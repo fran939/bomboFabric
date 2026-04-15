@@ -1,0 +1,342 @@
+Compiled from "MoulConfigScreenComponent.java"
+public class io.github.notenoughupdates.moulconfig.platform.MoulConfigScreenComponent extends net.minecraft.class_437 {
+  final io.github.notenoughupdates.moulconfig.gui.GuiContext guiContext;
+
+  final net.minecraft.class_437 previousScreen;
+
+  static final boolean $assertionsDisabled;
+
+  public io.github.notenoughupdates.moulconfig.platform.MoulConfigScreenComponent(net.minecraft.class_2561, io.github.notenoughupdates.moulconfig.gui.GuiContext, net.minecraft.class_437);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #47                 // Method net/minecraft/class_437."<init>":(Lnet/minecraft/class_2561;)V
+       5: aload_0
+       6: aload_2
+       7: putfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+      10: aload_0
+      11: aload_3
+      12: putfield      #51                 // Field previousScreen:Lnet/minecraft/class_437;
+      15: aload_2
+      16: aload_0
+      17: invokedynamic #68,  0             // InvokeDynamic #0:run:(Lio/github/notenoughupdates/moulconfig/platform/MoulConfigScreenComponent;)Ljava/lang/Runnable;
+      22: invokevirtual #74                 // Method io/github/notenoughupdates/moulconfig/gui/GuiContext.setCloseRequestHandler:(Ljava/lang/Runnable;)V
+      25: return
+
+  public io.github.notenoughupdates.moulconfig.gui.GuiImmediateContext createContext();
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: invokevirtual #83                 // Method createContext:(Lnet/minecraft/class_332;)Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+       5: areturn
+
+  public io.github.notenoughupdates.moulconfig.gui.GuiImmediateContext createContext(net.minecraft.class_332);
+    Code:
+       0: getstatic     #85                 // Field $assertionsDisabled:Z
+       3: ifne          21
+       6: aload_0
+       7: getfield      #89                 // Field field_22787:Lnet/minecraft/class_310;
+      10: ifnonnull     21
+      13: new           #91                 // class java/lang/AssertionError
+      16: dup
+      17: invokespecial #93                 // Method java/lang/AssertionError."<init>":()V
+      20: athrow
+      21: getstatic     #99                 // Field io/github/notenoughupdates/moulconfig/common/IMinecraft.INSTANCE:Lio/github/notenoughupdates/moulconfig/common/IMinecraft;
+      24: astore_2
+      25: aload_2
+      26: invokeinterface #103,  1          // InterfaceMethod io/github/notenoughupdates/moulconfig/common/IMinecraft.getMousePositionHF:()Lkotlin/Pair;
+      31: astore_3
+      32: aload_3
+      33: invokevirtual #109                // Method kotlin/Pair.getFirst:()Ljava/lang/Object;
+      36: checkcast     #111                // class java/lang/Double
+      39: invokevirtual #115                // Method java/lang/Double.intValue:()I
+      42: istore        4
+      44: aload_3
+      45: invokevirtual #118                // Method kotlin/Pair.getSecond:()Ljava/lang/Object;
+      48: checkcast     #111                // class java/lang/Double
+      51: invokevirtual #115                // Method java/lang/Double.intValue:()I
+      54: istore        5
+      56: new           #120                // class io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext
+      59: dup
+      60: new           #122                // class io/github/notenoughupdates/moulconfig/platform/MoulConfigRenderContext
+      63: dup
+      64: aload_1
+      65: ifnull        72
+      68: aload_1
+      69: goto          75
+      72: invokestatic  #130                // Method io/github/notenoughupdates/moulconfig/platform/MoulConfigPlatform.makeDrawContext:()Lnet/minecraft/class_332;
+      75: invokespecial #133                // Method io/github/notenoughupdates/moulconfig/platform/MoulConfigRenderContext."<init>":(Lnet/minecraft/class_332;)V
+      78: iconst_0
+      79: iconst_0
+      80: aload_2
+      81: invokeinterface #136,  1          // InterfaceMethod io/github/notenoughupdates/moulconfig/common/IMinecraft.getScaledWidth:()I
+      86: aload_2
+      87: invokeinterface #139,  1          // InterfaceMethod io/github/notenoughupdates/moulconfig/common/IMinecraft.getScaledHeight:()I
+      92: iload         4
+      94: iload         5
+      96: iload         4
+      98: iload         5
+     100: aload_3
+     101: invokevirtual #109                // Method kotlin/Pair.getFirst:()Ljava/lang/Object;
+     104: checkcast     #111                // class java/lang/Double
+     107: invokevirtual #143                // Method java/lang/Double.floatValue:()F
+     110: aload_3
+     111: invokevirtual #118                // Method kotlin/Pair.getSecond:()Ljava/lang/Object;
+     114: checkcast     #111                // class java/lang/Double
+     117: invokevirtual #143                // Method java/lang/Double.floatValue:()F
+     120: invokespecial #146                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext."<init>":(Lio/github/notenoughupdates/moulconfig/common/RenderContext;IIIIIIIIFF)V
+     123: areturn
+
+  public void method_25419();
+    Code:
+       0: aload_0
+       1: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+       4: invokevirtual #159                // Method io/github/notenoughupdates/moulconfig/gui/GuiContext.onBeforeClose:()Lio/github/notenoughupdates/moulconfig/gui/CloseEventListener$CloseAction;
+       7: getstatic     #163                // Field io/github/notenoughupdates/moulconfig/gui/CloseEventListener$CloseAction.NO_OBJECTIONS_TO_CLOSE:Lio/github/notenoughupdates/moulconfig/gui/CloseEventListener$CloseAction;
+      10: if_acmpne     17
+      13: aload_0
+      14: invokespecial #164                // Method net/minecraft/class_437.method_25419:()V
+      17: return
+
+  public void method_25432();
+    Code:
+       0: aload_0
+       1: invokespecial #167                // Method net/minecraft/class_437.method_25432:()V
+       4: aload_0
+       5: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+       8: invokevirtual #170                // Method io/github/notenoughupdates/moulconfig/gui/GuiContext.onAfterClose:()V
+      11: return
+
+  public void method_25394(net.minecraft.class_332, int, int, float);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: iload_3
+       4: fload         4
+       6: invokespecial #174                // Method net/minecraft/class_437.method_25394:(Lnet/minecraft/class_332;IIF)V
+       9: aload_0
+      10: aload_1
+      11: invokevirtual #83                 // Method createContext:(Lnet/minecraft/class_332;)Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+      14: astore        5
+      16: aload_0
+      17: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+      20: invokevirtual #178                // Method io/github/notenoughupdates/moulconfig/gui/GuiContext.getRoot:()Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+      23: aload         5
+      25: invokevirtual #184                // Method io/github/notenoughupdates/moulconfig/gui/GuiComponent.render:(Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;)V
+      28: aload         5
+      30: invokevirtual #188                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext.getRenderContext:()Lio/github/notenoughupdates/moulconfig/common/RenderContext;
+      33: invokeinterface #193,  1          // InterfaceMethod io/github/notenoughupdates/moulconfig/common/RenderContext.renderExtraLayers:()V
+      38: return
+
+  public boolean method_25400(net.minecraft.class_11905);
+    Code:
+       0: aload_0
+       1: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+       4: invokevirtual #178                // Method io/github/notenoughupdates/moulconfig/gui/GuiContext.getRoot:()Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+       7: new           #13                 // class io/github/notenoughupdates/moulconfig/gui/KeyboardEvent$CharTyped
+      10: dup
+      11: aload_1
+      12: invokevirtual #207                // Method net/minecraft/class_11905.comp_4793:()I
+      15: i2c
+      16: invokespecial #210                // Method io/github/notenoughupdates/moulconfig/gui/KeyboardEvent$CharTyped."<init>":(C)V
+      19: aload_0
+      20: invokevirtual #212                // Method createContext:()Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+      23: invokevirtual #216                // Method io/github/notenoughupdates/moulconfig/gui/GuiComponent.keyboardEvent:(Lio/github/notenoughupdates/moulconfig/gui/KeyboardEvent;Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;)Z
+      26: ireturn
+
+  public boolean method_25404(net.minecraft.class_11908);
+    Code:
+       0: aload_1
+       1: invokevirtual #225                // Method net/minecraft/class_11908.comp_4795:()I
+       4: istore_2
+       5: aload_1
+       6: invokevirtual #228                // Method net/minecraft/class_11908.comp_4796:()I
+       9: istore_3
+      10: aload_0
+      11: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+      14: getfield      #232                // Field io/github/notenoughupdates/moulconfig/gui/GuiContext.root:Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+      17: new           #18                 // class io/github/notenoughupdates/moulconfig/gui/KeyboardEvent$KeyPressed
+      20: dup
+      21: iload_2
+      22: iload_3
+      23: iconst_1
+      24: invokespecial #235                // Method io/github/notenoughupdates/moulconfig/gui/KeyboardEvent$KeyPressed."<init>":(IIZ)V
+      27: aload_0
+      28: invokevirtual #212                // Method createContext:()Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+      31: invokevirtual #216                // Method io/github/notenoughupdates/moulconfig/gui/GuiComponent.keyboardEvent:(Lio/github/notenoughupdates/moulconfig/gui/KeyboardEvent;Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;)Z
+      34: ifeq          39
+      37: iconst_1
+      38: ireturn
+      39: iload_2
+      40: sipush        256
+      43: if_icmpne     73
+      46: aload_0
+      47: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+      50: invokevirtual #238                // Method io/github/notenoughupdates/moulconfig/gui/GuiContext.getFocusedElement:()Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+      53: ifnull        67
+      56: aload_0
+      57: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+      60: aconst_null
+      61: invokevirtual #242                // Method io/github/notenoughupdates/moulconfig/gui/GuiContext.setFocusedElement:(Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;)V
+      64: goto          71
+      67: aload_0
+      68: invokevirtual #56                 // Method method_25419:()V
+      71: iconst_1
+      72: ireturn
+      73: iconst_0
+      74: ireturn
+
+  public boolean method_16803(net.minecraft.class_11908);
+    Code:
+       0: aload_1
+       1: invokevirtual #225                // Method net/minecraft/class_11908.comp_4795:()I
+       4: istore_2
+       5: aload_1
+       6: invokevirtual #228                // Method net/minecraft/class_11908.comp_4796:()I
+       9: istore_3
+      10: aload_0
+      11: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+      14: getfield      #232                // Field io/github/notenoughupdates/moulconfig/gui/GuiContext.root:Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+      17: new           #18                 // class io/github/notenoughupdates/moulconfig/gui/KeyboardEvent$KeyPressed
+      20: dup
+      21: iload_2
+      22: iload_3
+      23: iconst_0
+      24: invokespecial #235                // Method io/github/notenoughupdates/moulconfig/gui/KeyboardEvent$KeyPressed."<init>":(IIZ)V
+      27: aload_0
+      28: invokevirtual #212                // Method createContext:()Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+      31: invokevirtual #216                // Method io/github/notenoughupdates/moulconfig/gui/GuiComponent.keyboardEvent:(Lio/github/notenoughupdates/moulconfig/gui/KeyboardEvent;Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;)Z
+      34: ireturn
+
+  public void method_16014(double, double);
+    Code:
+       0: aload_0
+       1: invokevirtual #212                // Method createContext:()Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+       4: astore        5
+       6: dload_1
+       7: d2i
+       8: istore        6
+      10: dload_3
+      11: d2i
+      12: istore        7
+      14: new           #21                 // class io/github/notenoughupdates/moulconfig/gui/MouseEvent$Move
+      17: dup
+      18: dload_1
+      19: d2f
+      20: aload         5
+      22: invokevirtual #251                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext.getMouseXHF:()F
+      25: fsub
+      26: dload_3
+      27: d2f
+      28: aload         5
+      30: invokevirtual #254                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext.getMouseYHF:()F
+      33: fsub
+      34: invokespecial #257                // Method io/github/notenoughupdates/moulconfig/gui/MouseEvent$Move."<init>":(FF)V
+      37: astore        8
+      39: new           #120                // class io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext
+      42: dup
+      43: aload         5
+      45: invokevirtual #188                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext.getRenderContext:()Lio/github/notenoughupdates/moulconfig/common/RenderContext;
+      48: aload         5
+      50: invokevirtual #260                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext.getRenderOffsetX:()I
+      53: aload         5
+      55: invokevirtual #263                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext.getRenderOffsetY:()I
+      58: aload         5
+      60: invokevirtual #266                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext.getWidth:()I
+      63: aload         5
+      65: invokevirtual #269                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext.getHeight:()I
+      68: iload         6
+      70: iload         7
+      72: iload         6
+      74: iload         7
+      76: dload_1
+      77: d2f
+      78: dload_3
+      79: d2f
+      80: invokespecial #146                // Method io/github/notenoughupdates/moulconfig/gui/GuiImmediateContext."<init>":(Lio/github/notenoughupdates/moulconfig/common/RenderContext;IIIIIIIIFF)V
+      83: astore        5
+      85: aload_0
+      86: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+      89: invokevirtual #178                // Method io/github/notenoughupdates/moulconfig/gui/GuiContext.getRoot:()Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+      92: aload         8
+      94: aload         5
+      96: invokevirtual #273                // Method io/github/notenoughupdates/moulconfig/gui/GuiComponent.mouseEvent:(Lio/github/notenoughupdates/moulconfig/gui/MouseEvent;Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;)Z
+      99: pop
+     100: return
+
+  public boolean method_25402(net.minecraft.class_11909, boolean);
+    Code:
+       0: aload_0
+       1: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+       4: getfield      #232                // Field io/github/notenoughupdates/moulconfig/gui/GuiContext.root:Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+       7: new           #26                 // class io/github/notenoughupdates/moulconfig/gui/MouseEvent$Click
+      10: dup
+      11: aload_1
+      12: invokevirtual #285                // Method net/minecraft/class_11909.method_74245:()I
+      15: iconst_1
+      16: invokespecial #288                // Method io/github/notenoughupdates/moulconfig/gui/MouseEvent$Click."<init>":(IZ)V
+      19: aload_0
+      20: invokevirtual #212                // Method createContext:()Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+      23: invokevirtual #273                // Method io/github/notenoughupdates/moulconfig/gui/GuiComponent.mouseEvent:(Lio/github/notenoughupdates/moulconfig/gui/MouseEvent;Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;)Z
+      26: ireturn
+
+  public boolean method_25406(net.minecraft.class_11909);
+    Code:
+       0: aload_0
+       1: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+       4: getfield      #232                // Field io/github/notenoughupdates/moulconfig/gui/GuiContext.root:Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+       7: new           #26                 // class io/github/notenoughupdates/moulconfig/gui/MouseEvent$Click
+      10: dup
+      11: aload_1
+      12: invokevirtual #285                // Method net/minecraft/class_11909.method_74245:()I
+      15: iconst_0
+      16: invokespecial #288                // Method io/github/notenoughupdates/moulconfig/gui/MouseEvent$Click."<init>":(IZ)V
+      19: aload_0
+      20: invokevirtual #212                // Method createContext:()Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+      23: invokevirtual #273                // Method io/github/notenoughupdates/moulconfig/gui/GuiComponent.mouseEvent:(Lio/github/notenoughupdates/moulconfig/gui/MouseEvent;Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;)Z
+      26: ireturn
+
+  public boolean method_25401(double, double, double, double);
+    Code:
+       0: aload_0
+       1: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+       4: getfield      #232                // Field io/github/notenoughupdates/moulconfig/gui/GuiContext.root:Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;
+       7: new           #29                 // class io/github/notenoughupdates/moulconfig/gui/MouseEvent$Scroll
+      10: dup
+      11: dload         7
+      13: d2f
+      14: invokespecial #298                // Method io/github/notenoughupdates/moulconfig/gui/MouseEvent$Scroll."<init>":(F)V
+      17: aload_0
+      18: invokevirtual #212                // Method createContext:()Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;
+      21: invokevirtual #273                // Method io/github/notenoughupdates/moulconfig/gui/GuiComponent.mouseEvent:(Lio/github/notenoughupdates/moulconfig/gui/MouseEvent;Lio/github/notenoughupdates/moulconfig/gui/GuiImmediateContext;)Z
+      24: ireturn
+
+  public boolean method_25403(net.minecraft.class_11909, double, double);
+    Code:
+       0: iconst_1
+       1: ireturn
+
+  public io.github.notenoughupdates.moulconfig.gui.GuiContext getGuiContext();
+    Code:
+       0: aload_0
+       1: getfield      #49                 // Field guiContext:Lio/github/notenoughupdates/moulconfig/gui/GuiContext;
+       4: areturn
+
+  public net.minecraft.class_437 getPreviousScreen();
+    Code:
+       0: aload_0
+       1: getfield      #51                 // Field previousScreen:Lnet/minecraft/class_437;
+       4: areturn
+
+  static {};
+    Code:
+       0: ldc           #2                  // class io/github/notenoughupdates/moulconfig/platform/MoulConfigScreenComponent
+       2: invokevirtual #315                // Method java/lang/Class.desiredAssertionStatus:()Z
+       5: ifne          12
+       8: iconst_1
+       9: goto          13
+      12: iconst_0
+      13: putstatic     #85                 // Field $assertionsDisabled:Z
+      16: return
+}

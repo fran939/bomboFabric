@@ -1,0 +1,43 @@
+Compiled from "ManagedDataFileBuilder.kt"
+public class io.github.notenoughupdates.moulconfig.managed.ManagedDataFileBuilder<T> {
+  private java.io.File file;
+  private final java.lang.Class<T> clazz;
+  private io.github.notenoughupdates.moulconfig.managed.DataMapper<T> mapper;
+  private java.util.function.BiConsumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>, java.lang.Exception> loadFailed;
+  private java.util.function.BiConsumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>, java.lang.Exception> saveFailed;
+  private java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>> beforeLoad;
+  private java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>> afterLoad;
+  private java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>> beforeSave;
+  private java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>> afterSave;
+  public io.github.notenoughupdates.moulconfig.managed.ManagedDataFileBuilder(java.io.File, java.lang.Class<T>);
+  public final java.io.File getFile();
+  public final void setFile(java.io.File);
+  public final java.lang.Class<T> getClazz();
+  public final void throwOnFailure();
+  public final io.github.notenoughupdates.moulconfig.managed.DataMapper<T> getMapper();
+  public final void setMapper(io.github.notenoughupdates.moulconfig.managed.DataMapper<T>);
+  public final void jsonMapper(kotlin.jvm.functions.Function1<? super io.github.notenoughupdates.moulconfig.managed.GsonMapper<T>, kotlin.Unit>);
+  public static void jsonMapper$default(io.github.notenoughupdates.moulconfig.managed.ManagedDataFileBuilder, kotlin.jvm.functions.Function1, int, java.lang.Object);
+  public java.util.function.BiConsumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>, java.lang.Exception> getLoadFailed();
+  public void setLoadFailed(java.util.function.BiConsumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>, java.lang.Exception>);
+  public java.util.function.BiConsumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>, java.lang.Exception> getSaveFailed();
+  public void setSaveFailed(java.util.function.BiConsumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>, java.lang.Exception>);
+  public java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>> getBeforeLoad();
+  public void setBeforeLoad(java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>>);
+  public java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>> getAfterLoad();
+  public void setAfterLoad(java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>>);
+  public java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>> getBeforeSave();
+  public void setBeforeSave(java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>>);
+  public java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>> getAfterSave();
+  public void setAfterSave(java.util.function.Consumer<io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T>>);
+  public final void jsonMapper();
+  private static final void throwOnFailure$lambda$0(io.github.notenoughupdates.moulconfig.managed.ManagedDataFile, java.lang.Exception);
+  private static final void throwOnFailure$lambda$1(io.github.notenoughupdates.moulconfig.managed.ManagedDataFile, java.lang.Exception);
+  private static final kotlin.Unit jsonMapper$lambda$2(io.github.notenoughupdates.moulconfig.managed.GsonMapper);
+  private static final void loadFailed$lambda$3(io.github.notenoughupdates.moulconfig.managed.ManagedDataFile, java.lang.Exception);
+  private static final void saveFailed$lambda$4(io.github.notenoughupdates.moulconfig.managed.ManagedDataFile, java.lang.Exception);
+  private static final void beforeLoad$lambda$5(io.github.notenoughupdates.moulconfig.managed.ManagedDataFile);
+  private static final void afterLoad$lambda$6(io.github.notenoughupdates.moulconfig.managed.ManagedDataFile);
+  private static final void beforeSave$lambda$7(io.github.notenoughupdates.moulconfig.managed.ManagedDataFile);
+  private static final void afterSave$lambda$8(io.github.notenoughupdates.moulconfig.managed.ManagedDataFile);
+}

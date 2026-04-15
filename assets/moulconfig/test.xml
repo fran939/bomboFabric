@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Root xmlns="http://notenoughupdates.org/moulconfig">
+    <Gui>
+        <Column>
+            <Meta afterClose="@afterClose" beforeClose="@beforeClose" requestClose="@requestClose"/>
+            <Hover lines="Hehehhe;More Hehehehehe">
+                <Text text="Laudantium velit velit iure consequatur nobis dolores possimus aut.Eos inventore vero fugit dolores.Optio exercitationem perspiciatis recusandae quas maximeest repudiandae. Delectus sapiente quis est sedalias et. Est modi tempora dolor dolores molestiaeexpedita et harum."
+                      width="180"/>
+            </Hover>
+            <ItemStack value="@itemStack"/>
+            <Panel background="VANILLA" insets="6">
+                <Collapsible title="Test">
+                    <Scale scale="10">
+                        <Text text="test"/>
+                    </Scale>
+                </Collapsible>
+            </Panel>
+            <Row>
+                <Tabs>
+                    <Tab>
+                        <Tab.Header>
+                            <Text text="Tab A"/>
+                        </Tab.Header>
+                        <Tab.Body>
+                            <Panel background="TRANSPARENT" insets="10">
+                                <Align horizontal="RIGHT" vertical="BOTTOM">
+                                    <TextField value="@textField" width="100"/>
+                                </Align>
+                            </Panel>
+                        </Tab.Body>
+                    </Tab>
+                    <Tab>
+                        <Tab.Header>
+                            <Text text="Tab B"/>
+                        </Tab.Header>
+                        <Tab.Body>
+                            <Panel background="TRANSPARENT" insets="10">
+                                <Center>
+                                    <Text text="@textField" width="120"/>
+                                </Center>
+                            </Panel>
+                        </Tab.Body>
+                    </Tab>
+                </Tabs>
+                <Text text="Option A" width="80"/>
+                <Switch
+                        value="@value"
+                        animationSpeed="100"
+                />
+            </Row>
+            <Row>
+                <Text text="Option B" width="80"/>
+                <Switch
+                        value="@value"
+                        animationSpeed="1000"
+                />
+            </Row>
+            <ScrollPanel width="200" height="100">
+                <Array data="@data" oddBackground="#93caed">
+                    <Row>
+                        <Text text="@text" width="80"/>
+                        <Center>
+                            <Switch value="@enabled"/>
+                        </Center>
+                        <Button onClick="@randomize">
+                            <Text text="Randomize"/>
+                        </Button>
+                    </Row>
+                </Array>
+            </ScrollPanel>
+            <Button onClick="@addElement">
+                <Text text="Add Element"/>
+            </Button>
+            <TextField value="@textField" editable="true" suggestion="Test"/>
+            <Slider value="@slider" minValue="-10" maxValue="20"/>
+        </Column>
+    </Gui>
+</Root>

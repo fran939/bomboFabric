@@ -1,0 +1,185 @@
+Compiled from "IMinecraft.java"
+public interface io.github.notenoughupdates.moulconfig.common.IMinecraft {
+  public static final io.github.notenoughupdates.moulconfig.common.IMinecraft INSTANCE;
+
+  public abstract java.io.InputStream loadResourceLocation(io.github.notenoughupdates.moulconfig.common.MyResourceLocation);
+
+  public abstract io.github.notenoughupdates.moulconfig.internal.MCLogger getLogger(java.lang.String);
+
+  public abstract boolean isGeneratedSentinel(io.github.notenoughupdates.moulconfig.common.MyResourceLocation);
+
+  public abstract io.github.notenoughupdates.moulconfig.common.DynamicTextureReference generateDynamicTexture(java.awt.image.BufferedImage);
+
+  public abstract kotlin.Pair<java.lang.Double, java.lang.Double> getMousePositionHF();
+
+  public default kotlin.Pair<java.lang.Integer, java.lang.Integer> getMousePosition();
+    Code:
+       0: aload_0
+       1: invokeinterface #46,  1           // InterfaceMethod getMousePositionHF:()Lkotlin/Pair;
+       6: astore_1
+       7: new           #48                 // class kotlin/Pair
+      10: dup
+      11: aload_1
+      12: invokevirtual #52                 // Method kotlin/Pair.getFirst:()Ljava/lang/Object;
+      15: checkcast     #54                 // class java/lang/Double
+      18: invokevirtual #58                 // Method java/lang/Double.intValue:()I
+      21: invokestatic  #64                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      24: aload_1
+      25: invokevirtual #67                 // Method kotlin/Pair.getSecond:()Ljava/lang/Object;
+      28: checkcast     #54                 // class java/lang/Double
+      31: invokevirtual #58                 // Method java/lang/Double.intValue:()I
+      34: invokestatic  #64                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      37: invokespecial #71                 // Method kotlin/Pair."<init>":(Ljava/lang/Object;Ljava/lang/Object;)V
+      40: areturn
+
+  public default int getMouseX();
+    Code:
+       0: aload_0
+       1: invokeinterface #80,  1           // InterfaceMethod getMouseXHF:()D
+       6: d2i
+       7: ireturn
+
+  public default int getMouseY();
+    Code:
+       0: aload_0
+       1: invokeinterface #84,  1           // InterfaceMethod getMouseYHF:()D
+       6: d2i
+       7: ireturn
+
+  public default double getMouseXHF();
+    Code:
+       0: aload_0
+       1: invokeinterface #46,  1           // InterfaceMethod getMousePositionHF:()Lkotlin/Pair;
+       6: invokevirtual #52                 // Method kotlin/Pair.getFirst:()Ljava/lang/Object;
+       9: checkcast     #54                 // class java/lang/Double
+      12: invokevirtual #87                 // Method java/lang/Double.doubleValue:()D
+      15: dreturn
+
+  public default double getMouseYHF();
+    Code:
+       0: aload_0
+       1: invokeinterface #46,  1           // InterfaceMethod getMousePositionHF:()Lkotlin/Pair;
+       6: invokevirtual #67                 // Method kotlin/Pair.getSecond:()Ljava/lang/Object;
+       9: checkcast     #54                 // class java/lang/Double
+      12: invokevirtual #87                 // Method java/lang/Double.doubleValue:()D
+      15: dreturn
+
+  public abstract boolean isDevelopmentEnvironment();
+
+  public abstract io.github.notenoughupdates.moulconfig.common.IFontRenderer getDefaultFontRenderer();
+
+  public abstract io.github.notenoughupdates.moulconfig.common.IKeyboardConstants getKeyboardConstants();
+
+  public abstract int getScaledWidth();
+
+  public abstract int getScaledHeight();
+
+  public abstract int getScaleFactor();
+
+  public abstract boolean isOnMacOs();
+
+  public abstract boolean isMouseButtonDown(int);
+
+  public abstract boolean isKeyboardKeyDown(int);
+
+  public abstract void addExtraBuiltinConfigProcessors(io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor<?>);
+
+  public abstract void sendClickableChatMessage(io.github.notenoughupdates.moulconfig.common.text.StructuredText, java.lang.String, io.github.notenoughupdates.moulconfig.common.ClickType);
+
+  public default void sendChatMessage(io.github.notenoughupdates.moulconfig.common.text.StructuredText);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: ldc           #110                // String
+       4: aconst_null
+       5: invokeinterface #112,  4          // InterfaceMethod sendClickableChatMessage:(Lio/github/notenoughupdates/moulconfig/common/text/StructuredText;Ljava/lang/String;Lio/github/notenoughupdates/moulconfig/common/ClickType;)V
+      10: return
+
+  public abstract io.github.notenoughupdates.moulconfig.common.text.StructuredText getKeyName(int);
+
+  public abstract io.github.notenoughupdates.moulconfig.common.text.StructuredText$Mutable createLiteral(java.lang.String);
+
+  public abstract io.github.notenoughupdates.moulconfig.common.text.StructuredText$Mutable createTranslatable(java.lang.String, io.github.notenoughupdates.moulconfig.common.text.StructuredText...);
+
+  public abstract io.github.notenoughupdates.moulconfig.common.text.StructuredText createStructuredTextInternal(java.lang.Object);
+
+  public abstract void registerPlatformTypeMorphisms(io.github.notenoughupdates.moulconfig.xml.XMLUniverse);
+
+  public abstract io.github.notenoughupdates.moulconfig.common.RenderContext provideTopLevelRenderContext();
+
+  public default void openWrappedScreen(io.github.notenoughupdates.moulconfig.gui.GuiElement);
+    Code:
+       0: aload_0
+       1: new           #133                // class io/github/notenoughupdates/moulconfig/gui/GuiElementComponent
+       4: dup
+       5: aload_1
+       6: invokespecial #135                // Method io/github/notenoughupdates/moulconfig/gui/GuiElementComponent."<init>":(Lio/github/notenoughupdates/moulconfig/gui/GuiElement;)V
+       9: invokeinterface #138,  2          // InterfaceMethod openWrappedScreen:(Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;)V
+      14: return
+
+  public abstract void openWrappedScreen(io.github.notenoughupdates.moulconfig.gui.GuiContext);
+
+  public default void openWrappedScreen(io.github.notenoughupdates.moulconfig.gui.GuiComponent);
+    Code:
+       0: aload_0
+       1: new           #143                // class io/github/notenoughupdates/moulconfig/gui/GuiContext
+       4: dup
+       5: aload_1
+       6: invokespecial #145                // Method io/github/notenoughupdates/moulconfig/gui/GuiContext."<init>":(Lio/github/notenoughupdates/moulconfig/gui/GuiComponent;)V
+       9: invokeinterface #147,  2          // InterfaceMethod openWrappedScreen:(Lio/github/notenoughupdates/moulconfig/gui/GuiContext;)V
+      14: return
+
+  public abstract void copyToClipboard(java.lang.String);
+
+  public abstract java.lang.String copyFromClipboard();
+
+  public static io.github.notenoughupdates.moulconfig.common.IMinecraft getInstance();
+    Code:
+       0: getstatic     #157                // Field INSTANCE:Lio/github/notenoughupdates/moulconfig/common/IMinecraft;
+       3: areturn
+
+  private static io.github.notenoughupdates.moulconfig.common.IMinecraft lambda$static$0() throws java.lang.Exception;
+    Code:
+       0: ldc           #2                  // class io/github/notenoughupdates/moulconfig/common/IMinecraft
+       2: invokestatic  #166                // Method java/util/ServiceLoader.load:(Ljava/lang/Class;)Ljava/util/ServiceLoader;
+       5: astore_0
+       6: aload_0
+       7: invokevirtual #170                // Method java/util/ServiceLoader.reload:()V
+      10: aload_0
+      11: invokevirtual #174                // Method java/util/ServiceLoader.iterator:()Ljava/util/Iterator;
+      14: astore_1
+      15: aload_1
+      16: invokeinterface #179,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      21: checkcast     #2                  // class io/github/notenoughupdates/moulconfig/common/IMinecraft
+      24: astore_2
+      25: aload_1
+      26: invokeinterface #182,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      31: ifeq          75
+      34: aload_1
+      35: invokeinterface #179,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      40: checkcast     #2                  // class io/github/notenoughupdates/moulconfig/common/IMinecraft
+      43: astore_3
+      44: new           #184                // class java/lang/StringBuilder
+      47: dup
+      48: invokespecial #186                // Method java/lang/StringBuilder."<init>":()V
+      51: ldc           #188                // String Duplicate IMinecraft class
+      53: invokevirtual #192                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      56: aload_3
+      57: invokevirtual #195                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      60: ldc           #197                // String ,
+      62: invokevirtual #192                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      65: aload_2
+      66: invokevirtual #195                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      69: invokevirtual #200                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      72: invokestatic  #205                // Method io/github/notenoughupdates/moulconfig/internal/Warnings.warn:(Ljava/lang/String;)V
+      75: aload_2
+      76: areturn
+
+  static {};
+    Code:
+       0: invokedynamic #229,  0            // InvokeDynamic #0:get:()Lio/github/notenoughupdates/moulconfig/internal/InitUtil$ThrowingSupplier;
+       5: invokestatic  #233                // Method io/github/notenoughupdates/moulconfig/internal/InitUtil.makeUnchecked:(Lio/github/notenoughupdates/moulconfig/internal/InitUtil$ThrowingSupplier;)Ljava/lang/Object;
+       8: checkcast     #2                  // class io/github/notenoughupdates/moulconfig/common/IMinecraft
+      11: putstatic     #157                // Field INSTANCE:Lio/github/notenoughupdates/moulconfig/common/IMinecraft;
+      14: return
+}

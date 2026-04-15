@@ -1,0 +1,27 @@
+Compiled from "EntityRenderer.java"
+public abstract class net.minecraft.client.renderer.entity.EntityRenderer<T extends net.minecraft.world.entity.Entity, S extends net.minecraft.client.renderer.entity.state.EntityRenderState> {
+  public static final float NAMETAG_SCALE;
+  protected final net.minecraft.client.renderer.entity.EntityRenderDispatcher entityRenderDispatcher;
+  protected float shadowRadius;
+  protected float shadowStrength;
+  protected net.minecraft.client.renderer.entity.EntityRenderer(net.minecraft.client.renderer.entity.EntityRendererProvider$Context);
+  public final int getPackedLightCoords(T, float);
+  protected int getSkyLightLevel(T, net.minecraft.core.BlockPos);
+  protected int getBlockLightLevel(T, net.minecraft.core.BlockPos);
+  public boolean shouldRender(T, net.minecraft.client.renderer.culling.Frustum, double, double, double);
+  protected net.minecraft.world.phys.AABB getBoundingBoxForCulling(T);
+  protected boolean affectedByCulling(T);
+  public net.minecraft.world.phys.Vec3 getRenderOffset(S);
+  public void submit(S, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.client.renderer.state.CameraRenderState);
+  protected boolean shouldShowName(T, double);
+  public net.minecraft.client.gui.Font getFont();
+  protected void submitNameTag(S, com.mojang.blaze3d.vertex.PoseStack, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.client.renderer.state.CameraRenderState);
+  protected net.minecraft.network.chat.Component getNameTag(T);
+  protected float getShadowRadius(S);
+  protected float getShadowStrength(S);
+  public abstract S createRenderState();
+  public final S createRenderState(T, float);
+  public void extractRenderState(T, S, float);
+  protected void finalizeRenderState(T, S);
+  protected void extractAdditionalHitboxes(T, com.google.common.collect.ImmutableList$Builder<net.minecraft.client.renderer.entity.state.HitboxRenderState>, float);
+}

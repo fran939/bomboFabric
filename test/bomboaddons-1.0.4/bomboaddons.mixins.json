@@ -1,0 +1,18 @@
+{
+	"required": true,
+	"package": "me.bombo.bomboaddons.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [],
+	"client": [
+		"KeyboardMixin",
+		"GuiMixin",
+		"SignEditMixin",
+		"ChatMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

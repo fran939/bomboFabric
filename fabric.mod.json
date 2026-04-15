@@ -1,0 +1,17 @@
+{
+  "id": "moulconfig",
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "name": "Moulconfig",
+  "entrypoints": {
+    "main": []
+  },
+  "custom": {
+    "modmenu": {
+      "badges": [
+        "library"
+      ]
+    }
+  },
+  "accessWidener": "moulconfig.accesswidener"
+}

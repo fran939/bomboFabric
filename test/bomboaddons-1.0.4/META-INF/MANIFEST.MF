@@ -1,0 +1,24 @@
+Manifest-Version: 1.0
+Fabric-Jar-Type: classes
+Fabric-Loom-Client-Only-Entries: me/bombo/bomboaddons/AutoExperiments.cl
+ ass;me/bombo/bomboaddons/BomboaddonsClient.class;me/bombo/bomboaddons/C
+ lickLogic$1.class;me/bombo/bomboaddons/ClickLogic$ClickTarget.class;me/
+ bombo/bomboaddons/ClickLogic.class;me/bombo/bomboaddons/LF$SearchContex
+ t.class;me/bombo/bomboaddons/LF.class;me/bombo/bomboaddons/LeftClickEth
+ erwarp.class;me/bombo/bomboaddons/SBECommands.class;me/bombo/bomboaddon
+ s/SphinxMacro$1.class;me/bombo/bomboaddons/SphinxMacro.class;me/bombo/b
+ omboaddons/mixin/ChatMixin.class;me/bombo/bomboaddons/mixin/GuiMixin.cl
+ ass;me/bombo/bomboaddons/mixin/KeyboardMixin.class;me/bombo/bomboaddons
+ /mixin/SignEditMixin.class
+Fabric-Loom-Mixin-Remap-Type: static
+Fabric-Loom-Split-Environment: true
+Fabric-Gradle-Version: 9.3.0
+Fabric-Loom-Version: 1.15.3
+Fabric-Mixin-Compile-Extensions-Version: 0.6.0
+Fabric-Minecraft-Version: 1.21.10
+Fabric-Tiny-Remapper-Version: 0.12.3
+Fabric-Loader-Version: 0.17.3
+Fabric-Mixin-Version: 0.16.5+mixin.0.8.7
+Fabric-Mixin-Group: net.fabricmc
+Fabric-Mapping-Namespace: intermediary
+

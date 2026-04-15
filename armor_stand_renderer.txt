@@ -1,0 +1,223 @@
+Compiled from "ArmorStandRenderer.java"
+public class net.minecraft.client.renderer.entity.ArmorStandRenderer extends net.minecraft.client.renderer.entity.LivingEntityRenderer<net.minecraft.world.entity.decoration.ArmorStand, net.minecraft.client.model.ArmorStandArmorModel> {
+  public static final net.minecraft.resources.ResourceLocation DEFAULT_SKIN_LOCATION;
+
+  public net.minecraft.client.renderer.entity.ArmorStandRenderer(net.minecraft.client.renderer.entity.EntityRendererProvider$Context);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: new           #18                 // class net/minecraft/client/model/ArmorStandModel
+       5: dup
+       6: aload_1
+       7: getstatic     #24                 // Field net/minecraft/client/model/geom/ModelLayers.ARMOR_STAND:Lnet/minecraft/client/model/geom/ModelLayerLocation;
+      10: invokevirtual #28                 // Method net/minecraft/client/renderer/entity/EntityRendererProvider$Context.bakeLayer:(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;
+      13: invokespecial #31                 // Method net/minecraft/client/model/ArmorStandModel."<init>":(Lnet/minecraft/client/model/geom/ModelPart;)V
+      16: fconst_0
+      17: invokespecial #34                 // Method net/minecraft/client/renderer/entity/LivingEntityRenderer."<init>":(Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;Lnet/minecraft/client/model/EntityModel;F)V
+      20: aload_0
+      21: new           #36                 // class net/minecraft/client/renderer/entity/layers/HumanoidArmorLayer
+      24: dup
+      25: aload_0
+      26: new           #38                 // class net/minecraft/client/model/ArmorStandArmorModel
+      29: dup
+      30: aload_1
+      31: getstatic     #41                 // Field net/minecraft/client/model/geom/ModelLayers.ARMOR_STAND_INNER_ARMOR:Lnet/minecraft/client/model/geom/ModelLayerLocation;
+      34: invokevirtual #28                 // Method net/minecraft/client/renderer/entity/EntityRendererProvider$Context.bakeLayer:(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;
+      37: invokespecial #42                 // Method net/minecraft/client/model/ArmorStandArmorModel."<init>":(Lnet/minecraft/client/model/geom/ModelPart;)V
+      40: new           #38                 // class net/minecraft/client/model/ArmorStandArmorModel
+      43: dup
+      44: aload_1
+      45: getstatic     #45                 // Field net/minecraft/client/model/geom/ModelLayers.ARMOR_STAND_OUTER_ARMOR:Lnet/minecraft/client/model/geom/ModelLayerLocation;
+      48: invokevirtual #28                 // Method net/minecraft/client/renderer/entity/EntityRendererProvider$Context.bakeLayer:(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;
+      51: invokespecial #42                 // Method net/minecraft/client/model/ArmorStandArmorModel."<init>":(Lnet/minecraft/client/model/geom/ModelPart;)V
+      54: aload_1
+      55: invokevirtual #49                 // Method net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelManager:()Lnet/minecraft/client/resources/model/ModelManager;
+      58: invokespecial #52                 // Method net/minecraft/client/renderer/entity/layers/HumanoidArmorLayer."<init>":(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/HumanoidModel;Lnet/minecraft/client/model/HumanoidModel;Lnet/minecraft/client/resources/model/ModelManager;)V
+      61: invokevirtual #56                 // Method addLayer:(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z
+      64: pop
+      65: aload_0
+      66: new           #58                 // class net/minecraft/client/renderer/entity/layers/ItemInHandLayer
+      69: dup
+      70: aload_0
+      71: aload_1
+      72: invokevirtual #62                 // Method net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getItemInHandRenderer:()Lnet/minecraft/client/renderer/ItemInHandRenderer;
+      75: invokespecial #65                 // Method net/minecraft/client/renderer/entity/layers/ItemInHandLayer."<init>":(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/renderer/ItemInHandRenderer;)V
+      78: invokevirtual #56                 // Method addLayer:(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z
+      81: pop
+      82: aload_0
+      83: new           #67                 // class net/minecraft/client/renderer/entity/layers/ElytraLayer
+      86: dup
+      87: aload_0
+      88: aload_1
+      89: invokevirtual #71                 // Method net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet:()Lnet/minecraft/client/model/geom/EntityModelSet;
+      92: invokespecial #74                 // Method net/minecraft/client/renderer/entity/layers/ElytraLayer."<init>":(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/geom/EntityModelSet;)V
+      95: invokevirtual #56                 // Method addLayer:(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z
+      98: pop
+      99: aload_0
+     100: new           #76                 // class net/minecraft/client/renderer/entity/layers/CustomHeadLayer
+     103: dup
+     104: aload_0
+     105: aload_1
+     106: invokevirtual #71                 // Method net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet:()Lnet/minecraft/client/model/geom/EntityModelSet;
+     109: aload_1
+     110: invokevirtual #62                 // Method net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getItemInHandRenderer:()Lnet/minecraft/client/renderer/ItemInHandRenderer;
+     113: invokespecial #79                 // Method net/minecraft/client/renderer/entity/layers/CustomHeadLayer."<init>":(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/geom/EntityModelSet;Lnet/minecraft/client/renderer/ItemInHandRenderer;)V
+     116: invokevirtual #56                 // Method addLayer:(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z
+     119: pop
+     120: return
+
+  public net.minecraft.resources.ResourceLocation getTextureLocation(net.minecraft.world.entity.decoration.ArmorStand);
+    Code:
+       0: getstatic     #87                 // Field DEFAULT_SKIN_LOCATION:Lnet/minecraft/resources/ResourceLocation;
+       3: areturn
+
+  protected void setupRotations(net.minecraft.world.entity.decoration.ArmorStand, com.mojang.blaze3d.vertex.PoseStack, float, float, float, float);
+    Code:
+       0: aload_2
+       1: getstatic     #101                // Field com/mojang/math/Axis.YP:Lcom/mojang/math/Axis;
+       4: ldc           #102                // float 180.0f
+       6: fload         4
+       8: fsub
+       9: invokeinterface #106,  2          // InterfaceMethod com/mojang/math/Axis.rotationDegrees:(F)Lorg/joml/Quaternionf;
+      14: invokevirtual #112                // Method com/mojang/blaze3d/vertex/PoseStack.mulPose:(Lorg/joml/Quaternionf;)V
+      17: aload_1
+      18: invokevirtual #118                // Method net/minecraft/world/entity/decoration/ArmorStand.level:()Lnet/minecraft/world/level/Level;
+      21: invokevirtual #124                // Method net/minecraft/world/level/Level.getGameTime:()J
+      24: aload_1
+      25: getfield      #128                // Field net/minecraft/world/entity/decoration/ArmorStand.lastHit:J
+      28: lsub
+      29: l2f
+      30: fload         5
+      32: fadd
+      33: fstore        7
+      35: fload         7
+      37: ldc           #129                // float 5.0f
+      39: fcmpg
+      40: ifge          69
+      43: aload_2
+      44: getstatic     #101                // Field com/mojang/math/Axis.YP:Lcom/mojang/math/Axis;
+      47: fload         7
+      49: ldc           #130                // float 1.5f
+      51: fdiv
+      52: ldc           #131                // float 3.1415927f
+      54: fmul
+      55: invokestatic  #137                // Method net/minecraft/util/Mth.sin:(F)F
+      58: ldc           #138                // float 3.0f
+      60: fmul
+      61: invokeinterface #106,  2          // InterfaceMethod com/mojang/math/Axis.rotationDegrees:(F)Lorg/joml/Quaternionf;
+      66: invokevirtual #112                // Method com/mojang/blaze3d/vertex/PoseStack.mulPose:(Lorg/joml/Quaternionf;)V
+      69: return
+
+  protected boolean shouldShowName(net.minecraft.world.entity.decoration.ArmorStand);
+    Code:
+       0: aload_0
+       1: getfield      #147                // Field entityRenderDispatcher:Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;
+       4: aload_1
+       5: invokevirtual #153                // Method net/minecraft/client/renderer/entity/EntityRenderDispatcher.distanceToSqr:(Lnet/minecraft/world/entity/Entity;)D
+       8: dstore_2
+       9: aload_1
+      10: invokevirtual #157                // Method net/minecraft/world/entity/decoration/ArmorStand.isCrouching:()Z
+      13: ifeq          21
+      16: ldc           #158                // float 32.0f
+      18: goto          23
+      21: ldc           #159                // float 64.0f
+      23: fstore        4
+      25: dload_2
+      26: fload         4
+      28: fload         4
+      30: fmul
+      31: f2d
+      32: dcmpl
+      33: iflt          38
+      36: iconst_0
+      37: ireturn
+      38: aload_1
+      39: invokevirtual #162                // Method net/minecraft/world/entity/decoration/ArmorStand.isCustomNameVisible:()Z
+      42: ireturn
+
+  protected net.minecraft.client.renderer.RenderType getRenderType(net.minecraft.world.entity.decoration.ArmorStand, boolean, boolean, boolean);
+    Code:
+       0: aload_1
+       1: invokevirtual #173                // Method net/minecraft/world/entity/decoration/ArmorStand.isMarker:()Z
+       4: ifne          17
+       7: aload_0
+       8: aload_1
+       9: iload_2
+      10: iload_3
+      11: iload         4
+      13: invokespecial #176                // Method net/minecraft/client/renderer/entity/LivingEntityRenderer.getRenderType:(Lnet/minecraft/world/entity/LivingEntity;ZZZ)Lnet/minecraft/client/renderer/RenderType;
+      16: areturn
+      17: aload_0
+      18: aload_1
+      19: invokevirtual #178                // Method getTextureLocation:(Lnet/minecraft/world/entity/decoration/ArmorStand;)Lnet/minecraft/resources/ResourceLocation;
+      22: astore        5
+      24: iload_3
+      25: ifeq          35
+      28: aload         5
+      30: iconst_0
+      31: invokestatic  #184                // Method net/minecraft/client/renderer/RenderType.entityTranslucent:(Lnet/minecraft/resources/ResourceLocation;Z)Lnet/minecraft/client/renderer/RenderType;
+      34: areturn
+      35: iload_2
+      36: ifeq          46
+      39: aload         5
+      41: iconst_0
+      42: invokestatic  #189                // Method net/minecraft/client/renderer/RenderType.entityCutoutNoCull:(Lnet/minecraft/resources/ResourceLocation;Z)Lnet/minecraft/client/renderer/RenderType;
+      45: areturn
+      46: aconst_null
+      47: areturn
+
+  protected boolean shouldShowName(net.minecraft.world.entity.LivingEntity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #114                // class net/minecraft/world/entity/decoration/ArmorStand
+       5: invokevirtual #195                // Method shouldShowName:(Lnet/minecraft/world/entity/decoration/ArmorStand;)Z
+       8: ireturn
+
+  protected void setupRotations(net.minecraft.world.entity.LivingEntity, com.mojang.blaze3d.vertex.PoseStack, float, float, float, float);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #114                // class net/minecraft/world/entity/decoration/ArmorStand
+       5: aload_2
+       6: fload_3
+       7: fload         4
+       9: fload         5
+      11: fload         6
+      13: invokevirtual #199                // Method setupRotations:(Lnet/minecraft/world/entity/decoration/ArmorStand;Lcom/mojang/blaze3d/vertex/PoseStack;FFFF)V
+      16: return
+
+  protected net.minecraft.client.renderer.RenderType getRenderType(net.minecraft.world.entity.LivingEntity, boolean, boolean, boolean);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #114                // class net/minecraft/world/entity/decoration/ArmorStand
+       5: iload_2
+       6: iload_3
+       7: iload         4
+       9: invokevirtual #201                // Method getRenderType:(Lnet/minecraft/world/entity/decoration/ArmorStand;ZZZ)Lnet/minecraft/client/renderer/RenderType;
+      12: areturn
+
+  public net.minecraft.resources.ResourceLocation getTextureLocation(net.minecraft.world.entity.Entity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #114                // class net/minecraft/world/entity/decoration/ArmorStand
+       5: invokevirtual #178                // Method getTextureLocation:(Lnet/minecraft/world/entity/decoration/ArmorStand;)Lnet/minecraft/resources/ResourceLocation;
+       8: areturn
+
+  protected boolean shouldShowName(net.minecraft.world.entity.Entity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #114                // class net/minecraft/world/entity/decoration/ArmorStand
+       5: invokevirtual #195                // Method shouldShowName:(Lnet/minecraft/world/entity/decoration/ArmorStand;)Z
+       8: ireturn
+
+  static {};
+    Code:
+       0: ldc           #209                // String textures/entity/armorstand/wood.png
+       2: invokestatic  #213                // Method net/minecraft/resources/ResourceLocation.withDefaultNamespace:(Ljava/lang/String;)Lnet/minecraft/resources/ResourceLocation;
+       5: putstatic     #87                 // Field DEFAULT_SKIN_LOCATION:Lnet/minecraft/resources/ResourceLocation;
+       8: return
+}

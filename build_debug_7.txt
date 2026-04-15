@@ -1,0 +1,754 @@
+
+> Configure project :
+Fabric Loom: 1.15.4
+
+> Task :compileJava
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:4: error: cannot find symbol
+import me.bombo.bomboaddons.PestUtils;
+                           ^
+  symbol:   class PestUtils
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:5: error: package net.minecraft.client.model does not exist
+import net.minecraft.client.model.ArmorStandModel;
+                                 ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:6: error: package net.minecraft.client.model.geom does not exist
+import net.minecraft.client.model.geom.ModelPart;
+                                      ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:15: error: package net.minecraft.client.renderer.entity does not exist
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+                                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:16: error: package com.mojang.blaze3d.vertex does not exist
+import com.mojang.blaze3d.vertex.PoseStack;
+                                ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:22: error: cannot find symbol
+    private void onSetupRotations(net.minecraft.world.entity.LivingEntity entity, PoseStack poseStack, float f,
+                                                                                  ^
+  symbol:   class PoseStack
+  location: class ArmorStandRendererMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:59: error: cannot find symbol
+    private void setPartVisible(ArmorStandModel model, String fieldName, boolean visible) {
+                                ^
+  symbol:   class ArmorStandModel
+  location: class ArmorStandRendererMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:3: error: cannot find symbol
+import me.bombo.bomboaddons.SphinxMacro;
+                           ^
+  symbol:   class SphinxMacro
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:4: error: package net.minecraft.client.gui.components does not exist
+import net.minecraft.client.gui.components.ChatComponent;
+                                          ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:5: error: package net.minecraft.client does not exist
+import net.minecraft.client.GuiMessage;
+                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:6: error: package net.minecraft.client does not exist
+import net.minecraft.client.GuiMessageTag;
+                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:21: error: cannot find symbol
+    @Shadow @Final private List<GuiMessage> allMessages;
+                                ^
+  symbol:   class GuiMessage
+  location: class ChatMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:22: error: package GuiMessage does not exist
+    @Shadow @Final private List<GuiMessage.Line> trimmedMessages;
+                                          ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:26: error: cannot find symbol
+    private void onAddMessage(Component message, net.minecraft.network.chat.MessageSignature signature, GuiMessageTag tag, CallbackInfo ci) {
+                                                                                                        ^
+  symbol:   class GuiMessageTag
+  location: class ChatMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:33: error: cannot find symbol
+    public void bombo$removeMessages(Predicate<GuiMessage> predicate) {
+                                               ^
+  symbol:   class GuiMessage
+  location: class ChatMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:3: error: cannot find symbol
+import me.bombo.bomboaddons.ChatPeek;
+                           ^
+  symbol:   class ChatPeek
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:4: error: package net.minecraft.client.gui.components does not exist
+import net.minecraft.client.gui.components.ChatComponent;
+                                          ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:18: error: cannot find symbol
+    private boolean onGetHeightFocused(ChatComponent instance) {
+                                       ^
+  symbol:   class ChatComponent
+  location: class ChatPeekingMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:3: error: cannot find symbol
+import me.bombo.bomboaddons.ChatPeek;
+                           ^
+  symbol:   class ChatPeek
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:4: error: package net.minecraft.client does not exist
+import net.minecraft.client.Minecraft;
+                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:5: error: package net.minecraft.client does not exist
+import net.minecraft.client.MouseHandler;
+                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:3: error: cannot find symbol
+import me.bombo.bomboaddons.ClickLogic;
+                           ^
+  symbol:   class ClickLogic
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:4: error: package net.minecraft.client does not exist
+import net.minecraft.client.Minecraft;
+                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:5: error: package net.minecraft.client.gui.screens does not exist
+import net.minecraft.client.gui.screens.Screen;
+                                       ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:6: error: package net.minecraft.client.gui.screens.inventory does not exist
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+                                                 ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:15: error: cannot find symbol
+    private void onSetScreen(Screen screen, CallbackInfo ci) {
+                             ^
+  symbol:   class Screen
+  location: class GuiMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:3: error: cannot find symbol
+import me.bombo.bomboaddons.ItemHotkeys;
+                           ^
+  symbol:   class ItemHotkeys
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:4: error: package net.minecraft.client does not exist
+import net.minecraft.client.Minecraft;
+                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:5: error: package net.minecraft.client.gui.screens.inventory does not exist
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+                                                 ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:13: error: package com.mojang.blaze3d.platform does not exist
+import com.mojang.blaze3d.platform.InputConstants;
+                                  ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:15: error: package net.fabricmc.fabric.api.client.keybinding.v1 does not exist
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+                                                   ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:17: error: package net.minecraft.client.input does not exist
+import net.minecraft.client.input.KeyEvent;
+                                 ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:21: error: cannot find symbol
+import me.bombo.bomboaddons.BazaarUtils;
+                           ^
+  symbol:   class BazaarUtils
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:30: error: cannot find symbol
+    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+                              ^
+  symbol:   class KeyEvent
+  location: class ItemHotkeysMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:3: error: cannot find symbol
+import me.bombo.bomboaddons.ClickLogic;
+                           ^
+  symbol:   class ClickLogic
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:4: error: package net.minecraft.client does not exist
+import net.minecraft.client.KeyboardHandler;
+                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:13: error: package net.minecraft.client.input does not exist
+    private void onKey(long window, int action, net.minecraft.client.input.KeyEvent event, CallbackInfo ci) {
+                                                                          ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:4: error: cannot find symbol
+import me.bombo.bomboaddons.SignCalculator;
+                           ^
+  symbol:   class SignCalculator
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:5: error: package net.minecraft.client does not exist
+import net.minecraft.client.Minecraft;
+                           ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:6: error: package net.minecraft.client.gui.screens.inventory does not exist
+import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
+                                                 ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:14: error: package net.minecraft.client.gui does not exist
+import net.minecraft.client.gui.GuiGraphics;
+                               ^
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:42: error: cannot find symbol
+    private void onRender(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+                          ^
+  symbol:   class GuiGraphics
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\YggdrasilKeyInfoMixin.java:5: error: cannot find symbol
+import me.bombo.bomboaddons.PestUtils;
+                           ^
+  symbol:   class PestUtils
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:18: error: cannot find symbol
+@Mixin(LivingEntityRenderer.class)
+       ^
+  symbol: class LivingEntityRenderer
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:19: error: cannot find symbol
+@Mixin(ChatComponent.class)
+       ^
+  symbol: class ChatComponent
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:10: error: cannot find symbol
+@Mixin(ChatComponent.class)
+       ^
+  symbol: class ChatComponent
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:11: error: cannot find symbol
+@Mixin(MouseHandler.class)
+       ^
+  symbol: class MouseHandler
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:12: error: cannot find symbol
+@Mixin(Minecraft.class)
+       ^
+  symbol: class Minecraft
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:24: error: cannot find symbol
+@Mixin(AbstractContainerScreen.class)
+       ^
+  symbol: class AbstractContainerScreen
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:10: error: cannot find symbol
+@Mixin(KeyboardHandler.class)
+       ^
+  symbol: class KeyboardHandler
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:16: error: cannot find symbol
+@Mixin(AbstractSignEditScreen.class)
+       ^
+  symbol: class AbstractSignEditScreen
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:31: error: cannot find symbol
+            LivingEntityRenderer<?, ?, ?> renderer = (LivingEntityRenderer<?, ?, ?>) (Object) this;
+            ^
+  symbol:   class LivingEntityRenderer
+  location: class ArmorStandRendererMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:31: error: cannot find symbol
+            LivingEntityRenderer<?, ?, ?> renderer = (LivingEntityRenderer<?, ?, ?>) (Object) this;
+                                                      ^
+  symbol:   class LivingEntityRenderer
+  location: class ArmorStandRendererMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:33: error: cannot find symbol
+            if (!(modelObj instanceof ArmorStandModel model))
+                                      ^
+  symbol:   class ArmorStandModel
+  location: class ArmorStandRendererMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:36: error: cannot find symbol
+            String pestType = PestUtils.getPestType(armorStand);
+                              ^
+  symbol:   variable PestUtils
+  location: class ArmorStandRendererMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:61: error: cannot find symbol
+            Field field = ArmorStandModel.class.getDeclaredField(fieldName);
+                          ^
+  symbol:   class ArmorStandModel
+  location: class ArmorStandRendererMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:64: error: cannot find symbol
+            if (part instanceof ModelPart modelPart) {
+                                ^
+  symbol:   class ModelPart
+  location: class ArmorStandRendererMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:28: error: cannot find symbol
+            SphinxMacro.onChatMessage(message.getString());
+            ^
+  symbol:   variable SphinxMacro
+  location: class ChatMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:14: error: cannot find symbol
+        return focused || ChatPeek.isPeeking();
+                          ^
+  symbol:   variable ChatPeek
+  location: class ChatPeekingMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:19: error: cannot find symbol
+        return instance.isChatFocused() || ChatPeek.isPeeking();
+                                           ^
+  symbol:   variable ChatPeek
+  location: class ChatPeekingMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:15: error: cannot find symbol
+        if (ChatPeek.isPeeking()) {
+            ^
+  symbol:   variable ChatPeek
+  location: class ChatPeekScrollMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:21: error: cannot find symbol
+                Minecraft.getInstance().gui.getChat().scrollChat((int) scrollAmount);
+                ^
+  symbol:   variable Minecraft
+  location: class ChatPeekScrollMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\EntityMixin.java:32: error: cannot find symbol
+        if (BomboConfig.get().pestEsp && me.bombo.bomboaddons.PestUtils.getPestType(self) != null) {
+                                                             ^
+  symbol:   class PestUtils
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\EntityMixin.java:58: error: cannot find symbol
+            String pestType = me.bombo.bomboaddons.PestUtils.getPestType(self);
+                                                  ^
+  symbol:   class PestUtils
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:16: error: cannot find symbol
+        if (screen instanceof AbstractContainerScreen containerScreen) {
+                              ^
+  symbol:   class AbstractContainerScreen
+  location: class GuiMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:17: error: cannot find symbol
+            ClickLogic.onGuiOpen(containerScreen);
+            ^
+  symbol:   variable ClickLogic
+  location: class GuiMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:36: error: cannot find symbol
+        int tradeBoundKey = me.bombo.bomboaddons.ClickLogic.getKeyCode(me.bombo.bomboaddons.BomboConfig.get().tradeKey);
+                                                ^
+  symbol:   class ClickLogic
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:37: error: cannot find symbol
+        int recipeBoundKey = me.bombo.bomboaddons.ClickLogic
+                                                 ^
+  symbol:   class ClickLogic
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:39: error: cannot find symbol
+        int usageBoundKey = me.bombo.bomboaddons.ClickLogic.getKeyCode(me.bombo.bomboaddons.BomboConfig.get().usageKey);
+                                                ^
+  symbol:   class ClickLogic
+  location: package me.bombo.bomboaddons
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:80: error: cannot find symbol
+                Minecraft.getInstance().player.connection.sendCommand("viewrecipe " + skyblockId);
+                ^
+  symbol:   variable Minecraft
+  location: class ItemHotkeysMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:83: error: cannot find symbol
+                boolean isBazaar = BazaarUtils.isBazaarItem(skyblockId);
+                                   ^
+  symbol:   variable BazaarUtils
+  location: class ItemHotkeysMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:87: error: cannot find symbol
+                    Minecraft.getInstance().player.connection.sendCommand("bz " + cleanName.toLowerCase());
+                    ^
+  symbol:   variable Minecraft
+  location: class ItemHotkeysMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:89: error: cannot find symbol
+                    Minecraft.getInstance().player.connection.sendCommand("ahs " + cleanName);
+                    ^
+  symbol:   variable Minecraft
+  location: class ItemHotkeysMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:15: error: cannot find symbol
+            ClickLogic.onKeyPressed(event.key());
+            ^
+  symbol:   variable ClickLogic
+  location: class KeyboardMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:36: error: cannot find symbol
+                messages[i] = SignCalculator.calculate(messages[i]);
+                              ^
+  symbol:   variable SignCalculator
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:46: error: cannot find symbol
+        Minecraft mc = Minecraft.getInstance();
+        ^
+  symbol:   class Minecraft
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:46: error: cannot find symbol
+        Minecraft mc = Minecraft.getInstance();
+                       ^
+  symbol:   variable Minecraft
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:57: error: cannot find symbol
+            if (SignCalculator.isPotentialExpression(currentLineText)) {
+                ^
+  symbol:   variable SignCalculator
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:58: error: cannot find symbol
+                String preview = SignCalculator.getPreviewText(currentLineText);
+                                 ^
+  symbol:   variable SignCalculator
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:59: error: cannot find symbol
+                boolean isValid = SignCalculator.isValidExpression(currentLineText);
+                                  ^
+  symbol:   variable SignCalculator
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:76: error: cannot find symbol
+            if (SignCalculator.isValidExpression(msg)) {
+                ^
+  symbol:   variable SignCalculator
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:77: error: cannot find symbol
+                total += SignCalculator.getResult(msg);
+                         ^
+  symbol:   variable SignCalculator
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:83: error: cannot find symbol
+            String totalText = "┬º6Total: ┬ºe" + SignCalculator.formatResultOnly(total);
+                                               ^
+  symbol:   variable SignCalculator
+  location: class SignEditMixin
+C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\YggdrasilKeyInfoMixin.java:18: error: package PestUtils does not exist
+            if (PestUtils.PEST_LIST.containsKey(value)) {
+                         ^
+84 errors
+
+> Task :compileJava FAILED
+
+[Incubating] Problems report is available at: file:///C:/Users/frand/Documents/bomboaddons-1.21.10/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler output below.
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:4: error: cannot find symbol
+  import me.bombo.bomboaddons.PestUtils;
+                             ^
+    symbol:   class PestUtils
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:22: error: cannot find symbol
+      private void onSetupRotations(net.minecraft.world.entity.LivingEntity entity, PoseStack poseStack, float f,
+                                                                                    ^
+    symbol:   class PoseStack
+    location: class ArmorStandRendererMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:59: error: cannot find symbol
+      private void setPartVisible(ArmorStandModel model, String fieldName, boolean visible) {
+                                  ^
+    symbol:   class ArmorStandModel
+    location: class ArmorStandRendererMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:3: error: cannot find symbol
+  import me.bombo.bomboaddons.SphinxMacro;
+                             ^
+    symbol:   class SphinxMacro
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:21: error: cannot find symbol
+      @Shadow @Final private List<GuiMessage> allMessages;
+                                  ^
+    symbol:   class GuiMessage
+    location: class ChatMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:26: error: cannot find symbol
+      private void onAddMessage(Component message, net.minecraft.network.chat.MessageSignature signature, GuiMessageTag tag, CallbackInfo ci) {
+                                                                                                          ^
+    symbol:   class GuiMessageTag
+    location: class ChatMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:33: error: cannot find symbol
+      public void bombo$removeMessages(Predicate<GuiMessage> predicate) {
+                                                 ^
+    symbol:   class GuiMessage
+    location: class ChatMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:3: error: cannot find symbol
+  import me.bombo.bomboaddons.ChatPeek;
+                             ^
+    symbol:   class ChatPeek
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:18: error: cannot find symbol
+      private boolean onGetHeightFocused(ChatComponent instance) {
+                                         ^
+    symbol:   class ChatComponent
+    location: class ChatPeekingMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:3: error: cannot find symbol
+  import me.bombo.bomboaddons.ChatPeek;
+                             ^
+    symbol:   class ChatPeek
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:3: error: cannot find symbol
+  import me.bombo.bomboaddons.ClickLogic;
+                             ^
+    symbol:   class ClickLogic
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:15: error: cannot find symbol
+      private void onSetScreen(Screen screen, CallbackInfo ci) {
+                               ^
+    symbol:   class Screen
+    location: class GuiMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:3: error: cannot find symbol
+  import me.bombo.bomboaddons.ItemHotkeys;
+                             ^
+    symbol:   class ItemHotkeys
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:21: error: cannot find symbol
+  import me.bombo.bomboaddons.BazaarUtils;
+                             ^
+    symbol:   class BazaarUtils
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:30: error: cannot find symbol
+      private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+                                ^
+    symbol:   class KeyEvent
+    location: class ItemHotkeysMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:3: error: cannot find symbol
+  import me.bombo.bomboaddons.ClickLogic;
+                             ^
+    symbol:   class ClickLogic
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:4: error: cannot find symbol
+  import me.bombo.bomboaddons.SignCalculator;
+                             ^
+    symbol:   class SignCalculator
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:42: error: cannot find symbol
+      private void onRender(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+                            ^
+    symbol:   class GuiGraphics
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\YggdrasilKeyInfoMixin.java:5: error: cannot find symbol
+  import me.bombo.bomboaddons.PestUtils;
+                             ^
+    symbol:   class PestUtils
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:31: error: cannot find symbol
+              LivingEntityRenderer<?, ?, ?> renderer = (LivingEntityRenderer<?, ?, ?>) (Object) this;
+              ^
+    symbol:   class LivingEntityRenderer
+    location: class ArmorStandRendererMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:31: error: cannot find symbol
+              LivingEntityRenderer<?, ?, ?> renderer = (LivingEntityRenderer<?, ?, ?>) (Object) this;
+                                                        ^
+    symbol:   class LivingEntityRenderer
+    location: class ArmorStandRendererMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:33: error: cannot find symbol
+              if (!(modelObj instanceof ArmorStandModel model))
+                                        ^
+    symbol:   class ArmorStandModel
+    location: class ArmorStandRendererMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:36: error: cannot find symbol
+              String pestType = PestUtils.getPestType(armorStand);
+                                ^
+    symbol:   variable PestUtils
+    location: class ArmorStandRendererMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:61: error: cannot find symbol
+              Field field = ArmorStandModel.class.getDeclaredField(fieldName);
+                            ^
+    symbol:   class ArmorStandModel
+    location: class ArmorStandRendererMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:64: error: cannot find symbol
+              if (part instanceof ModelPart modelPart) {
+                                  ^
+    symbol:   class ModelPart
+    location: class ArmorStandRendererMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:28: error: cannot find symbol
+              SphinxMacro.onChatMessage(message.getString());
+              ^
+    symbol:   variable SphinxMacro
+    location: class ChatMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:14: error: cannot find symbol
+          return focused || ChatPeek.isPeeking();
+                            ^
+    symbol:   variable ChatPeek
+    location: class ChatPeekingMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:19: error: cannot find symbol
+          return instance.isChatFocused() || ChatPeek.isPeeking();
+                                             ^
+    symbol:   variable ChatPeek
+    location: class ChatPeekingMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:15: error: cannot find symbol
+          if (ChatPeek.isPeeking()) {
+              ^
+    symbol:   variable ChatPeek
+    location: class ChatPeekScrollMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:21: error: cannot find symbol
+                  Minecraft.getInstance().gui.getChat().scrollChat((int) scrollAmount);
+                  ^
+    symbol:   variable Minecraft
+    location: class ChatPeekScrollMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\EntityMixin.java:32: error: cannot find symbol
+          if (BomboConfig.get().pestEsp && me.bombo.bomboaddons.PestUtils.getPestType(self) != null) {
+                                                               ^
+    symbol:   class PestUtils
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\EntityMixin.java:58: error: cannot find symbol
+              String pestType = me.bombo.bomboaddons.PestUtils.getPestType(self);
+                                                    ^
+    symbol:   class PestUtils
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:16: error: cannot find symbol
+          if (screen instanceof AbstractContainerScreen containerScreen) {
+                                ^
+    symbol:   class AbstractContainerScreen
+    location: class GuiMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:17: error: cannot find symbol
+              ClickLogic.onGuiOpen(containerScreen);
+              ^
+    symbol:   variable ClickLogic
+    location: class GuiMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:36: error: cannot find symbol
+          int tradeBoundKey = me.bombo.bomboaddons.ClickLogic.getKeyCode(me.bombo.bomboaddons.BomboConfig.get().tradeKey);
+                                                  ^
+    symbol:   class ClickLogic
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:37: error: cannot find symbol
+          int recipeBoundKey = me.bombo.bomboaddons.ClickLogic
+                                                   ^
+    symbol:   class ClickLogic
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:39: error: cannot find symbol
+          int usageBoundKey = me.bombo.bomboaddons.ClickLogic.getKeyCode(me.bombo.bomboaddons.BomboConfig.get().usageKey);
+                                                  ^
+    symbol:   class ClickLogic
+    location: package me.bombo.bomboaddons
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:80: error: cannot find symbol
+                  Minecraft.getInstance().player.connection.sendCommand("viewrecipe " + skyblockId);
+                  ^
+    symbol:   variable Minecraft
+    location: class ItemHotkeysMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:83: error: cannot find symbol
+                  boolean isBazaar = BazaarUtils.isBazaarItem(skyblockId);
+                                     ^
+    symbol:   variable BazaarUtils
+    location: class ItemHotkeysMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:87: error: cannot find symbol
+                      Minecraft.getInstance().player.connection.sendCommand("bz " + cleanName.toLowerCase());
+                      ^
+    symbol:   variable Minecraft
+    location: class ItemHotkeysMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:89: error: cannot find symbol
+                      Minecraft.getInstance().player.connection.sendCommand("ahs " + cleanName);
+                      ^
+    symbol:   variable Minecraft
+    location: class ItemHotkeysMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:15: error: cannot find symbol
+              ClickLogic.onKeyPressed(event.key());
+              ^
+    symbol:   variable ClickLogic
+    location: class KeyboardMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:36: error: cannot find symbol
+                  messages[i] = SignCalculator.calculate(messages[i]);
+                                ^
+    symbol:   variable SignCalculator
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:46: error: cannot find symbol
+          Minecraft mc = Minecraft.getInstance();
+          ^
+    symbol:   class Minecraft
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:46: error: cannot find symbol
+          Minecraft mc = Minecraft.getInstance();
+                         ^
+    symbol:   variable Minecraft
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:57: error: cannot find symbol
+              if (SignCalculator.isPotentialExpression(currentLineText)) {
+                  ^
+    symbol:   variable SignCalculator
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:58: error: cannot find symbol
+                  String preview = SignCalculator.getPreviewText(currentLineText);
+                                   ^
+    symbol:   variable SignCalculator
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:59: error: cannot find symbol
+                  boolean isValid = SignCalculator.isValidExpression(currentLineText);
+                                    ^
+    symbol:   variable SignCalculator
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:76: error: cannot find symbol
+              if (SignCalculator.isValidExpression(msg)) {
+                  ^
+    symbol:   variable SignCalculator
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:77: error: cannot find symbol
+                  total += SignCalculator.getResult(msg);
+                           ^
+    symbol:   variable SignCalculator
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:83: error: cannot find symbol
+              String totalText = "┬º6Total: ┬ºe" + SignCalculator.formatResultOnly(total);
+                                                 ^
+    symbol:   variable SignCalculator
+    location: class SignEditMixin
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:18: error: cannot find symbol
+  @Mixin(LivingEntityRenderer.class)
+         ^
+    symbol: class LivingEntityRenderer
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:19: error: cannot find symbol
+  @Mixin(ChatComponent.class)
+         ^
+    symbol: class ChatComponent
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:10: error: cannot find symbol
+  @Mixin(ChatComponent.class)
+         ^
+    symbol: class ChatComponent
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:11: error: cannot find symbol
+  @Mixin(MouseHandler.class)
+         ^
+    symbol: class MouseHandler
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:12: error: cannot find symbol
+  @Mixin(Minecraft.class)
+         ^
+    symbol: class Minecraft
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:24: error: cannot find symbol
+  @Mixin(AbstractContainerScreen.class)
+         ^
+    symbol: class AbstractContainerScreen
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:10: error: cannot find symbol
+  @Mixin(KeyboardHandler.class)
+         ^
+    symbol: class KeyboardHandler
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:16: error: cannot find symbol
+  @Mixin(AbstractSignEditScreen.class)
+         ^
+    symbol: class AbstractSignEditScreen
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:5: error: package net.minecraft.client.model does not exist
+  import net.minecraft.client.model.ArmorStandModel;
+                                   ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:6: error: package net.minecraft.client.model.geom does not exist
+  import net.minecraft.client.model.geom.ModelPart;
+                                        ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:15: error: package net.minecraft.client.renderer.entity does not exist
+  import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+                                             ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ArmorStandRendererMixin.java:16: error: package com.mojang.blaze3d.vertex does not exist
+  import com.mojang.blaze3d.vertex.PoseStack;
+                                  ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:4: error: package net.minecraft.client.gui.components does not exist
+  import net.minecraft.client.gui.components.ChatComponent;
+                                            ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:5: error: package net.minecraft.client does not exist
+  import net.minecraft.client.GuiMessage;
+                             ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:6: error: package net.minecraft.client does not exist
+  import net.minecraft.client.GuiMessageTag;
+                             ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatMixin.java:22: error: package GuiMessage does not exist
+      @Shadow @Final private List<GuiMessage.Line> trimmedMessages;
+                                            ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekingMixin.java:4: error: package net.minecraft.client.gui.components does not exist
+  import net.minecraft.client.gui.components.ChatComponent;
+                                            ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:4: error: package net.minecraft.client does not exist
+  import net.minecraft.client.Minecraft;
+                             ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ChatPeekScrollMixin.java:5: error: package net.minecraft.client does not exist
+  import net.minecraft.client.MouseHandler;
+                             ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:4: error: package net.minecraft.client does not exist
+  import net.minecraft.client.Minecraft;
+                             ^
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.3.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+1 actionable task: 1 executed
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:5: error: package net.minecraft.client.gui.screens does not exist
+  import net.minecraft.client.gui.screens.Screen;
+                                         ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\GuiMixin.java:6: error: package net.minecraft.client.gui.screens.inventory does not exist
+  import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+                                                   ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:4: error: package net.minecraft.client does not exist
+  import net.minecraft.client.Minecraft;
+                             ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:5: error: package net.minecraft.client.gui.screens.inventory does not exist
+  import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+                                                   ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:13: error: package com.mojang.blaze3d.platform does not exist
+  import com.mojang.blaze3d.platform.InputConstants;
+                                    ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:15: error: package net.fabricmc.fabric.api.client.keybinding.v1 does not exist
+  import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+                                                     ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\ItemHotkeysMixin.java:17: error: package net.minecraft.client.input does not exist
+  import net.minecraft.client.input.KeyEvent;
+                                   ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:4: error: package net.minecraft.client does not exist
+  import net.minecraft.client.KeyboardHandler;
+                             ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\KeyboardMixin.java:13: error: package net.minecraft.client.input does not exist
+      private void onKey(long window, int action, net.minecraft.client.input.KeyEvent event, CallbackInfo ci) {
+                                                                            ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:5: error: package net.minecraft.client does not exist
+  import net.minecraft.client.Minecraft;
+                             ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:6: error: package net.minecraft.client.gui.screens.inventory does not exist
+  import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
+                                                   ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\SignEditMixin.java:14: error: package net.minecraft.client.gui does not exist
+  import net.minecraft.client.gui.GuiGraphics;
+                                 ^
+  C:\Users\frand\Documents\bomboaddons-1.21.10\src\main\java\me\bombo\bomboaddons\mixin\YggdrasilKeyInfoMixin.java:18: error: package PestUtils does not exist
+              if (PestUtils.PEST_LIST.containsKey(value)) {
+                           ^
+  84 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 9s

@@ -1,0 +1,19 @@
+Compiled from "ManagedConfig.kt"
+public final class io.github.notenoughupdates.moulconfig.managed.ManagedConfig<T extends io.github.notenoughupdates.moulconfig.Config> extends io.github.notenoughupdates.moulconfig.managed.ManagedDataFile<T> {
+  public static final io.github.notenoughupdates.moulconfig.managed.ManagedConfig$Companion Companion;
+  private final io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder<T> builder;
+  private io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor<T> processor;
+  public io.github.notenoughupdates.moulconfig.managed.ManagedConfig(io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder<T>);
+  public final io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor<T> getProcessor();
+  public void injectIntoInstance();
+  public final void rebuildConfigProcessor();
+  private final void rebuildConfigProcessor(io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder<T>);
+  private final <A extends java.lang.annotation.Annotation> void cast(io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor<T>, java.lang.Class<A>, java.lang.Object);
+  private final io.github.notenoughupdates.moulconfig.processor.MoulConfigProcessor<T> buildProcessor(io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder<T>);
+  public final io.github.notenoughupdates.moulconfig.gui.MoulConfigEditor<T> getEditor();
+  public final void openConfigGui();
+  private static final void _init_$lambda$1$lambda$0(io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder, io.github.notenoughupdates.moulconfig.managed.ManagedDataFile);
+  public static final <T extends io.github.notenoughupdates.moulconfig.Config> io.github.notenoughupdates.moulconfig.managed.ManagedConfig<T> create(java.io.File, java.lang.Class<T>, kotlin.jvm.functions.Function1<? super io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder<T>, kotlin.Unit>);
+  public static final <T extends io.github.notenoughupdates.moulconfig.Config> io.github.notenoughupdates.moulconfig.managed.ManagedConfig<T> create(java.io.File, java.lang.Class<T>);
+  static {};
+}

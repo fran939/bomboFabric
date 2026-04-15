@@ -1,0 +1,15 @@
+Compiled from "ManagedConfigBuilder.kt"
+public final class io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder<T> extends io.github.notenoughupdates.moulconfig.managed.ManagedDataFileBuilder<T> {
+  private boolean useDefaultProcessors;
+  private boolean checkExpose;
+  private final java.util.List<kotlin.Pair<java.lang.Class<? extends java.lang.annotation.Annotation>, java.util.function.BiFunction<io.github.notenoughupdates.moulconfig.processor.ProcessedOption, java.lang.annotation.Annotation, io.github.notenoughupdates.moulconfig.gui.GuiOptionEditor>>> customProcessors;
+  public io.github.notenoughupdates.moulconfig.managed.ManagedConfigBuilder(java.io.File, java.lang.Class<T>);
+  public final boolean getUseDefaultProcessors();
+  public final void setUseDefaultProcessors(boolean);
+  public final boolean getCheckExpose();
+  public final void setCheckExpose(boolean);
+  public final java.util.List<kotlin.Pair<java.lang.Class<? extends java.lang.annotation.Annotation>, java.util.function.BiFunction<io.github.notenoughupdates.moulconfig.processor.ProcessedOption, java.lang.annotation.Annotation, io.github.notenoughupdates.moulconfig.gui.GuiOptionEditor>>> getCustomProcessors$common();
+  public final void clearCustomProcessors();
+  public final <A extends java.lang.annotation.Annotation> void customProcessor(kotlin.jvm.functions.Function2<? super io.github.notenoughupdates.moulconfig.processor.ProcessedOption, ? super A, ? extends io.github.notenoughupdates.moulconfig.gui.GuiOptionEditor>);
+  public final <A extends java.lang.annotation.Annotation> void customProcessor(java.lang.Class<A>, java.util.function.BiFunction<io.github.notenoughupdates.moulconfig.processor.ProcessedOption, ? super A, io.github.notenoughupdates.moulconfig.gui.GuiOptionEditor>);
+}

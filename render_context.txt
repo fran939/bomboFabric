@@ -1,0 +1,45 @@
+Compiled from "RenderContext.java"
+public interface io.github.notenoughupdates.moulconfig.common.RenderContext {
+  public abstract void pushMatrix();
+  public abstract void popMatrix();
+  public abstract void translate(float, float);
+  public abstract void scale(float, float);
+  public default void scale(float);
+  public abstract void drawOnTop(io.github.notenoughupdates.moulconfig.common.Layer, io.github.notenoughupdates.moulconfig.common.RenderContext$ScissorBehaviour, java.util.function.Consumer<io.github.notenoughupdates.moulconfig.common.RenderContext>);
+  public default boolean isMouseButtonDown(int);
+  public default boolean isKeyboardKeyDown(int);
+  public default boolean isShiftDown();
+  public default boolean isPhysicalCtrlDown();
+  public default boolean isCmdDown();
+  public default boolean isLogicalCtrlDown();
+  public default void drawStringScaledMaxWidth(io.github.notenoughupdates.moulconfig.common.text.StructuredText, io.github.notenoughupdates.moulconfig.common.IFontRenderer, int, int, boolean, int, int);
+  public default void drawStringCenteredScaledMaxWidth(io.github.notenoughupdates.moulconfig.common.text.StructuredText, io.github.notenoughupdates.moulconfig.common.IFontRenderer, float, float, boolean, int, int);
+  public default void drawVerticalLine(int, int, int, int);
+  public default void drawHorizontalLine(int, int, int, int);
+  public default void drawColoredTriangles(int, float...);
+  public abstract void drawColouredQuads(int, float...);
+  public default void drawOpenCloseTriangle(boolean, float, float, float, float, int);
+  public abstract void drawString(io.github.notenoughupdates.moulconfig.common.IFontRenderer, io.github.notenoughupdates.moulconfig.common.text.StructuredText, int, int, int, boolean);
+  public abstract void drawColoredRect(float, float, float, float, int);
+  public abstract void invertedRect(float, float, float, float, int);
+  public default void drawTexturedRect(io.github.notenoughupdates.moulconfig.common.MyResourceLocation, float, float, float, float);
+  public abstract void drawTexturedTintedRect(io.github.notenoughupdates.moulconfig.common.MyResourceLocation, float, float, float, float, float, float, float, float, int, io.github.notenoughupdates.moulconfig.common.TextureFilter);
+  public default void drawComplexTexture(io.github.notenoughupdates.moulconfig.common.MyResourceLocation, float, float, float, float, java.util.function.Consumer<io.github.notenoughupdates.moulconfig.common.RenderContext$DrawTextureBuilder>);
+  public default void drawNinePatch(io.github.notenoughupdates.moulconfig.deps.libninepatch.NinePatch<io.github.notenoughupdates.moulconfig.common.MyResourceLocation>, float, float, int, int);
+  public default void drawDarkRect(int, int, int, int);
+  public abstract void drawDarkRect(int, int, int, int, boolean);
+  public abstract void drawGradientRect(int, int, int, int, int, int);
+  public abstract void pushScissor(int, int, int, int);
+  public abstract void pushRawScissor(int, int, int, int);
+  public abstract void popScissor();
+  public abstract void assertNoScissors();
+  public abstract void clearScissor();
+  public abstract void renderItemStack(io.github.notenoughupdates.moulconfig.common.IItemStack, int, int, io.github.notenoughupdates.moulconfig.common.text.StructuredText);
+  public abstract void drawTooltipNow(int, int, java.util.List<io.github.notenoughupdates.moulconfig.common.text.StructuredText>);
+  public default void scheduleDrawTooltip(int, int, java.util.List<io.github.notenoughupdates.moulconfig.common.text.StructuredText>);
+  public abstract void renderExtraLayers();
+  public default io.github.notenoughupdates.moulconfig.common.IMinecraft getMinecraft();
+  private static void lambda$scheduleDrawTooltip$1(int, int, java.util.List, io.github.notenoughupdates.moulconfig.common.RenderContext);
+  private static void lambda$drawTexturedRect$0(io.github.notenoughupdates.moulconfig.common.RenderContext$DrawTextureBuilder);
+  static {};
+}

@@ -1,0 +1,28 @@
+{
+	"required": true,
+	"package": "me.bombo.bomboaddons_final.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [],
+	"client": [
+		"BomboGuiMixin",
+		"ChatMixin",
+		"ChatPeekingMixin",
+		"ChatPeekScrollMixin",
+		"ItemHotkeysMixin",
+		"KeyboardMixin",
+		"SignEditMixin",
+		"EntityMixin",
+		"AbstractContainerScreenMixin",
+		"ItemStackMixin",
+		"HollowWandMixin",
+		"MouseMixin",
+		"CommandMixin",
+		"PlayerTabOverlayAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

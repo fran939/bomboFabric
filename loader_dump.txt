@@ -1,0 +1,9 @@
+Compiled from "GuiLoader.java"
+public class io.github.notenoughupdates.moulconfig.xml.loaders.GuiLoader implements io.github.notenoughupdates.moulconfig.xml.XMLGuiLoader$Basic<io.github.notenoughupdates.moulconfig.gui.component.CenterComponent> {
+  public io.github.notenoughupdates.moulconfig.xml.loaders.GuiLoader();
+  public io.github.notenoughupdates.moulconfig.gui.component.CenterComponent createInstance(io.github.notenoughupdates.moulconfig.xml.XMLContext<?>, org.w3c.dom.Element);
+  public javax.xml.namespace.QName getName();
+  public io.github.notenoughupdates.moulconfig.xml.ChildCount getChildCount();
+  public java.util.Map<java.lang.String, java.lang.Boolean> getAttributeNames();
+  public io.github.notenoughupdates.moulconfig.gui.GuiComponent createInstance(io.github.notenoughupdates.moulconfig.xml.XMLContext, org.w3c.dom.Element);
+}

@@ -1,0 +1,41 @@
+Compiled from "InitUtil.java"
+public class io.github.notenoughupdates.moulconfig.internal.InitUtil {
+  public io.github.notenoughupdates.moulconfig.internal.InitUtil();
+    Code:
+       0: aload_0
+       1: invokespecial #15                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static <T, E extends java.lang.Throwable> T run(T, io.github.notenoughupdates.moulconfig.internal.InitUtil$ThrowingRunnable<E>) throws E;
+    Code:
+       0: aload_1
+       1: invokeinterface #24,  1           // InterfaceMethod io/github/notenoughupdates/moulconfig/internal/InitUtil$ThrowingRunnable.run:()V
+       6: aload_0
+       7: areturn
+
+  public static <T> T makeUnchecked(io.github.notenoughupdates.moulconfig.internal.InitUtil$ThrowingSupplier<T, java.lang.Exception>);
+    Code:
+       0: aload_0
+       1: invokeinterface #37,  1           // InterfaceMethod io/github/notenoughupdates/moulconfig/internal/InitUtil$ThrowingSupplier.get:()Ljava/lang/Object;
+       6: areturn
+       7: astore_1
+       8: aload_1
+       9: athrow
+    Exception table:
+       from    to  target type
+           0     6     7   Class java/lang/Throwable
+
+  public static <T> T make(T, java.util.function.Consumer<T>);
+    Code:
+       0: aload_1
+       1: aload_0
+       2: invokeinterface #51,  2           // InterfaceMethod java/util/function/Consumer.accept:(Ljava/lang/Object;)V
+       7: aload_0
+       8: areturn
+
+  public static <T> T make(java.util.function.Supplier<T>);
+    Code:
+       0: aload_0
+       1: invokeinterface #60,  1           // InterfaceMethod java/util/function/Supplier.get:()Ljava/lang/Object;
+       6: areturn
+}
