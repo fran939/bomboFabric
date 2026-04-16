@@ -5,6 +5,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -44,7 +45,7 @@ public abstract class AbstractContainerScreenMixin {
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void onMouseClicked(double mouseX, double mouseY, int button,
+    private void onMouseClicked(MouseButtonEvent event, boolean handled,
             CallbackInfoReturnable<Boolean> cir) {
         if (hoveredSlot != null && (SlotHighlight.isTargetSlot(hoveredSlot.index) || hoveredSlot.index == 45 || hoveredSlot.index == 53)) {
             return; // Don't clear if we clicked a target slot or navigation arrows.

@@ -96,8 +96,124 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         ClickLogic.toggleDebug();
                                         context.getSource().sendFeedback(Component.literal(PREFIX + "§7Click Debug: " + (ClickLogic.isDebugMode() ? "§aON" : "§cOFF")));
                                         return 1;
+                                    }))
+                            .then(ClientCommandManager.argument("gui", StringArgumentType.word())
+                                    .then(ClientCommandManager.argument("key", StringArgumentType.word())
+                                            .then(ClientCommandManager.argument("item", StringArgumentType.word())
+                                                    .executes(context -> {
+                                                        String gui = StringArgumentType.getString(context, "gui");
+                                                        String key = StringArgumentType.getString(context, "key");
+                                                        String item = StringArgumentType.getString(context, "item");
+                                                        ClickLogic.setTarget(item, gui, key, "left", false);
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§aAdded click target: §e" + item + " §7in §b" + gui + " §7(Key: §d" + key + "§7)"));
+                                                        return 1;
+                                                    })
+                                                    .then(ClientCommandManager.argument("type", StringArgumentType.word())
+                                                            .executes(context -> {
+                                                                String gui = StringArgumentType.getString(context, "gui");
+                                                                String key = StringArgumentType.getString(context, "key");
+                                                                String item = StringArgumentType.getString(context, "item");
+                                                                String type = StringArgumentType.getString(context, "type");
+                                                                ClickLogic.setTarget(item, gui, key, type, false);
+                                                                context.getSource().sendFeedback(Component.literal(PREFIX + "§aAdded click target: §e" + item + " §7in §b" + gui + " §7(Key: §d" + key + "§7, Click: §a" + type + "§7)"));
+                                                                return 1;
+                                                            })))))
+                            .executes(context -> {
+                                ClickLogic.listTargets(context.getSource());
+                                return 1;
+                            }));
+
+                    dispatcher.register(ClientCommandManager.literal("bomboprof")
+                            .then(ClientCommandManager.argument("id", StringArgumentType.string())
+                                    .executes(context -> {
+                                        String id = StringArgumentType.getString(context, "id");
+                                        BomboConfig.Settings s = BomboConfig.get();
+                                        s.activeProfile = id;
+                                        if (!s.profileBinds.containsKey(id)) {
+                                            s.profileBinds.put(id, new java.util.ArrayList<>());
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aCreated and switched to global profile: §e" + id));
+                                        } else {
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aSwitched to global profile: §e" + id));
+                                        }
+                                        BomboConfig.save();
+                                        return 1;
+                                    }))
+                            .executes(context -> {
+                                context.getSource().sendFeedback(Component.literal(PREFIX + "§6--- Global Profiles ---"));
+                                boolean found = false;
+                                for (String s : BomboConfig.get().profileBinds.keySet()) {
+                                    context.getSource().sendFeedback(Component.literal("  §7- §e" + s));
+                                    found = true;
+                                }
+                                if (!found)
+                                    context.getSource().sendFeedback(Component.literal("  §7None"));
+                                return 1;
+                            }));
+                    dispatcher.register(ClientCommandManager.literal("bombohb")
+                            .then(ClientCommandManager.literal("save")
+                                    .then(ClientCommandManager.argument("id", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String id = StringArgumentType.getString(context, "id");
+                                                if (HotbarSwapper.saveSnapshot(id)) {
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§aSaved hotbar snapshot: §e" + id));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§cFailed to save hotbar snapshot."));
+                                                }
+                                                return 1;
+                                            })))
+                            .then(ClientCommandManager.literal("delete")
+                                    .then(ClientCommandManager.argument("id", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String id = StringArgumentType.getString(context, "id");
+                                                if (HotbarSwapper.deleteSnapshot(id)) {
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§aDeleted hotbar snapshot: §e" + id));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§cSnapshot not found: §e" + id));
+                                                }
+                                                return 1;
+                                            })))
+                            .then(ClientCommandManager.literal("list")
+                                    .executes(context -> {
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§6--- Hotbar Snapshots ---"));
+                                        boolean found = false;
+                                        for (String s : HotbarSwapper.list()) {
+                                            context.getSource().sendFeedback(Component.literal("  §7- §e" + s));
+                                            found = true;
+                                        }
+                                        if (!found) context.getSource().sendFeedback(Component.literal("  §7None"));
+                                        return 1;
+                                    }))
+                            .then(ClientCommandManager.literal("apply")
+                                    .then(ClientCommandManager.argument("id", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String id = StringArgumentType.getString(context, "id");
+                                                if (HotbarSwapper.exists(id)) {
+                                                    HotbarSwapper.apply(id);
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§aApplied hotbar: §e" + id));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§cSnapshot not found: §e" + id));
+                                                }
+                                                return 1;
+                                            })))
+                            .then(ClientCommandManager.argument("id", StringArgumentType.string())
+                                    .executes(context -> {
+                                        String id = StringArgumentType.getString(context, "id");
+                                        if (HotbarSwapper.exists(id)) {
+                                            HotbarSwapper.apply(id);
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aApplied hotbar: §e" + id));
+                                        } else {
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§cSnapshot not found: §e" + id));
+                                        }
+                                        return 1;
                                     })));
-                    Bomboaddons.LOGGER.info("[BomboAddons] Priority commands (/click, /clicks) registered successfully!");
+                    dispatcher.register(ClientCommandManager.literal("hitbox")
+                            .executes(context -> {
+                                BomboConfig.get().hitbox = !BomboConfig.get().hitbox;
+                                BomboConfig.save();
+                                context.getSource().sendFeedback(Component.literal(PREFIX + "§7Hitboxes: " + (BomboConfig.get().hitbox ? "§aON" : "§cOFF")));
+                                return 1;
+                            }));
+                    Bomboaddons.LOGGER.info("[BomboAddons] Priority commands (/click, /clicks, /bombohb, /hitbox) registered successfully!");
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register priority /click commands!", t);
                 }
@@ -111,6 +227,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                     java.util.function.Consumer<LiteralArgumentBuilder<FabricClientCommandSource>> setupCommands = builder -> {
                         builder.executes(context -> {
                             openGuiNextTick = true;
+                            Bomboaddons.LOGGER.info("[BomboAddons] GUI requested via command.");
                             return 1;
                         });
 
@@ -185,6 +302,25 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                         // --- Highlight Command ---
                         builder.then(ClientCommandManager.literal("highlight")
+                                .then(ClientCommandManager.argument("mob", StringArgumentType.word())
+                                        .then(ClientCommandManager.argument("color", StringArgumentType.word())
+                                                .suggests((context, builder2) -> {
+                                                    for (String c : SlotHighlight.COLORS)
+                                                        builder2.suggest(c);
+                                                    return builder2.buildFuture();
+                                                })
+                                                .executes(context -> {
+                                                    String mob = StringArgumentType.getString(context, "mob");
+                                                    String color = StringArgumentType.getString(context, "color")
+                                                            .toUpperCase();
+                                                    BomboConfig.get().highlights.put(mob.toLowerCase(),
+                                                            new BomboConfig.HighlightInfo(color, false));
+                                                    BomboConfig.save();
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX
+                                                            + "§aHighlight added for §e" + mob + " §awith color §b"
+                                                            + color));
+                                                    return 1;
+                                                })))
                                 .then(ClientCommandManager.literal("remove")
                                         .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
                                                 .executes(context -> {
@@ -473,6 +609,24 @@ public class BomboaddonsClient implements ClientModInitializer {
             BazaarUtils.init();
             LowestBinManager.ensureLoaded();
             ItemHotkeys.init();
+            
+            // --- RESTORED LISTENERS ---
+            ClientTickEvents.END_CLIENT_TICK.register(client -> {
+                if (openGuiNextTick && client.player != null) {
+                    openGuiNextTick = false;
+                    client.setScreen(new BomboConfigGUI(client.screen));
+                }
+            });
+
+            WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+                HighlightESP.render(context);
+                PestESP.render(context);
+            });
+
+            ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+                LowestBinManager.reload();
+            });
+
         } catch (Throwable t) {
             Bomboaddons.LOGGER.error("[BomboAddons] CRITICAL ERROR in onInitializeClient!", t);
         }

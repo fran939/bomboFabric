@@ -15,10 +15,8 @@ import java.util.Map;
 
 public class HighlightESP {
     public static void render(WorldRenderContext context) {
-        // Redundant hitbox rendering disabled to match legacy 'Glow-only' behavior.
-        // The Glowing effect is handled by EntityMixin.java.
+        if (!BomboConfig.get().hitbox) return;
         
-        /*
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
 
@@ -39,7 +37,7 @@ public class HighlightESP {
         for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity == mc.player) continue;
 
-            String name = ChatFormatting.stripFormatting(entity.getDisplayName().getString()).toLowerCase();
+            String name = net.minecraft.ChatFormatting.stripFormatting(entity.getDisplayName().getString()).toLowerCase();
             
             for (Map.Entry<String, BomboConfig.HighlightInfo> entry : highlights.entrySet()) {
                 String key = entry.getKey().toLowerCase();
@@ -62,6 +60,5 @@ public class HighlightESP {
 
         bufferSource.endBatch(RenderType.lines());
         poseStack.popPose();
-        */
     }
 }

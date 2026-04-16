@@ -17,6 +17,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.client.input.KeyEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -32,9 +33,9 @@ public abstract class ItemHotkeysMixin {
    protected Slot hoveredSlot;
 
    @Inject(method = { "keyPressed" }, at = { @At("HEAD") }, cancellable = true)
-   private void onKeyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+   private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
       if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
-         int pressedKey = keyCode;
+         int pressedKey = event.key();
          int tradeBoundKey = ClickLogic.getKeyCode(BomboConfig.get().tradeKey);
          int recipeBoundKey = ClickLogic.getKeyCode(BomboConfig.get().recipeKey);
          int usageBoundKey = ClickLogic.getKeyCode(BomboConfig.get().usageKey);
@@ -145,8 +146,8 @@ public abstract class ItemHotkeysMixin {
       if (customData != null) {
          CompoundTag tag = customData.copyTag();
          String nbtString = tag.toString();
-         Minecraft.getInstance().player.displayClientMessage(Component.literal("§6Item NBT copied to console/log."), false);
-         System.out.println("Item NBT: " + nbtString);
+         Minecraft.getInstance().keyboardHandler.setClipboard(nbtString);
+         Minecraft.getInstance().player.displayClientMessage(Component.literal("§6Item NBT copied to clipboard."), false);
       } else {
          Minecraft.getInstance().player.displayClientMessage(Component.literal("§cNo NBT data found for this item."), false);
       }

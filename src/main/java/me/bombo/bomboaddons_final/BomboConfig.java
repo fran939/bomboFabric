@@ -107,6 +107,7 @@ public class BomboConfig {
         public boolean pestEspTracer = false;
         public String pestEspColor = "FFAA00";
         public float pestEspThickness = 2.0f;
+        public boolean hitbox = false;
     }
 
     public static class CommandBind {

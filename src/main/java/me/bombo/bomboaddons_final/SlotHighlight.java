@@ -9,6 +9,10 @@ import java.util.Set;
 
 @Environment(EnvType.CLIENT)
 public class SlotHighlight {
+    public static final java.util.List<String> COLORS = java.util.List.of(
+        "BLACK", "DARK_BLUE", "DARK_GREEN", "DARK_AQUA", "DARK_RED", "DARK_PURPLE", "GOLD", "GRAY", "DARK_GRAY",
+        "BLUE", "GREEN", "AQUA", "RED", "LIGHT_PURPLE", "YELLOW", "WHITE", "PINK"
+    );
     private static Set<Integer> targetSlots = new HashSet<>();
     private static Set<String> targetNames = new HashSet<>();
     private static long highlightStartTime = 0;

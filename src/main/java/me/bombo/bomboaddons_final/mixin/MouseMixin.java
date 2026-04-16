@@ -6,6 +6,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+import net.minecraft.client.input.MouseButtonInfo;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,9 +16,10 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 @Mixin(MouseHandler.class)
 public abstract class MouseMixin {
-    @Inject(at = @At("HEAD"), method = "onPress", cancellable = true)
-    private void onMouse(long window, int button, int action, int modifiers, CallbackInfo ci) {
+    @Inject(at = @At("HEAD"), method = "method_22686", cancellable = true)
+    private void onMouse(long window, MouseButtonInfo info, int action, CallbackInfo ci) {
         if (action == 1) { // GLFW_PRESS
+            int button = info.button();
             Minecraft mc = Minecraft.getInstance();
             if (mc.screen != null && mc.player != null) {
                 String activeProfile = BomboConfig.get().activeProfile;

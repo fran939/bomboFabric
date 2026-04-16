@@ -11,14 +11,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.KeyEvent;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
 @Mixin({ KeyboardHandler.class })
 public abstract class KeyboardMixin {
-   @Inject(at = { @At("HEAD") }, method = { "onKey" }, cancellable = true)
-   private void onKey(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
+   @Inject(at = { @At("HEAD") }, method = { "method_22678" }, cancellable = true)
+   private void onKey(long window, int action, KeyEvent event, CallbackInfo ci) {
       if (action == 1) { // 1 = Press, 0 = Release, 2 = Repeat
+         int key = event.key();
          ClickLogic.onKeyPressed(key);
 
          Minecraft mc = Minecraft.getInstance();
