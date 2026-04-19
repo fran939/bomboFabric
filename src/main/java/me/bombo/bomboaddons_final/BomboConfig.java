@@ -94,6 +94,7 @@ public class BomboConfig {
         public String gfsMaxKey = "k";
         public String gfsStackKey = "l";
         public Map<String, HighlightInfo> highlights = new HashMap<>();
+        public boolean highlightsEnabled = true;
         public boolean debugMode = false;
         public List<CommandBind> commandBinds = null;
         public String activeProfile = "default";

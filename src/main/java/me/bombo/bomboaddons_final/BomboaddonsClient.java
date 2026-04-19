@@ -302,136 +302,73 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                         // --- Highlight Command ---
                         builder.then(ClientCommandManager.literal("highlight")
-                                .then(ClientCommandManager.argument("mob", StringArgumentType.word())
-                                        .then(ClientCommandManager.argument("color", StringArgumentType.word())
-                                                .suggests((context, builder2) -> {
-                                                    for (String c : SlotHighlight.COLORS)
-                                                        builder2.suggest(c);
-                                                    return builder2.buildFuture();
-                                                })
-                                                .executes(context -> {
-                                                    String mob = StringArgumentType.getString(context, "mob");
-                                                    String color = StringArgumentType.getString(context, "color")
-                                                            .toUpperCase();
-                                                    BomboConfig.get().highlights.put(mob.toLowerCase(),
-                                                            new BomboConfig.HighlightInfo(color, false));
-                                                    BomboConfig.save();
-                                                    context.getSource().sendFeedback(Component.literal(PREFIX
-                                                            + "§aHighlight added for §e" + mob + " §awith color §b"
-                                                            + color));
-                                                    return 1;
-                                                })))
                                 .then(ClientCommandManager.literal("remove")
                                         .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
                                                 .executes(context -> {
                                                     String name = StringArgumentType.getString(context, "name").toLowerCase();
                                                     if (BomboConfig.get().highlights.remove(name) != null) {
                                                         BomboConfig.save();
-                                                        context.getSource()
-                                                                .sendFeedback(Component.literal(
-                                                                        PREFIX + "§aRemoved highlight for: §e"
-                                                                                + name));
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§aRemoved highlight for: §e" + name));
                                                     } else {
-                                                        context.getSource()
-                                                                .sendFeedback(Component.literal(
-                                                                        PREFIX + "§cNo highlight found for: §e"
-                                                                                + name));
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cNo highlight found for: §e" + name));
                                                     }
                                                     return 1;
                                                 })))
                                 .then(ClientCommandManager.literal("list")
                                         .executes(context -> {
-                                            context.getSource().sendFeedback(
-                                                    Component.literal(PREFIX + "§6--- Persistent Entity Highlights ---"));
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§6--- Persistent Entity Highlights ---"));
                                             if (BomboConfig.get().highlights.isEmpty()) {
                                                 context.getSource().sendFeedback(Component.literal("  §7None"));
                                             } else {
-                                                for (Map.Entry<String, BomboConfig.HighlightInfo> entry : BomboConfig.get().highlights
-                                                        .entrySet()) {
+                                                for (Map.Entry<String, BomboConfig.HighlightInfo> entry : BomboConfig.get().highlights.entrySet()) {
                                                     String targetName = entry.getKey();
                                                     String color = entry.getValue().color;
-                                                    
-                                                    ClickEvent click = LF.createClickEventRobust("RUN_COMMAND", "/bombo highlight remove " + targetName);
+                                                    ClickEvent click = LF.createClickEventRobust("RUN_COMMAND", "/b highlight remove " + targetName);
                                                     Component removeBtn = Component.literal(" §c[Remove]");
-                                                    if (click != null) {
-                                                        removeBtn = Component.literal(" §c[Remove]").withStyle(style -> style.withClickEvent(click));
-                                                    }
-                                                            
-                                                    context.getSource().sendFeedback(Component.literal("  §e" + targetName + " §7- §b" + color)
-                                                            .append(removeBtn));
+                                                    if (click != null) removeBtn = Component.literal(" §c[Remove]").withStyle(style -> style.withClickEvent(click));
+                                                    context.getSource().sendFeedback(Component.literal("  §e" + targetName + " §7- §b" + color).append(removeBtn));
                                                 }
                                             }
                                             return 1;
                                         }))
                                 .then(ClientCommandManager.literal("clear")
                                         .executes(context -> {
+                                            Bomboaddons.LOGGER.info("[BomboAddons] Clearing all highlights.");
                                             BomboConfig.get().highlights.clear();
                                             BomboConfig.save();
-                                            SlotHighlight.clearTargetSlot();
-                                            context.getSource()
-                                                    .sendFeedback(Component.literal(PREFIX + "§aCleared all highlights."));
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aCleared all highlights."));
                                             return 1;
                                         }))
-                                .executes(context -> {
-                                    SlotHighlight.clearTargetSlot();
-                                    context.getSource()
-                                            .sendFeedback(Component.literal(PREFIX + "§7Temporary highlights cleared."));
-                                    return 1;
-                                })
-                                .then(ClientCommandManager.argument("args", StringArgumentType.greedyString())
-                                        .executes(context -> {
-                                            String args = StringArgumentType.getString(context, "args");
-                                            String[] parts = args.split(" ");
-                                            if (parts.length < 2) {
-                                                context.getSource().sendFeedback(Component.literal(
-                                                        PREFIX + "§cUsage: /bombo highlight <name> <color> [showInvisible (0/1)]"));
-                                                return 1;
-                                            }
-
-                                            int showInvisible = -1;
-                                            String colorString;
-                                            int nameEndIndex;
-                                            String lastPart = parts[parts.length - 1];
-
-                                            if (lastPart.equals("0") || lastPart.equals("1")) {
-                                                showInvisible = Integer.parseInt(lastPart);
-                                                if (parts.length < 3) {
-                                                    context.getSource().sendFeedback(Component.literal(
-                                                            PREFIX + "§cUsage: /bombo highlight <name> <color> [showInvisible (0/1)]"));
+                                .then(ClientCommandManager.argument("mob", StringArgumentType.word())
+                                        .then(ClientCommandManager.argument("color", StringArgumentType.word())
+                                                .suggests((context, builder2) -> {
+                                                    for (String c : SlotHighlight.COLORS) builder2.suggest(c);
+                                                    return builder2.buildFuture();
+                                                })
+                                                .executes(context -> {
+                                                    String mob = StringArgumentType.getString(context, "mob");
+                                                    String color = StringArgumentType.getString(context, "color").toUpperCase();
+                                                    BomboConfig.get().highlights.put(mob.toLowerCase(), new BomboConfig.HighlightInfo(color, false));
+                                                    BomboConfig.save();
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§aHighlight added for §e" + mob + " §awith color §b" + color));
                                                     return 1;
-                                                }
-                                                colorString = parts[parts.length - 2].toUpperCase();
-                                                nameEndIndex = parts.length - 3;
-                                            } else {
-                                                colorString = lastPart.toUpperCase();
-                                                nameEndIndex = parts.length - 2;
-                                            }
-
-                                            try {
-                                                ChatFormatting.valueOf(colorString);
-                                            } catch (IllegalArgumentException e) {
-                                                context.getSource().sendFeedback(
-                                                        Component.literal(PREFIX + "§cInvalid color: " + colorString));
-                                                return 1;
-                                            }
-
-                                            StringBuilder nameBuilder = new StringBuilder();
-                                            for (int i = 0; i <= nameEndIndex; ++i) {
-                                                if (i > 0)
-                                                    nameBuilder.append(" ");
-                                                nameBuilder.append(parts[i]);
-                                            }
-                                            String name = nameBuilder.toString().toLowerCase();
-
-                                            boolean si = showInvisible == 1;
-                                            BomboConfig.get().highlights.put(name,
-                                                    new BomboConfig.HighlightInfo(colorString, si));
-                                            BomboConfig.save();
-
-                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aNow highlighting §e"
-                                                    + name + " §7in §b" + colorString + (si ? " §d(even if invisible)" : "")));
-                                            return 1;
-                                        })));
+                                                })
+                                                .then(ClientCommandManager.argument("showInvisible", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 1))
+                                                        .executes(context -> {
+                                                            String mob = StringArgumentType.getString(context, "mob");
+                                                            String color = StringArgumentType.getString(context, "color").toUpperCase();
+                                                            int siInt = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "showInvisible");
+                                                            boolean si = (siInt == 1);
+                                                            BomboConfig.get().highlights.put(mob.toLowerCase(), new BomboConfig.HighlightInfo(color, si));
+                                                            BomboConfig.save();
+                                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aHighlight added for §e" + mob + " §7(Invis: " + si + ")"));
+                                                            return 1;
+                                                        }))))
+                                .executes(context -> {
+                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§7Usage: /b highlight <mob> <color> [showInvis: true/false]"));
+                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§7Subcommands: list, remove <name>, clear"));
+                                    return 1;
+                                }));
 
                         // Default
                         builder.then(ClientCommandManager.argument("args", StringArgumentType.greedyString())
@@ -599,6 +536,34 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     })));
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register util commands!", t);
+                }
+
+                // --- PRIORITY 5: Inventory Snapshots ---
+                try {
+                    dispatcher.register(ClientCommandManager.literal("checki")
+                            .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                                    .executes(context -> {
+                                        InventoryManager.openSnapshot(StringArgumentType.getString(context, "name"), 1);
+                                        return 1;
+                                    })
+                                    .then(ClientCommandManager.argument("index", IntegerArgumentType.integer(1))
+                                            .executes(context -> {
+                                                InventoryManager.openSnapshot(StringArgumentType.getString(context, "name"),
+                                                        IntegerArgumentType.getInteger(context, "index"));
+                                                return 1;
+                                            }))));
+                    dispatcher.register(ClientCommandManager.literal("listi")
+                            .executes(context -> {
+                                InventoryManager.listSnapshots(context.getSource());
+                                return 1;
+                            }));
+                    dispatcher.register(ClientCommandManager.literal("savei")
+                            .executes(context -> {
+                                InventoryManager.captureCurrentGUI();
+                                return 1;
+                            }));
+                } catch (Throwable t) {
+                    Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register inventory commands!", t);
                 }
 
                 Bomboaddons.LOGGER.info("[BomboAddons] Command registration lambda FINISHED!");

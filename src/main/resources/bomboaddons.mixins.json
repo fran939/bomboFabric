@@ -17,7 +17,8 @@
 		"HollowWandMixin",
 		"MouseMixin",
 		"CommandMixin",
-		"PlayerTabOverlayAccessor"
+		"PlayerTabOverlayAccessor",
+		"PostPassMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

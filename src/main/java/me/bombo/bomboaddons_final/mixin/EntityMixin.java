@@ -36,6 +36,9 @@ public abstract class EntityMixin {
 
    @Inject(method = { "isCurrentlyGlowing" }, at = { @At("HEAD") }, cancellable = true)
    private void onIsCurrentlyGlowing(CallbackInfoReturnable<Boolean> cir) {
+      if (!BomboConfig.get().highlightsEnabled) {
+         return;
+      }
       Entity self = (Entity) (Object) this;
       String name = ChatFormatting.stripFormatting(self.getDisplayName().getString());
       StringBuilder combinedName = new StringBuilder(name != null ? name.toLowerCase() : "");
@@ -184,7 +187,7 @@ public abstract class EntityMixin {
       if (self instanceof ArmorStand || self.level() == null) {
          return null;
       }
-      List<Entity> nearby = self.level().getEntities(self, self.getBoundingBox().inflate(0.5D),
+      List<Entity> nearby = self.level().getEntities(self, self.getBoundingBox().inflate(0.5D, 3.0D, 0.5D),
             (e) -> e instanceof ArmorStand && e.hasCustomName());
       for (Entity e : nearby) {
          String name = ChatFormatting.stripFormatting(e.getCustomName().getString());

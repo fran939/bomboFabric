@@ -10,7 +10,9 @@ import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.client.input.KeyEvent;
 
 public class BomboConfigGUI extends Screen {
 
@@ -36,12 +38,14 @@ public class BomboConfigGUI extends Screen {
     // Transient state for keybinds
     private static String bindCommandInput = "";
     private static String bindComboInput = "";
+    private static String newProfileInput = "";
 
     // Transient state for highlights
     private static String highMobInput = "";
     private static String highColorInput = "GOLD";
     private static boolean highShowInvis = false;
     private static String editingHighName = "";
+    private static String listeningForKeyTarget = ""; // "clicker", "copyNbt", "gfsMax", etc.
 
     public BomboConfigGUI(Screen parent) {
         super(Component.literal("Bomboaddons Configuration"));
@@ -122,17 +126,19 @@ public class BomboConfigGUI extends Screen {
                             contentX, contentWidth, y);
                 }
                 case 3 -> { // Hotkeys
-                    y = addTextBox("Copy NBT Key", s.copyNbtKey, v -> s.copyNbtKey = v, contentX, contentWidth, y);
-                    y = addTextBox("GFS Max Key", s.gfsMaxKey, v -> s.gfsMaxKey = v, contentX, contentWidth, y);
-                    y = addTextBox("GFS Stack Key", s.gfsStackKey, v -> s.gfsStackKey = v, contentX, contentWidth, y);
-                    y = addTextBox("Chat Peek Key", s.chatPeekKey, v -> s.chatPeekKey = v, contentX, contentWidth, y);
-                    y = addTextBox("Trade Key", s.tradeKey, v -> s.tradeKey = v, contentX, contentWidth, y);
-                    y = addTextBox("Recipe Key", s.recipeKey, v -> s.recipeKey = v, contentX, contentWidth, y);
-                    y = addTextBox("Usage Key", s.usageKey, v -> s.usageKey = v, contentX, contentWidth, y);
+                    y = addKeyBindButton("Copy NBT Key", s.copyNbtKey, v -> s.copyNbtKey = v, "copyNbt", contentX, contentWidth, y);
+                    y = addKeyBindButton("GFS Max Key", s.gfsMaxKey, v -> s.gfsMaxKey = v, "gfsMax", contentX, contentWidth, y);
+                    y = addKeyBindButton("GFS Stack Key", s.gfsStackKey, v -> s.gfsStackKey = v, "gfsStack", contentX, contentWidth, y);
+                    y = addKeyBindButton("Chat Peek Key", s.chatPeekKey, v -> s.chatPeekKey = v, "chatPeek", contentX, contentWidth, y);
+                    y = addKeyBindButton("Trade Key", s.tradeKey, v -> s.tradeKey = v, "trade", contentX, contentWidth, y);
+                    y = addKeyBindButton("Recipe Key", s.recipeKey, v -> s.recipeKey = v, "recipe", contentX, contentWidth, y);
+                    y = addKeyBindButton("Usage Key", s.usageKey, v -> s.usageKey = v, "usage", contentX, contentWidth, y);
                 }
                 case 5 -> { // Clicker
                     y = addTextBox("GUI Name", clickGuiInput, v -> clickGuiInput = v, contentX, contentWidth, y);
-                    y = addTextBox("Key", clickKeyInput, v -> clickKeyInput = v, contentX, contentWidth, y);
+                    
+                    y = addKeyBindButton("Key", clickKeyInput, v -> clickKeyInput = v, "clicker", contentX, contentWidth, y);
+
                     y = addTextBox("Item", clickItemInput, v -> clickItemInput = v, contentX, contentWidth, y);
                     y = addTextBox("Type", clickTypeInput, v -> clickTypeInput = v, contentX, contentWidth, y);
 
@@ -188,6 +194,49 @@ public class BomboConfigGUI extends Screen {
                     }
                 }
                 case 6 -> { // Keybinds (Global Binds)
+                    // Row 1: Active Profile with Nav Buttons
+                    
+                    addRenderableWidget(Button.builder(Component.literal("§7<"), btn -> {
+                        java.util.List<String> profileList = new java.util.ArrayList<>(s.profileBinds.keySet());
+                        if (!profileList.contains("default")) profileList.add("default");
+                        int current = profileList.indexOf(s.activeProfile);
+                        int next = (current - 1 + profileList.size()) % profileList.size();
+                        s.activeProfile = profileList.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + contentWidth / 2 - 25, y, 20, 18).build());
+
+                    EditBox profBox = new EditBox(font, contentX + contentWidth / 2, y, contentWidth / 2 - 30, 16, Component.literal("Profile"));
+                    profBox.setValue(s.activeProfile);
+                    profBox.setResponder(v -> { s.activeProfile = v; BomboConfig.save(); });
+                    addRenderableWidget(profBox);
+
+                    addRenderableWidget(Button.builder(Component.literal("§7>"), btn -> {
+                        java.util.List<String> profileList = new java.util.ArrayList<>(s.profileBinds.keySet());
+                        if (!profileList.contains("default")) profileList.add("default");
+                        int current = profileList.indexOf(s.activeProfile);
+                        int next = (current + 1) % profileList.size();
+                        s.activeProfile = profileList.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + contentWidth - 25, y, 20, 18).build());
+
+                    y += ITEM_HEIGHT + 10;
+
+                    // New Profile Creation Row
+                    y = addTextBox("New Profile Name", newProfileInput, v -> newProfileInput = v, contentX, contentWidth, y);
+                    addRenderableWidget(Button.builder(Component.literal("§aCreate"), btn -> {
+                        if (!newProfileInput.isEmpty()) {
+                            s.profileBinds.putIfAbsent(newProfileInput, new java.util.ArrayList<>());
+                            s.activeProfile = newProfileInput;
+                            newProfileInput = "";
+                            BomboConfig.save();
+                            init();
+                        }
+                    }).bounds(contentX + contentWidth - 60, y - ITEM_HEIGHT, 60, 18).build());
+
+                    y += ITEM_HEIGHT + 15;
+
                     y = addTextBox("Command", bindCommandInput, v -> bindCommandInput = v, contentX, contentWidth, y);
                     y = addTextBox("Combination (e.g. F5+1)", bindComboInput, v -> bindComboInput = v, contentX,
                             contentWidth, y);
@@ -196,9 +245,8 @@ public class BomboConfigGUI extends Screen {
                         if (!bindCommandInput.isEmpty() && !bindComboInput.isEmpty()) {
                             List<Integer> codes = parseCombo(bindComboInput);
                             if (!codes.isEmpty()) {
-                                BomboConfig.Settings settings = BomboConfig.get();
-                                settings.profileBinds.putIfAbsent(settings.activeProfile, new java.util.ArrayList<>());
-                                settings.profileBinds.get(settings.activeProfile).add(
+                                s.profileBinds.putIfAbsent(s.activeProfile, new java.util.ArrayList<>());
+                                s.profileBinds.get(s.activeProfile).add(
                                         new BomboConfig.CommandBind(bindCommandInput, codes, bindComboInput));
                                 bindCommandInput = "";
                                 bindComboInput = "";
@@ -210,8 +258,7 @@ public class BomboConfigGUI extends Screen {
 
                     y += 40;
 
-                    BomboConfig.Settings settings = BomboConfig.get();
-                    List<BomboConfig.CommandBind> binds = settings.profileBinds.get(settings.activeProfile);
+                    List<BomboConfig.CommandBind> binds = s.profileBinds.get(s.activeProfile);
                     if (binds != null) {
                         for (int i = 0; i < binds.size(); i++) {
                             final int idx = i;
@@ -226,10 +273,13 @@ public class BomboConfigGUI extends Screen {
                     }
                 }
                 case 7 -> { // Highlights
+                    y = addBoolOption("Highlights Enabled", s.highlightsEnabled, v -> s.highlightsEnabled = v, contentX, contentWidth, y);
+                    y += 20; // More spacer to prevent overlap
+                    
                     y = addTextBox("Mob Name", highMobInput, v -> highMobInput = v, contentX, contentWidth, y);
                     y = addTextBox("Color", highColorInput, v -> highColorInput = v, contentX, contentWidth, y);
                     y = addBoolOption("Show Invisible", highShowInvis, v -> highShowInvis = v, contentX, contentWidth, y);
-
+                    
                     String btnLabel = editingHighName.isEmpty() ? "§a+ Add Highlight" : "§b§lUpdate Highlight";
                     addRenderableWidget(Button.builder(Component.literal(btnLabel), btn -> {
                         if (!highMobInput.isEmpty() && !highColorInput.isEmpty()) {
@@ -238,6 +288,7 @@ public class BomboConfigGUI extends Screen {
                             }
                             BomboConfig.get().highlights.put(highMobInput.toLowerCase(), 
                                 new BomboConfig.HighlightInfo(highColorInput.toUpperCase(), highShowInvis));
+                            
                             editingHighName = "";
                             highMobInput = ""; highColorInput = "GOLD"; highShowInvis = false;
                             BomboConfig.save();
@@ -255,9 +306,9 @@ public class BomboConfigGUI extends Screen {
 
                     y += 40;
                     
-                    java.util.List<Map.Entry<String, BomboConfig.HighlightInfo>> hList = new java.util.ArrayList<>(BomboConfig.get().highlights.entrySet());
+                    java.util.List<java.util.Map.Entry<String, BomboConfig.HighlightInfo>> hList = new java.util.ArrayList<>(BomboConfig.get().highlights.entrySet());
                     for (int i = 0; i < hList.size(); i++) {
-                        Map.Entry<String, BomboConfig.HighlightInfo> entry = hList.get(i);
+                        java.util.Map.Entry<String, BomboConfig.HighlightInfo> entry = hList.get(i);
                         int currentY = y;
                         
                         addRenderableWidget(Button.builder(Component.literal("§bEdit"), btn -> {
@@ -360,6 +411,18 @@ public class BomboConfigGUI extends Screen {
         return y + ITEM_HEIGHT;
     }
 
+    private int addKeyBindButton(String label, String current, Consumer<String> setter, String target, int x, int w, int y) {
+        boolean listening = listeningForKeyTarget.equals(target);
+        String btnLabel = listening ? "§e§l[ Press Any Key ]" : "§f" + label + ": §d" + (current.isEmpty() ? "None" : current);
+        
+        addRenderableWidget(Button.builder(Component.literal(btnLabel), btn -> {
+            listeningForKeyTarget = target;
+            init();
+        }).bounds(x + w / 2, y, w / 2, 16).build());
+        
+        return y + ITEM_HEIGHT;
+    }
+
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         try {
@@ -384,7 +447,8 @@ public class BomboConfigGUI extends Screen {
             int contentWidth = width - SIDEBAR_WIDTH - PADDING * 3;
             int y = HEADER_HEIGHT + PADDING * 2;
 
-            g.drawString(font, "§f§l" + categories.get(selectedCategory).toUpperCase(), contentX, y, 0xFFFFFFFF, true);
+            int safeIdx = Math.max(0, Math.min(selectedCategory, categories.size() - 1));
+            g.drawString(font, "§f§l" + categories.get(safeIdx).toUpperCase(), contentX, y, 0xFFFFFFFF, true);
 
             String loc = SkyblockUtils.getLocation();
             String locDisplay = "§7Area: §a" + loc;
@@ -396,6 +460,9 @@ public class BomboConfigGUI extends Screen {
 
             BomboConfig.Settings s = BomboConfig.get();
             switch (selectedCategory) {
+                case 0 -> { // General
+                    g.drawString(font, "§6§lMod Settings", contentX, y, 0xFFFFAA00, true);
+                }
                 case 1 -> {
                     y += ITEM_HEIGHT; // Skip Auto Experiments
                     g.drawString(font, "§7Click Delay: §e" + s.experimentClickDelay + "ms", contentX, y + 4, 0xFFCCCCCC,
@@ -458,17 +525,24 @@ public class BomboConfigGUI extends Screen {
                     }
                 }
                 case 6 -> { // Keybinds
-                    BomboConfig.Settings settings = BomboConfig.get();
-                    g.drawString(font, "§6§lProfile Binds: §e" + settings.activeProfile, contentX, y, 0xFFFFAA00, true);
-                    g.drawString(font, "§7Command:", contentX, y + 24, 0xFFCCCCCC, false);
-                    g.drawString(font, "§7Combo (e.g. CTRL+X):", contentX, y + 46, 0xFFCCCCCC, false);
+                    y += ITEM_HEIGHT + 10;
+                    
+                    g.drawString(font, "§7Create New Profile:", contentX, y + 4, 0xFFCCCCCC, false);
+                    y += ITEM_HEIGHT + 25;
+                    
+                    g.drawString(font, "§6§lProfile Binds: §e" + s.activeProfile, contentX, y, 0xFFFFAA00, true);
+                    y += 20;
+                    g.drawString(font, "§7Command:", contentX, y + 4, 0xFFCCCCCC, false);
+                    y += ITEM_HEIGHT;
+                    g.drawString(font, "§7Combo (e.g. CTRL+X):", contentX, y + 4, 0xFFCCCCCC, false);
+                    y += ITEM_HEIGHT;
 
-                    y += 80;
+                    y += 20;
 
                     g.drawString(font, "§6§lActive Binds", contentX, y, 0xFFFFAA00, true);
                     y += 20;
 
-                    List<BomboConfig.CommandBind> binds = settings.profileBinds.get(settings.activeProfile);
+                    List<BomboConfig.CommandBind> binds = s.profileBinds.get(s.activeProfile);
                     if (binds == null || binds.isEmpty()) {
                         g.drawString(font, "§7None", contentX, y, 0xFF888888, false);
                     } else {
@@ -480,24 +554,36 @@ public class BomboConfigGUI extends Screen {
                     }
                 }
                 case 7 -> { // Highlights
-                    g.drawString(font, "§6§lAdd/Edit Highlight", contentX, y, 0xFFFFAA00, true);
-                    g.drawString(font, "§7Mob Name:", contentX, y + 24, 0xFFCCCCCC, false);
-                    g.drawString(font, "§7Color:", contentX, y + 46, 0xFFCCCCCC, false);
+                    y += ITEM_HEIGHT; // Skip Toggle
+                    y += 20; // Spacer
+                    g.drawString(font, "§6§lAdd/Edit Highlight", contentX, y + 4, 0xFFFFAA00, true);
+                    y += ITEM_HEIGHT;
                     
-                    y += 100;
+                    g.drawString(font, "§7Mob Name:", contentX, y + 4, 0xFFCCCCCC, false);
+                    y += ITEM_HEIGHT;
+                    g.drawString(font, "§7Color:", contentX, y + 4, 0xFFCCCCCC, false);
+                    y += ITEM_HEIGHT;
+                    g.drawString(font, "§7Show Invisible:", contentX, y + 4, 0xFFCCCCCC, false);
+                    y += ITEM_HEIGHT;
+                    
+                    y += 20;
 
                     g.drawString(font, "§6§lActive Highlights", contentX, y, 0xFFFFAA00, true);
                     y += 20;
 
-                    java.util.List<Map.Entry<String, BomboConfig.HighlightInfo>> hList = new java.util.ArrayList<>(BomboConfig.get().highlights.entrySet());
+                    java.util.List<java.util.Map.Entry<String, BomboConfig.HighlightInfo>> hList = new java.util.ArrayList<>(BomboConfig.get().highlights.entrySet());
                     if (hList.isEmpty()) {
                         g.drawString(font, "§7None", contentX, y, 0xFF888888, false);
                     } else {
-                        for (Map.Entry<String, BomboConfig.HighlightInfo> entry : hList) {
-                            g.drawString(font, "§e" + entry.getKey() + " §7- §b" + entry.getValue().color, contentX, y, 0xFFFFFFFF, false);
+                        for (java.util.Map.Entry<String, BomboConfig.HighlightInfo> entry : hList) {
+                            String invisInfo = entry.getValue().showInvisible ? " §7(§aInvis§7)" : "";
+                            g.drawString(font, "§e" + entry.getKey() + " §7- §b" + entry.getValue().color + invisInfo, contentX, y, 0xFFFFFFFF, false);
                             y += 20;
                         }
                     }
+                }
+                case 4 -> { // Debug
+                    g.drawString(font, "§6§lDiagnostic Tools", contentX, y, 0xFFFFAA00, true);
                 }
             }
 
@@ -551,6 +637,41 @@ public class BomboConfigGUI extends Screen {
 
             g.drawString(Minecraft.getInstance().font, prefix + label, getX() + 10, getY() + (height - 8) / 2, color,
                     true);
+        }
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        if (!listeningForKeyTarget.isEmpty()) {
+            if (keyCode == 256) { // ESC
+                updateKeyTarget("");
+            } else {
+                String keyName = org.lwjgl.glfw.GLFW.glfwGetKeyName(keyCode, 0);
+                if (keyName == null) {
+                    keyName = "key_" + keyCode; 
+                }
+                updateKeyTarget(keyName);
+            }
+            listeningForKeyTarget = "";
+            BomboConfig.save();
+            init();
+            return true;
+        }
+        return super.keyPressed(event);
+    }
+
+    private void updateKeyTarget(String keyName) {
+        BomboConfig.Settings s = BomboConfig.get();
+        switch (listeningForKeyTarget) {
+            case "copyNbt" -> s.copyNbtKey = keyName;
+            case "gfsMax" -> s.gfsMaxKey = keyName;
+            case "gfsStack" -> s.gfsStackKey = keyName;
+            case "chatPeek" -> s.chatPeekKey = keyName;
+            case "trade" -> s.tradeKey = keyName;
+            case "recipe" -> s.recipeKey = keyName;
+            case "usage" -> s.usageKey = keyName;
+            case "clicker" -> clickKeyInput = keyName;
         }
     }
 }
