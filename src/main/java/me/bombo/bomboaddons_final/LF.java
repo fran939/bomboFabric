@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Map.Entry;
@@ -13,6 +14,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.nbt.CompoundTag;
@@ -193,5 +196,26 @@ public class LF {
    private static void sendMessage(String msg) { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(Component.literal(msg), false); }
    private static void sendMessage(Component msg) { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(msg, false); }
 
-   private record SearchContext(String json, String targetUuid, String targetUsername, boolean coopMode) {}
+    private record SearchContext(String json, String targetUuid, String targetUsername, boolean coopMode) {}
+
+    public static void printContainerInfo() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof AbstractContainerScreen<?> screen) {
+            sendMessage("§6--- Container Diagnostic ---");
+            sendMessage("§eTitle: §f" + screen.getTitle().getString());
+            
+            net.minecraft.world.inventory.AbstractContainerMenu menu = screen.getMenu();
+            List<net.minecraft.world.inventory.Slot> slots = menu.slots;
+            sendMessage("§eTotal Slots: §f" + slots.size());
+            
+            if (slots.size() > 49) {
+                net.minecraft.world.item.ItemStack timer = slots.get(49).getItem();
+                sendMessage("§eSlot 49 (Timer): §f" + timer.getItem().toString() + " (Foil: " + timer.hasFoil() + ")");
+            }
+            
+            sendMessage("§7(Diagnostic info displayed in-game)");
+        } else {
+            sendMessage("§cNot in a container!");
+        }
+    }
 }

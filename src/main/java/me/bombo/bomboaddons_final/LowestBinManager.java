@@ -34,13 +34,11 @@ public class LowestBinManager {
     }
 
     public static void reload() {
-        System.out.println("[BomboAddons] Reloading Prices and Bazaar data...");
         CompletableFuture.allOf(
             fetchFromBazaar(), 
             fetchFromPrices(), 
             BitsManager.ensureLoaded()
         ).thenRun(() -> {
-            System.out.println("[BomboAddons] Data reload complete. Prices: " + priceCache.size() + ", Bazaar: " + bazaarCache.size());
             if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.displayClientMessage(Component.literal("§b[BomboAddons] §aPrices Loaded! §8(" + priceCache.size() + " items)"), false);
             }

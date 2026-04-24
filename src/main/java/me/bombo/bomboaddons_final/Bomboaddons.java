@@ -11,6 +11,5 @@ public class Bomboaddons implements ModInitializer {
    public void onInitialize() {
       BomboConfig.load();
       InventoryConfig.load();
-      LOGGER.info("Bomboaddons main initialized!");
    }
 }

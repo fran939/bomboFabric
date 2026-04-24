@@ -18,7 +18,8 @@
 		"MouseMixin",
 		"CommandMixin",
 		"PlayerTabOverlayAccessor",
-		"PostPassMixin"
+		"PostPassMixin",
+		"MinecraftMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

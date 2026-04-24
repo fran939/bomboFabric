@@ -80,13 +80,7 @@ public abstract class ItemStackMixin {
 
         if (skyblockId != null) {
             List<Component> tooltip = cir.getReturnValue();
-            // Using getNow to wait for the future if it's already completed or return fallback immediately
             Long price = LowestBinManager.getLowestBin(skyblockId).getNow(-1L);
-            
-            // Critical Debug Message
-            if (BomboConfig.get().debugMode && player != null) {
-                player.displayClientMessage(Component.literal("§b[Bombo Debug] §7Found Skyblock ID: §f" + skyblockId + " §7(Price: " + price + ")"), false);
-            }
 
             if (price != -1L) {
                 int count = stack.getCount();

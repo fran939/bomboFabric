@@ -24,13 +24,6 @@ public abstract class SignEditMixin {
    @Shadow
    private int line;
 
-   @Inject(
-      method = {"init"},
-      at = {@At("TAIL")}
-   )
-   private void onInit(CallbackInfo ci) {
-      Bomboaddons.LOGGER.info("SignEditScreen initialized");
-   }
 
    @Inject(
       method = {"onClose"},

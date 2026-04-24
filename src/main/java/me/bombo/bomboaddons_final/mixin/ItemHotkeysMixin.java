@@ -9,6 +9,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
+import me.bombo.bomboaddons_final.SBECommands;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.item.component.CustomData;
@@ -82,7 +83,7 @@ public abstract class ItemHotkeysMixin {
          CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
          if (ea != null) {
                String eaString = ea.toString();
-               HoverEvent hover = LF.createHoverEventRobust(eaString);
+               HoverEvent hover = SBECommands.createHoverEvent(eaString);
                Style style = Style.EMPTY;
                if (hover != null) style = style.withHoverEvent(hover);
                

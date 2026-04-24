@@ -89,12 +89,6 @@ public abstract class EntityMixin {
          while (var4.hasNext()) {
             Entry<String, BomboConfig.HighlightInfo> entry = (Entry) var4.next();
             String key = (String) entry.getKey();
-            /*
-            if (BomboConfig.get().debugMode && key.contains("✯")) {
-               System.out.println("[Bomboaddons Debug] Checking Entity Context: '" + name + "' | Nearby: '" + nametagName
-                     + "' against key '" + key + "' (invisible: " + self.isInvisible() + ")");
-            }
-            */
             if ((!name.isEmpty() && name.contains(key)) || (nametagName != null && nametagName.contains(key))) {
                if (self.isInvisible() && !((BomboConfig.HighlightInfo) entry.getValue()).showInvisible) {
                   continue;

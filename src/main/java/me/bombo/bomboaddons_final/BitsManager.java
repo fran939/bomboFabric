@@ -26,7 +26,6 @@ public class BitsManager {
         }
 
         String url = "https://bomboapi.frandl938.workers.dev/bi";
-        Bomboaddons.LOGGER.info("[BomboAddons] Loading bit costs from: " + url);
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "Mozilla/5.0").timeout(Duration.ofSeconds(10)).GET().build();
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
@@ -89,14 +88,12 @@ public class BitsManager {
                 .GET()
                 .build();
         
-        Bomboaddons.LOGGER.info("[BomboAddons] Fetching top bits from: " + url);
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
                     List<String> results = new ArrayList<>();
                     if (response.statusCode() == 200) {
                         try {
-                            Bomboaddons.LOGGER.info("[BomboAddons] Bits API Response received: " + response.body().length() + " bytes");
                             JsonArray jsonArray = JsonParser.parseString(response.body()).getAsJsonArray();
                             List<BitItem> items = new ArrayList<>();
                             
@@ -118,7 +115,6 @@ public class BitsManager {
                             }
                             
                         } catch (Exception e) {
-                            e.printStackTrace();
                             results.add("§cFailed to parse Bits API response.");
                         }
                     } else {
@@ -126,7 +122,6 @@ public class BitsManager {
                     }
                     return results;
                 }).exceptionally(ex -> {
-                    ex.printStackTrace();
                     List<String> results = new ArrayList<>();
                     results.add("§cFailed to connect to Bits API.");
                     return results;

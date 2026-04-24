@@ -37,7 +37,6 @@ public class BazaarUtils {
                            bazaarProducts.addAll(products.keySet());
                         }
 
-                        System.out.println("[BomboAddons] Loaded " + bazaarProducts.size() + " bazaar products.");
                      }
                   } catch (Throwable var9) {
                      try {

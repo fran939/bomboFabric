@@ -79,8 +79,9 @@ public class BomboConfig {
         public boolean leftClickEtherwarp = false;
         public int signCalcX = -1;
         public int signCalcY = -1;
-        public boolean autoExperiments = false;
+        public boolean autoExperiments = true;
         public int experimentClickDelay = 200;
+        public int experimentClickType = 1; // 0=Left, 1=Middle, 2=Shift
         public boolean experimentAutoClose = true;
         public int experimentSerumCount = 0;
         public boolean experimentGetMaxXp = false;
@@ -95,7 +96,7 @@ public class BomboConfig {
         public String gfsStackKey = "l";
         public Map<String, HighlightInfo> highlights = new HashMap<>();
         public boolean highlightsEnabled = true;
-        public boolean debugMode = false;
+        public boolean debugMode = true;
         public List<CommandBind> commandBinds = null;
         public String activeProfile = "default";
         public Map<String, List<CommandBind>> profileBinds = new HashMap<>();

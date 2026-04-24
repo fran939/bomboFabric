@@ -39,10 +39,11 @@ public class SBECommands {
          Minecraft mc = Minecraft.getInstance();
          String selfUuid = mc.getUser().getProfileId().toString();
          sendMessage("§7Fetching data for " + name + "...");
-         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.10) " + selfUuid).timeout(Duration.ofSeconds(60L)).GET().build();
+         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
+               .header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.10) " + selfUuid).timeout(Duration.ofSeconds(60L))
+               .GET().build();
          client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body).thenAccept((body) -> {
             try {
-               System.out.println("API Response for " + command + ": " + body);
                if (body == null || body.trim().isEmpty()) {
                   sendMessage("§cError: Empty response from API.");
                   return;
@@ -62,69 +63,67 @@ public class SBECommands {
 
                if (!json.has("data") || json.get("data").isJsonNull()) {
                   sendMessage("§cError: No data returned from API for " + name + ".");
-                  System.err.println("Response for " + command + " " + name + " has no data: " + body);
                   return;
                }
 
                JsonObject data = json.getAsJsonObject("data");
                byte var7 = -1;
-               switch(command.hashCode()) {
-               case -1620171640:
-                  if (command.equals("trophyfish")) {
-                     var7 = 5;
-                  }
-                  break;
-               case -900562878:
-                  if (command.equals("skills")) {
-                     var7 = 2;
-                  }
-                  break;
-               case -899865410:
-                  if (command.equals("slayer")) {
-                     var7 = 3;
-                  }
-                  break;
-               case 3529:
-                  if (command.equals("nw")) {
-                     var7 = 0;
-                  }
-                  break;
-               case 3046219:
-                  if (command.equals("cata")) {
-                     var7 = 1;
-                  }
-                  break;
-               case 1032605407:
-                  if (command.equals("crimson")) {
-                     var7 = 4;
-                  }
+               switch (command.hashCode()) {
+                  case -1620171640:
+                     if (command.equals("trophyfish")) {
+                        var7 = 5;
+                     }
+                     break;
+                  case -900562878:
+                     if (command.equals("skills")) {
+                        var7 = 2;
+                     }
+                     break;
+                  case -899865410:
+                     if (command.equals("slayer")) {
+                        var7 = 3;
+                     }
+                     break;
+                  case 3529:
+                     if (command.equals("nw")) {
+                        var7 = 0;
+                     }
+                     break;
+                  case 3046219:
+                     if (command.equals("cata")) {
+                        var7 = 1;
+                     }
+                     break;
+                  case 1032605407:
+                     if (command.equals("crimson")) {
+                        var7 = 4;
+                     }
                }
 
-               switch(var7) {
-               case 0:
-                  renderNetworth(data);
-                  break;
-               case 1:
-                  renderCata(data);
-                  break;
-               case 2:
-                  renderSkills(data);
-                  break;
-               case 3:
-                  renderSlayer(data);
-                  break;
-               case 4:
-                  renderCrimson(data);
-                  break;
-               case 5:
-                  renderTrophyFish(data);
-                  break;
-               default:
-                  sendMessage("§cCommand " + command + " data received but renderer not implemented yet.");
+               switch (var7) {
+                  case 0:
+                     renderNetworth(data);
+                     break;
+                  case 1:
+                     renderCata(data);
+                     break;
+                  case 2:
+                     renderSkills(data);
+                     break;
+                  case 3:
+                     renderSlayer(data);
+                     break;
+                  case 4:
+                     renderCrimson(data);
+                     break;
+                  case 5:
+                     renderTrophyFish(data);
+                     break;
+                  default:
+                     sendMessage("§cCommand " + command + " data received but renderer not implemented yet.");
                }
             } catch (Exception var8) {
                sendMessage("§cFailed to parse API response: " + var8.getMessage());
-               var8.printStackTrace();
             }
 
          }).exceptionally((ex) -> {
@@ -154,25 +153,25 @@ public class SBECommands {
 
    }
 
-   private static HoverEvent createHoverEvent(String text) {
+   public static HoverEvent createHoverEvent(String text) {
       try {
          Component content = Component.literal(text.replace("&", "§"));
          Class[] var2 = HoverEvent.class.getDeclaredClasses();
          int var3 = var2.length;
 
          int var4;
-         for(var4 = 0; var4 < var3; ++var4) {
+         for (var4 = 0; var4 < var3; ++var4) {
             Class<?> inner = var2[var4];
             Constructor[] var6 = inner.getDeclaredConstructors();
             int var7 = var6.length;
 
-            for(int var8 = 0; var8 < var7; ++var8) {
+            for (int var8 = 0; var8 < var7; ++var8) {
                Constructor<?> c = var6[var8];
                c.setAccessible(true);
                if (c.getParameterCount() == 1 && c.getParameterTypes()[0].isAssignableFrom(Component.class)) {
                   Object showTextInstance = c.newInstance(content);
                   if (showTextInstance instanceof HoverEvent) {
-                     return (HoverEvent)showTextInstance;
+                     return (HoverEvent) showTextInstance;
                   }
                }
             }
@@ -184,7 +183,7 @@ public class SBECommands {
             var4 = var13.length;
 
             int var16;
-            for(var16 = 0; var16 < var4; ++var16) {
+            for (var16 = 0; var16 < var4; ++var16) {
                Class<?> inner = var13[var16];
                if (inner.isEnum() || inner.getSimpleName().contains("Action")) {
                   actionClass = inner;
@@ -198,11 +197,11 @@ public class SBECommands {
                var16 = var15.length;
 
                int var19;
-               for(var19 = 0; var19 < var16; ++var19) {
+               for (var19 = 0; var19 < var16; ++var19) {
                   Field f = var15[var19];
                   if (f.getName().contains("SHOW_TEXT") || f.getName().contains("TEXT")) {
                      f.setAccessible(true);
-                     showTextAction = f.get((Object)null);
+                     showTextAction = f.get((Object) null);
                      break;
                   }
                }
@@ -211,11 +210,11 @@ public class SBECommands {
                   Constructor[] var17 = HoverEvent.class.getDeclaredConstructors();
                   var16 = var17.length;
 
-                  for(var19 = 0; var19 < var16; ++var19) {
+                  for (var19 = 0; var19 < var16; ++var19) {
                      Constructor<?> c = var17[var19];
                      c.setAccessible(true);
                      if (c.getParameterCount() == 2) {
-                        return (HoverEvent)c.newInstance(showTextAction, content);
+                        return (HoverEvent) c.newInstance(showTextAction, content);
                      }
                   }
                }
@@ -233,7 +232,8 @@ public class SBECommands {
          String var10000;
          if (nw.has("noInventory") && nw.get("noInventory").getAsBoolean()) {
             var10000 = formatUsername(data);
-            sendMessage(var10000 + " §r§chas inventory API disabled in profile '" + data.get("profileName").getAsString() + "'!§r");
+            sendMessage(var10000 + " §r§chas inventory API disabled in profile '"
+                  + data.get("profileName").getAsString() + "'!§r");
          } else {
             sendComponent(Component.literal(formatUsername(data) + "§r§c's Networth:§r"));
             long totalNw = nw.has("networth") ? nw.get("networth").getAsLong() : 0L;
@@ -253,11 +253,12 @@ public class SBECommands {
             sendComponent(coins);
             if (nw.has("types")) {
                JsonObject types = nw.getAsJsonObject("types");
-               String[] sequence = new String[]{"armor", "equipment", "wardrobe", "inventory", "enderchest", "accessories", "personal_vault", "storage", "museum", "sacks", "essence", "pets"};
+               String[] sequence = new String[] { "armor", "equipment", "wardrobe", "inventory", "enderchest",
+                     "accessories", "personal_vault", "storage", "museum", "sacks", "essence", "pets" };
                String[] var13 = sequence;
                int var14 = sequence.length;
 
-               for(int var15 = 0; var15 < var14; ++var15) {
+               for (int var15 = 0; var15 < var14; ++var15) {
                   String type = var13[var15];
                   if (types.has(type) && !types.get(type).isJsonNull()) {
                      JsonObject typeData = types.getAsJsonObject(type);
@@ -265,9 +266,10 @@ public class SBECommands {
                      JsonArray items = typeData.has("items") ? typeData.getAsJsonArray("items") : new JsonArray();
                      StringBuilder hover = new StringBuilder();
 
-                     for(int i = 0; i < Math.min(items.size(), 16); ++i) {
+                     for (int i = 0; i < Math.min(items.size(), 16); ++i) {
                         JsonObject item = items.get(i).getAsJsonObject();
-                        String itemName = item.has("loreName") ? item.get("loreName").getAsString() : (item.has("name") ? item.get("name").getAsString() : "Unknown");
+                        String itemName = item.has("loreName") ? item.get("loreName").getAsString()
+                              : (item.has("name") ? item.get("name").getAsString() : "Unknown");
                         if (itemName.equals("Unknown") && item.has("id")) {
                            itemName = toTitleCase(item.get("id").getAsString().replace("_", " "));
                         }
@@ -282,7 +284,8 @@ public class SBECommands {
                            hover.append("§7").append(count).append("x§r ");
                         }
 
-                        hover.append(itemName.replace("&", "§")).append(" §b- ").append(formatNotation(price)).append("§r");
+                        hover.append(itemName.replace("&", "§")).append(" §b- ").append(formatNotation(price))
+                              .append("§r");
                      }
 
                      var10000 = toTitleCase(type.replace("_", " "));
@@ -336,13 +339,14 @@ public class SBECommands {
             boolean hasFloors = false;
             Iterator var6 = floors.keySet().iterator();
 
-            while(var6.hasNext()) {
-               String key = (String)var6.next();
+            while (var6.hasNext()) {
+               String key = (String) var6.next();
                JsonObject floor = floors.getAsJsonObject(key);
                if (floor.has("completions")) {
                   int comps = floor.get("completions").getAsInt();
                   if (comps > 0) {
-                     hover.append("\n§7").append(toTitleCase(key.replace("_", " "))).append(": §6").append(formatCommas((long)comps));
+                     hover.append("\n§7").append(toTitleCase(key.replace("_", " "))).append(": §6")
+                           .append(formatCommas((long) comps));
                      hasFloors = true;
                   }
                }
@@ -400,16 +404,16 @@ public class SBECommands {
 
          if (kuudra != null) {
             sendMessage("§d ⦾ §bKuudra Tiers:");
-            String[] tiers = new String[]{"basic", "hot", "burning", "fiery", "infernal"};
+            String[] tiers = new String[] { "basic", "hot", "burning", "fiery", "infernal" };
             String[] var4 = tiers;
             int var10 = tiers.length;
 
-            for(int var6 = 0; var6 < var10; ++var6) {
+            for (int var6 = 0; var6 < var10; ++var6) {
                String tier = var4[var6];
                int count = kuudra.has(tier) ? kuudra.get(tier).getAsInt() : 0;
                if (count > 0) {
                   String var10000 = toTitleCase(tier);
-                  sendMessage("§7  - §b" + var10000 + ": §6" + formatCommas((long)count));
+                  sendMessage("§7  - §b" + var10000 + ": §6" + formatCommas((long) count));
                }
             }
          }
@@ -432,7 +436,7 @@ public class SBECommands {
          boolean hasFish = false;
          Iterator var4 = fish.keySet().iterator();
 
-         while(true) {
+         while (true) {
             JsonObject f;
             String name;
             int total;
@@ -444,7 +448,8 @@ public class SBECommands {
                      do {
                         if (!var4.hasNext()) {
                            if (hasFish) {
-                              MutableComponent breakdown = Component.literal("§d | §bFish Breakdown: §7(Hover for details)§r");
+                              MutableComponent breakdown = Component
+                                    .literal("§d | §bFish Breakdown: §7(Hover for details)§r");
                               HoverEvent hoverEvent = createHoverEvent(hover.toString());
                               if (hoverEvent != null) {
                                  breakdown.setStyle(Style.EMPTY.withHoverEvent(hoverEvent));
@@ -460,17 +465,17 @@ public class SBECommands {
                            return;
                         }
 
-                        key = (String)var4.next();
-                     } while(key.equals("total_caught"));
-                  } while(key.equals("rank"));
+                        key = (String) var4.next();
+                     } while (key.equals("total_caught"));
+                  } while (key.equals("rank"));
 
                   el = fish.get(key);
-               } while(!el.isJsonObject());
+               } while (!el.isJsonObject());
 
                f = el.getAsJsonObject();
                name = f.has("name") ? f.get("name").getAsString() : toTitleCase(key.replace("_", " "));
                total = f.has("total") ? f.get("total").getAsInt() : 0;
-            } while(total <= 0);
+            } while (total <= 0);
 
             hover.append("\n§7").append(name).append(": §6").append(total);
             if (f.has("bronze") || f.has("silver") || f.has("gold") || f.has("diamond")) {
@@ -512,15 +517,16 @@ public class SBECommands {
          boolean hasSkills = false;
          Iterator var4 = skills.keySet().iterator();
 
-         while(var4.hasNext()) {
-            String key = (String)var4.next();
+         while (var4.hasNext()) {
+            String key = (String) var4.next();
             if (!key.equals("average")) {
                JsonElement el = skills.get(key);
                if (el.isJsonObject()) {
                   JsonObject s = el.getAsJsonObject();
                   int level = s.has("level") ? s.get("level").getAsInt() : 0;
                   double xp = s.has("xp") ? s.get("xp").getAsDouble() : 0.0D;
-                  hover.append("\n§7").append(toTitleCase(key)).append(": §6").append(level).append(" §8(").append(formatNotation((long)xp)).append(" XP)");
+                  hover.append("\n§7").append(toTitleCase(key)).append(": §6").append(level).append(" §8(")
+                        .append(formatNotation((long) xp)).append(" XP)");
                   hasSkills = true;
                }
             }
@@ -560,15 +566,16 @@ public class SBECommands {
             boolean hasSlayer = false;
             Iterator var6 = slayer.keySet().iterator();
 
-            while(var6.hasNext()) {
-               String key = (String)var6.next();
+            while (var6.hasNext()) {
+               String key = (String) var6.next();
                if (!key.equals("total_experience") && !key.equals("totalXp") && !key.equals("total_coins_spent")) {
                   JsonElement el = slayer.get(key);
                   if (el.isJsonObject()) {
                      JsonObject s = el.getAsJsonObject();
                      int level = s.has("level") ? s.get("level").getAsInt() : 0;
                      long xp = s.has("xp") ? s.get("xp").getAsLong() : 0L;
-                     hover.append("\n§7").append(toTitleCase(key)).append(": §6").append(level).append(" §8(").append(formatNotation(xp)).append(" XP)");
+                     hover.append("\n§7").append(toTitleCase(key)).append(": §6").append(level).append(" §8(")
+                           .append(formatNotation(xp)).append(" XP)");
                      hasSlayer = true;
                   }
                }
@@ -603,11 +610,11 @@ public class SBECommands {
 
    private static String formatNotation(long value) {
       if (value >= 1000000000L) {
-         return String.format("%.2fB", (double)value / 1.0E9D);
+         return String.format("%.2fB", (double) value / 1.0E9D);
       } else if (value >= 1000000L) {
-         return String.format("%.2fM", (double)value / 1000000.0D);
+         return String.format("%.2fM", (double) value / 1000000.0D);
       } else {
-         return value >= 1000L ? String.format("%.1fK", (double)value / 1000.0D) : String.valueOf(value);
+         return value >= 1000L ? String.format("%.1fK", (double) value / 1000.0D) : String.valueOf(value);
       }
    }
 
@@ -617,7 +624,7 @@ public class SBECommands {
       char[] var3 = input.toCharArray();
       int var4 = var3.length;
 
-      for(int var5 = 0; var5 < var4; ++var5) {
+      for (int var5 = 0; var5 < var4; ++var5) {
          char c = var3[var5];
          if (Character.isSpaceChar(c)) {
             nextTitleCase = true;

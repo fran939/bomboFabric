@@ -33,12 +33,13 @@ import net.minecraft.world.phys.EntityHitResult;
 public class BomboaddonsClient implements ClientModInitializer {
     private static final String PREFIX = "§8[§bBomboAddons§8]§r ";
     private static boolean openGuiNextTick = false;
+    public static com.mojang.brigadier.CommandDispatcher<FabricClientCommandSource> clientDispatcher;
+
 
     public void onInitializeClient() {
-        Bomboaddons.LOGGER.info("[BomboAddons] onInitializeClient start");
         try {
             ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-                Bomboaddons.LOGGER.info("[BomboAddons] Command registration lambda reached!");
+                clientDispatcher = dispatcher;
 
                 // --- PRIORITY 1: /click and /clicks ---
                 try {
@@ -48,6 +49,17 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 return 1;
                             }));
                     dispatcher.register(ClientCommandManager.literal("click")
+                            .then(ClientCommandManager.literal("list")
+                                    .executes(context -> {
+                                        ClickLogic.listTargets(context.getSource());
+                                        return 1;
+                                    }))
+                            .then(ClientCommandManager.literal("debug")
+                                    .executes(context -> {
+                                        ClickLogic.toggleDebug();
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§7Click Debug: " + (ClickLogic.isDebugMode() ? "§aON" : "§cOFF")));
+                                        return 1;
+                                    }))
                             .then(ClientCommandManager.literal("add")
                                     .then(ClientCommandManager.argument("item", StringArgumentType.string())
                                             .then(ClientCommandManager.argument("gui", StringArgumentType.string())
@@ -86,17 +98,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 context.getSource().sendFeedback(Component.literal(PREFIX + "§aRemoved click target."));
                                                 return 1;
                                             })))
-                            .then(ClientCommandManager.literal("list")
-                                    .executes(context -> {
-                                        ClickLogic.listTargets(context.getSource());
-                                        return 1;
-                                    }))
-                            .then(ClientCommandManager.literal("debug")
-                                    .executes(context -> {
-                                        ClickLogic.toggleDebug();
-                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§7Click Debug: " + (ClickLogic.isDebugMode() ? "§aON" : "§cOFF")));
-                                        return 1;
-                                    }))
                             .then(ClientCommandManager.argument("gui", StringArgumentType.word())
                                     .then(ClientCommandManager.argument("key", StringArgumentType.word())
                                             .then(ClientCommandManager.argument("item", StringArgumentType.word())
@@ -150,6 +151,17 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 return 1;
                             }));
                     dispatcher.register(ClientCommandManager.literal("bombohb")
+                            .then(ClientCommandManager.literal("list")
+                                    .executes(context -> {
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§6--- Hotbar Snapshots ---"));
+                                        boolean found = false;
+                                        for (String s : HotbarSwapper.list()) {
+                                            context.getSource().sendFeedback(Component.literal("  §7- §e" + s));
+                                            found = true;
+                                        }
+                                        if (!found) context.getSource().sendFeedback(Component.literal("  §7None"));
+                                        return 1;
+                                    }))
                             .then(ClientCommandManager.literal("save")
                                     .then(ClientCommandManager.argument("id", StringArgumentType.string())
                                             .executes(context -> {
@@ -172,17 +184,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 }
                                                 return 1;
                                             })))
-                            .then(ClientCommandManager.literal("list")
-                                    .executes(context -> {
-                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§6--- Hotbar Snapshots ---"));
-                                        boolean found = false;
-                                        for (String s : HotbarSwapper.list()) {
-                                            context.getSource().sendFeedback(Component.literal("  §7- §e" + s));
-                                            found = true;
-                                        }
-                                        if (!found) context.getSource().sendFeedback(Component.literal("  §7None"));
-                                        return 1;
-                                    }))
                             .then(ClientCommandManager.literal("apply")
                                     .then(ClientCommandManager.argument("id", StringArgumentType.string())
                                             .executes(context -> {
@@ -213,7 +214,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 context.getSource().sendFeedback(Component.literal(PREFIX + "§7Hitboxes: " + (BomboConfig.get().hitbox ? "§aON" : "§cOFF")));
                                 return 1;
                             }));
-                    Bomboaddons.LOGGER.info("[BomboAddons] Priority commands (/click, /clicks, /bombohb, /hitbox) registered successfully!");
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register priority /click commands!", t);
                 }
@@ -227,7 +227,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                     java.util.function.Consumer<LiteralArgumentBuilder<FabricClientCommandSource>> setupCommands = builder -> {
                         builder.executes(context -> {
                             openGuiNextTick = true;
-                            Bomboaddons.LOGGER.info("[BomboAddons] GUI requested via command.");
                             return 1;
                         });
 
@@ -235,6 +234,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                         builder.then(ClientCommandManager.literal("area").executes(context -> {
                             String loc = SkyblockUtils.getLocation();
                             context.getSource().sendFeedback(Component.literal(PREFIX + "§7Current Area: §a" + loc));
+                            return 1;
+                        }));
+                        builder.then(ClientCommandManager.literal("container").executes(context -> {
+                            LF.printContainerInfo();
                             return 1;
                         }));
                         builder.then(ClientCommandManager.literal("sb").executes(context -> {
@@ -333,12 +336,37 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         }))
                                 .then(ClientCommandManager.literal("clear")
                                         .executes(context -> {
-                                            Bomboaddons.LOGGER.info("[BomboAddons] Clearing all highlights.");
                                             BomboConfig.get().highlights.clear();
                                             BomboConfig.save();
                                             context.getSource().sendFeedback(Component.literal(PREFIX + "§aCleared all highlights."));
                                             return 1;
                                         }))
+                                .then(ClientCommandManager.literal("add")
+                                        .then(ClientCommandManager.argument("mob", StringArgumentType.word())
+                                                .then(ClientCommandManager.argument("color", StringArgumentType.word())
+                                                        .suggests((context, builder2) -> {
+                                                            for (String c : SlotHighlight.COLORS) builder2.suggest(c);
+                                                            return builder2.buildFuture();
+                                                        })
+                                                        .executes(context -> {
+                                                            String mob = StringArgumentType.getString(context, "mob");
+                                                            String color = StringArgumentType.getString(context, "color").toUpperCase();
+                                                            BomboConfig.get().highlights.put(mob.toLowerCase(), new BomboConfig.HighlightInfo(color, false));
+                                                            BomboConfig.save();
+                                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aHighlight added for §e" + mob + " §awith color §b" + color));
+                                                            return 1;
+                                                        })
+                                                        .then(ClientCommandManager.argument("showInvisible", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0, 1))
+                                                                .executes(context -> {
+                                                                    String mob = StringArgumentType.getString(context, "mob");
+                                                                    String color = StringArgumentType.getString(context, "color").toUpperCase();
+                                                                    int siInt = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "showInvisible");
+                                                                    boolean si = (siInt == 1);
+                                                                    BomboConfig.get().highlights.put(mob.toLowerCase(), new BomboConfig.HighlightInfo(color, si));
+                                                                    BomboConfig.save();
+                                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§aHighlight added for §e" + mob + " §7(Invis: " + si + ")"));
+                                                                    return 1;
+                                                                })))))
                                 .then(ClientCommandManager.argument("mob", StringArgumentType.word())
                                         .then(ClientCommandManager.argument("color", StringArgumentType.word())
                                                 .suggests((context, builder2) -> {
@@ -370,12 +398,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     return 1;
                                 }));
 
-                        // Default
-                        builder.then(ClientCommandManager.argument("args", StringArgumentType.greedyString())
-                                .executes(context -> {
-                                    openGuiNextTick = true;
-                                    return 1;
-                                }));
                     };
 
                     setupCommands.accept(bBuilder);
@@ -451,10 +473,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             }))));
                     dispatcher.register(ClientCommandManager.literal("lb")
                             .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
-                                    .executes(context -> {
-                                        LF.searchLocal(StringArgumentType.getString(context, "query"));
-                                        return 1;
-                                    })));
+                                .executes(context -> {
+                                    String query = StringArgumentType.getString(context, "query");
+                                    Minecraft mc = Minecraft.getInstance();
+                                    if (mc.player != null) {
+                                        String name = mc.player.getGameProfile().name();
+                                        LF.show(name, query, false);
+                                    }
+                                    return 1;
+                                })));
                     dispatcher.register(ClientCommandManager.literal("deal")
                             .executes(context -> {
                                 Minecraft mc = Minecraft.getInstance();
@@ -506,14 +533,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                             }));
                     dispatcher.register(ClientCommandManager.literal("bits")
                             .executes(context -> {
-                                context.getSource().sendFeedback(Component.literal(PREFIX + "§7[BUILD_VERIFY_B] §eFetching top bits..."));
                                 BitsManager.fetchTopBits(5).thenAccept(lines -> { for (String line : lines) context.getSource().sendFeedback(Component.literal(line)); });
                                 return 1;
                             })
                             .then(ClientCommandManager.argument("amount", IntegerArgumentType.integer(1, 100))
                                     .executes(context -> {
                                         int amount = IntegerArgumentType.getInteger(context, "amount");
-                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§7[BUILD_VERIFY_B] §eFetching top " + amount + " bits..."));
                                         BitsManager.fetchTopBits(amount).thenAccept(lines -> { for (String line : lines) context.getSource().sendFeedback(Component.literal(line)); });
                                         return 1;
                                     })));
@@ -552,11 +577,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                         IntegerArgumentType.getInteger(context, "index"));
                                                 return 1;
                                             }))));
-                    dispatcher.register(ClientCommandManager.literal("listi")
-                            .executes(context -> {
-                                InventoryManager.listSnapshots(context.getSource());
-                                return 1;
-                            }));
                     dispatcher.register(ClientCommandManager.literal("savei")
                             .executes(context -> {
                                 InventoryManager.captureCurrentGUI();
@@ -566,7 +586,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register inventory commands!", t);
                 }
 
-                Bomboaddons.LOGGER.info("[BomboAddons] Command registration lambda FINISHED!");
             });
 
             HotbarConfig.load();
@@ -575,13 +594,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             LowestBinManager.ensureLoaded();
             ItemHotkeys.init();
             
-            // --- RESTORED LISTENERS ---
-            ClientTickEvents.END_CLIENT_TICK.register(client -> {
-                if (openGuiNextTick && client.player != null) {
-                    openGuiNextTick = false;
-                    client.setScreen(new BomboConfigGUI(client.screen));
-                }
-            });
+            registerTickEvents();
 
             WorldRenderEvents.AFTER_ENTITIES.register(context -> {
                 HighlightESP.render(context);
@@ -590,12 +603,40 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
                 LowestBinManager.reload();
+                AutoExperiments.reset();
             });
 
         } catch (Throwable t) {
             Bomboaddons.LOGGER.error("[BomboAddons] CRITICAL ERROR in onInitializeClient!", t);
         }
-        Bomboaddons.LOGGER.info("[BomboAddons] onInitializeClient finished");
+    }
+
+    private void registerTickEvents() {
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            // Safe execution of Config GUI logic
+            try {
+                if (openGuiNextTick && client.player != null) {
+                    openGuiNextTick = false;
+                    client.setScreen(new BomboConfigGUI(client.screen));
+                }
+            } catch (Throwable t) {
+                // Silently ignore or use logger
+            }
+
+            // Independent Safe Box for Etherwarp
+            try {
+                LeftClickEtherwarp.onTick();
+            } catch (Throwable t) {
+                // Silently ignore
+            }
+
+            // Independent Safe Box for Experiments
+            try {
+                AutoExperiments.onTick();
+            } catch (Throwable t) {
+                // Silently ignore
+            }
+        });
     }
 
 
@@ -603,12 +644,28 @@ public class BomboaddonsClient implements ClientModInitializer {
     private void executeTracked(String cmd) {
         if (cmd == null || cmd.isEmpty())
             return;
-        Minecraft.getInstance().execute(() -> {
-            if (Minecraft.getInstance().player != null) {
-                Minecraft.getInstance().player.connection.sendCommand(cmd.startsWith("/") ? cmd.substring(1) : cmd);
+        Minecraft mc = Minecraft.getInstance();
+        mc.execute(() -> {
+            if (mc.player != null) {
+                String cleanCmd = cmd.startsWith("/") ? cmd.substring(1) : cmd;
+                try {
+                    // Check if it's a client-side command first using our stored dispatcher
+                    if (clientDispatcher != null && clientDispatcher.getRoot().getChild(cleanCmd.split(" ")[0]) != null) {
+                        clientDispatcher.execute(cleanCmd, (FabricClientCommandSource) mc.player);
+                    } else if (mc.player.connection != null) {
+                        // Fallback to server
+                        mc.player.connection.sendCommand(cleanCmd);
+                    } else {
+                        mc.player.displayClientMessage(Component.literal("§c[Bombo] Failed to execute: /" + cleanCmd), false);
+                    }
+                } catch (Exception e) {
+                    if (mc.player.connection != null) mc.player.connection.sendCommand(cleanCmd);
+                }
             }
         });
     }
+
+
 
     private static String cleanName(String name) {
         return name.trim().replaceAll("(?i)§[0-9a-fk-or]", "");
