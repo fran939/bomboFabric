@@ -35,6 +35,10 @@ public abstract class ItemHotkeysMixin {
 
    @Inject(method = { "keyPressed" }, at = { @At("HEAD") }, cancellable = true)
    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+      if (ClickLogic.onKeyPressed(event.key())) {
+         cir.setReturnValue(true);
+         return;
+      }
       if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
          int pressedKey = event.key();
          int tradeBoundKey = ClickLogic.getKeyCode(BomboConfig.get().tradeKey);

@@ -110,6 +110,10 @@ public class BomboConfig {
         public String pestEspColor = "FFAA00";
         public float pestEspThickness = 2.0f;
         public boolean hitbox = false;
+        
+        public boolean autoCloseWardrobe = true;
+        public boolean disableUnequipWardrobe = true;
+        public List<String> wardrobeKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", ""));
     }
 
     public static class CommandBind {

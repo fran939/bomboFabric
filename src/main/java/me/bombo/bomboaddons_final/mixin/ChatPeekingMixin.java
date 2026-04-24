@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Environment(EnvType.CLIENT)
 @Mixin({ ChatComponent.class })
 public class ChatPeekingMixin {
-   @ModifyVariable(method = { "render" }, at = @At("HEAD"), argsOnly = true)
+   @ModifyVariable(method = { "render" }, at = @At("HEAD"), argsOnly = true, ordinal = 0)
    private boolean onRenderFocused(boolean focused) {
       return focused || ChatPeek.isPeeking();
    }

@@ -94,10 +94,69 @@ public class ClickLogic {
       return debugMode;
    }
 
-   public static void onKeyPressed(int key) {
+   public static boolean onKeyPressed(int key) {
+      Minecraft mc = Minecraft.getInstance();
+      Screen var3 = mc.screen;
+      if (var3 instanceof AbstractContainerScreen) {
+         AbstractContainerScreen screen = (AbstractContainerScreen)var3;
+         String title = screen.getTitle().getString().toLowerCase();
+
+         // Wardrobe Keybinds
+         if (title.contains("wardrobe")) {
+            if (debugMode && mc.player != null) {
+               mc.player.displayClientMessage(Component.literal("§7[Debug] Wardrobe GUI detected"), false);
+            }
+            List<String> wardrobeKeys = BomboConfig.get().wardrobeKeys;
+            if (wardrobeKeys != null) {
+               for (int i = 0; i < Math.min(9, wardrobeKeys.size()); i++) {
+                  String kName = wardrobeKeys.get(i);
+                  if (kName != null && !kName.isEmpty()) {
+                     int code = getKeyCode(kName);
+                     if (code != -1 && code == key) {
+                        if (debugMode && mc.player != null) {
+                           mc.player.displayClientMessage(Component.literal("§7[Debug] Pressed Wardrobe key for slot " + (i + 1)), false);
+                        }
+                        int slotIndex = 36 + i;
+                        if (slotIndex < screen.getMenu().slots.size()) {
+                           Slot slot = screen.getMenu().slots.get(slotIndex);
+                           ItemStack stack = slot.getItem();
+                           if (debugMode && mc.player != null) {
+                              mc.player.displayClientMessage(Component.literal("§7[Debug] Target slot item: " + stack.getHoverName().getString()), false);
+                           }
+                           if (!stack.isEmpty()) {
+                              boolean isEquipped = false;
+                              if (BomboConfig.get().disableUnequipWardrobe) {
+                                 List<Component> tooltip = stack.getTooltipLines(TooltipContext.of(mc.level), mc.player, Default.NORMAL);
+                                 for (Component line : tooltip) {
+                                    String lineStr = line.getString();
+                                    if (lineStr.contains(": Equipped")) {
+                                       isEquipped = true;
+                                       break;
+                                    }
+                                 }
+                              }
+                              if (debugMode && mc.player != null) {
+                                 mc.player.displayClientMessage(Component.literal("§7[Debug] isEquipped check: " + isEquipped), false);
+                              }
+                              if (!isEquipped) {
+                                 if (mc.gameMode != null && mc.player != null) {
+                                    mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, 0, ClickType.PICKUP, mc.player);
+                                    if (BomboConfig.get().autoCloseWardrobe) {
+                                       mc.player.closeContainer();
+                                    }
+                                 }
+                              }
+                           }
+                        }
+                        return true;
+                     }
+                  }
+               }
+            }
+         }
+      }
+
       if (BomboConfig.get().chestClicker) {
-         Minecraft mc = Minecraft.getInstance();
-         Screen var3 = mc.screen;
          if (var3 instanceof AbstractContainerScreen) {
             AbstractContainerScreen screen = (AbstractContainerScreen)var3;
             String title = screen.getTitle().getString().toLowerCase();
@@ -115,6 +174,7 @@ public class ClickLogic {
                if (target.keyCode != -1 && key == target.keyCode) {
                   if (target.gui.equals("all") || title.contains(target.gui)) {
                      executeClick(target, mc, screen);
+                     return true;
                   } else if (debugMode) {
                      mc.player.displayClientMessage(Component.literal("§7[Debug] GUI mismatch: '" + title + "' does not contain '" + target.gui + "'"), false);
                   }
@@ -123,8 +183,8 @@ public class ClickLogic {
          } else if (debugMode && mc.player != null) {
             mc.player.displayClientMessage(Component.literal("§7[Debug] Key: " + key + " (" + getKeyName(key) + "), No container screen open"), false);
          }
-
       }
+      return false;
    }
 
    public static void listTargets(net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource source) {

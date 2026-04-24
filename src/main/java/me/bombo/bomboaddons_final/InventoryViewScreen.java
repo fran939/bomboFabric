@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -16,7 +16,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.RegistryOps;
 
 public class InventoryViewScreen extends AbstractContainerScreen<ChestMenu> {
-    private static final ResourceLocation CONTAINER_BACKGROUND = ResourceLocation
+    private static final Identifier CONTAINER_BACKGROUND = Identifier
             .withDefaultNamespace("textures/gui/container/generic_54.png");
     private final int rows;
 
@@ -109,7 +109,7 @@ public class InventoryViewScreen extends AbstractContainerScreen<ChestMenu> {
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float delta, int mouseX, int mouseY) {
-        // signature: (ResourceLocation, int x, int y, int width, int height, float u,
+        // signature: (Identifier, int x, int y, int width, int height, float u,
         // float v, float uWidth, float vHeight)
         // Note: AbstractContainerScreen translates the GuiGraphics to leftPos, topPos
         // before calling renderBg

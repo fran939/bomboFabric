@@ -132,7 +132,7 @@ public class LF {
             StringBuilder lore = new StringBuilder(fullName).append("\n");
             net.minecraft.nbt.ListTag loreList = (net.minecraft.nbt.ListTag) display.get("Lore");
             if (loreList != null) {
-               for (int j = 0; j < loreList.size(); ++j) lore.append(loreList.getString(j)).append("\n");
+               for (int j = 0; j < loreList.size(); ++j) lore.append(loreList.getString(j).orElse("")).append("\n");
             }
             
             boolean match = removeColors(fullName).toLowerCase().contains(query);
@@ -141,12 +141,13 @@ public class LF {
             if (match) {
                int idx = matchCount.incrementAndGet();
                Object[] info = getContainerInfo(containerPath, i, removeColors(fullName));
+               final int slotIndex = i + (int) info[2];
                resolveName(extractLastUuidFromPath(containerPath)).thenAccept(memberName -> {
                   String cont = (String) info[0];
                   if (memberName != null && !memberName.isEmpty() && (ctx.coopMode || !memberName.equalsIgnoreCase(ctx.targetUsername))) cont += " (" + memberName + ")";
                   
                   HoverEvent h = createHoverEventRobust(lore.toString());
-                  ClickEvent c = createClickEventRobust("RUN_COMMAND", (String) info[1]);
+                  ClickEvent c = createClickEventRobust("RUN_COMMAND", "/bombo_highlight_slot " + slotIndex + " " + info[1]);
                   
                   MutableComponent link = Component.literal(fullName);
                   Style style = Style.EMPTY;
@@ -154,7 +155,10 @@ public class LF {
                   if (c != null) style = style.withClickEvent(c);
                   link.setStyle(style);
                   
-                  Component msg = Component.literal("§7#" + idx + " ").append(link).append(Component.literal(" §r§7(" + cont + ")"));
+                  MutableComponent contComponent = Component.literal(" §r§7(" + cont + ")");
+                  if (c != null) contComponent.setStyle(Style.EMPTY.withClickEvent(c));
+                  
+                  Component msg = Component.literal("§7#" + idx + " ").append(link).append(contComponent);
                   Minecraft.getInstance().execute(() -> sendMessage(msg));
                });
             }
@@ -166,17 +170,54 @@ public class LF {
       String s = raw.toLowerCase();
       String name = "Inventory";
       String cmd = "/play sb";
-      if (s.contains("backpack")) { name = "Backpack"; cmd = "/backpack"; }
-      else if (s.contains("ender")) { name = "Ender Chest"; cmd = "/enderchest"; }
-      return new Object[] { name, cmd };
+      int offset = 0;
+      if (s.contains("backpack")) {
+          name = "Backpack"; cmd = "/backpack";
+          offset = 9;
+          try {
+              String[] parts = s.split(" > ");
+              for (int i = 0; i < parts.length - 1; i++) {
+                  if (parts[i].contains("backpack")) {
+                      int num = Integer.parseInt(parts[i+1]) + 1;
+                      name = "Backpack " + num;
+                      cmd = "/backpack " + num;
+                      break;
+                  }
+              }
+          } catch (Exception e) {}
+      }
+      else if (s.contains("ender")) {
+          name = "Ender Chest"; cmd = "/enderchest";
+          try {
+              String[] parts = s.split(" > ");
+              for (int i = 0; i < parts.length - 1; i++) {
+                  if (parts[i].contains("ender")) {
+                      int num = Integer.parseInt(parts[i+1]) + 1;
+                      name = "Ender Chest " + num;
+                      cmd = "/enderchest " + num;
+                      break;
+                  }
+              }
+          } catch (Exception e) {}
+      }
+      else if (s.contains("museum")) { name = "Museum"; cmd = "/museum"; }
+      else if (s.contains("vault")) { name = "Personal Vault"; cmd = "/bank"; }
+      else if (s.contains("wardrobe")) { name = "Wardrobe"; cmd = "/wardrobe"; }
+      else if (s.contains("sacks")) { name = "Sacks"; cmd = "/sacks"; }
+      else if (s.contains("accessory") || s.contains("talisman")) { name = "Accessory Bag"; cmd = "/accessories"; }
+      else if (s.contains("pets")) { name = "Pets"; cmd = "/pets"; }
+      
+      return new Object[] { name, cmd, offset };
    }
 
    public static ClickEvent createClickEventRobust(String actionName, String value) {
+      if ("RUN_COMMAND".equals(actionName)) return new ClickEvent.RunCommand(value);
+      if ("SUGGEST_COMMAND".equals(actionName)) return new ClickEvent.SuggestCommand(value);
       return null;
    }
 
    public static HoverEvent createHoverEventRobust(String text) {
-      return null;
+      return new HoverEvent.ShowText(Component.literal(text));
    }
 
    public static String removeColors(String text) { return text.replaceAll("(?i)§[0-9a-fk-or]", ""); }
@@ -190,9 +231,85 @@ public class LF {
       return null;
    }
 
-   private static CompletableFuture<UUID> getUuid(String name) { return CompletableFuture.completedFuture(UUID.randomUUID()); }
-   private static CompletableFuture<String> getFeatureData(String uuid) { return CompletableFuture.completedFuture("{}"); }
-   private static CompletableFuture<String> resolveName(String uuid) { return CompletableFuture.completedFuture(NAME_CACHE.getOrDefault(uuid, "")); }
+   private static final java.net.http.HttpClient CLIENT = java.net.http.HttpClient.newBuilder()
+           .version(java.net.http.HttpClient.Version.HTTP_2)
+           .connectTimeout(java.time.Duration.ofSeconds(10L))
+           .build();
+
+   private static CompletableFuture<String> fetchString(String url) {
+      java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create(url)).header("User-Agent", "Minecraft-Mod-1.21").GET().build();
+      return CLIENT.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString()).thenApply((res) -> {
+         return res.statusCode() == 200 ? res.body() : null;
+      }).exceptionally((e) -> {
+         return null;
+      });
+   }
+
+   private static CompletableFuture<UUID> getUuid(String username) {
+      return fetchString("https://api.ashcon.app/mojang/v2/uuid/" + username).thenCompose((response) -> {
+         if (response != null) {
+            try {
+               if (response.contains("-") && response.length() == 36) {
+                  return CompletableFuture.completedFuture(UUID.fromString(response.trim()));
+               }
+               JsonObject json = JsonParser.parseString(response).getAsJsonObject();
+               if (json.has("uuid")) {
+                  return CompletableFuture.completedFuture(UUID.fromString(json.get("uuid").getAsString()));
+               }
+            } catch (Exception e) {}
+         }
+         return fetchString("https://api.mojang.com/users/profiles/minecraft/" + username).thenApply((mojangRes) -> {
+            if (mojangRes == null) return null;
+            try {
+               JsonObject json = JsonParser.parseString(mojangRes).getAsJsonObject();
+               if (json.has("id")) {
+                  return UUID.fromString(json.get("id").getAsString().replaceFirst("(\\w{8})(\\w{4})(\\w{4})(\\w{4})(\\w{12})", "$1-$2-$3-$4-$5"));
+               }
+            } catch (Exception e) {}
+            return null;
+         });
+      });
+   }
+
+   private static CompletableFuture<String> getFeatureData(String cleanUuid) {
+      return fetchString("https://bomboapi.frandl938.workers.dev/" + cleanUuid).thenCompose((response) -> {
+         if (response != null && !response.isEmpty() && response.startsWith("{")) {
+            return CompletableFuture.completedFuture(response);
+         }
+         return fetchString("https://profile.snailify.workers.dev/?uuid=" + cleanUuid);
+      });
+   }
+
+   private static CompletableFuture<String> resolveName(String uuid) {
+      if (uuid == null) return CompletableFuture.completedFuture(null);
+      if (NAME_CACHE.containsKey(uuid.toLowerCase())) return CompletableFuture.completedFuture(NAME_CACHE.get(uuid.toLowerCase()));
+      
+      return fetchString("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid).thenCompose((response) -> {
+         if (response != null && response.contains("\"name\"")) {
+            try {
+               JsonObject json = JsonParser.parseString(response).getAsJsonObject();
+               if (json.has("name")) {
+                  String name = json.get("name").getAsString();
+                  NAME_CACHE.put(uuid.toLowerCase(), name);
+                  return CompletableFuture.completedFuture(name);
+               }
+            } catch (Exception e) {}
+         }
+         return fetchString("https://api.ashcon.app/mojang/v2/user/" + uuid).thenApply((fallbackRes) -> {
+            if (fallbackRes == null) return null;
+            try {
+               JsonObject json = JsonParser.parseString(fallbackRes).getAsJsonObject();
+               if (json.has("username")) {
+                  String name = json.get("username").getAsString();
+                  NAME_CACHE.put(uuid.toLowerCase(), name);
+                  return name;
+               }
+            } catch (Exception e) {}
+            return null;
+         });
+      });
+   }
+
    private static void sendMessage(String msg) { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(Component.literal(msg), false); }
    private static void sendMessage(Component msg) { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(msg, false); }
 

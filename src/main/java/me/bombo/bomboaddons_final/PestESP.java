@@ -19,7 +19,7 @@ public class PestESP {
         if (mc.level == null || mc.player == null) return;
         if (!SkyblockUtils.isInGarden()) return;
 
-        // Visual rendering disabled for stability in 1.21.10
+        // Visual rendering disabled for stability in 1.21.11
         /*
         pests.clear();
         for (Entity entity : mc.level.entitiesForRendering()) {

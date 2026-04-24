@@ -21,7 +21,6 @@ public abstract class KeyboardMixin {
    private void onKey(long window, int action, KeyEvent event, CallbackInfo ci) {
       if (action == 1) { // 1 = Press, 0 = Release, 2 = Repeat
          int key = event.key();
-         ClickLogic.onKeyPressed(key);
 
          Minecraft mc = Minecraft.getInstance();
 

@@ -40,7 +40,7 @@ public class SBECommands {
          String selfUuid = mc.getUser().getProfileId().toString();
          sendMessage("§7Fetching data for " + name + "...");
          HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
-               .header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.10) " + selfUuid).timeout(Duration.ofSeconds(60L))
+               .header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.11) " + selfUuid).timeout(Duration.ofSeconds(60L))
                .GET().build();
          client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body).thenAccept((body) -> {
             try {

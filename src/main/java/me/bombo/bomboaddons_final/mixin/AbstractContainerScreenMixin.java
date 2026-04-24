@@ -28,7 +28,7 @@ public abstract class AbstractContainerScreenMixin {
     }
 
     @Inject(method = "renderSlot", at = @At("TAIL"))
-    private void onRenderSlot(GuiGraphics guiGraphics, Slot slot, CallbackInfo ci) {
+    private void onRenderSlot(GuiGraphics guiGraphics, Slot slot, int x, int y, CallbackInfo ci) {
         int color = 0;
         
         // Only highlight slots targeted during search navigation (temporary session results)

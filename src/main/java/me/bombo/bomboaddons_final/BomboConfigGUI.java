@@ -24,7 +24,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "Experiments", "Pest ESP", "Hotkeys", "Clicker",
-            "Keybinds", "Highlights");
+            "Keybinds", "Highlights", "Wardrobe");
     private static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -44,6 +44,7 @@ public class BomboConfigGUI extends Screen {
     private static String highMobInput = "";
     private static String highColorInput = "GOLD";
     private static boolean highShowInvis = false;
+    private static String editingHighMob = null;
     private static String listeningForKeyTarget = "";
 
     private double scrollAmount = 0;
@@ -253,14 +254,26 @@ public class BomboConfigGUI extends Screen {
                     curY = addTextBox("Color", highColorInput, v -> highColorInput = v, contentX, contentWidth, curY);
                     
                     int finalCurY = curY;
-                    addRenderableWidget(Button.builder(Component.literal("§a+ Add Highlight"), btn -> {
+                    String addBtnText = editingHighMob != null ? "§e✔ Save Highlight" : "§a+ Add Highlight";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
                         if (!highMobInput.isEmpty()) {
+                            if (editingHighMob != null) {
+                                s.highlights.remove(editingHighMob);
+                            }
                             s.highlights.put(highMobInput.toLowerCase(), new BomboConfig.HighlightInfo(highColorInput.toUpperCase(), true));
                             BomboConfig.save();
                             highMobInput = ""; highColorInput = "GOLD";
+                            editingHighMob = null;
                             init();
                         }
                     }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+                    if (editingHighMob != null) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel Edit"), btn -> {
+                            highMobInput = ""; highColorInput = "GOLD";
+                            editingHighMob = null;
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 80, 20).build());
+                    }
 
                     curY += 35; // Space before list
                     int listStartY = curY;
@@ -272,12 +285,23 @@ public class BomboConfigGUI extends Screen {
                         if (itemY > listStartY + 15 && itemY < height - 20) {
                             BomboConfig.HighlightInfo info = s.highlights.get(mobName);
                             addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                editingHighMob = mobName;
                                 highMobInput = mobName;
                                 highColorInput = s.highlights.get(mobName).color;
                                 init();
                             }).bounds(contentX + 180, itemY + 5, 40, 18).build());
                             addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> { s.highlights.remove(mobName); BomboConfig.save(); init(); }).bounds(contentX + 225, itemY + 5, 35, 18).build());
                         }
+                    }
+                }
+                case 7 -> { // Wardrobe
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Auto Close Wardrobe", s.autoCloseWardrobe, v -> s.autoCloseWardrobe = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Disable Unequip", s.disableUnequipWardrobe, v -> s.disableUnequipWardrobe = v, contentX, contentWidth, curY);
+                    curY += 10;
+                    for (int i = 0; i < 9; i++) {
+                        final int index = i;
+                        curY = addKeyBindButton("Slot " + (i + 1), s.wardrobeKeys.get(i), v -> s.wardrobeKeys.set(index, v), "wardrobe" + i, contentX, contentWidth, curY);
                     }
                 }
             }
@@ -490,6 +514,18 @@ public class BomboConfigGUI extends Screen {
                         listY += 22;
                     }
                 }
+                case 7 -> {
+                    g.drawString(font, "§6§lWardrobe", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Auto Close Wardrobe", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Disable Unequip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 10;
+                    for (int i = 0; i < 9; i++) {
+                        g.drawString(font, "§fSlot " + (i + 1) + ":", contentX, curY, 0xFFFFFFFF);
+                        curY += ITEM_HEIGHT;
+                    }
+                }
             }
         } catch (Exception e) {
             Bomboaddons.LOGGER.error("[BomboAddons] Error during render!", e);
@@ -537,6 +573,13 @@ public class BomboConfigGUI extends Screen {
 
     private void updateKeyTarget(String keyName) {
         BomboConfig.Settings s = BomboConfig.get();
+        if (listeningForKeyTarget.startsWith("wardrobe")) {
+            try {
+                int index = Integer.parseInt(listeningForKeyTarget.substring(8));
+                s.wardrobeKeys.set(index, keyName);
+            } catch (Exception ignored) {}
+            return;
+        }
         switch (listeningForKeyTarget) {
             case "copyNbt" -> s.copyNbtKey = keyName;
             case "gfsMax" -> s.gfsMaxKey = keyName;
