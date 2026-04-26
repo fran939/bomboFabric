@@ -134,6 +134,10 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 3 -> { // Hotkeys
                     curY += ITEM_HEIGHT;
+                    curY = addKeyBindButton("Trade", s.tradeKey, v -> s.tradeKey = v, "trade", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Recipe", s.recipeKey, v -> s.recipeKey = v, "recipe", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Usage", s.usageKey, v -> s.usageKey = v, "usage", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Show Info", s.showItemKey, v -> s.showItemKey = v, "showItem", contentX, contentWidth, curY);
                     curY = addKeyBindButton("Copy NBT", s.copyNbtKey, v -> s.copyNbtKey = v, "copyNbt", contentX, contentWidth, curY);
                     curY = addKeyBindButton("GFS Max", s.gfsMaxKey, v -> s.gfsMaxKey = v, "gfsMax", contentX, contentWidth, curY);
                     curY = addKeyBindButton("GFS Stack", s.gfsStackKey, v -> s.gfsStackKey = v, "gfsStack", contentX, contentWidth, curY);
@@ -425,6 +429,14 @@ public class BomboConfigGUI extends Screen {
                 case 3 -> {
                     g.drawString(font, "§6§lHotkey Shortcuts", contentX, curY, 0xFFFFAA00, true);
                     curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fTrade:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fRecipe:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fUsage:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fShow Info:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
                     g.drawString(font, "§fCopy NBT:", contentX, curY, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§fGFS Max:", contentX, curY, 0xFFFFFFFF);
@@ -581,6 +593,10 @@ public class BomboConfigGUI extends Screen {
             return;
         }
         switch (listeningForKeyTarget) {
+            case "trade" -> s.tradeKey = keyName;
+            case "recipe" -> s.recipeKey = keyName;
+            case "usage" -> s.usageKey = keyName;
+            case "showItem" -> s.showItemKey = keyName;
             case "copyNbt" -> s.copyNbtKey = keyName;
             case "gfsMax" -> s.gfsMaxKey = keyName;
             case "gfsStack" -> s.gfsStackKey = keyName;

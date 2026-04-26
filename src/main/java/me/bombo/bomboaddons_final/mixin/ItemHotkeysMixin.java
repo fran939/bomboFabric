@@ -171,10 +171,31 @@ public abstract class ItemHotkeysMixin {
          }
 
          if (action.equalsIgnoreCase("TRADE")) {
+            String title = Minecraft.getInstance().screen.getTitle().getString();
+            String cleanName = this.cleanName(itemStack);
+            
+            if (title.contains("Hunting Box")) {
+               Minecraft.getInstance().player.connection.sendCommand("bz " + cleanName + " Shard");
+               return true;
+            }
+            
+            if (title.contains("Attribute Menu")) {
+               ItemLore itemLore = itemStack.get(DataComponents.LORE);
+               if (itemLore != null) {
+                  for (Component line : itemLore.lines()) {
+                     String lineStr = line.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+                     if (lineStr.startsWith("Source: ")) {
+                        String sourceItem = lineStr.substring(8).replaceAll("\\(C\\d+\\)", "").trim();
+                        Minecraft.getInstance().player.connection.sendCommand("bz " + sourceItem);
+                        return true;
+                     }
+                  }
+               }
+            }
+
             boolean isBazaar = BazaarUtils.isBazaarItem(skyblockId);
             if (skyblockId.contains("ENCHANTED_BOOK")) isBazaar = true;
             
-            String cleanName = this.cleanName(itemStack);
             if (isBazaar) {
                Minecraft.getInstance().player.connection.sendCommand("bz " + cleanName.toLowerCase());
             } else {
@@ -189,7 +210,12 @@ public abstract class ItemHotkeysMixin {
    private String cleanName(ItemStack itemStack) {
       String originalName = itemStack.getHoverName().getString();
       String name = originalName.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+      
+      // Remove quantity prefixes like "64x " or "1x " at the start
+      name = name.replaceAll("^\\d+x\\s+", "").trim();
+      // Remove quantity suffixes like " x64" at the end
       name = name.replaceAll("\\s+x\\d+$", "").trim();
+      
       name = name.replaceAll("[⚚✪⭐✦]", "").trim();
 
       if (name.startsWith("SELL ")) name = name.substring(5).trim();
@@ -207,6 +233,23 @@ public abstract class ItemHotkeysMixin {
                String cleanLine = line.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
                if (cleanLine.isEmpty() || cleanLine.equalsIgnoreCase("Combinable in Anvil") || cleanLine.contains("view")) continue;
                return cleanLine.replaceAll("(?i)\\s+(I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|[0-9]+)$", "").trim();
+            }
+         }
+      }
+
+      // Strip reforge from NBT if available
+      CustomData customData = itemStack.get(DataComponents.CUSTOM_DATA);
+      if (customData != null) {
+         CompoundTag tag = customData.copyTag();
+         CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+         if (ea != null) {
+            String modifier = ea.getString("modifier").orElse("");
+            if (!modifier.isEmpty()) {
+               // Capitalize first letter of modifier for matching
+               String reforgeName = modifier.substring(0, 1).toUpperCase() + modifier.substring(1).toLowerCase() + " ";
+               if (name.startsWith(reforgeName)) {
+                  name = name.substring(reforgeName.length()).trim();
+               }
             }
          }
       }
