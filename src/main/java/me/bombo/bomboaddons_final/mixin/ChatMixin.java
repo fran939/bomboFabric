@@ -2,6 +2,7 @@ package me.bombo.bomboaddons_final.mixin;
 
 import java.util.List;
 import java.util.function.Predicate;
+import me.bombo.bomboaddons_final.CarnivalAuto;
 import me.bombo.bomboaddons_final.SphinxMacro;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -35,7 +36,9 @@ public abstract class ChatMixin {
    @Inject(method = { "addMessage(Lnet/minecraft/network/chat/Component;)V" }, at = { @At("HEAD") })
    private void onAddMessage(Component message, CallbackInfo ci) {
       if (message != null) {
-         SphinxMacro.onChatMessage(message.getString());
+         String raw = message.getString();
+         SphinxMacro.onChatMessage(raw);
+         CarnivalAuto.onChatMessage(raw);
       }
 
    }

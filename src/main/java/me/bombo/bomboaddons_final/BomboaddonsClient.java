@@ -606,6 +606,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                 AutoExperiments.reset();
             });
 
+            net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+                DebugUtils.debug("chat", message.getString().replaceAll("§.", ""));
+            });
+
         } catch (Throwable t) {
             Bomboaddons.LOGGER.error("[BomboAddons] CRITICAL ERROR in onInitializeClient!", t);
         }
@@ -636,6 +640,28 @@ public class BomboaddonsClient implements ClientModInitializer {
             } catch (Throwable t) {
                 // Silently ignore
             }
+
+            try {
+                GardenMovement.onTick(client);
+            } catch (Throwable t) {
+                // Silently ignore
+            }
+
+            try {
+                if (client.player != null && client.player.tickCount % 100 == 0) {
+                    if (client.level != null) {
+                        int count = 0;
+                        StringBuilder info = new StringBuilder("Entities near you: ");
+                        for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
+                            count++;
+                            if (e.distanceTo(client.player) < 10) {
+                                info.append(e.getName().getString()).append(" (").append(e.getId()).append("), ");
+                            }
+                        }
+                        DebugUtils.debug("entity", "Total: " + count + " | Nearby: " + info.toString());
+                    }
+                }
+            } catch (Throwable t) {}
         });
     }
 
@@ -649,6 +675,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             if (mc.player != null) {
                 String cleanCmd = cmd.startsWith("/") ? cmd.substring(1) : cmd;
                 try {
+                    DebugUtils.debug("command", "Runned: /" + cleanCmd);
                     // Check if it's a client-side command first using our stored dispatcher
                     if (clientDispatcher != null && clientDispatcher.getRoot().getChild(cleanCmd.split(" ")[0]) != null) {
                         clientDispatcher.execute(cleanCmd, (FabricClientCommandSource) mc.player);

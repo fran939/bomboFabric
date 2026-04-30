@@ -37,9 +37,18 @@ public class ClickLogic {
    private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_clicks.json").toFile();
    private static final Map<String, Integer> KEY_MAP = new HashMap();
 
-   public static int getKeyCode(String keyName) {
-      return (Integer)KEY_MAP.getOrDefault(keyName.toLowerCase(), -1);
-   }
+    public static int getKeyCode(String keyName) {
+        if (keyName == null) return -1;
+        String name = keyName.toLowerCase();
+        if (name.startsWith("key_")) {
+            try {
+                return Integer.parseInt(name.substring(4));
+            } catch (NumberFormatException e) {
+                return -1;
+            }
+        }
+        return KEY_MAP.getOrDefault(name, -1);
+    }
 
    public static boolean isCodeDown(long handle, com.mojang.blaze3d.platform.Window win, int code) {
       if (code == -1) return false;
@@ -135,9 +144,7 @@ public class ClickLogic {
                                     }
                                  }
                               }
-                              if (debugMode && mc.player != null) {
-                                 mc.player.displayClientMessage(Component.literal("§7[Debug] isEquipped check: " + isEquipped), false);
-                              }
+                              DebugUtils.debug("gui", "isEquipped check: " + isEquipped);
                               if (!isEquipped) {
                                  if (mc.gameMode != null && mc.player != null) {
                                     mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, 0, ClickType.PICKUP, mc.player);
@@ -160,16 +167,12 @@ public class ClickLogic {
          if (var3 instanceof AbstractContainerScreen) {
             AbstractContainerScreen screen = (AbstractContainerScreen)var3;
             String title = screen.getTitle().getString().toLowerCase();
-            if (debugMode) {
-               mc.player.displayClientMessage(Component.literal("§7[Debug] Pressed Key: " + key + " (" + getKeyName(key) + "), GUI: " + title), false);
-            }
+            DebugUtils.debug("gui", "Pressed Key: " + key + " (" + getKeyName(key) + "), GUI: " + title);
 
             for (ClickLogic.ClickTarget target : targets) {
                if (target.auto) continue;
 
-               if (debugMode) {
-                  mc.player.displayClientMessage(Component.literal("§7[Debug] Checking target: " + target.item + " (Key: " + target.keyCode + "/" + target.keyName + ", GUI: " + target.gui + ")"), false);
-               }
+               DebugUtils.debug("gui", "Checking target: " + target.item + " (Key: " + target.keyCode + "/" + target.keyName + ", GUI: " + target.gui + ")");
                
                if (target.keyCode != -1 && key == target.keyCode) {
                   if (target.gui.equals("all") || title.contains(target.gui)) {
@@ -230,9 +233,7 @@ public class ClickLogic {
                         } while(!target.auto);
                      } while(!target.gui.equals("all") && !title.contains(target.gui));
 
-                     if (debugMode && mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal("§7[Debug] Auto clicking: " + target.item), false);
-                     }
+                     DebugUtils.debug("gui", "Auto clicking: " + target.item);
 
                      executeClick(target, mc, screen);
                   }
@@ -317,9 +318,7 @@ public class ClickLogic {
             }
          }
 
-         if (debugMode && mc.player != null) {
-            mc.player.displayClientMessage(Component.literal("§7[Debug] Item '" + target.item + "' not found in GUI"), false);
-         }
+         DebugUtils.debug("gui", "Item '" + target.item + "' not found in GUI");
 
       }
    }

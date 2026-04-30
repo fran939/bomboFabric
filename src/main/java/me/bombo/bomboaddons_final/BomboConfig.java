@@ -96,12 +96,26 @@ public class BomboConfig {
         public String gfsStackKey = "l";
         public Map<String, HighlightInfo> highlights = new HashMap<>();
         public boolean highlightsEnabled = true;
-        public boolean debugMode = true;
+        public boolean debugMaster = false;
+        public boolean debugChat = false;
+        public boolean debugGuis = false;
+        public boolean debugEntities = false;
+        public boolean debugCommands = false;
+        public boolean debugMode = false;
         public List<CommandBind> commandBinds = null;
         public String activeProfile = "default";
         public Map<String, List<CommandBind>> profileBinds = new HashMap<>();
         public boolean hollowWandClickThrough = false;
         public boolean hollowWandAutoCombine = false;
+        public boolean autoAcceptCarnival = false;
+        
+        public boolean gardenMovement = false;
+        public String gardenForwardKey = "up";
+        public String gardenBackwardKey = "down";
+        public String gardenLeftKey = "left";
+        public String gardenRightKey = "right";
+        public String gardenBreakKey = "b";
+        public String gardenUseKey = "u";
         
         public boolean lowestBin = true;
         public Map<String, String> calculatorAliases = new HashMap<>();

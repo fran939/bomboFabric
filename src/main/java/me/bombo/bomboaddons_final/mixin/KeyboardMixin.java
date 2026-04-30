@@ -23,6 +23,8 @@ public abstract class KeyboardMixin {
          int key = event.key();
 
          Minecraft mc = Minecraft.getInstance();
+         
+         me.bombo.bomboaddons_final.GardenMovement.handleKey(key);
 
          // Inventory Snapshot 'P' key
          if (key == 80 && mc.screen instanceof AbstractContainerScreen) {

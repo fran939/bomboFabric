@@ -23,8 +23,8 @@ public class BomboConfigGUI extends Screen {
     private static final int PADDING = 8;
 
     private final Screen parent;
-    private final List<String> categories = List.of("General", "Experiments", "Pest ESP", "Hotkeys", "Clicker",
-            "Keybinds", "Highlights", "Wardrobe");
+    private final List<String> categories = List.of("General", "Experiments", "Garden", "Hotkeys", "Clicker",
+            "Keybinds", "Highlights", "Wardrobe", "Debug");
     private static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -104,8 +104,8 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Sphinx Macro", s.sphinxMacro, v -> s.sphinxMacro = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Hollow Wand Fix", s.hollowWandClickThrough, v -> s.hollowWandClickThrough = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Hollow Wand Double Click", s.hollowWandAutoCombine, v -> s.hollowWandAutoCombine = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Auto Accept Carnival", s.autoAcceptCarnival, v -> s.autoAcceptCarnival = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Debug Mode", s.debugMode, v -> s.debugMode = v, contentX, contentWidth, curY);
                 }
                 case 1 -> { // Experiments
                     curY += ITEM_HEIGHT;
@@ -125,12 +125,22 @@ public class BomboConfigGUI extends Screen {
                     }).bounds(contentX, curY, 150, 20).build());
                     curY += ITEM_HEIGHT + 5;
                 }
-                case 2 -> { // Pest ESP
+                case 2 -> { // Garden
                     curY += ITEM_HEIGHT;
-                    curY = addBoolOption("Enabled", s.pestEsp, v -> s.pestEsp = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Tracers", s.pestEspTracer, v -> s.pestEspTracer = v, contentX, contentWidth, curY);
-                    curY = addTextBox("Color", s.pestEspColor, v -> s.pestEspColor = v, contentX, contentWidth, curY);
-                    curY = addFloatLabelSlider("Size", s.pestEspThickness, 0.5f, 5.0f, v -> s.pestEspThickness = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Garden Movement", s.gardenMovement, v -> { s.gardenMovement = v; if (!v) GardenMovement.reset(); }, contentX, contentWidth, curY);
+                    curY += 10;
+                    curY = addKeyBindButton("Forward", s.gardenForwardKey, v -> s.gardenForwardKey = v, "gardenF", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Backward", s.gardenBackwardKey, v -> s.gardenBackwardKey = v, "gardenB", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Left", s.gardenLeftKey, v -> s.gardenLeftKey = v, "gardenL", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Right", s.gardenRightKey, v -> s.gardenRightKey = v, "gardenR", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Break", s.gardenBreakKey, v -> s.gardenBreakKey = v, "gardenBr", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Use", s.gardenUseKey, v -> s.gardenUseKey = v, "gardenU", contentX, contentWidth, curY);
+                    
+                    curY += 20;
+                    curY = addBoolOption("Pest ESP Enabled", s.pestEsp, v -> s.pestEsp = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Pest Tracers", s.pestEspTracer, v -> s.pestEspTracer = v, contentX, contentWidth, curY);
+                    curY = addTextBox("Pest Color", s.pestEspColor, v -> s.pestEspColor = v, contentX, contentWidth, curY);
+                    curY = addFloatLabelSlider("Pest Size", s.pestEspThickness, 0.5f, 5.0f, v -> s.pestEspThickness = v, contentX, contentWidth, curY);
                 }
                 case 3 -> { // Hotkeys
                     curY += ITEM_HEIGHT;
@@ -302,11 +312,29 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Auto Close Wardrobe", s.autoCloseWardrobe, v -> s.autoCloseWardrobe = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Disable Unequip", s.disableUnequipWardrobe, v -> s.disableUnequipWardrobe = v, contentX, contentWidth, curY);
-                    curY += 10;
                     for (int i = 0; i < 9; i++) {
                         final int index = i;
                         curY = addKeyBindButton("Slot " + (i + 1), s.wardrobeKeys.get(i), v -> s.wardrobeKeys.set(index, v), "wardrobe" + i, contentX, contentWidth, curY);
                     }
+                }
+                case 8 -> { // Debug
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("MASTER DEBUG", s.debugMaster, v -> s.debugMaster = v, contentX, contentWidth, curY);
+                    
+                    addRenderableWidget(Button.builder(Component.literal("§a[Enable All Debug]"), btn -> {
+                        s.debugChat = true;
+                        s.debugGuis = true;
+                        s.debugEntities = true;
+                        s.debugCommands = true;
+                        s.debugMaster = true;
+                    }).bounds(contentX, curY, contentWidth, 20).build());
+                    curY += ITEM_HEIGHT + 4;
+
+                    curY = addBoolOption("Chat Debug", s.debugChat, v -> s.debugChat = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("GUIs Debug", s.debugGuis, v -> s.debugGuis = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Entities Debug", s.debugEntities, v -> s.debugEntities = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Command Debug", s.debugCommands, v -> s.debugCommands = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Debug Mode (Legacy)", s.debugMode, v -> s.debugMode = v, contentX, contentWidth, curY);
                 }
             }
 
@@ -397,9 +425,9 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Hollow Wand Double Click", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Lowest BIN Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    g.drawString(font, "§7Auto Accept Carnival", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Debug Mode", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    g.drawString(font, "§7Lowest BIN Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 1 -> {
                     g.drawString(font, "§6§lExperiment Solver", contentX, curY, 0xFFFFAA00, true);
@@ -416,15 +444,30 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT + 5;
                 }
                 case 2 -> {
-                    g.drawString(font, "§6§lPest ESP", contentX, curY, 0xFFFFAA00, true);
+                    g.drawString(font, "§6§lGarden Settings", contentX, curY, 0xFFFFAA00, true);
                     curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    g.drawString(font, "§7Garden Movement", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 10;
+                    g.drawString(font, "§fForward:", contentX, curY, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Tracers", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    g.drawString(font, "§fBackward:", contentX, curY, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fColor (Hex):", contentX, curY, 0xFFFFFFFF);
+                    g.drawString(font, "§fLeft:", contentX, curY, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fThickness: §e" + BomboConfig.get().pestEspThickness, contentX, curY, 0xFFFFFFFF);
+                    g.drawString(font, "§fRight:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fBreak:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fUse:", contentX, curY, 0xFFFFFFFF);
+
+                    curY += 20;
+                    g.drawString(font, "§7Pest ESP Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Pest Tracers", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fPest Color (Hex):", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fPest Thickness: §e" + BomboConfig.get().pestEspThickness, contentX, curY, 0xFFFFFFFF);
                 }
                 case 3 -> {
                     g.drawString(font, "§6§lHotkey Shortcuts", contentX, curY, 0xFFFFAA00, true);
@@ -538,6 +581,21 @@ public class BomboConfigGUI extends Screen {
                         curY += ITEM_HEIGHT;
                     }
                 }
+                case 8 -> {
+                    g.drawString(font, "§c§lDebug Settings", contentX, curY, 0xFFFF5555, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§b§lMASTER DEBUG", contentX + 24, curY + 4, 0xFF55FFFF, false);
+                    curY += ITEM_HEIGHT + 24; // Space for button
+                    g.drawString(font, "§7Chat Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7GUIs Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Entities Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Command Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Debug Mode (Legacy)", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                }
             }
         } catch (Exception e) {
             Bomboaddons.LOGGER.error("[BomboAddons] Error during render!", e);
@@ -602,6 +660,12 @@ public class BomboConfigGUI extends Screen {
             case "gfsStack" -> s.gfsStackKey = keyName;
             case "chatPeek" -> s.chatPeekKey = keyName;
             case "clicker" -> clickKeyInput = keyName;
+            case "gardenF" -> s.gardenForwardKey = keyName;
+            case "gardenB" -> s.gardenBackwardKey = keyName;
+            case "gardenL" -> s.gardenLeftKey = keyName;
+            case "gardenR" -> s.gardenRightKey = keyName;
+            case "gardenBr" -> s.gardenBreakKey = keyName;
+            case "gardenU" -> s.gardenUseKey = keyName;
         }
     }
 }

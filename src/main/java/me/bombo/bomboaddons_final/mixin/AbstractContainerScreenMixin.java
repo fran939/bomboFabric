@@ -47,6 +47,11 @@ public abstract class AbstractContainerScreenMixin {
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
     private void onMouseClicked(MouseButtonEvent event, boolean handled,
             CallbackInfoReturnable<Boolean> cir) {
+        if (me.bombo.bomboaddons_final.ComposterHelper.onMouseClicked((AbstractContainerScreen)(Object)this, hoveredSlot, event.button())) {
+            cir.setReturnValue(true);
+            return;
+        }
+        
         if (hoveredSlot != null && (SlotHighlight.isTargetSlot(hoveredSlot.index) || hoveredSlot.index == 45 || hoveredSlot.index == 53)) {
             return; // Don't clear if we clicked a target slot or navigation arrows.
         }
