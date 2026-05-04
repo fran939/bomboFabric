@@ -118,6 +118,7 @@ public class BomboConfig {
         public String gardenUseKey = "u";
         
         public boolean lowestBin = true;
+        public boolean npcPrice = true;
         public Map<String, String> calculatorAliases = new HashMap<>();
         public boolean pestEsp = false;
         public boolean pestEspTracer = false;

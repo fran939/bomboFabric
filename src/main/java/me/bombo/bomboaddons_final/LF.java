@@ -42,10 +42,10 @@ public class LF {
    }
 
    public static void show(String username, String query, boolean coopMode) {
-      sendMessage("§7Looking up §b" + username + (coopMode ? " §d(Coop Mode)" : "") + "§7...");
+      sendMessage("&7Looking up &b" + username + (coopMode ? " &d(Coop Mode)" : "") + "&7...");
       getUuid(username).thenCompose((uuid) -> {
          if (uuid == null) {
-            sendMessage("§cError: Could not find UUID for " + username);
+            sendMessage("&cError: Could not find UUID for " + username);
             return CompletableFuture.completedFuture(null);
          } else {
             String cleanUuid = uuid.toString().replace("-", "").toLowerCase();
@@ -58,7 +58,7 @@ public class LF {
          if (ctx != null && ctx.json != null) {
             Minecraft.getInstance().execute(() -> handleResponse(username, query, ctx));
          } else if (ctx != null) {
-            sendMessage("§cFailed to get data for " + username);
+            sendMessage("&cFailed to get data for " + username);
          }
       });
    }
@@ -74,11 +74,11 @@ public class LF {
          }
 
          AtomicInteger matchCount = new AtomicInteger(0);
-         sendMessage("§eSearch Results for '§f" + lowerQuery + "§e' in §b" + username + (ctx.coopMode ? " (Coop)" : "") + "§e:");
+         sendMessage("&eSearch Results for '&f" + lowerQuery + "&e' in &b" + username + (ctx.coopMode ? " (Coop)" : "") + "&e:");
          searchJsonRecursive(root, "", lowerQuery, searchLore, matchCount, ctx, false);
-         if (matchCount.get() == 0) sendMessage("§cCould not find '§f" + lowerQuery + "§c' in any container.");
+         if (matchCount.get() == 0) sendMessage("&cCould not find '&f" + lowerQuery + "&c' in any container.");
       } catch (Exception e) {
-         sendMessage("§cError parsing data: " + e.getMessage());
+         sendMessage("&cError parsing data: " + e.getMessage());
       }
    }
 
@@ -119,6 +119,7 @@ public class LF {
          if (items == null) return;
 
          for (int i = 0; i < items.size(); ++i) {
+            final int loopIndex = i;
             CompoundTag item = (CompoundTag) items.get(i);
             CompoundTag tag = item.getCompound("tag").orElse(null);
             if (tag == null) continue;
@@ -140,14 +141,26 @@ public class LF {
             
             if (match) {
                int idx = matchCount.incrementAndGet();
-               Object[] info = getContainerInfo(containerPath, i, removeColors(fullName));
-               final int slotIndex = i + (int) info[2];
+               Object[] info = getContainerInfo(containerPath, loopIndex, removeColors(fullName));
+               final int finalSlotIndex = loopIndex + (int) info[2];
+               final String finalCmdBase = (String) info[1];
+               final String finalContBase = (String) info[0];
+               final int finalOffset = (int) info[2];
+
                resolveName(extractLastUuidFromPath(containerPath)).thenAccept(memberName -> {
-                  String cont = (String) info[0];
-                  if (memberName != null && !memberName.isEmpty() && (ctx.coopMode || !memberName.equalsIgnoreCase(ctx.targetUsername))) cont += " (" + memberName + ")";
+                  String cont = finalContBase;
+                  String fullCmd = finalCmdBase;
+                  
+                  boolean isOthers = memberName != null && !memberName.isEmpty() && (ctx.coopMode || !memberName.equalsIgnoreCase(ctx.targetUsername));
+                  if (isOthers) {
+                      cont += " (" + memberName + ")";
+                      if (fullCmd.startsWith("/enderchest") || fullCmd.startsWith("/backpack") || fullCmd.startsWith("/museum") || fullCmd.startsWith("/bank")) {
+                          fullCmd += " " + memberName;
+                      }
+                  }
                   
                   HoverEvent h = createHoverEventRobust(lore.toString());
-                  ClickEvent c = createClickEventRobust("RUN_COMMAND", "/bombo_highlight_slot " + slotIndex + " " + info[1]);
+                  ClickEvent c = createClickEventRobust("RUN_COMMAND", "/bombo_highlight_slot " + finalSlotIndex + " " + fullCmd);
                   
                   MutableComponent link = Component.literal(fullName);
                   Style style = Style.EMPTY;
@@ -155,11 +168,17 @@ public class LF {
                   if (c != null) style = style.withClickEvent(c);
                   link.setStyle(style);
                   
-                  MutableComponent contComponent = Component.literal(" §r§7(" + cont + ")");
+                  MutableComponent contComponent = translate(" &r&7(" + cont + ")");
                   if (c != null) contComponent.setStyle(Style.EMPTY.withClickEvent(c));
                   
-                  Component msg = Component.literal("§7#" + idx + " ").append(link).append(contComponent);
-                  Minecraft.getInstance().execute(() -> sendMessage(msg));
+                  final String finalContDisplay = cont;
+                  Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
+                  Minecraft.getInstance().execute(() -> {
+                      if (BomboConfig.get().debugMode) {
+                          sendMessage("&b[Debug] " + finalContDisplay + " slot " + finalSlotIndex + " (i=" + loopIndex + ", offset=" + finalOffset + ")");
+                      }
+                      sendMessage(msg);
+                  });
                });
             }
          }
@@ -188,6 +207,7 @@ public class LF {
       }
       else if (s.contains("ender")) {
           name = "Ender Chest"; cmd = "/enderchest";
+          offset = 9;
           try {
               String[] parts = s.split(" > ");
               for (int i = 0; i < parts.length - 1; i++) {
@@ -197,6 +217,17 @@ public class LF {
                       cmd = "/enderchest " + num;
                       break;
                   }
+              }
+              
+              int pageFromIndex = (itemIndex / 45) + 1;
+              if (itemIndex >= 45) {
+                  if (!cmd.contains(" ")) {
+                      name = "Ender Chest " + pageFromIndex;
+                      cmd = "/enderchest " + pageFromIndex;
+                  }
+                  offset = 9 - (pageFromIndex - 1) * 45;
+              } else {
+                  offset = 9;
               }
           } catch (Exception e) {}
       }
@@ -220,7 +251,9 @@ public class LF {
       return new HoverEvent.ShowText(Component.literal(text));
    }
 
-   public static String removeColors(String text) { return text.replaceAll("(?i)§[0-9a-fk-or]", ""); }
+   public static String removeColors(String text) { 
+       return text.replaceAll("(?i)\\u00A7[0-9a-fk-or]", "").replaceAll("(?i)&[0-9a-fk-or]", ""); 
+   }
 
    private static String extractLastUuidFromPath(String path) {
       String[] parts = path.split(" > ");
@@ -310,29 +343,43 @@ public class LF {
       });
    }
 
-   private static void sendMessage(String msg) { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(Component.literal(msg), false); }
-   private static void sendMessage(Component msg) { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(msg, false); }
+   private static void sendMessage(String msg) { 
+       if (Minecraft.getInstance().player != null) {
+           String formatted = msg.replace("&", "\u00A7");
+           Minecraft.getInstance().player.displayClientMessage(Component.literal(formatted), false); 
+       }
+   }
+   
+   private static void sendMessage(Component msg) { 
+       if (Minecraft.getInstance().player != null) {
+           Minecraft.getInstance().player.displayClientMessage(msg, false); 
+       }
+   }
+
+   private static MutableComponent translate(String s) {
+       return Component.literal(s.replace("&", "\u00A7"));
+   }
 
     private record SearchContext(String json, String targetUuid, String targetUsername, boolean coopMode) {}
 
     public static void printContainerInfo() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen instanceof AbstractContainerScreen<?> screen) {
-            sendMessage("§6--- Container Diagnostic ---");
-            sendMessage("§eTitle: §f" + screen.getTitle().getString());
+            sendMessage("&6--- Container Diagnostic ---");
+            sendMessage("&eTitle: &f" + screen.getTitle().getString());
             
             net.minecraft.world.inventory.AbstractContainerMenu menu = screen.getMenu();
             List<net.minecraft.world.inventory.Slot> slots = menu.slots;
-            sendMessage("§eTotal Slots: §f" + slots.size());
+            sendMessage("&eTotal Slots: &f" + slots.size());
             
             if (slots.size() > 49) {
                 net.minecraft.world.item.ItemStack timer = slots.get(49).getItem();
-                sendMessage("§eSlot 49 (Timer): §f" + timer.getItem().toString() + " (Foil: " + timer.hasFoil() + ")");
+                sendMessage("&eSlot 49 (Timer): &f" + timer.getItem().toString() + " (Foil: " + timer.hasFoil() + ")");
             }
             
-            sendMessage("§7(Diagnostic info displayed in-game)");
+            sendMessage("&7(Diagnostic info displayed in-game)");
         } else {
-            sendMessage("§cNot in a container!");
+            sendMessage("&cNot in a container!");
         }
     }
 }

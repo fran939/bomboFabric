@@ -106,6 +106,7 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Hollow Wand Double Click", s.hollowWandAutoCombine, v -> s.hollowWandAutoCombine = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Auto Accept Carnival", s.autoAcceptCarnival, v -> s.autoAcceptCarnival = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, contentX, contentWidth, curY);
                 }
                 case 1 -> { // Experiments
                     curY += ITEM_HEIGHT;
@@ -428,6 +429,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Auto Accept Carnival", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Lowest BIN Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7NPC Sell Price Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 1 -> {
                     g.drawString(font, "§6§lExperiment Solver", contentX, curY, 0xFFFFAA00, true);

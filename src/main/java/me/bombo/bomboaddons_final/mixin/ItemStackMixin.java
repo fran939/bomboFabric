@@ -46,6 +46,10 @@ public abstract class ItemStackMixin {
             }
         }
 
+        if (BomboConfig.get().debugMode) {
+            Bomboaddons.sendMessage("§7[Debug] Skyblock ID found: §b" + skyblockId);
+        }
+
         if (skyblockId == null || skyblockId.equals("ENCHANTED_BOOK")) {
             if (stack.getItem().toString().contains("enchanted_book") || stack.getHoverName().getString().contains("Enchanted Book")) {
                 ItemLore lore = stack.get(DataComponents.LORE);
@@ -71,7 +75,7 @@ public abstract class ItemStackMixin {
                         }
 
                         if (tier != -1) {
-                            skyblockId = "ENCHANTMENT_" + name + "_" + tier;
+                            skyblockId = name + "_" + tier;
                         }
                     }
                 }
@@ -79,16 +83,29 @@ public abstract class ItemStackMixin {
         }
 
         if (skyblockId != null) {
-            List<Component> tooltip = cir.getReturnValue();
-            Long price = LowestBinManager.getLowestBin(skyblockId).getNow(-1L);
+            List<Component> lines = cir.getReturnValue();
 
-            if (price != -1L) {
-                int count = stack.getCount();
-                String priceText = "§6Lowest BIN: " + LowestBinManager.formatPrice(price) + " coins";
-                if (count > 1) {
-                    priceText += " §7(" + LowestBinManager.formatPrice(price * count) + " coins)";
+            if (BomboConfig.get().lowestBin) {
+                long price = LowestBinManager.getLowestBin(skyblockId).getNow(-1L);
+                if (price > 0) {
+                    lines.add(Component.literal("§6Lowest BIN: §e" + LowestBinManager.formatPrice(price)));
+                } else if (BomboConfig.get().debugMode) {
+                    lines.add(Component.literal("§c[Debug] No BIN for: " + skyblockId));
                 }
-                tooltip.add(Component.literal(priceText));
+            }
+            
+            if (BomboConfig.get().npcPrice) {
+                long npcPrice = LowestBinManager.getNpcPrice(skyblockId);
+                if (npcPrice >= 0) {
+                    int count = stack.getCount();
+                    String text = "§6NPC: §e" + LowestBinManager.formatPrice(npcPrice);
+                    if (count > 1) {
+                        text += " §7(" + LowestBinManager.formatPrice(npcPrice * count) + ")";
+                    }
+                    lines.add(Component.literal(text));
+                } else if (BomboConfig.get().debugMode) {
+                    lines.add(Component.literal("§c[Debug] No NPC for: " + skyblockId));
+                }
             }
 
             Integer bitCost = me.bombo.bomboaddons_final.BitsManager.bitCostCache.get(skyblockId);
@@ -98,7 +115,7 @@ public abstract class ItemStackMixin {
                 if (count > 1) {
                     bitsText += " §7(" + LowestBinManager.formatPrice((long) bitCost * count) + " bits)";
                 }
-                tooltip.add(Component.literal(bitsText));
+                lines.add(Component.literal(bitsText));
             }
         }
     }

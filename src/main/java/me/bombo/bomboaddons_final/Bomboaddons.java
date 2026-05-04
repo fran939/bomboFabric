@@ -12,4 +12,13 @@ public class Bomboaddons implements ModInitializer {
       BomboConfig.load();
       InventoryConfig.load();
    }
+
+   public static void sendMessage(String message) {
+      net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+      if (mc.player != null) {
+         mc.execute(() -> {
+            mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(message.replace("&", "§")), false);
+         });
+      }
+   }
 }

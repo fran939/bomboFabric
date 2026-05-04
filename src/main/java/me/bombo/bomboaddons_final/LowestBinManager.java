@@ -1,5 +1,7 @@
 package me.bombo.bomboaddons_final;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.fabricmc.api.EnvType;
@@ -19,16 +21,19 @@ import java.util.concurrent.CompletableFuture;
 public class LowestBinManager {
     private static final HttpClient client = HttpClient.newBuilder().build();
     private static final Map<String, Long> priceCache = new ConcurrentHashMap<>();
+    private static final Map<String, Long> npcCache = new ConcurrentHashMap<>();
     private static final Map<String, Double> bazaarCache = new ConcurrentHashMap<>();
     private static long lastFetchTime = 0;
     private static long lastBazaarFetch = 0;
+    private static long lastNpcFetch = 0;
     private static final long CACHE_DURATION = 300000; // 5 minutes in ms
 
     public static void ensureLoaded() {
         long now = System.currentTimeMillis();
         boolean bazaarFresh = now - lastBazaarFetch < CACHE_DURATION;
         boolean pricesFresh = !priceCache.isEmpty() && (now - lastFetchTime < CACHE_DURATION);
-        if (!bazaarFresh || !pricesFresh) {
+        boolean npcFresh = !npcCache.isEmpty() && (now - lastNpcFetch < CACHE_DURATION);
+        if (!bazaarFresh || !pricesFresh || !npcFresh) {
             reload();
         }
     }
@@ -37,6 +42,7 @@ public class LowestBinManager {
         CompletableFuture.allOf(
             fetchFromBazaar(), 
             fetchFromPrices(), 
+            fetchFromNpc(),
             BitsManager.ensureLoaded()
         ).thenRun(() -> {
             if (Minecraft.getInstance().player != null) {
@@ -52,6 +58,7 @@ public class LowestBinManager {
         StringBuilder sb = new StringBuilder("§6API Status:\n");
         sb.append("§7- Prices: ").append(pricesFresh ? "§aFresh" : "§cStale").append(" §8(").append(priceCache.size()).append(" ids)\n");
         sb.append("§7- Bazaar: ").append(bazaarFresh ? "§aFresh" : "§cStale").append(" §8(").append(bazaarCache.size()).append(" ids)\n");
+        sb.append("§7- NPC: ").append(!npcCache.isEmpty() && (now - lastNpcFetch < CACHE_DURATION) ? "§aFresh" : "§cStale").append(" §8(").append(npcCache.size()).append(" ids)\n");
         sb.append("§7- Bits: §aLoaded §8(").append(BitsManager.bitCostCache.size()).append(" ids)");
         return sb.toString();
     }
@@ -87,12 +94,31 @@ public class LowestBinManager {
     public static long getCachedPrice(String skyblockId) {
         if (skyblockId == null) return -1;
         if (bazaarCache.containsKey(skyblockId)) return Math.round(bazaarCache.get(skyblockId));
-        return priceCache.getOrDefault(skyblockId, -1L);
+        if (priceCache.containsKey(skyblockId)) return priceCache.get(skyblockId);
+        
+        // Fallback for IDs with delimiters (e.g. RED_SCARF;0 -> RED_SCARF)
+        if (skyblockId.contains(";")) {
+            String baseId = skyblockId.split(";")[0];
+            if (bazaarCache.containsKey(baseId)) return Math.round(bazaarCache.get(baseId));
+            if (priceCache.containsKey(baseId)) return priceCache.get(baseId);
+        }
+        
+        return -1L;
     }
 
     public static CompletableFuture<Long> getLowestBin(String skyblockId) {
         if (skyblockId == null) return CompletableFuture.completedFuture(-1L);
         return CompletableFuture.completedFuture(getCachedPrice(skyblockId));
+    }
+
+    public static long getNpcPrice(String skyblockId) {
+        if (skyblockId == null) return -1;
+        if (npcCache.containsKey(skyblockId)) return npcCache.get(skyblockId);
+        if (skyblockId.contains(";")) {
+            String baseId = skyblockId.split(";")[0];
+            if (npcCache.containsKey(baseId)) return npcCache.get(baseId);
+        }
+        return -1L;
     }
 
     private static CompletableFuture<Boolean> fetchFromBazaar() {
@@ -130,7 +156,12 @@ public class LowestBinManager {
     }
 
     private static CompletableFuture<Boolean> fetchFromPrices() {
-        String url = "https://bomboapi.frandl938.workers.dev/prices";
+        return fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices")
+                .thenCombine(fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices2"), (r1, r2) -> r1 || r2);
+    }
+
+    private static CompletableFuture<Boolean> fetchFromNpc() {
+        String url = "https://bomboapi.frandl938.workers.dev/npc";
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "Mozilla/5.0 (Bomboaddons)")
@@ -143,21 +174,81 @@ public class LowestBinManager {
                     if (response.statusCode() == 200) {
                         try {
                             JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-                            for (String key : json.keySet()) {
-                                String cleanKey = key;
-                                if (key.contains(";")) {
-                                    cleanKey = key.split(";")[0];
+                            if (json.has("data") && json.get("data").isJsonArray()) {
+                                JsonArray dataArray = json.getAsJsonArray("data");
+                                int count = 0;
+                                for (JsonElement element : dataArray) {
+                                    if (!element.isJsonObject()) continue;
+                                    JsonObject item = element.getAsJsonObject();
+                                    if (item.has("id") && item.has("npc_sell_price")) {
+                                        String id = item.get("id").getAsString();
+                                        long value = Math.round(item.get("npc_sell_price").getAsDouble());
+                                        npcCache.put(id, value);
+                                        if (id.contains(";")) {
+                                            npcCache.putIfAbsent(id.split(";")[0], value);
+                                        }
+                                        count++;
+                                    }
                                 }
-                                priceCache.put(cleanKey, json.get(key).getAsLong());
+                                lastNpcFetch = System.currentTimeMillis();
+                                if (BomboConfig.get().debugMode) {
+                                    Bomboaddons.sendMessage("§7[Debug] Loaded " + count + " NPC prices");
+                                }
+                                return true;
                             }
-                            lastFetchTime = System.currentTimeMillis();
-                            return true;
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                     return false;
                 }).exceptionally(ex -> false);
+    }
+
+    private static CompletableFuture<Boolean> fetchFromUrl(String url) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("User-Agent", "Mozilla/5.0 (Bomboaddons)")
+                .timeout(Duration.ofSeconds(10))
+                .GET()
+                .build();
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> {
+                    if (response.statusCode() == 200) {
+                        try {
+                            JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
+                            if (json.has("data") && json.get("data").isJsonArray()) {
+                                JsonArray dataArray = json.getAsJsonArray("data");
+                                int count = 0;
+                                for (JsonElement element : dataArray) {
+                                    if (!element.isJsonObject()) continue;
+                                    JsonObject item = element.getAsJsonObject();
+                                    if (item.has("id") && item.has("value")) {
+                                        String id = item.get("id").getAsString();
+                                        long value = Math.round(item.get("value").getAsDouble());
+                                        // We store both full ID and base ID if different
+                                        priceCache.put(id, value);
+                                        if (id.contains(";")) {
+                                            priceCache.putIfAbsent(id.split(";")[0], value);
+                                        }
+                                        count++;
+                                    }
+                                }
+                                lastFetchTime = System.currentTimeMillis();
+                                if (BomboConfig.get().debugMode) {
+                                    Bomboaddons.sendMessage("§7[Debug] Loaded " + count + " prices from " + url);
+                                }
+                                return true;
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    return false;
+                }).exceptionally(ex -> {
+                    ex.printStackTrace();
+                    return false;
+                });
     }
 
     public static String formatPrice(long price) {

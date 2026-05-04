@@ -10,7 +10,6 @@ public class CommandTracker {
         
         // Handle /ec, /ender, /enderchest
         if (lower.startsWith("ec") || lower.startsWith("ender")) {
-            // Check if it's exactly ec/ender or starts with ec /ender 
             if (isMatch(lower, "ec") || isMatch(lower, "ender") || isMatch(lower, "enderchest")) {
                 lastEc = command;
             }
@@ -23,8 +22,11 @@ public class CommandTracker {
         }
         // Handle /ahs, /bz, /bazaar, /ah search
         else if (lower.startsWith("ahs") || lower.startsWith("bz") || lower.startsWith("bazaar") || lower.startsWith("ah")) {
-            if (isMatch(lower, "ahs") || isMatch(lower, "bz") || isMatch(lower, "bazaar") || lower.startsWith("ah search ")) {
-                lastSh = command;
+            // Only update if it has arguments (contains a space)
+            if (lower.contains(" ")) {
+                if (isMatch(lower, "ahs") || isMatch(lower, "bz") || isMatch(lower, "bazaar") || lower.startsWith("ah search ")) {
+                    lastSh = command;
+                }
             }
         }
     }
