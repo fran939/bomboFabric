@@ -106,6 +106,15 @@ public class LowestBinManager {
         return -1L;
     }
 
+    public static boolean isBazaar(String skyblockId) {
+        if (skyblockId == null) return false;
+        if (bazaarCache.containsKey(skyblockId)) return true;
+        if (skyblockId.contains(";")) {
+            return bazaarCache.containsKey(skyblockId.split(";")[0]);
+        }
+        return false;
+    }
+
     public static CompletableFuture<Long> getLowestBin(String skyblockId) {
         if (skyblockId == null) return CompletableFuture.completedFuture(-1L);
         return CompletableFuture.completedFuture(getCachedPrice(skyblockId));

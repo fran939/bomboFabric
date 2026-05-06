@@ -88,7 +88,14 @@ public abstract class ItemStackMixin {
             if (BomboConfig.get().lowestBin) {
                 long price = LowestBinManager.getLowestBin(skyblockId).getNow(-1L);
                 if (price > 0) {
-                    lines.add(Component.literal("§6Lowest BIN: §e" + LowestBinManager.formatPrice(price)));
+                    boolean isBz = LowestBinManager.isBazaar(skyblockId);
+                    String label = isBz ? "§6BZ: " : "§6Lowest BIN: ";
+                    int count = stack.getCount();
+                    String priceText = label + "§e" + LowestBinManager.formatPrice(price);
+                    if (count > 1) {
+                        priceText += " §7(" + LowestBinManager.formatPrice(price * count) + ")";
+                    }
+                    lines.add(Component.literal(priceText));
                 } else if (BomboConfig.get().debugMode) {
                     lines.add(Component.literal("§c[Debug] No BIN for: " + skyblockId));
                 }
