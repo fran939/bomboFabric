@@ -170,9 +170,7 @@ public class PlaytimeTracker {
                 }
                 int responseCode = conn.getResponseCode();
                 DebugUtils.debug("playtime", "Cloud sync response: " + responseCode);
-                if (responseCode == 200) {
-                    mc.execute(() -> mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §aPlaytime data successfully synced to the cloud!"), false));
-                } else {
+                if (responseCode != 200) {
                     mc.execute(() -> mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cFailed to sync playtime data (HTTP " + responseCode + ")"), false));
                 }
             } catch (Exception e) {
