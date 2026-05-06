@@ -146,8 +146,8 @@ public class PlaytimeTracker {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         
-        String username = mc.player.getGameProfile().getName();
-        String uuid = mc.player.getGameProfile().getId().toString();
+        String username = mc.player.getScoreboardName();
+        String uuid = mc.player.getUUID().toString();
         
         Map<String, Object> payload = new HashMap<>();
         payload.put("username", username);
