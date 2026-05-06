@@ -32,13 +32,9 @@ public abstract class ChatScreenMixin {
             // "ignore caps lock, if i press shift make it caps"
             // This means if Caps Lock is ON and Shift is OFF, we want lowercase.
             if (capsLock && !shift) {
-                int spaceIdx = text.indexOf(' ');
-                String commandPart = spaceIdx == -1 ? text : text.substring(0, spaceIdx);
-                
-                if (!commandPart.equals(commandPart.toLowerCase())) {
+                if (!text.equals(text.toLowerCase())) {
                     int cursor = input.getCursorPosition();
-                    String newText = commandPart.toLowerCase() + (spaceIdx == -1 ? "" : text.substring(spaceIdx));
-                    input.setValue(newText);
+                    input.setValue(text.toLowerCase());
                     input.setCursorPosition(cursor);
                 }
             }
