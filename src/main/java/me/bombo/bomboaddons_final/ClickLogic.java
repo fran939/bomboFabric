@@ -201,7 +201,7 @@ public class ClickLogic {
          for (ClickLogic.ClickTarget target : targets) {
             if (target.keyCode != -1 && key == target.keyCode) {
                DebugUtils.debug("clicker", "Match! Target gui=" + target.gui + " item=" + target.item);
-               if (target.gui.equalsIgnoreCase("all") || title.contains(target.gui.toLowerCase())) {
+               if (target.gui.trim().equalsIgnoreCase("all") || title.contains(target.gui.trim().toLowerCase())) {
                   executeClick(target, mc, (var3 instanceof AbstractContainerScreen ? (AbstractContainerScreen)var3 : null));
                   return true;
                }
@@ -252,7 +252,7 @@ public class ClickLogic {
 
                            target = (ClickLogic.ClickTarget)var3.next();
                         } while(!target.auto);
-                     } while(!target.gui.equals("all") && !title.contains(target.gui));
+                     } while(!target.gui.trim().equalsIgnoreCase("all") && !title.contains(target.gui.trim().toLowerCase()));
 
                      DebugUtils.debug("gui", "Auto clicking: " + target.item);
 

@@ -44,15 +44,15 @@ public class ModUpdater {
         }
     }
 
-    public static void checkAndUpdate() {
+    public static void checkAndUpdate(boolean silent) {
         new Thread(() -> {
             try {
-                sendMessage("§7Checking for updates...");
+                if (!silent) sendMessage("§7Checking for updates...");
 
                 HttpURLConnection conn = (HttpURLConnection) new URL(GITHUB_API).openConnection();
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0");
                 if (conn.getResponseCode() != 200) {
-                    sendMessage("§cFailed to check for updates (HTTP " + conn.getResponseCode() + ")");
+                    if (!silent) sendMessage("§cFailed to check for updates (HTTP " + conn.getResponseCode() + ")");
                     return;
                 }
 
@@ -63,7 +63,13 @@ public class ModUpdater {
                         .get().getMetadata().getVersion().getFriendlyString();
 
                 if (latestVersion.equals(currentVersion)) {
-                    sendMessage("§aMod is already up to date! (v" + currentVersion + ")");
+                    if (!silent) sendMessage("§aMod is already up to date! (v" + currentVersion + ")");
+                    return;
+                }
+
+                if (silent) {
+                    sendMessage("§eUpdate found: §b" + latestVersion + " §7(Current: " + currentVersion + ")");
+                    sendMessage("§7Run §b/b update §7to download the new version.");
                     return;
                 }
 
@@ -106,7 +112,7 @@ public class ModUpdater {
                 sendMessage("§eThe old version will be removed on next restart.");
                 
             } catch (Exception e) {
-                sendMessage("§cError while updating: " + e.getMessage());
+                if (!silent) sendMessage("§cError while updating: " + e.getMessage());
                 e.printStackTrace();
             }
         }).start();

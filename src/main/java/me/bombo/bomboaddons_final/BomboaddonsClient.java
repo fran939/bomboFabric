@@ -231,7 +231,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                         // --- Update ---
                         builder.then(ClientCommandManager.literal("update")
                                 .executes(context -> {
-                                    ModUpdater.checkAndUpdate();
+                                    ModUpdater.checkAndUpdate(false);
                                     return 1;
                                 }));
 
@@ -554,6 +554,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
                 LowestBinManager.reload();
                 AutoExperiments.reset();
+                ModUpdater.checkAndUpdate(true);
             });
 
             net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
