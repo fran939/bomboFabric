@@ -212,6 +212,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     context.getSource().sendFeedback(Component.literal(PREFIX + "§7Sugar Cane Mode: " + (s.gardenSugarCane ? "§aON" : "§cOFF")));
                                     return 1;
                                 }));
+                        builder.then(ClientCommandManager.literal("test")
+                                .executes(context -> {
+                                    String version = FabricLoader.getInstance().getModContainer("bomboaddons").get().getMetadata().getVersion().getFriendlyString();
+                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§aCurrent Version: §e" + version));
+                                    return 1;
+                                }));
                         // --- Playtime ---
                         builder.then(ClientCommandManager.literal("pt")
                                 .executes(context -> {
