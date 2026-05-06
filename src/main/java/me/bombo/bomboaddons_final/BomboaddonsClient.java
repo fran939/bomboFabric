@@ -223,10 +223,36 @@ public class BomboaddonsClient implements ClientModInitializer {
                         builder.then(ClientCommandManager.literal("pt")
                                 .executes(context -> {
                                     Minecraft.getInstance().execute(() -> {
-                                        Minecraft.getInstance().setScreen(new PlaytimeGUI());
+                                        Minecraft.getInstance().setScreen(new PlaytimeGUI(null));
                                     });
                                     return 1;
-                                }));
+                                })
+                                .then(ClientCommandManager.argument("username", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String username = StringArgumentType.getString(context, "username");
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aFetching playtime data for §e" + username + "§a..."));
+                                            new Thread(() -> {
+                                                try {
+                                                    java.net.URL url = new java.net.URI("https://bomboapi.frandl938.workers.dev/playtime/" + username).toURL();
+                                                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                                                    conn.setRequestMethod("GET");
+                                                    int responseCode = conn.getResponseCode();
+                                                    if (responseCode == 200) {
+                                                        try (java.io.InputStreamReader reader = new java.io.InputStreamReader(conn.getInputStream())) {
+                                                            com.google.gson.JsonObject data = com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();
+                                                            Minecraft.getInstance().execute(() -> {
+                                                                Minecraft.getInstance().setScreen(new PlaytimeGUI(data));
+                                                            });
+                                                        }
+                                                    } else {
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cNo playtime data found for §e" + username + "§c."));
+                                                    }
+                                                } catch (Exception e) {
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§cError fetching playtime data: " + e.getMessage()));
+                                                }
+                                            }).start();
+                                            return 1;
+                                        })));
 
                         // --- Update ---
                         builder.then(ClientCommandManager.literal("update")

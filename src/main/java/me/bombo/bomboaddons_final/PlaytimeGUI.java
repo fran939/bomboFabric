@@ -25,13 +25,32 @@ public class PlaytimeGUI extends Screen {
     private long totalAfkTime = 0;
     private Map<String, Long> globalDaily = new HashMap<>();
 
+    private final com.google.gson.JsonObject cloudData;
+
     public PlaytimeGUI() {
-        super(Component.literal("Detailed /playtime"));
+        this(null);
+    }
+
+    public PlaytimeGUI(com.google.gson.JsonObject cloudData) {
+        super(Component.literal(cloudData != null ? "Playtime: " + (cloudData.has("username") ? cloudData.get("username").getAsString() : "Unknown") : "Detailed /playtime"));
+        this.cloudData = cloudData;
         calculateEntries();
     }
 
     private void calculateEntries() {
-        Map<String, PlaytimeTracker.AreaData> map = PlaytimeTracker.getAreaDataMap();
+        Map<String, PlaytimeTracker.AreaData> map;
+        if (this.cloudData != null) {
+            map = new HashMap<>();
+            if (this.cloudData.has("areaDataMap")) {
+                com.google.gson.JsonObject areas = this.cloudData.getAsJsonObject("areaDataMap");
+                for (String key : areas.keySet()) {
+                    PlaytimeTracker.AreaData data = new com.google.gson.Gson().fromJson(areas.get(key), PlaytimeTracker.AreaData.class);
+                    map.put(key, data);
+                }
+            }
+        } else {
+            map = PlaytimeTracker.getAreaDataMap();
+        }
         entries = new ArrayList<>();
         totalPlaytime = 0;
         totalAfkTime = 0;
@@ -75,7 +94,9 @@ public class PlaytimeGUI extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         super.render(graphics, mouseX, mouseY, partialTicks);
-        calculateEntries(); // Update real-time
+        if (this.cloudData == null) {
+            calculateEntries(); // Update real-time only if viewing local data
+        }
         
         int x = (this.width - xSize) / 2;
         int y = (this.height - ySize) / 2;

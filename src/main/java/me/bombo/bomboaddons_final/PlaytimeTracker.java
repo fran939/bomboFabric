@@ -29,6 +29,7 @@ public class PlaytimeTracker {
     private static boolean isAfk = false;
     
     private static long lastTickTime = System.currentTimeMillis();
+    private static long lastCloudSyncTime = System.currentTimeMillis();
 
     public static void load() {
         if (!SAVE_FILE.exists()) return;
@@ -94,6 +95,12 @@ public class PlaytimeTracker {
         
         // Auto-save every 1 minute
         if (now % 60000 < delta) save();
+        
+        // Sync to cloud every 5 minutes
+        if (now - lastCloudSyncTime > 300000) {
+            lastCloudSyncTime = now;
+            sendPlaytimeDataToCloud();
+        }
     }
 
     public static String normalizeAreaName(String name) {
@@ -133,5 +140,38 @@ public class PlaytimeTracker {
         public Map<String, Long> dailyAfk = new HashMap<>();
         public transient long sessionTime = 0;
         public transient long sessionAfkTime = 0;
+    }
+
+    private static void sendPlaytimeDataToCloud() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        
+        String username = mc.player.getGameProfile().getName();
+        String uuid = mc.player.getGameProfile().getId().toString();
+        
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("username", username);
+        payload.put("uuid", uuid);
+        payload.put("areaDataMap", areaDataMap);
+        
+        String json = GSON.toJson(payload);
+        
+        new Thread(() -> {
+            try {
+                java.net.URL url = new java.net.URI("https://bomboapi.frandl938.workers.dev/playtime").toURL();
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                try (java.io.OutputStream os = conn.getOutputStream()) {
+                    byte[] input = json.getBytes("utf-8");
+                    os.write(input, 0, input.length);
+                }
+                int responseCode = conn.getResponseCode();
+                DebugUtils.debug("playtime", "Cloud sync response: " + responseCode);
+            } catch (Exception e) {
+                DebugUtils.debug("playtime", "Cloud sync failed: " + e.getMessage());
+            }
+        }).start();
     }
 }
