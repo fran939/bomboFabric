@@ -1,0 +1,129 @@
+package me.bombo.bomboaddons_final;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+public class ModUpdater {
+    private static final String REPO = "fran939/bomboFabric";
+    private static final String GITHUB_API = "https://api.github.com/repos/" + REPO + "/releases/latest";
+    private static final Path PENDING_DELETE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_pending_delete.txt");
+
+    public static void init() {
+        if (Files.exists(PENDING_DELETE)) {
+            try {
+                String oldJarPath = Files.readString(PENDING_DELETE, StandardCharsets.UTF_8).trim();
+                File oldJar = new File(oldJarPath);
+                if (oldJar.exists()) {
+                    // Check if it's NOT the current running JAR
+                    File currentJar = getCurrentJar();
+                    if (currentJar != null && !currentJar.getAbsolutePath().equals(oldJar.getAbsolutePath())) {
+                        if (oldJar.delete()) {
+                            Bomboaddons.LOGGER.info("[BomboAddons] Deleted old version: " + oldJarPath);
+                        } else {
+                            Bomboaddons.LOGGER.warn("[BomboAddons] FAILED to delete old version: " + oldJarPath);
+                        }
+                    }
+                }
+                Files.deleteIfExists(PENDING_DELETE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void checkAndUpdate() {
+        new Thread(() -> {
+            try {
+                sendMessage("§7Checking for updates...");
+
+                HttpURLConnection conn = (HttpURLConnection) new URL(GITHUB_API).openConnection();
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                if (conn.getResponseCode() != 200) {
+                    sendMessage("§cFailed to check for updates (HTTP " + conn.getResponseCode() + ")");
+                    return;
+                }
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                String latestVersion = json.get("tag_name").getAsString().replace("v", "");
+                String currentVersion = FabricLoader.getInstance().getModContainer("bomboaddons")
+                        .get().getMetadata().getVersion().getFriendlyString();
+
+                if (latestVersion.equals(currentVersion)) {
+                    sendMessage("§aMod is already up to date! (v" + currentVersion + ")");
+                    return;
+                }
+
+                sendMessage("§eUpdate found: §b" + latestVersion + " §7(Current: " + currentVersion + ")");
+                
+                String downloadUrl = null;
+                JsonArray assets = json.getAsJsonArray("assets");
+                for (JsonElement asset : assets) {
+                    JsonObject assetObj = asset.getAsJsonObject();
+                    if (assetObj.get("name").getAsString().endsWith(".jar")) {
+                        downloadUrl = assetObj.get("browser_download_url").getAsString();
+                        break;
+                    }
+                }
+
+                if (downloadUrl == null) {
+                    sendMessage("§cNo .jar found in the latest release!");
+                    return;
+                }
+
+                sendMessage("§7Downloading update...");
+                
+                Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
+                File currentJar = getCurrentJar();
+                if (currentJar == null) {
+                    sendMessage("§cFailed to identify current mod JAR location!");
+                    return;
+                }
+                
+                File newJarFile = modsFolder.resolve("bomboaddons-" + latestVersion + ".jar").toFile();
+
+                try (InputStream in = new URL(downloadUrl).openStream()) {
+                    Files.copy(in, newJarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+                
+                // Record the current JAR to be deleted on next restart
+                Files.writeString(PENDING_DELETE, currentJar.getAbsolutePath(), StandardCharsets.UTF_8);
+                
+                sendMessage("§aUpdate downloaded: §b" + newJarFile.getName());
+                sendMessage("§eThe old version will be removed on next restart.");
+                
+            } catch (Exception e) {
+                sendMessage("§cError while updating: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private static File getCurrentJar() {
+        try {
+            return new File(ModUpdater.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static void sendMessage(String msg) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            mc.execute(() -> mc.player.displayClientMessage(Component.literal("§6[Updater] " + msg), false));
+        }
+    }
+}

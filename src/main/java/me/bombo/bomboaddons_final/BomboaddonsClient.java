@@ -221,6 +221,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     return 1;
                                 }));
 
+                        // --- Update ---
+                        builder.then(ClientCommandManager.literal("update")
+                                .executes(context -> {
+                                    ModUpdater.checkAndUpdate();
+                                    return 1;
+                                }));
+
                         // --- Highlight Command ---
                         builder.then(ClientCommandManager.literal("highlight")
                                 .then(ClientCommandManager.literal("remove")
@@ -529,6 +536,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             LowestBinManager.ensureLoaded();
             ItemHotkeys.init();
             
+            ModUpdater.init();
             registerTickEvents();
 
             WorldRenderEvents.AFTER_ENTITIES.register(context -> {
