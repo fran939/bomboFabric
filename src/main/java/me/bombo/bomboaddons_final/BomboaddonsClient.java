@@ -227,6 +227,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     });
                                     return 1;
                                 })
+                                .then(ClientCommandManager.literal("sync")
+                                        .executes(context -> {
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aManually syncing your playtime data to the cloud..."));
+                                            PlaytimeTracker.sendPlaytimeDataToCloud();
+                                            return 1;
+                                        }))
                                 .then(ClientCommandManager.argument("username", StringArgumentType.string())
                                         .executes(context -> {
                                             String username = StringArgumentType.getString(context, "username");

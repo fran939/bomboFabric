@@ -142,7 +142,7 @@ public class PlaytimeTracker {
         public transient long sessionAfkTime = 0;
     }
 
-    private static void sendPlaytimeDataToCloud() {
+    public static void sendPlaytimeDataToCloud() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         
@@ -169,8 +169,14 @@ public class PlaytimeTracker {
                 }
                 int responseCode = conn.getResponseCode();
                 DebugUtils.debug("playtime", "Cloud sync response: " + responseCode);
+                if (responseCode == 200) {
+                    mc.execute(() -> mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §aPlaytime data successfully synced to the cloud!"), false));
+                } else {
+                    mc.execute(() -> mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cFailed to sync playtime data (HTTP " + responseCode + ")"), false));
+                }
             } catch (Exception e) {
                 DebugUtils.debug("playtime", "Cloud sync failed: " + e.getMessage());
+                mc.execute(() -> mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getMessage()), false));
             }
         }).start();
     }
