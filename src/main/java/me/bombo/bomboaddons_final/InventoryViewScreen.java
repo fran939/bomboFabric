@@ -14,6 +14,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.ClickType;
 
 public class InventoryViewScreen extends AbstractContainerScreen<ChestMenu> {
     private static final Identifier CONTAINER_BACKGROUND = Identifier
@@ -22,7 +24,7 @@ public class InventoryViewScreen extends AbstractContainerScreen<ChestMenu> {
 
     public InventoryViewScreen(InventorySnapshot snapshot) {
         super(createMenu(snapshot), Minecraft.getInstance().player.getInventory(),
-                Component.literal(snapshot.guiName + " (" + snapshot.timestamp + ")"));
+                Component.literal(snapshot.guiName));
         this.rows = (this.menu.getContainer().getContainerSize() / 9);
         this.imageWidth = 176;
         this.imageHeight = 114 + this.rows * 18;
@@ -32,9 +34,10 @@ public class InventoryViewScreen extends AbstractContainerScreen<ChestMenu> {
     @Override
     protected void init() {
         super.init();
-        if (this.minecraft.player != null) {
-            this.minecraft.player.containerMenu = this.menu;
-        }
+    }
+
+    @Override
+    protected void slotClicked(Slot slot, int slotId, int mouseButton, ClickType type) {
     }
 
     private static ChestMenu createMenu(InventorySnapshot snapshot) {
@@ -109,14 +112,10 @@ public class InventoryViewScreen extends AbstractContainerScreen<ChestMenu> {
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float delta, int mouseX, int mouseY) {
-        // signature: (Identifier, int x, int y, int width, int height, float u,
-        // float v, float uWidth, float vHeight)
-        // Note: AbstractContainerScreen translates the GuiGraphics to leftPos, topPos
-        // before calling renderBg
-        guiGraphics.blit(CONTAINER_BACKGROUND, 0, 0, this.imageWidth, this.rows * 18 + 17, 0f, 0f,
-                (float) this.imageWidth, (float) (this.rows * 18 + 17));
-        guiGraphics.blit(CONTAINER_BACKGROUND, 0, this.rows * 18 + 17, this.imageWidth, 96, 0f, 126f,
-                (float) this.imageWidth, 96f);
+        int x = 0;
+        int y = 0;
+        guiGraphics.blit(CONTAINER_BACKGROUND, x, y, 0, 0, this.imageWidth, this.rows * 18 + 17, 256, 256);
+        guiGraphics.blit(CONTAINER_BACKGROUND, x, y + this.rows * 18 + 17, 0, 126, this.imageWidth, 96, 256, 256);
     }
 
     @Override

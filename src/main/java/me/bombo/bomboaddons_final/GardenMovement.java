@@ -41,9 +41,9 @@ public class GardenMovement {
         BomboConfig.Settings s = BomboConfig.get();
         if (!s.gardenMovement || !SkyblockUtils.isInGarden()) return;
         
-        // Don't trigger if in a GUI (unless it's a chat screen maybe, but usually better to avoid)
+        // Don't trigger if in a GUI
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen != null && !(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen)) return;
+        if (mc.screen != null) return;
 
         int fKey = ClickLogic.getKeyCode(s.gardenForwardKey);
         int bKey = ClickLogic.getKeyCode(s.gardenBackwardKey);
@@ -56,32 +56,52 @@ public class GardenMovement {
             forward = !forward;
             if (!forward) mc.options.keyUp.setDown(false);
             if (forward) {
-                backward = false;
-                mc.options.keyDown.setDown(false);
+                if (s.gardenSugarCane) {
+                    right = false;
+                    mc.options.keyRight.setDown(false);
+                } else {
+                    backward = false;
+                    mc.options.keyDown.setDown(false);
+                }
             }
             sendToggleMsg("Forward", forward);
         } else if (keyCode == bKey && bKey != -1) {
             backward = !backward;
             if (!backward) mc.options.keyDown.setDown(false);
             if (backward) {
-                forward = false;
-                mc.options.keyUp.setDown(false);
+                if (s.gardenSugarCane) {
+                    left = false;
+                    mc.options.keyLeft.setDown(false);
+                } else {
+                    forward = false;
+                    mc.options.keyUp.setDown(false);
+                }
             }
             sendToggleMsg("Backward", backward);
         } else if (keyCode == lKey && lKey != -1) {
             left = !left;
             if (!left) mc.options.keyLeft.setDown(false);
             if (left) {
-                right = false;
-                mc.options.keyRight.setDown(false);
+                if (s.gardenSugarCane) {
+                    backward = false;
+                    mc.options.keyDown.setDown(false);
+                } else {
+                    right = false;
+                    mc.options.keyRight.setDown(false);
+                }
             }
             sendToggleMsg("Left", left);
         } else if (keyCode == rKey && rKey != -1) {
             right = !right;
             if (!right) mc.options.keyRight.setDown(false);
             if (right) {
-                left = false;
-                mc.options.keyLeft.setDown(false);
+                if (s.gardenSugarCane) {
+                    forward = false;
+                    mc.options.keyUp.setDown(false);
+                } else {
+                    left = false;
+                    mc.options.keyLeft.setDown(false);
+                }
             }
             sendToggleMsg("Right", right);
         } else if (keyCode == brKey && brKey != -1) {

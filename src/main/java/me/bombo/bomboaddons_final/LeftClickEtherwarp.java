@@ -42,30 +42,34 @@ public class LeftClickEtherwarp {
       state = 0;
    }
 
-   public static void onLeftClick() {
-      if (BomboConfig.get().leftClickEtherwarp) {
+   public static boolean isHoldingEtherwarp() {
+      if (!BomboConfig.get().leftClickEtherwarp) return false;
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player == null) return false;
+      ItemStack heldItem = mc.player.getMainHandItem();
+      if (heldItem.isEmpty()) return false;
+      String itemName = heldItem.getHoverName().getString();
+      return itemName.contains("Aspect of the Void") || itemName.contains("Aspect of the End");
+   }
+
+   public static boolean onLeftClick() {
+      if (isHoldingEtherwarp()) {
+         Minecraft mc = Minecraft.getInstance();
          if (state == 0) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-               ItemStack heldItem = mc.player.getMainHandItem();
-               if (!heldItem.isEmpty()) {
-                  String itemName = heldItem.getHoverName().getString();
-                  if (itemName.contains("Aspect of the Void") || itemName.contains("Aspect of the End")) {
-                     if (mc.options.keyShift.isDown()) {
-                        if (mc.gameMode != null) {
-                           mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                           mc.player.swing(InteractionHand.MAIN_HAND);
-                        }
-                     } else {
-                        getSneakMapping(mc).setDown(true);
-                        sendSneakPacket(mc, true);
-                        state = 1;
-                     }
-                  }
+            if (mc.options.keyShift.isDown()) {
+               if (mc.gameMode != null) {
+                  mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                  mc.player.swing(InteractionHand.MAIN_HAND);
                }
+            } else {
+               getSneakMapping(mc).setDown(true);
+               sendSneakPacket(mc, true);
+               state = 1;
             }
          }
+         return true; // Block the left click
       }
+      return false;
    }
 
     private static net.minecraft.client.KeyMapping getSneakMapping(Minecraft mc) {

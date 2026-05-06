@@ -75,7 +75,7 @@ public class LF {
 
          AtomicInteger matchCount = new AtomicInteger(0);
          sendMessage("&eSearch Results for '&f" + lowerQuery + "&e' in &b" + username + (ctx.coopMode ? " (Coop)" : "") + "&e:");
-         searchJsonRecursive(root, "", lowerQuery, searchLore, matchCount, ctx, false);
+         searchJsonRecursive(root, "", lowerQuery, searchLore, matchCount, ctx, false, false, MAX_RESULTS);
          if (matchCount.get() == 0) sendMessage("&cCould not find '&f" + lowerQuery + "&c' in any container.");
       } catch (Exception e) {
          sendMessage("&cError parsing data: " + e.getMessage());
@@ -83,17 +83,17 @@ public class LF {
    }
 
    private static void searchJsonRecursive(JsonElement element, String path, String query, boolean searchLore,
-         AtomicInteger matchCount, LF.SearchContext ctx, boolean isInsideMembersNode) {
-      if (matchCount.get() >= MAX_RESULTS) return;
+         AtomicInteger matchCount, LF.SearchContext ctx, boolean isInsideMembersNode, boolean toolkitsOnly, int limit) {
+      if (matchCount.get() >= limit) return;
       if (element.isJsonArray()) {
          JsonArray arr = element.getAsJsonArray();
          for (int i = 0; i < arr.size(); ++i) {
-            searchJsonRecursive(arr.get(i), path + " > " + i, query, searchLore, matchCount, ctx, isInsideMembersNode);
+            searchJsonRecursive(arr.get(i), path + " > " + i, query, searchLore, matchCount, ctx, isInsideMembersNode, toolkitsOnly, limit);
          }
       } else if (element.isJsonObject()) {
          JsonObject obj = element.getAsJsonObject();
          if (obj.has("data") && obj.get("data").isJsonPrimitive()) {
-            decodeAndSearch(path, obj.get("data").getAsString(), query, searchLore, matchCount, ctx);
+            decodeAndSearch(path, obj.get("data").getAsString(), query, searchLore, matchCount, ctx, toolkitsOnly, limit);
          } else {
             boolean nextIsMember = false;
             for (Entry<String, JsonElement> entry : obj.entrySet()) {
@@ -103,86 +103,139 @@ public class LF {
                   String raw = key.replace("-", "").toLowerCase();
                   if (raw.length() == 32 && UUID_PATTERN.matcher(raw).matches() && !raw.equals(ctx.targetUuid)) continue;
                }
-               searchJsonRecursive(entry.getValue(), path.isEmpty() ? key : path + " > " + key, query, searchLore, matchCount, ctx, nextIsMember);
+               searchJsonRecursive(entry.getValue(), path.isEmpty() ? key : path + " > " + key, query, searchLore, matchCount, ctx, nextIsMember, toolkitsOnly, limit);
             }
          }
+      } else if (element.isJsonPrimitive() && !path.contains(" > data")) {
+          // Check if this is a sack item (primitive count)
+          if (path.contains("sacks_counts") && !toolkitsOnly) {
+              String[] parts = path.split(" > ");
+              String id = parts[parts.length - 1];
+              int count = element.getAsInt();
+          if (count > 0) {
+                  String nameId = id;
+                  if (nameId.equals("NETHER_STALK")) nameId = "NETHER_WART";
+                  else if (nameId.equals("ENCHANTED_NETHER_STALK")) nameId = "ENCHANTED_NETHER_WART";
+                  else if (nameId.equals("MUTANT_NETHER_STALK")) nameId = "MUTANT_NETHER_WART";
+                  
+                  String name = nameId.replace("_", " ").toLowerCase();
+                  // Simple capitalization
+                  String capitalized = "";
+                  for (String word : name.split(" ")) {
+                      if (word.length() > 0) capitalized += word.substring(0, 1).toUpperCase() + word.substring(1) + " ";
+                  }
+                  capitalized = capitalized.trim();
+                  
+                  if (capitalized.toLowerCase().contains(query)) {
+                      int idx = matchCount.incrementAndGet();
+                      ClickEvent c = new ClickEvent.SuggestCommand("/gfs " + id + " ");
+                      MutableComponent link = Component.literal(capitalized).withStyle(s -> s.withClickEvent(c));
+                      Component msg = translate("&7#" + idx + " ").append(link).append(translate(" &e(x" + count + ") &r&7(Sacks)"));
+                      sendMessage(msg);
+                  }
+              }
+          }
       }
    }
 
-   private static void decodeAndSearch(String containerPath, String base64Data, String query, boolean searchLore, AtomicInteger matchCount, LF.SearchContext ctx) {
+   private static void decodeAndSearch(String containerPath, String base64Data, String query, boolean searchLore, AtomicInteger matchCount, LF.SearchContext ctx, boolean toolkitsOnly, int limit) {
+      if (matchCount.get() >= limit) return;
+      if (toolkitsOnly && !containerPath.contains("farming_toolkit")) return;
       try {
          byte[] data = Base64.getDecoder().decode(base64Data);
          CompoundTag nbt = NbtIo.readCompressed(new ByteArrayInputStream(data), NbtAccounter.create(9223372036854775807L));
-         if (!nbt.contains("i")) return;
          
-         net.minecraft.nbt.ListTag items = (net.minecraft.nbt.ListTag) nbt.get("i");
-         if (items == null) return;
-
-         for (int i = 0; i < items.size(); ++i) {
-            final int loopIndex = i;
-            CompoundTag item = (CompoundTag) items.get(i);
-            CompoundTag tag = item.getCompound("tag").orElse(null);
-            if (tag == null) continue;
-            
-            CompoundTag display = tag.getCompound("display").orElse(null);
-            if (display == null) continue;
-            
-            String fullName = display.getString("Name").orElse("");
-            if (fullName.isEmpty()) continue;
-            
-            StringBuilder lore = new StringBuilder(fullName).append("\n");
-            net.minecraft.nbt.ListTag loreList = (net.minecraft.nbt.ListTag) display.get("Lore");
-            if (loreList != null) {
-               for (int j = 0; j < loreList.size(); ++j) lore.append(loreList.getString(j).orElse("")).append("\n");
+         if (nbt.contains("i")) {
+            net.minecraft.nbt.ListTag items = (net.minecraft.nbt.ListTag) nbt.get("i");
+            if (items == null) return;
+            for (int i = 0; i < items.size(); ++i) {
+               processItemNbt((CompoundTag) items.get(i), i, containerPath, query, searchLore, matchCount, ctx, limit);
             }
-            
-            boolean match = removeColors(fullName).toLowerCase().contains(query);
-            if (!match && searchLore && removeColors(lore.toString()).toLowerCase().contains(query)) match = true;
-            
-            if (match) {
-               int idx = matchCount.incrementAndGet();
-               Object[] info = getContainerInfo(containerPath, loopIndex, removeColors(fullName));
-               final int finalSlotIndex = loopIndex + (int) info[2];
-               final String finalCmdBase = (String) info[1];
-               final String finalContBase = (String) info[0];
-               final int finalOffset = (int) info[2];
-
-               resolveName(extractLastUuidFromPath(containerPath)).thenAccept(memberName -> {
-                  String cont = finalContBase;
-                  String fullCmd = finalCmdBase;
-                  
-                  boolean isOthers = memberName != null && !memberName.isEmpty() && (ctx.coopMode || !memberName.equalsIgnoreCase(ctx.targetUsername));
-                  if (isOthers) {
-                      cont += " (" + memberName + ")";
-                      if (fullCmd.startsWith("/enderchest") || fullCmd.startsWith("/backpack") || fullCmd.startsWith("/museum") || fullCmd.startsWith("/bank")) {
-                          fullCmd += " " + memberName;
-                      }
-                  }
-                  
-                  HoverEvent h = createHoverEventRobust(lore.toString());
-                  ClickEvent c = createClickEventRobust("RUN_COMMAND", "/bombo_highlight_slot " + finalSlotIndex + " " + fullCmd);
-                  
-                  MutableComponent link = Component.literal(fullName);
-                  Style style = Style.EMPTY;
-                  if (h != null) style = style.withHoverEvent(h);
-                  if (c != null) style = style.withClickEvent(c);
-                  link.setStyle(style);
-                  
-                  MutableComponent contComponent = translate(" &r&7(" + cont + ")");
-                  if (c != null) contComponent.setStyle(Style.EMPTY.withClickEvent(c));
-                  
-                  final String finalContDisplay = cont;
-                  Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
-                  Minecraft.getInstance().execute(() -> {
-                      if (BomboConfig.get().debugMode) {
-                          sendMessage("&b[Debug] " + finalContDisplay + " slot " + finalSlotIndex + " (i=" + loopIndex + ", offset=" + finalOffset + ")");
-                      }
-                      sendMessage(msg);
-                  });
-               });
-            }
+         } else {
+            // Might be a single item (like in some toolkits)
+            processItemNbt(nbt, 0, containerPath, query, searchLore, matchCount, ctx, limit);
          }
-      } catch (Exception e) {}
+      } catch (Exception e) {
+         try {
+            // Fallback for uncompressed NBT
+            byte[] data = Base64.getDecoder().decode(base64Data);
+            CompoundTag nbt = NbtIo.read(new java.io.DataInputStream(new ByteArrayInputStream(data)), NbtAccounter.create(9223372036854775807L));
+            if (nbt.contains("i")) {
+               net.minecraft.nbt.ListTag items = (net.minecraft.nbt.ListTag) nbt.get("i");
+               if (items != null) {
+                  for (int i = 0; i < items.size(); ++i) {
+                     processItemNbt((CompoundTag) items.get(i), i, containerPath, query, searchLore, matchCount, ctx, limit);
+                  }
+               }
+            } else {
+               processItemNbt(nbt, 0, containerPath, query, searchLore, matchCount, ctx, limit);
+            }
+         } catch (Exception e2) {}
+      }
+   }
+
+   private static void processItemNbt(CompoundTag item, int slotIndex, String containerPath, String query, boolean searchLore, AtomicInteger matchCount, LF.SearchContext ctx, int limit) {
+      if (matchCount.get() >= limit) return;
+      CompoundTag tag = item.getCompound("tag").orElse(null);
+      if (tag == null) return;
+      
+      CompoundTag display = tag.getCompound("display").orElse(null);
+      if (display == null) return;
+      
+      String fullName = display.getString("Name").orElse("");
+      if (fullName.isEmpty()) return;
+      
+      StringBuilder lore = new StringBuilder(fullName).append("\n");
+      net.minecraft.nbt.ListTag loreList = (net.minecraft.nbt.ListTag) display.get("Lore");
+      if (loreList != null) {
+         for (int j = 0; j < loreList.size(); ++j) lore.append(loreList.getString(j).orElse("")).append("\n");
+      }
+      
+      boolean match = removeColors(fullName).toLowerCase().contains(query);
+      if (!match && searchLore && removeColors(lore.toString()).toLowerCase().contains(query)) match = true;
+      
+      if (match) {
+         int idx = matchCount.incrementAndGet();
+         Object[] info = getContainerInfo(containerPath, slotIndex, removeColors(fullName));
+         final int finalSlotIndex = slotIndex + (int) info[2];
+         final String finalCmdBase = (String) info[1];
+         final String finalContBase = (String) info[0];
+         final int finalOffset = (int) info[2];
+
+         resolveName(extractLastUuidFromPath(containerPath)).thenAccept(memberName -> {
+            String cont = finalContBase;
+            String fullCmd = finalCmdBase;
+            
+            boolean isOthers = memberName != null && !memberName.isEmpty() && (ctx.coopMode || !memberName.equalsIgnoreCase(ctx.targetUsername));
+            if (isOthers) {
+                cont += " (" + memberName + ")";
+                if (fullCmd.startsWith("/enderchest") || fullCmd.startsWith("/backpack") || fullCmd.startsWith("/museum") || fullCmd.startsWith("/bank")) {
+                    fullCmd += " " + memberName;
+                }
+            }
+            
+            HoverEvent h = createHoverEventRobust(lore.toString());
+            ClickEvent c = createClickEventRobust("RUN_COMMAND", "/bombo_highlight_slot " + finalSlotIndex + " " + fullCmd);
+            
+            MutableComponent link = Component.literal(fullName);
+            Style style = Style.EMPTY;
+            if (h != null) style = style.withHoverEvent(h);
+            if (c != null) style = style.withClickEvent(c);
+            link.setStyle(style);
+            
+            MutableComponent contComponent = translate(" &r&7(" + cont + ")");
+            if (c != null) contComponent.setStyle(Style.EMPTY.withClickEvent(c));
+            
+            final String finalContDisplay = cont;
+            Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
+            Minecraft.getInstance().execute(() -> {
+                if (BomboConfig.get().debugMode) {
+                    sendMessage("&b[Debug] " + finalContDisplay + " slot " + finalSlotIndex + " (i=" + slotIndex + ", offset=" + finalOffset + ")");
+                }
+                sendMessage(msg);
+            });
+         });
+      }
    }
 
    public static Object[] getContainerInfo(String raw, int itemIndex, String itemName) {
@@ -237,6 +290,20 @@ public class LF {
       else if (s.contains("sacks")) { name = "Sacks"; cmd = "/sacks"; }
       else if (s.contains("accessory") || s.contains("talisman")) { name = "Accessory Bag"; cmd = "/accessories"; }
       else if (s.contains("pets")) { name = "Pets"; cmd = "/pets"; }
+      else if (s.contains("toolkit")) {
+          if (s.contains("hunting")) { name = "Hunting Toolkit"; cmd = "/play sb"; }
+          else { 
+              name = "Farming Toolkit"; 
+              String[] parts = raw.split(" > ");
+              for (int i = 0; i < parts.length; i++) {
+                  if (parts[i].equalsIgnoreCase("farming_toolkit") && i + 1 < parts.length) {
+                      name += " (" + parts[i+1] + ")";
+                      break;
+                  }
+              }
+              cmd = "/play sb"; 
+          }
+      }
       
       return new Object[] { name, cmd, offset };
    }
@@ -381,5 +448,38 @@ public class LF {
         } else {
             sendMessage("&cNot in a container!");
         }
+    }
+
+    public static void showToolkit(String username, int limit) {
+        sendMessage("&7Fetching toolkit data for &b" + username + "&7...");
+        getUuid(username).thenCompose((uuid) -> {
+            if (uuid == null) return CompletableFuture.completedFuture(null);
+            String cleanUuid = uuid.toString().replace("-", "").toLowerCase();
+            return getFeatureData(cleanUuid).thenApply(json -> new Object[]{cleanUuid, json});
+        }).thenAccept((results) -> {
+            if (results == null) return;
+            String cleanUuid = (String) results[0];
+            String json = (String) results[1];
+            if (json == null) {
+                Minecraft.getInstance().execute(() -> sendMessage("&cFailed to get data."));
+                return;
+            }
+            try {
+                JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+                Minecraft.getInstance().execute(() -> {
+                    sendMessage("&e--- Toolkit Contents for &b" + username + " &e---");
+                    AtomicInteger count = new AtomicInteger(0);
+                    LF.SearchContext ctx = new LF.SearchContext(json, cleanUuid, username, false);
+                    searchJsonRecursive(root, "", "", false, count, ctx, false, true, limit);
+                    if (count.get() == 0) sendMessage("&cNo toolkit or sack data found.");
+                });
+            } catch (Exception e) {
+                Minecraft.getInstance().execute(() -> sendMessage("&cError: " + e.getMessage()));
+            }
+        });
+    }
+
+    private static void findAndPrintToolkit(JsonElement el, String target, String uuid, java.util.Set<JsonElement> visited) {
+        // Legacy debug method, replaced by recursive search with empty query in showToolkit
     }
 }

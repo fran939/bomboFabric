@@ -27,6 +27,16 @@ public class SkyblockUtils {
             List<String> sbLines = getSidebarLines(scoreboard, sidebar);
             String loc = parseAreaFromLines(sbLines);
             if (!loc.equals("Unknown")) return loc;
+            
+            // Check for Lobby marker in scoreboard
+            for (String line : sbLines) {
+                if (line.toLowerCase().contains("hypixel.net")) return "Lobby";
+            }
+        } else {
+            // No scoreboard sidebar - usually Limbo
+            if (mc.getConnection() != null) {
+                return "Limbo";
+            }
         }
 
         // 2. Try Tab List Header/Footer
@@ -38,12 +48,17 @@ public class SkyblockUtils {
             String loc = parseAreaFromLines(plainTabLines);
             if (!loc.equals("Unknown")) return loc;
             
-            // Check Header/Footer specifically if not found in player list
             PlayerTabOverlayAccessor tabAccessor = (PlayerTabOverlayAccessor) mc.gui.getTabList();
             Component header = tabAccessor.getHeader();
             Component footer = tabAccessor.getFooter();
-            if (header != null && parseAreaFromLines(List.of(header.getString())) instanceof String l && !l.equals("Unknown")) return l;
-            if (footer != null && parseAreaFromLines(List.of(footer.getString())) instanceof String l && !l.equals("Unknown")) return l;
+            if (header != null) {
+                String l = parseAreaFromLines(List.of(header.getString()));
+                if (!l.equals("Unknown")) return l;
+            }
+            if (footer != null) {
+                String l = parseAreaFromLines(List.of(footer.getString()));
+                if (!l.equals("Unknown")) return l;
+            }
         }
 
         return "Unknown";
@@ -61,6 +76,8 @@ public class SkyblockUtils {
             if (lower.contains("the garden") || lower.contains("garden")) return "The Garden";
             if (lower.contains("the hub") || lower.contains("hub")) return "The Hub";
             if (lower.contains("private island") || lower.contains("island")) return "Private Island";
+            if (lower.contains("limbo")) return "Limbo";
+            if (lower.contains("lobby")) return "Lobby";
         }
         return "Unknown";
     }

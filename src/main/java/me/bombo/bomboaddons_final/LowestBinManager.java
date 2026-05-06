@@ -156,8 +156,23 @@ public class LowestBinManager {
     }
 
     private static CompletableFuture<Boolean> fetchFromPrices() {
-        return fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices")
-                .thenCombine(fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices2"), (r1, r2) -> r1 || r2);
+        return fetchFromUrl("https://api.eliteskyblock.com/resources/auctions/neu")
+            .thenCompose(success -> {
+                if (success) return CompletableFuture.completedFuture(true);
+                return fetchFromUrl("https://api.odtheking.com/lb/lowestbins");
+            })
+            .thenCompose(success -> {
+                if (success) return CompletableFuture.completedFuture(true);
+                return fetchFromUrl("https://maro.skyblockextras.com/api/auctions/all");
+            })
+            .thenCompose(success -> {
+                if (success) return CompletableFuture.completedFuture(true);
+                return fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices2");
+            })
+            .thenCompose(success -> {
+                if (success) return CompletableFuture.completedFuture(true);
+                return fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices");
+            });
     }
 
     private static CompletableFuture<Boolean> fetchFromNpc() {
@@ -216,24 +231,74 @@ public class LowestBinManager {
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
                         try {
-                            JsonObject json = JsonParser.parseString(response.body()).getAsJsonObject();
-                            if (json.has("data") && json.get("data").isJsonArray()) {
-                                JsonArray dataArray = json.getAsJsonArray("data");
-                                int count = 0;
-                                for (JsonElement element : dataArray) {
-                                    if (!element.isJsonObject()) continue;
-                                    JsonObject item = element.getAsJsonObject();
-                                    if (item.has("id") && item.has("value")) {
-                                        String id = item.get("id").getAsString();
-                                        long value = Math.round(item.get("value").getAsDouble());
-                                        // We store both full ID and base ID if different
-                                        priceCache.put(id, value);
-                                        if (id.contains(";")) {
-                                            priceCache.putIfAbsent(id.split(";")[0], value);
+                            JsonElement root = JsonParser.parseString(response.body());
+                            int count = 0;
+                            
+                            if (root.isJsonObject()) {
+                                JsonObject json = root.getAsJsonObject();
+                                
+                                // Case 1: {"data": [...]} or {"data": {...}}
+                                if (json.has("data")) {
+                                    JsonElement data = json.get("data");
+                                    if (data.isJsonArray()) {
+                                        JsonArray dataArray = data.getAsJsonArray();
+                                        for (JsonElement element : dataArray) {
+                                            if (element.isJsonObject()) {
+                                                JsonObject item = element.getAsJsonObject();
+                                                if (item.has("id") && item.has("value")) {
+                                                    String id = item.get("id").getAsString();
+                                                    long value = Math.round(item.get("value").getAsDouble());
+                                                    priceCache.put(id, value);
+                                                    if (id.contains(";")) priceCache.putIfAbsent(id.split(";")[0], value);
+                                                    count++;
+                                                }
+                                            }
                                         }
-                                        count++;
+                                    } else if (data.isJsonObject()) {
+                                        JsonObject dataObj = data.getAsJsonObject();
+                                        for (String key : dataObj.keySet()) {
+                                            JsonElement val = dataObj.get(key);
+                                            if (val.isJsonPrimitive()) {
+                                                long value = Math.round(val.getAsDouble());
+                                                priceCache.put(key, value);
+                                                if (key.contains(";")) priceCache.putIfAbsent(key.split(";")[0], value);
+                                                count++;
+                                            }
+                                        }
+                                    }
+                                } 
+                                // Case 2: Flat object {"ITEM_ID": price, ...}
+                                else {
+                                    for (String key : json.keySet()) {
+                                        JsonElement val = json.get(key);
+                                        if (val.isJsonPrimitive()) {
+                                            try {
+                                                long value = Math.round(val.getAsDouble());
+                                                priceCache.put(key, value);
+                                                if (key.contains(";")) priceCache.putIfAbsent(key.split(";")[0], value);
+                                                count++;
+                                            } catch (Exception ignored) {}
+                                        }
                                     }
                                 }
+                            } else if (root.isJsonArray()) {
+                                // Case 3: Raw array [...]
+                                JsonArray array = root.getAsJsonArray();
+                                for (JsonElement element : array) {
+                                    if (element.isJsonObject()) {
+                                        JsonObject item = element.getAsJsonObject();
+                                        if (item.has("id") && item.has("value")) {
+                                            String id = item.get("id").getAsString();
+                                            long value = Math.round(item.get("value").getAsDouble());
+                                            priceCache.put(id, value);
+                                            if (id.contains(";")) priceCache.putIfAbsent(id.split(";")[0], value);
+                                            count++;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (count > 0) {
                                 lastFetchTime = System.currentTimeMillis();
                                 if (BomboConfig.get().debugMode) {
                                     Bomboaddons.sendMessage("§7[Debug] Loaded " + count + " prices from " + url);

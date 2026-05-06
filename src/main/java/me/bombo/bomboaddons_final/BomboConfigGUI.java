@@ -47,6 +47,9 @@ public class BomboConfigGUI extends Screen {
     private static String editingHighMob = null;
     private static String listeningForKeyTarget = "";
 
+    private static int editingClickTargetIdx = -1;
+    private static int editingKeybindIdx = -1;
+
     private double scrollAmount = 0;
 
     public BomboConfigGUI(Screen parent) {
@@ -107,6 +110,7 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Auto Accept Carnival", s.autoAcceptCarnival, v -> s.autoAcceptCarnival = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, contentX, contentWidth, curY);
                     curY = addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, contentX, contentWidth, curY);
                 }
                 case 1 -> { // Experiments
                     curY += ITEM_HEIGHT;
@@ -129,6 +133,7 @@ public class BomboConfigGUI extends Screen {
                 case 2 -> { // Garden
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Garden Movement", s.gardenMovement, v -> { s.gardenMovement = v; if (!v) GardenMovement.reset(); }, contentX, contentWidth, curY);
+                    curY = addBoolOption("Sugar Cane Mode", s.gardenSugarCane, v -> s.gardenSugarCane = v, contentX, contentWidth, curY);
                     curY += 10;
                     curY = addKeyBindButton("Forward", s.gardenForwardKey, v -> s.gardenForwardKey = v, "gardenF", contentX, contentWidth, curY);
                     curY = addKeyBindButton("Backward", s.gardenBackwardKey, v -> s.gardenBackwardKey = v, "gardenB", contentX, contentWidth, curY);
@@ -163,13 +168,27 @@ public class BomboConfigGUI extends Screen {
                     curY = addKeyBindButton("Key", clickKeyInput, v -> clickKeyInput = v, "clicker", contentX, contentWidth, curY);
                     
                     int finalCurY = curY;
-                    addRenderableWidget(Button.builder(Component.literal("§a+ Add Target"), btn -> {
+                    String addBtnText = editingClickTargetIdx != -1 ? "§e✔ Save Target" : "§a+ Add Target";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
                         if (!clickGuiInput.isEmpty() && !clickKeyInput.isEmpty()) {
-                            ClickLogic.setTarget(clickItemInput, clickGuiInput, clickKeyInput, clickTypeInput, false);
+                            if (editingClickTargetIdx != -1) {
+                                ClickLogic.updateTarget(editingClickTargetIdx, clickItemInput, clickGuiInput, clickKeyInput, clickTypeInput, false);
+                                editingClickTargetIdx = -1;
+                            } else {
+                                ClickLogic.setTarget(clickItemInput, clickGuiInput, clickKeyInput, clickTypeInput, false);
+                            }
                             clickGuiInput = ""; clickKeyInput = ""; clickItemInput = "";
                             init();
                         }
                     }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+                    
+                    if (editingClickTargetIdx != -1) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel"), btn -> {
+                            editingClickTargetIdx = -1;
+                            clickGuiInput = ""; clickKeyInput = ""; clickItemInput = "";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 60, 20).build());
+                    }
 
                     curY += 35; // Space before list
                     int listStartY = curY;
@@ -179,6 +198,7 @@ public class BomboConfigGUI extends Screen {
                         int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
                         if (itemY > listStartY + 15 && itemY < height - 20) {
                             addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                editingClickTargetIdx = idx;
                                 clickGuiInput = target.gui;
                                 clickItemInput = target.item;
                                 clickKeyInput = target.keyName;
@@ -229,18 +249,32 @@ public class BomboConfigGUI extends Screen {
                     curY = addTextBox("Command", bindCommandInput, v -> bindCommandInput = v, contentX, contentWidth, curY);
                     curY = addTextBox("Combo (e.g. CTRL+G)", bindComboInput, v -> bindComboInput = v, contentX, contentWidth, curY);
                     int finalCurY = curY;
-                    addRenderableWidget(Button.builder(Component.literal("§a+ Add Bind"), btn -> {
+                    String addBindText = editingKeybindIdx != -1 ? "§e✔ Save Bind" : "§a+ Add Bind";
+                    addRenderableWidget(Button.builder(Component.literal(addBindText), btn -> {
                         if (!bindCommandInput.isEmpty() && !bindComboInput.isEmpty()) {
                             List<Integer> codes = parseCombo(bindComboInput);
                             if (!codes.isEmpty()) {
                                 s.profileBinds.putIfAbsent(s.activeProfile, new ArrayList<>());
-                                s.profileBinds.get(s.activeProfile).add(new BomboConfig.CommandBind(bindCommandInput, codes, bindComboInput));
+                                if (editingKeybindIdx != -1) {
+                                    s.profileBinds.get(s.activeProfile).set(editingKeybindIdx, new BomboConfig.CommandBind(bindCommandInput, codes, bindComboInput));
+                                    editingKeybindIdx = -1;
+                                } else {
+                                    s.profileBinds.get(s.activeProfile).add(new BomboConfig.CommandBind(bindCommandInput, codes, bindComboInput));
+                                }
                                 BomboConfig.save();
                                 bindCommandInput = ""; bindComboInput = "";
                                 init();
                             }
                         }
                     }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+                    
+                    if (editingKeybindIdx != -1) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel"), btn -> {
+                            editingKeybindIdx = -1;
+                            bindCommandInput = ""; bindComboInput = "";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 60, 20).build());
+                    }
 
                     curY += 35;
                     int listStartY = curY;
@@ -252,6 +286,7 @@ public class BomboConfigGUI extends Screen {
                             int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
                             if (itemY > listStartY + 15 && itemY < height - 20) {
                                 addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                    editingKeybindIdx = idx;
                                     bindCommandInput = bind.command;
                                     bindComboInput = bind.keyName;
                                     init();
@@ -379,7 +414,8 @@ public class BomboConfigGUI extends Screen {
 
     private int addKeyBindButton(String label, String current, Consumer<String> setter, String target, int x, int w, int y) {
         boolean listening = listeningForKeyTarget.equals(target);
-        String txt = listening ? "§e[PRESS KEY]" : "§f" + label + ": §d" + (current.isEmpty() ? "None" : current);
+        String displayKey = ClickLogic.getKeyDisplayName(current);
+        String txt = listening ? "§e[PRESS KEY]" : "§f" + label + ": §d" + (current.isEmpty() ? "None" : displayKey);
         addRenderableWidget(Button.builder(Component.literal(txt), btn -> { listeningForKeyTarget = target; init(); }).bounds(x + w / 2, y, w / 2, 16).build());
         return y + ITEM_HEIGHT;
     }
@@ -431,6 +467,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Lowest BIN Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7NPC Sell Price Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Ignore Caps Lock", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 1 -> {
                     g.drawString(font, "§6§lExperiment Solver", contentX, curY, 0xFFFFAA00, true);
@@ -450,6 +488,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§6§lGarden Settings", contentX, curY, 0xFFFFAA00, true);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Garden Movement", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Sugar Cane Mode", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT + 10;
                     g.drawString(font, "§fForward:", contentX, curY, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
@@ -510,7 +550,8 @@ public class BomboConfigGUI extends Screen {
                     int listY = listTitleY + 20 - (int)scrollAmount;
                     for (ClickLogic.ClickTarget target : ClickLogic.getTargets()) {
                         if (listY > listTitleY + 15 && listY < height - 15) {
-                            String txt = "§e" + target.gui + " §7- §b" + target.keyName;
+                            String displayKey = ClickLogic.getKeyDisplayName(target.keyName);
+                            String txt = "§e" + target.gui + " §7- §b" + displayKey;
                             if (!target.item.isEmpty()) txt += " §8(" + target.item + ")";
                             g.drawString(font, txt, contentX, listY + 5, 0xFFFFFFFF, false);
                         }

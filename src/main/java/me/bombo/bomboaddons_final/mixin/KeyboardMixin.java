@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.client.input.KeyEvent;
 import java.util.List;
 
@@ -23,6 +25,15 @@ public abstract class KeyboardMixin {
          int key = event.key();
 
          Minecraft mc = Minecraft.getInstance();
+         
+         if (mc.screen instanceof ChatScreen || mc.screen instanceof AbstractSignEditScreen) {
+            return;
+         }
+
+         if (ClickLogic.onKeyPressed(key)) {
+            ci.cancel();
+            return;
+         }
          
          me.bombo.bomboaddons_final.GardenMovement.handleKey(key);
 

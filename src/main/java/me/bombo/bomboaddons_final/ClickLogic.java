@@ -26,8 +26,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.Item.TooltipContext;
-import net.minecraft.world.item.TooltipFlag.Default;
 
 @Environment(EnvType.CLIENT)
 public class ClickLogic {
@@ -62,13 +62,52 @@ public class ClickLogic {
    }
 
    public static void setTarget(String item, String gui, String keyName, String type, boolean auto) {
-      int keyCode = (Integer)KEY_MAP.getOrDefault(keyName.toLowerCase(), -1);
+      int keyCode = getKeyCode(keyName);
       targets.add(new ClickLogic.ClickTarget(item, gui, keyName, keyCode, type, auto));
       saveTargets();
    }
 
    public static List<ClickLogic.ClickTarget> getTargets() {
       return targets;
+   }
+
+   public static String getKeyDisplayName(String keyName) {
+      if (keyName == null || keyName.isEmpty()) return "None";
+      if (keyName.equalsIgnoreCase("key_280")) return "Caps Lock";
+      if (keyName.equalsIgnoreCase("key_340")) return "Left Shift";
+      if (keyName.equalsIgnoreCase("key_344")) return "Right Shift";
+      if (keyName.equalsIgnoreCase("key_341")) return "Left Ctrl";
+      if (keyName.equalsIgnoreCase("key_345")) return "Right Ctrl";
+      if (keyName.equalsIgnoreCase("key_342")) return "Left Alt";
+      if (keyName.equalsIgnoreCase("key_346")) return "Right Alt";
+      if (keyName.equalsIgnoreCase("key_258")) return "Tab";
+      if (keyName.equalsIgnoreCase("key_262")) return "Right Arrow";
+      if (keyName.equalsIgnoreCase("key_263")) return "Left Arrow";
+      if (keyName.equalsIgnoreCase("key_264")) return "Down Arrow";
+      if (keyName.equalsIgnoreCase("key_265")) return "Up Arrow";
+      if (keyName.equalsIgnoreCase("key_261")) return "Delete";
+      if (keyName.equalsIgnoreCase("key_266")) return "Page Up";
+      if (keyName.equalsIgnoreCase("key_267")) return "Page Down";
+      if (keyName.equalsIgnoreCase("key_268")) return "Home";
+      if (keyName.equalsIgnoreCase("key_269")) return "End";
+      if (keyName.equalsIgnoreCase("key_257")) return "Enter";
+      if (keyName.equalsIgnoreCase("key_92")) return "Backslash";
+      if (keyName.equalsIgnoreCase("key_32")) return "Space";
+      if (keyName.equalsIgnoreCase("key_259")) return "Backspace";
+      if (keyName.equalsIgnoreCase("key_256")) return "Escape";
+      
+      if (keyName.length() > 0) {
+         return keyName.substring(0, 1).toUpperCase() + keyName.substring(1);
+      }
+      return keyName;
+   }
+
+   public static void updateTarget(int index, String item, String gui, String keyName, String type, boolean auto) {
+      if (index >= 0 && index < targets.size()) {
+         int keyCode = getKeyCode(keyName);
+         targets.set(index, new ClickLogic.ClickTarget(item, gui, keyName, keyCode, type, auto));
+         saveTargets();
+      }
    }
 
    public static void removeTarget(int index) {
@@ -106,15 +145,16 @@ public class ClickLogic {
    public static boolean onKeyPressed(int key) {
       Minecraft mc = Minecraft.getInstance();
       Screen var3 = mc.screen;
+      if (var3 == null) return false;
+      if (var3 instanceof me.bombo.bomboaddons_final.BomboConfigGUI) return false;
+      if (var3 instanceof net.minecraft.client.gui.screens.ChatScreen || var3 instanceof net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen) return false;
+
+      // Handle Wardrobe Keybinds (Legacy logic, usually in AbstractContainerScreen)
       if (var3 instanceof AbstractContainerScreen) {
          AbstractContainerScreen screen = (AbstractContainerScreen)var3;
          String title = screen.getTitle().getString().toLowerCase();
 
-         // Wardrobe Keybinds
          if (title.contains("wardrobe")) {
-            if (debugMode && mc.player != null) {
-               mc.player.displayClientMessage(Component.literal("§7[Debug] Wardrobe GUI detected"), false);
-            }
             List<String> wardrobeKeys = BomboConfig.get().wardrobeKeys;
             if (wardrobeKeys != null) {
                for (int i = 0; i < Math.min(9, wardrobeKeys.size()); i++) {
@@ -122,29 +162,21 @@ public class ClickLogic {
                   if (kName != null && !kName.isEmpty()) {
                      int code = getKeyCode(kName);
                      if (code != -1 && code == key) {
-                        if (debugMode && mc.player != null) {
-                           mc.player.displayClientMessage(Component.literal("§7[Debug] Pressed Wardrobe key for slot " + (i + 1)), false);
-                        }
                         int slotIndex = 36 + i;
                         if (slotIndex < screen.getMenu().slots.size()) {
                            Slot slot = screen.getMenu().slots.get(slotIndex);
                            ItemStack stack = slot.getItem();
-                           if (debugMode && mc.player != null) {
-                              mc.player.displayClientMessage(Component.literal("§7[Debug] Target slot item: " + stack.getHoverName().getString()), false);
-                           }
                            if (!stack.isEmpty()) {
                               boolean isEquipped = false;
                               if (BomboConfig.get().disableUnequipWardrobe) {
-                                 List<Component> tooltip = stack.getTooltipLines(TooltipContext.of(mc.level), mc.player, Default.NORMAL);
+                                 List<Component> tooltip = stack.getTooltipLines(TooltipContext.of(mc.level), mc.player, TooltipFlag.NORMAL);
                                  for (Component line : tooltip) {
-                                    String lineStr = line.getString();
-                                    if (lineStr.contains(": Equipped")) {
+                                    if (line.getString().contains(": Equipped")) {
                                        isEquipped = true;
                                        break;
                                     }
                                  }
                               }
-                              DebugUtils.debug("gui", "isEquipped check: " + isEquipped);
                               if (!isEquipped) {
                                  if (mc.gameMode != null && mc.player != null) {
                                     mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, 0, ClickType.PICKUP, mc.player);
@@ -164,27 +196,16 @@ public class ClickLogic {
       }
 
       if (BomboConfig.get().chestClicker) {
-         if (var3 instanceof AbstractContainerScreen) {
-            AbstractContainerScreen screen = (AbstractContainerScreen)var3;
-            String title = screen.getTitle().getString().toLowerCase();
-            DebugUtils.debug("gui", "Pressed Key: " + key + " (" + getKeyName(key) + "), GUI: " + title);
-
-            for (ClickLogic.ClickTarget target : targets) {
-               if (target.auto) continue;
-
-               DebugUtils.debug("gui", "Checking target: " + target.item + " (Key: " + target.keyCode + "/" + target.keyName + ", GUI: " + target.gui + ")");
-               
-               if (target.keyCode != -1 && key == target.keyCode) {
-                  if (target.gui.equals("all") || title.contains(target.gui)) {
-                     executeClick(target, mc, screen);
-                     return true;
-                  } else if (debugMode) {
-                     mc.player.displayClientMessage(Component.literal("§7[Debug] GUI mismatch: '" + title + "' does not contain '" + target.gui + "'"), false);
-                  }
+         String title = var3.getTitle().getString().toLowerCase();
+         DebugUtils.debug("clicker", "Key pressed: " + key + " in GUI: " + title);
+         for (ClickLogic.ClickTarget target : targets) {
+            if (target.keyCode != -1 && key == target.keyCode) {
+               DebugUtils.debug("clicker", "Match! Target gui=" + target.gui + " item=" + target.item);
+               if (target.gui.equalsIgnoreCase("all") || title.contains(target.gui.toLowerCase())) {
+                  executeClick(target, mc, (var3 instanceof AbstractContainerScreen ? (AbstractContainerScreen)var3 : null));
+                  return true;
                }
             }
-         } else if (debugMode && mc.player != null) {
-            mc.player.displayClientMessage(Component.literal("§7[Debug] Key: " + key + " (" + getKeyName(key) + "), No container screen open"), false);
          }
       }
       return false;
@@ -259,68 +280,68 @@ public class ClickLogic {
    }
 
    private static void executeClick(ClickLogic.ClickTarget target, Minecraft mc, AbstractContainerScreen screen) {
+      DebugUtils.debug("clicker", "executeClick: item=" + target.item + ", gui=" + target.gui);
       if (target.item.startsWith("/") && !target.item.endsWith("/")) {
-         mc.player.connection.sendCommand(target.item.substring(1));
-         mc.player.displayClientMessage(Component.literal("§b[Bomboaddons] Executing command: " + target.item), true);
-      } else {
-         List<Slot> slots = screen.getMenu().slots;
-         int totalSlots = slots.size();
+         String command = target.item.substring(1);
+         DebugUtils.debug("clicker", "Sending command: " + command);
+         try {
+            mc.player.connection.sendCommand(command);
+            mc.player.displayClientMessage(Component.literal("§b[Bomboaddons] Executing command: /" + command), true);
+         } catch (Exception e) {
+            DebugUtils.debug("clicker", "Failed to send command: " + e.getMessage());
+            mc.player.displayClientMessage(Component.literal("§c[Bomboaddons] Failed to execute command: " + e.getMessage()), true);
+         }
+         return;
+      }
+      if (screen == null) return;
+      List<Slot> slots = screen.getMenu().slots;
+      int totalSlots = slots.size();
 
-         for(int i = 0; i < totalSlots; ++i) {
-            Slot slot = (Slot)slots.get(i);
-            ItemStack stack = slot.getItem();
-            if (!stack.isEmpty()) {
-               String itemName = stack.getHoverName().getString().toLowerCase();
-               boolean match = false;
-               String loreTarget;
-               if (target.item.startsWith("l:")) {
-                  loreTarget = target.item.substring(2).toLowerCase();
-                  List<Component> tooltip = stack.getTooltipLines(TooltipContext.of(mc.level), mc.player, Default.NORMAL);
-                  Iterator var12 = tooltip.iterator();
-
-                  while(var12.hasNext()) {
-                     Component line = (Component)var12.next();
-                     if (line.getString().toLowerCase().contains(loreTarget)) {
-                        match = true;
-                        break;
-                     }
+      for (int i = 0; i < totalSlots; ++i) {
+         Slot slot = (Slot) slots.get(i);
+         ItemStack stack = slot.getItem();
+         if (!stack.isEmpty()) {
+            String itemName = stack.getHoverName().getString().toLowerCase();
+            boolean match = false;
+            if (target.item.startsWith("l:")) {
+               String loreTarget = target.item.substring(2).toLowerCase();
+               List<Component> tooltip = stack.getTooltipLines(TooltipContext.of(mc.level), mc.player, TooltipFlag.NORMAL);
+               for (Component line : tooltip) {
+                  if (line.getString().toLowerCase().contains(loreTarget)) {
+                     match = true;
+                     break;
                   }
-               } else {
-                  try {
-                     if (target.item.startsWith("/") && target.item.endsWith("/")) {
-                        loreTarget = target.item.substring(1, target.item.length() - 1);
-                        match = itemName.matches(".*" + loreTarget + ".*");
-                     } else {
-                        match = itemName.contains(target.item.toLowerCase());
-                     }
-                  } catch (Exception var14) {
+               }
+            } else {
+               try {
+                  if (target.item.startsWith("/") && target.item.endsWith("/")) {
+                     String regex = target.item.substring(1, target.item.length() - 1);
+                     match = itemName.matches(".*" + regex + ".*");
+                  } else {
                      match = itemName.contains(target.item.toLowerCase());
                   }
-               }
-
-               if (match) {
-                  if (mc.gameMode != null && mc.player != null) {
-                     int button = 0;
-                     if (target.type.equalsIgnoreCase("right")) {
-                        button = 1;
-                     } else if (target.type.equalsIgnoreCase("middle")) {
-                        button = 2;
-                     }
-
-                     mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, button, ClickType.PICKUP, mc.player);
-                     LocalPlayer var10000 = mc.player;
-                     String var10001 = stack.getHoverName().getString();
-                     var10000.displayClientMessage(Component.literal("§b[Bomboaddons] Clicking " + var10001 + " (Slot " + slot.index + ") in " + screen.getTitle().getString()), true);
-                  }
-
-                  return;
+               } catch (Exception e) {
+                  match = itemName.contains(target.item.toLowerCase());
                }
             }
+
+            if (match) {
+               if (mc.gameMode != null && mc.player != null) {
+                  int button = 0;
+                  if (target.type.equalsIgnoreCase("right")) {
+                     button = 1;
+                  } else if (target.type.equalsIgnoreCase("middle")) {
+                     button = 2;
+                  }
+
+                  mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, button, ClickType.PICKUP, mc.player);
+                  mc.player.displayClientMessage(Component.literal("§b[Bomboaddons] Clicking " + stack.getHoverName().getString() + " (Slot " + slot.index + ") in " + screen.getTitle().getString()), true);
+               }
+               return;
+            }
          }
-
-         DebugUtils.debug("gui", "Item '" + target.item + "' not found in GUI");
-
       }
+      DebugUtils.debug("gui", "Item '" + target.item + "' not found in GUI");
    }
 
    private static void saveTargets() {
@@ -471,11 +492,11 @@ public class ClickLogic {
       public boolean auto;
 
       public ClickTarget(String item, String gui, String keyName, int keyCode, String type, boolean auto) {
-         this.item = item.toLowerCase();
-         this.gui = gui.toLowerCase();
-         this.keyName = keyName.toLowerCase();
+         this.item = item.trim().toLowerCase();
+         this.gui = gui.trim().toLowerCase();
+         this.keyName = keyName.trim().toLowerCase();
          this.keyCode = keyCode;
-         this.type = type.toLowerCase();
+         this.type = type.trim().toLowerCase();
          this.auto = auto;
       }
    }

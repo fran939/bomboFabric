@@ -108,8 +108,10 @@ public class BomboConfig {
         public boolean hollowWandClickThrough = false;
         public boolean hollowWandAutoCombine = false;
         public boolean autoAcceptCarnival = false;
+        public boolean ignoreCapsLock = true;
         
         public boolean gardenMovement = false;
+        public boolean gardenSugarCane = false;
         public String gardenForwardKey = "up";
         public String gardenBackwardKey = "down";
         public String gardenLeftKey = "left";

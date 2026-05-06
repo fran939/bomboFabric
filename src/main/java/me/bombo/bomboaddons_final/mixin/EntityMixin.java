@@ -39,9 +39,9 @@ public abstract class EntityMixin {
       Entity self = (Entity) (Object) this;
 
       if (BomboConfig.get().pestEsp) {
-         if (self instanceof net.minecraft.world.entity.decoration.ArmorStand stand && me.bombo.bomboaddons_final.TargetPests.getPestName(stand) != null) { System.out.println("GLOWING PEST: " + stand); cir.setReturnValue(true); return; }
-         for (Entity p : self.getPassengers()) { if (p instanceof net.minecraft.world.entity.decoration.ArmorStand stand && me.bombo.bomboaddons_final.TargetPests.getPestName(stand) != null) { System.out.println("GLOWING PEST (PASSENGER): " + stand); cir.setReturnValue(true); return; } }
-         if (self.getVehicle() instanceof net.minecraft.world.entity.decoration.ArmorStand stand && me.bombo.bomboaddons_final.TargetPests.getPestName(stand) != null) { System.out.println("GLOWING PEST (VEHICLE): " + stand); cir.setReturnValue(true); return; }
+         if (self instanceof net.minecraft.world.entity.decoration.ArmorStand stand && me.bombo.bomboaddons_final.TargetPests.getPestName(stand) != null) { cir.setReturnValue(true); return; }
+         for (Entity p : self.getPassengers()) { if (p instanceof net.minecraft.world.entity.decoration.ArmorStand stand && me.bombo.bomboaddons_final.TargetPests.getPestName(stand) != null) { cir.setReturnValue(true); return; } }
+         if (self.getVehicle() instanceof net.minecraft.world.entity.decoration.ArmorStand stand && me.bombo.bomboaddons_final.TargetPests.getPestName(stand) != null) { cir.setReturnValue(true); return; }
       }
 
       if (!BomboConfig.get().highlightsEnabled) {
@@ -101,7 +101,7 @@ public abstract class EntityMixin {
                   continue;
                }
 
-               System.out.println("BOMBO-GLOW: Matched " + key + " on entity " + name + " (nametag: " + nametagName + ")");
+
                cir.setReturnValue(true);
                return;
             }
@@ -192,18 +192,18 @@ public abstract class EntityMixin {
                try {
                   ChatFormatting format = ChatFormatting.valueOf(colorStr);
                   if (format != null && format.getColor() != null) {
-                     System.out.println("BOMBO-COLOR: Formatting " + colorStr + " to " + format.getColor());
+
                      cir.setReturnValue(format.getColor());
                      return;
                   }
                } catch (Exception var7) {
                   try {
                      int hex = Integer.parseInt(colorStr, 16);
-                     System.out.println("BOMBO-COLOR: Hex " + colorStr + " to " + hex);
+
                      cir.setReturnValue(hex);
                      return;
                   } catch (NumberFormatException ignored) {
-                     System.out.println("BOMBO-COLOR: Failed to parse color " + colorStr);
+
                   }
                }
             }
