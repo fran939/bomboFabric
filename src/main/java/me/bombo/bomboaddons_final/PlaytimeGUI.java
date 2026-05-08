@@ -159,10 +159,48 @@ public class PlaytimeGUI extends Screen {
         graphics.renderItem(Items.GOLD_NUGGET.getDefaultInstance(), sessionX, sessionY);
         if (isMouseOver(sessionX, sessionY, mouseX, mouseY)) {
             graphics.fill(sessionX, sessionY, sessionX + 16, sessionY + 16, 0x80FFFFFF);
-            hovered = new HoveredTooltip("§dCurrent Session", mouseX, mouseY,
-                "§7Elapsed: §e" + PlaytimeTracker.formatTime(PlaytimeTracker.getSessionTime()),
-                "§7Current Area: §f" + BomboaddonsClient.currentArea,
-                "§7Status: " + (PlaytimeTracker.isAfk() ? "§cAFK" : "§aActive")
+
+            long elapsed = PlaytimeTracker.getSessionTime();
+            String area = BomboaddonsClient.currentArea;
+            boolean afk = PlaytimeTracker.isAfk();
+            boolean offline = false;
+
+            if (this.cloudData != null) {
+                if (this.cloudData.has("sessionTime")) {
+                    elapsed = this.cloudData.get("sessionTime").getAsLong();
+                } else {
+                    elapsed = 0;
+                }
+                if (this.cloudData.has("currentArea")) {
+                    area = this.cloudData.get("currentArea").getAsString();
+                } else {
+                    area = "Unknown";
+                }
+                if (this.cloudData.has("isAfk")) {
+                    afk = this.cloudData.get("isAfk").getAsBoolean();
+                }
+                if (this.cloudData.has("lastUpdated")) {
+                    long lastUpdated = this.cloudData.get("lastUpdated").getAsLong();
+                    // Syncs every 5 minutes. If it's been more than 7 minutes, consider offline.
+                    if (System.currentTimeMillis() - lastUpdated > 7 * 60 * 1000) {
+                        offline = true;
+                    }
+                }
+            }
+
+            String statusStr;
+            if (offline) {
+                statusStr = "§8Offline";
+            } else if (afk) {
+                statusStr = "§cAFK";
+            } else {
+                statusStr = "§aActive";
+            }
+
+            hovered = new HoveredTooltip(offline ? "§dLast Session" : "§dCurrent Session", mouseX, mouseY,
+                "§7Elapsed: §e" + PlaytimeTracker.formatTime(elapsed),
+                "§7" + (offline ? "Last Area" : "Current Area") + ": §f" + area,
+                "§7Status: " + statusStr
             );
         }
 

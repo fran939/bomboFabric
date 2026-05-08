@@ -154,6 +154,9 @@ public class PlaytimeTracker {
         payload.put("username", username);
         payload.put("uuid", uuid);
         payload.put("areaDataMap", areaDataMap);
+        payload.put("sessionTime", getSessionTime());
+        payload.put("currentArea", BomboaddonsClient.currentArea);
+        payload.put("isAfk", isAfk());
         
         String json = GSON.toJson(payload);
         
