@@ -64,6 +64,55 @@ public class SkyblockUtils {
         return "Unknown";
     }
     
+    public static String getSubArea() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return "None";
+
+        // 1. Try Scoreboard Sidebar
+        Scoreboard scoreboard = mc.level.getScoreboard();
+        Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
+        if (sidebar != null) {
+            List<String> sbLines = getSidebarLines(scoreboard, sidebar);
+            String sub = parseSubAreaFromLines(sbLines);
+            if (!sub.equals("None")) return sub;
+        }
+
+        // 2. Try Tab List Header/Footer
+        if (mc.getConnection() != null) {
+            List<Component> tabLines = getTabListLines();
+            List<String> plainTabLines = new ArrayList<>();
+            for (Component c : tabLines) plainTabLines.add(c.getString());
+            
+            String sub = parseSubAreaFromLines(plainTabLines);
+            if (!sub.equals("None")) return sub;
+            
+            PlayerTabOverlayAccessor tabAccessor = (PlayerTabOverlayAccessor) mc.gui.getTabList();
+            Component header = tabAccessor.getHeader();
+            Component footer = tabAccessor.getFooter();
+            if (header != null) {
+                String s = parseSubAreaFromLines(List.of(header.getString()));
+                if (!s.equals("None")) return s;
+            }
+            if (footer != null) {
+                String s = parseSubAreaFromLines(List.of(footer.getString()));
+                if (!s.equals("None")) return s;
+            }
+        }
+
+        return "None";
+    }
+
+    private static String parseSubAreaFromLines(List<String> lines) {
+        for (String line : lines) {
+            String clean = line.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+            // Hypixel subareas usually start with these symbols
+            if (clean.startsWith("⏣") || clean.startsWith("ф") || clean.startsWith("ф")) {
+                return clean.substring(1).trim();
+            }
+        }
+        return "None";
+    }
+
     private static String parseAreaFromLines(List<String> lines) {
         for (String line : lines) {
             String clean = line.replaceAll("(?i)§[0-9a-fk-or]", "").trim();

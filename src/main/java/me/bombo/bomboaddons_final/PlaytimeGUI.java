@@ -21,10 +21,11 @@ public class PlaytimeGUI extends Screen {
     private int guiTop;
 
     private enum ViewMode {
-        AREAS, DAYS, DAY_DETAIL
+        AREAS, DAYS, DAY_DETAIL, SUB_AREAS
     }
     private ViewMode currentMode = ViewMode.AREAS;
     private String selectedDate = null;
+    private String selectedAreaName = null;
     private List<ViewItem> viewItems = new ArrayList<>();
 
     private long totalPlaytime = 0;
@@ -100,6 +101,14 @@ public class PlaytimeGUI extends Screen {
                 }
             }
             this.viewItems.sort((a, b) -> Long.compare(b.sortValue, a.sortValue));
+        } else if (currentMode == ViewMode.SUB_AREAS) {
+            PlaytimeTracker.AreaData parent = map.get(selectedAreaName);
+            if (parent != null && parent.subAreas != null) {
+                for (Map.Entry<String, PlaytimeTracker.AreaData> entry : parent.subAreas.entrySet()) {
+                    this.viewItems.add(new ViewItem(entry.getKey(), entry.getValue(), entry.getValue().totalTime));
+                }
+                this.viewItems.sort((a, b) -> Long.compare(b.sortValue, a.sortValue));
+            }
         }
     }
 
@@ -181,7 +190,9 @@ public class PlaytimeGUI extends Screen {
                         "§e§lAverages:",
                         "§7Daily: §f" + getAverage(item.data.dailyTime, 1),
                         "§7Weekly: §f" + getAverage(item.data.dailyTime, 7),
-                        "§7Monthly: §f" + getAverage(item.data.dailyTime, 30)
+                        "§7Monthly: §f" + getAverage(item.data.dailyTime, 30),
+                        "",
+                        "§eClick to view subareas!"
                     );
                 } else if (currentMode == ViewMode.DAYS) {
                     hovered = new HoveredTooltip("§b" + item.name, mouseX, mouseY,
@@ -196,6 +207,12 @@ public class PlaytimeGUI extends Screen {
                         "§7Playtime: §a" + PlaytimeTracker.formatTime(item.sortValue),
                         "§7AFK Time: §c" + PlaytimeTracker.formatTime(item.dayAfkTime),
                         "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.dayAfkTime)
+                    );
+                } else if (currentMode == ViewMode.SUB_AREAS) {
+                    hovered = new HoveredTooltip("§d" + item.name + " §7(Subarea)", mouseX, mouseY,
+                        "§7Playtime: §a" + PlaytimeTracker.formatTime(item.sortValue) + " §8(" + PlaytimeTracker.formatTime(item.data.sessionTime) + ")",
+                        "§7AFK Time: §c" + PlaytimeTracker.formatTime(item.data.afkTime) + " §8(" + PlaytimeTracker.formatTime(item.data.sessionAfkTime) + ")",
+                        "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.data.afkTime)
                     );
                 }
             }
@@ -377,7 +394,7 @@ public class PlaytimeGUI extends Screen {
                 if (currentMode == ViewMode.DAY_DETAIL) {
                     currentMode = ViewMode.DAYS;
                     calculateEntries();
-                } else if (currentMode == ViewMode.DAYS) {
+                } else if (currentMode == ViewMode.DAYS || currentMode == ViewMode.SUB_AREAS) {
                     currentMode = ViewMode.AREAS;
                     calculateEntries();
                 }
@@ -392,6 +409,20 @@ public class PlaytimeGUI extends Screen {
                 currentMode = ViewMode.DAYS;
                 calculateEntries();
                 return true;
+            }
+
+            // Click an area to see subareas
+            for (int i = 0; i < Math.min(viewItems.size(), 27); i++) {
+                int row = (i / 9) + 1;
+                int col = i % 9;
+                int slotX = startX + col * 18;
+                int slotY = startY + row * 18;
+                if (mouseX >= slotX && mouseX < slotX + 16 && mouseY >= slotY && mouseY < slotY + 16) {
+                    selectedAreaName = viewItems.get(i).name;
+                    currentMode = ViewMode.SUB_AREAS;
+                    calculateEntries();
+                    return true;
+                }
             }
         }
         

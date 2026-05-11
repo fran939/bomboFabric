@@ -39,6 +39,7 @@ public class BomboaddonsClient implements ClientModInitializer {
     private static boolean openHudMoveNextTick = false;
     public static com.mojang.brigadier.CommandDispatcher<FabricClientCommandSource> clientDispatcher;
     public static String currentArea = "None";
+    public static String currentSubArea = "None";
 
 
     public void onInitializeClient() {
@@ -124,6 +125,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                         builder.then(ClientCommandManager.literal("area").executes(context -> {
                             String loc = SkyblockUtils.getLocation();
                             context.getSource().sendFeedback(Component.literal(PREFIX + "§7Current Area: §a" + loc));
+                            return 1;
+                        }));
+                        builder.then(ClientCommandManager.literal("subarea").executes(context -> {
+                            String sub = SkyblockUtils.getSubArea();
+                            context.getSource().sendFeedback(Component.literal(PREFIX + "§7Current Subarea: §d" + sub));
                             return 1;
                         }));
                         builder.then(ClientCommandManager.literal("container").executes(context -> {
@@ -693,6 +699,7 @@ public class BomboaddonsClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null && client.player.tickCount % 20 == 0) {
                 currentArea = SkyblockUtils.getLocation();
+                currentSubArea = SkyblockUtils.getSubArea();
             }
             PlaytimeTracker.tick();
             

@@ -62,8 +62,15 @@ public class ModUpdater {
                 String currentVersion = FabricLoader.getInstance().getModContainer("bomboaddons")
                         .get().getMetadata().getVersion().getFriendlyString();
 
-                if (latestVersion.equals(currentVersion)) {
-                    if (!silent) sendMessage("§aMod is already up to date! (v" + currentVersion + ")");
+                if (currentVersion.equals("${version}")) {
+                    if (!silent) sendMessage("§cRunning in dev environment with unset version. Update skipped.");
+                    return;
+                }
+
+                int comparison = compareVersions(latestVersion, currentVersion);
+
+                if (comparison <= 0) {
+                    if (!silent) sendMessage("§aMod is up to date! (v" + currentVersion + ")");
                     return;
                 }
 
@@ -116,6 +123,22 @@ public class ModUpdater {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private static int compareVersions(String v1, String v2) {
+        String[] parts1 = v1.split("\\.");
+        String[] parts2 = v2.split("\\.");
+        int length = Math.max(parts1.length, parts2.length);
+        for (int i = 0; i < length; i++) {
+            int p1 = 0, p2 = 0;
+            try {
+                if (i < parts1.length) p1 = Integer.parseInt(parts1[i].replaceAll("[^0-9]", ""));
+                if (i < parts2.length) p2 = Integer.parseInt(parts2[i].replaceAll("[^0-9]", ""));
+            } catch (NumberFormatException e) {}
+            if (p1 < p2) return -1;
+            if (p1 > p2) return 1;
+        }
+        return 0;
     }
 
     private static File getCurrentJar() {

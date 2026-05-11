@@ -88,6 +88,7 @@ public class PlaytimeTracker {
         lastPitch = currentPitch;
         
         String area = normalizeAreaName(BomboaddonsClient.currentArea);
+        String subArea = normalizeAreaName(BomboaddonsClient.currentSubArea);
         String today = LocalDate.now().toString();
         
         AreaData data = areaDataMap.computeIfAbsent(area, k -> new AreaData());
@@ -101,6 +102,19 @@ public class PlaytimeTracker {
             data.afkTime += delta;
             data.sessionAfkTime += delta;
             data.dailyAfk.put(today, data.dailyAfk.getOrDefault(today, 0L) + delta);
+        }
+
+        // Subarea tracking
+        if (!subArea.equals("None") && !subArea.equalsIgnoreCase(area)) {
+            AreaData subData = data.subAreas.computeIfAbsent(subArea, k -> new AreaData());
+            subData.totalTime += delta;
+            subData.sessionTime += delta;
+            subData.dailyTime.put(today, subData.dailyTime.getOrDefault(today, 0L) + delta);
+            if (isAfk) {
+                subData.afkTime += delta;
+                subData.sessionAfkTime += delta;
+                subData.dailyAfk.put(today, subData.dailyAfk.getOrDefault(today, 0L) + delta);
+            }
         }
         
         // Auto-save every 1 minute
@@ -148,6 +162,7 @@ public class PlaytimeTracker {
         public long afkTime = 0;
         public Map<String, Long> dailyTime = new HashMap<>();
         public Map<String, Long> dailyAfk = new HashMap<>();
+        public Map<String, AreaData> subAreas = new HashMap<>();
         public transient long sessionTime = 0;
         public transient long sessionAfkTime = 0;
     }
