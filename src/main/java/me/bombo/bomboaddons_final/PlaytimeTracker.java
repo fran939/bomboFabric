@@ -18,7 +18,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class PlaytimeTracker {
-    private static final File SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bombo_playtime.json");
+    private static final File OLD_SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bombo_playtime.json");
+    private static final File SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bombo/bombo_playtime.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     
     private static Map<String, AreaData> areaDataMap = new HashMap<>();
@@ -33,6 +34,14 @@ public class PlaytimeTracker {
     private static long lastCloudSyncTime = System.currentTimeMillis();
 
     public static void load() {
+        if (OLD_SAVE_FILE.exists()) {
+            try {
+                if (!SAVE_FILE.getParentFile().exists()) SAVE_FILE.getParentFile().mkdirs();
+                java.nio.file.Files.move(OLD_SAVE_FILE.toPath(), SAVE_FILE.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         if (!SAVE_FILE.exists()) return;
         try (FileReader reader = new FileReader(SAVE_FILE)) {
             Type type = new TypeToken<Map<String, AreaData>>(){}.getType();

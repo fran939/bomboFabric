@@ -26,20 +26,15 @@ public abstract class EditBoxMixin {
         if (!cir.getReturnValue()) return;
         
         String text = this.getValue();
-        if (text != null && text.startsWith("/") && me.bombo.bomboaddons_final.BomboConfig.get().ignoreCapsLock) {
+        if (text != null && me.bombo.bomboaddons_final.BomboConfig.get().ignoreCapsLock) {
             int modifiers = characterEvent.modifiers();
             boolean shift = (modifiers & 1) != 0;
             
-            // "ignore caps lock, if i press shift make it caps"
-            // If shift is NOT down, we ensure the command part is lowercase.
+            // If shift is NOT down, we ensure the text is lowercase.
             if (!shift) {
-                int spaceIdx = text.indexOf(' ');
-                String commandPart = spaceIdx == -1 ? text : text.substring(0, spaceIdx);
-                
-                if (!commandPart.equals(commandPart.toLowerCase())) {
+                if (!text.equals(text.toLowerCase())) {
                     int cursor = this.getCursorPosition();
-                    String newText = commandPart.toLowerCase() + (spaceIdx == -1 ? "" : text.substring(spaceIdx));
-                    this.setValue(newText);
+                    this.setValue(text.toLowerCase());
                     this.setCursorPosition(cursor);
                 }
             }

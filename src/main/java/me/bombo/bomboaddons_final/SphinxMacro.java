@@ -23,7 +23,8 @@ import net.minecraft.client.Minecraft;
 @Environment(EnvType.CLIENT)
 public class SphinxMacro {
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
-   private static final File DATA_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_sphinx.json").toFile();
+   private static final File OLD_DATA_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_sphinx.json").toFile();
+   private static final File DATA_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons_sphinx.json").toFile();
    private static final Map<String, String> QUESTIONS = new HashMap();
    private static boolean inBlock = false;
    private static String currentQuestion = null;
@@ -185,6 +186,14 @@ public class SphinxMacro {
    }
 
    public static void load() {
+      if (OLD_DATA_FILE.exists()) {
+         try {
+            if (!DATA_FILE.getParentFile().exists()) DATA_FILE.getParentFile().mkdirs();
+            java.nio.file.Files.move(OLD_DATA_FILE.toPath(), DATA_FILE.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+      }
       if (DATA_FILE.exists()) {
          try {
             InputStreamReader r = new InputStreamReader(Files.newInputStream(DATA_FILE.toPath()), StandardCharsets.UTF_8);

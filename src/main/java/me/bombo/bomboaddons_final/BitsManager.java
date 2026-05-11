@@ -26,7 +26,7 @@ public class BitsManager {
         }
 
         String url = "https://bomboapi.frandl938.workers.dev/bi";
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "Mozilla/5.0").timeout(Duration.ofSeconds(10)).GET().build();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36").timeout(Duration.ofSeconds(10)).GET().build();
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
@@ -83,7 +83,7 @@ public class BitsManager {
         String url = "https://bomboapi.frandl938.workers.dev/bi";
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
-                .header("User-Agent", "Mozilla/5.0 (Bomboaddons)")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                 .timeout(Duration.ofSeconds(10))
                 .GET()
                 .build();
@@ -92,6 +92,9 @@ public class BitsManager {
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
                     List<String> results = new ArrayList<>();
+                    if (BomboConfig.get().apiDebug) {
+                        results.add("§b[Debug] API: " + url);
+                    }
                     if (response.statusCode() == 200) {
                         try {
                             JsonArray jsonArray = JsonParser.parseString(response.body()).getAsJsonArray();

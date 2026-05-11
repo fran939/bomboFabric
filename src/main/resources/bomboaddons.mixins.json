@@ -20,7 +20,10 @@
 		"CommandMixin",
 		"PlayerTabOverlayAccessor",
 		"PostPassMixin",
-		"MinecraftMixin"
+		"MinecraftMixin",
+		"PauseScreenMixin",
+		"ScreenAccessor",
+		"ScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -19,7 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 public class BomboConfig {
-    private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons.json");
+    private static final Path OLD_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons.json");
+    private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons.json");
     
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
@@ -29,6 +30,16 @@ public class BomboConfig {
     private static Settings instance = new Settings();
 
     public static void load() {
+        if (Files.exists(OLD_CONFIG_PATH)) {
+            try {
+                if (!Files.exists(CONFIG_PATH.getParent())) {
+                    Files.createDirectories(CONFIG_PATH.getParent());
+                }
+                Files.move(OLD_CONFIG_PATH, CONFIG_PATH, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         if (Files.exists(CONFIG_PATH)) {
             try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
                 Settings loaded = GSON.fromJson(reader, Settings.class);
@@ -102,6 +113,7 @@ public class BomboConfig {
         public boolean debugEntities = false;
         public boolean debugCommands = false;
         public boolean debugMode = false;
+        public boolean apiDebug = false;
         public List<CommandBind> commandBinds = null;
         public String activeProfile = "default";
         public Map<String, List<CommandBind>> profileBinds = new HashMap<>();
@@ -109,6 +121,10 @@ public class BomboConfig {
         public boolean hollowWandAutoCombine = false;
         public boolean autoAcceptCarnival = false;
         public boolean ignoreCapsLock = true;
+        public boolean serverListButton = true;
+        public boolean diceTracker = true;
+        public int diceHudX = 10;
+        public int diceHudY = 50;
         
         public boolean gardenMovement = false;
         public boolean gardenSugarCane = false;

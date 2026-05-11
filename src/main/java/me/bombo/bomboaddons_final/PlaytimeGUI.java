@@ -20,7 +20,13 @@ public class PlaytimeGUI extends Screen {
     private int guiLeft;
     private int guiTop;
 
-    private List<PlaytimeEntry> entries;
+    private enum ViewMode {
+        AREAS, DAYS, DAY_DETAIL
+    }
+    private ViewMode currentMode = ViewMode.AREAS;
+    private String selectedDate = null;
+    private List<ViewItem> viewItems = new ArrayList<>();
+
     private long totalPlaytime = 0;
     private long totalAfkTime = 0;
     private Map<String, Long> globalDaily = new HashMap<>();
@@ -51,25 +57,50 @@ public class PlaytimeGUI extends Screen {
         } else {
             map = PlaytimeTracker.getAreaDataMap();
         }
-        entries = new ArrayList<>();
+
         totalPlaytime = 0;
         totalAfkTime = 0;
         globalDaily = new HashMap<>();
 
         for (Map.Entry<String, PlaytimeTracker.AreaData> entry : map.entrySet()) {
-            PlaytimeEntry e = new PlaytimeEntry(entry.getKey(), entry.getValue());
-            entries.add(e);
-            totalPlaytime += e.data.totalTime;
-            totalAfkTime += e.data.afkTime;
+            totalPlaytime += entry.getValue().totalTime;
+            totalAfkTime += entry.getValue().afkTime;
             
             // Aggregate global daily stats
-            for (Map.Entry<String, Long> daily : e.data.dailyTime.entrySet()) {
+            for (Map.Entry<String, Long> daily : entry.getValue().dailyTime.entrySet()) {
                 globalDaily.put(daily.getKey(), globalDaily.getOrDefault(daily.getKey(), 0L) + daily.getValue());
             }
         }
 
-        // Sort by total playtime descending
-        entries.sort((a, b) -> Long.compare(b.data.totalTime, a.data.totalTime));
+        this.viewItems.clear();
+
+        if (currentMode == ViewMode.AREAS) {
+            for (Map.Entry<String, PlaytimeTracker.AreaData> entry : map.entrySet()) {
+                this.viewItems.add(new ViewItem(entry.getKey(), entry.getValue(), entry.getValue().totalTime));
+            }
+            this.viewItems.sort((a, b) -> Long.compare(b.sortValue, a.sortValue));
+        } else if (currentMode == ViewMode.DAYS) {
+            for (Map.Entry<String, Long> day : this.globalDaily.entrySet()) {
+                long afk = 0;
+                for (PlaytimeTracker.AreaData d : map.values()) {
+                    afk += d.dailyAfk.getOrDefault(day.getKey(), 0L);
+                }
+                ViewItem item = new ViewItem(day.getKey(), null, day.getValue());
+                item.dayAfkTime = afk;
+                this.viewItems.add(item);
+            }
+            this.viewItems.sort((a, b) -> b.name.compareTo(a.name)); // Sort dates descending
+        } else if (currentMode == ViewMode.DAY_DETAIL) {
+            for (Map.Entry<String, PlaytimeTracker.AreaData> entry : map.entrySet()) {
+                long time = entry.getValue().dailyTime.getOrDefault(selectedDate, 0L);
+                if (time > 0) {
+                    ViewItem item = new ViewItem(entry.getKey(), entry.getValue(), time);
+                    item.dayAfkTime = entry.getValue().dailyAfk.getOrDefault(selectedDate, 0L);
+                    this.viewItems.add(item);
+                }
+            }
+            this.viewItems.sort((a, b) -> Long.compare(b.sortValue, a.sortValue));
+        }
     }
 
     private String getAverage(Map<String, Long> daily, int days) {
@@ -128,28 +159,45 @@ public class PlaytimeGUI extends Screen {
         }
 
         // Area Icons
-        for (int i = 0; i < Math.min(entries.size(), 27); i++) {
-            PlaytimeEntry entry = entries.get(i);
+        for (int i = 0; i < Math.min(viewItems.size(), 27); i++) {
+            ViewItem item = viewItems.get(i);
             int row = (i / 9) + 1;
             int col = i % 9;
             int slotX = startX + col * 18;
             int slotY = startY + row * 18;
             
-            ItemStack icon = getIconForArea(entry.name);
+            ItemStack icon = currentMode == ViewMode.DAYS ? Items.PAPER.getDefaultInstance() : getIconForArea(item.name);
             graphics.renderItem(icon, slotX, slotY);
             
             if (isMouseOver(slotX, slotY, mouseX, mouseY)) {
                 graphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0x80FFFFFF);
-                hovered = new HoveredTooltip("§a" + entry.name, mouseX, mouseY,
-                    "§7Playtime: §a" + PlaytimeTracker.formatTime(entry.data.totalTime) + " §8(" + PlaytimeTracker.formatTime(entry.data.sessionTime) + ")",
-                    "§7AFK Time: §c" + PlaytimeTracker.formatTime(entry.data.afkTime) + " §8(" + PlaytimeTracker.formatTime(entry.data.sessionAfkTime) + ")",
-                    "§7Active: §b" + PlaytimeTracker.formatTime(entry.data.totalTime - entry.data.afkTime),
-                    "",
-                    "§e§lAverages:",
-                    "§7Daily: §f" + getAverage(entry.data.dailyTime, 1),
-                    "§7Weekly: §f" + getAverage(entry.data.dailyTime, 7),
-                    "§7Monthly: §f" + getAverage(entry.data.dailyTime, 30)
-                );
+                
+                if (currentMode == ViewMode.AREAS) {
+                    hovered = new HoveredTooltip("§a" + item.name, mouseX, mouseY,
+                        "§7Playtime: §a" + PlaytimeTracker.formatTime(item.sortValue) + " §8(" + PlaytimeTracker.formatTime(item.data.sessionTime) + ")",
+                        "§7AFK Time: §c" + PlaytimeTracker.formatTime(item.data.afkTime) + " §8(" + PlaytimeTracker.formatTime(item.data.sessionAfkTime) + ")",
+                        "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.data.afkTime),
+                        "",
+                        "§e§lAverages:",
+                        "§7Daily: §f" + getAverage(item.data.dailyTime, 1),
+                        "§7Weekly: §f" + getAverage(item.data.dailyTime, 7),
+                        "§7Monthly: §f" + getAverage(item.data.dailyTime, 30)
+                    );
+                } else if (currentMode == ViewMode.DAYS) {
+                    hovered = new HoveredTooltip("§b" + item.name, mouseX, mouseY,
+                        "§7Total Playtime: §a" + PlaytimeTracker.formatTime(item.sortValue),
+                        "§7AFK Time: §c" + PlaytimeTracker.formatTime(item.dayAfkTime),
+                        "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.dayAfkTime),
+                        "",
+                        "§eClick to view islands played on this day!"
+                    );
+                } else if (currentMode == ViewMode.DAY_DETAIL) {
+                    hovered = new HoveredTooltip("§a" + item.name + " §7(" + selectedDate + ")", mouseX, mouseY,
+                        "§7Playtime: §a" + PlaytimeTracker.formatTime(item.sortValue),
+                        "§7AFK Time: §c" + PlaytimeTracker.formatTime(item.dayAfkTime),
+                        "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.dayAfkTime)
+                    );
+                }
             }
         }
         
@@ -196,6 +244,10 @@ public class PlaytimeGUI extends Screen {
             } else {
                 statusStr = "§aActive";
             }
+            
+            if ("None".equals(area)) {
+                area = "Main Screen";
+            }
 
             hovered = new HoveredTooltip(offline ? "§dLast Session" : "§dCurrent Session", mouseX, mouseY,
                 "§7Elapsed: §e" + PlaytimeTracker.formatTime(elapsed),
@@ -204,13 +256,33 @@ public class PlaytimeGUI extends Screen {
             );
         }
 
-        // Close Button
+        // Bottom Navigation Buttons
         int closeX = startX + 4 * 18;
         int closeY = startY + 5 * 18;
         graphics.renderItem(Items.BARRIER.getDefaultInstance(), closeX, closeY);
         if (isMouseOver(closeX, closeY, mouseX, mouseY)) {
             graphics.fill(closeX, closeY, closeX + 16, closeY + 16, 0x80FFFFFF);
             hovered = new HoveredTooltip("§cClose", mouseX, mouseY);
+        }
+        
+        if (currentMode != ViewMode.AREAS) {
+            int backX = startX + 3 * 18;
+            int backY = startY + 5 * 18;
+            graphics.renderItem(Items.ARROW.getDefaultInstance(), backX, backY);
+            if (isMouseOver(backX, backY, mouseX, mouseY)) {
+                graphics.fill(backX, backY, backX + 16, backY + 16, 0x80FFFFFF);
+                hovered = new HoveredTooltip("§eBack", mouseX, mouseY, "§7Return to previous view");
+            }
+        }
+        
+        if (currentMode == ViewMode.AREAS) {
+            int dailyX = startX + 5 * 18;
+            int dailyY = startY + 5 * 18;
+            graphics.renderItem(Items.WRITABLE_BOOK.getDefaultInstance(), dailyX, dailyY);
+            if (isMouseOver(dailyX, dailyY, mouseX, mouseY)) {
+                graphics.fill(dailyX, dailyY, dailyX + 16, dailyY + 16, 0x80FFFFFF);
+                hovered = new HoveredTooltip("§bDaily View", mouseX, mouseY, "§7View playtime broken down by day.");
+            }
         }
 
         // Draw Tooltip last to be on top
@@ -287,12 +359,56 @@ public class PlaytimeGUI extends Screen {
         int startX = x + 8;
         int startY = y + 18;
         
-        // Close button check
+        double mouseX = event.x();
+        double mouseY = event.y();
+        
+        // Navigation Buttons
         int closeX = startX + 4 * 18;
         int closeY = startY + 5 * 18;
-        if (event.x() >= closeX && event.x() < closeX + 16 && event.y() >= closeY && event.y() < closeY + 16) {
+        if (mouseX >= closeX && mouseX < closeX + 16 && mouseY >= closeY && mouseY < closeY + 16) {
             this.onClose();
             return true;
+        }
+        
+        if (currentMode != ViewMode.AREAS) {
+            int backX = startX + 3 * 18;
+            int backY = startY + 5 * 18;
+            if (mouseX >= backX && mouseX < backX + 16 && mouseY >= backY && mouseY < backY + 16) {
+                if (currentMode == ViewMode.DAY_DETAIL) {
+                    currentMode = ViewMode.DAYS;
+                    calculateEntries();
+                } else if (currentMode == ViewMode.DAYS) {
+                    currentMode = ViewMode.AREAS;
+                    calculateEntries();
+                }
+                return true;
+            }
+        }
+        
+        if (currentMode == ViewMode.AREAS) {
+            int dailyX = startX + 5 * 18;
+            int dailyY = startY + 5 * 18;
+            if (mouseX >= dailyX && mouseX < dailyX + 16 && mouseY >= dailyY && mouseY < dailyY + 16) {
+                currentMode = ViewMode.DAYS;
+                calculateEntries();
+                return true;
+            }
+        }
+        
+        // Item clicks
+        if (currentMode == ViewMode.DAYS) {
+            for (int i = 0; i < Math.min(viewItems.size(), 27); i++) {
+                int row = (i / 9) + 1;
+                int col = i % 9;
+                int slotX = startX + col * 18;
+                int slotY = startY + row * 18;
+                if (mouseX >= slotX && mouseX < slotX + 16 && mouseY >= slotY && mouseY < slotY + 16) {
+                    selectedDate = viewItems.get(i).name;
+                    currentMode = ViewMode.DAY_DETAIL;
+                    calculateEntries();
+                    return true;
+                }
+            }
         }
         
         return super.mouseClicked(event, handled);
@@ -303,13 +419,16 @@ public class PlaytimeGUI extends Screen {
         return false;
     }
 
-    private static class PlaytimeEntry {
-        public String name;
-        public PlaytimeTracker.AreaData data;
+    private static class ViewItem {
+        String name;
+        PlaytimeTracker.AreaData data;
+        long sortValue;
+        long dayAfkTime;
 
-        public PlaytimeEntry(String name, PlaytimeTracker.AreaData data) {
+        ViewItem(String name, PlaytimeTracker.AreaData data, long sortValue) {
             this.name = name;
             this.data = data;
+            this.sortValue = sortValue;
         }
     }
 }

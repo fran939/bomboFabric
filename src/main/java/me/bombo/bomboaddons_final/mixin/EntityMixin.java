@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class EntityMixin {
    @Inject(method = { "isInvisibleTo" }, at = { @At("HEAD") }, cancellable = true)
    private void onIsInvisibleTo(Player player, CallbackInfoReturnable<Boolean> cir) {
-      if (BomboConfig.get().debugMode) {
+      if (BomboConfig.get().debugMode || BomboConfig.get().debugEntities) {
          cir.setReturnValue(false);
       }
 
@@ -28,10 +28,9 @@ public abstract class EntityMixin {
 
    @Inject(method = { "isInvisible" }, at = { @At("HEAD") }, cancellable = true)
    private void onIsInvisible(CallbackInfoReturnable<Boolean> cir) {
-      if (BomboConfig.get().debugMode) {
+      if (BomboConfig.get().debugMode || BomboConfig.get().debugEntities) {
          cir.setReturnValue(false);
       }
-
    }
 
    @Inject(method = { "isCurrentlyGlowing" }, at = { @At("HEAD") }, cancellable = true)
@@ -214,7 +213,7 @@ public abstract class EntityMixin {
 
    @Inject(method = { "isCustomNameVisible" }, at = { @At("HEAD") }, cancellable = true)
    private void onIsCustomNameVisible(CallbackInfoReturnable<Boolean> cir) {
-      if (BomboConfig.get().debugMode) {
+      if (BomboConfig.get().debugMode || BomboConfig.get().debugEntities) {
          cir.setReturnValue(true);
       }
 

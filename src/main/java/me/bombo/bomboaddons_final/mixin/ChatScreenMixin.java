@@ -21,17 +21,12 @@ public abstract class ChatScreenMixin {
         if (input == null) return;
         
         String text = input.getValue();
-        if (text.startsWith("/")) {
-            // Check for Caps Lock (0x10) and Shift (0x01)
-            // GLFW_MOD_CAPS_LOCK = 0x0010
-            // GLFW_MOD_SHIFT = 0x0001
+        if (me.bombo.bomboaddons_final.BomboConfig.get().ignoreCapsLock) {
             int modifiers = characterEvent.modifiers();
-            boolean capsLock = (modifiers & 0x10) != 0;
             boolean shift = (modifiers & 0x01) != 0;
             
-            // "ignore caps lock, if i press shift make it caps"
-            // This means if Caps Lock is ON and Shift is OFF, we want lowercase.
-            if (capsLock && !shift) {
+            // If shift is NOT down, we enforce lowercase to ignore caps lock
+            if (!shift) {
                 if (!text.equals(text.toLowerCase())) {
                     int cursor = input.getCursorPosition();
                     input.setValue(text.toLowerCase());

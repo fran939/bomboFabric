@@ -5,9 +5,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -18,6 +25,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
@@ -27,12 +35,17 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextColor;
 
 @Environment(EnvType.CLIENT)
 public class LF {
    private static final Map<String, String> NAME_CACHE = new ConcurrentHashMap<>();
    private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{32}$");
    private static final int MAX_RESULTS = 300;
+
+   private static final java.net.http.HttpClient CLIENT = java.net.http.HttpClient.newBuilder()
+           .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+           .build();
 
    public static void searchLocal(String query) {
       if (Minecraft.getInstance().player != null) {
@@ -43,25 +56,31 @@ public class LF {
 
    public static void show(String username, String query, boolean coopMode) {
       sendMessage("&7Looking up &b" + username + (coopMode ? " &d(Coop Mode)" : "") + "&7...");
-      getUuid(username).thenCompose((uuid) -> {
-         if (uuid == null) {
-            sendMessage("&cError: Could not find UUID for " + username);
-            return CompletableFuture.completedFuture(null);
-         } else {
-            String cleanUuid = uuid.toString().replace("-", "").toLowerCase();
-            NAME_CACHE.put(cleanUuid, username);
-            return getFeatureData(cleanUuid).thenApply((json) -> {
-               return new LF.SearchContext(json, cleanUuid, username, coopMode);
-            });
-         }
-      }).thenAccept((ctx) -> {
-         if (ctx != null && ctx.json != null) {
-            Minecraft.getInstance().execute(() -> handleResponse(username, query, ctx));
-         } else if (ctx != null) {
-            sendMessage("&cFailed to get data for " + username);
-         }
-      });
+         getUuid(username).thenCompose((uuid) -> {
+            if (uuid == null) {
+               sendMessage("&cError: Could not find UUID for " + username);
+               return CompletableFuture.completedFuture(null);
+            } else {
+               String cleanUuid = uuid.toString().replace("-", "").toLowerCase();
+               NAME_CACHE.put(cleanUuid, username);
+               return getFeatureData(username, cleanUuid).thenApply((json) -> {
+                  if (json == null || json.isEmpty()) {
+                      sendMessage("&cError: Could not fetch data for " + username);
+                      return null;
+                  }
+                  return new LF.SearchContext(json, cleanUuid, username, coopMode);
+               });
+            }
+         }).thenAccept((ctx) -> {
+            if (ctx != null && ctx.json != null) {
+               Minecraft.getInstance().execute(() -> handleResponse(username, query, ctx));
+            }
+         }).exceptionally(e -> {
+            sendMessage("&cError during search: " + e.getMessage());
+            return null;
+         });
    }
+
 
    private static void handleResponse(String username, String query, LF.SearchContext ctx) {
       try {
@@ -75,106 +94,81 @@ public class LF {
 
          AtomicInteger matchCount = new AtomicInteger(0);
          sendMessage("&eSearch Results for '&f" + lowerQuery + "&e' in &b" + username + (ctx.coopMode ? " (Coop)" : "") + "&e:");
-         searchJsonRecursive(root, "", lowerQuery, searchLore, matchCount, ctx, false, false, MAX_RESULTS);
-         if (matchCount.get() == 0) sendMessage("&cCould not find '&f" + lowerQuery + "&c' in any container.");
+         searchJsonRecursive(root, "", lowerQuery, searchLore, matchCount, ctx, false, false, MAX_RESULTS, false);
+         if (matchCount.get() == 0) sendMessage("&cCould find 0 results for '&f" + lowerQuery + "&c'.");
       } catch (Exception e) {
          sendMessage("&cError parsing data: " + e.getMessage());
       }
    }
 
    private static void searchJsonRecursive(JsonElement element, String path, String query, boolean searchLore,
-         AtomicInteger matchCount, LF.SearchContext ctx, boolean isInsideMembersNode, boolean toolkitsOnly, int limit) {
+         AtomicInteger matchCount, LF.SearchContext ctx, boolean isInsideMembersNode, boolean toolkitsOnly, int limit, boolean isBorrowed) {
       if (matchCount.get() >= limit) return;
       if (element.isJsonArray()) {
          JsonArray arr = element.getAsJsonArray();
          for (int i = 0; i < arr.size(); ++i) {
-            searchJsonRecursive(arr.get(i), path + " > " + i, query, searchLore, matchCount, ctx, isInsideMembersNode, toolkitsOnly, limit);
+            searchJsonRecursive(arr.get(i), path + " > " + i, query, searchLore, matchCount, ctx, isInsideMembersNode, toolkitsOnly, limit, isBorrowed);
          }
       } else if (element.isJsonObject()) {
          JsonObject obj = element.getAsJsonObject();
+         
+         if (obj.has("borrowing") && obj.get("borrowing").isJsonPrimitive() && obj.get("borrowing").getAsBoolean()) {
+             return; // Hide borrowed items entirely
+         }
+
          if (obj.has("data") && obj.get("data").isJsonPrimitive()) {
-            decodeAndSearch(path, obj.get("data").getAsString(), query, searchLore, matchCount, ctx, toolkitsOnly, limit);
+            decodeAndSearch(path, obj.get("data").getAsString(), query, searchLore, matchCount, ctx, toolkitsOnly, limit, false);
          } else {
             boolean nextIsMember = false;
             for (Entry<String, JsonElement> entry : obj.entrySet()) {
                String key = entry.getKey();
                if (key.equalsIgnoreCase("members")) nextIsMember = true;
+               
                if (isInsideMembersNode && !ctx.coopMode) {
                   String raw = key.replace("-", "").toLowerCase();
-                  if (raw.length() == 32 && UUID_PATTERN.matcher(raw).matches() && !raw.equals(ctx.targetUuid)) continue;
+                  if (!raw.equals(ctx.targetUuid)) continue;
                }
-               searchJsonRecursive(entry.getValue(), path.isEmpty() ? key : path + " > " + key, query, searchLore, matchCount, ctx, nextIsMember, toolkitsOnly, limit);
+               searchJsonRecursive(entry.getValue(), path.isEmpty() ? key : path + " > " + key, query, searchLore, matchCount, ctx, nextIsMember, toolkitsOnly, limit, false);
             }
          }
-      } else if (element.isJsonPrimitive() && !path.contains(" > data")) {
-          // Check if this is a sack item (primitive count)
-          if (path.contains("sacks_counts") && !toolkitsOnly) {
-              String[] parts = path.split(" > ");
-              String id = parts[parts.length - 1];
-              int count = element.getAsInt();
-          if (count > 0) {
-                  String nameId = id;
-                  if (nameId.equals("NETHER_STALK")) nameId = "NETHER_WART";
-                  else if (nameId.equals("ENCHANTED_NETHER_STALK")) nameId = "ENCHANTED_NETHER_WART";
-                  else if (nameId.equals("MUTANT_NETHER_STALK")) nameId = "MUTANT_NETHER_WART";
-                  
-                  String name = nameId.replace("_", " ").toLowerCase();
-                  // Simple capitalization
-                  String capitalized = "";
-                  for (String word : name.split(" ")) {
-                      if (word.length() > 0) capitalized += word.substring(0, 1).toUpperCase() + word.substring(1) + " ";
-                  }
-                  capitalized = capitalized.trim();
-                  
-                  if (capitalized.toLowerCase().contains(query)) {
-                      int idx = matchCount.incrementAndGet();
-                      ClickEvent c = new ClickEvent.SuggestCommand("/gfs " + id + " ");
-                      MutableComponent link = Component.literal(capitalized).withStyle(s -> s.withClickEvent(c));
-                      Component msg = translate("&7#" + idx + " ").append(link).append(translate(" &e(x" + count + ") &r&7(Sacks)"));
-                      sendMessage(msg);
-                  }
-              }
+      }
+   }
+
+   private static void decodeAndSearch(String containerPath, String base64, String query, boolean searchLore,
+         AtomicInteger matchCount, LF.SearchContext ctx, boolean toolkitsOnly, int limit, boolean isBorrowed) {
+      try {
+         byte[] bytes = Base64.getDecoder().decode(base64);
+         CompoundTag nbt;
+         try {
+             nbt = NbtIo.readCompressed(new ByteArrayInputStream(bytes), NbtAccounter.unlimitedHeap());
+         } catch (Exception e) {
+             nbt = NbtIo.read(new java.io.DataInputStream(new ByteArrayInputStream(bytes)));
+         }
+         if (nbt == null) return;
+
+         if (nbt.contains("i")) {
+             net.minecraft.nbt.ListTag list = (net.minecraft.nbt.ListTag) nbt.get("i");
+             if (list != null) {
+                 for (int i = 0; i < list.size(); ++i) {
+                    CompoundTag item = list.getCompound(i).orElse(null);
+                    if (item != null && !item.isEmpty()) {
+                       processItemNbt(item, i, containerPath, query, searchLore, matchCount, ctx, limit, isBorrowed);
+                    }
+                 }
+             }
+         } else {
+             if (nbt.contains("id") || nbt.contains("tag")) {
+                 processItemNbt(nbt, 0, containerPath, query, searchLore, matchCount, ctx, limit, isBorrowed);
+             }
+         }
+      } catch (Exception e) {
+          if (BomboConfig.get().apiDebug) {
+              sendMessage("&c[Debug] Decode failed for " + containerPath + ": " + e.getMessage());
           }
       }
    }
 
-   private static void decodeAndSearch(String containerPath, String base64Data, String query, boolean searchLore, AtomicInteger matchCount, LF.SearchContext ctx, boolean toolkitsOnly, int limit) {
-      if (matchCount.get() >= limit) return;
-      if (toolkitsOnly && !containerPath.contains("farming_toolkit")) return;
-      try {
-         byte[] data = Base64.getDecoder().decode(base64Data);
-         CompoundTag nbt = NbtIo.readCompressed(new ByteArrayInputStream(data), NbtAccounter.create(9223372036854775807L));
-         
-         if (nbt.contains("i")) {
-            net.minecraft.nbt.ListTag items = (net.minecraft.nbt.ListTag) nbt.get("i");
-            if (items == null) return;
-            for (int i = 0; i < items.size(); ++i) {
-               processItemNbt((CompoundTag) items.get(i), i, containerPath, query, searchLore, matchCount, ctx, limit);
-            }
-         } else {
-            // Might be a single item (like in some toolkits)
-            processItemNbt(nbt, 0, containerPath, query, searchLore, matchCount, ctx, limit);
-         }
-      } catch (Exception e) {
-         try {
-            // Fallback for uncompressed NBT
-            byte[] data = Base64.getDecoder().decode(base64Data);
-            CompoundTag nbt = NbtIo.read(new java.io.DataInputStream(new ByteArrayInputStream(data)), NbtAccounter.create(9223372036854775807L));
-            if (nbt.contains("i")) {
-               net.minecraft.nbt.ListTag items = (net.minecraft.nbt.ListTag) nbt.get("i");
-               if (items != null) {
-                  for (int i = 0; i < items.size(); ++i) {
-                     processItemNbt((CompoundTag) items.get(i), i, containerPath, query, searchLore, matchCount, ctx, limit);
-                  }
-               }
-            } else {
-               processItemNbt(nbt, 0, containerPath, query, searchLore, matchCount, ctx, limit);
-            }
-         } catch (Exception e2) {}
-      }
-   }
-
-   private static void processItemNbt(CompoundTag item, int slotIndex, String containerPath, String query, boolean searchLore, AtomicInteger matchCount, LF.SearchContext ctx, int limit) {
+   private static void processItemNbt(CompoundTag item, int slotIndex, String containerPath, String query, boolean searchLore, AtomicInteger matchCount, LF.SearchContext ctx, int limit, boolean isBorrowed) {
       if (matchCount.get() >= limit) return;
       CompoundTag tag = item.getCompound("tag").orElse(null);
       if (tag == null) return;
@@ -215,7 +209,14 @@ public class LF {
             }
             
             HoverEvent h = createHoverEventRobust(lore.toString());
-            ClickEvent c = createClickEventRobust("RUN_COMMAND", "/bombo_highlight_slot " + finalSlotIndex + " " + fullCmd);
+            
+            String clickCmd = "/bombo_highlight_slot " + finalSlotIndex + " " + fullCmd;
+            if (fullCmd.startsWith("/museum")) {
+                String mUser = memberName != null && !memberName.isEmpty() ? memberName : ctx.targetUsername;
+                clickCmd = "/bombo_museum_click " + mUser + " " + finalSlotIndex;
+            }
+            
+            ClickEvent c = createClickEventRobust("RUN_COMMAND", clickCmd);
             
             MutableComponent link = Component.literal(fullName);
             Style style = Style.EMPTY;
@@ -252,74 +253,26 @@ public class LF {
                   if (parts[i].contains("backpack")) {
                       int num = Integer.parseInt(parts[i+1]) + 1;
                       name = "Backpack " + num;
-                      cmd = "/backpack " + num;
                       break;
                   }
               }
           } catch (Exception e) {}
       }
-      else if (s.contains("ender")) {
-          name = "Ender Chest"; cmd = "/enderchest";
-          offset = 9;
-          try {
-              String[] parts = s.split(" > ");
-              for (int i = 0; i < parts.length - 1; i++) {
-                  if (parts[i].contains("ender")) {
-                      int num = Integer.parseInt(parts[i+1]) + 1;
-                      name = "Ender Chest " + num;
-                      cmd = "/enderchest " + num;
-                      break;
-                  }
-              }
-              
-              int pageFromIndex = (itemIndex / 45) + 1;
-              if (itemIndex >= 45) {
-                  if (!cmd.contains(" ")) {
-                      name = "Ender Chest " + pageFromIndex;
-                      cmd = "/enderchest " + pageFromIndex;
-                  }
-                  offset = 9 - (pageFromIndex - 1) * 45;
-              } else {
-                  offset = 9;
-              }
-          } catch (Exception e) {}
-      }
-      else if (s.contains("museum")) { name = "Museum"; cmd = "/museum"; }
-      else if (s.contains("vault")) { name = "Personal Vault"; cmd = "/bank"; }
+      else if (s.contains("enderchest") || s.contains("ender_chest")) { name = "Ender Chest"; cmd = "/enderchest"; }
       else if (s.contains("wardrobe")) { name = "Wardrobe"; cmd = "/wardrobe"; }
+      else if (s.contains("vault")) { name = "Personal Vault"; cmd = "/pv"; }
+      else if (s.contains("museum")) { name = "Museum"; cmd = "/museum"; }
       else if (s.contains("sacks")) { name = "Sacks"; cmd = "/sacks"; }
-      else if (s.contains("accessory") || s.contains("talisman")) { name = "Accessory Bag"; cmd = "/accessories"; }
-      else if (s.contains("pets")) { name = "Pets"; cmd = "/pets"; }
-      else if (s.contains("toolkit")) {
-          if (s.contains("hunting")) { name = "Hunting Toolkit"; cmd = "/play sb"; }
-          else { 
-              name = "Farming Toolkit"; 
-              String[] parts = raw.split(" > ");
-              for (int i = 0; i < parts.length; i++) {
-                  if (parts[i].equalsIgnoreCase("farming_toolkit") && i + 1 < parts.length) {
-                      name += " (" + parts[i+1] + ")";
-                      break;
-                  }
-              }
-              cmd = "/play sb"; 
-          }
-      }
+      else if (s.contains("quiver")) { name = "Quiver"; cmd = "/quiver"; }
+      else if (s.contains("potion_bag")) { name = "Potion Bag"; cmd = "/potionbag"; }
+      else if (s.contains("candy_bag")) { name = "Candy Bag"; cmd = "/candybag"; }
+      else if (s.contains("fishing_bag")) { name = "Fishing Bag"; cmd = "/fishingbag"; }
       
       return new Object[] { name, cmd, offset };
    }
 
-   public static ClickEvent createClickEventRobust(String actionName, String value) {
-      if ("RUN_COMMAND".equals(actionName)) return new ClickEvent.RunCommand(value);
-      if ("SUGGEST_COMMAND".equals(actionName)) return new ClickEvent.SuggestCommand(value);
-      return null;
-   }
-
-   public static HoverEvent createHoverEventRobust(String text) {
-      return new HoverEvent.ShowText(Component.literal(text));
-   }
-
-   public static String removeColors(String text) { 
-       return text.replaceAll("(?i)\\u00A7[0-9a-fk-or]", "").replaceAll("(?i)&[0-9a-fk-or]", ""); 
+   public static String removeColors(String s) {
+      return s == null ? "" : s.replaceAll("§.", "").replaceAll("&.", "");
    }
 
    private static String extractLastUuidFromPath(String path) {
@@ -331,27 +284,11 @@ public class LF {
       return null;
    }
 
-   private static final java.net.http.HttpClient CLIENT = java.net.http.HttpClient.newBuilder()
-           .version(java.net.http.HttpClient.Version.HTTP_2)
-           .connectTimeout(java.time.Duration.ofSeconds(10L))
-           .build();
-
-   private static CompletableFuture<String> fetchString(String url) {
-      java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder().uri(java.net.URI.create(url)).header("User-Agent", "Minecraft-Mod-1.21").GET().build();
-      return CLIENT.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString()).thenApply((res) -> {
-         return res.statusCode() == 200 ? res.body() : null;
-      }).exceptionally((e) -> {
-         return null;
-      });
-   }
-
    private static CompletableFuture<UUID> getUuid(String username) {
-      return fetchString("https://api.ashcon.app/mojang/v2/uuid/" + username).thenCompose((response) -> {
-         if (response != null) {
+      if (username == null || username.isEmpty()) return CompletableFuture.completedFuture(null);
+      return fetchString("https://api.ashcon.app/mojang/v2/user/" + username).thenCompose((response) -> {
+         if (response != null && response.contains("\"uuid\"")) {
             try {
-               if (response.contains("-") && response.length() == 36) {
-                  return CompletableFuture.completedFuture(UUID.fromString(response.trim()));
-               }
                JsonObject json = JsonParser.parseString(response).getAsJsonObject();
                if (json.has("uuid")) {
                   return CompletableFuture.completedFuture(UUID.fromString(json.get("uuid").getAsString()));
@@ -371,12 +308,22 @@ public class LF {
       });
    }
 
-   private static CompletableFuture<String> getFeatureData(String cleanUuid) {
-      return fetchString("https://bomboapi.frandl938.workers.dev/" + cleanUuid).thenCompose((response) -> {
+   private static CompletableFuture<String> getFeatureData(String username, String cleanUuid) {
+      String url = "https://bomboapi.frandl938.workers.dev/" + username;
+      if (BomboConfig.get().apiDebug) {
+          sendMessage("&b[Debug] API: " + url);
+      }
+      return fetchString(url).thenCompose((response) -> {
          if (response != null && !response.isEmpty() && response.startsWith("{")) {
             return CompletableFuture.completedFuture(response);
          }
-         return fetchString("https://profile.snailify.workers.dev/?uuid=" + cleanUuid);
+         // Fallback to UUID
+         String uuidUrl = "https://bomboapi.frandl938.workers.dev/" + cleanUuid;
+         if (BomboConfig.get().apiDebug) sendMessage("&7[Debug] Username API failed, trying UUID: " + uuidUrl);
+         return fetchString(uuidUrl).thenCompose(uuidRes -> {
+             if (uuidRes != null && !uuidRes.isEmpty() && uuidRes.startsWith("{")) return CompletableFuture.completedFuture(uuidRes);
+             return fetchString("https://profile.snailify.workers.dev/?uuid=" + cleanUuid);
+         });
       });
    }
 
@@ -410,10 +357,24 @@ public class LF {
       });
    }
 
+   private static CompletableFuture<String> fetchString(String url) {
+      java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+              .uri(java.net.URI.create(url))
+              .timeout(java.time.Duration.ofSeconds(10))
+              .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+              .GET()
+              .build();
+      
+      return CLIENT.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString()).thenApply((res) -> {
+         return res.statusCode() == 200 ? res.body() : null;
+      }).exceptionally((e) -> {
+         return null;
+      });
+   }
+
    private static void sendMessage(String msg) { 
        if (Minecraft.getInstance().player != null) {
-           String formatted = msg.replace("&", "\u00A7");
-           Minecraft.getInstance().player.displayClientMessage(Component.literal(formatted), false); 
+           Minecraft.getInstance().player.displayClientMessage(translate(msg), false); 
        }
    }
    
@@ -421,6 +382,19 @@ public class LF {
        if (Minecraft.getInstance().player != null) {
            Minecraft.getInstance().player.displayClientMessage(msg, false); 
        }
+   }
+
+   public static HoverEvent createHoverEventRobust(String lore) {
+       return SBECommands.createHoverEvent(lore);
+   }
+
+   public static ClickEvent createClickEventRobust(String action, String value) {
+       try {
+           if (action.equalsIgnoreCase("RUN_COMMAND")) return new ClickEvent.RunCommand(value);
+           if (action.equalsIgnoreCase("SUGGEST_COMMAND")) return new ClickEvent.SuggestCommand(value);
+           if (action.equalsIgnoreCase("OPEN_URL")) return new ClickEvent.OpenUrl(java.net.URI.create(value));
+           return null;
+       } catch (Throwable t) { return null; }
    }
 
    private static MutableComponent translate(String s) {
@@ -455,7 +429,7 @@ public class LF {
         getUuid(username).thenCompose((uuid) -> {
             if (uuid == null) return CompletableFuture.completedFuture(null);
             String cleanUuid = uuid.toString().replace("-", "").toLowerCase();
-            return getFeatureData(cleanUuid).thenApply(json -> new Object[]{cleanUuid, json});
+            return getFeatureData(username, cleanUuid).thenApply(json -> new Object[]{cleanUuid, json});
         }).thenAccept((results) -> {
             if (results == null) return;
             String cleanUuid = (String) results[0];
@@ -470,16 +444,12 @@ public class LF {
                     sendMessage("&e--- Toolkit Contents for &b" + username + " &e---");
                     AtomicInteger count = new AtomicInteger(0);
                     LF.SearchContext ctx = new LF.SearchContext(json, cleanUuid, username, false);
-                    searchJsonRecursive(root, "", "", false, count, ctx, false, true, limit);
+                    searchJsonRecursive(root, "", "", false, count, ctx, false, true, limit, false);
                     if (count.get() == 0) sendMessage("&cNo toolkit or sack data found.");
                 });
             } catch (Exception e) {
                 Minecraft.getInstance().execute(() -> sendMessage("&cError: " + e.getMessage()));
             }
         });
-    }
-
-    private static void findAndPrintToolkit(JsonElement el, String target, String uuid, java.util.Set<JsonElement> visited) {
-        // Legacy debug method, replaced by recursive search with empty query in showToolkit
     }
 }

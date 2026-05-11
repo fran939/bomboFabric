@@ -15,13 +15,23 @@ import java.util.Map;
 
 public class HotbarConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
+    private static final File OLD_CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
             .resolve("bomboaddons_hotbars.json").toFile();
+    private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
+            .resolve("bombo/bomboaddons_hotbars.json").toFile();
 
     // Map of Snapshot ID -> Array of 9 SlotData objects
     private static Map<String, SlotData[]> snapshots = new HashMap<>();
 
     public static void load() {
+        if (OLD_CONFIG_FILE.exists()) {
+            try {
+                if (!CONFIG_FILE.getParentFile().exists()) CONFIG_FILE.getParentFile().mkdirs();
+                java.nio.file.Files.move(OLD_CONFIG_FILE.toPath(), CONFIG_FILE.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         if (!CONFIG_FILE.exists()) {
             save();
             return;
@@ -77,5 +87,9 @@ public class HotbarConfig {
             this.vanillaId = vanillaId;
             this.customName = customName;
         }
+    }
+
+    static {
+        load();
     }
 }

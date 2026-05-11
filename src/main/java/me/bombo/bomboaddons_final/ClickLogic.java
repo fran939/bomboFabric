@@ -34,7 +34,8 @@ public class ClickLogic {
    private static List<ClickLogic.ClickTarget> targets = new ArrayList();
    private static boolean debugMode = false;
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
-   private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_clicks.json").toFile();
+   private static final File OLD_CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_clicks.json").toFile();
+   private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons_clicks.json").toFile();
    private static final Map<String, Integer> KEY_MAP = new HashMap();
 
     public static int getKeyCode(String keyName) {
@@ -368,6 +369,14 @@ public class ClickLogic {
    }
 
    private static void loadTargets() {
+      if (OLD_CONFIG_FILE.exists()) {
+         try {
+            if (!CONFIG_FILE.getParentFile().exists()) CONFIG_FILE.getParentFile().mkdirs();
+            java.nio.file.Files.move(OLD_CONFIG_FILE.toPath(), CONFIG_FILE.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+      }
       if (CONFIG_FILE.exists()) {
          try {
             FileReader reader = new FileReader(CONFIG_FILE);

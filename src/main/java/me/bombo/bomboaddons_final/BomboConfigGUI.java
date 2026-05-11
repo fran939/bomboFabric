@@ -111,6 +111,8 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, contentX, contentWidth, curY);
                     curY = addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Server List Button", s.serverListButton, v -> s.serverListButton = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Dice Tracker HUD", s.diceTracker, v -> s.diceTracker = v, contentX, contentWidth, curY);
                 }
                 case 1 -> { // Experiments
                     curY += ITEM_HEIGHT;
@@ -371,6 +373,7 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Entities Debug", s.debugEntities, v -> s.debugEntities = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Command Debug", s.debugCommands, v -> s.debugCommands = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Debug Mode (Legacy)", s.debugMode, v -> s.debugMode = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("API Debug", s.apiDebug, v -> s.apiDebug = v, contentX, contentWidth, curY);
                 }
             }
 
@@ -469,6 +472,10 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7NPC Sell Price Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Ignore Caps Lock", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Server List Button", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Dice Tracker HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 1 -> {
                     g.drawString(font, "§6§lExperiment Solver", contentX, curY, 0xFFFFAA00, true);
@@ -639,6 +646,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Command Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Debug Mode (Legacy)", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7API Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
             }
         } catch (Exception e) {

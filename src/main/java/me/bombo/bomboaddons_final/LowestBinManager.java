@@ -44,11 +44,7 @@ public class LowestBinManager {
             fetchFromPrices(), 
             fetchFromNpc(),
             BitsManager.ensureLoaded()
-        ).thenRun(() -> {
-            if (Minecraft.getInstance().player != null) {
-                Minecraft.getInstance().player.displayClientMessage(Component.literal("§b[BomboAddons] §aPrices Loaded! §8(" + priceCache.size() + " items)"), false);
-            }
-        });
+        );
     }
 
     public static String getStatus() {

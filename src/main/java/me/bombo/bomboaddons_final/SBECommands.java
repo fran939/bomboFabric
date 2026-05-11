@@ -39,6 +39,9 @@ public class SBECommands {
          Minecraft mc = Minecraft.getInstance();
          String selfUuid = mc.getUser().getProfileId().toString();
          sendMessage("§7Fetching data for " + name + "...");
+         if (BomboConfig.get().apiDebug) {
+             sendMessage("§b[Debug] API: " + url);
+         }
          HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
                .header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.11) " + selfUuid).timeout(Duration.ofSeconds(60L))
                .GET().build();

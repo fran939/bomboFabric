@@ -34,6 +34,7 @@ import net.minecraft.world.phys.EntityHitResult;
 public class BomboaddonsClient implements ClientModInitializer {
     private static final String PREFIX = "§8[§bBomboAddons§8]§r ";
     private static boolean openGuiNextTick = false;
+    private static boolean openHudMoveNextTick = false;
     public static com.mojang.brigadier.CommandDispatcher<FabricClientCommandSource> clientDispatcher;
     public static String currentArea = "None";
 
@@ -362,6 +363,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     return 1;
                                 }));
 
+                        builder.then(ClientCommandManager.literal("gui").executes(context -> {
+                            openHudMoveNextTick = true;
+                            return 1;
+                        }));
+
+                        builder.then(ClientCommandManager.literal("resetdice").executes(context -> {
+                            DiceTracker.reset();
+                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aDice Tracker statistics have been reset!"));
+                            return 1;
+                        }));
                     };
 
                     setupCommands.accept(bBuilder);
@@ -417,6 +428,29 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                     }
                                                 }
                                                 executeTracked(cmd);
+                                                return 1;
+                                            }))));
+                    
+                    final long[] lastMuseumClick = {0L};
+                    final String[] lastMuseumTarget = {""};
+                    dispatcher.register(ClientCommandManager.literal("bombo_museum_click")
+                            .then(ClientCommandManager.argument("username", StringArgumentType.string())
+                                    .then(ClientCommandManager.argument("slot", IntegerArgumentType.integer())
+                                            .executes(context -> {
+                                                String user = StringArgumentType.getString(context, "username");
+                                                int slot = IntegerArgumentType.getInteger(context, "slot");
+                                                long now = System.currentTimeMillis();
+                                                String target = user + ":" + slot;
+                                                
+                                                if (now - lastMuseumClick[0] < 2000 && target.equals(lastMuseumTarget[0])) {
+                                                    executeTracked("/warp museum");
+                                                    lastMuseumClick[0] = 0;
+                                                    lastMuseumTarget[0] = "";
+                                                } else {
+                                                    lastMuseumClick[0] = now;
+                                                    lastMuseumTarget[0] = target;
+                                                    context.getSource().sendFeedback(Component.literal("§7[Bombo] Click again within 2s to §b/warp museum§7!"));
+                                                }
                                                 return 1;
                                             }))));
                     dispatcher.register(ClientCommandManager.literal("lf")
@@ -562,6 +596,50 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 InventoryManager.captureCurrentGUI();
                                 return 1;
                             }));
+                            
+                    dispatcher.register(ClientCommandManager.literal("bombohb")
+                            .then(ClientCommandManager.literal("save")
+                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String name = StringArgumentType.getString(context, "name");
+                                                if (HotbarSwapper.saveSnapshot(name)) {
+                                                    context.getSource().sendFeedback(Component.literal("§aSaved hotbar snapshot: §e" + name));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal("§cFailed to save hotbar snapshot (player is null)."));
+                                                }
+                                                return 1;
+                                            })))
+                            .then(ClientCommandManager.literal("delete")
+                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String name = StringArgumentType.getString(context, "name");
+                                                if (HotbarSwapper.deleteSnapshot(name)) {
+                                                    context.getSource().sendFeedback(Component.literal("§aDeleted hotbar snapshot: §e" + name));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal("§cSnapshot not found: §e" + name));
+                                                }
+                                                return 1;
+                                            })))
+                            .then(ClientCommandManager.literal("list")
+                                    .executes(context -> {
+                                        context.getSource().sendFeedback(Component.literal("§6--- Hotbar Snapshots ---"));
+                                        for (String id : HotbarSwapper.list()) {
+                                            context.getSource().sendFeedback(Component.literal("§7- §e" + id));
+                                        }
+                                        return 1;
+                                    }))
+                            .then(ClientCommandManager.literal("apply")
+                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String name = StringArgumentType.getString(context, "name");
+                                                if (HotbarSwapper.exists(name)) {
+                                                    HotbarSwapper.apply(name);
+                                                    context.getSource().sendFeedback(Component.literal("§aApplied hotbar snapshot: §e" + name));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal("§cSnapshot not found: §e" + name));
+                                                }
+                                                return 1;
+                                            }))));
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register inventory commands!", t);
                 }
@@ -570,6 +648,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             BomboConfig.load();
             PlaytimeTracker.load();
+            DiceTracker.load();
             ChatPeek.init();
             BazaarUtils.init();
             LowestBinManager.ensureLoaded();
@@ -577,6 +656,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             
             ModUpdater.init();
             registerTickEvents();
+            DiceHud.init();
 
             WorldRenderEvents.AFTER_ENTITIES.register(context -> {
                 HighlightESP.render(context);
@@ -590,7 +670,9 @@ public class BomboaddonsClient implements ClientModInitializer {
             });
 
             net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
-                DebugUtils.debug("chat", message.getString().replaceAll("§.", ""));
+                String clean = message.getString().replaceAll("§.", "");
+                DebugUtils.debug("chat", clean);
+                DiceTracker.onChatMessage(clean);
             });
 
         } catch (Throwable t) {
@@ -610,6 +692,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                 if (openGuiNextTick && client.player != null) {
                     openGuiNextTick = false;
                     client.setScreen(new BomboConfigGUI(client.screen));
+                }
+                if (openHudMoveNextTick && client.player != null) {
+                    openHudMoveNextTick = false;
+                    client.setScreen(new HudMoveScreen());
                 }
             } catch (Throwable t) {
                 // Silently ignore or use logger
@@ -643,7 +729,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                         for (net.minecraft.world.entity.Entity e : client.level.entitiesForRendering()) {
                             count++;
                             if (e.distanceTo(client.player) < 10) {
-                                info.append(e.getName().getString()).append(" (").append(e.getId()).append("), ");
+                                String name = e.getName().getString();
+                                if (e.isInvisible()) name += " §7(Invisible)§r";
+                                info.append(name).append(" (").append(e.getId()).append("), ");
                             }
                         }
                         DebugUtils.debug("entity", "Total: " + count + " | Nearby: " + info.toString());

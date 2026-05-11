@@ -15,12 +15,22 @@ import java.util.List;
 
 public class InventoryConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
+    private static final File OLD_CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
             .resolve("bomboaddons_inventories.json").toFile();
+    private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir()
+            .resolve("bombo/bomboaddons_inventories.json").toFile();
 
     private static List<InventorySnapshot> snapshots = new ArrayList<>();
 
     public static void load() {
+        if (OLD_CONFIG_FILE.exists()) {
+            try {
+                if (!CONFIG_FILE.getParentFile().exists()) CONFIG_FILE.getParentFile().mkdirs();
+                java.nio.file.Files.move(OLD_CONFIG_FILE.toPath(), CONFIG_FILE.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         if (!CONFIG_FILE.exists()) {
             save();
             return;
@@ -53,5 +63,9 @@ public class InventoryConfig {
     public static void addSnapshot(InventorySnapshot snapshot) {
         snapshots.add(snapshot);
         save();
+    }
+
+    static {
+        load();
     }
 }
