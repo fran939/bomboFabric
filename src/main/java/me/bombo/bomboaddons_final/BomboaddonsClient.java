@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.nio.file.Path;
+import net.minecraft.util.Util;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -640,6 +642,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 }
                                                 return 1;
                                             }))));
+                    dispatcher.register(ClientCommandManager.literal("mod")
+                            .executes(context -> {
+                                Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
+                                Util.getPlatform().openUri(modsFolder.toUri());
+                                context.getSource().sendFeedback(Component.literal("§aOpening mods folder..."));
+                                return 1;
+                            }));
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register inventory commands!", t);
                 }
