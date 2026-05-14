@@ -21,7 +21,7 @@ public class PlaytimeGUI extends Screen {
     private int guiTop;
 
     private enum ViewMode {
-        AREAS, DAYS, DAY_DETAIL, SUB_AREAS
+        AREAS, DAYS, DAY_DETAIL, SUB_AREAS, DAY_SUB_AREAS
     }
     private ViewMode currentMode = ViewMode.AREAS;
     private String selectedDate = null;
@@ -106,6 +106,19 @@ public class PlaytimeGUI extends Screen {
             if (parent != null && parent.subAreas != null) {
                 for (Map.Entry<String, PlaytimeTracker.AreaData> entry : parent.subAreas.entrySet()) {
                     this.viewItems.add(new ViewItem(entry.getKey(), entry.getValue(), entry.getValue().totalTime));
+                }
+                this.viewItems.sort((a, b) -> Long.compare(b.sortValue, a.sortValue));
+            }
+        } else if (currentMode == ViewMode.DAY_SUB_AREAS) {
+            PlaytimeTracker.AreaData parent = map.get(selectedAreaName);
+            if (parent != null && parent.subAreas != null) {
+                for (Map.Entry<String, PlaytimeTracker.AreaData> entry : parent.subAreas.entrySet()) {
+                    long time = entry.getValue().dailyTime.getOrDefault(selectedDate, 0L);
+                    if (time > 0) {
+                        ViewItem item = new ViewItem(entry.getKey(), entry.getValue(), time);
+                        item.dayAfkTime = entry.getValue().dailyAfk.getOrDefault(selectedDate, 0L);
+                        this.viewItems.add(item);
+                    }
                 }
                 this.viewItems.sort((a, b) -> Long.compare(b.sortValue, a.sortValue));
             }
@@ -206,13 +219,21 @@ public class PlaytimeGUI extends Screen {
                     hovered = new HoveredTooltip("§a" + item.name + " §7(" + selectedDate + ")", mouseX, mouseY,
                         "§7Playtime: §a" + PlaytimeTracker.formatTime(item.sortValue),
                         "§7AFK Time: §c" + PlaytimeTracker.formatTime(item.dayAfkTime),
-                        "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.dayAfkTime)
+                        "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.dayAfkTime),
+                        "",
+                        "§eClick to view subareas for this day!"
                     );
                 } else if (currentMode == ViewMode.SUB_AREAS) {
                     hovered = new HoveredTooltip("§d" + item.name + " §7(Subarea)", mouseX, mouseY,
                         "§7Playtime: §a" + PlaytimeTracker.formatTime(item.sortValue) + " §8(" + PlaytimeTracker.formatTime(item.data.sessionTime) + ")",
                         "§7AFK Time: §c" + PlaytimeTracker.formatTime(item.data.afkTime) + " §8(" + PlaytimeTracker.formatTime(item.data.sessionAfkTime) + ")",
                         "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.data.afkTime)
+                    );
+                } else if (currentMode == ViewMode.DAY_SUB_AREAS) {
+                    hovered = new HoveredTooltip("§d" + item.name + " §7(" + selectedDate + ")", mouseX, mouseY,
+                        "§7Playtime: §a" + PlaytimeTracker.formatTime(item.sortValue),
+                        "§7AFK Time: §c" + PlaytimeTracker.formatTime(item.dayAfkTime),
+                        "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.dayAfkTime)
                     );
                 }
             }
@@ -229,6 +250,7 @@ public class PlaytimeGUI extends Screen {
             String area = BomboaddonsClient.currentArea;
             boolean afk = PlaytimeTracker.isAfk();
             boolean offline = false;
+            long lastSyncAgo = -1;
 
             if (this.cloudData != null) {
                 if (this.cloudData.has("sessionTime")) {
@@ -246,11 +268,18 @@ public class PlaytimeGUI extends Screen {
                 }
                 if (this.cloudData.has("lastUpdated")) {
                     long lastUpdated = this.cloudData.get("lastUpdated").getAsLong();
+                    lastSyncAgo = (System.currentTimeMillis() - lastUpdated) / 1000;
+                    
                     // Syncs every 5 minutes. If it's been more than 7 minutes, consider offline.
-                    if (System.currentTimeMillis() - lastUpdated > 7 * 60 * 1000) {
+                    if (lastSyncAgo > 420) {
                         offline = true;
+                    } else if (!offline) {
+                        // Extrapolate live time for online users
+                        elapsed += (System.currentTimeMillis() - lastUpdated);
                     }
                 }
+            } else {
+                lastSyncAgo = (System.currentTimeMillis() - PlaytimeTracker.lastCloudSyncTime) / 1000;
             }
 
             String statusStr;
@@ -266,10 +295,21 @@ public class PlaytimeGUI extends Screen {
                 area = "Main Screen";
             }
 
+            List<String> lore = new ArrayList<>();
+            lore.add("§7Elapsed: §e" + PlaytimeTracker.formatTime(elapsed));
+            lore.add("§7" + (offline ? "Last Area" : "Current Area") + ": §f" + area);
+            lore.add("§7Status: " + statusStr);
+            lore.add("");
+            if (lastSyncAgo >= 0) {
+                lore.add("§8Last Sync: " + lastSyncAgo + "s ago");
+                if (this.cloudData == null) {
+                    long next = Math.max(0, 300 - lastSyncAgo);
+                    lore.add("§8Next Sync: " + next + "s");
+                }
+            }
+
             hovered = new HoveredTooltip(offline ? "§dLast Session" : "§dCurrent Session", mouseX, mouseY,
-                "§7Elapsed: §e" + PlaytimeTracker.formatTime(elapsed),
-                "§7" + (offline ? "Last Area" : "Current Area") + ": §f" + area,
-                "§7Status: " + statusStr
+                lore.toArray(new String[0])
             );
         }
 
@@ -391,7 +431,10 @@ public class PlaytimeGUI extends Screen {
             int backX = startX + 3 * 18;
             int backY = startY + 5 * 18;
             if (mouseX >= backX && mouseX < backX + 16 && mouseY >= backY && mouseY < backY + 16) {
-                if (currentMode == ViewMode.DAY_DETAIL) {
+                if (currentMode == ViewMode.DAY_SUB_AREAS) {
+                    currentMode = ViewMode.DAY_DETAIL;
+                    calculateEntries();
+                } else if (currentMode == ViewMode.DAY_DETAIL) {
                     currentMode = ViewMode.DAYS;
                     calculateEntries();
                 } else if (currentMode == ViewMode.DAYS || currentMode == ViewMode.SUB_AREAS) {
@@ -436,6 +479,19 @@ public class PlaytimeGUI extends Screen {
                 if (mouseX >= slotX && mouseX < slotX + 16 && mouseY >= slotY && mouseY < slotY + 16) {
                     selectedDate = viewItems.get(i).name;
                     currentMode = ViewMode.DAY_DETAIL;
+                    calculateEntries();
+                    return true;
+                }
+            }
+        } else if (currentMode == ViewMode.DAY_DETAIL) {
+            for (int i = 0; i < Math.min(viewItems.size(), 27); i++) {
+                int row = (i / 9) + 1;
+                int col = i % 9;
+                int slotX = startX + col * 18;
+                int slotY = startY + row * 18;
+                if (mouseX >= slotX && mouseX < slotX + 16 && mouseY >= slotY && mouseY < slotY + 16) {
+                    selectedAreaName = viewItems.get(i).name;
+                    currentMode = ViewMode.DAY_SUB_AREAS;
                     calculateEntries();
                     return true;
                 }

@@ -54,28 +54,38 @@ public abstract class ItemStackMixin {
             if (stack.getItem().toString().contains("enchanted_book") || stack.getHoverName().getString().contains("Enchanted Book")) {
                 ItemLore lore = stack.get(DataComponents.LORE);
                 if (lore != null && !lore.lines().isEmpty()) {
-                    String firstLine = lore.lines().get(0).getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
-                    int lastSpace = firstLine.lastIndexOf(' ');
-                    if (lastSpace != -1) {
-                        String name = firstLine.substring(0, lastSpace).trim().toUpperCase().replace(" ", "_");
-                        String tierStr = firstLine.substring(lastSpace + 1).trim();
-                        int tier = -1;
-                        if (tierStr.equals("I")) tier = 1;
-                        else if (tierStr.equals("II")) tier = 2;
-                        else if (tierStr.equals("III")) tier = 3;
-                        else if (tierStr.equals("IV")) tier = 4;
-                        else if (tierStr.equals("V")) tier = 5;
-                        else if (tierStr.equals("VI")) tier = 6;
-                        else if (tierStr.equals("VII")) tier = 7;
-                        else if (tierStr.equals("VIII")) tier = 8;
-                        else if (tierStr.equals("IX")) tier = 9;
-                        else if (tierStr.equals("X")) tier = 10;
-                        else {
-                            try { tier = Integer.parseInt(tierStr); } catch (Exception ignored) {}
-                        }
+                    for (int i = 0; i < Math.min(lore.lines().size(), 10); i++) {
+                        String line = lore.lines().get(i).getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+                        if (line.isEmpty() || line.equalsIgnoreCase("Rare Book!") || line.equalsIgnoreCase("Super Rare Book!")) continue;
 
-                        if (tier != -1) {
-                            skyblockId = name + "_" + tier;
+                        int lastSpace = line.lastIndexOf(' ');
+                        if (lastSpace != -1) {
+                            String name = line.substring(0, lastSpace).trim().toUpperCase().replace(" ", "_");
+                            String tierStr = line.substring(lastSpace + 1).trim();
+                            int tier = RomanNumber.romanToDecimal(tierStr);
+                            if (tier <= 0) {
+                                try { tier = Integer.parseInt(tierStr); } catch (Exception ignored) {}
+                            }
+
+                            if (tier > 0) {
+                                String baseId = name + "_" + tier;
+                                // Try common prefixes to find valid price data
+                                if (LowestBinManager.getCachedPrice("ENCHANTMENT_" + baseId) > 0) {
+                                    skyblockId = "ENCHANTMENT_" + baseId;
+                                    break;
+                                }
+                                if (LowestBinManager.getCachedPrice("ENCHANTED_BOOK_" + baseId) > 0) {
+                                    skyblockId = "ENCHANTED_BOOK_" + baseId;
+                                    break;
+                                }
+                                if (LowestBinManager.getCachedPrice(baseId) > 0) {
+                                    skyblockId = baseId;
+                                    break;
+                                }
+                                // Fallback to baseId if nothing better found
+                                skyblockId = baseId;
+                                break;
+                            }
                         }
                     }
                 }
@@ -84,13 +94,32 @@ public abstract class ItemStackMixin {
 
         if (skyblockId != null) {
             List<Component> lines = cir.getReturnValue();
+            int count = stack.getCount();
+
+            // Special case for Composter: use 'Compost Available' count instead of stack size
+            if (stack.getHoverName().getString().contains("Collect Compost")) {
+                ItemLore lore = stack.get(DataComponents.LORE);
+                if (lore != null) {
+                    for (Component line : lore.lines()) {
+                        String lineStr = line.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+                        if (lineStr.contains("Compost Available: ")) {
+                            String countStr = lineStr.substring(lineStr.indexOf("Compost Available: ") + 19).replaceAll("[^0-9]", "");
+                            if (!countStr.isEmpty()) {
+                                try {
+                                    count = Integer.parseInt(countStr);
+                                } catch (NumberFormatException ignored) {}
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
 
             if (BomboConfig.get().lowestBin) {
                 long price = LowestBinManager.getLowestBin(skyblockId).getNow(-1L);
                 if (price > 0) {
                     boolean isBz = LowestBinManager.isBazaar(skyblockId);
                     String label = isBz ? "§6BZ: " : "§6Lowest BIN: ";
-                    int count = stack.getCount();
                     String priceText = label + "§e" + LowestBinManager.formatPrice(price);
                     if (count > 1) {
                         priceText += " §7(" + LowestBinManager.formatPrice(price * count) + ")";
@@ -104,7 +133,6 @@ public abstract class ItemStackMixin {
             if (BomboConfig.get().npcPrice) {
                 long npcPrice = LowestBinManager.getNpcPrice(skyblockId);
                 if (npcPrice >= 0) {
-                    int count = stack.getCount();
                     String text = "§6NPC: §e" + LowestBinManager.formatPrice(npcPrice);
                     if (count > 1) {
                         text += " §7(" + LowestBinManager.formatPrice(npcPrice * count) + ")";
@@ -117,7 +145,6 @@ public abstract class ItemStackMixin {
 
             Integer bitCost = me.bombo.bomboaddons_final.BitsManager.bitCostCache.get(skyblockId);
             if (bitCost != null) {
-                int count = stack.getCount();
                 String bitsText = "§bBit Cost: " + LowestBinManager.formatPrice((long) bitCost) + " bits";
                 if (count > 1) {
                     bitsText += " §7(" + LowestBinManager.formatPrice((long) bitCost * count) + " bits)";

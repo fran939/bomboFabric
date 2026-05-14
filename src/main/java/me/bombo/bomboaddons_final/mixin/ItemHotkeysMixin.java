@@ -175,6 +175,11 @@ public abstract class ItemHotkeysMixin {
                return true;
             }
             
+            if (title.contains("Composter") && cleanName.contains("Collect Compost")) {
+               Minecraft.getInstance().player.connection.sendCommand("bz compost");
+               return true;
+            }
+            
             if (title.contains("Attribute Menu")) {
                ItemLore itemLore = itemStack.get(DataComponents.LORE);
                if (itemLore != null) {

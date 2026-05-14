@@ -147,6 +147,9 @@ public class BomboConfig {
         public boolean autoCloseWardrobe = true;
         public boolean disableUnequipWardrobe = true;
         public List<String> wardrobeKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", ""));
+        public Map<String, Integer> anvilAutoCombine = new HashMap<>();
+        public boolean anvilAutoCombineEnabled = true;
+        public int anvilAutoCombineDelay = 200;
     }
 
     public static class CommandBind {

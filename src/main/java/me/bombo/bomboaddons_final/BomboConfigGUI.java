@@ -24,7 +24,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "Experiments", "Garden", "Hotkeys", "Clicker",
-            "Keybinds", "Highlights", "Wardrobe", "Debug");
+            "Keybinds", "Highlights", "Wardrobe", "Anvil", "Debug");
     private static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -355,7 +355,23 @@ public class BomboConfigGUI extends Screen {
                         curY = addKeyBindButton("Slot " + (i + 1), s.wardrobeKeys.get(i), v -> s.wardrobeKeys.set(index, v), "wardrobe" + i, contentX, contentWidth, curY);
                     }
                 }
-                case 8 -> { // Debug
+                case 8 -> { // Anvil
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Auto Combine Enabled", s.anvilAutoCombineEnabled, v -> s.anvilAutoCombineEnabled = v, contentX, contentWidth, curY);
+                    curY = addIntLabelSlider("Combine Delay", s.anvilAutoCombineDelay, 50, 1000, 50, v -> s.anvilAutoCombineDelay = v, contentX, 150, curY);
+                    curY += 20;
+                    int listStartY = curY;
+                    List<String> sortedEnchants = new ArrayList<>(s.anvilAutoCombine.keySet());
+                    Collections.sort(sortedEnchants);
+                    for (int i = 0; i < sortedEnchants.size(); i++) {
+                        final String enc = sortedEnchants.get(i);
+                        int itemY = listStartY + i * 22 - (int)scrollAmount;
+                        if (itemY > listStartY - 10 && itemY < height - 50) {
+                            addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> { s.anvilAutoCombine.remove(enc); BomboConfig.save(); init(); }).bounds(contentX + 180, itemY, 35, 18).build());
+                        }
+                    }
+                }
+                case 9 -> { // Debug
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("MASTER DEBUG", s.debugMaster, v -> s.debugMaster = v, contentX, contentWidth, curY);
                     
@@ -633,6 +649,23 @@ public class BomboConfigGUI extends Screen {
                     }
                 }
                 case 8 -> {
+                    g.drawString(font, "§6§lAnvil Auto-Combine", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Auto Combine Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fCombine Delay: §e" + BomboConfig.get().anvilAutoCombineDelay + "ms", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 20;
+                    g.drawString(font, "§9§lConfigured Enchants", contentX, curY, 0xFF5555FF, true);
+                    curY += 20;
+                    int listY = curY - (int)scrollAmount;
+                    for (Map.Entry<String, Integer> entry : s.anvilAutoCombine.entrySet()) {
+                        if (listY > curY - 10 && listY < height - 50) {
+                            g.drawString(font, "§e" + entry.getKey() + " §7- §bTier " + entry.getValue(), contentX, listY + 4, 0xFFFFFFFF, false);
+                        }
+                        listY += 22;
+                    }
+                }
+                case 9 -> {
                     g.drawString(font, "§c§lDebug Settings", contentX, curY, 0xFFFF5555, true);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§b§lMASTER DEBUG", contentX + 24, curY + 4, 0xFF55FFFF, false);

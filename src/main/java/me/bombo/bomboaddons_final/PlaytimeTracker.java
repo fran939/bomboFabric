@@ -31,7 +31,8 @@ public class PlaytimeTracker {
     private static boolean isAfk = false;
     
     private static long lastTickTime = System.currentTimeMillis();
-    private static long lastCloudSyncTime = System.currentTimeMillis();
+    public static long lastCloudSyncTime = System.currentTimeMillis();
+    private static String lastSyncedArea = "None";
 
     public static void load() {
         if (OLD_SAVE_FILE.exists()) {
@@ -46,10 +47,40 @@ public class PlaytimeTracker {
         try (FileReader reader = new FileReader(SAVE_FILE)) {
             Type type = new TypeToken<Map<String, AreaData>>(){}.getType();
             Map<String, AreaData> loaded = GSON.fromJson(reader, type);
-            if (loaded != null) areaDataMap = loaded;
+            if (loaded != null) {
+                areaDataMap = loaded;
+                migrateMenuData();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static void migrateMenuData() {
+        if (!areaDataMap.containsKey("Main Menu") && !areaDataMap.containsKey("Multiplayer Menu")) return;
+        
+        AreaData menuData = areaDataMap.computeIfAbsent("Menu", k -> new AreaData());
+        
+        String[] legacyNames = {"Main Menu", "Multiplayer Menu"};
+        for (String oldName : legacyNames) {
+            if (areaDataMap.containsKey(oldName)) {
+                AreaData oldData = areaDataMap.remove(oldName);
+                
+                // Add to subareas
+                menuData.subAreas.put(oldName, oldData);
+                
+                // Merge into parent totals
+                menuData.totalTime += oldData.totalTime;
+                menuData.afkTime += oldData.afkTime;
+                
+                // Merge daily maps
+                oldData.dailyTime.forEach((date, time) -> 
+                    menuData.dailyTime.put(date, menuData.dailyTime.getOrDefault(date, 0L) + time));
+                oldData.dailyAfk.forEach((date, time) -> 
+                    menuData.dailyAfk.put(date, menuData.dailyAfk.getOrDefault(date, 0L) + time));
+            }
+        }
+        save();
     }
 
     public static void save() {
@@ -65,28 +96,33 @@ public class PlaytimeTracker {
 
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        // We allow tick() to run even if player is null so we can sync status to cloud
+        boolean inWorld = (mc.player != null && mc.level != null);
         
         long now = System.currentTimeMillis();
         long delta = now - lastTickTime;
         lastTickTime = now;
         
-        // AFK Detection
-        Vec3 currentPos = mc.player.position();
-        float currentYaw = mc.player.getYRot();
-        float currentPitch = mc.player.getXRot();
-        
-        if (!currentPos.equals(lastPos) || currentYaw != lastYaw || currentPitch != lastPitch) {
-            lastMoveTime = now;
-            isAfk = false;
-        } else if (now - lastMoveTime > 60000) { // 1 minute threshold for AFK
-            isAfk = true;
+        if (inWorld) {
+            // AFK Detection
+            Vec3 currentPos = mc.player.position();
+            float currentYaw = mc.player.getYRot();
+            float currentPitch = mc.player.getXRot();
+            
+            if (!currentPos.equals(lastPos) || currentYaw != lastYaw || currentPitch != lastPitch) {
+                lastMoveTime = now;
+                isAfk = false;
+            } else if (now - lastMoveTime > 60000) { // 1 minute threshold for AFK
+                isAfk = true;
+            }
+            
+            lastPos = currentPos;
+            lastYaw = currentYaw;
+            lastPitch = currentPitch;
+        } else {
+            isAfk = true; // Always AFK if in menu
         }
-        
-        lastPos = currentPos;
-        lastYaw = currentYaw;
-        lastPitch = currentPitch;
-        
+
         String area = normalizeAreaName(BomboaddonsClient.currentArea);
         String subArea = normalizeAreaName(BomboaddonsClient.currentSubArea);
         String today = LocalDate.now().toString();
@@ -120,9 +156,13 @@ public class PlaytimeTracker {
         // Auto-save every 1 minute
         if (now % 60000 < delta) save();
         
-        // Sync to cloud every 5 minutes
-        if (now - lastCloudSyncTime > 300000) {
+        // Sync to cloud every 5 minutes, or if area changed (cooldown 10s)
+        String currentArea = BomboaddonsClient.currentArea;
+        boolean areaChanged = !currentArea.equals(lastSyncedArea);
+        
+        if (now - lastCloudSyncTime > 300000 || (areaChanged && now - lastCloudSyncTime > 10000)) {
             lastCloudSyncTime = now;
+            lastSyncedArea = currentArea;
             sendPlaytimeDataToCloud();
         }
     }
@@ -169,10 +209,9 @@ public class PlaytimeTracker {
 
     public static void sendPlaytimeDataToCloud() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
-        
-        String username = mc.player.getScoreboardName();
-        String uuid = mc.player.getUUID().toString();
+        String username = mc.getUser().getName();
+        String uuid = mc.getUser().getProfileId().toString();
+        if (username == null || uuid == null) return;
         
         Map<String, Object> payload = new HashMap<>();
         payload.put("username", username);

@@ -18,7 +18,7 @@ public class SkyblockUtils {
 
     public static String getLocation() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return "Unknown";
+        if (mc.level == null) return "Menu";
 
         // 1. Try Scoreboard Sidebar
         Scoreboard scoreboard = mc.level.getScoreboard();
@@ -66,7 +66,14 @@ public class SkyblockUtils {
     
     public static String getSubArea() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return "None";
+        if (mc.level == null) {
+            if (mc.screen != null) {
+                String name = mc.screen.getClass().getSimpleName();
+                if (name.equals("JoinMultiplayerScreen") || name.equals("MultiplayerScreen")) return "Multiplayer Menu";
+                if (name.equals("TitleScreen")) return "Main Menu";
+            }
+            return "None";
+        }
 
         // 1. Try Scoreboard Sidebar
         Scoreboard scoreboard = mc.level.getScoreboard();

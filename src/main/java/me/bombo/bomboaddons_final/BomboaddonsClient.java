@@ -40,6 +40,7 @@ public class BomboaddonsClient implements ClientModInitializer {
     public static com.mojang.brigadier.CommandDispatcher<FabricClientCommandSource> clientDispatcher;
     public static String currentArea = "None";
     public static String currentSubArea = "None";
+    private static int menuTickCount = 0;
 
 
     public void onInitializeClient() {
@@ -107,6 +108,77 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             }))));
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register click commands!", t);
+                }
+
+                // --- PRIORITY 1: Core Search ---
+                try {
+                    dispatcher.register(ClientCommandManager.literal("lf")
+                            .executes(context -> {
+                                System.out.println("[Bombo] Executing /lf (help)");
+                                context.getSource().sendFeedback(Component.literal(PREFIX + "§7Usage: /lf <username> [query]"));
+                                return 1;
+                            })
+                            .then(ClientCommandManager.argument("username", StringArgumentType.string())
+                                    .executes(context -> {
+                                        String user = StringArgumentType.getString(context, "username");
+                                        System.out.println("[Bombo] Executing /lf for user: " + user);
+                                        LF.show(user, "", false);
+                                        return 1;
+                                    })
+                                    .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
+                                            .executes(context -> {
+                                                String user = StringArgumentType.getString(context, "username");
+                                                String query = StringArgumentType.getString(context, "query");
+                                                System.out.println("[Bombo] Executing /lf for user: " + user + " with query: " + query);
+                                                LF.show(user, query, false);
+                                                return 1;
+                                            }))));
+                    dispatcher.register(ClientCommandManager.literal("lfc")
+                            .executes(context -> {
+                                System.out.println("[Bombo] Executing /lfc (help)");
+                                context.getSource().sendFeedback(Component.literal(PREFIX + "§7Usage: /lfc <username> [query]"));
+                                return 1;
+                            })
+                            .then(ClientCommandManager.argument("username", StringArgumentType.string())
+                                    .executes(context -> {
+                                        String user = StringArgumentType.getString(context, "username");
+                                        System.out.println("[Bombo] Executing /lfc for user: " + user);
+                                        LF.show(user, "", true);
+                                        return 1;
+                                    })
+                                    .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
+                                            .executes(context -> {
+                                                String user = StringArgumentType.getString(context, "username");
+                                                String query = StringArgumentType.getString(context, "query");
+                                                System.out.println("[Bombo] Executing /lfc for user: " + user + " with query: " + query);
+                                                LF.show(user, query, true);
+                                                return 1;
+                                            }))));
+                    dispatcher.register(ClientCommandManager.literal("lb")
+                            .executes(context -> {
+                                System.out.println("[Bombo] Executing /lb");
+                                Minecraft mc = Minecraft.getInstance();
+                                if (mc.player != null) {
+                                    String name = mc.player.getName().getString();
+                                    System.out.println("[Bombo] /lb for self: " + name);
+                                    LF.show(name, "", false);
+                                }
+                                return 1;
+                            })
+                            .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
+                                .executes(context -> {
+                                    String query = StringArgumentType.getString(context, "query");
+                                    Minecraft mc = Minecraft.getInstance();
+                                    if (mc.player != null) {
+                                        String name = mc.player.getName().getString();
+                                        System.out.println("[Bombo] /lb for self: " + name + " with query: " + query);
+                                        LF.show(name, query, false);
+                                    }
+                                    return 1;
+                                })));
+                } catch (Throwable t) {
+                    System.err.println("[Bombo] FAILED to register core search commands!");
+                    t.printStackTrace();
                 }
 
                 // --- PRIORITY 2: /b, /ba, /bombo and subcommands ---
@@ -381,6 +453,128 @@ public class BomboaddonsClient implements ClientModInitializer {
                             context.getSource().sendFeedback(Component.literal(PREFIX + "§aDice Tracker statistics have been reset!"));
                             return 1;
                         }));
+
+                        builder.then(ClientCommandManager.literal("anvil")
+                                .then(ClientCommandManager.literal("add")
+                                        .then(ClientCommandManager.argument("tier", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 100))
+                                                .executes(context -> {
+                                                    Minecraft mc = Minecraft.getInstance();
+                                                    if (mc.player != null) {
+                                                        ItemStack hand = mc.player.getMainHandItem();
+                                                        if (!hand.isEmpty()) {
+                                                            Map<String, Integer> enchants = getEnchantments(hand);
+                                                            if (!enchants.isEmpty()) {
+                                                                int tier = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "tier");
+                                                                for (String enc : enchants.keySet()) {
+                                                                    BomboConfig.get().anvilAutoCombine.put(enc, tier);
+                                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§aAdded anvil auto-combine: §e" + enc + " §7(Target Tier: " + tier + ")"));
+                                                                }
+                                                                BomboConfig.save();
+                                                                return 1;
+                                                            } else {
+                                                                context.getSource().sendFeedback(Component.literal(PREFIX + "§cNo enchantments found on this item! §8(NBT may be flat or missing ExtraAttributes)"));
+                                                                return 0;
+                                                            }
+                                                        } else {
+                                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§cPlease hold an enchanted book in your main hand!"));
+                                                            return 0;
+                                                        }
+                                                    }
+                                                    return 0;
+                                                }))
+                                        .then(ClientCommandManager.argument("enchant", StringArgumentType.word())
+                                                .then(ClientCommandManager.argument("tier", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 100))
+                                                        .executes(context -> {
+                                                            String enc = StringArgumentType.getString(context, "enchant").toLowerCase();
+                                                            int tier = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "tier");
+                                                            BomboConfig.get().anvilAutoCombine.put(enc, tier);
+                                                            BomboConfig.save();
+                                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aAdded anvil auto-combine: §e" + enc + " §7(Target Tier: " + tier + ")"));
+                                                            return 1;
+                                                        }))))
+                                .then(ClientCommandManager.literal("remove")
+                                        .then(ClientCommandManager.argument("enchant", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    String enc = StringArgumentType.getString(context, "enchant").toLowerCase();
+                                                    if (BomboConfig.get().anvilAutoCombine.remove(enc) != null) {
+                                                        BomboConfig.save();
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§aRemoved anvil auto-combine for: §e" + enc));
+                                                    } else {
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cNo anvil auto-combine found for: §e" + enc));
+                                                    }
+                                                    return 1;
+                                                })))
+                                .then(ClientCommandManager.literal("list")
+                                        .executes(context -> {
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§6--- Anvil Auto-Combine ---"));
+                                            if (BomboConfig.get().anvilAutoCombine.isEmpty()) {
+                                                context.getSource().sendFeedback(Component.literal("  §7None"));
+                                            } else {
+                                                for (Map.Entry<String, Integer> entry : BomboConfig.get().anvilAutoCombine.entrySet()) {
+                                                    context.getSource().sendFeedback(Component.literal("  §e" + entry.getKey() + " §7- §bTier " + entry.getValue()));
+                                                }
+                                            }
+                                            return 1;
+                                        })));
+
+                        builder.then(ClientCommandManager.literal("view")
+                                .then(ClientCommandManager.argument("username", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("path", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    String user = StringArgumentType.getString(context, "username");
+                                                    String pathWithHighlight = StringArgumentType.getString(context, "path");
+                                                    int highlight = -1;
+                                                    String path = pathWithHighlight;
+                                                    if (pathWithHighlight.contains(" ")) {
+                                                        try {
+                                                            int lastSpace = pathWithHighlight.lastIndexOf(" ");
+                                                            highlight = Integer.parseInt(pathWithHighlight.substring(lastSpace + 1));
+                                                            path = pathWithHighlight.substring(0, lastSpace);
+                                                        } catch (Exception e) {}
+                                                    }
+                                                    LF.openVirtualContainer(user, path.replace("\"", ""), highlight);
+                                                    return 1;
+                                                }))));
+                        builder.then(ClientCommandManager.literal("lf")
+                                .then(ClientCommandManager.argument("username", StringArgumentType.string())
+                                        .executes(context -> {
+                                            LF.show(StringArgumentType.getString(context, "username"), "", false);
+                                            return 1;
+                                        })
+                                        .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    LF.show(StringArgumentType.getString(context, "username"),
+                                                            StringArgumentType.getString(context, "query"), false);
+                                                    return 1;
+                                                }))));
+                        builder.then(ClientCommandManager.literal("lfc")
+                                .then(ClientCommandManager.argument("username", StringArgumentType.string())
+                                        .executes(context -> {
+                                            LF.show(StringArgumentType.getString(context, "username"), "", true);
+                                            return 1;
+                                        })
+                                        .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    LF.show(StringArgumentType.getString(context, "username"),
+                                                            StringArgumentType.getString(context, "query"), true);
+                                                    return 1;
+                                                }))));
+                        builder.then(ClientCommandManager.literal("lb")
+                                .executes(context -> {
+                                    Minecraft mc = Minecraft.getInstance();
+                                    if (mc.player != null) LF.show(mc.getUser().getName(), "", false);
+                                    return 1;
+                                })
+                                .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            String query = StringArgumentType.getString(context, "query");
+                                            Minecraft mc = Minecraft.getInstance();
+                                            if (mc.player != null) {
+                                                String name = mc.getUser().getName();
+                                                LF.show(name, query, false);
+                                            }
+                                            return 1;
+                                        })));
                     };
 
                     setupCommands.accept(bBuilder);
@@ -461,33 +655,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 }
                                                 return 1;
                                             }))));
-                    dispatcher.register(ClientCommandManager.literal("lf")
-                            .then(ClientCommandManager.argument("username", StringArgumentType.string())
-                                    .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
-                                            .executes(context -> {
-                                                LF.show(StringArgumentType.getString(context, "username"),
-                                                        StringArgumentType.getString(context, "query"), false);
-                                                return 1;
-                                            }))));
-                    dispatcher.register(ClientCommandManager.literal("lfc")
-                            .then(ClientCommandManager.argument("username", StringArgumentType.string())
-                                    .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
-                                            .executes(context -> {
-                                                LF.show(StringArgumentType.getString(context, "username"),
-                                                        StringArgumentType.getString(context, "query"), true);
-                                                return 1;
-                                            }))));
-                    dispatcher.register(ClientCommandManager.literal("lb")
-                            .then(ClientCommandManager.argument("query", StringArgumentType.greedyString())
-                                .executes(context -> {
-                                    String query = StringArgumentType.getString(context, "query");
-                                    Minecraft mc = Minecraft.getInstance();
-                                    if (mc.player != null) {
-                                        String name = mc.player.getGameProfile().name();
-                                        LF.show(name, query, false);
-                                    }
-                                    return 1;
-                                })));
                     dispatcher.register(ClientCommandManager.literal("tk")
                             .then(ClientCommandManager.argument("username", StringArgumentType.string())
                                     .executes(context -> {
@@ -697,9 +864,16 @@ public class BomboaddonsClient implements ClientModInitializer {
 
     private void registerTickEvents() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player != null && client.player.tickCount % 20 == 0) {
-                currentArea = SkyblockUtils.getLocation();
-                currentSubArea = SkyblockUtils.getSubArea();
+            if (client.player != null) {
+                if (client.player.tickCount % 20 == 0) {
+                    currentArea = SkyblockUtils.getLocation();
+                    currentSubArea = SkyblockUtils.getSubArea();
+                }
+            } else {
+                if (menuTickCount++ % 20 == 0) {
+                    currentArea = SkyblockUtils.getLocation();
+                    currentSubArea = SkyblockUtils.getSubArea();
+                }
             }
             PlaytimeTracker.tick();
             
@@ -733,6 +907,12 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             try {
                 GardenMovement.onTick(client);
+            } catch (Throwable t) {
+                // Silently ignore
+            }
+
+            try {
+                AutoCombine.onTick();
             } catch (Throwable t) {
                 // Silently ignore
             }
@@ -785,6 +965,10 @@ public class BomboaddonsClient implements ClientModInitializer {
     }
 
 
+
+    public static Map<String, Integer> getEnchantments(ItemStack stack) {
+        return AutoCombine.getEnchantments(stack);
+    }
 
     private static String cleanName(String name) {
         return name.trim().replaceAll("(?i)§[0-9a-fk-or]", "");

@@ -81,7 +81,7 @@ public class SkyblockCalculator {
                         if (aliasRes.error != null) return aliasRes;
                         resolved.add(aliasRes.value);
                         breakdownParts.add(Component.literal(token).withStyle(ChatFormatting.YELLOW)
-                                .append(Component.literal("(" + LowestBinManager.formatPrice((long)aliasRes.value) + ")").withStyle(ChatFormatting.GRAY)));
+                                .append(Component.literal("(" + LowestBinManager.formatPrice(aliasRes.value) + ")").withStyle(ChatFormatting.GRAY)));
                     } else {
                         // Try to resolve as Skyblock ID
                         boolean isStrict = token.equals(token.toUpperCase()) || token.contains("_");
@@ -105,8 +105,8 @@ public class SkyblockCalculator {
             }
 
             double result = evaluateInfix(resolved);
-            long resLong = Math.round(result);
-            Component finalBreakdown = Component.literal("§6Result: §b" + resLong + " §7(§b" + LowestBinManager.formatPrice(resLong) + "§7) §7(§f");
+            String formattedRes = (result == (long) result) ? String.valueOf((long) result) : String.format("%.3f", result);
+            Component finalBreakdown = Component.literal("§6Result: §b" + formattedRes + " §7(§b" + LowestBinManager.formatPrice(result) + "§7) §7(§f");
             for (Component part : breakdownParts) {
                 finalBreakdown = finalBreakdown.copy().append(part);
             }

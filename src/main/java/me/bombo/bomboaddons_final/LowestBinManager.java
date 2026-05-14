@@ -332,4 +332,17 @@ public class LowestBinManager {
             return String.valueOf(price);
         }
     }
+
+    public static String formatPrice(double price) {
+        if (price >= 1000000000.0) {
+            return String.format("%.2fB", price / 1.0E9D);
+        } else if (price >= 1000000.0) {
+            return String.format("%.2fM", price / 1000000.0D);
+        } else if (price >= 1000.0) {
+            return String.format("%.1fK", price / 1000.0D);
+        } else {
+            if (price == (long) price) return String.valueOf((long) price);
+            return String.format("%.3f", price);
+        }
+    }
 }
