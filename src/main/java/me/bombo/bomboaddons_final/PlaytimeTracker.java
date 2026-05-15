@@ -48,12 +48,40 @@ public class PlaytimeTracker {
             Type type = new TypeToken<Map<String, AreaData>>(){}.getType();
             Map<String, AreaData> loaded = GSON.fromJson(reader, type);
             if (loaded != null) {
-                areaDataMap = loaded;
+                // Re-normalize all keys to merge duplicates
+                areaDataMap = new HashMap<>();
+                loaded.forEach((k, v) -> {
+                    String norm = normalizeAreaName(k);
+                    if (areaDataMap.containsKey(norm)) {
+                        mergeData(areaDataMap.get(norm), v);
+                    } else {
+                        areaDataMap.put(norm, v);
+                    }
+                });
                 migrateMenuData();
+                save();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static void mergeData(AreaData target, AreaData source) {
+        target.totalTime += source.totalTime;
+        target.afkTime += source.afkTime;
+        source.dailyTime.forEach((date, time) -> 
+            target.dailyTime.put(date, target.dailyTime.getOrDefault(date, 0L) + time));
+        source.dailyAfk.forEach((date, time) -> 
+            target.dailyAfk.put(date, target.dailyAfk.getOrDefault(date, 0L) + time));
+        
+        source.subAreas.forEach((subName, subData) -> {
+            String normSub = normalizeAreaName(subName);
+            if (target.subAreas.containsKey(normSub)) {
+                mergeData(target.subAreas.get(normSub), subData);
+            } else {
+                target.subAreas.put(normSub, subData);
+            }
+        });
     }
 
     private static void migrateMenuData() {
@@ -65,22 +93,11 @@ public class PlaytimeTracker {
         for (String oldName : legacyNames) {
             if (areaDataMap.containsKey(oldName)) {
                 AreaData oldData = areaDataMap.remove(oldName);
-                
-                // Add to subareas
+                mergeData(menuData, oldData);
+                // Also track them as subareas for historical detail
                 menuData.subAreas.put(oldName, oldData);
-                
-                // Merge into parent totals
-                menuData.totalTime += oldData.totalTime;
-                menuData.afkTime += oldData.afkTime;
-                
-                // Merge daily maps
-                oldData.dailyTime.forEach((date, time) -> 
-                    menuData.dailyTime.put(date, menuData.dailyTime.getOrDefault(date, 0L) + time));
-                oldData.dailyAfk.forEach((date, time) -> 
-                    menuData.dailyAfk.put(date, menuData.dailyAfk.getOrDefault(date, 0L) + time));
             }
         }
-        save();
     }
 
     public static void save() {
@@ -169,10 +186,15 @@ public class PlaytimeTracker {
 
     public static String normalizeAreaName(String name) {
         if (name == null || name.isEmpty()) return "Unknown";
-        String normalized = name.replaceAll("§.", "");
+        // Strip colors, trim, and handle common prefixes
+        String normalized = name.replaceAll("(?i)§.", "").trim();
         if (normalized.startsWith("The ")) {
             normalized = normalized.substring(4);
         }
+        // Force consistency for common locations
+        if (normalized.equalsIgnoreCase("Lobby")) return "Lobby";
+        if (normalized.equalsIgnoreCase("Hub")) return "Hub";
+        
         return normalized;
     }
 

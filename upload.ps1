@@ -7,6 +7,6 @@ if (-not (Test-Path $jarPath)) {
 }
 
 Write-Host "Creating GitHub Release for v$version..." -ForegroundColor Cyan
-& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Added support for tracking playtime in The Rift, including subarea detection for its various dimensions and zones."
+& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Fixed 'Lobby' category duplication and improved area name normalization. Existing duplicate data will be automatically merged upon first launch."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

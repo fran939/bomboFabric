@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.37
+- **Fixes**: Resolved a duplication issue where "Lobby" appeared twice in the playtime tracker.
+    - Improved area name normalization (trimming and prefix handling).
+    - Added an automatic migration that merges existing duplicate categories in the save file.
+
 ## v1.0.36
 - **Features**: Added support for The Rift in the playtime tracker.
     - Tracks time spent in the Rift and its various dimensions/zones as subareas.
