@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.33
+- **Features**: Added comprehensive support for Dungeon playtime tracking. 
+    - The mod now detects the "Dungeons" area from the scoreboard.
+    - Floors (Entrance, F1-F7, M1-M7) are tracked as subareas.
+    - Improved subarea detection logic to handle custom color codes.
+
 ## v1.0.32
 - **Stability**: Fixed `java.lang.IllegalArgumentException: Illegal base64 char` in `LF.java` that occurred during configuration saving and container data decoding.
 - **Rendering**: Resolved the issue where Pest Tracers were not rendering in 2D space. Tracers now correctly point from the bottom-center of the HUD to the pests.

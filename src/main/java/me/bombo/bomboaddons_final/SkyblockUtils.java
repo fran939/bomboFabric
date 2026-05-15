@@ -111,9 +111,19 @@ public class SkyblockUtils {
 
     private static String parseSubAreaFromLines(List<String> lines) {
         for (String line : lines) {
-            String clean = line.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+            String clean = line.replaceAll("(?i)§.", "").trim();
+            
+            // Dungeon Floor Detection (e.g. ⏣ The Catacombs (F7))
+            if (clean.contains("The Catacombs (")) {
+                int start = clean.indexOf("(") + 1;
+                int end = clean.indexOf(")");
+                if (start > 0 && end > start) {
+                    return clean.substring(start, end);
+                }
+            }
+
             // Hypixel subareas usually start with these symbols
-            if (clean.startsWith("⏣") || clean.startsWith("ф") || clean.startsWith("ф")) {
+            if (clean.startsWith("⏣") || clean.startsWith("ф")) {
                 return clean.substring(1).trim();
             }
         }
@@ -132,6 +142,7 @@ public class SkyblockUtils {
             if (lower.contains("the garden") || lower.contains("garden")) return "The Garden";
             if (lower.contains("the hub") || lower.contains("hub")) return "The Hub";
             if (lower.contains("private island") || lower.contains("island")) return "Private Island";
+            if (lower.contains("the catacombs") || lower.contains("dungeon")) return "Dungeons";
             if (lower.contains("limbo")) return "Limbo";
             if (lower.contains("lobby")) return "Lobby";
         }

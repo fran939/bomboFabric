@@ -7,6 +7,6 @@ if (-not (Test-Path $jarPath)) {
 }
 
 Write-Host "Creating GitHub Release for v$version..." -ForegroundColor Cyan
-& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Fixed Base64 IllegalArgumentException in configuration persistence, resolved Pest Tracer 2D rendering issues, and refined Hotbar Swapper virtual inventory logic."
+& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Added support for Dungeon playtime tracking. Floors (Entrance, F1-F7, M1-M7) are now tracked as subareas under the Dungeons category."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
