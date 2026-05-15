@@ -145,6 +145,14 @@ public class SkyblockUtils {
             if (lower.contains("the catacombs") || lower.contains("dungeon")) return "Dungeons";
             if (lower.contains("dwarven mines")) return "Dwarven Mines";
             if (lower.contains("crystal hollows")) return "Crystal Hollows";
+            if (lower.contains("crimson isle")) return "Crimson Isle";
+            if (lower.contains("spider's den")) return "Spider's Den";
+            if (lower.contains("the end")) return "The End";
+            if (lower.contains("the park")) return "The Park";
+            if (lower.contains("deep caverns")) return "Deep Caverns";
+            if (lower.contains("gold mine")) return "Gold Mine";
+            if (lower.contains("the barn")) return "The Barn";
+            if (lower.contains("mushroom desert")) return "Mushroom Desert";
             if (lower.contains("limbo")) return "Limbo";
             if (lower.contains("lobby")) return "Lobby";
         }

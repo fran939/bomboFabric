@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.35
+- **Features**: Comprehensive support for all major SkyBlock areas in the playtime tracker.
+    - Added Crimson Isle, Spider's Den, The End, The Park, Deep Caverns, Gold Mine, The Barn, and Mushroom Desert.
+    - All areas now correctly track their internal zones as subareas.
+
 ## v1.0.34
 - **Features**: Added support for mining areas in the playtime tracker.
     - Explicit detection for "Dwarven Mines" and "Crystal Hollows".
