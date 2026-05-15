@@ -103,8 +103,4 @@ publishing {
 	}
 }
 
-task printCp {
-    doLast {
-        configurations.clientCompileClasspath.each { println it }
-    }
-}
+

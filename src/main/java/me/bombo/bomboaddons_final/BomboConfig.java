@@ -140,7 +140,7 @@ public class BomboConfig {
         public Map<String, String> calculatorAliases = new HashMap<>();
         public boolean pestEsp = false;
         public boolean pestEspTracer = false;
-        public String pestEspColor = "FFAA00";
+        public String pestEspColor = "yellow";
         public float pestEspThickness = 2.0f;
         public boolean hitbox = false;
         

@@ -7,6 +7,6 @@ if (-not (Test-Path $jarPath)) {
 }
 
 Write-Host "Creating GitHub Release for v$version..." -ForegroundColor Cyan
-& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Auto-update system, Etherwarp fixes, and Playtime statistics."
+& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Fixed Base64 IllegalArgumentException in configuration persistence, resolved Pest Tracer 2D rendering issues, and refined Hotbar Swapper virtual inventory logic."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

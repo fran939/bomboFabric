@@ -19,6 +19,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
@@ -841,8 +842,17 @@ public class BomboaddonsClient implements ClientModInitializer {
             DiceHud.init();
 
             WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+                if (BomboConfig.get().debugEntities) System.out.println("DEBUG: AFTER_ENTITIES Fired!");
                 HighlightESP.render(context);
                 PestESP.render(context);
+            });
+
+            HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
+                if (BomboConfig.get().pestEspTracer) {
+                    for (PestESP.PestTracer tracer : PestESP.TRACERS) {
+                        BomboRenderUtils.draw2DLine(graphics, tracer.start.x, tracer.start.y, tracer.end.x, tracer.end.y, tracer.color, tracer.thickness);
+                    }
+                }
             });
 
             ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {

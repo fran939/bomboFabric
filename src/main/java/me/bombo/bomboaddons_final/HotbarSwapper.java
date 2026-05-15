@@ -72,9 +72,28 @@ public class HotbarSwapper {
         if (targetHotbar == null)
             return;
 
-        // Keep track of which slots in the inventory have already been claimed to
-        // prevent duplicate usage
-        List<Integer> claimedInvSlots = new ArrayList<>();
+        // Create a virtual inventory to track item movements during swaps
+        HotbarConfig.SlotData[] virtualInv = new HotbarConfig.SlotData[36];
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (!stack.isEmpty()) {
+                virtualInv[i] = new HotbarConfig.SlotData(
+                    getSkyblockUuid(stack),
+                    getSkyblockId(stack),
+                    BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
+                    stack.has(DataComponents.CUSTOM_NAME) ? stack.getHoverName().getString() : null
+                );
+            } else {
+                virtualInv[i] = null;
+            }
+        }
+
+        if (BomboConfig.get().apiDebug) {
+            System.out.println("DEBUG: Applying Hotbar Snapshot: " + id);
+            for (int i = 0; i < 36; i++) {
+                if (virtualInv[i] != null) System.out.println("  Slot " + i + ": " + virtualInv[i].skyblockId + " (" + virtualInv[i].skyblockUuid + ")");
+            }
+        }
 
         for (int hotbarIndex = 0; hotbarIndex < 8; hotbarIndex++) {
             HotbarConfig.SlotData targetData = targetHotbar[hotbarIndex];
@@ -82,119 +101,132 @@ public class HotbarSwapper {
             if (targetData == null)
                 continue;
 
-            // Check if the current item is exactly what we want
-            ItemStack currentStack = player.getInventory().getItem(hotbarIndex);
-            if (matches(currentStack, targetData)) {
-                claimedInvSlots.add(hotbarIndex);
-                continue; // Already correct
+            // Check if the current item in the virtual inventory is what we want
+            if (matches(virtualInv[hotbarIndex], targetData)) {
+                if (BomboConfig.get().apiDebug) System.out.println("DEBUG: Slot " + hotbarIndex + " already matches: " + targetData.skyblockId);
+                continue;
             }
 
             int foundSlot = -1;
 
             // Priority 1: Exact UUID match
             if (targetData.skyblockUuid != null) {
-                foundSlot = findSlotByUuid(player, targetData.skyblockUuid, hotbarIndex, claimedInvSlots);
+                foundSlot = findVirtualSlotByUuid(virtualInv, targetData.skyblockUuid, hotbarIndex, targetHotbar);
             }
 
             // Priority 2: Skyblock ID match
             if (foundSlot == -1 && targetData.skyblockId != null) {
-                foundSlot = findSlotBySkyblockId(player, targetData.skyblockId, targetData.customName, hotbarIndex,
-                        claimedInvSlots);
+                foundSlot = findVirtualSlotBySkyblockId(virtualInv, targetData.skyblockId, targetData.customName, hotbarIndex, targetHotbar);
             }
 
-            // Priority 3: Vanilla fallback (if the target didn't even have Skyblock NBT)
+            // Priority 3: Vanilla fallback
             if (foundSlot == -1 && targetData.skyblockUuid == null && targetData.skyblockId == null) {
-                foundSlot = findSlotByVanilla(player, targetData.vanillaId, targetData.customName, hotbarIndex,
-                        claimedInvSlots);
+                foundSlot = findVirtualSlotByVanilla(virtualInv, targetData.vanillaId, targetData.customName, hotbarIndex, targetHotbar);
             }
 
             if (foundSlot != -1) {
-                claimedInvSlots.add(foundSlot);
-
                 if (client.gameMode != null) {
                     int containerId = player.inventoryMenu.containerId;
-
                     int sourceScreenSlot = (foundSlot < 9) ? (foundSlot + 36) : foundSlot;
 
-                    // Use SWAP click type for an atomic swap operation
-                    // button = hotbarIndex (0-8), clickType = SWAP
-                    client.gameMode.handleInventoryMouseClick(containerId, sourceScreenSlot, hotbarIndex,
-                            ClickType.SWAP,
-                            player);
+                    if (BomboConfig.get().apiDebug) {
+                        System.out.println("DEBUG: Swapping " + targetData.skyblockId + " from slot " + foundSlot + " (Screen: " + sourceScreenSlot + ") to hotbar " + hotbarIndex);
+                    }
+
+                    // Execute the actual swap
+                    client.gameMode.handleInventoryMouseClick(containerId, sourceScreenSlot, hotbarIndex, ClickType.SWAP, player);
+                    
+                    // Update the virtual inventory to reflect the swap
+                    HotbarConfig.SlotData temp = virtualInv[hotbarIndex];
+                    virtualInv[hotbarIndex] = virtualInv[foundSlot];
+                    virtualInv[foundSlot] = temp;
                 }
             } else {
                 String idLabel = targetData.skyblockId != null ? targetData.skyblockId : targetData.vanillaId;
                 player.displayClientMessage(
-                        Component.literal(
-                                "§cCould not find matching item for slot " + (hotbarIndex + 1) + ": " + idLabel),
+                        Component.literal("§cCould not find matching item for slot " + (hotbarIndex + 1) + ": " + idLabel),
                         false);
+                if (BomboConfig.get().apiDebug) {
+                    System.out.println("DEBUG: FAILED to find " + idLabel + " for slot " + hotbarIndex);
+                }
             }
         }
     }
 
-    private static int findSlotByUuid(LocalPlayer player, String targetUuid, int hotbarIndex,
-            List<Integer> claimedInvSlots) {
+    private static int findVirtualSlotByUuid(HotbarConfig.SlotData[] virtualInv, String targetUuid, int hotbarIndex, HotbarConfig.SlotData[] targetHotbar) {
         for (int invSlot = 0; invSlot < 36; invSlot++) {
-            if (invSlot == hotbarIndex || claimedInvSlots.contains(invSlot))
+            if (invSlot == hotbarIndex) continue;
+            
+            // If we've already correctly filled a hotbar slot, don't take the item from there
+            if (invSlot < hotbarIndex && targetHotbar[invSlot] != null && matches(virtualInv[invSlot], targetHotbar[invSlot])) {
                 continue;
+            }
 
-            ItemStack stack = player.getInventory().getItem(invSlot);
-            if (stack.isEmpty())
-                continue;
-
-            String uuid = getSkyblockUuid(stack);
-            if (targetUuid.equals(uuid)) {
+            HotbarConfig.SlotData data = virtualInv[invSlot];
+            if (data != null && targetUuid.equals(data.skyblockUuid)) {
                 return invSlot;
             }
         }
         return -1;
     }
 
-    private static int findSlotBySkyblockId(LocalPlayer player, String targetId, String targetCustomName,
-            int hotbarIndex,
-            List<Integer> claimedInvSlots) {
+    private static int findVirtualSlotBySkyblockId(HotbarConfig.SlotData[] virtualInv, String targetId, String targetCustomName, int hotbarIndex, HotbarConfig.SlotData[] targetHotbar) {
         for (int invSlot = 0; invSlot < 36; invSlot++) {
-            if (invSlot == hotbarIndex || claimedInvSlots.contains(invSlot))
+            if (invSlot == hotbarIndex) continue;
+            
+            if (invSlot < hotbarIndex && targetHotbar[invSlot] != null && matches(virtualInv[invSlot], targetHotbar[invSlot])) {
                 continue;
+            }
 
-            ItemStack stack = player.getInventory().getItem(invSlot);
-            if (stack.isEmpty())
-                continue;
-
-            String id = getSkyblockId(stack);
-            if (targetId.equals(id)) {
-                String customName = stack.has(DataComponents.CUSTOM_NAME) ? stack.getHoverName().getString() : null;
-                boolean nameMatch = (targetCustomName == null && customName == null) ||
-                        (targetCustomName != null && targetCustomName.equals(customName));
-                if (nameMatch) {
-                    return invSlot;
-                }
+            HotbarConfig.SlotData data = virtualInv[invSlot];
+            if (data != null && targetId.equals(data.skyblockId)) {
+                boolean nameMatch = (targetCustomName == null && data.customName == null) ||
+                                    (targetCustomName != null && targetCustomName.equals(data.customName));
+                if (nameMatch) return invSlot;
             }
         }
         return -1;
     }
 
-    private static int findSlotByVanilla(LocalPlayer player, String targetVanillaId, String targetCustomName,
-            int hotbarIndex, List<Integer> claimedInvSlots) {
+    private static int findVirtualSlotByVanilla(HotbarConfig.SlotData[] virtualInv, String targetVanillaId, String targetCustomName, int hotbarIndex, HotbarConfig.SlotData[] targetHotbar) {
         for (int invSlot = 0; invSlot < 36; invSlot++) {
-            if (invSlot == hotbarIndex || claimedInvSlots.contains(invSlot))
-                continue;
+            if (invSlot == hotbarIndex) continue;
 
-            ItemStack stack = player.getInventory().getItem(invSlot);
-            if (stack.isEmpty())
+            if (invSlot < hotbarIndex && targetHotbar[invSlot] != null && matches(virtualInv[invSlot], targetHotbar[invSlot])) {
                 continue;
+            }
 
-            String vanillaId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-            if (targetVanillaId.equals(vanillaId)) {
-                String customName = stack.has(DataComponents.CUSTOM_NAME) ? stack.getHoverName().getString() : null;
-                boolean nameMatch = (targetCustomName == null && customName == null) ||
-                        (targetCustomName != null && targetCustomName.equals(customName));
-                if (nameMatch) {
-                    return invSlot;
-                }
+            HotbarConfig.SlotData data = virtualInv[invSlot];
+            if (data != null && targetVanillaId.equals(data.vanillaId)) {
+                boolean nameMatch = (targetCustomName == null && data.customName == null) ||
+                                    (targetCustomName != null && targetCustomName.equals(data.customName));
+                if (nameMatch) return invSlot;
             }
         }
         return -1;
+    }
+
+    private static boolean matches(HotbarConfig.SlotData s1, HotbarConfig.SlotData s2) {
+        if (s1 == null || s2 == null) return s1 == s2;
+        
+        if (s2.skyblockUuid != null) {
+            return s2.skyblockUuid.equals(s1.skyblockUuid);
+        }
+        
+        if (s2.skyblockId != null) {
+            if (s2.skyblockId.equals(s1.skyblockId)) {
+                return (s2.customName == null && s1.customName == null) ||
+                       (s2.customName != null && s2.customName.equals(s1.customName));
+            }
+            return false;
+        }
+        
+        if (s2.vanillaId.equals(s1.vanillaId)) {
+            return (s2.customName == null && s1.customName == null) ||
+                   (s2.customName != null && s2.customName.equals(s1.customName));
+        }
+        
+        return false;
     }
 
     private static boolean matches(ItemStack stack, HotbarConfig.SlotData targetData) {

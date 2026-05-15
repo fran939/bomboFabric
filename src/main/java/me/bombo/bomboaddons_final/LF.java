@@ -792,16 +792,17 @@ public class LF {
 
     private static List<ItemStack> decodeToItems(String base64) {
         List<ItemStack> result = new ArrayList<>();
+        if (base64 == null || base64.trim().isEmpty()) return result;
+        
         try {
-            byte[] bytes = Base64.getDecoder().decode(base64);
+            byte[] bytes = Base64.getDecoder().decode(base64.trim());
             CompoundTag nbt;
             try {
-                nbt = NbtIo.readCompressed(new ByteArrayInputStream(bytes), NbtAccounter.unlimitedHeap());
+                nbt = NbtIo.readCompressed(new java.io.ByteArrayInputStream(bytes), NbtAccounter.unlimitedHeap());
             } catch (Exception e) {
-                nbt = NbtIo.read(new java.io.DataInputStream(new ByteArrayInputStream(bytes)));
+                nbt = NbtIo.read(new java.io.DataInputStream(new java.io.ByteArrayInputStream(bytes)));
             }
-            if (nbt == null)
-                return result;
+            if (nbt == null) return result;
 
             if (nbt.contains("i")) {
                 net.minecraft.nbt.ListTag list = (net.minecraft.nbt.ListTag) nbt.get("i");
@@ -811,7 +812,10 @@ public class LF {
                     }
                 }
             }
+        } catch (IllegalArgumentException e) {
+            Bomboaddons.LOGGER.error("[BomboAddons] Illegal Base64 character in container data: " + e.getMessage());
         } catch (Exception e) {
+            Bomboaddons.LOGGER.error("[BomboAddons] Failed to decode container data", e);
         }
         return result;
     }
