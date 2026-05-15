@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.36
+- **Features**: Added support for The Rift in the playtime tracker.
+    - Tracks time spent in the Rift and its various dimensions/zones as subareas.
+
 ## v1.0.35
 - **Features**: Comprehensive support for all major SkyBlock areas in the playtime tracker.
     - Added Crimson Isle, Spider's Den, The End, The Park, Deep Caverns, Gold Mine, The Barn, and Mushroom Desert.

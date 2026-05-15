@@ -7,6 +7,6 @@ if (-not (Test-Path $jarPath)) {
 }
 
 Write-Host "Creating GitHub Release for v$version..." -ForegroundColor Cyan
-& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Expanded playtime tracking to include all major SkyBlock areas: Crimson Isle, Spider's Den, The End, The Park, Deep Caverns, Gold Mine, The Barn, and Mushroom Desert."
+& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Added support for tracking playtime in The Rift, including subarea detection for its various dimensions and zones."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

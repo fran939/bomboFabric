@@ -153,6 +153,7 @@ public class SkyblockUtils {
             if (lower.contains("gold mine")) return "Gold Mine";
             if (lower.contains("the barn")) return "The Barn";
             if (lower.contains("mushroom desert")) return "Mushroom Desert";
+            if (lower.contains("the rift") || lower.contains("rift")) return "The Rift";
             if (lower.contains("limbo")) return "Limbo";
             if (lower.contains("lobby")) return "Lobby";
         }
