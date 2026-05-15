@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.34
+- **Features**: Added support for mining areas in the playtime tracker.
+    - Explicit detection for "Dwarven Mines" and "Crystal Hollows".
+    - Improved subarea tracking for specific zones within these areas.
+    - Switched to more robust color code stripping for better location accuracy.
+
 ## v1.0.33
 - **Features**: Added comprehensive support for Dungeon playtime tracking. 
     - The mod now detects the "Dungeons" area from the scoreboard.

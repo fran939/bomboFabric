@@ -132,7 +132,7 @@ public class SkyblockUtils {
 
     private static String parseAreaFromLines(List<String> lines) {
         for (String line : lines) {
-            String clean = line.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+            String clean = line.replaceAll("(?i)§.", "").trim();
             // Fuzzy search for common location markers
             if (clean.contains("Area:") || clean.contains("Zone:")) {
                 return clean.substring(clean.indexOf(":") + 1).trim();
@@ -143,6 +143,8 @@ public class SkyblockUtils {
             if (lower.contains("the hub") || lower.contains("hub")) return "The Hub";
             if (lower.contains("private island") || lower.contains("island")) return "Private Island";
             if (lower.contains("the catacombs") || lower.contains("dungeon")) return "Dungeons";
+            if (lower.contains("dwarven mines")) return "Dwarven Mines";
+            if (lower.contains("crystal hollows")) return "Crystal Hollows";
             if (lower.contains("limbo")) return "Limbo";
             if (lower.contains("lobby")) return "Lobby";
         }
