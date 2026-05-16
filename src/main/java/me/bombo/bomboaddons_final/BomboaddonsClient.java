@@ -194,6 +194,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                             return 1;
                         });
 
+                        builder.then(ClientCommandManager.literal("prof").executes(context -> {
+                            BomboConfigGUI.selectedCategory = 5;
+                            openGuiNextTick = true;
+                            return 1;
+                        }));
+
                         // --- Diagnostics ---
                         builder.then(ClientCommandManager.literal("area").executes(context -> {
                             String loc = SkyblockUtils.getLocation();
@@ -585,6 +591,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                     dispatcher.register(bBuilder);
                     dispatcher.register(baBuilder);
                     dispatcher.register(bomboBuilder);
+
+                    dispatcher.register(ClientCommandManager.literal("bomboprof")
+                        .executes(context -> {
+                            BomboConfigGUI.selectedCategory = 5;
+                            openGuiNextTick = true;
+                            return 1;
+                        }));
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register /bombo commands!", t);
                 }
@@ -823,6 +836,37 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 context.getSource().sendFeedback(Component.literal("§aOpening mods folder..."));
                                 return 1;
                             }));
+
+                    // --- PRIORITY 6: Quick Join Commands ---
+                    String[] floorNames = {"one", "two", "three", "four", "five", "six", "seven"};
+                    for (int i = 1; i <= 7; i++) {
+                        final int f = i;
+                        dispatcher.register(ClientCommandManager.literal("f" + i).executes(c -> {
+                            if (BomboConfig.get().quickJoinCommands) {
+                                Minecraft.getInstance().execute(() -> { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.connection.sendCommand("joininstance catacombs_floor_" + floorNames[f-1]); });
+                                return 1;
+                            }
+                            return 0;
+                        }));
+                        dispatcher.register(ClientCommandManager.literal("m" + i).executes(c -> {
+                            if (BomboConfig.get().quickJoinCommands) {
+                                Minecraft.getInstance().execute(() -> { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.connection.sendCommand("joininstance master_catacombs_floor_" + floorNames[f-1]); });
+                                return 1;
+                            }
+                            return 0;
+                        }));
+                    }
+                    String[] kuudraTiers = {"normal", "hot", "burning", "fiery", "infernal"};
+                    for (int i = 1; i <= 5; i++) {
+                        final int t = i;
+                        dispatcher.register(ClientCommandManager.literal("t" + i).executes(c -> {
+                            if (BomboConfig.get().quickJoinCommands) {
+                                Minecraft.getInstance().execute(() -> { if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.connection.sendCommand("joininstance kuudra_" + kuudraTiers[t-1]); });
+                                return 1;
+                            }
+                            return 0;
+                        }));
+                    }
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register inventory commands!", t);
                 }
@@ -853,6 +897,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                         BomboRenderUtils.draw2DLine(graphics, tracer.start.x, tracer.start.y, tracer.end.x, tracer.end.y, tracer.color, tracer.thickness);
                     }
                 }
+                // Only render HUD if no screen is open or it's the HudMoveScreen
+                if (Minecraft.getInstance().screen == null || Minecraft.getInstance().screen instanceof HudMoveScreen) {
+                    FeastBakeryHud.onHudRender(graphics);
+                }
+            });
+
+            net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+                net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterRender(screen).register((screen1, graphics, mouseX, mouseY, tickDelta) -> {
+                    FeastBakeryHud.onHudRender(graphics);
+                });
             });
 
             ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {

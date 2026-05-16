@@ -199,13 +199,52 @@ public class ClickLogic {
       if (BomboConfig.get().chestClicker) {
          String title = var3.getTitle().getString().toLowerCase();
          DebugUtils.debug("clicker", "Key pressed: " + key + " in GUI: " + title);
+         boolean matched = false;
          for (ClickLogic.ClickTarget target : targets) {
             if (target.keyCode != -1 && key == target.keyCode) {
                DebugUtils.debug("clicker", "Match! Target gui=" + target.gui + " item=" + target.item);
                if (target.gui.trim().equalsIgnoreCase("all") || title.contains(target.gui.trim().toLowerCase())) {
                   executeClick(target, mc, (var3 instanceof AbstractContainerScreen ? (AbstractContainerScreen)var3 : null));
-                  return true;
+                  matched = true;
                }
+            }
+         }
+         if (matched) return true;
+      }
+
+      if (var3 instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+         if (key != -1) {
+            if (key == getKeyCode(BomboConfig.get().nextPageKey)) {
+               if (tryClickNavigation(mc, screen, "Next Page", "Levels ", "Next ")) return true;
+            }
+            if (key == getKeyCode(BomboConfig.get().prevPageKey)) {
+               if (tryClickNavigation(mc, screen, "Previous Page", "Previous ")) return true;
+            }
+            if (key == getKeyCode(BomboConfig.get().goBackKey)) {
+               if (tryClickNavigation(mc, screen, "Go Back", "Close", "Menu", "Back")) return true;
+            }
+            if (key == getKeyCode(BomboConfig.get().smartGoBackKey)) {
+               if (tryClickNavigation(mc, screen, "Previous Page", "Previous ")) return true;
+               if (tryClickNavigation(mc, screen, "Go Back", "Close", "Menu", "Back")) return true;
+            }
+         }
+      }
+
+      return false;
+   }
+
+   private static boolean tryClickNavigation(Minecraft mc, net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen, String... keywords) {
+      net.minecraft.world.inventory.AbstractContainerMenu menu = screen.getMenu();
+      for (int i = 0; i < menu.slots.size(); i++) {
+         ItemStack stack = menu.getSlot(i).getItem();
+         if (stack.isEmpty()) continue;
+         String name = stack.getHoverName().getString().toLowerCase();
+         if (BomboConfig.get().apiDebug) DebugUtils.debug("nav", "Checking slot " + i + ": " + name);
+         for (String kw : keywords) {
+            if (name.contains(kw.toLowerCase())) {
+               if (BomboConfig.get().apiDebug) Bomboaddons.sendMessage("§a[Debug] Clicking navigation item: " + name + " in slot " + i);
+               mc.gameMode.handleInventoryMouseClick(menu.containerId, i, 0, net.minecraft.world.inventory.ClickType.PICKUP, mc.player);
+               return true;
             }
          }
       }

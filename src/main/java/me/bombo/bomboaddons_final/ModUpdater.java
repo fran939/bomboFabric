@@ -8,6 +8,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
+import java.util.List;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,17 +20,21 @@ import java.nio.file.StandardCopyOption;
 public class ModUpdater {
     private static final String REPO = "fran939/bomboFabric";
     private static final String GITHUB_API = "https://api.github.com/repos/" + REPO + "/releases/latest";
+    public static boolean updatedThisSession = false;
     private static final Path PENDING_DELETE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_pending_delete.txt");
 
     public static void init() {
         if (Files.exists(PENDING_DELETE)) {
             try {
-                String oldJarPath = Files.readString(PENDING_DELETE, StandardCharsets.UTF_8).trim();
-                File oldJar = new File(oldJarPath);
-                if (oldJar.exists()) {
-                    // Check if it's NOT the current running JAR
-                    File currentJar = getCurrentJar();
-                    if (currentJar != null && !currentJar.getAbsolutePath().equals(oldJar.getAbsolutePath())) {
+                List<String> lines = Files.readAllLines(PENDING_DELETE, StandardCharsets.UTF_8);
+                File currentJar = getCurrentJar();
+                String currentPath = currentJar != null ? currentJar.getAbsolutePath() : "";
+
+                for (String line : lines) {
+                    String oldJarPath = line.trim();
+                    if (oldJarPath.isEmpty()) continue;
+                    File oldJar = new File(oldJarPath);
+                    if (oldJar.exists() && !oldJarPath.equals(currentPath)) {
                         if (oldJar.delete()) {
                             Bomboaddons.LOGGER.info("[BomboAddons] Deleted old version: " + oldJarPath);
                         } else {
@@ -45,6 +50,8 @@ public class ModUpdater {
     }
 
     public static void checkAndUpdate(boolean silent) {
+        if (silent && updatedThisSession) return;
+        
         new Thread(() -> {
             try {
                 if (!silent) sendMessage("§7Checking for updates...");
@@ -112,11 +119,22 @@ public class ModUpdater {
                     Files.copy(in, newJarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
                 
-                // Record the current JAR to be deleted on next restart
-                Files.writeString(PENDING_DELETE, currentJar.getAbsolutePath(), StandardCharsets.UTF_8);
+                updatedThisSession = true;
+
+                // Record ALL existing bomboaddons JARs to be deleted (except the new one)
+                StringBuilder pending = new StringBuilder();
+                if (Files.exists(modsFolder)) {
+                    try (var stream = Files.list(modsFolder)) {
+                        stream.filter(p -> p.getFileName().toString().startsWith("bomboaddons-") && p.getFileName().toString().endsWith(".jar"))
+                              .filter(p -> !p.equals(newJarFile.toPath()))
+                              .forEach(p -> pending.append(p.toAbsolutePath().toString()).append("\n"));
+                    }
+                }
+                
+                Files.writeString(PENDING_DELETE, pending.toString(), StandardCharsets.UTF_8);
                 
                 sendMessage("§aUpdate downloaded: §b" + newJarFile.getName());
-                sendMessage("§eThe old version will be removed on next restart.");
+                sendMessage("§eThe old versions will be removed on next restart.");
                 
             } catch (Exception e) {
                 if (!silent) sendMessage("§cError while updating: " + e.getMessage());

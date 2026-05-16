@@ -88,17 +88,47 @@ public class LowestBinManager {
     }
 
     public static long getCachedPrice(String skyblockId) {
-        if (skyblockId == null) return -1;
-        if (bazaarCache.containsKey(skyblockId)) return Math.round(bazaarCache.get(skyblockId));
-        if (priceCache.containsKey(skyblockId)) return priceCache.get(skyblockId);
+        if (skyblockId == null || skyblockId.isEmpty()) return -1;
         
-        // Fallback for IDs with delimiters (e.g. RED_SCARF;0 -> RED_SCARF)
-        if (skyblockId.contains(";")) {
-            String baseId = skyblockId.split(";")[0];
+        long price = getRawPrice(skyblockId);
+        if (price > 0) return price;
+        
+        // Handle ENCHANTMENT_NAME_LEVEL variations
+        if (skyblockId.startsWith("ENCHANTMENT_")) {
+            String[] parts = skyblockId.split("_");
+            if (parts.length >= 3) {
+                String level = parts[parts.length - 1];
+                String base = skyblockId.substring(0, skyblockId.lastIndexOf("_"));
+                
+                // Try Roman numerals if Arabic failed
+                String[] roman = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+                try {
+                    int lvl = Integer.parseInt(level);
+                    if (lvl > 0 && lvl < roman.length) {
+                        price = getRawPrice(base + "_" + roman[lvl]);
+                        if (price > 0) return price;
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        
+        // Try fuzzy match as a last resort
+        String fuzzy = findIdByName(skyblockId, true);
+        if (fuzzy != null && !fuzzy.equals(skyblockId)) {
+            return getCachedPrice(fuzzy);
+        }
+        
+        return -1L;
+    }
+
+    private static long getRawPrice(String id) {
+        if (bazaarCache.containsKey(id)) return Math.round(bazaarCache.get(id));
+        if (priceCache.containsKey(id)) return priceCache.get(id);
+        if (id.contains(";")) {
+            String baseId = id.split(";")[0];
             if (bazaarCache.containsKey(baseId)) return Math.round(bazaarCache.get(baseId));
             if (priceCache.containsKey(baseId)) return priceCache.get(baseId);
         }
-        
         return -1L;
     }
 
@@ -150,6 +180,9 @@ public class LowestBinManager {
                                     }
                                 }
                                 lastBazaarFetch = System.currentTimeMillis();
+                                if (BomboConfig.get().debugMode) {
+                                    Bomboaddons.sendMessage("§7[Debug] Loaded " + products.size() + " Bazaar prices");
+                                }
                                 return true;
                             }
                         } catch (Exception e) {

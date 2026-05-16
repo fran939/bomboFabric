@@ -11,35 +11,96 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.inventory.ClickType;
 import java.util.Map;
 import java.util.HashMap;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.Date;
 
 public class AutoCombine {
     private static long lastAction = 0;
-    private static final long DELAY = 200;
+    private static boolean toggled = false;
+    private static boolean wasDown = false;
+    private static final String LOG_FILE = "bombo_autocombine.log";
+
+    public static void log(String msg) {
+        try (FileWriter fw = new FileWriter(LOG_FILE, true);
+             PrintWriter pw = new PrintWriter(fw)) {
+            pw.println("[" + new Date() + "] " + msg);
+        } catch (Exception e) {
+            // Ignore
+        }
+    }
 
     public static void onTick() {
+        try {
+            onTickUnsafe();
+        } catch (Throwable t) {
+            log("CRASH: " + t.toString());
+        }
+    }
+
+    private static void onTickUnsafe() {
         Minecraft mc = Minecraft.getInstance();
-        if (!BomboConfig.get().anvilAutoCombineEnabled) return;
         if (mc.player == null || mc.level == null) return;
         
-        if (mc.screen != null && BomboConfig.get().apiDebug && System.currentTimeMillis() % 1000 < 50) {
-             Bomboaddons.sendMessage("§7[Debug] Screen: " + mc.screen.getClass().getSimpleName() + " Title: " + mc.screen.getTitle().getString());
-        }
+        BomboConfig.Settings config = BomboConfig.get();
+        if (!config.anvilAutoCombineEnabled) return;
 
+        // 1. Check if in valid GUI first
         boolean isVanillaAnvil = mc.screen instanceof AnvilScreen;
         boolean isChestAnvil = false;
-        
         if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
             String title = screen.getTitle().getString();
-            if (title.contains("Anvil")) isChestAnvil = true;
+            if (title.toLowerCase().contains("anvil") || title.toLowerCase().contains("combine")) isChestAnvil = true;
         }
 
-        if (!isVanillaAnvil && !isChestAnvil) return;
+        if (!isVanillaAnvil && !isChestAnvil) {
+            wasDown = false; // Reset to prevent proccing immediately on open
+            return;
+        }
 
-        if (System.currentTimeMillis() - lastAction < BomboConfig.get().anvilAutoCombineDelay) return;
+        // 2. Toggle Logic (Only works while in the GUI)
+        String bound = config.anvilAutoCombineKey;
+        if (bound != null && !bound.isEmpty()) {
+            int code = ClickLogic.getKeyCode(bound);
+            if (code != -1) {
+                long handle = findWindowHandle(mc.getWindow());
+                if (handle != 0) {
+                    boolean down = false;
+                    if (code >= 0 && code < 8) {
+                        down = org.lwjgl.glfw.GLFW.glfwGetMouseButton(handle, code) == 1;
+                    } else {
+                        down = org.lwjgl.glfw.GLFW.glfwGetKey(handle, code) == 1;
+                    }
+                    
+                    if (down && !wasDown) {
+                        toggled = !toggled;
+                        Bomboaddons.sendMessage("§8[§bBomboAddons§8] §7Anvil Auto-Combine: " + (toggled ? "§aENABLED" : "§cDISABLED"));
+                    }
+                    wasDown = down;
+                }
+            }
+        }
+
+        // If "Require Keybind" is ON, we only work if we are in "Toggled ON" state
+        if (config.anvilAutoCombineRequireKey && !toggled) return;
+
+        // Safety: don't click if holding something with the mouse (Normal Use fix)
+        try {
+            ItemStack carried = mc.player.containerMenu.getCarried();
+            if (carried != null && !carried.isEmpty()) return;
+        } catch (Throwable t) {
+            try {
+                java.lang.reflect.Method m = mc.player.containerMenu.getClass().getMethod("getCursorItem");
+                ItemStack carried = (ItemStack) m.invoke(mc.player.containerMenu);
+                if (carried != null && !carried.isEmpty()) return;
+            } catch (Throwable t2) {}
+        }
+
+        if (System.currentTimeMillis() - lastAction < config.anvilAutoCombineDelay) return;
 
         net.minecraft.world.inventory.AbstractContainerMenu menu;
         int leftSlot, rightSlot, resultSlot, invStart;
-        
+
         if (isVanillaAnvil) {
             menu = ((AnvilScreen) mc.screen).getMenu();
             leftSlot = 0; rightSlot = 1; resultSlot = 2; invStart = 3;
@@ -47,7 +108,7 @@ public class AutoCombine {
             menu = ((net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) mc.screen).getMenu();
             leftSlot = 29; rightSlot = 33; resultSlot = 22; invStart = 54;
         }
-        
+
         if (menu.slots.size() < invStart) return;
 
         // 1. Collect result or click 'Combine' / 'Claim' if available
@@ -58,7 +119,6 @@ public class AutoCombine {
             boolean hasGlint = result.get(DataComponents.ENCHANTMENT_GLINT_OVERRIDE) != null && result.get(DataComponents.ENCHANTMENT_GLINT_OVERRIDE);
 
             if ((isCombineAnvil && hasGlint) || isSign) {
-                // This is the Hypixel "Click to combine!" or "Claim the result" icon
                 clickSlot(menu.containerId, resultSlot, 0, ClickType.PICKUP);
                 lastAction = System.currentTimeMillis();
                 return;
@@ -66,9 +126,8 @@ public class AutoCombine {
 
             Map<String, Integer> enchants = getEnchantments(result);
             for (Map.Entry<String, Integer> entry : enchants.entrySet()) {
-                Integer targetTier = BomboConfig.get().anvilAutoCombine.get(entry.getKey());
+                Integer targetTier = config.anvilAutoCombine.get(entry.getKey());
                 if (targetTier != null) {
-                    // Use quick move (shift click) for result
                     clickSlot(menu.containerId, resultSlot, 0, ClickType.QUICK_MOVE);
                     lastAction = System.currentTimeMillis();
                     return;
@@ -81,7 +140,6 @@ public class AutoCombine {
         ItemStack right = menu.getSlot(rightSlot).getItem();
 
         if (left.isEmpty() && right.isEmpty()) {
-            // Both empty: find a pair of matching tiers in inventory
             for (int i = invStart; i < menu.slots.size(); i++) {
                 ItemStack stack = menu.getSlot(i).getItem();
                 if (stack.isEmpty()) continue;
@@ -91,7 +149,7 @@ public class AutoCombine {
                 for (Map.Entry<String, Integer> entry : enchants.entrySet()) {
                     String enchantId = entry.getKey();
                     int tier = entry.getValue();
-                    Integer targetTier = BomboConfig.get().anvilAutoCombine.get(enchantId);
+                    Integer targetTier = config.anvilAutoCombine.get(enchantId);
 
                     if (targetTier != null && tier < targetTier) {
                         int otherSlot = findMatching(menu, enchantId, tier, i, invStart);
@@ -104,16 +162,17 @@ public class AutoCombine {
                 }
             }
         } else if (left.isEmpty() || right.isEmpty()) {
-            // One slot is filled: find a matching book for the one already there
             ItemStack present = left.isEmpty() ? right : left;
-            int targetSlot = left.isEmpty() ? leftSlot : rightSlot;
-            
             Map<String, Integer> enchants = getEnchantments(present);
+            
+            // Allow manual combination if item has multiple enchants
+            if (enchants.size() > 1) return;
+
             if (enchants.size() == 1) {
                 Map.Entry<String, Integer> entry = enchants.entrySet().iterator().next();
                 String enchantId = entry.getKey();
                 int tier = entry.getValue();
-                Integer targetTier = BomboConfig.get().anvilAutoCombine.get(enchantId);
+                Integer targetTier = config.anvilAutoCombine.get(enchantId);
 
                 if (targetTier != null && tier < targetTier) {
                     int otherSlot = findMatching(menu, enchantId, tier, -1, invStart);
@@ -124,12 +183,31 @@ public class AutoCombine {
                     }
                 }
             }
-            
-            // If we couldn't find a match for what's in the anvil, or it shouldn't be there, take it out
+
             int occupiedSlot = left.isEmpty() ? rightSlot : leftSlot;
             clickSlot(menu.containerId, occupiedSlot, 0, ClickType.QUICK_MOVE);
             lastAction = System.currentTimeMillis();
         }
+    }
+
+    private static long findWindowHandle(com.mojang.blaze3d.platform.Window window) {
+        try {
+            for (java.lang.reflect.Method m : window.getClass().getDeclaredMethods()) {
+                if (m.getReturnType() == long.class && m.getParameterCount() == 0) {
+                    m.setAccessible(true);
+                    long val = (long) m.invoke(window);
+                    if (val > 1000) return val;
+                }
+            }
+            for (java.lang.reflect.Field f : window.getClass().getDeclaredFields()) {
+                if (f.getType() == long.class) {
+                    f.setAccessible(true);
+                    long val = (long) f.get(window);
+                    if (val > 1000) return val;
+                }
+            }
+        } catch (Exception e) {}
+        return 0;
     }
 
     private static int findMatching(net.minecraft.world.inventory.AbstractContainerMenu menu, String enchantId, int tier, int skipSlot, int invStart) {
@@ -140,7 +218,7 @@ public class AutoCombine {
 
             Map<String, Integer> enchants = getEnchantments(stack);
             if (enchants.size() != 1) continue;
-            
+
             Integer foundTier = enchants.get(enchantId);
             if (foundTier != null && foundTier == tier) {
                 return i;
@@ -154,20 +232,19 @@ public class AutoCombine {
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData != null) {
             CompoundTag tag = customData.copyTag();
-            if (BomboConfig.get().apiDebug) {
-                Bomboaddons.sendMessage("§7[Debug] NBT: " + tag.keySet());
-            }
-
-            CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
-            if (ea == null && tag.contains("enchantments")) ea = tag; // Fallback if flat
-            
-            if (ea != null && ea.contains("enchantments")) {
-                CompoundTag encTag = ea.getCompound("enchantments").orElse(null);
-                if (encTag != null) {
+            tag.getCompound("ExtraAttributes").ifPresent(ea -> {
+                ea.getCompound("enchantments").ifPresent(encTag -> {
                     for (String key : encTag.keySet()) {
                         enchants.put(key, encTag.getInt(key).orElse(0));
                     }
-                }
+                });
+            });
+            if (enchants.isEmpty()) {
+                tag.getCompound("enchantments").ifPresent(encTag -> {
+                    for (String key : encTag.keySet()) {
+                        enchants.put(key, encTag.getInt(key).orElse(0));
+                    }
+                });
             }
         }
         return enchants;

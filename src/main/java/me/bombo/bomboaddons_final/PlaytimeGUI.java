@@ -405,6 +405,8 @@ public class PlaytimeGUI extends Screen {
         if (name.contains("dungeon")) return Items.WITHER_SKELETON_SKULL.getDefaultInstance();
         if (name.contains("lobby")) return Items.BEACON.getDefaultInstance();
         if (name.contains("limbo")) return Items.FIREWORK_STAR.getDefaultInstance();
+        if (name.contains("jerry")) return Items.SNOWBALL.getDefaultInstance();
+        if (name.contains("dark auction")) return Items.GOLD_INGOT.getDefaultInstance();
         
         return Items.PAPER.getDefaultInstance();
     }

@@ -13,6 +13,11 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import me.bombo.bomboaddons_final.mixin.PlayerTabOverlayAccessor;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.nbt.CompoundTag;
+import java.util.Optional;
 
 public class SkyblockUtils {
 
@@ -154,6 +159,8 @@ public class SkyblockUtils {
             if (lower.contains("the barn")) return "The Barn";
             if (lower.contains("mushroom desert")) return "Mushroom Desert";
             if (lower.contains("the rift") || lower.contains("rift")) return "The Rift";
+            if (lower.contains("jerry's workshop") || lower.contains("jerry")) return "Jerry's Workshop";
+            if (lower.contains("dark auction") || lower.contains("auction")) return "Dark Auction";
             if (lower.contains("limbo")) return "Limbo";
             if (lower.contains("lobby")) return "Lobby";
         }
@@ -199,5 +206,43 @@ public class SkyblockUtils {
             }
         }
         return lines;
+    }
+
+    public static String getInternalId(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return "";
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+        if (customData != null) {
+            CompoundTag tag = customData.copyTag();
+            // Try ExtraAttributes.id
+            CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (ea != null) {
+                String id = ea.getString("id").orElse("");
+                // Special handling for enchanted books to get bazaar price
+                if (id.equals("ENCHANTED_BOOK")) {
+                    // Skyblock uses "enchantments" tag inside ExtraAttributes
+                    CompoundTag enchants = ea.getCompound("enchantments").orElse(null);
+                    if (enchants == null) enchants = ea.getCompound("enchantment").orElse(null); // fallback
+                    
+                    if (enchants != null && !enchants.keySet().isEmpty()) {
+                        String name = enchants.keySet().iterator().next();
+                        int level = enchants.getInt(name).orElse(1);
+                        return "ENCHANTMENT_" + name.toUpperCase() + "_" + level;
+                    }
+                }
+                return id;
+            }
+            // Fallback to direct id in tag
+            return tag.getString("id").orElse("");
+        }
+        return "";
+    }
+
+    public static List<Component> getLore(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return Collections.emptyList();
+        net.minecraft.world.item.component.ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore != null) {
+            return lore.lines();
+        }
+        return Collections.emptyList();
     }
 }

@@ -105,6 +105,10 @@ public class BomboConfig {
         public String copyNbtKey = "p";
         public String gfsMaxKey = "k";
         public String gfsStackKey = "l";
+        public String nextPageKey = "";
+        public String prevPageKey = "";
+        public String goBackKey = "";
+        public String smartGoBackKey = "";
         public Map<String, HighlightInfo> highlights = new HashMap<>();
         public boolean highlightsEnabled = true;
         public boolean debugMaster = false;
@@ -125,6 +129,11 @@ public class BomboConfig {
         public boolean diceTracker = true;
         public int diceHudX = 10;
         public int diceHudY = 50;
+        
+        public boolean feastBakeryHud = true;
+        public boolean quickJoinCommands = true;
+        public int feastBakeryHudX = 10;
+        public int feastBakeryHudY = 100;
         
         public boolean gardenMovement = false;
         public boolean gardenSugarCane = false;
@@ -150,6 +159,8 @@ public class BomboConfig {
         public Map<String, Integer> anvilAutoCombine = new HashMap<>();
         public boolean anvilAutoCombineEnabled = true;
         public int anvilAutoCombineDelay = 200;
+        public String anvilAutoCombineKey = "";
+        public boolean anvilAutoCombineRequireKey = false;
     }
 
     public static class CommandBind {
