@@ -42,6 +42,10 @@ public class BomboaddonsClient implements ClientModInitializer {
     public static String currentArea = "None";
     public static String currentSubArea = "None";
     private static int menuTickCount = 0;
+    public static net.minecraft.client.multiplayer.ServerData lastServerData = null;
+    public static net.minecraft.client.gui.components.Button activeReconnectBtn = null;
+    public static net.minecraft.client.gui.screens.Screen activeParent = null;
+    public static int autoReconnectTicks = -1;
 
 
     public void onInitializeClient() {
@@ -201,6 +205,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }));
 
                         // --- Diagnostics ---
+                        builder.then(ClientCommandManager.literal("kick").executes(context -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            if (mc.getConnection() != null) {
+                                mc.getConnection().getConnection().disconnect(Component.literal("Kicked via /b kick"));
+                            } else {
+                                context.getSource().sendFeedback(Component.literal(PREFIX + "§cNot currently connected to any server!"));
+                            }
+                            return 1;
+                        }));
                         builder.then(ClientCommandManager.literal("area").executes(context -> {
                             String loc = SkyblockUtils.getLocation();
                             context.getSource().sendFeedback(Component.literal(PREFIX + "§7Current Area: §a" + loc));
@@ -910,9 +923,16 @@ public class BomboaddonsClient implements ClientModInitializer {
             });
 
             ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+                if (client.getCurrentServer() != null) {
+                    lastServerData = client.getCurrentServer();
+                }
                 LowestBinManager.reload();
                 AutoExperiments.reset();
                 ModUpdater.checkAndUpdate(true);
+            });
+
+            ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+                PlaytimeTracker.sendPlaytimeDataToCloud();
             });
 
             net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
@@ -928,6 +948,29 @@ public class BomboaddonsClient implements ClientModInitializer {
 
     private void registerTickEvents() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            try {
+                if (client.screen instanceof net.minecraft.client.gui.screens.DisconnectedScreen) {
+                    if (autoReconnectTicks > 0) {
+                        autoReconnectTicks--;
+                        int secondsLeft = (autoReconnectTicks + 19) / 20;
+                        if (activeReconnectBtn != null) {
+                            activeReconnectBtn.setMessage(
+                                Component.literal("Reconnect (" + secondsLeft + "s)")
+                            );
+                        }
+                        if (autoReconnectTicks == 0) {
+                            reconnect(activeParent, client);
+                        }
+                    }
+                } else {
+                    autoReconnectTicks = -1;
+                    activeReconnectBtn = null;
+                    activeParent = null;
+                }
+            } catch (Throwable t) {
+                // Safely catch any unexpected errors during menu tick
+            }
+
             if (client.player != null) {
                 if (client.player.tickCount % 20 == 0) {
                     currentArea = SkyblockUtils.getLocation();
@@ -1036,5 +1079,16 @@ public class BomboaddonsClient implements ClientModInitializer {
 
     private static String cleanName(String name) {
         return name.trim().replaceAll("(?i)§[0-9a-fk-or]", "");
+    }
+
+    public static void reconnect(net.minecraft.client.gui.screens.Screen parentScreen, Minecraft mc) {
+        net.minecraft.client.multiplayer.ServerData server = lastServerData;
+        if (server != null) {
+            net.minecraft.client.multiplayer.resolver.ServerAddress address = 
+                net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip);
+            net.minecraft.client.gui.screens.ConnectScreen.startConnecting(
+                parentScreen, mc, address, server, false, null
+            );
+        }
     }
 }

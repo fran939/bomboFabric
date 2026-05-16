@@ -25,17 +25,22 @@ public class SkyblockUtils {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return "Menu";
 
+        String loc = "Unknown";
+
         // 1. Try Scoreboard Sidebar
         Scoreboard scoreboard = mc.level.getScoreboard();
         Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
         if (sidebar != null) {
             List<String> sbLines = getSidebarLines(scoreboard, sidebar);
-            String loc = parseAreaFromLines(sbLines);
-            if (!loc.equals("Unknown")) return loc;
-            
-            // Check for Lobby marker in scoreboard
-            for (String line : sbLines) {
-                if (line.toLowerCase().contains("hypixel.net")) return "Lobby";
+            loc = parseAreaFromLines(sbLines);
+            if (loc.equals("Unknown")) {
+                // Check for Lobby marker in scoreboard
+                for (String line : sbLines) {
+                    if (line.toLowerCase().contains("hypixel.net")) {
+                        loc = "Lobby";
+                        break;
+                    }
+                }
             }
         } else {
             // No scoreboard sidebar - usually Limbo
@@ -45,28 +50,37 @@ public class SkyblockUtils {
         }
 
         // 2. Try Tab List Header/Footer
-        if (mc.getConnection() != null) {
+        if (loc.equals("Unknown") && mc.getConnection() != null) {
             List<Component> tabLines = getTabListLines();
             List<String> plainTabLines = new ArrayList<>();
             for (Component c : tabLines) plainTabLines.add(c.getString());
             
-            String loc = parseAreaFromLines(plainTabLines);
-            if (!loc.equals("Unknown")) return loc;
-            
-            PlayerTabOverlayAccessor tabAccessor = (PlayerTabOverlayAccessor) mc.gui.getTabList();
-            Component header = tabAccessor.getHeader();
-            Component footer = tabAccessor.getFooter();
-            if (header != null) {
-                String l = parseAreaFromLines(List.of(header.getString()));
-                if (!l.equals("Unknown")) return l;
-            }
-            if (footer != null) {
-                String l = parseAreaFromLines(List.of(footer.getString()));
-                if (!l.equals("Unknown")) return l;
+            loc = parseAreaFromLines(plainTabLines);
+            if (loc.equals("Unknown")) {
+                PlayerTabOverlayAccessor tabAccessor = (PlayerTabOverlayAccessor) mc.gui.getTabList();
+                Component header = tabAccessor.getHeader();
+                Component footer = tabAccessor.getFooter();
+                if (header != null) {
+                    loc = parseAreaFromLines(List.of(header.getString()));
+                }
+                if (loc.equals("Unknown") && footer != null) {
+                    loc = parseAreaFromLines(List.of(footer.getString()));
+                }
             }
         }
 
-        return "Unknown";
+        // 3. Try fallback to mapping from Subarea
+        if (loc.equals("Unknown")) {
+            String sub = getSubArea();
+            if (!sub.equals("None")) {
+                String mapped = mapSubAreaToMainArea(sub);
+                if (!mapped.equals("Unknown")) {
+                    loc = mapped;
+                }
+            }
+        }
+
+        return loc;
     }
     
     public static String getSubArea() {
@@ -147,7 +161,7 @@ public class SkyblockUtils {
             if (lower.contains("the garden") || lower.contains("garden")) return "The Garden";
             if (lower.contains("the hub") || lower.contains("hub")) return "The Hub";
             if (lower.contains("private island") || lower.contains("island")) return "Private Island";
-            if (lower.contains("the catacombs") || lower.contains("dungeon")) return "Dungeons";
+            if (lower.contains("catacombs") || lower.contains("dungeon")) return "Dungeons";
             if (lower.contains("dwarven mines")) return "Dwarven Mines";
             if (lower.contains("crystal hollows")) return "Crystal Hollows";
             if (lower.contains("crimson isle")) return "Crimson Isle";
@@ -164,6 +178,39 @@ public class SkyblockUtils {
             if (lower.contains("limbo")) return "Limbo";
             if (lower.contains("lobby")) return "Lobby";
         }
+        return "Unknown";
+    }
+
+    public static String mapSubAreaToMainArea(String sub) {
+        if (sub == null || sub.isEmpty() || sub.equalsIgnoreCase("None")) return "Unknown";
+        String lower = sub.toLowerCase();
+        
+        if (lower.contains("garden") || lower.contains("plot")) return "The Garden";
+        if (lower.contains("island")) return "Private Island";
+        if (lower.contains("catacombs") || lower.contains("dungeon") || 
+            lower.matches("^(f[1-7]|m[1-7])$")) return "Dungeons";
+        if (lower.contains("mines") || lower.contains("dwarven")) return "Dwarven Mines";
+        if (lower.contains("hollows") || lower.contains("crystal")) return "Crystal Hollows";
+        if (lower.contains("crimson") || lower.contains("isle")) return "Crimson Isle";
+        if (lower.contains("spider") || lower.contains("den")) return "Spider's Den";
+        if (lower.contains("end")) return "The End";
+        if (lower.contains("park")) return "The Park";
+        if (lower.contains("cavern") || lower.contains("deep")) return "Deep Caverns";
+        if (lower.contains("gold") || lower.contains("mine")) return "Gold Mine";
+        if (lower.contains("barn")) return "The Barn";
+        if (lower.contains("desert") || lower.contains("mushroom")) return "Mushroom Desert";
+        if (lower.contains("rift")) return "The Rift";
+        if (lower.contains("jerry") || lower.contains("workshop")) return "Jerry's Workshop";
+        if (lower.contains("auction") || lower.contains("dark")) return "Dark Auction";
+        
+        // Hub subareas
+        if (lower.contains("village") || lower.contains("ruins") || lower.contains("high level") || 
+            lower.contains("forest") || lower.contains("mountain") || lower.contains("wilderness") || 
+            lower.contains("graveyard") || lower.contains("coal mine") || lower.contains("bazaar") || 
+            lower.contains("community center") || lower.contains("farm") || lower.contains("hut")) {
+            return "The Hub";
+        }
+        
         return "Unknown";
     }
 

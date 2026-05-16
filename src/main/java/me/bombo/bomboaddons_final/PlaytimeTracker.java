@@ -59,6 +59,7 @@ public class PlaytimeTracker {
                     }
                 });
                 migrateMenuData();
+                migrateUnknownData();
                 save();
             }
         } catch (Exception e) {
@@ -97,6 +98,60 @@ public class PlaytimeTracker {
                 // Also track them as subareas for historical detail
                 menuData.subAreas.put(oldName, oldData);
             }
+        }
+    }
+
+    private static void migrateUnknownData() {
+        if (!areaDataMap.containsKey("Unknown")) return;
+        
+        AreaData unknownData = areaDataMap.get("Unknown");
+        if (unknownData == null || unknownData.subAreas == null || unknownData.subAreas.isEmpty()) return;
+        
+        List<String> migratedSubs = new ArrayList<>();
+        unknownData.subAreas.forEach((subName, subData) -> {
+            String mappedArea = SkyblockUtils.mapSubAreaToMainArea(subName);
+            if (!mappedArea.equals("Unknown")) {
+                AreaData targetArea = areaDataMap.computeIfAbsent(mappedArea, k -> new AreaData());
+                // Merge this subarea's data into the main area's total time
+                targetArea.totalTime += subData.totalTime;
+                targetArea.afkTime += subData.afkTime;
+                subData.dailyTime.forEach((date, time) -> 
+                    targetArea.dailyTime.put(date, targetArea.dailyTime.getOrDefault(date, 0L) + time));
+                subData.dailyAfk.forEach((date, time) -> 
+                    targetArea.dailyAfk.put(date, targetArea.dailyAfk.getOrDefault(date, 0L) + time));
+                
+                // Keep it as a subarea under the proper main area!
+                String normSub = normalizeAreaName(subName);
+                if (targetArea.subAreas.containsKey(normSub)) {
+                    mergeData(targetArea.subAreas.get(normSub), subData);
+                } else {
+                    targetArea.subAreas.put(normSub, subData);
+                }
+                migratedSubs.add(subName);
+            }
+        });
+        
+        // Remove migrated subareas from "Unknown"
+        for (String subName : migratedSubs) {
+            AreaData subData = unknownData.subAreas.remove(subName);
+            if (subData != null) {
+                // Deduct the migrated times from "Unknown"'s totals
+                unknownData.totalTime = Math.max(0L, unknownData.totalTime - subData.totalTime);
+                unknownData.afkTime = Math.max(0L, unknownData.afkTime - subData.afkTime);
+                subData.dailyTime.forEach((date, time) -> {
+                    long oldVal = unknownData.dailyTime.getOrDefault(date, 0L);
+                    unknownData.dailyTime.put(date, Math.max(0L, oldVal - time));
+                });
+                subData.dailyAfk.forEach((date, time) -> {
+                    long oldVal = unknownData.dailyAfk.getOrDefault(date, 0L);
+                    unknownData.dailyAfk.put(date, Math.max(0L, oldVal - time));
+                });
+            }
+        }
+        
+        // If "Unknown" is now empty or practically empty, remove it entirely
+        if (unknownData.subAreas.isEmpty() && unknownData.totalTime < 1000) {
+            areaDataMap.remove("Unknown");
         }
     }
 
@@ -173,11 +228,11 @@ public class PlaytimeTracker {
         // Auto-save every 1 minute
         if (now % 60000 < delta) save();
         
-        // Sync to cloud every 5 minutes, or if area changed (cooldown 10s)
+        // Sync to cloud every 10 minutes, or if area changed (cooldown 3 minutes)
         String currentArea = BomboaddonsClient.currentArea;
         boolean areaChanged = !currentArea.equals(lastSyncedArea);
         
-        if (now - lastCloudSyncTime > 300000 || (areaChanged && now - lastCloudSyncTime > 10000)) {
+        if (now - lastCloudSyncTime > 600000 || (areaChanged && now - lastCloudSyncTime > 180000)) {
             lastCloudSyncTime = now;
             lastSyncedArea = currentArea;
             sendPlaytimeDataToCloud();
@@ -259,11 +314,19 @@ public class PlaytimeTracker {
                 int responseCode = conn.getResponseCode();
                 DebugUtils.debug("playtime", "Cloud sync response: " + responseCode);
                 if (responseCode != 200) {
-                    mc.execute(() -> mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cFailed to sync playtime data (HTTP " + responseCode + ")"), false));
+                    mc.execute(() -> {
+                        if (mc.player != null) {
+                            mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cFailed to sync playtime data (HTTP " + responseCode + ")"), false);
+                        }
+                    });
                 }
             } catch (Exception e) {
                 DebugUtils.debug("playtime", "Cloud sync failed: " + e.getMessage());
-                mc.execute(() -> mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getMessage()), false));
+                mc.execute(() -> {
+                    if (mc.player != null) {
+                        mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getMessage()), false);
+                    }
+                });
             }
         }).start();
     }

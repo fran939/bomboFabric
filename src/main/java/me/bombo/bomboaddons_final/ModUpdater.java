@@ -76,7 +76,7 @@ public class ModUpdater {
 
                 int comparison = compareVersions(latestVersion, currentVersion);
 
-                if (comparison <= 0) {
+                if (comparison < 0 || (comparison == 0 && silent)) {
                     if (!silent) sendMessage("§aMod is up to date! (v" + currentVersion + ")");
                     return;
                 }

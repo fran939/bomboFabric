@@ -23,7 +23,8 @@
 		"MinecraftMixin",
 		"PauseScreenMixin",
 		"ScreenAccessor",
-		"ScreenMixin"
+		"ScreenMixin",
+		"DisconnectedScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
