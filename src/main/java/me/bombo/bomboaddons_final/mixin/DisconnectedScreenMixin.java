@@ -37,7 +37,8 @@ public abstract class DisconnectedScreenMixin extends Screen {
             int originalWidth = backBtn.getWidth();
             int originalHeight = backBtn.getHeight();
 
-            Button reconnectBtn = Button.builder(Component.literal("Reconnect (5s)"), btn -> {
+            boolean auto = me.bombo.bomboaddons_final.BomboConfig.get().autoReconnect;
+            Button reconnectBtn = Button.builder(Component.literal(auto ? "Reconnect (5s)" : "Reconnect"), btn -> {
                 BomboaddonsClient.autoReconnectTicks = -1;
                 BomboaddonsClient.reconnect(this.parent, this.minecraft);
             })
@@ -47,7 +48,7 @@ public abstract class DisconnectedScreenMixin extends Screen {
             addRenderableWidget(reconnectBtn);
             BomboaddonsClient.activeReconnectBtn = reconnectBtn;
             BomboaddonsClient.activeParent = this.parent;
-            BomboaddonsClient.autoReconnectTicks = 100; // 5 seconds (20 ticks/sec)
+            BomboaddonsClient.autoReconnectTicks = auto ? 100 : -1; // 5 seconds if auto enabled, otherwise disabled
         }
     }
 }

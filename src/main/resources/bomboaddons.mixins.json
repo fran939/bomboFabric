@@ -8,6 +8,7 @@
 		"ChatMixin",
 		"ChatPeekingMixin",
 		"ChatPeekScrollMixin",
+		"RngScrollMixin",
 		"ItemHotkeysMixin",
 		"KeyboardMixin",
 		"SignEditMixin",

@@ -4,6 +4,7 @@ import me.bombo.bomboaddons_final.Bomboaddons;
 import me.bombo.bomboaddons_final.BomboConfig;
 import me.bombo.bomboaddons_final.LowestBinManager;
 import me.bombo.bomboaddons_final.RomanNumber;
+import net.minecraft.client.Minecraft;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.core.component.DataComponents;
@@ -42,6 +43,20 @@ public abstract class ItemStackMixin {
                 CompoundTag extraAttributes = tag.getCompound("ExtraAttributes").orElse(null);
                 if (extraAttributes != null && extraAttributes.contains("id")) {
                     skyblockId = extraAttributes.getString("id").orElse(null);
+                }
+            }
+        }
+
+        if (skyblockId == null || skyblockId.isEmpty()) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+                String title = screen.getTitle().getString();
+                if (title.toLowerCase().contains("experimentation table rng")) {
+                    String cleanName = stack.getHoverName().getString().replaceAll("(?i)§.", "").trim();
+                    String possibleId = me.bombo.bomboaddons_final.ExperimentationTableHud.getSkyblockIdFromName(cleanName);
+                    if (!possibleId.isEmpty() && !possibleId.contains("GLASS_PANE") && !possibleId.equals("BARRIER")) {
+                        skyblockId = possibleId;
+                    }
                 }
             }
         }

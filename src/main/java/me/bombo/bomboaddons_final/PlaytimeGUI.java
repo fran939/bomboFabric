@@ -138,6 +138,40 @@ public class PlaytimeGUI extends Screen {
         return PlaytimeTracker.formatTime(total / count);
     }
 
+    private String formatSeconds(long seconds) {
+        if (seconds < 60) return seconds + "s";
+        long minutes = seconds / 60;
+        long secs = seconds % 60;
+        if (minutes < 60) return minutes + "m " + secs + "s";
+        long hours = minutes / 60;
+        long mins = minutes % 60;
+        if (hours < 24) return hours + "h " + mins + "m";
+        long days = hours / 24;
+        long hrs = hours % 24;
+        return days + "d " + hrs + "h";
+    }
+
+    private String getAverageWithActive(Map<String, Long> dailyTime, Map<String, Long> dailyAfk, int days) {
+        if (dailyTime == null || dailyTime.isEmpty()) return "§a0s §7(§b0s§7)";
+        List<String> keys = new ArrayList<>(dailyTime.keySet());
+        Collections.sort(keys, Collections.reverseOrder());
+        
+        long totalPlay = 0;
+        long totalAfk = 0;
+        int count = Math.min(keys.size(), days);
+        for (int i = 0; i < count; i++) {
+            String date = keys.get(i);
+            totalPlay += dailyTime.get(date);
+            if (dailyAfk != null) {
+                totalAfk += dailyAfk.getOrDefault(date, 0L);
+            }
+        }
+        long avgPlay = totalPlay / count;
+        long avgAfk = totalAfk / count;
+        long avgActive = Math.max(0L, avgPlay - avgAfk);
+        return "§a" + PlaytimeTracker.formatTime(avgPlay) + " §7(§b" + PlaytimeTracker.formatTime(avgActive) + "§7)";
+    }
+
     @Override
     protected void init() {
         this.guiLeft = (this.width - this.xSize) / 2;
@@ -168,15 +202,37 @@ public class PlaytimeGUI extends Screen {
         graphics.renderItem(Items.CLOCK.getDefaultInstance(), clockX, clockY);
         if (isMouseOver(clockX, clockY, mouseX, mouseY)) {
             graphics.fill(clockX, clockY, clockX + 16, clockY + 16, 0x80FFFFFF);
+            
+            // Build global daily AFK map for averages
+            Map<String, Long> globalDailyAfk = new HashMap<>();
+            Map<String, PlaytimeTracker.AreaData> map;
+            if (this.cloudData != null) {
+                map = new HashMap<>();
+                if (this.cloudData.has("areaDataMap")) {
+                    com.google.gson.JsonObject areas = this.cloudData.getAsJsonObject("areaDataMap");
+                    for (String key : areas.keySet()) {
+                        PlaytimeTracker.AreaData data = new com.google.gson.Gson().fromJson(areas.get(key), PlaytimeTracker.AreaData.class);
+                        map.put(key, data);
+                    }
+                }
+            } else {
+                map = PlaytimeTracker.getAreaDataMap();
+            }
+            for (PlaytimeTracker.AreaData d : map.values()) {
+                for (Map.Entry<String, Long> dailyAfk : d.dailyAfk.entrySet()) {
+                    globalDailyAfk.put(dailyAfk.getKey(), globalDailyAfk.getOrDefault(dailyAfk.getKey(), 0L) + dailyAfk.getValue());
+                }
+            }
+
             hovered = new HoveredTooltip("§6Global Statistics", mouseX, mouseY,
                 "§7Total Playtime: §a" + PlaytimeTracker.formatTime(totalPlaytime),
                 "§7Total AFK Time: §c" + PlaytimeTracker.formatTime(totalAfkTime),
                 "§7Active Playtime: §b" + PlaytimeTracker.formatTime(totalPlaytime - totalAfkTime),
                 "",
                 "§e§lAverages:",
-                "§7Daily: §f" + getAverage(globalDaily, 1),
-                "§7Weekly: §f" + getAverage(globalDaily, 7),
-                "§7Monthly: §f" + getAverage(globalDaily, 30)
+                "§7Daily: §f" + getAverageWithActive(globalDaily, globalDailyAfk, 1),
+                "§7Weekly: §f" + getAverageWithActive(globalDaily, globalDailyAfk, 7),
+                "§7Monthly: §f" + getAverageWithActive(globalDaily, globalDailyAfk, 30)
             );
         }
 
@@ -201,9 +257,9 @@ public class PlaytimeGUI extends Screen {
                         "§7Active: §b" + PlaytimeTracker.formatTime(item.sortValue - item.data.afkTime),
                         "",
                         "§e§lAverages:",
-                        "§7Daily: §f" + getAverage(item.data.dailyTime, 1),
-                        "§7Weekly: §f" + getAverage(item.data.dailyTime, 7),
-                        "§7Monthly: §f" + getAverage(item.data.dailyTime, 30),
+                        "§7Daily: §f" + getAverageWithActive(item.data.dailyTime, item.data.dailyAfk, 1),
+                        "§7Weekly: §f" + getAverageWithActive(item.data.dailyTime, item.data.dailyAfk, 7),
+                        "§7Monthly: §f" + getAverageWithActive(item.data.dailyTime, item.data.dailyAfk, 30),
                         "",
                         "§eClick to view subareas!"
                     );
@@ -301,10 +357,10 @@ public class PlaytimeGUI extends Screen {
             lore.add("§7Status: " + statusStr);
             lore.add("");
             if (lastSyncAgo >= 0) {
-                lore.add("§8Last Sync: " + lastSyncAgo + "s ago");
+                lore.add("§8Last Sync: " + formatSeconds(lastSyncAgo) + " ago");
                 if (this.cloudData == null) {
                     long next = Math.max(0, 300 - lastSyncAgo);
-                    lore.add("§8Next Sync: " + next + "s");
+                    lore.add("§8Next Sync: " + formatSeconds(next));
                 }
             }
 

@@ -126,6 +126,8 @@ public class BomboConfig {
         public boolean autoAcceptCarnival = false;
         public boolean ignoreCapsLock = true;
         public boolean serverListButton = true;
+        public boolean reconnectButton = true;
+        public boolean hideCheats = true;
         public boolean diceTracker = true;
         public int diceHudX = 10;
         public int diceHudY = 50;
@@ -135,8 +137,14 @@ public class BomboConfig {
         public int feastBakeryHudX = 10;
         public int feastBakeryHudY = 100;
         
+        public boolean rngProfitHud = true;
+        public int rngProfitHudX = 10;
+        public int rngProfitHudY = 200;
+        public int rngProfitHudOpacity = 80;
+        
         public boolean gardenMovement = false;
         public boolean gardenSugarCane = false;
+        public boolean gardenDirectionHelper = true;
         public String gardenForwardKey = "up";
         public String gardenBackwardKey = "down";
         public String gardenLeftKey = "left";
@@ -161,6 +169,7 @@ public class BomboConfig {
         public int anvilAutoCombineDelay = 200;
         public String anvilAutoCombineKey = "";
         public boolean anvilAutoCombineRequireKey = false;
+        public boolean autoReconnect = true;
     }
 
     public static class CommandBind {

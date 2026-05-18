@@ -23,6 +23,7 @@ public class LowestBinManager {
     private static final Map<String, Long> priceCache = new ConcurrentHashMap<>();
     private static final Map<String, Long> npcCache = new ConcurrentHashMap<>();
     private static final Map<String, Double> bazaarCache = new ConcurrentHashMap<>();
+    private static final Map<String, Double> bazaarSellCache = new ConcurrentHashMap<>();
     private static long lastFetchTime = 0;
     private static long lastBazaarFetch = 0;
     private static long lastNpcFetch = 0;
@@ -92,6 +93,26 @@ public class LowestBinManager {
         
         long price = getRawPrice(skyblockId);
         if (price > 0) return price;
+
+        // Handle pet price translation variations
+        if (skyblockId.startsWith("PET_")) {
+            String[] parts = skyblockId.split("_");
+            if (parts.length >= 3) {
+                String rarity = parts[parts.length - 1];
+                String petName = skyblockId.substring(4, skyblockId.lastIndexOf("_"));
+                int rarityNum = 0;
+                if (rarity.equals("UNCOMMON")) rarityNum = 1;
+                else if (rarity.equals("RARE")) rarityNum = 2;
+                else if (rarity.equals("EPIC")) rarityNum = 3;
+                else if (rarity.equals("LEGENDARY")) rarityNum = 4;
+                else if (rarity.equals("MYTHIC")) rarityNum = 5;
+                
+                price = getRawPrice(petName + ";" + rarityNum);
+                if (price > 0) return price;
+                price = getRawPrice(skyblockId);
+                if (price > 0) return price;
+            }
+        }
         
         // Handle ENCHANTMENT_NAME_LEVEL variations
         if (skyblockId.startsWith("ENCHANTMENT_")) {
@@ -156,6 +177,26 @@ public class LowestBinManager {
         return -1L;
     }
 
+    public static long getBuyPrice(String skyblockId) {
+        long price = getCachedPrice(skyblockId);
+        if (price > 0) return price;
+        return 0L;
+    }
+
+    public static long getSellPrice(String skyblockId) {
+        if (skyblockId == null || skyblockId.isEmpty()) return 0L;
+        if (bazaarSellCache.containsKey(skyblockId)) {
+            return Math.round(bazaarSellCache.get(skyblockId));
+        }
+        if (skyblockId.contains(";")) {
+            String baseId = skyblockId.split(";")[0];
+            if (bazaarSellCache.containsKey(baseId)) {
+                return Math.round(bazaarSellCache.get(baseId));
+            }
+        }
+        return getBuyPrice(skyblockId);
+    }
+
     private static CompletableFuture<Boolean> fetchFromBazaar() {
         String url = "https://bomboapi.frandl938.workers.dev/hyp/skyblock/bazaar";
         HttpRequest request = HttpRequest.newBuilder()
@@ -176,7 +217,9 @@ public class LowestBinManager {
                                     JsonObject product = products.getAsJsonObject(key);
                                     if (product.has("quick_status")) {
                                         double buyPrice = product.getAsJsonObject("quick_status").get("buyPrice").getAsDouble();
+                                        double sellPrice = product.getAsJsonObject("quick_status").get("sellPrice").getAsDouble();
                                         bazaarCache.put(key, buyPrice);
+                                        bazaarSellCache.put(key, sellPrice);
                                     }
                                 }
                                 lastBazaarFetch = System.currentTimeMillis();

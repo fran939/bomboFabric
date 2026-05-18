@@ -26,7 +26,7 @@ public abstract class ScreenMixin {
             boolean hovered = mouseX >= s.diceHudX && mouseX <= s.diceHudX + w &&
                               mouseY >= s.diceHudY && mouseY <= s.diceHudY + h;
             
-            if (DiceTracker.shouldShowHud() || hovered) {
+            if (DiceTracker.shouldShowHud()) {
                 DiceHud.drawDiceInfo(g, s.diceHudX, s.diceHudY, hovered);
             }
         }

@@ -23,8 +23,8 @@ public class BomboConfigGUI extends Screen {
     private static final int PADDING = 8;
 
     private final Screen parent;
-    private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Clicker",
-            "Keybinds", "Highlights", "Wardrobe", "Anvil", "Debug");
+    private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug");
     public static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -78,9 +78,14 @@ public class BomboConfigGUI extends Screen {
             clearWidgets();
 
             // 1. Sidebar Category Buttons
+            int renderCount = 0;
             for (int i = 0; i < categories.size(); i++) {
                 final int idx = i;
-                int catY = HEADER_HEIGHT + PADDING * 3 + i * 26;
+                if (s.hideCheats && (idx == 2 || idx == 9)) {
+                    continue; // Skip Experiments and Anvil
+                }
+                int catY = HEADER_HEIGHT + PADDING * 3 + renderCount * 26;
+                renderCount++;
                 String label = (idx == selectedCategory ? "§6§l> " : "§7") + categories.get(idx);
 
                 Button btn = Button.builder(Component.literal(label), b -> {
@@ -117,12 +122,16 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Server List Button", s.serverListButton, v -> s.serverListButton = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Reconnect Button on Pause Screen", s.reconnectButton, v -> s.reconnectButton = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Quick Join Commands (/f1, /m1, etc)", s.quickJoinCommands, v -> s.quickJoinCommands = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Auto Reconnect", s.autoReconnect, v -> s.autoReconnect = v, contentX, contentWidth, curY);
                 }
                 case 1 -> { // HUDs
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Dice Tracker HUD", s.diceTracker, v -> s.diceTracker = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Feast Bakery HUD", s.feastBakeryHud, v -> s.feastBakeryHud = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("RNG Profit HUD", s.rngProfitHud, v -> s.rngProfitHud = v, contentX, contentWidth, curY);
+                    curY = addIntLabelSlider("RNG HUD Opacity", s.rngProfitHudOpacity, 0, 100, 10, v -> s.rngProfitHudOpacity = v, contentX, 150, curY);
                     
                     curY += 10;
                     addRenderableWidget(Button.builder(Component.literal("§e§lMove HUD Elements"), btn -> {
@@ -152,6 +161,7 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Garden Movement", s.gardenMovement, v -> { s.gardenMovement = v; if (!v) GardenMovement.reset(); }, contentX, contentWidth, curY);
                     curY = addBoolOption("Sugar Cane Mode", s.gardenSugarCane, v -> s.gardenSugarCane = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Direction Helper Warning", s.gardenDirectionHelper, v -> s.gardenDirectionHelper = v, contentX, contentWidth, curY);
                     curY += 10;
                     curY = addKeyBindButton("Forward", s.gardenForwardKey, v -> s.gardenForwardKey = v, "gardenF", contentX, contentWidth, curY);
                     curY = addKeyBindButton("Backward", s.gardenBackwardKey, v -> s.gardenBackwardKey = v, "gardenB", contentX, contentWidth, curY);
@@ -181,7 +191,7 @@ public class BomboConfigGUI extends Screen {
                     curY = addKeyBindButton("Go Back", s.goBackKey, v -> s.goBackKey = v, "goBack", contentX, contentWidth, curY);
                     curY = addKeyBindButton("Smart Back", s.smartGoBackKey, v -> s.smartGoBackKey = v, "smartBack", contentX, contentWidth, curY);
                 }
-                case 5 -> { // Clicker
+                case 6 -> { // Clicker
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Auto GUI Clicker", s.autoClicker, v -> s.autoClicker = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Keypress Clicker", s.chestClicker, v -> s.chestClicker = v, contentX, contentWidth, curY);
@@ -231,7 +241,7 @@ public class BomboConfigGUI extends Screen {
                         }
                     }
                 }
-                case 6 -> { // Keybinds
+                case 5 -> { // Profiles
                     curY += ITEM_HEIGHT;
                     
                     List<String> profiles = new ArrayList<>(s.profileBinds.keySet());
@@ -387,7 +397,9 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 8 -> { // Wardrobe
                     curY += ITEM_HEIGHT;
-                    curY = addBoolOption("Auto Close Wardrobe", s.autoCloseWardrobe, v -> s.autoCloseWardrobe = v, contentX, contentWidth, curY);
+                    if (!s.hideCheats) {
+                        curY = addBoolOption("Auto Close Wardrobe", s.autoCloseWardrobe, v -> s.autoCloseWardrobe = v, contentX, contentWidth, curY);
+                    }
                     curY = addBoolOption("Disable Unequip", s.disableUnequipWardrobe, v -> s.disableUnequipWardrobe = v, contentX, contentWidth, curY);
                     for (int i = 0; i < 9; i++) {
                         final int index = i;
@@ -610,7 +622,11 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Server List Button", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Reconnect Button", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Quick Join Commands (/f1, /m1, etc)", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Auto Reconnect", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 1 -> {
                     g.drawString(font, "§6§lHUD Settings", contentX, curY, 0xFFFFAA00, true);
@@ -619,7 +635,9 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Feast Bakery HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Bakery Contact Discount", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    g.drawString(font, "§7RNG Profit HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fRNG HUD Opacity: §e" + BomboConfig.get().rngProfitHudOpacity + "%", contentX, curY, 0xFFFFFFFF);
                 }
                 case 2 -> {
                     g.drawString(font, "§6§lExperiment Solver", contentX, curY, 0xFFFFAA00, true);
@@ -640,6 +658,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Garden Movement", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Sugar Cane Mode", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Direction Helper Warning", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT + 10;
                     g.drawString(font, "§fForward:", contentX, curY, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
@@ -652,6 +672,7 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§fBreak:", contentX, curY, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§fUse:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
 
                     curY += 20;
                     g.drawString(font, "§7Pest ESP Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
@@ -689,7 +710,7 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§fSmart Back:", contentX, curY, 0xFFFFFFFF);
                 }
-                case 5 -> {
+                case 6 -> {
                     g.drawString(font, "§6§lClicker Targets", contentX, curY, 0xFFFFAA00, true);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Auto GUI: " + (s.autoClicker ? "§aON" : "§cOFF"), contentX + 24, curY + 4, 0xFFFFFFFF, false);
@@ -718,7 +739,7 @@ public class BomboConfigGUI extends Screen {
                         listY += 22;
                     }
                 }
-                case 6 -> {
+                case 5 -> {
                     g.drawString(font, "§6§lProfile Management", contentX, curY, 0xFFFFAA00, true);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§fActive Profile: §e" + s.activeProfile, contentX, curY + 4, 0xFFFFFFFF);
@@ -776,9 +797,12 @@ public class BomboConfigGUI extends Screen {
                 case 8 -> {
                     g.drawString(font, "§6§lWardrobe Settings", contentX, curY, 0xFFFFAA00, true);
                     curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Auto Close", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
+                    if (!s.hideCheats) {
+                        g.drawString(font, "§7Auto Close", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                        curY += ITEM_HEIGHT;
+                    }
                     g.drawString(font, "§7Disable Unequip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
                     for (int i = 0; i < 9; i++) {
                         g.drawString(font, "§fSlot " + (i + 1) + ":", contentX, curY, 0xFFFFFFFF);
                         curY += ITEM_HEIGHT;
@@ -826,14 +850,7 @@ public class BomboConfigGUI extends Screen {
                 }
             }
 
-            if (colorPickerTarget != null) {
-                renderColorPicker(contentX, HEADER_HEIGHT + 30, contentWidth);
-            }
 
-            addRenderableWidget(Button.builder(Component.literal("§lSave & Close"), btn -> {
-                BomboConfig.save();
-                minecraft.setScreen(parent);
-            }).bounds(width / 2 - 75, height - 32, 150, 24).build());
 
         } catch (Exception e) {
             Bomboaddons.LOGGER.error("[BomboAddons] Error during render!", e);

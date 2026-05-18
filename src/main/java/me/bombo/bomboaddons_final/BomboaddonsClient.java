@@ -21,6 +21,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.world.item.ItemStack;
@@ -46,6 +48,13 @@ public class BomboaddonsClient implements ClientModInitializer {
     public static net.minecraft.client.gui.components.Button activeReconnectBtn = null;
     public static net.minecraft.client.gui.screens.Screen activeParent = null;
     public static int autoReconnectTicks = -1;
+    public static String locrawServer = "";
+    public static String locrawGametype = "";
+    public static String locrawMode = "";
+    public static String locrawMap = "";
+    public static long lastLocrawTime = 0;
+    public static int locrawDelayTicks = -1;
+    public static int expectingLocrawCount = 0;
 
 
     public void onInitializeClient() {
@@ -198,6 +207,38 @@ public class BomboaddonsClient implements ClientModInitializer {
                             return 1;
                         });
 
+                        builder.then(ClientCommandManager.literal("help").executes(context -> {
+                            context.getSource().sendFeedback(Component.literal("§8----------------- §b[BomboAddons Help] §8-----------------"));
+                            context.getSource().sendFeedback(Component.literal("§7Hover over any command to see what it does! Click to suggest it.\n"));
+
+                            context.getSource().sendFeedback(createHelpLine("/b", "/b", "Opens the main config GUI.").append(Component.literal(" §7- Opens the main config GUI")));
+                            context.getSource().sendFeedback(createHelpLine("/b help", "/b help", "Shows this help menu.").append(Component.literal(" §7- Shows this help menu")));
+                            context.getSource().sendFeedback(createHelpLine("/b prof", "/b prof", "Opens config GUI directly to Profile Binds.").append(Component.literal(" §7- Opens Profile Binds config")));
+                            context.getSource().sendFeedback(createHelpLine("/b gui", "/b gui", "Opens the HUD Editor to reposition overlays.").append(Component.literal(" §7- Opens the HUD Editor")));
+                            context.getSource().sendFeedback(createHelpLine("/b api", "/b api", "Reloads lowest BIN prices and checks status.").append(Component.literal(" §7- Reloads and checks APIs")));
+                            context.getSource().sendFeedback(createHelpLine("/b ks", "/b ks", "Resets active Garden Movement states.").append(Component.literal(" §7- Resets Garden Movement states")));
+                            context.getSource().sendFeedback(createHelpLine("/b sugarcane", "/b sugarcane", "Toggles Sugar Cane mode for lane warnings.").append(Component.literal(" §7- Toggles Sugar Cane mode")));
+                            context.getSource().sendFeedback(createHelpLine("/b highlight", "/b highlight", "Configures persistent entity highlights.").append(Component.literal(" §7- Persistent Highlights config")));
+                            context.getSource().sendFeedback(createHelpLine("/b anvil", "/b anvil", "Configures persistent auto-combine goals.").append(Component.literal(" §7- Anvil Auto-Combine config")));
+                            context.getSource().sendFeedback(createHelpLine("/b pt", "/b pt", "Opens Playtime statistics GUI.").append(Component.literal(" §7- Opens Playtime GUI")));
+                            context.getSource().sendFeedback(createHelpLine("/b update", "/b update", "Manually checks for mod updates.").append(Component.literal(" §7- Checks for mod updates")));
+                            context.getSource().sendFeedback(createHelpLine("/b hide", "/b hide", "Toggles visibility of cheats in the GUI.").append(Component.literal(" §7- Toggles GUI cheat visibility")));
+                            context.getSource().sendFeedback(createHelpLine("/b area", "/b area", "Shows the current SkyBlock area.").append(Component.literal(" §7- Shows current Area")));
+                            context.getSource().sendFeedback(createHelpLine("/b subarea", "/b subarea", "Shows the current SkyBlock subarea.").append(Component.literal(" §7- Shows current Subarea")));
+                            context.getSource().sendFeedback(createHelpLine("/b container", "/b container", "Logs active virtual container structures.").append(Component.literal(" §7- Logs container info")));
+                            context.getSource().sendFeedback(createHelpLine("/b sb", "/b sb", "Logs current scoreboard lines to chat.").append(Component.literal(" §7- Logs scoreboard lines")));
+                            context.getSource().sendFeedback(createHelpLine("/b tab", "/b tab", "Logs current tab list lines to chat.").append(Component.literal(" §7- Logs tab list lines")));
+                            context.getSource().sendFeedback(createHelpLine("/b kick", "/b kick", "Safely disconnects you from the server.").append(Component.literal(" §7- Safely disconnects from server")));
+                            context.getSource().sendFeedback(createHelpLine("/b resetdice", "/b resetdice", "Resets High Class Archfiend Dice stats.").append(Component.literal(" §7- Resets Dice statistics")));
+                            context.getSource().sendFeedback(createHelpLine("/b lf <name>", "/b lf ", "Searches a player's inventory.").append(Component.literal(" §7- Searches player's inventory")));
+                            context.getSource().sendFeedback(createHelpLine("/b lfc <name>", "/b lfc ", "Searches a player's inventory with NBT components.").append(Component.literal(" §7- Searches inventory with NBT components")));
+                            context.getSource().sendFeedback(createHelpLine("/b lb", "/b lb", "Searches your own inventory.").append(Component.literal(" §7- Searches your own inventory")));
+                            context.getSource().sendFeedback(createHelpLine("/b view <name> <p>", "/b view ", "Opens virtual container paths.").append(Component.literal(" §7- Opens virtual container paths")));
+
+                            context.getSource().sendFeedback(Component.literal("§8---------------------------------------------------------"));
+                            return 1;
+                        }));
+
                         builder.then(ClientCommandManager.literal("prof").executes(context -> {
                             BomboConfigGUI.selectedCategory = 5;
                             openGuiNextTick = true;
@@ -251,6 +292,21 @@ public class BomboaddonsClient implements ClientModInitializer {
                             return 1;
                         }));
 
+                        builder.then(ClientCommandManager.literal("hide").executes(context -> {
+                            BomboConfig.Settings s = BomboConfig.get();
+                            s.hideCheats = !s.hideCheats;
+                            if (s.hideCheats) {
+                                if (BomboConfigGUI.selectedCategory == 2 || BomboConfigGUI.selectedCategory == 9) {
+                                    BomboConfigGUI.selectedCategory = 0;
+                                }
+                                context.getSource().sendFeedback(Component.literal(PREFIX + "§aCheats are now §chidden §afrom the GUI!"));
+                            } else {
+                                context.getSource().sendFeedback(Component.literal(PREFIX + "§aCheats are now §avisible §ain the GUI!"));
+                            }
+                            BomboConfig.save();
+                            return 1;
+                        }));
+
                         // --- SBE Commands (Translation to /b) ---
                         String[] sbeSubs = { "nw", "cata", "skills", "slayer", "trophyfish", "crimson" };
                         for (String s : sbeSubs) {
@@ -294,7 +350,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                         // --- Garden ---
                         builder.then(ClientCommandManager.literal("ks")
                                 .executes(context -> {
-                                    GardenMovement.reset();
+                                    GardenMovement.onWarpTriggered();
                                     context.getSource().sendFeedback(Component.literal(PREFIX + "§cGarden Movement Reset! §7(States cleared)"));
                                     return 1;
                                 }));
@@ -913,12 +969,17 @@ public class BomboaddonsClient implements ClientModInitializer {
                 // Only render HUD if no screen is open or it's the HudMoveScreen
                 if (Minecraft.getInstance().screen == null || Minecraft.getInstance().screen instanceof HudMoveScreen) {
                     FeastBakeryHud.onHudRender(graphics);
+                    ExperimentationTableHud.onHudRender(graphics);
+                }
+                if (Minecraft.getInstance().screen == null) {
+                    GardenMovement.drawDirectionWarning(graphics);
                 }
             });
 
             net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
                 net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.afterRender(screen).register((screen1, graphics, mouseX, mouseY, tickDelta) -> {
                     FeastBakeryHud.onHudRender(graphics);
+                    ExperimentationTableHud.onHudRender(graphics);
                 });
             });
 
@@ -933,6 +994,54 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
                 PlaytimeTracker.sendPlaytimeDataToCloud();
+            });
+
+            ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((client, world) -> {
+                if (world != null && SkyblockUtils.isConnectedToHypixel()) {
+                    // Reset locraw variables on lobby change
+                    locrawServer = "";
+                    locrawGametype = "";
+                    locrawMode = "";
+                    locrawMap = "";
+                    
+                    // Schedule a locraw call in 2 seconds (40 ticks)
+                    locrawDelayTicks = 40;
+                }
+            });
+
+            ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
+                String plain = message.getString().trim();
+                // Check if it is a valid locraw JSON response
+                if (plain.startsWith("{") && plain.endsWith("}") && plain.contains("\"server\"") && plain.contains("\"gametype\"")) {
+                    try {
+                        com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(plain).getAsJsonObject();
+                        if (json.has("server")) locrawServer = json.get("server").getAsString();
+                        if (json.has("gametype")) locrawGametype = json.get("gametype").getAsString();
+                        if (json.has("mode")) locrawMode = json.get("mode").getAsString();
+                        if (json.has("map")) locrawMap = json.get("map").getAsString();
+                        
+                        // Dynamically update the current area immediately
+                        String area = SkyblockUtils.mapLocrawToArea(locrawMode, locrawMap);
+                        if (!area.equals("Unknown")) {
+                            currentArea = area;
+                        } else if (!"SKYBLOCK".equals(locrawGametype) && json.has("server")) {
+                            String srv = json.get("server").getAsString().toLowerCase();
+                            if (srv.contains("lobby")) {
+                                currentArea = "Lobby";
+                            } else if (srv.contains("limbo")) {
+                                currentArea = "Limbo";
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    if (expectingLocrawCount > 0) {
+                        expectingLocrawCount = Math.max(0, expectingLocrawCount - 1);
+                        return false; // Blocks/hides the message from chat
+                    }
+                }
+                return true;
             });
 
             net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
@@ -983,6 +1092,19 @@ public class BomboaddonsClient implements ClientModInitializer {
                 }
             }
             PlaytimeTracker.tick();
+
+            // Handle lobby change locraw delay
+            if (locrawDelayTicks > 0) {
+                locrawDelayTicks--;
+                if (locrawDelayTicks == 0) {
+                    triggerLocraw();
+                }
+            }
+
+            // Periodic locraw check (every 5 minutes)
+            if (client.player != null && System.currentTimeMillis() - lastLocrawTime > 300000) {
+                triggerLocraw();
+            }
             
             // Safe execution of Config GUI logic
             try {
@@ -1090,5 +1212,26 @@ public class BomboaddonsClient implements ClientModInitializer {
                 parentScreen, mc, address, server, false, null
             );
         }
+    }
+
+    public static void triggerLocraw() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.connection != null && SkyblockUtils.isConnectedToHypixel()) {
+            expectingLocrawCount++;
+            lastLocrawTime = System.currentTimeMillis();
+            try {
+                mc.player.connection.sendCommand("locraw");
+            } catch (Exception e) {
+                expectingLocrawCount = Math.max(0, expectingLocrawCount - 1);
+            }
+        }
+    }
+
+    private static net.minecraft.network.chat.MutableComponent createHelpLine(String command, String suggestion, String description) {
+        return Component.literal("§b" + command)
+            .withStyle(style -> style
+                .withClickEvent(new ClickEvent.SuggestCommand(suggestion))
+                .withHoverEvent(SBECommands.createHoverEvent("§b" + suggestion + "\n\n§7" + description))
+            );
     }
 }

@@ -33,15 +33,18 @@ public abstract class EntityMixin {
       }
    }
 
-   @Inject(method = { "isCurrentlyGlowing" }, at = { @At("HEAD") }, cancellable = true)
-   private void onIsCurrentlyGlowing(CallbackInfoReturnable<Boolean> cir) {
-      Entity self = (Entity) (Object) this;
-
-      // Forced pest glowing removed to favor the new box/tracer ESP
-
-      if (!BomboConfig.get().highlightsEnabled) {
-         return;
+   private me.bombo.bomboaddons_final.TargetPests.EntityInfoCache getCachedInfo(Entity self) {
+      if (me.bombo.bomboaddons_final.TargetPests.infoCache.size() > 5000) {
+         me.bombo.bomboaddons_final.TargetPests.infoCache.clear();
       }
+      int id = self.getId();
+      long now = System.currentTimeMillis();
+      me.bombo.bomboaddons_final.TargetPests.EntityInfoCache cached = me.bombo.bomboaddons_final.TargetPests.infoCache.get(id);
+      
+      if (cached != null && (now - cached.lastCheckMs) < 500) {
+         return cached;
+      }
+
       String name = ChatFormatting.stripFormatting(self.getDisplayName().getString());
       StringBuilder combinedName = new StringBuilder(name != null ? name.toLowerCase() : "");
 
@@ -82,107 +85,86 @@ public abstract class EntityMixin {
          }
       }
 
-      name = combinedName.toString();
-      String nametagName = getNearbyNametagName(self);
+      String finalCombined = combinedName.toString();
+      String nametag = getNearbyNametagName(self);
 
-      if (!name.isEmpty() || nametagName != null) {
-         Iterator var4 = BomboConfig.get().highlights.entrySet().iterator();
+      me.bombo.bomboaddons_final.TargetPests.EntityInfoCache newValue = new me.bombo.bomboaddons_final.TargetPests.EntityInfoCache(now, finalCombined, nametag);
+      me.bombo.bomboaddons_final.TargetPests.infoCache.put(id, newValue);
+      return newValue;
+   }
 
-         while (var4.hasNext()) {
-            Entry<String, BomboConfig.HighlightInfo> entry = (Entry) var4.next();
-            String key = (String) entry.getKey();
-            if ((!name.isEmpty() && name.contains(key)) || (nametagName != null && nametagName.contains(key))) {
-               if (self.isInvisible() && !((BomboConfig.HighlightInfo) entry.getValue()).showInvisible) {
-                  continue;
+   @Inject(method = { "isCurrentlyGlowing" }, at = { @At("HEAD") }, cancellable = true)
+   private void onIsCurrentlyGlowing(CallbackInfoReturnable<Boolean> cir) {
+      BomboConfig.Settings config = BomboConfig.get();
+      Entity self = (Entity) (Object) this;
+
+      boolean shouldGlow = false;
+
+      // 1. Or if highlights are enabled and matches config highlights
+      if (config.highlightsEnabled) {
+         me.bombo.bomboaddons_final.TargetPests.EntityInfoCache cache = getCachedInfo(self);
+         String name = cache.combinedName;
+         String nametagName = cache.nametagName;
+
+         if (!name.isEmpty() || nametagName != null) {
+            for (Entry<String, BomboConfig.HighlightInfo> entry : config.highlights.entrySet()) {
+               String key = entry.getKey();
+               if ((!name.isEmpty() && name.contains(key)) || (nametagName != null && nametagName.contains(key))) {
+                  if (self.isInvisible() && !entry.getValue().showInvisible) {
+                     continue;
+                  }
+                  shouldGlow = true;
+                  break;
                }
-
-
-               cir.setReturnValue(true);
-               return;
             }
          }
       }
 
+      if (shouldGlow) {
+         // If hideCheats is enabled, enforce line of sight (no seeing through walls!)
+         if (config.hideCheats) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null && !mc.player.hasLineOfSight(self)) {
+               return;
+            }
+         }
+         cir.setReturnValue(true);
+      }
    }
 
    @Inject(method = { "getTeamColor" }, at = { @At("HEAD") }, cancellable = true)
    private void onGetTeamColor(CallbackInfoReturnable<Integer> cir) {
+      BomboConfig.Settings config = BomboConfig.get();
       Entity self = (Entity) (Object) this;
 
-      // Pest color logic removed as it's now handled by the custom ESP renderer
+      if (config.highlightsEnabled) {
+         me.bombo.bomboaddons_final.TargetPests.EntityInfoCache cache = getCachedInfo(self);
+         String name = cache.combinedName;
+         String nametagName = cache.nametagName;
 
-      String name = ChatFormatting.stripFormatting(self.getDisplayName().getString());
-      StringBuilder combinedName = new StringBuilder(name != null ? name.toLowerCase() : "");
-
-      if (self instanceof net.minecraft.world.entity.decoration.ArmorStand) {
-         String pestName = me.bombo.bomboaddons_final.TargetPests
-               .getPestName((net.minecraft.world.entity.decoration.ArmorStand) self);
-         if (pestName != null) {
-            combinedName.append(" | ").append(pestName);
-         }
-      }
-
-      for (Entity passenger : self.getPassengers()) {
-         String pName = ChatFormatting.stripFormatting(passenger.getDisplayName().getString());
-         if (pName != null) {
-            combinedName.append(" | ").append(pName.toLowerCase());
-         }
-         if (passenger instanceof net.minecraft.world.entity.decoration.ArmorStand) {
-            String pestName = me.bombo.bomboaddons_final.TargetPests
-                  .getPestName((net.minecraft.world.entity.decoration.ArmorStand) passenger);
-            if (pestName != null) {
-               combinedName.append(" | ").append(pestName);
-            }
-         }
-      }
-
-      Entity vehicle = self.getVehicle();
-      if (vehicle != null) {
-         String vName = ChatFormatting.stripFormatting(vehicle.getDisplayName().getString());
-         if (vName != null) {
-            combinedName.append(" | ").append(vName.toLowerCase());
-         }
-         if (vehicle instanceof net.minecraft.world.entity.decoration.ArmorStand) {
-            String pestName = me.bombo.bomboaddons_final.TargetPests
-                  .getPestName((net.minecraft.world.entity.decoration.ArmorStand) vehicle);
-            if (pestName != null) {
-               combinedName.append(" | ").append(pestName);
-            }
-         }
-      }
-
-      name = combinedName.toString();
-      String nametagName = getNearbyNametagName(self);
-
-      if (!name.isEmpty() || nametagName != null) {
-         Iterator var4 = BomboConfig.get().highlights.entrySet().iterator();
-
-         while (var4.hasNext()) {
-            Entry<String, BomboConfig.HighlightInfo> entry = (Entry) var4.next();
-            String key = (String) entry.getKey();
-            if ((!name.isEmpty() && name.contains(key)) || (nametagName != null && nametagName.contains(key))) {
-               String colorStr = ((BomboConfig.HighlightInfo) entry.getValue()).color.replace("#", "");
-               try {
-                  ChatFormatting format = ChatFormatting.valueOf(colorStr);
-                  if (format != null && format.getColor() != null) {
-
-                     cir.setReturnValue(format.getColor());
-                     return;
-                  }
-               } catch (Exception var7) {
+         if (!name.isEmpty() || nametagName != null) {
+            for (Entry<String, BomboConfig.HighlightInfo> entry : config.highlights.entrySet()) {
+               String key = entry.getKey();
+               if ((!name.isEmpty() && name.contains(key)) || (nametagName != null && nametagName.contains(key))) {
+                  String colorStr = entry.getValue().color.replace("#", "");
                   try {
-                     int hex = Integer.parseInt(colorStr, 16);
-
-                     cir.setReturnValue(hex);
-                     return;
-                  } catch (NumberFormatException ignored) {
-
+                     ChatFormatting format = ChatFormatting.valueOf(colorStr);
+                     if (format != null && format.getColor() != null) {
+                        cir.setReturnValue(format.getColor());
+                        return;
+                      }
+                  } catch (Exception var7) {
+                     try {
+                        int hex = Integer.parseInt(colorStr, 16);
+                        cir.setReturnValue(hex);
+                        return;
+                     } catch (NumberFormatException ignored) {
+                     }
                   }
                }
             }
          }
       }
-
    }
 
    @Inject(method = { "isCustomNameVisible" }, at = { @At("HEAD") }, cancellable = true)

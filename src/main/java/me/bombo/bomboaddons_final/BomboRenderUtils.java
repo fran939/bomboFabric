@@ -74,6 +74,10 @@ public class BomboRenderUtils {
     }
 
     public static void drawText(PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource consumers, String text, float x, float y, float z, int color, float scale, boolean shadow) {
+        drawText(poseStack, consumers, text, x, y, z, color, scale, shadow, true);
+    }
+
+    public static void drawText(PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource consumers, String text, float x, float y, float z, int color, float scale, boolean shadow, boolean seeThrough) {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         net.minecraft.client.gui.Font font = mc.font;
 
@@ -87,8 +91,8 @@ public class BomboRenderUtils {
         Matrix4f matrix = poseStack.last().pose();
         float offset = -font.width(text) / 2.0f;
 
-        // Use see-through text renderer if possible, or just normal for now
-        font.drawInBatch(text, offset, 0, color, shadow, matrix, consumers, net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH, 0, 15728880);
+        net.minecraft.client.gui.Font.DisplayMode mode = seeThrough ? net.minecraft.client.gui.Font.DisplayMode.SEE_THROUGH : net.minecraft.client.gui.Font.DisplayMode.NORMAL;
+        font.drawInBatch(text, offset, 0, color, shadow, matrix, consumers, mode, 0, 15728880);
 
         poseStack.popPose();
     }

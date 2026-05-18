@@ -111,7 +111,7 @@ public class PlaytimeTracker {
         unknownData.subAreas.forEach((subName, subData) -> {
             String mappedArea = SkyblockUtils.mapSubAreaToMainArea(subName);
             if (!mappedArea.equals("Unknown")) {
-                AreaData targetArea = areaDataMap.computeIfAbsent(mappedArea, k -> new AreaData());
+                AreaData targetArea = areaDataMap.computeIfAbsent(normalizeAreaName(mappedArea), k -> new AreaData());
                 // Merge this subarea's data into the main area's total time
                 targetArea.totalTime += subData.totalTime;
                 targetArea.afkTime += subData.afkTime;
@@ -214,14 +214,18 @@ public class PlaytimeTracker {
 
         // Subarea tracking
         if (!subArea.equals("None") && !subArea.equalsIgnoreCase(area)) {
-            AreaData subData = data.subAreas.computeIfAbsent(subArea, k -> new AreaData());
-            subData.totalTime += delta;
-            subData.sessionTime += delta;
-            subData.dailyTime.put(today, subData.dailyTime.getOrDefault(today, 0L) + delta);
-            if (isAfk) {
-                subData.afkTime += delta;
-                subData.sessionAfkTime += delta;
-                subData.dailyAfk.put(today, subData.dailyAfk.getOrDefault(today, 0L) + delta);
+            // Verify if the subarea actually belongs to this main area!
+            String mappedMain = normalizeAreaName(SkyblockUtils.mapSubAreaToMainArea(subArea));
+            if (mappedMain.equals("Unknown") || mappedMain.equalsIgnoreCase(area)) {
+                AreaData subData = data.subAreas.computeIfAbsent(subArea, k -> new AreaData());
+                subData.totalTime += delta;
+                subData.sessionTime += delta;
+                subData.dailyTime.put(today, subData.dailyTime.getOrDefault(today, 0L) + delta);
+                if (isAfk) {
+                    subData.afkTime += delta;
+                    subData.sessionAfkTime += delta;
+                    subData.dailyAfk.put(today, subData.dailyAfk.getOrDefault(today, 0L) + delta);
+                }
             }
         }
         

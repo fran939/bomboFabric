@@ -11,6 +11,15 @@ public class GardenMovement {
     private static boolean breaking = false;
     private static boolean using = false;
 
+    // Direction Helper Tracking
+    private static boolean wasGoingForward = false;
+    private static boolean wasGoingBackward = false;
+    private static boolean wasGoingLeft = false;
+    private static boolean wasGoingRight = false;
+    private static boolean warped = false;
+    private static long warningStartTime = 0;
+    private static String correctArrow = "";
+
     public static void onTick(Minecraft mc) {
         BomboConfig.Settings s = BomboConfig.get();
         if (!s.gardenMovement || !SkyblockUtils.isInGarden()) {
@@ -56,6 +65,17 @@ public class GardenMovement {
             forward = !forward;
             if (!forward) mc.options.keyUp.setDown(false);
             if (forward) {
+                if (s.gardenDirectionHelper && warped && !wasGoingForward) {
+                    warningStartTime = System.currentTimeMillis();
+                    if (wasGoingBackward) correctArrow = "↓";
+                    else if (wasGoingLeft) correctArrow = "←";
+                    else if (wasGoingRight) correctArrow = "→";
+                    else correctArrow = "↓";
+                    warped = false;
+                } else if (warped && wasGoingForward) {
+                    warped = false;
+                }
+                
                 if (s.gardenSugarCane) {
                     right = false;
                     mc.options.keyRight.setDown(false);
@@ -69,6 +89,17 @@ public class GardenMovement {
             backward = !backward;
             if (!backward) mc.options.keyDown.setDown(false);
             if (backward) {
+                if (s.gardenDirectionHelper && warped && !wasGoingBackward) {
+                    warningStartTime = System.currentTimeMillis();
+                    if (wasGoingForward) correctArrow = "↑";
+                    else if (wasGoingLeft) correctArrow = "←";
+                    else if (wasGoingRight) correctArrow = "→";
+                    else correctArrow = "↑";
+                    warped = false;
+                } else if (warped && wasGoingBackward) {
+                    warped = false;
+                }
+                
                 if (s.gardenSugarCane) {
                     left = false;
                     mc.options.keyLeft.setDown(false);
@@ -82,6 +113,17 @@ public class GardenMovement {
             left = !left;
             if (!left) mc.options.keyLeft.setDown(false);
             if (left) {
+                if (s.gardenDirectionHelper && warped && !wasGoingLeft) {
+                    warningStartTime = System.currentTimeMillis();
+                    if (wasGoingRight) correctArrow = "→";
+                    else if (wasGoingForward) correctArrow = "↑";
+                    else if (wasGoingBackward) correctArrow = "↓";
+                    else correctArrow = "→";
+                    warped = false;
+                } else if (warped && wasGoingLeft) {
+                    warped = false;
+                }
+                
                 if (s.gardenSugarCane) {
                     backward = false;
                     mc.options.keyDown.setDown(false);
@@ -95,6 +137,17 @@ public class GardenMovement {
             right = !right;
             if (!right) mc.options.keyRight.setDown(false);
             if (right) {
+                if (s.gardenDirectionHelper && warped && !wasGoingRight) {
+                    warningStartTime = System.currentTimeMillis();
+                    if (wasGoingLeft) correctArrow = "←";
+                    else if (wasGoingForward) correctArrow = "↑";
+                    else if (wasGoingBackward) correctArrow = "↓";
+                    else correctArrow = "←";
+                    warped = false;
+                } else if (warped && wasGoingRight) {
+                    warped = false;
+                }
+                
                 if (s.gardenSugarCane) {
                     forward = false;
                     mc.options.keyUp.setDown(false);
@@ -123,6 +176,57 @@ public class GardenMovement {
         if (mc.player != null) {
             mc.player.displayClientMessage(Component.literal("§b[Garden] §f" + dir + ": " + (active ? "§aON" : "§cOFF")), true);
         }
+    }
+
+    public static void onWarpTriggered() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.gardenMovement) return;
+        
+        Minecraft mc = Minecraft.getInstance();
+        
+        wasGoingForward = forward || mc.options.keyUp.isDown();
+        wasGoingBackward = backward || mc.options.keyDown.isDown();
+        wasGoingLeft = left || mc.options.keyLeft.isDown();
+        wasGoingRight = right || mc.options.keyRight.isDown();
+        
+        if (wasGoingForward || wasGoingBackward || wasGoingLeft || wasGoingRight) {
+            warped = true;
+        }
+        
+        mc.options.keyUp.setDown(false);
+        mc.options.keyDown.setDown(false);
+        mc.options.keyLeft.setDown(false);
+        mc.options.keyRight.setDown(false);
+        reset();
+    }
+
+    public static void drawDirectionWarning(net.minecraft.client.gui.GuiGraphics g) {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.gardenMovement || !s.gardenDirectionHelper) return;
+
+        long now = System.currentTimeMillis();
+        if (now - warningStartTime > 3000) return;
+
+        Minecraft mc = Minecraft.getInstance();
+        int screenWidth = mc.getWindow().getGuiScaledWidth();
+        int screenHeight = mc.getWindow().getGuiScaledHeight();
+
+        net.minecraft.client.gui.Font font = mc.font;
+
+        int x = screenWidth / 2;
+        int y = screenHeight / 2 - 50;
+
+        String warningText = "§c§lWrong lane brochacho";
+        String arrowText = "§6§l" + correctArrow;
+
+        int textW = Math.max(font.width(warningText.replaceAll("(?i)§.", "")), font.width(arrowText.replaceAll("(?i)§.", "")));
+        int padX = 10;
+        int padY = 8;
+        g.fill(x - textW / 2 - padX, y - padY, x + textW / 2 + padX, y + 25 + padY, 0xAA000000);
+        g.renderOutline(x - textW / 2 - padX, y - padY, textW + padX * 2, 25 + padY * 2, 0xFFFF0000);
+
+        g.drawCenteredString(font, warningText, x, y, 0xFFFFFFFF);
+        g.drawCenteredString(font, arrowText, x, y + 12, 0xFFFFFFFF);
     }
 
     public static void reset() {

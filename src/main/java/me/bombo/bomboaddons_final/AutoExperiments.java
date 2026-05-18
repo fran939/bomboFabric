@@ -60,7 +60,7 @@ public class AutoExperiments {
         Minecraft mc = Minecraft.getInstance();
         BomboConfig.Settings config = BomboConfig.get();
 
-        if (mc.player != null && config.autoExperiments) {
+        if (mc.player != null && !config.hideCheats && config.autoExperiments) {
             String title = mc.screen != null ? mc.screen.getTitle().getString().trim() : "";
             
             if (mc.screen == null) {

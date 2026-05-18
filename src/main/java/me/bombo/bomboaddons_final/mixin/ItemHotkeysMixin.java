@@ -186,7 +186,7 @@ public abstract class ItemHotkeysMixin {
                   for (Component line : itemLore.lines()) {
                      String lineStr = line.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
                      if (lineStr.startsWith("Source: ")) {
-                        String sourceItem = lineStr.substring(8).replaceAll("\\(C\\d+\\)", "").trim();
+                        String sourceItem = lineStr.substring(8).replaceAll("\\([A-Za-z0-9]+\\)", "").trim();
                         Minecraft.getInstance().player.connection.sendCommand("bz " + sourceItem);
                         return true;
                      }

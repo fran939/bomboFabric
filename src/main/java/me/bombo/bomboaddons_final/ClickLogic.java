@@ -181,7 +181,7 @@ public class ClickLogic {
                               if (!isEquipped) {
                                  if (mc.gameMode != null && mc.player != null) {
                                     mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, 0, ClickType.PICKUP, mc.player);
-                                    if (BomboConfig.get().autoCloseWardrobe) {
+                                    if (!BomboConfig.get().hideCheats && BomboConfig.get().autoCloseWardrobe) {
                                        mc.player.closeContainer();
                                     }
                                  }

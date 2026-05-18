@@ -86,7 +86,7 @@ public class PestESP {
             // so it doesn't get occluded by walls, but scale it down so it appears the same size.
             float dist = (float) Math.sqrt(x*x + y*y + z*z);
             float scale = 1.0f;
-            if (dist > 0.2f) {
+            if (!s.hideCheats && dist > 0.2f) {
                 scale = 0.2f / dist;
             }
 
@@ -119,7 +119,7 @@ public class PestESP {
             AABB box = new AABB(scaledX - boxWidth/2, scaledY + boxYOffset, scaledZ - boxWidth/2, scaledX + boxWidth/2, scaledY + boxYOffset + boxHeight, scaledZ + boxWidth/2);
             BomboRenderUtils.drawBox(poseStack, lineBuffer, box, r, g, b, a, lineWidth);
 
-            if (s.pestEspTracer) {
+            if (!s.hideCheats && s.pestEspTracer) {
                 // Project 3D position to 2D HUD coordinates using the correct matrices from WorldRenderContext
                 Matrix4f view = context.matrices().last().pose();
                 Matrix4f proj = mc.gameRenderer.getProjectionMatrix(mc.getDeltaTracker().getGameTimeDeltaTicks());
@@ -149,7 +149,7 @@ public class PestESP {
             }
 
             String displayName = pestName.substring(0, 1).toUpperCase() + pestName.substring(1);
-            BomboRenderUtils.drawText(poseStack, consumers, "§e" + displayName, (float)x, (float)(y + textYOffset), (float)z, 0xFFFFFF, 0.03f, true);
+            BomboRenderUtils.drawText(poseStack, consumers, "§e" + displayName, (float)x, (float)(y + textYOffset), (float)z, 0xFFFFFF, 0.03f, true, !s.hideCheats);
         }
 
         if (debugTicks % 200 == 0 && s.debugEntities) {

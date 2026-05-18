@@ -134,6 +134,14 @@ public class FeastBakeryHud {
         return -1;
     }
 
+    public static int getHudWidth() {
+        return 185;
+    }
+
+    public static int getHudHeight(int itemCount) {
+        return (itemCount + 2) * 10 + 10;
+    }
+
     public static void drawBakeryInfo(GuiGraphics g, int x, int y, List<DetectedItem> items) {
         Minecraft mc = Minecraft.getInstance();
         Font font = mc.font;
@@ -141,12 +149,18 @@ public class FeastBakeryHud {
         // Kernels are untradeable, so we don't need a market price for them.
         int playerKernels = -1;
 
-        int width = 185;
-        int height = (items.size() + 2) * 10 + 10;
+        int width = getHudWidth();
+        int height = getHudHeight(items.size());
 
-        // Premium background: High contrast for visibility
-        g.fill(x - 5, y - 5, x + width + 5, y + height + 5, 0xCD000000); // 80% black
-        g.renderOutline(x - 5, y - 5, width + 10, height + 10, 0xFFFFFFFF); // Pure white border
+        // Premium background: Dynamic high contrast for visibility
+        int opacity = BomboConfig.get().rngProfitHudOpacity;
+        int alpha = (int) (opacity * 2.55);
+        int bgColor = (alpha << 24) | 0x00000000;
+        
+        if (opacity > 0) {
+            g.fill(x - 5, y - 5, x + width + 5, y + height + 5, bgColor);
+            g.renderOutline(x - 5, y - 5, width + 10, height + 10, 0xFFFFFFFF); // Pure white border
+        }
 
         // Header
         g.drawString(font, "§6§lFeast Bakery §r§7- §bScott", x, y, 0xFFFFFFFF, true);

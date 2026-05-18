@@ -6,6 +6,7 @@ import java.util.Map;
 public class TargetPests {
         public static final Map<String, String> PEST_MAP = new HashMap<>();
         private static int debugCounter = 0;
+        private static final Map<Integer, String> pestCache = new java.util.concurrent.ConcurrentHashMap<>();
 
         static {
                 PEST_MAP.put(
@@ -62,6 +63,21 @@ public class TargetPests {
         }
 
         public static String getPestName(net.minecraft.world.entity.decoration.ArmorStand stand) {
+                if (pestCache.size() > 5000) {
+                        pestCache.clear();
+                }
+                int id = stand.getId();
+                String cached = pestCache.get(id);
+                if (cached != null) {
+                        return cached.isEmpty() ? null : cached;
+                }
+
+                String pestName = getPestNameInternal(stand);
+                pestCache.put(id, pestName == null ? "" : pestName);
+                return pestName;
+        }
+
+        private static String getPestNameInternal(net.minecraft.world.entity.decoration.ArmorStand stand) {
                 net.minecraft.world.item.ItemStack head = stand
                                 .getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
                 if (head != null && head.is(net.minecraft.world.item.Items.PLAYER_HEAD)) {
@@ -83,4 +99,18 @@ public class TargetPests {
                 }
                 return null;
         }
+
+        public static class EntityInfoCache {
+                public final long lastCheckMs;
+                public final String combinedName;
+                public final String nametagName;
+
+                public EntityInfoCache(long lastCheckMs, String combinedName, String nametagName) {
+                        this.lastCheckMs = lastCheckMs;
+                        this.combinedName = combinedName;
+                        this.nametagName = nametagName;
+                }
+        }
+
+        public static final Map<Integer, EntityInfoCache> infoCache = new java.util.concurrent.ConcurrentHashMap<>();
 }

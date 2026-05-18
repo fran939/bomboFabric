@@ -25,12 +25,20 @@ public class HudMoveScreen extends Screen {
         DiceHud.drawDiceInfo(g, s.diceHudX, s.diceHudY, draggingTarget == HudTarget.DICE);
 
         // 2. Feast Bakery
-        renderTarget(g, mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, 140, 95, HudTarget.BAKERY);
+        int bakeryW = FeastBakeryHud.getHudWidth();
+        int bakeryH = FeastBakeryHud.getHudHeight(3); // 3 dummy items in edit screen
+        renderTarget(g, mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudTarget.BAKERY);
         java.util.List<FeastBakeryHud.DetectedItem> dummy = new java.util.ArrayList<>();
         dummy.add(new FeastBakeryHud.DetectedItem("FRESHLY_BAKED_TALISMAN", "Baked Talisman", 25));
         dummy.add(new FeastBakeryHud.DetectedItem("POPCORN_RING", "Popcorn Ring", 125));
         dummy.add(new FeastBakeryHud.DetectedItem("ENCHANTMENT_FEAST_1", "Enchanted Book (Feast I)", 500));
         FeastBakeryHud.drawBakeryInfo(g, s.feastBakeryHudX, s.feastBakeryHudY, dummy);
+
+        // 3. RNG Experiments Profit
+        int rngW = 185;
+        int rngH = ExperimentationTableHud.getHudHeight();
+        renderTarget(g, mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudTarget.RNG);
+        ExperimentationTableHud.onHudRender(g);
 
         g.drawCenteredString(font, "§e§lHUD EDIT MODE", width / 2, 10, 0xFFFFFFFF);
         g.drawCenteredString(font, "§7Drag elements to reposition them", width / 2, 22, 0xFFFFFFFF);
@@ -50,6 +58,9 @@ public class HudMoveScreen extends Screen {
             } else if (target == HudTarget.BAKERY) {
                 s.feastBakeryHudX = mouseX - dragOffsetX;
                 s.feastBakeryHudY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.RNG) {
+                s.rngProfitHudX = mouseX - dragOffsetX;
+                s.rngProfitHudY = mouseY - dragOffsetY;
             }
         }
 
@@ -66,8 +77,17 @@ public class HudMoveScreen extends Screen {
         double mouseY = event.y();
         int button = event.button();
 
-        // Check Bakery first (often larger)
-        if (checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, 140, 95)) {
+        // Check RNG
+        int rngW = 185;
+        int rngH = ExperimentationTableHud.getHudHeight();
+        if (checkHit(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH)) {
+            startDragging(HudTarget.RNG, (int) mouseX - s.rngProfitHudX, (int) mouseY - s.rngProfitHudY);
+            return true;
+        }
+        // Check Bakery
+        int bakeryW = FeastBakeryHud.getHudWidth();
+        int bakeryH = FeastBakeryHud.getHudHeight(3);
+        if (checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH)) {
             startDragging(HudTarget.BAKERY, (int) mouseX - s.feastBakeryHudX, (int) mouseY - s.feastBakeryHudY);
             return true;
         }
@@ -109,6 +129,6 @@ public class HudMoveScreen extends Screen {
     }
 
     private enum HudTarget {
-        DICE, BAKERY
+        DICE, BAKERY, RNG
     }
 }

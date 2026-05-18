@@ -6,7 +6,16 @@ public class CommandTracker {
     private static String lastSh = "ahs";
 
     public static void onCommandSent(String command) {
+        if (command.startsWith("/")) {
+            command = command.substring(1);
+        }
         String lower = command.trim().toLowerCase();
+        
+        if (lower.equals("b ks") || lower.startsWith("b ks ") ||
+            lower.equals("tptoplot") || lower.startsWith("tptoplot ") ||
+            lower.equals("warp garden") || lower.startsWith("warp garden ")) {
+            GardenMovement.onWarpTriggered();
+        }
         
         // Handle /ec, /ender, /enderchest
         if (lower.startsWith("ec") || lower.startsWith("ender")) {

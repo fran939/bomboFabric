@@ -21,9 +21,61 @@ import java.util.Optional;
 
 public class SkyblockUtils {
 
+    public static boolean isConnectedToHypixel() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.getCurrentServer() != null) {
+            String ip = mc.getCurrentServer().ip.toLowerCase();
+            return ip.contains("hypixel.net") || ip.contains("hypixel.io");
+        }
+        return false;
+    }
+
+    public static String mapLocrawToArea(String mode, String map) {
+        if (mode == null) mode = "";
+        if (map == null) map = "";
+        
+        String lowerMode = mode.toLowerCase();
+        String lowerMap = map.toLowerCase();
+        
+        if (lowerMode.contains("garden") || lowerMap.contains("garden")) return "The Garden";
+        if (lowerMode.contains("hub") || lowerMap.contains("hub")) return "The Hub";
+        if (lowerMap.contains("private island") || lowerMode.contains("island")) return "Private Island";
+        if (lowerMode.contains("dungeon") || lowerMap.contains("dungeon") || lowerMap.contains("catacombs")) return "Dungeons";
+        if (lowerMode.contains("mines") || lowerMap.contains("dwarven mines")) return "Dwarven Mines";
+        if (lowerMode.contains("crystal_hollows") || lowerMap.contains("crystal hollows")) return "Crystal Hollows";
+        if (lowerMode.contains("crimson_isle") || lowerMap.contains("crimson isle")) return "Crimson Isle";
+        if (lowerMode.contains("spider") || lowerMap.contains("spider's den")) return "Spider's Den";
+        if (lowerMode.contains("end") || lowerMap.contains("the end")) return "The End";
+        if (lowerMode.contains("park") || lowerMap.contains("the park")) return "The Park";
+        if (lowerMode.contains("caverns") || lowerMap.contains("deep caverns")) return "Deep Caverns";
+        if (lowerMode.contains("gold") || lowerMap.contains("gold mine")) return "Gold Mine";
+        if (lowerMode.contains("barn") || lowerMap.contains("the barn")) return "The Barn";
+        if (lowerMode.contains("desert") || lowerMap.contains("mushroom desert")) return "Mushroom Desert";
+        if (lowerMode.contains("rift") || lowerMap.contains("the rift")) return "The Rift";
+        if (lowerMode.contains("jerry") || lowerMap.contains("jerry's workshop")) return "Jerry's Workshop";
+        if (lowerMode.contains("auction") || lowerMap.contains("dark auction")) return "Dark Auction";
+        
+        // Fallback
+        List<String> list = new ArrayList<>();
+        list.add(map);
+        list.add(mode);
+        String parsed = parseAreaFromLines(list);
+        if (!parsed.equals("Unknown")) return parsed;
+        
+        return "Unknown";
+    }
+
     public static String getLocation() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return "Menu";
+
+        // Prioritize locraw if on Hypixel SkyBlock
+        if (isConnectedToHypixel() && "SKYBLOCK".equals(BomboaddonsClient.locrawGametype)) {
+            String area = mapLocrawToArea(BomboaddonsClient.locrawMode, BomboaddonsClient.locrawMap);
+            if (!area.equals("Unknown")) {
+                return area;
+            }
+        }
 
         String loc = "Unknown";
 

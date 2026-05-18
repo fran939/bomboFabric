@@ -43,7 +43,7 @@ public class AutoCombine {
         if (mc.player == null || mc.level == null) return;
         
         BomboConfig.Settings config = BomboConfig.get();
-        if (!config.anvilAutoCombineEnabled) return;
+        if (config.hideCheats || !config.anvilAutoCombineEnabled) return;
 
         // 1. Check if in valid GUI first
         boolean isVanillaAnvil = mc.screen instanceof AnvilScreen;
