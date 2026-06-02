@@ -15,6 +15,7 @@
 		"EditBoxMixin",
 		"EntityMixin",
 		"AbstractContainerScreenMixin",
+		"AbstractContainerScreenAccessor",
 		"ItemStackMixin",
 		"HollowWandMixin",
 		"MouseMixin",
@@ -25,7 +26,9 @@
 		"PauseScreenMixin",
 		"ScreenAccessor",
 		"ScreenMixin",
-		"DisconnectedScreenMixin"
+		"PlayerMixin",
+		"DisconnectedScreenMixin",
+		"ParticleMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

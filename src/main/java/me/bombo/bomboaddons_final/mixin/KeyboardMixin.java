@@ -62,8 +62,7 @@ public abstract class KeyboardMixin {
                      }
 
                      if (allMatch) {
-                        String cmd = bind.command.startsWith("/") ? bind.command.substring(1) : bind.command;
-                        mc.player.connection.sendCommand(cmd);
+                        me.bombo.bomboaddons_final.BomboaddonsClient.executeTracked(bind.command);
                         ci.cancel();
                         return;
                      }

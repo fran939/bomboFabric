@@ -232,13 +232,9 @@ public class PlaytimeTracker {
         // Auto-save every 1 minute
         if (now % 60000 < delta) save();
         
-        // Sync to cloud every 10 minutes, or if area changed (cooldown 3 minutes)
-        String currentArea = BomboaddonsClient.currentArea;
-        boolean areaChanged = !currentArea.equals(lastSyncedArea);
-        
-        if (now - lastCloudSyncTime > 600000 || (areaChanged && now - lastCloudSyncTime > 180000)) {
+        // Sync to cloud every 10 minutes
+        if (now - lastCloudSyncTime > 600000) {
             lastCloudSyncTime = now;
-            lastSyncedArea = currentArea;
             sendPlaytimeDataToCloud();
         }
     }
@@ -307,6 +303,7 @@ public class PlaytimeTracker {
         new Thread(() -> {
             try {
                 java.net.URL url = new java.net.URI("https://bomboapi.frandl938.workers.dev/playtime").toURL();
+                Bomboaddons.logApiRequest("https://bomboapi.frandl938.workers.dev/playtime");
                 java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");

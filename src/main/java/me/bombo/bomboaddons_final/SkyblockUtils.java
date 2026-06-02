@@ -37,6 +37,7 @@ public class SkyblockUtils {
         String lowerMode = mode.toLowerCase();
         String lowerMap = map.toLowerCase();
         
+        if (lowerMode.contains("kuudra") || lowerMap.contains("kuudra")) return "Kuudra";
         if (lowerMode.contains("garden") || lowerMap.contains("garden")) return "The Garden";
         if (lowerMode.contains("hub") || lowerMap.contains("hub")) return "The Hub";
         if (lowerMap.contains("private island") || lowerMode.contains("island")) return "Private Island";
@@ -194,7 +195,7 @@ public class SkyblockUtils {
             }
 
             // Hypixel subareas usually start with these symbols
-            if (clean.startsWith("⏣") || clean.startsWith("ф")) {
+            if (clean.startsWith("\u23CF") || clean.startsWith("\u0444")) {
                 return clean.substring(1).trim();
             }
         }

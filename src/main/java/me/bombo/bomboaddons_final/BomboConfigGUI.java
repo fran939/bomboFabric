@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class BomboConfigGUI extends Screen {
 
@@ -24,7 +25,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
-            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug");
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets");
     public static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -46,6 +47,7 @@ public class BomboConfigGUI extends Screen {
     private static boolean highShowInvis = false;
     private static String editingHighMob = null;
     private static String listeningForKeyTarget = "";
+    private static final List<String> recordedComboKeys = new ArrayList<>();
 
     private static int editingClickTargetIdx = -1;
     private static int editingKeybindIdx = -1;
@@ -160,6 +162,7 @@ public class BomboConfigGUI extends Screen {
                 case 3 -> { // Garden
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Garden Movement", s.gardenMovement, v -> { s.gardenMovement = v; if (!v) GardenMovement.reset(); }, contentX, contentWidth, curY);
+                    curY = addBoolOption("Lock Mouse on Movement", s.lockMouseOnGarden, v -> s.lockMouseOnGarden = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Sugar Cane Mode", s.gardenSugarCane, v -> s.gardenSugarCane = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Direction Helper Warning", s.gardenDirectionHelper, v -> s.gardenDirectionHelper = v, contentX, contentWidth, curY);
                     curY += 10;
@@ -190,6 +193,7 @@ public class BomboConfigGUI extends Screen {
                     curY = addKeyBindButton("Prev Page", s.prevPageKey, v -> s.prevPageKey = v, "prevPage", contentX, contentWidth, curY);
                     curY = addKeyBindButton("Go Back", s.goBackKey, v -> s.goBackKey = v, "goBack", contentX, contentWidth, curY);
                     curY = addKeyBindButton("Smart Back", s.smartGoBackKey, v -> s.smartGoBackKey = v, "smartBack", contentX, contentWidth, curY);
+                    curY = addKeyBindButton("Save Pet", s.savePetKey, v -> s.savePetKey = v, "savePet", contentX, contentWidth, curY);
                 }
                 case 6 -> { // Clicker
                     curY += ITEM_HEIGHT;
@@ -298,7 +302,7 @@ public class BomboConfigGUI extends Screen {
                     curY += 10;
                     curY += ITEM_HEIGHT;
                     curY = addTextBox("Command", bindCommandInput, v -> bindCommandInput = v, contentX, contentWidth, curY);
-                    curY = addTextBox("Combo (e.g. CTRL+G)", bindComboInput, v -> bindComboInput = v, contentX, contentWidth, curY);
+                    curY = addComboBindButton("Combo", bindComboInput, v -> bindComboInput = v, "profileCombo", contentX, contentWidth, curY);
                     int finalCurY = curY;
                     String addBindText = editingKeybindIdx != -1 ? "§e✔ Save Bind" : "§a+ Add Bind";
                     addRenderableWidget(Button.builder(Component.literal(addBindText), btn -> {
@@ -443,6 +447,58 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Command Debug", s.debugCommands, v -> s.debugCommands = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Debug Mode (Legacy)", s.debugMode, v -> s.debugMode = v, contentX, contentWidth, curY);
                     curY = addBoolOption("API Debug", s.apiDebug, v -> s.apiDebug = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("API Chat Messages", s.apiChatMessages, v -> s.apiChatMessages = v, contentX, contentWidth, curY);
+                }
+                case 11 -> { // Kuudra
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Blindness Timer", s.kuudraBlindnessTimer, v -> s.kuudraBlindnessTimer = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Disable Blindness", s.disableBlindness, v -> s.disableBlindness = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Perk Menu Clicker", s.perkMenuClicker, v -> s.perkMenuClicker = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Auto GFS Toxic", s.autoGfsToxic, v -> s.autoGfsToxic = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Auto GFS Twilight", s.autoGfsTwilight, v -> s.autoGfsTwilight = v, contentX, contentWidth, curY);
+                }
+                case 12 -> { // Pets
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Disable Unequip", s.disableUnequipPet, v -> s.disableUnequipPet = v, contentX, contentWidth, curY);
+                    for (int i = 0; i < 9; i++) {
+                        final int index = i;
+                        boolean listening = listeningForKeyTarget.equals("pets" + index);
+                        String currentKey = s.petKeys.get(index);
+                        String displayKey = ClickLogic.getKeyDisplayName(currentKey);
+                        String keyText = listening ? "§e[PRESS]" : (currentKey.isEmpty() ? "None" : displayKey);
+
+                        addRenderableWidget(Button.builder(Component.literal(keyText), btn -> {
+                            listeningForKeyTarget = "pets" + index;
+                            init();
+                        }).bounds(contentX + 110, curY, 80, 18).build());
+
+                        // Up button (▲)
+                        Button upBtn = Button.builder(Component.literal("▲"), btn -> {
+                            swapPetSlots(index, index - 1);
+                            init();
+                        }).bounds(contentX + 195, curY, 20, 18).build();
+                        if (index == 0) upBtn.active = false;
+                        addRenderableWidget(upBtn);
+
+                        // Down button (▼)
+                        Button downBtn = Button.builder(Component.literal("▼"), btn -> {
+                            swapPetSlots(index, index + 1);
+                            init();
+                        }).bounds(contentX + 218, curY, 20, 18).build();
+                        if (index == 8) downBtn.active = false;
+                        addRenderableWidget(downBtn);
+
+                        // Delete button (✕)
+                        Button delBtn = Button.builder(Component.literal("✕"), btn -> {
+                            clearPetSlot(index);
+                            init();
+                        }).bounds(contentX + 241, curY, 20, 18).build();
+                        String uuid = s.petKeybinds.get(String.valueOf(index + 1));
+                        if (uuid == null || uuid.isEmpty()) delBtn.active = false;
+                        addRenderableWidget(delBtn);
+
+                        curY += ITEM_HEIGHT;
+                    }
                 }
             }
 
@@ -493,6 +549,17 @@ public class BomboConfigGUI extends Screen {
         String displayKey = ClickLogic.getKeyDisplayName(current);
         String txt = listening ? "§e[PRESS KEY]" : "§f" + label + ": §d" + (current.isEmpty() ? "None" : displayKey);
         addRenderableWidget(Button.builder(Component.literal(txt), btn -> { listeningForKeyTarget = target; init(); }).bounds(x + w / 2, y, w / 2, 16).build());
+        return y + ITEM_HEIGHT;
+    }
+
+    private int addComboBindButton(String label, String current, Consumer<String> setter, String target, int x, int w, int y) {
+        boolean listening = listeningForKeyTarget.equals(target);
+        String txt = listening ? "§e[PRESS KEYS...]" : "§f" + label + ": §d" + (current.isEmpty() ? "None" : current);
+        addRenderableWidget(Button.builder(Component.literal(txt), btn -> {
+            listeningForKeyTarget = target;
+            recordedComboKeys.clear();
+            init();
+        }).bounds(x + w / 2, y, w / 2, 16).build());
         return y + ITEM_HEIGHT;
     }
 
@@ -657,6 +724,8 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Garden Movement", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Lock Mouse on Movement", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Sugar Cane Mode", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Direction Helper Warning", contentX + 24, curY + 4, 0xFFFFFFFF, false);
@@ -709,6 +778,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§fGo Back:", contentX, curY, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§fSmart Back:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fSave Pet:", contentX, curY, 0xFFFFFFFF);
                 }
                 case 6 -> {
                     g.drawString(font, "§6§lClicker Targets", contentX, curY, 0xFFFFAA00, true);
@@ -847,6 +918,36 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Debug Mode (Legacy)", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7API Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7API Chat Messages", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                }
+                case 11 -> { // Kuudra
+                    g.drawString(font, "§6§lKuudra Settings", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Blindness Timer", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Disable Blindness", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Perk Menu Clicker", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Auto GFS Toxic", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Auto GFS Twilight", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                }
+                case 12 -> { // Pets
+                    g.drawString(font, "§6§lPets Settings", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Disable Unequip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    for (int i = 0; i < 9; i++) {
+                        String uuid = s.petKeybinds.get(String.valueOf(i + 1));
+                        String boundInfo = "";
+                        if (uuid != null && !uuid.isEmpty()) {
+                            boundInfo = " §7(" + (uuid.length() > 6 ? uuid.substring(0, 6) : uuid) + ")";
+                        }
+                        g.drawString(font, "§fSlot " + (i + 1) + boundInfo + ":", contentX, curY + 4, 0xFFFFFFFF);
+                        curY += ITEM_HEIGHT;
+                    }
                 }
             }
 
@@ -879,15 +980,41 @@ public class BomboConfigGUI extends Screen {
             return true;
         }
         if (!listeningForKeyTarget.isEmpty()) {
+            if (listeningForKeyTarget.equals("profileCombo")) {
+                if (keyCode == 256) {
+                    bindComboInput = "";
+                    listeningForKeyTarget = "";
+                    recordedComboKeys.clear();
+                    init();
+                    return true;
+                }
+                String keyName = ClickLogic.getKeyName(keyCode);
+                if (keyName.equals("unknown")) {
+                    if (keyCode >= 320 && keyCode <= 329) {
+                        keyName = "kp_" + (keyCode - 320);
+                    } else {
+                        keyName = org.lwjgl.glfw.GLFW.glfwGetKeyName(keyCode, 0);
+                        if (keyName == null) keyName = "key_" + keyCode;
+                    }
+                }
+                if (!recordedComboKeys.contains(keyName)) {
+                    recordedComboKeys.add(keyName);
+                }
+                bindComboInput = String.join("+", recordedComboKeys);
+                init();
+                return true;
+            }
             if (keyCode == 256) {
                 updateKeyTarget("");
             } else {
-                String keyName;
-                if (keyCode >= 320 && keyCode <= 329) {
-                    keyName = "kp_" + (keyCode - 320);
-                } else {
-                    keyName = org.lwjgl.glfw.GLFW.glfwGetKeyName(keyCode, 0);
-                    if (keyName == null) keyName = "key_" + keyCode;
+                String keyName = ClickLogic.getKeyName(keyCode);
+                if (keyName.equals("unknown")) {
+                    if (keyCode >= 320 && keyCode <= 329) {
+                        keyName = "kp_" + (keyCode - 320);
+                    } else {
+                        keyName = org.lwjgl.glfw.GLFW.glfwGetKeyName(keyCode, 0);
+                        if (keyName == null) keyName = "key_" + keyCode;
+                    }
                 }
                 updateKeyTarget(keyName);
             }
@@ -897,6 +1024,53 @@ public class BomboConfigGUI extends Screen {
             return true;
         }
         return super.keyPressed(event);
+    }
+    
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
+        if (!listeningForKeyTarget.isEmpty()) {
+            int button = event.button();
+            if (button != 0) {
+                String keyName = "mouse" + (button + 1);
+                if (listeningForKeyTarget.equals("profileCombo")) {
+                    if (!recordedComboKeys.contains(keyName)) {
+                        recordedComboKeys.add(keyName);
+                    }
+                    bindComboInput = String.join("+", recordedComboKeys);
+                    init();
+                    return true;
+                } else {
+                    updateKeyTarget(keyName);
+                    listeningForKeyTarget = "";
+                    BomboConfig.save();
+                    init();
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(event, handled);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (listeningForKeyTarget.equals("profileCombo") && !recordedComboKeys.isEmpty()) {
+            Minecraft mc = Minecraft.getInstance();
+            long window = mc.getWindow().handle();
+            boolean anyDown = false;
+            for (String keyName : recordedComboKeys) {
+                int code = ClickLogic.getKeyCode(keyName);
+                if (code != -1 && ClickLogic.isCodeDown(window, mc.getWindow(), code)) {
+                    anyDown = true;
+                    break;
+                }
+            }
+            if (!anyDown) {
+                listeningForKeyTarget = "";
+                recordedComboKeys.clear();
+                init();
+            }
+        }
     }
 
     @Override
@@ -912,6 +1086,13 @@ public class BomboConfigGUI extends Screen {
             try {
                 int index = Integer.parseInt(listeningForKeyTarget.substring(8));
                 s.wardrobeKeys.set(index, keyName);
+            } catch (Exception ignored) {}
+            return;
+        }
+        if (listeningForKeyTarget.startsWith("pets")) {
+            try {
+                int index = Integer.parseInt(listeningForKeyTarget.substring(4));
+                s.petKeys.set(index, keyName);
             } catch (Exception ignored) {}
             return;
         }
@@ -936,6 +1117,34 @@ public class BomboConfigGUI extends Screen {
             case "gardenBr" -> s.gardenBreakKey = keyName;
             case "gardenU" -> s.gardenUseKey = keyName;
             case "anvilTrigger" -> s.anvilAutoCombineKey = keyName;
+            case "savePet" -> s.savePetKey = keyName;
         }
+    }
+
+    private void swapPetSlots(int idx1, int idx2) {
+        BomboConfig.Settings s = BomboConfig.get();
+        String key1 = String.valueOf(idx1 + 1);
+        String key2 = String.valueOf(idx2 + 1);
+        String uuid1 = s.petKeybinds.get(key1);
+        String uuid2 = s.petKeybinds.get(key2);
+
+        if (uuid1 == null) {
+            s.petKeybinds.remove(key2);
+        } else {
+            s.petKeybinds.put(key2, uuid1);
+        }
+
+        if (uuid2 == null) {
+            s.petKeybinds.remove(key1);
+        } else {
+            s.petKeybinds.put(key1, uuid2);
+        }
+        BomboConfig.save();
+    }
+
+    private void clearPetSlot(int idx) {
+        BomboConfig.Settings s = BomboConfig.get();
+        s.petKeybinds.remove(String.valueOf(idx + 1));
+        BomboConfig.save();
     }
 }

@@ -194,6 +194,81 @@ public class ClickLogic {
                }
             }
          }
+
+         if (title.contains("pets")) {
+            List<String> petKeys = BomboConfig.get().petKeys;
+            if (petKeys != null) {
+               for (int i = 0; i < Math.min(9, petKeys.size()); i++) {
+                  String kName = petKeys.get(i);
+                  if (kName != null && !kName.isEmpty()) {
+                     int code = getKeyCode(kName);
+                     if (code != -1 && code == key) {
+                        Slot hovered = ((me.bombo.bomboaddons_final.mixin.AbstractContainerScreenAccessor) screen).getHoveredSlot();
+                        if (hovered != null && hovered.hasItem()) {
+                            PetManager.savePet(null, String.valueOf(i + 1));
+                         } else {
+                            String uuid = BomboConfig.get().petKeybinds.get(String.valueOf(i + 1));
+                            if (uuid != null && !uuid.isEmpty()) {
+                               for (int sIdx = 10; sIdx <= 43; sIdx++) {
+                                  if (sIdx < screen.getMenu().slots.size()) {
+                                     Slot slot = screen.getMenu().slots.get(sIdx);
+                                     ItemStack stack = slot.getItem();
+                                     String itemUuid = PetManager.getPetUuid(stack);
+                                     if (itemUuid != null && itemUuid.equals(uuid)) {
+                                        boolean isEquipped = false;
+                                        if (BomboConfig.get().disableUnequipPet) {
+                                           List<Component> tooltip = stack.getTooltipLines(
+                                               net.minecraft.world.item.Item.TooltipContext.of(mc.level),
+                                               mc.player,
+                                               net.minecraft.world.item.TooltipFlag.NORMAL
+                                           );
+                                           for (Component line : tooltip) {
+                                              if (line.getString().contains("Click to despawn!")) {
+                                                 isEquipped = true;
+                                                 break;
+                                              }
+                                           }
+                                        }
+                                        if (!isEquipped) {
+                                           if (mc.gameMode != null && mc.player != null) {
+                                              mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, 0, ClickType.PICKUP, mc.player);
+                                           }
+                                        }
+                                        if (mc.player != null) {
+                                           mc.player.closeContainer();
+                                        }
+                                        break;
+                                     }
+                                  }
+                               }
+                            }
+                         }
+                         return true;
+                     }
+                  }
+               }
+            }
+
+            String saveKey = BomboConfig.get().savePetKey;
+            if (saveKey != null && !saveKey.isEmpty()) {
+               int code = getKeyCode(saveKey);
+               if (code != -1 && code == key) {
+                  Slot hovered = ((me.bombo.bomboaddons_final.mixin.AbstractContainerScreenAccessor) screen).getHoveredSlot();
+                  if (hovered != null && hovered.hasItem()) {
+                     String slotToSave = "1";
+                     for (int i = 0; i < 9; i++) {
+                        String uuid = BomboConfig.get().petKeybinds.get(String.valueOf(i + 1));
+                        if (uuid == null || uuid.isEmpty()) {
+                           slotToSave = String.valueOf(i + 1);
+                           break;
+                        }
+                     }
+                     PetManager.savePet(null, slotToSave);
+                     return true;
+                  }
+               }
+            }
+         }
       }
 
       if (BomboConfig.get().chestClicker) {
@@ -264,6 +339,7 @@ public class ClickLogic {
    }
 
    public static void onGuiOpen(AbstractContainerScreen screen) {
+      me.bombo.bomboaddons_final.WardrobeHelper.onGuiOpen(screen);
       if (BomboConfig.get().autoClicker) {
          Minecraft mc = Minecraft.getInstance();
          String title = screen.getTitle().getString().toLowerCase();
@@ -304,7 +380,7 @@ public class ClickLogic {
       }
    }
 
-   private static String getKeyName(int keyCode) {
+   public static String getKeyName(int keyCode) {
       Iterator var1 = KEY_MAP.entrySet().iterator();
 
       Entry entry;

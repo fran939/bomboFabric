@@ -11,17 +11,48 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.Shadow;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
 @Mixin(MouseHandler.class)
 public abstract class MouseMixin {
+    @Shadow private double accumulatedDX;
+    @Shadow private double accumulatedDY;
+
+    @Inject(method = "turnPlayer", at = @At("HEAD"))
+    private void onTurnPlayer(CallbackInfo ci) {
+        if (me.bombo.bomboaddons_final.GardenMovement.shouldLockMouse()) {
+            this.accumulatedDX = 0;
+            this.accumulatedDY = 0;
+        }
+    }
+
     @Inject(at = @At("HEAD"), method = "method_22686", cancellable = true)
     private void onMouse(long window, MouseButtonInfo info, int action, CallbackInfo ci) {
         if (action == 1) { // GLFW_PRESS
             int button = info.button();
             Minecraft mc = Minecraft.getInstance();
             if (mc.screen != null && mc.player != null) {
+                try {
+                    if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen) {
+                        net.minecraft.world.inventory.Slot slot = ((me.bombo.bomboaddons_final.mixin.AbstractContainerScreenAccessor) containerScreen).getHoveredSlot();
+                        if (me.bombo.bomboaddons_final.KuudraPerkClicker.onMouseClicked(containerScreen, slot, button)) {
+                            ci.cancel();
+                            return;
+                        }
+                    }
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+
+                if (!(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen || mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen)) {
+                    if (ClickLogic.onKeyPressed(button)) {
+                        ci.cancel();
+                        return;
+                    }
+                }
+
                 String activeProfile = BomboConfig.get().activeProfile;
                 List<BomboConfig.CommandBind> binds = BomboConfig.get().profileBinds.get(activeProfile);
 
@@ -40,12 +71,11 @@ public abstract class MouseMixin {
                                 }
                             }
 
-                            if (allMatch) {
-                                String cmd = bind.command.startsWith("/") ? bind.command.substring(1) : bind.command;
-                                mc.player.connection.sendCommand(cmd);
-                                ci.cancel();
-                                return;
-                            }
+                             if (allMatch) {
+                                 me.bombo.bomboaddons_final.BomboaddonsClient.executeTracked(bind.command);
+                                 ci.cancel();
+                                 return;
+                             }
                         }
                     }
                 }

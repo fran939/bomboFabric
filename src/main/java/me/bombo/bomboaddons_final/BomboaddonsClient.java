@@ -234,6 +234,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                             context.getSource().sendFeedback(createHelpLine("/b lfc <name>", "/b lfc ", "Searches a player's inventory with NBT components.").append(Component.literal(" §7- Searches inventory with NBT components")));
                             context.getSource().sendFeedback(createHelpLine("/b lb", "/b lb", "Searches your own inventory.").append(Component.literal(" §7- Searches your own inventory")));
                             context.getSource().sendFeedback(createHelpLine("/b view <name> <p>", "/b view ", "Opens virtual container paths.").append(Component.literal(" §7- Opens virtual container paths")));
+                            context.getSource().sendFeedback(createHelpLine("/b msg <message>", "/b msg ", "Simulates a chat message with §-color code support.").append(Component.literal(" §7- Simulates a chat message")));
 
                             context.getSource().sendFeedback(Component.literal("§8---------------------------------------------------------"));
                             return 1;
@@ -291,6 +292,14 @@ public class BomboaddonsClient implements ClientModInitializer {
                             context.getSource().sendFeedback(Component.literal(LowestBinManager.getStatus()));
                             return 1;
                         }));
+
+                        builder.then(ClientCommandManager.literal("wd")
+                                .then(ClientCommandManager.argument("slot", IntegerArgumentType.integer(1))
+                                        .executes(context -> {
+                                            int slot = IntegerArgumentType.getInteger(context, "slot");
+                                            me.bombo.bomboaddons_final.WardrobeHelper.equip(slot);
+                                            return 1;
+                                        })));
 
                         builder.then(ClientCommandManager.literal("hide").executes(context -> {
                             BomboConfig.Settings s = BomboConfig.get();
@@ -530,6 +539,71 @@ public class BomboaddonsClient implements ClientModInitializer {
                             return 1;
                         }));
 
+                        builder.then(ClientCommandManager.literal("msg")
+                                .then(ClientCommandManager.argument("message", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            String msg = StringArgumentType.getString(context, "message").replace('&', '§');
+                                            Minecraft mc = Minecraft.getInstance();
+                                            if (mc.gui != null && mc.gui.getChat() != null) {
+                                                mc.gui.getChat().addMessage(Component.literal(msg));
+                                            }
+                                            return 1;
+                                        })));
+
+                        // --- Particle List + ESP ---
+                        builder.then(ClientCommandManager.literal("particles")
+                                .executes(context -> {
+                                    // List nearby particles
+                                    java.util.Map<String, Integer> summary = ParticleTracker.getSummary(ParticleTracker.espRadius);
+                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§6Nearby Particles (last 5s, radius §e" + (int)ParticleTracker.espRadius + "§6 blocks):"));
+                                    if (summary.isEmpty()) {
+                                        context.getSource().sendFeedback(Component.literal("  §7None detected."));
+                                    } else {
+                                        for (java.util.Map.Entry<String, Integer> entry : summary.entrySet()) {
+                                            int col = ParticleTracker.colorForType(entry.getKey());
+                                            String hexStr = String.format("#%06X", col);
+                                            context.getSource().sendFeedback(Component.literal(
+                                                "  §7» §r" + entry.getKey() + " §8x" + entry.getValue()));
+                                        }
+                                    }
+                                    return 1;
+                                })
+                                .then(ClientCommandManager.literal("esp")
+                                        .executes(context -> {
+                                            ParticleTracker.espEnabled = !ParticleTracker.espEnabled;
+                                            ParticleESP.typeFilter = null;
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§7Particle ESP: " + (ParticleTracker.espEnabled ? "§aON" : "§cOFF")));
+                                            return 1;
+                                        })
+                                        .then(ClientCommandManager.argument("type", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    String filter = StringArgumentType.getString(context, "type");
+                                                    if (filter.equals("off") || filter.equals("none")) {
+                                                        ParticleESP.typeFilter = null;
+                                                        ParticleTracker.espEnabled = false;
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cParticle ESP disabled."));
+                                                    } else {
+                                                        ParticleESP.typeFilter = filter;
+                                                        ParticleTracker.espEnabled = true;
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§aParticle ESP §aON §7— filtering: §e" + filter));
+                                                    }
+                                                    return 1;
+                                                })))
+                                .then(ClientCommandManager.literal("radius")
+                                        .then(ClientCommandManager.argument("r", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 128))
+                                                .executes(context -> {
+                                                    int r = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "r");
+                                                    ParticleTracker.espRadius = r;
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§7Particle ESP radius set to §e" + r + "§7 blocks."));
+                                                    return 1;
+                                                })))
+                                .then(ClientCommandManager.literal("clear")
+                                        .executes(context -> {
+                                            ParticleTracker.clear();
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aParticle history cleared."));
+                                            return 1;
+                                        })));
+
                         builder.then(ClientCommandManager.literal("anvil")
                                 .then(ClientCommandManager.literal("add")
                                         .then(ClientCommandManager.argument("tier", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 100))
@@ -649,6 +723,28 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 String name = mc.getUser().getName();
                                                 LF.show(name, query, false);
                                             }
+                                            return 1;
+                                        })));
+
+                        builder.then(ClientCommandManager.literal("pet")
+                                .then(ClientCommandManager.literal("save")
+                                        .then(ClientCommandManager.argument("slot", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    String slot = StringArgumentType.getString(context, "slot");
+                                                    PetManager.savePet(context.getSource(), slot);
+                                                    return 1;
+                                                })))
+                                .then(ClientCommandManager.literal("apply")
+                                        .then(ClientCommandManager.argument("slot", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    String slot = StringArgumentType.getString(context, "slot");
+                                                    PetManager.applyPet(context.getSource(), slot);
+                                                    return 1;
+                                                })))
+                                .then(ClientCommandManager.argument("slot", StringArgumentType.word())
+                                        .executes(context -> {
+                                            String slot = StringArgumentType.getString(context, "slot");
+                                            PetManager.applyPet(context.getSource(), slot);
                                             return 1;
                                         })));
                     };
@@ -953,11 +1049,13 @@ public class BomboaddonsClient implements ClientModInitializer {
             ModUpdater.init();
             registerTickEvents();
             DiceHud.init();
+            KuudraTimer.init();
 
             WorldRenderEvents.AFTER_ENTITIES.register(context -> {
                 if (BomboConfig.get().debugEntities) System.out.println("DEBUG: AFTER_ENTITIES Fired!");
                 HighlightESP.render(context);
                 PestESP.render(context);
+                ParticleESP.render(context);
             });
 
             HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -1091,7 +1189,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                     currentSubArea = SkyblockUtils.getSubArea();
                 }
             }
+            ParticleTracker.onTick();
             PlaytimeTracker.tick();
+            PetManager.onTick();
 
             // Handle lobby change locraw delay
             if (locrawDelayTicks > 0) {
@@ -1168,7 +1268,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
 
 
-    private void executeTracked(String cmd) {
+    public static void executeTracked(String cmd) {
         if (cmd == null || cmd.isEmpty())
             return;
         Minecraft mc = Minecraft.getInstance();

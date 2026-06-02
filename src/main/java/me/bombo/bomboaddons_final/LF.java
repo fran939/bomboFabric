@@ -444,6 +444,7 @@ public class LF {
     }
 
     private static CompletableFuture<String> fetchString(String url) {
+        Bomboaddons.logApiRequest(url);
         java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                 .uri(java.net.URI.create(url))
                 .timeout(java.time.Duration.ofSeconds(30))

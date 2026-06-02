@@ -12,6 +12,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class MinecraftMixin {
     @Inject(method = "startAttack", at = @At("HEAD"), cancellable = true)
     private void onStartAttack(CallbackInfoReturnable<Boolean> cir) {
+        if (me.bombo.bomboaddons_final.KuudraPerkClicker.shouldBlockAttack()) {
+            cir.setReturnValue(false);
+            cir.cancel();
+            return;
+        }
         if (LeftClickEtherwarp.onLeftClick()) {
             cir.setReturnValue(false);
             cir.cancel();
@@ -20,7 +25,7 @@ public class MinecraftMixin {
 
     @Inject(method = "continueAttack", at = @At("HEAD"), cancellable = true)
     private void onContinueAttack(boolean breaking, CallbackInfo ci) {
-        if (LeftClickEtherwarp.isHoldingEtherwarp()) {
+        if (LeftClickEtherwarp.isHoldingEtherwarp() || me.bombo.bomboaddons_final.KuudraPerkClicker.shouldBlockAttack()) {
             ci.cancel();
         }
     }

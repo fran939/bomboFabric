@@ -35,6 +35,7 @@ public class SBECommands {
          if (profile != null && !profile.equalsIgnoreCase("selected")) {
             url = url + "/" + profile;
          }
+         Bomboaddons.logApiRequest(url);
 
          Minecraft mc = Minecraft.getInstance();
          String selfUuid = mc.getUser().getProfileId().toString();

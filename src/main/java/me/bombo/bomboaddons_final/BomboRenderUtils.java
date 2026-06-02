@@ -73,6 +73,21 @@ public class BomboRenderUtils {
         buffer.addVertex(matrix, x2, y2, z2).setColor(r, g, b, a).setNormal(-nx, -ny, -nz).setLineWidth(lineWidth);
     }
 
+    public static void drawHorizontalCircle(PoseStack poseStack, VertexConsumer buffer, float cx, float cy, float cz, float radius, float r, float g, float b, float a, float lineWidth) {
+        Matrix4f matrix = poseStack.last().pose();
+        int segments = 32;
+        double angleStep = 2.0 * Math.PI / segments;
+        for (int i = 0; i < segments; i++) {
+            double angle1 = i * angleStep;
+            double angle2 = (i + 1) * angleStep;
+            float x1 = cx + (float) (radius * Math.cos(angle1));
+            float z1 = cz + (float) (radius * Math.sin(angle1));
+            float x2 = cx + (float) (radius * Math.cos(angle2));
+            float z2 = cz + (float) (radius * Math.sin(angle2));
+            drawLine(matrix, buffer, x1, cy, z1, x2, cy, z2, r, g, b, a, lineWidth);
+        }
+    }
+
     public static void drawText(PoseStack poseStack, net.minecraft.client.renderer.MultiBufferSource consumers, String text, float x, float y, float z, int color, float scale, boolean shadow) {
         drawText(poseStack, consumers, text, x, y, z, color, scale, shadow, true);
     }

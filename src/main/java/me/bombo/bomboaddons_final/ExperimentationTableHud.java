@@ -261,30 +261,36 @@ public class ExperimentationTableHud {
         int totalEnchantsShown = 1 + shownCount; // Best + others
         int height = 18 + 10 + 12 + (shownCount > 0 ? 4 : 0) + (shownCount * 10);
 
+        g.pose().pushMatrix();
+        g.pose().translate((float) x, (float) y);
+        float scale = BomboConfig.get().rngProfitHudScale;
+        g.pose().scale(scale, scale);
+
         // Premium background: Dynamic high contrast for visibility
         int opacity = BomboConfig.get().rngProfitHudOpacity;
         int alpha = (int) (opacity * 2.55);
         int bgColor = (alpha << 24) | 0x00000000;
         
         if (opacity > 0) {
-            g.fill(x - 5, y - 5, x + width + 5, y + height + 5, bgColor);
-            g.renderOutline(x - 5, y - 5, width + 10, height + 10, 0xFFFFFFFF); // Pure white border
+            g.fill(-5, -5, width + 5, height + 5, bgColor);
+            g.renderOutline(-5, -5, width + 10, height + 10, 0xFFFFFFFF); // Pure white border
         }
 
         // Header
-        g.drawString(font, "§6§lRNG Experiments Profit", x, y, 0xFFFFFFFF, true);
+        g.drawString(font, "§6§lRNG Experiments Profit", 0, 0, 0xFFFFFFFF, true);
         
         // Separator line
-        g.fill(x, y + 11, x + width, y + 12, 0xAAFFFFFF);
+        g.fill(0, 11, width, 12, 0xAAFFFFFF);
 
-        int curY = y + 18;
+        int curY = 18;
         if (items.isEmpty()) {
-            g.drawString(font, "§7No items detected", x, curY, 0xFFFFFFFF, true);
+            g.drawString(font, "§7No items detected", 0, curY, 0xFFFFFFFF, true);
+            g.pose().popMatrix();
             return;
         }
 
         // 1. Render the Fixed "Most profit" item (index 0)
-        g.drawString(font, "§eMost profit:", x, curY, 0xFFFFFFFF, true);
+        g.drawString(font, "§eMost profit:", 0, curY, 0xFFFFFFFF, true);
         curY += 10;
 
         DetectedRngItem bestItem = items.get(0);
@@ -303,15 +309,15 @@ public class ExperimentationTableHud {
             bestValueText = "§a" + buyFormatted + "/" + sellFormatted;
         }
         
-        g.drawString(font, bestNameText, x + 5, curY, 0xFFFFFFFF, true);
+        g.drawString(font, bestNameText, 5, curY, 0xFFFFFFFF, true);
         int bestValueWidth = font.width(bestValueText.replaceAll("(?i)§.", ""));
-        g.drawString(font, bestValueText, x + width - bestValueWidth - 5, curY, 0xFFFFFFFF, true);
+        g.drawString(font, bestValueText, width - bestValueWidth - 5, curY, 0xFFFFFFFF, true);
         
         curY += 12; // Extra space after best item
 
         // Subtle separator before other scrollable items if there are any
         if (shownCount > 0) {
-            g.fill(x + 5, curY, x + width - 5, curY + 1, 0x44FFFFFF);
+            g.fill(5, curY, width - 5, curY + 1, 0x44FFFFFF);
             curY += 4;
         }
 
@@ -342,17 +348,17 @@ public class ExperimentationTableHud {
                 valueText = "§7" + buyFormatted + "/" + sellFormatted;
             }
             
-            g.drawString(font, nameText, x + 5, curY, 0xFFFFFFFF, true);
+            g.drawString(font, nameText, 5, curY, 0xFFFFFFFF, true);
             int valueWidth = font.width(valueText.replaceAll("(?i)§.", ""));
-            g.drawString(font, valueText, x + width - valueWidth - 5, curY, 0xFFFFFFFF, true);
+            g.drawString(font, valueText, width - valueWidth - 5, curY, 0xFFFFFFFF, true);
             
             curY += 10;
         }
 
         // Render Scrollbar indicator if items exceed what can be shown
         if (items.size() - 1 > 7) {
-            int scrollbarX = x + width - 2;
-            int scrollbarY = y + 44;
+            int scrollbarX = width - 2;
+            int scrollbarY = 44;
             int scrollbarHeight = height - 48;
             
             // Background of scrollbar
@@ -364,6 +370,8 @@ public class ExperimentationTableHud {
             int thumbY = scrollbarY + (int) (scrollPct * (scrollbarHeight - thumbHeight));
             g.fill(scrollbarX, thumbY, scrollbarX + 2, thumbY + thumbHeight, 0xCCFFFFFF);
         }
+
+        g.pose().popMatrix();
     }
 
     public static String getSkyblockIdFromName(String cleanName) {

@@ -21,12 +21,12 @@ public class HudMoveScreen extends Screen {
         BomboConfig.Settings s = BomboConfig.get();
         
         // 1. Dice Tracker
-        renderTarget(g, mouseX, mouseY, s.diceHudX, s.diceHudY, 100, 35, HudTarget.DICE);
+        renderTarget(g, mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(100 * s.diceHudScale), (int)(35 * s.diceHudScale), HudTarget.DICE);
         DiceHud.drawDiceInfo(g, s.diceHudX, s.diceHudY, draggingTarget == HudTarget.DICE);
 
         // 2. Feast Bakery
-        int bakeryW = FeastBakeryHud.getHudWidth();
-        int bakeryH = FeastBakeryHud.getHudHeight(3); // 3 dummy items in edit screen
+        int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
+        int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale); // 3 dummy items in edit screen
         renderTarget(g, mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudTarget.BAKERY);
         java.util.List<FeastBakeryHud.DetectedItem> dummy = new java.util.ArrayList<>();
         dummy.add(new FeastBakeryHud.DetectedItem("FRESHLY_BAKED_TALISMAN", "Baked Talisman", 25));
@@ -35,13 +35,19 @@ public class HudMoveScreen extends Screen {
         FeastBakeryHud.drawBakeryInfo(g, s.feastBakeryHudX, s.feastBakeryHudY, dummy);
 
         // 3. RNG Experiments Profit
-        int rngW = 185;
-        int rngH = ExperimentationTableHud.getHudHeight();
+        int rngW = (int)(185 * s.rngProfitHudScale);
+        int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
         renderTarget(g, mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudTarget.RNG);
         ExperimentationTableHud.onHudRender(g);
 
+        // 4. Kuudra Blindness Timer
+        int kuudraW = (int)(80 * s.kuudraBlindnessTimerScale);
+        int kuudraH = (int)(12 * s.kuudraBlindnessTimerScale);
+        renderTarget(g, mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudTarget.KUUDRA);
+        KuudraTimer.drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, true);
+
         g.drawCenteredString(font, "§e§lHUD EDIT MODE", width / 2, 10, 0xFFFFFFFF);
-        g.drawCenteredString(font, "§7Drag elements to reposition them", width / 2, 22, 0xFFFFFFFF);
+        g.drawCenteredString(font, "§7Drag elements to reposition them, scroll wheel to resize", width / 2, 22, 0xFFFFFFFF);
         g.drawCenteredString(font, "§cPress ESC to save and close", width / 2, height - 20, 0xFFFFFFFF);
         
         super.render(g, mouseX, mouseY, partialTick);
@@ -61,6 +67,9 @@ public class HudMoveScreen extends Screen {
             } else if (target == HudTarget.RNG) {
                 s.rngProfitHudX = mouseX - dragOffsetX;
                 s.rngProfitHudY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.KUUDRA) {
+                s.kuudraBlindnessTimerX = mouseX - dragOffsetX;
+                s.kuudraBlindnessTimerY = mouseY - dragOffsetY;
             }
         }
 
@@ -78,26 +87,65 @@ public class HudMoveScreen extends Screen {
         int button = event.button();
 
         // Check RNG
-        int rngW = 185;
-        int rngH = ExperimentationTableHud.getHudHeight();
+        int rngW = (int)(185 * s.rngProfitHudScale);
+        int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
         if (checkHit(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH)) {
             startDragging(HudTarget.RNG, (int) mouseX - s.rngProfitHudX, (int) mouseY - s.rngProfitHudY);
             return true;
         }
         // Check Bakery
-        int bakeryW = FeastBakeryHud.getHudWidth();
-        int bakeryH = FeastBakeryHud.getHudHeight(3);
+        int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
+        int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
         if (checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH)) {
             startDragging(HudTarget.BAKERY, (int) mouseX - s.feastBakeryHudX, (int) mouseY - s.feastBakeryHudY);
             return true;
         }
         // Check Dice
-        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, 100, 35)) {
+        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(100 * s.diceHudScale), (int)(35 * s.diceHudScale))) {
             startDragging(HudTarget.DICE, (int) mouseX - s.diceHudX, (int) mouseY - s.diceHudY);
+            return true;
+        }
+        // Check Kuudra
+        if (checkHit(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, (int)(80 * s.kuudraBlindnessTimerScale), (int)(12 * s.kuudraBlindnessTimerScale))) {
+            startDragging(HudTarget.KUUDRA, (int) mouseX - s.kuudraBlindnessTimerX, (int) mouseY - s.kuudraBlindnessTimerY);
             return true;
         }
 
         return super.mouseClicked(event, handled);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        BomboConfig.Settings s = BomboConfig.get();
+        // dice
+        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(100 * s.diceHudScale), (int)(35 * s.diceHudScale))) {
+            s.diceHudScale = (float) Math.max(0.5, Math.min(3.0, s.diceHudScale + vertical * 0.1));
+            BomboConfig.save();
+            return true;
+        }
+        // bakery
+        int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
+        int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
+        if (checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH)) {
+            s.feastBakeryHudScale = (float) Math.max(0.5, Math.min(3.0, s.feastBakeryHudScale + vertical * 0.1));
+            BomboConfig.save();
+            return true;
+        }
+        // rng
+        int rngW = (int)(185 * s.rngProfitHudScale);
+        int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
+        if (checkHit(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH)) {
+            s.rngProfitHudScale = (float) Math.max(0.5, Math.min(3.0, s.rngProfitHudScale + vertical * 0.1));
+            BomboConfig.save();
+            return true;
+        }
+        // kuudra
+        if (checkHit(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, (int)(80 * s.kuudraBlindnessTimerScale), (int)(12 * s.kuudraBlindnessTimerScale))) {
+            s.kuudraBlindnessTimerScale = (float) Math.max(0.5, Math.min(3.0, s.kuudraBlindnessTimerScale + vertical * 0.1));
+            BomboConfig.save();
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
     private boolean checkHit(double mx, double my, int x, int y, int w, int h) {
@@ -129,6 +177,6 @@ public class HudMoveScreen extends Screen {
     }
 
     private enum HudTarget {
-        DICE, BAKERY, RNG
+        DICE, BAKERY, RNG, KUUDRA
     }
 }

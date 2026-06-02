@@ -23,6 +23,7 @@ public class GardenMovement {
     public static void onTick(Minecraft mc) {
         BomboConfig.Settings s = BomboConfig.get();
         if (!s.gardenMovement || !SkyblockUtils.isInGarden()) {
+            clearWasGoing();
             if (forward || backward || left || right || breaking) {
                 if (forward) mc.options.keyUp.setDown(false);
                 if (backward) mc.options.keyDown.setDown(false);
@@ -65,17 +66,29 @@ public class GardenMovement {
             forward = !forward;
             if (!forward) mc.options.keyUp.setDown(false);
             if (forward) {
-                if (s.gardenDirectionHelper && warped && !wasGoingForward) {
-                    warningStartTime = System.currentTimeMillis();
-                    if (wasGoingBackward) correctArrow = "↓";
-                    else if (wasGoingLeft) correctArrow = "←";
-                    else if (wasGoingRight) correctArrow = "→";
-                    else correctArrow = "↓";
-                    warped = false;
-                } else if (warped && wasGoingForward) {
-                    warped = false;
+                if (s.gardenDirectionHelper && warped) {
+                    if (s.gardenSugarCane) {
+                        if (wasGoingBackward || wasGoingRight) {
+                            warningStartTime = System.currentTimeMillis();
+                            correctArrow = "→";
+                            warped = false;
+                        } else {
+                            warped = false;
+                        }
+                    } else {
+                        if (!wasGoingForward) {
+                            warningStartTime = System.currentTimeMillis();
+                            if (wasGoingBackward) correctArrow = "↓";
+                            else if (wasGoingLeft) correctArrow = "←";
+                            else if (wasGoingRight) correctArrow = "→";
+                            else correctArrow = "↓";
+                            warped = false;
+                        } else {
+                            warped = false;
+                        }
+                    }
                 }
-                
+
                 if (s.gardenSugarCane) {
                     right = false;
                     mc.options.keyRight.setDown(false);
@@ -89,15 +102,27 @@ public class GardenMovement {
             backward = !backward;
             if (!backward) mc.options.keyDown.setDown(false);
             if (backward) {
-                if (s.gardenDirectionHelper && warped && !wasGoingBackward) {
-                    warningStartTime = System.currentTimeMillis();
-                    if (wasGoingForward) correctArrow = "↑";
-                    else if (wasGoingLeft) correctArrow = "←";
-                    else if (wasGoingRight) correctArrow = "→";
-                    else correctArrow = "↑";
-                    warped = false;
-                } else if (warped && wasGoingBackward) {
-                    warped = false;
+                if (s.gardenDirectionHelper && warped) {
+                    if (s.gardenSugarCane) {
+                        if (wasGoingForward || wasGoingLeft) {
+                            warningStartTime = System.currentTimeMillis();
+                            correctArrow = "←";
+                            warped = false;
+                        } else {
+                            warped = false;
+                        }
+                    } else {
+                        if (!wasGoingBackward) {
+                            warningStartTime = System.currentTimeMillis();
+                            if (wasGoingForward) correctArrow = "↑";
+                            else if (wasGoingLeft) correctArrow = "←";
+                            else if (wasGoingRight) correctArrow = "→";
+                            else correctArrow = "↑";
+                            warped = false;
+                        } else {
+                            warped = false;
+                        }
+                    }
                 }
                 
                 if (s.gardenSugarCane) {
@@ -113,15 +138,27 @@ public class GardenMovement {
             left = !left;
             if (!left) mc.options.keyLeft.setDown(false);
             if (left) {
-                if (s.gardenDirectionHelper && warped && !wasGoingLeft) {
-                    warningStartTime = System.currentTimeMillis();
-                    if (wasGoingRight) correctArrow = "→";
-                    else if (wasGoingForward) correctArrow = "↑";
-                    else if (wasGoingBackward) correctArrow = "↓";
-                    else correctArrow = "→";
-                    warped = false;
-                } else if (warped && wasGoingLeft) {
-                    warped = false;
+                if (s.gardenDirectionHelper && warped) {
+                    if (s.gardenSugarCane) {
+                        if (wasGoingBackward || wasGoingRight) {
+                            warningStartTime = System.currentTimeMillis();
+                            correctArrow = "↓";
+                            warped = false;
+                        } else {
+                            warped = false;
+                        }
+                    } else {
+                        if (!wasGoingLeft) {
+                            warningStartTime = System.currentTimeMillis();
+                            if (wasGoingRight) correctArrow = "→";
+                            else if (wasGoingForward) correctArrow = "↑";
+                            else if (wasGoingBackward) correctArrow = "↓";
+                            else correctArrow = "→";
+                            warped = false;
+                        } else {
+                            warped = false;
+                        }
+                    }
                 }
                 
                 if (s.gardenSugarCane) {
@@ -137,15 +174,27 @@ public class GardenMovement {
             right = !right;
             if (!right) mc.options.keyRight.setDown(false);
             if (right) {
-                if (s.gardenDirectionHelper && warped && !wasGoingRight) {
-                    warningStartTime = System.currentTimeMillis();
-                    if (wasGoingLeft) correctArrow = "←";
-                    else if (wasGoingForward) correctArrow = "↑";
-                    else if (wasGoingBackward) correctArrow = "↓";
-                    else correctArrow = "←";
-                    warped = false;
-                } else if (warped && wasGoingRight) {
-                    warped = false;
+                if (s.gardenDirectionHelper && warped) {
+                    if (s.gardenSugarCane) {
+                        if (wasGoingForward || wasGoingLeft) {
+                            warningStartTime = System.currentTimeMillis();
+                            correctArrow = "↑";
+                            warped = false;
+                        } else {
+                            warped = false;
+                        }
+                    } else {
+                        if (!wasGoingRight) {
+                            warningStartTime = System.currentTimeMillis();
+                            if (wasGoingLeft) correctArrow = "←";
+                            else if (wasGoingForward) correctArrow = "↑";
+                            else if (wasGoingBackward) correctArrow = "↓";
+                            else correctArrow = "←";
+                            warped = false;
+                        } else {
+                            warped = false;
+                        }
+                    }
                 }
                 
                 if (s.gardenSugarCane) {
@@ -183,6 +232,13 @@ public class GardenMovement {
         if (!s.gardenMovement) return;
         
         Minecraft mc = Minecraft.getInstance();
+        
+        boolean isMovingNow = forward || backward || left || right ||
+                             mc.options.keyUp.isDown() || mc.options.keyDown.isDown() ||
+                             mc.options.keyLeft.isDown() || mc.options.keyRight.isDown();
+        if (warped && !isMovingNow) {
+            return;
+        }
         
         wasGoingForward = forward || mc.options.keyUp.isDown();
         wasGoingBackward = backward || mc.options.keyDown.isDown();
@@ -227,6 +283,23 @@ public class GardenMovement {
 
         g.drawCenteredString(font, warningText, x, y, 0xFFFFFFFF);
         g.drawCenteredString(font, arrowText, x, y + 12, 0xFFFFFFFF);
+    }
+
+    public static boolean shouldLockMouse() {
+        return BomboConfig.get().lockMouseOnGarden && SkyblockUtils.isInGarden() && (forward || backward || left || right);
+    }
+
+    public static void clearWasGoing() {
+        wasGoingForward = false;
+        wasGoingBackward = false;
+        wasGoingLeft = false;
+        wasGoingRight = false;
+        warped = false;
+    }
+
+    public static void onManualReset() {
+        clearWasGoing();
+        reset();
     }
 
     public static void reset() {

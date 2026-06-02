@@ -43,13 +43,20 @@ public class DiceHud {
         lines.add("§fDices: §d" + stats.normalDicesUsed + " §6" + stats.highClassDicesUsed + " §7(" + formatCoins(totalDiceCosts) + ")");
         lines.add("§fProfit: " + profitStr);
 
-        int curY = y;
+        g.pose().pushMatrix();
+        g.pose().translate((float) x, (float) y);
+        float scale = BomboConfig.get().diceHudScale;
+        g.pose().scale(scale, scale);
+
+        int curY = 0;
         int maxWidth = 0;
         for (String line : lines) {
-            g.drawString(Minecraft.getInstance().font, line, x, curY, 0xFFFFFFFF, true);
+            g.drawString(Minecraft.getInstance().font, line, 0, curY, 0xFFFFFFFF, true);
             maxWidth = Math.max(maxWidth, Minecraft.getInstance().font.width(line));
             curY += 10;
         }
+
+        g.pose().popMatrix();
 
         if (isHovered) {
             List<String> tooltip = new ArrayList<>();

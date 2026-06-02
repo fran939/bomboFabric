@@ -152,23 +152,28 @@ public class FeastBakeryHud {
         int width = getHudWidth();
         int height = getHudHeight(items.size());
 
+        g.pose().pushMatrix();
+        g.pose().translate((float) x, (float) y);
+        float scale = BomboConfig.get().feastBakeryHudScale;
+        g.pose().scale(scale, scale);
+
         // Premium background: Dynamic high contrast for visibility
         int opacity = BomboConfig.get().rngProfitHudOpacity;
         int alpha = (int) (opacity * 2.55);
         int bgColor = (alpha << 24) | 0x00000000;
         
         if (opacity > 0) {
-            g.fill(x - 5, y - 5, x + width + 5, y + height + 5, bgColor);
-            g.renderOutline(x - 5, y - 5, width + 10, height + 10, 0xFFFFFFFF); // Pure white border
+            g.fill(-5, -5, width + 5, height + 5, bgColor);
+            g.renderOutline(-5, -5, width + 10, height + 10, 0xFFFFFFFF); // Pure white border
         }
 
         // Header
-        g.drawString(font, "§6§lFeast Bakery §r§7- §bScott", x, y, 0xFFFFFFFF, true);
+        g.drawString(font, "§6§lFeast Bakery §r§7- §bScott", 0, 0, 0xFFFFFFFF, true);
         
         // Separator line
-        g.fill(x, y + 11, x + width, y + 12, 0xAAFFFFFF);
+        g.fill(0, 11, width, 12, 0xAAFFFFFF);
 
-        int curY = y + 18;
+        int curY = 18;
         for (DetectedItem item : items) {
             long itemPrice = LowestBinManager.getCachedPrice(item.id);
             // Bruteforce/Fallback prices if API fails
@@ -200,18 +205,20 @@ public class FeastBakeryHud {
             String nameText = "§f" + (displayName.length() > 20 ? displayName.substring(0, 18) + ".." : displayName);
             String valueText = itemPrice <= 0 ? "§8N/A" : priceColor + LowestBinManager.formatPrice((long) coinsPerKernel) + "§7/k";
             
-            g.drawString(font, nameText, x, curY, 0xFFFFFFFF, true);
+            g.drawString(font, nameText, 0, curY, 0xFFFFFFFF, true);
             int valueWidth = font.width(valueText.replaceAll("(?i)§.", ""));
-            g.drawString(font, valueText, x + width - valueWidth, curY, 0xFFFFFFFF, true);
+            g.drawString(font, valueText, width - valueWidth, curY, 0xFFFFFFFF, true);
             
             curY += 10;
         }
 
         // Show Scott's Bakery footer
-        g.fill(x, curY + 2, x + width, curY + 3, 0x66FFFFFF);
+        g.fill(0, curY + 2, width, curY + 3, 0x66FFFFFF);
         
         String bottomText = "§7Scott's Bakery";
-        g.drawString(font, bottomText, x + (width / 2) - (font.width(bottomText.replaceAll("(?i)§.", "")) / 2), curY + 5, 0xFFFFFFFF, true);
+        g.drawString(font, bottomText, (width / 2) - (font.width(bottomText.replaceAll("(?i)§.", "")) / 2), curY + 5, 0xFFFFFFFF, true);
+
+        g.pose().popMatrix();
     }
 
     public static class DetectedItem {

@@ -39,6 +39,7 @@ public abstract class ChatMixin {
          String raw = message.getString();
          SphinxMacro.onChatMessage(raw);
          CarnivalAuto.onChatMessage(raw);
+         me.bombo.bomboaddons_final.KuudraPerkClicker.onChatMessage(raw);
       }
 
    }

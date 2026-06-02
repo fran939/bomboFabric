@@ -37,6 +37,8 @@ loom {
 			ideConfigGenerated(true)
 			name("Minecraft Client")
 			source(sourceSets.main)
+			property("devauth.enabled", "true")
+			property("devauth.account", "main")
 		}
 	}
 }
@@ -65,6 +67,7 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
+	it.options.encoding = "UTF-8"
 }
 
 java {
@@ -102,5 +105,11 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+tasks.register("runDebugRenderType", JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'me.bombo.bomboaddons_final.DebugRenderType'
+}
+
 
 

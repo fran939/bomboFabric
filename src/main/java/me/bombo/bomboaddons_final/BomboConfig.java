@@ -59,6 +59,12 @@ public class BomboConfig {
             instance.commandBinds = null;
             save();
         }
+        if (instance.autoGfsToxicTwilight) {
+            instance.autoGfsToxic = true;
+            instance.autoGfsTwilight = true;
+            instance.autoGfsToxicTwilight = false;
+            save();
+        }
     }
 
     public static void save() {
@@ -118,6 +124,7 @@ public class BomboConfig {
         public boolean debugCommands = false;
         public boolean debugMode = false;
         public boolean apiDebug = false;
+        public boolean apiChatMessages = false;
         public List<CommandBind> commandBinds = null;
         public String activeProfile = "default";
         public Map<String, List<CommandBind>> profileBinds = new HashMap<>();
@@ -143,6 +150,7 @@ public class BomboConfig {
         public int rngProfitHudOpacity = 80;
         
         public boolean gardenMovement = false;
+        public boolean lockMouseOnGarden = false;
         public boolean gardenSugarCane = false;
         public boolean gardenDirectionHelper = true;
         public String gardenForwardKey = "up";
@@ -170,7 +178,26 @@ public class BomboConfig {
         public String anvilAutoCombineKey = "";
         public boolean anvilAutoCombineRequireKey = false;
         public boolean autoReconnect = true;
+        public Map<String, String> petKeybinds = new HashMap<>();
+        public List<String> petKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", ""));
+        public String savePetKey = "";
+        public boolean disableUnequipPet = true;
+
+        public boolean kuudraBlindnessTimer = true;
+        public boolean disableBlindness = false;
+        public int kuudraBlindnessTimerX = 10;
+        public int kuudraBlindnessTimerY = 150;
+        
+        public float diceHudScale = 1.0f;
+        public float feastBakeryHudScale = 1.0f;
+        public float rngProfitHudScale = 1.0f;
+        public float kuudraBlindnessTimerScale = 1.0f;
+        public boolean perkMenuClicker = true;
+        public boolean autoGfsToxicTwilight = false;
+        public boolean autoGfsToxic = false;
+        public boolean autoGfsTwilight = false;
     }
+
 
     public static class CommandBind {
         public String command;

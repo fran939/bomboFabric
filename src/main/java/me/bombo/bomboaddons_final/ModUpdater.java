@@ -56,6 +56,7 @@ public class ModUpdater {
             try {
                 if (!silent) sendMessage("§7Checking for updates...");
 
+                Bomboaddons.logApiRequest(GITHUB_API);
                 HttpURLConnection conn = (HttpURLConnection) new URL(GITHUB_API).openConnection();
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0");
                 if (conn.getResponseCode() != 200) {
@@ -115,6 +116,7 @@ public class ModUpdater {
                 
                 File newJarFile = modsFolder.resolve("bomboaddons-" + latestVersion + ".jar").toFile();
 
+                Bomboaddons.logApiRequest(downloadUrl);
                 try (InputStream in = new URL(downloadUrl).openStream()) {
                     Files.copy(in, newJarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }

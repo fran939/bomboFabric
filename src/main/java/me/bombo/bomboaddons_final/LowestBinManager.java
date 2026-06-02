@@ -12,6 +12,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,28 +25,52 @@ public class LowestBinManager {
     private static final Map<String, Long> npcCache = new ConcurrentHashMap<>();
     private static final Map<String, Double> bazaarCache = new ConcurrentHashMap<>();
     private static final Map<String, Double> bazaarSellCache = new ConcurrentHashMap<>();
+    private static final AtomicBoolean isFetchingBazaar = new AtomicBoolean(false);
+    private static final AtomicBoolean isFetchingPrices = new AtomicBoolean(false);
+    private static final AtomicBoolean isFetchingNpc = new AtomicBoolean(false);
     private static long lastFetchTime = 0;
     private static long lastBazaarFetch = 0;
     private static long lastNpcFetch = 0;
     private static final long CACHE_DURATION = 300000; // 5 minutes in ms
+    private static long lastBazaarAttempt = 0;
+    private static long lastPricesAttempt = 0;
+    private static long lastNpcAttempt = 0;
 
     public static void ensureLoaded() {
         long now = System.currentTimeMillis();
         boolean bazaarFresh = now - lastBazaarFetch < CACHE_DURATION;
+        if (!bazaarFresh && now - lastBazaarAttempt < 30000) bazaarFresh = true;
+
         boolean pricesFresh = !priceCache.isEmpty() && (now - lastFetchTime < CACHE_DURATION);
+        if (!pricesFresh && now - lastPricesAttempt < 30000) pricesFresh = true;
+
         boolean npcFresh = !npcCache.isEmpty() && (now - lastNpcFetch < CACHE_DURATION);
+        if (!npcFresh && now - lastNpcAttempt < 30000) npcFresh = true;
+
         if (!bazaarFresh || !pricesFresh || !npcFresh) {
             reload();
         }
     }
 
     public static void reload() {
-        CompletableFuture.allOf(
-            fetchFromBazaar(), 
-            fetchFromPrices(), 
-            fetchFromNpc(),
-            BitsManager.ensureLoaded()
-        );
+        long now = System.currentTimeMillis();
+        boolean bazaarFresh = now - lastBazaarFetch < CACHE_DURATION;
+        boolean pricesFresh = !priceCache.isEmpty() && (now - lastFetchTime < CACHE_DURATION);
+        boolean npcFresh = !npcCache.isEmpty() && (now - lastNpcFetch < CACHE_DURATION);
+
+        if (!bazaarFresh && now - lastBazaarAttempt >= 30000) {
+            lastBazaarAttempt = now;
+            fetchFromBazaar();
+        }
+        if (!pricesFresh && now - lastPricesAttempt >= 30000) {
+            lastPricesAttempt = now;
+            fetchFromPrices();
+        }
+        if (!npcFresh && now - lastNpcAttempt >= 30000) {
+            lastNpcAttempt = now;
+            fetchFromNpc();
+        }
+        BitsManager.ensureLoaded();
     }
 
     public static String getStatus() {
@@ -198,7 +223,11 @@ public class LowestBinManager {
     }
 
     private static CompletableFuture<Boolean> fetchFromBazaar() {
+        if (!isFetchingBazaar.compareAndSet(false, true)) {
+            return CompletableFuture.completedFuture(false);
+        }
         String url = "https://bomboapi.frandl938.workers.dev/hyp/skyblock/bazaar";
+        Bomboaddons.logApiRequest(url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "Mozilla/5.0 (Bomboaddons)")
@@ -233,10 +262,14 @@ public class LowestBinManager {
                         }
                     }
                     return false;
-                }).exceptionally(ex -> false);
+                }).exceptionally(ex -> false)
+                .whenComplete((res, ex) -> isFetchingBazaar.set(false));
     }
 
     private static CompletableFuture<Boolean> fetchFromPrices() {
+        if (!isFetchingPrices.compareAndSet(false, true)) {
+            return CompletableFuture.completedFuture(false);
+        }
         return fetchFromUrl("https://api.eliteskyblock.com/resources/auctions/neu")
             .thenCompose(success -> {
                 if (success) return CompletableFuture.completedFuture(true);
@@ -253,11 +286,16 @@ public class LowestBinManager {
             .thenCompose(success -> {
                 if (success) return CompletableFuture.completedFuture(true);
                 return fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices");
-            });
+            })
+            .whenComplete((res, ex) -> isFetchingPrices.set(false));
     }
 
     private static CompletableFuture<Boolean> fetchFromNpc() {
+        if (!isFetchingNpc.compareAndSet(false, true)) {
+            return CompletableFuture.completedFuture(false);
+        }
         String url = "https://bomboapi.frandl938.workers.dev/npc";
+        Bomboaddons.logApiRequest(url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "Mozilla/5.0 (Bomboaddons)")
@@ -297,10 +335,12 @@ public class LowestBinManager {
                         }
                     }
                     return false;
-                }).exceptionally(ex -> false);
+                }).exceptionally(ex -> false)
+                .whenComplete((res, ex) -> isFetchingNpc.set(false));
     }
 
     private static CompletableFuture<Boolean> fetchFromUrl(String url) {
+        Bomboaddons.logApiRequest(url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "Mozilla/5.0 (Bomboaddons)")

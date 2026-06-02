@@ -15,10 +15,16 @@ public class Bomboaddons implements ModInitializer {
 
    public static void sendMessage(String message) {
       net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-      if (mc.player != null) {
-         mc.execute(() -> {
+      mc.execute(() -> {
+         if (mc.player != null) {
             mc.player.displayClientMessage(net.minecraft.network.chat.Component.literal(message.replace("&", "§")), false);
-         });
+         }
+      });
+   }
+
+   public static void logApiRequest(String url) {
+      if (BomboConfig.get() != null && BomboConfig.get().apiChatMessages) {
+         sendMessage("§8[§bBomboAddons API§8] §7Requesting: §f" + url);
       }
    }
 }

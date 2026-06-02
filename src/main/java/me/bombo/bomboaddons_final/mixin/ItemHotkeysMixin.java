@@ -223,8 +223,15 @@ public abstract class ItemHotkeysMixin {
       else if (name.startsWith("BUY ")) name = name.substring(4).trim();
 
       if (name.startsWith("[Lvl")) {
-         int closingBracket = name.indexOf(93);
-         if (closingBracket != -1) return name.substring(closingBracket + 1).trim();
+         int lastBracket = name.lastIndexOf(']');
+         if (lastBracket != -1) {
+            String petName = name.substring(lastBracket + 1).trim();
+            petName = petName.replaceAll("[⚚✪⭐✦]", "").trim();
+            if (petName.contains("(")) {
+               petName = petName.substring(0, petName.indexOf('(')).trim();
+            }
+            return "] " + petName;
+         }
       }
 
       if (name.contains("Enchanted Book")) {

@@ -63,21 +63,12 @@ public class AutoCombine {
         if (bound != null && !bound.isEmpty()) {
             int code = ClickLogic.getKeyCode(bound);
             if (code != -1) {
-                long handle = findWindowHandle(mc.getWindow());
-                if (handle != 0) {
-                    boolean down = false;
-                    if (code >= 0 && code < 8) {
-                        down = org.lwjgl.glfw.GLFW.glfwGetMouseButton(handle, code) == 1;
-                    } else {
-                        down = org.lwjgl.glfw.GLFW.glfwGetKey(handle, code) == 1;
-                    }
-                    
-                    if (down && !wasDown) {
-                        toggled = !toggled;
-                        Bomboaddons.sendMessage("§8[§bBomboAddons§8] §7Anvil Auto-Combine: " + (toggled ? "§aENABLED" : "§cDISABLED"));
-                    }
-                    wasDown = down;
+                boolean down = ClickLogic.isCodeDown(mc.getWindow().handle(), mc.getWindow(), code);
+                if (down && !wasDown) {
+                    toggled = !toggled;
+                    Bomboaddons.sendMessage("§8[§bBomboAddons§8] §7Anvil Auto-Combine: " + (toggled ? "§aENABLED" : "§cDISABLED"));
                 }
+                wasDown = down;
             }
         }
 
@@ -190,25 +181,6 @@ public class AutoCombine {
         }
     }
 
-    private static long findWindowHandle(com.mojang.blaze3d.platform.Window window) {
-        try {
-            for (java.lang.reflect.Method m : window.getClass().getDeclaredMethods()) {
-                if (m.getReturnType() == long.class && m.getParameterCount() == 0) {
-                    m.setAccessible(true);
-                    long val = (long) m.invoke(window);
-                    if (val > 1000) return val;
-                }
-            }
-            for (java.lang.reflect.Field f : window.getClass().getDeclaredFields()) {
-                if (f.getType() == long.class) {
-                    f.setAccessible(true);
-                    long val = (long) f.get(window);
-                    if (val > 1000) return val;
-                }
-            }
-        } catch (Exception e) {}
-        return 0;
-    }
 
     private static int findMatching(net.minecraft.world.inventory.AbstractContainerMenu menu, String enchantId, int tier, int skipSlot, int invStart) {
         for (int i = invStart; i < menu.slots.size(); i++) {

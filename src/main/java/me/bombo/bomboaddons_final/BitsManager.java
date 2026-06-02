@@ -13,17 +13,28 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BitsManager {
     private static final HttpClient client = HttpClient.newBuilder().build();
     public static final java.util.Map<String, Integer> bitCostCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final AtomicBoolean isFetching = new AtomicBoolean(false);
     private static long lastFetchTime = 0;
+    private static long lastAttemptTime = 0;
 
     public static CompletableFuture<Boolean> ensureLoaded() {
         long now = System.currentTimeMillis();
         if (!bitCostCache.isEmpty() && (now - lastFetchTime < 300000)) {
             return CompletableFuture.completedFuture(true);
         }
+        if (now - lastAttemptTime < 30000) {
+            return CompletableFuture.completedFuture(false);
+        }
+
+        if (!isFetching.compareAndSet(false, true)) {
+            return CompletableFuture.completedFuture(false);
+        }
+        lastAttemptTime = now;
 
         String url = "https://bomboapi.frandl938.workers.dev/bi";
         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36").timeout(Duration.ofSeconds(10)).GET().build();
@@ -44,7 +55,8 @@ public class BitsManager {
                         } catch (Exception e) {}
                     }
                     return false;
-                }).exceptionally(ex -> false);
+                }).exceptionally(ex -> false)
+                .whenComplete((res, ex) -> isFetching.set(false));
     }
 
     public static class BitItem {
@@ -81,6 +93,7 @@ public class BitsManager {
 
     public static CompletableFuture<List<String>> fetchTopBits(int amount) {
         String url = "https://bomboapi.frandl938.workers.dev/bi";
+        Bomboaddons.logApiRequest(url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
