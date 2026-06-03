@@ -74,6 +74,16 @@ public class SkyblockUtils {
         if (isConnectedToHypixel() && "SKYBLOCK".equals(BomboaddonsClient.locrawGametype)) {
             String area = mapLocrawToArea(BomboaddonsClient.locrawMode, BomboaddonsClient.locrawMap);
             if (!area.equals("Unknown")) {
+                if ("Kuudra".equals(area)) {
+                    Scoreboard scoreboard = mc.level.getScoreboard();
+                    Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
+                    if (sidebar != null) {
+                        String loc = parseAreaFromLines(getSidebarLines(scoreboard, sidebar));
+                        if (loc.startsWith("T") && loc.length() == 2) {
+                            return loc;
+                        }
+                    }
+                }
                 return area;
             }
         }
@@ -194,8 +204,8 @@ public class SkyblockUtils {
                 }
             }
 
-            // Hypixel subareas usually start with these symbols
-            if (clean.startsWith("\u23CF") || clean.startsWith("\u0444")) {
+            // Hypixel subareas usually start with these symbols (⏏ U+23CF, ⏣ U+23E3, or o U+0444)
+            if (clean.startsWith("\u23CF") || clean.startsWith("\u23E3") || clean.startsWith("⏣") || clean.startsWith("\u0444")) {
                 return clean.substring(1).trim();
             }
         }
@@ -211,6 +221,18 @@ public class SkyblockUtils {
             }
             // Direct matches for common SkyBlock areas
             String lower = clean.toLowerCase();
+            if (lower.contains("kuudra's hollow") || lower.contains("kuudra")) {
+                if (clean.contains("(T")) {
+                    int idx = clean.indexOf("(T");
+                    if (idx + 2 < clean.length()) {
+                        char c = clean.charAt(idx + 2);
+                        if (c >= '1' && c <= '5') {
+                            return "T" + c;
+                        }
+                    }
+                }
+                return "Kuudra";
+            }
             if (lower.contains("the garden") || lower.contains("garden")) return "The Garden";
             if (lower.contains("the hub") || lower.contains("hub")) return "The Hub";
             if (lower.contains("private island") || lower.contains("island")) return "Private Island";

@@ -196,6 +196,16 @@ public class BomboConfig {
         public boolean autoGfsToxicTwilight = false;
         public boolean autoGfsToxic = false;
         public boolean autoGfsTwilight = false;
+
+        public boolean pearlCalculator = false;
+        public boolean showTimer = true;
+        public boolean showAll = false;
+        public boolean showSkyPearls = true;
+        public boolean showFlatPearls = true;
+        public boolean showDoublePearls = true;
+        public int kuudraTalisman = 3;
+        public int kuudraTiers = 5;
+        public boolean kuudraDebug = false;
     }
 
 

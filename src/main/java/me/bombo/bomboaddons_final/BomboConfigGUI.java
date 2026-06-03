@@ -456,6 +456,16 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Perk Menu Clicker", s.perkMenuClicker, v -> s.perkMenuClicker = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Auto GFS Toxic", s.autoGfsToxic, v -> s.autoGfsToxic = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Auto GFS Twilight", s.autoGfsTwilight, v -> s.autoGfsTwilight = v, contentX, contentWidth, curY);
+                    
+                    curY += 10;
+                    curY = addBoolOption("Pearl Waypoints & Timers", s.pearlCalculator, v -> s.pearlCalculator = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Show Pearl Throw Timer", s.showTimer, v -> s.showTimer = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Show All Pearl Spots", s.showAll, v -> s.showAll = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Show Sky Pearl Spots", s.showSkyPearls, v -> s.showSkyPearls = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Show Flat Pearl Spots", s.showFlatPearls, v -> s.showFlatPearls = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Show Double Pearl Spots", s.showDoublePearls, v -> s.showDoublePearls = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Kuudra Debug Mode", s.kuudraDebug, v -> s.kuudraDebug = v, contentX, contentWidth, curY);
+                    curY = addIntLabelSlider("Talisman Tier (0-3)", s.kuudraTalisman, 0, 3, 1, v -> s.kuudraTalisman = v, contentX, 150, curY);
                 }
                 case 12 -> { // Pets
                     curY += ITEM_HEIGHT;
@@ -933,6 +943,24 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Auto GFS Toxic", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Auto GFS Twilight", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    
+                    curY += ITEM_HEIGHT;
+                    curY += 10;
+                    g.drawString(font, "§7Pearl Waypoints & Timers", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Show Pearl Throw Timer", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Show All Pearl Spots", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Show Sky Pearl Spots", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Show Flat Pearl Spots", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Show Double Pearl Spots", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Kuudra Debug Mode", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fTalisman Tier: §e" + BomboConfig.get().kuudraTalisman, contentX, curY + 4, 0xFFFFFFFF);
                 }
                 case 12 -> { // Pets
                     g.drawString(font, "§6§lPets Settings", contentX, curY, 0xFFFFAA00, true);

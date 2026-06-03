@@ -110,6 +110,10 @@ public class BomboRenderUtils {
         font.drawInBatch(text, offset, 0, color, shadow, matrix, consumers, mode, 0, 15728880);
 
         poseStack.popPose();
+
+        if (consumers instanceof net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource) {
+            bufferSource.endBatch();
+        }
     }
 
     public static int hexToColor(String hex) {

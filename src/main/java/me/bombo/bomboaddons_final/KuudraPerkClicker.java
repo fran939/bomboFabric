@@ -19,8 +19,7 @@ public class KuudraPerkClicker {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return false;
 
-        // Check if on Kuudra or local server (singleplayer) for testing
-        boolean isKuudraOrLocal = "Kuudra".equalsIgnoreCase(BomboaddonsClient.currentArea) || mc.isLocalServer();
+        boolean isKuudraOrLocal = me.bombo.bomboaddons_final.kuudra.pearls.KuudraUtils.inKuudra();
         if (!isKuudraOrLocal) return false;
 
         String title = screen.getTitle().getString().replaceAll("(?i)§.", "").trim();

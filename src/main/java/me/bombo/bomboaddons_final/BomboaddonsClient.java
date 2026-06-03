@@ -747,6 +747,35 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             PetManager.applyPet(context.getSource(), slot);
                                             return 1;
                                         })));
+                        
+                        builder.then(ClientCommandManager.literal("ep")
+                                .executes(context -> {
+                                    Minecraft mc = Minecraft.getInstance();
+                                    if (mc.player != null) {
+                                        int pearlCount = 0;
+                                        for (int j = 0; j < mc.player.getInventory().getContainerSize(); j++) {
+                                            ItemStack stack = mc.player.getInventory().getItem(j);
+                                            if (!stack.isEmpty()) {
+                                                String internalId = SkyblockUtils.getInternalId(stack);
+                                                if ("ENDER_PEARL".equals(internalId) || stack.is(net.minecraft.world.item.Items.ENDER_PEARL)) {
+                                                    pearlCount += stack.getCount();
+                                                }
+                                            }
+                                        }
+                                        if (pearlCount < 16) {
+                                            int toGet = 16 - pearlCount;
+                                            mc.player.connection.sendCommand("gfs ENDER_PEARL " + toGet);
+                                            if (BomboConfig.get().debugCommands || BomboConfig.get().debugMaster) {
+                                                context.getSource().sendFeedback(Component.literal("§7[Bombo] Found §e" + pearlCount + "§7 pearls. Requesting §e" + toGet + "§7 more from sack!"));
+                                            }
+                                        } else {
+                                            if (BomboConfig.get().debugCommands || BomboConfig.get().debugMaster) {
+                                                context.getSource().sendFeedback(Component.literal("§7[Bombo] Already have §e" + pearlCount + "§7 pearls (>= 16)."));
+                                            }
+                                        }
+                                    }
+                                    return 1;
+                                }));
                     };
 
                     setupCommands.accept(bBuilder);
@@ -1056,6 +1085,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                 HighlightESP.render(context);
                 PestESP.render(context);
                 ParticleESP.render(context);
+                try {
+                    me.bombo.bomboaddons_final.kuudra.pearls.Pearls.render(context);
+                } catch (Throwable t) {}
             });
 
             HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -1064,6 +1096,14 @@ public class BomboaddonsClient implements ClientModInitializer {
                         BomboRenderUtils.draw2DLine(graphics, tracer.start.x, tracer.start.y, tracer.end.x, tracer.end.y, tracer.color, tracer.thickness);
                     }
                 }
+
+                try {
+                    graphics.drawString(Minecraft.getInstance().font, "§d§lHUD RENDER TEST ACTIVE", 10, 50, 0xFFFF00FF, true);
+                    for (me.bombo.bomboaddons_final.kuudra.pearls.Pearls.PearlHUDText t : me.bombo.bomboaddons_final.kuudra.pearls.Pearls.HUD_TEXTS) {
+                        graphics.drawCenteredString(Minecraft.getInstance().font, t.text, (int)t.x, (int)t.y, t.color);
+                    }
+                } catch (Throwable t) {}
+
                 // Only render HUD if no screen is open or it's the HudMoveScreen
                 if (Minecraft.getInstance().screen == null || Minecraft.getInstance().screen instanceof HudMoveScreen) {
                     FeastBakeryHud.onHudRender(graphics);
@@ -1146,6 +1186,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                 String clean = message.getString().replaceAll("§.", "");
                 DebugUtils.debug("chat", clean);
                 DiceTracker.onChatMessage(clean);
+                if (overlay) {
+                    me.bombo.bomboaddons_final.kuudra.pearls.Pearls.onTitleReceived(clean);
+                }
             });
 
         } catch (Throwable t) {
@@ -1262,6 +1305,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                         DebugUtils.debug("entity", "Total: " + count + " | Nearby: " + info.toString());
                     }
                 }
+            } catch (Throwable t) {}
+
+            try {
+                me.bombo.bomboaddons_final.kuudra.pearls.KuudraUtils.onClientTick();
+                me.bombo.bomboaddons_final.kuudra.pearls.Pearls.onClientTick();
             } catch (Throwable t) {}
         });
     }

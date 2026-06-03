@@ -40,6 +40,7 @@ public abstract class ChatMixin {
          SphinxMacro.onChatMessage(raw);
          CarnivalAuto.onChatMessage(raw);
          me.bombo.bomboaddons_final.KuudraPerkClicker.onChatMessage(raw);
+         me.bombo.bomboaddons_final.kuudra.pearls.Pearls.onChatMessage(raw);
       }
 
    }
