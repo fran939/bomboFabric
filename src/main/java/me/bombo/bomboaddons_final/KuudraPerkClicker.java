@@ -28,14 +28,13 @@ public class KuudraPerkClicker {
 
         if (!isPerkMenu && !isAreYouSure) return false;
 
-        // Condition: "and i click anywhere on the screen, and there is not a real item"
-        // Real item means: slot is not null, slot has an item, and it is not a glass pane
         boolean isRealItem = false;
         if (slot != null && slot.hasItem()) {
             ItemStack stack = slot.getItem();
             String itemType = stack.getItem().toString().toLowerCase();
             boolean isGlass = itemType.contains("glass_pane") || itemType.contains("stained_glass_pane");
-            if (!isGlass) {
+            boolean isBarrier = itemType.contains("barrier");
+            if (!isGlass && !isBarrier) {
                 isRealItem = true;
             }
         }

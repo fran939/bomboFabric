@@ -88,57 +88,59 @@ public class Pearls {
         MultiBufferSource consumers = context.consumers();
         if (consumers == null) return;
 
-        // Static test render requested by user
-        double testRelX = -102.0 - camPos.x;
-        double testRelY = 79.0 - camPos.y;
-        double testRelZ = -179.0 - camPos.z;
-        double testDist = Math.sqrt(testRelX*testRelX + testRelY*testRelY + testRelZ*testRelZ);
-        double testProjScale = 1.0;
-        if (testDist > 0.2) testProjScale = 0.2 / testDist;
-        double testScaledX = testRelX * testProjScale;
-        double testScaledY = testRelY * testProjScale;
-        double testScaledZ = testRelZ * testProjScale;
-        double testScaledHs = 0.25 * testProjScale;
+        // Static test render requested by user (only when kuudraDebug is enabled)
+        if (s.kuudraDebug) {
+            double testRelX = -102.0 - camPos.x;
+            double testRelY = 79.0 - camPos.y;
+            double testRelZ = -179.0 - camPos.z;
+            double testDist = Math.sqrt(testRelX*testRelX + testRelY*testRelY + testRelZ*testRelZ);
+            double testProjScale = 1.0;
+            if (testDist > 0.2) testProjScale = 0.2 / testDist;
+            double testScaledX = testRelX * testProjScale;
+            double testScaledY = testRelY * testProjScale;
+            double testScaledZ = testRelZ * testProjScale;
+            double testScaledHs = 0.25 * testProjScale;
 
-        AABB testBox = new AABB(
-            testScaledX - testScaledHs,
-            testScaledY - testScaledHs,
-            testScaledZ - testScaledHs,
-            testScaledX + testScaledHs,
-            testScaledY + testScaledHs,
-            testScaledZ + testScaledHs
-        );
-        VertexConsumer testLineBuffer = consumers.getBuffer(RenderTypes.linesTranslucent());
-        BomboRenderUtils.drawBox(poseStack, testLineBuffer, testBox, 0.0f, 1.0f, 1.0f, 1.0f, 2.0f); // Cyan box
+            AABB testBox = new AABB(
+                testScaledX - testScaledHs,
+                testScaledY - testScaledHs,
+                testScaledZ - testScaledHs,
+                testScaledX + testScaledHs,
+                testScaledY + testScaledHs,
+                testScaledZ + testScaledHs
+            );
+            VertexConsumer testLineBuffer = consumers.getBuffer(RenderTypes.linesTranslucent());
+            BomboRenderUtils.drawBox(poseStack, testLineBuffer, testBox, 0.0f, 1.0f, 1.0f, 1.0f, 2.0f); // Cyan box
 
-        // Static test projection to HUD (using absolute world coordinates)
-        org.joml.Vector4f testScreenPos = new org.joml.Vector4f(
-            -102.0f,
-            80.0f,
-            -179.0f,
-            1.0f
-        );
-        testScreenPos.mul(poseStack.last().pose());
-        testScreenPos.mul(mc.gameRenderer.getProjectionMatrix(mc.getDeltaTracker().getGameTimeDeltaTicks()));
-        if (s.kuudraDebug && debugRenderCounter % 100 == 0) {
-            mc.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal(
-                "§7[KuudraDebug] testScreenPos: x=" + testScreenPos.x + ", y=" + testScreenPos.y + ", z=" + testScreenPos.z + ", w=" + testScreenPos.w
-            ));
-        }
-        if (testScreenPos.w > 0.0f) {
-            float ndcX = testScreenPos.x / testScreenPos.w;
-            float ndcY = testScreenPos.y / testScreenPos.w;
-            int screenWidth = mc.getWindow().getGuiScaledWidth();
-            int screenHeight = mc.getWindow().getGuiScaledHeight();
-            float screenX = (ndcX + 1.0f) * 0.5f * screenWidth;
-            float screenY = (1.0f - ndcY) * 0.5f * screenHeight;
+            // Static test projection to HUD
+            org.joml.Vector4f testScreenPos = new org.joml.Vector4f(
+                -102.0f,
+                80.0f,
+                -179.0f,
+                1.0f
+            );
+            testScreenPos.mul(poseStack.last().pose());
+            testScreenPos.mul(mc.gameRenderer.getProjectionMatrix(mc.getDeltaTracker().getGameTimeDeltaTicks()));
+            if (debugRenderCounter % 100 == 0) {
+                mc.gui.getChat().addMessage(net.minecraft.network.chat.Component.literal(
+                    "§7[KuudraDebug] testScreenPos: x=" + testScreenPos.x + ", y=" + testScreenPos.y + ", z=" + testScreenPos.z + ", w=" + testScreenPos.w
+                ));
+            }
+            if (testScreenPos.w > 0.0f) {
+                float ndcX = testScreenPos.x / testScreenPos.w;
+                float ndcY = testScreenPos.y / testScreenPos.w;
+                int screenWidth = mc.getWindow().getGuiScaledWidth();
+                int screenHeight = mc.getWindow().getGuiScaledHeight();
+                float screenX = (ndcX + 1.0f) * 0.5f * screenWidth;
+                float screenY = (1.0f - ndcY) * 0.5f * screenHeight;
 
-            HUD_TEXTS.add(new PearlHUDText(
-                "§b§lSTATIC TEST 300ms",
-                screenX,
-                screenY,
-                0xFF00FFFF
-            ));
+                HUD_TEXTS.add(new PearlHUDText(
+                    "§b§lSTATIC TEST 300ms",
+                    screenX,
+                    screenY,
+                    0xFF00FFFF
+                ));
+            }
         }
 
         boolean hasSupplies = isHoldingSupplies();

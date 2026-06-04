@@ -89,17 +89,17 @@ public class BomboConfig {
     }
 
     public static class Settings {
-        public boolean signCalculator = true;
-        public boolean chestClicker = true;
-        public boolean autoClicker = true;
-        public boolean sbeCommands = true;
+        public boolean signCalculator = false;
+        public boolean chestClicker = false;
+        public boolean autoClicker = false;
+        public boolean sbeCommands = false;
         public boolean leftClickEtherwarp = false;
         public int signCalcX = -1;
         public int signCalcY = -1;
-        public boolean autoExperiments = true;
+        public boolean autoExperiments = false;
         public int experimentClickDelay = 200;
         public int experimentClickType = 1; // 0=Left, 1=Middle, 2=Shift
-        public boolean experimentAutoClose = true;
+        public boolean experimentAutoClose = false;
         public int experimentSerumCount = 0;
         public boolean experimentGetMaxXp = false;
         public boolean sphinxMacro = false;
@@ -116,7 +116,7 @@ public class BomboConfig {
         public String goBackKey = "";
         public String smartGoBackKey = "";
         public Map<String, HighlightInfo> highlights = new HashMap<>();
-        public boolean highlightsEnabled = true;
+        public boolean highlightsEnabled = false;
         public boolean debugMaster = false;
         public boolean debugChat = false;
         public boolean debugGuis = false;
@@ -128,23 +128,24 @@ public class BomboConfig {
         public List<CommandBind> commandBinds = null;
         public String activeProfile = "default";
         public Map<String, List<CommandBind>> profileBinds = new HashMap<>();
+        public Map<String, List<CommandBind>> keybindBinds = new HashMap<>();
         public boolean hollowWandClickThrough = false;
         public boolean hollowWandAutoCombine = false;
         public boolean autoAcceptCarnival = false;
-        public boolean ignoreCapsLock = true;
-        public boolean serverListButton = true;
-        public boolean reconnectButton = true;
+        public boolean ignoreCapsLock = false;
+        public boolean serverListButton = false;
+        public boolean reconnectButton = false;
         public boolean hideCheats = true;
-        public boolean diceTracker = true;
+        public boolean diceTracker = false;
         public int diceHudX = 10;
         public int diceHudY = 50;
         
-        public boolean feastBakeryHud = true;
-        public boolean quickJoinCommands = true;
+        public boolean feastBakeryHud = false;
+        public boolean quickJoinCommands = false;
         public int feastBakeryHudX = 10;
         public int feastBakeryHudY = 100;
         
-        public boolean rngProfitHud = true;
+        public boolean rngProfitHud = false;
         public int rngProfitHudX = 10;
         public int rngProfitHudY = 200;
         public int rngProfitHudOpacity = 80;
@@ -152,7 +153,7 @@ public class BomboConfig {
         public boolean gardenMovement = false;
         public boolean lockMouseOnGarden = false;
         public boolean gardenSugarCane = false;
-        public boolean gardenDirectionHelper = true;
+        public boolean gardenDirectionHelper = false;
         public String gardenForwardKey = "up";
         public String gardenBackwardKey = "down";
         public String gardenLeftKey = "left";
@@ -160,8 +161,8 @@ public class BomboConfig {
         public String gardenBreakKey = "b";
         public String gardenUseKey = "u";
         
-        public boolean lowestBin = true;
-        public boolean npcPrice = true;
+        public boolean lowestBin = false;
+        public boolean npcPrice = false;
         public Map<String, String> calculatorAliases = new HashMap<>();
         public boolean pestEsp = false;
         public boolean pestEspTracer = false;
@@ -169,21 +170,21 @@ public class BomboConfig {
         public float pestEspThickness = 2.0f;
         public boolean hitbox = false;
         
-        public boolean autoCloseWardrobe = true;
-        public boolean disableUnequipWardrobe = true;
+        public boolean autoCloseWardrobe = false;
+        public boolean disableUnequipWardrobe = false;
         public List<String> wardrobeKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", ""));
         public Map<String, Integer> anvilAutoCombine = new HashMap<>();
-        public boolean anvilAutoCombineEnabled = true;
+        public boolean anvilAutoCombineEnabled = false;
         public int anvilAutoCombineDelay = 200;
         public String anvilAutoCombineKey = "";
         public boolean anvilAutoCombineRequireKey = false;
-        public boolean autoReconnect = true;
+        public boolean autoReconnect = false;
         public Map<String, String> petKeybinds = new HashMap<>();
         public List<String> petKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", ""));
         public String savePetKey = "";
-        public boolean disableUnequipPet = true;
-
-        public boolean kuudraBlindnessTimer = true;
+        public boolean disableUnequipPet = false;
+ 
+        public boolean kuudraBlindnessTimer = false;
         public boolean disableBlindness = false;
         public int kuudraBlindnessTimerX = 10;
         public int kuudraBlindnessTimerY = 150;
@@ -192,17 +193,17 @@ public class BomboConfig {
         public float feastBakeryHudScale = 1.0f;
         public float rngProfitHudScale = 1.0f;
         public float kuudraBlindnessTimerScale = 1.0f;
-        public boolean perkMenuClicker = true;
+        public boolean perkMenuClicker = false;
         public boolean autoGfsToxicTwilight = false;
         public boolean autoGfsToxic = false;
         public boolean autoGfsTwilight = false;
-
+ 
         public boolean pearlCalculator = false;
-        public boolean showTimer = true;
+        public boolean showTimer = false;
         public boolean showAll = false;
-        public boolean showSkyPearls = true;
-        public boolean showFlatPearls = true;
-        public boolean showDoublePearls = true;
+        public boolean showSkyPearls = false;
+        public boolean showFlatPearls = false;
+        public boolean showDoublePearls = false;
         public int kuudraTalisman = 3;
         public int kuudraTiers = 5;
         public boolean kuudraDebug = false;
@@ -213,6 +214,9 @@ public class BomboConfig {
         public String command;
         public List<Integer> keyCodes;
         public String keyName;
+        public String requiredIsland = "";
+        public String requiredArmor = "";
+        public boolean enabled = true;
 
         public CommandBind() {}
 
@@ -220,6 +224,14 @@ public class BomboConfig {
             this.command = command;
             this.keyCodes = keyCodes;
             this.keyName = keyName;
+        }
+
+        public CommandBind(String command, List<Integer> keyCodes, String keyName, String requiredIsland, String requiredArmor) {
+            this.command = command;
+            this.keyCodes = keyCodes;
+            this.keyName = keyName;
+            this.requiredIsland = requiredIsland;
+            this.requiredArmor = requiredArmor;
         }
     }
 

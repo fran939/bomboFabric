@@ -1098,7 +1098,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                 }
 
                 try {
-                    graphics.drawString(Minecraft.getInstance().font, "§d§lHUD RENDER TEST ACTIVE", 10, 50, 0xFFFF00FF, true);
+                    if (BomboConfig.get().kuudraDebug) {
+                        graphics.drawString(Minecraft.getInstance().font, "§d§lHUD RENDER TEST ACTIVE", 10, 50, 0xFFFF00FF, true);
+                    }
                     for (me.bombo.bomboaddons_final.kuudra.pearls.Pearls.PearlHUDText t : me.bombo.bomboaddons_final.kuudra.pearls.Pearls.HUD_TEXTS) {
                         graphics.drawCenteredString(Minecraft.getInstance().font, t.text, (int)t.x, (int)t.y, t.color);
                     }

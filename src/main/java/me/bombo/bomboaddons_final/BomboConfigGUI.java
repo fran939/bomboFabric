@@ -25,7 +25,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
-            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets");
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds");
     public static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -39,6 +39,8 @@ public class BomboConfigGUI extends Screen {
     // Transient state for keybinds
     private static String bindCommandInput = "";
     private static String bindComboInput = "";
+    private static String bindIslandInput = "";
+    private static String bindArmorInput = "";
     private static String profileNameInput = "";
 
     // Transient state for highlights
@@ -510,6 +512,76 @@ public class BomboConfigGUI extends Screen {
                         curY += ITEM_HEIGHT;
                     }
                 }
+                case 13 -> { // Keybinds
+                    curY += ITEM_HEIGHT; // Title row
+                    curY += ITEM_HEIGHT + 5; // Active profile row
+                    
+                    curY = addTextBox("Command", bindCommandInput, v -> bindCommandInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addComboBindButton("Combo", bindComboInput, v -> bindComboInput = v, "profileCombo", contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Only on Island", bindIslandInput, v -> bindIslandInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Only with Armor", bindArmorInput, v -> bindArmorInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    
+                    int finalCurY = curY;
+                    String addBindText = editingKeybindIdx != -1 ? "§e✔ Save Bind" : "§a+ Add Bind";
+                    addRenderableWidget(Button.builder(Component.literal(addBindText), btn -> {
+                        if (!bindCommandInput.isEmpty() && !bindComboInput.isEmpty()) {
+                            List<Integer> codes = parseCombo(bindComboInput);
+                            if (!codes.isEmpty()) {
+                                s.keybindBinds.putIfAbsent(s.activeProfile, new ArrayList<>());
+                                if (editingKeybindIdx != -1) {
+                                    s.keybindBinds.get(s.activeProfile).set(editingKeybindIdx, new BomboConfig.CommandBind(bindCommandInput, codes, bindComboInput, bindIslandInput, bindArmorInput));
+                                    editingKeybindIdx = -1;
+                                } else {
+                                    s.keybindBinds.get(s.activeProfile).add(new BomboConfig.CommandBind(bindCommandInput, codes, bindComboInput, bindIslandInput, bindArmorInput));
+                                }
+                                BomboConfig.save();
+                                bindCommandInput = ""; bindComboInput = ""; bindIslandInput = ""; bindArmorInput = "";
+                                init();
+                            }
+                        }
+                    }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+                    
+                    if (editingKeybindIdx != -1) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel"), btn -> {
+                            editingKeybindIdx = -1;
+                            bindCommandInput = ""; bindComboInput = ""; bindIslandInput = ""; bindArmorInput = "";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 60, 20).build());
+                    }
+
+                    curY += 35;
+                    int listStartY = curY;
+                    List<BomboConfig.CommandBind> binds = s.keybindBinds.get(s.activeProfile);
+                    if (binds != null) {
+                        for (int i = 0; i < binds.size(); i++) {
+                            final int idx = i;
+                            BomboConfig.CommandBind bind = binds.get(idx);
+                            int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
+                            if (itemY > listStartY + 15 && itemY < height - 20) {
+                                String toggleLabel = bind.enabled ? "§aON" : "§cOFF";
+                                addRenderableWidget(Button.builder(Component.literal(toggleLabel), btn -> {
+                                    bind.enabled = !bind.enabled;
+                                    BomboConfig.save();
+                                    init();
+                                }).bounds(contentX + 130, itemY + 5, 45, 18).build());
+
+                                addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                    editingKeybindIdx = idx;
+                                    bindCommandInput = bind.command;
+                                    bindComboInput = bind.keyName;
+                                    bindIslandInput = bind.requiredIsland != null ? bind.requiredIsland : "";
+                                    bindArmorInput = bind.requiredArmor != null ? bind.requiredArmor : "";
+                                    init();
+                                }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+                                addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> { binds.remove(idx); BomboConfig.save(); init(); }).bounds(contentX + 225, itemY + 5, 35, 18).build());
+                            }
+                        }
+                    }
+                }
             }
 
             if (colorPickerTarget != null) {
@@ -820,7 +892,7 @@ public class BomboConfigGUI extends Screen {
                         listY += 22;
                     }
                 }
-                case 5 -> {
+                case 5 -> { // Profiles
                     g.drawString(font, "§6§lProfile Management", contentX, curY, 0xFFFFAA00, true);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§fActive Profile: §e" + s.activeProfile, contentX, curY + 4, 0xFFFFFFFF);
@@ -975,6 +1047,43 @@ public class BomboConfigGUI extends Screen {
                         }
                         g.drawString(font, "§fSlot " + (i + 1) + boundInfo + ":", contentX, curY + 4, 0xFFFFFFFF);
                         curY += ITEM_HEIGHT;
+                    }
+                }
+                case 13 -> { // Keybinds
+                    g.drawString(font, "§6§lKeybinds Management", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fActive Profile: §e" + s.activeProfile, contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fCommand:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fCombo:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fOnly on Island:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fOnly with Armor:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    
+                    curY += 35; // Space before list
+                    int activeBindsTitleY = curY;
+                    g.drawString(font, "§9§lActive Binds", contentX, activeBindsTitleY, 0xFF5555FF, true);
+                    
+                    int listY = activeBindsTitleY + 20 - (int)scrollAmount;
+                    List<BomboConfig.CommandBind> binds = s.keybindBinds.get(s.activeProfile);
+                    if (binds != null) {
+                        for (BomboConfig.CommandBind bind : binds) {
+                            if (listY > activeBindsTitleY + 15 && listY < height - 15) {
+                                String extra = "";
+                                if (bind.requiredIsland != null && !bind.requiredIsland.isEmpty()) {
+                                    extra += " §8[" + bind.requiredIsland + "]";
+                                }
+                                if (bind.requiredArmor != null && !bind.requiredArmor.isEmpty()) {
+                                    extra += " §8(" + bind.requiredArmor + ")";
+                                }
+                                String statusPrefix = bind.enabled ? "§a[✔] " : "§c[✘] ";
+                                g.drawString(font, statusPrefix + "§e" + bind.keyName + " §7-> §b/" + bind.command + extra, contentX, listY + 5, 0xFFFFFFFF, false);
+                            }
+                            listY += 22;
+                        }
                     }
                 }
             }

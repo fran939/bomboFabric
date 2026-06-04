@@ -33,7 +33,7 @@ public abstract class MouseMixin {
         if (action == 1) { // GLFW_PRESS
             int button = info.button();
             Minecraft mc = Minecraft.getInstance();
-            if (mc.screen != null && mc.player != null) {
+             if (mc.screen != null && mc.player != null) {
                 try {
                     if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen) {
                         net.minecraft.world.inventory.Slot slot = ((me.bombo.bomboaddons_final.mixin.AbstractContainerScreenAccessor) containerScreen).getHoveredSlot();
@@ -52,12 +52,24 @@ public abstract class MouseMixin {
                         return;
                     }
                 }
+            }
 
+            if (mc.player != null) {
                 String activeProfile = BomboConfig.get().activeProfile;
-                List<BomboConfig.CommandBind> binds = BomboConfig.get().profileBinds.get(activeProfile);
+                List<BomboConfig.CommandBind> binds = null;
+
+                if (mc.screen != null) {
+                    // Profile keybinds only trigger when a GUI is open
+                    binds = BomboConfig.get().profileBinds.get(activeProfile);
+                } else {
+                    // Keybinds category keybinds only trigger when NO GUI is open
+                    binds = BomboConfig.get().keybindBinds.get(activeProfile);
+                }
 
                 if (binds != null) {
                     for (BomboConfig.CommandBind bind : binds) {
+                        if (!bind.enabled)
+                            continue;
                         if (bind.keyCodes.isEmpty())
                             continue;
 
@@ -72,9 +84,11 @@ public abstract class MouseMixin {
                             }
 
                              if (allMatch) {
-                                 me.bombo.bomboaddons_final.BomboaddonsClient.executeTracked(bind.command);
-                                 ci.cancel();
-                                 return;
+                                 if (me.bombo.bomboaddons_final.ClickLogic.shouldTriggerBind(bind)) {
+                                     me.bombo.bomboaddons_final.BomboaddonsClient.executeTracked(bind.command);
+                                     ci.cancel();
+                                     return;
+                                 }
                              }
                         }
                     }

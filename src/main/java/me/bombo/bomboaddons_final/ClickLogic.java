@@ -605,6 +605,52 @@ public class ClickLogic {
       loadTargets();
    }
 
+   public static boolean shouldTriggerBind(BomboConfig.CommandBind bind) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player == null) return false;
+
+      // Check required island
+      if (bind.requiredIsland != null && !bind.requiredIsland.trim().isEmpty()) {
+         String currentArea = BomboaddonsClient.currentArea;
+         if (currentArea == null) currentArea = "";
+         String target = bind.requiredIsland.trim().toLowerCase();
+         boolean matched = currentArea.toLowerCase().contains(target);
+         if (!matched && mc.level != null) {
+            var sidebar = mc.level.getScoreboard().getDisplayObjective(net.minecraft.world.scores.DisplaySlot.SIDEBAR);
+            if (sidebar != null) {
+               for (String line : SkyblockUtils.getSidebarLines(mc.level.getScoreboard(), sidebar)) {
+                  String clean = line.replaceAll("(?i)§.", "").trim().toLowerCase();
+                  if (clean.contains(target)) {
+                     matched = true;
+                     break;
+                  }
+               }
+            }
+         }
+         if (!matched) return false;
+      }
+
+      // Check required armor piece
+      if (bind.requiredArmor != null && !bind.requiredArmor.trim().isEmpty()) {
+         String reqArmor = bind.requiredArmor.trim().toLowerCase();
+         boolean hasRequiredArmor = false;
+         for (int i = 36; i <= 39; i++) {
+            net.minecraft.world.item.ItemStack stack = mc.player.getInventory().getItem(i);
+            if (stack != null && !stack.isEmpty()) {
+               String armorName = stack.getHoverName().getString().toLowerCase();
+               String armorId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString().toLowerCase();
+               if (armorName.contains(reqArmor) || armorId.contains(reqArmor)) {
+                  hasRequiredArmor = true;
+                  break;
+               }
+            }
+         }
+         if (!hasRequiredArmor) return false;
+      }
+
+      return true;
+   }
+
    @Environment(EnvType.CLIENT)
    public static class ClickTarget {
       public UUID id = UUID.randomUUID();
