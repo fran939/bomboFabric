@@ -7,6 +7,7 @@ if (-not (Test-Path $jarPath)) {
 }
 
 Write-Host "Creating GitHub Release for v$version..." -ForegroundColor Cyan
-& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Fixed 'Lobby' category duplication and improved area name normalization. Existing duplicate data will be automatically merged upon first launch."
+$env:GITHUB_TOKEN = $null
+& "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --title "v$version" --notes "Add Keybinds category with conditional triggers, toggle features, separated Profiles GUI logic, and default settings turned off."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
