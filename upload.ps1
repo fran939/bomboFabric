@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Parse Kuudra's Hollow as main area and Kuudra tiers (T1-T5) as subareas for /b area and playtime statistics."
+gh release create "v$version" $jarPath --title "v$version" --notes "Refactor subarea to main area mapping, group Farming Islands under a single main area, and add playtime data migrations."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

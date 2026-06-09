@@ -59,6 +59,8 @@ public class PlaytimeTracker {
                     }
                 });
                 migrateMenuData();
+                migrateFarmingIslandsData();
+                migrateKuudraData();
                 migrateUnknownData();
                 save();
             }
@@ -97,6 +99,46 @@ public class PlaytimeTracker {
                 mergeData(menuData, oldData);
                 // Also track them as subareas for historical detail
                 menuData.subAreas.put(oldName, oldData);
+            }
+        }
+    }
+
+    private static void migrateFarmingIslandsData() {
+        if (!areaDataMap.containsKey("The Barn") && !areaDataMap.containsKey("Barn") && 
+            !areaDataMap.containsKey("Mushroom Desert") && !areaDataMap.containsKey("MushroomDesert")) return;
+            
+        AreaData farmingData = areaDataMap.computeIfAbsent("Farming Islands", k -> new AreaData());
+        
+        String[] legacyNames = {"The Barn", "Barn", "Mushroom Desert", "MushroomDesert"};
+        for (String oldName : legacyNames) {
+            if (areaDataMap.containsKey(oldName)) {
+                AreaData oldData = areaDataMap.remove(oldName);
+                mergeData(farmingData, oldData);
+                // Also track them as subareas for historical detail
+                String normName = oldName;
+                if (oldName.equalsIgnoreCase("Barn")) normName = "The Barn";
+                if (oldName.equalsIgnoreCase("MushroomDesert")) normName = "Mushroom Desert";
+                farmingData.subAreas.put(normName, oldData);
+            }
+        }
+    }
+
+    private static void migrateKuudraData() {
+        if (!areaDataMap.containsKey("Kuudra") && !areaDataMap.containsKey("T1") && 
+            !areaDataMap.containsKey("T2") && !areaDataMap.containsKey("T3") && 
+            !areaDataMap.containsKey("T4") && !areaDataMap.containsKey("T5")) return;
+            
+        AreaData kuudraData = areaDataMap.computeIfAbsent("Kuudra's Hollow", k -> new AreaData());
+        
+        String[] legacyNames = {"Kuudra", "T1", "T2", "T3", "T4", "T5"};
+        for (String oldName : legacyNames) {
+            if (areaDataMap.containsKey(oldName)) {
+                AreaData oldData = areaDataMap.remove(oldName);
+                mergeData(kuudraData, oldData);
+                // Also track them as subareas for historical detail
+                String normName = oldName;
+                if (oldName.equalsIgnoreCase("Kuudra")) normName = "Kuudra's Hollow";
+                kuudraData.subAreas.put(normName, oldData);
             }
         }
     }

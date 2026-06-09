@@ -50,8 +50,8 @@ public class SkyblockUtils {
         if (lowerMode.contains("park") || lowerMap.contains("the park")) return "The Park";
         if (lowerMode.contains("caverns") || lowerMap.contains("deep caverns")) return "Deep Caverns";
         if (lowerMode.contains("gold") || lowerMap.contains("gold mine")) return "Gold Mine";
-        if (lowerMode.contains("barn") || lowerMap.contains("the barn")) return "The Barn";
-        if (lowerMode.contains("desert") || lowerMap.contains("mushroom desert")) return "Mushroom Desert";
+        if (lowerMode.contains("barn") || lowerMap.contains("the barn") || 
+            lowerMode.contains("desert") || lowerMap.contains("mushroom desert")) return "Farming Islands";
         if (lowerMode.contains("rift") || lowerMap.contains("the rift")) return "The Rift";
         if (lowerMode.contains("jerry") || lowerMap.contains("jerry's workshop")) return "Jerry's Workshop";
         if (lowerMode.contains("auction") || lowerMap.contains("dark auction")) return "Dark Auction";
@@ -238,8 +238,8 @@ public class SkyblockUtils {
             if (lower.contains("the park")) return "The Park";
             if (lower.contains("deep caverns")) return "Deep Caverns";
             if (lower.contains("gold mine")) return "Gold Mine";
-            if (lower.contains("the barn")) return "The Barn";
-            if (lower.contains("mushroom desert")) return "Mushroom Desert";
+            if (lower.contains("the barn") || lower.contains("barn") || 
+                lower.contains("mushroom desert") || lower.contains("desert")) return "Farming Islands";
             if (lower.contains("the rift") || lower.contains("rift")) return "The Rift";
             if (lower.contains("jerry's workshop") || lower.contains("jerry")) return "Jerry's Workshop";
             if (lower.contains("dark auction") || lower.contains("auction")) return "Dark Auction";
@@ -253,30 +253,81 @@ public class SkyblockUtils {
         if (sub == null || sub.isEmpty() || sub.equalsIgnoreCase("None")) return "Unknown";
         String lower = sub.toLowerCase();
         
-        if (lower.contains("garden") || lower.contains("plot")) return "The Garden";
-        if (lower.contains("island")) return "Private Island";
+        // 1. Dungeons
         if (lower.contains("catacombs") || lower.contains("dungeon") || 
             lower.matches("^(f[1-7]|m[1-7])$")) return "Dungeons";
-        if (lower.contains("mines") || lower.contains("dwarven")) return "Dwarven Mines";
-        if (lower.contains("hollows") || lower.contains("crystal")) return "Crystal Hollows";
-        if (lower.contains("crimson") || lower.contains("isle")) return "Crimson Isle";
-        if (lower.contains("spider") || lower.contains("den")) return "Spider's Den";
-        if (lower.contains("end")) return "The End";
-        if (lower.contains("park")) return "The Park";
-        if (lower.contains("cavern") || lower.contains("deep")) return "Deep Caverns";
-        if (lower.contains("gold") || lower.contains("mine")) return "Gold Mine";
-        if (lower.contains("barn")) return "The Barn";
-        if (lower.contains("desert") || lower.contains("mushroom")) return "Mushroom Desert";
-        if (lower.contains("rift")) return "The Rift";
-        if (lower.contains("jerry") || lower.contains("workshop")) return "Jerry's Workshop";
-        if (lower.contains("auction") || lower.contains("dark")) return "Dark Auction";
+            
+        // 2. Kuudra
         if (lower.matches("^(t[1-5])$") || lower.contains("kuudra")) return "Kuudra's Hollow";
         
-        // Hub subareas
+        // 3. Farming Islands (The Barn & Mushroom Desert & their sub-locations)
+        if (lower.contains("barn") || lower.contains("desert") || lower.contains("mushroom") || 
+            lower.contains("oasis") || lower.contains("windmill") || lower.contains("trevor") || 
+            lower.contains("shepherd") || lower.contains("jake")) return "Farming Islands";
+            
+        // 4. Dwarven Mines (make sure it's checked before Gold Mine because of "mines")
+        if (lower.contains("dwarven") || lower.contains("forge") || lower.contains("goblin") || 
+            lower.contains("royal") || lower.contains("palace") || lower.contains("cliffside") ||
+            lower.contains("copcoils") || lower.contains("rampart") || lower.contains("aristocrat") ||
+            lower.contains("hanging court")) return "Dwarven Mines";
+            
+        // 5. Crystal Hollows (check before other general ones)
+        if (lower.contains("hollows") || lower.contains("nucleus") || lower.contains("precursor") || 
+            lower.contains("khazad") || lower.contains("grotto") || lower.contains("mithril deposits")) return "Crystal Hollows";
+            
+        // 6. Deep Caverns
+        if (lower.contains("cavern") || lower.contains("deep") || lower.contains("gunpowder") || 
+            lower.contains("lapis") || lower.contains("pigman") || lower.contains("slimehill") || 
+            lower.contains("obsidian") || lower.contains("diamond reserve")) return "Deep Caverns";
+            
+        // 7. Gold Mine (check after Coal Mine/Dwarven Mines/Mithril/etc)
+        if (lower.contains("gold")) return "Gold Mine";
+        
+        // 8. The Park
+        if (lower.contains("park") || lower.contains("spruce") || lower.contains("birch") || 
+            lower.contains("savanna") || lower.contains("howling") || lower.contains("melancholy") || 
+            lower.contains("dark thicket")) return "The Park";
+            
+        // 9. Spider's Den
+        if (lower.contains("spider") || lower.contains("den") || lower.contains("arachne") || 
+            lower.contains("archaeologist")) return "Spider's Den";
+            
+        // 10. The End
+        if (lower.contains("end") || lower.contains("nest") || lower.contains("sepulture") || 
+            lower.contains("zealot")) return "The End";
+            
+        // 11. Crimson Isle
+        if (lower.contains("crimson") || lower.contains("isle") || lower.contains("scarleton") || 
+            lower.contains("dragontail") || lower.contains("ashfang") || lower.contains("lest") || 
+            lower.contains("marsh") || lower.contains("bastion") || lower.contains("smoldering") || 
+            lower.contains("aurea")) return "Crimson Isle";
+            
+        // 12. The Rift
+        if (lower.contains("rift") || lower.contains("wyld") || lower.contains("lagoon") || 
+            lower.contains("colosseum reborn") || lower.contains("dreadfarm") || 
+            lower.contains("westbridge") || lower.contains("otherside") || 
+            lower.contains("mirror") || lower.contains("gallery") || lower.contains("village plaza")) return "The Rift";
+            
+        // 13. Jerry's Workshop
+        if (lower.contains("jerry")) return "Jerry's Workshop";
+        
+        // 14. Private Island
+        if (lower.contains("island") || lower.contains("plot")) return "Private Island";
+        
+        // 15. The Garden
+        if (lower.contains("garden")) return "The Garden";
+        
+        // 16. The Hub
         if (lower.contains("village") || lower.contains("ruins") || lower.contains("high level") || 
             lower.contains("forest") || lower.contains("mountain") || lower.contains("wilderness") || 
-            lower.contains("graveyard") || lower.contains("coal mine") || lower.contains("bazaar") || 
-            lower.contains("community center") || lower.contains("farm") || lower.contains("hut")) {
+            lower.contains("graveyard") || lower.contains("coal") || lower.contains("bazaar") || 
+            lower.contains("community center") || lower.contains("farm") || lower.contains("hut") || 
+            lower.contains("canvas") || lower.contains("carnival") || lower.contains("colosseum") || 
+            lower.contains("election") || lower.contains("blacksmith") || lower.contains("auction") || 
+            lower.contains("bank") || lower.contains("abiphone") || lower.contains("library") || 
+            lower.contains("thaumaturgist") || lower.contains("sewer") || lower.contains("museum") || 
+            lower.contains("taylor") || lower.contains("seymour") || lower.contains("shen") || 
+            lower.contains("elise") || lower.contains("wizard") || lower.contains("flower house")) {
             return "The Hub";
         }
         
