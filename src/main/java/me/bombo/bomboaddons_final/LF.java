@@ -66,6 +66,14 @@ public class LF {
     }
 
     public static void show(String username, String query, boolean coopMode) {
+        if (username.equalsIgnoreCase(cachedUsername) && cachedJson != null && cachedUuid != null && !cachedUuid.isEmpty()
+                && (System.currentTimeMillis() - cacheTime < 60000)) {
+            sendMessage("&7Looking up &b" + username + (coopMode ? " &d(Coop Mode)" : "") + "&7 (Cached)...");
+            LF.SearchContext ctx = new LF.SearchContext(cachedJson, cachedUuid, username, coopMode);
+            Minecraft.getInstance().execute(() -> handleResponse(username, query, ctx));
+            return;
+        }
+
         sendMessage("&7Looking up &b" + username + (coopMode ? " &d(Coop Mode)" : "") + "&7...");
         getUuid(username).thenCompose((uuid) -> {
             if (uuid == null) {
@@ -79,6 +87,10 @@ public class LF {
                         sendMessage("&cError: Could not fetch data for " + username);
                         return null;
                     }
+                    cachedUsername = username;
+                    cachedUuid = cleanUuid;
+                    cachedJson = json;
+                    cacheTime = System.currentTimeMillis();
                     return new LF.SearchContext(json, cleanUuid, username, coopMode);
                 });
             }
@@ -121,6 +133,7 @@ public class LF {
 
         // Intercept sacks_counts
         if (element.isJsonObject() && (path.endsWith("sacks_counts") || path.contains("sacks_counts"))) {
+            final String finalPath = path;
             JsonObject obj = element.getAsJsonObject();
             for (Entry<String, JsonElement> entry : obj.entrySet()) {
                 String itemId = entry.getKey();
@@ -136,15 +149,26 @@ public class LF {
                 if (friendlyName.toLowerCase().contains(query)) {
                     int idx = matchCount.incrementAndGet();
                     String fullName = "§a" + friendlyName + " §7x" + count;
-                    MutableComponent link = Component.literal(fullName);
                     
-                    ClickEvent c = createClickEventRobust("RUN_COMMAND", "/sacks");
-                    Style style = Style.EMPTY.withClickEvent(c);
-                    link.setStyle(style);
-                    
-                    MutableComponent contComponent = translate(" &r&7(Sacks)");
-                    Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
-                    sendMessage(msg);
+                    resolveName(extractLastUuidFromPath(finalPath)).thenAccept(memberName -> {
+                        Minecraft.getInstance().execute(() -> {
+                            String mUser = memberName != null && !memberName.isEmpty() ? memberName : ctx.targetUsername;
+                            String selfName = Minecraft.getInstance().getUser().getName();
+                            String labelSuffix = "Sacks";
+                            if (!mUser.equalsIgnoreCase(selfName)) {
+                                labelSuffix += ") (" + mUser;
+                            }
+                            
+                            MutableComponent link = Component.literal(fullName);
+                            ClickEvent c = createClickEventRobust("RUN_COMMAND", "/sacks");
+                            Style style = Style.EMPTY.withClickEvent(c);
+                            link.setStyle(style);
+                            
+                            MutableComponent contComponent = translate(" &r&7(" + labelSuffix + ")");
+                            Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
+                            sendMessage(msg);
+                        });
+                    });
                 }
             }
             return;
@@ -152,6 +176,7 @@ public class LF {
 
         // Intercept pets
         if (element.isJsonArray() && path.endsWith("pets")) {
+            final String finalPath = path;
             JsonArray arr = element.getAsJsonArray();
             for (JsonElement itemEl : arr) {
                 if (!itemEl.isJsonObject()) continue;
@@ -177,16 +202,28 @@ public class LF {
                     else if (exp >= 1_000) expText = String.format("%.1fK exp", exp / 1_000.0);
                     else expText = String.format("%.0f exp", exp);
                     
-                    String fullName = "§6" + displayName + " §7(" + expText + ")";
-                    MutableComponent link = Component.literal(fullName);
+                    String color = getPetColor(tier);
+                    String fullName = color + displayName + " §7(" + expText + ")";
                     
-                    ClickEvent c = createClickEventRobust("RUN_COMMAND", "/pets");
-                    Style style = Style.EMPTY.withClickEvent(c);
-                    link.setStyle(style);
-                    
-                    MutableComponent contComponent = translate(" &r&7(Pets)");
-                    Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
-                    sendMessage(msg);
+                    resolveName(extractLastUuidFromPath(finalPath)).thenAccept(memberName -> {
+                        Minecraft.getInstance().execute(() -> {
+                            String mUser = memberName != null && !memberName.isEmpty() ? memberName : ctx.targetUsername;
+                            String selfName = Minecraft.getInstance().getUser().getName();
+                            String labelSuffix = "Pets";
+                            if (!mUser.equalsIgnoreCase(selfName)) {
+                                labelSuffix += ") (" + mUser;
+                            }
+                            
+                            MutableComponent link = Component.literal(fullName);
+                            ClickEvent c = createClickEventRobust("RUN_COMMAND", "/pets");
+                            Style style = Style.EMPTY.withClickEvent(c);
+                            link.setStyle(style);
+                            
+                            MutableComponent contComponent = translate(" &r&7(" + labelSuffix + ")");
+                            Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
+                            sendMessage(msg);
+                        });
+                    });
                 }
             }
             return;
@@ -430,6 +467,29 @@ public class LF {
         return s == null ? "" : s.replaceAll("§.", "").replaceAll("&.", "");
     }
 
+    private static String getPetColor(String tier) {
+        if (tier == null) return "§7";
+        switch (tier.toUpperCase()) {
+            case "COMMON":
+                return "§f";
+            case "UNCOMMON":
+                return "§a";
+            case "RARE":
+                return "§9";
+            case "EPIC":
+                return "§5";
+            case "LEGENDARY":
+                return "§6";
+            case "MYTHIC":
+                return "§d";
+            case "SPECIAL":
+            case "VERY_SPECIAL":
+                return "§c";
+            default:
+                return "§7";
+        }
+    }
+
     private static String extractLastUuidFromPath(String path) {
         String[] parts = path.split(" > ");
         for (int i = parts.length - 1; i >= 0; i--) {
@@ -635,9 +695,10 @@ public class LF {
         });
     }
 
-    private static String cachedUsername = "";
-    private static String cachedJson = null;
-    private static long cacheTime = 0;
+    private static volatile String cachedUsername = "";
+    private static volatile String cachedUuid = "";
+    private static volatile String cachedJson = null;
+    private static volatile long cacheTime = 0;
 
     public static void openVirtualContainer(String username, String path, int highlightSlot) {
         if (username.equalsIgnoreCase(cachedUsername) && cachedJson != null
@@ -655,10 +716,12 @@ public class LF {
             if (res == null)
                 return;
             String json = (String) res[0];
+            String cleanUuid = (String) res[1];
             if (json == null)
                 return;
 
             cachedUsername = username;
+            cachedUuid = cleanUuid;
             cachedJson = json;
             cacheTime = System.currentTimeMillis();
 

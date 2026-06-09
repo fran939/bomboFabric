@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Pre-populate bits cost cache at startup, match talisman_bag container paths for accessory bags, and run /pets and /sacks click actions directly."
+gh release create "v$version" $jarPath --title "v$version" --notes "Implement 1-minute profile data cache in LF.show(), dynamic pet rarity color codes, and coop member name resolution for sacks and pets search results."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
