@@ -90,7 +90,7 @@ public class KuudraPerkClicker {
 
         // Ballista is ready → get toxic arrows
         if (s.autoGfsToxic && clean.contains("[NPC] Elle: Phew! The Ballista is finally ready!")) {
-            sendCommand("gfs TOXIC_ARROW_POISON 21");
+            sendCommand("gfs TOXIC_ARROW_POISON " + s.autoGfsToxicCount);
         }
         // Purchased Human Cannonball → get twilight arrows
         else if (s.autoGfsTwilight && clean.contains("You purchased Human Cannonball!")) {

@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Optimize Fuck Diorite replacement to run instantly by intercepting block updates in ClientLevel, fixing rendering delays for moving pads in Dungeons."
+gh release create "v$version" $jarPath --title "v$version" --notes "Widen Fuck Diorite replacement range to cover downward pad movements, and add a configuration option for Toxic Arrow Poison count."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

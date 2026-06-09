@@ -228,6 +228,7 @@ public class BomboConfig {
         public boolean perkMenuClicker = false;
         public boolean autoGfsToxicTwilight = false;
         public boolean autoGfsToxic = false;
+        public int autoGfsToxicCount = 21;
         public boolean autoGfsTwilight = false;
  
         public boolean pearlCalculator = false;

@@ -550,6 +550,7 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Disable Blindness", s.disableBlindness, v -> s.disableBlindness = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Perk Menu Clicker", s.perkMenuClicker, v -> s.perkMenuClicker = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Auto GFS Toxic", s.autoGfsToxic, v -> s.autoGfsToxic = v, contentX, contentWidth, curY);
+                    curY = addIntLabelSlider("Toxic Count", s.autoGfsToxicCount, 1, 64, 1, v -> s.autoGfsToxicCount = v, contentX, 150, curY);
                     curY = addBoolOption("Auto GFS Twilight", s.autoGfsTwilight, v -> s.autoGfsTwilight = v, contentX, contentWidth, curY);
                     
                     curY += 10;
@@ -1260,6 +1261,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Perk Menu Clicker", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Auto GFS Toxic", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fToxic Count: §e" + BomboConfig.get().autoGfsToxicCount, contentX, curY + 4, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Auto GFS Twilight", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     
