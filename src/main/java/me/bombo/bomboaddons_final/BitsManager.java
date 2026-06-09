@@ -18,6 +18,37 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class BitsManager {
     private static final HttpClient client = HttpClient.newBuilder().build();
     public static final java.util.Map<String, Integer> bitCostCache = new java.util.concurrent.ConcurrentHashMap<>();
+    static {
+        bitCostCache.put("GOD_POTION_2", 1500);
+        bitCostCache.put("KISMET_FEATHER", 1350);
+        bitCostCache.put("KAT_FLOWER", 500);
+        bitCostCache.put("KAT_BOUQUET", 2500);
+        bitCostCache.put("MATRIARCH_PARFUM", 1200);
+        bitCostCache.put("HOLOGRAM", 2000);
+        bitCostCache.put("DITTO_BLOB", 600);
+        bitCostCache.put("BUILDERS_WAND", 12000);
+        bitCostCache.put("BLOCK_ZAPPER", 5000);
+        bitCostCache.put("BITS_TALISMAN", 15000);
+        bitCostCache.put("SHARD_BITBUG", 5000);
+        bitCostCache.put("POCKET_SACK_IN_A_SACK", 8000);
+        bitCostCache.put("PORTALIZER", 4800);
+        bitCostCache.put("TRIO_CONTACTS_ADDON", 6450);
+        bitCostCache.put("AUTOPET_RULES_2", 21000);
+        bitCostCache.put("ENCHANTMENT_EXPERTISE_1", 4000);
+        bitCostCache.put("ENCHANTMENT_COMPACT_1", 4000);
+        bitCostCache.put("ENCHANTMENT_CULTIVATING_1", 4000);
+        bitCostCache.put("ENCHANTMENT_ABSORB_1", 4000);
+        bitCostCache.put("ENCHANTMENT_CHAMPION_1", 4000);
+        bitCostCache.put("ENCHANTMENT_HECATOMB_1", 6000);
+        bitCostCache.put("ENCHANTMENT_TOXOPHILITE_1", 4000);
+        bitCostCache.put("TALISMAN_ENRICHMENT_SWAPPER", 200);
+        bitCostCache.put("HEAT_CORE", 3000);
+        bitCostCache.put("HYPER_CATALYST_UPGRADE", 300);
+        bitCostCache.put("ULTIMATE_CARROT_CANDY_UPGRADE", 8000);
+        bitCostCache.put("COLOSSAL_EXP_BOTTLE_UPGRADE", 1200);
+        bitCostCache.put("JUMBO_BACKPACK_UPGRADE", 4000);
+        bitCostCache.put("MINION_STORAGE_EXPANDER", 1500);
+    }
     private static final AtomicBoolean isFetching = new AtomicBoolean(false);
     private static long lastFetchTime = 0;
     private static long lastAttemptTime = 0;

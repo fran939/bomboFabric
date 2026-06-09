@@ -138,7 +138,7 @@ public class LF {
                     String fullName = "§a" + friendlyName + " §7x" + count;
                     MutableComponent link = Component.literal(fullName);
                     
-                    ClickEvent c = createClickEventRobust("SUGGEST_COMMAND", "/sacks");
+                    ClickEvent c = createClickEventRobust("RUN_COMMAND", "/sacks");
                     Style style = Style.EMPTY.withClickEvent(c);
                     link.setStyle(style);
                     
@@ -180,7 +180,7 @@ public class LF {
                     String fullName = "§6" + displayName + " §7(" + expText + ")";
                     MutableComponent link = Component.literal(fullName);
                     
-                    ClickEvent c = createClickEventRobust("SUGGEST_COMMAND", "/pets");
+                    ClickEvent c = createClickEventRobust("RUN_COMMAND", "/pets");
                     Style style = Style.EMPTY.withClickEvent(c);
                     link.setStyle(style);
                     
@@ -394,7 +394,7 @@ public class LF {
                 int page = (itemIndex / 45) + 1;
                 name = "Ender Chest " + page;
                 cmd = "/ec " + page;
-        } else if (s.contains("accessory_bag") || s.contains("accessory")) {
+        } else if (s.contains("accessory_bag") || s.contains("accessory") || s.contains("talisman_bag") || s.contains("talisman")) {
             name = "Accessory Bag";
             cmd = "/ab";
         } else if (s.contains("wardrobe")) {
