@@ -22,6 +22,37 @@ public class FuckDiorite {
 
     private static int tickCounter = 0;
 
+    public static BlockState checkAndReplace(BlockPos pos, BlockState state) {
+        if (state == null || (!state.is(Blocks.DIORITE) && !state.is(Blocks.POLISHED_DIORITE))) {
+            return state;
+        }
+
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.fuckDiorite) return state;
+
+        String area = SkyblockUtils.getLocation();
+        if (!"Dungeons".equals(area) && !"Private Island".equals(area)) {
+            return state;
+        }
+
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+
+        for (int p = 0; p < 4; p++) {
+            BlockPos pillar = PILLARS[p];
+            if (x >= pillar.getX() - 3 && x <= pillar.getX() + 3 &&
+                y >= pillar.getY() && y <= pillar.getY() + 37 &&
+                z >= pillar.getZ() - 3 && z <= pillar.getZ() + 3) {
+                
+                BlockState customGlass = getSelectedGlassState(s.fuckDioriteColor);
+                return s.fuckDioritePillarColor ? PILLAR_GLASS_STATES[p] : customGlass;
+            }
+        }
+
+        return state;
+    }
+
     public static void onTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;

@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Implement 1-minute profile data cache in LF.show(), dynamic pet rarity color codes, and coop member name resolution for sacks and pets search results."
+gh release create "v$version" $jarPath --title "v$version" --notes "Optimize Fuck Diorite replacement to run instantly by intercepting block updates in ClientLevel, fixing rendering delays for moving pads in Dungeons."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
