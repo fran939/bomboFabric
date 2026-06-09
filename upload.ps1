@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Fix GUI overlaps and suppress profile keybinds in GUI; add Fuck Diorite feature to replace pillar diorite with color-matched glass in F7 boss room."
+gh release create "v$version" $jarPath --title "v$version" --notes "Parse Kuudra's Hollow as main area and Kuudra tiers (T1-T5) as subareas for /b area and playtime statistics."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
