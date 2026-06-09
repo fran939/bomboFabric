@@ -34,6 +34,7 @@ import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 
 @Environment(EnvType.CLIENT)
 public class BomboaddonsClient implements ClientModInitializer {
@@ -235,6 +236,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                             context.getSource().sendFeedback(createHelpLine("/b lb", "/b lb", "Searches your own inventory.").append(Component.literal(" §7- Searches your own inventory")));
                             context.getSource().sendFeedback(createHelpLine("/b view <name> <p>", "/b view ", "Opens virtual container paths.").append(Component.literal(" §7- Opens virtual container paths")));
                             context.getSource().sendFeedback(createHelpLine("/b msg <message>", "/b msg ", "Simulates a chat message with §-color code support.").append(Component.literal(" §7- Simulates a chat message")));
+                            context.getSource().sendFeedback(createHelpLine("/b get <alias>", "/b get ", "Checks inventory and runs /gfs to refill item up to target.").append(Component.literal(" §7- Refills items from sack")));
 
                             context.getSource().sendFeedback(Component.literal("§8---------------------------------------------------------"));
                             return 1;
@@ -385,6 +387,135 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     context.getSource().sendFeedback(Component.literal(PREFIX + "§aCurrent Version: §e" + version));
                                     return 1;
                                 }));
+
+                        builder.then(ClientCommandManager.literal("wp")
+                                .executes(context -> {
+                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§cUsage: /b wp <x> <y> <z> <name> OR /b wp clear"));
+                                    return 1;
+                                })
+                                .then(ClientCommandManager.literal("clear")
+                                        .executes(context -> {
+                                            GardenWaypoints.clear();
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aAll waypoints cleared!"));
+                                            return 1;
+                                        }))
+                                .then(ClientCommandManager.argument("x", StringArgumentType.word())
+                                        .then(ClientCommandManager.argument("y", StringArgumentType.word())
+                                                .then(ClientCommandManager.argument("z", StringArgumentType.word())
+                                                        .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                                                                .executes(context -> {
+                                                                    try {
+                                                                        String xStr = StringArgumentType.getString(context, "x");
+                                                                        String yStr = StringArgumentType.getString(context, "y");
+                                                                        String zStr = StringArgumentType.getString(context, "z");
+                                                                        String name = StringArgumentType.getString(context, "name");
+
+                                                                        Minecraft mc = Minecraft.getInstance();
+                                                                        if (mc.player == null) {
+                                                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§cPlayer not found!"));
+                                                                            return 0;
+                                                                        }
+                                                                        Vec3 playerPos = mc.player.position();
+                                                                        double x, y, z;
+                                                                        if (xStr.startsWith("~")) {
+                                                                            x = playerPos.x + (xStr.length() > 1 ? Double.parseDouble(xStr.substring(1)) : 0);
+                                                                        } else {
+                                                                            x = Double.parseDouble(xStr);
+                                                                        }
+                                                                        if (yStr.startsWith("~")) {
+                                                                            y = playerPos.y + (yStr.length() > 1 ? Double.parseDouble(yStr.substring(1)) : 0);
+                                                                        } else {
+                                                                            y = Double.parseDouble(yStr);
+                                                                        }
+                                                                        if (zStr.startsWith("~")) {
+                                                                            z = playerPos.z + (zStr.length() > 1 ? Double.parseDouble(zStr.substring(1)) : 0);
+                                                                        } else {
+                                                                            z = Double.parseDouble(zStr);
+                                                                        }
+
+                                                                        Vec3 targetPos = new Vec3(x, y, z);
+                                                                        GardenWaypoints.addWaypoint(targetPos, name);
+                                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§aAdded waypoint '§e" + name + "§a' at " + String.format("%.1f, %.1f, %.1f", x, y, z)));
+                                                                        return 1;
+                                                                    } catch (NumberFormatException e) {
+                                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cInvalid coordinates format!"));
+                                                                        return 0;
+                                                                    }
+                                                                }))))));
+
+                        builder.then(ClientCommandManager.literal("cycle")
+                                .executes(context -> {
+                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§cUsage: /b cycle add <name> <commands...>, /b cycle apply <name>, /b cycle remove <name>, or /b cycle list"));
+                                    return 1;
+                                })
+                                .then(ClientCommandManager.literal("add")
+                                        .then(ClientCommandManager.argument("name", StringArgumentType.word())
+                                                .then(ClientCommandManager.argument("commands", StringArgumentType.greedyString())
+                                                        .executes(context -> {
+                                                            String name = StringArgumentType.getString(context, "name").toLowerCase();
+                                                            String commandsStr = StringArgumentType.getString(context, "commands");
+                                                            List<String> cmds = splitCommands(commandsStr);
+                                                            if (cmds.isEmpty()) {
+                                                                context.getSource().sendFeedback(Component.literal(PREFIX + "§cNo commands specified!"));
+                                                                return 0;
+                                                            }
+                                                            BomboConfig.get().commandCycles.put(name, cmds);
+                                                            BomboConfig.get().commandCycleIndices.put(name, 0);
+                                                            BomboConfig.save();
+                                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aAdded cycle §e" + name + " §awith §6" + cmds.size() + "§a commands: §7" + String.join(", ", cmds)));
+                                                            return 1;
+                                                        }))))
+                                .then(ClientCommandManager.literal("remove")
+                                        .then(ClientCommandManager.argument("name", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "name").toLowerCase();
+                                                    if (BomboConfig.get().commandCycles.remove(name) != null) {
+                                                        BomboConfig.get().commandCycleIndices.remove(name);
+                                                        BomboConfig.save();
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§aRemoved cycle §e" + name));
+                                                    } else {
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cCycle §e" + name + " §cdoes not exist!"));
+                                                    }
+                                                    return 1;
+                                                })))
+                                .then(ClientCommandManager.literal("list")
+                                        .executes(context -> {
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§6--- Command Cycles ---"));
+                                            if (BomboConfig.get().commandCycles.isEmpty()) {
+                                                context.getSource().sendFeedback(Component.literal("  §7None"));
+                                            } else {
+                                                for (Map.Entry<String, List<String>> entry : BomboConfig.get().commandCycles.entrySet()) {
+                                                    String name = entry.getKey();
+                                                    List<String> cmds = entry.getValue();
+                                                    int index = BomboConfig.get().commandCycleIndices.getOrDefault(name, 0);
+                                                    context.getSource().sendFeedback(Component.literal("  §e" + name + " §7(Next index: §b" + index + "§7/§b" + cmds.size() + "§7) -> §7" + String.join(", ", cmds)));
+                                                }
+                                            }
+                                            return 1;
+                                        }))
+                                .then(ClientCommandManager.literal("apply")
+                                        .then(ClientCommandManager.argument("name", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "name").toLowerCase();
+                                                    List<String> cmds = BomboConfig.get().commandCycles.get(name);
+                                                    if (cmds == null || cmds.isEmpty()) {
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cCycle §e" + name + " §cdoes not exist or is empty!"));
+                                                        return 0;
+                                                    }
+                                                    int index = BomboConfig.get().commandCycleIndices.getOrDefault(name, 0);
+                                                    if (index >= cmds.size() || index < 0) {
+                                                        index = 0;
+                                                    }
+                                                    String cmd = cmds.get(index);
+                                                    int nextIndex = (index + 1) % cmds.size();
+                                                    BomboConfig.get().commandCycleIndices.put(name, nextIndex);
+                                                    BomboConfig.save();
+                                                    
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§aRunning: §b" + cmd + " §7(Next: " + cmds.get(nextIndex) + ")"));
+                                                    executeTracked(cmd);
+                                                    return 1;
+                                                }))));
+
                         // --- Playtime ---
                         builder.then(ClientCommandManager.literal("pt")
                                 .executes(context -> {
@@ -776,6 +907,103 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     }
                                     return 1;
                                 }));
+
+                        builder.then(ClientCommandManager.literal("get")
+                                .then(ClientCommandManager.literal("add")
+                                        .then(ClientCommandManager.argument("number", IntegerArgumentType.integer(1))
+                                                .then(ClientCommandManager.argument("alias", StringArgumentType.word())
+                                                        .executes(context -> {
+                                                            Minecraft mc = Minecraft.getInstance();
+                                                            if (mc.player == null) return 0;
+                                                            ItemStack hand = mc.player.getMainHandItem();
+                                                            if (hand.isEmpty()) {
+                                                                context.getSource().sendFeedback(Component.literal(PREFIX + "§cPlease hold the item you want to add in your main hand!"));
+                                                                return 0;
+                                                            }
+                                                            String itemId = SkyblockUtils.getInternalId(hand);
+                                                            if (itemId == null || itemId.isEmpty()) {
+                                                                itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(hand.getItem()).getPath().toUpperCase();
+                                                            }
+                                                            int number = IntegerArgumentType.getInteger(context, "number");
+                                                            String alias = StringArgumentType.getString(context, "alias").toLowerCase();
+                                                            
+                                                            BomboConfig.get().getTargets.put(alias, new BomboConfig.GetTarget(itemId, number));
+                                                            BomboConfig.save();
+                                                            
+                                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aAdded get target: §e" + itemId + " §7(Target: " + number + ") under alias §b" + alias));
+                                                            return 1;
+                                                        }))))
+                                .then(ClientCommandManager.literal("remove")
+                                        .then(ClientCommandManager.argument("alias", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    String alias = StringArgumentType.getString(context, "alias").toLowerCase();
+                                                    if (BomboConfig.get().getTargets.remove(alias) != null) {
+                                                        BomboConfig.save();
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§aRemoved get target for alias §e" + alias));
+                                                    } else {
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cNo get target found for alias §e" + alias));
+                                                    }
+                                                    return 1;
+                                                })))
+                                .then(ClientCommandManager.literal("list")
+                                        .executes(context -> {
+                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§6--- Get Targets ---"));
+                                            if (BomboConfig.get().getTargets.isEmpty()) {
+                                                context.getSource().sendFeedback(Component.literal("  §7None"));
+                                            } else {
+                                                for (Map.Entry<String, BomboConfig.GetTarget> entry : BomboConfig.get().getTargets.entrySet()) {
+                                                    context.getSource().sendFeedback(Component.literal("  §eb" + " get " + entry.getKey() + " §7-> §b" + entry.getValue().itemId + " §7(Target: " + entry.getValue().targetAmount + ")"));
+                                                }
+                                            }
+                                            return 1;
+                                        }))
+                                .then(ClientCommandManager.argument("alias_or_id", StringArgumentType.word())
+                                        .executes(context -> {
+                                            String alias = StringArgumentType.getString(context, "alias_or_id").toLowerCase();
+                                            BomboConfig.GetTarget target = BomboConfig.get().getTargets.get(alias);
+                                            if (target == null) {
+                                                context.getSource().sendFeedback(Component.literal(PREFIX + "§cNo get target found for alias §e" + alias));
+                                                return 0;
+                                            }
+                                            
+                                            Minecraft mc = Minecraft.getInstance();
+                                            if (mc.player != null) {
+                                                int currentCount = 0;
+                                                for (int j = 0; j < mc.player.getInventory().getContainerSize(); j++) {
+                                                    ItemStack stack = mc.player.getInventory().getItem(j);
+                                                    if (!stack.isEmpty()) {
+                                                        String itemId = SkyblockUtils.getInternalId(stack);
+                                                        if (itemId == null || itemId.isEmpty()) {
+                                                            itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().toUpperCase();
+                                                        }
+                                                        if (itemId.equalsIgnoreCase(target.itemId)) {
+                                                            currentCount += stack.getCount();
+                                                        }
+                                                    }
+                                                }
+                                                if (currentCount < target.targetAmount) {
+                                                    int missing = target.targetAmount - currentCount;
+                                                    mc.player.connection.sendCommand("gfs " + target.itemId + " " + missing);
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§7Requesting §e" + missing + " §7more §e" + target.itemId + " §7(missing §e" + missing + "/" + target.targetAmount + "§7)."));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§7Already have §e" + currentCount + "/" + target.targetAmount + " §e" + target.itemId + "§7."));
+                                                }
+                                            }
+                                            return 1;
+                                        })
+                                        .then(ClientCommandManager.argument("number", IntegerArgumentType.integer(1))
+                                                .then(ClientCommandManager.argument("alias", StringArgumentType.word())
+                                                        .executes(context -> {
+                                                            String itemId = StringArgumentType.getString(context, "alias_or_id").toUpperCase();
+                                                            int number = IntegerArgumentType.getInteger(context, "number");
+                                                            String alias = StringArgumentType.getString(context, "alias").toLowerCase();
+                                                            
+                                                            BomboConfig.get().getTargets.put(alias, new BomboConfig.GetTarget(itemId, number));
+                                                            BomboConfig.save();
+                                                            
+                                                            context.getSource().sendFeedback(Component.literal(PREFIX + "§aAdded get target: §e" + itemId + " §7(Target: " + number + ") under alias §b" + alias));
+                                                            return 1;
+                                                        })))));
                     };
 
                     setupCommands.accept(bBuilder);
@@ -1088,6 +1316,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                 try {
                     me.bombo.bomboaddons_final.kuudra.pearls.Pearls.render(context);
                 } catch (Throwable t) {}
+                try {
+                    GardenWaypoints.render(context);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
             });
 
             HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -1286,6 +1519,12 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
 
             try {
+                FuckDiorite.onTick();
+            } catch (Throwable t) {
+                // Silently ignore
+            }
+
+            try {
                 AutoCombine.onTick();
             } catch (Throwable t) {
                 // Silently ignore
@@ -1383,5 +1622,28 @@ public class BomboaddonsClient implements ClientModInitializer {
                 .withClickEvent(new ClickEvent.SuggestCommand(suggestion))
                 .withHoverEvent(SBECommands.createHoverEvent("§b" + suggestion + "\n\n§7" + description))
             );
+    }
+
+    public static List<String> splitCommands(String input) {
+        List<String> result = new ArrayList<>();
+        if (input == null || input.trim().isEmpty()) return result;
+        if (input.contains("/")) {
+            String[] parts = input.split("\\s+(?=/)");
+            for (String p : parts) {
+                String trimmed = p.trim();
+                if (!trimmed.isEmpty()) {
+                    result.add(trimmed);
+                }
+            }
+        } else {
+            String[] parts = input.split("\\s+");
+            for (String p : parts) {
+                String trimmed = p.trim();
+                if (!trimmed.isEmpty()) {
+                    result.add(trimmed);
+                }
+            }
+        }
+        return result;
     }
 }

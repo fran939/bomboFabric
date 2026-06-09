@@ -33,6 +33,9 @@ public abstract class MouseMixin {
         if (action == 1) { // GLFW_PRESS
             int button = info.button();
             Minecraft mc = Minecraft.getInstance();
+            if (mc.screen instanceof me.bombo.bomboaddons_final.BomboConfigGUI) {
+                return;
+            }
              if (mc.screen != null && mc.player != null) {
                 try {
                     if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen) {
@@ -56,15 +59,21 @@ public abstract class MouseMixin {
 
             if (mc.player != null) {
                 String activeProfile = BomboConfig.get().activeProfile;
-                List<BomboConfig.CommandBind> binds = null;
+                List<BomboConfig.CommandBind> binds = new java.util.ArrayList<>();
+                List<BomboConfig.CommandBind> activeBinds = null;
+                List<BomboConfig.CommandBind> generalBinds = null;
 
                 if (mc.screen != null) {
                     // Profile keybinds only trigger when a GUI is open
-                    binds = BomboConfig.get().profileBinds.get(activeProfile);
+                    activeBinds = BomboConfig.get().profileBinds.get(activeProfile);
+                    generalBinds = BomboConfig.get().profileBinds.get("General");
                 } else {
                     // Keybinds category keybinds only trigger when NO GUI is open
-                    binds = BomboConfig.get().keybindBinds.get(activeProfile);
+                    activeBinds = BomboConfig.get().keybindBinds.get(activeProfile);
+                    generalBinds = BomboConfig.get().keybindBinds.get("General");
                 }
+                if (activeBinds != null) binds.addAll(activeBinds);
+                if (generalBinds != null && !activeProfile.equals("General")) binds.addAll(generalBinds);
 
                 if (binds != null) {
                     for (BomboConfig.CommandBind bind : binds) {

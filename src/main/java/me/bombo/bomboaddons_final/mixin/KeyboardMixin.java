@@ -30,6 +30,18 @@ public abstract class KeyboardMixin {
             return;
          }
 
+         if (mc.screen instanceof me.bombo.bomboaddons_final.BomboConfigGUI && me.bombo.bomboaddons_final.BomboConfigGUI.isTypingOrListening()) {
+            return;
+         }
+
+         if (mc.screen instanceof me.bombo.bomboaddons_final.BomboConfigGUI) {
+            if (key == 256 || mc.options.keyInventory.matches(event)) {
+               return;
+            }
+            ci.cancel();
+            return;
+         }
+
          if (ClickLogic.onKeyPressed(key)) {
             ci.cancel();
             return;
@@ -44,15 +56,21 @@ public abstract class KeyboardMixin {
 
          if (mc.player != null) {
             String activeProfile = BomboConfig.get().activeProfile;
-            List<BomboConfig.CommandBind> binds = null;
+            List<BomboConfig.CommandBind> binds = new java.util.ArrayList<>();
+            List<BomboConfig.CommandBind> activeBinds = null;
+            List<BomboConfig.CommandBind> generalBinds = null;
 
             if (mc.screen != null) {
                // Profile keybinds only trigger when a GUI is open
-               binds = BomboConfig.get().profileBinds.get(activeProfile);
+               activeBinds = BomboConfig.get().profileBinds.get(activeProfile);
+               generalBinds = BomboConfig.get().profileBinds.get("General");
             } else {
                // Keybinds category keybinds only trigger when NO GUI is open
-               binds = BomboConfig.get().keybindBinds.get(activeProfile);
+               activeBinds = BomboConfig.get().keybindBinds.get(activeProfile);
+               generalBinds = BomboConfig.get().keybindBinds.get("General");
             }
+            if (activeBinds != null) binds.addAll(activeBinds);
+            if (generalBinds != null && !activeProfile.equals("General")) binds.addAll(generalBinds);
 
             if (binds != null) {
                for (BomboConfig.CommandBind bind : binds) {
@@ -82,6 +100,8 @@ public abstract class KeyboardMixin {
                }
             }
          }
+
+
       }
 
    }

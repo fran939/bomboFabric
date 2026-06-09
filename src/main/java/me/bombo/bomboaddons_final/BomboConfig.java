@@ -65,6 +65,27 @@ public class BomboConfig {
             instance.autoGfsToxicTwilight = false;
             save();
         }
+        if (instance.customWaypoints == null) {
+            instance.customWaypoints = new HashMap<>();
+        }
+        if (instance.commandCycles == null) {
+            instance.commandCycles = new HashMap<>();
+        }
+        if (instance.commandCycleIndices == null) {
+            instance.commandCycleIndices = new HashMap<>();
+        }
+        if (instance.getTargets == null) {
+            instance.getTargets = new HashMap<>();
+        }
+        if (!instance.profileBinds.containsKey("General")) {
+            instance.profileBinds.put("General", new ArrayList<>());
+        }
+        if (!instance.keybindBinds.containsKey("General")) {
+            instance.keybindBinds.put("General", new ArrayList<>());
+        }
+        if (!instance.customWaypoints.containsKey("General")) {
+            instance.customWaypoints.put("General", new ArrayList<>());
+        }
     }
 
     public static void save() {
@@ -165,9 +186,16 @@ public class BomboConfig {
         public boolean npcPrice = false;
         public Map<String, String> calculatorAliases = new HashMap<>();
         public boolean pestEsp = false;
+        public boolean pestSpawnWaypoint = false;
+        public int pestWaypointDuration = 0;
+        public boolean pestWaypointRemoveOnNear = false;
+        public boolean pestWaypointBeacon = false;
         public boolean pestEspTracer = false;
         public String pestEspColor = "yellow";
         public float pestEspThickness = 2.0f;
+        public boolean fuckDiorite = false;
+        public boolean fuckDioritePillarColor = true;
+        public String fuckDioriteColor = "None";
         public boolean hitbox = false;
         
         public boolean autoCloseWardrobe = false;
@@ -207,6 +235,10 @@ public class BomboConfig {
         public int kuudraTalisman = 3;
         public int kuudraTiers = 5;
         public boolean kuudraDebug = false;
+        public Map<String, List<CustomWaypoint>> customWaypoints = new HashMap<>();
+        public Map<String, List<String>> commandCycles = new HashMap<>();
+        public Map<String, Integer> commandCycleIndices = new HashMap<>();
+        public Map<String, GetTarget> getTargets = new HashMap<>();
     }
 
 
@@ -232,6 +264,43 @@ public class BomboConfig {
             this.keyName = keyName;
             this.requiredIsland = requiredIsland;
             this.requiredArmor = requiredArmor;
+        }
+    }
+
+    public static class CustomWaypoint {
+        public String name;
+        public double x;
+        public double y;
+        public double z;
+        public String requiredIsland = "";
+        public boolean showThroughWalls = true;
+        public boolean showBeacon = true;
+        public String color = "AQUA";
+        public boolean enabled = true;
+
+        public CustomWaypoint() {}
+
+        public CustomWaypoint(String name, double x, double y, double z, String requiredIsland, boolean showThroughWalls, boolean showBeacon, String color) {
+            this.name = name;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.requiredIsland = requiredIsland;
+            this.showThroughWalls = showThroughWalls;
+            this.showBeacon = showBeacon;
+            this.color = color;
+        }
+    }
+
+    public static class GetTarget {
+        public String itemId;
+        public int targetAmount;
+
+        public GetTarget() {}
+
+        public GetTarget(String itemId, int targetAmount) {
+            this.itemId = itemId;
+            this.targetAmount = targetAmount;
         }
     }
 

@@ -25,7 +25,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
-            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds");
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints");
     public static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -54,6 +54,74 @@ public class BomboConfigGUI extends Screen {
     private static int editingClickTargetIdx = -1;
     private static int editingKeybindIdx = -1;
     private static boolean confirmProfileDelete = false;
+
+    // Transient state for waypoints
+    private static String wpNameInput = "";
+    private static String wpCoordsInput = "";
+    private static String wpIslandInput = "";
+    private static boolean wpThruWallsInput = true;
+    private static boolean wpBeaconInput = true;
+    private static String wpColorInput = "AQUA";
+    private static int editingWaypointIdx = -1;
+
+    public static boolean isTypingOrListening() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen instanceof BomboConfigGUI gui) {
+            if (listeningForKeyTarget != null && !listeningForKeyTarget.isEmpty()) {
+                return true;
+            }
+            if (gui.activeBoxes != null) {
+                for (EditBox box : gui.activeBoxes) {
+                    if (box.isFocused()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static double[] parseCoords(String input) {
+        if (input == null || input.trim().isEmpty()) return null;
+        input = input.trim();
+        if (input.contains(" tp @s ")) {
+            String sub = input.substring(input.indexOf(" tp @s ") + 7);
+            String[] parts = sub.trim().split("\\s+");
+            if (parts.length >= 3) {
+                try {
+                    double x = Double.parseDouble(parts[0]);
+                    double y = Double.parseDouble(parts[1]);
+                    double z = Double.parseDouble(parts[2]);
+                    return new double[]{x, y, z};
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        if (input.contains("tp ")) {
+            String sub = input.substring(input.indexOf("tp ") + 3);
+            String[] parts = sub.trim().split("\\s+");
+            List<Double> parsed = new ArrayList<>();
+            for (String part : parts) {
+                try {
+                    parsed.add(Double.parseDouble(part));
+                    if (parsed.size() == 3) {
+                        return new double[]{parsed.get(0), parsed.get(1), parsed.get(2)};
+                    }
+                } catch (NumberFormatException e) {
+                    parsed.clear();
+                }
+            }
+        }
+        String[] parts = input.replaceAll(",", " ").trim().split("\\s+");
+        if (parts.length >= 3) {
+            try {
+                double x = Double.parseDouble(parts[0]);
+                double y = Double.parseDouble(parts[1]);
+                double z = Double.parseDouble(parts[2]);
+                return new double[]{x, y, z};
+            } catch (NumberFormatException ignored) {}
+        }
+        return null;
+    }
     
     private static String colorPickerTarget = null;
     private static Consumer<String> colorPickerSetter = null;
@@ -97,6 +165,9 @@ public class BomboConfigGUI extends Screen {
                     scrollAmount = 0;
                     confirmProfileDelete = false;
                     colorPickerTarget = null;
+                    editingWaypointIdx = -1;
+                    wpNameInput = ""; wpCoordsInput = ""; wpIslandInput = "";
+                    wpThruWallsInput = true; wpBeaconInput = true; wpColorInput = "AQUA";
                     init();
                 }).bounds(PADDING, catY, SIDEBAR_WIDTH - PADDING * 2, 22).build();
                 addRenderableWidget(btn);
@@ -114,21 +185,34 @@ public class BomboConfigGUI extends Screen {
 
             switch (selectedCategory) {
                 case 0 -> { // General
-                    curY += ITEM_HEIGHT;
-                    curY = addBoolOption("Sign Calculator", s.signCalculator, v -> s.signCalculator = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("SBE Commands", s.sbeCommands, v -> s.sbeCommands = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Left Click Etherwarp", s.leftClickEtherwarp, v -> s.leftClickEtherwarp = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Sphinx Macro", s.sphinxMacro, v -> s.sphinxMacro = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Hollow Wand Fix", s.hollowWandClickThrough, v -> s.hollowWandClickThrough = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Hollow Wand Double Click", s.hollowWandAutoCombine, v -> s.hollowWandAutoCombine = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Auto Accept Carnival", s.autoAcceptCarnival, v -> s.autoAcceptCarnival = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Server List Button", s.serverListButton, v -> s.serverListButton = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Reconnect Button on Pause Screen", s.reconnectButton, v -> s.reconnectButton = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Quick Join Commands (/f1, /m1, etc)", s.quickJoinCommands, v -> s.quickJoinCommands = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Auto Reconnect", s.autoReconnect, v -> s.autoReconnect = v, contentX, contentWidth, curY);
+                    int col1X = contentX;
+                    int col1W = contentWidth / 2 - 10;
+                    int col2X = contentX + contentWidth / 2 + 10;
+                    int col2W = contentWidth / 2 - 10;
+
+                    int y1 = contentBaseY + ITEM_HEIGHT;
+                    y1 = addBoolOption("Sign Calculator", s.signCalculator, v -> s.signCalculator = v, col1X, col1W, y1);
+                    y1 = addBoolOption("SBE Commands", s.sbeCommands, v -> s.sbeCommands = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Left Click Etherwarp", s.leftClickEtherwarp, v -> s.leftClickEtherwarp = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Sphinx Macro", s.sphinxMacro, v -> s.sphinxMacro = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Hollow Wand Fix", s.hollowWandClickThrough, v -> s.hollowWandClickThrough = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Hollow Wand Double Click", s.hollowWandAutoCombine, v -> s.hollowWandAutoCombine = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Auto Accept Carnival", s.autoAcceptCarnival, v -> s.autoAcceptCarnival = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, col1X, col1W, y1);
+                    y1 = addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, col1X, col1W, y1);
+
+                    int y2 = contentBaseY + ITEM_HEIGHT;
+                    y2 = addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Server List Button", s.serverListButton, v -> s.serverListButton = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Reconnect Button on Pause Screen", s.reconnectButton, v -> s.reconnectButton = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Quick Join Commands (/f1, /m1, etc)", s.quickJoinCommands, v -> s.quickJoinCommands = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Auto Reconnect", s.autoReconnect, v -> s.autoReconnect = v, col2X, col2W, y2);
+                    
+                    y2 += 10;
+                    y2 += ITEM_HEIGHT;
+                    y2 = addBoolOption("Fuck Diorite", s.fuckDiorite, v -> s.fuckDiorite = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Fuck Diorite Pillar Color", s.fuckDioritePillarColor, v -> s.fuckDioritePillarColor = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Fuck Diorite Color", s.fuckDioriteColor, v -> s.fuckDioriteColor = v, col2X, col2W, y2);
                 }
                 case 1 -> { // HUDs
                     curY += ITEM_HEIGHT;
@@ -162,24 +246,33 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT + 5;
                 }
                 case 3 -> { // Garden
-                    curY += ITEM_HEIGHT;
-                    curY = addBoolOption("Garden Movement", s.gardenMovement, v -> { s.gardenMovement = v; if (!v) GardenMovement.reset(); }, contentX, contentWidth, curY);
-                    curY = addBoolOption("Lock Mouse on Movement", s.lockMouseOnGarden, v -> s.lockMouseOnGarden = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Sugar Cane Mode", s.gardenSugarCane, v -> s.gardenSugarCane = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Direction Helper Warning", s.gardenDirectionHelper, v -> s.gardenDirectionHelper = v, contentX, contentWidth, curY);
-                    curY += 10;
-                    curY = addKeyBindButton("Forward", s.gardenForwardKey, v -> s.gardenForwardKey = v, "gardenF", contentX, contentWidth, curY);
-                    curY = addKeyBindButton("Backward", s.gardenBackwardKey, v -> s.gardenBackwardKey = v, "gardenB", contentX, contentWidth, curY);
-                    curY = addKeyBindButton("Left", s.gardenLeftKey, v -> s.gardenLeftKey = v, "gardenL", contentX, contentWidth, curY);
-                    curY = addKeyBindButton("Right", s.gardenRightKey, v -> s.gardenRightKey = v, "gardenR", contentX, contentWidth, curY);
-                    curY = addKeyBindButton("Break", s.gardenBreakKey, v -> s.gardenBreakKey = v, "gardenBr", contentX, contentWidth, curY);
-                    curY = addKeyBindButton("Use", s.gardenUseKey, v -> s.gardenUseKey = v, "gardenU", contentX, contentWidth, curY);
-                    
-                    curY += 20;
-                    curY = addBoolOption("Pest ESP Enabled", s.pestEsp, v -> s.pestEsp = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Pest Tracers", s.pestEspTracer, v -> s.pestEspTracer = v, contentX, contentWidth, curY);
-                    curY = addColorCycleButton("Pest Color", s.pestEspColor, v -> s.pestEspColor = v, contentX, contentWidth, curY);
-                    curY = addFloatLabelSlider("Pest Size", s.pestEspThickness, 0.5f, 5.0f, v -> s.pestEspThickness = v, contentX, contentWidth, curY);
+                    int col1X = contentX;
+                    int col1W = contentWidth / 2 - 10;
+                    int col2X = contentX + contentWidth / 2 + 10;
+                    int col2W = contentWidth / 2 - 10;
+
+                    int y1 = contentBaseY + ITEM_HEIGHT;
+                    y1 = addBoolOption("Garden Movement", s.gardenMovement, v -> { s.gardenMovement = v; if (!v) GardenMovement.reset(); }, col1X, col1W, y1);
+                    y1 = addBoolOption("Lock Mouse on Movement", s.lockMouseOnGarden, v -> s.lockMouseOnGarden = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Sugar Cane Mode", s.gardenSugarCane, v -> s.gardenSugarCane = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Direction Helper Warning", s.gardenDirectionHelper, v -> s.gardenDirectionHelper = v, col1X, col1W, y1);
+                    y1 += 10;
+                    y1 = addKeyBindButton("Forward", s.gardenForwardKey, v -> s.gardenForwardKey = v, "gardenF", col1X, col1W, y1);
+                    y1 = addKeyBindButton("Backward", s.gardenBackwardKey, v -> s.gardenBackwardKey = v, "gardenB", col1X, col1W, y1);
+                    y1 = addKeyBindButton("Left", s.gardenLeftKey, v -> s.gardenLeftKey = v, "gardenL", col1X, col1W, y1);
+                    y1 = addKeyBindButton("Right", s.gardenRightKey, v -> s.gardenRightKey = v, "gardenR", col1X, col1W, y1);
+                    y1 = addKeyBindButton("Break", s.gardenBreakKey, v -> s.gardenBreakKey = v, "gardenBr", col1X, col1W, y1);
+                    y1 = addKeyBindButton("Use", s.gardenUseKey, v -> s.gardenUseKey = v, "gardenU", col1X, col1W, y1);
+
+                    int y2 = contentBaseY + ITEM_HEIGHT;
+                    y2 = addBoolOption("Pest ESP Enabled", s.pestEsp, v -> s.pestEsp = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Pest Waypoints", s.pestSpawnWaypoint, v -> s.pestSpawnWaypoint = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Remove Waypoint On Return", s.pestWaypointRemoveOnNear, v -> s.pestWaypointRemoveOnNear = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Pest Waypoint Beacon", s.pestWaypointBeacon, v -> s.pestWaypointBeacon = v, col2X, col2W, y2);
+                    y2 = addIntLabelSlider("Pest Waypoint Duration", s.pestWaypointDuration, 0, 600, 10, v -> s.pestWaypointDuration = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Pest Tracers", s.pestEspTracer, v -> s.pestEspTracer = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Pest Color", s.pestEspColor, v -> s.pestEspColor = v, col2X, col2W, y2);
+                    y2 = addFloatLabelSlider("Pest Size", s.pestEspThickness, 0.5f, 5.0f, v -> s.pestEspThickness = v, col2X, col2W, y2);
                 }
                 case 4 -> { // Hotkeys
                     curY += ITEM_HEIGHT;
@@ -270,7 +363,7 @@ public class BomboConfigGUI extends Screen {
                         init();
                     }).bounds(contentX + 175, curY, 20, 20).build());
                     
-                    if (!s.activeProfile.equals("default")) {
+                    if (!s.activeProfile.equals("default") && !s.activeProfile.equals("General")) {
                         String delText = confirmProfileDelete ? "§c§lCONFIRM?" : "§cDEL";
                         addRenderableWidget(Button.builder(Component.literal(delText), btn -> {
                             if (confirmProfileDelete) {
@@ -514,6 +607,26 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 13 -> { // Keybinds
                     curY += ITEM_HEIGHT; // Title row
+                    
+                    // Profile Switcher row
+                    List<String> profiles = new ArrayList<>(s.profileBinds.keySet());
+                    if (!profiles.contains("default")) profiles.add(0, "default");
+                    int currentIdx = profiles.indexOf(s.activeProfile);
+                    
+                    addRenderableWidget(Button.builder(Component.literal("<"), btn -> {
+                        int next = (currentIdx - 1 + profiles.size()) % profiles.size();
+                        s.activeProfile = profiles.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + 150, curY, 20, 20).build());
+                    
+                    addRenderableWidget(Button.builder(Component.literal(">"), btn -> {
+                        int next = (currentIdx + 1) % profiles.size();
+                        s.activeProfile = profiles.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + 175, curY, 20, 20).build());
+
                     curY += ITEM_HEIGHT + 5; // Active profile row
                     
                     curY = addTextBox("Command", bindCommandInput, v -> bindCommandInput = v, contentX, contentWidth, curY);
@@ -582,6 +695,102 @@ public class BomboConfigGUI extends Screen {
                         }
                     }
                 }
+                case 14 -> { // Waypoints
+                    curY += ITEM_HEIGHT;
+                    
+                    // Profile Switcher row
+                    List<String> profiles = new ArrayList<>(s.profileBinds.keySet());
+                    if (!profiles.contains("default")) profiles.add(0, "default");
+                    int currentIdx = profiles.indexOf(s.activeProfile);
+                    
+                    addRenderableWidget(Button.builder(Component.literal("<"), btn -> {
+                        int next = (currentIdx - 1 + profiles.size()) % profiles.size();
+                        s.activeProfile = profiles.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + 150, curY, 20, 20).build());
+                    
+                    addRenderableWidget(Button.builder(Component.literal(">"), btn -> {
+                        int next = (currentIdx + 1) % profiles.size();
+                        s.activeProfile = profiles.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + 175, curY, 20, 20).build());
+
+                    curY += ITEM_HEIGHT + 5;
+
+                    curY = addTextBox("Name", wpNameInput, v -> wpNameInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Coords (X Y Z)", wpCoordsInput, v -> wpCoordsInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Only on Island", wpIslandInput, v -> wpIslandInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addBoolOption("Show Through Walls", wpThruWallsInput, v -> wpThruWallsInput = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Show Beacon", wpBeaconInput, v -> wpBeaconInput = v, contentX, contentWidth, curY);
+                    curY = addColorCycleButton("Color", wpColorInput, v -> wpColorInput = v, contentX, contentWidth, curY);
+
+                    int finalCurY = curY;
+                    String addBtnText = editingWaypointIdx != -1 ? "§e✔ Save Waypoint" : "§a+ Add Waypoint";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                        if (!wpNameInput.isEmpty() && !wpCoordsInput.isEmpty()) {
+                            double[] parsed = parseCoords(wpCoordsInput);
+                            if (parsed != null) {
+                                s.customWaypoints.putIfAbsent(s.activeProfile, new ArrayList<>());
+                                BomboConfig.CustomWaypoint cwp = new BomboConfig.CustomWaypoint(wpNameInput, parsed[0], parsed[1], parsed[2], wpIslandInput, wpThruWallsInput, wpBeaconInput, wpColorInput);
+                                if (editingWaypointIdx != -1) {
+                                    s.customWaypoints.get(s.activeProfile).set(editingWaypointIdx, cwp);
+                                    editingWaypointIdx = -1;
+                                } else {
+                                    s.customWaypoints.get(s.activeProfile).add(cwp);
+                                }
+                                BomboConfig.save();
+                                wpNameInput = ""; wpCoordsInput = ""; wpIslandInput = "";
+                                wpThruWallsInput = true; wpBeaconInput = true; wpColorInput = "AQUA";
+                                init();
+                            }
+                        }
+                    }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+
+                    if (editingWaypointIdx != -1) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel"), btn -> {
+                            editingWaypointIdx = -1;
+                            wpNameInput = ""; wpCoordsInput = ""; wpIslandInput = "";
+                            wpThruWallsInput = true; wpBeaconInput = true; wpColorInput = "AQUA";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 60, 20).build());
+                    }
+
+                    curY += 35;
+                    int listStartY = curY;
+                    List<BomboConfig.CustomWaypoint> wps = s.customWaypoints.get(s.activeProfile);
+                    if (wps != null) {
+                        for (int i = 0; i < wps.size(); i++) {
+                            final int idx = i;
+                            BomboConfig.CustomWaypoint wp = wps.get(idx);
+                            int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
+                            if (itemY > listStartY + 15 && itemY < height - 20) {
+                                String toggleLabel = wp.enabled ? "§aON" : "§cOFF";
+                                addRenderableWidget(Button.builder(Component.literal(toggleLabel), btn -> {
+                                    wp.enabled = !wp.enabled;
+                                    BomboConfig.save();
+                                    init();
+                                }).bounds(contentX + 130, itemY + 5, 45, 18).build());
+
+                                addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                    editingWaypointIdx = idx;
+                                    wpNameInput = wp.name;
+                                    wpCoordsInput = String.format("%.2f %.2f %.2f", wp.x, wp.y, wp.z);
+                                    wpIslandInput = wp.requiredIsland != null ? wp.requiredIsland : "";
+                                    wpThruWallsInput = wp.showThroughWalls;
+                                    wpBeaconInput = wp.showBeacon;
+                                    wpColorInput = wp.color != null ? wp.color : "AQUA";
+                                    init();
+                                }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+                                addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> { wps.remove(idx); BomboConfig.save(); init(); }).bounds(contentX + 225, itemY + 5, 35, 18).build());
+                            }
+                        }
+                    }
+                }
             }
 
             if (colorPickerTarget != null) {
@@ -601,6 +810,8 @@ public class BomboConfigGUI extends Screen {
     private int addBoolOption(String label, boolean value, Consumer<Boolean> setter, int x, int w, int y) {
         // Use empty label to avoid overlap with drawString in render
         Checkbox cb = Checkbox.builder(Component.literal(""), font).pos(x, y).selected(value).onValueChange((box, val) -> { setter.accept(val); BomboConfig.save(); }).build();
+        cb.setX(x);
+        cb.setY(y);
         addRenderableWidget(cb);
         return y + ITEM_HEIGHT;
     }
@@ -697,8 +908,14 @@ public class BomboConfigGUI extends Screen {
         int startX = pickerX + 10;
         int startY = pickerY + 25;
 
-        for (int i = 0; i < SlotHighlight.COLORS.size(); i++) {
-            String color = SlotHighlight.COLORS.get(i);
+        List<String> colorsToUse = new ArrayList<>();
+        if ("Fuck Diorite Color".equals(colorPickerTarget)) {
+            colorsToUse.add("NONE");
+        }
+        colorsToUse.addAll(SlotHighlight.COLORS);
+
+        for (int i = 0; i < colorsToUse.size(); i++) {
+            String color = colorsToUse.get(i);
             String formatting = getColorFormatting(color);
             
             addRenderableWidget(Button.builder(Component.literal(formatting + color), btn -> {
@@ -747,35 +964,52 @@ public class BomboConfigGUI extends Screen {
 
             switch (selectedCategory) {
                 case 0 -> {
-                    g.drawString(font, "§6§lMod Settings", contentX, curY, 0xFFFFAA00, true);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Sign Calculator", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7SBE Commands", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Left Click Etherwarp", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Sphinx Macro", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Hollow Wand Fix", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Hollow Wand Double Click", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Auto Accept Carnival", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Lowest BIN Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7NPC Sell Price Tooltip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Ignore Caps Lock", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Server List Button", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Reconnect Button", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Quick Join Commands (/f1, /m1, etc)", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Auto Reconnect", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    int col1X = contentX;
+                    int col2X = contentX + contentWidth / 2 + 10;
+
+                    int y1 = contentBaseY;
+                    g.drawString(font, "§6§lMod Settings", col1X, y1, 0xFFFFAA00, true);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Sign Calculator", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7SBE Commands", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Left Click Etherwarp", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Sphinx Macro", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Hollow Wand Fix", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Hollow Wand Double Click", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Auto Accept Carnival", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Lowest BIN Tooltip", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7NPC Sell Price Tooltip", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+
+                    int y2 = contentBaseY;
+                    g.drawString(font, "§6§lClient Settings", col2X, y2, 0xFFFFAA00, true);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Ignore Caps Lock", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Server List Button", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Reconnect Button", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Quick Join Commands (/f1, /m1, etc)", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Auto Reconnect", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    
+                    y2 += ITEM_HEIGHT;
+                    y2 += 10;
+                    g.drawString(font, "§6§lFuck Diorite Settings", col2X, y2, 0xFFFFAA00, true);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Fuck Diorite", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Fuck Diorite Pillar Color", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fFuck Diorite Color:", col2X, y2, 0xFFFFFFFF);
                 }
                 case 1 -> {
                     g.drawString(font, "§6§lHUD Settings", contentX, curY, 0xFFFFAA00, true);
@@ -802,37 +1036,50 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Get Max XP", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 3 -> {
-                    g.drawString(font, "§6§lGarden Settings", contentX, curY, 0xFFFFAA00, true);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Garden Movement", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Lock Mouse on Movement", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Sugar Cane Mode", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Direction Helper Warning", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT + 10;
-                    g.drawString(font, "§fForward:", contentX, curY, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fBackward:", contentX, curY, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fLeft:", contentX, curY, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fRight:", contentX, curY, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fBreak:", contentX, curY, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fUse:", contentX, curY, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
+                    int col1X = contentX;
+                    int col2X = contentX + contentWidth / 2 + 10;
+                    
+                    int y1 = contentBaseY;
+                    g.drawString(font, "§6§lGarden Settings", col1X, y1, 0xFFFFAA00, true);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Garden Movement", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Lock Mouse on Movement", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Sugar Cane Mode", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Direction Helper Warning", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT + 10;
+                    g.drawString(font, "§fForward:", col1X, y1, 0xFFFFFFFF);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§fBackward:", col1X, y1, 0xFFFFFFFF);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§fLeft:", col1X, y1, 0xFFFFFFFF);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§fRight:", col1X, y1, 0xFFFFFFFF);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§fBreak:", col1X, y1, 0xFFFFFFFF);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§fUse:", col1X, y1, 0xFFFFFFFF);
 
-                    curY += 20;
-                    g.drawString(font, "§7Pest ESP Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§7Pest Tracers", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fPest Color:", contentX, curY, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
-                    g.drawString(font, "§fPest Thickness: §e" + BomboConfig.get().pestEspThickness, contentX, curY, 0xFFFFFFFF);
+                    int y2 = contentBaseY;
+                    g.drawString(font, "§6§lPest Settings", col2X, y2, 0xFFFFAA00, true);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Pest ESP Enabled", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Pest Waypoints", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Remove Waypoint On Return", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Pest Waypoint Beacon", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fPest Waypoint Duration: §e" + (BomboConfig.get().pestWaypointDuration == 0 ? "Infinite" : BomboConfig.get().pestWaypointDuration + "s"), col2X, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Pest Tracers", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fPest Color:", col2X, y2, 0xFFFFFFFF);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fPest Thickness: §e" + BomboConfig.get().pestEspThickness, col2X, y2, 0xFFFFFFFF);
                 }
                 case 4 -> {
                     g.drawString(font, "§6§lHotkey Shortcuts", contentX, curY, 0xFFFFAA00, true);
@@ -1081,6 +1328,45 @@ public class BomboConfigGUI extends Screen {
                                 }
                                 String statusPrefix = bind.enabled ? "§a[✔] " : "§c[✘] ";
                                 g.drawString(font, statusPrefix + "§e" + bind.keyName + " §7-> §b/" + bind.command + extra, contentX, listY + 5, 0xFFFFFFFF, false);
+                            }
+                            listY += 22;
+                        }
+                    }
+                }
+                case 14 -> { // Waypoints
+                    g.drawString(font, "§6§lWaypoints Management", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fActive Profile: §e" + s.activeProfile, contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fName:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fCoords (X Y Z):", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fOnly on Island:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§7Show Through Walls", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Show Beacon", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fColor:", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+
+                    curY += 35; // Space before list
+                    int activeWaypointsTitleY = curY;
+                    g.drawString(font, "§9§lActive Waypoints", contentX, activeWaypointsTitleY, 0xFF5555FF, true);
+
+                    int listY = activeWaypointsTitleY + 20 - (int)scrollAmount;
+                    List<BomboConfig.CustomWaypoint> wps = s.customWaypoints.get(s.activeProfile);
+                    if (wps != null) {
+                        for (BomboConfig.CustomWaypoint wp : wps) {
+                            if (listY > activeWaypointsTitleY + 15 && listY < height - 15) {
+                                String extra = "";
+                                if (wp.requiredIsland != null && !wp.requiredIsland.isEmpty()) {
+                                    extra += " §8[" + wp.requiredIsland + "]";
+                                }
+                                String statusPrefix = wp.enabled ? "§a[✔] " : "§c[✘] ";
+                                String formattedColor = getColorFormatting(wp.color);
+                                g.drawString(font, statusPrefix + formattedColor + wp.name + " §7-> (" + String.format("%.1f, %.1f, %.1f", wp.x, wp.y, wp.z) + ")" + extra, contentX, listY + 5, 0xFFFFFFFF, false);
                             }
                             listY += 22;
                         }
