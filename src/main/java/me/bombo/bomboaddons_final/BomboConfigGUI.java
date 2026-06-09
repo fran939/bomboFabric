@@ -1290,7 +1290,16 @@ public class BomboConfigGUI extends Screen {
                         String uuid = s.petKeybinds.get(String.valueOf(i + 1));
                         String boundInfo = "";
                         if (uuid != null && !uuid.isEmpty()) {
-                            boundInfo = " §7(" + (uuid.length() > 6 ? uuid.substring(0, 6) : uuid) + ")";
+                            String petName = s.petNames.get(String.valueOf(i + 1));
+                            if (petName != null && !petName.isEmpty()) {
+                                String cleanName = petName.replaceAll("§.", "");
+                                if (cleanName.length() > 12) {
+                                    cleanName = cleanName.substring(0, 12) + "...";
+                                }
+                                boundInfo = " §7(" + cleanName + ")";
+                            } else {
+                                boundInfo = " §7(" + (uuid.length() > 6 ? uuid.substring(0, 6) : uuid) + ")";
+                            }
                         }
                         g.drawString(font, "§fSlot " + (i + 1) + boundInfo + ":", contentX, curY + 4, 0xFFFFFFFF);
                         curY += ITEM_HEIGHT;
@@ -1562,12 +1571,30 @@ public class BomboConfigGUI extends Screen {
         } else {
             s.petKeybinds.put(key1, uuid2);
         }
+
+        String name1 = s.petNames.get(key1);
+        String name2 = s.petNames.get(key2);
+
+        if (name1 == null) {
+            s.petNames.remove(key2);
+        } else {
+            s.petNames.put(key2, name1);
+        }
+
+        if (name2 == null) {
+            s.petNames.remove(key1);
+        } else {
+            s.petNames.put(key1, name2);
+        }
+
         BomboConfig.save();
     }
 
     private void clearPetSlot(int idx) {
         BomboConfig.Settings s = BomboConfig.get();
-        s.petKeybinds.remove(String.valueOf(idx + 1));
+        String key = String.valueOf(idx + 1);
+        s.petKeybinds.remove(key);
+        s.petNames.remove(key);
         BomboConfig.save();
     }
 }

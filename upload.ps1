@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Refactor subarea to main area mapping, group Farming Islands under a single main area, and add playtime data migrations."
+gh release create "v$version" $jarPath --title "v$version" --notes "Always equip pet on keybind press in pets menu, and show pet name instead of UUID in pet settings config GUI."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

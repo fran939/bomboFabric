@@ -86,6 +86,9 @@ public class BomboConfig {
         if (!instance.customWaypoints.containsKey("General")) {
             instance.customWaypoints.put("General", new ArrayList<>());
         }
+        if (instance.petNames == null) {
+            instance.petNames = new HashMap<>();
+        }
     }
 
     public static void save() {
@@ -208,6 +211,7 @@ public class BomboConfig {
         public boolean anvilAutoCombineRequireKey = false;
         public boolean autoReconnect = false;
         public Map<String, String> petKeybinds = new HashMap<>();
+        public Map<String, String> petNames = new HashMap<>();
         public List<String> petKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", ""));
         public String savePetKey = "";
         public boolean disableUnequipPet = false;

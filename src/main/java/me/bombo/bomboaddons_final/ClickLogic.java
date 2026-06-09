@@ -203,46 +203,41 @@ public class ClickLogic {
                   if (kName != null && !kName.isEmpty()) {
                      int code = getKeyCode(kName);
                      if (code != -1 && code == key) {
-                        Slot hovered = ((me.bombo.bomboaddons_final.mixin.AbstractContainerScreenAccessor) screen).getHoveredSlot();
-                        if (hovered != null && hovered.hasItem()) {
-                            PetManager.savePet(null, String.valueOf(i + 1));
-                         } else {
-                            String uuid = BomboConfig.get().petKeybinds.get(String.valueOf(i + 1));
-                            if (uuid != null && !uuid.isEmpty()) {
-                               for (int sIdx = 10; sIdx <= 43; sIdx++) {
-                                  if (sIdx < screen.getMenu().slots.size()) {
-                                     Slot slot = screen.getMenu().slots.get(sIdx);
-                                     ItemStack stack = slot.getItem();
-                                     String itemUuid = PetManager.getPetUuid(stack);
-                                     if (itemUuid != null && itemUuid.equals(uuid)) {
-                                        boolean isEquipped = false;
-                                        if (BomboConfig.get().disableUnequipPet) {
-                                           List<Component> tooltip = stack.getTooltipLines(
-                                               net.minecraft.world.item.Item.TooltipContext.of(mc.level),
-                                               mc.player,
-                                               net.minecraft.world.item.TooltipFlag.NORMAL
-                                           );
-                                           for (Component line : tooltip) {
-                                              if (line.getString().contains("Click to despawn!")) {
-                                                 isEquipped = true;
-                                                 break;
-                                              }
-                                           }
-                                        }
-                                        if (!isEquipped) {
-                                           if (mc.gameMode != null && mc.player != null) {
-                                              mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, 0, ClickType.PICKUP, mc.player);
-                                           }
-                                        }
-                                        if (mc.player != null) {
-                                           mc.player.closeContainer();
-                                        }
-                                        break;
-                                     }
-                                  }
-                               }
-                            }
-                         }
+                        String uuid = BomboConfig.get().petKeybinds.get(String.valueOf(i + 1));
+                        if (uuid != null && !uuid.isEmpty()) {
+                           for (int sIdx = 10; sIdx <= 43; sIdx++) {
+                              if (sIdx < screen.getMenu().slots.size()) {
+                                 Slot slot = screen.getMenu().slots.get(sIdx);
+                                 ItemStack stack = slot.getItem();
+                                 String itemUuid = PetManager.getPetUuid(stack);
+                                 if (itemUuid != null && itemUuid.equals(uuid)) {
+                                    boolean isEquipped = false;
+                                    if (BomboConfig.get().disableUnequipPet) {
+                                       List<Component> tooltip = stack.getTooltipLines(
+                                           net.minecraft.world.item.Item.TooltipContext.of(mc.level),
+                                           mc.player,
+                                           net.minecraft.world.item.TooltipFlag.NORMAL
+                                       );
+                                       for (Component line : tooltip) {
+                                          if (line.getString().contains("Click to despawn!")) {
+                                             isEquipped = true;
+                                             break;
+                                          }
+                                       }
+                                    }
+                                    if (!isEquipped) {
+                                       if (mc.gameMode != null && mc.player != null) {
+                                          mc.gameMode.handleInventoryMouseClick(screen.getMenu().containerId, slot.index, 0, ClickType.PICKUP, mc.player);
+                                       }
+                                    }
+                                    if (mc.player != null) {
+                                       mc.player.closeContainer();
+                                    }
+                                    break;
+                                 }
+                              }
+                           }
+                        }
                          return true;
                      }
                   }

@@ -65,6 +65,7 @@ public class PetManager {
 
         String petName = petItem.getHoverName().getString();
         BomboConfig.get().petKeybinds.put(slot, uuid);
+        BomboConfig.get().petNames.put(slot, petName);
         BomboConfig.save();
 
         sendFeedback(source, "§a[Bombo] Saved pet " + petName + " §7(UUID: " + uuid + ") §ato pet slot " + slot + "!");
