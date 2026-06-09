@@ -118,6 +118,80 @@ public class LF {
             int limit, boolean isBorrowed) {
         if (matchCount.get() >= limit)
             return;
+
+        // Intercept sacks_counts
+        if (element.isJsonObject() && (path.endsWith("sacks_counts") || path.contains("sacks_counts"))) {
+            JsonObject obj = element.getAsJsonObject();
+            for (Entry<String, JsonElement> entry : obj.entrySet()) {
+                String itemId = entry.getKey();
+                int count = 0;
+                try {
+                    count = entry.getValue().getAsInt();
+                } catch (Exception ignored) {}
+                if (count <= 0) continue;
+                
+                String friendlyName = itemId.replace("_", " ").toLowerCase();
+                friendlyName = toTitleCase(friendlyName);
+                
+                if (friendlyName.toLowerCase().contains(query)) {
+                    int idx = matchCount.incrementAndGet();
+                    String fullName = "§a" + friendlyName + " §7x" + count;
+                    MutableComponent link = Component.literal(fullName);
+                    
+                    ClickEvent c = createClickEventRobust("SUGGEST_COMMAND", "/sacks");
+                    Style style = Style.EMPTY.withClickEvent(c);
+                    link.setStyle(style);
+                    
+                    MutableComponent contComponent = translate(" &r&7(Sacks)");
+                    Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
+                    sendMessage(msg);
+                }
+            }
+            return;
+        }
+
+        // Intercept pets
+        if (element.isJsonArray() && path.endsWith("pets")) {
+            JsonArray arr = element.getAsJsonArray();
+            for (JsonElement itemEl : arr) {
+                if (!itemEl.isJsonObject()) continue;
+                JsonObject pet = itemEl.getAsJsonObject();
+                if (!pet.has("type") || !pet.has("tier")) continue;
+                
+                String type = pet.get("type").getAsString();
+                String tier = pet.get("tier").getAsString();
+                double exp = pet.has("exp") ? pet.get("exp").getAsDouble() : 0;
+                boolean active = pet.has("active") && pet.get("active").getAsBoolean();
+                
+                String friendlyType = toTitleCase(type.replace("_", " "));
+                String friendlyTier = toTitleCase(tier.replace("_", " "));
+                
+                String displayName = friendlyTier + " " + friendlyType;
+                if (active) displayName += " §a[Active]";
+                
+                if (displayName.toLowerCase().contains(query) || friendlyType.toLowerCase().contains(query)) {
+                    int idx = matchCount.incrementAndGet();
+                    
+                    String expText = "";
+                    if (exp >= 1_000_000) expText = String.format("%.1fM exp", exp / 1_000_000.0);
+                    else if (exp >= 1_000) expText = String.format("%.1fK exp", exp / 1_000.0);
+                    else expText = String.format("%.0f exp", exp);
+                    
+                    String fullName = "§6" + displayName + " §7(" + expText + ")";
+                    MutableComponent link = Component.literal(fullName);
+                    
+                    ClickEvent c = createClickEventRobust("SUGGEST_COMMAND", "/pets");
+                    Style style = Style.EMPTY.withClickEvent(c);
+                    link.setStyle(style);
+                    
+                    MutableComponent contComponent = translate(" &r&7(Pets)");
+                    Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
+                    sendMessage(msg);
+                }
+            }
+            return;
+        }
+
         if (element.isJsonArray()) {
             JsonArray arr = element.getAsJsonArray();
             for (int i = 0; i < arr.size(); ++i) {
@@ -249,7 +323,13 @@ public class LF {
 
                     HoverEvent h = createHoverEventRobust(lore.toString());
 
-                    String clickCmd = "/bombo_highlight_slot " + finalSlotIndex + " " + fullCmd;
+                    int highlightSlotTemp = finalSlotIndex;
+                    if (finalCmdBase.startsWith("/ec ") || finalCmdBase.startsWith("/ec") || finalCmdBase.startsWith("/enderchest")) {
+                        highlightSlotTemp = slotIndex % 45;
+                    }
+                    final int finalHighlightSlot = highlightSlotTemp;
+
+                    String clickCmd = "/bombo_highlight_slot " + finalHighlightSlot + " " + fullCmd;
                     if (fullCmd.startsWith("/museum")) {
                         clickCmd = "/bombo_museum_click " + mUser + " " + finalSlotIndex;
                     } else if (isOthers) {
@@ -314,6 +394,9 @@ public class LF {
                 int page = (itemIndex / 45) + 1;
                 name = "Ender Chest " + page;
                 cmd = "/ec " + page;
+        } else if (s.contains("accessory_bag") || s.contains("accessory")) {
+            name = "Accessory Bag";
+            cmd = "/ab";
         } else if (s.contains("wardrobe")) {
             name = "Wardrobe";
             cmd = "/wardrobe";
@@ -1484,5 +1567,23 @@ public class LF {
             fw.write("[" + new java.util.Date() + "] " + message + "\n");
         } catch (Exception ignored) {
         }
+    }
+
+    private static String toTitleCase(String input) {
+        if (input == null || input.isEmpty()) return "";
+        StringBuilder titleCase = new StringBuilder();
+        boolean nextTitleCase = true;
+        for (char c : input.toCharArray()) {
+            if (Character.isSpaceChar(c) || c == '_') {
+                nextTitleCase = true;
+                titleCase.append(' ');
+            } else if (nextTitleCase) {
+                titleCase.append(Character.toTitleCase(c));
+                nextTitleCase = false;
+            } else {
+                titleCase.append(Character.toLowerCase(c));
+            }
+        }
+        return titleCase.toString().trim();
     }
 }

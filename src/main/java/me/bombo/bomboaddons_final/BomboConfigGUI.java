@@ -1293,8 +1293,11 @@ public class BomboConfigGUI extends Screen {
                             String petName = s.petNames.get(String.valueOf(i + 1));
                             if (petName != null && !petName.isEmpty()) {
                                 String cleanName = petName.replaceAll("§.", "");
-                                if (cleanName.length() > 12) {
-                                    cleanName = cleanName.substring(0, 12) + "...";
+                                cleanName = cleanName.replaceAll("\\[Lvl \\d+\\]", "");
+                                cleanName = cleanName.replaceAll("[^a-zA-Z0-9\\s\\-']", "");
+                                cleanName = cleanName.trim();
+                                if (cleanName.length() > 14) {
+                                    cleanName = cleanName.substring(0, 14) + "...";
                                 }
                                 boundInfo = " §7(" + cleanName + ")";
                             } else {

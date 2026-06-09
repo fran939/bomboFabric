@@ -37,7 +37,15 @@ public class BitsManager {
         lastAttemptTime = now;
 
         String url = "https://bomboapi.frandl938.workers.dev/bi";
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36").timeout(Duration.ofSeconds(10)).GET().build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("Upgrade-Insecure-Requests", "1")
+                .timeout(Duration.ofSeconds(10))
+                .GET()
+                .build();
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
@@ -91,12 +99,51 @@ public class BitsManager {
         }
     }
 
+    private static void getLocalTopBits(int amount, List<String> results, String reason) {
+        try {
+            List<BitItem> items = new ArrayList<>();
+            for (java.util.Map.Entry<String, Integer> entry : bitCostCache.entrySet()) {
+                String name = entry.getKey();
+                int bits = entry.getValue();
+                if (bits <= 0) continue;
+                
+                double price = LowestBinManager.getSellPrice(name);
+                if (price <= 0) {
+                    String foundId = LowestBinManager.findIdByName(name, true);
+                    if (foundId != null) {
+                        price = LowestBinManager.getSellPrice(foundId);
+                    }
+                }
+                
+                if (price > 0) {
+                    items.add(new BitItem(name, price / bits));
+                }
+            }
+            
+            if (!items.isEmpty()) {
+                items.sort(Comparator.comparingDouble((BitItem b) -> b.profitPerBit).reversed());
+                results.add("§6Profit Per Bit §7(Local Fallback)");
+                for (int i = 0; i < Math.min(amount, items.size()); i++) {
+                    BitItem item = items.get(i);
+                    results.add(String.format("§e%s: §a%d", item.formattedName, Math.round(item.profitPerBit)));
+                }
+            } else {
+                results.add("§c" + reason);
+            }
+        } catch (Exception ex) {
+            results.add("§c" + reason);
+        }
+    }
+
     public static CompletableFuture<List<String>> fetchTopBits(int amount) {
         String url = "https://bomboapi.frandl938.workers.dev/bi";
         Bomboaddons.logApiRequest(url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("Upgrade-Insecure-Requests", "1")
                 .timeout(Duration.ofSeconds(10))
                 .GET()
                 .build();
@@ -131,15 +178,15 @@ public class BitsManager {
                             }
                             
                         } catch (Exception e) {
-                            results.add("§cFailed to parse Bits API response.");
+                            getLocalTopBits(amount, results, "Failed to parse Bits API response.");
                         }
                     } else {
-                        results.add("§cBits API returned error code: " + response.statusCode());
+                        getLocalTopBits(amount, results, "Bits API returned error code: " + response.statusCode());
                     }
                     return results;
                 }).exceptionally(ex -> {
                     List<String> results = new ArrayList<>();
-                    results.add("§cFailed to connect to Bits API.");
+                    getLocalTopBits(amount, results, "Failed to connect to Bits API.");
                     return results;
                 });
     }

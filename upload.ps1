@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Always equip pet on keybind press in pets menu, and show pet name instead of UUID in pet settings config GUI."
+gh release create "v$version" $jarPath --title "v$version" --notes "Clean pet settings display names, add sacks/pets to inventory search (/lb), correct ender chest highlights index, map accessory bag, and add browser emulation/local fallback to Bits API."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
