@@ -37,7 +37,7 @@ public class SkyblockUtils {
         String lowerMode = mode.toLowerCase();
         String lowerMap = map.toLowerCase();
         
-        if (lowerMode.contains("kuudra") || lowerMap.contains("kuudra")) return "Kuudra";
+        if (lowerMode.contains("kuudra") || lowerMap.contains("kuudra")) return "Kuudra's Hollow";
         if (lowerMode.contains("garden") || lowerMap.contains("garden")) return "The Garden";
         if (lowerMode.contains("hub") || lowerMap.contains("hub")) return "The Hub";
         if (lowerMap.contains("private island") || lowerMode.contains("island")) return "Private Island";
@@ -74,16 +74,6 @@ public class SkyblockUtils {
         if (isConnectedToHypixel() && "SKYBLOCK".equals(BomboaddonsClient.locrawGametype)) {
             String area = mapLocrawToArea(BomboaddonsClient.locrawMode, BomboaddonsClient.locrawMap);
             if (!area.equals("Unknown")) {
-                if ("Kuudra".equals(area)) {
-                    Scoreboard scoreboard = mc.level.getScoreboard();
-                    Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
-                    if (sidebar != null) {
-                        String loc = parseAreaFromLines(getSidebarLines(scoreboard, sidebar));
-                        if (loc.startsWith("T") && loc.length() == 2) {
-                            return loc;
-                        }
-                    }
-                }
                 return area;
             }
         }
@@ -206,7 +196,19 @@ public class SkyblockUtils {
 
             // Hypixel subareas usually start with these symbols (⏏ U+23CF, ⏣ U+23E3, or o U+0444)
             if (clean.startsWith("\u23CF") || clean.startsWith("\u23E3") || clean.startsWith("⏣") || clean.startsWith("\u0444")) {
-                return clean.substring(1).trim();
+                String sub = clean.substring(1).trim();
+                if (sub.toLowerCase().contains("kuudra")) {
+                    if (sub.contains("(T")) {
+                        int idx = sub.indexOf("(T");
+                        if (idx + 2 < sub.length()) {
+                            char c = sub.charAt(idx + 2);
+                            if (c >= '1' && c <= '5') {
+                                return "T" + c;
+                            }
+                        }
+                    }
+                }
+                return sub;
             }
         }
         return "None";
@@ -222,16 +224,7 @@ public class SkyblockUtils {
             // Direct matches for common SkyBlock areas
             String lower = clean.toLowerCase();
             if (lower.contains("kuudra's hollow") || lower.contains("kuudra")) {
-                if (clean.contains("(T")) {
-                    int idx = clean.indexOf("(T");
-                    if (idx + 2 < clean.length()) {
-                        char c = clean.charAt(idx + 2);
-                        if (c >= '1' && c <= '5') {
-                            return "T" + c;
-                        }
-                    }
-                }
-                return "Kuudra";
+                return "Kuudra's Hollow";
             }
             if (lower.contains("the garden") || lower.contains("garden")) return "The Garden";
             if (lower.contains("the hub") || lower.contains("hub")) return "The Hub";
@@ -277,6 +270,7 @@ public class SkyblockUtils {
         if (lower.contains("rift")) return "The Rift";
         if (lower.contains("jerry") || lower.contains("workshop")) return "Jerry's Workshop";
         if (lower.contains("auction") || lower.contains("dark")) return "Dark Auction";
+        if (lower.matches("^(t[1-5])$") || lower.contains("kuudra")) return "Kuudra's Hollow";
         
         // Hub subareas
         if (lower.contains("village") || lower.contains("ruins") || lower.contains("high level") || 

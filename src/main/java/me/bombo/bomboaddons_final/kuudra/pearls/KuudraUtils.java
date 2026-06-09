@@ -40,7 +40,7 @@ public class KuudraUtils {
         if (mc.isLocalServer()) return true;
 
         String area = BomboaddonsClient.currentArea;
-        if ("Kuudra".equalsIgnoreCase(area)) return true;
+        if ("Kuudra".equalsIgnoreCase(area) || "Kuudra's Hollow".equalsIgnoreCase(area)) return true;
         if (area != null && area.matches("^T[1-5]$")) return true;
 
         // Fallback: check scoreboard lines for "Kuudra"
@@ -59,6 +59,10 @@ public class KuudraUtils {
         String area = BomboaddonsClient.currentArea;
         if (area != null && area.matches("^T[1-5]$")) {
             return Character.getNumericValue(area.charAt(1));
+        }
+        String sub = BomboaddonsClient.currentSubArea;
+        if (sub != null && sub.matches("^T[1-5]$")) {
+            return Character.getNumericValue(sub.charAt(1));
         }
 
         Minecraft mc = Minecraft.getInstance();

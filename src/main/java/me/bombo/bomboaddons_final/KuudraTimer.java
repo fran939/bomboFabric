@@ -26,7 +26,7 @@ public class KuudraTimer {
         if (client.screen != null && !(client.screen instanceof HudMoveScreen)) return;
 
         // Only track and show if in Kuudra area OR in singleplayer (for testing)
-        boolean isKuudraOrLocal = "Kuudra".equalsIgnoreCase(BomboaddonsClient.currentArea) || client.isLocalServer();
+        boolean isKuudraOrLocal = "Kuudra".equalsIgnoreCase(BomboaddonsClient.currentArea) || "Kuudra's Hollow".equalsIgnoreCase(BomboaddonsClient.currentArea) || client.isLocalServer();
         if (!isKuudraOrLocal) {
             lastDurationTicks = 0;
             return;
