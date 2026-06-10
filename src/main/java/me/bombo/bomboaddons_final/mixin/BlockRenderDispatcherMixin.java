@@ -20,7 +20,7 @@ public class BlockRenderDispatcherMixin {
         at = @At("HEAD"),
         argsOnly = true
     )
-    private BlockState modifyRenderState(BlockState state, BlockPos pos) {
+    private BlockState modifyRenderState(BlockState state, BlockState originalState, BlockPos pos) {
         if (FuckDiorite.inDungeonsOrPrivateIsland) {
             return FuckDiorite.checkAndReplace(pos, state);
         }
