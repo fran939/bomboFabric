@@ -8,11 +8,8 @@ if (Test-Path $modJsonPath) {
 }
 
 $jarPath = "build/libs/bomboaddons-$version.jar"
-
-if (-not (Test-Path $jarPath)) {
-    Write-Host "JAR not found at $jarPath. Building project..." -ForegroundColor Yellow
-    .\gradlew build
-}
+Write-Host "Building project cleanly..." -ForegroundColor Yellow
+.\gradlew clean build
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     $wingetGhDir = "$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Packages\GitHub.cli_Microsoft.Winget.Source_8wekyb3d8bbwe\bin"
@@ -29,6 +26,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to 1.0.63 to fix jar file locking issues during updates."
+gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to 1.0.64 with clean build to fix version caching bug."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
