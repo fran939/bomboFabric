@@ -30,11 +30,6 @@ public class FuckDiorite {
         BomboConfig.Settings s = BomboConfig.get();
         if (!s.fuckDiorite) return state;
 
-        String area = SkyblockUtils.getLocation();
-        if (!"Dungeons".equals(area) && !"Private Island".equals(area)) {
-            return state;
-        }
-
         int x = pos.getX();
         int y = pos.getY();
         int z = pos.getZ();
