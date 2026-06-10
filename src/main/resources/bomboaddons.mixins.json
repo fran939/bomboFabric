@@ -6,6 +6,7 @@
 	"client": [
 		"ClientLevelMixin",
 		"BlockRenderDispatcherMixin",
+		"BlockModelShaperMixin",
 		"BomboGuiMixin",
 		"GuiMixin",
 		"ChatMixin",

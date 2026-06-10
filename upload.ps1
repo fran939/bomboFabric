@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Implement instant block model rendering override in BlockRenderDispatcherMixin to eliminate all visual Diorite rendering delays."
+gh release create "v$version" $jarPath --title "v$version" --notes "Implement global BlockModelShaper model mapping to solve Diorite rendering delays for falling block entities and pistons."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
