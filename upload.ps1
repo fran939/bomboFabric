@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Revert to ClientLevel setBlock Mixin targeting 4-argument version and remove scoreboard location checks to fix instant block updates."
+gh release create "v$version" $jarPath --title "v$version" --notes "Widen vertical checking range in FuckDiorite from y=50 to y=220 to cover the complete downward pad movement path."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

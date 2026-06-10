@@ -37,7 +37,7 @@ public class FuckDiorite {
         for (int p = 0; p < 4; p++) {
             BlockPos pillar = PILLARS[p];
             if (x >= pillar.getX() - 3 && x <= pillar.getX() + 3 &&
-                y >= pillar.getY() - 20 && y <= pillar.getY() + 40 &&
+                y >= 50 && y <= 220 &&
                 z >= pillar.getZ() - 3 && z <= pillar.getZ() + 3) {
                 
                 BlockState customGlass = getSelectedGlassState(s.fuckDioriteColor);
@@ -72,7 +72,7 @@ public class FuckDiorite {
             BlockState targetGlass = s.fuckDioritePillarColor ? PILLAR_GLASS_STATES[p] : customGlass;
 
             for (int dx = pillar.getX() - 3; dx <= pillar.getX() + 3; dx++) {
-                for (int dy = pillar.getY() - 20; dy <= pillar.getY() + 40; dy++) {
+                for (int dy = 120; dy <= 220; dy++) {
                     for (int dz = pillar.getZ() - 3; dz <= pillar.getZ() + 3; dz++) {
                         BlockPos pos = new BlockPos(dx, dy, dz);
                         BlockState state = mc.level.getBlockState(pos);
