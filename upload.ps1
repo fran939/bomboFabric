@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Implement FallingBlockRenderer state replacement to render moving pads as transparent, colored stained glass."
+gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to 1.0.63 to fix jar file locking issues during updates."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
