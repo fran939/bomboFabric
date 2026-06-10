@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Widen Fuck Diorite replacement range to cover downward pad movements, and add a configuration option for Toxic Arrow Poison count."
+gh release create "v$version" $jarPath --title "v$version" --notes "Target Level.setBlock method instead of ClientLevel to ensure correct remapping, resolving the client block update issue completely."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
