@@ -29,6 +29,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Widen vertical checking range in FuckDiorite from y=50 to y=220 to cover the complete downward pad movement path."
+gh release create "v$version" $jarPath --title "v$version" --notes "Implement instant block model rendering override in BlockRenderDispatcherMixin to eliminate all visual Diorite rendering delays."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

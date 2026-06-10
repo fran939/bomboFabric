@@ -5,6 +5,7 @@
 	"mixins": [],
 	"client": [
 		"ClientLevelMixin",
+		"BlockRenderDispatcherMixin",
 		"BomboGuiMixin",
 		"GuiMixin",
 		"ChatMixin",

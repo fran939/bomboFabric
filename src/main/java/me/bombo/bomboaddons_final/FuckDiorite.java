@@ -21,6 +21,7 @@ public class FuckDiorite {
     };
 
     private static int tickCounter = 0;
+    public static volatile boolean inDungeonsOrPrivateIsland = false;
 
     public static BlockState checkAndReplace(BlockPos pos, BlockState state) {
         if (state == null || (!state.is(Blocks.DIORITE) && !state.is(Blocks.POLISHED_DIORITE))) {
@@ -50,16 +51,23 @@ public class FuckDiorite {
 
     public static void onTick() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) return;
+        if (mc.level == null || mc.player == null) {
+            inDungeonsOrPrivateIsland = false;
+            return;
+        }
 
         BomboConfig.Settings s = BomboConfig.get();
-        if (!s.fuckDiorite) return;
+        if (!s.fuckDiorite) {
+            inDungeonsOrPrivateIsland = false;
+            return;
+        }
 
         tickCounter++;
         if (tickCounter % 10 != 0) return; // Run every 10 ticks (0.5 seconds)
 
         String area = SkyblockUtils.getLocation();
-        if ("Dungeons".equals(area) || "Private Island".equals(area)) {
+        inDungeonsOrPrivateIsland = "Dungeons".equals(area) || "Private Island".equals(area);
+        if (inDungeonsOrPrivateIsland) {
             replaceDioriteDungeons(mc, s);
         }
     }
