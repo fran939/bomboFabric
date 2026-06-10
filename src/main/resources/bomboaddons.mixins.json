@@ -7,6 +7,7 @@
 		"ClientLevelMixin",
 		"BlockRenderDispatcherMixin",
 		"BlockModelShaperMixin",
+		"FallingBlockRendererMixin",
 		"BomboGuiMixin",
 		"GuiMixin",
 		"ChatMixin",
