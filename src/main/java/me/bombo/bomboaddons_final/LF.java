@@ -51,6 +51,7 @@ import java.util.Optional;
 public class LF {
     private static final Map<String, String> NAME_CACHE = new ConcurrentHashMap<>();
     private static final Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{32}$");
+    private static final Set<String> pendingPreFetches = ConcurrentHashMap.newKeySet();
     private static final int MAX_RESULTS = 300;
 
     private static final java.net.http.HttpClient CLIENT = java.net.http.HttpClient.newBuilder()
@@ -101,6 +102,41 @@ public class LF {
         }).exceptionally(e -> {
             sendMessage("&cError during search: " + e.getMessage());
             return null;
+        });
+    }
+
+    public static void preFetchSelf() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        String username = removeColors(mc.player.getName().getString());
+        if (username == null || username.isEmpty()) return;
+
+        // Already cached within last 60 seconds?
+        if (username.equalsIgnoreCase(cachedUsername) && cachedJson != null && (System.currentTimeMillis() - cacheTime < 60000)) {
+            return;
+        }
+
+        // Already fetching?
+        String lowerName = username.toLowerCase();
+        if (!pendingPreFetches.add(lowerName)) return;
+
+        getUuid(username).thenCompose((uuid) -> {
+            if (uuid == null) {
+                return CompletableFuture.completedFuture(null);
+            } else {
+                String cleanUuid = uuid.toString().replace("-", "").toLowerCase();
+                return getFeatureData(username, cleanUuid).thenApply((json) -> {
+                    if (json != null && !json.isEmpty()) {
+                        cachedUsername = username;
+                        cachedUuid = cleanUuid;
+                        cachedJson = json;
+                        cacheTime = System.currentTimeMillis();
+                    }
+                    return null;
+                });
+            }
+        }).whenComplete((res, ex) -> {
+            pendingPreFetches.remove(lowerName);
         });
     }
 

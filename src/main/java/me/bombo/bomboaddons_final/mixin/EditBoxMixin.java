@@ -40,4 +40,16 @@ public abstract class EditBoxMixin {
             }
         }
     }
+
+    @Inject(method = "setValue", at = @At("HEAD"))
+    private void onSetValue(String value, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        if (value != null) {
+            String lower = value.toLowerCase();
+            if (lower.startsWith("/lb") || lower.startsWith("/lfc")) {
+                if (Minecraft.getInstance().screen instanceof ChatScreen) {
+                    me.bombo.bomboaddons_final.LF.preFetchSelf();
+                }
+            }
+        }
+    }
 }

@@ -89,6 +89,22 @@ public class BomboConfig {
         if (instance.petNames == null) {
             instance.petNames = new HashMap<>();
         }
+        if (instance.commandAliases == null) {
+            instance.commandAliases = new HashMap<>();
+        }
+        if (instance.profileChatTriggers == null) {
+            instance.profileChatTriggers = new HashMap<>();
+        }
+        if (!instance.profileChatTriggers.containsKey("General")) {
+            instance.profileChatTriggers.put("General", new ArrayList<>());
+        }
+        if (instance.chatTriggers != null && !instance.chatTriggers.isEmpty()) {
+            instance.profileChatTriggers.putIfAbsent("default", new ArrayList<>());
+            instance.profileChatTriggers.get("default").addAll(instance.chatTriggers);
+            instance.chatTriggers.clear();
+            instance.chatTriggers = null;
+            save();
+        }
     }
 
     public static void save() {
@@ -244,6 +260,24 @@ public class BomboConfig {
         public Map<String, List<String>> commandCycles = new HashMap<>();
         public Map<String, Integer> commandCycleIndices = new HashMap<>();
         public Map<String, GetTarget> getTargets = new HashMap<>();
+        public Map<String, String> commandAliases = new HashMap<>();
+        public List<ChatTrigger> chatTriggers = null;
+        public Map<String, List<ChatTrigger>> profileChatTriggers = new HashMap<>();
+    }
+
+    public static class ChatTrigger {
+        public String triggerText = "";
+        public String commandToRun = "";
+        public String titleToShow = "";
+        public boolean enabled = true;
+
+        public ChatTrigger() {}
+
+        public ChatTrigger(String triggerText, String commandToRun, String titleToShow) {
+            this.triggerText = triggerText;
+            this.commandToRun = commandToRun;
+            this.titleToShow = titleToShow;
+        }
     }
 
 

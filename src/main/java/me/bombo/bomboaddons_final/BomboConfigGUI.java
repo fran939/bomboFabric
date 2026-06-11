@@ -25,7 +25,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
-            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints");
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers");
     public static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -63,6 +63,17 @@ public class BomboConfigGUI extends Screen {
     private static boolean wpBeaconInput = true;
     private static String wpColorInput = "AQUA";
     private static int editingWaypointIdx = -1;
+
+    // Transient state for aliases
+    private static String aliasCommandInput = "";
+    private static String aliasActualInput = "";
+    private static String editingAliasKey = null;
+
+    // Transient state for chat triggers
+    private static String triggerTextInput = "";
+    private static String triggerCommandInput = "";
+    private static String triggerTitleInput = "";
+    private static int editingTriggerIdx = -1;
 
     public static boolean isTypingOrListening() {
         Minecraft mc = Minecraft.getInstance();
@@ -368,6 +379,9 @@ public class BomboConfigGUI extends Screen {
                         addRenderableWidget(Button.builder(Component.literal(delText), btn -> {
                             if (confirmProfileDelete) {
                                 s.profileBinds.remove(s.activeProfile);
+                                s.keybindBinds.remove(s.activeProfile);
+                                s.customWaypoints.remove(s.activeProfile);
+                                s.profileChatTriggers.remove(s.activeProfile);
                                 s.activeProfile = "default";
                                 BomboConfig.save();
                                 confirmProfileDelete = false;
@@ -789,6 +803,150 @@ public class BomboConfigGUI extends Screen {
                                 }).bounds(contentX + 180, itemY + 5, 40, 18).build());
                                 addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> { wps.remove(idx); BomboConfig.save(); init(); }).bounds(contentX + 225, itemY + 5, 35, 18).build());
                             }
+                        }
+                    }
+                }
+                case 15 -> { // Aliases
+                    curY += ITEM_HEIGHT;
+                    curY = addTextBox("Alias", aliasCommandInput, v -> aliasCommandInput = v, contentX, contentWidth, curY);
+                    curY = addTextBox("Command", aliasActualInput, v -> aliasActualInput = v, contentX, contentWidth, curY);
+
+                    int finalCurY = curY;
+                    String addBtnText = editingAliasKey != null ? "§e✔ Save Alias" : "§a+ Add Alias";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                        if (!aliasCommandInput.isEmpty() && !aliasActualInput.isEmpty()) {
+                            String cleanAlias = aliasCommandInput.startsWith("/") ? aliasCommandInput.substring(1) : aliasCommandInput;
+                            if (editingAliasKey != null) {
+                                s.commandAliases.remove(editingAliasKey);
+                                editingAliasKey = null;
+                            }
+                            s.commandAliases.put(cleanAlias, aliasActualInput);
+                            BomboConfig.save();
+                            BomboaddonsClient.registerAllAliases();
+                            aliasCommandInput = "";
+                            aliasActualInput = "";
+                            init();
+                        }
+                    }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+
+                    if (editingAliasKey != null) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel"), btn -> {
+                            editingAliasKey = null;
+                            aliasCommandInput = "";
+                            aliasActualInput = "";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 60, 20).build());
+                    }
+
+                    curY += 35;
+                    int listStartY = curY;
+                    List<String> sortedAliases = new ArrayList<>(s.commandAliases.keySet());
+                    Collections.sort(sortedAliases);
+                    for (int i = 0; i < sortedAliases.size(); i++) {
+                        final int idx = i;
+                        final String aliasKey = sortedAliases.get(idx);
+                        int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
+                        if (itemY > listStartY + 15 && itemY < height - 20) {
+                            addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                editingAliasKey = aliasKey;
+                                aliasCommandInput = aliasKey;
+                                aliasActualInput = s.commandAliases.get(aliasKey);
+                                init();
+                            }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+                            addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> {
+                                s.commandAliases.remove(aliasKey);
+                                BomboConfig.save();
+                                BomboaddonsClient.registerAllAliases();
+                                init();
+                            }).bounds(contentX + 225, itemY + 5, 35, 18).build());
+                        }
+                    }
+                }
+                case 16 -> { // Chat Triggers
+                    curY += ITEM_HEIGHT;
+                    
+                    // Profile Switcher row
+                    List<String> profiles = new ArrayList<>(s.profileBinds.keySet());
+                    if (!profiles.contains("default")) profiles.add(0, "default");
+                    int currentIdx = profiles.indexOf(s.activeProfile);
+                    
+                    addRenderableWidget(Button.builder(Component.literal("<"), btn -> {
+                        int next = (currentIdx - 1 + profiles.size()) % profiles.size();
+                        s.activeProfile = profiles.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + 150, curY, 20, 20).build());
+                    
+                    addRenderableWidget(Button.builder(Component.literal(">"), btn -> {
+                        int next = (currentIdx + 1) % profiles.size();
+                        s.activeProfile = profiles.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + 175, curY, 20, 20).build());
+
+                    curY += ITEM_HEIGHT + 5;
+                    
+                    curY = addTextBox("If Chat Contains", triggerTextInput, v -> triggerTextInput = v, contentX, contentWidth, curY);
+                    curY = addTextBox("Run Command", triggerCommandInput, v -> triggerCommandInput = v, contentX, contentWidth, curY);
+                    curY = addTextBox("Show Title", triggerTitleInput, v -> triggerTitleInput = v, contentX, contentWidth, curY);
+
+                    List<BomboConfig.ChatTrigger> triggers = s.profileChatTriggers.computeIfAbsent(s.activeProfile, k -> new ArrayList<>());
+
+                    int finalCurY = curY;
+                    String addBtnText = editingTriggerIdx != -1 ? "§e✔ Save Trigger" : "§a+ Add Trigger";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                        if (!triggerTextInput.isEmpty() && (!triggerCommandInput.isEmpty() || !triggerTitleInput.isEmpty())) {
+                            BomboConfig.ChatTrigger ct = new BomboConfig.ChatTrigger(triggerTextInput, triggerCommandInput, triggerTitleInput);
+                            if (editingTriggerIdx != -1) {
+                                triggers.set(editingTriggerIdx, ct);
+                                editingTriggerIdx = -1;
+                            } else {
+                                triggers.add(ct);
+                            }
+                            BomboConfig.save();
+                            triggerTextInput = "";
+                            triggerCommandInput = "";
+                            triggerTitleInput = "";
+                            init();
+                        }
+                    }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+
+                    if (editingTriggerIdx != -1) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel"), btn -> {
+                            editingTriggerIdx = -1;
+                            triggerTextInput = "";
+                            triggerCommandInput = "";
+                            triggerTitleInput = "";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 60, 20).build());
+                    }
+
+                    curY += 35;
+                    int listStartY = curY;
+                    for (int i = 0; i < triggers.size(); i++) {
+                        final int idx = i;
+                        BomboConfig.ChatTrigger trigger = triggers.get(idx);
+                        int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
+                        if (itemY > listStartY + 15 && itemY < height - 20) {
+                            String toggleLabel = trigger.enabled ? "§aON" : "§cOFF";
+                            addRenderableWidget(Button.builder(Component.literal(toggleLabel), btn -> {
+                                trigger.enabled = !trigger.enabled;
+                                BomboConfig.save();
+                                init();
+                            }).bounds(contentX + 130, itemY + 5, 45, 18).build());
+
+                            addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                editingTriggerIdx = idx;
+                                triggerTextInput = trigger.triggerText;
+                                triggerCommandInput = trigger.commandToRun;
+                                triggerTitleInput = trigger.titleToShow;
+                                init();
+                            }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+                            addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> {
+                                triggers.remove(idx);
+                                BomboConfig.save();
+                                init();
+                            }).bounds(contentX + 225, itemY + 5, 35, 18).build());
                         }
                     }
                 }
@@ -1382,6 +1540,63 @@ public class BomboConfigGUI extends Screen {
                                 String statusPrefix = wp.enabled ? "§a[✔] " : "§c[✘] ";
                                 String formattedColor = getColorFormatting(wp.color);
                                 g.drawString(font, statusPrefix + formattedColor + wp.name + " §7-> (" + String.format("%.1f, %.1f, %.1f", wp.x, wp.y, wp.z) + ")" + extra, contentX, listY + 5, 0xFFFFFFFF, false);
+                            }
+                            listY += 22;
+                        }
+                    }
+                }
+                case 15 -> { // Aliases
+                    g.drawString(font, "§6§lCommand Aliases", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fAlias:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fCommand:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+
+                    curY += 35; // Space before list
+                    int activeAliasesTitleY = curY;
+                    g.drawString(font, "§9§lActive Aliases", contentX, activeAliasesTitleY, 0xFF5555FF, true);
+
+                    int listY = activeAliasesTitleY + 20 - (int)scrollAmount;
+                    List<String> sortedAliases = new ArrayList<>(s.commandAliases.keySet());
+                    Collections.sort(sortedAliases);
+                    for (String aliasKey : sortedAliases) {
+                        if (listY > activeAliasesTitleY + 15 && listY < height - 15) {
+                            g.drawString(font, "§e/" + aliasKey + " §7-> §b" + s.commandAliases.get(aliasKey), contentX, listY + 5, 0xFFFFFFFF, false);
+                        }
+                        listY += 22;
+                    }
+                }
+                case 16 -> { // Chat Triggers
+                    g.drawString(font, "§6§lChat Triggers & Actions", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fActive Profile: §e" + s.activeProfile, contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fIf Chat Contains:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fRun Command:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fShow Title:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+
+                    curY += 35; // Space before list
+                    int activeTriggersTitleY = curY;
+                    g.drawString(font, "§9§lActive Triggers", contentX, activeTriggersTitleY, 0xFF5555FF, true);
+
+                    int listY = activeTriggersTitleY + 20 - (int)scrollAmount;
+                    List<BomboConfig.ChatTrigger> activeTriggers = s.profileChatTriggers.get(s.activeProfile);
+                    if (activeTriggers != null) {
+                        for (BomboConfig.ChatTrigger trigger : activeTriggers) {
+                            if (listY > activeTriggersTitleY + 15 && listY < height - 15) {
+                                String actionText = "";
+                                if (trigger.commandToRun != null && !trigger.commandToRun.isEmpty()) {
+                                    actionText += " §7[Cmd: §b" + trigger.commandToRun + "§7]";
+                                }
+                                if (trigger.titleToShow != null && !trigger.titleToShow.isEmpty()) {
+                                    actionText += " §7[Title: §e" + trigger.titleToShow + "§7]";
+                                }
+                                String statusPrefix = trigger.enabled ? "§a[✔] " : "§c[✘] ";
+                                g.drawString(font, statusPrefix + "§f\"" + trigger.triggerText + "\"" + actionText, contentX, listY + 5, 0xFFFFFFFF, false);
                             }
                             listY += 22;
                         }
