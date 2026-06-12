@@ -33,7 +33,8 @@
 		"ScreenMixin",
 		"PlayerMixin",
 		"DisconnectedScreenMixin",
-		"ParticleMixin"
+		"ParticleMixin",
+		"DungeonPadTimersMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

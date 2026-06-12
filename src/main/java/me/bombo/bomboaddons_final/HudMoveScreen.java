@@ -46,6 +46,12 @@ public class HudMoveScreen extends Screen {
         renderTarget(g, mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudTarget.KUUDRA);
         KuudraTimer.drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, true);
 
+        // 5. Dungeon Pad Timers
+        int padW = (int)(120 * s.padTimersScale);
+        int padH = (int)(12 * s.padTimersScale);
+        renderTarget(g, mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudTarget.PAD_TIMERS);
+        DungeonPadTimers.drawTimerInfo(g, s.padTimersX, s.padTimersY, true);
+
         g.drawCenteredString(font, "§e§lHUD EDIT MODE", width / 2, 10, 0xFFFFFFFF);
         g.drawCenteredString(font, "§7Drag elements to reposition them, scroll wheel to resize", width / 2, 22, 0xFFFFFFFF);
         g.drawCenteredString(font, "§cPress ESC to save and close", width / 2, height - 20, 0xFFFFFFFF);
@@ -70,6 +76,9 @@ public class HudMoveScreen extends Screen {
             } else if (target == HudTarget.KUUDRA) {
                 s.kuudraBlindnessTimerX = mouseX - dragOffsetX;
                 s.kuudraBlindnessTimerY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.PAD_TIMERS) {
+                s.padTimersX = mouseX - dragOffsetX;
+                s.padTimersY = mouseY - dragOffsetY;
             }
         }
 
@@ -110,6 +119,11 @@ public class HudMoveScreen extends Screen {
             startDragging(HudTarget.KUUDRA, (int) mouseX - s.kuudraBlindnessTimerX, (int) mouseY - s.kuudraBlindnessTimerY);
             return true;
         }
+        // Check Pad Timers
+        if (checkHit(mouseX, mouseY, s.padTimersX, s.padTimersY, (int)(120 * s.padTimersScale), (int)(12 * s.padTimersScale))) {
+            startDragging(HudTarget.PAD_TIMERS, (int) mouseX - s.padTimersX, (int) mouseY - s.padTimersY);
+            return true;
+        }
 
         return super.mouseClicked(event, handled);
     }
@@ -145,6 +159,12 @@ public class HudMoveScreen extends Screen {
             BomboConfig.save();
             return true;
         }
+        // pad timers
+        if (checkHit(mouseX, mouseY, s.padTimersX, s.padTimersY, (int)(120 * s.padTimersScale), (int)(12 * s.padTimersScale))) {
+            s.padTimersScale = (float) Math.max(0.5, Math.min(3.0, s.padTimersScale + vertical * 0.1));
+            BomboConfig.save();
+            return true;
+        }
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -177,6 +197,6 @@ public class HudMoveScreen extends Screen {
     }
 
     private enum HudTarget {
-        DICE, BAKERY, RNG, KUUDRA
+        DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS
     }
 }

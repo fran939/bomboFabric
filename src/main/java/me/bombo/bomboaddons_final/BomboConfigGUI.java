@@ -25,7 +25,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
-            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers");
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons");
     public static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -950,6 +950,16 @@ public class BomboConfigGUI extends Screen {
                         }
                     }
                 }
+                case 17 -> { // Dungeons
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Pad Timers Purple", s.padTimersPurple, v -> s.padTimersPurple = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Pad Timers Green", s.padTimersGreen, v -> s.padTimersGreen = v, contentX, contentWidth, curY);
+                    curY += 10;
+                    addRenderableWidget(Button.builder(Component.literal("§e§lMove HUD Elements"), btn -> {
+                        Minecraft.getInstance().setScreen(new HudMoveScreen());
+                    }).bounds(contentX, curY, contentWidth / 2, 20).build());
+                    curY += 30;
+                }
             }
 
             if (colorPickerTarget != null) {
@@ -1601,6 +1611,13 @@ public class BomboConfigGUI extends Screen {
                             listY += 22;
                         }
                     }
+                }
+                case 17 -> { // Dungeons
+                    g.drawString(font, "§6§lDungeons Settings", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Pad Timers Purple", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Pad Timers Green", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
             }
 

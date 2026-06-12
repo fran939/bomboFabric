@@ -1733,6 +1733,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             registerTickEvents();
             DiceHud.init();
             KuudraTimer.init();
+            DungeonPadTimers.init();
             IRCClient.start();
 
             WorldRenderEvents.AFTER_ENTITIES.register(context -> {
@@ -2126,6 +2127,10 @@ public class BomboaddonsClient implements ClientModInitializer {
         if (rawMessage == null)
             return;
         String cleanMessage = rawMessage.replaceAll("§.", "").trim().toLowerCase();
+        if (cleanMessage.contains("[boss] storm: energy heed my call!") || 
+            cleanMessage.contains("[boss] storm: thunder let me be your catalyst!")) {
+            DungeonPadTimers.onBossMessage();
+        }
         if (cleanMessage.startsWith("co-op >") && cleanMessage.contains("noreconnect")) {
             tempDisableReconnect = true;
             Minecraft mc = Minecraft.getInstance();
