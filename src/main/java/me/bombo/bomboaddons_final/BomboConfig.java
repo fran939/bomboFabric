@@ -263,6 +263,7 @@ public class BomboConfig {
         public Map<String, String> commandAliases = new HashMap<>();
         public List<ChatTrigger> chatTriggers = null;
         public Map<String, List<ChatTrigger>> profileChatTriggers = new HashMap<>();
+        public boolean ircChatEnabled = true;
     }
 
     public static class ChatTrigger {

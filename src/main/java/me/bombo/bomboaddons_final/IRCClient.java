@@ -31,9 +31,27 @@ public class IRCClient {
         clientThread.start();
     }
     
+    public static void onEnabledToggled() {
+        if (!BomboConfig.get().ircChatEnabled) {
+            closeQuietly();
+        }
+    }
+
     private static void runLoop() {
         Random random = new Random();
         while (running) {
+            if (!BomboConfig.get().ircChatEnabled) {
+                if (socket != null) {
+                    closeQuietly();
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    break;
+                }
+                continue;
+            }
+
             try {
                 Minecraft mc = Minecraft.getInstance();
                 String username = "Player";
@@ -112,7 +130,7 @@ public class IRCClient {
                         if (msgParts.length == 3) {
                             String rankPrefix = msgParts[0];
                             String realUsername = msgParts[1];
-                            String actualMsg = msgParts[2];
+                            String actualMsg = msgParts[2].replace('&', '§');
                             
                             if (rankPrefix.isEmpty()) {
                                 rankPrefix = "§7";
@@ -128,7 +146,8 @@ public class IRCClient {
                             } else if (!rankPrefix.endsWith(" ")) {
                                 rankPrefix = rankPrefix + " ";
                             }
-                            formattedMessage = "§9Party §8> " + rankPrefix + senderNick + "§f: §r" + payload;
+                            String cleanPayload = payload.replace('&', '§');
+                            formattedMessage = "§9Party §8> " + rankPrefix + senderNick + "§f: §r" + cleanPayload;
                         }
                         
                         Minecraft mc = Minecraft.getInstance();
@@ -157,7 +176,8 @@ public class IRCClient {
                 String username = mc.getUser().getName();
                 String prefix = RankCache.getRank(username);
                 
-                String payload = prefix + "\u0002" + username + "\u0002" + msg;
+                String coloredMsg = msg.replace('&', '§');
+                String payload = prefix + "\u0002" + username + "\u0002" + coloredMsg;
                 sendRaw("PRIVMSG " + CHANNEL + " :" + payload);
                 
                 // Display our own message locally in chat
@@ -167,7 +187,7 @@ public class IRCClient {
                 } else if (!localPrefix.endsWith(" ")) {
                     localPrefix = localPrefix + " ";
                 }
-                String localMsg = "§9Party §8> " + localPrefix + username + "§f: §r" + msg;
+                String localMsg = "§9Party §8> " + localPrefix + username + "§f: §r" + coloredMsg;
                 mc.execute(() -> {
                     if (mc.player != null) {
                         mc.player.displayClientMessage(Component.literal(localMsg), false);

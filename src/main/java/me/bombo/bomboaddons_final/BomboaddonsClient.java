@@ -333,6 +333,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                             context.getSource().sendFeedback(
                                     createHelpLine("/b rank [name]", "/b rank", "Fetches and displays the Hypixel rank of a player.")
                                             .append(Component.literal(" §7- Fetches and displays player rank")));
+                            context.getSource().sendFeedback(
+                                    createHelpLine("/b chat", "/b chat", "Toggles the global IRC mod chat.")
+                                            .append(Component.literal(" §7- Toggles IRC chat")));
 
                             context.getSource().sendFeedback(
                                     Component.literal("§8---------------------------------------------------------"));
@@ -461,6 +464,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             showRankCommand(context.getSource(), name);
                                             return 1;
                                         })));
+
+                        builder.then(ClientCommandManager.literal("chat")
+                                .executes(context -> {
+                                    BomboConfig.get().ircChatEnabled = !BomboConfig.get().ircChatEnabled;
+                                    BomboConfig.save();
+                                    IRCClient.onEnabledToggled();
+                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§7IRC Chat: " 
+                                            + (BomboConfig.get().ircChatEnabled ? "§aON" : "§cOFF")));
+                                    return 1;
+                                }));
 
                         // --- Utilities ---
                         builder.then(ClientCommandManager.literal("ec")
@@ -1516,6 +1529,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                             })
                             .then(ClientCommandManager.argument("message", StringArgumentType.greedyString())
                                     .executes(context -> {
+                                        if (!BomboConfig.get().ircChatEnabled) {
+                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cIRC Chat is currently disabled! Toggle it on with §e/b chat§c."));
+                                            return 1;
+                                        }
                                         String message = StringArgumentType.getString(context, "message");
                                         IRCClient.sendMessage(message);
                                         return 1;
@@ -1559,8 +1576,22 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 return 1;
                             }));
 
-                    dispatcher.register(ClientCommandManager.literal("bombohb")
+                    java.util.function.Consumer<String> registerHotbarCommand = nameLiteral -> {
+                        dispatcher.register(ClientCommandManager.literal(nameLiteral)
                             .then(ClientCommandManager.literal("save")
+                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String name = StringArgumentType.getString(context, "name");
+                                                if (HotbarSwapper.saveSnapshot(name)) {
+                                                    context.getSource().sendFeedback(
+                                                            Component.literal("§aSaved hotbar snapshot: §e" + name));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal(
+                                                            "§cFailed to save hotbar snapshot (player is null)."));
+                                                }
+                                                return 1;
+                                            })))
+                            .then(ClientCommandManager.literal("s")
                                     .then(ClientCommandManager.argument("name", StringArgumentType.string())
                                             .executes(context -> {
                                                 String name = StringArgumentType.getString(context, "name");
@@ -1608,7 +1639,26 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                             Component.literal("§cSnapshot not found: §e" + name));
                                                 }
                                                 return 1;
-                                            }))));
+                                            })))
+                            .then(ClientCommandManager.literal("a")
+                                    .then(ClientCommandManager.argument("name", StringArgumentType.string())
+                                            .executes(context -> {
+                                                String name = StringArgumentType.getString(context, "name");
+                                                if (HotbarSwapper.exists(name)) {
+                                                    HotbarSwapper.apply(name);
+                                                    context.getSource().sendFeedback(
+                                                            Component.literal("§aApplied hotbar snapshot: §e" + name));
+                                                } else {
+                                                    context.getSource().sendFeedback(
+                                                            Component.literal("§cSnapshot not found: §e" + name));
+                                                }
+                                                return 1;
+                                            })))
+                        );
+                    };
+
+                    registerHotbarCommand.accept("bombohb");
+                    registerHotbarCommand.accept("bhb");
                     dispatcher.register(ClientCommandManager.literal("mod")
                             .executes(context -> {
                                 Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");

@@ -26,6 +26,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to 1.0.67 with clean build to fix rank caching and add /lb typing pre-fetch."
+gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to 1.0.68 with clean build to add IRC chat toggle, color codes support, and /bhb save/apply command aliases."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
