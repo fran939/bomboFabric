@@ -33,7 +33,7 @@ public class IRCClient {
     
     public static void onEnabledToggled() {
         if (!BomboConfig.get().ircChatEnabled) {
-            closeQuietly();
+            new Thread(IRCClient::closeQuietly, "IRC-Close-Thread").start();
         }
     }
 
@@ -68,15 +68,20 @@ public class IRCClient {
                     currentNick = currentNick.substring(0, 20);
                 }
                 
-                socket = new Socket(SERVER, PORT);
-                writer = new PrintWriter(socket.getOutputStream(), true);
-                reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+                Socket localSocket = new Socket(SERVER, PORT);
+                socket = localSocket;
+                PrintWriter localWriter = new PrintWriter(localSocket.getOutputStream(), true);
+                writer = localWriter;
+                BufferedReader localReader = new BufferedReader(new InputStreamReader(localSocket.getInputStream(), "UTF-8"));
+                reader = localReader;
                 
                 sendRaw("NICK " + currentNick);
                 sendRaw("USER " + currentNick + " 0 * :BomboAddons User");
                 
                 String line;
-                while ((line = reader.readLine()) != null) {
+                while (running && BomboConfig.get().ircChatEnabled) {
+                    line = localReader.readLine();
+                    if (line == null) break;
                     handleLine(line);
                 }
             } catch (Exception e) {
@@ -209,10 +214,10 @@ public class IRCClient {
         }
     }
     
-    private static void closeQuietly() {
-        try { if (reader != null) reader.close(); } catch (Exception e) {}
-        try { if (writer != null) writer.close(); } catch (Exception e) {}
-        try { if (socket != null) socket.close(); } catch (Exception e) {}
+    private static synchronized void closeQuietly() {
+        try { if (reader != null) reader.close(); } catch (Throwable t) {}
+        try { if (writer != null) writer.close(); } catch (Throwable t) {}
+        try { if (socket != null) socket.close(); } catch (Throwable t) {}
         reader = null;
         writer = null;
         socket = null;

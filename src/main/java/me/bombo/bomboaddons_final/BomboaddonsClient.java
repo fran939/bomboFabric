@@ -467,11 +467,16 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                         builder.then(ClientCommandManager.literal("chat")
                                 .executes(context -> {
-                                    BomboConfig.get().ircChatEnabled = !BomboConfig.get().ircChatEnabled;
-                                    BomboConfig.save();
-                                    IRCClient.onEnabledToggled();
-                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§7IRC Chat: " 
-                                            + (BomboConfig.get().ircChatEnabled ? "§aON" : "§cOFF")));
+                                    try {
+                                        BomboConfig.get().ircChatEnabled = !BomboConfig.get().ircChatEnabled;
+                                        BomboConfig.save();
+                                        IRCClient.onEnabledToggled();
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§7IRC Chat: " 
+                                                + (BomboConfig.get().ircChatEnabled ? "§aON" : "§cOFF")));
+                                    } catch (Throwable t) {
+                                        Bomboaddons.LOGGER.error("[BomboAddons] Error toggling IRC Chat via command", t);
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cError toggling IRC Chat: " + t.getMessage()));
+                                    }
                                     return 1;
                                 }));
 
