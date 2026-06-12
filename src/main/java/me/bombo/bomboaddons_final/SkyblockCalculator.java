@@ -35,10 +35,13 @@ public class SkyblockCalculator {
                 if (alias.isEmpty() || expression.isEmpty()) {
                     return new EvaluationResult("§cInvalid alias definition. Usage: /c <name> = <expression>");
                 }
+                expression = cleanSkyblockInput(expression);
                 BomboConfig.get().calculatorAliases.put(alias, expression);
                 BomboConfig.save();
                 return new EvaluationResult(0, Component.literal("§aSet alias §b" + alias + " §7to §f" + expression));
             }
+
+            input = cleanSkyblockInput(input);
 
             // Ensure prices are loaded before starting evaluation
             LowestBinManager.ensureLoaded();
@@ -48,6 +51,28 @@ public class SkyblockCalculator {
         } catch (Exception e) {
             return new EvaluationResult("§cError: " + e.getMessage());
         }
+    }
+
+    private static String cleanSkyblockInput(String input) {
+        if (input == null) return "";
+        // Remove commas between digits (e.g. 178,040,170 -> 178040170)
+        input = input.replaceAll("(?<=\\d),(?=\\d)", "");
+
+        // Remove common non-numeric labels case-insensitively
+        String[] noisePatterns = {
+            "(?i)\\byou earn:?\\b",
+            "(?i)\\bcoins?\\b",
+            "(?i)\\bbuy price:?\\b",
+            "(?i)\\bsell price:?\\b",
+            "(?i)\\bprofit:?\\b",
+            "(?i)\\best\\.? value:?\\b",
+            "(?i)\\bworth:?\\b",
+            "(?i)\\bprice:?\\b"
+        };
+        for (String pattern : noisePatterns) {
+            input = input.replaceAll(pattern, "");
+        }
+        return input.trim();
     }
 
     private static List<String> tokenize(String input) {
