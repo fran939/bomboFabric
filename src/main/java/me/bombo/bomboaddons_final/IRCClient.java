@@ -150,7 +150,12 @@ public class IRCClient {
                             } else if (!rankPrefix.endsWith(" ")) {
                                 rankPrefix = rankPrefix + " ";
                             }
-                            formattedMessage = "§9Party §8> " + rankPrefix + realUsername + "§f: §r" + actualMsg;
+                            
+                            if (rankPrefix.contains(" >") || rankPrefix.contains(">")) {
+                                formattedMessage = rankPrefix + realUsername + "§f: §r" + actualMsg;
+                            } else {
+                                formattedMessage = "§9Party §8> " + rankPrefix + realUsername + "§f: §r" + actualMsg;
+                            }
                         } else {
                             // Fallback: look up rank from cache or fetch it
                             String rankPrefix = RankCache.getRank(senderNick);
@@ -160,7 +165,12 @@ public class IRCClient {
                                 rankPrefix = rankPrefix + " ";
                             }
                             String cleanPayload = payload.replace('&', '§');
-                            formattedMessage = "§9Party §8> " + rankPrefix + senderNick + "§f: §r" + cleanPayload;
+                            
+                            if (rankPrefix.contains(" >") || rankPrefix.contains(">")) {
+                                formattedMessage = rankPrefix + senderNick + "§f: §r" + cleanPayload;
+                            } else {
+                                formattedMessage = "§9Party §8> " + rankPrefix + senderNick + "§f: §r" + cleanPayload;
+                            }
                         }
                         
                         Minecraft mc = Minecraft.getInstance();
