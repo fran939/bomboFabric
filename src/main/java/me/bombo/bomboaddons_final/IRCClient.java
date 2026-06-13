@@ -55,7 +55,15 @@ public class IRCClient {
             try {
                 Minecraft mc = Minecraft.getInstance();
                 String username = "Player";
-                if (mc.getUser() != null) {
+                String customFormat = BomboConfig.get().ircCustomFormat;
+                ParsedCustomName parsed = null;
+                if (customFormat != null && !customFormat.isEmpty()) {
+                    parsed = parseCustomFormat(customFormat);
+                }
+                
+                if (parsed != null && parsed.customUsername != null && !parsed.customUsername.isEmpty()) {
+                    username = parsed.customUsername;
+                } else if (mc.getUser() != null) {
                     username = mc.getUser().getName();
                 }
                 
@@ -172,55 +180,114 @@ public class IRCClient {
     }
     
     public static void sendMessage(String msg) {
-        if (msg == null || msg.trim().isEmpty()) return;
+        System.out.println("[BomboAddons-IRC] sendMessage called with msg: " + msg);
+        if (msg == null || msg.trim().isEmpty()) {
+            System.out.println("[BomboAddons-IRC] Message is empty, ignoring.");
+            return;
+        }
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+        if (mc.player == null) {
+            System.out.println("[BomboAddons-IRC] mc.player is null, ignoring.");
+            return;
+        }
         
         new Thread(() -> {
             try {
+                System.out.println("[BomboAddons-IRC] Send thread started.");
                 String username = mc.getUser().getName();
+                System.out.println("[BomboAddons-IRC] Username: " + username);
                 String prefix = RankCache.getRank(username);
+                System.out.println("[BomboAddons-IRC] Rank prefix from cache: " + prefix);
+                
+                String customFormat = BomboConfig.get().ircCustomFormat;
+                System.out.println("[BomboAddons-IRC] customFormat: " + customFormat);
+                ParsedCustomName parsed = null;
+                if (customFormat != null && !customFormat.isEmpty()) {
+                    parsed = parseCustomFormat(customFormat);
+                }
+                
+                if (parsed != null && parsed.customUsername != null && !parsed.customUsername.isEmpty()) {
+                    username = parsed.customUsername;
+                    prefix = parsed.customRank;
+                    System.out.println("[BomboAddons-IRC] Custom format parsed. Username: " + username + ", Prefix: " + prefix);
+                }
                 
                 String coloredMsg = msg.replace('&', '§');
                 String payload = prefix + "\u0002" + username + "\u0002" + coloredMsg;
+                System.out.println("[BomboAddons-IRC] Sending payload: " + payload);
                 sendRaw("PRIVMSG " + CHANNEL + " :" + payload);
                 
                 // Display our own message locally in chat
-                String localPrefix = prefix;
-                if (localPrefix.isEmpty()) {
-                    localPrefix = "§7";
-                } else if (!localPrefix.endsWith(" ")) {
-                    localPrefix = localPrefix + " ";
+                String localMsg;
+                if (parsed != null && parsed.customLocalFormat != null && !parsed.customLocalFormat.isEmpty()) {
+                    String localPrefixFormat = parsed.customLocalFormat;
+                    // Find where the suffix (like "§f:" or ":") is and make sure it ends with color codes cleanly
+                    int suffixIdx = localPrefixFormat.lastIndexOf("§f:");
+                    if (suffixIdx == -1) {
+                        suffixIdx = localPrefixFormat.lastIndexOf(":");
+                    }
+                    if (suffixIdx != -1) {
+                        localPrefixFormat = localPrefixFormat.substring(0, suffixIdx) + "§f: §r";
+                    }
+                    localMsg = localPrefixFormat + coloredMsg;
+                } else {
+                    String localPrefix = prefix;
+                    if (localPrefix.isEmpty()) {
+                        localPrefix = "§7";
+                    } else if (!localPrefix.endsWith(" ")) {
+                        localPrefix = localPrefix + " ";
+                    }
+                    localMsg = "§9Party §8> " + localPrefix + username + "§f: §r" + coloredMsg;
                 }
-                String localMsg = "§9Party §8> " + localPrefix + username + "§f: §r" + coloredMsg;
+                
+                final String finalLocalMsg = localMsg;
+                System.out.println("[BomboAddons-IRC] Local msg prepared: " + finalLocalMsg);
                 mc.execute(() -> {
+                    System.out.println("[BomboAddons-IRC] Executing local display on main thread.");
                     if (mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal(localMsg), false);
+                        mc.player.displayClientMessage(Component.literal(finalLocalMsg), false);
+                        System.out.println("[BomboAddons-IRC] Local msg displayed.");
+                    } else {
+                        System.out.println("[BomboAddons-IRC] mc.player is null during display.");
                     }
                 });
-            } catch (Exception e) {
+            } catch (Throwable e) {
+                System.out.println("[BomboAddons-IRC] Exception/Error in sendMessage: " + e.getMessage());
+                e.printStackTrace();
                 mc.execute(() -> {
                     if (mc.player != null) {
-                        mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cFailed to send IRC message!"), false);
+                        mc.player.displayClientMessage(Component.literal("§8[§bBomboAddons§8] §cFailed to send IRC message: " + e.getClass().getSimpleName() + " - " + e.getMessage()), false);
                     }
                 });
             }
         }, "IRC-Send-Thread").start();
     }
     
-    private static synchronized void sendRaw(String line) {
-        if (writer != null) {
-            writer.println(line);
+    private static void sendRaw(String line) {
+        PrintWriter localWriter;
+        synchronized (IRCClient.class) {
+            localWriter = writer;
+        }
+        if (localWriter != null) {
+            localWriter.println(line);
         }
     }
     
-    private static synchronized void closeQuietly() {
-        try { if (reader != null) reader.close(); } catch (Throwable t) {}
-        try { if (writer != null) writer.close(); } catch (Throwable t) {}
-        try { if (socket != null) socket.close(); } catch (Throwable t) {}
-        reader = null;
-        writer = null;
-        socket = null;
+    private static void closeQuietly() {
+        BufferedReader r;
+        PrintWriter w;
+        Socket s;
+        synchronized (IRCClient.class) {
+            r = reader;
+            w = writer;
+            s = socket;
+            reader = null;
+            writer = null;
+            socket = null;
+        }
+        try { if (r != null) r.close(); } catch (Throwable t) {}
+        try { if (w != null) w.close(); } catch (Throwable t) {}
+        try { if (s != null) s.close(); } catch (Throwable t) {}
     }
     
     public static String getLegacyString(Component component) {
@@ -244,5 +311,62 @@ public class IRCClient {
             return java.util.Optional.empty();
         }, net.minecraft.network.chat.Style.EMPTY);
         return sb.toString();
+    }
+
+    public static class ParsedCustomName {
+        public String customUsername = "";
+        public String customRank = "";
+        public String customLocalFormat = "";
+    }
+
+    public static ParsedCustomName parseCustomFormat(String input) {
+        ParsedCustomName res = new ParsedCustomName();
+        if (input == null || input.trim().isEmpty()) {
+            return res;
+        }
+        String formatted = input.replace('&', '§');
+        res.customLocalFormat = formatted;
+        
+        int suffixIdx = formatted.lastIndexOf("§f:");
+        if (suffixIdx == -1) {
+            suffixIdx = formatted.lastIndexOf(":");
+        }
+        
+        String leftPart;
+        if (suffixIdx != -1) {
+            leftPart = formatted.substring(0, suffixIdx).trim();
+        } else {
+            leftPart = formatted.trim();
+        }
+        
+        String cleanLeft = leftPart.replaceAll("§[0-9a-fk-or]", "");
+        String[] words = cleanLeft.split("\\s+");
+        if (words.length > 0) {
+            String username = words[words.length - 1];
+            res.customUsername = username;
+            
+            int userIdx = leftPart.lastIndexOf(username);
+            if (userIdx != -1) {
+                String beforeUser = leftPart.substring(0, userIdx);
+                String cleanBeforeUser = beforeUser;
+                String[] channelPrefixes = {"§9Party §8> ", "§9Party §8>", "Party >"};
+                for (String cp : channelPrefixes) {
+                    if (cleanBeforeUser.startsWith(cp)) {
+                        cleanBeforeUser = cleanBeforeUser.substring(cp.length());
+                        break;
+                    }
+                }
+                res.customRank = cleanBeforeUser;
+            }
+        }
+        return res;
+    }
+
+    public static void onCustomFormatChanged() {
+        if (running && BomboConfig.get().ircChatEnabled) {
+            new Thread(() -> {
+                closeQuietly();
+            }, "IRC-Reconnect-Thread").start();
+        }
     }
 }

@@ -282,11 +282,9 @@ public class LF {
                 decodeAndSearch(path, obj.get("data").getAsString(), query, searchLore, matchCount, ctx, toolkitsOnly,
                         limit, false);
             } else {
-                boolean nextIsMember = false;
                 for (Entry<String, JsonElement> entry : obj.entrySet()) {
                     String key = entry.getKey();
-                    if (key.equalsIgnoreCase("members"))
-                        nextIsMember = true;
+                    boolean nextIsMember = key.equalsIgnoreCase("members");
 
                     if (isInsideMembersNode && !ctx.coopMode) {
                         String raw = key.replace("-", "").toLowerCase();

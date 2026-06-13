@@ -63,6 +63,190 @@ public class BomboaddonsClient implements ClientModInitializer {
         try {
             ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
                 clientDispatcher = dispatcher;
+                
+                // --- Hoppity Egg Finder commands ---
+                try {
+                    dispatcher.register(ClientCommandManager.literal("skyblocker")
+                            .then(ClientCommandManager.literal("eggFinder")
+                                    .then(ClientCommandManager.literal("shareLocation")
+                                            .then(ClientCommandManager.argument("eggType", StringArgumentType.word())
+                                                    .executes(context -> {
+                                                        String typeStr = StringArgumentType.getString(context, "eggType");
+                                                        me.bombo.bomboaddons_final.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons_final.eggfinder.EggFinder.EggType.getTypeByName(typeStr);
+                                                        if (type == null) {
+                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
+                                                            return 1;
+                                                        }
+                                                        List<me.bombo.bomboaddons_final.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons_final.eggfinder.EggFinder.getActiveWaypoints();
+                                                        me.bombo.bomboaddons_final.eggfinder.EggFinder.EggWaypoint targetWp = null;
+                                                        for (var wp : wps) {
+                                                            if (wp.type == type) {
+                                                                targetWp = wp;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (targetWp == null) {
+                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
+                                                            return 1;
+                                                        }
+                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
+                                                        Minecraft.getInstance().player.connection.sendChat(chatMsg);
+                                                        return 1;
+                                                    })))
+                                    .then(ClientCommandManager.literal("sharelocation")
+                                            .then(ClientCommandManager.argument("eggType", StringArgumentType.word())
+                                                    .executes(context -> {
+                                                        String typeStr = StringArgumentType.getString(context, "eggType");
+                                                        me.bombo.bomboaddons_final.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons_final.eggfinder.EggFinder.EggType.getTypeByName(typeStr);
+                                                        if (type == null) {
+                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
+                                                            return 1;
+                                                        }
+                                                        List<me.bombo.bomboaddons_final.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons_final.eggfinder.EggFinder.getActiveWaypoints();
+                                                        me.bombo.bomboaddons_final.eggfinder.EggFinder.EggWaypoint targetWp = null;
+                                                        for (var wp : wps) {
+                                                            if (wp.type == type) {
+                                                                targetWp = wp;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (targetWp == null) {
+                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
+                                                            return 1;
+                                                        }
+                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
+                                                        Minecraft.getInstance().player.connection.sendChat(chatMsg);
+                                                        return 1;
+                                                    })))
+                                    .then(ClientCommandManager.literal("status")
+                                            .executes(context -> {
+                                                boolean connected = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.isConnected();
+                                                boolean connecting = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.isConnecting();
+                                                String sub = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.getActiveSubscription();
+                                                String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
+                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                                                return 1;
+                                            }))
+                                    .then(ClientCommandManager.literal("reconnect")
+                                            .executes(context -> {
+                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                                                me.bombo.bomboaddons_final.eggfinder.EggAuth.forceUpdateToken();
+                                                me.bombo.bomboaddons_final.eggfinder.EggWebSocket.forceReconnect();
+                                                return 1;
+                                            })))
+                            .then(ClientCommandManager.literal("eggfinder")
+                                    .then(ClientCommandManager.literal("shareLocation")
+                                            .then(ClientCommandManager.argument("eggType", StringArgumentType.word())
+                                                    .executes(context -> {
+                                                        String typeStr = StringArgumentType.getString(context, "eggType");
+                                                        me.bombo.bomboaddons_final.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons_final.eggfinder.EggFinder.EggType.getTypeByName(typeStr);
+                                                        if (type == null) {
+                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
+                                                            return 1;
+                                                        }
+                                                        List<me.bombo.bomboaddons_final.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons_final.eggfinder.EggFinder.getActiveWaypoints();
+                                                        me.bombo.bomboaddons_final.eggfinder.EggFinder.EggWaypoint targetWp = null;
+                                                        for (var wp : wps) {
+                                                            if (wp.type == type) {
+                                                                targetWp = wp;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (targetWp == null) {
+                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
+                                                            return 1;
+                                                        }
+                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
+                                                        Minecraft.getInstance().player.connection.sendChat(chatMsg);
+                                                        return 1;
+                                                    })))
+                                    .then(ClientCommandManager.literal("sharelocation")
+                                            .then(ClientCommandManager.argument("eggType", StringArgumentType.word())
+                                                    .executes(context -> {
+                                                        String typeStr = StringArgumentType.getString(context, "eggType");
+                                                        me.bombo.bomboaddons_final.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons_final.eggfinder.EggFinder.EggType.getTypeByName(typeStr);
+                                                        if (type == null) {
+                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
+                                                            return 1;
+                                                        }
+                                                        List<me.bombo.bomboaddons_final.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons_final.eggfinder.EggFinder.getActiveWaypoints();
+                                                        me.bombo.bomboaddons_final.eggfinder.EggFinder.EggWaypoint targetWp = null;
+                                                        for (var wp : wps) {
+                                                            if (wp.type == type) {
+                                                                targetWp = wp;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (targetWp == null) {
+                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
+                                                            return 1;
+                                                        }
+                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
+                                                        Minecraft.getInstance().player.connection.sendChat(chatMsg);
+                                                        return 1;
+                                                    })))
+                                    .then(ClientCommandManager.literal("status")
+                                            .executes(context -> {
+                                                boolean connected = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.isConnected();
+                                                boolean connecting = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.isConnecting();
+                                                String sub = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.getActiveSubscription();
+                                                String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
+                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                                                return 1;
+                                            }))
+                                    .then(ClientCommandManager.literal("reconnect")
+                                            .executes(context -> {
+                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                                                me.bombo.bomboaddons_final.eggfinder.EggAuth.forceUpdateToken();
+                                                me.bombo.bomboaddons_final.eggfinder.EggWebSocket.forceReconnect();
+                                                return 1;
+                                            }))));
+
+                    // Register direct /eggfinder command
+                    dispatcher.register(ClientCommandManager.literal("eggfinder")
+                            .then(ClientCommandManager.literal("status")
+                                    .executes(context -> {
+                                        boolean connected = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.isConnected();
+                                        boolean connecting = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.isConnecting();
+                                        String sub = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.getActiveSubscription();
+                                        String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
+                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                                        return 1;
+                                    }))
+                            .then(ClientCommandManager.literal("reconnect")
+                                    .executes(context -> {
+                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                                        me.bombo.bomboaddons_final.eggfinder.EggAuth.forceUpdateToken();
+                                        me.bombo.bomboaddons_final.eggfinder.EggWebSocket.forceReconnect();
+                                        return 1;
+                                    })));
+
+                    // Register direct /eggFinder command
+                    dispatcher.register(ClientCommandManager.literal("eggFinder")
+                            .then(ClientCommandManager.literal("status")
+                                    .executes(context -> {
+                                        boolean connected = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.isConnected();
+                                        boolean connecting = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.isConnecting();
+                                        String sub = me.bombo.bomboaddons_final.eggfinder.EggWebSocket.getActiveSubscription();
+                                        String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
+                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                                        return 1;
+                                    }))
+                            .then(ClientCommandManager.literal("reconnect")
+                                    .executes(context -> {
+                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                                        me.bombo.bomboaddons_final.eggfinder.EggAuth.forceUpdateToken();
+                                        me.bombo.bomboaddons_final.eggfinder.EggWebSocket.forceReconnect();
+                                        return 1;
+                                    })));
+                } catch (Throwable t) {
+                    Bomboaddons.LOGGER.error("[BomboAddons] Failed to register skyblocker eggFinder commands!", t);
+                }
+
                 registerAllAliases();
 
                 // --- PRIORITY 1: /click and /clicks ---
@@ -1542,6 +1726,60 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         IRCClient.sendMessage(message);
                                         return 1;
                                     })));
+
+                    dispatcher.register(ClientCommandManager.literal("chat")
+                            .then(ClientCommandManager.literal("b")
+                                    .executes(context -> {
+                                        BomboConfig.get().ircDefaultChat = true;
+                                        BomboConfig.save();
+                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Default chat set to §eIRC§7. Messages will be sent to IRC chat."));
+                                        return 1;
+                                    }))
+                            .then(ClientCommandManager.argument("channel", StringArgumentType.greedyString())
+                                    .executes(context -> {
+                                        String channel = StringArgumentType.getString(context, "channel");
+                                        BomboConfig.get().ircDefaultChat = false;
+                                        BomboConfig.save();
+                                        if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.connection != null) {
+                                            Minecraft.getInstance().player.connection.sendCommand("chat " + channel);
+                                        }
+                                        return 1;
+                                    }))
+                            .executes(context -> {
+                                if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.connection != null) {
+                                    Minecraft.getInstance().player.connection.sendCommand("chat");
+                                }
+                                return 1;
+                            }));
+
+                    dispatcher.register(ClientCommandManager.literal("cb")
+                            .executes(context -> {
+                                String current = BomboConfig.get().ircCustomFormat;
+                                if (current.isEmpty()) {
+                                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Current format: §cNone (Default)"));
+                                } else {
+                                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Current format: §f" + current.replace('&', '§')));
+                                }
+                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Usage: /cb <format_string> (or /cb clear)"));
+                                return 1;
+                            })
+                            .then(ClientCommandManager.argument("format", StringArgumentType.greedyString())
+                                    .executes(context -> {
+                                        String format = StringArgumentType.getString(context, "format");
+                                        if (format.equalsIgnoreCase("clear") || format.equalsIgnoreCase("reset")) {
+                                            BomboConfig.get().ircCustomFormat = "";
+                                            BomboConfig.save();
+                                            IRCClient.onCustomFormatChanged();
+                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §aReset custom chat format to default."));
+                                        } else {
+                                            BomboConfig.get().ircCustomFormat = format;
+                                            BomboConfig.save();
+                                            IRCClient.onCustomFormatChanged();
+                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §aSet custom chat format to: §f" + format.replace('&', '§')));
+                                        }
+                                        return 1;
+                                    })));
+
                     dispatcher.register(ClientCommandManager.literal("c")
                             .then(ClientCommandManager.argument("expression", StringArgumentType.greedyString())
                                     .executes(context -> {
@@ -1751,6 +1989,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
+                try {
+                    me.bombo.bomboaddons_final.eggfinder.EggFinder.render(context);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
             });
 
             HudRenderCallback.EVENT.register((graphics, tickDelta) -> {
@@ -1800,6 +2043,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                 AutoExperiments.reset();
                 ModUpdater.checkAndUpdate(true);
                 
+                // Fetch/update Skyblocker WebSocket token
+                try {
+                    me.bombo.bomboaddons_final.eggfinder.EggAuth.updateToken();
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+                
                 // Proactively fetch local player's rank on join to ensure cache is updated
                 if (client.getUser() != null) {
                     String name = client.getUser().getName();
@@ -1811,6 +2061,12 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
                 PlaytimeTracker.sendPlaytimeDataToCloud();
+                try {
+                    me.bombo.bomboaddons_final.eggfinder.EggFinder.clearEggs();
+                    me.bombo.bomboaddons_final.eggfinder.EggWebSocket.disconnect();
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
             });
 
             ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((client, world) -> {
@@ -1827,6 +2083,11 @@ public class BomboaddonsClient implements ClientModInitializer {
             });
 
             ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
+                try {
+                    me.bombo.bomboaddons_final.eggfinder.EggFinder.onChatMessage(message, overlay);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
                 String plain = message.getString().trim();
                 // Check if it is a valid locraw JSON response
                 if (plain.startsWith("{") && plain.endsWith("}") && plain.contains("\"server\"")
@@ -1884,6 +2145,11 @@ public class BomboaddonsClient implements ClientModInitializer {
 
     private void registerTickEvents() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            try {
+                me.bombo.bomboaddons_final.eggfinder.EggFinder.tick();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
             try {
                 if (client.screen instanceof net.minecraft.client.gui.screens.DisconnectedScreen) {
                     if (autoReconnectTicks > 0) {

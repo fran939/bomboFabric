@@ -264,11 +264,17 @@ public class BomboConfig {
         public List<ChatTrigger> chatTriggers = null;
         public Map<String, List<ChatTrigger>> profileChatTriggers = new HashMap<>();
         public boolean ircChatEnabled = true;
+        public boolean ircDefaultChat = false;
+        public String ircCustomFormat = "";
         public boolean padTimersPurple = false;
         public boolean padTimersGreen = false;
         public int padTimersX = 10;
         public int padTimersY = 250;
         public float padTimersScale = 1.0f;
+        public boolean eggFinder = false;
+        public boolean eggFinderChat = true;
+        public boolean eggFinderBeacon = true;
+        public boolean eggFinderThroughWalls = true;
     }
 
     public static class ChatTrigger {

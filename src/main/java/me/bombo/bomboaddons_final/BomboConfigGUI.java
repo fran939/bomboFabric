@@ -138,6 +138,8 @@ public class BomboConfigGUI extends Screen {
     private static Consumer<String> colorPickerSetter = null;
 
     private double scrollAmount = 0;
+    private double categoryScrollAmount = 0;
+    private final List<Button> sidebarButtons = new ArrayList<>();
 
     public BomboConfigGUI(Screen parent) {
         super(Component.literal("Bomboaddons Configuration"));
@@ -161,13 +163,26 @@ public class BomboConfigGUI extends Screen {
             clearWidgets();
 
             // 1. Sidebar Category Buttons
+            sidebarButtons.clear();
             int renderCount = 0;
+            int totalRendered = 0;
+            for (int i = 0; i < categories.size(); i++) {
+                if (s.hideCheats && (i == 2 || i == 9)) {
+                    continue;
+                }
+                totalRendered++;
+            }
+            int totalHeight = totalRendered * 26;
+            int viewportHeight = height - (HEADER_HEIGHT + PADDING * 3) - PADDING;
+            int maxCategoryScroll = Math.max(0, totalHeight - viewportHeight);
+            categoryScrollAmount = Math.max(0, Math.min(categoryScrollAmount, maxCategoryScroll));
+
             for (int i = 0; i < categories.size(); i++) {
                 final int idx = i;
                 if (s.hideCheats && (idx == 2 || idx == 9)) {
                     continue; // Skip Experiments and Anvil
                 }
-                int catY = HEADER_HEIGHT + PADDING * 3 + renderCount * 26;
+                int catY = HEADER_HEIGHT + PADDING * 3 + renderCount * 26 - (int)categoryScrollAmount;
                 renderCount++;
                 String label = (idx == selectedCategory ? "§6§l> " : "§7") + categories.get(idx);
 
@@ -181,7 +196,13 @@ public class BomboConfigGUI extends Screen {
                     wpThruWallsInput = true; wpBeaconInput = true; wpColorInput = "AQUA";
                     init();
                 }).bounds(PADDING, catY, SIDEBAR_WIDTH - PADDING * 2, 22).build();
-                addRenderableWidget(btn);
+
+                boolean visible = (catY + 22 > HEADER_HEIGHT + PADDING * 2) && (catY < height - PADDING);
+                btn.active = visible;
+                btn.visible = visible;
+
+                addWidget(btn);
+                sidebarButtons.add(btn);
             }
 
             // 2. Content area
@@ -211,6 +232,12 @@ public class BomboConfigGUI extends Screen {
                     y1 = addBoolOption("Auto Accept Carnival", s.autoAcceptCarnival, v -> s.autoAcceptCarnival = v, col1X, col1W, y1);
                     y1 = addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, col1X, col1W, y1);
                     y1 = addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, col1X, col1W, y1);
+                    y1 += 10;
+                    y1 += ITEM_HEIGHT;
+                    y1 = addBoolOption("Hoppity Egg Finder", s.eggFinder, v -> { s.eggFinder = v; if (!v) me.bombo.bomboaddons_final.eggfinder.EggFinder.clearEggs(); }, col1X, col1W, y1);
+                    y1 = addBoolOption("Egg Finder Chat Alerts", s.eggFinderChat, v -> s.eggFinderChat = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Egg Finder Beacon", s.eggFinderBeacon, v -> s.eggFinderBeacon = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Egg Finder Through Walls", s.eggFinderThroughWalls, v -> s.eggFinderThroughWalls = v, col1X, col1W, y1);
 
                     int y2 = contentBaseY + ITEM_HEIGHT;
                     y2 = addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, col2X, col2W, y2);
@@ -1117,6 +1144,36 @@ public class BomboConfigGUI extends Screen {
                 g.drawString(font, "§6Select Color", pickerX + 10, pickerY + 8, 0xFFFFFFFF);
             }
 
+            // Draw sidebar category buttons with scissor clipping
+            g.enableScissor(0, HEADER_HEIGHT + PADDING * 2, SIDEBAR_WIDTH, height - PADDING);
+            for (Button btn : sidebarButtons) {
+                btn.render(g, mouseX, mouseY, partialTick);
+            }
+            g.disableScissor();
+
+            // Draw sidebar category scrollbar if scrollable
+            int totalRendered = 0;
+            for (int i = 0; i < categories.size(); i++) {
+                if (s.hideCheats && (i == 2 || i == 9)) {
+                    continue;
+                }
+                totalRendered++;
+            }
+            int totalHeight = totalRendered * 26;
+            int viewportHeight = height - (HEADER_HEIGHT + PADDING * 3) - PADDING;
+            if (totalHeight > viewportHeight) {
+                int trackX = SIDEBAR_WIDTH - 4;
+                int trackY = HEADER_HEIGHT + PADDING * 2;
+                int trackH = height - trackY - PADDING;
+
+                int thumbH = Math.max(10, (trackH * viewportHeight) / totalHeight);
+                int maxScroll = totalHeight - viewportHeight;
+                int thumbY = trackY + (int)((categoryScrollAmount * (trackH - thumbH)) / maxScroll);
+
+                g.fill(trackX, trackY, trackX + 2, trackY + trackH, 0x15FFFFFF);
+                g.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, 0x55FFFFFF);
+            }
+
             super.render(g, mouseX, mouseY, partialTick);
 
             g.drawString(font, "§6§lBomboaddons §r§7Config", SIDEBAR_WIDTH + PADDING, 14, 0xFFFFFFFF, true);
@@ -1156,6 +1213,18 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Lowest BIN Tooltip", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
                     g.drawString(font, "§7NPC Sell Price Tooltip", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+
+                    y1 += ITEM_HEIGHT;
+                    y1 += 10;
+                    g.drawString(font, "§6§lHoppity Egg Finder", col1X, y1, 0xFFFFAA00, true);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Enable Egg Finder", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Egg Finder Chat Alerts", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Egg Finder Beacon", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Egg Finder Through Walls", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
 
                     int y2 = contentBaseY;
                     g.drawString(font, "§6§lClient Settings", col2X, y2, 0xFFFFAA00, true);
@@ -1745,7 +1814,11 @@ public class BomboConfigGUI extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
-        scrollAmount = Math.max(0, scrollAmount - vertical * 15);
+        if (mouseX < SIDEBAR_WIDTH) {
+            categoryScrollAmount = Math.max(0, categoryScrollAmount - vertical * 15);
+        } else {
+            scrollAmount = Math.max(0, scrollAmount - vertical * 15);
+        }
         init();
         return true;
     }
