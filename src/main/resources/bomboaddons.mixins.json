@@ -35,8 +35,7 @@
 		"DisconnectedScreenMixin",
 		"ParticleMixin",
 		"DungeonPadTimersMixin",
-		"ClientPacketListenerMixin",
-		"ChatScreenMixin"
+		"ClientPacketListenerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

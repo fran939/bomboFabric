@@ -55,15 +55,7 @@ public class IRCClient {
             try {
                 Minecraft mc = Minecraft.getInstance();
                 String username = "Player";
-                String customFormat = BomboConfig.get().ircCustomFormat;
-                ParsedCustomName parsed = null;
-                if (customFormat != null && !customFormat.isEmpty()) {
-                    parsed = parseCustomFormat(customFormat);
-                }
-                
-                if (parsed != null && parsed.customUsername != null && !parsed.customUsername.isEmpty()) {
-                    username = parsed.customUsername;
-                } else if (mc.getUser() != null) {
+                if (mc.getUser() != null) {
                     username = mc.getUser().getName();
                 }
                 
@@ -150,12 +142,7 @@ public class IRCClient {
                             } else if (!rankPrefix.endsWith(" ")) {
                                 rankPrefix = rankPrefix + " ";
                             }
-                            
-                            if (rankPrefix.contains(" >") || rankPrefix.contains(">")) {
-                                formattedMessage = rankPrefix + realUsername + "§f: §r" + actualMsg;
-                            } else {
-                                formattedMessage = "§9Party §8> " + rankPrefix + realUsername + "§f: §r" + actualMsg;
-                            }
+                            formattedMessage = "§9Party §8> " + rankPrefix + realUsername + "§f: §r" + actualMsg;
                         } else {
                             // Fallback: look up rank from cache or fetch it
                             String rankPrefix = RankCache.getRank(senderNick);
@@ -165,12 +152,7 @@ public class IRCClient {
                                 rankPrefix = rankPrefix + " ";
                             }
                             String cleanPayload = payload.replace('&', '§');
-                            
-                            if (rankPrefix.contains(" >") || rankPrefix.contains(">")) {
-                                formattedMessage = rankPrefix + senderNick + "§f: §r" + cleanPayload;
-                            } else {
-                                formattedMessage = "§9Party §8> " + rankPrefix + senderNick + "§f: §r" + cleanPayload;
-                            }
+                            formattedMessage = "§9Party §8> " + rankPrefix + senderNick + "§f: §r" + cleanPayload;
                         }
                         
                         Minecraft mc = Minecraft.getInstance();
@@ -209,46 +191,19 @@ public class IRCClient {
                 String prefix = RankCache.getRank(username);
                 System.out.println("[BomboAddons-IRC] Rank prefix from cache: " + prefix);
                 
-                String customFormat = BomboConfig.get().ircCustomFormat;
-                System.out.println("[BomboAddons-IRC] customFormat: " + customFormat);
-                ParsedCustomName parsed = null;
-                if (customFormat != null && !customFormat.isEmpty()) {
-                    parsed = parseCustomFormat(customFormat);
-                }
-                
-                if (parsed != null && parsed.customUsername != null && !parsed.customUsername.isEmpty()) {
-                    username = parsed.customUsername;
-                    prefix = parsed.customRank;
-                    System.out.println("[BomboAddons-IRC] Custom format parsed. Username: " + username + ", Prefix: " + prefix);
-                }
-                
                 String coloredMsg = msg.replace('&', '§');
                 String payload = prefix + "\u0002" + username + "\u0002" + coloredMsg;
                 System.out.println("[BomboAddons-IRC] Sending payload: " + payload);
                 sendRaw("PRIVMSG " + CHANNEL + " :" + payload);
                 
                 // Display our own message locally in chat
-                String localMsg;
-                if (parsed != null && parsed.customLocalFormat != null && !parsed.customLocalFormat.isEmpty()) {
-                    String localPrefixFormat = parsed.customLocalFormat;
-                    // Find where the suffix (like "§f:" or ":") is and make sure it ends with color codes cleanly
-                    int suffixIdx = localPrefixFormat.lastIndexOf("§f:");
-                    if (suffixIdx == -1) {
-                        suffixIdx = localPrefixFormat.lastIndexOf(":");
-                    }
-                    if (suffixIdx != -1) {
-                        localPrefixFormat = localPrefixFormat.substring(0, suffixIdx) + "§f: §r";
-                    }
-                    localMsg = localPrefixFormat + coloredMsg;
-                } else {
-                    String localPrefix = prefix;
-                    if (localPrefix.isEmpty()) {
-                        localPrefix = "§7";
-                    } else if (!localPrefix.endsWith(" ")) {
-                        localPrefix = localPrefix + " ";
-                    }
-                    localMsg = "§9Party §8> " + localPrefix + username + "§f: §r" + coloredMsg;
+                String localPrefix = prefix;
+                if (localPrefix.isEmpty()) {
+                    localPrefix = "§7";
+                } else if (!localPrefix.endsWith(" ")) {
+                    localPrefix = localPrefix + " ";
                 }
+                String localMsg = "§9Party §8> " + localPrefix + username + "§f: §r" + coloredMsg;
                 
                 final String finalLocalMsg = localMsg;
                 System.out.println("[BomboAddons-IRC] Local msg prepared: " + finalLocalMsg);
@@ -321,62 +276,5 @@ public class IRCClient {
             return java.util.Optional.empty();
         }, net.minecraft.network.chat.Style.EMPTY);
         return sb.toString();
-    }
-
-    public static class ParsedCustomName {
-        public String customUsername = "";
-        public String customRank = "";
-        public String customLocalFormat = "";
-    }
-
-    public static ParsedCustomName parseCustomFormat(String input) {
-        ParsedCustomName res = new ParsedCustomName();
-        if (input == null || input.trim().isEmpty()) {
-            return res;
-        }
-        String formatted = input.replace('&', '§');
-        res.customLocalFormat = formatted;
-        
-        int suffixIdx = formatted.lastIndexOf("§f:");
-        if (suffixIdx == -1) {
-            suffixIdx = formatted.lastIndexOf(":");
-        }
-        
-        String leftPart;
-        if (suffixIdx != -1) {
-            leftPart = formatted.substring(0, suffixIdx).trim();
-        } else {
-            leftPart = formatted.trim();
-        }
-        
-        String cleanLeft = leftPart.replaceAll("§[0-9a-fk-or]", "");
-        String[] words = cleanLeft.split("\\s+");
-        if (words.length > 0) {
-            String username = words[words.length - 1];
-            res.customUsername = username;
-            
-            int userIdx = leftPart.lastIndexOf(username);
-            if (userIdx != -1) {
-                String beforeUser = leftPart.substring(0, userIdx);
-                String cleanBeforeUser = beforeUser;
-                String[] channelPrefixes = {"§9Party §8> ", "§9Party §8>", "Party >"};
-                for (String cp : channelPrefixes) {
-                    if (cleanBeforeUser.startsWith(cp)) {
-                        cleanBeforeUser = cleanBeforeUser.substring(cp.length());
-                        break;
-                    }
-                }
-                res.customRank = cleanBeforeUser;
-            }
-        }
-        return res;
-    }
-
-    public static void onCustomFormatChanged() {
-        if (running && BomboConfig.get().ircChatEnabled) {
-            new Thread(() -> {
-                closeQuietly();
-            }, "IRC-Reconnect-Thread").start();
-        }
     }
 }

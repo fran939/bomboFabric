@@ -1752,34 +1752,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 return 1;
                             }));
 
-                    dispatcher.register(ClientCommandManager.literal("cb")
-                            .executes(context -> {
-                                String current = BomboConfig.get().ircCustomFormat;
-                                if (current.isEmpty()) {
-                                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Current format: §cNone (Default)"));
-                                } else {
-                                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Current format: §f" + current.replace('&', '§')));
-                                }
-                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Usage: /cb <format_string> (or /cb clear)"));
-                                return 1;
-                            })
-                            .then(ClientCommandManager.argument("format", StringArgumentType.greedyString())
-                                    .executes(context -> {
-                                        String format = StringArgumentType.getString(context, "format");
-                                        if (format.equalsIgnoreCase("clear") || format.equalsIgnoreCase("reset")) {
-                                            BomboConfig.get().ircCustomFormat = "";
-                                            BomboConfig.save();
-                                            IRCClient.onCustomFormatChanged();
-                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §aReset custom chat format to default."));
-                                        } else {
-                                            BomboConfig.get().ircCustomFormat = format;
-                                            BomboConfig.save();
-                                            IRCClient.onCustomFormatChanged();
-                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §aSet custom chat format to: §f" + format.replace('&', '§')));
-                                        }
-                                        return 1;
-                                    })));
-
                     dispatcher.register(ClientCommandManager.literal("c")
                             .then(ClientCommandManager.argument("expression", StringArgumentType.greedyString())
                                     .executes(context -> {
