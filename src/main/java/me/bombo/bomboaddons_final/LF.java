@@ -284,7 +284,7 @@ public class LF {
             } else {
                 for (Entry<String, JsonElement> entry : obj.entrySet()) {
                     String key = entry.getKey();
-                    boolean nextIsMember = key.equalsIgnoreCase("members");
+                    boolean nextIsMember = key.equalsIgnoreCase("members") && !path.contains("museum");
 
                     if (isInsideMembersNode && !ctx.coopMode) {
                         String raw = key.replace("-", "").toLowerCase();
