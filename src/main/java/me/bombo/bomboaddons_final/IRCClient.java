@@ -145,18 +145,13 @@ public class IRCClient {
                             String realUsername = msgParts[1];
                             String actualMsg = msgParts[2].replace('&', '§');
                             
-                            boolean isCustom = rankPrefix.startsWith("§r§r");
-                            if (isCustom) {
-                                rankPrefix = rankPrefix.substring(4);
-                            }
-                            
                             if (rankPrefix.isEmpty()) {
                                 rankPrefix = "§7";
                             } else if (!rankPrefix.endsWith(" ")) {
                                 rankPrefix = rankPrefix + " ";
                             }
                             
-                            if (isCustom || rankPrefix.contains(" >") || rankPrefix.contains(">")) {
+                            if (rankPrefix.contains(" >") || rankPrefix.contains(">")) {
                                 formattedMessage = rankPrefix + realUsername + "§f: §r" + actualMsg;
                             } else {
                                 formattedMessage = "§9Party §8> " + rankPrefix + realUsername + "§f: §r" + actualMsg;
@@ -164,12 +159,6 @@ public class IRCClient {
                         } else {
                             // Fallback: look up rank from cache or fetch it
                             String rankPrefix = RankCache.getRank(senderNick);
-                            
-                            boolean isCustom = rankPrefix.startsWith("§r§r");
-                            if (isCustom) {
-                                rankPrefix = rankPrefix.substring(4);
-                            }
-                            
                             if (rankPrefix.isEmpty()) {
                                 rankPrefix = "§7";
                             } else if (!rankPrefix.endsWith(" ")) {
@@ -177,7 +166,7 @@ public class IRCClient {
                             }
                             String cleanPayload = payload.replace('&', '§');
                             
-                            if (isCustom || rankPrefix.contains(" >") || rankPrefix.contains(">")) {
+                            if (rankPrefix.contains(" >") || rankPrefix.contains(">")) {
                                 formattedMessage = rankPrefix + senderNick + "§f: §r" + cleanPayload;
                             } else {
                                 formattedMessage = "§9Party §8> " + rankPrefix + senderNick + "§f: §r" + cleanPayload;
@@ -229,7 +218,7 @@ public class IRCClient {
                 
                 if (parsed != null && parsed.customUsername != null && !parsed.customUsername.isEmpty()) {
                     username = parsed.customUsername;
-                    prefix = "§r§r" + parsed.customRank;
+                    prefix = parsed.customRank;
                     System.out.println("[BomboAddons-IRC] Custom format parsed. Username: " + username + ", Prefix: " + prefix);
                 }
                 
