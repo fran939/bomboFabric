@@ -33,6 +33,7 @@
 		"ScreenMixin",
 		"PlayerMixin",
 		"DisconnectedScreenMixin",
+		"ChatScreenMixin",
 		"ParticleMixin",
 		"DungeonPadTimersMixin",
 		"ClientPacketListenerMixin"

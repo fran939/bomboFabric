@@ -27,7 +27,9 @@ public class DungeonPadTimers {
 
     public static void onBossMessage() {
         active = true;
-        serverTicks = 196;
+        double purpleTime = BomboConfig.get().padTimerPurpleTime;
+        int purpleCountdownTicks = (int) Math.round(purpleTime * 20.0);
+        serverTicks = 100 + purpleCountdownTicks;
         if (BomboConfig.get().debugCommands || BomboConfig.get().debugMaster) {
             Bomboaddons.sendMessage("§8[§bBomboAddons§8] §7Dungeon Pad Timers started!");
         }
@@ -53,27 +55,35 @@ public class DungeonPadTimers {
         BomboConfig.Settings config = BomboConfig.get();
 
         if (active) {
-            if (serverTicks > 100) {
+            double purpleTime = config.padTimerPurpleTime;
+            int purpleCountdownTicks = (int) Math.round(purpleTime * 20.0);
+            int tGreenNow = 15;
+            int tGreenCountdown = 25;
+            int tGap = 75;
+            int tPurpleNow = 90;
+            int tPurpleCountdown = 100;
+
+            if (serverTicks > tPurpleCountdown) {
                 if (config.padTimersPurple) {
-                    double sec = (serverTicks - 100) / 20.0;
+                    double sec = (serverTicks - tPurpleCountdown) / 20.0;
                     text = String.format("Pad §dpurple§r in §b%.1fs", sec);
                 }
-            } else if (serverTicks > 90) {
+            } else if (serverTicks > tPurpleNow) {
                 if (config.padTimersPurple) {
                     text = "Pad §dpurple §eNOW!";
                 }
-            } else if (serverTicks > 25) {
-                if (config.padTimersGreen && serverTicks <= 75) {
-                    double sec = (serverTicks - 25) / 20.0;
+            } else if (serverTicks > tGreenCountdown) {
+                if (config.padTimersGreen && serverTicks <= tGap) {
+                    double sec = (serverTicks - tGreenCountdown) / 20.0;
                     text = String.format("Pad §agreen§r in §b%.1fs!", sec);
                 }
-            } else if (serverTicks >= 15) {
+            } else if (serverTicks >= tGreenNow) {
                 if (config.padTimersGreen) {
                     text = "Pad §agreen §eNOW!";
                 }
             }
         } else if (forceShow) {
-            text = "Pad §dpurple§r in §b2.5s";
+            text = String.format("Pad §dpurple§r in §b%.1fs", config.padTimerPurpleTime);
         }
 
         if (!text.isEmpty()) {

@@ -25,7 +25,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
-            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons");
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons", "Coord Binds", "Mining");
     public static int selectedCategory = 0;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
@@ -74,6 +74,12 @@ public class BomboConfigGUI extends Screen {
     private static String triggerCommandInput = "";
     private static String triggerTitleInput = "";
     private static int editingTriggerIdx = -1;
+
+    // Transient state for coord binds
+    private static String cbCoordsInput = "";
+    private static String cbCommandInput = "";
+    private static String cbIslandInput = "";
+    private static int editingCoordBindIdx = -1;
 
     public static boolean isTypingOrListening() {
         Minecraft mc = Minecraft.getInstance();
@@ -194,6 +200,8 @@ public class BomboConfigGUI extends Screen {
                     editingWaypointIdx = -1;
                     wpNameInput = ""; wpCoordsInput = ""; wpIslandInput = "";
                     wpThruWallsInput = true; wpBeaconInput = true; wpColorInput = "AQUA";
+                    editingCoordBindIdx = -1;
+                    cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = "";
                     init();
                 }).bounds(PADDING, catY, SIDEBAR_WIDTH - PADDING * 2, 22).build();
 
@@ -409,6 +417,7 @@ public class BomboConfigGUI extends Screen {
                                 s.keybindBinds.remove(s.activeProfile);
                                 s.customWaypoints.remove(s.activeProfile);
                                 s.profileChatTriggers.remove(s.activeProfile);
+                                s.coordBinds.remove(s.activeProfile);
                                 s.activeProfile = "default";
                                 BomboConfig.save();
                                 confirmProfileDelete = false;
@@ -981,11 +990,135 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Pad Timers Purple", s.padTimersPurple, v -> s.padTimersPurple = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Pad Timers Green", s.padTimersGreen, v -> s.padTimersGreen = v, contentX, contentWidth, curY);
+                    curY = addFloatLabelSlider("Purple Timer (s)", (float) s.padTimerPurpleTime, 1.0f, 10.0f, v -> s.padTimerPurpleTime = (double) v, contentX, 150, curY);
                     curY += 10;
                     addRenderableWidget(Button.builder(Component.literal("§e§lMove HUD Elements"), btn -> {
                         Minecraft.getInstance().setScreen(new HudMoveScreen());
                     }).bounds(contentX, curY, contentWidth / 2, 20).build());
                     curY += 30;
+                }
+                case 18 -> { // Coord Binds
+                    curY += ITEM_HEIGHT;
+
+                    // Profile Switcher row
+                    List<String> profiles = new ArrayList<>(s.profileBinds.keySet());
+                    if (!profiles.contains("default")) profiles.add(0, "default");
+                    int currentIdx = profiles.indexOf(s.activeProfile);
+
+                    addRenderableWidget(Button.builder(Component.literal("<"), btn -> {
+                        int next = (currentIdx - 1 + profiles.size()) % profiles.size();
+                        s.activeProfile = profiles.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + 150, curY, 20, 20).build());
+
+                    addRenderableWidget(Button.builder(Component.literal(">"), btn -> {
+                        int next = (currentIdx + 1) % profiles.size();
+                        s.activeProfile = profiles.get(next);
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX + 175, curY, 20, 20).build());
+
+                    curY += ITEM_HEIGHT + 5;
+
+                    curY = addTextBox("Coords (X Y Z)", cbCoordsInput, v -> cbCoordsInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Command", cbCommandInput, v -> cbCommandInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Only on Island", cbIslandInput, v -> cbIslandInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+
+                    int finalCurY = curY;
+                    String addBtnText = editingCoordBindIdx != -1 ? "§e✔ Save Coord Bind" : "§a+ Add Coord Bind";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                        if (!cbCoordsInput.isEmpty() && !cbCommandInput.isEmpty()) {
+                            double[] parsed = parseCoords(cbCoordsInput);
+                            if (parsed != null) {
+                                s.coordBinds.putIfAbsent(s.activeProfile, new ArrayList<>());
+                                BomboConfig.CoordBind cb = new BomboConfig.CoordBind(cbCommandInput, parsed[0], parsed[1], parsed[2], cbIslandInput);
+                                if (editingCoordBindIdx != -1) {
+                                    s.coordBinds.get(s.activeProfile).set(editingCoordBindIdx, cb);
+                                    editingCoordBindIdx = -1;
+                                } else {
+                                    s.coordBinds.get(s.activeProfile).add(cb);
+                                }
+                                BomboConfig.save();
+                                cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = "";
+                                init();
+                            }
+                        }
+                    }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+
+                    if (editingCoordBindIdx != -1) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel"), btn -> {
+                            editingCoordBindIdx = -1;
+                            cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = "";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 60, 20).build());
+                    }
+
+                    curY += 35;
+                    int listStartY = curY;
+                    List<BomboConfig.CoordBind> binds = s.coordBinds.get(s.activeProfile);
+                    if (binds != null) {
+                        for (int i = 0; i < binds.size(); i++) {
+                            final int idx = i;
+                            BomboConfig.CoordBind cb = binds.get(idx);
+                            int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
+                            if (itemY > listStartY + 15 && itemY < height - 20) {
+                                String toggleLabel = cb.enabled ? "§aON" : "§cOFF";
+                                addRenderableWidget(Button.builder(Component.literal(toggleLabel), btn -> {
+                                    cb.enabled = !cb.enabled;
+                                    BomboConfig.save();
+                                    init();
+                                }).bounds(contentX + 130, itemY + 5, 45, 18).build());
+
+                                addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                    editingCoordBindIdx = idx;
+                                    cbCoordsInput = String.format("%.2f %.2f %.2f", cb.x, cb.y, cb.z);
+                                    cbCommandInput = cb.command;
+                                    cbIslandInput = cb.requiredIsland != null ? cb.requiredIsland : "";
+                                    init();
+                                }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+                                addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> { binds.remove(idx); BomboConfig.save(); init(); }).bounds(contentX + 225, itemY + 5, 35, 18).build());
+                            }
+                        }
+                    }
+                }
+                case 19 -> { // Mining
+                    int col1X = contentX;
+                    int col1W = contentWidth / 2 - 10;
+                    int col2X = contentX + contentWidth / 2 + 10;
+                    int col2W = contentWidth / 2 - 10;
+
+                    int y1 = contentBaseY + ITEM_HEIGHT;
+                    y1 = addBoolOption("Corpse ESP Enabled", s.corpseEsp, v -> s.corpseEsp = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Hide Opened Corpses", s.hideOpenedCorpses, v -> s.hideOpenedCorpses = v, col1X, col1W, y1);
+                    y1 += 5;
+
+                    String[] styleNames = {"Outline", "Filled", "Both"};
+                    String styleLabel = "ESP Style: " + s.corpseEspStyle;
+                    addRenderableWidget(Button.builder(Component.literal(styleLabel), btn -> {
+                        int currentIdx = 0;
+                        if ("Filled".equals(s.corpseEspStyle)) currentIdx = 1;
+                        else if ("Both".equals(s.corpseEspStyle)) currentIdx = 2;
+
+                        int nextIdx = (currentIdx + 1) % 3;
+                        s.corpseEspStyle = styleNames[nextIdx];
+                        BomboConfig.save();
+                        init();
+                    }).bounds(col1X, y1, col1W, 20).build());
+                    y1 += ITEM_HEIGHT + 5;
+
+                    int y2 = contentBaseY + ITEM_HEIGHT;
+                    y2 = addColorCycleButton("Lapis Outline Color", s.lapisOutlineColor, v -> s.lapisOutlineColor = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Lapis Fill Color", s.lapisFillColor, v -> s.lapisFillColor = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Tungsten Outline Color", s.tungstenOutlineColor, v -> s.tungstenOutlineColor = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Tungsten Fill Color", s.tungstenFillColor, v -> s.tungstenFillColor = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Umber Outline Color", s.umberOutlineColor, v -> s.umberOutlineColor = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Umber Fill Color", s.umberFillColor, v -> s.umberFillColor = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Vanguard Outline Color", s.vanguardOutlineColor, v -> s.vanguardOutlineColor = v, col2X, col2W, y2);
+                    y2 = addColorCycleButton("Vanguard Fill Color", s.vanguardFillColor, v -> s.vanguardFillColor = v, col2X, col2W, y2);
                 }
             }
 
@@ -1687,6 +1820,72 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Pad Timers Purple", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Pad Timers Green", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fPurple Timer: §e" + String.format("%.1fs", s.padTimerPurpleTime), contentX, curY, 0xFFFFFFFF);
+                }
+                case 18 -> { // Coord Binds
+                    g.drawString(font, "§6§lCoord Commands Management", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§fActive Profile: §e" + s.activeProfile, contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fCoords (X Y Z):", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fCommand:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fOnly on Island:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+
+                    curY += 35; // Space before list
+                    int activeBindsTitleY = curY;
+                    g.drawString(font, "§9§lActive Coord Binds", contentX, activeBindsTitleY, 0xFF5555FF, true);
+
+                    int listY = activeBindsTitleY + 20 - (int)scrollAmount;
+                    List<BomboConfig.CoordBind> binds = s.coordBinds.get(s.activeProfile);
+                    if (binds != null) {
+                        for (BomboConfig.CoordBind cb : binds) {
+                            if (listY > activeBindsTitleY + 15 && listY < height - 15) {
+                                String extra = "";
+                                if (cb.requiredIsland != null && !cb.requiredIsland.isEmpty()) {
+                                    extra += " §8[" + cb.requiredIsland + "]";
+                                }
+                                String statusPrefix = cb.enabled ? "§a[✔] " : "§c[✘] ";
+                                g.drawString(font, statusPrefix + "(" + String.format("%.1f, %.1f, %.1f", cb.x, cb.y, cb.z) + ") §7-> §b" + cb.command + extra, contentX, listY + 5, 0xFFFFFFFF, false);
+                            }
+                            listY += 22;
+                        }
+                    }
+                }
+                case 19 -> { // Mining
+                    int col1X = contentX;
+                    int col2X = contentX + contentWidth / 2 + 10;
+
+                    int y1 = contentBaseY;
+                    g.drawString(font, "§6§lCorpse ESP Settings", col1X, y1, 0xFFFFAA00, true);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Corpse ESP Enabled", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Hide Opened Corpses", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fESP Style:", col1X, y1, 0xFFFFFFFF);
+
+                    int y2 = contentBaseY;
+                    g.drawString(font, "§6§lCorpse Colors", col2X, y2, 0xFFFFAA00, true);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fLapis Outline:", col2X, y2, 0xFFFFFFFF);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fLapis Fill:", col2X, y2, 0xFFFFFFFF);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fTungsten Outline:", col2X, y2, 0xFFFFFFFF);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fTungsten Fill:", col2X, y2, 0xFFFFFFFF);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fUmber Outline:", col2X, y2, 0xFFFFFFFF);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fUmber Fill:", col2X, y2, 0xFFFFFFFF);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fVanguard Outline:", col2X, y2, 0xFFFFFFFF);
+                    y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§fVanguard Fill:", col2X, y2, 0xFFFFFFFF);
                 }
             }
 

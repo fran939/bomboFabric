@@ -1944,6 +1944,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             DiceHud.init();
             KuudraTimer.init();
             DungeonPadTimers.init();
+            CorpseHighlight.init();
             IRCClient.start();
 
             WorldRenderEvents.AFTER_ENTITIES.register(context -> {
@@ -1963,6 +1964,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                 }
                 try {
                     me.bombo.bomboaddons_final.eggfinder.EggFinder.render(context);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+                try {
+                    CorpseHighlight.render(context);
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
@@ -2148,6 +2154,60 @@ public class BomboaddonsClient implements ClientModInitializer {
                 if (client.player.tickCount % 20 == 0) {
                     currentArea = SkyblockUtils.getLocation();
                     currentSubArea = SkyblockUtils.getSubArea();
+                }
+
+                // Coord Binds check
+                try {
+                    BomboConfig.Settings s = BomboConfig.get();
+                    if (s.coordBinds != null) {
+                        List<BomboConfig.CoordBind> activeBinds = s.coordBinds.get(s.activeProfile);
+                        List<BomboConfig.CoordBind> generalBinds = s.coordBinds.get("General");
+                        List<BomboConfig.CoordBind> binds = new ArrayList<>();
+                        if (activeBinds != null) binds.addAll(activeBinds);
+                        if (generalBinds != null && !s.activeProfile.equals("General")) binds.addAll(generalBinds);
+
+                        net.minecraft.world.phys.Vec3 playerPos = client.player.position();
+                        for (BomboConfig.CoordBind bind : binds) {
+                            if (!bind.enabled) continue;
+
+                            // Check required island
+                            if (bind.requiredIsland != null && !bind.requiredIsland.trim().isEmpty()) {
+                                String currentAreaLocal = BomboaddonsClient.currentArea;
+                                if (currentAreaLocal == null) currentAreaLocal = "";
+                                String target = bind.requiredIsland.trim().toLowerCase();
+                                boolean matched = currentAreaLocal.toLowerCase().contains(target);
+                                if (!matched && client.level != null) {
+                                    var scoreboard = client.level.getScoreboard();
+                                    var sidebar = scoreboard.getDisplayObjective(net.minecraft.world.scores.DisplaySlot.SIDEBAR);
+                                    if (sidebar != null) {
+                                        for (String line : SkyblockUtils.getSidebarLines(scoreboard, sidebar)) {
+                                            String clean = line.replaceAll("(?i)§.", "").trim().toLowerCase();
+                                            if (clean.contains(target)) {
+                                                matched = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                if (!matched) {
+                                    bind.wasInside = false;
+                                    continue;
+                                }
+                            }
+
+                            double dist = playerPos.distanceTo(new net.minecraft.world.phys.Vec3(bind.x, bind.y, bind.z));
+                            if (dist <= 3.0) {
+                                if (!bind.wasInside) {
+                                    executeTracked(bind.command);
+                                    bind.wasInside = true;
+                                }
+                            } else if (dist > 4.5) {
+                                bind.wasInside = false;
+                            }
+                        }
+                    }
+                } catch (Throwable t) {
+                    // Ignored
                 }
             } else {
                 if (menuTickCount++ % 20 == 0) {

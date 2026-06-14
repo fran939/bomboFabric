@@ -86,6 +86,12 @@ public class BomboConfig {
         if (!instance.customWaypoints.containsKey("General")) {
             instance.customWaypoints.put("General", new ArrayList<>());
         }
+        if (instance.coordBinds == null) {
+            instance.coordBinds = new HashMap<>();
+        }
+        if (!instance.coordBinds.containsKey("General")) {
+            instance.coordBinds.put("General", new ArrayList<>());
+        }
         if (instance.petNames == null) {
             instance.petNames = new HashMap<>();
         }
@@ -271,10 +277,24 @@ public class BomboConfig {
         public int padTimersX = 10;
         public int padTimersY = 250;
         public float padTimersScale = 1.0f;
+        public double padTimerPurpleTime = 4.8;
         public boolean eggFinder = false;
         public boolean eggFinderChat = true;
         public boolean eggFinderBeacon = true;
         public boolean eggFinderThroughWalls = true;
+        public Map<String, List<CoordBind>> coordBinds = new HashMap<>();
+
+        public boolean corpseEsp = false;
+        public boolean hideOpenedCorpses = true;
+        public String corpseEspStyle = "Outline";
+        public String lapisOutlineColor = "BLUE";
+        public String lapisFillColor = "BLUE";
+        public String tungstenOutlineColor = "WHITE";
+        public String tungstenFillColor = "WHITE";
+        public String umberOutlineColor = "GOLD";
+        public String umberFillColor = "GOLD";
+        public String vanguardOutlineColor = "LIGHT_PURPLE";
+        public String vanguardFillColor = "LIGHT_PURPLE";
     }
 
     public static class ChatTrigger {
@@ -340,6 +360,26 @@ public class BomboConfig {
             this.showThroughWalls = showThroughWalls;
             this.showBeacon = showBeacon;
             this.color = color;
+        }
+    }
+
+    public static class CoordBind {
+        public String command = "";
+        public double x;
+        public double y;
+        public double z;
+        public String requiredIsland = "";
+        public boolean enabled = true;
+        public transient boolean wasInside = false;
+
+        public CoordBind() {}
+
+        public CoordBind(String command, double x, double y, double z, String requiredIsland) {
+            this.command = command;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.requiredIsland = requiredIsland;
         }
     }
 

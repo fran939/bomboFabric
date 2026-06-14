@@ -19,5 +19,6 @@ public class DebugRenderType {
         for (Field f : clazz.getDeclaredFields()) {
             System.out.println(f.toString());
         }
+        System.out.println("==========================");
     }
 }
