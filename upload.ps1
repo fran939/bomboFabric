@@ -26,6 +26,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to v${version}: support formatting-agnostic calculator inputs."
+gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to v${version}: improve Mineshaft Corpse ESP eligibility checks."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

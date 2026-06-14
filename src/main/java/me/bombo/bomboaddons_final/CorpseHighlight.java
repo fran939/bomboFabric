@@ -46,7 +46,7 @@ public class CorpseHighlight {
         UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
             if (level.isClientSide() && entity instanceof ArmorStand stand) {
                 BomboConfig.Settings s = BomboConfig.get();
-                if (s.corpseEsp && s.hideOpenedCorpses && isInMineshaft()) {
+                if (s.corpseEsp && s.hideOpenedCorpses) {
                     CorpseType type = getCorpseType(stand);
                     if (type != CorpseType.None && hasKeyForCorpse(type)) {
                         openedCorpses.add(stand.getId());
@@ -64,14 +64,11 @@ public class CorpseHighlight {
     public static CorpseType getCorpseType(ArmorStand stand) {
         ItemStack helmet = stand.getItemBySlot(EquipmentSlot.HEAD);
         if (helmet != null && !helmet.isEmpty()) {
-            String name = helmet.getHoverName().getString().replaceAll("(?i)§.", "").trim();
-            return switch (name) {
-                case "Lapis Armor Helmet" -> CorpseType.Lapis;
-                case "Mineral Helmet" -> CorpseType.Tungsten;
-                case "Yog Helmet" -> CorpseType.Umber;
-                case "Vanguard Helmet" -> CorpseType.Vanguard;
-                default -> CorpseType.None;
-            };
+            String name = helmet.getHoverName().getString().replaceAll("(?i)§.", "").trim().toLowerCase();
+            if (name.contains("lapis armor helmet") || name.contains("lapis helmet")) return CorpseType.Lapis;
+            if (name.contains("mineral helmet")) return CorpseType.Tungsten;
+            if (name.contains("yog helmet")) return CorpseType.Umber;
+            if (name.contains("vanguard helmet")) return CorpseType.Vanguard;
         }
         return CorpseType.None;
     }
@@ -152,7 +149,7 @@ public class CorpseHighlight {
 
     public static void render(WorldRenderContext context) {
         BomboConfig.Settings s = BomboConfig.get();
-        if (!s.corpseEsp || !isInMineshaft()) return;
+        if (!s.corpseEsp) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
@@ -164,7 +161,6 @@ public class CorpseHighlight {
 
         for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof ArmorStand stand)) continue;
-            if (stand.isInvisible()) continue;
 
             if (s.hideOpenedCorpses && openedCorpses.contains(stand.getId())) {
                 continue;
