@@ -398,12 +398,20 @@ public class BomboConfig {
     public static class HighlightInfo {
         public String color;
         public boolean showInvisible;
+        public boolean enabled = true;
 
         public HighlightInfo() {}
 
         public HighlightInfo(String color, boolean showInvisible) {
             this.color = color;
             this.showInvisible = showInvisible;
+            this.enabled = true;
+        }
+
+        public HighlightInfo(String color, boolean showInvisible, boolean enabled) {
+            this.color = color;
+            this.showInvisible = showInvisible;
+            this.enabled = enabled;
         }
     }
 
@@ -415,6 +423,7 @@ public class BomboConfig {
                 out.beginObject();
                 out.name("color").value(value.color);
                 out.name("showInvisible").value(value.showInvisible);
+                out.name("enabled").value(value.enabled);
                 out.endObject();
             }
         }
@@ -424,9 +433,10 @@ public class BomboConfig {
                 in.nextNull();
                 return null;
             } else if (in.peek() == JsonToken.STRING) {
-                return new HighlightInfo(in.nextString(), false);
+                return new HighlightInfo(in.nextString(), false, true);
             } else {
                 HighlightInfo info = new HighlightInfo();
+                info.enabled = true;
                 in.beginObject();
                 while (in.hasNext()) {
                     String name = in.nextName();
@@ -434,6 +444,8 @@ public class BomboConfig {
                         info.color = in.nextString();
                     } else if (name.equals("showInvisible")) {
                         info.showInvisible = in.nextBoolean();
+                    } else if (name.equals("enabled")) {
+                        info.enabled = in.nextBoolean();
                     } else {
                         in.skipValue();
                     }

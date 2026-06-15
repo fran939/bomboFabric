@@ -110,6 +110,9 @@ public abstract class EntityMixin {
             for (Entry<String, BomboConfig.HighlightInfo> entry : config.highlights.entrySet()) {
                String key = entry.getKey();
                if ((!name.isEmpty() && name.contains(key)) || (nametagName != null && nametagName.contains(key))) {
+                  if (!entry.getValue().enabled) {
+                     continue;
+                  }
                   if (self.isInvisible() && !entry.getValue().showInvisible) {
                      continue;
                   }
@@ -146,6 +149,9 @@ public abstract class EntityMixin {
             for (Entry<String, BomboConfig.HighlightInfo> entry : config.highlights.entrySet()) {
                String key = entry.getKey();
                if ((!name.isEmpty() && name.contains(key)) || (nametagName != null && nametagName.contains(key))) {
+                  if (!entry.getValue().enabled) {
+                     continue;
+                  }
                   String colorStr = entry.getValue().color.replace("#", "");
                   try {
                      ChatFormatting format = ChatFormatting.valueOf(colorStr);

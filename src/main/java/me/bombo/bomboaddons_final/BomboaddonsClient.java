@@ -973,7 +973,25 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                                 PREFIX + "§cNo highlight found for: §e" + name));
                                                     }
                                                     return 1;
-                                                })))
+                                                })))
+
+                                .then(ClientCommandManager.literal("toggle")
+                                        .then(ClientCommandManager.argument("name", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "name")
+                                                            .toLowerCase();
+                                                    BomboConfig.HighlightInfo info = BomboConfig.get().highlights.get(name);
+                                                    if (info != null) {
+                                                        info.enabled = !info.enabled;
+                                                        BomboConfig.save();
+                                                        context.getSource().sendFeedback(Component.literal(
+                                                                PREFIX + "§aToggled highlight for: §e" + name + " §a(" + (info.enabled ? "Enabled" : "Disabled") + ")"));
+                                                    } else {
+                                                        context.getSource().sendFeedback(Component.literal(
+                                                                PREFIX + "§cNo highlight found for: §e" + name));
+                                                    }
+                                                    return 1;
+                                                })))
                                 .then(ClientCommandManager.literal("list")
                                         .executes(context -> {
                                             context.getSource().sendFeedback(Component
@@ -985,6 +1003,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                         .get().highlights.entrySet()) {
                                                     String targetName = entry.getKey();
                                                     String color = entry.getValue().color;
+                                                    boolean enabled = entry.getValue().enabled;
+
+                                                    ClickEvent toggleClick = LF.createClickEventRobust("RUN_COMMAND",
+                                                            "/b highlight toggle " + targetName);
+                                                    Component toggleBtn = enabled ? Component.literal(" §a[Enabled]") : Component.literal(" §c[Disabled]");
+                                                    if (toggleClick != null) {
+                                                        toggleBtn = (enabled ? Component.literal(" §a[Enabled]") : Component.literal(" §c[Disabled]"))
+                                                                .withStyle(style -> style.withClickEvent(toggleClick));
+                                                    }
+
                                                     ClickEvent click = LF.createClickEventRobust("RUN_COMMAND",
                                                             "/b highlight remove " + targetName);
                                                     Component removeBtn = Component.literal(" §c[Remove]");
@@ -994,6 +1022,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                     context.getSource()
                                                             .sendFeedback(Component
                                                                     .literal("  §e" + targetName + " §7- §b" + color)
+                                                                    .append(toggleBtn)
                                                                     .append(removeBtn));
                                                 }
                                             }
@@ -1091,12 +1120,40 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     context.getSource().sendFeedback(Component.literal(
                                             PREFIX + "§7Usage: /b highlight <mob> <color> [showInvis: true/false]"));
                                     context.getSource().sendFeedback(
-                                            Component.literal(PREFIX + "§7Subcommands: list, remove <name>, clear"));
+                                            Component.literal(PREFIX + "§7Subcommands: list, remove <name>, clear, toggle <name>"));
                                     return 1;
                                 }));
 
                         builder.then(ClientCommandManager.literal("gui").executes(context -> {
                             openHudMoveNextTick = true;
+                            return 1;
+                        }));
+
+                        builder.then(ClientCommandManager.literal("corpsedebug").executes(context -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            if (mc.level == null) {
+                                context.getSource().sendFeedback(Component.literal("§cWorld is null!"));
+                                return 1;
+                            }
+                            int totalCount = 0;
+                            int standCount = 0;
+                            for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
+                                totalCount++;
+                                if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand stand) {
+                                    standCount++;
+                                    net.minecraft.world.item.ItemStack helmet = stand.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
+                                    String itemStr = "None";
+                                    if (helmet != null && !helmet.isEmpty()) {
+                                        itemStr = helmet.getHoverName().getString();
+                                    }
+                                    context.getSource().sendFeedback(Component.literal(
+                                            "§eStand ID: " + stand.getId() + " §7- Pos: " + stand.blockPosition() + " §7- Head: §b" + itemStr
+                                    ));
+                                }
+                            }
+                            context.getSource().sendFeedback(Component.literal(
+                                    "§aScan complete. Checked " + totalCount + " entities. Found " + standCount + " armor stands."
+                            ));
                             return 1;
                         }));
 

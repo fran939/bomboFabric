@@ -534,6 +534,12 @@ public class BomboConfigGUI extends Screen {
                         int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
                         if (itemY > listStartY + 15 && itemY < height - 20) {
                             BomboConfig.HighlightInfo info = s.highlights.get(mobName);
+                            String toggleLabel = info.enabled ? "§aON" : "§cOFF";
+                            addRenderableWidget(Button.builder(Component.literal(toggleLabel), btn -> {
+                                info.enabled = !info.enabled;
+                                BomboConfig.save();
+                                init();
+                            }).bounds(contentX + 130, itemY + 5, 45, 18).build());
                             addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
                                 editingHighMob = mobName;
                                 highMobInput = mobName;
@@ -1559,8 +1565,10 @@ public class BomboConfigGUI extends Screen {
                     Collections.sort(sortedMobs);
                     for (String mobName : sortedMobs) {
                         if (listY > listTitleY + 15 && listY < height - 15) {
-                            String color = s.highlights.get(mobName).color;
-                            g.drawString(font, "§e" + mobName + " §7- " + getColorFormatting(color) + color, contentX, listY + 5, 0xFFFFFFFF, false);
+                            BomboConfig.HighlightInfo info = s.highlights.get(mobName);
+                            String prefix = info.enabled ? "§e" : "§8§m";
+                            String color = info.color;
+                            g.drawString(font, prefix + mobName + " §7- " + getColorFormatting(color) + color, contentX, listY + 5, 0xFFFFFFFF, false);
                         }
                         listY += 22;
                     }

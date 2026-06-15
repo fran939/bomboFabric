@@ -150,6 +150,7 @@ public class CorpseHighlight {
     public static void render(WorldRenderContext context) {
         BomboConfig.Settings s = BomboConfig.get();
         if (!s.corpseEsp) return;
+        if (!isInMineshaft()) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
@@ -197,21 +198,30 @@ public class CorpseHighlight {
             float bFill = (fillColorHex & 0xFF) / 255.0f;
             float aFill = 0.4f;
 
-            BlockPos eyePos = BlockPos.containing(stand.getEyePosition());
-            BlockPos groundPos = findGround(eyePos, 4).above(1);
+            double x = stand.getX() - camPos.x;
+            double y = stand.getY() - camPos.y;
+            double z = stand.getZ() - camPos.z;
+            float dist = (float) Math.sqrt(x*x + y*y + z*z);
+            float scale = 1.0f;
+            if (!s.hideCheats && dist > 0.2f) {
+                scale = 0.2f / dist;
+            }
 
-            double x = groundPos.getX() - camPos.x;
-            double y = groundPos.getY() - camPos.y;
-            double z = groundPos.getZ() - camPos.z;
-
-            AABB box = new AABB(x, y, z, x + 1.0, y + 1.0, z + 1.0);
+            // Bounding box of the armor stand expanded by 0.25 on x and z, and moved relative to camera
+            AABB box = stand.getBoundingBox().inflate(0.25, 0.0, 0.25).move(-camPos.x, -camPos.y, -camPos.z);
+            if (scale != 1.0f) {
+                box = new AABB(
+                    box.minX * scale, box.minY * scale, box.minZ * scale,
+                    box.maxX * scale, box.maxY * scale, box.maxZ * scale
+                );
+            }
 
             if ("Outline".equals(s.corpseEspStyle) || "Both".equals(s.corpseEspStyle)) {
                 VertexConsumer lineBuffer = consumers.getBuffer(RenderTypes.linesTranslucent());
                 BomboRenderUtils.drawBox(poseStack, lineBuffer, box, rOut, gOut, bOut, aOut, 2.0f);
             }
             if ("Filled".equals(s.corpseEspStyle) || "Both".equals(s.corpseEspStyle)) {
-                VertexConsumer fillBuffer = consumers.getBuffer(RenderTypes.debugFilledBox());
+                VertexConsumer fillBuffer = consumers.getBuffer(RenderTypes.debugQuads());
                 drawFilledBox(poseStack, fillBuffer, box, rFill, gFill, bFill, aFill);
             }
         }
