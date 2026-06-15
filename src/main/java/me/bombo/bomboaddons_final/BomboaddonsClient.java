@@ -1124,6 +1124,55 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     return 1;
                                 }));
 
+                        builder.then(ClientCommandManager.literal("left").executes(context -> {
+                            if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
+                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                return 1;
+                            }
+                            GardenMovement.toggleLeft();
+                            return 1;
+                        }));
+                        builder.then(ClientCommandManager.literal("right").executes(context -> {
+                            if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
+                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                return 1;
+                            }
+                            GardenMovement.toggleRight();
+                            return 1;
+                        }));
+                        builder.then(ClientCommandManager.literal("back").executes(context -> {
+                            if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
+                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                return 1;
+                            }
+                            GardenMovement.toggleBackward();
+                            return 1;
+                        }));
+                        builder.then(ClientCommandManager.literal("forw").executes(context -> {
+                            if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
+                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                return 1;
+                            }
+                            GardenMovement.toggleForward();
+                            return 1;
+                        }));
+                        builder.then(ClientCommandManager.literal("break").executes(context -> {
+                            if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
+                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                return 1;
+                            }
+                            GardenMovement.toggleBreak();
+                            return 1;
+                        }));
+                        builder.then(ClientCommandManager.literal("use").executes(context -> {
+                            if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
+                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                return 1;
+                            }
+                            GardenMovement.toggleUse();
+                            return 1;
+                        }));
+
                         builder.then(ClientCommandManager.literal("gui").executes(context -> {
                             openHudMoveNextTick = true;
                             return 1;

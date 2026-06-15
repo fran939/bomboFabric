@@ -282,6 +282,7 @@ public class BomboConfig {
         public boolean eggFinderChat = true;
         public boolean eggFinderBeacon = true;
         public boolean eggFinderThroughWalls = true;
+        public boolean dungeonBigHitbox = false;
         public Map<String, List<CoordBind>> coordBinds = new HashMap<>();
 
         public boolean corpseEsp = false;

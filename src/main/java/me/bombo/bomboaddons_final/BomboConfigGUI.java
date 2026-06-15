@@ -996,6 +996,7 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Pad Timers Purple", s.padTimersPurple, v -> s.padTimersPurple = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Pad Timers Green", s.padTimersGreen, v -> s.padTimersGreen = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Dungeon Big Hitbox", s.dungeonBigHitbox, v -> s.dungeonBigHitbox = v, contentX, contentWidth, curY);
                     curY = addFloatLabelSlider("Purple Timer (s)", (float) s.padTimerPurpleTime, 1.0f, 10.0f, v -> s.padTimerPurpleTime = (double) v, contentX, 150, curY);
                     curY += 10;
                     addRenderableWidget(Button.builder(Component.literal("§e§lMove HUD Elements"), btn -> {
@@ -1828,6 +1829,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Pad Timers Purple", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§7Pad Timers Green", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Dungeon Big Hitbox", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§fPurple Timer: §e" + String.format("%.1fs", s.padTimerPurpleTime), contentX, curY, 0xFFFFFFFF);
                 }

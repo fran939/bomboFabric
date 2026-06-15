@@ -41,3 +41,4 @@ replay_*.log
 test/
 temp_sources/
 auto_push.bat
+logs/

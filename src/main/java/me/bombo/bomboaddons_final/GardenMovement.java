@@ -63,161 +63,209 @@ public class GardenMovement {
         int uKey = ClickLogic.getKeyCode(s.gardenUseKey);
 
         if (keyCode == fKey && fKey != -1) {
-            forward = !forward;
-            if (!forward) mc.options.keyUp.setDown(false);
-            if (forward) {
-                if (s.gardenDirectionHelper && warped) {
-                    if (s.gardenSugarCane) {
-                        if (wasGoingBackward || wasGoingRight) {
-                            warningStartTime = System.currentTimeMillis();
-                            correctArrow = "→";
-                            warped = false;
-                        } else {
-                            warped = false;
-                        }
-                    } else {
-                        if (!wasGoingForward) {
-                            warningStartTime = System.currentTimeMillis();
-                            if (wasGoingBackward) correctArrow = "↓";
-                            else if (wasGoingLeft) correctArrow = "←";
-                            else if (wasGoingRight) correctArrow = "→";
-                            else correctArrow = "↓";
-                            warped = false;
-                        } else {
-                            warped = false;
-                        }
-                    }
-                }
-
-                if (s.gardenSugarCane) {
-                    right = false;
-                    mc.options.keyRight.setDown(false);
-                } else {
-                    backward = false;
-                    mc.options.keyDown.setDown(false);
-                }
-            }
-            sendToggleMsg("Forward", forward);
+            toggleForward();
         } else if (keyCode == bKey && bKey != -1) {
-            backward = !backward;
-            if (!backward) mc.options.keyDown.setDown(false);
-            if (backward) {
-                if (s.gardenDirectionHelper && warped) {
-                    if (s.gardenSugarCane) {
-                        if (wasGoingForward || wasGoingLeft) {
-                            warningStartTime = System.currentTimeMillis();
-                            correctArrow = "←";
-                            warped = false;
-                        } else {
-                            warped = false;
-                        }
-                    } else {
-                        if (!wasGoingBackward) {
-                            warningStartTime = System.currentTimeMillis();
-                            if (wasGoingForward) correctArrow = "↑";
-                            else if (wasGoingLeft) correctArrow = "←";
-                            else if (wasGoingRight) correctArrow = "→";
-                            else correctArrow = "↑";
-                            warped = false;
-                        } else {
-                            warped = false;
-                        }
-                    }
-                }
-                
-                if (s.gardenSugarCane) {
-                    left = false;
-                    mc.options.keyLeft.setDown(false);
-                } else {
-                    forward = false;
-                    mc.options.keyUp.setDown(false);
-                }
-            }
-            sendToggleMsg("Backward", backward);
+            toggleBackward();
         } else if (keyCode == lKey && lKey != -1) {
-            left = !left;
-            if (!left) mc.options.keyLeft.setDown(false);
-            if (left) {
-                if (s.gardenDirectionHelper && warped) {
-                    if (s.gardenSugarCane) {
-                        if (wasGoingBackward || wasGoingRight) {
-                            warningStartTime = System.currentTimeMillis();
-                            correctArrow = "↓";
-                            warped = false;
-                        } else {
-                            warped = false;
-                        }
-                    } else {
-                        if (!wasGoingLeft) {
-                            warningStartTime = System.currentTimeMillis();
-                            if (wasGoingRight) correctArrow = "→";
-                            else if (wasGoingForward) correctArrow = "↑";
-                            else if (wasGoingBackward) correctArrow = "↓";
-                            else correctArrow = "→";
-                            warped = false;
-                        } else {
-                            warped = false;
-                        }
-                    }
-                }
-                
-                if (s.gardenSugarCane) {
-                    backward = false;
-                    mc.options.keyDown.setDown(false);
-                } else {
-                    right = false;
-                    mc.options.keyRight.setDown(false);
-                }
-            }
-            sendToggleMsg("Left", left);
+            toggleLeft();
         } else if (keyCode == rKey && rKey != -1) {
-            right = !right;
-            if (!right) mc.options.keyRight.setDown(false);
-            if (right) {
-                if (s.gardenDirectionHelper && warped) {
-                    if (s.gardenSugarCane) {
-                        if (wasGoingForward || wasGoingLeft) {
-                            warningStartTime = System.currentTimeMillis();
-                            correctArrow = "↑";
-                            warped = false;
-                        } else {
-                            warped = false;
-                        }
+            toggleRight();
+        } else if (keyCode == brKey && brKey != -1) {
+            toggleBreak();
+        } else if (keyCode == uKey && uKey != -1) {
+            toggleUse();
+        }
+    }
+
+    public static void toggleForward() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.gardenMovement || !SkyblockUtils.isInGarden()) return;
+        Minecraft mc = Minecraft.getInstance();
+
+        forward = !forward;
+        mc.options.keyUp.setDown(forward);
+        if (forward) {
+            if (s.gardenDirectionHelper && warped) {
+                if (s.gardenSugarCane) {
+                    if (wasGoingBackward || wasGoingRight) {
+                        warningStartTime = System.currentTimeMillis();
+                        correctArrow = "→";
+                        warped = false;
                     } else {
-                        if (!wasGoingRight) {
-                            warningStartTime = System.currentTimeMillis();
-                            if (wasGoingLeft) correctArrow = "←";
-                            else if (wasGoingForward) correctArrow = "↑";
-                            else if (wasGoingBackward) correctArrow = "↓";
-                            else correctArrow = "←";
-                            warped = false;
-                        } else {
-                            warped = false;
-                        }
+                        warped = false;
+                    }
+                } else {
+                    if (!wasGoingForward) {
+                        warningStartTime = System.currentTimeMillis();
+                        if (wasGoingBackward) correctArrow = "↓";
+                        else if (wasGoingLeft) correctArrow = "←";
+                        else if (wasGoingRight) correctArrow = "→";
+                        else correctArrow = "↓";
+                        warped = false;
+                    } else {
+                        warped = false;
                     }
                 }
-                
+            }
+
+            if (s.gardenSugarCane) {
+                right = false;
+                mc.options.keyRight.setDown(false);
+            } else {
+                backward = false;
+                mc.options.keyDown.setDown(false);
+            }
+        }
+        sendToggleMsg("Forward", forward);
+    }
+
+    public static void toggleBackward() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.gardenMovement || !SkyblockUtils.isInGarden()) return;
+        Minecraft mc = Minecraft.getInstance();
+
+        backward = !backward;
+        mc.options.keyDown.setDown(backward);
+        if (backward) {
+            if (s.gardenDirectionHelper && warped) {
                 if (s.gardenSugarCane) {
-                    forward = false;
-                    mc.options.keyUp.setDown(false);
+                    if (wasGoingForward || wasGoingLeft) {
+                        warningStartTime = System.currentTimeMillis();
+                        correctArrow = "←";
+                        warped = false;
+                    } else {
+                        warped = false;
+                    }
                 } else {
-                    left = false;
-                    mc.options.keyLeft.setDown(false);
+                    if (!wasGoingBackward) {
+                        warningStartTime = System.currentTimeMillis();
+                        if (wasGoingForward) correctArrow = "↑";
+                        else if (wasGoingLeft) correctArrow = "←";
+                        else if (wasGoingRight) correctArrow = "→";
+                        else correctArrow = "↑";
+                        warped = false;
+                    } else {
+                        warped = false;
+                    }
                 }
             }
-            sendToggleMsg("Right", right);
-        } else if (keyCode == brKey && brKey != -1) {
-            breaking = !breaking;
-            if (breaking && mc.player != null) {
-                mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+            
+            if (s.gardenSugarCane) {
+                left = false;
+                mc.options.keyLeft.setDown(false);
+            } else {
+                forward = false;
+                mc.options.keyUp.setDown(false);
             }
-            if (!breaking) mc.options.keyAttack.setDown(false);
-            sendToggleMsg("Breaking", breaking);
-        } else if (keyCode == uKey && uKey != -1) {
-            using = !using;
-            if (!using) mc.options.keyUse.setDown(false);
-            sendToggleMsg("Using", using);
         }
+        sendToggleMsg("Backward", backward);
+    }
+
+    public static void toggleLeft() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.gardenMovement || !SkyblockUtils.isInGarden()) return;
+        Minecraft mc = Minecraft.getInstance();
+
+        left = !left;
+        mc.options.keyLeft.setDown(left);
+        if (left) {
+            if (s.gardenDirectionHelper && warped) {
+                if (s.gardenSugarCane) {
+                    if (wasGoingBackward || wasGoingRight) {
+                        warningStartTime = System.currentTimeMillis();
+                        correctArrow = "↓";
+                        warped = false;
+                    } else {
+                        warped = false;
+                    }
+                } else {
+                    if (!wasGoingLeft) {
+                        warningStartTime = System.currentTimeMillis();
+                        if (wasGoingRight) correctArrow = "→";
+                        else if (wasGoingForward) correctArrow = "↑";
+                        else if (wasGoingBackward) correctArrow = "↓";
+                        else correctArrow = "→";
+                        warped = false;
+                    } else {
+                        warped = false;
+                    }
+                }
+            }
+            
+            if (s.gardenSugarCane) {
+                backward = false;
+                mc.options.keyDown.setDown(false);
+            } else {
+                right = false;
+                mc.options.keyRight.setDown(false);
+            }
+        }
+        sendToggleMsg("Left", left);
+    }
+
+    public static void toggleRight() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.gardenMovement || !SkyblockUtils.isInGarden()) return;
+        Minecraft mc = Minecraft.getInstance();
+
+        right = !right;
+        mc.options.keyRight.setDown(right);
+        if (right) {
+            if (s.gardenDirectionHelper && warped) {
+                if (s.gardenSugarCane) {
+                    if (wasGoingForward || wasGoingLeft) {
+                        warningStartTime = System.currentTimeMillis();
+                        correctArrow = "↑";
+                        warped = false;
+                    } else {
+                        warped = false;
+                    }
+                } else {
+                    if (!wasGoingRight) {
+                        warningStartTime = System.currentTimeMillis();
+                        if (wasGoingLeft) correctArrow = "←";
+                        else if (wasGoingForward) correctArrow = "↑";
+                        else if (wasGoingBackward) correctArrow = "↓";
+                        else correctArrow = "←";
+                        warped = false;
+                    } else {
+                        warped = false;
+                    }
+                }
+            }
+            
+            if (s.gardenSugarCane) {
+                forward = false;
+                mc.options.keyUp.setDown(false);
+            } else {
+                left = false;
+                mc.options.keyLeft.setDown(false);
+            }
+        }
+        sendToggleMsg("Right", right);
+    }
+
+    public static void toggleBreak() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.gardenMovement || !SkyblockUtils.isInGarden()) return;
+        Minecraft mc = Minecraft.getInstance();
+
+        breaking = !breaking;
+        mc.options.keyAttack.setDown(breaking);
+        if (breaking && mc.player != null) {
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        }
+        sendToggleMsg("Breaking", breaking);
+    }
+
+    public static void toggleUse() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (!s.gardenMovement || !SkyblockUtils.isInGarden()) return;
+        Minecraft mc = Minecraft.getInstance();
+
+        using = !using;
+        mc.options.keyUse.setDown(using);
+        sendToggleMsg("Using", using);
     }
 
     private static void sendToggleMsg(String dir, boolean active) {

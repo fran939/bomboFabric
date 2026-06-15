@@ -36,7 +36,9 @@
 		"ChatScreenMixin",
 		"ParticleMixin",
 		"DungeonPadTimersMixin",
-		"ClientPacketListenerMixin"
+		"ClientPacketListenerMixin",
+		"LeverBlockMixin",
+		"ButtonBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
