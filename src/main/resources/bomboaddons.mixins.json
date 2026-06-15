@@ -39,7 +39,7 @@
 		"ClientPacketListenerMixin",
 		"LeverBlockMixin",
 		"ButtonBlockMixin",
-		"AbstractSkullBlockMixin"
+		"SkullBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

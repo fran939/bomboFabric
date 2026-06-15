@@ -3,7 +3,8 @@ package me.bombo.bomboaddons_final.mixin;
 import me.bombo.bomboaddons_final.BomboConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.AbstractSkullBlock;
+import net.minecraft.world.level.block.SkullBlock;
+import net.minecraft.world.level.block.WallSkullBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -13,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(AbstractSkullBlock.class)
-public class AbstractSkullBlockMixin {
+@Mixin({SkullBlock.class, WallSkullBlock.class})
+public class SkullBlockMixin {
 
     @Inject(method = "getShape", at = @At("HEAD"), cancellable = true)
     private void onGetShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
