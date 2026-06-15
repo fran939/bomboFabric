@@ -371,6 +371,7 @@ public class BomboConfig {
         public double z;
         public String requiredIsland = "";
         public boolean enabled = true;
+        public double radius = 3.0;
         public transient boolean wasInside = false;
 
         public CoordBind() {}
@@ -381,6 +382,15 @@ public class BomboConfig {
             this.y = y;
             this.z = z;
             this.requiredIsland = requiredIsland;
+        }
+
+        public CoordBind(String command, double x, double y, double z, String requiredIsland, double radius) {
+            this.command = command;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.requiredIsland = requiredIsland;
+            this.radius = radius;
         }
     }
 

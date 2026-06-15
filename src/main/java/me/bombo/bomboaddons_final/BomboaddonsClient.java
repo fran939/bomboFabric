@@ -2302,12 +2302,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                             }
 
                             double dist = playerPos.distanceTo(new net.minecraft.world.phys.Vec3(bind.x, bind.y, bind.z));
-                            if (dist <= 3.0) {
+                            double r = bind.radius <= 0.0 ? 3.0 : bind.radius;
+                            if (dist <= r) {
                                 if (!bind.wasInside) {
                                     executeTracked(bind.command);
                                     bind.wasInside = true;
                                 }
-                            } else if (dist > 4.5) {
+                            } else if (dist > r + 1.5) {
                                 bind.wasInside = false;
                             }
                         }

@@ -79,6 +79,7 @@ public class BomboConfigGUI extends Screen {
     private static String cbCoordsInput = "";
     private static String cbCommandInput = "";
     private static String cbIslandInput = "";
+    private static String cbRadiusInput = "3";
     private static int editingCoordBindIdx = -1;
 
     public static boolean isTypingOrListening() {
@@ -201,7 +202,7 @@ public class BomboConfigGUI extends Screen {
                     wpNameInput = ""; wpCoordsInput = ""; wpIslandInput = "";
                     wpThruWallsInput = true; wpBeaconInput = true; wpColorInput = "AQUA";
                     editingCoordBindIdx = -1;
-                    cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = "";
+                    cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = ""; cbRadiusInput = "3";
                     init();
                 }).bounds(PADDING, catY, SIDEBAR_WIDTH - PADDING * 2, 22).build();
 
@@ -1034,15 +1035,34 @@ public class BomboConfigGUI extends Screen {
                     curY += 5;
                     curY = addTextBox("Only on Island", cbIslandInput, v -> cbIslandInput = v, contentX, contentWidth, curY);
                     curY += 5;
+                    curY = addTextBox("Radius", cbRadiusInput, v -> cbRadiusInput = v, contentX, contentWidth, curY);
+                    curY += 5;
 
                     int finalCurY = curY;
                     String addBtnText = editingCoordBindIdx != -1 ? "§e✔ Save Coord Bind" : "§a+ Add Coord Bind";
                     addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
-                        if (!cbCoordsInput.isEmpty() && !cbCommandInput.isEmpty()) {
-                            double[] parsed = parseCoords(cbCoordsInput);
+                        if (!cbCommandInput.isEmpty()) {
+                            double[] parsed;
+                            if (cbCoordsInput.trim().isEmpty()) {
+                                Minecraft mc = Minecraft.getInstance();
+                                if (mc.player != null) {
+                                    parsed = new double[] { mc.player.getX(), mc.player.getY(), mc.player.getZ() };
+                                } else {
+                                    parsed = null;
+                                }
+                            } else {
+                                parsed = parseCoords(cbCoordsInput);
+                            }
+
                             if (parsed != null) {
+                                double radiusVal = 3.0;
+                                if (!cbRadiusInput.trim().isEmpty()) {
+                                    try {
+                                        radiusVal = Double.parseDouble(cbRadiusInput.trim());
+                                    } catch (NumberFormatException ignored) {}
+                                }
                                 s.coordBinds.putIfAbsent(s.activeProfile, new ArrayList<>());
-                                BomboConfig.CoordBind cb = new BomboConfig.CoordBind(cbCommandInput, parsed[0], parsed[1], parsed[2], cbIslandInput);
+                                BomboConfig.CoordBind cb = new BomboConfig.CoordBind(cbCommandInput, parsed[0], parsed[1], parsed[2], cbIslandInput, radiusVal);
                                 if (editingCoordBindIdx != -1) {
                                     s.coordBinds.get(s.activeProfile).set(editingCoordBindIdx, cb);
                                     editingCoordBindIdx = -1;
@@ -1050,7 +1070,7 @@ public class BomboConfigGUI extends Screen {
                                     s.coordBinds.get(s.activeProfile).add(cb);
                                 }
                                 BomboConfig.save();
-                                cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = "";
+                                cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = ""; cbRadiusInput = "3";
                                 init();
                             }
                         }
@@ -1059,7 +1079,7 @@ public class BomboConfigGUI extends Screen {
                     if (editingCoordBindIdx != -1) {
                         addRenderableWidget(Button.builder(Component.literal("§cCancel"), btn -> {
                             editingCoordBindIdx = -1;
-                            cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = "";
+                            cbCoordsInput = ""; cbCommandInput = ""; cbIslandInput = ""; cbRadiusInput = "3";
                             init();
                         }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 60, 20).build());
                     }
@@ -1085,6 +1105,7 @@ public class BomboConfigGUI extends Screen {
                                     cbCoordsInput = String.format("%.2f %.2f %.2f", cb.x, cb.y, cb.z);
                                     cbCommandInput = cb.command;
                                     cbIslandInput = cb.requiredIsland != null ? cb.requiredIsland : "";
+                                    cbRadiusInput = String.valueOf(cb.radius <= 0.0 ? 3.0 : cb.radius);
                                     init();
                                 }).bounds(contentX + 180, itemY + 5, 40, 18).build());
                                 addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> { binds.remove(idx); BomboConfig.save(); init(); }).bounds(contentX + 225, itemY + 5, 35, 18).build());
@@ -1845,6 +1866,8 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT + 5;
                     g.drawString(font, "§fOnly on Island:", contentX, curY + 4, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT + 5;
+                    g.drawString(font, "§fRadius:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
 
                     curY += 35; // Space before list
                     int activeBindsTitleY = curY;
@@ -1859,6 +1882,8 @@ public class BomboConfigGUI extends Screen {
                                 if (cb.requiredIsland != null && !cb.requiredIsland.isEmpty()) {
                                     extra += " §8[" + cb.requiredIsland + "]";
                                 }
+                                double r = cb.radius <= 0.0 ? 3.0 : cb.radius;
+                                extra += " §7(r=" + String.format("%.1f", r) + ")";
                                 String statusPrefix = cb.enabled ? "§a[✔] " : "§c[✘] ";
                                 g.drawString(font, statusPrefix + "(" + String.format("%.1f, %.1f, %.1f", cb.x, cb.y, cb.z) + ") §7-> §b" + cb.command + extra, contentX, listY + 5, 0xFFFFFFFF, false);
                             }

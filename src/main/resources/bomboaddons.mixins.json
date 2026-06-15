@@ -38,7 +38,8 @@
 		"DungeonPadTimersMixin",
 		"ClientPacketListenerMixin",
 		"LeverBlockMixin",
-		"ButtonBlockMixin"
+		"ButtonBlockMixin",
+		"AbstractSkullBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
