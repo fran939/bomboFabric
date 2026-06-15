@@ -26,6 +26,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to v${version}: add Dungeon Big Hitbox feature for levers and buttons."
+gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to v${version}: make button hitbox flat on its attached side (like map hitbox)."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
