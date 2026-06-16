@@ -21,4 +21,18 @@ public class ClientPacketListenerMixin {
             }
         }
     }
+
+    @Inject(method = "handleMovePlayer", at = @At("HEAD"))
+    private void onHandleMovePlayerHead(net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
+        try {
+            me.bombo.bomboaddons_final.GardenMacroDetector.onMovePlayerPacketHead();
+        } catch (Throwable t) {}
+    }
+
+    @Inject(method = "handleMovePlayer", at = @At("RETURN"))
+    private void onHandleMovePlayerReturn(net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
+        try {
+            me.bombo.bomboaddons_final.GardenMacroDetector.onMovePlayerPacketTail();
+        } catch (Throwable t) {}
+    }
 }

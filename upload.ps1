@@ -26,6 +26,6 @@ if ($tokenLine) {
     $env:GITHUB_TOKEN = $tokenLine.Substring(9)
 }
 gh release delete "v$version" --yes --cleanup-tag 2>$null
-gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to v${version}: add Coord Binds waypoints and randomized delay execution."
+gh release create "v$version" $jarPath --title "v$version" --notes "Bump version to v${version}: remove Coord Bind beacons, add customizable Garden Macro Check Detector."
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

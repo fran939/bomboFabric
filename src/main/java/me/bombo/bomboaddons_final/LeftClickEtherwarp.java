@@ -27,6 +27,7 @@ public class LeftClickEtherwarp {
                if (mc.gameMode != null) {
                   mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                   mc.player.swing(InteractionHand.MAIN_HAND);
+                  GardenMacroDetector.recordWeaponUse();
                }
                state = 2;
             } else if (state == 2) {
@@ -60,6 +61,7 @@ public class LeftClickEtherwarp {
                if (mc.gameMode != null) {
                   mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                   mc.player.swing(InteractionHand.MAIN_HAND);
+                  GardenMacroDetector.recordWeaponUse();
                }
             } else {
                getSneakMapping(mc).setDown(true);

@@ -307,6 +307,13 @@ public class BomboConfigGUI extends Screen {
                     y1 = addBoolOption("Lock Mouse on Movement", s.lockMouseOnGarden, v -> s.lockMouseOnGarden = v, col1X, col1W, y1);
                     y1 = addBoolOption("Sugar Cane Mode", s.gardenSugarCane, v -> s.gardenSugarCane = v, col1X, col1W, y1);
                     y1 = addBoolOption("Direction Helper Warning", s.gardenDirectionHelper, v -> s.gardenDirectionHelper = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Macro Check Detector", s.gardenMacroCheckDetector, v -> s.gardenMacroCheckDetector = v, col1X, col1W, y1);
+                    if (s.gardenMacroCheckDetector) {
+                        y1 = addBoolOption("Stop Movement on Check", s.gardenMacroCheckStop, v -> s.gardenMacroCheckStop = v, col1X, col1W, y1);
+                        y1 = addCycleOption("Alarm Sound", s.gardenMacroCheckSound, List.of("Anvil", "Pling", "Wither", "Explode"), v -> s.gardenMacroCheckSound = v, col1X, col1W, y1);
+                        y1 = addIntLabelSlider("Sound Repeats", s.gardenMacroCheckSoundCount, 1, 50, 1, v -> s.gardenMacroCheckSoundCount = v, col1X, col1W, y1);
+                        y1 = addIntLabelSlider("Sound Delay (ms)", s.gardenMacroCheckSoundDelay, 100, 2000, 50, v -> s.gardenMacroCheckSoundDelay = v, col1X, col1W, y1);
+                    }
                     y1 += 10;
                     y1 = addKeyBindButton("Forward", s.gardenForwardKey, v -> s.gardenForwardKey = v, "gardenF", col1X, col1W, y1);
                     y1 = addKeyBindButton("Backward", s.gardenBackwardKey, v -> s.gardenBackwardKey = v, "gardenB", col1X, col1W, y1);
@@ -1261,6 +1268,17 @@ public class BomboConfigGUI extends Screen {
         };
     }
 
+    private int addCycleOption(String label, String current, List<String> options, Consumer<String> setter, int x, int w, int y) {
+        addRenderableWidget(Button.builder(Component.literal(current), btn -> {
+            int idx = options.indexOf(current);
+            int next = (idx + 1) % options.size();
+            setter.accept(options.get(next));
+            BomboConfig.save();
+            init();
+        }).bounds(x + w / 2, y, w / 2, 16).build());
+        return y + ITEM_HEIGHT;
+    }
+
     private int addColorCycleButton(String label, String current, Consumer<String> setter, int x, int w, int y) {
         String formatting = getColorFormatting(current);
         String btnText = label + ": " + formatting + current.toUpperCase();
@@ -1473,7 +1491,20 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Sugar Cane Mode", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
                     g.drawString(font, "§7Direction Helper Warning", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
-                    y1 += ITEM_HEIGHT + 10;
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Macro Check Detector", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    if (BomboConfig.get().gardenMacroCheckDetector) {
+                        g.drawString(font, "§7Stop Movement on Check", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                        y1 += ITEM_HEIGHT;
+                        g.drawString(font, "§fAlarm Sound:", col1X, y1 + 4, 0xFFFFFFFF, false);
+                        y1 += ITEM_HEIGHT;
+                        g.drawString(font, "§fSound Repeats: §e" + BomboConfig.get().gardenMacroCheckSoundCount, col1X, y1 + 4, 0xFFFFFFFF, false);
+                        y1 += ITEM_HEIGHT;
+                        g.drawString(font, "§fSound Delay: §e" + BomboConfig.get().gardenMacroCheckSoundDelay + "ms", col1X, y1 + 4, 0xFFFFFFFF, false);
+                        y1 += ITEM_HEIGHT;
+                    }
+                    y1 += 10;
                     g.drawString(font, "§fForward:", col1X, y1, 0xFFFFFFFF);
                     y1 += ITEM_HEIGHT;
                     g.drawString(font, "§fBackward:", col1X, y1, 0xFFFFFFFF);

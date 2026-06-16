@@ -2401,6 +2401,25 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
 
             try {
+                if (client.player != null) {
+                    net.minecraft.world.item.ItemStack held = client.player.getMainHandItem();
+                    if (!held.isEmpty()) {
+                        String cleanName = held.getHoverName().getString().replaceAll("(?i)§.", "").toLowerCase();
+                        if (cleanName.contains("aspect of the end") ||
+                            cleanName.contains("aspect of the void") ||
+                            cleanName.contains("hyperion") ||
+                            cleanName.contains("valkyrie") ||
+                            cleanName.contains("scylla") ||
+                            cleanName.contains("astraea")) {
+                            if (client.options.keyUse.isDown()) {
+                                GardenMacroDetector.recordWeaponUse();
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable t) {}
+
+            try {
                 GardenMovement.onTick(client);
             } catch (Throwable t) {
                 // Silently ignore

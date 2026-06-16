@@ -6,6 +6,7 @@ public class CommandTracker {
     private static String lastSh = "ahs";
 
     public static void onCommandSent(String command) {
+        GardenMacroDetector.recordCommandSend(command);
         if (command.startsWith("/")) {
             command = command.substring(1);
         }

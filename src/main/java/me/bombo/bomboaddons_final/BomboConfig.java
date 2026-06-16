@@ -200,6 +200,11 @@ public class BomboConfig {
         public boolean lockMouseOnGarden = false;
         public boolean gardenSugarCane = false;
         public boolean gardenDirectionHelper = false;
+        public boolean gardenMacroCheckDetector = false;
+        public boolean gardenMacroCheckStop = false;
+        public String gardenMacroCheckSound = "Anvil";
+        public int gardenMacroCheckSoundCount = 10;
+        public int gardenMacroCheckSoundDelay = 500;
         public String gardenForwardKey = "up";
         public String gardenBackwardKey = "down";
         public String gardenLeftKey = "left";

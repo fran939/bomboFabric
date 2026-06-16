@@ -285,13 +285,7 @@ public class GardenWaypoints {
                 );
                 BomboRenderUtils.drawBox(poseStack, lineBuffer, centerBox, r, g, b, 1.0f, 2.0f);
 
-                // Draw vertical beacon line
-                float beaconWidth = 0.12f * scale;
-                AABB beaconBox = new AABB(
-                    scaledX - beaconWidth, scaledY, scaledZ - beaconWidth,
-                    scaledX + beaconWidth, scaledY + (256.0f * scale), scaledZ + beaconWidth
-                );
-                BomboRenderUtils.drawBox(poseStack, lineBuffer, beaconBox, r, g, b, 0.3f, 1.5f);
+
 
                 // Draw waypoint text label
                 String text = "§d[Bind] §f" + cb.command + " §7(" + (int)dist + "m, r=" + String.format("%.1f", rVal) + ")";
