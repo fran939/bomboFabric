@@ -223,5 +223,103 @@ public class GardenWaypoints {
                 BomboRenderUtils.drawText(poseStack, consumers, text, (float)x, (float)y + 0.8f, (float)z, 0xFFFFFF, 0.03f, true, wp.showThroughWalls);
             }
         }
+
+        // Render Coord Binds Waypoints
+        List<BomboConfig.CoordBind> coordWps = new java.util.ArrayList<>();
+        if (BomboConfig.get().coordBinds != null) {
+            List<BomboConfig.CoordBind> activeCoordBinds = BomboConfig.get().coordBinds.get(BomboConfig.get().activeProfile);
+            List<BomboConfig.CoordBind> generalCoordBinds = BomboConfig.get().coordBinds.get("General");
+            if (activeCoordBinds != null) {
+                for (BomboConfig.CoordBind cb : activeCoordBinds) {
+                    if (cb.enabled && cb.showWaypoint && matchesIsland(cb.requiredIsland)) {
+                        coordWps.add(cb);
+                    }
+                }
+            }
+            if (generalCoordBinds != null && !BomboConfig.get().activeProfile.equals("General")) {
+                for (BomboConfig.CoordBind cb : generalCoordBinds) {
+                    if (cb.enabled && cb.showWaypoint && matchesIsland(cb.requiredIsland)) {
+                        coordWps.add(cb);
+                    }
+                }
+            }
+        }
+
+        if (!coordWps.isEmpty()) {
+            for (BomboConfig.CoordBind cb : coordWps) {
+                double x = cb.x - camPos.x;
+                double y = cb.y - camPos.y;
+                double z = cb.z - camPos.z;
+
+                float dist = (float) Math.sqrt(x*x + y*y + z*z);
+                double rVal = cb.radius <= 0.0 ? 3.0 : cb.radius;
+
+                VertexConsumer lineBuffer = consumers.getBuffer(RenderTypes.linesTranslucent());
+                int colorHex = BomboRenderUtils.colorNameToHex("light_purple");
+                float r = ((colorHex >> 16) & 0xFF) / 255.0f;
+                float g = ((colorHex >> 8) & 0xFF) / 255.0f;
+                float b = (colorHex & 0xFF) / 255.0f;
+
+                // 1. Draw real-world proc boundary box (non-perspective-scaled)
+                AABB boundaryBox = new AABB(
+                    x - rVal, y - rVal, z - rVal,
+                    x + rVal, y + rVal, z + rVal
+                );
+                BomboRenderUtils.drawBox(poseStack, lineBuffer, boundaryBox, r, g, b, 0.4f, 1.5f);
+
+                // 2. Draw perspective-scaled center marker box (visible through walls)
+                float scale = 1.0f;
+                if (!s.hideCheats && dist > 0.2f) {
+                    scale = 0.2f / dist;
+                }
+
+                float boxWidth = 0.4f * scale;
+                float boxHeight = 0.4f * scale;
+                float scaledX = (float)x * scale;
+                float scaledY = (float)y * scale;
+                float scaledZ = (float)z * scale;
+
+                AABB centerBox = new AABB(
+                    scaledX - boxWidth, scaledY - boxHeight, scaledZ - boxWidth,
+                    scaledX + boxWidth, scaledY + boxHeight, scaledZ + boxWidth
+                );
+                BomboRenderUtils.drawBox(poseStack, lineBuffer, centerBox, r, g, b, 1.0f, 2.0f);
+
+                // Draw vertical beacon line
+                float beaconWidth = 0.12f * scale;
+                AABB beaconBox = new AABB(
+                    scaledX - beaconWidth, scaledY, scaledZ - beaconWidth,
+                    scaledX + beaconWidth, scaledY + (256.0f * scale), scaledZ + beaconWidth
+                );
+                BomboRenderUtils.drawBox(poseStack, lineBuffer, beaconBox, r, g, b, 0.3f, 1.5f);
+
+                // Draw waypoint text label
+                String text = "§d[Bind] §f" + cb.command + " §7(" + (int)dist + "m, r=" + String.format("%.1f", rVal) + ")";
+                BomboRenderUtils.drawText(poseStack, consumers, text, (float)x, (float)y + 0.8f, (float)z, 0xFFFFFF, 0.03f, true, true);
+            }
+        }
+    }
+
+    private static boolean matchesIsland(String requiredIsland) {
+        if (requiredIsland == null || requiredIsland.trim().isEmpty()) return true;
+        Minecraft mc = Minecraft.getInstance();
+        String currentArea = BomboaddonsClient.currentArea;
+        if (currentArea == null) currentArea = "";
+        String target = requiredIsland.trim().toLowerCase();
+        boolean matched = currentArea.toLowerCase().contains(target);
+        if (!matched && mc.level != null) {
+            var scoreboard = mc.level.getScoreboard();
+            var sidebar = scoreboard.getDisplayObjective(net.minecraft.world.scores.DisplaySlot.SIDEBAR);
+            if (sidebar != null) {
+                for (String line : SkyblockUtils.getSidebarLines(scoreboard, sidebar)) {
+                    String clean = line.replaceAll("(?i)§.", "").trim().toLowerCase();
+                    if (clean.contains(target)) {
+                        matched = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return matched;
     }
 }

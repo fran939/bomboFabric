@@ -39,6 +39,17 @@ import net.minecraft.client.multiplayer.ClientSuggestionProvider;
 
 @Environment(EnvType.CLIENT)
 public class BomboaddonsClient implements ClientModInitializer {
+    public static class PendingCommand {
+        public final String command;
+        public final long triggerTime;
+
+        public PendingCommand(String command, long triggerTime) {
+            this.command = command;
+            this.triggerTime = triggerTime;
+        }
+    }
+    public static final java.util.List<PendingCommand> pendingCommands = new java.util.concurrent.CopyOnWriteArrayList<>();
+
     private static final String PREFIX = "§8[§bBomboAddons§8]§r ";
     private static boolean openGuiNextTick = false;
     private static boolean openHudMoveNextTick = false;
@@ -2230,6 +2241,20 @@ public class BomboaddonsClient implements ClientModInitializer {
     private void registerTickEvents() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             try {
+                long now = System.currentTimeMillis();
+                java.util.List<PendingCommand> toRun = new java.util.ArrayList<>();
+                for (PendingCommand pc : pendingCommands) {
+                    if (now >= pc.triggerTime) {
+                        toRun.add(pc);
+                    }
+                }
+                for (PendingCommand pc : toRun) {
+                    executeTracked(pc.command);
+                    pendingCommands.remove(pc);
+                }
+            } catch (Throwable t) {
+            }
+            try {
                 me.bombo.bomboaddons_final.eggfinder.EggFinder.tick();
             } catch (Throwable t) {
                 t.printStackTrace();
@@ -2305,7 +2330,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                             double r = bind.radius <= 0.0 ? 3.0 : bind.radius;
                             if (dist <= r) {
                                 if (!bind.wasInside) {
-                                    executeTracked(bind.command);
+                                    double minD = bind.minDelay;
+                                    double maxD = bind.maxDelay;
+                                    if (maxD > minD && maxD > 0.0) {
+                                        double delaySec = minD + Math.random() * (maxD - minD);
+                                        long triggerTime = System.currentTimeMillis() + (long)(delaySec * 1000.0);
+                                        pendingCommands.add(new PendingCommand(bind.command, triggerTime));
+                                    } else {
+                                        executeTracked(bind.command);
+                                    }
                                     bind.wasInside = true;
                                 }
                             } else if (dist > r + 1.5) {

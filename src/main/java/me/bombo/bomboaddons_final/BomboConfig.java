@@ -372,6 +372,9 @@ public class BomboConfig {
         public String requiredIsland = "";
         public boolean enabled = true;
         public double radius = 3.0;
+        public boolean showWaypoint = false;
+        public double minDelay = 0.0;
+        public double maxDelay = 0.0;
         public transient boolean wasInside = false;
 
         public CoordBind() {}
@@ -391,6 +394,18 @@ public class BomboConfig {
             this.z = z;
             this.requiredIsland = requiredIsland;
             this.radius = radius;
+        }
+
+        public CoordBind(String command, double x, double y, double z, String requiredIsland, double radius, boolean showWaypoint, double minDelay, double maxDelay) {
+            this.command = command;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.requiredIsland = requiredIsland;
+            this.radius = radius;
+            this.showWaypoint = showWaypoint;
+            this.minDelay = minDelay;
+            this.maxDelay = maxDelay;
         }
     }
 
