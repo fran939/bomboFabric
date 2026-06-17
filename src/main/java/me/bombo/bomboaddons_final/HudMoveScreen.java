@@ -52,6 +52,12 @@ public class HudMoveScreen extends Screen {
         renderTarget(g, mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudTarget.PAD_TIMERS);
         DungeonPadTimers.drawTimerInfo(g, s.padTimersX, s.padTimersY, true);
 
+        // 6. Custom Timers
+        int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
+        int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
+        renderTarget(g, mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH, HudTarget.TIMERS);
+        CustomTimerManager.drawTimers(g, s.customTimerHudX, s.customTimerHudY, true);
+
         g.drawCenteredString(font, "§e§lHUD EDIT MODE", width / 2, 10, 0xFFFFFFFF);
         g.drawCenteredString(font, "§7Drag elements to reposition them, scroll wheel to resize", width / 2, 22, 0xFFFFFFFF);
         g.drawCenteredString(font, "§cPress ESC to save and close", width / 2, height - 20, 0xFFFFFFFF);
@@ -79,6 +85,9 @@ public class HudMoveScreen extends Screen {
             } else if (target == HudTarget.PAD_TIMERS) {
                 s.padTimersX = mouseX - dragOffsetX;
                 s.padTimersY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.TIMERS) {
+                s.customTimerHudX = mouseX - dragOffsetX;
+                s.customTimerHudY = mouseY - dragOffsetY;
             }
         }
 
@@ -124,6 +133,13 @@ public class HudMoveScreen extends Screen {
             startDragging(HudTarget.PAD_TIMERS, (int) mouseX - s.padTimersX, (int) mouseY - s.padTimersY);
             return true;
         }
+        // Check Custom Timers
+        int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
+        int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
+        if (checkHit(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH)) {
+            startDragging(HudTarget.TIMERS, (int) mouseX - s.customTimerHudX, (int) mouseY - s.customTimerHudY);
+            return true;
+        }
 
         return super.mouseClicked(event, handled);
     }
@@ -165,6 +181,14 @@ public class HudMoveScreen extends Screen {
             BomboConfig.save();
             return true;
         }
+        // custom timers
+        int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
+        int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
+        if (checkHit(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH)) {
+            s.customTimerHudScale = (float) Math.max(0.5, Math.min(3.0, s.customTimerHudScale + vertical * 0.1));
+            BomboConfig.save();
+            return true;
+        }
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -197,6 +221,6 @@ public class HudMoveScreen extends Screen {
     }
 
     private enum HudTarget {
-        DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS
+        DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS
     }
 }

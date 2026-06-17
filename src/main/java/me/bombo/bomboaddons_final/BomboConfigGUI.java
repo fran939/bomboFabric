@@ -25,8 +25,13 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
-            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons", "Coord Binds", "Mining");
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons", "Coord Binds", "Mining", "Party Settings");
     public static int selectedCategory = 0;
+
+    private static int partyCommandsX = -1;
+    private static int partyCommandsY = -1;
+    private static int partyCommandsWidth = -1;
+    private static int partyCommandsHeight = -1;
 
     private final List<EditBox> activeBoxes = new ArrayList<>();
 
@@ -180,6 +185,9 @@ public class BomboConfigGUI extends Screen {
                 if (s.hideCheats && (i == 2 || i == 9)) {
                     continue;
                 }
+                if (categories.get(i).equals("Party Settings")) {
+                    continue;
+                }
                 totalRendered++;
             }
             int totalHeight = totalRendered * 26;
@@ -191,6 +199,9 @@ public class BomboConfigGUI extends Screen {
                 final int idx = i;
                 if (s.hideCheats && (idx == 2 || idx == 9)) {
                     continue; // Skip Experiments and Anvil
+                }
+                if (categories.get(idx).equals("Party Settings")) {
+                    continue;
                 }
                 int catY = HEADER_HEIGHT + PADDING * 3 + renderCount * 26 - (int)categoryScrollAmount;
                 renderCount++;
@@ -258,6 +269,11 @@ public class BomboConfigGUI extends Screen {
                     y2 = addBoolOption("Reconnect Button on Pause Screen", s.reconnectButton, v -> s.reconnectButton = v, col2X, col2W, y2);
                     y2 = addBoolOption("Quick Join Commands (/f1, /m1, etc)", s.quickJoinCommands, v -> s.quickJoinCommands = v, col2X, col2W, y2);
                     y2 = addBoolOption("Auto Reconnect", s.autoReconnect, v -> s.autoReconnect = v, col2X, col2W, y2);
+                    partyCommandsX = col2X;
+                    partyCommandsY = y2;
+                    partyCommandsWidth = col2W;
+                    partyCommandsHeight = ITEM_HEIGHT;
+                    y2 = addBoolOption("Party Commands", s.partyCommandsEnabled, v -> s.partyCommandsEnabled = v, col2X, col2W, y2);
                     
                     y2 += 10;
                     y2 += ITEM_HEIGHT;
@@ -271,6 +287,7 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Feast Bakery HUD", s.feastBakeryHud, v -> s.feastBakeryHud = v, contentX, contentWidth, curY);
                     curY = addBoolOption("RNG Profit HUD", s.rngProfitHud, v -> s.rngProfitHud = v, contentX, contentWidth, curY);
                     curY = addIntLabelSlider("RNG HUD Opacity", s.rngProfitHudOpacity, 0, 100, 10, v -> s.rngProfitHudOpacity = v, contentX, 150, curY);
+                    curY = addBoolOption("Custom Timers HUD", s.customTimerHudEnabled, v -> s.customTimerHudEnabled = v, contentX, contentWidth, curY);
                     
                     curY += 10;
                     addRenderableWidget(Button.builder(Component.literal("§e§lMove HUD Elements"), btn -> {
@@ -1180,6 +1197,21 @@ public class BomboConfigGUI extends Screen {
                     y2 = addColorCycleButton("Vanguard Outline Color", s.vanguardOutlineColor, v -> s.vanguardOutlineColor = v, col2X, col2W, y2);
                     y2 = addColorCycleButton("Vanguard Fill Color", s.vanguardFillColor, v -> s.vanguardFillColor = v, col2X, col2W, y2);
                 }
+                case 20 -> { // Party Settings
+                    int col1X = contentX;
+                    int col1W = contentWidth / 2 - 10;
+                    int y1 = contentBaseY + ITEM_HEIGHT;
+
+                    y1 = addBoolOption("!timer command", s.partyCommandTimer, v -> s.partyCommandTimer = v, col1X, col1W, y1);
+                    y1 = addBoolOption("!warp command", s.partyCommandWarp, v -> s.partyCommandWarp = v, col1X, col1W, y1);
+                    y1 = addBoolOption("!psa command", s.partyCommandPsa, v -> s.partyCommandPsa = v, col1X, col1W, y1);
+
+                    y1 += 20;
+                    addRenderableWidget(Button.builder(Component.literal("§e← Back to General"), btn -> {
+                        selectedCategory = 0;
+                        init();
+                    }).bounds(col1X, y1, 150, 20).build());
+                }
             }
 
             if (colorPickerTarget != null) {
@@ -1361,6 +1393,9 @@ public class BomboConfigGUI extends Screen {
                 if (s.hideCheats && (i == 2 || i == 9)) {
                     continue;
                 }
+                if (categories.get(i).equals("Party Settings")) {
+                    continue;
+                }
                 totalRendered++;
             }
             int totalHeight = totalRendered * 26;
@@ -1379,6 +1414,26 @@ public class BomboConfigGUI extends Screen {
             }
 
             super.render(g, mouseX, mouseY, partialTick);
+
+            if (selectedCategory == 0 && partyCommandsX != -1 && mouseX >= partyCommandsX && mouseX <= partyCommandsX + partyCommandsWidth && mouseY >= partyCommandsY && mouseY <= partyCommandsY + partyCommandsHeight) {
+                List<String> tooltip = List.of(
+                    "§eParty Commands Automation",
+                    "§7Allows party members to trigger commands.",
+                    "§bRight-click §7to configure options."
+                );
+                int tX = mouseX + 12;
+                int tY = mouseY;
+                int width = 180;
+                int height = tooltip.size() * 10 + 4;
+                g.fill(tX - 4, tY - 4, tX + width, tY + height, 0xFF181818);
+                g.fill(tX - 5, tY - 5, tX - 4, tY + height + 1, 0xFF555555);
+                g.fill(tX + width, tY - 5, tX + width + 1, tY + height + 1, 0xFF555555);
+                g.fill(tX - 5, tY - 5, tX + width + 1, tY - 4, 0xFF555555);
+                g.fill(tX - 5, tY + height, tX + width + 1, tY + height + 1, 0xFF555555);
+                for (int idx = 0; idx < tooltip.size(); idx++) {
+                    g.drawString(font, tooltip.get(idx), tX, tY + idx * 10, 0xFFFFFFFF, true);
+                }
+            }
 
             g.drawString(font, "§6§lBomboaddons §r§7Config", SIDEBAR_WIDTH + PADDING, 14, 0xFFFFFFFF, true);
             g.drawString(font, "§f§lCATEGORIES", PADDING, HEADER_HEIGHT - 12, 0xFFFFFFFF, true);
@@ -1442,8 +1497,10 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7Quick Join Commands (/f1, /m1, etc)", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
                     y2 += ITEM_HEIGHT;
                     g.drawString(font, "§7Auto Reconnect", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
-                    
                     y2 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Party Commands", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    
                     y2 += 10;
                     g.drawString(font, "§6§lFuck Diorite Settings", col2X, y2, 0xFFFFAA00, true);
                     y2 += ITEM_HEIGHT;
@@ -1463,6 +1520,8 @@ public class BomboConfigGUI extends Screen {
                     g.drawString(font, "§7RNG Profit HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.drawString(font, "§fRNG HUD Opacity: §e" + BomboConfig.get().rngProfitHudOpacity + "%", contentX, curY, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT;
+                    g.drawString(font, "§7Custom Timers HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 2 -> {
                     g.drawString(font, "§6§lExperiment Solver", contentX, curY, 0xFFFFAA00, true);
@@ -1991,6 +2050,17 @@ public class BomboConfigGUI extends Screen {
                     y2 += ITEM_HEIGHT;
                     g.drawString(font, "§fVanguard Fill:", col2X, y2, 0xFFFFFFFF);
                 }
+                case 20 -> { // Party Settings
+                    int col1X = contentX;
+                    int y1 = contentBaseY;
+                    g.drawString(font, "§6§lParty Commands Config", col1X, y1, 0xFFFFAA00, true);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Toggle !timer command", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Toggle !warp command (runs /party warp)", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.drawString(font, "§7Toggle !psa command (runs /party settings allinvite)", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                }
             }
 
 
@@ -2070,6 +2140,16 @@ public class BomboConfigGUI extends Screen {
     
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
+        if (event.button() == 1) { // Right click
+            double mx = event.x();
+            double my = event.y();
+            if (selectedCategory == 0 && partyCommandsX != -1 && mx >= partyCommandsX && mx <= partyCommandsX + partyCommandsWidth && my >= partyCommandsY && my <= partyCommandsY + partyCommandsHeight) {
+                selectedCategory = categories.indexOf("Party Settings");
+                scrollAmount = 0;
+                init();
+                return true;
+            }
+        }
         if (!listeningForKeyTarget.isEmpty()) {
             int button = event.button();
             if (button != 0) {

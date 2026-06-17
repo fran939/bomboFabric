@@ -348,6 +348,42 @@ public class BomboaddonsClient implements ClientModInitializer {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register click commands!", t);
                 }
 
+                // --- Custom Timer commands ---
+                try {
+                    dispatcher.register(ClientCommandManager.literal("timer")
+                            .executes(context -> {
+                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Usage: /timer <duration> OR /timer <name> <duration>"));
+                                return 1;
+                            })
+                            .then(ClientCommandManager.argument("arg1", StringArgumentType.word())
+                                    .executes(context -> {
+                                        String arg1 = StringArgumentType.getString(context, "arg1");
+                                        long durationMs = CustomTimerManager.parseTimeMs(arg1);
+                                        if (durationMs > 0) {
+                                            CustomTimerManager.startTimer("Timer", durationMs);
+                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Started default timer for §e" + arg1 + "§7."));
+                                        } else {
+                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid duration format: " + arg1));
+                                        }
+                                        return 1;
+                                    })
+                                    .then(ClientCommandManager.argument("arg2", StringArgumentType.word())
+                                            .executes(context -> {
+                                                String name = StringArgumentType.getString(context, "arg1");
+                                                String durationStr = StringArgumentType.getString(context, "arg2");
+                                                long durationMs = CustomTimerManager.parseTimeMs(durationStr);
+                                                if (durationMs > 0) {
+                                                    CustomTimerManager.startTimer(name, durationMs);
+                                                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Started timer '§e" + name + "§7' for §e" + durationStr + "§7."));
+                                                } else {
+                                                    context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid duration format: " + durationStr));
+                                                }
+                                                return 1;
+                                            }))));
+                } catch (Throwable t) {
+                    Bomboaddons.LOGGER.error("[BomboAddons] Failed to register timer command!", t);
+                }
+
                 // --- PRIORITY 1: Core Search ---
                 try {
                     dispatcher.register(ClientCommandManager.literal("lf")
@@ -2060,6 +2096,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             registerTickEvents();
             DiceHud.init();
             KuudraTimer.init();
+            CustomTimerManager.init();
             DungeonPadTimers.init();
             CorpseHighlight.init();
             IRCClient.start();
@@ -2240,6 +2277,10 @@ public class BomboaddonsClient implements ClientModInitializer {
 
     private void registerTickEvents() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            try {
+                CustomTimerManager.tick();
+            } catch (Throwable t) {
+            }
             try {
                 long now = System.currentTimeMillis();
                 java.util.List<PendingCommand> toRun = new java.util.ArrayList<>();
@@ -2584,6 +2625,31 @@ public class BomboaddonsClient implements ClientModInitializer {
         if (rawMessage == null)
             return;
         String cleanMessage = rawMessage.replaceAll("§.", "").trim().toLowerCase();
+        
+        // Party command automation parsing
+        if (BomboConfig.get().partyCommandsEnabled) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("^party\\s*>\\s*(?:\\[[^\\]]+\\]\\s*)?(\\w+)\\s*:\\s*!(\\w+)(?:\\s+(.+))?$", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(cleanMessage);
+            if (m.find()) {
+                String senderName = m.group(1);
+                String command = m.group(2).toLowerCase();
+                String args = m.group(3) != null ? m.group(3).trim() : "";
+
+                if (command.equals("timer") && BomboConfig.get().partyCommandTimer) {
+                    if (!args.isEmpty()) {
+                        long durationMs = CustomTimerManager.parseTimeMs(args);
+                        if (durationMs > 0) {
+                            CustomTimerManager.startTimer(senderName, durationMs, true);
+                            Bomboaddons.sendMessage("&8[&bBomboAddons&8] &7Started a &e" + args + " &7timer for &a" + senderName + "&7.");
+                        }
+                    }
+                } else if (command.equals("warp") && BomboConfig.get().partyCommandWarp) {
+                    pendingCommands.add(new PendingCommand("party warp", System.currentTimeMillis() + 300));
+                } else if (command.equals("psa") && BomboConfig.get().partyCommandPsa) {
+                    pendingCommands.add(new PendingCommand("party settings allinvite", System.currentTimeMillis() + 300));
+                }
+            }
+        }
+
         if (cleanMessage.contains("[boss] storm: energy heed my call!") || 
             cleanMessage.contains("[boss] storm: thunder let me be your catalyst!")) {
             DungeonPadTimers.onBossMessage();

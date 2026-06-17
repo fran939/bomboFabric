@@ -301,6 +301,15 @@ public class BomboConfig {
         public String umberFillColor = "GOLD";
         public String vanguardOutlineColor = "LIGHT_PURPLE";
         public String vanguardFillColor = "LIGHT_PURPLE";
+
+        public boolean customTimerHudEnabled = true;
+        public int customTimerHudX = 10;
+        public int customTimerHudY = 300;
+        public float customTimerHudScale = 1.0f;
+        public boolean partyCommandsEnabled = false;
+        public boolean partyCommandTimer = true;
+        public boolean partyCommandWarp = true;
+        public boolean partyCommandPsa = true;
     }
 
     public static class ChatTrigger {
