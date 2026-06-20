@@ -23,9 +23,14 @@ if (Test-Path $jarPath) {
 }
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-    $wingetGhDir = "$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Packages\GitHub.cli_Microsoft.Winget.Source_8wekyb3d8bbwe\bin"
-    if (Test-Path $wingetGhDir) {
-        $env:PATH += ";$wingetGhDir"
+    $commonGhPaths = @(
+        "$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Packages\GitHub.cli_Microsoft.Winget.Source_8wekyb3d8bbwe\bin",
+        "C:\Program Files\GitHub CLI"
+    )
+    foreach ($path in $commonGhPaths) {
+        if (Test-Path $path) {
+            $env:PATH += ";$path"
+        }
     }
 }
 
