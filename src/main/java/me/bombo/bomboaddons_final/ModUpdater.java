@@ -19,7 +19,7 @@ import java.nio.file.StandardCopyOption;
 
 public class ModUpdater {
     private static final String REPO = "fran939/bomboFabric";
-    private static final String GITHUB_API = "https://api.github.com/repos/" + REPO + "/releases/latest";
+    private static final String GITHUB_API_LIST = "https://api.github.com/repos/" + REPO + "/releases";
     public static boolean updatedThisSession = false;
     private static final Path PENDING_DELETE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_pending_delete.txt");
 
@@ -56,8 +56,8 @@ public class ModUpdater {
             try {
                 if (!silent) sendMessage("§7Checking for updates...");
 
-                Bomboaddons.logApiRequest(GITHUB_API);
-                HttpURLConnection conn = (HttpURLConnection) new URL(GITHUB_API).openConnection();
+                Bomboaddons.logApiRequest(GITHUB_API_LIST);
+                HttpURLConnection conn = (HttpURLConnection) new URL(GITHUB_API_LIST).openConnection();
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0");
                 if (conn.getResponseCode() != 200) {
                     if (!silent) sendMessage("§cFailed to check for updates (HTTP " + conn.getResponseCode() + ")");
@@ -65,8 +65,73 @@ public class ModUpdater {
                 }
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-                String latestVersion = json.get("tag_name").getAsString().replace("v", "");
+                JsonArray releases = JsonParser.parseReader(reader).getAsJsonArray();
+                
+                String mcVersion = FabricLoader.getInstance().getModContainer("minecraft")
+                        .get().getMetadata().getVersion().getFriendlyString();
+                
+                JsonObject targetRelease = null;
+                String downloadUrl = null;
+                String latestVersion = null;
+                
+                for (JsonElement relElement : releases) {
+                    JsonObject rel = relElement.getAsJsonObject();
+                    JsonArray assets = rel.getAsJsonArray("assets");
+                    
+                    JsonObject matchingAsset = null;
+                    boolean hasVersionSpecificAssets = false;
+                    
+                    for (JsonElement asset : assets) {
+                        JsonObject assetObj = asset.getAsJsonObject();
+                        String assetName = assetObj.get("name").getAsString();
+                        if (assetName.endsWith(".jar")) {
+                            String mcVerInAsset = null;
+                            if (assetName.startsWith("bomboaddons-")) {
+                                String cleanName = assetName.substring("bomboaddons-".length(), assetName.length() - 4);
+                                String[] nameParts = cleanName.split("-");
+                                if (nameParts.length >= 2) {
+                                    mcVerInAsset = nameParts[0];
+                                }
+                            }
+                            
+                            if (mcVerInAsset != null) {
+                                hasVersionSpecificAssets = true;
+                                if (mcVerInAsset.equals(mcVersion)) {
+                                    matchingAsset = assetObj;
+                                }
+                            } else {
+                                if (matchingAsset == null) {
+                                    matchingAsset = assetObj;
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (matchingAsset != null) {
+                        boolean isMatchingAssetVersionSpecific = false;
+                        String assetName = matchingAsset.get("name").getAsString();
+                        if (assetName.startsWith("bomboaddons-")) {
+                            String cleanName = assetName.substring("bomboaddons-".length(), assetName.length() - 4);
+                            String[] nameParts = cleanName.split("-");
+                            if (nameParts.length >= 2) {
+                                isMatchingAssetVersionSpecific = true;
+                            }
+                        }
+                        
+                        if (!hasVersionSpecificAssets || isMatchingAssetVersionSpecific) {
+                            targetRelease = rel;
+                            downloadUrl = matchingAsset.get("browser_download_url").getAsString();
+                            latestVersion = rel.get("tag_name").getAsString().replace("v", "");
+                            break;
+                        }
+                    }
+                }
+
+                if (targetRelease == null) {
+                    if (!silent) sendMessage("§cNo releases or update jars found!");
+                    return;
+                }
+
                 String currentVersion = FabricLoader.getInstance().getModContainer("bomboaddons")
                         .get().getMetadata().getVersion().getFriendlyString();
 
@@ -89,22 +154,6 @@ public class ModUpdater {
                 }
 
                 sendMessage("§eUpdate found: §b" + latestVersion + " §7(Current: " + currentVersion + ")");
-                
-                String downloadUrl = null;
-                JsonArray assets = json.getAsJsonArray("assets");
-                for (JsonElement asset : assets) {
-                    JsonObject assetObj = asset.getAsJsonObject();
-                    if (assetObj.get("name").getAsString().endsWith(".jar")) {
-                        downloadUrl = assetObj.get("browser_download_url").getAsString();
-                        break;
-                    }
-                }
-
-                if (downloadUrl == null) {
-                    sendMessage("§cNo .jar found in the latest release!");
-                    return;
-                }
-
                 sendMessage("§7Downloading update...");
                 
                 Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
@@ -114,7 +163,7 @@ public class ModUpdater {
                     return;
                 }
                 
-                File newJarFile = modsFolder.resolve("bomboaddons-" + latestVersion + ".jar").toFile();
+                File newJarFile = modsFolder.resolve("bomboaddons-" + mcVersion + "-" + latestVersion + ".jar").toFile();
 
                 Bomboaddons.logApiRequest(downloadUrl);
                 try (InputStream in = new URL(downloadUrl).openStream()) {
