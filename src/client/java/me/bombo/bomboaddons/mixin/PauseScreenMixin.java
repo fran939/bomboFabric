@@ -25,55 +25,61 @@ public abstract class PauseScreenMixin extends Screen {
         if (this.minecraft == null || this.minecraft.isLocalServer()) return;
 
         Button serverLinksBtn = null;
+        Button optionsBtn = null;
         for (Renderable renderable : ((ScreenAccessor) (Object) this).getRenderables()) {
             if (renderable instanceof Button button) {
                 if (isServerLinksButton(button)) {
                     serverLinksBtn = button;
-                    break;
+                } else if (isOptionsButton(button)) {
+                    optionsBtn = button;
                 }
             }
         }
 
-        if (serverLinksBtn != null) {
+        if (serverLinksBtn != null && BomboConfig.get().serverListButton) {
             int originalX = serverLinksBtn.getX();
             int originalY = serverLinksBtn.getY();
             int originalW = serverLinksBtn.getWidth();
             int originalH = serverLinksBtn.getHeight();
 
-            if (BomboConfig.get().serverListButton) {
-                Button newButton = Button.builder(Component.literal("Server List"), btn -> {
-                    this.minecraft.setScreenAndShow(new JoinMultiplayerScreen(this));
-                })
-                .bounds(originalX, originalY, originalW, originalH)
-                .build();
+            Button newButton = Button.builder(Component.literal("Server List"), btn -> {
+                this.minecraft.setScreenAndShow(new JoinMultiplayerScreen(this));
+            })
+            .bounds(originalX, originalY, originalW, originalH)
+            .build();
 
-                removeWidget(serverLinksBtn);
-                addRenderableWidget(newButton);
-            }
+            removeWidget(serverLinksBtn);
+            addRenderableWidget(newButton);
+        }
 
-            if (BomboConfig.get().reconnectButton) {
-                Button reconnectBtn = Button.builder(Component.literal("Reconnect"), btn -> {
-                    net.minecraft.client.multiplayer.ServerData server = this.minecraft.getCurrentServer();
-                    if (server == null) {
-                        server = me.bombo.bomboaddons.BomboaddonsClient.lastServerData;
+        if (optionsBtn != null && BomboConfig.get().reconnectButton) {
+            int originalX = optionsBtn.getX();
+            int originalY = optionsBtn.getY();
+            int originalW = optionsBtn.getWidth();
+            int originalH = optionsBtn.getHeight();
+
+            Button reconnectBtn = Button.builder(Component.literal("Reconnect"), btn -> {
+                net.minecraft.client.multiplayer.ServerData server = this.minecraft.getCurrentServer();
+                if (server == null) {
+                    server = me.bombo.bomboaddons.BomboaddonsClient.lastServerData;
+                }
+                if (server != null) {
+                    if (this.minecraft.getConnection() != null) {
+                        this.minecraft.getConnection().getConnection().disconnect(Component.literal("Reconnecting..."));
                     }
-                    if (server != null) {
-                        if (this.minecraft.getConnection() != null) {
-                            this.minecraft.getConnection().getConnection().disconnect(Component.literal("Reconnecting..."));
-                        }
-                        net.minecraft.client.multiplayer.resolver.ServerAddress address = 
-                            net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip);
-                        net.minecraft.client.gui.screens.ConnectScreen.startConnecting(
-                            new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(new net.minecraft.client.gui.screens.TitleScreen()), 
-                            this.minecraft, address, server, false, null
-                        );
-                    }
-                })
-                .bounds(originalX, originalY + originalH + 4, originalW, originalH)
-                .build();
+                    net.minecraft.client.multiplayer.resolver.ServerAddress address = 
+                        net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip);
+                    net.minecraft.client.gui.screens.ConnectScreen.startConnecting(
+                        new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(new net.minecraft.client.gui.screens.TitleScreen()), 
+                        this.minecraft, address, server, false, null
+                    );
+                }
+            })
+            .bounds(originalX, originalY, originalW, originalH)
+            .build();
 
-                addRenderableWidget(reconnectBtn);
-            }
+            removeWidget(optionsBtn);
+            addRenderableWidget(reconnectBtn);
         }
     }
 
@@ -81,6 +87,14 @@ public abstract class PauseScreenMixin extends Screen {
         Component message = button.getMessage();
         if (message != null && message.getContents() instanceof TranslatableContents translatable) {
             return "menu.server_links".equals(translatable.getKey());
+        }
+        return false;
+    }
+
+    private boolean isOptionsButton(Button button) {
+        Component message = button.getMessage();
+        if (message != null && message.getContents() instanceof TranslatableContents translatable) {
+            return "menu.options".equals(translatable.getKey());
         }
         return false;
     }
