@@ -1795,11 +1795,7 @@ public class BomboConfigGUI extends Screen {
             addRenderableWidget(Button.builder(Component.literal("§lSave & Close"), btn -> {
                 BomboConfig.save();
                 minecraft.setScreenAndShow(parent);
-            }).bounds(width / 2 - 160, height - 32, 150, 24).build());
-
-            addRenderableWidget(Button.builder(Component.literal("§lNuh uh"), btn -> {
-                minecraft.setScreenAndShow(parent);
-            }).bounds(width / 2 + 10, height - 32, 150, 24).build());
+            }).bounds(width / 2 - 75, height - 32, 150, 24).build());
 
             System.out.println("DEBUG: BomboConfigGUI init end");
         } catch (Throwable e) {
