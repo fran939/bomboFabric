@@ -367,6 +367,7 @@ public class BomboConfig {
         public boolean particleHighlightsEnabled = false;
         public boolean bedwarsEsp = false;
         public boolean bedwarsEspOwnTeam = false;
+        public boolean borderlessFullscreen = false;
     }
 
     public static class CustomItemOverride {

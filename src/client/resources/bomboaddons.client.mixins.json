@@ -48,7 +48,8 @@
 		"TooltipRenderUtilMixin",
 		"PackConfirmScreenMixin",
 		"TitleScreenMixin",
-		"AbstractWidgetMixin"
+		"AbstractWidgetMixin",
+		"WindowMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

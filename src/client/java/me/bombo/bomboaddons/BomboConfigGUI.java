@@ -340,6 +340,13 @@ public class BomboConfigGUI extends Screen {
                             v -> s.hypixelShortcutButton = v, col2X, col2W, y2);
                     y2 = addBoolOption("Smart Disconnect", s.smartDisconnect, v -> s.smartDisconnect = v, col2X, col2W,
                             y2);
+                    y2 = addBoolOption("Borderless Fullscreen", s.borderlessFullscreen, v -> {
+                        s.borderlessFullscreen = v;
+                        BomboConfig.save();
+                        try {
+                            Minecraft.getInstance().getWindow().updateFullscreen(Minecraft.getInstance().options.enableVsync().get());
+                        } catch (Throwable ignored) {}
+                    }, col2X, col2W, y2);
 
                     y2 += 10;
                     y2 += ITEM_HEIGHT;
