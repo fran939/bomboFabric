@@ -85,7 +85,7 @@ public class ModUpdater {
                 for (JsonElement relElement : releases) {
                     JsonObject rel = relElement.getAsJsonObject();
                     String tagVersion = rel.get("tag_name").getAsString().replace("v", "");
-                    if (!tagVersion.startsWith("26.1.2.")) {
+                    if (!tagVersion.startsWith("6.")) {
                         continue;
                     }
                     JsonArray assets = rel.getAsJsonArray("assets");
