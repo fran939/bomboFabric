@@ -95,6 +95,10 @@ public abstract class EntityMixin {
 
    @Inject(method = { "isCurrentlyGlowing" }, at = { @At("HEAD") }, cancellable = true)
    private void onIsCurrentlyGlowing(CallbackInfoReturnable<Boolean> cir) {
+      if (me.bombo.bomboaddons.BedwarsESP.shouldGlowEntity((Entity) (Object) this)) {
+         cir.setReturnValue(true);
+         return;
+      }
       BomboConfig.Settings config = BomboConfig.get();
       Entity self = (Entity) (Object) this;
 
@@ -137,6 +141,11 @@ public abstract class EntityMixin {
 
    @Inject(method = { "getTeamColor" }, at = { @At("HEAD") }, cancellable = true)
    private void onGetTeamColor(CallbackInfoReturnable<Integer> cir) {
+      Integer bedwarsColor = me.bombo.bomboaddons.BedwarsESP.getEntityColor((Entity) (Object) this);
+      if (bedwarsColor != null) {
+         cir.setReturnValue(bedwarsColor);
+         return;
+      }
       BomboConfig.Settings config = BomboConfig.get();
       Entity self = (Entity) (Object) this;
 

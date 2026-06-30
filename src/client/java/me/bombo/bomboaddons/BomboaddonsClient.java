@@ -50,6 +50,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             this.triggerTime = triggerTime;
         }
     }
+
     public static final java.util.List<PendingCommand> pendingCommands = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     private static final String PREFIX = "§8[§3Bombo§8]§r ";
@@ -118,7 +119,7 @@ public class BomboaddonsClient implements ClientModInitializer {
         try {
             ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
                 clientDispatcher = dispatcher;
-                
+
                 // --- Hoppity Egg Finder commands ---
                 try {
                     dispatcher.register(ClientCommands.literal("skyblocker")
@@ -126,13 +127,19 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     .then(ClientCommands.literal("shareLocation")
                                             .then(ClientCommands.argument("eggType", StringArgumentType.word())
                                                     .executes(context -> {
-                                                        String typeStr = StringArgumentType.getString(context, "eggType");
-                                                        me.bombo.bomboaddons.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons.eggfinder.EggFinder.EggType.getTypeByName(typeStr);
+                                                        String typeStr = StringArgumentType.getString(context,
+                                                                "eggType");
+                                                        me.bombo.bomboaddons.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons.eggfinder.EggFinder.EggType
+                                                                .getTypeByName(typeStr);
                                                         if (type == null) {
-                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
+                                                            context.getSource()
+                                                                    .sendError(Component.literal(
+                                                                            "§8[§bBomboAddons§8] §cInvalid egg type: "
+                                                                                    + typeStr));
                                                             return 1;
                                                         }
-                                                        List<me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons.eggfinder.EggFinder.getActiveWaypoints();
+                                                        List<me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons.eggfinder.EggFinder
+                                                                .getActiveWaypoints();
                                                         me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint targetWp = null;
                                                         for (var wp : wps) {
                                                             if (wp.type == type) {
@@ -141,23 +148,32 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                             }
                                                         }
                                                         if (targetWp == null) {
-                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
+                                                            context.getSource().sendError(Component.literal(
+                                                                    "§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
                                                             return 1;
                                                         }
-                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
+                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name
+                                                                + " Egg found at " + targetWp.pos.getX() + ", "
+                                                                + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
                                                         Minecraft.getInstance().player.connection.sendChat(chatMsg);
                                                         return 1;
                                                     })))
                                     .then(ClientCommands.literal("sharelocation")
                                             .then(ClientCommands.argument("eggType", StringArgumentType.word())
                                                     .executes(context -> {
-                                                        String typeStr = StringArgumentType.getString(context, "eggType");
-                                                        me.bombo.bomboaddons.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons.eggfinder.EggFinder.EggType.getTypeByName(typeStr);
+                                                        String typeStr = StringArgumentType.getString(context,
+                                                                "eggType");
+                                                        me.bombo.bomboaddons.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons.eggfinder.EggFinder.EggType
+                                                                .getTypeByName(typeStr);
                                                         if (type == null) {
-                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
+                                                            context.getSource()
+                                                                    .sendError(Component.literal(
+                                                                            "§8[§bBomboAddons§8] §cInvalid egg type: "
+                                                                                    + typeStr));
                                                             return 1;
                                                         }
-                                                        List<me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons.eggfinder.EggFinder.getActiveWaypoints();
+                                                        List<me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons.eggfinder.EggFinder
+                                                                .getActiveWaypoints();
                                                         me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint targetWp = null;
                                                         for (var wp : wps) {
                                                             if (wp.type == type) {
@@ -166,26 +182,40 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                             }
                                                         }
                                                         if (targetWp == null) {
-                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
+                                                            context.getSource().sendError(Component.literal(
+                                                                    "§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
                                                             return 1;
                                                         }
-                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
+                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name
+                                                                + " Egg found at " + targetWp.pos.getX() + ", "
+                                                                + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
                                                         Minecraft.getInstance().player.connection.sendChat(chatMsg);
                                                         return 1;
                                                     })))
                                     .then(ClientCommands.literal("status")
                                             .executes(context -> {
-                                                boolean connected = me.bombo.bomboaddons.eggfinder.EggWebSocket.isConnected();
-                                                boolean connecting = me.bombo.bomboaddons.eggfinder.EggWebSocket.isConnecting();
-                                                String sub = me.bombo.bomboaddons.eggfinder.EggWebSocket.getActiveSubscription();
-                                                String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                                                boolean connected = me.bombo.bomboaddons.eggfinder.EggWebSocket
+                                                        .isConnected();
+                                                boolean connecting = me.bombo.bomboaddons.eggfinder.EggWebSocket
+                                                        .isConnecting();
+                                                String sub = me.bombo.bomboaddons.eggfinder.EggWebSocket
+                                                        .getActiveSubscription();
+                                                String statusColor = connected ? "§aConnected"
+                                                        : (connecting ? "§eConnecting..." : "§cDisconnected");
+                                                context.getSource()
+                                                        .sendFeedback(Component.literal(
+                                                                "§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: "
+                                                                        + statusColor));
+                                                context.getSource()
+                                                        .sendFeedback(Component.literal(
+                                                                "§8[§bBomboAddons§8] §7Active Subscription Area: §e"
+                                                                        + (sub != null ? sub : "None")));
                                                 return 1;
                                             }))
                                     .then(ClientCommands.literal("reconnect")
                                             .executes(context -> {
-                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                                                context.getSource().sendFeedback(Component.literal(
+                                                        "§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
                                                 me.bombo.bomboaddons.eggfinder.EggAuth.forceUpdateToken();
                                                 me.bombo.bomboaddons.eggfinder.EggWebSocket.forceReconnect();
                                                 return 1;
@@ -194,13 +224,19 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     .then(ClientCommands.literal("shareLocation")
                                             .then(ClientCommands.argument("eggType", StringArgumentType.word())
                                                     .executes(context -> {
-                                                        String typeStr = StringArgumentType.getString(context, "eggType");
-                                                        me.bombo.bomboaddons.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons.eggfinder.EggFinder.EggType.getTypeByName(typeStr);
+                                                        String typeStr = StringArgumentType.getString(context,
+                                                                "eggType");
+                                                        me.bombo.bomboaddons.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons.eggfinder.EggFinder.EggType
+                                                                .getTypeByName(typeStr);
                                                         if (type == null) {
-                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
+                                                            context.getSource()
+                                                                    .sendError(Component.literal(
+                                                                            "§8[§bBomboAddons§8] §cInvalid egg type: "
+                                                                                    + typeStr));
                                                             return 1;
                                                         }
-                                                        List<me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons.eggfinder.EggFinder.getActiveWaypoints();
+                                                        List<me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons.eggfinder.EggFinder
+                                                                .getActiveWaypoints();
                                                         me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint targetWp = null;
                                                         for (var wp : wps) {
                                                             if (wp.type == type) {
@@ -209,23 +245,32 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                             }
                                                         }
                                                         if (targetWp == null) {
-                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
+                                                            context.getSource().sendError(Component.literal(
+                                                                    "§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
                                                             return 1;
                                                         }
-                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
+                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name
+                                                                + " Egg found at " + targetWp.pos.getX() + ", "
+                                                                + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
                                                         Minecraft.getInstance().player.connection.sendChat(chatMsg);
                                                         return 1;
                                                     })))
                                     .then(ClientCommands.literal("sharelocation")
                                             .then(ClientCommands.argument("eggType", StringArgumentType.word())
                                                     .executes(context -> {
-                                                        String typeStr = StringArgumentType.getString(context, "eggType");
-                                                        me.bombo.bomboaddons.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons.eggfinder.EggFinder.EggType.getTypeByName(typeStr);
+                                                        String typeStr = StringArgumentType.getString(context,
+                                                                "eggType");
+                                                        me.bombo.bomboaddons.eggfinder.EggFinder.EggType type = me.bombo.bomboaddons.eggfinder.EggFinder.EggType
+                                                                .getTypeByName(typeStr);
                                                         if (type == null) {
-                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
+                                                            context.getSource()
+                                                                    .sendError(Component.literal(
+                                                                            "§8[§bBomboAddons§8] §cInvalid egg type: "
+                                                                                    + typeStr));
                                                             return 1;
                                                         }
-                                                        List<me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons.eggfinder.EggFinder.getActiveWaypoints();
+                                                        List<me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint> wps = me.bombo.bomboaddons.eggfinder.EggFinder
+                                                                .getActiveWaypoints();
                                                         me.bombo.bomboaddons.eggfinder.EggFinder.EggWaypoint targetWp = null;
                                                         for (var wp : wps) {
                                                             if (wp.type == type) {
@@ -234,26 +279,40 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                             }
                                                         }
                                                         if (targetWp == null) {
-                                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
+                                                            context.getSource().sendError(Component.literal(
+                                                                    "§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
                                                             return 1;
                                                         }
-                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
+                                                        String chatMsg = "[Skyblocker] Chocolate " + type.name
+                                                                + " Egg found at " + targetWp.pos.getX() + ", "
+                                                                + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
                                                         Minecraft.getInstance().player.connection.sendChat(chatMsg);
                                                         return 1;
                                                     })))
                                     .then(ClientCommands.literal("status")
                                             .executes(context -> {
-                                                boolean connected = me.bombo.bomboaddons.eggfinder.EggWebSocket.isConnected();
-                                                boolean connecting = me.bombo.bomboaddons.eggfinder.EggWebSocket.isConnecting();
-                                                String sub = me.bombo.bomboaddons.eggfinder.EggWebSocket.getActiveSubscription();
-                                                String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                                                boolean connected = me.bombo.bomboaddons.eggfinder.EggWebSocket
+                                                        .isConnected();
+                                                boolean connecting = me.bombo.bomboaddons.eggfinder.EggWebSocket
+                                                        .isConnecting();
+                                                String sub = me.bombo.bomboaddons.eggfinder.EggWebSocket
+                                                        .getActiveSubscription();
+                                                String statusColor = connected ? "§aConnected"
+                                                        : (connecting ? "§eConnecting..." : "§cDisconnected");
+                                                context.getSource()
+                                                        .sendFeedback(Component.literal(
+                                                                "§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: "
+                                                                        + statusColor));
+                                                context.getSource()
+                                                        .sendFeedback(Component.literal(
+                                                                "§8[§bBomboAddons§8] §7Active Subscription Area: §e"
+                                                                        + (sub != null ? sub : "None")));
                                                 return 1;
                                             }))
                                     .then(ClientCommands.literal("reconnect")
                                             .executes(context -> {
-                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                                                context.getSource().sendFeedback(Component.literal(
+                                                        "§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
                                                 me.bombo.bomboaddons.eggfinder.EggAuth.forceUpdateToken();
                                                 me.bombo.bomboaddons.eggfinder.EggWebSocket.forceReconnect();
                                                 return 1;
@@ -265,15 +324,21 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     .executes(context -> {
                                         boolean connected = me.bombo.bomboaddons.eggfinder.EggWebSocket.isConnected();
                                         boolean connecting = me.bombo.bomboaddons.eggfinder.EggWebSocket.isConnecting();
-                                        String sub = me.bombo.bomboaddons.eggfinder.EggWebSocket.getActiveSubscription();
-                                        String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                                        String sub = me.bombo.bomboaddons.eggfinder.EggWebSocket
+                                                .getActiveSubscription();
+                                        String statusColor = connected ? "§aConnected"
+                                                : (connecting ? "§eConnecting..." : "§cDisconnected");
+                                        context.getSource().sendFeedback(Component.literal(
+                                                "§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+                                        context.getSource().sendFeedback(
+                                                Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e"
+                                                        + (sub != null ? sub : "None")));
                                         return 1;
                                     }))
                             .then(ClientCommands.literal("reconnect")
                                     .executes(context -> {
-                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                                        context.getSource().sendFeedback(Component.literal(
+                                                "§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
                                         me.bombo.bomboaddons.eggfinder.EggAuth.forceUpdateToken();
                                         me.bombo.bomboaddons.eggfinder.EggWebSocket.forceReconnect();
                                         return 1;
@@ -285,15 +350,21 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     .executes(context -> {
                                         boolean connected = me.bombo.bomboaddons.eggfinder.EggWebSocket.isConnected();
                                         boolean connecting = me.bombo.bomboaddons.eggfinder.EggWebSocket.isConnecting();
-                                        String sub = me.bombo.bomboaddons.eggfinder.EggWebSocket.getActiveSubscription();
-                                        String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                                        String sub = me.bombo.bomboaddons.eggfinder.EggWebSocket
+                                                .getActiveSubscription();
+                                        String statusColor = connected ? "§aConnected"
+                                                : (connecting ? "§eConnecting..." : "§cDisconnected");
+                                        context.getSource().sendFeedback(Component.literal(
+                                                "§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+                                        context.getSource().sendFeedback(
+                                                Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e"
+                                                        + (sub != null ? sub : "None")));
                                         return 1;
                                     }))
                             .then(ClientCommands.literal("reconnect")
                                     .executes(context -> {
-                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                                        context.getSource().sendFeedback(Component.literal(
+                                                "§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
                                         me.bombo.bomboaddons.eggfinder.EggAuth.forceUpdateToken();
                                         me.bombo.bomboaddons.eggfinder.EggWebSocket.forceReconnect();
                                         return 1;
@@ -396,7 +467,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                 try {
                     dispatcher.register(ClientCommands.literal("timer")
                             .executes(context -> {
-                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Usage: /timer <duration> OR /timer <name> <duration>"));
+                                context.getSource().sendFeedback(Component.literal(
+                                        "§8[§bBomboAddons§8] §7Usage: /timer <duration> OR /timer <name> <duration>"));
                                 return 1;
                             })
                             .then(ClientCommands.argument("arg1", StringArgumentType.word())
@@ -405,9 +477,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         long durationMs = CustomTimerManager.parseTimeMs(arg1);
                                         if (durationMs > 0) {
                                             CustomTimerManager.startTimer("Timer", durationMs);
-                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Started default timer for §e" + arg1 + "§7."));
+                                            context.getSource()
+                                                    .sendFeedback(Component.literal(
+                                                            "§8[§bBomboAddons§8] §7Started default timer for §e" + arg1
+                                                                    + "§7."));
                                         } else {
-                                            context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid duration format: " + arg1));
+                                            context.getSource().sendError(Component
+                                                    .literal("§8[§bBomboAddons§8] §cInvalid duration format: " + arg1));
                                         }
                                         return 1;
                                     })
@@ -418,9 +494,14 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 long durationMs = CustomTimerManager.parseTimeMs(durationStr);
                                                 if (durationMs > 0) {
                                                     CustomTimerManager.startTimer(name, durationMs);
-                                                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Started timer '§e" + name + "§7' for §e" + durationStr + "§7."));
+                                                    context.getSource().sendFeedback(
+                                                            Component.literal("§8[§bBomboAddons§8] §7Started timer '§e"
+                                                                    + name + "§7' for §e" + durationStr + "§7."));
                                                 } else {
-                                                    context.getSource().sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid duration format: " + durationStr));
+                                                    context.getSource()
+                                                            .sendError(Component.literal(
+                                                                    "§8[§bBomboAddons§8] §cInvalid duration format: "
+                                                                            + durationStr));
                                                 }
                                                 return 1;
                                             }))));
@@ -532,10 +613,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                     dispatcher.register(ClientCommands.literal("bitem")
                             .executes(context -> {
                                 Minecraft mc = Minecraft.getInstance();
-                                if (mc.player == null) return 1;
+                                if (mc.player == null)
+                                    return 1;
                                 ItemStack stack = mc.player.getMainHandItem();
                                 if (stack.isEmpty()) {
-                                    context.getSource().sendFeedback(Component.literal("§c[Bombo] You must hold an item."));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("§c[Bombo] You must hold an item."));
                                     return 1;
                                 }
 
@@ -546,25 +629,40 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                                 String skyblockId = SkyblockUtils.getInternalIdRaw(stack);
                                 context.getSource().sendFeedback(Component.literal("§6=== Item Debug ==="));
-                                context.getSource().sendFeedback(Component.literal("§7Name: §f" + stack.getHoverName().getString()));
-                                context.getSource().sendFeedback(Component.literal("§7SkyBlock ID: §e" + (skyblockId.isEmpty() ? "None" : skyblockId)));
-                                context.getSource().sendFeedback(Component.literal("§7Vanilla Item: §c" + net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(originalItem).toString()));
+                                context.getSource().sendFeedback(
+                                        Component.literal("§7Name: §f" + stack.getHoverName().getString()));
+                                context.getSource().sendFeedback(Component
+                                        .literal("§7SkyBlock ID: §e" + (skyblockId.isEmpty() ? "None" : skyblockId)));
+                                context.getSource()
+                                        .sendFeedback(Component.literal("§7Vanilla Item: §c"
+                                                + net.minecraft.core.registries.BuiltInRegistries.ITEM
+                                                        .getKey(originalItem).toString()));
 
                                 if (!skyblockId.isEmpty()) {
                                     SkyblockItemManager.SkyblockItemInfo info = SkyblockItemManager.getInfo(skyblockId);
                                     if (info != null) {
-                                        context.getSource().sendFeedback(Component.literal("§7Expected Material (API): §a" + info.material));
-                                        net.minecraft.world.item.Item overrideItem = SkyblockItemManager.getOverrideItem(info.material);
+                                        context.getSource().sendFeedback(
+                                                Component.literal("§7Expected Material (API): §a" + info.material));
+                                        net.minecraft.world.item.Item overrideItem = SkyblockItemManager
+                                                .getOverrideItem(info.material);
                                         if (overrideItem != null) {
-                                            context.getSource().sendFeedback(Component.literal("§7Overridden Item: §b" + net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(overrideItem).toString()));
+                                            context.getSource()
+                                                    .sendFeedback(Component.literal("§7Overridden Item: §b"
+                                                            + net.minecraft.core.registries.BuiltInRegistries.ITEM
+                                                                    .getKey(overrideItem).toString()));
                                         } else {
-                                            context.getSource().sendFeedback(Component.literal("§7Overridden Item: §cNone (Failed to resolve)"));
+                                            context.getSource().sendFeedback(
+                                                    Component.literal("§7Overridden Item: §cNone (Failed to resolve)"));
                                         }
                                         if (info.skinValue != null) {
-                                            context.getSource().sendFeedback(Component.literal("§7Skin Value: §d" + (info.skinValue.length() > 20 ? info.skinValue.substring(0, 20) + "..." : info.skinValue)));
+                                            context.getSource().sendFeedback(
+                                                    Component.literal("§7Skin Value: §d" + (info.skinValue.length() > 20
+                                                            ? info.skinValue.substring(0, 20) + "..."
+                                                            : info.skinValue)));
                                         }
                                     } else {
-                                        context.getSource().sendFeedback(Component.literal("§7Expected Material (API): §cNot found in database"));
+                                        context.getSource().sendFeedback(Component
+                                                .literal("§7Expected Material (API): §cNot found in database"));
                                     }
                                 }
                                 context.getSource().sendFeedback(Component.literal("§6=================="));
@@ -584,16 +682,18 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         Minecraft mc = Minecraft.getInstance();
                                         mc.execute(() -> {
                                             if (mc.getConnection() != null) {
-                                                mc.getConnection().getConnection().disconnect(Component.literal("Connecting to " + ip));
+                                                mc.getConnection().getConnection()
+                                                        .disconnect(Component.literal("Connecting to " + ip));
                                             }
-                                            net.minecraft.client.multiplayer.resolver.ServerAddress address = 
-                                                net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(ip);
-                                            net.minecraft.client.multiplayer.ServerData server = 
-                                                new net.minecraft.client.multiplayer.ServerData("Server", ip, net.minecraft.client.multiplayer.ServerData.Type.OTHER);
+                                            net.minecraft.client.multiplayer.resolver.ServerAddress address = net.minecraft.client.multiplayer.resolver.ServerAddress
+                                                    .parseString(ip);
+                                            net.minecraft.client.multiplayer.ServerData server = new net.minecraft.client.multiplayer.ServerData(
+                                                    "Server", ip,
+                                                    net.minecraft.client.multiplayer.ServerData.Type.OTHER);
                                             net.minecraft.client.gui.screens.ConnectScreen.startConnecting(
-                                                new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(new net.minecraft.client.gui.screens.TitleScreen()), 
-                                                mc, address, server, false, null
-                                            );
+                                                    new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(
+                                                            new net.minecraft.client.gui.screens.TitleScreen()),
+                                                    mc, address, server, false, null);
                                         });
                                         return 1;
                                     })));
@@ -631,6 +731,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     createHelpLine("/b prof", "/b prof", "Opens config GUI directly to Profile Binds.")
                                             .append(Component.literal(" §7- Opens Profile Binds config")));
                             context.getSource().sendFeedback(
+                                    createHelpLine("/b bw", "/b bw", "Opens config GUI directly to Bedwars settings.")
+                                            .append(Component.literal(" §7- Opens Bedwars ESP settings")));
+                            context.getSource().sendFeedback(
                                     createHelpLine("/b gui", "/b gui", "Opens the HUD Editor to reposition overlays.")
                                             .append(Component.literal(" §7- Opens the HUD Editor")));
                             context.getSource().sendFeedback(
@@ -663,10 +766,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     createHelpLine("/b area", "/b area", "Shows the current SkyBlock area.")
                                             .append(Component.literal(" §7- Shows current Area")));
                             context.getSource().sendFeedback(
-                                    createHelpLine("/b online", "/b online", "Shows who is online with the mod and their version.")
+                                    createHelpLine("/b online", "/b online",
+                                            "Shows who is online with the mod and their version.")
                                             .append(Component.literal(" §7- Shows online mod users")));
                             context.getSource().sendFeedback(
-                                    createHelpLine("/b color", "/b color", "Shows Minecraft text color and formatting codes.")
+                                    createHelpLine("/b color", "/b color",
+                                            "Shows Minecraft text color and formatting codes.")
                                             .append(Component.literal(" §7- Shows text color codes")));
                             context.getSource().sendFeedback(
                                     createHelpLine("/b subarea", "/b subarea", "Shows the current SkyBlock subarea.")
@@ -685,7 +790,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     createHelpLine("/b kick", "/b kick", "Safely disconnects you from the server.")
                                             .append(Component.literal(" §7- Safely disconnects from server")));
                             context.getSource().sendFeedback(
-                                    createHelpLine("/b play <ip>", "/b play ", "Safely disconnects and connects to a server.")
+                                    createHelpLine("/b play <ip>", "/b play ",
+                                            "Safely disconnects and connects to a server.")
                                             .append(Component.literal(" §7- Connects to a server")));
                             context.getSource()
                                     .sendFeedback(createHelpLine("/b resetdice", "/b resetdice",
@@ -713,13 +819,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             "Checks inventory and runs /gfs to refill item up to target.")
                                             .append(Component.literal(" §7- Refills items from sack")));
                             context.getSource().sendFeedback(
-                                    createHelpLine("/b rank [name]", "/b rank", "Fetches and displays the Hypixel rank of a player.")
+                                    createHelpLine("/b rank [name]", "/b rank",
+                                            "Fetches and displays the Hypixel rank of a player.")
                                             .append(Component.literal(" §7- Fetches and displays player rank")));
                             context.getSource().sendFeedback(
                                     createHelpLine("/b chat", "/b chat", "Toggles the global IRC mod chat.")
                                             .append(Component.literal(" §7- Toggles IRC chat")));
                             context.getSource().sendFeedback(
-                                    createHelpLine("/b custom", "/b custom", "Customizes the material and name of the held item.")
+                                    createHelpLine("/b custom", "/b custom",
+                                            "Customizes the material and name of the held item.")
                                             .append(Component.literal(" §7- Customizes the held item")));
 
                             context.getSource().sendFeedback(
@@ -734,16 +842,18 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             Minecraft mc = Minecraft.getInstance();
                                             mc.execute(() -> {
                                                 if (mc.getConnection() != null) {
-                                                    mc.getConnection().getConnection().disconnect(Component.literal("Connecting to " + ip));
+                                                    mc.getConnection().getConnection()
+                                                            .disconnect(Component.literal("Connecting to " + ip));
                                                 }
-                                                net.minecraft.client.multiplayer.resolver.ServerAddress address = 
-                                                    net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(ip);
-                                                net.minecraft.client.multiplayer.ServerData server = 
-                                                    new net.minecraft.client.multiplayer.ServerData("Server", ip, net.minecraft.client.multiplayer.ServerData.Type.OTHER);
+                                                net.minecraft.client.multiplayer.resolver.ServerAddress address = net.minecraft.client.multiplayer.resolver.ServerAddress
+                                                        .parseString(ip);
+                                                net.minecraft.client.multiplayer.ServerData server = new net.minecraft.client.multiplayer.ServerData(
+                                                        "Server", ip,
+                                                        net.minecraft.client.multiplayer.ServerData.Type.OTHER);
                                                 net.minecraft.client.gui.screens.ConnectScreen.startConnecting(
-                                                    new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(new net.minecraft.client.gui.screens.TitleScreen()), 
-                                                    mc, address, server, false, null
-                                                );
+                                                        new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(
+                                                                new net.minecraft.client.gui.screens.TitleScreen()),
+                                                        mc, address, server, false, null);
                                             });
                                             return 1;
                                         })));
@@ -754,38 +864,50 @@ public class BomboaddonsClient implements ClientModInitializer {
                             return 1;
                         }));
 
+                        builder.then(ClientCommands.literal("bw").executes(context -> {
+                            BomboConfigGUI.selectedCategory = 23;
+                            openGuiNextTick = true;
+                            return 1;
+                        }));
+
                         builder.then(ClientCommands.literal("friends").executes(context -> {
-                            context.getSource().sendFeedback(Component.literal(PREFIX + "§bFriends in Cache (" + TabCompletionManager.friends.size() + "):"));
+                            context.getSource().sendFeedback(Component.literal(
+                                    PREFIX + "§bFriends in Cache (" + TabCompletionManager.friends.size() + "):"));
                             if (TabCompletionManager.friends.isEmpty()) {
                                 context.getSource().sendFeedback(Component.literal("§7- §cNone"));
                             } else {
                                 java.util.List<String> sorted = new java.util.ArrayList<>(TabCompletionManager.friends);
                                 java.util.Collections.sort(sorted);
-                                context.getSource().sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
+                                context.getSource()
+                                        .sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
                             }
                             return 1;
                         }));
 
                         builder.then(ClientCommands.literal("guild").executes(context -> {
-                            context.getSource().sendFeedback(Component.literal(PREFIX + "§bGuild Members in Cache (" + TabCompletionManager.guild.size() + "):"));
+                            context.getSource().sendFeedback(Component.literal(
+                                    PREFIX + "§bGuild Members in Cache (" + TabCompletionManager.guild.size() + "):"));
                             if (TabCompletionManager.guild.isEmpty()) {
                                 context.getSource().sendFeedback(Component.literal("§7- §cNone"));
                             } else {
                                 java.util.List<String> sorted = new java.util.ArrayList<>(TabCompletionManager.guild);
                                 java.util.Collections.sort(sorted);
-                                context.getSource().sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
+                                context.getSource()
+                                        .sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
                             }
                             return 1;
                         }));
 
                         builder.then(ClientCommands.literal("party").executes(context -> {
-                            context.getSource().sendFeedback(Component.literal(PREFIX + "§bParty Members in Cache (" + TabCompletionManager.party.size() + "):"));
+                            context.getSource().sendFeedback(Component.literal(
+                                    PREFIX + "§bParty Members in Cache (" + TabCompletionManager.party.size() + "):"));
                             if (TabCompletionManager.party.isEmpty()) {
                                 context.getSource().sendFeedback(Component.literal("§7- §cNone"));
                             } else {
                                 java.util.List<String> sorted = new java.util.ArrayList<>(TabCompletionManager.party);
                                 java.util.Collections.sort(sorted);
-                                context.getSource().sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
+                                context.getSource()
+                                        .sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
                             }
                             return 1;
                         }));
@@ -913,11 +1035,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         BomboConfig.get().ircChatEnabled = !BomboConfig.get().ircChatEnabled;
                                         BomboConfig.save();
                                         IRCClient.onEnabledToggled();
-                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§7IRC Chat: " 
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§7IRC Chat: "
                                                 + (BomboConfig.get().ircChatEnabled ? "§aON" : "§cOFF")));
                                     } catch (Throwable t) {
-                                        Bomboaddons.LOGGER.error("[BomboAddons] Error toggling IRC Chat via command", t);
-                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cError toggling IRC Chat: " + t.getMessage()));
+                                        Bomboaddons.LOGGER.error("[BomboAddons] Error toggling IRC Chat via command",
+                                                t);
+                                        context.getSource().sendFeedback(Component
+                                                .literal(PREFIX + "§cError toggling IRC Chat: " + t.getMessage()));
                                     }
                                     return 1;
                                 }));
@@ -976,10 +1100,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                         builder.then(ClientCommands.literal("custom")
                                 .executes(context -> {
                                     Minecraft mc = Minecraft.getInstance();
-                                    if (mc.player == null) return 1;
+                                    if (mc.player == null)
+                                        return 1;
                                     ItemStack stack = mc.player.getMainHandItem();
                                     if (stack.isEmpty()) {
-                                        context.getSource().sendFeedback(Component.literal("§c[Bombo] You must hold an item to customize it."));
+                                        context.getSource().sendFeedback(
+                                                Component.literal("§c[Bombo] You must hold an item to customize it."));
                                         return 1;
                                     }
                                     openCustomizeGuiNextTick = true;
@@ -988,10 +1114,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                         builder.then(ClientCommands.literal("customize")
                                 .executes(context -> {
                                     Minecraft mc = Minecraft.getInstance();
-                                    if (mc.player == null) return 1;
+                                    if (mc.player == null)
+                                        return 1;
                                     ItemStack stack = mc.player.getMainHandItem();
                                     if (stack.isEmpty()) {
-                                        context.getSource().sendFeedback(Component.literal("§c[Bombo] You must hold an item to customize it."));
+                                        context.getSource().sendFeedback(
+                                                Component.literal("§c[Bombo] You must hold an item to customize it."));
                                         return 1;
                                     }
                                     openCustomizeGuiNextTick = true;
@@ -1257,18 +1385,20 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                     return 1;
                                                 })))
 
-
                                 .then(ClientCommands.literal("toggle")
                                         .then(ClientCommands.argument("name", StringArgumentType.greedyString())
                                                 .executes(context -> {
                                                     String name = StringArgumentType.getString(context, "name")
                                                             .toLowerCase();
-                                                    BomboConfig.HighlightInfo info = BomboConfig.get().highlights.get(name);
+                                                    BomboConfig.HighlightInfo info = BomboConfig.get().highlights
+                                                            .get(name);
                                                     if (info != null) {
                                                         info.enabled = !info.enabled;
                                                         BomboConfig.save();
                                                         context.getSource().sendFeedback(Component.literal(
-                                                                PREFIX + "§aToggled highlight for: §e" + name + " §a(" + (info.enabled ? "Enabled" : "Disabled") + ")"));
+                                                                PREFIX + "§aToggled highlight for: §e" + name + " §a("
+                                                                        + (info.enabled ? "Enabled" : "Disabled")
+                                                                        + ")"));
                                                     } else {
                                                         context.getSource().sendFeedback(Component.literal(
                                                                 PREFIX + "§cNo highlight found for: §e" + name));
@@ -1291,9 +1421,11 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                                                     ClickEvent toggleClick = LF.createClickEventRobust("RUN_COMMAND",
                                                             "/b highlight toggle " + targetName);
-                                                    Component toggleBtn = enabled ? Component.literal(" §a[Enabled]") : Component.literal(" §c[Disabled]");
+                                                    Component toggleBtn = enabled ? Component.literal(" §a[Enabled]")
+                                                            : Component.literal(" §c[Disabled]");
                                                     if (toggleClick != null) {
-                                                        toggleBtn = (enabled ? Component.literal(" §a[Enabled]") : Component.literal(" §c[Disabled]"))
+                                                        toggleBtn = (enabled ? Component.literal(" §a[Enabled]")
+                                                                : Component.literal(" §c[Disabled]"))
                                                                 .withStyle(style -> style.withClickEvent(toggleClick));
                                                     }
 
@@ -1404,13 +1536,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     context.getSource().sendFeedback(Component.literal(
                                             PREFIX + "§7Usage: /b highlight <mob> <color> [showInvis: true/false]"));
                                     context.getSource().sendFeedback(
-                                            Component.literal(PREFIX + "§7Subcommands: list, remove <name>, clear, toggle <name>"));
+                                            Component.literal(PREFIX
+                                                    + "§7Subcommands: list, remove <name>, clear, toggle <name>"));
                                     return 1;
                                 }));
 
                         builder.then(ClientCommands.literal("left").executes(context -> {
                             if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
-                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                context.getSource().sendFeedback(Component.literal(
+                                        "§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
                                 return 1;
                             }
                             GardenMovement.toggleLeft();
@@ -1418,7 +1552,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }));
                         builder.then(ClientCommands.literal("right").executes(context -> {
                             if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
-                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                context.getSource().sendFeedback(Component.literal(
+                                        "§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
                                 return 1;
                             }
                             GardenMovement.toggleRight();
@@ -1426,7 +1561,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }));
                         builder.then(ClientCommands.literal("back").executes(context -> {
                             if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
-                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                context.getSource().sendFeedback(Component.literal(
+                                        "§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
                                 return 1;
                             }
                             GardenMovement.toggleBackward();
@@ -1434,7 +1570,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }));
                         builder.then(ClientCommands.literal("forw").executes(context -> {
                             if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
-                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                context.getSource().sendFeedback(Component.literal(
+                                        "§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
                                 return 1;
                             }
                             GardenMovement.toggleForward();
@@ -1442,7 +1579,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }));
                         builder.then(ClientCommands.literal("break").executes(context -> {
                             if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
-                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                context.getSource().sendFeedback(Component.literal(
+                                        "§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
                                 return 1;
                             }
                             GardenMovement.toggleBreak();
@@ -1450,7 +1588,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }));
                         builder.then(ClientCommands.literal("use").executes(context -> {
                             if (!BomboConfig.get().gardenMovement || !SkyblockUtils.isInGarden()) {
-                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
+                                context.getSource().sendFeedback(Component.literal(
+                                        "§8[§bBomboAddons§8] §cGarden Movement is disabled or you are not in the Garden!"));
                                 return 1;
                             }
                             GardenMovement.toggleUse();
@@ -1474,19 +1613,20 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 totalCount++;
                                 if (entity instanceof net.minecraft.world.entity.decoration.ArmorStand stand) {
                                     standCount++;
-                                    net.minecraft.world.item.ItemStack helmet = stand.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
+                                    net.minecraft.world.item.ItemStack helmet = stand
+                                            .getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
                                     String itemStr = "None";
                                     if (helmet != null && !helmet.isEmpty()) {
                                         itemStr = helmet.getHoverName().getString();
                                     }
                                     context.getSource().sendFeedback(Component.literal(
-                                            "§eStand ID: " + stand.getId() + " §7- Pos: " + stand.blockPosition() + " §7- Head: §b" + itemStr
-                                    ));
+                                            "§eStand ID: " + stand.getId() + " §7- Pos: " + stand.blockPosition()
+                                                    + " §7- Head: §b" + itemStr));
                                 }
                             }
                             context.getSource().sendFeedback(Component.literal(
-                                    "§aScan complete. Checked " + totalCount + " entities. Found " + standCount + " armor stands."
-                            ));
+                                    "§aScan complete. Checked " + totalCount + " entities. Found " + standCount
+                                            + " armor stands."));
                             return 1;
                         }));
 
@@ -1511,7 +1651,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         })));
 
                         // --- Particle List + ESP ---
-                        for (String argName : new String[]{"particles", "particle"}) {
+                        for (String argName : new String[] { "particles", "particle" }) {
                             builder.then(ClientCommands.literal(argName)
                                     .executes(context -> {
                                         // List nearby particles
@@ -1526,11 +1666,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             for (java.util.Map.Entry<String, Integer> entry : summary.entrySet()) {
                                                 String keyName = entry.getKey();
                                                 String highlightName = keyName.toLowerCase();
-                                                
+
                                                 // Find details of a matching entry
                                                 String rawType = "Unknown";
                                                 double lastX = 0, lastY = 0, lastZ = 0;
-                                                for (ParticleTracker.ParticleEntry p : ParticleTracker.getEspPoints(null)) {
+                                                for (ParticleTracker.ParticleEntry p : ParticleTracker
+                                                        .getEspPoints(null)) {
                                                     if (p.type.equals(keyName)) {
                                                         rawType = p.rawType;
                                                         lastX = p.x;
@@ -1541,8 +1682,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 }
 
                                                 context.getSource().sendFeedback(Component.literal(
-                                                        "  §7» Highlight name: §e" + highlightName + " §8x" + entry.getValue() + 
-                                                        " §7(Raw/Debug: §d" + rawType + "§7, Last Pos: §a" + String.format("%.2f, %.2f, %.2f", lastX, lastY, lastZ) + "§7)"));
+                                                        "  §7» Highlight name: §e" + highlightName + " §8x"
+                                                                + entry.getValue() +
+                                                                " §7(Raw/Debug: §d" + rawType + "§7, Last Pos: §a"
+                                                                + String.format("%.2f, %.2f, %.2f", lastX, lastY, lastZ)
+                                                                + "§7)"));
                                             }
                                         }
                                         return 1;
@@ -1563,26 +1707,30 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                             ParticleESP.typeFilter = null;
                                                             ParticleTracker.espEnabled = false;
                                                             context.getSource().sendFeedback(
-                                                                    Component.literal(PREFIX + "§cParticle ESP disabled."));
+                                                                    Component.literal(
+                                                                            PREFIX + "§cParticle ESP disabled."));
                                                         } else {
                                                             ParticleESP.typeFilter = filter;
                                                             ParticleTracker.espEnabled = true;
                                                             context.getSource().sendFeedback(Component.literal(PREFIX
-                                                                    + "§aParticle ESP §aON §7— filtering: §e" + filter));
+                                                                    + "§aParticle ESP §aON §7— filtering: §e"
+                                                                    + filter));
                                                         }
                                                         return 1;
                                                     })))
                                     .then(ClientCommands.literal("radius")
                                             .then(ClientCommands
                                                     .argument("r",
-                                                            com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,
+                                                            com.mojang.brigadier.arguments.IntegerArgumentType.integer(
+                                                                    1,
                                                                     128))
                                                     .executes(context -> {
                                                         int r = com.mojang.brigadier.arguments.IntegerArgumentType
                                                                 .getInteger(context, "r");
                                                         ParticleTracker.espRadius = r;
                                                         context.getSource().sendFeedback(Component.literal(PREFIX
-                                                                + "§7Particle ESP radius set to §e" + r + "§7 blocks."));
+                                                                + "§7Particle ESP radius set to §e" + r
+                                                                + "§7 blocks."));
                                                         return 1;
                                                     })))
                                     .then(ClientCommands.literal("clear")
@@ -1932,11 +2080,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                         builder.then(ClientCommands.literal("online")
                                 .executes(context -> {
                                     if (!BomboConfig.get().ircChatEnabled) {
-                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cIRC Chat is currently disabled. Toggle it ON in the config GUI to see online users."));
+                                        context.getSource().sendFeedback(Component.literal(PREFIX
+                                                + "§cIRC Chat is currently disabled. Toggle it ON in the config GUI to see online users."));
                                         return 1;
                                     }
                                     if (!IRCClient.isConnected()) {
-                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§7Connecting to IRC server... (Please wait a moment and try again)"));
+                                        context.getSource().sendFeedback(Component.literal(PREFIX
+                                                + "§7Connecting to IRC server... (Please wait a moment and try again)"));
                                         IRCClient.start();
                                         return 1;
                                     }
@@ -1944,7 +2094,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     java.util.Map<String, String> onlineMap = IRCClient.getOnlinePlayers();
                                     context.getSource().sendFeedback(Component.literal(PREFIX + "§6Online Mod Users:"));
                                     if (onlineMap.isEmpty()) {
-                                        context.getSource().sendFeedback(Component.literal("  §7No other users detected yet (or currently fetching names list)."));
+                                        context.getSource().sendFeedback(Component.literal(
+                                                "  §7No other users detected yet (or currently fetching names list)."));
                                     } else {
                                         int count = 0;
                                         for (String nick : onlineMap.values()) {
@@ -1953,26 +2104,39 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                     "  §7» §a" + user.username + " §7— Version: §e" + user.version));
                                             count++;
                                         }
-                                        context.getSource().sendFeedback(Component.literal("§7Total online: §b" + count));
+                                        context.getSource()
+                                                .sendFeedback(Component.literal("§7Total online: §b" + count));
                                     }
                                     return 1;
                                 }));
 
                         builder.then(ClientCommands.literal("color")
                                 .executes(context -> {
-                                    context.getSource().sendFeedback(Component.literal("§8---------------- §b[Color Codes] §8----------------"));
-                                    context.getSource().sendFeedback(Component.literal("  §0&0 - Black        §1&1 - Dark Blue"));
-                                    context.getSource().sendFeedback(Component.literal("  §2&2 - Dark Green   §3&3 - Dark Aqua"));
-                                    context.getSource().sendFeedback(Component.literal("  §4&4 - Dark Red     §5&5 - Dark Purple"));
-                                    context.getSource().sendFeedback(Component.literal("  §6&6 - Gold         §7&7 - Gray"));
-                                    context.getSource().sendFeedback(Component.literal("  §8&8 - Dark Gray    §9&9 - Blue"));
-                                    context.getSource().sendFeedback(Component.literal("  §a&a - Green        §b&b - Aqua"));
-                                    context.getSource().sendFeedback(Component.literal("  §c&c - Red          §d&d - Light Purple"));
-                                    context.getSource().sendFeedback(Component.literal("  §e&e - Yellow       §f&f - White"));
+                                    context.getSource().sendFeedback(
+                                            Component.literal("§8---------------- §b[Color Codes] §8----------------"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §0&0 - Black        §1&1 - Dark Blue"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §2&2 - Dark Green   §3&3 - Dark Aqua"));
+                                    context.getSource().sendFeedback(
+                                            Component.literal("  §4&4 - Dark Red     §5&5 - Dark Purple"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §6&6 - Gold         §7&7 - Gray"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §8&8 - Dark Gray    §9&9 - Blue"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §a&a - Green        §b&b - Aqua"));
+                                    context.getSource().sendFeedback(
+                                            Component.literal("  §c&c - Red          §d&d - Light Purple"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §e&e - Yellow       §f&f - White"));
                                     context.getSource().sendFeedback(Component.literal("§8Formatting Codes:"));
-                                    context.getSource().sendFeedback(Component.literal("  §k&k - Obfuscated   §l&l - Bold"));
-                                    context.getSource().sendFeedback(Component.literal("  §m&m - Strikethrough§n&n - Underline"));
-                                    context.getSource().sendFeedback(Component.literal("  §o&o - Italic       §r&r - Reset"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §k&k - Obfuscated   §l&l - Bold"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §m&m - Strikethrough§n&n - Underline"));
+                                    context.getSource()
+                                            .sendFeedback(Component.literal("  §o&o - Italic       §r&r - Reset"));
                                     return 1;
                                 }));
                     };
@@ -2173,7 +2337,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                             .then(ClientCommands.argument("message", StringArgumentType.greedyString())
                                     .executes(context -> {
                                         if (!BomboConfig.get().ircChatEnabled) {
-                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cIRC Chat is currently disabled! Toggle it on with §e/b chat§c."));
+                                            context.getSource().sendFeedback(Component.literal(
+                                                    "§8[§bBomboAddons§8] §cIRC Chat is currently disabled! Toggle it on with §e/b chat§c."));
                                             return 1;
                                         }
                                         String message = StringArgumentType.getString(context, "message");
@@ -2186,7 +2351,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     .executes(context -> {
                                         BomboConfig.get().ircDefaultChat = true;
                                         BomboConfig.save();
-                                        context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Default chat set to §eIRC§7. Messages will be sent to IRC chat."));
+                                        context.getSource().sendFeedback(Component.literal(
+                                                "§8[§bBomboAddons§8] §7Default chat set to §eIRC§7. Messages will be sent to IRC chat."));
                                         return 1;
                                     }))
                             .then(ClientCommands.argument("channel", StringArgumentType.greedyString())
@@ -2195,13 +2361,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         BomboConfig.get().ircDefaultChat = false;
                                         BomboConfig.save();
                                         if (Minecraft.getInstance().getConnection() != null) {
-                                            Minecraft.getInstance().getConnection().send(new ServerboundChatCommandPacket("chat " + channel));
+                                            Minecraft.getInstance().getConnection()
+                                                    .send(new ServerboundChatCommandPacket("chat " + channel));
                                         }
                                         return 1;
                                     }))
                             .executes(context -> {
                                 if (Minecraft.getInstance().getConnection() != null) {
-                                    Minecraft.getInstance().getConnection().send(new ServerboundChatCommandPacket("chat"));
+                                    Minecraft.getInstance().getConnection()
+                                            .send(new ServerboundChatCommandPacket("chat"));
                                 }
                                 return 1;
                             }));
@@ -2247,83 +2415,87 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                     java.util.function.Consumer<String> registerHotbarCommand = nameLiteral -> {
                         dispatcher.register(ClientCommands.literal(nameLiteral)
-                            .then(ClientCommands.literal("save")
-                                    .then(ClientCommands.argument("name", StringArgumentType.string())
-                                            .executes(context -> {
-                                                String name = StringArgumentType.getString(context, "name");
-                                                if (HotbarSwapper.saveSnapshot(name)) {
-                                                    context.getSource().sendFeedback(
-                                                            Component.literal("§aSaved hotbar snapshot: §e" + name));
-                                                } else {
-                                                    context.getSource().sendFeedback(Component.literal(
-                                                            "§cFailed to save hotbar snapshot (player is null)."));
-                                                }
-                                                return 1;
-                                            })))
-                            .then(ClientCommands.literal("s")
-                                    .then(ClientCommands.argument("name", StringArgumentType.string())
-                                            .executes(context -> {
-                                                String name = StringArgumentType.getString(context, "name");
-                                                if (HotbarSwapper.saveSnapshot(name)) {
-                                                    context.getSource().sendFeedback(
-                                                            Component.literal("§aSaved hotbar snapshot: §e" + name));
-                                                } else {
-                                                    context.getSource().sendFeedback(Component.literal(
-                                                            "§cFailed to save hotbar snapshot (player is null)."));
-                                                }
-                                                return 1;
-                                            })))
-                            .then(ClientCommands.literal("delete")
-                                    .then(ClientCommands.argument("name", StringArgumentType.string())
-                                            .executes(context -> {
-                                                String name = StringArgumentType.getString(context, "name");
-                                                if (HotbarSwapper.deleteSnapshot(name)) {
-                                                    context.getSource().sendFeedback(
-                                                            Component.literal("§aDeleted hotbar snapshot: §e" + name));
-                                                } else {
-                                                    context.getSource().sendFeedback(
-                                                            Component.literal("§cSnapshot not found: §e" + name));
-                                                }
-                                                return 1;
-                                            })))
-                            .then(ClientCommands.literal("list")
-                                    .executes(context -> {
-                                        context.getSource()
-                                                .sendFeedback(Component.literal("§6--- Hotbar Snapshots ---"));
-                                        for (String id : HotbarSwapper.list()) {
-                                            context.getSource().sendFeedback(Component.literal("§7- §e" + id));
-                                        }
-                                        return 1;
-                                    }))
-                            .then(ClientCommands.literal("apply")
-                                    .then(ClientCommands.argument("name", StringArgumentType.string())
-                                            .executes(context -> {
-                                                String name = StringArgumentType.getString(context, "name");
-                                                if (HotbarSwapper.exists(name)) {
-                                                    HotbarSwapper.apply(name);
-                                                    context.getSource().sendFeedback(
-                                                            Component.literal("§aApplied hotbar snapshot: §e" + name));
-                                                } else {
-                                                    context.getSource().sendFeedback(
-                                                            Component.literal("§cSnapshot not found: §e" + name));
-                                                }
-                                                return 1;
-                                            })))
-                            .then(ClientCommands.literal("a")
-                                    .then(ClientCommands.argument("name", StringArgumentType.string())
-                                            .executes(context -> {
-                                                String name = StringArgumentType.getString(context, "name");
-                                                if (HotbarSwapper.exists(name)) {
-                                                    HotbarSwapper.apply(name);
-                                                    context.getSource().sendFeedback(
-                                                            Component.literal("§aApplied hotbar snapshot: §e" + name));
-                                                } else {
-                                                    context.getSource().sendFeedback(
-                                                            Component.literal("§cSnapshot not found: §e" + name));
-                                                }
-                                                return 1;
-                                            })))
-                        );
+                                .then(ClientCommands.literal("save")
+                                        .then(ClientCommands.argument("name", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "name");
+                                                    if (HotbarSwapper.saveSnapshot(name)) {
+                                                        context.getSource().sendFeedback(
+                                                                Component
+                                                                        .literal("§aSaved hotbar snapshot: §e" + name));
+                                                    } else {
+                                                        context.getSource().sendFeedback(Component.literal(
+                                                                "§cFailed to save hotbar snapshot (player is null)."));
+                                                    }
+                                                    return 1;
+                                                })))
+                                .then(ClientCommands.literal("s")
+                                        .then(ClientCommands.argument("name", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "name");
+                                                    if (HotbarSwapper.saveSnapshot(name)) {
+                                                        context.getSource().sendFeedback(
+                                                                Component
+                                                                        .literal("§aSaved hotbar snapshot: §e" + name));
+                                                    } else {
+                                                        context.getSource().sendFeedback(Component.literal(
+                                                                "§cFailed to save hotbar snapshot (player is null)."));
+                                                    }
+                                                    return 1;
+                                                })))
+                                .then(ClientCommands.literal("delete")
+                                        .then(ClientCommands.argument("name", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "name");
+                                                    if (HotbarSwapper.deleteSnapshot(name)) {
+                                                        context.getSource().sendFeedback(
+                                                                Component.literal(
+                                                                        "§aDeleted hotbar snapshot: §e" + name));
+                                                    } else {
+                                                        context.getSource().sendFeedback(
+                                                                Component.literal("§cSnapshot not found: §e" + name));
+                                                    }
+                                                    return 1;
+                                                })))
+                                .then(ClientCommands.literal("list")
+                                        .executes(context -> {
+                                            context.getSource()
+                                                    .sendFeedback(Component.literal("§6--- Hotbar Snapshots ---"));
+                                            for (String id : HotbarSwapper.list()) {
+                                                context.getSource().sendFeedback(Component.literal("§7- §e" + id));
+                                            }
+                                            return 1;
+                                        }))
+                                .then(ClientCommands.literal("apply")
+                                        .then(ClientCommands.argument("name", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "name");
+                                                    if (HotbarSwapper.exists(name)) {
+                                                        HotbarSwapper.apply(name);
+                                                        context.getSource().sendFeedback(
+                                                                Component.literal(
+                                                                        "§aApplied hotbar snapshot: §e" + name));
+                                                    } else {
+                                                        context.getSource().sendFeedback(
+                                                                Component.literal("§cSnapshot not found: §e" + name));
+                                                    }
+                                                    return 1;
+                                                })))
+                                .then(ClientCommands.literal("a")
+                                        .then(ClientCommands.argument("name", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "name");
+                                                    if (HotbarSwapper.exists(name)) {
+                                                        HotbarSwapper.apply(name);
+                                                        context.getSource().sendFeedback(
+                                                                Component.literal(
+                                                                        "§aApplied hotbar snapshot: §e" + name));
+                                                    } else {
+                                                        context.getSource().sendFeedback(
+                                                                Component.literal("§cSnapshot not found: §e" + name));
+                                                    }
+                                                    return 1;
+                                                }))));
                     };
 
                     registerHotbarCommand.accept("bombohb");
@@ -2435,35 +2607,37 @@ public class BomboaddonsClient implements ClientModInitializer {
                 }
             });
 
-            HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "main_hud"), (graphics, deltaTracker) -> {
-                if (BomboConfig.get().pestEspTracer) {
-                    for (PestESP.PestTracer tracer : PestESP.TRACERS) {
-                        BomboRenderUtils.draw2DLine(graphics, tracer.start.x, tracer.start.y, tracer.end.x,
-                                tracer.end.y, tracer.color, tracer.thickness);
-                    }
-                }
+            HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "main_hud"),
+                    (graphics, deltaTracker) -> {
+                        if (BomboConfig.get().pestEspTracer) {
+                            for (PestESP.PestTracer tracer : PestESP.TRACERS) {
+                                BomboRenderUtils.draw2DLine(graphics, tracer.start.x, tracer.start.y, tracer.end.x,
+                                        tracer.end.y, tracer.color, tracer.thickness);
+                            }
+                        }
 
-                try {
-                    if (BomboConfig.get().kuudraDebug) {
-                        graphics.text(Minecraft.getInstance().font, "§d§lHUD RENDER TEST ACTIVE", 10, 50,
-                                0xFFFF00FF, true);
-                    }
-                    for (me.bombo.bomboaddons.kuudra.pearls.Pearls.PearlHUDText t : me.bombo.bomboaddons.kuudra.pearls.Pearls.HUD_TEXTS) {
-                        graphics.centeredText(Minecraft.getInstance().font, t.text, (int) t.x, (int) t.y,
-                                t.color);
-                    }
-                } catch (Throwable t) {
-                }
+                        try {
+                            if (BomboConfig.get().kuudraDebug) {
+                                graphics.text(Minecraft.getInstance().font, "§d§lHUD RENDER TEST ACTIVE", 10, 50,
+                                        0xFFFF00FF, true);
+                            }
+                            for (me.bombo.bomboaddons.kuudra.pearls.Pearls.PearlHUDText t : me.bombo.bomboaddons.kuudra.pearls.Pearls.HUD_TEXTS) {
+                                graphics.centeredText(Minecraft.getInstance().font, t.text, (int) t.x, (int) t.y,
+                                        t.color);
+                            }
+                        } catch (Throwable t) {
+                        }
 
-                // Only render HUD if no screen is open or it's the HudMoveScreen
-                if (Minecraft.getInstance().screen == null || Minecraft.getInstance().screen instanceof HudMoveScreen) {
-                    FeastBakeryHud.onHudRender(graphics);
-                    ExperimentationTableHud.onHudRender(graphics);
-                }
-                if (Minecraft.getInstance().screen == null) {
-                    GardenMovement.drawDirectionWarning(graphics);
-                }
-            });
+                        // Only render HUD if no screen is open or it's the HudMoveScreen
+                        if (Minecraft.getInstance().screen == null
+                                || Minecraft.getInstance().screen instanceof HudMoveScreen) {
+                            FeastBakeryHud.onHudRender(graphics);
+                            ExperimentationTableHud.onHudRender(graphics);
+                        }
+                        if (Minecraft.getInstance().screen == null) {
+                            GardenMovement.drawDirectionWarning(graphics);
+                        }
+                    });
 
             net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.BEFORE_INIT
                     .register((client, screen, scaledWidth, scaledHeight) -> {
@@ -2482,14 +2656,14 @@ public class BomboaddonsClient implements ClientModInitializer {
                 LowestBinManager.reload();
                 AutoExperiments.reset();
                 ModUpdater.checkAndUpdate(true);
-                
+
                 // Fetch/update Skyblocker WebSocket token
                 try {
                     me.bombo.bomboaddons.eggfinder.EggAuth.updateToken();
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
-                
+
                 // Proactively fetch local player's rank on join to ensure cache is updated
                 if (client.getUser() != null) {
                     String name = client.getUser().getName();
@@ -2585,8 +2759,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                     }
                 }
                 if ((clean.contains("You are now in the ") && clean.contains("channel")) ||
-                    (clean.contains("Opened a chat conversation with ") && clean.contains("minutes"))) {
-                    
+                        (clean.contains("Opened a chat conversation with ") && clean.contains("minutes"))) {
+
                     if (clean.contains("You are now in the ") && clean.contains("channel")) {
                         if (clean.contains("ALL CHAT") || clean.contains("ALL")) {
                             currentHypixelChannel = "a";
@@ -2601,10 +2775,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }
                     } else if (clean.contains("Opened a chat conversation with ") && clean.contains("minutes")) {
                         int idx = clean.indexOf("Opened a conversation with ");
-                        if (idx == -1) idx = clean.indexOf("Opened a chat conversation with ");
+                        if (idx == -1)
+                            idx = clean.indexOf("Opened a chat conversation with ");
                         int forNextIndex = clean.indexOf(" for the next");
                         if (idx != -1 && forNextIndex != -1) {
-                            String namePart = clean.substring(idx + (clean.contains("Opened a chat conversation with ") ? "Opened a chat conversation with ".length() : "Opened a conversation with ".length()), forNextIndex).trim();
+                            String namePart = clean.substring(idx + (clean.contains("Opened a chat conversation with ")
+                                    ? "Opened a chat conversation with ".length()
+                                    : "Opened a conversation with ".length()), forNextIndex).trim();
                             String[] parts = namePart.split("\\s+");
                             if (parts.length > 0) {
                                 currentHypixelChannel = parts[parts.length - 1].toLowerCase();
@@ -2615,7 +2792,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                     if (BomboConfig.get().ircDefaultChat) {
                         BomboConfig.get().ircDefaultChat = false;
                         BomboConfig.save();
-                        Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §7Default chat set to §ePublic§7 (detected channel change)."));
+                        Minecraft.getInstance().player.sendSystemMessage(Component.literal(
+                                "§8[§bBomboAddons§8] §7Default chat set to §ePublic§7 (detected channel change)."));
                     }
                 }
                 processChatMessage(message.getString());
@@ -2648,6 +2826,11 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
             try {
                 me.bombo.bomboaddons.eggfinder.EggFinder.tick();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+            try {
+                me.bombo.bomboaddons.BedwarsESP.tick();
             } catch (Throwable t) {
                 t.printStackTrace();
             }
@@ -2686,22 +2869,27 @@ public class BomboaddonsClient implements ClientModInitializer {
                         List<BomboConfig.CoordBind> activeBinds = s.coordBinds.get(s.activeProfile);
                         List<BomboConfig.CoordBind> generalBinds = s.coordBinds.get("General");
                         List<BomboConfig.CoordBind> binds = new ArrayList<>();
-                        if (activeBinds != null) binds.addAll(activeBinds);
-                        if (generalBinds != null && !s.activeProfile.equals("General")) binds.addAll(generalBinds);
+                        if (activeBinds != null)
+                            binds.addAll(activeBinds);
+                        if (generalBinds != null && !s.activeProfile.equals("General"))
+                            binds.addAll(generalBinds);
 
                         net.minecraft.world.phys.Vec3 playerPos = client.player.position();
                         for (BomboConfig.CoordBind bind : binds) {
-                            if (!bind.enabled) continue;
+                            if (!bind.enabled)
+                                continue;
 
                             // Check required island
                             if (bind.requiredIsland != null && !bind.requiredIsland.trim().isEmpty()) {
                                 String currentAreaLocal = BomboaddonsClient.currentArea;
-                                if (currentAreaLocal == null) currentAreaLocal = "";
+                                if (currentAreaLocal == null)
+                                    currentAreaLocal = "";
                                 String target = bind.requiredIsland.trim().toLowerCase();
                                 boolean matched = currentAreaLocal.toLowerCase().contains(target);
                                 if (!matched && client.level != null) {
                                     var scoreboard = client.level.getScoreboard();
-                                    var sidebar = scoreboard.getDisplayObjective(net.minecraft.world.scores.DisplaySlot.SIDEBAR);
+                                    var sidebar = scoreboard
+                                            .getDisplayObjective(net.minecraft.world.scores.DisplaySlot.SIDEBAR);
                                     if (sidebar != null) {
                                         for (String line : SkyblockUtils.getSidebarLines(scoreboard, sidebar)) {
                                             String clean = line.replaceAll("(?i)§.", "").trim().toLowerCase();
@@ -2718,7 +2906,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 }
                             }
 
-                            double dist = playerPos.distanceTo(new net.minecraft.world.phys.Vec3(bind.x, bind.y, bind.z));
+                            double dist = playerPos
+                                    .distanceTo(new net.minecraft.world.phys.Vec3(bind.x, bind.y, bind.z));
                             double r = bind.radius <= 0.0 ? 3.0 : bind.radius;
                             if (dist <= r) {
                                 if (!bind.wasInside) {
@@ -2726,7 +2915,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     double maxD = bind.maxDelay;
                                     if (maxD > minD && maxD > 0.0) {
                                         double delaySec = minD + Math.random() * (maxD - minD);
-                                        long triggerTime = System.currentTimeMillis() + (long)(delaySec * 1000.0);
+                                        long triggerTime = System.currentTimeMillis() + (long) (delaySec * 1000.0);
                                         pendingCommands.add(new PendingCommand(bind.command, triggerTime));
                                     } else {
                                         executeTracked(bind.command);
@@ -2793,7 +2982,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                         t.printStackTrace(pw);
                         pw.println("==================================");
                     }
-                } catch (Throwable ignore) {}
+                } catch (Throwable ignore) {
+                }
             }
 
             // Independent Safe Box for Etherwarp
@@ -2816,18 +3006,19 @@ public class BomboaddonsClient implements ClientModInitializer {
                     if (!held.isEmpty()) {
                         String cleanName = held.getHoverName().getString().replaceAll("(?i)§.", "").toLowerCase();
                         if (cleanName.contains("aspect of the end") ||
-                            cleanName.contains("aspect of the void") ||
-                            cleanName.contains("hyperion") ||
-                            cleanName.contains("valkyrie") ||
-                            cleanName.contains("scylla") ||
-                            cleanName.contains("astraea")) {
+                                cleanName.contains("aspect of the void") ||
+                                cleanName.contains("hyperion") ||
+                                cleanName.contains("valkyrie") ||
+                                cleanName.contains("scylla") ||
+                                cleanName.contains("astraea")) {
                             if (client.options.keyUse.isDown()) {
                                 GardenMacroDetector.recordWeaponUse();
                             }
                         }
                     }
                 }
-            } catch (Throwable t) {}
+            } catch (Throwable t) {
+            }
 
             try {
                 GardenMovement.onTick(client);
@@ -2994,7 +3185,8 @@ public class BomboaddonsClient implements ClientModInitializer {
     }
 
     public static String normalizeChannel(String channel) {
-        if (channel == null) return "";
+        if (channel == null)
+            return "";
         String lower = channel.toLowerCase().trim();
         if (lower.equals("a") || lower.equals("all")) {
             return "a";
@@ -3022,7 +3214,7 @@ public class BomboaddonsClient implements ClientModInitializer {
         } catch (Throwable t) {
         }
         String cleanMessage = rawMessage.replaceAll("§.", "").trim().toLowerCase();
-        
+
         // Party command automation parsing
         if (BomboConfig.get().partyCommandsEnabled) {
             java.util.List<String> prefixes = new java.util.ArrayList<>();
@@ -3043,22 +3235,27 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             StringBuilder prefixRegex = new StringBuilder("(");
             for (int i = 0; i < prefixes.size(); i++) {
-                if (i > 0) prefixRegex.append("|");
+                if (i > 0)
+                    prefixRegex.append("|");
                 prefixRegex.append(java.util.regex.Pattern.quote(prefixes.get(i)));
             }
             prefixRegex.append(")");
 
-            String regexPattern = "^party\\s*>\\s*(?:\\[[^\\]]+\\]\\s*)?(\\w+)\\s*:\\s*" + prefixRegex.toString() + "(\\w+)(?:\\s+(.+))?$";
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile(regexPattern, java.util.regex.Pattern.CASE_INSENSITIVE).matcher(cleanMessage);
+            String regexPattern = "^party\\s*>\\s*(?:\\[[^\\]]+\\]\\s*)?(\\w+)\\s*:\\s*" + prefixRegex.toString()
+                    + "(\\w+)(?:\\s+(.+))?$";
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile(regexPattern, java.util.regex.Pattern.CASE_INSENSITIVE).matcher(cleanMessage);
             if (m.find()) {
                 String senderName = m.group(1);
                 try {
                     String rawNoFormat = rawMessage.replaceAll("§.", "").trim();
-                    java.util.regex.Matcher mRaw = java.util.regex.Pattern.compile(regexPattern, java.util.regex.Pattern.CASE_INSENSITIVE).matcher(rawNoFormat);
+                    java.util.regex.Matcher mRaw = java.util.regex.Pattern
+                            .compile(regexPattern, java.util.regex.Pattern.CASE_INSENSITIVE).matcher(rawNoFormat);
                     if (mRaw.find()) {
                         senderName = mRaw.group(1);
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
 
                 String command = m.group(3).toLowerCase();
                 String args = m.group(4) != null ? m.group(4).trim() : "";
@@ -3068,13 +3265,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                         long durationMs = CustomTimerManager.parseTimeMs(args);
                         if (durationMs > 0) {
                             CustomTimerManager.startTimer(senderName, durationMs, true);
-                            Bomboaddons.sendMessage("&8[&bBomboAddons&8] &7Started a &e" + args + " &7timer for &a" + senderName + "&7.");
+                            Bomboaddons.sendMessage("&8[&bBomboAddons&8] &7Started a &e" + args + " &7timer for &a"
+                                    + senderName + "&7.");
                         }
                     }
                 } else if (command.equals("warp") && BomboConfig.get().partyCommandWarp) {
                     pendingCommands.add(new PendingCommand("party warp", System.currentTimeMillis() + 300));
                 } else if (command.equals("psa") && BomboConfig.get().partyCommandPsa) {
-                    pendingCommands.add(new PendingCommand("party settings allinvite", System.currentTimeMillis() + 300));
+                    pendingCommands
+                            .add(new PendingCommand("party settings allinvite", System.currentTimeMillis() + 300));
                 } else {
                     for (BomboConfig.CustomPartyCommand cpc : BomboConfig.get().customPartyCommands) {
                         if (cpc.enabled && cpc.triggerText.equalsIgnoreCase(command)) {
@@ -3094,8 +3293,8 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
         }
 
-        if (cleanMessage.contains("[boss] storm: energy heed my call!") || 
-            cleanMessage.contains("[boss] storm: thunder let me be your catalyst!")) {
+        if (cleanMessage.contains("[boss] storm: energy heed my call!") ||
+                cleanMessage.contains("[boss] storm: thunder let me be your catalyst!")) {
             DungeonPadTimers.onBossMessage();
         }
         if (cleanMessage.startsWith("co-op >") && cleanMessage.contains("noreconnect")) {
@@ -3202,16 +3401,20 @@ public class BomboaddonsClient implements ClientModInitializer {
         source.sendFeedback(Component.literal(PREFIX + "§7Checking rank for §e" + username + "§7..."));
         new Thread(() -> {
             try {
-                java.net.URL url = new java.net.URI("https://sbecommands-api.icarusphantom.dev/v1/sbecommands/nw/" + username).toURL();
+                java.net.URL url = new java.net.URI(
+                        "https://sbecommands-api.icarusphantom.dev/v1/sbecommands/nw/" + username).toURL();
                 java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                conn.setRequestProperty("User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
                 int status = conn.getResponseCode();
                 if (status == 200) {
-                    try (java.io.InputStreamReader reader = new java.io.InputStreamReader(conn.getInputStream(), "UTF-8")) {
-                        com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();
+                    try (java.io.InputStreamReader reader = new java.io.InputStreamReader(conn.getInputStream(),
+                            "UTF-8")) {
+                        com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseReader(reader)
+                                .getAsJsonObject();
                         if (obj.has("data")) {
                             com.google.gson.JsonObject data = obj.getAsJsonObject("data");
                             if (data.has("rank")) {
@@ -3219,7 +3422,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 if (rank != null) {
                                     RankCache.setRank(username, rank);
                                     Minecraft.getInstance().execute(() -> {
-                                        source.sendFeedback(Component.literal(PREFIX + "§7API Rank for §e" + username + "§7: " + (rank.isEmpty() ? "§7None" : rank)));
+                                        source.sendFeedback(Component.literal(PREFIX + "§7API Rank for §e" + username
+                                                + "§7: " + (rank.isEmpty() ? "§7None" : rank)));
                                     });
                                     return;
                                 }
@@ -3228,23 +3432,27 @@ public class BomboaddonsClient implements ClientModInitializer {
                     }
                 }
                 Minecraft.getInstance().execute(() -> {
-                    source.sendFeedback(Component.literal(PREFIX + "§cFailed to fetch rank for §e" + username + " §7(Status: " + status + ")"));
+                    source.sendFeedback(Component.literal(
+                            PREFIX + "§cFailed to fetch rank for §e" + username + " §7(Status: " + status + ")"));
                 });
             } catch (Exception e) {
                 Minecraft.getInstance().execute(() -> {
-                    source.sendFeedback(Component.literal(PREFIX + "§cError fetching rank for §e" + username + "§c: " + e.getMessage()));
+                    source.sendFeedback(Component
+                            .literal(PREFIX + "§cError fetching rank for §e" + username + "§c: " + e.getMessage()));
                 });
             }
         }, "Rank-Fetch-Command-" + username).start();
     }
 
     private static void findAndClickYes(Component component) {
-        if (component == null) return;
+        if (component == null)
+            return;
         Style style = component.getStyle();
         ClickEvent clickEvent = style.getClickEvent();
-        
+
         if (BomboConfig.get().debugChat) {
-            DebugUtils.debug("chat", "Inspecting Component: text=\"" + component.getString() + "\", style=" + style + ", clickEvent=" + clickEvent);
+            DebugUtils.debug("chat", "Inspecting Component: text=\"" + component.getString() + "\", style=" + style
+                    + ", clickEvent=" + clickEvent);
         }
 
         if (clickEvent != null) {
@@ -3264,7 +3472,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                             field.setAccessible(true);
                             Object val = field.get(clickEvent);
                             if (BomboConfig.get().debugChat) {
-                                DebugUtils.debug("chat", "Field: " + field.getName() + " of type " + field.getType().getName() + " = " + val);
+                                DebugUtils.debug("chat", "Field: " + field.getName() + " of type "
+                                        + field.getType().getName() + " = " + val);
                             }
                             if (val instanceof ClickEvent.Action) {
                                 actionObj = (ClickEvent.Action) val;
@@ -3280,12 +3489,14 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                     // 2. Scan zero-argument methods via reflection
                     for (java.lang.reflect.Method method : clazz.getDeclaredMethods()) {
-                        if (method.getParameterCount() == 0 && !method.getName().equals("toString") && !method.getName().equals("name")) {
+                        if (method.getParameterCount() == 0 && !method.getName().equals("toString")
+                                && !method.getName().equals("name")) {
                             try {
                                 method.setAccessible(true);
                                 Object val = method.invoke(clickEvent);
                                 if (BomboConfig.get().debugChat) {
-                                    DebugUtils.debug("chat", "Method: " + method.getName() + " returning " + method.getReturnType().getName() + " = " + val);
+                                    DebugUtils.debug("chat", "Method: " + method.getName() + " returning "
+                                            + method.getReturnType().getName() + " = " + val);
                                 }
                                 if (val instanceof ClickEvent.Action) {
                                     actionObj = (ClickEvent.Action) val;
@@ -3294,7 +3505,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 }
                             } catch (Throwable t) {
                                 if (BomboConfig.get().debugChat) {
-                                    DebugUtils.debug("chat", "Method error (" + method.getName() + "): " + t.getMessage());
+                                    DebugUtils.debug("chat",
+                                            "Method error (" + method.getName() + "): " + t.getMessage());
                                 }
                             }
                         }

@@ -365,6 +365,8 @@ public class BomboConfig {
         public boolean blockHighlightsEnabled = false;
         public Map<String, HighlightInfo> particleHighlights = new HashMap<>();
         public boolean particleHighlightsEnabled = false;
+        public boolean bedwarsEsp = false;
+        public boolean bedwarsEspOwnTeam = false;
     }
 
     public static class CustomItemOverride {

@@ -58,6 +58,8 @@ public abstract class EditBoxMixin {
         }
     }
 
+
+
     @Inject(method = "setValue", at = @At("HEAD"))
     private void onSetValue(String value, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         if (value != null) {

@@ -75,11 +75,13 @@ public class ItemCustomizeScreen extends Screen {
         this.materialBox = new EditBox(this.font, x + 100, y + 60, 200, 16, Component.literal("Material"));
         this.materialBox.setMaxLength(64);
         this.materialBox.setValue(currentMaterial);
+        this.materialBox.setBordered(false);
         this.addRenderableWidget(this.materialBox);
 
         this.nameBox = new EditBox(this.font, x + 100, y + 90, 200, 16, Component.literal("Display Name"));
         this.nameBox.setMaxLength(64);
         this.nameBox.setValue(currentName);
+        this.nameBox.setBordered(false);
         this.addRenderableWidget(this.nameBox);
 
         // Buttons: Save, Reset, Cancel

@@ -47,7 +47,8 @@
 		"SkullBlockMixin",
 		"TooltipRenderUtilMixin",
 		"PackConfirmScreenMixin",
-		"TitleScreenMixin"
+		"TitleScreenMixin",
+		"AbstractWidgetMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
