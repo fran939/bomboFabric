@@ -2137,6 +2137,8 @@ public class BomboConfigGUI extends Screen {
                     y2 += ITEM_HEIGHT;
                     g.text(font, "§7Smart Disconnect", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
                     y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Borderless Fullscreen", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
 
                     y2 += 10;
                     g.text(font, "§6§lFuck Diorite Settings", col2X, y2, 0xFFFFAA00, true);
