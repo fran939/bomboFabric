@@ -110,8 +110,10 @@ public class BitsManager {
         }
 
         private String formatName(String name) {
+            String suffix = "";
             int bracketIndex = name.indexOf("(");
             if (bracketIndex != -1) {
+                suffix = " " + name.substring(bracketIndex).trim();
                 name = name.substring(0, bracketIndex).trim();
             }
             
@@ -126,31 +128,187 @@ public class BitsManager {
                     sb.append(" ");
                 }
             }
-            return sb.toString().trim();
+            return sb.toString().trim() + suffix;
         }
+    }
+
+    private static class SimpleBitItem {
+        final String id;
+        final int bits;
+        final String displayName;
+        
+        SimpleBitItem(String id, int bits) {
+            this.id = id;
+            this.bits = bits;
+            this.displayName = id;
+        }
+        
+        SimpleBitItem(String id, int bits, String displayName) {
+            this.id = id;
+            this.bits = bits;
+            this.displayName = displayName;
+        }
+    }
+
+    private static double getPrice(String id) {
+        if ("CARROT_ITEM".equals(id)) {
+            return LowestBinManager.getSellPrice("CARROT_ITEM");
+        }
+        if (id == null || id.isEmpty()) return 0;
+        return LowestBinManager.getSellPrice(id);
     }
 
     private static void getLocalTopBits(int amount, List<String> results, String reason) {
         try {
             List<BitItem> items = new ArrayList<>();
-            for (java.util.Map.Entry<String, Integer> entry : bitCostCache.entrySet()) {
-                String name = entry.getKey();
-                int bits = entry.getValue();
-                if (bits <= 0) continue;
-                
-                double price = LowestBinManager.getSellPrice(name);
-                if (price <= 0) {
-                    String foundId = LowestBinManager.findIdByName(name, true);
-                    if (foundId != null) {
-                        price = LowestBinManager.getSellPrice(foundId);
-                    }
-                }
-                
+            
+            List<SimpleBitItem> simpleItems = List.of(
+                new SimpleBitItem("GOD_POTION_2", 1500),
+                new SimpleBitItem("KISMET_FEATHER", 1350),
+                new SimpleBitItem("KAT_FLOWER", 500),
+                new SimpleBitItem("KAT_BOUQUET", 2500),
+                new SimpleBitItem("MATRIARCH_PARFUM", 1200),
+                new SimpleBitItem("HOLOGRAM", 2000),
+                new SimpleBitItem("DITTO_BLOB", 600),
+                new SimpleBitItem("BUILDERS_WAND", 12000),
+                new SimpleBitItem("BLOCK_ZAPPER", 5000),
+                new SimpleBitItem("BITS_TALISMAN", 15000),
+                new SimpleBitItem("SHARD_BITBUG", 5000),
+                new SimpleBitItem("POCKET_SACK_IN_A_SACK", 8000),
+                new SimpleBitItem("PORTALIZER", 4800),
+                new SimpleBitItem("TRIO_CONTACTS_ADDON", 6450),
+                new SimpleBitItem("ABICASE_SUMSUNG_1", 15000, "SUMSUNG_1"),
+                new SimpleBitItem("ABICASE_SUMSUNG_2", 25000, "SUMSUNG_2"),
+                new SimpleBitItem("ABICASE_REZAR", 26000),
+                new SimpleBitItem("ABICASE_BLUE_RED", 17000),
+                new SimpleBitItem("ABICASE_BLUE_BLUE", 17000),
+                new SimpleBitItem("ABICASE_BLUE_GREEN", 17000),
+                new SimpleBitItem("ABICASE_BLUE_YELLOW", 17000),
+                new SimpleBitItem("ABICASE_BLUE_AQUA", 17000),
+                new SimpleBitItem("AUTOPET_RULES_2", 21000),
+                new SimpleBitItem("DYE_PURE_BLACK", 250000),
+                new SimpleBitItem("DYE_PURE_WHITE", 250000),
+                new SimpleBitItem("ENCHANTMENT_EXPERTISE_1", 4000),
+                new SimpleBitItem("ENCHANTMENT_COMPACT_1", 4000),
+                new SimpleBitItem("ENCHANTMENT_CULTIVATING_1", 4000),
+                new SimpleBitItem("ENCHANTMENT_ABSORB_1", 4000),
+                new SimpleBitItem("ENCHANTMENT_CHAMPION_1", 4000),
+                new SimpleBitItem("ENCHANTMENT_HECATOMB_1", 6000),
+                new SimpleBitItem("ENCHANTMENT_TOXOPHILITE_1", 4000),
+                new SimpleBitItem("TALISMAN_ENRICHMENT_SWAPPER", 200)
+            );
+
+            for (SimpleBitItem item : simpleItems) {
+                double price = getPrice(item.id);
                 if (price > 0) {
-                    items.add(new BitItem(name, price / bits));
+                    items.add(new BitItem(item.displayName, price / item.bits));
                 }
             }
-            
+
+            double infernoPrice = getPrice("INFERNO_FUEL_BLOCK");
+            if (infernoPrice > 0) {
+                items.add(new BitItem("INFERNO_FUEL_BLOCK", (infernoPrice * 64.0) / 3120.0));
+            }
+
+            String[] ENRICHMENTS = {
+                "TALISMAN_ENRICHMENT_WALK_SPEED",
+                "TALISMAN_ENRICHMENT_INTELLIGENCE",
+                "TALISMAN_ENRICHMENT_CRITICAL_DAMAGE",
+                "TALISMAN_ENRICHMENT_CRITICAL_CHANCE",
+                "TALISMAN_ENRICHMENT_STRENGTH",
+                "TALISMAN_ENRICHMENT_DEFENSE",
+                "TALISMAN_ENRICHMENT_HEALTH",
+                "TALISMAN_ENRICHMENT_MAGIC_FIND",
+                "TALISMAN_ENRICHMENT_FEROCITY",
+                "TALISMAN_ENRICHMENT_SEA_CREATURE_CHANCE",
+                "TALISMAN_ENRICHMENT_ATTACK_SPEED"
+            };
+            double cheapestEnrichmentPrice = Double.MAX_VALUE;
+            for (String enr : ENRICHMENTS) {
+                double p = getPrice(enr);
+                if (p > 0 && p < cheapestEnrichmentPrice) {
+                    cheapestEnrichmentPrice = p;
+                }
+            }
+            if (cheapestEnrichmentPrice != Double.MAX_VALUE) {
+                items.add(new BitItem("CHEAPEST_ENRICHMENT", cheapestEnrichmentPrice / 5000.0));
+            }
+
+            double heatCorePrice = getPrice("HEAT_CORE");
+            if (heatCorePrice > 0) {
+                items.add(new BitItem("HEAT_CORE (Raw)", heatCorePrice / 3000.0));
+            }
+
+            double plasmaPrice = getPrice("PLASMA_BUCKET");
+            double magmaPrice = getPrice("MAGMA_BUCKET");
+            double enchCoalBlock = getPrice("ENCHANTED_COAL_BLOCK");
+            double enchIron = getPrice("ENCHANTED_IRON");
+            if (enchCoalBlock > 0 && enchIron > 0) {
+                if (magmaPrice > 0) {
+                    double costVal = 4.0 * enchCoalBlock + 6.0 * enchIron;
+                    items.add(new BitItem("MAGMA_BUCKET (Crafted)", (magmaPrice - costVal) / 3000.0));
+                }
+                if (plasmaPrice > 0) {
+                    double costVal = 8.0 * enchCoalBlock + 12.0 * enchIron;
+                    items.add(new BitItem("PLASMA_BUCKET (Crafted)", (plasmaPrice - costVal) / 9000.0));
+                }
+            }
+
+            double hcuPrice = getPrice("HYPER_CATALYST_UPGRADE");
+            if (hcuPrice > 0) {
+                items.add(new BitItem("HYPER_CATALYST_UPGRADE (Raw)", hcuPrice / 300.0));
+            }
+
+            double hyperCatalystPrice = getPrice("HYPER_CATALYST");
+            double catalystPrice = getPrice("CATALYST");
+            if (hyperCatalystPrice > 0 && catalystPrice > 0) {
+                double made = hyperCatalystPrice * 8.0;
+                double cost = catalystPrice * 8.0;
+                items.add(new BitItem("HYPER_CATALYST (Crafted 8x)", (made - cost) / 300.0));
+            }
+
+            double uccuPrice = getPrice("ULTIMATE_CARROT_CANDY_UPGRADE");
+            if (uccuPrice > 0) {
+                items.add(new BitItem("ULTIMATE_CARROT_CANDY_UPGRADE (Raw)", uccuPrice / 8000.0));
+            }
+
+            double uccPrice = getPrice("ULTIMATE_CARROT_CANDY");
+            double carrotMenuPrice = getPrice("CARROT_ITEM");
+            double enchCarrotPrice = getPrice("ENCHANTED_CARROT");
+            if (uccPrice > 0 && carrotMenuPrice > 0 && enchCarrotPrice > 0) {
+                double totalIngredientsCost = 33280.0 * enchCarrotPrice + 4608.0 * carrotMenuPrice;
+                items.add(new BitItem("ULTIMATE_CARROT_CANDY (Crafted 10x)", (uccPrice * 10.0 - totalIngredientsCost) / 8000.0));
+            }
+
+            double cebuPrice = getPrice("COLOSSAL_EXP_BOTTLE_UPGRADE");
+            if (cebuPrice > 0) {
+                items.add(new BitItem("COLOSSAL_EXP_BOTTLE_UPGRADE (Raw)", cebuPrice / 1200.0));
+            }
+
+            double colossalPrice = getPrice("COLOSSAL_EXP_BOTTLE");
+            double titanicPrice = getPrice("TITANIC_EXP_BOTTLE");
+            if (colossalPrice > 0 && titanicPrice > 0) {
+                items.add(new BitItem("COLOSSAL_EXP_BOTTLE (Crafted)", (colossalPrice - titanicPrice) / 1200.0));
+            }
+
+            double jbuPrice = getPrice("JUMBO_BACKPACK_UPGRADE");
+            if (jbuPrice > 0) {
+                items.add(new BitItem("JUMBO_BACKPACK_UPGRADE (Raw)", jbuPrice / 4000.0));
+            }
+
+            double jumboPrice = getPrice("JUMBO_BACKPACK");
+            double enchLeatherPrice = getPrice("ENCHANTED_LEATHER");
+            double leatherPrice = getPrice("LEATHER");
+            if (jumboPrice > 0 && enchLeatherPrice > 0 && leatherPrice > 0) {
+                double leatherCost = 144.0 * enchLeatherPrice + 512.0 * leatherPrice;
+                items.add(new BitItem("JUMBO_BACKPACK (Crafted)", (jumboPrice - leatherCost) / 4000.0));
+            }
+
+            double msePrice = getPrice("MINION_STORAGE_EXPANDER");
+            if (msePrice > 0) {
+                items.add(new BitItem("MINION_STORAGE_EXPANDER (Raw)", msePrice / 1500.0));
+            }
+
             if (!items.isEmpty()) {
                 items.sort(Comparator.comparingDouble((BitItem b) -> b.profitPerBit).reversed());
                 results.add("§6Profit Per Bit §7(Local Fallback)");

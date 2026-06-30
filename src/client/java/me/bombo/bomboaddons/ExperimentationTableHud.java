@@ -71,7 +71,7 @@ public class ExperimentationTableHud {
         Minecraft mc = Minecraft.getInstance();
         long currentFrame = System.currentTimeMillis();
         // Prevent double rendering in the same frame
-        if (currentFrame == lastRenderFrame && !(mc.gui.screen() instanceof HudMoveScreen)) return;
+        if (currentFrame == lastRenderFrame && !(mc.screen instanceof HudMoveScreen)) return;
         lastRenderFrame = currentFrame;
 
         BomboConfig.Settings s = BomboConfig.get();
@@ -80,7 +80,7 @@ public class ExperimentationTableHud {
         LowestBinManager.ensureLoaded();
 
         boolean inMenu = false;
-        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+        if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
             String title = screen.getTitle().getString();
             if (title.toLowerCase().contains("experimentation table rng")) {
                 inMenu = true;
@@ -106,14 +106,14 @@ public class ExperimentationTableHud {
         }
         lastInMenu = inMenu;
 
-        if (!inMenu && !(mc.gui.screen() instanceof HudMoveScreen)) {
+        if (!inMenu && !(mc.screen instanceof HudMoveScreen)) {
             // Keep the items stored so they persist when the screen closes!
             // But don't render if we aren't in the GUI or HudMoveScreen
             return;
         }
 
         // If in HudMoveScreen and empty, show a dummy
-        if (mc.gui.screen() instanceof HudMoveScreen && storedRewards.isEmpty()) {
+        if (mc.screen instanceof HudMoveScreen && storedRewards.isEmpty()) {
             storedRewards.put("ENCHANTMENT_LOOTING_5", new DetectedRngItem("ENCHANTMENT_LOOTING_5", "Looting V", 500000));
             storedRewards.put("ENCHANTMENT_GROWTH_6", new DetectedRngItem("ENCHANTMENT_GROWTH_6", "Growth VI", 150000));
             storedRewards.put("ENCHANTMENT_GIANT_KILLER_7", new DetectedRngItem("ENCHANTMENT_GIANT_KILLER_7", "Giant Killer VII", 500000));

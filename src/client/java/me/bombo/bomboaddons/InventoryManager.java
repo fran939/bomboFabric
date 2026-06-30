@@ -17,7 +17,7 @@ import java.util.List;
 public class InventoryManager {
     public static void captureCurrentGUI() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen) {
+        if (mc.screen instanceof AbstractContainerScreen<?> screen) {
             String guiName = screen.getTitle().getString().replaceAll("§.", "");
             String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             List<String> itemData = new ArrayList<>();
@@ -106,7 +106,7 @@ public class InventoryManager {
             mc.execute(() -> {
                 try {
                     InventoryViewScreen screen = new InventoryViewScreen(selected);
-                    mc.setScreenAndShow(screen);
+                    mc.setScreen(screen);
                 } catch (Exception e) {
                     mc.player.sendSystemMessage(Component.literal("§c[BomboAddons] Failed to open snapshot: " + e.getMessage()));
                     e.printStackTrace();

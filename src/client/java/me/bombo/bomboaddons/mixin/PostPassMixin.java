@@ -23,7 +23,9 @@ public abstract class PostPassMixin {
             if (customUniforms != null) {
                 com.mojang.blaze3d.buffers.GpuBuffer radiusBuffer = customUniforms.get("Radius");
                 if (radiusBuffer != null) {
-                    com.mojang.blaze3d.buffers.GpuBufferSlice.MappedView mappedView = radiusBuffer.map(false, true);
+                    com.mojang.blaze3d.systems.GpuDevice device = com.mojang.blaze3d.systems.RenderSystem.getDevice();
+                    com.mojang.blaze3d.systems.CommandEncoder encoder = device.createCommandEncoder();
+                    com.mojang.blaze3d.buffers.GpuBuffer.MappedView mappedView = encoder.mapBuffer(radiusBuffer, false, true);
                     if (mappedView != null) {
                         java.nio.ByteBuffer byteBuffer = mappedView.data();
                         if (byteBuffer != null) {

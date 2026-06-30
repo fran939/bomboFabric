@@ -17,6 +17,8 @@ import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -26,6 +28,108 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 @Mixin(ItemStack.class)
 public abstract class ItemStackMixin {
+
+    private Item getOriginalItem() {
+        boolean originalRestore = BomboConfig.get().restoreItemModels;
+        BomboConfig.get().restoreItemModels = false;
+        Item originalItem = ((ItemStack) (Object) this).getItem();
+        BomboConfig.get().restoreItemModels = originalRestore;
+        return originalItem;
+    }
+
+    @Inject(method = "getItem", at = @At("HEAD"), cancellable = true)
+    private void onGetItem(CallbackInfoReturnable<Item> cir) {
+        if (!BomboConfig.get().restoreItemModels) return;
+
+        ItemStack stack = (ItemStack) (Object) this;
+        String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
+        me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
+        if (id != null && !id.isEmpty()) {
+            customOverride = BomboConfig.get().customItemOverrides.get(id);
+        } else {
+            Item orig = getOriginalItem();
+            if (orig != null) {
+                String vanillaId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(orig).toString();
+                customOverride = BomboConfig.get().customItemOverrides.get(vanillaId);
+            }
+        }
+
+        if (customOverride != null && customOverride.material != null && !customOverride.material.isEmpty()) {
+            Item overrideItem = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItem(customOverride.material);
+            if (overrideItem != null) {
+                cir.setReturnValue(overrideItem);
+                return;
+            }
+        }
+
+        if (id != null && !id.isEmpty()) {
+            me.bombo.bomboaddons.SkyblockItemManager.SkyblockItemInfo info = me.bombo.bomboaddons.SkyblockItemManager.getInfo(id);
+            if (info != null) {
+                Item overrideItem = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItem(info.material);
+                if (overrideItem != null) {
+                    cir.setReturnValue(overrideItem);
+                }
+            }
+        }
+    }
+
+    @Inject(method = "typeHolder", at = @At("HEAD"), cancellable = true)
+    private void onGetTypeHolder(CallbackInfoReturnable<net.minecraft.core.Holder<Item>> cir) {
+        if (!BomboConfig.get().restoreItemModels) return;
+
+        ItemStack stack = (ItemStack) (Object) this;
+        String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
+        me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
+        if (id != null && !id.isEmpty()) {
+            customOverride = BomboConfig.get().customItemOverrides.get(id);
+        } else {
+            Item orig = getOriginalItem();
+            if (orig != null) {
+                String vanillaId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(orig).toString();
+                customOverride = BomboConfig.get().customItemOverrides.get(vanillaId);
+            }
+        }
+
+        if (customOverride != null && customOverride.material != null && !customOverride.material.isEmpty()) {
+            net.minecraft.core.Holder<Item> overrideHolder = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItemHolder(customOverride.material);
+            if (overrideHolder != null) {
+                cir.setReturnValue(overrideHolder);
+                return;
+            }
+        }
+
+        if (id != null && !id.isEmpty()) {
+            me.bombo.bomboaddons.SkyblockItemManager.SkyblockItemInfo info = me.bombo.bomboaddons.SkyblockItemManager.getInfo(id);
+            if (info != null) {
+                net.minecraft.core.Holder<Item> overrideHolder = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItemHolder(info.material);
+                if (overrideHolder != null) {
+                    cir.setReturnValue(overrideHolder);
+                }
+            }
+        }
+    }
+
+    @Inject(method = "getHoverName", at = @At("HEAD"), cancellable = true)
+    private void onGetHoverName(CallbackInfoReturnable<Component> cir) {
+        ItemStack stack = (ItemStack) (Object) this;
+        String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
+        me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
+        if (id != null && !id.isEmpty()) {
+            customOverride = BomboConfig.get().customItemOverrides.get(id);
+        } else {
+            Item orig = getOriginalItem();
+            if (orig != null) {
+                String vanillaId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(orig).toString();
+                customOverride = BomboConfig.get().customItemOverrides.get(vanillaId);
+            }
+        }
+
+        if (customOverride != null && customOverride.name != null && !customOverride.name.isEmpty()) {
+            String formatted = customOverride.name.replace('&', '§');
+            cir.setReturnValue(Component.literal(formatted));
+        }
+    }
+
 
     @Inject(method = "getTooltipLines", at = @At("RETURN"))
     private void onGetTooltipLines(Item.TooltipContext context, Player player, TooltipFlag tooltipFlag, CallbackInfoReturnable<List<Component>> cir) {
@@ -49,7 +153,7 @@ public abstract class ItemStackMixin {
 
         if (skyblockId == null || skyblockId.isEmpty()) {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+            if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
                 String title = screen.getTitle().getString();
                 if (title.toLowerCase().contains("experimentation table rng")) {
                     String cleanName = stack.getHoverName().getString().replaceAll("(?i)§.", "").trim();

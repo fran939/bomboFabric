@@ -39,15 +39,21 @@ public abstract class DisconnectedScreenMixin extends Screen {
 
             boolean auto = me.bombo.bomboaddons.BomboConfig.get().autoReconnect;
             boolean delayed = BomboaddonsClient.tempDisableReconnect;
-            Button reconnectBtn = Button.builder(Component.literal(auto ? (delayed ? "Reconnect (300s)" : "Reconnect (5s)") : "Reconnect"), btn -> {
-                BomboaddonsClient.autoReconnectTicks = -1;
-                BomboaddonsClient.reconnect(this.parent, this.minecraft);
-            })
-            .bounds(originalX, originalY + originalHeight + 4, originalWidth, originalHeight)
-            .build();
 
-            addRenderableWidget(reconnectBtn);
-            BomboaddonsClient.activeReconnectBtn = reconnectBtn;
+            if (me.bombo.bomboaddons.BomboConfig.get().reconnectButton) {
+                Button reconnectBtn = Button.builder(Component.literal(auto ? (delayed ? "Reconnect (300s)" : "Reconnect (5s)") : "Reconnect"), btn -> {
+                    BomboaddonsClient.autoReconnectTicks = -1;
+                    BomboaddonsClient.reconnect(this.parent, this.minecraft);
+                })
+                .bounds(originalX, originalY + originalHeight + 4, originalWidth, originalHeight)
+                .build();
+
+                addRenderableWidget(reconnectBtn);
+                BomboaddonsClient.activeReconnectBtn = reconnectBtn;
+            } else {
+                BomboaddonsClient.activeReconnectBtn = null;
+            }
+
             BomboaddonsClient.activeParent = this.parent;
             if (auto) {
                 BomboaddonsClient.autoReconnectTicks = delayed ? 6000 : 100; // 5 minutes if delayed, otherwise 5 seconds

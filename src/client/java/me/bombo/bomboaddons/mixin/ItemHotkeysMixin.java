@@ -171,7 +171,7 @@ public abstract class ItemHotkeysMixin {
          }
 
          if (action.equalsIgnoreCase("TRADE")) {
-            String title = Minecraft.getInstance().gui.screen().getTitle().getString();
+            String title = Minecraft.getInstance().screen.getTitle().getString();
             String cleanName = this.cleanName(itemStack);
             
             if (title.contains("Hunting Box")) {

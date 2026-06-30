@@ -10,11 +10,13 @@ public class ParticleTracker {
 
     public static class ParticleEntry {
         public final String type;
+        public final String rawType;
         public final double x, y, z;
         public final long timestamp;
 
-        public ParticleEntry(String type, double x, double y, double z) {
+        public ParticleEntry(String type, String rawType, double x, double y, double z) {
             this.type = type;
+            this.rawType = rawType;
             this.x = x;
             this.y = y;
             this.z = z;
@@ -50,7 +52,7 @@ public class ParticleTracker {
         double maxR = Math.max(espRadius, 32.0); // always collect within at least 32 blocks
         if (distSq > maxR * maxR) return;
 
-        ENTRIES.add(new ParticleEntry(cleanTypeName(typeName), x, y, z));
+        ENTRIES.add(new ParticleEntry(cleanTypeName(typeName), typeName, x, y, z));
     }
 
     // -----------------------------------------------------------------------

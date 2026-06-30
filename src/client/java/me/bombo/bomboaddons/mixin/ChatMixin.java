@@ -12,6 +12,7 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.network.chat.MessageSignature;
 import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.client.multiplayer.chat.GuiMessageSource;
+import net.minecraft.client.Minecraft;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Environment(EnvType.CLIENT)
 @Mixin({ ChatComponent.class })
-public abstract class ChatMixin {
+public abstract class ChatMixin implements me.bombo.bomboaddons.util.IChatComponent {
    @Shadow
    @Final
    private List<GuiMessage> allMessages;
@@ -32,7 +33,17 @@ public abstract class ChatMixin {
    private List<GuiMessage.Line> trimmedMessages;
 
    @Shadow
+   @Final
+   private Minecraft minecraft;
+
+   @Shadow
    protected abstract void refreshTrimmedMessages();
+
+   @Shadow
+   public abstract double getScale();
+
+   @Shadow
+   public abstract int getWidth();
 
    @Inject(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V", at = @At("HEAD"))
    private void onAddMessage(Component message, MessageSignature signature, GuiMessageSource source, GuiMessageTag tag, CallbackInfo ci) {
@@ -54,5 +65,35 @@ public abstract class ChatMixin {
          this.refreshTrimmedMessages();
       }
 
+   }
+
+   @Unique
+   @Override
+   public double bombo$getScale() {
+      return this.getScale();
+   }
+
+   @Unique
+   @Override
+   public GuiMessage.Line bombo$getLineAt(double mouseX, double mouseY) {
+      if (this.trimmedMessages == null || this.trimmedMessages.isEmpty()) return null;
+      if (this.minecraft.screen == null) return null;
+      
+      double d = mouseX - 2.0;
+      double e = (double)this.minecraft.getWindow().getGuiScaledHeight() - mouseY - 40.0;
+      double scale = this.getScale();
+      d = d / scale;
+      e = e / scale;
+      
+      int width = this.getWidth();
+      if (d >= 0.0 && d <= (double)width) {
+         double chatLineSpacing = this.minecraft.options.chatLineSpacing().get();
+         double chatLineHeight = 9.0 * (chatLineSpacing + 1.0);
+         int lineIndex = net.minecraft.util.Mth.floor(e / chatLineHeight);
+         if (lineIndex >= 0 && lineIndex < this.trimmedMessages.size()) {
+            return this.trimmedMessages.get(lineIndex);
+         }
+      }
+      return null;
    }
 }

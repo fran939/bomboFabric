@@ -33,12 +33,12 @@ public abstract class MouseMixin {
         if (action == 1) { // GLFW_PRESS
             int button = info.button();
             Minecraft mc = Minecraft.getInstance();
-            if (mc.gui.screen() instanceof me.bombo.bomboaddons.BomboConfigGUI) {
+            if (mc.screen instanceof me.bombo.bomboaddons.BomboConfigGUI) {
                 return;
             }
-             if (mc.gui.screen() != null && mc.player != null) {
+             if (mc.screen != null && mc.player != null) {
                 try {
-                    if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen) {
+                    if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen) {
                         net.minecraft.world.inventory.Slot slot = ((me.bombo.bomboaddons.mixin.AbstractContainerScreenAccessor) containerScreen).getHoveredSlot();
                         if (me.bombo.bomboaddons.KuudraPerkClicker.onMouseClicked(containerScreen, slot, button)) {
                             ci.cancel();
@@ -49,7 +49,7 @@ public abstract class MouseMixin {
                     t.printStackTrace();
                 }
 
-                if (!(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen || mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen)) {
+                if (!(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen || mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen)) {
                     if (ClickLogic.onKeyPressed(button)) {
                         ci.cancel();
                         return;
@@ -63,7 +63,7 @@ public abstract class MouseMixin {
                 List<BomboConfig.CommandBind> activeBinds = null;
                 List<BomboConfig.CommandBind> generalBinds = null;
 
-                if (mc.gui.screen() != null) {
+                if (mc.screen != null) {
                     // Profile keybinds only trigger when a GUI is open
                     activeBinds = BomboConfig.get().profileBinds.get(activeProfile);
                     generalBinds = BomboConfig.get().profileBinds.get("General");

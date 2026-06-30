@@ -25,7 +25,7 @@ public class BomboConfigGUI extends Screen {
 
     private final Screen parent;
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
-            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons", "Coord Binds", "Mining", "Party Settings");
+            "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons", "Coord Binds", "Mining", "Party Settings", "Block Highlights", "Particle Highlights");
     public static int selectedCategory = 0;
 
     private static int partyCommandsX = -1;
@@ -54,6 +54,17 @@ public class BomboConfigGUI extends Screen {
     private static boolean highShowInvis = false;
     private static String editingHighMob = null;
     private static String listeningForKeyTarget = "";
+
+    // Transient state for block highlights
+    private static String blockNameInput = "";
+    private static String blockColorInput = "GOLD";
+    private static boolean blockThroughWallsInput = true;
+    private static String editingBlockName = null;
+
+    // Transient state for particle highlights
+    private static String partHighInput = "";
+    private static String partHighColorInput = "GOLD";
+    private static String editingPartHigh = null;
     private static final List<String> recordedComboKeys = new ArrayList<>();
 
     private static int editingClickTargetIdx = -1;
@@ -95,9 +106,15 @@ public class BomboConfigGUI extends Screen {
     private static String cbMaxDelayInput = "0";
     private static int editingCoordBindIdx = -1;
 
+    private static int colorPickerMode = 0; // 0 = Background, 1 = Border
+    private static boolean isDraggingSv = false;
+    private static boolean isDraggingHue = false;
+    private static boolean isDraggingAlpha = false;
+    private static float currentHue = 0.0f;
+
     public static boolean isTypingOrListening() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui.screen() instanceof BomboConfigGUI gui) {
+        if (mc.screen instanceof BomboConfigGUI gui) {
             if (listeningForKeyTarget != null && !listeningForKeyTarget.isEmpty()) {
                 return true;
             }
@@ -163,11 +180,13 @@ public class BomboConfigGUI extends Screen {
 
     public BomboConfigGUI(Screen parent) {
         super(Component.literal("Bomboaddons Configuration"));
+        System.out.println("DEBUG: BomboConfigGUI constructor start");
         this.parent = parent;
+        System.out.println("DEBUG: BomboConfigGUI constructor end");
     }
 
     public static Screen create() {
-        Screen current = Minecraft.getInstance().gui.screen();
+        Screen current = Minecraft.getInstance().screen;
         if (current instanceof net.minecraft.client.gui.screens.ChatScreen) {
             return new BomboConfigGUI(null);
         }
@@ -176,6 +195,7 @@ public class BomboConfigGUI extends Screen {
 
     @Override
     protected void init() {
+        System.out.println("DEBUG: BomboConfigGUI init start");
         try {
             super.init();
             BomboConfig.Settings s = BomboConfig.get();
@@ -254,6 +274,7 @@ public class BomboConfigGUI extends Screen {
                     int y1 = contentBaseY + ITEM_HEIGHT;
                     y1 = addBoolOption("Sign Calculator", s.signCalculator, v -> s.signCalculator = v, col1X, col1W, y1);
                     y1 = addBoolOption("SBE Commands", s.sbeCommands, v -> s.sbeCommands = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Copy Chat", s.copyChat, v -> s.copyChat = v, col1X, col1W, y1);
                     y1 = addBoolOption("Left Click Etherwarp", s.leftClickEtherwarp, v -> s.leftClickEtherwarp = v, col1X, col1W, y1);
                     y1 = addBoolOption("Sphinx Macro", s.sphinxMacro, v -> s.sphinxMacro = v, col1X, col1W, y1);
                     y1 = addBoolOption("Hollow Wand Fix", s.hollowWandClickThrough, v -> s.hollowWandClickThrough = v, col1X, col1W, y1);
@@ -272,7 +293,7 @@ public class BomboConfigGUI extends Screen {
                     int y2 = contentBaseY + ITEM_HEIGHT;
                     y2 = addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, col2X, col2W, y2);
                     y2 = addBoolOption("Server List Button", s.serverListButton, v -> s.serverListButton = v, col2X, col2W, y2);
-                    y2 = addBoolOption("Reconnect Button on Pause Screen", s.reconnectButton, v -> s.reconnectButton = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Reconnect Button", s.reconnectButton, v -> s.reconnectButton = v, col2X, col2W, y2);
                     y2 = addBoolOption("Quick Join Commands (/f1, /m1, etc)", s.quickJoinCommands, v -> s.quickJoinCommands = v, col2X, col2W, y2);
                     y2 = addBoolOption("Auto Reconnect", s.autoReconnect, v -> s.autoReconnect = v, col2X, col2W, y2);
                     partyCommandsX = col2X;
@@ -280,6 +301,10 @@ public class BomboConfigGUI extends Screen {
                     partyCommandsWidth = col2W;
                     partyCommandsHeight = ITEM_HEIGHT;
                     y2 = addBoolOption("Party Commands", s.partyCommandsEnabled, v -> s.partyCommandsEnabled = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Nuh uh", s.bypassResourcePack, v -> s.bypassResourcePack = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Restore Item Models", s.restoreItemModels, v -> s.restoreItemModels = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Hypixel Shortcut Button", s.hypixelShortcutButton, v -> s.hypixelShortcutButton = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Smart Disconnect", s.smartDisconnect, v -> s.smartDisconnect = v, col2X, col2W, y2);
                     
                     y2 += 10;
                     y2 += ITEM_HEIGHT;
@@ -288,13 +313,60 @@ public class BomboConfigGUI extends Screen {
                     y2 = addColorCycleButton("Fuck Diorite Color", s.fuckDioriteColor, v -> s.fuckDioriteColor = v, col2X, col2W, y2);
                 }
                 case 1 -> { // HUDs
-                    curY += ITEM_HEIGHT;
-                    curY = addBoolOption("Dice Tracker HUD", s.diceTracker, v -> s.diceTracker = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("Feast Bakery HUD", s.feastBakeryHud, v -> s.feastBakeryHud = v, contentX, contentWidth, curY);
-                    curY = addBoolOption("RNG Profit HUD", s.rngProfitHud, v -> s.rngProfitHud = v, contentX, contentWidth, curY);
-                    curY = addIntLabelSlider("RNG HUD Opacity", s.rngProfitHudOpacity, 0, 100, 10, v -> s.rngProfitHudOpacity = v, contentX, 150, curY);
-                    curY = addBoolOption("Custom Timers HUD", s.customTimerHudEnabled, v -> s.customTimerHudEnabled = v, contentX, contentWidth, curY);
+                    int col1X = contentX;
+                    int col1W = contentWidth / 2 - 10;
+                    int col2X = contentX + contentWidth / 2 + 10;
+                    int col2W = contentWidth / 2 - 10;
+
+                    int y1 = contentBaseY + ITEM_HEIGHT;
+                    y1 = addBoolOption("Dice Tracker HUD", s.diceTracker, v -> s.diceTracker = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Feast Bakery HUD", s.feastBakeryHud, v -> s.feastBakeryHud = v, col1X, col1W, y1);
+                    y1 = addBoolOption("RNG Profit HUD", s.rngProfitHud, v -> s.rngProfitHud = v, col1X, col1W, y1);
+                    y1 = addIntLabelSlider("RNG HUD Opacity", s.rngProfitHudOpacity, 0, 100, 10, v -> s.rngProfitHudOpacity = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Custom Timers HUD", s.customTimerHudEnabled, v -> s.customTimerHudEnabled = v, col1X, col1W, y1);
+
+                    int y2 = contentBaseY + ITEM_HEIGHT;
+                    y2 = addBoolOption("Custom Tooltip Background", s.customTooltipBg, v -> s.customTooltipBg = v, col2X, col2W, y2);
                     
+                    int btnW = col2W / 2 - 2;
+                    addRenderableWidget(Button.builder(Component.literal(colorPickerMode == 0 ? "§a§lBg Color" : "§7Bg Color"), btn -> {
+                        colorPickerMode = 0;
+                        int currentRgb = (s.tooltipBgColor & 0xFFFFFF);
+                        float[] hsvTemp = rgbToHsv((currentRgb >> 16) & 0xFF, (currentRgb >> 8) & 0xFF, currentRgb & 0xFF);
+                        currentHue = hsvTemp[0];
+                        init();
+                    }).bounds(col2X, y2, btnW, 16).build());
+                    
+                    addRenderableWidget(Button.builder(Component.literal(colorPickerMode == 1 ? "§a§lBorder Color" : "§7Border Color"), btn -> {
+                        colorPickerMode = 1;
+                        int currentRgb = (s.tooltipBorderColor & 0xFFFFFF);
+                        float[] hsvTemp = rgbToHsv((currentRgb >> 16) & 0xFF, (currentRgb >> 8) & 0xFF, currentRgb & 0xFF);
+                        currentHue = hsvTemp[0];
+                        init();
+                    }).bounds(col2X + btnW + 4, y2, btnW, 16).build());
+                    
+                    y2 += 20;
+                    
+                    int pickerY = y2;
+                    addRenderableWidget(Button.builder(Component.literal("Reset"), btn -> {
+                        s.tooltipBgColor = 0xF0100010;
+                        s.tooltipBorderColor = 0x505000FF;
+                        int currentRgb = colorPickerMode == 0 ? (s.tooltipBgColor & 0xFFFFFF) : (s.tooltipBorderColor & 0xFFFFFF);
+                        float[] hsvTemp = rgbToHsv((currentRgb >> 16) & 0xFF, (currentRgb >> 8) & 0xFF, currentRgb & 0xFF);
+                        currentHue = hsvTemp[0];
+                        BomboConfig.save();
+                        init();
+                    }).bounds(col2X + 126, pickerY + 63, 40, 16).build());
+                    
+                    y2 += 90;
+
+                    int activeRgb = colorPickerMode == 0 ? (s.tooltipBgColor & 0xFFFFFF) : (s.tooltipBorderColor & 0xFFFFFF);
+                    float[] hsv = rgbToHsv((activeRgb >> 16) & 0xFF, (activeRgb >> 8) & 0xFF, activeRgb & 0xFF);
+                    if (!isDraggingHue && !isDraggingSv) {
+                        currentHue = hsv[0];
+                    }
+
+                    curY = Math.max(y1, y2);
                     curY += 10;
                     addRenderableWidget(Button.builder(Component.literal("§e§lMove HUD Elements"), btn -> {
                         Minecraft.getInstance().setScreenAndShow(new HudMoveScreen());
@@ -626,6 +698,7 @@ public class BomboConfigGUI extends Screen {
                         s.debugEntities = true;
                         s.debugCommands = true;
                         s.debugMaster = true;
+                        s.debugParticles = true;
                     }).bounds(contentX, curY, contentWidth, 20).build());
                     curY += ITEM_HEIGHT + 4;
 
@@ -636,6 +709,8 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Debug Mode (Legacy)", s.debugMode, v -> s.debugMode = v, contentX, contentWidth, curY);
                     curY = addBoolOption("API Debug", s.apiDebug, v -> s.apiDebug = v, contentX, contentWidth, curY);
                     curY = addBoolOption("API Chat Messages", s.apiChatMessages, v -> s.apiChatMessages = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("LB Debug", s.lbDebug, v -> s.lbDebug = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Particle Debug", s.debugParticles, v -> s.debugParticles = v, contentX, contentWidth, curY);
                 }
                 case 11 -> { // Kuudra
                     curY += ITEM_HEIGHT;
@@ -1296,6 +1371,133 @@ public class BomboConfigGUI extends Screen {
                         }
                     }
                 }
+                case 21 -> { // Block Highlights
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Block Highlights Enabled", s.blockHighlightsEnabled, v -> { s.blockHighlightsEnabled = v; if (!v) BlockHighlight.highlightedBlocks.clear(); }, contentX, contentWidth, curY);
+                    curY += 10;
+                    curY = addTextBox("Block Name/ID", blockNameInput, v -> blockNameInput = v, contentX, contentWidth, curY);
+                    curY = addColorCycleButton("Color", blockColorInput, v -> blockColorInput = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("See Through Walls", blockThroughWallsInput, v -> blockThroughWallsInput = v, contentX, contentWidth, curY);
+
+                    int finalCurY = curY;
+                    String addBtnText = editingBlockName != null ? "§e✔ Save Block Highlight" : "§a+ Add Block Highlight";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                        if (!blockNameInput.isEmpty()) {
+                            if (editingBlockName != null) {
+                                s.blockHighlights.remove(editingBlockName);
+                            }
+                            s.blockHighlights.put(blockNameInput.toLowerCase(), new BomboConfig.BlockHighlightInfo(blockColorInput.toUpperCase(), blockThroughWallsInput));
+                            BomboConfig.save();
+                            blockNameInput = ""; blockColorInput = "GOLD"; blockThroughWallsInput = true;
+                            editingBlockName = null;
+                            BlockHighlight.highlightedBlocks.clear(); // force rescan
+                            init();
+                        }
+                    }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+
+                    if (editingBlockName != null) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel Edit"), btn -> {
+                            blockNameInput = ""; blockColorInput = "GOLD"; blockThroughWallsInput = true;
+                            editingBlockName = null;
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 80, 20).build());
+                    }
+
+                    curY += 35; // Space before list
+                    int listStartY = curY;
+                    List<String> sortedBlocks = new ArrayList<>(s.blockHighlights.keySet());
+                    Collections.sort(sortedBlocks);
+                    for (int i = 0; i < sortedBlocks.size(); i++) {
+                        final String bName = sortedBlocks.get(i);
+                        int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
+                        if (itemY > listStartY + 15 && itemY < height - 20) {
+                            BomboConfig.BlockHighlightInfo info = s.blockHighlights.get(bName);
+                            String toggleLabel = info.enabled ? "§aON" : "§cOFF";
+                            addRenderableWidget(Button.builder(Component.literal(toggleLabel), btn -> {
+                                info.enabled = !info.enabled;
+                                BomboConfig.save();
+                                BlockHighlight.highlightedBlocks.clear(); // force rescan
+                                init();
+                            }).bounds(contentX + 130, itemY + 5, 45, 18).build());
+
+                            addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                editingBlockName = bName;
+                                blockNameInput = bName;
+                                blockColorInput = info.color;
+                                blockThroughWallsInput = info.throughWalls;
+                                init();
+                            }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+
+                            addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> {
+                                s.blockHighlights.remove(bName);
+                                BomboConfig.save();
+                                BlockHighlight.highlightedBlocks.clear(); // force rescan
+                                init();
+                            }).bounds(contentX + 225, itemY + 5, 35, 18).build());
+                        }
+                    }
+                }
+                case 22 -> { // Particle Highlights
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Particle Highlights Enabled", s.particleHighlightsEnabled, v -> s.particleHighlightsEnabled = v, contentX, contentWidth, curY);
+                    curY += 10;
+                    curY = addTextBox("Particle Name", partHighInput, v -> partHighInput = v, contentX, contentWidth, curY);
+                    curY = addColorCycleButton("Color", partHighColorInput, v -> partHighColorInput = v, contentX, contentWidth, curY);
+
+                    int finalCurY = curY;
+                    String addBtnText = editingPartHigh != null ? "§e✔ Save Particle Highlight" : "§a+ Add Particle Highlight";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                        if (!partHighInput.isEmpty()) {
+                            if (editingPartHigh != null) {
+                                s.particleHighlights.remove(editingPartHigh);
+                            }
+                            s.particleHighlights.put(partHighInput.toLowerCase(), new BomboConfig.HighlightInfo(partHighColorInput.toUpperCase(), true));
+                            BomboConfig.save();
+                            partHighInput = ""; partHighColorInput = "GOLD";
+                            editingPartHigh = null;
+                            init();
+                        }
+                    }).bounds(contentX, finalCurY, contentWidth / 2, 20).build());
+
+                    if (editingPartHigh != null) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel Edit"), btn -> {
+                            partHighInput = ""; partHighColorInput = "GOLD";
+                            editingPartHigh = null;
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, 80, 20).build());
+                    }
+
+                    curY += 35; // Space before list
+                    int listStartY = curY;
+                    List<String> sortedParticles = new ArrayList<>(s.particleHighlights.keySet());
+                    Collections.sort(sortedParticles);
+                    for (int i = 0; i < sortedParticles.size(); i++) {
+                        final String pName = sortedParticles.get(i);
+                        int itemY = listStartY + 20 + i * 22 - (int)scrollAmount;
+                        if (itemY > listStartY + 15 && itemY < height - 20) {
+                            BomboConfig.HighlightInfo info = s.particleHighlights.get(pName);
+                            String toggleLabel = info.enabled ? "§aON" : "§cOFF";
+                            addRenderableWidget(Button.builder(Component.literal(toggleLabel), btn -> {
+                                info.enabled = !info.enabled;
+                                BomboConfig.save();
+                                init();
+                            }).bounds(contentX + 130, itemY + 5, 45, 18).build());
+
+                            addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                editingPartHigh = pName;
+                                partHighInput = pName;
+                                partHighColorInput = info.color;
+                                init();
+                            }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+
+                            addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> {
+                                s.particleHighlights.remove(pName);
+                                BomboConfig.save();
+                                init();
+                            }).bounds(contentX + 225, itemY + 5, 35, 18).build());
+                        }
+                    }
+                }
             }
 
             if (colorPickerTarget != null) {
@@ -1305,10 +1507,23 @@ public class BomboConfigGUI extends Screen {
             addRenderableWidget(Button.builder(Component.literal("§lSave & Close"), btn -> {
                 BomboConfig.save();
                 minecraft.setScreenAndShow(parent);
-            }).bounds(width / 2 - 75, height - 32, 150, 24).build());
+            }).bounds(width / 2 - 160, height - 32, 150, 24).build());
 
+            addRenderableWidget(Button.builder(Component.literal("§lNuh uh"), btn -> {
+                minecraft.setScreenAndShow(parent);
+            }).bounds(width / 2 + 10, height - 32, 150, 24).build());
+
+            System.out.println("DEBUG: BomboConfigGUI init end");
         } catch (Throwable e) {
             Bomboaddons.LOGGER.error("[BomboAddons] Error during init!", e);
+            try {
+                java.io.File file = new java.io.File("crash_exception.log");
+                try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(file, true))) {
+                    pw.println("=== GUI INIT EXCEPTION ===");
+                    e.printStackTrace(pw);
+                    pw.println("==========================");
+                }
+            } catch (Throwable ignore) {}
         }
     }
 
@@ -1543,6 +1758,8 @@ public class BomboConfigGUI extends Screen {
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7SBE Commands", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Copy Chat", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
                     g.text(font, "§7Left Click Etherwarp", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7Sphinx Macro", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
@@ -1586,6 +1803,14 @@ public class BomboConfigGUI extends Screen {
                     y2 += ITEM_HEIGHT;
                     g.text(font, "§7Party Commands", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
                     y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Bypass Resource Pack", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Restore Item Models", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Hypixel Shortcut Button", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Smart Disconnect", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
                     
                     y2 += 10;
                     g.text(font, "§6§lFuck Diorite Settings", col2X, y2, 0xFFFFAA00, true);
@@ -1596,18 +1821,121 @@ public class BomboConfigGUI extends Screen {
                     y2 += ITEM_HEIGHT;
                     g.text(font, "§fFuck Diorite Color:", col2X, y2, 0xFFFFFFFF);
                 }
-                case 1 -> {
-                    g.text(font, "§6§lHUD Settings", contentX, curY, 0xFFFFAA00, true);
-                    curY += ITEM_HEIGHT;
-                    g.text(font, "§7Dice Tracker HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.text(font, "§7Feast Bakery HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.text(font, "§7RNG Profit HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
-                    curY += ITEM_HEIGHT;
-                    g.text(font, "§fRNG HUD Opacity: §e" + BomboConfig.get().rngProfitHudOpacity + "%", contentX, curY, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
-                    g.text(font, "§7Custom Timers HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                case 1 -> { // HUDs
+                    int col1X = contentX;
+                    int col2X = contentX + contentWidth / 2 + 10;
+
+                    int y1 = contentBaseY;
+                    g.text(font, "§6§lHUD Settings", col1X, y1, 0xFFFFAA00, true);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Dice Tracker HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Feast Bakery HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7RNG Profit HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§fRNG HUD Opacity: §e" + BomboConfig.get().rngProfitHudOpacity + "%", col1X, y1 + 4, 0xFFFFFFFF);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Custom Timers HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+
+                    int y2 = contentBaseY;
+                    g.text(font, "§6§lTooltip Customization", col2X, y2, 0xFFFFAA00, true);
+                    y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Custom Tooltip Bg", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    
+                    y2 += 20;
+                    
+                    int pickerX = col2X;
+                    int pickerY = y2;
+                    int svSize = 80;
+
+                    // Real-time drag updates
+                    if (isDraggingSv || isDraggingHue || isDraggingAlpha) {
+                        if (isDraggingSv) {
+                            float sat = (float) (mouseX - pickerX) / svSize;
+                            float val = 1.0f - ((float) (mouseY - pickerY) / svSize);
+                            sat = Math.max(0f, Math.min(1f, sat));
+                            val = Math.max(0f, Math.min(1f, val));
+                            int rgb = hsvToRgb(currentHue, sat, val);
+                            if (colorPickerMode == 0) {
+                                s.tooltipBgColor = (s.tooltipBgColor & 0xFF000000) | rgb;
+                            } else {
+                                s.tooltipBorderColor = (s.tooltipBorderColor & 0xFF000000) | rgb;
+                            }
+                        } else if (isDraggingHue) {
+                            float hue = (float) (mouseY - pickerY) / svSize;
+                            hue = Math.max(0f, Math.min(1f, hue));
+                            currentHue = hue;
+                            int currentRgb = colorPickerMode == 0 ? (s.tooltipBgColor & 0xFFFFFF) : (s.tooltipBorderColor & 0xFFFFFF);
+                            float[] hsvTemp = rgbToHsv((currentRgb >> 16) & 0xFF, (currentRgb >> 8) & 0xFF, currentRgb & 0xFF);
+                            int rgb = hsvToRgb(hue, hsvTemp[1], hsvTemp[2]);
+                            if (colorPickerMode == 0) {
+                                s.tooltipBgColor = (s.tooltipBgColor & 0xFF000000) | rgb;
+                            } else {
+                                s.tooltipBorderColor = (s.tooltipBorderColor & 0xFF000000) | rgb;
+                            }
+                        } else if (isDraggingAlpha) {
+                            float pct = 1.0f - ((float) (mouseY - pickerY) / svSize);
+                            pct = Math.max(0f, Math.min(1f, pct));
+                            int alpha = (int)(pct * 255);
+                            if (colorPickerMode == 0) {
+                                s.tooltipBgColor = (alpha << 24) | (s.tooltipBgColor & 0xFFFFFF);
+                            } else {
+                                s.tooltipBorderColor = (alpha << 24) | (s.tooltipBorderColor & 0xFFFFFF);
+                            }
+                        }
+                    }
+
+                    // Render Saturation-Value 2D Square (optimized step)
+                    int step = 4;
+                    for (int r = 0; r < svSize; r += step) {
+                        for (int c = 0; c < svSize; c += step) {
+                            float sat = (float) c / svSize;
+                            float val = 1.0f - ((float) r / svSize);
+                            int rgb = hsvToRgb(currentHue, sat, val);
+                            g.fill(pickerX + c, pickerY + r, pickerX + c + step, pickerY + r + step, 0xFF000000 | rgb);
+                        }
+                    }
+                    g.outline(pickerX, pickerY, svSize, svSize, 0xFF555555);
+
+                    // Render Hue Slider rainbow bar (vertical)
+                    for (int r = 0; r < svSize; r += 2) {
+                        float hue = (float) r / svSize;
+                        int rgb = hsvToRgb(hue, 1.0f, 1.0f);
+                        g.fill(pickerX + 90, pickerY + r, pickerX + 102, pickerY + r + 2, 0xFF000000 | rgb);
+                    }
+                    g.outline(pickerX + 90, pickerY, 12, svSize, 0xFF555555);
+
+                    // Render Alpha Slider gradient bar (vertical)
+                    int activeColorVal = colorPickerMode == 0 ? s.tooltipBgColor : s.tooltipBorderColor;
+                    int activeRgb = activeColorVal & 0xFFFFFF;
+                    int activeAlpha = (activeColorVal >> 24) & 0xFF;
+                    for (int r = 0; r < svSize; r += 2) {
+                        int alpha = (int) ((1.0f - ((float) r / svSize)) * 255);
+                        g.fill(pickerX + 110, pickerY + r, pickerX + 122, pickerY + r + 2, (alpha << 24) | activeRgb);
+                    }
+                    g.outline(pickerX + 110, pickerY, 12, svSize, 0xFF555555);
+
+                    // Render indicators
+                    float[] activeHsv = rgbToHsv((activeRgb >> 16) & 0xFF, (activeRgb >> 8) & 0xFF, activeRgb & 0xFF);
+                    int circleX = pickerX + (int) (activeHsv[1] * svSize);
+                    int circleY = pickerY + (int) ((1.0f - activeHsv[2]) * svSize);
+                    g.fill(circleX - 1, circleY - 1, circleX + 1, circleY + 1, 0xFFFFFFFF);
+
+                    int hueY = pickerY + (int) (currentHue * svSize);
+                    g.fill(pickerX + 89, hueY, pickerX + 103, hueY + 1, 0xFFFFFFFF);
+
+                    int alphaY = pickerY + (int) ((1.0f - (activeAlpha / 255.0f)) * svSize);
+                    g.fill(pickerX + 109, alphaY, pickerX + 123, alphaY + 1, 0xFFFFFFFF);
+
+                    // Render Preview
+                    g.fill(pickerX + 130, pickerY + 5, pickerX + 160, pickerY + 35, (activeAlpha << 24) | activeRgb);
+                    g.outline(pickerX + 130, pickerY + 5, 30, 30, 0xFFFFFFFF);
+
+                    String colorString = String.format("#%02X%06X", activeAlpha, activeRgb);
+                    g.text(font, colorString, pickerX + 128, pickerY + 45, 0xFFFFFFFF);
+                    g.text(font, "A: " + activeAlpha, pickerX + 128, pickerY + 57, 0xFFFFFFFF);
                 }
                 case 2 -> {
                     g.text(font, "§6§lExperiment Solver", contentX, curY, 0xFFFFAA00, true);
@@ -1855,6 +2183,10 @@ public class BomboConfigGUI extends Screen {
                     g.text(font, "§7API Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7API Chat Messages", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7LB Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Particle Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 11 -> { // Kuudra
                     g.text(font, "§6§lKuudra Settings", contentX, curY, 0xFFFFAA00, true);
@@ -2193,12 +2525,75 @@ public class BomboConfigGUI extends Screen {
                         listY += 22;
                     }
                 }
+                case 21 -> { // Block Highlights
+                    g.text(font, "§6§lAdd Block Highlight", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Block Highlights Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 10;
+                    g.text(font, "§fBlock Name/ID:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.text(font, "§fColor:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.text(font, "§7See Through Walls", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+
+                    curY += 35;
+                    int listTitleY = curY;
+                    g.text(font, "§9§lActive Block Highlights", contentX, listTitleY, 0xFF5555FF, true);
+                    int listY = listTitleY + 20 - (int)scrollAmount;
+                    List<String> sortedBlocks = new ArrayList<>(s.blockHighlights.keySet());
+                    Collections.sort(sortedBlocks);
+                    for (String bName : sortedBlocks) {
+                        if (listY > listTitleY + 15 && listY < height - 15) {
+                            BomboConfig.BlockHighlightInfo info = s.blockHighlights.get(bName);
+                            String prefix = info.enabled ? "§e" : "§8§m";
+                            String color = info.color;
+                            String twText = info.throughWalls ? " §7(X-Ray)" : " §8(Depth)";
+                            g.text(font, prefix + bName + " §7- " + getColorFormatting(color) + color + twText, contentX, listY + 5, 0xFFFFFFFF, false);
+                        }
+                        listY += 22;
+                    }
+                }
+                case 22 -> { // Particle Highlights
+                    g.text(font, "§6§lAdd Particle Highlight", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Particle Highlights Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 10;
+                    g.text(font, "§fParticle Name:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.text(font, "§fColor:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+
+                    curY += 35;
+                    int listTitleY = curY;
+                    g.text(font, "§9§lActive Particle Highlights", contentX, listTitleY, 0xFF5555FF, true);
+                    int listY = listTitleY + 20 - (int)scrollAmount;
+                    List<String> sortedParticles = new ArrayList<>(s.particleHighlights.keySet());
+                    Collections.sort(sortedParticles);
+                    for (String pName : sortedParticles) {
+                        if (listY > listTitleY + 15 && listY < height - 15) {
+                            BomboConfig.HighlightInfo info = s.particleHighlights.get(pName);
+                            String prefix = info.enabled ? "§e" : "§8§m";
+                            String color = info.color;
+                            g.text(font, prefix + pName + " §7- " + getColorFormatting(color) + color, contentX, listY + 5, 0xFFFFFFFF, false);
+                        }
+                        listY += 22;
+                    }
+                }
             }
 
 
 
         } catch (Throwable e) {
             Bomboaddons.LOGGER.error("[BomboAddons] Error during render!", e);
+            try {
+                java.io.File file = new java.io.File("crash_exception.log");
+                try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(file, true))) {
+                    pw.println("=== GUI RENDER EXCEPTION ===");
+                    e.printStackTrace(pw);
+                    pw.println("============================");
+                }
+            } catch (Throwable ignore) {}
         }
     }
 
@@ -2282,6 +2677,28 @@ public class BomboConfigGUI extends Screen {
                 return true;
             }
         }
+        if (event.button() == 0 && selectedCategory == 1) {
+            double mx = event.x();
+            double my = event.y();
+            int contentWidth = width - SIDEBAR_WIDTH - PADDING * 3;
+            int col2X = SIDEBAR_WIDTH + PADDING * 2 + contentWidth / 2 + 10;
+            int contentBaseY = HEADER_HEIGHT + PADDING * 2 + 30;
+            int pickerY = contentBaseY + ITEM_HEIGHT * 2 + 20;
+            int svSize = 80;
+
+            if (mx >= col2X && mx <= col2X + svSize && my >= pickerY && my <= pickerY + svSize) {
+                isDraggingSv = true;
+                return true;
+            }
+            if (mx >= col2X + 90 && mx <= col2X + 102 && my >= pickerY && my <= pickerY + svSize) {
+                isDraggingHue = true;
+                return true;
+            }
+            if (mx >= col2X + 110 && mx <= col2X + 122 && my >= pickerY && my <= pickerY + svSize) {
+                isDraggingAlpha = true;
+                return true;
+            }
+        }
         if (!listeningForKeyTarget.isEmpty()) {
             int button = event.button();
             if (button != 0) {
@@ -2303,6 +2720,15 @@ public class BomboConfigGUI extends Screen {
             }
         }
         return super.mouseClicked(event, handled);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        isDraggingSv = false;
+        isDraggingHue = false;
+        isDraggingAlpha = false;
+        BomboConfig.save();
+        return super.mouseReleased(event);
     }
 
     @Override
@@ -2424,5 +2850,81 @@ public class BomboConfigGUI extends Screen {
         s.petKeybinds.remove(key);
         s.petNames.remove(key);
         BomboConfig.save();
+    }
+
+    public static float[] rgbToHsv(int r, int g, int b) {
+        float var_R = (r / 255f);
+        float var_G = (g / 255f);
+        float var_B = (b / 255f);
+
+        float min = Math.min(var_R, Math.min(var_G, var_B));
+        float max = Math.max(var_R, Math.max(var_G, var_B));
+        float del_Max = max - min;
+
+        float h = 0;
+        float s = 0;
+        float v = max;
+
+        if (del_Max != 0) {
+            s = del_Max / max;
+
+            float del_R = (((max - var_R) / 6f) + (del_Max / 2f)) / del_Max;
+            float del_G = (((max - var_G) / 6f) + (del_Max / 2f)) / del_Max;
+            float del_B = (((max - var_B) / 6f) + (del_Max / 2f)) / del_Max;
+
+            if (var_R == max) h = del_B - del_G;
+            else if (var_G == max) h = (1f / 3f) + del_R - del_B;
+            else if (var_B == max) h = (2f / 3f) + del_G - del_R;
+
+            if (h < 0) h += 1;
+            if (h > 1) h -= 1;
+        }
+        return new float[]{h, s, v};
+    }
+
+    public static int hsvToRgb(float h, float s, float v) {
+        int r = 0, g = 0, b = 0;
+        if (s == 0) {
+            r = g = b = (int) (v * 255f + 0.5f);
+        } else {
+            float h_h = (h - (float) Math.floor(h)) * 6f;
+            float f = h_h - (float) Math.floor(h_h);
+            float p = v * (1f - s);
+            float q = v * (1f - s * f);
+            float t = v * (1f - s * (1f - f));
+            switch ((int) h_h) {
+                case 0 -> {
+                    r = (int) (v * 255f + 0.5f);
+                    g = (int) (t * 255f + 0.5f);
+                    b = (int) (p * 255f + 0.5f);
+                }
+                case 1 -> {
+                    r = (int) (q * 255f + 0.5f);
+                    g = (int) (v * 255f + 0.5f);
+                    b = (int) (p * 255f + 0.5f);
+                }
+                case 2 -> {
+                    r = (int) (p * 255f + 0.5f);
+                    g = (int) (v * 255f + 0.5f);
+                    b = (int) (t * 255f + 0.5f);
+                }
+                case 3 -> {
+                    r = (int) (p * 255f + 0.5f);
+                    g = (int) (q * 255f + 0.5f);
+                    b = (int) (v * 255f + 0.5f);
+                }
+                case 4 -> {
+                    r = (int) (t * 255f + 0.5f);
+                    g = (int) (p * 255f + 0.5f);
+                    b = (int) (v * 255f + 0.5f);
+                }
+                case 5 -> {
+                    r = (int) (v * 255f + 0.5f);
+                    g = (int) (p * 255f + 0.5f);
+                    b = (int) (q * 255f + 0.5f);
+                }
+            }
+        }
+        return (r << 16) | (g << 8) | b;
     }
 }

@@ -20,7 +20,7 @@ public class RngScrollMixin {
    )
    private void onScroll(long window, double horizontal, double vertical, CallbackInfo ci) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+      if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
          String title = screen.getTitle().getString();
          if (title.toLowerCase().contains("experimentation table rng")) {
             if (vertical != 0.0D) {

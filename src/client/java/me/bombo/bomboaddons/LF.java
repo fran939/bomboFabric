@@ -150,10 +150,82 @@ public class LF {
                 lowerQuery = lowerQuery.substring(lowerQuery.indexOf(":") + 1).trim();
             }
 
+            JsonElement searchTarget = root;
+            String pathPrefix = "";
+            
+            if (root.has("profiles") && root.get("profiles").isJsonArray()) {
+                JsonArray profiles = root.getAsJsonArray("profiles");
+                int activeIndex = -1;
+                
+                if (BomboConfig.get().lbDebug) {
+                    sendMessage("&b[Debug] Profiles found in API JSON:");
+                }
+                
+                for (int i = 0; i < profiles.size(); i++) {
+                    JsonElement p = profiles.get(i);
+                    if (p.isJsonObject()) {
+                        JsonObject pObj = p.getAsJsonObject();
+                        String cuteName = pObj.has("cute_name") ? pObj.get("cute_name").getAsString() : "Unknown";
+                        String profileId = pObj.has("profile_id") ? pObj.get("profile_id").getAsString() : "Unknown";
+                        boolean selected = pObj.has("selected") && pObj.get("selected").isJsonPrimitive() && pObj.get("selected").getAsBoolean();
+                        long lastSave = pObj.has("last_save") ? pObj.get("last_save").getAsLong() : -1;
+                        
+                        if (BomboConfig.get().lbDebug) {
+                            sendMessage("  &7- &e" + cuteName + " &7(" + profileId + ") - Selected: " 
+                                    + (selected ? "&aYes" : "&cNo") + " &7- Last Save: &d" + lastSave);
+                        }
+                        
+                        if (selected) {
+                            activeIndex = i;
+                        }
+                    }
+                }
+                
+                if (activeIndex == -1) {
+                    long maxSave = -1;
+                    for (int i = 0; i < profiles.size(); i++) {
+                        JsonElement p = profiles.get(i);
+                        if (p.isJsonObject()) {
+                            JsonObject pObj = p.getAsJsonObject();
+                            long save = pObj.has("last_save") ? pObj.get("last_save").getAsLong() : -1;
+                            if (save > maxSave) {
+                                maxSave = save;
+                                activeIndex = i;
+                            }
+                        }
+                    }
+                    if (activeIndex != -1 && BomboConfig.get().lbDebug) {
+                        sendMessage("&b[Debug] No profile was explicitly marked as selected. Falling back to most recently saved profile index: " + activeIndex);
+                    }
+                }
+                
+                if (activeIndex == -1 && profiles.size() > 0) {
+                    activeIndex = 0;
+                    if (BomboConfig.get().lbDebug) {
+                        sendMessage("&b[Debug] No profile marked selected and no timestamps. Defaulting to index 0.");
+                    }
+                }
+                
+                if (activeIndex != -1) {
+                    searchTarget = profiles.get(activeIndex);
+                    pathPrefix = "profiles > " + activeIndex;
+                    JsonObject activeObj = searchTarget.getAsJsonObject();
+                    String activeName = activeObj.has("cute_name") ? activeObj.get("cute_name").getAsString() : "Unknown";
+                    
+                    if (BomboConfig.get().lbDebug) {
+                        sendMessage("&b[Debug] Choosing profile: &6" + activeName + " &7(index " + activeIndex + ") for search.");
+                    }
+                }
+            } else {
+                if (BomboConfig.get().lbDebug) {
+                    sendMessage("&b[Debug] API JSON did not contain 'profiles' array. Searching root JSON directly.");
+                }
+            }
+
             AtomicInteger matchCount = new AtomicInteger(0);
             sendMessage("&eSearch Results for '&f" + lowerQuery + "&e' in &b" + username
                     + (ctx.coopMode ? " (Coop)" : "") + "&e:");
-            searchJsonRecursive(root, "", lowerQuery, searchLore, matchCount, ctx, false, false, MAX_RESULTS, false);
+            searchJsonRecursive(searchTarget, pathPrefix, lowerQuery, searchLore, matchCount, ctx, false, false, MAX_RESULTS, false);
             if (matchCount.get() == 0)
                 sendMessage("&cCould find 0 results for '&f" + lowerQuery + "&c'.");
         } catch (Exception e) {
@@ -396,7 +468,7 @@ public class LF {
 
                     int highlightSlotTemp = finalSlotIndex;
                     if (finalCmdBase.startsWith("/ec ") || finalCmdBase.startsWith("/ec") || finalCmdBase.startsWith("/enderchest")) {
-                        highlightSlotTemp = slotIndex % 45;
+                        highlightSlotTemp = (slotIndex % 45) + 9;
                     }
                     final int finalHighlightSlot = highlightSlotTemp;
 
@@ -424,7 +496,7 @@ public class LF {
 
                     final String finalContDisplay = cont;
                     Component msg = translate("&7#" + idx + " ").append(link).append(contComponent);
-                    if (BomboConfig.get().apiDebug) {
+                    if (BomboConfig.get().apiDebug || BomboConfig.get().lbDebug) {
                         sendMessage("&b[Debug] Found at: &7" + containerPath);
                     }
                     if (BomboConfig.get().debugMode) {
@@ -678,7 +750,7 @@ public class LF {
 
     public static void printContainerInfo() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen) {
+        if (mc.screen instanceof AbstractContainerScreen<?> screen) {
             sendMessage("&6--- Container Diagnostic ---");
             sendMessage("&eTitle: &f" + screen.getTitle().getString());
 
@@ -1130,144 +1202,42 @@ public class LF {
                                         }
                                     }
                                 }
-
-                                String uuidStr = skullOwner.contains("Id") ? skullOwner.getString("Id").orElse(null) : null;
-                                java.util.UUID uuid = null;
-                                try { if (uuidStr != null) uuid = java.util.UUID.fromString(uuidStr); } catch (Exception ignored) {}
-                                if (uuid == null || uuid.toString().startsWith("04049c90")) uuid = java.util.UUID.randomUUID();
-
-                                String profileName = skullOwner.contains("Name") ? skullOwner.getString("Name").orElse("") : "";
-                                com.mojang.authlib.GameProfile profile = new com.mojang.authlib.GameProfile(uuid, profileName);
-                                if (BomboConfig.get().apiDebug) logDebug("Loading head: " + profileName + " UUID=" + uuid);
-                                
-                                // Add textures property manually to the profile using reflection for compatibility
-                                com.mojang.authlib.properties.PropertyMap props = null;
-                                try {
-                                    java.lang.reflect.Method gp = profile.getClass().getMethod("getProperties");
-                                    props = (com.mojang.authlib.properties.PropertyMap) gp.invoke(profile);
-                                } catch (Exception e1) {
-                                    try {
-                                        java.lang.reflect.Method gp = profile.getClass().getMethod("properties");
-                                        props = (com.mojang.authlib.properties.PropertyMap) gp.invoke(profile);
-                                    } catch (Exception e2) {}
-                                }
-
-                                // If still null, try to instantiate via reflection
-                                if (props == null) {
-                                    try {
-                                        props = (com.mojang.authlib.properties.PropertyMap) com.mojang.authlib.properties.PropertyMap.class.getDeclaredConstructor().newInstance();
-                                    } catch (Exception e3) {}
-                                }
-                                if (props != null && (skullOwner.contains("Properties") || skullOwner.contains("properties"))) {
+                                String val = null;
+                                if (skullOwner.contains("Properties") || skullOwner.contains("properties")) {
                                     CompoundTag properties = skullOwner.getCompound("Properties").orElse(skullOwner.getCompound("properties").orElse(null));
                                     if (properties != null && (properties.contains("textures") || properties.contains("Textures"))) {
                                         net.minecraft.nbt.ListTag textures = (net.minecraft.nbt.ListTag) properties.get(properties.contains("textures") ? "textures" : "Textures");
                                         for (int i = 0; i < textures.size(); i++) {
                                             CompoundTag tex = textures.getCompound(i).orElse(null);
                                             if (tex != null && (tex.contains("Value") || tex.contains("value"))) {
-                                                try {
-                                                    Object v = tex.get(tex.contains("Value") ? "Value" : "value");
-                                                    Object s = tex.get(tex.contains("Signature") ? "Signature" : "signature");
-                                                    
-                                                    String val = "";
-                                                    if (v != null) {
-                                                        if (v instanceof String) val = (String)v;
-                                                        else {
-                                                            try {
-                                                                java.lang.reflect.Method m = v.getClass().getMethod("getAsString");
-                                                                val = (String) m.invoke(v);
-                                                            } catch (Exception e) {
-                                                                val = v.toString().replace("\"", "");
-                                                            }
+                                                Object v = tex.get(tex.contains("Value") ? "Value" : "value");
+                                                if (v != null) {
+                                                    if (v instanceof String) {
+                                                        val = (String) v;
+                                                    } else {
+                                                        try {
+                                                            java.lang.reflect.Method m = v.getClass().getMethod("getAsString");
+                                                            val = (String) m.invoke(v);
+                                                        } catch (Exception e) {
+                                                            val = v.toString().replace("\"", "");
                                                         }
                                                     }
-                                                    
-                                                    // Signature stripping to bypass Authlib verification
-                                                    props.put("textures", new com.mojang.authlib.properties.Property("textures", val));
-                                                    if (BomboConfig.get().apiDebug) logDebug("  Added Texture (len=" + val.length() + ", no sig)");
-                                                } catch (Exception e_tex) {
-                                                    System.out.println("[Bombo]   Failed to get texture string: " + e_tex.getMessage());
                                                 }
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    System.out.println("[Bombo]   NO Properties found in SkullOwner!");
-                                }
-                                final com.mojang.authlib.properties.PropertyMap finalProps = props;
-
-                                // Create ResolvableProfile via reflection to handle record component differences
-                                try {
-                                    java.lang.reflect.Constructor<?>[] constructors = net.minecraft.world.item.component.ResolvableProfile.class.getConstructors();
-                                    Object rp = null;
-                                    for (java.lang.reflect.Constructor<?> constructor : constructors) {
-                                        Class<?>[] params = constructor.getParameterTypes();
-                                        System.out.println("[Bombo]   Constructor params: " + java.util.Arrays.toString(params));
-                                        if (params.length == 1 && params[0] == com.mojang.authlib.GameProfile.class) {
-                                            rp = constructor.newInstance(profile);
-                                            break;
-                                        } else if (params.length == 3) {
-                                            // Record constructor: Optional<String>, Optional<UUID>, PropertyMap
-                                            try {
-                                                java.util.Optional<String> nameOpt = java.util.Optional.ofNullable(profile.name());
-                                                java.util.Optional<java.util.UUID> idOpt = java.util.Optional.ofNullable(profile.id());
-                                                System.out.println("[Bombo]   Applying (name=" + nameOpt + ", id=" + idOpt + ", props=" + (finalProps != null) + ")");
-                                                rp = constructor.newInstance(nameOpt, idOpt, finalProps);
                                                 break;
-                                            } catch (Exception e_inner) {
-                                                System.out.println("[Bombo]   Inner reflection failed: " + e_inner.getMessage());
-                                                e_inner.printStackTrace();
                                             }
                                         }
                                     }
-                                    
-                                    if (rp != null) {
-                                        stack.set(net.minecraft.core.component.DataComponents.PROFILE, (net.minecraft.world.item.component.ResolvableProfile)rp);
-                                        if (BomboConfig.get().apiDebug) logDebug("  Applied ResolvableProfile (UUID: " + profile.id() + ")");
-                                    } else {
-                                        if (BomboConfig.get().apiDebug) logDebug("  FAILED to create ResolvableProfile via reflection");
-                                    }
-                                    // Final fallback: use codec with a manually constructed, "clean" NBT
-                                    try {
-                                        CompoundTag cleanProfileNbt = new CompoundTag();
-                                        cleanProfileNbt.putString("name", profileName);
-                                        
-                                        // UUID as int-array (Required by modern Codecs)
-                                        long most = uuid.getMostSignificantBits();
-                                        long least = uuid.getLeastSignificantBits();
-                                        int[] uuidInts = new int[]{(int)(most >> 32), (int)most, (int)(least >> 32), (int)least};
-                                        cleanProfileNbt.putIntArray("id", uuidInts);
-                                        
-                                        if (finalProps != null && !finalProps.isEmpty()) {
-                                            net.minecraft.nbt.ListTag propsList = new net.minecraft.nbt.ListTag();
-                                            for (com.mojang.authlib.properties.Property p : finalProps.get("textures")) {
-                                                CompoundTag pTag = new CompoundTag();
-                                                pTag.putString("name", "textures");
-                                                pTag.putString("value", p.value());
-                                                // Ensure signature is ABSENT or empty to bypass verification
-                                                propsList.add(pTag);
-                                            }
-                                            cleanProfileNbt.put("properties", propsList);
-                                        }
-                                        
-                                        RegistryOps<net.minecraft.nbt.Tag> ops = RegistryOps.create(NbtOps.INSTANCE, Minecraft.getInstance().level.registryAccess());
-                                        if (BomboConfig.get().apiDebug) logDebug("  Bulletproof NBT: " + cleanProfileNbt);
-                                        
-                                        net.minecraft.world.item.component.ResolvableProfile parsed = net.minecraft.world.item.component.ResolvableProfile.CODEC.parse(ops, cleanProfileNbt).result().orElse(null);
-                                        if (parsed != null) {
-                                            stack.set(net.minecraft.core.component.DataComponents.PROFILE, parsed);
-                                            if (BomboConfig.get().apiDebug) logDebug("  Applied ResolvableProfile via CODEC (Bulletproof)");
-                                        } else {
-                                            if (BomboConfig.get().apiDebug) logDebug("  CODEC parse returned null");
-                                        }
-                                    } catch (Exception e_codec) {
-                                        if (BomboConfig.get().apiDebug) logDebug("  CODEC fallback failed: " + e_codec.getMessage());
-                                    }
-                                } catch (Exception e) {
-                                    if (BomboConfig.get().apiDebug) sendMessage("&cError applying head texture: " + e.getMessage());
                                 }
-                            } catch (Exception e_outer) {
-                                System.out.println("[Bombo] Outer head error: " + e_outer.getMessage());
+                                
+                                if (val != null && !val.isEmpty()) {
+                                    net.minecraft.world.item.component.ResolvableProfile rp = me.bombo.bomboaddons.SkyblockItemManager.createProfile(val, null);
+                                    if (rp != null) {
+                                        stack.set(net.minecraft.core.component.DataComponents.PROFILE, rp);
+                                        if (BomboConfig.get().apiDebug) logDebug("  Applied ResolvableProfile (Cached)");
+                                    }
+                                }
+                            } catch (Exception e) {
+                                if (BomboConfig.get().apiDebug) sendMessage("&cError applying head texture: " + e.getMessage());
                             }
                         }
                     }
@@ -1293,11 +1263,12 @@ public class LF {
         return item.getDefaultInstance();
     }
 
-    private static String guessItem(String id) {
+    public static String guessItem(String id) {
         String clean = id.toUpperCase().replace("MINECRAFT:", "");
 
         // 1. Common legacy ID mappings
         String legacyMapped = switch (clean) {
+            case "EXPLOSIVE_MINECART" -> "minecraft:tnt_minecart";
             case "SKULL_ITEM" -> "minecraft:player_head";
             case "IRON_SPADE" -> "minecraft:iron_shovel";
             case "DIAMOND_SPADE" -> "minecraft:diamond_shovel";

@@ -18,7 +18,7 @@ public class FeastBakeryHud {
         Minecraft mc = Minecraft.getInstance();
         long currentFrame = System.currentTimeMillis();
         // Prevent double rendering in the same frame
-        if (currentFrame == lastRenderFrame && !(mc.gui.screen() instanceof HudMoveScreen)) return;
+        if (currentFrame == lastRenderFrame && !(mc.screen instanceof HudMoveScreen)) return;
         lastRenderFrame = currentFrame;
 
         BomboConfig.Settings s = BomboConfig.get();
@@ -27,7 +27,7 @@ public class FeastBakeryHud {
         LowestBinManager.ensureLoaded();
 
         boolean inMenu = false;
-        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+        if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
             String title = screen.getTitle().getString();
             if (title.toLowerCase().contains("bakery")) {
                 inMenu = true;
@@ -43,13 +43,13 @@ public class FeastBakeryHud {
         }
         lastInMenu = inMenu;
 
-        if (!inMenu && !(mc.gui.screen() instanceof HudMoveScreen)) {
+        if (!inMenu && !(mc.screen instanceof HudMoveScreen)) {
             DETECTED_ITEMS.clear();
             return;
         }
 
         // If in HudMoveScreen and empty, show a dummy
-        if (mc.gui.screen() instanceof HudMoveScreen && DETECTED_ITEMS.isEmpty()) {
+        if (mc.screen instanceof HudMoveScreen && DETECTED_ITEMS.isEmpty()) {
             DETECTED_ITEMS.add(new DetectedItem("FRESHLY_BAKED_TALISMAN", "Baked Talisman", 25));
             DETECTED_ITEMS.add(new DetectedItem("POPCORN_RING", "Popcorn Ring", 125));
             DETECTED_ITEMS.add(new DetectedItem("ENCHANTMENT_FEAST_1", "Enchanted Book (Feast I)", 500));

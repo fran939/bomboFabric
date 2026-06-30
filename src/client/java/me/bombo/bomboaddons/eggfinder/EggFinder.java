@@ -32,8 +32,9 @@ import java.util.regex.Pattern;
 public class EggFinder {
     private static final Logger LOGGER = LoggerFactory.getLogger("bomboaddons-eggfinder");
     
-    private static final Pattern EGG_FOUND_PATTERN = Pattern.compile("^(?:HOPPITY'S HUNT You found a Chocolate|You have already collected this Chocolate) (Breakfast|Lunch|Dinner|Brunch|Déjeuner|Supper) Egg");
-    private static final Pattern NO_EGGS_PATTERN = Pattern.compile("^There are no hidden Chocolate Rabbit Eggs nearby! Try again later!$");
+    private static final Pattern EGG_FOUND_PATTERN = Pattern.compile("(?:HOPPITY'S HUNT You found a Chocolate|You have already collected this Chocolate) (Breakfast|Lunch|Dinner|Brunch|D[eé]jeuner|Supper) Egg", Pattern.CASE_INSENSITIVE);
+    private static final Pattern NO_EGGS_PATTERN = Pattern.compile("There are no hidden Chocolate Rabbit Eggs nearby! Try again later!", Pattern.CASE_INSENSITIVE);
+    private static final Pattern RABBIT_FOUND_PATTERN = Pattern.compile("HOPPITY'S HUNT You found (.+) \\(([A-Z]+)\\)!", Pattern.CASE_INSENSITIVE);
 
     private static final Set<String> VALID_LOCATIONS = Set.of(
             "Backwater Bayou", "Crimson Isle", "Crystal Hollows", "Deep Caverns",
@@ -115,9 +116,9 @@ public class EggFinder {
     public static boolean onChatMessage(Component text, boolean overlay) {
         if (overlay || !BomboConfig.get().eggFinder) return true;
 
-        String msg = text.getString();
+        String msg = text.getString().replaceAll("§.", "");
         Matcher matcher = NO_EGGS_PATTERN.matcher(msg);
-        if (matcher.matches()) {
+        if (matcher.find()) {
             synchronized (activeWaypoints) {
                 for (EggWaypoint wp : activeWaypoints) {
                     wp.collected = true;
@@ -175,6 +176,42 @@ public class EggFinder {
             } catch (Exception e) {
                 LOGGER.error("Failed to process egg chat message: " + e.getMessage(), e);
             }
+            return true;
+        }
+
+        matcher.usePattern(RABBIT_FOUND_PATTERN);
+        if (matcher.find()) {
+            try {
+                Minecraft client = Minecraft.getInstance();
+                if (client.player != null) {
+                    Vec3 playerPos = client.player.position();
+                    EggWaypoint closestWp = null;
+                    double closestDist = Double.MAX_VALUE;
+
+                    synchronized (activeWaypoints) {
+                        for (EggWaypoint wp : activeWaypoints) {
+                            double dist = wp.pos.distToCenterSqr(playerPos.x, playerPos.y, playerPos.z);
+                            if (dist < closestDist) {
+                                closestDist = dist;
+                                closestWp = wp;
+                            }
+                        }
+                    }
+
+                    if (closestWp != null && closestDist < 225.0) { // 15 blocks squared
+                        EggType eggType = closestWp.type;
+                        eggType.collected = true;
+                        synchronized (activeWaypoints) {
+                            activeWaypoints.removeIf(wp -> wp.type == eggType);
+                        }
+                        LOGGER.info("Collected rabbit egg via proximity to " + eggType.name + " Egg!");
+                    } else {
+                        LOGGER.info("Found a rabbit but no egg waypoint was nearby.");
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to process rabbit found message: " + e.getMessage(), e);
+            }
         }
 
         return true;
@@ -200,8 +237,8 @@ public class EggFinder {
                                 .append(eggName)
                                 .append(" §adiscovered at §e" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + "!")
                                 .withStyle(style -> style
-                                        .withClickEvent(new ClickEvent.RunCommand("/skyblocker eggFinder shareLocation " + eggType.name().toLowerCase()))
-                                        .withHoverEvent(me.bombo.bomboaddons.SBECommands.createHoverEvent("§aClick to share this egg location in chat!"))
+                                        .withClickEvent(new ClickEvent.RunCommand("/shnav " + pos.getX() + " " + pos.getY() + " " + pos.getZ()))
+                                        .withHoverEvent(me.bombo.bomboaddons.SBECommands.createHoverEvent("§aClick to navigate to this egg!"))
                                 ));
             }
         }
@@ -237,7 +274,7 @@ public class EggFinder {
         if (wps.isEmpty()) return;
 
         Minecraft mc = Minecraft.getInstance();
-        Vec3 camPos = mc.gameRenderer.mainCamera().position();
+        Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
         net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
         if (collector == null) return;

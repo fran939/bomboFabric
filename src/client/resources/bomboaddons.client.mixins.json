@@ -22,6 +22,9 @@
 		"AbstractContainerScreenMixin",
 		"AbstractContainerScreenAccessor",
 		"ItemStackMixin",
+		"ItemModelResolverMixin",
+		"PatchedDataComponentMapMixin",
+		"PropertyMixin",
 		"HollowWandMixin",
 		"MouseMixin",
 		"CommandMixin",
@@ -35,11 +38,16 @@
 		"DisconnectedScreenMixin",
 		"ChatScreenMixin",
 		"ParticleMixin",
+		"ParticleEngineMixin",
 		"DungeonPadTimersMixin",
 		"ClientPacketListenerMixin",
+		"ClientCommonPacketListenerMixin",
 		"LeverBlockMixin",
 		"ButtonBlockMixin",
-		"SkullBlockMixin"
+		"SkullBlockMixin",
+		"TooltipRenderUtilMixin",
+		"PackConfirmScreenMixin",
+		"TitleScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

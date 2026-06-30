@@ -42,9 +42,25 @@ public class BomboConfig {
         }
         if (Files.exists(CONFIG_PATH)) {
             try (Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
-                Settings loaded = GSON.fromJson(reader, Settings.class);
-                if (loaded != null) {
-                    instance = loaded;
+                com.google.gson.JsonElement jsonElement = com.google.gson.JsonParser.parseReader(reader);
+                if (jsonElement.isJsonObject()) {
+                    com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
+                    if (jsonObject.has("tooltipBgColor")) {
+                        com.google.gson.JsonElement bgEl = jsonObject.get("tooltipBgColor");
+                        if (bgEl.isJsonPrimitive() && bgEl.getAsJsonPrimitive().isString()) {
+                            jsonObject.remove("tooltipBgColor");
+                        }
+                    }
+                    if (jsonObject.has("tooltipBorderColor")) {
+                        com.google.gson.JsonElement borderEl = jsonObject.get("tooltipBorderColor");
+                        if (borderEl.isJsonPrimitive() && borderEl.getAsJsonPrimitive().isString()) {
+                            jsonObject.remove("tooltipBorderColor");
+                        }
+                    }
+                    Settings loaded = GSON.fromJson(jsonObject, Settings.class);
+                    if (loaded != null) {
+                        instance = loaded;
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -67,6 +83,9 @@ public class BomboConfig {
         }
         if (instance.customWaypoints == null) {
             instance.customWaypoints = new HashMap<>();
+        }
+        if (instance.customItemOverrides == null) {
+            instance.customItemOverrides = new HashMap<>();
         }
         if (instance.commandCycles == null) {
             instance.commandCycles = new HashMap<>();
@@ -119,6 +138,12 @@ public class BomboConfig {
         }
         if (instance.clipboardRunKey == null) {
             instance.clipboardRunKey = "";
+        }
+        if (instance.blockHighlights == null) {
+            instance.blockHighlights = new HashMap<>();
+        }
+        if (instance.particleHighlights == null) {
+            instance.particleHighlights = new HashMap<>();
         }
     }
 
@@ -181,6 +206,9 @@ public class BomboConfig {
         public boolean debugMode = false;
         public boolean apiDebug = false;
         public boolean apiChatMessages = false;
+        public boolean copyChat = false;
+        public boolean lbDebug = false;
+        public boolean debugParticles = false;
         public List<CommandBind> commandBinds = null;
         public String activeProfile = "default";
         public Map<String, List<CommandBind>> profileBinds = new HashMap<>();
@@ -192,7 +220,7 @@ public class BomboConfig {
         public boolean ignoreCapsLock = false;
         public boolean serverListButton = false;
         public boolean reconnectButton = false;
-        public boolean hideCheats = true;
+        public boolean hideCheats = false;
         public boolean diceTracker = false;
         public int diceHudX = 10;
         public int diceHudY = 50;
@@ -235,7 +263,7 @@ public class BomboConfig {
         public String pestEspColor = "yellow";
         public float pestEspThickness = 2.0f;
         public boolean fuckDiorite = false;
-        public boolean fuckDioritePillarColor = true;
+        public boolean fuckDioritePillarColor = false;
         public String fuckDioriteColor = "None";
         public boolean hitbox = false;
         
@@ -285,7 +313,7 @@ public class BomboConfig {
         public Map<String, String> commandAliases = new HashMap<>();
         public List<ChatTrigger> chatTriggers = null;
         public Map<String, List<ChatTrigger>> profileChatTriggers = new HashMap<>();
-        public boolean ircChatEnabled = true;
+        public boolean ircChatEnabled = false;
         public boolean ircDefaultChat = false;
         public String ircCustomFormat = "";
         public boolean padTimersPurple = false;
@@ -295,14 +323,14 @@ public class BomboConfig {
         public float padTimersScale = 1.0f;
         public double padTimerPurpleTime = 4.8;
         public boolean eggFinder = false;
-        public boolean eggFinderChat = true;
-        public boolean eggFinderBeacon = true;
-        public boolean eggFinderThroughWalls = true;
+        public boolean eggFinderChat = false;
+        public boolean eggFinderBeacon = false;
+        public boolean eggFinderThroughWalls = false;
         public boolean dungeonBigHitbox = false;
         public Map<String, List<CoordBind>> coordBinds = new HashMap<>();
 
         public boolean corpseEsp = false;
-        public boolean hideOpenedCorpses = true;
+        public boolean hideOpenedCorpses = false;
         public String corpseEspStyle = "Outline";
         public String lapisOutlineColor = "BLUE";
         public String lapisFillColor = "BLUE";
@@ -313,17 +341,42 @@ public class BomboConfig {
         public String vanguardOutlineColor = "LIGHT_PURPLE";
         public String vanguardFillColor = "LIGHT_PURPLE";
 
-        public boolean customTimerHudEnabled = true;
+        public boolean customTimerHudEnabled = false;
         public int customTimerHudX = 10;
         public int customTimerHudY = 300;
         public float customTimerHudScale = 1.0f;
         public boolean partyCommandsEnabled = false;
-        public boolean partyCommandTimer = true;
-        public boolean partyCommandWarp = true;
-        public boolean partyCommandPsa = true;
+        public boolean partyCommandTimer = false;
+        public boolean partyCommandWarp = false;
+        public boolean partyCommandPsa = false;
         public String partyCommandPrefixes = "!,.,?";
         public String clipboardRunKey = "";
         public List<CustomPartyCommand> customPartyCommands = new ArrayList<>();
+        public boolean bypassResourcePack = false;
+        public boolean restoreItemModels = false;
+        public Map<String, CustomItemOverride> customItemOverrides = new java.util.HashMap<>();
+        public boolean customTooltipBg = false;
+        public int tooltipBgColor = 0xF0100010;
+        public int tooltipBorderColor = 0x505000FF;
+        public int tooltipAlpha = 240;
+        public boolean hypixelShortcutButton = false;
+        public boolean smartDisconnect = false;
+        public Map<String, BlockHighlightInfo> blockHighlights = new HashMap<>();
+        public boolean blockHighlightsEnabled = false;
+        public Map<String, HighlightInfo> particleHighlights = new HashMap<>();
+        public boolean particleHighlightsEnabled = false;
+    }
+
+    public static class CustomItemOverride {
+        public String material = "";
+        public String name = "";
+
+        public CustomItemOverride() {}
+
+        public CustomItemOverride(String material, String name) {
+            this.material = material;
+            this.name = name;
+        }
     }
 
     public static class CustomPartyCommand {
@@ -479,6 +532,26 @@ public class BomboConfig {
         public HighlightInfo(String color, boolean showInvisible, boolean enabled) {
             this.color = color;
             this.showInvisible = showInvisible;
+            this.enabled = enabled;
+        }
+    }
+
+    public static class BlockHighlightInfo {
+        public String color;
+        public boolean throughWalls;
+        public boolean enabled = true;
+
+        public BlockHighlightInfo() {}
+
+        public BlockHighlightInfo(String color, boolean throughWalls) {
+            this.color = color;
+            this.throughWalls = throughWalls;
+            this.enabled = true;
+        }
+
+        public BlockHighlightInfo(String color, boolean throughWalls, boolean enabled) {
+            this.color = color;
+            this.throughWalls = throughWalls;
             this.enabled = enabled;
         }
     }

@@ -29,7 +29,7 @@ public class BomboRenderUtils {
         drawLine(matrix, buffer, minX, maxY, minZ, maxX, maxY, minZ, r, g, b, a, lineWidth);
         drawLine(matrix, buffer, maxX, maxY, minZ, maxX, maxY, maxZ, r, g, b, a, lineWidth);
         drawLine(matrix, buffer, maxX, maxY, maxZ, minX, maxY, maxZ, r, g, b, a, lineWidth);
-        drawLine(matrix, buffer, minX, maxY, maxZ, minX, minY, minZ, r, g, b, a, lineWidth);
+        drawLine(matrix, buffer, minX, maxY, maxZ, minX, maxY, minZ, r, g, b, a, lineWidth);
 
         // Vertical 4 lines
         drawLine(matrix, buffer, minX, minY, minZ, minX, maxY, minZ, r, g, b, a, lineWidth);
@@ -97,6 +97,52 @@ public class BomboRenderUtils {
         }
     }
 
+    public static void drawVerticalCircleXY(PoseStack poseStack, VertexConsumer buffer, float cx, float cy, float cz, float radius, float r, float g, float b, float a, float lineWidth) {
+        drawVerticalCircleXY(poseStack.last().pose(), buffer, cx, cy, cz, radius, r, g, b, a, lineWidth);
+    }
+
+    public static void drawVerticalCircleXY(Matrix4f matrix, VertexConsumer buffer, float cx, float cy, float cz, float radius, float r, float g, float b, float a, float lineWidth) {
+        int segments = 32;
+        double angleStep = 2.0 * Math.PI / segments;
+        for (int i = 0; i < segments; i++) {
+            double angle1 = i * angleStep;
+            double angle2 = (i + 1) * angleStep;
+            float x1 = cx + (float) (radius * Math.cos(angle1));
+            float y1 = cy + (float) (radius * Math.sin(angle1));
+            float x2 = cx + (float) (radius * Math.cos(angle2));
+            float y2 = cy + (float) (radius * Math.sin(angle2));
+            drawLine(matrix, buffer, x1, y1, cz, x2, y2, cz, r, g, b, a, lineWidth);
+        }
+    }
+
+    public static void drawVerticalCircleYZ(PoseStack poseStack, VertexConsumer buffer, float cx, float cy, float cz, float radius, float r, float g, float b, float a, float lineWidth) {
+        drawVerticalCircleYZ(poseStack.last().pose(), buffer, cx, cy, cz, radius, r, g, b, a, lineWidth);
+    }
+
+    public static void drawVerticalCircleYZ(Matrix4f matrix, VertexConsumer buffer, float cx, float cy, float cz, float radius, float r, float g, float b, float a, float lineWidth) {
+        int segments = 32;
+        double angleStep = 2.0 * Math.PI / segments;
+        for (int i = 0; i < segments; i++) {
+            double angle1 = i * angleStep;
+            double angle2 = (i + 1) * angleStep;
+            float y1 = cy + (float) (radius * Math.cos(angle1));
+            float z1 = cz + (float) (radius * Math.sin(angle1));
+            float y2 = cy + (float) (radius * Math.cos(angle2));
+            float z2 = cz + (float) (radius * Math.sin(angle2));
+            drawLine(matrix, buffer, cx, y1, z1, cx, y2, z2, r, g, b, a, lineWidth);
+        }
+    }
+
+    public static void drawSphere(PoseStack poseStack, VertexConsumer buffer, float cx, float cy, float cz, float radius, float r, float g, float b, float a, float lineWidth) {
+        drawSphere(poseStack.last().pose(), buffer, cx, cy, cz, radius, r, g, b, a, lineWidth);
+    }
+
+    public static void drawSphere(Matrix4f matrix, VertexConsumer buffer, float cx, float cy, float cz, float radius, float r, float g, float b, float a, float lineWidth) {
+        drawHorizontalCircle(matrix, buffer, cx, cy, cz, radius, r, g, b, a, lineWidth);
+        drawVerticalCircleXY(matrix, buffer, cx, cy, cz, radius, r, g, b, a, lineWidth);
+        drawVerticalCircleYZ(matrix, buffer, cx, cy, cz, radius, r, g, b, a, lineWidth);
+    }
+
     public static void drawText(PoseStack poseStack, net.minecraft.client.renderer.OrderedSubmitNodeCollector collector, String text, float x, float y, float z, int color, float scale, boolean shadow) {
         drawText(poseStack, collector, text, x, y, z, color, scale, shadow, true);
     }
@@ -109,7 +155,7 @@ public class BomboRenderUtils {
         poseStack.translate(x, y, z);
 
         // Billboard effect
-        poseStack.mulPose(mc.gameRenderer.mainCamera().rotation());
+        poseStack.mulPose(mc.gameRenderer.getMainCamera().rotation());
         poseStack.scale(-scale, -scale, scale);
 
         float offset = -font.width(text) / 2.0f;

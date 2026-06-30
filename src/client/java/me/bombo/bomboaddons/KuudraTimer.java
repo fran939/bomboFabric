@@ -21,10 +21,10 @@ public class KuudraTimer {
         if (!s.kuudraBlindnessTimer) return;
 
         Minecraft client = Minecraft.getInstance();
-        if (client.gui.hud.isHidden()) return;
+        if (client.options.hideGui) return;
         
         // Hide during open screens unless it is the HUD movement screen
-        if (client.gui.screen() != null && !(client.gui.screen() instanceof HudMoveScreen)) return;
+        if (client.screen != null && !(client.screen instanceof HudMoveScreen)) return;
 
         // Only track and show if in Kuudra area OR in singleplayer (for testing)
         boolean isKuudraOrLocal = "Kuudra".equalsIgnoreCase(BomboaddonsClient.currentArea) || "Kuudra's Hollow".equalsIgnoreCase(BomboaddonsClient.currentArea) || client.isLocalServer();

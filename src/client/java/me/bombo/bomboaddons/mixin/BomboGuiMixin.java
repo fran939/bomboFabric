@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Environment(EnvType.CLIENT)
 @Mixin({ Minecraft.class })
 public class BomboGuiMixin {
-   @Inject(method = { "setScreenAndShow" }, at = { @At("RETURN") })
+   @Inject(method = { "setScreen" }, at = { @At("RETURN") })
    private void onSetScreen(Screen screen, CallbackInfo ci) {
       if (screen instanceof AbstractContainerScreen) {
          AbstractContainerScreen containerScreen = (AbstractContainerScreen) screen;

@@ -110,9 +110,9 @@ public class GardenMacroDetector {
         }
 
         mc.execute(() -> {
-            mc.gui.hud.setTimes(10, 100, 20);
-            mc.gui.hud.setTitle(Component.literal("§c§lMACRO CHECKED!"));
-            mc.gui.hud.setSubtitle(Component.literal("§eGarden Movement Alert"));
+            mc.gui.setTimes(10, 100, 20);
+            mc.gui.setTitle(Component.literal("§c§lMACRO CHECKED!"));
+            mc.gui.setSubtitle(Component.literal("§eGarden Movement Alert"));
         });
 
         // 4. Play alarm sound repetitively

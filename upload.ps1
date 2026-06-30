@@ -53,7 +53,7 @@ if ($releaseExists) {
     gh release upload "v$version" $releaseJarPath --clobber
 } else {
     Write-Host "Release v$version does not exist. Creating new release..." -ForegroundColor Yellow
-    gh release create "v$version" $releaseJarPath --title "v$version" --notes "Bump version to v${version} for Minecraft ${mcVersion}: add Count Items hotkey (with Enchanted Book formatting), and auto-disable default IRC chat on channel change or private message commands/events."
+    gh release create "v$version" $releaseJarPath --latest=false --title "v$version" --notes "Bump version to v${version} for Minecraft ${mcVersion}: backport 26.2 features, including Block Highlights 3D ESP (with see-through toggle), Tab Completion/suggestions for various commands, /b commands, and config persistence."
 }
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green

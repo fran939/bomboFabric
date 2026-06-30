@@ -15,7 +15,7 @@ public class ClientPacketListenerMixin {
     @Inject(method = "sendChat", at = @At("HEAD"), cancellable = true)
     private void onSendChat(String message, CallbackInfo ci) {
         if (BomboConfig.get().ircChatEnabled && BomboConfig.get().ircDefaultChat) {
-            if (Minecraft.getInstance().gui.screen() instanceof ChatScreen) {
+            if (Minecraft.getInstance().screen instanceof ChatScreen) {
                 IRCClient.sendMessage(message);
                 ci.cancel();
             }

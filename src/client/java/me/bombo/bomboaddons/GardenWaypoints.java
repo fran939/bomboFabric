@@ -95,7 +95,7 @@ public class GardenWaypoints {
 
         if (!hasActive && !hasCustom) return;
 
-        Vec3 camPos = mc.gameRenderer.mainCamera().position();
+        Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
         net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
         if (collector == null) return;

@@ -14,10 +14,10 @@ public class FuckDiorite {
     };
 
     private static final BlockState[] PILLAR_GLASS_STATES = {
-        Blocks.STAINED_GLASS.green().defaultBlockState(),
-        Blocks.STAINED_GLASS.yellow().defaultBlockState(),
-        Blocks.STAINED_GLASS.blue().defaultBlockState(),
-        Blocks.STAINED_GLASS.red().defaultBlockState()
+        Blocks.GREEN_STAINED_GLASS.defaultBlockState(),
+        Blocks.YELLOW_STAINED_GLASS.defaultBlockState(),
+        Blocks.BLUE_STAINED_GLASS.defaultBlockState(),
+        Blocks.RED_STAINED_GLASS.defaultBlockState()
     };
 
     private static int tickCounter = 0;
@@ -98,22 +98,22 @@ public class FuckDiorite {
             return Blocks.GLASS.defaultBlockState();
         }
         return switch (colorName.toUpperCase()) {
-            case "WHITE" -> Blocks.STAINED_GLASS.white().defaultBlockState();
-            case "ORANGE", "GOLD" -> Blocks.STAINED_GLASS.orange().defaultBlockState();
-            case "MAGENTA" -> Blocks.STAINED_GLASS.magenta().defaultBlockState();
-            case "LIGHT_BLUE", "AQUA" -> Blocks.STAINED_GLASS.lightBlue().defaultBlockState();
-            case "YELLOW" -> Blocks.STAINED_GLASS.yellow().defaultBlockState();
-            case "LIME" -> Blocks.STAINED_GLASS.lime().defaultBlockState();
-            case "PINK", "LIGHT_PURPLE" -> Blocks.STAINED_GLASS.pink().defaultBlockState();
-            case "GRAY", "DARK_GRAY" -> Blocks.STAINED_GLASS.gray().defaultBlockState();
-            case "LIGHT_GRAY" -> Blocks.STAINED_GLASS.lightGray().defaultBlockState();
-            case "CYAN", "DARK_AQUA" -> Blocks.STAINED_GLASS.cyan().defaultBlockState();
-            case "PURPLE", "DARK_PURPLE" -> Blocks.STAINED_GLASS.purple().defaultBlockState();
-            case "BLUE", "DARK_BLUE" -> Blocks.STAINED_GLASS.blue().defaultBlockState();
-            case "BROWN" -> Blocks.STAINED_GLASS.brown().defaultBlockState();
-            case "GREEN", "DARK_GREEN" -> Blocks.STAINED_GLASS.green().defaultBlockState();
-            case "RED", "DARK_RED" -> Blocks.STAINED_GLASS.red().defaultBlockState();
-            case "BLACK" -> Blocks.STAINED_GLASS.black().defaultBlockState();
+            case "WHITE" -> Blocks.WHITE_STAINED_GLASS.defaultBlockState();
+            case "ORANGE", "GOLD" -> Blocks.ORANGE_STAINED_GLASS.defaultBlockState();
+            case "MAGENTA" -> Blocks.MAGENTA_STAINED_GLASS.defaultBlockState();
+            case "LIGHT_BLUE", "AQUA" -> Blocks.LIGHT_BLUE_STAINED_GLASS.defaultBlockState();
+            case "YELLOW" -> Blocks.YELLOW_STAINED_GLASS.defaultBlockState();
+            case "LIME" -> Blocks.LIME_STAINED_GLASS.defaultBlockState();
+            case "PINK", "LIGHT_PURPLE" -> Blocks.PINK_STAINED_GLASS.defaultBlockState();
+            case "GRAY", "DARK_GRAY" -> Blocks.GRAY_STAINED_GLASS.defaultBlockState();
+            case "LIGHT_GRAY" -> Blocks.LIGHT_GRAY_STAINED_GLASS.defaultBlockState();
+            case "CYAN", "DARK_AQUA" -> Blocks.CYAN_STAINED_GLASS.defaultBlockState();
+            case "PURPLE", "DARK_PURPLE" -> Blocks.PURPLE_STAINED_GLASS.defaultBlockState();
+            case "BLUE", "DARK_BLUE" -> Blocks.BLUE_STAINED_GLASS.defaultBlockState();
+            case "BROWN" -> Blocks.BROWN_STAINED_GLASS.defaultBlockState();
+            case "GREEN", "DARK_GREEN" -> Blocks.GREEN_STAINED_GLASS.defaultBlockState();
+            case "RED", "DARK_RED" -> Blocks.RED_STAINED_GLASS.defaultBlockState();
+            case "BLACK" -> Blocks.BLACK_STAINED_GLASS.defaultBlockState();
             default -> Blocks.GLASS.defaultBlockState();
         };
     }

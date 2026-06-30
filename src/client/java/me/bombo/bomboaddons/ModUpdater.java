@@ -70,12 +70,24 @@ public class ModUpdater {
                 String mcVersion = FabricLoader.getInstance().getModContainer("minecraft")
                         .get().getMetadata().getVersion().getFriendlyString();
                 
+                String currentVersion = FabricLoader.getInstance().getModContainer("bomboaddons")
+                        .get().getMetadata().getVersion().getFriendlyString();
+
+                if (currentVersion.equals("${version}")) {
+                    if (!silent) sendMessage("§cRunning in dev environment with unset version. Update skipped.");
+                    return;
+                }
+
                 JsonObject targetRelease = null;
                 String downloadUrl = null;
                 String latestVersion = null;
                 
                 for (JsonElement relElement : releases) {
                     JsonObject rel = relElement.getAsJsonObject();
+                    String tagVersion = rel.get("tag_name").getAsString().replace("v", "");
+                    if (!tagVersion.startsWith("26.1.2.")) {
+                        continue;
+                    }
                     JsonArray assets = rel.getAsJsonArray("assets");
                     
                     JsonObject matchingAsset = null;
@@ -129,14 +141,6 @@ public class ModUpdater {
 
                 if (targetRelease == null) {
                     if (!silent) sendMessage("§cNo releases or update jars found!");
-                    return;
-                }
-
-                String currentVersion = FabricLoader.getInstance().getModContainer("bomboaddons")
-                        .get().getMetadata().getVersion().getFriendlyString();
-
-                if (currentVersion.equals("${version}")) {
-                    if (!silent) sendMessage("§cRunning in dev environment with unset version. Update skipped.");
                     return;
                 }
 

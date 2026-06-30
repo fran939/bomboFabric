@@ -16,7 +16,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 public class PlaytimeGUI extends Screen {
     private static final Identifier CHEST_GUI_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
     private final int xSize = 176;
-    private final int ySize = 222;
+    private final int ySize = 126;
     private int guiLeft;
     private int guiTop;
 
@@ -187,7 +187,7 @@ public class PlaytimeGUI extends Screen {
         
         int x = (this.width - xSize) / 2;
         int y = (this.height - ySize) / 2;
-        graphics.blit(CHEST_GUI_TEXTURE, x, y, xSize, ySize, 0f, 0f, (float) xSize, (float) ySize);
+        graphics.blit(CHEST_GUI_TEXTURE, x, y, x + xSize, y + ySize, 0f, 176f / 256f, 0f, 126f / 256f);
         
         graphics.text(this.font, this.title, x + 8, y + 6, 4210752, false);
         

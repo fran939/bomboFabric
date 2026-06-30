@@ -40,12 +40,30 @@ public abstract class EditBoxMixin {
         }
     }
 
+    @Shadow public abstract void insertText(String string);
+
+    private boolean insertingCopied = false;
+
+    @Inject(method = "insertText", at = @At("HEAD"), cancellable = true)
+    private void onInsertText(String text, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        if (insertingCopied) return;
+        if (text != null && text.contains("§")) {
+            ci.cancel();
+            insertingCopied = true;
+            try {
+                this.insertText(text.replace('§', '&'));
+            } finally {
+                insertingCopied = false;
+            }
+        }
+    }
+
     @Inject(method = "setValue", at = @At("HEAD"))
     private void onSetValue(String value, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         if (value != null) {
             String lower = value.toLowerCase();
             if (lower.startsWith("/lb") || lower.startsWith("/lfc")) {
-                if (Minecraft.getInstance().gui.screen() instanceof ChatScreen) {
+                if (Minecraft.getInstance().screen instanceof ChatScreen) {
                     me.bombo.bomboaddons.LF.preFetchSelf();
                 }
             }

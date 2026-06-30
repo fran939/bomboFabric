@@ -23,6 +23,7 @@ public class PlaytimeTracker {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     
     private static Map<String, AreaData> areaDataMap = new HashMap<>();
+    private static String currentTrackedUser = null;
     private static long sessionStartTime = System.currentTimeMillis();
     private static Vec3 lastPos = Vec3.ZERO;
     private static float lastYaw = 0;
@@ -34,7 +35,25 @@ public class PlaytimeTracker {
     public static long lastCloudSyncTime = System.currentTimeMillis();
     private static String lastSyncedArea = "None";
 
+    private static File getSaveFile() {
+        Minecraft mc = Minecraft.getInstance();
+        String username = "default";
+        if (mc.getUser() != null && mc.getUser().getName() != null) {
+            username = mc.getUser().getName().toLowerCase(java.util.Locale.ROOT);
+        }
+        return new File(mc.gameDirectory, "config/bombo/bombo_playtime_" + username + ".json");
+    }
+
     public static void load() {
+        Minecraft mc = Minecraft.getInstance();
+        String username = "default";
+        if (mc.getUser() != null && mc.getUser().getName() != null) {
+            username = mc.getUser().getName().toLowerCase(java.util.Locale.ROOT);
+        }
+        currentTrackedUser = username;
+
+        File userFile = getSaveFile();
+
         if (OLD_SAVE_FILE.exists()) {
             try {
                 if (!SAVE_FILE.getParentFile().exists()) SAVE_FILE.getParentFile().mkdirs();
@@ -43,8 +62,22 @@ public class PlaytimeTracker {
                 e.printStackTrace();
             }
         }
-        if (!SAVE_FILE.exists()) return;
-        try (FileReader reader = new FileReader(SAVE_FILE)) {
+
+        // Migrate legacy shared stats to the user-specific file on first launch
+        if (!userFile.exists() && SAVE_FILE.exists()) {
+            try {
+                java.nio.file.Files.copy(SAVE_FILE.toPath(), userFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (!userFile.exists()) {
+            areaDataMap = new HashMap<>();
+            return;
+        }
+
+        try (FileReader reader = new FileReader(userFile)) {
             Type type = new TypeToken<Map<String, AreaData>>(){}.getType();
             Map<String, AreaData> loaded = GSON.fromJson(reader, type);
             if (loaded != null) {
@@ -198,9 +231,10 @@ public class PlaytimeTracker {
     }
 
     public static void save() {
+        File userFile = getSaveFile();
         try {
-            if (!SAVE_FILE.getParentFile().exists()) SAVE_FILE.getParentFile().mkdirs();
-            try (FileWriter writer = new FileWriter(SAVE_FILE)) {
+            if (!userFile.getParentFile().exists()) userFile.getParentFile().mkdirs();
+            try (FileWriter writer = new FileWriter(userFile)) {
                 GSON.toJson(areaDataMap, writer);
             }
         } catch (Exception e) {
@@ -210,6 +244,16 @@ public class PlaytimeTracker {
 
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
+        
+        String username = "default";
+        if (mc.getUser() != null && mc.getUser().getName() != null) {
+            username = mc.getUser().getName().toLowerCase(java.util.Locale.ROOT);
+        }
+        if (currentTrackedUser == null || !currentTrackedUser.equals(username)) {
+            save();
+            load();
+        }
+
         // We allow tick() to run even if player is null so we can sync status to cloud
         boolean inWorld = (mc.player != null && mc.level != null);
         

@@ -137,7 +137,7 @@ public class InventoryViewScreen extends AbstractContainerScreen<ChestMenu> {
         super.extractBackground(guiGraphics, mouseX, mouseY, delta);
         int x = this.leftPos;
         int y = this.topPos;
-        guiGraphics.blit(CONTAINER_BACKGROUND, x, y, this.imageWidth, this.rows * 18 + 17, 0f, 0f, (float) this.imageWidth, (float) (this.rows * 18 + 17));
-        guiGraphics.blit(CONTAINER_BACKGROUND, x, y + this.rows * 18 + 17, this.imageWidth, 96, 0f, 126f, (float) this.imageWidth, 96f);
+        guiGraphics.blit(CONTAINER_BACKGROUND, x, y, x + this.imageWidth, y + this.rows * 18 + 17, 0f, (float) this.imageWidth / 256f, 0f, (float) (this.rows * 18 + 17) / 256f);
+        guiGraphics.blit(CONTAINER_BACKGROUND, x, y + this.rows * 18 + 17, x + this.imageWidth, y + this.rows * 18 + 17 + 96, 0f, (float) this.imageWidth / 256f, 126f / 256f, 222f / 256f);
     }
 }

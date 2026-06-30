@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "bomboaddons",
-	"version": "26.2.1",
+	"version": "26.1.2",
 	"name": "Bomboaddons",
 	"description": "bumboclat",
 	"authors": [
@@ -30,7 +30,7 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.19.3",
-		"minecraft": "~26.2",
+		"minecraft": "~26.1.2",
 		"java": ">=25"
 	}
 }

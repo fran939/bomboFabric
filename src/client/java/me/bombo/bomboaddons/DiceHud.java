@@ -17,8 +17,8 @@ public class DiceHud {
         if (!s.diceTracker) return;
         
         Minecraft client = Minecraft.getInstance();
-        if (client.gui.hud.isHidden()) return;
-        if (client.gui.screen() != null) return;
+        if (client.options.hideGui) return;
+        if (client.screen != null) return;
 
         if (DiceTracker.shouldShowHud()) {
             drawDiceInfo(g, s.diceHudX, s.diceHudY, false);

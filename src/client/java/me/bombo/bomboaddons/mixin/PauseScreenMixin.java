@@ -19,6 +19,8 @@ public abstract class PauseScreenMixin extends Screen {
         super(title);
     }
 
+    private boolean confirmingDisconnect = false;
+
     @Inject(method = "init", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
         // Only replace/add if we are on a remote server (multiplayer)
@@ -52,34 +54,49 @@ public abstract class PauseScreenMixin extends Screen {
             addRenderableWidget(newButton);
         }
 
-        if (optionsBtn != null && BomboConfig.get().reconnectButton) {
-            int originalX = optionsBtn.getX();
-            int originalY = optionsBtn.getY();
-            int originalW = optionsBtn.getWidth();
-            int originalH = optionsBtn.getHeight();
 
-            Button reconnectBtn = Button.builder(Component.literal("Reconnect"), btn -> {
-                net.minecraft.client.multiplayer.ServerData server = this.minecraft.getCurrentServer();
-                if (server == null) {
-                    server = me.bombo.bomboaddons.BomboaddonsClient.lastServerData;
+
+        Button disconnectBtn = null;
+        for (Renderable renderable : ((ScreenAccessor) (Object) this).getRenderables()) {
+            if (renderable instanceof Button button) {
+                if (isDisconnectButton(button)) {
+                    disconnectBtn = button;
+                    break;
                 }
-                if (server != null) {
-                    if (this.minecraft.getConnection() != null) {
-                        this.minecraft.getConnection().getConnection().disconnect(Component.literal("Reconnecting..."));
-                    }
-                    net.minecraft.client.multiplayer.resolver.ServerAddress address = 
-                        net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip);
-                    net.minecraft.client.gui.screens.ConnectScreen.startConnecting(
-                        new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(new net.minecraft.client.gui.screens.TitleScreen()), 
-                        this.minecraft, address, server, false, null
-                    );
+            }
+        }
+
+        if (disconnectBtn != null && BomboConfig.get().smartDisconnect) {
+            int originalX = disconnectBtn.getX();
+            int originalY = disconnectBtn.getY();
+            int originalW = disconnectBtn.getWidth();
+            int originalH = disconnectBtn.getHeight();
+
+            Button origBtnRef = disconnectBtn;
+
+            Button newDisconnectBtn = Button.builder(Component.translatable("menu.disconnect"), btn -> {
+                if (!confirmingDisconnect) {
+                    confirmingDisconnect = true;
+                    btn.setMessage(Component.literal("§cConfirm Disconnect?"));
+                } else {
+                    origBtnRef.onPress(new net.minecraft.client.input.InputWithModifiers() {
+                        @Override
+                        public int modifiers() {
+                            return 0;
+                        }
+
+                        @Override
+                        public int input() {
+                            return 0;
+                        }
+                    });
                 }
             })
             .bounds(originalX, originalY, originalW, originalH)
             .build();
 
-            removeWidget(optionsBtn);
-            addRenderableWidget(reconnectBtn);
+            removeWidget(disconnectBtn);
+            addRenderableWidget(newDisconnectBtn);
         }
     }
 
@@ -95,6 +112,14 @@ public abstract class PauseScreenMixin extends Screen {
         Component message = button.getMessage();
         if (message != null && message.getContents() instanceof TranslatableContents translatable) {
             return "menu.options".equals(translatable.getKey());
+        }
+        return false;
+    }
+
+    private boolean isDisconnectButton(Button button) {
+        Component message = button.getMessage();
+        if (message != null && message.getContents() instanceof TranslatableContents translatable) {
+            return "menu.disconnect".equals(translatable.getKey());
         }
         return false;
     }

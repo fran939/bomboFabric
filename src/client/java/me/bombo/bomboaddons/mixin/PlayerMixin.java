@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerMixin {
     @Inject(method = "swing(Lnet/minecraft/world/InteractionHand;)V", at = @At("HEAD"), cancellable = true)
     private void onSwing(InteractionHand hand, CallbackInfo ci) {
-        if ((Object) this == Minecraft.getInstance().player && Minecraft.getInstance().gui.screen() != null) {
+        if ((Object) this == Minecraft.getInstance().player && Minecraft.getInstance().screen != null) {
             ci.cancel();
         }
     }

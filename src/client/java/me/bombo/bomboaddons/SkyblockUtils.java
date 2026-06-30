@@ -112,7 +112,7 @@ public class SkyblockUtils {
             
             loc = parseAreaFromLines(plainTabLines);
             if (loc.equals("Unknown")) {
-                PlayerTabOverlayAccessor tabAccessor = (PlayerTabOverlayAccessor) mc.gui.hud.getTabList();
+                PlayerTabOverlayAccessor tabAccessor = (PlayerTabOverlayAccessor) mc.gui.getTabList();
                 Component header = tabAccessor.getHeader();
                 Component footer = tabAccessor.getFooter();
                 if (header != null) {
@@ -141,8 +141,8 @@ public class SkyblockUtils {
     public static String getSubArea() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) {
-            if (mc.gui.screen() != null) {
-                String name = mc.gui.screen().getClass().getSimpleName();
+            if (mc.screen != null) {
+                String name = mc.screen.getClass().getSimpleName();
                 if (name.equals("JoinMultiplayerScreen") || name.equals("MultiplayerScreen")) return "Multiplayer Menu";
                 if (name.equals("TitleScreen")) return "Main Menu";
             }
@@ -166,7 +166,7 @@ public class SkyblockUtils {
             String sub = parseSubAreaFromLines(plainTabLines);
             if (!sub.equals("None")) return sub;
             
-            PlayerTabOverlayAccessor tabAccessor = (PlayerTabOverlayAccessor) mc.gui.hud.getTabList();
+            PlayerTabOverlayAccessor tabAccessor = (PlayerTabOverlayAccessor) mc.gui.getTabList();
             Component header = tabAccessor.getHeader();
             Component footer = tabAccessor.getFooter();
             if (header != null) {
@@ -401,6 +401,34 @@ public class SkyblockUtils {
                 return id;
             }
             // Fallback to direct id in tag
+            return tag.getString("id").orElse("");
+        }
+        return "";
+    }
+
+    public static String getInternalIdRaw(ItemStack stack) {
+        if (stack == null) return "";
+        CustomData customData = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+        if (customData != null) {
+            CompoundTag tag = customData.copyTag();
+            CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (ea != null) {
+                return ea.getString("id").orElse("");
+            }
+            return tag.getString("id").orElse("");
+        }
+        return "";
+    }
+
+    public static String getInternalIdRaw(net.minecraft.core.component.DataComponentMap map) {
+        if (map == null) return "";
+        net.minecraft.world.item.component.CustomData customData = map.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+        if (customData != null) {
+            CompoundTag tag = customData.copyTag();
+            CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (ea != null) {
+                return ea.getString("id").orElse("");
+            }
             return tag.getString("id").orElse("");
         }
         return "";

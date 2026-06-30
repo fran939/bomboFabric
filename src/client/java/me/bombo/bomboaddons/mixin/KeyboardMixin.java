@@ -26,11 +26,11 @@ public abstract class KeyboardMixin {
 
          Minecraft mc = Minecraft.getInstance();
          
-         if (mc.gui.screen() instanceof ChatScreen || mc.gui.screen() instanceof AbstractSignEditScreen) {
+         if (mc.screen instanceof ChatScreen || mc.screen instanceof AbstractSignEditScreen) {
             return;
          }
 
-         if (mc.gui.screen() instanceof me.bombo.bomboaddons.BomboConfigGUI && me.bombo.bomboaddons.BomboConfigGUI.isTypingOrListening()) {
+         if (mc.screen instanceof me.bombo.bomboaddons.BomboConfigGUI && me.bombo.bomboaddons.BomboConfigGUI.isTypingOrListening()) {
             return;
          }
 
@@ -48,7 +48,7 @@ public abstract class KeyboardMixin {
             }
          }
 
-         if (mc.gui.screen() instanceof me.bombo.bomboaddons.BomboConfigGUI) {
+         if (mc.screen instanceof me.bombo.bomboaddons.BomboConfigGUI) {
             if (key == 256 || mc.options.keyInventory.matches(event)) {
                return;
             }
@@ -64,7 +64,7 @@ public abstract class KeyboardMixin {
          me.bombo.bomboaddons.GardenMovement.handleKey(key);
 
          // Inventory Snapshot 'P' key
-         if (key == 80 && mc.gui.screen() instanceof AbstractContainerScreen) {
+         if (key == 80 && mc.screen instanceof AbstractContainerScreen) {
             me.bombo.bomboaddons.InventoryManager.captureCurrentGUI();
          }
 
@@ -74,7 +74,7 @@ public abstract class KeyboardMixin {
             List<BomboConfig.CommandBind> activeBinds = null;
             List<BomboConfig.CommandBind> generalBinds = null;
 
-            if (mc.gui.screen() != null) {
+            if (mc.screen != null) {
                // Profile keybinds only trigger when a GUI is open
                activeBinds = BomboConfig.get().profileBinds.get(activeProfile);
                generalBinds = BomboConfig.get().profileBinds.get("General");

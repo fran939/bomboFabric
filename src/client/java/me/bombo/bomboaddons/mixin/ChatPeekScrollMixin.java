@@ -22,7 +22,7 @@ public class ChatPeekScrollMixin {
       if (ChatPeek.isPeeking()) {
          ci.cancel();
          if (vertical != 0.0D) {
-            Minecraft.getInstance().gui.hud.getChat().scrollChat((int)vertical);
+            Minecraft.getInstance().gui.getChat().scrollChat((int)vertical);
          }
       }
    }

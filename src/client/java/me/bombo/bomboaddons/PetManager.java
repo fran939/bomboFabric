@@ -37,7 +37,7 @@ public class PetManager {
         ItemStack petItem = null;
 
         // Check if hovering a pet in an active container screen
-        if (mc.gui.screen() instanceof AbstractContainerScreen screen) {
+        if (mc.screen instanceof AbstractContainerScreen screen) {
             Slot hovered = ((AbstractContainerScreenAccessor) screen).getHoveredSlot();
             if (hovered != null && hovered.hasItem()) {
                 petItem = hovered.getItem();
@@ -105,7 +105,7 @@ public class PetManager {
             return;
         }
 
-        if (mc.gui.screen() instanceof AbstractContainerScreen screen) {
+        if (mc.screen instanceof AbstractContainerScreen screen) {
             String title = screen.getTitle().getString();
             if (title.toLowerCase().contains("pets")) {
                 petsMenuOpened = true;

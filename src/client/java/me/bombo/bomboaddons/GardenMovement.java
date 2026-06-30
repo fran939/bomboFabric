@@ -36,7 +36,7 @@ public class GardenMovement {
             return;
         }
 
-        if (mc.gui.screen() != null) return; // Don't move while in a GUI
+        if (mc.screen != null) return; // Don't move while in a GUI
 
         // Apply held states to Minecraft's keys
         if (forward) mc.options.keyUp.setDown(true);
@@ -53,7 +53,7 @@ public class GardenMovement {
         
         // Don't trigger if in a GUI
         Minecraft mc = Minecraft.getInstance();
-        if (mc.gui.screen() != null) return;
+        if (mc.screen != null) return;
 
         int fKey = ClickLogic.getKeyCode(s.gardenForwardKey);
         int bKey = ClickLogic.getKeyCode(s.gardenBackwardKey);

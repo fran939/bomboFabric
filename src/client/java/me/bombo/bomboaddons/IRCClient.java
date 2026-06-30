@@ -23,6 +23,48 @@ public class IRCClient {
     private static boolean running = false;
     private static String currentNick = "";
     
+    // Concurrent map to keep track of online mod users
+    private static final java.util.Map<String, String> onlinePlayers = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static java.util.Map<String, String> getOnlinePlayers() {
+        return onlinePlayers;
+    }
+
+    public static boolean isConnected() {
+        return running && socket != null && !socket.isClosed();
+    }
+
+    public static class ModUser {
+        public final String username;
+        public final String version;
+        
+        public ModUser(String username, String version) {
+            this.username = username;
+            this.version = version;
+        }
+    }
+    
+    public static ModUser parseNick(String nick) {
+        if (nick.startsWith("b_")) {
+            String stripped = nick.substring(2);
+            int vIdx = stripped.indexOf("_v");
+            if (vIdx != -1) {
+                String user = stripped.substring(0, vIdx);
+                String verAndSuffix = stripped.substring(vIdx + 2);
+                String[] verParts = verAndSuffix.split("_");
+                StringBuilder verBuilder = new StringBuilder();
+                for (int i = 0; i < Math.min(verParts.length, 3); i++) {
+                    if (i > 0) verBuilder.append(".");
+                    verBuilder.append(verParts[i]);
+                }
+                return new ModUser(user, verBuilder.toString());
+            } else {
+                return new ModUser(stripped, "Unknown (< 26.2.2)");
+            }
+        }
+        return new ModUser(nick, "Unknown");
+    }
+
     public static void start() {
         if (running) return;
         running = true;
@@ -53,6 +95,7 @@ public class IRCClient {
             }
 
             try {
+                onlinePlayers.clear();
                 Minecraft mc = Minecraft.getInstance();
                 String username = "Player";
                 if (mc.getUser() != null) {
@@ -63,9 +106,25 @@ public class IRCClient {
                 if (cleanUsername.isEmpty()) {
                     cleanUsername = "bombo_" + random.nextInt(10000);
                 }
-                currentNick = "b_" + cleanUsername;
-                if (currentNick.length() > 20) {
-                    currentNick = currentNick.substring(0, 20);
+                
+                // Fetch mod version dynamically
+                String versionStr = "26.2.2";
+                try {
+                    versionStr = net.fabricmc.loader.api.FabricLoader.getInstance()
+                        .getModContainer("bomboaddons")
+                        .map(m -> m.getMetadata().getVersion().getFriendlyString())
+                        .orElse("26.2.2");
+                } catch (Throwable ignored) {}
+                
+                String cleanVersion = versionStr.replace('.', '_');
+                
+                currentNick = "b_" + cleanUsername + "_v" + cleanVersion;
+                if (currentNick.length() > 30) {
+                    int maxUserLen = 30 - 3 - cleanVersion.length() - 2; // "b_" + "_v"
+                    if (maxUserLen > 0 && cleanUsername.length() > maxUserLen) {
+                        cleanUsername = cleanUsername.substring(0, maxUserLen);
+                    }
+                    currentNick = "b_" + cleanUsername + "_v" + cleanVersion;
                 }
                 
                 Socket localSocket = new Socket(SERVER, PORT);
@@ -113,10 +172,47 @@ public class IRCClient {
                 } else if ("433".equals(command)) { // ERR_NICKNAMEINUSE
                     Random rand = new Random();
                     currentNick = currentNick + "_" + rand.nextInt(100);
-                    if (currentNick.length() > 20) {
-                        currentNick = currentNick.substring(0, 15) + rand.nextInt(9000) + 1000;
+                    if (currentNick.length() > 30) {
+                        currentNick = currentNick.substring(0, 20) + rand.nextInt(1000);
                     }
                     sendRaw("NICK " + currentNick);
+                } else if ("353".equals(command) && parts.length >= 4) { // RPL_NAMREPLY
+                    int colonIdx = line.indexOf(" :");
+                    if (colonIdx != -1) {
+                        String nicksList = line.substring(colonIdx + 2);
+                        String[] nicks = nicksList.split(" ");
+                        for (String nick : nicks) {
+                            if (nick.startsWith("@") || nick.startsWith("+") || nick.startsWith("%") || nick.startsWith("~") || nick.startsWith("&")) {
+                                nick = nick.substring(1);
+                            }
+                            if (nick.startsWith("b_")) {
+                                onlinePlayers.put(nick.toLowerCase(java.util.Locale.ROOT), nick);
+                            }
+                        }
+                    }
+                } else if ("JOIN".equals(command)) {
+                    String senderNick = parts[0].substring(1).split("!")[0];
+                    if (senderNick.startsWith("b_")) {
+                        onlinePlayers.put(senderNick.toLowerCase(java.util.Locale.ROOT), senderNick);
+                    }
+                } else if ("PART".equals(command)) {
+                    String senderNick = parts[0].substring(1).split("!")[0];
+                    onlinePlayers.remove(senderNick.toLowerCase(java.util.Locale.ROOT));
+                } else if ("QUIT".equals(command)) {
+                    String senderNick = parts[0].substring(1).split("!")[0];
+                    onlinePlayers.remove(senderNick.toLowerCase(java.util.Locale.ROOT));
+                } else if ("KICK".equals(command) && parts.length >= 4) {
+                    String kickedNick = parts[3];
+                    onlinePlayers.remove(kickedNick.toLowerCase(java.util.Locale.ROOT));
+                } else if ("NICK".equals(command) && parts.length >= 3) {
+                    String oldNick = parts[0].substring(1).split("!")[0];
+                    String newNick = parts[2];
+                    if (newNick.startsWith(":")) newNick = newNick.substring(1);
+                    
+                    onlinePlayers.remove(oldNick.toLowerCase(java.util.Locale.ROOT));
+                    if (newNick.startsWith("b_")) {
+                        onlinePlayers.put(newNick.toLowerCase(java.util.Locale.ROOT), newNick);
+                    }
                 } else if ("PRIVMSG".equals(command) && parts.length >= 4) {
                     // Line format: :nick!user@host PRIVMSG #channel :message
                     int privmsgIdx = line.indexOf(" PRIVMSG ");
@@ -142,9 +238,8 @@ public class IRCClient {
                             } else if (!rankPrefix.endsWith(" ")) {
                                 rankPrefix = rankPrefix + " ";
                             }
-                            formattedMessage = "§9Party §8> " + rankPrefix + realUsername + "§f: §r" + actualMsg;
+                            formattedMessage = "§r§8[§r§3Bombo§r§8] §r" + rankPrefix + realUsername + "§f: §r" + actualMsg;
                         } else {
-                            // Fallback: look up rank from cache or fetch it
                             String rankPrefix = RankCache.getRank(senderNick);
                             if (rankPrefix.isEmpty()) {
                                 rankPrefix = "§7";
@@ -152,7 +247,7 @@ public class IRCClient {
                                 rankPrefix = rankPrefix + " ";
                             }
                             String cleanPayload = payload.replace('&', '§');
-                            formattedMessage = "§9Party §8> " + rankPrefix + senderNick + "§f: §r" + cleanPayload;
+                            formattedMessage = "§r§8[§r§3Bombo§r§8] §r" + rankPrefix + senderNick + "§f: §r" + cleanPayload;
                         }
                         
                         Minecraft mc = Minecraft.getInstance();
@@ -203,7 +298,7 @@ public class IRCClient {
                 } else if (!localPrefix.endsWith(" ")) {
                     localPrefix = localPrefix + " ";
                 }
-                String localMsg = "§9Party §8> " + localPrefix + username + "§f: §r" + coloredMsg;
+                String localMsg = "§r§8[§r§3Bombo§r§8] §r" + localPrefix + username + "§f: §r" + coloredMsg;
                 
                 final String finalLocalMsg = localMsg;
                 System.out.println("[BomboAddons-IRC] Local msg prepared: " + finalLocalMsg);
@@ -239,6 +334,7 @@ public class IRCClient {
     }
     
     private static void closeQuietly() {
+        onlinePlayers.clear();
         BufferedReader r;
         PrintWriter w;
         Socket s;

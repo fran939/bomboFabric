@@ -39,10 +39,10 @@ public class CustomTimerManager {
         if (!s.customTimerHudEnabled) return;
 
         Minecraft client = Minecraft.getInstance();
-        if (client.gui.hud.isHidden()) return;
+        if (client.options.hideGui) return;
 
         // Hide during open screens unless it is the HUD movement screen
-        if (client.gui.screen() != null && !(client.gui.screen() instanceof HudMoveScreen)) return;
+        if (client.screen != null && !(client.screen instanceof HudMoveScreen)) return;
 
         drawTimers(g, s.customTimerHudX, s.customTimerHudY, false);
     }

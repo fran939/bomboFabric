@@ -83,7 +83,7 @@ public class Pearls {
             // Even if empty, draw the static test so they can check it
         }
 
-        Vec3 camPos = mc.gameRenderer.mainCamera().position();
+        Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
         net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
         if (collector == null) return;
@@ -123,8 +123,8 @@ public class Pearls {
             testScreenPos.mul(poseStack.last().pose());
             testScreenPos.mul(context.levelState().cameraRenderState.projectionMatrix);
             if (debugRenderCounter % 100 == 0) {
-                if (mc.gui != null && mc.gui.hud != null && mc.gui.hud.getChat() != null) {
-                    mc.gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(
+                if (mc.gui != null && mc.gui != null && mc.gui.getChat() != null) {
+                    mc.gui.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(
                         "§7[KuudraDebug] testScreenPos: x=" + testScreenPos.x + ", y=" + testScreenPos.y + ", z=" + testScreenPos.z + ", w=" + testScreenPos.w
                     ));
                 }
@@ -232,13 +232,13 @@ public class Pearls {
 
         debugRenderCounter++;
         if (s.kuudraDebug && debugRenderCounter % 100 == 0) {
-            if (mc.gui != null && mc.gui.hud != null && mc.gui.hud.getChat() != null) {
-                mc.gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(
+            if (mc.gui != null && mc.gui != null && mc.gui.getChat() != null) {
+                mc.gui.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(
                     "§7[KuudraDebug] Pearls rendering " + pearlSolutions.size() + " solutions. MySupply=" + mySupply + ", HUD_TEXTS=" + HUD_TEXTS.size()
                 ));
                 for (int i = 0; i < pearlSolutions.size(); i++) {
                     PearlRenderData d = pearlSolutions.get(i);
-                    mc.gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(
+                    mc.gui.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(
                         "§7[KuudraDebug] #" + i + " " + d.cachedDisplay + " at " + String.format("%.1f, %.1f, %.1f", d.solution.x, d.solution.y, d.solution.z)
                     ));
                 }
@@ -339,8 +339,8 @@ public class Pearls {
         int percent = Integer.parseInt(matcher.group(2));
         if (s.kuudraDebug) {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.gui != null && mc.gui.hud != null && mc.gui.hud.getChat() != null) {
-                mc.gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal("§7[KuudraDebug] Matched Progress: §a" + percent + "%"));
+            if (mc.gui != null && mc.gui != null && mc.gui.getChat() != null) {
+                mc.gui.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal("§7[KuudraDebug] Matched Progress: §a" + percent + "%"));
             }
         }
 
@@ -435,8 +435,8 @@ public class Pearls {
 
         if (BomboConfig.get().kuudraDebug && !name.equals(lastHeldItemName)) {
             lastHeldItemName = name;
-            if (mc.gui != null && mc.gui.hud != null && mc.gui.hud.getChat() != null) {
-                mc.gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal("§7[KuudraDebug] Held Item changed: §e" + (name.isEmpty() ? "Empty" : name)));
+            if (mc.gui != null && mc.gui != null && mc.gui.getChat() != null) {
+                mc.gui.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal("§7[KuudraDebug] Held Item changed: §e" + (name.isEmpty() ? "Empty" : name)));
             }
         }
 

@@ -145,7 +145,7 @@ public class ClickLogic {
 
    public static boolean onKeyPressed(int key) {
       Minecraft mc = Minecraft.getInstance();
-      Screen var3 = mc.gui.screen();
+      Screen var3 = mc.screen;
       if (var3 == null) return false;
       if (var3 instanceof me.bombo.bomboaddons.BomboConfigGUI) return false;
       if (var3 instanceof net.minecraft.client.gui.screens.ChatScreen || var3 instanceof net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen) return false;
@@ -350,7 +350,7 @@ public class ClickLogic {
             }
 
             mc.execute(() -> {
-               if (mc.gui.screen() == screen) {
+               if (mc.screen == screen) {
                   Iterator var3 = targets.iterator();
 
                   while(true) {

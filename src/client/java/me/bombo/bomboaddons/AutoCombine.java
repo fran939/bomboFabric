@@ -46,9 +46,9 @@ public class AutoCombine {
         if (config.hideCheats || !config.anvilAutoCombineEnabled) return;
 
         // 1. Check if in valid GUI first
-        boolean isVanillaAnvil = mc.gui.screen() instanceof AnvilScreen;
+        boolean isVanillaAnvil = mc.screen instanceof AnvilScreen;
         boolean isChestAnvil = false;
-        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
+        if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen) {
             String title = screen.getTitle().getString();
             if (title.toLowerCase().contains("anvil") || title.toLowerCase().contains("combine")) isChestAnvil = true;
         }
@@ -93,10 +93,10 @@ public class AutoCombine {
         int leftSlot, rightSlot, resultSlot, invStart;
 
         if (isVanillaAnvil) {
-            menu = ((AnvilScreen) mc.gui.screen()).getMenu();
+            menu = ((AnvilScreen) mc.screen).getMenu();
             leftSlot = 0; rightSlot = 1; resultSlot = 2; invStart = 3;
         } else {
-            menu = ((net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) mc.gui.screen()).getMenu();
+            menu = ((net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?>) mc.screen).getMenu();
             leftSlot = 29; rightSlot = 33; resultSlot = 22; invStart = 54;
         }
 

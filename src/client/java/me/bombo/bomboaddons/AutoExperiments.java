@@ -61,9 +61,9 @@ public class AutoExperiments {
         BomboConfig.Settings config = BomboConfig.get();
 
         if (mc.player != null && !config.hideCheats && config.autoExperiments) {
-            String title = mc.gui.screen() != null ? mc.gui.screen().getTitle().getString().trim() : "";
+            String title = mc.screen != null ? mc.screen.getTitle().getString().trim() : "";
             
-            if (mc.gui.screen() == null) {
+            if (mc.screen == null) {
                 if (!lastDetectedTitle.isEmpty()) {
                     lastDetectedTitle = "";
                     reset();
@@ -83,7 +83,7 @@ public class AutoExperiments {
                     lastDetectedTitle = cleanTitle;
                 }
                 
-                Screen screen = mc.gui.screen();
+                Screen screen = mc.screen;
                 if (screen instanceof AbstractContainerScreen && !cleanTitle.contains("Stakes") && !cleanTitle.contains("Table")) {
                     AbstractContainerScreen<?> acs = (AbstractContainerScreen<?>) screen;
                     

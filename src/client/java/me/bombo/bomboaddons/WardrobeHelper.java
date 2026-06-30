@@ -39,7 +39,7 @@ public class WardrobeHelper {
                     for (int i = 0; i < 20; i++) {
                         Thread.sleep(50L);
                         boolean success = mc.submit(() -> {
-                            if (mc.gui.screen() == screen && slotToClick < screen.getMenu().slots.size()) {
+                            if (mc.screen == screen && slotToClick < screen.getMenu().slots.size()) {
                                 Slot slot = screen.getMenu().slots.get(slotToClick);
                                 ItemStack stack = slot.getItem();
                                 if (!stack.isEmpty()) {

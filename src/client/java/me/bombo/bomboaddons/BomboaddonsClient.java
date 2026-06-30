@@ -52,9 +52,10 @@ public class BomboaddonsClient implements ClientModInitializer {
     }
     public static final java.util.List<PendingCommand> pendingCommands = new java.util.concurrent.CopyOnWriteArrayList<>();
 
-    private static final String PREFIX = "§8[§bBomboAddons§8]§r ";
+    private static final String PREFIX = "§8[§3Bombo§8]§r ";
     private static boolean openGuiNextTick = false;
     private static boolean openHudMoveNextTick = false;
+    private static boolean openCustomizeGuiNextTick = false;
     public static com.mojang.brigadier.CommandDispatcher<FabricClientCommandSource> clientDispatcher;
     public static String currentArea = "None";
     public static String currentSubArea = "None";
@@ -74,6 +75,38 @@ public class BomboaddonsClient implements ClientModInitializer {
     public static int expectingLocrawCount = 0;
 
     public void onInitializeClient() {
+        Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.UncaughtExceptionHandler customHandler = (thread, throwable) -> {
+            try {
+                java.io.File file = new java.io.File("crash_exception.log");
+                try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(file, true))) {
+                    pw.println("=== UNCAUGHT EXCEPTION ===");
+                    pw.println("Thread: " + thread.getName());
+                    throwable.printStackTrace(pw);
+                    pw.println("==========================");
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+            if (defaultHandler != null) {
+                defaultHandler.uncaughtException(thread, throwable);
+            }
+        };
+        Thread.setDefaultUncaughtExceptionHandler(customHandler);
+        Thread.currentThread().setUncaughtExceptionHandler(customHandler);
+
+        try {
+            SkyblockItemManager.ensureLoaded();
+            System.out.println("=== ServerData.Type Enum Constants ===");
+            for (Object obj : Class.forName("net.minecraft.client.multiplayer.ServerData$Type").getEnumConstants()) {
+                System.out.println("Enum constant: " + obj);
+            }
+            System.out.println("======================================");
+        } catch (Throwable t) {
+            System.err.println("[BomboAddons] Error triggering SkyblockItemManager:");
+            t.printStackTrace();
+        }
+
         Bomboaddons.sendMessageConsumer = (message) -> {
             Minecraft mc = Minecraft.getInstance();
             mc.execute(() -> {
@@ -405,6 +438,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 return 1;
                             })
                             .then(ClientCommands.argument("username", StringArgumentType.string())
+                                    .suggests((ctx, sb) -> TabCompletionManager.getUsernameSuggestions(ctx, sb))
                                     .executes(context -> {
                                         String user = StringArgumentType.getString(context, "username");
                                         System.out.println("[Bombo] Executing /lf for user: " + user);
@@ -428,6 +462,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 return 1;
                             })
                             .then(ClientCommands.argument("username", StringArgumentType.string())
+                                    .suggests((ctx, sb) -> TabCompletionManager.getUsernameSuggestions(ctx, sb))
                                     .executes(context -> {
                                         String user = StringArgumentType.getString(context, "username");
                                         System.out.println("[Bombo] Executing /lfc for user: " + user);
@@ -443,6 +478,34 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 LF.show(user, query, true);
                                                 return 1;
                                             }))));
+
+                    // --- SBE Commands (Top-Level with Auto-Completions) ---
+                    String[] sbeSubs = { "nw", "cata", "skills", "slayer", "trophyfish", "crimson", "crimsom" };
+                    for (String s : sbeSubs) {
+                        final String commandName = s.equals("crimsom") ? "crimson" : s;
+                        dispatcher.register(ClientCommands.literal(s)
+                                .executes(context -> {
+                                    Minecraft mc = Minecraft.getInstance();
+                                    if (mc.player != null) {
+                                        SBECommands.handleCommand(commandName, mc.player.getName().getString(), null);
+                                    }
+                                    return 1;
+                                })
+                                .then(ClientCommands.argument("username", StringArgumentType.string())
+                                        .suggests((ctx, sb) -> TabCompletionManager.getUsernameSuggestions(ctx, sb))
+                                        .executes(context -> {
+                                            String name = StringArgumentType.getString(context, "username");
+                                            SBECommands.handleCommand(commandName, name, null);
+                                            return 1;
+                                        })
+                                        .then(ClientCommands.argument("profile", StringArgumentType.word())
+                                                .executes(context -> {
+                                                    String name = StringArgumentType.getString(context, "username");
+                                                    String profile = StringArgumentType.getString(context, "profile");
+                                                    SBECommands.handleCommand(commandName, name, profile);
+                                                    return 1;
+                                                }))));
+                    }
                     dispatcher.register(ClientCommands.literal("lb")
                             .executes(context -> {
                                 System.out.println("[Bombo] Executing /lb");
@@ -466,8 +529,76 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         }
                                         return 1;
                                     })));
+                    dispatcher.register(ClientCommands.literal("bitem")
+                            .executes(context -> {
+                                Minecraft mc = Minecraft.getInstance();
+                                if (mc.player == null) return 1;
+                                ItemStack stack = mc.player.getMainHandItem();
+                                if (stack.isEmpty()) {
+                                    context.getSource().sendFeedback(Component.literal("§c[Bombo] You must hold an item."));
+                                    return 1;
+                                }
+
+                                boolean originalRestore = BomboConfig.get().restoreItemModels;
+                                BomboConfig.get().restoreItemModels = false;
+                                net.minecraft.world.item.Item originalItem = stack.getItem();
+                                BomboConfig.get().restoreItemModels = originalRestore;
+
+                                String skyblockId = SkyblockUtils.getInternalIdRaw(stack);
+                                context.getSource().sendFeedback(Component.literal("§6=== Item Debug ==="));
+                                context.getSource().sendFeedback(Component.literal("§7Name: §f" + stack.getHoverName().getString()));
+                                context.getSource().sendFeedback(Component.literal("§7SkyBlock ID: §e" + (skyblockId.isEmpty() ? "None" : skyblockId)));
+                                context.getSource().sendFeedback(Component.literal("§7Vanilla Item: §c" + net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(originalItem).toString()));
+
+                                if (!skyblockId.isEmpty()) {
+                                    SkyblockItemManager.SkyblockItemInfo info = SkyblockItemManager.getInfo(skyblockId);
+                                    if (info != null) {
+                                        context.getSource().sendFeedback(Component.literal("§7Expected Material (API): §a" + info.material));
+                                        net.minecraft.world.item.Item overrideItem = SkyblockItemManager.getOverrideItem(info.material);
+                                        if (overrideItem != null) {
+                                            context.getSource().sendFeedback(Component.literal("§7Overridden Item: §b" + net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(overrideItem).toString()));
+                                        } else {
+                                            context.getSource().sendFeedback(Component.literal("§7Overridden Item: §cNone (Failed to resolve)"));
+                                        }
+                                        if (info.skinValue != null) {
+                                            context.getSource().sendFeedback(Component.literal("§7Skin Value: §d" + (info.skinValue.length() > 20 ? info.skinValue.substring(0, 20) + "..." : info.skinValue)));
+                                        }
+                                    } else {
+                                        context.getSource().sendFeedback(Component.literal("§7Expected Material (API): §cNot found in database"));
+                                    }
+                                }
+                                context.getSource().sendFeedback(Component.literal("§6=================="));
+                                return 1;
+                            }));
                 } catch (Throwable t) {
                     System.err.println("[Bombo] FAILED to register core search commands!");
+                    t.printStackTrace();
+                }
+
+                // --- PRIORITY 1.5: /server command ---
+                try {
+                    dispatcher.register(ClientCommands.literal("server")
+                            .then(ClientCommands.argument("ip", StringArgumentType.greedyString())
+                                    .executes(context -> {
+                                        String ip = StringArgumentType.getString(context, "ip");
+                                        Minecraft mc = Minecraft.getInstance();
+                                        mc.execute(() -> {
+                                            if (mc.getConnection() != null) {
+                                                mc.getConnection().getConnection().disconnect(Component.literal("Connecting to " + ip));
+                                            }
+                                            net.minecraft.client.multiplayer.resolver.ServerAddress address = 
+                                                net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(ip);
+                                            net.minecraft.client.multiplayer.ServerData server = 
+                                                new net.minecraft.client.multiplayer.ServerData("Server", ip, net.minecraft.client.multiplayer.ServerData.Type.OTHER);
+                                            net.minecraft.client.gui.screens.ConnectScreen.startConnecting(
+                                                new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(new net.minecraft.client.gui.screens.TitleScreen()), 
+                                                mc, address, server, false, null
+                                            );
+                                        });
+                                        return 1;
+                                    })));
+                } catch (Throwable t) {
+                    System.err.println("[Bombo] FAILED to register server command!");
                     t.printStackTrace();
                 }
 
@@ -532,6 +663,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     createHelpLine("/b area", "/b area", "Shows the current SkyBlock area.")
                                             .append(Component.literal(" §7- Shows current Area")));
                             context.getSource().sendFeedback(
+                                    createHelpLine("/b online", "/b online", "Shows who is online with the mod and their version.")
+                                            .append(Component.literal(" §7- Shows online mod users")));
+                            context.getSource().sendFeedback(
+                                    createHelpLine("/b color", "/b color", "Shows Minecraft text color and formatting codes.")
+                                            .append(Component.literal(" §7- Shows text color codes")));
+                            context.getSource().sendFeedback(
                                     createHelpLine("/b subarea", "/b subarea", "Shows the current SkyBlock subarea.")
                                             .append(Component.literal(" §7- Shows current Subarea")));
                             context.getSource()
@@ -547,6 +684,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                             context.getSource().sendFeedback(
                                     createHelpLine("/b kick", "/b kick", "Safely disconnects you from the server.")
                                             .append(Component.literal(" §7- Safely disconnects from server")));
+                            context.getSource().sendFeedback(
+                                    createHelpLine("/b play <ip>", "/b play ", "Safely disconnects and connects to a server.")
+                                            .append(Component.literal(" §7- Connects to a server")));
                             context.getSource()
                                     .sendFeedback(createHelpLine("/b resetdice", "/b resetdice",
                                             "Resets High Class Archfiend Dice stats.")
@@ -578,15 +718,75 @@ public class BomboaddonsClient implements ClientModInitializer {
                             context.getSource().sendFeedback(
                                     createHelpLine("/b chat", "/b chat", "Toggles the global IRC mod chat.")
                                             .append(Component.literal(" §7- Toggles IRC chat")));
+                            context.getSource().sendFeedback(
+                                    createHelpLine("/b custom", "/b custom", "Customizes the material and name of the held item.")
+                                            .append(Component.literal(" §7- Customizes the held item")));
 
                             context.getSource().sendFeedback(
                                     Component.literal("§8---------------------------------------------------------"));
                             return 1;
                         }));
 
+                        builder.then(ClientCommands.literal("play")
+                                .then(ClientCommands.argument("ip", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            String ip = StringArgumentType.getString(context, "ip");
+                                            Minecraft mc = Minecraft.getInstance();
+                                            mc.execute(() -> {
+                                                if (mc.getConnection() != null) {
+                                                    mc.getConnection().getConnection().disconnect(Component.literal("Connecting to " + ip));
+                                                }
+                                                net.minecraft.client.multiplayer.resolver.ServerAddress address = 
+                                                    net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(ip);
+                                                net.minecraft.client.multiplayer.ServerData server = 
+                                                    new net.minecraft.client.multiplayer.ServerData("Server", ip, net.minecraft.client.multiplayer.ServerData.Type.OTHER);
+                                                net.minecraft.client.gui.screens.ConnectScreen.startConnecting(
+                                                    new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(new net.minecraft.client.gui.screens.TitleScreen()), 
+                                                    mc, address, server, false, null
+                                                );
+                                            });
+                                            return 1;
+                                        })));
+
                         builder.then(ClientCommands.literal("prof").executes(context -> {
                             BomboConfigGUI.selectedCategory = 5;
                             openGuiNextTick = true;
+                            return 1;
+                        }));
+
+                        builder.then(ClientCommands.literal("friends").executes(context -> {
+                            context.getSource().sendFeedback(Component.literal(PREFIX + "§bFriends in Cache (" + TabCompletionManager.friends.size() + "):"));
+                            if (TabCompletionManager.friends.isEmpty()) {
+                                context.getSource().sendFeedback(Component.literal("§7- §cNone"));
+                            } else {
+                                java.util.List<String> sorted = new java.util.ArrayList<>(TabCompletionManager.friends);
+                                java.util.Collections.sort(sorted);
+                                context.getSource().sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
+                            }
+                            return 1;
+                        }));
+
+                        builder.then(ClientCommands.literal("guild").executes(context -> {
+                            context.getSource().sendFeedback(Component.literal(PREFIX + "§bGuild Members in Cache (" + TabCompletionManager.guild.size() + "):"));
+                            if (TabCompletionManager.guild.isEmpty()) {
+                                context.getSource().sendFeedback(Component.literal("§7- §cNone"));
+                            } else {
+                                java.util.List<String> sorted = new java.util.ArrayList<>(TabCompletionManager.guild);
+                                java.util.Collections.sort(sorted);
+                                context.getSource().sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
+                            }
+                            return 1;
+                        }));
+
+                        builder.then(ClientCommands.literal("party").executes(context -> {
+                            context.getSource().sendFeedback(Component.literal(PREFIX + "§bParty Members in Cache (" + TabCompletionManager.party.size() + "):"));
+                            if (TabCompletionManager.party.isEmpty()) {
+                                context.getSource().sendFeedback(Component.literal("§7- §cNone"));
+                            } else {
+                                java.util.List<String> sorted = new java.util.ArrayList<>(TabCompletionManager.party);
+                                java.util.Collections.sort(sorted);
+                                context.getSource().sendFeedback(Component.literal("§7- §e" + String.join(", ", sorted)));
+                            }
                             return 1;
                         }));
 
@@ -771,6 +971,30 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             .getMetadata().getVersion().getFriendlyString();
                                     context.getSource().sendFeedback(
                                             Component.literal(PREFIX + "§aCurrent Version: §e" + version));
+                                    return 1;
+                                }));
+                        builder.then(ClientCommands.literal("custom")
+                                .executes(context -> {
+                                    Minecraft mc = Minecraft.getInstance();
+                                    if (mc.player == null) return 1;
+                                    ItemStack stack = mc.player.getMainHandItem();
+                                    if (stack.isEmpty()) {
+                                        context.getSource().sendFeedback(Component.literal("§c[Bombo] You must hold an item to customize it."));
+                                        return 1;
+                                    }
+                                    openCustomizeGuiNextTick = true;
+                                    return 1;
+                                }));
+                        builder.then(ClientCommands.literal("customize")
+                                .executes(context -> {
+                                    Minecraft mc = Minecraft.getInstance();
+                                    if (mc.player == null) return 1;
+                                    ItemStack stack = mc.player.getMainHandItem();
+                                    if (stack.isEmpty()) {
+                                        context.getSource().sendFeedback(Component.literal("§c[Bombo] You must hold an item to customize it."));
+                                        return 1;
+                                    }
+                                    openCustomizeGuiNextTick = true;
                                     return 1;
                                 }));
 
@@ -1279,79 +1503,96 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             String msg = StringArgumentType.getString(context, "message").replace('&',
                                                     '§');
                                             Minecraft mc = Minecraft.getInstance();
-                                            if (mc.gui != null && mc.gui.hud != null && mc.gui.hud.getChat() != null) {
-                                                mc.gui.hud.getChat().addClientSystemMessage(Component.literal(msg));
+                                            if (mc.gui != null && mc.gui.getChat() != null) {
+                                                mc.gui.getChat().addClientSystemMessage(Component.literal(msg));
                                             }
                                             processChatMessage(msg);
                                             return 1;
                                         })));
 
                         // --- Particle List + ESP ---
-                        builder.then(ClientCommands.literal("particles")
-                                .executes(context -> {
-                                    // List nearby particles
-                                    java.util.Map<String, Integer> summary = ParticleTracker
-                                            .getSummary(ParticleTracker.espRadius);
-                                    context.getSource().sendFeedback(
-                                            Component.literal(PREFIX + "§6Nearby Particles (last 5s, radius §e"
-                                                    + (int) ParticleTracker.espRadius + "§6 blocks):"));
-                                    if (summary.isEmpty()) {
-                                        context.getSource().sendFeedback(Component.literal("  §7None detected."));
-                                    } else {
-                                        for (java.util.Map.Entry<String, Integer> entry : summary.entrySet()) {
-                                            int col = ParticleTracker.colorForType(entry.getKey());
-                                            String hexStr = String.format("#%06X", col);
-                                            context.getSource().sendFeedback(Component.literal(
-                                                    "  §7» §r" + entry.getKey() + " §8x" + entry.getValue()));
-                                        }
-                                    }
-                                    return 1;
-                                })
-                                .then(ClientCommands.literal("esp")
-                                        .executes(context -> {
-                                            ParticleTracker.espEnabled = !ParticleTracker.espEnabled;
-                                            ParticleESP.typeFilter = null;
-                                            context.getSource()
-                                                    .sendFeedback(Component.literal(PREFIX + "§7Particle ESP: "
-                                                            + (ParticleTracker.espEnabled ? "§aON" : "§cOFF")));
-                                            return 1;
-                                        })
-                                        .then(ClientCommands.argument("type", StringArgumentType.greedyString())
-                                                .executes(context -> {
-                                                    String filter = StringArgumentType.getString(context, "type");
-                                                    if (filter.equals("off") || filter.equals("none")) {
-                                                        ParticleESP.typeFilter = null;
-                                                        ParticleTracker.espEnabled = false;
-                                                        context.getSource().sendFeedback(
-                                                                Component.literal(PREFIX + "§cParticle ESP disabled."));
-                                                    } else {
-                                                        ParticleESP.typeFilter = filter;
-                                                        ParticleTracker.espEnabled = true;
-                                                        context.getSource().sendFeedback(Component.literal(PREFIX
-                                                                + "§aParticle ESP §aON §7— filtering: §e" + filter));
+                        for (String argName : new String[]{"particles", "particle"}) {
+                            builder.then(ClientCommands.literal(argName)
+                                    .executes(context -> {
+                                        // List nearby particles
+                                        java.util.Map<String, Integer> summary = ParticleTracker
+                                                .getSummary(ParticleTracker.espRadius);
+                                        context.getSource().sendFeedback(
+                                                Component.literal(PREFIX + "§6Nearby Particles (last 5s, radius §e"
+                                                        + (int) ParticleTracker.espRadius + "§6 blocks):"));
+                                        if (summary.isEmpty()) {
+                                            context.getSource().sendFeedback(Component.literal("  §7None detected."));
+                                        } else {
+                                            for (java.util.Map.Entry<String, Integer> entry : summary.entrySet()) {
+                                                String keyName = entry.getKey();
+                                                String highlightName = keyName.toLowerCase();
+                                                
+                                                // Find details of a matching entry
+                                                String rawType = "Unknown";
+                                                double lastX = 0, lastY = 0, lastZ = 0;
+                                                for (ParticleTracker.ParticleEntry p : ParticleTracker.getEspPoints(null)) {
+                                                    if (p.type.equals(keyName)) {
+                                                        rawType = p.rawType;
+                                                        lastX = p.x;
+                                                        lastY = p.y;
+                                                        lastZ = p.z;
+                                                        break;
                                                     }
-                                                    return 1;
-                                                })))
-                                .then(ClientCommands.literal("radius")
-                                        .then(ClientCommands
-                                                .argument("r",
-                                                        com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,
-                                                                128))
-                                                .executes(context -> {
-                                                    int r = com.mojang.brigadier.arguments.IntegerArgumentType
-                                                            .getInteger(context, "r");
-                                                    ParticleTracker.espRadius = r;
-                                                    context.getSource().sendFeedback(Component.literal(PREFIX
-                                                            + "§7Particle ESP radius set to §e" + r + "§7 blocks."));
-                                                    return 1;
-                                                })))
-                                .then(ClientCommands.literal("clear")
-                                        .executes(context -> {
-                                            ParticleTracker.clear();
-                                            context.getSource().sendFeedback(
-                                                    Component.literal(PREFIX + "§aParticle history cleared."));
-                                            return 1;
-                                        })));
+                                                }
+
+                                                context.getSource().sendFeedback(Component.literal(
+                                                        "  §7» Highlight name: §e" + highlightName + " §8x" + entry.getValue() + 
+                                                        " §7(Raw/Debug: §d" + rawType + "§7, Last Pos: §a" + String.format("%.2f, %.2f, %.2f", lastX, lastY, lastZ) + "§7)"));
+                                            }
+                                        }
+                                        return 1;
+                                    })
+                                    .then(ClientCommands.literal("esp")
+                                            .executes(context -> {
+                                                ParticleTracker.espEnabled = !ParticleTracker.espEnabled;
+                                                ParticleESP.typeFilter = null;
+                                                context.getSource()
+                                                        .sendFeedback(Component.literal(PREFIX + "§7Particle ESP: "
+                                                                + (ParticleTracker.espEnabled ? "§aON" : "§cOFF")));
+                                                return 1;
+                                            })
+                                            .then(ClientCommands.argument("type", StringArgumentType.greedyString())
+                                                    .executes(context -> {
+                                                        String filter = StringArgumentType.getString(context, "type");
+                                                        if (filter.equals("off") || filter.equals("none")) {
+                                                            ParticleESP.typeFilter = null;
+                                                            ParticleTracker.espEnabled = false;
+                                                            context.getSource().sendFeedback(
+                                                                    Component.literal(PREFIX + "§cParticle ESP disabled."));
+                                                        } else {
+                                                            ParticleESP.typeFilter = filter;
+                                                            ParticleTracker.espEnabled = true;
+                                                            context.getSource().sendFeedback(Component.literal(PREFIX
+                                                                    + "§aParticle ESP §aON §7— filtering: §e" + filter));
+                                                        }
+                                                        return 1;
+                                                    })))
+                                    .then(ClientCommands.literal("radius")
+                                            .then(ClientCommands
+                                                    .argument("r",
+                                                            com.mojang.brigadier.arguments.IntegerArgumentType.integer(1,
+                                                                    128))
+                                                    .executes(context -> {
+                                                        int r = com.mojang.brigadier.arguments.IntegerArgumentType
+                                                                .getInteger(context, "r");
+                                                        ParticleTracker.espRadius = r;
+                                                        context.getSource().sendFeedback(Component.literal(PREFIX
+                                                                + "§7Particle ESP radius set to §e" + r + "§7 blocks."));
+                                                        return 1;
+                                                    })))
+                                    .then(ClientCommands.literal("clear")
+                                            .executes(context -> {
+                                                ParticleTracker.clear();
+                                                context.getSource().sendFeedback(
+                                                        Component.literal(PREFIX + "§aParticle history cleared."));
+                                                return 1;
+                                            })));
+                        }
 
                         builder.then(ClientCommands.literal("anvil")
                                 .then(ClientCommands.literal("add")
@@ -1687,6 +1928,53 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                                     + number + ") under alias §b" + alias));
                                                             return 1;
                                                         })))));
+
+                        builder.then(ClientCommands.literal("online")
+                                .executes(context -> {
+                                    if (!BomboConfig.get().ircChatEnabled) {
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§cIRC Chat is currently disabled. Toggle it ON in the config GUI to see online users."));
+                                        return 1;
+                                    }
+                                    if (!IRCClient.isConnected()) {
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "§7Connecting to IRC server... (Please wait a moment and try again)"));
+                                        IRCClient.start();
+                                        return 1;
+                                    }
+
+                                    java.util.Map<String, String> onlineMap = IRCClient.getOnlinePlayers();
+                                    context.getSource().sendFeedback(Component.literal(PREFIX + "§6Online Mod Users:"));
+                                    if (onlineMap.isEmpty()) {
+                                        context.getSource().sendFeedback(Component.literal("  §7No other users detected yet (or currently fetching names list)."));
+                                    } else {
+                                        int count = 0;
+                                        for (String nick : onlineMap.values()) {
+                                            IRCClient.ModUser user = IRCClient.parseNick(nick);
+                                            context.getSource().sendFeedback(Component.literal(
+                                                    "  §7» §a" + user.username + " §7— Version: §e" + user.version));
+                                            count++;
+                                        }
+                                        context.getSource().sendFeedback(Component.literal("§7Total online: §b" + count));
+                                    }
+                                    return 1;
+                                }));
+
+                        builder.then(ClientCommands.literal("color")
+                                .executes(context -> {
+                                    context.getSource().sendFeedback(Component.literal("§8---------------- §b[Color Codes] §8----------------"));
+                                    context.getSource().sendFeedback(Component.literal("  §0&0 - Black        §1&1 - Dark Blue"));
+                                    context.getSource().sendFeedback(Component.literal("  §2&2 - Dark Green   §3&3 - Dark Aqua"));
+                                    context.getSource().sendFeedback(Component.literal("  §4&4 - Dark Red     §5&5 - Dark Purple"));
+                                    context.getSource().sendFeedback(Component.literal("  §6&6 - Gold         §7&7 - Gray"));
+                                    context.getSource().sendFeedback(Component.literal("  §8&8 - Dark Gray    §9&9 - Blue"));
+                                    context.getSource().sendFeedback(Component.literal("  §a&a - Green        §b&b - Aqua"));
+                                    context.getSource().sendFeedback(Component.literal("  §c&c - Red          §d&d - Light Purple"));
+                                    context.getSource().sendFeedback(Component.literal("  §e&e - Yellow       §f&f - White"));
+                                    context.getSource().sendFeedback(Component.literal("§8Formatting Codes:"));
+                                    context.getSource().sendFeedback(Component.literal("  §k&k - Obfuscated   §l&l - Bold"));
+                                    context.getSource().sendFeedback(Component.literal("  §m&m - Strikethrough§n&n - Underline"));
+                                    context.getSource().sendFeedback(Component.literal("  §o&o - Italic       §r&r - Reset"));
+                                    return 1;
+                                }));
                     };
 
                     setupCommands.accept(bBuilder);
@@ -2106,6 +2394,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             ItemHotkeys.init();
 
             ModUpdater.init();
+            TabCompletionManager.load();
             registerTickEvents();
             DiceHud.init();
             KuudraTimer.init();
@@ -2139,6 +2428,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
+                try {
+                    BlockHighlight.render(context);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
             });
 
             HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "main_hud"), (graphics, deltaTracker) -> {
@@ -2162,11 +2456,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                 }
 
                 // Only render HUD if no screen is open or it's the HudMoveScreen
-                if (Minecraft.getInstance().gui.screen() == null || Minecraft.getInstance().gui.screen() instanceof HudMoveScreen) {
+                if (Minecraft.getInstance().screen == null || Minecraft.getInstance().screen instanceof HudMoveScreen) {
                     FeastBakeryHud.onHudRender(graphics);
                     ExperimentationTableHud.onHudRender(graphics);
                 }
-                if (Minecraft.getInstance().gui.screen() == null) {
+                if (Minecraft.getInstance().screen == null) {
                     GardenMovement.drawDirectionWarning(graphics);
                 }
             });
@@ -2212,6 +2506,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                     me.bombo.bomboaddons.eggfinder.EggWebSocket.disconnect();
                 } catch (Throwable t) {
                     t.printStackTrace();
+                }
+                try {
+                    TabCompletionManager.party.clear();
+                } catch (Throwable t) {
                 }
             });
 
@@ -2354,7 +2652,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                 t.printStackTrace();
             }
             try {
-                if (client.gui.screen() instanceof net.minecraft.client.gui.screens.DisconnectedScreen) {
+                if (client.screen instanceof net.minecraft.client.gui.screens.DisconnectedScreen) {
                     if (autoReconnectTicks > 0) {
                         autoReconnectTicks--;
                         int secondsLeft = (autoReconnectTicks + 19) / 20;
@@ -2469,15 +2767,33 @@ public class BomboaddonsClient implements ClientModInitializer {
             // Safe execution of Config GUI logic
             try {
                 if (openGuiNextTick && client.player != null) {
+                    System.out.println("DEBUG: Tick opening config GUI");
                     openGuiNextTick = false;
-                    client.setScreenAndShow(new BomboConfigGUI(client.gui.screen()));
+                    client.setScreen(new BomboConfigGUI(client.screen));
+                    System.out.println("DEBUG: Config GUI set screen success");
                 }
                 if (openHudMoveNextTick && client.player != null) {
+                    System.out.println("DEBUG: Tick opening HUD move screen");
                     openHudMoveNextTick = false;
-                    client.setScreenAndShow(new HudMoveScreen());
+                    client.setScreen(new HudMoveScreen());
+                    System.out.println("DEBUG: HUD move screen set success");
+                }
+                if (openCustomizeGuiNextTick && client.player != null) {
+                    System.out.println("DEBUG: Tick opening customize screen");
+                    openCustomizeGuiNextTick = false;
+                    client.setScreen(new ItemCustomizeScreen(client.screen));
+                    System.out.println("DEBUG: Customize screen set screen success");
                 }
             } catch (Throwable t) {
-                // Silently ignore or use logger
+                Bomboaddons.LOGGER.error("[BomboAddons] Error opening screen!", t);
+                try {
+                    java.io.File file = new java.io.File("crash_exception.log");
+                    try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(file, true))) {
+                        pw.println("=== TICK SCREEN OPEN EXCEPTION ===");
+                        t.printStackTrace(pw);
+                        pw.println("==================================");
+                    }
+                } catch (Throwable ignore) {}
             }
 
             // Independent Safe Box for Etherwarp
@@ -2554,6 +2870,10 @@ public class BomboaddonsClient implements ClientModInitializer {
             try {
                 me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.onClientTick();
                 me.bombo.bomboaddons.kuudra.pearls.Pearls.onClientTick();
+            } catch (Throwable t) {
+            }
+            try {
+                BlockHighlight.onTick();
             } catch (Throwable t) {
             }
         });
@@ -2697,6 +3017,10 @@ public class BomboaddonsClient implements ClientModInitializer {
     public static void processChatMessage(String rawMessage) {
         if (rawMessage == null)
             return;
+        try {
+            TabCompletionManager.onChatMessage(rawMessage);
+        } catch (Throwable t) {
+        }
         String cleanMessage = rawMessage.replaceAll("§.", "").trim().toLowerCase();
         
         // Party command automation parsing
@@ -2802,8 +3126,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                         Minecraft mc = Minecraft.getInstance();
                         String formattedTitle = trigger.titleToShow.replace('&', '§');
                         mc.execute(() -> {
-                            mc.gui.hud.setTimes(10, 70, 20);
-                            mc.gui.hud.setTitle(Component.literal(formattedTitle));
+                            mc.gui.setTimes(10, 70, 20);
+                            mc.gui.setTitle(Component.literal(formattedTitle));
                         });
                     }
                 }
