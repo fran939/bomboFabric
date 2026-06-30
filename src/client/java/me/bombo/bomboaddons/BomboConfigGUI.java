@@ -344,7 +344,7 @@ public class BomboConfigGUI extends Screen {
                         s.borderlessFullscreen = v;
                         BomboConfig.save();
                         try {
-                            Minecraft.getInstance().getWindow().updateFullscreen(Minecraft.getInstance().options.enableVsync().get());
+                            ((me.bombo.bomboaddons.mixin.WindowAccessor) (Object) Minecraft.getInstance().getWindow()).invokeUpdateFullscreen(Minecraft.getInstance().options.enableVsync().get());
                         } catch (Throwable ignored) {}
                     }, col2X, col2W, y2);
 
