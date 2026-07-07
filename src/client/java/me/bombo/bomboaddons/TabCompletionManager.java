@@ -177,10 +177,22 @@ public class TabCompletionManager {
     }
 
     public static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> getUsernameSuggestions(
-            com.mojang.brigadier.context.CommandContext<net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource> context,
+            com.mojang.brigadier.context.CommandContext<?> context,
             com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
         
-        String remaining = builder.getRemaining().toLowerCase();
+        String fullRemaining = builder.getRemaining();
+        int lastSpaceIndex = fullRemaining.lastIndexOf(' ');
+        
+        String remaining;
+        com.mojang.brigadier.suggestion.SuggestionsBuilder actualBuilder;
+        
+        if (lastSpaceIndex != -1) {
+            remaining = fullRemaining.substring(lastSpaceIndex + 1).toLowerCase();
+            actualBuilder = builder.createOffset(builder.getStart() + lastSpaceIndex + 1);
+        } else {
+            remaining = fullRemaining.toLowerCase();
+            actualBuilder = builder;
+        }
         Set<String> suggestions = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
         // 1. Current lobby players
@@ -216,10 +228,10 @@ public class TabCompletionManager {
         // Filter and add suggestions
         for (String name : suggestions) {
             if (name.toLowerCase().startsWith(remaining) && name.matches("^[a-zA-Z0-9_]{3,16}$")) {
-                builder.suggest(name);
+                actualBuilder.suggest(name);
             }
         }
 
-        return builder.buildFuture();
+        return actualBuilder.buildFuture();
     }
 }

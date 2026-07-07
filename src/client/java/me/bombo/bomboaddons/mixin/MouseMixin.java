@@ -22,6 +22,12 @@ public abstract class MouseMixin {
 
     @Inject(method = "turnPlayer", at = @At("HEAD"))
     private void onTurnPlayer(CallbackInfo ci) {
+        if (me.bombo.bomboaddons.util.FreelookManager.isFreelookActive()) {
+            me.bombo.bomboaddons.util.FreelookManager.onMouseTurn(this.accumulatedDX, this.accumulatedDY);
+            this.accumulatedDX = 0;
+            this.accumulatedDY = 0;
+            return;
+        }
         if (me.bombo.bomboaddons.GardenMovement.shouldLockMouse()) {
             this.accumulatedDX = 0;
             this.accumulatedDY = 0;

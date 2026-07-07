@@ -39,10 +39,12 @@ public abstract class ItemStackMixin {
 
     @Inject(method = "getItem", at = @At("HEAD"), cancellable = true)
     private void onGetItem(CallbackInfoReturnable<Item> cir) {
-        if (!BomboConfig.get().restoreItemModels) return;
-
         ItemStack stack = (ItemStack) (Object) this;
         String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
+        if (!BomboConfig.get().restoreItemModels) {
+            if (id == null || id.isEmpty()) return;
+        }
+
         me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
         if (id != null && !id.isEmpty()) {
             customOverride = BomboConfig.get().customItemOverrides.get(id);
@@ -75,10 +77,12 @@ public abstract class ItemStackMixin {
 
     @Inject(method = "typeHolder", at = @At("HEAD"), cancellable = true)
     private void onGetTypeHolder(CallbackInfoReturnable<net.minecraft.core.Holder<Item>> cir) {
-        if (!BomboConfig.get().restoreItemModels) return;
-
         ItemStack stack = (ItemStack) (Object) this;
         String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
+        if (!BomboConfig.get().restoreItemModels) {
+            if (id == null || id.isEmpty()) return;
+        }
+
         me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
         if (id != null && !id.isEmpty()) {
             customOverride = BomboConfig.get().customItemOverrides.get(id);
@@ -138,17 +142,9 @@ public abstract class ItemStackMixin {
         ItemStack stack = (ItemStack) (Object) this;
         String skyblockId = null;
 
-        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        if (customData != null) {
-            CompoundTag tag = customData.copyTag();
-            if (tag.contains("id")) {
-                skyblockId = tag.getString("id").orElse(null);
-            } else if (tag.contains("ExtraAttributes")) {
-                CompoundTag extraAttributes = tag.getCompound("ExtraAttributes").orElse(null);
-                if (extraAttributes != null && extraAttributes.contains("id")) {
-                    skyblockId = extraAttributes.getString("id").orElse(null);
-                }
-            }
+        String rawId = me.bombo.bomboaddons.SkyblockUtils.getInternalId(stack);
+        if (rawId != null && !rawId.isEmpty()) {
+            skyblockId = rawId;
         }
 
         if (skyblockId == null || skyblockId.isEmpty()) {
@@ -170,7 +166,21 @@ public abstract class ItemStackMixin {
         }
 
         if (skyblockId == null || skyblockId.equals("ENCHANTED_BOOK")) {
-            if (stack.getItem().toString().contains("enchanted_book") || stack.getHoverName().getString().contains("Enchanted Book")) {
+            String hoverName = stack.getHoverName().getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+            if (stack.getItem().toString().contains("enchanted_book") && !hoverName.contains("Enchanted Book") && !hoverName.isEmpty()) {
+                int lastSpace = hoverName.lastIndexOf(' ');
+                if (lastSpace != -1) {
+                    String name = hoverName.substring(0, lastSpace).trim().toUpperCase().replace(" ", "_");
+                    String tierStr = hoverName.substring(lastSpace + 1).trim();
+                    int tier = RomanNumber.romanToDecimal(tierStr);
+                    if (tier > 0) {
+                        skyblockId = "ENCHANTMENT_" + name + "_" + tier;
+                    }
+                }
+            }
+        }
+        if (skyblockId == null || skyblockId.equals("ENCHANTED_BOOK")) {
+            if (stack.getItem().toString().contains("enchanted_book") || stack.getHoverName().getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim().contains("Enchanted Book")) {
                 ItemLore lore = stack.get(DataComponents.LORE);
                 if (lore != null && !lore.lines().isEmpty()) {
                     for (int i = 0; i < Math.min(lore.lines().size(), 10); i++) {
@@ -234,13 +244,26 @@ public abstract class ItemStackMixin {
                 }
             }
 
-            if (BomboConfig.get().lowestBin) {
+            boolean shouldShowLowestBin = BomboConfig.get().lowestBin;
+            boolean isPet = skyblockId.startsWith("PET-") || skyblockId.contains(";");
+            if (shouldShowLowestBin) {
                 long price = LowestBinManager.getLowestBin(skyblockId).getNow(-1L);
                 if (price > 0) {
                     boolean isBz = LowestBinManager.isBazaar(skyblockId);
                     String label = isBz ? "§6BZ: " : "§6Lowest BIN: ";
                     String priceText = label + "§e" + LowestBinManager.formatPrice(price);
-                    if (count > 1) {
+                    
+                    if (isPet) {
+                        long lvl100Price = -1;
+                        if (skyblockId.startsWith("PET-")) {
+                            lvl100Price = LowestBinManager.getLowestBin(skyblockId + "-100").getNow(-1L);
+                        } else if (skyblockId.contains(";")) {
+                            lvl100Price = LowestBinManager.getLowestBin(skyblockId + "-100").getNow(-1L);
+                        }
+                        if (lvl100Price > 0) {
+                            priceText += " §7(" + LowestBinManager.formatPrice(lvl100Price) + ")";
+                        }
+                    } else if (count > 1) {
                         priceText += " §7(" + LowestBinManager.formatPrice(price * count) + ")";
                     }
                     lines.add(Component.literal(priceText));
@@ -251,7 +274,7 @@ public abstract class ItemStackMixin {
             
             if (BomboConfig.get().npcPrice) {
                 long npcPrice = LowestBinManager.getNpcPrice(skyblockId);
-                if (npcPrice >= 0) {
+                if (npcPrice > 0) {
                     String text = "§6NPC: §e" + LowestBinManager.formatPrice(npcPrice);
                     if (count > 1) {
                         text += " §7(" + LowestBinManager.formatPrice(npcPrice * count) + ")";

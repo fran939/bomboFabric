@@ -379,28 +379,62 @@ public class SkyblockUtils {
 
     public static String getInternalId(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return "";
+        
+        // Try vanilla STORED_ENCHANTMENTS (or ENCHANTMENTS) fallback for enchanted books
+        if (stack.getItem().toString().contains("enchanted_book")) {
+            net.minecraft.world.item.enchantment.ItemEnchantments enchants = stack.get(DataComponents.STORED_ENCHANTMENTS);
+            if (enchants == null) {
+                enchants = stack.get(DataComponents.ENCHANTMENTS);
+            }
+            if (enchants != null && !enchants.isEmpty()) {
+                for (net.minecraft.core.Holder<net.minecraft.world.item.enchantment.Enchantment> holder : enchants.keySet()) {
+                    int level = enchants.getLevel(holder);
+                    String path = holder.unwrapKey().map(key -> key.identifier().getPath()).orElse("");
+                    if (!path.isEmpty()) {
+                        return "ENCHANTMENT_" + path.toUpperCase() + "_" + level;
+                    }
+                }
+            }
+        }
+        
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData != null) {
             CompoundTag tag = customData.copyTag();
+            CompoundTag searchTag = tag;
+            
             // Try ExtraAttributes.id
             CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
             if (ea != null) {
-                String id = ea.getString("id").orElse("");
-                // Special handling for enchanted books to get bazaar price
-                if (id.equals("ENCHANTED_BOOK")) {
-                    // Skyblock uses "enchantments" tag inside ExtraAttributes
-                    CompoundTag enchants = ea.getCompound("enchantments").orElse(null);
-                    if (enchants == null) enchants = ea.getCompound("enchantment").orElse(null); // fallback
-                    
-                    if (enchants != null && !enchants.keySet().isEmpty()) {
-                        String name = enchants.keySet().iterator().next();
-                        int level = enchants.getInt(name).orElse(1);
-                        return "ENCHANTMENT_" + name.toUpperCase() + "_" + level;
-                    }
+                searchTag = ea;
+            }
+            
+            String id = searchTag.getString("id").orElse("");
+            if (id.equals("ENCHANTED_BOOK")) {
+                CompoundTag enchants = searchTag.getCompound("enchantments").orElse(null);
+                if (enchants == null) enchants = searchTag.getCompound("enchantment").orElse(null);
+                
+                if (enchants != null && !enchants.keySet().isEmpty()) {
+                    String name = enchants.keySet().iterator().next();
+                    int level = enchants.getInt(name).orElse(1);
+                    return "ENCHANTMENT_" + name.toUpperCase() + "_" + level;
                 }
+            }
+            if (id.equals("PET")) {
+                String petInfoStr = searchTag.getString("petInfo").orElse("");
+                if (!petInfoStr.isEmpty()) {
+                    try {
+                        com.google.gson.JsonObject petObj = com.google.gson.JsonParser.parseString(petInfoStr).getAsJsonObject();
+                        if (petObj.has("type") && petObj.has("tier")) {
+                            String type = petObj.get("type").getAsString();
+                            String tier = petObj.get("tier").getAsString();
+                            return "PET-" + type + "-" + tier;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+            if (!id.isEmpty()) {
                 return id;
             }
-            // Fallback to direct id in tag
             return tag.getString("id").orElse("");
         }
         return "";

@@ -1,0 +1,25 @@
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Custom Timers HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Custom Time Enabled", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§fCustom Time Hour: §e" + BomboConfig.get().customTimeHour + "h", col1X, y1 + 4,
+                            0xFFFFFFFF);
+                    y1 += 10;
+                    g.text(font, "§6§lItem List Settings", col1X, y1, 0xFFFFAA00, true);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Enable Item List", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Remove Background", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Colored Background", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+
+                    int y2 = contentBaseY;
+                    g.text(font, "§6§lTooltip Customization", col2X, y2, 0xFFFFAA00, true);
+                    y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Custom Tooltip Bg", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+
+                    y2 += 20;
+
+                    int pickerX = col2X;

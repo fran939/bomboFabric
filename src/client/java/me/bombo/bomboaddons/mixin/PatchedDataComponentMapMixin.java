@@ -15,8 +15,6 @@ public class PatchedDataComponentMapMixin {
 
     @Inject(method = "get", at = @At("HEAD"), cancellable = true)
     private <T> void onGet(DataComponentType<? extends T> type, CallbackInfoReturnable<T> cir) {
-        if (!BomboConfig.get().restoreItemModels) return;
-
         if (type == DataComponents.PROFILE) {
             DataComponentMap map = (DataComponentMap) this;
             String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(map);
@@ -26,10 +24,13 @@ public class PatchedDataComponentMapMixin {
                     ResolvableProfile rp = me.bombo.bomboaddons.SkyblockItemManager.createProfile(info.skinValue, info.skinSignature);
                     if (rp != null) {
                         cir.setReturnValue((T) rp);
+                        return;
                     }
                 }
             }
         }
+
+        if (!BomboConfig.get().restoreItemModels) return;
 
         if (type == DataComponents.CUSTOM_MODEL_DATA) {
             DataComponentMap map = (DataComponentMap) this;

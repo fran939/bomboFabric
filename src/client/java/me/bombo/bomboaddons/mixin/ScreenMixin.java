@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Environment(EnvType.CLIENT)
 @Mixin(Screen.class)
@@ -21,8 +22,8 @@ public abstract class ScreenMixin {
         if (Minecraft.getInstance().level == null) return;
         BomboConfig.Settings s = BomboConfig.get();
         if (s.diceTracker) {
-            int w = 100;
-            int h = 35;
+            int w = (int) (260 * s.diceHudScale);
+            int h = (int) (52 * s.diceHudScale);
             boolean hovered = mouseX >= s.diceHudX && mouseX <= s.diceHudX + w &&
                               mouseY >= s.diceHudY && mouseY <= s.diceHudY + h;
             

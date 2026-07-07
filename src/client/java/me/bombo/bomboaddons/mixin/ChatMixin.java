@@ -67,12 +67,30 @@ public abstract class ChatMixin implements me.bombo.bomboaddons.util.IChatCompon
 
    }
 
+   @Shadow
+   private int chatScrollbarPos;
+
    @Unique
    @Override
    public double bombo$getScale() {
       return this.getScale();
    }
 
+
+   @Unique
+   @Override
+   public java.util.List<GuiMessage.Line> bombo$getFullMessageLines(GuiMessage.Line clickedLine) {
+       java.util.List<GuiMessage.Line> result = new java.util.ArrayList<>();
+       if (this.trimmedMessages == null) return result;
+       int targetTime = clickedLine.addedTime();
+       for (int i = this.trimmedMessages.size() - 1; i >= 0; i--) {
+           GuiMessage.Line line = this.trimmedMessages.get(i);
+           if (line.addedTime() == targetTime) {
+               result.add(line);
+           }
+       }
+       return result;
+   }
    @Unique
    @Override
    public GuiMessage.Line bombo$getLineAt(double mouseX, double mouseY) {
@@ -90,10 +108,11 @@ public abstract class ChatMixin implements me.bombo.bomboaddons.util.IChatCompon
          double chatLineSpacing = this.minecraft.options.chatLineSpacing().get();
          double chatLineHeight = 9.0 * (chatLineSpacing + 1.0);
          int lineIndex = net.minecraft.util.Mth.floor(e / chatLineHeight);
-         if (lineIndex >= 0 && lineIndex < this.trimmedMessages.size()) {
-            return this.trimmedMessages.get(lineIndex);
-         }
-      }
-      return null;
-   }
+         int scrolledLineIndex = lineIndex + this.chatScrollbarPos;
+         if (scrolledLineIndex >= 0 && scrolledLineIndex < this.trimmedMessages.size()) {
+            return this.trimmedMessages.get(scrolledLineIndex);
+          }
+       }
+       return null;
+    }
 }

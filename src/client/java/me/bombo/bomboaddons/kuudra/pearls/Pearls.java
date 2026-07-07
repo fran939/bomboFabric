@@ -85,8 +85,7 @@ public class Pearls {
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
-        net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
-        if (collector == null) return;
+        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
 
         // Static test render requested by user (only when kuudraDebug is enabled)
         if (s.kuudraDebug) {

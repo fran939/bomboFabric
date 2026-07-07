@@ -11,4 +11,7 @@ import java.util.List;
 public interface ScreenAccessor {
     @Accessor("renderables")
     List<Renderable> getRenderables();
+
+    @org.spongepowered.asm.mixin.gen.Invoker("addRenderableWidget")
+    <T extends net.minecraft.client.gui.components.events.GuiEventListener & net.minecraft.client.gui.components.Renderable & net.minecraft.client.gui.narration.NarratableEntry> T invokeAddRenderableWidget(T widget);
 }

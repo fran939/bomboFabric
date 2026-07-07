@@ -326,8 +326,8 @@ public class PlaytimeGUI extends Screen {
                     long lastUpdated = this.cloudData.get("lastUpdated").getAsLong();
                     lastSyncAgo = (System.currentTimeMillis() - lastUpdated) / 1000;
                     
-                    // Syncs every 5 minutes. If it's been more than 7 minutes, consider offline.
-                    if (lastSyncAgo > 420) {
+                    // Syncs every 60 minutes. If it's been more than 65 minutes, consider offline.
+                    if (lastSyncAgo > 3900) {
                         offline = true;
                     } else if (!offline) {
                         // Extrapolate live time for online users
@@ -359,7 +359,7 @@ public class PlaytimeGUI extends Screen {
             if (lastSyncAgo >= 0) {
                 lore.add("§8Last Sync: " + formatSeconds(lastSyncAgo) + " ago");
                 if (this.cloudData == null) {
-                    long next = Math.max(0, 300 - lastSyncAgo);
+                    long next = Math.max(0, 3600 - lastSyncAgo);
                     lore.add("§8Next Sync: " + formatSeconds(next));
                 }
             }

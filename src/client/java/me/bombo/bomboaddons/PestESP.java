@@ -52,8 +52,7 @@ public class PestESP {
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
-        net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
-        if (collector == null) return;
+        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
 
         // Use color name from config
         int colorInt = BomboRenderUtils.colorNameToHex(s.pestEspColor);
@@ -114,37 +113,44 @@ public class PestESP {
             float scaledZ = (float)z * scale;
 
             AABB box = new AABB(scaledX - boxWidth/2, scaledY + boxYOffset, scaledZ - boxWidth/2, scaledX + boxWidth/2, scaledY + boxYOffset + boxHeight, scaledZ + boxWidth/2);
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+            net.minecraft.client.renderer.rendertype.RenderType renderType = s.hideCheats ? RenderTypes.lines() : RenderTypes.linesTranslucent();
+            collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                 BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, lineWidth);
             });
 
-            if (!s.hideCheats && s.pestEspTracer) {
-                // Project 3D position to 2D HUD coordinates using the correct matrices from LevelRenderContext
-                Matrix4f view = context.poseStack().last().pose();
-                Matrix4f proj = context.levelState().cameraRenderState.projectionMatrix;
+            boolean shouldTrace = false;
+            if ("rat".equals(pestName)) shouldTrace = s.tracerRat;
+            else if ("worm".equals(pestName) || "wormass".equals(pestName)) shouldTrace = s.tracerWorm;
+            else if ("slug".equals(pestName)) shouldTrace = s.tracerSlug;
+            else if ("fly".equals(pestName)) shouldTrace = s.tracerFly;
+            else if ("locust".equals(pestName)) shouldTrace = s.tracerLocust;
+            else if ("beetle".equals(pestName)) shouldTrace = s.tracerBeetle;
+            else if ("cricket".equals(pestName)) shouldTrace = s.tracerCricket;
+            else if ("spider".equals(pestName)) shouldTrace = s.tracerSpider;
+            else if ("moth".equals(pestName)) shouldTrace = s.tracerMoth;
+            else if ("mite".equals(pestName)) shouldTrace = s.tracerMite;
+            else if ("field mouse".equals(pestName)) shouldTrace = s.tracerMouse;
+            else if ("mosquito".equals(pestName)) shouldTrace = s.tracerMosquito;
 
-                // Original world position (unscaled) of the pest's center
-                Vector4f pos = new Vector4f((float)x, (float)(y + 1.3f + 0.5f), (float)z, 1.0f);
-                pos.mul(view);
-                pos.mul(proj);
+            if (!s.hideCheats && s.pestEspTracer && shouldTrace) {
+                final float endX = (float) x;
+                float tempEndY = (float) (y + 1.3f + 0.5f);
+                if (pestName.contains("worm")) tempEndY = (float) (y + 0.5f + 0.4f);
+                else if (pestName.equals("slug")) tempEndY = (float) (y + 1.3f + 0.2f);
+                else if (pestName.equals("field mouse")) tempEndY = (float) (y + 1.5f + 0.5f);
+                final float endY = tempEndY;
+                final float endZ = (float) z;
 
-                if (pos.w > 0.0f) {
-                    float ndcX = pos.x / pos.w;
-                    float ndcY = pos.y / pos.w;
+                org.joml.Vector3fc look = mc.gameRenderer.getMainCamera().forwardVector();
+                float startX = look.x();
+                float startY = look.y();
+                float startZ = look.z();
 
-                    int screenWidth = mc.getWindow().getGuiScaledWidth();
-                    int screenHeight = mc.getWindow().getGuiScaledHeight();
-
-                    float screenX = (ndcX + 1.0f) * 0.5f * screenWidth;
-                    float screenY = (1.0f - ndcY) * 0.5f * screenHeight;
-
-                    PestTracer tracer = new PestTracer();
-                    tracer.end = new Vector2f(screenX, screenY);
-                    tracer.start = new Vector2f(screenWidth / 2.0f, screenHeight); // Bottom center of screen
-                    tracer.color = colorInt;
-                    tracer.thickness = lineWidth;
-                    TRACERS.add(tracer);
-                }
+                final float finalR = r;
+                final float finalG = g;
+                collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                    BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, finalR, finalG, b, a, 2.0f);
+                });
             }
 
             String displayName = pestName.substring(0, 1).toUpperCase() + pestName.substring(1);

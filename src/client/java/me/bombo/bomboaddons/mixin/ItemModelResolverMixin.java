@@ -51,15 +51,21 @@ public class ItemModelResolverMixin {
 
             if (id != null && !id.isEmpty()) {
                 me.bombo.bomboaddons.SkyblockItemManager.SkyblockItemInfo info = me.bombo.bomboaddons.SkyblockItemManager.getInfo(id);
-                if (info != null && info.material != null && !info.material.isEmpty()) {
-                    String mapped = me.bombo.bomboaddons.LF.guessItem(info.material);
-                    if (mapped == null) {
-                        mapped = "minecraft:" + info.material.toLowerCase();
+                if (info != null) {
+                    String overrideModel = info.itemModel;
+                    if (overrideModel == null || overrideModel.isEmpty()) {
+                        overrideModel = info.material;
                     }
-                    if (BomboConfig.get().debugMode) {
-                        System.out.println("[BomboDebug] ItemModelResolver: Overriding ITEM_MODEL to: " + mapped + " for " + stack.getHoverName().getString());
+                    if (overrideModel != null && !overrideModel.isEmpty()) {
+                        String mapped = me.bombo.bomboaddons.LF.guessItem(overrideModel);
+                        if (mapped == null) {
+                            mapped = "minecraft:" + overrideModel.toLowerCase();
+                        }
+                        if (BomboConfig.get().debugMode) {
+                            System.out.println("[BomboDebug] ItemModelResolver: Overriding ITEM_MODEL to: " + mapped + " for " + stack.getHoverName().getString());
+                        }
+                        return Identifier.parse(mapped);
                     }
-                    return Identifier.parse(mapped);
                 }
             }
         }

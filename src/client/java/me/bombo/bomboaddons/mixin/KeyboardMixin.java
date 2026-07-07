@@ -19,14 +19,35 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 @Mixin({ KeyboardHandler.class })
 public abstract class KeyboardMixin {
-   @Inject(at = { @At("HEAD") }, method = { "keyPress" }, cancellable = true)
-   private void onKey(long window, int action, KeyEvent event, CallbackInfo ci) {
-      if (action == 1) { // 1 = Press, 0 = Release, 2 = Repeat
+    @Inject(at = { @At("HEAD") }, method = { "keyPress" }, cancellable = true)
+    private void onKey(long window, int action, KeyEvent event, CallbackInfo ci) {
+        Minecraft mc = Minecraft.getInstance();
+        String flKey = BomboConfig.get().freelookKey;
+        if (flKey != null && !flKey.isEmpty()) {
+            int targetCode = ClickLogic.getKeyCode(flKey);
+            if (targetCode != -1 && event.key() == targetCode) {
+                if (mc.screen == null) {
+                    if (action == 1) {
+                        me.bombo.bomboaddons.util.FreelookManager.toggleFreelook(true);
+                        ci.cancel();
+                        return;
+                    } else if (action == 0) {
+                        me.bombo.bomboaddons.util.FreelookManager.toggleFreelook(false);
+                        ci.cancel();
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (action == 1) { // 1 = Press, 0 = Release, 2 = Repeat
          int key = event.key();
 
-         Minecraft mc = Minecraft.getInstance();
-         
          if (mc.screen instanceof ChatScreen || mc.screen instanceof AbstractSignEditScreen) {
+            return;
+         }
+
+         if (me.bombo.bomboaddons.ItemListOverlay.searchBox != null && me.bombo.bomboaddons.ItemListOverlay.searchBox.isFocused()) {
             return;
          }
 

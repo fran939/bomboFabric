@@ -27,7 +27,7 @@ public class BomboConfigGUI extends Screen {
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
             "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases",
             "Chat Triggers", "Dungeons", "Coord Binds", "Mining", "Party Settings", "Block Highlights",
-            "Particle Highlights", "Bedwars");
+            "Particle Highlights", "Bedwars", "Fishing", "Custom Crosshair", "Custom Slots", "Custom Tracers");
     public static int selectedCategory = 0;
 
     private static int partyCommandsX = -1;
@@ -67,6 +67,12 @@ public class BomboConfigGUI extends Screen {
     private static String partHighInput = "";
     private static String partHighColorInput = "GOLD";
     private static String editingPartHigh = null;
+
+    // Transient state for custom tracers
+    private static String editingCustomTracer = null;
+    private static String customTracerColorInput = "GREEN";
+    private static String newTracerIdInput = "";
+    private static String newTracerNameInput = "";
     private static final List<String> recordedComboKeys = new ArrayList<>();
 
     private static int editingClickTargetIdx = -1;
@@ -97,6 +103,15 @@ public class BomboConfigGUI extends Screen {
     private static String customPartyTriggerInput = "";
     private static String customPartyCommandInput = "";
     private static int editingCustomPartyIdx = -1;
+
+    // Transient state for custom slots
+    private static String csGuiNameInput = "";
+    private static String csSlotIndexInput = "";
+    private static String csIconInput = "minecraft:barrier";
+    private static String csNameInput = "";
+    private static String csDescInput = "";
+    private static String csCommandInput = "";
+    private static int editingCustomSlotIdx = -1;
 
     // Transient state for coord binds
     private static String cbCoordsInput = "";
@@ -131,6 +146,13 @@ public class BomboConfigGUI extends Screen {
         return false;
     }
 
+    private static double centerCoord(double val) {
+        if (val == Math.floor(val)) {
+            return val + 0.5;
+        }
+        return val;
+    }
+
     public static double[] parseCoords(String input) {
         if (input == null || input.trim().isEmpty())
             return null;
@@ -143,7 +165,7 @@ public class BomboConfigGUI extends Screen {
                     double x = Double.parseDouble(parts[0]);
                     double y = Double.parseDouble(parts[1]);
                     double z = Double.parseDouble(parts[2]);
-                    return new double[] { x, y, z };
+                    return new double[] { centerCoord(x), y, centerCoord(z) };
                 } catch (NumberFormatException ignored) {
                 }
             }
@@ -156,7 +178,7 @@ public class BomboConfigGUI extends Screen {
                 try {
                     parsed.add(Double.parseDouble(part));
                     if (parsed.size() == 3) {
-                        return new double[] { parsed.get(0), parsed.get(1), parsed.get(2) };
+                        return new double[] { centerCoord(parsed.get(0)), parsed.get(1), centerCoord(parsed.get(2)) };
                     }
                 } catch (NumberFormatException e) {
                     parsed.clear();
@@ -169,7 +191,7 @@ public class BomboConfigGUI extends Screen {
                 double x = Double.parseDouble(parts[0]);
                 double y = Double.parseDouble(parts[1]);
                 double z = Double.parseDouble(parts[2]);
-                return new double[] { x, y, z };
+                return new double[] { centerCoord(x), y, centerCoord(z) };
             } catch (NumberFormatException ignored) {
             }
         }
@@ -196,6 +218,12 @@ public class BomboConfigGUI extends Screen {
             return new BomboConfigGUI(null);
         }
         return new BomboConfigGUI(current);
+    }
+
+    public static void autofillCustomSlot(String title, int slotIndex) {
+        selectedCategory = 26; // Custom Slots category
+        csGuiNameInput = title;
+        csSlotIndexInput = String.valueOf(slotIndex);
     }
 
     @Override
@@ -344,8 +372,10 @@ public class BomboConfigGUI extends Screen {
                         s.borderlessFullscreen = v;
                         BomboConfig.save();
                         try {
-                            ((me.bombo.bomboaddons.mixin.WindowAccessor) (Object) Minecraft.getInstance().getWindow()).invokeUpdateFullscreen(Minecraft.getInstance().options.enableVsync().get());
-                        } catch (Throwable ignored) {}
+                            ((me.bombo.bomboaddons.mixin.WindowAccessor) (Object) Minecraft.getInstance().getWindow())
+                                    .invokeUpdateFullscreen(Minecraft.getInstance().options.enableVsync().get());
+                        } catch (Throwable ignored) {
+                        }
                     }, col2X, col2W, y2);
 
                     y2 += 10;
@@ -371,6 +401,14 @@ public class BomboConfigGUI extends Screen {
                             v -> s.rngProfitHudOpacity = v, col1X, col1W, y1);
                     y1 = addBoolOption("Custom Timers HUD", s.customTimerHudEnabled, v -> s.customTimerHudEnabled = v,
                             col1X, col1W, y1);
+                    y1 = addBoolOption("Item List Enabled", s.itemListEnabled, v -> s.itemListEnabled = v, col1X, col1W,
+                            y1);
+                    y1 = addBoolOption("Lock Item List Position", s.itemListLocked, v -> s.itemListLocked = v, col1X, col1W,
+                            y1);
+                    y1 = addBoolOption("Separate IL Search", s.itemListSeparateSearch,
+                            v -> s.itemListSeparateSearch = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Keep IL Search Vis", s.itemListSearchAlwaysVisible,
+                            v -> s.itemListSearchAlwaysVisible = v, col1X, col1W, y1);
 
                     int y2 = contentBaseY + ITEM_HEIGHT;
                     y2 = addBoolOption("Custom Tooltip Background", s.customTooltipBg, v -> s.customTooltipBg = v,
@@ -511,6 +549,7 @@ public class BomboConfigGUI extends Screen {
                     y2 = addIntLabelSlider("Pest Waypoint Duration", s.pestWaypointDuration, 0, 600, 10,
                             v -> s.pestWaypointDuration = v, col2X, col2W, y2);
                     y2 = addBoolOption("Pest Tracers", s.pestEspTracer, v -> s.pestEspTracer = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Cheese Tracers", s.cheeseTracer, v -> s.cheeseTracer = v, col2X, col2W, y2);
                     y2 = addColorCycleButton("Pest Color", s.pestEspColor, v -> s.pestEspColor = v, col2X, col2W, y2);
                     y2 = addFloatLabelSlider("Pest Size", s.pestEspThickness, 0.5f, 5.0f, v -> s.pestEspThickness = v,
                             col2X, col2W, y2);
@@ -860,6 +899,8 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Debug Mode (Legacy)", s.debugMode, v -> s.debugMode = v, contentX,
                             contentWidth, curY);
                     curY = addBoolOption("API Debug", s.apiDebug, v -> s.apiDebug = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Pet Price Debug", s.petPriceDebug, v -> s.petPriceDebug = v, contentX,
+                            contentWidth, curY);
                     curY = addBoolOption("API Chat Messages", s.apiChatMessages, v -> s.apiChatMessages = v, contentX,
                             contentWidth, curY);
                     curY = addBoolOption("LB Debug", s.lbDebug, v -> s.lbDebug = v, contentX, contentWidth, curY);
@@ -901,6 +942,9 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 12 -> { // Pets
                     curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Show Pet Lowest BIN", s.showPetLowestBin, v -> s.showPetLowestBin = v,
+                            contentX, contentWidth, curY);
+                    curY += 5;
                     curY = addBoolOption("Disable Unequip", s.disableUnequipPet, v -> s.disableUnequipPet = v, contentX,
                             contentWidth, curY);
                     for (int i = 0; i < 9; i++) {
@@ -1326,6 +1370,12 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 17 -> { // Dungeons
                     curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Dungeon Secrets Tracker", s.dungeonSecretsTracker,
+                            v -> s.dungeonSecretsTracker = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Dungeon Secrets Debug", s.dungeonSecretsDebug, v -> s.dungeonSecretsDebug = v,
+                            contentX, contentWidth, curY);
+                    curY = addBoolOption("Clear Info HUD", s.clearInfoHud, v -> s.clearInfoHud = v, contentX,
+                            contentWidth, curY);
                     curY = addBoolOption("Pad Timers Purple", s.padTimersPurple, v -> s.padTimersPurple = v, contentX,
                             contentWidth, curY);
                     curY = addBoolOption("Pad Timers Green", s.padTimersGreen, v -> s.padTimersGreen = v, contentX,
@@ -1793,8 +1843,197 @@ public class BomboConfigGUI extends Screen {
                         BomboConfig.save();
                     }, contentX, contentWidth, curY);
                 }
-            }
+                case 24 -> { // Fishing
+                }
+                case 25 -> { // Custom Crosshair
+                    BomboConfig.CrosshairSettings crosshair = s.customCrosshair;
+                    curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Enable Custom Crosshair", crosshair.enabled, v -> crosshair.enabled = v,
+                            contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addBoolOption("Chroma", crosshair.chroma, v -> crosshair.chroma = v, contentX, contentWidth,
+                            curY);
+                    if (!crosshair.chroma) {
+                        curY = addColorCycleButton("Color", crosshair.color, v -> crosshair.color = v, contentX,
+                                contentWidth, curY);
+                    }
+                    curY = addBoolOption("Outline", crosshair.outline, v -> crosshair.outline = v, contentX,
+                            contentWidth, curY);
+                    if (crosshair.outline) {
+                        curY = addColorCycleButton("Outline Color", crosshair.outlineColor,
+                                v -> crosshair.outlineColor = v, contentX, contentWidth, curY);
+                    }
+                    curY += 5;
+                    curY += ITEM_HEIGHT + 5; // Space for "Presets:" label
 
+                    int btnW = 45;
+                    int px = contentX;
+                    int startX = contentX;
+                    int count = 0;
+                    String[] presetNames = { "Dot", "Plus", "Lg Plus", "Sm Plus", "Circle", "Op Circle", "Square",
+                            "F Square", "Target", "F Target", "Arrow", "Cross", "Sm Cross", "T Shape", "Caret", "Hash",
+                            "Clear" };
+                    for (String name : presetNames) {
+                        if (count > 0 && count % 6 == 0) {
+                            curY += 25;
+                            px = startX;
+                        }
+                        addRenderableWidget(net.minecraft.client.gui.components.Button
+                                .builder(net.minecraft.network.chat.Component.literal(""), btn -> {
+                                    System.arraycopy(getPresetGrid(name), 0, crosshair.grid, 0, 225);
+
+                                    BomboConfig.save();
+                                    init();
+                                }).bounds(px, curY, btnW, 20).build());
+                        px += btnW + 5;
+                        count++;
+                    }
+                    curY += 25;
+                }
+                case 26 -> { // Custom Slots
+                    curY += ITEM_HEIGHT;
+                    curY = addTextBox("GUI Name", csGuiNameInput, v -> csGuiNameInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Slot Index", csSlotIndexInput, v -> csSlotIndexInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Icon (e.g. minecraft:barrier)", csIconInput, v -> csIconInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Name", csNameInput, v -> csNameInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Description", csDescInput, v -> csDescInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Command", csCommandInput, v -> csCommandInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+
+                    addRenderableWidget(Button.builder(Component.literal(editingCustomSlotIdx == -1 ? "Add Custom Slot" : "Save Changes"), btn -> {
+                        if (csGuiNameInput.isEmpty() || csSlotIndexInput.isEmpty()) return;
+                        int sIdx;
+                        try { sIdx = Integer.parseInt(csSlotIndexInput); } catch (Exception e) { return; }
+                        BomboConfig.CustomSlot cs = new BomboConfig.CustomSlot(csGuiNameInput, sIdx, csIconInput, csNameInput, csDescInput, csCommandInput);
+                        if (s.customSlots == null) s.customSlots = new java.util.ArrayList<>();
+                        if (editingCustomSlotIdx != -1) {
+                            s.customSlots.set(editingCustomSlotIdx, cs);
+                        } else {
+                            s.customSlots.add(0, cs);
+                        }
+                        editingCustomSlotIdx = -1;
+                        csGuiNameInput = "";
+                        csSlotIndexInput = "";
+                        csIconInput = "minecraft:barrier";
+                        csNameInput = "";
+                        csDescInput = "";
+                        csCommandInput = "";
+                        BomboConfig.save();
+                        init();
+                    }).bounds(contentX, curY, contentWidth / 2 - 5, 20).build());
+
+                    if (editingCustomSlotIdx != -1) {
+                        addRenderableWidget(Button.builder(Component.literal("Cancel Edit"), btn -> {
+                            editingCustomSlotIdx = -1;
+                            csGuiNameInput = "";
+                            csSlotIndexInput = "";
+                            csIconInput = "minecraft:barrier";
+                            csNameInput = "";
+                            csDescInput = "";
+                            csCommandInput = "";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, curY, contentWidth / 2 - 5, 20).build());
+                    }
+
+                    curY += 30;
+
+                    if (s.customSlots != null && !s.customSlots.isEmpty()) {
+                        int listStartY = curY;
+                        for (int i = 0; i < s.customSlots.size(); i++) {
+                            final int idx = i;
+                            BomboConfig.CustomSlot cs = s.customSlots.get(i);
+                            int itemY = listStartY + 20 + i * 22 - (int) scrollAmount;
+                            if (itemY > listStartY + 15 && itemY < height - 20) {
+                                addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                    editingCustomSlotIdx = idx;
+                                    csGuiNameInput = cs.guiName;
+                                    csSlotIndexInput = String.valueOf(cs.slotIndex);
+                                    csIconInput = cs.icon != null ? cs.icon : "minecraft:barrier";
+                                    csNameInput = cs.name != null ? cs.name : "";
+                                    csDescInput = cs.description != null ? cs.description : "";
+                                    csCommandInput = cs.command != null ? cs.command : "";
+                                    init();
+                                }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+                                addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> {
+                                    s.customSlots.remove(idx);
+                                    BomboConfig.save();
+                                    init();
+                                }).bounds(contentX + 225, itemY + 5, 35, 18).build());
+                            }
+                        }
+                    }
+                }
+                case 27 -> { // Custom Tracers
+                    curY += ITEM_HEIGHT;
+                    // Add new tracer manually
+                    curY = addTextBox("ID/UUID", newTracerIdInput, v -> newTracerIdInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addTextBox("Name", newTracerNameInput, v -> newTracerNameInput = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    
+                    int finalCurYAdd = curY;
+                    addRenderableWidget(Button.builder(Component.literal("§a+ Add Tracer"), btn -> {
+                        try {
+                            String id = newTracerIdInput.trim();
+                            if (!id.isEmpty()) {
+                                s.customTracers.put(id, new BomboConfig.Settings.CustomTracerInfo(newTracerNameInput, "GREEN"));
+                                newTracerIdInput = "";
+                                newTracerNameInput = "";
+                                BomboConfig.save();
+                                init();
+                            }
+                        } catch (Exception ignored) {}
+                    }).bounds(contentX, finalCurYAdd, contentWidth, 20).build());
+                    curY += 30;
+
+                    if (editingCustomTracer != null) {
+                        curY = addColorCycleButton("Color", customTracerColorInput, v -> customTracerColorInput = v, contentX, contentWidth, curY);
+
+                        int finalCurY = curY;
+                        addRenderableWidget(Button.builder(Component.literal("§e✔ Save Color"), btn -> {
+                            if (s.customTracers.containsKey(editingCustomTracer)) {
+                                s.customTracers.get(editingCustomTracer).color = customTracerColorInput;
+                                BomboConfig.save();
+                            }
+                            editingCustomTracer = null;
+                            customTracerColorInput = "GREEN";
+                            init();
+                        }).bounds(contentX, finalCurY, contentWidth / 2 - 5, 20).build());
+
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel Edit"), btn -> {
+                            editingCustomTracer = null;
+                            customTracerColorInput = "GREEN";
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, finalCurY, contentWidth / 2 - 5, 20).build());
+                        curY += 25;
+                    }
+
+                    curY += 15; // Space before list
+                    int listStartY = curY;
+                    List<String> tracerIds = new ArrayList<>(s.customTracers.keySet());
+                    for (int i = 0; i < tracerIds.size(); i++) {
+                        final String tid = tracerIds.get(i);
+                        int itemY = listStartY + 20 + i * 22 - (int) scrollAmount;
+                        if (itemY > listStartY + 15 && itemY < height - 20) {
+                            addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
+                                editingCustomTracer = tid;
+                                customTracerColorInput = s.customTracers.get(tid).color;
+                                init();
+                            }).bounds(contentX + 180, itemY + 5, 40, 18).build());
+                            addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> {
+                                s.customTracers.remove(tid);
+                                BomboConfig.save();
+                                init();
+                            }).bounds(contentX + 225, itemY + 5, 35, 18).build());
+                        }
+                    }
+                }
+            }
             if (colorPickerTarget != null) {
                 renderColorPicker(contentX, HEADER_HEIGHT + 30, contentWidth);
             }
@@ -2166,6 +2405,14 @@ public class BomboConfigGUI extends Screen {
                             0xFFFFFFFF);
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7Custom Timers HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Item List Enabled", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Lock Item List Position", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Separate IL Search", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Keep IL Search Vis", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
 
                     int y2 = contentBaseY;
                     g.text(font, "§6§lTooltip Customization", col2X, y2, 0xFFFFAA00, true);
@@ -2526,6 +2773,8 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7API Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
+                    g.text(font, "§7Pet Price Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
                     g.text(font, "§7API Chat Messages", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7LB Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
@@ -2570,6 +2819,8 @@ public class BomboConfigGUI extends Screen {
                 case 12 -> { // Pets
                     g.text(font, "§6§lPets Settings", contentX, curY, 0xFFFFAA00, true);
                     curY += ITEM_HEIGHT;
+                    g.text(font, "§7Show Pet Lowest BIN", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 5;
                     g.text(font, "§7Disable Unequip", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     for (int i = 0; i < 9; i++) {
@@ -2735,6 +2986,12 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 17 -> { // Dungeons
                     g.text(font, "§6§lDungeons Settings", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Dungeon Secrets Tracker", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Dungeon Secrets Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Clear Info HUD", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7Pad Timers Purple", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
@@ -2947,20 +3204,140 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7Highlight Own Team", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
-            }
-
-        } catch (Throwable e) {
-            Bomboaddons.LOGGER.error("[BomboAddons] Error during render!", e);
-            try {
-                java.io.File file = new java.io.File("crash_exception.log");
-                try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(file, true))) {
-                    pw.println("=== GUI RENDER EXCEPTION ===");
-                    e.printStackTrace(pw);
-                    pw.println("============================");
+                case 24 -> { // Fishing
+                    g.text(font, "§6§lFishing Settings", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§c[No fishing settings available]", contentX, curY + 4, 0xFF5555, false);
                 }
-            } catch (Throwable ignore) {
+                case 25 -> { // Custom Crosshair
+                    BomboConfig.CrosshairSettings crosshair = BomboConfig.get().customCrosshair;
+                    g.text(font, "§6§lCustom Crosshair", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT; // title space
+                    
+                    g.text(font, "§7Enable Custom Crosshair", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT; // checkbox
+                    
+                    curY += 5;
+                    
+                    g.text(font, "§7Chroma", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT; // checkbox
+                    
+                    if (!crosshair.chroma) {
+                        g.text(font, "§fColor:", contentX, curY + 4, 0xFFFFFFFF, false);
+                        curY += ITEM_HEIGHT; // button
+                    }
+                    
+                    g.text(font, "§7Outline", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT; // checkbox
+                    
+                    if (crosshair.outline) {
+                        g.text(font, "§fOutline Color:", contentX, curY + 4, 0xFFFFFFFF, false);
+                        curY += ITEM_HEIGHT; // button
+                    }
+                    
+                    curY += 5;
+                    g.text(font, "§ePresets:", contentX, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 5; 
+
+                    int ppx = contentX;
+                    int startPx = contentX;
+                    int pCount = 0;
+                    int pCurY = curY;
+                    String[] presetNames2 = {"Dot", "Plus", "Lg Plus", "Sm Plus", "Circle", "Op Circle", "Square", "F Square", "Target", "F Target", "Arrow", "Cross", "Sm Cross", "T Shape", "Caret", "Hash", "Clear"};
+                    for (String name : presetNames2) {
+                        if (pCount > 0 && pCount % 6 == 0) {
+                            pCurY += 25;
+                            ppx = startPx;
+                        }
+                        boolean[] pGrid = getPresetGrid(name);
+                        int miniX = ppx + 45/2 - 8;
+                        int miniY = pCurY + 2;
+                        for (int r = 0; r < 15; r++) {
+                            for (int c = 0; c < 15; c++) {
+                                if (pGrid[r*15+c]) {
+                                    g.fill(miniX + c, miniY + r, miniX + c + 1, miniY + r + 1, 0xFFFFFFFF);
+                                }
+                            }
+                        }
+                        ppx += 45 + 5;
+                        pCount++;
+                    }
+                    
+                    curY = pCurY + 25; // advance curY past the presets
+                    
+                    g.text(font, "§aDraw your crosshair (L=Draw R=Erase):", contentX, curY, 0xFFFFFFFF, false);
+                    curY += 15;
+
+                    int gridSize = 10;
+                    int gridStartX = contentX + (contentWidth - 15 * gridSize) / 2;
+                    int gridStartY = curY;
+                    for (int r = 0; r < 15; r++) {
+                        for (int c = 0; c < 15; c++) {
+                            int idx = r * 15 + c;
+                            int px = gridStartX + c * gridSize;
+                            int py = gridStartY + r * gridSize;
+                            int color = crosshair.grid[idx] ? 0xFF55FF55 : 0xFF555555;
+                            if (!crosshair.grid[idx] && r == 7 && c == 7) {
+                                color = 0xFF777777;
+                            }
+                            if (mouseX >= px && mouseX < px + gridSize && mouseY >= py && mouseY < py + gridSize) {
+                                color = 0xFFFFFFFF;
+                            }
+                            g.fill(px, py, px + gridSize, py + gridSize, color);
+                            g.fill(px+1, py+1, px + gridSize - 1, py + gridSize - 1, crosshair.grid[idx] ? 0xFF00FF00 : (r == 7 && c == 7 ? 0xFF333333 : 0xFF222222));
+                        }
+                    }
+                }
+                case 26 -> { // Custom Slots
+                    if (s.customSlots != null && !s.customSlots.isEmpty()) {
+                        int listStartY = categoryTitleY + 30 + 144 + 60;
+                        int yOffset = listStartY;
+                        g.fill(contentX - 5, yOffset, contentX + contentWidth + 5, height - PADDING, 0xAA000000);
+                        g.text(font, "§e§lCustom Slots", contentX, yOffset + 5, 0xFFFFFFFF, true);
+                        
+                        g.enableScissor(contentX - 5, yOffset + 20, contentX + contentWidth + 5, height - PADDING);
+                        for (int i = 0; i < s.customSlots.size(); i++) {
+                            BomboConfig.CustomSlot cs = s.customSlots.get(i);
+                            int itemY = yOffset + 20 + i * 22 - (int) scrollAmount;
+                            g.text(font, "§b" + cs.guiName + " §8[Slot " + cs.slotIndex + "]", contentX, itemY + 5, 0xFFFFFFFF, true);
+                            g.text(font, "§7Cmd: " + (cs.command != null ? cs.command : ""), contentX, itemY + 15, 0xFFFFFFFF, true);
+                        }
+                        g.disableScissor();
+                    }
+                }
+                case 27 -> { // Custom Tracers
+                    int listTitleY = categoryTitleY + 30 + 130;
+                    if (editingCustomTracer != null) {
+                        listTitleY += 50;
+                    }
+
+                    g.text(font, "§9§lCustom Tracers", contentX, listTitleY, 0xFF5555FF, true);
+                    List<String> tracerIds = new ArrayList<>(s.customTracers.keySet());
+                    for (int i = 0; i < tracerIds.size(); i++) {
+                        final String tid = tracerIds.get(i);
+                        int itemY = listTitleY + 20 + i * 22 - (int) scrollAmount;
+                        if (itemY > listTitleY + 15 && itemY < height - 20) {
+                            BomboConfig.Settings.CustomTracerInfo info = s.customTracers.get(tid);
+                            String nameText = (info.name != null && !info.name.isEmpty()) ? info.name : "Unknown";
+                            g.text(font, "§7Name: §e" + nameText + " §8[" + tid + "]", contentX, itemY + 10, 0xFFFFFFFF, true);
+                            int cHex = BomboRenderUtils.colorNameToHex(info.color);
+                            g.fill(contentX - 10, itemY + 8, contentX - 5, itemY + 18, cHex | 0xFF000000);
+                        }
+                    }
+                }
             }
+        } catch (Throwable e) {
+        Bomboaddons.LOGGER.error("[BomboAddons] Error during render!", e);
+        try {
+            java.io.File file = new java.io.File("crash_exception.log");
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(file, true))) {
+                pw.println("=== GUI RENDER EXCEPTION ===");
+                e.printStackTrace(pw);
+                pw.println("============================");
+            }
+        } catch (Throwable ignore) {
         }
+    }
     }
 
     @Override
@@ -3036,8 +3413,59 @@ public class BomboConfigGUI extends Screen {
         return super.keyPressed(event);
     }
 
+    private void handleCrosshairDraw(double mx, double my, int button) {
+        if (button == 0 || button == 1) {
+            int contentWidth = width - SIDEBAR_WIDTH - PADDING * 3;
+            int gridSize = 10;
+            int contentX = SIDEBAR_WIDTH + PADDING * 2;
+            int gridStartX = contentX + (contentWidth - 15 * gridSize) / 2;
+
+            // To find the exact Y position, we mimic the new curY trace:
+            BomboConfig.CrosshairSettings crosshair = BomboConfig.get().customCrosshair;
+            int curY = HEADER_HEIGHT + PADDING * 2 + 30; // contentBaseY
+            curY += 24; // title
+            curY += 24; // enable crosshair
+            curY += 5;
+            curY += 24; // chroma
+            if (!crosshair.chroma)
+                curY += 24;
+            curY += 24; // outline
+            if (crosshair.outline)
+                curY += 24;
+            curY += 5;
+            curY += 24 + 5; // Presets label
+            curY += 75; // Presets grid (3 rows)
+            curY += 15; // text "Draw your crosshair"
+
+            int top = curY;
+            int left = gridStartX;
+
+            if (mx >= left && mx < left + 150 && my >= top && my < top + 150) {
+                int col = (int) (mx - left) / 10;
+                int row = (int) (my - top) / 10;
+                if (col >= 0 && col < 16 && row >= 0 && row < 16) {
+                    crosshair.grid[row * 15 + col] = (button == 0);
+                    BomboConfig.save();
+                }
+            }
+        }
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (selectedCategory == 25 && BomboConfig.get().customCrosshair != null
+                && BomboConfig.get().customCrosshair.enabled) {
+            handleCrosshairDraw(event.x(), event.y(), event.button());
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
+        if (selectedCategory == 25 && event.button() <= 1 && BomboConfig.get().customCrosshair != null
+                && BomboConfig.get().customCrosshair.enabled) {
+            handleCrosshairDraw(event.x(), event.y(), event.button());
+        }
         if (event.button() == 1) { // Right click
             double mx = event.x();
             double my = event.y();
@@ -3307,4 +3735,24 @@ public class BomboConfigGUI extends Screen {
         }
         return (r << 16) | (g << 8) | b;
     }
+
+    private boolean[] getPresetGrid(String name) {
+        int index = 0;
+        String[] presetNames = { "Dot", "Plus", "Lg Plus", "Sm Plus", "Circle", "Op Circle", "Square", "F Square",
+                "Target", "F Target", "Arrow", "Cross", "Sm Cross", "T Shape", "Caret", "Hash", "Clear" };
+        for (int i = 0; i < presetNames.length; i++) {
+            if (presetNames[i].equals(name)) {
+                index = i;
+                break;
+            }
+        }
+        if (index == 16)
+            return new boolean[225]; // Clear
+        boolean[] result = new boolean[225];
+        if (index < me.bombo.bomboaddons.CrosshairPresets.PRESETS.length) {
+            System.arraycopy(me.bombo.bomboaddons.CrosshairPresets.PRESETS[index], 0, result, 0, 225);
+        }
+        return result;
+    }
+
 }

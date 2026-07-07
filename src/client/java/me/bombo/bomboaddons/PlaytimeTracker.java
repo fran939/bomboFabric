@@ -318,8 +318,8 @@ public class PlaytimeTracker {
         // Auto-save every 1 minute
         if (now % 60000 < delta) save();
         
-        // Sync to cloud every 10 minutes
-        if (now - lastCloudSyncTime > 600000) {
+        // Sync to cloud every 1 hour
+        if (now - lastCloudSyncTime > 3600000) {
             lastCloudSyncTime = now;
             sendPlaytimeDataToCloud();
         }
@@ -371,6 +371,11 @@ public class PlaytimeTracker {
     }
 
     public static void sendPlaytimeDataToCloud() {
+        sendPlaytimeDataToCloud(true);
+    }
+
+    public static void sendPlaytimeDataToCloud(boolean async) {
+        save();
         Minecraft mc = Minecraft.getInstance();
         String username = mc.getUser().getName();
         String uuid = mc.getUser().getProfileId().toString();
@@ -386,7 +391,7 @@ public class PlaytimeTracker {
         
         String json = GSON.toJson(payload);
         
-        new Thread(() -> {
+        Runnable r = () -> {
             try {
                 java.net.URL url = new java.net.URI("https://bomboapi.frandl938.workers.dev/playtime").toURL();
                 Bomboaddons.logApiRequest("https://bomboapi.frandl938.workers.dev/playtime");
@@ -415,6 +420,12 @@ public class PlaytimeTracker {
                     }
                 });
             }
-        }).start();
+        };
+        
+        if (async) {
+            new Thread(r).start();
+        } else {
+            r.run();
+        }
     }
 }

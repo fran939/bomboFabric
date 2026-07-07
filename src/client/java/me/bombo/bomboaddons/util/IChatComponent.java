@@ -9,6 +9,7 @@ import java.util.Objects;
 
 public interface IChatComponent {
     GuiMessage.Line bombo$getLineAt(double mouseX, double mouseY);
+    java.util.List<GuiMessage.Line> bombo$getFullMessageLines(GuiMessage.Line clickedLine);
     double bombo$getScale();
 
     static Style getStyleAt(Minecraft mc, GuiMessage.Line line, double mouseX, double scale) {

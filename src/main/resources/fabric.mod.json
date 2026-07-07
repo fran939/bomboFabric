@@ -1,15 +1,15 @@
 {
 	"schemaVersion": 1,
 	"id": "bomboaddons",
-	"version": "26.1.2.4",
+	"version": "26.1.2.7",
 	"name": "Bomboaddons",
-	"description": "bumboclat",
+	"description": "Hypixel skyblock mod",
 	"authors": [
-		"bumboclas"
+		"bomboclas"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/fran939/bombofabric",
+		"sources": "https://github.com/fran939/bombofabric"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/bomboaddons/icon.png",

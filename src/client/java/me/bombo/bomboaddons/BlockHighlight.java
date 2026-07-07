@@ -118,8 +118,7 @@ public class BlockHighlight {
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
-        net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
-        if (collector == null) return;
+        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
 
         // Take local reference of current highlighted blocks to avoid thread race conditions
         Map<BlockPos, BomboConfig.BlockHighlightInfo> currentHighlights = highlightedBlocks;
@@ -143,7 +142,8 @@ public class BlockHighlight {
             float a = 0.85f;
 
             final AABB box;
-            if (info.throughWalls) {
+            boolean throughWalls = info.throughWalls && !s.hideCheats;
+            if (throughWalls) {
                 float scale = 1.0f;
                 if (dist > 0.2) {
                     scale = 0.2f / (float) dist;
@@ -156,7 +156,8 @@ public class BlockHighlight {
                 box = new AABB(x, y, z, x + 1.0, y + 1.0, z + 1.0);
             }
 
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+            net.minecraft.client.renderer.rendertype.RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
+            collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                 BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, 2.0f);
             });
         }

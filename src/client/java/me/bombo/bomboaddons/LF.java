@@ -1303,6 +1303,11 @@ public class LF {
             case "POTION" -> "minecraft:potion";
             case "EXP_BOTTLE" -> "minecraft:experience_bottle";
             case "BOOK_AND_QUILL" -> "minecraft:writable_book";
+            case "LOG" -> "minecraft:oak_log";
+            case "LOG_2" -> "minecraft:acacia_log";
+            case "LEAVES" -> "minecraft:oak_leaves";
+            case "LEAVES_2" -> "minecraft:acacia_leaves";
+            case "WOOD" -> "minecraft:oak_wood";
             case "WATCH" -> "minecraft:clock";
             case "STEP" -> "minecraft:stone_slab";
             case "WOOD_STEP" -> "minecraft:oak_slab";
@@ -1315,6 +1320,7 @@ public class LF {
             case "LEASH" -> "minecraft:lead";
             case "PRISMARINE_SHARD" -> "minecraft:prismarine_shard";
             case "PRISMARINE_CRYSTALS" -> "minecraft:prismarine_crystals";
+            case "CARPET" -> "minecraft:white_carpet";
             default -> null;
         };
         if (legacyMapped != null)

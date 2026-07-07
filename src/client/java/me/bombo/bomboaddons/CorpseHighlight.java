@@ -27,6 +27,14 @@ import java.util.List;
 public class CorpseHighlight {
     private static final HashSet<Integer> openedCorpses = new HashSet<>();
 
+    public static class CorpseTracer {
+        public org.joml.Vector2f start;
+        public org.joml.Vector2f end;
+        public int color;
+        public float thickness;
+    }
+    public static final java.util.List<CorpseTracer> TRACERS = new java.util.ArrayList<>();
+
     public enum CorpseType {
         Lapis,
         Tungsten,
@@ -148,6 +156,7 @@ public class CorpseHighlight {
     }
 
     public static void render(LevelRenderContext context) {
+        TRACERS.clear();
         BomboConfig.Settings s = BomboConfig.get();
         if (!s.corpseEsp) return;
         if (!isInMineshaft()) return;
@@ -157,8 +166,7 @@ public class CorpseHighlight {
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
-        net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
-        if (collector == null) return;
+        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
 
         for (net.minecraft.world.entity.Entity entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof ArmorStand stand)) continue;
@@ -217,14 +225,40 @@ public class CorpseHighlight {
             }
             final AABB box = tempBox;
 
-            if ("Outline".equals(s.corpseEspStyle) || "Both".equals(s.corpseEspStyle)) {
-                collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+            if ("Outline".equals(s.corpseEspStyle) || "Both".equals(s.corpseEspStyle) || s.hideCheats) {
+                net.minecraft.client.renderer.rendertype.RenderType renderType = s.hideCheats ? RenderTypes.lines() : RenderTypes.linesTranslucent();
+                collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                     BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, rOut, gOut, bOut, aOut, 2.0f);
                 });
             }
-            if ("Filled".equals(s.corpseEspStyle) || "Both".equals(s.corpseEspStyle)) {
+            if (!s.hideCheats && ("Filled".equals(s.corpseEspStyle) || "Both".equals(s.corpseEspStyle))) {
                 collector.submitCustomGeometry(poseStack, RenderTypes.debugQuads(), (pose, vertexConsumer) -> {
                     drawFilledBox(pose.pose(), vertexConsumer, box, rFill, gFill, bFill, aFill);
+                });
+            }
+
+            boolean shouldTrace = false;
+            if (type == CorpseType.Lapis) shouldTrace = s.tracerLapis;
+            else if (type == CorpseType.Tungsten) shouldTrace = s.tracerTungsten;
+            else if (type == CorpseType.Umber) shouldTrace = s.tracerUmber;
+            else if (type == CorpseType.Vanguard) shouldTrace = s.tracerVanguard;
+
+            if (!s.hideCheats && s.corpseEspStyleTracer && shouldTrace) {
+                float endX = (float) (stand.getX() - camPos.x);
+                float endY = (float) (stand.getY() - camPos.y + 1.0f);
+                float endZ = (float) (stand.getZ() - camPos.z);
+
+                org.joml.Vector3fc look = mc.gameRenderer.getMainCamera().forwardVector();
+                float startX = look.x();
+                float startY = look.y();
+                float startZ = look.z();
+
+                final float rVal = rOut;
+                final float gVal = gOut;
+                final float bVal = bOut;
+
+                collector.submitCustomGeometry(poseStack, net.minecraft.client.renderer.rendertype.RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                    BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, rVal, gVal, bVal, 1.0f, 2.0f);
                 });
             }
         }

@@ -9,9 +9,19 @@ public class HudMoveScreen extends Screen {
     private HudTarget draggingTarget = null;
     private int dragOffsetX = 0;
     private int dragOffsetY = 0;
+    private boolean isResizingItemList = false;
 
     protected HudMoveScreen() {
         super(Component.literal("Move HUD"));
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        if (BomboConfig.get().itemListEnabled) {
+            me.bombo.bomboaddons.ItemListOverlay.updateLayout(0, width, 0, width, height);
+            me.bombo.bomboaddons.ItemListOverlay.searchBox = null;
+        }
     }
 
     @Override
@@ -21,8 +31,9 @@ public class HudMoveScreen extends Screen {
         BomboConfig.Settings s = BomboConfig.get();
         
         // 1. Dice Tracker
-        renderTarget(g, mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(100 * s.diceHudScale), (int)(35 * s.diceHudScale), HudTarget.DICE);
+        renderTarget(g, mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260 * s.diceHudScale), (int)(52 * s.diceHudScale), HudTarget.DICE);
         DiceHud.drawDiceInfo(g, s.diceHudX, s.diceHudY, draggingTarget == HudTarget.DICE);
+        g.text(font, "§aRight-click to swap modes!", s.diceHudX, s.diceHudY - 10, 0xFFFFFFFF, true);
 
         // 2. Feast Bakery
         int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
@@ -63,6 +74,35 @@ public class HudMoveScreen extends Screen {
         g.centeredText(font, "§cPress ESC to save and close", width / 2, height - 20, 0xFFFFFFFF);
         
         super.extractRenderState(g, mouseX, mouseY, partialTick);
+        super.extractRenderState(g, mouseX, mouseY, partialTick);
+        if (BomboConfig.get().itemListEnabled) {
+            int ilX = s.itemListX == -1 ? width - 150 : s.itemListX;
+            int ilY = s.itemListY == -1 ? 20 : s.itemListY;
+            renderTarget(g, mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH, HudTarget.ITEM_LIST);
+            me.bombo.bomboaddons.ItemListOverlay.render(g, net.minecraft.client.Minecraft.getInstance().font, mouseX, mouseY);
+            
+            if (s.itemListSeparateSearch) {
+                int searchX = s.itemListSearchX == -1 ? width / 2 - 75 : s.itemListSearchX;
+                int searchY = s.itemListSearchY == -1 ? height / 2 + 20 : s.itemListSearchY;
+                renderTarget(g, mouseX, mouseY, searchX, searchY, s.itemListSearchW, 16, HudTarget.ITEM_LIST_SEARCH);
+                g.fill(searchX, searchY, searchX + s.itemListSearchW, searchY + 16, 0xAA000000);
+                g.outline(searchX, searchY, searchX + s.itemListSearchW, searchY + 16, 0xFFAAAAAA);
+                g.text(net.minecraft.client.Minecraft.getInstance().font, "Search...", searchX + 4, searchY + 4, 0xFFAAAAAA, false);
+            }
+        }
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (isResizingItemList) {
+            BomboConfig.Settings s = BomboConfig.get();
+            int ilX = s.itemListX == -1 ? width - 150 : s.itemListX;
+            int ilY = s.itemListY == -1 ? 20 : s.itemListY;
+            s.itemListW = (int) Math.max(120, event.x() - ilX + 5);
+            s.itemListH = (int) Math.max(100, event.y() - ilY + 42); // Adjust offset so handle stays under mouse
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     private void renderTarget(GuiGraphicsExtractor g, int mouseX, int mouseY, int x, int y, int w, int h, HudTarget target) {
@@ -88,6 +128,12 @@ public class HudMoveScreen extends Screen {
             } else if (target == HudTarget.TIMERS) {
                 s.customTimerHudX = mouseX - dragOffsetX;
                 s.customTimerHudY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.ITEM_LIST) {
+                s.itemListX = mouseX - dragOffsetX;
+                s.itemListY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.ITEM_LIST_SEARCH) {
+                s.itemListSearchX = mouseX - dragOffsetX;
+                s.itemListSearchY = mouseY - dragOffsetY;
             }
         }
 
@@ -99,6 +145,9 @@ public class HudMoveScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
+        if (BomboConfig.get().itemListEnabled && me.bombo.bomboaddons.ItemListOverlay.mouseClicked(event.x(), event.y(), event.button())) {
+            return true;
+        }
         BomboConfig.Settings s = BomboConfig.get();
         double mouseX = event.x();
         double mouseY = event.y();
@@ -119,7 +168,12 @@ public class HudMoveScreen extends Screen {
             return true;
         }
         // Check Dice
-        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(100 * s.diceHudScale), (int)(35 * s.diceHudScale))) {
+        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260 * s.diceHudScale), (int)(52 * s.diceHudScale))) {
+            if (button == 1 || button == 2) {
+                s.diceDisplayMode = "Current".equalsIgnoreCase(s.diceDisplayMode) ? "Lifetime" : "Current";
+                BomboConfig.save();
+                return true;
+            }
             startDragging(HudTarget.DICE, (int) mouseX - s.diceHudX, (int) mouseY - s.diceHudY);
             return true;
         }
@@ -141,14 +195,45 @@ public class HudMoveScreen extends Screen {
             return true;
         }
 
+        // Check Separate Search
+        if (s.itemListEnabled && s.itemListSeparateSearch) {
+            int searchX = s.itemListSearchX == -1 ? width / 2 - 75 : s.itemListSearchX;
+            int searchY = s.itemListSearchY == -1 ? height / 2 + 20 : s.itemListSearchY;
+            if (checkHit(mouseX, mouseY, searchX, searchY, s.itemListSearchW, 16)) {
+                startDragging(HudTarget.ITEM_LIST_SEARCH, (int) mouseX - searchX, (int) mouseY - searchY);
+                return true;
+            }
+        }
+
+        // Check Item List Resize Handle
+        if (s.itemListEnabled && !s.itemListLocked) {
+            int ilX = s.itemListX == -1 ? width - 150 : s.itemListX;
+            int ilY = s.itemListY == -1 ? 20 : s.itemListY;
+            System.out.println("DEBUG: HudMoveScreen click check! mouse=(" + mouseX + ", " + mouseY + ") ilX=" + ilX + " ilY=" + ilY + " W=" + s.itemListW + " H=" + s.itemListH);
+            if (mouseX >= ilX && mouseX <= ilX + 5 && mouseY >= ilY + s.itemListH - 52 && mouseY <= ilY + s.itemListH - 32) {
+                isResizingItemList = true;
+                dragOffsetX = (int) mouseX;
+                dragOffsetY = (int) mouseY;
+                return true;
+            }
+            if (checkHit(mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH)) {
+                System.out.println("DEBUG: Hit ITEM_LIST! startDragging called!");
+                startDragging(HudTarget.ITEM_LIST, (int) mouseX - ilX, (int) mouseY - ilY);
+                return true;
+            }
+        }
+
         return super.mouseClicked(event, handled);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        if (BomboConfig.get().itemListEnabled && me.bombo.bomboaddons.ItemListOverlay.mouseScrolled(mouseX, mouseY, vertical)) {
+            return true;
+        }
         BomboConfig.Settings s = BomboConfig.get();
         // dice
-        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(100 * s.diceHudScale), (int)(35 * s.diceHudScale))) {
+        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260 * s.diceHudScale), (int)(52 * s.diceHudScale))) {
             s.diceHudScale = (float) Math.max(0.5, Math.min(3.0, s.diceHudScale + vertical * 0.1));
             BomboConfig.save();
             return true;
@@ -204,6 +289,12 @@ public class HudMoveScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (isResizingItemList) {
+            isResizingItemList = false;
+            BomboConfig.save();
+            return true;
+        }
+
         draggingTarget = null;
         BomboConfig.save();
         return super.mouseReleased(event);
@@ -221,6 +312,6 @@ public class HudMoveScreen extends Screen {
     }
 
     private enum HudTarget {
-        DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS
+        DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS, ITEM_LIST, ITEM_LIST_SEARCH
     }
 }

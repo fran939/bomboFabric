@@ -131,10 +131,12 @@ public class ModUpdater {
                         }
                         
                         if (!hasVersionSpecificAssets || isMatchingAssetVersionSpecific) {
-                            targetRelease = rel;
-                            downloadUrl = matchingAsset.get("browser_download_url").getAsString();
-                            latestVersion = rel.get("tag_name").getAsString().replace("v", "");
-                            break;
+                            String tagVersionCurrent = rel.get("tag_name").getAsString().replace("v", "");
+                            if (latestVersion == null || compareVersions(tagVersionCurrent, latestVersion) > 0) {
+                                targetRelease = rel;
+                                downloadUrl = matchingAsset.get("browser_download_url").getAsString();
+                                latestVersion = tagVersionCurrent;
+                            }
                         }
                     }
                 }

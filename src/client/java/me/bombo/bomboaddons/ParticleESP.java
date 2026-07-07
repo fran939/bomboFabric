@@ -35,8 +35,8 @@ public class ParticleESP {
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
-        net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
-        if (collector == null) return;
+        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
+        net.minecraft.client.renderer.rendertype.RenderType renderType = settings.hideCheats ? net.minecraft.client.renderer.rendertype.RenderTypes.lines() : net.minecraft.client.renderer.rendertype.RenderTypes.linesTranslucent();
 
         // Colors lookup map
         Map<String, Integer> typeColors = new HashMap<>();
@@ -140,7 +140,7 @@ public class ParticleESP {
 
                     AABB box = new AABB(scaledMinX, scaledMinY, scaledMinZ, scaledMaxX, scaledMaxY, scaledMaxZ);
 
-                    collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                    collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                         BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85f, 1.5f);
                     });
                 }
@@ -268,11 +268,11 @@ public class ParticleESP {
                     float scaledRadius = radius * scale;
 
                     if (isFlat) {
-                        collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                        collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                             BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float) scaledX, (float) scaledY, (float) scaledZ, scaledRadius, r, g, b, 0.85f, 2.0f);
                         });
                     } else {
-                        collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                        collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                             BomboRenderUtils.drawSphere(pose.pose(), vertexConsumer, (float) scaledX, (float) scaledY, (float) scaledZ, scaledRadius, r, g, b, 0.85f, 2.0f);
                         });
                     }
@@ -372,7 +372,7 @@ public class ParticleESP {
                     float scaledRadius = radius * scale;
                     float scaledHs = 0.25f * scale;
 
-                    collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                    collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                         BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float) scaledX, (float) scaledY, (float) scaledZ, scaledRadius, r, g, b, 0.85f, 2.0f);
                     });
 
@@ -380,7 +380,7 @@ public class ParticleESP {
                         scaledX - scaledHs, scaledY - scaledHs, scaledZ - scaledHs,
                         scaledX + scaledHs, scaledY + scaledHs, scaledZ + scaledHs
                     );
-                    collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                    collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                         BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85f, 1.5f);
                     });
 
@@ -422,7 +422,7 @@ public class ParticleESP {
                         scaledX + scaledHs, scaledY + scaledHs, scaledZ + scaledHs
                     );
 
-                    collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                    collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
                         BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85f, 1.5f);
                     });
 

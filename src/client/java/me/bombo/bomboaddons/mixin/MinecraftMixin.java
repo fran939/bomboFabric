@@ -29,4 +29,9 @@ public class MinecraftMixin {
             ci.cancel();
         }
     }
+
+    @Inject(method = "close", at = @At("HEAD"))
+    private void onClose(CallbackInfo ci) {
+        me.bombo.bomboaddons.PlaytimeTracker.sendPlaytimeDataToCloud(false);
+    }
 }

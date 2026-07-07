@@ -117,6 +117,13 @@ public class BomboConfig {
         if (instance.commandAliases == null) {
             instance.commandAliases = new HashMap<>();
         }
+        
+        if (instance.customCrosshair == null) {
+            instance.customCrosshair = new CrosshairSettings();
+        }
+        if (instance.customCrosshair.grid == null || instance.customCrosshair.grid.length != 225) {
+            instance.customCrosshair.grid = new boolean[225];
+        }
         if (instance.profileChatTriggers == null) {
             instance.profileChatTriggers = new HashMap<>();
         }
@@ -132,6 +139,9 @@ public class BomboConfig {
         }
         if (instance.customPartyCommands == null) {
             instance.customPartyCommands = new ArrayList<>();
+        }
+        if (instance.customTracers == null) {
+            instance.customTracers = new HashMap<>();
         }
         if (instance.partyCommandPrefixes == null) {
             instance.partyCommandPrefixes = "!,.,?";
@@ -166,6 +176,17 @@ public class BomboConfig {
 
     static {
         load();
+    }
+
+    
+    public static class CrosshairSettings {
+        public boolean enabled = false;
+        public boolean[] grid = new boolean[225];
+        public String color = "WHITE";
+        public boolean chroma = false;
+        public boolean outline = true;
+        public String outlineColor = "BLACK";
+        public float scale = 1.0f;
     }
 
     public static class Settings {
@@ -209,6 +230,7 @@ public class BomboConfig {
         public boolean copyChat = false;
         public boolean lbDebug = false;
         public boolean debugParticles = false;
+        public boolean petPriceDebug = false;
         public List<CommandBind> commandBinds = null;
         public String activeProfile = "default";
         public Map<String, List<CommandBind>> profileBinds = new HashMap<>();
@@ -241,6 +263,7 @@ public class BomboConfig {
         public boolean gardenDirectionHelper = false;
         public boolean gardenMacroCheckDetector = false;
         public boolean gardenMacroCheckStop = false;
+
         public String gardenMacroCheckSound = "Anvil";
         public int gardenMacroCheckSoundCount = 10;
         public int gardenMacroCheckSoundDelay = 500;
@@ -260,6 +283,7 @@ public class BomboConfig {
         public boolean pestWaypointRemoveOnNear = false;
         public boolean pestWaypointBeacon = false;
         public boolean pestEspTracer = false;
+        public boolean cheeseTracer = false;
         public String pestEspColor = "yellow";
         public float pestEspThickness = 2.0f;
         public boolean fuckDiorite = false;
@@ -281,7 +305,65 @@ public class BomboConfig {
         public List<String> petKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", ""));
         public String savePetKey = "";
         public boolean disableUnequipPet = false;
- 
+        
+        public boolean showPetLowestBin = false;
+        public boolean itemListEnabled = true;
+        public boolean itemListRemoveBackground = false;
+        public boolean itemListColoredBackground = false;
+        public boolean itemListLocked = false;
+        public boolean itemListSortReverse = false;
+        public int itemListSortType = 0;
+        public boolean itemListHideSkins = false;
+        public boolean itemListHideNPCs = false;
+        public boolean itemListHideMobs = false;
+        public boolean itemListHideVanilla = false;
+        public boolean autoHideItemList = false;
+        public boolean itemListSeparateSearch = false;
+        public boolean itemListSearchAlwaysVisible = false;
+        public int itemListSearchX = -1;
+        public int itemListSearchY = -1;
+        public int itemListSearchW = 150;
+        public CrosshairSettings customCrosshair = new CrosshairSettings();
+
+        public boolean trophyHighlight = false;
+        public boolean customTimeEnabled = false;
+        public boolean disableInventoryEffects = false;
+
+        public boolean tracerTestMode = false;
+        public boolean tracerTestAllEntities = false;
+        public int itemListX = -1;
+        public int itemListY = -1;
+        public int itemListW = 150;
+        public int itemListH = 200;
+
+        public boolean tracerRat = true;
+        public boolean tracerWorm = true;
+        public boolean tracerSlug = true;
+        public boolean tracerFly = true;
+        public boolean tracerLocust = true;
+        public boolean tracerBeetle = true;
+        public boolean tracerCricket = true;
+        public boolean tracerSpider = true;
+        public boolean tracerMoth = true;
+        public boolean tracerMite = true;
+        public boolean tracerMouse = true;
+        public boolean tracerMosquito = true;
+
+        public List<CustomSlot> customSlots = new ArrayList<>();
+        public int customTimeHour = 12;
+        public boolean corpseEspStyleTracer = false;
+        public String customSlotPrefillKey = "";
+        public String freelookKey = "";
+        public boolean tracerLapis = true;
+        public boolean tracerTungsten = true;
+        public boolean tracerUmber = true;
+        public boolean tracerVanguard = true;
+        public String diceDisplayMode = "Current";
+        public boolean dungeonSecretsTracker = false;
+        public boolean dungeonSecretsDebug = false;
+        public boolean clearInfoHud = false;
+        public int clearInfoHudX = 10;
+        public int clearInfoHudY = 100;
         public boolean kuudraBlindnessTimer = false;
         public boolean disableBlindness = false;
         public int kuudraBlindnessTimerX = 10;
@@ -313,6 +395,17 @@ public class BomboConfig {
         public Map<String, String> commandAliases = new HashMap<>();
         public List<ChatTrigger> chatTriggers = null;
         public Map<String, List<ChatTrigger>> profileChatTriggers = new HashMap<>();
+        
+        public static class CustomTracerInfo {
+            public String name = "";
+            public String color = "green";
+            public CustomTracerInfo() {}
+            public CustomTracerInfo(String name, String color) {
+                this.name = name;
+                this.color = color;
+            }
+        }
+        public Map<String, CustomTracerInfo> customTracers = new HashMap<>();
         public boolean ircChatEnabled = false;
         public boolean ircDefaultChat = false;
         public String ircCustomFormat = "";
@@ -447,10 +540,15 @@ public class BomboConfig {
         public boolean showBeacon = true;
         public String color = "AQUA";
         public boolean enabled = true;
+        public String category = "Imported";
+        public boolean ordered = false;
+        public transient boolean selected = false;
 
-        public CustomWaypoint() {}
+        public CustomWaypoint() {
+        }
 
-        public CustomWaypoint(String name, double x, double y, double z, String requiredIsland, boolean showThroughWalls, boolean showBeacon, String color) {
+        public CustomWaypoint(String name, double x, double y, double z, String requiredIsland,
+                boolean showThroughWalls, boolean showBeacon, String color, String category) {
             this.name = name;
             this.x = x;
             this.y = y;
@@ -459,6 +557,32 @@ public class BomboConfig {
             this.showThroughWalls = showThroughWalls;
             this.showBeacon = showBeacon;
             this.color = color;
+            this.category = category;
+        }
+
+        public CustomWaypoint(String name, double x, double y, double z, String requiredIsland,
+                boolean showThroughWalls, boolean showBeacon, String color) {
+            this(name, x, y, z, requiredIsland, showThroughWalls, showBeacon, color, "Imported");
+        }
+    }
+
+    public static class CustomSlot {
+        public String guiName;
+        public int slotIndex;
+        public String icon;
+        public String name;
+        public String description;
+        public String command;
+
+        public CustomSlot() {}
+
+        public CustomSlot(String guiName, int slotIndex, String icon, String name, String description, String command) {
+            this.guiName = guiName;
+            this.slotIndex = slotIndex;
+            this.icon = icon;
+            this.name = name;
+            this.description = description;
+            this.command = command;
         }
     }
 
@@ -520,13 +644,13 @@ public class BomboConfig {
     }
 
     public static class HighlightInfo {
-        public String color;
-        public boolean showInvisible;
+        public String color = "RED";
+        public boolean showInvisible = false;
         public boolean enabled = true;
+        public boolean tracer = false;
 
-        public HighlightInfo() {}
-
-        public HighlightInfo(String color, boolean showInvisible) {
+        public HighlightInfo() {
+        }  public HighlightInfo(String color, boolean showInvisible) {
             this.color = color;
             this.showInvisible = showInvisible;
             this.enabled = true;
@@ -536,6 +660,13 @@ public class BomboConfig {
             this.color = color;
             this.showInvisible = showInvisible;
             this.enabled = enabled;
+        }
+
+        public HighlightInfo(String color, boolean showInvisible, boolean enabled, boolean tracer) {
+            this.color = color;
+            this.showInvisible = showInvisible;
+            this.enabled = enabled;
+            this.tracer = tracer;
         }
     }
 

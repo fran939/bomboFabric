@@ -1,0 +1,7 @@
+Code block length: 258
+3250: b=0, p=1 | 'public static void registerBCommandsToDispatcher('
+3251: b=1, p=0 | '            com.mojang.brigadier.CommandDispatcher<ClientSuggestionProvider> dispatcher) {'
+3252: b=2, p=0 | '        if (clientDispatcher != null) {'
+3253: b=2, p=0 | '            copyClientCommands(clientDispatcher, dispatcher);'
+3254: b=1, p=0 | '        }'
+3255: b=0, p=0 | '    }'

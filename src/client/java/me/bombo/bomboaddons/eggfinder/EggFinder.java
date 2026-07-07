@@ -276,8 +276,7 @@ public class EggFinder {
         Minecraft mc = Minecraft.getInstance();
         Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
-        net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
-        if (collector == null) return;
+        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
 
         for (EggWaypoint wp : wps) {
             double x = wp.pos.getX() + 0.5 - camPos.x;
@@ -366,7 +365,7 @@ public class EggFinder {
         if (lower.contains("lotus") || lower.contains("atoll")) {
             return "Lotus Atoll";
         }
-        if (lower.contains("spider") || lower.contains("den")) {
+        if (lower.contains("spider") || lower.equals("spider's den") || lower.equals("spiders den")) {
             return "Spider's Den";
         }
         if (lower.contains("end") || lower.equals("nest")) {

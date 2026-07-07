@@ -39,6 +39,7 @@ public class DiceTracker {
     }
 
     private static Stats stats = new Stats();
+    private static final Stats sessionStats = new Stats();
 
     public static void init() {
         load();
@@ -88,6 +89,7 @@ public class DiceTracker {
             // 1. Cost per roll
             long rollCost = isHighClass ? 6666666 : 666666;
             stats.totalSpent += rollCost;
+            sessionStats.totalSpent += rollCost;
 
             // 2. Cost of dice lost (on 6 or 7)
             if (roll >= 6) {
@@ -95,8 +97,14 @@ public class DiceTracker {
                 if (dicePrice <= 0) dicePrice = isHighClass ? 6666666 : 666666;
                 
                 stats.totalSpent += dicePrice;
-                if (isHighClass) stats.highClassDicesUsed++;
-                else stats.normalDicesUsed++;
+                sessionStats.totalSpent += dicePrice;
+                if (isHighClass) {
+                    stats.highClassDicesUsed++;
+                    sessionStats.highClassDicesUsed++;
+                } else {
+                    stats.normalDicesUsed++;
+                    sessionStats.normalDicesUsed++;
+                }
             }
 
             // 3. Rewards
@@ -108,13 +116,17 @@ public class DiceTracker {
                 if (reward < 0) reward = 0;
             }
             stats.totalEarned += reward;
+            sessionStats.totalEarned += reward;
 
             // Stats tracking
             stats.totalRolls++;
+            sessionStats.totalRolls++;
             if (isHighClass) {
                 stats.highClassRolls.put(rollKey, stats.highClassRolls.getOrDefault(rollKey, 0) + 1);
+                sessionStats.highClassRolls.put(rollKey, sessionStats.highClassRolls.getOrDefault(rollKey, 0) + 1);
             } else {
                 stats.normalRolls.put(rollKey, stats.normalRolls.getOrDefault(rollKey, 0) + 1);
+                sessionStats.normalRolls.put(rollKey, sessionStats.normalRolls.getOrDefault(rollKey, 0) + 1);
             }
             
             lastRollTime = System.currentTimeMillis();
@@ -134,6 +146,10 @@ public class DiceTracker {
 
     public static Stats getStats() {
         return stats;
+    }
+
+    public static Stats getSessionStats() {
+        return sessionStats;
     }
     
     public static boolean isHoldingDice() {

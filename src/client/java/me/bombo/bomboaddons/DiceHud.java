@@ -26,7 +26,10 @@ public class DiceHud {
     }
 
     public static void drawDiceInfo(GuiGraphicsExtractor g, int x, int y, boolean isHovered) {
-        DiceTracker.Stats stats = DiceTracker.getStats();
+        BomboConfig.Settings s = BomboConfig.get();
+        boolean isCurrent = "Current".equalsIgnoreCase(s.diceDisplayMode);
+        DiceTracker.Stats stats = isCurrent ? DiceTracker.getSessionStats() : DiceTracker.getStats();
+
         long profit = stats.totalEarned - stats.totalSpent;
         String profitStr = (profit >= 0 ? "§a+" : "§c") + formatCoins(profit) + " coins";
         
@@ -39,10 +42,11 @@ public class DiceHud {
         long totalDiceCosts = stats.totalSpent - totalRollCosts;
 
         List<String> lines = new ArrayList<>();
-        lines.add("§6§lDice Tracker");
+        lines.add(isCurrent ? "§6§lDice Tracker (Current)" : "§6§lDice Tracker (Lifetime)");
         lines.add("§fRolls: §d" + normalRolls + " §6" + highRolls);
         lines.add("§fDices: §d" + stats.normalDicesUsed + " §6" + stats.highClassDicesUsed + " §7(" + formatCoins(totalDiceCosts) + ")");
         lines.add("§fProfit: " + profitStr);
+        lines.add("§fDisplay Mode: §b[" + (isCurrent ? "Current" : "Lifetime") + "]");
 
         g.pose().pushMatrix();
         g.pose().translate((float) x, (float) y);
@@ -74,6 +78,8 @@ public class DiceHud {
             tooltip.add("§fRoll Costs: §c-" + formatCoins(totalRollCosts));
             tooltip.add("§fDice Losses: §c-" + formatCoins(totalDiceCosts));
             tooltip.add("§fTotal Earned: §a+" + formatCoins(stats.totalEarned));
+            tooltip.add("");
+            tooltip.add("§bClick to switch Display Mode!");
             
             drawCustomTooltip(g, tooltip, x + maxWidth + 5, y);
         }
@@ -82,7 +88,11 @@ public class DiceHud {
     private static void drawCustomTooltip(GuiGraphicsExtractor g, List<String> lore, int x, int y) {
         int tX = x + 12;
         int tY = y;
-        int width = 125;
+        int width = 0;
+        for (String line : lore) {
+            width = Math.max(width, Minecraft.getInstance().font.width(line));
+        }
+        width += 8;
         int height = lore.size() * 10 + 4;
         
         g.fill(tX - 4, tY - 4, tX + width, tY + height, 0xFF181818);
@@ -96,7 +106,46 @@ public class DiceHud {
         }
     }
 
-    private static String formatCoins(long coins) {
+    public static void showStatsInChat() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+
+        DiceTracker.Stats total = DiceTracker.getStats();
+        DiceTracker.Stats session = DiceTracker.getSessionStats();
+
+        int sessionNormal = 0;
+        for (int count : session.normalRolls.values()) sessionNormal += count;
+        int sessionHigh = 0;
+        for (int count : session.highClassRolls.values()) sessionHigh += count;
+        long sessionProfit = session.totalEarned - session.totalSpent;
+        long sessionRollCosts = (sessionNormal * 666666L) + (sessionHigh * 6666666L);
+        long sessionDiceCosts = session.totalSpent - sessionRollCosts;
+
+        int totalNormal = 0;
+        for (int count : total.normalRolls.values()) totalNormal += count;
+        int totalHigh = 0;
+        for (int count : total.highClassRolls.values()) totalHigh += count;
+        long totalProfit = total.totalEarned - total.totalSpent;
+        long totalRollCosts = (totalNormal * 666666L) + (totalHigh * 6666666L);
+        long totalDiceCosts = total.totalSpent - totalRollCosts;
+
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8---------------------------------------------------------"));
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6§lDice Tracker Statistics:"));
+        
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e--- Current Session ---"));
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("  §fRolls: §d" + sessionNormal + " §6" + sessionHigh));
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("  §fDices Used: §d" + session.normalDicesUsed + " §6" + session.highClassDicesUsed + " §7(" + formatCoins(sessionDiceCosts) + ")"));
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("  §fProfit: " + (sessionProfit >= 0 ? "§a+" : "§c") + formatCoins(sessionProfit) + " coins"));
+
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e--- All-Time (Total) ---"));
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("  §fRolls: §d" + totalNormal + " §6" + totalHigh));
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("  §fDices Used: §d" + total.normalDicesUsed + " §6" + total.highClassDicesUsed + " §7(" + formatCoins(totalDiceCosts) + ")"));
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("  §fProfit: " + (totalProfit >= 0 ? "§a+" : "§c") + formatCoins(totalProfit) + " coins"));
+
+        mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8---------------------------------------------------------"));
+    }
+
+    public static String formatCoins(long coins) {
         long abs = Math.abs(coins);
         if (abs >= 1000000000) return String.format("%.2fB", (double)coins / 1e9);
         if (abs >= 1000000) return String.format("%.1fM", (double)coins / 1e6);

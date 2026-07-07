@@ -58,5 +58,9 @@ public abstract class TitleScreenMixin extends Screen {
 
             addRenderableWidget(hypixelBtn);
         }
+
+        // Add Account Switcher widget
+        me.bombo.bomboaddons.gui.AccountSwitcherWidget accountSwitcher = new me.bombo.bomboaddons.gui.AccountSwitcherWidget(5, 5, this);
+        addRenderableWidget(accountSwitcher);
     }
 }

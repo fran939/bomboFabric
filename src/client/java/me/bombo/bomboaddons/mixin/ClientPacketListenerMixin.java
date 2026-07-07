@@ -65,6 +65,23 @@ public class ClientPacketListenerMixin {
         }
     }
 
+    @Inject(method = "handleCommands", at = @At("TAIL"))
+    private void onHandleCommands(net.minecraft.network.protocol.game.ClientboundCommandsPacket packet, CallbackInfo ci) {
+        try {
+            ClientPacketListener listener = (ClientPacketListener) (Object) this;
+            com.mojang.brigadier.CommandDispatcher<net.minecraft.client.multiplayer.ClientSuggestionProvider> dispatcher = listener.getCommands();
+            if (dispatcher != null) {
+                me.bombo.bomboaddons.BomboaddonsClient.registerMsgCommandsToDispatcher(dispatcher);
+                me.bombo.bomboaddons.BomboaddonsClient.registerBCommandsToDispatcher(dispatcher);
+                for (String alias : BomboConfig.get().commandAliases.keySet()) {
+                    me.bombo.bomboaddons.BomboaddonsClient.registerAliasToDispatcher(dispatcher, alias);
+                }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
     @Inject(method = "handleMovePlayer", at = @At("HEAD"))
     private void onHandleMovePlayerHead(net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
         try {

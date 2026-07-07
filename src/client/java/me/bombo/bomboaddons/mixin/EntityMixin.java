@@ -132,6 +132,7 @@ public abstract class EntityMixin {
          if (config.hideCheats) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null && !mc.player.hasLineOfSight(self)) {
+               cir.setReturnValue(false);
                return;
             }
          }

@@ -33,9 +33,19 @@ public abstract class ItemHotkeysMixin {
    @Shadow
    protected Slot hoveredSlot;
  
-   @Inject(method = { "keyPressed" }, at = { @At("HEAD") }, cancellable = true)
-   private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-      if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
+    @Inject(method = { "keyPressed" }, at = { @At("HEAD") }, cancellable = true)
+    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+       if (me.bombo.bomboaddons.BomboConfigGUI.isTypingOrListening()) return;
+       if (me.bombo.bomboaddons.ItemListOverlay.searchBox != null && me.bombo.bomboaddons.ItemListOverlay.searchBox.isFocused()) return;
+
+       net.minecraft.world.item.ItemStack targetItem = null;
+       if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
+           targetItem = this.hoveredSlot.getItem();
+       } else if (me.bombo.bomboaddons.ItemListOverlay.hoveredStack != null) {
+           targetItem = me.bombo.bomboaddons.ItemListOverlay.hoveredStack;
+       }
+
+       if (targetItem != null) {
          int pressedKey = event.key();
          int tradeBoundKey = ClickLogic.getKeyCode(BomboConfig.get().tradeKey);
          int recipeBoundKey = ClickLogic.getKeyCode(BomboConfig.get().recipeKey);
@@ -47,31 +57,31 @@ public abstract class ItemHotkeysMixin {
          int gfsStackBoundKey = ClickLogic.getKeyCode(BomboConfig.get().gfsStackKey);
  
          if (pressedKey != -1 && pressedKey == tradeBoundKey) {
-            if (this.handleKey(this.hoveredSlot.getItem(), "TRADE")) {
+            if (this.handleKey(targetItem, "TRADE")) {
                cir.setReturnValue(true);
             }
          } else if (pressedKey != -1 && pressedKey == recipeBoundKey) {
-            if (this.handleKey(this.hoveredSlot.getItem(), "RECIPE")) {
+            if (this.handleKey(targetItem, "RECIPE")) {
                cir.setReturnValue(true);
             }
          } else if (pressedKey != -1 && pressedKey == usageBoundKey) {
-            if (this.handleKey(this.hoveredSlot.getItem(), "USAGE")) {
+            if (this.handleKey(targetItem, "USAGE")) {
                cir.setReturnValue(true);
             }
          } else if (pressedKey != -1 && pressedKey == showItemBoundKey) {
-            this.showItemInfo(this.hoveredSlot.getItem());
+            this.showItemInfo(targetItem);
             cir.setReturnValue(true);
          } else if (pressedKey != -1 && pressedKey == countItemBoundKey) {
-            this.countAndDisplayItems(this.hoveredSlot.getItem());
+            this.countAndDisplayItems(targetItem);
             cir.setReturnValue(true);
          } else if (pressedKey != -1 && pressedKey == copyNbtBoundKey) {
-            this.copyItemNbt(this.hoveredSlot.getItem());
+            this.copyItemNbt(targetItem);
             cir.setReturnValue(true);
          } else if (pressedKey != -1 && pressedKey == gfsMaxBoundKey) {
-            this.handleGFS(this.hoveredSlot.getItem(), true);
+            this.handleGFS(targetItem, true);
             cir.setReturnValue(true);
          } else if (pressedKey != -1 && pressedKey == gfsStackBoundKey) {
-            this.handleGFS(this.hoveredSlot.getItem(), false);
+            this.handleGFS(targetItem, false);
             cir.setReturnValue(true);
          }
       }
@@ -166,7 +176,7 @@ public abstract class ItemHotkeysMixin {
 
       if (skyblockId != null) {
          if (action.equalsIgnoreCase("RECIPE") || action.equalsIgnoreCase("USAGE")) {
-            Minecraft.getInstance().player.connection.sendCommand("viewrecipe " + skyblockId);
+            Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.RecipeViewerScreen(skyblockId, Minecraft.getInstance().screen));
             return true;
          }
 

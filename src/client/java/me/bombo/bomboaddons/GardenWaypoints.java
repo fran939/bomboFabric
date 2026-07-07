@@ -11,6 +11,16 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Base64;
+import java.util.zip.GZIPInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.util.stream.Collectors;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 
 public class GardenWaypoints {
     public static class Waypoint {
@@ -27,6 +37,8 @@ public class GardenWaypoints {
     }
 
     private static final List<Waypoint> waypoints = new ArrayList<>();
+    public static java.util.Map<String, Integer> currentOrderedIndexPerCat = new java.util.HashMap<>();
+    public static java.util.Map<String, String> lastOrderedIslandPerCat = new java.util.HashMap<>();
 
     public static void addWaypoint(Vec3 pos, String label) {
         synchronized (waypoints) {
@@ -44,6 +56,69 @@ public class GardenWaypoints {
         synchronized (waypoints) {
             return new ArrayList<>(waypoints);
         }
+    }
+
+    public static int importWaypointsFromClipboard(String data) {
+        int count = 0;
+        try {
+            if (data.startsWith("[Skyblocker-Waypoint-Data-V1]")) {
+                data = data.substring("[Skyblocker-Waypoint-Data-V1]".length());
+                byte[] decoded = Base64.getDecoder().decode(data);
+                try (GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(decoded));
+                     BufferedReader br = new BufferedReader(new InputStreamReader(gis, "UTF-8"))) {
+                    String jsonStr = br.lines().collect(Collectors.joining());
+                    JsonElement el = JsonParser.parseString(jsonStr);
+                    if (el.isJsonArray()) {
+                        for (JsonElement routeEl : el.getAsJsonArray()) {
+                            JsonObject route = routeEl.getAsJsonObject();
+                            String island = route.has("island") && !route.get("island").isJsonNull() ? route.get("island").getAsString() : "";
+                            String category = route.has("name") && !route.get("name").isJsonNull() ? route.get("name").getAsString() : "Imported";
+                            if (route.has("waypoints")) {
+                                for (JsonElement wpEl : route.getAsJsonArray("waypoints")) {
+                                    JsonObject wp = wpEl.getAsJsonObject();
+                                    JsonArray pos = wp.getAsJsonArray("pos");
+                                    String name = wp.has("name") ? wp.get("name").getAsString() : "Waypoint";
+                                    double x = pos.get(0).getAsDouble();
+                                    double y = pos.get(1).getAsDouble();
+                                    double z = pos.get(2).getAsDouble();
+                                    BomboConfig.CustomWaypoint cwp = new BomboConfig.CustomWaypoint(name, x, y, z, island, true, false, "AQUA", category);
+                                    BomboConfig.get().customWaypoints.putIfAbsent(BomboConfig.get().activeProfile, new ArrayList<>());
+                                    BomboConfig.get().customWaypoints.get(BomboConfig.get().activeProfile).add(cwp);
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (data.trim().startsWith("[") && data.trim().endsWith("]")) {
+                JsonElement el = JsonParser.parseString(data.trim());
+                if (el.isJsonArray()) {
+                    for (JsonElement wpEl : el.getAsJsonArray()) {
+                        JsonObject wp = wpEl.getAsJsonObject();
+                        if (wp.has("x") && wp.has("y") && wp.has("z")) {
+                            double x = wp.get("x").getAsDouble();
+                            double y = wp.get("y").getAsDouble();
+                            double z = wp.get("z").getAsDouble();
+                            String name = "Waypoint";
+                            if (wp.has("options")) {
+                                JsonObject options = wp.getAsJsonObject("options");
+                                if (options.has("name")) {
+                                    name = options.get("name").getAsString();
+                                }
+                            }
+                            BomboConfig.CustomWaypoint cwp = new BomboConfig.CustomWaypoint(name, x, y, z, "", true, false, "AQUA", "Imported");
+                            BomboConfig.get().customWaypoints.putIfAbsent(BomboConfig.get().activeProfile, new ArrayList<>());
+                            BomboConfig.get().customWaypoints.get(BomboConfig.get().activeProfile).add(cwp);
+                            count++;
+                        }
+                    }
+                }
+            }
+            if (count > 0) BomboConfig.save();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return count;
     }
 
     public static void render(LevelRenderContext context) {
@@ -97,8 +172,7 @@ public class GardenWaypoints {
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().position();
         PoseStack poseStack = context.poseStack();
-        net.minecraft.client.renderer.OrderedSubmitNodeCollector collector = context.submitNodeCollector();
-        if (collector == null) return;
+        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
 
         if (hasActive) {
             // Choose a color (we'll use green/aqua/gold depending on type)
@@ -152,22 +226,28 @@ public class GardenWaypoints {
                 BomboRenderUtils.drawText(poseStack, collector, text, (float)x, (float)y + 0.8f, (float)z, 0xFFFFFF, 0.03f, true, true);
             }
         }
-
         if (hasCustom) {
+            String currentAreaLower = (BomboaddonsClient.currentArea == null ? "" : BomboaddonsClient.currentArea).toLowerCase();
+            List<BomboConfig.CustomWaypoint> validWps = new ArrayList<>();
+            
             for (BomboConfig.CustomWaypoint wp : customWps) {
                 if (!wp.enabled) continue;
-
-                // Check required island
+                boolean matched = true;
                 if (wp.requiredIsland != null && !wp.requiredIsland.trim().isEmpty()) {
-                    String currentArea = BomboaddonsClient.currentArea;
-                    if (currentArea == null) currentArea = "";
                     String target = wp.requiredIsland.trim().toLowerCase();
-                    boolean matched = currentArea.toLowerCase().contains(target);
+                    matched = false;
+                    
+                    if (target.equals(BomboaddonsClient.locrawMode.toLowerCase()) || target.equals(BomboaddonsClient.locrawMap.toLowerCase())) {
+                        matched = true;
+                    } else if (currentAreaLower.contains(target)) {
+                        matched = true;
+                    }
+                    
                     if (!matched && mc.level != null) {
                         var sidebar = mc.level.getScoreboard().getDisplayObjective(net.minecraft.world.scores.DisplaySlot.SIDEBAR);
                         if (sidebar != null) {
                             for (String line : SkyblockUtils.getSidebarLines(mc.level.getScoreboard(), sidebar)) {
-                                String clean = line.replaceAll("(?i)§.", "").trim().toLowerCase();
+                                String clean = line.replaceAll("(?i)\\u00a7.", "").trim().toLowerCase();
                                 if (clean.contains(target)) {
                                     matched = true;
                                     break;
@@ -175,7 +255,89 @@ public class GardenWaypoints {
                             }
                         }
                     }
-                    if (!matched) continue;
+                }
+                if (matched) {
+                    validWps.add(wp);
+                }
+            }
+
+            java.util.Map<String, List<Integer>> orderedWpsPerCat = new java.util.HashMap<>();
+            for (BomboConfig.CustomWaypoint wp : validWps) {
+                if (wp.ordered) {
+                    try {
+                        int val = Integer.parseInt(wp.name.trim());
+                        String cat = wp.category != null ? wp.category : "Default";
+                        orderedWpsPerCat.putIfAbsent(cat, new ArrayList<>());
+                        if (!orderedWpsPerCat.get(cat).contains(val)) {
+                            orderedWpsPerCat.get(cat).add(val);
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            for (String cat : orderedWpsPerCat.keySet()) {
+                List<Integer> numericWps = orderedWpsPerCat.get(cat);
+                numericWps.sort(Integer::compareTo);
+                
+                String lastIsland = lastOrderedIslandPerCat.getOrDefault(cat, "");
+                int currentOrderedIndex = currentOrderedIndexPerCat.getOrDefault(cat, -1);
+                
+                if (!lastIsland.equals(currentAreaLower)) {
+                    lastOrderedIslandPerCat.put(cat, currentAreaLower);
+                    currentOrderedIndex = numericWps.get(0);
+                } else if (!numericWps.contains(currentOrderedIndex)) {
+                    currentOrderedIndex = numericWps.get(0);
+                }
+                
+                // check if we are close to currentOrderedIndex
+                for (BomboConfig.CustomWaypoint wp : validWps) {
+                    if (wp.ordered && (wp.category != null ? wp.category : "Default").equals(cat)) {
+                        try {
+                            int val = Integer.parseInt(wp.name.trim());
+                            if (val == currentOrderedIndex) {
+                                double dx = wp.x - playerPos.x;
+                                double dy = wp.y - playerPos.y;
+                                double dz = wp.z - playerPos.z;
+                                if (Math.sqrt(dx*dx + dy*dy + dz*dz) <= 3.0) {
+                                    // Advance
+                                    int idx = numericWps.indexOf(currentOrderedIndex);
+                                    if (idx + 1 < numericWps.size()) {
+                                        currentOrderedIndex = numericWps.get(idx + 1);
+                                    } else {
+                                        currentOrderedIndex = numericWps.get(0); // loop back
+                                    }
+                                }
+                            }
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+                currentOrderedIndexPerCat.put(cat, currentOrderedIndex);
+            }
+
+            for (BomboConfig.CustomWaypoint wp : validWps) {
+                boolean isCurrent = false;
+                if (wp.ordered) {
+                    try {
+                        int val = Integer.parseInt(wp.name.trim());
+                        String cat = wp.category != null ? wp.category : "Default";
+                        int currentOrderedIndex = currentOrderedIndexPerCat.getOrDefault(cat, -1);
+                        List<Integer> numericWps = orderedWpsPerCat.get(cat);
+                        
+                        boolean isNext = false;
+                        if (numericWps != null) {
+                            if (val == currentOrderedIndex) {
+                                isCurrent = true;
+                            } else if (numericWps.indexOf(currentOrderedIndex) != -1) {
+                                int idx = numericWps.indexOf(currentOrderedIndex);
+                                if (idx + 1 < numericWps.size() && val == numericWps.get(idx + 1)) {
+                                    isNext = true;
+                                } else if (idx + 1 == numericWps.size() && val == numericWps.get(0)) {
+                                    isNext = true;
+                                }
+                            }
+                        }
+                        if (!isCurrent && !isNext) continue; // Hide other ordered waypoints in this category
+                    } catch (NumberFormatException ignored) {}
                 }
 
                 double x = wp.x - camPos.x;
@@ -213,7 +375,7 @@ public class GardenWaypoints {
                     BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, lineWidth);
                 });
 
-                if (wp.showBeacon) {
+                if (wp.showBeacon && (!wp.ordered || isCurrent)) {
                     float beaconWidth = 0.15f * scale;
                     AABB beaconBox = new AABB(
                         scaledX - beaconWidth, scaledY, scaledZ - beaconWidth,
@@ -225,8 +387,18 @@ public class GardenWaypoints {
                 }
 
                 // Draw label
-                String text = wp.name + " §7(" + (int)dist + "m)";
+                String text = wp.name + " \u00a77(" + (int)dist + "m)";
                 BomboRenderUtils.drawText(poseStack, collector, text, (float)x, (float)y + 0.8f, (float)z, 0xFFFFFF, 0.03f, true, wp.showThroughWalls);
+
+                if (isCurrent) {
+                    collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                        org.joml.Vector3fc look = mc.gameRenderer.getMainCamera().forwardVector();
+                        float trX = look.x();
+                        float trY = look.y();
+                        float trZ = look.z();
+                        BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, trX, trY, trZ, (float)x, (float)y, (float)z, r, g, b, 1.0f, lineWidth);
+                    });
+                }
             }
         }
 
