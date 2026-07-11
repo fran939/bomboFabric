@@ -57,6 +57,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
     private static final String PREFIX = "§8[§3Bombo§8]§r ";
     private static boolean openGuiNextTick = false;
+    private static int lastInventoryStateId = -1;
     private static boolean openHudMoveNextTick = false;
     private static boolean openCustomizeGuiNextTick = false;
     public static com.mojang.brigadier.CommandDispatcher<FabricClientCommandSource> clientDispatcher;
@@ -78,6 +79,42 @@ public class BomboaddonsClient implements ClientModInitializer {
     public static int expectingLocrawCount = 0;
 
     public void onInitializeClient() {
+        net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+            net.minecraft.core.BlockPos pos = hitResult.getBlockPos();
+            if (me.bombo.bomboaddons.BlockHighlight.targetChestPos != null && pos.equals(me.bombo.bomboaddons.BlockHighlight.targetChestPos)) {
+                me.bombo.bomboaddons.BlockHighlight.targetChestPos = null;
+            }
+            
+            // Normalize double chest coordinates so both halves save to the same data
+            net.minecraft.world.level.block.state.BlockState state = world.getBlockState(pos);
+            if (state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
+                net.minecraft.world.level.block.state.properties.ChestType type = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE);
+                if (type != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
+                    net.minecraft.core.Direction connectedDir = net.minecraft.world.level.block.ChestBlock.getConnectedDirection(state);
+                    net.minecraft.core.BlockPos otherPos = pos.relative(connectedDir);
+                    // use the minimum of the two positions
+                    if (otherPos.compareTo(pos) < 0) {
+                        pos = otherPos;
+                    }
+                } else {
+                    for (net.minecraft.core.Direction d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                        net.minecraft.core.BlockPos adj = pos.relative(d);
+                        if (world.getBlockState(adj).getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
+                            if (adj.compareTo(pos) < 0) pos = adj;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            me.bombo.bomboaddons.features.StorageTracker.lastClickedBlockPos = pos;
+            return net.minecraft.world.InteractionResult.PASS;
+        });
+
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            me.bombo.bomboaddons.features.StorageTracker.save();
+        });
+
         ScreenEvents.BEFORE_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             ScreenMouseEvents.allowMouseClick(screen).register((screen1, event) -> {
                 double mouseX = event.x();
@@ -99,6 +136,8 @@ public class BomboaddonsClient implements ClientModInitializer {
             });
         });
         me.bombo.bomboaddons.auth.AccountManager.init();
+        me.bombo.bomboaddons.features.StorageTracker.init();
+        me.bombo.bomboaddons.features.TextureToggleManager.INSTANCE.init();
         Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.UncaughtExceptionHandler customHandler = (thread, throwable) -> {
             try {
@@ -144,6 +183,21 @@ public class BomboaddonsClient implements ClientModInitializer {
             ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
                 clientDispatcher = dispatcher;
                 registerMultiPlayerPartyCommands(dispatcher);
+
+                dispatcher.register(ClientCommands.literal("bombo_highlight_slot")
+                    .then(ClientCommands.argument("slot", com.mojang.brigadier.arguments.IntegerArgumentType.integer())
+                        .then(ClientCommands.argument("command", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                            .executes(context -> {
+                                int slot = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "slot");
+                                String cmd = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "command");
+                                me.bombo.bomboaddons.SlotHighlight.setTargetSlot(slot, 0xAA00FF00);
+                                String toSend = cmd.startsWith("/") ? cmd.substring(1) : cmd;
+                                Minecraft.getInstance().player.connection.sendCommand(toSend);
+                                return 1;
+                            })
+                        )
+                    )
+                );
 
                 // --- Hoppity Egg Finder commands ---
                 try {
@@ -649,10 +703,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     return 1;
                                 }
 
-                                boolean originalRestore = BomboConfig.get().restoreItemModels;
-                                BomboConfig.get().restoreItemModels = false;
                                 net.minecraft.world.item.Item originalItem = stack.getItem();
-                                BomboConfig.get().restoreItemModels = originalRestore;
 
                                 String skyblockId = SkyblockUtils.getInternalIdRaw(stack);
                                 context.getSource().sendFeedback(Component.literal("§6=== Item Debug ==="));
@@ -1383,6 +1434,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                     executeTracked(cmd);
                                                     return 1;
                                                 }))));
+
+                        // --- Storage Menu ---
+                        builder.then(ClientCommands.literal("storage")
+                                .executes(context -> {
+                                    Minecraft.getInstance().execute(() -> {
+                                        Minecraft.getInstance().setScreen(new me.bombo.bomboaddons.gui.GlobalStorageScreen());
+                                    });
+                                    return 1;
+                                }));
 
                         // --- Playtime ---
                         builder.then(ClientCommands.literal("pt")
@@ -3131,6 +3191,20 @@ public class BomboaddonsClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             try {
                 CustomTimerManager.tick();
+            } catch (Throwable t) {
+            }
+            try {
+                me.bombo.bomboaddons.features.StorageTracker.onGuiTick();
+            } catch (Throwable t) {
+            }
+            try {
+                if (client.player != null && client.player.inventoryMenu != null) {
+                    int currentState = client.player.inventoryMenu.getStateId();
+                    if (currentState != lastInventoryStateId) {
+                        lastInventoryStateId = currentState;
+                        me.bombo.bomboaddons.features.StorageTracker.updatePlayerInventory(client);
+                    }
+                }
             } catch (Throwable t) {
             }
             try {

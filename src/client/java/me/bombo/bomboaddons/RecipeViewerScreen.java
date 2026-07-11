@@ -11,6 +11,7 @@ import net.minecraft.core.component.DataComponents;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.world.item.component.ItemLore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,7 @@ public class RecipeViewerScreen extends Screen {
 
     private Button nextBtn;
     private Button prevBtn;
+    private Button viewRecipeBtn;
 
     public RecipeViewerScreen(String itemId, Screen parentScreen) {
         super(Component.literal("Recipe: " + itemId));
@@ -97,7 +99,7 @@ public class RecipeViewerScreen extends Screen {
             }
         }).bounds(x + 150, y + 155, 20, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("/viewrecipe"), btn -> {
+        viewRecipeBtn = this.addRenderableWidget(Button.builder(Component.literal("/viewrecipe"), btn -> {
             if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.connection.sendCommand("viewrecipe " + this.itemId);
                 Minecraft.getInstance().setScreenAndShow(null);
@@ -219,6 +221,9 @@ public class RecipeViewerScreen extends Screen {
     private void updateButtons() {
         if (prevBtn != null) prevBtn.active = currentRecipeIndex > 0;
         if (nextBtn != null) nextBtn.active = currentRecipeIndex < recipesToDisplay.size() - 1;
+        if (viewRecipeBtn != null) {
+            viewRecipeBtn.visible = error == null && !recipesToDisplay.isEmpty();
+        }
     }
 
     @Override
@@ -248,15 +253,15 @@ public class RecipeViewerScreen extends Screen {
                                     : "Recipe: " + nameColor + (outputItem != null ? outputItem.getHoverName().getString() : itemId);
         graphics.text(font, titleStr, x + 20, y + 15, 0xFFFFFFFF, true);
         
-        String subtitle = "§7" + (usageMode ? "Item Usages" : "Crafting Recipe") + " (" + recipeType + ")";
-        graphics.text(font, subtitle, x + 20, y + 27, 0xFFFFFFFF, true);
+        if (!"mob_drop".equalsIgnoreCase(recipeType)) {
+            String subtitle = "§7" + (usageMode ? "Item Usages" : "Crafting Recipe") + " (" + recipeType + ")";
+            graphics.text(font, subtitle, x + 20, y + 27, 0xFFFFFFFF, true);
+        }
 
         if (recipesToDisplay.size() > 1) {
-            int cx = x + 120;
+            int cx = x + 130;
             int cy = y + 161;
-            graphics.text(font, "§e[<-]", cx - 40, cy, 0xFFFFFFFF, true);
             graphics.centeredText(font, "§e" + (currentRecipeIndex + 1) + " / " + recipesToDisplay.size(), cx, cy, 0xFFFFFFFF);
-            graphics.text(font, "§e[->]", cx + 25, cy, 0xFFFFFFFF, true);
         }
 
         hoveredStack = null;
@@ -307,6 +312,93 @@ public class RecipeViewerScreen extends Screen {
                                 }
                             } catch (Exception e) {}
                             if (!id.isEmpty() && !id.equals("STONE_BUTTON")) hoveredId = id;
+                        }
+                    }
+                }
+            }
+        } else if ("mob_drop".equalsIgnoreCase(recipeType)) {
+            JsonObject recipeObj = recipesToDisplay.get(currentRecipeIndex);
+            String mobId = recipeObj.has("mob_id") ? recipeObj.get("mob_id").getAsString() : "";
+            String mobName = recipeObj.has("mob_name") ? recipeObj.get("mob_name").getAsString() : "Unknown Mob";
+            
+            int panelY = y + 27;
+            int panelH = 122;
+            graphics.fill(x + 10, panelY, x + w - 10, panelY + panelH, 0xFF181818);
+            graphics.fill(x + 10, panelY, x + w - 10, panelY + 1, 0xFF3A3A3A);
+            graphics.fill(x + 10, panelY + panelH - 1, x + w - 10, panelY + panelH, 0xFF3A3A3A);
+            graphics.fill(x + 10, panelY, x + 11, panelY + panelH, 0xFF3A3A3A);
+            graphics.fill(x + w - 11, panelY, x + w - 10, panelY + panelH, 0xFF3A3A3A);
+
+            int cx = x + w / 2;
+            int cy = y + 60;
+            
+            graphics.centeredText(font, "§6" + mobName, cx, cy - 25, 0xFFFFFFFF);
+            
+            ItemStack mobItem = SkyblockItemManager.createSkyblockItem(mobId);
+            if (mobItem != null && !mobItem.isEmpty()) {
+                graphics.pose().pushMatrix();
+                graphics.pose().translate((float) (cx - 16), (float) cy - 5);
+                graphics.pose().scale(2.0f, 2.0f);
+                graphics.item(mobItem, 0, 0);
+                graphics.pose().popMatrix();
+            }
+            
+            if (recipeObj.has("all_drops") && recipeObj.get("all_drops").isJsonArray()) {
+                com.google.gson.JsonArray drops = recipeObj.getAsJsonArray("all_drops");
+                
+                int validDropsCount = 0;
+                for (int i = 0; i < drops.size(); i++) {
+                    if (drops.get(i).getAsJsonObject().has("id")) validDropsCount++;
+                }
+                
+                int maxCols = 9;
+                int cols = Math.min(validDropsCount, maxCols);
+                int gridW = cols * 24;
+                
+                int startX = cx - (gridW / 2);
+                int startY = cy + 35;
+                int col = 0;
+                int row = 0;
+                
+                for (int i = 0; i < drops.size(); i++) {
+                    JsonObject drop = drops.get(i).getAsJsonObject();
+                    if (!drop.has("id")) continue;
+                    String dropId = drop.get("id").getAsString().split(":")[0];
+                    ItemStack dropStack = SkyblockItemManager.createSkyblockItem(dropId);
+                    
+                    if (dropStack != null && !dropStack.isEmpty()) {
+                        ItemStack renderStack = dropStack.copy();
+                        ItemLore loreComp = renderStack.get(DataComponents.LORE);
+                        List<Component> lines = new ArrayList<>();
+                        if (loreComp != null) lines.addAll(loreComp.lines());
+                        lines.add(Component.literal(""));
+                        lines.add(Component.literal("§eDrop Chance: §a" + (drop.has("chance") ? drop.get("chance").getAsString() : "Unknown")));
+                        if (drop.has("extra") && drop.get("extra").isJsonArray()) {
+                            for (JsonElement extraEl : drop.getAsJsonArray("extra")) {
+                                lines.add(Component.literal(extraEl.getAsString()));
+                            }
+                        }
+                        renderStack.set(DataComponents.LORE, new ItemLore(lines));
+                        
+                        int slotX = startX + col * 24 + 4;
+                        int slotY = startY + row * 24 + 4;
+                        
+                        graphics.fill(slotX - 1, slotY - 1, slotX + 17, slotY + 17, 0xFF2E2E2E);
+                        graphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF141414);
+                        
+                        graphics.item(renderStack, slotX, slotY);
+                        graphics.itemDecorations(font, renderStack, slotX, slotY);
+                        
+                        if (mouseX >= slotX && mouseX < slotX + 16 && mouseY >= slotY && mouseY < slotY + 16) {
+                            graphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0x40FFFFFF);
+                            hoveredStack = renderStack;
+                            hoveredId = dropId;
+                        }
+                        
+                        col++;
+                        if (col >= maxCols) {
+                            col = 0;
+                            row++;
                         }
                     }
                 }

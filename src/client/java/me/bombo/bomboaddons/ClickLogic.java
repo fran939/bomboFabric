@@ -155,15 +155,22 @@ public class ClickLogic {
          AbstractContainerScreen screen = (AbstractContainerScreen)var3;
          String title = screen.getTitle().getString().toLowerCase();
 
-         if (title.contains("wardrobe")) {
+         if (title.contains("wardrobe") || title.contains("armor sets") || title.contains("equipment sets") || title.contains("loadouts")) {
             List<String> wardrobeKeys = BomboConfig.get().wardrobeKeys;
             if (wardrobeKeys != null) {
-               for (int i = 0; i < Math.min(9, wardrobeKeys.size()); i++) {
+               for (int i = 0; i < Math.min(12, wardrobeKeys.size()); i++) {
                   String kName = wardrobeKeys.get(i);
                   if (kName != null && !kName.isEmpty()) {
                      int code = getKeyCode(kName);
                      if (code != -1 && code == key) {
                         int slotIndex = 36 + i;
+                        if (title.contains("loadouts")) {
+                            int row = i / 3;
+                            int col = i % 3;
+                            slotIndex = 14 + (row * 9) + col;
+                        } else if (i >= 9) {
+                            continue;
+                        }
                         if (slotIndex < screen.getMenu().slots.size()) {
                            Slot slot = screen.getMenu().slots.get(slotIndex);
                            ItemStack stack = slot.getItem();

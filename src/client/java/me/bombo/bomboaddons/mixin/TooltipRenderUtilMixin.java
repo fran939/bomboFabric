@@ -9,8 +9,32 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Final;
+
 @Mixin(TooltipRenderUtil.class)
 public class TooltipRenderUtilMixin {
+
+    @Shadow
+    @Final
+    private static Identifier BACKGROUND_SPRITE;
+
+    @Shadow
+    @Final
+    private static Identifier FRAME_SPRITE;
+
+    @Inject(method = "getBackgroundSprite", at = @At("HEAD"), cancellable = true)
+    private static void onGetBackgroundSprite(Identifier style, CallbackInfoReturnable<Identifier> cir) {
+        if (!BomboConfig.get().disableCustomTooltips || style == null) return;
+        cir.setReturnValue(BACKGROUND_SPRITE);
+    }
+
+    @Inject(method = "getFrameSprite", at = @At("HEAD"), cancellable = true)
+    private static void onGetFrameSprite(Identifier style, CallbackInfoReturnable<Identifier> cir) {
+        if (!BomboConfig.get().disableCustomTooltips || style == null) return;
+        cir.setReturnValue(FRAME_SPRITE);
+    }
 
     @Inject(
         method = "extractTooltipBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIILnet/minecraft/resources/Identifier;)V",
@@ -56,6 +80,27 @@ public class TooltipRenderUtilMixin {
                 // Bottom border
                 graphics.fill(x1, y2 - 1, x2, y2, border);
             }
+        } else if (s.disableCustomTooltips) {
+            ci.cancel();
+
+            int bg = 0xF0100010;
+            int border = 0x505000FF; // Vanilla border color
+
+            int pad = 4;
+            int padY = 2;
+            int x1 = x - pad;
+            int x2 = x + width + pad;
+            int y1 = y - padY;
+            int y2 = y + height + padY;
+
+            // Draw background fill
+            graphics.fill(x1, y1, x2, y2, bg);
+
+            // Draw border outlines (1px solid border)
+            graphics.fill(x1, y1, x1 + 1, y2, border);
+            graphics.fill(x2 - 1, y1, x2, y2, border);
+            graphics.fill(x1, y1, x2, y1 + 1, border);
+            graphics.fill(x1, y2 - 1, x2, y2, border);
         }
     }
 }

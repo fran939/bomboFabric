@@ -154,8 +154,9 @@ public class LowestBinManager {
         
         if (skyblockId.startsWith("PET_") || skyblockId.startsWith("PET-") || skyblockId.contains(";")) {
             boolean lvl100 = skyblockId.endsWith("-100");
+            boolean lvl200 = skyblockId.endsWith("-200");
             String baseId = skyblockId;
-            if (lvl100) baseId = baseId.substring(0, baseId.length() - 4);
+            if (lvl100 || lvl200) baseId = baseId.substring(0, baseId.length() - 4);
             
             if (baseId.contains(";")) {
                 String prefixRemoved = baseId.startsWith("PET-") ? baseId.substring(4) : baseId;
@@ -170,11 +171,11 @@ public class LowestBinManager {
                     else if (rarityNum.equals("4")) rarity = "LEGENDARY";
                     else if (rarityNum.equals("5")) rarity = "MYTHIC";
                     
-                    String lvlPrefix = lvl100 ? "LVL_100_" : "LVL_1_";
+                    String lvlPrefix = lvl200 ? "LVL_200_" : (lvl100 ? "LVL_100_" : "LVL_1_");
                     price = getRawPrice(lvlPrefix + rarity + "_" + petName);
                     if (price > 0) return price;
                     
-                    String odId = "PET-" + petName + "-" + rarity + (lvl100 ? "-100" : "");
+                    String odId = "PET-" + petName + "-" + rarity + (lvl200 ? "-200" : (lvl100 ? "-100" : ""));
                     price = getRawPrice(odId);
                     if (price > 0) return price;
                 }
@@ -190,15 +191,15 @@ public class LowestBinManager {
                     else if (rarity.equals("LEGENDARY")) rarityNum = 4;
                     else if (rarity.equals("MYTHIC")) rarityNum = 5;
                     
-                    String suffix = lvl100 ? "+100" : "";
+                    String suffix = lvl200 ? "+200" : (lvl100 ? "+100" : "");
                     price = getRawPrice(petName + ";" + rarityNum + suffix);
                     if (price > 0) return price;
                     
-                    String lvlPrefix = lvl100 ? "LVL_100_" : "LVL_1_";
+                    String lvlPrefix = lvl200 ? "LVL_200_" : (lvl100 ? "LVL_100_" : "LVL_1_");
                     price = getRawPrice(lvlPrefix + rarity + "_" + petName);
                     if (price > 0) return price;
                     
-                    String odId = "PET-" + petName + "-" + rarity + (lvl100 ? "-100" : "");
+                    String odId = "PET-" + petName + "-" + rarity + (lvl200 ? "-200" : (lvl100 ? "-100" : ""));
                     price = getRawPrice(odId);
                     if (price > 0) return price;
                 }

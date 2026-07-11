@@ -335,12 +335,36 @@ public class SkyblockItemManager {
                     });
                 }
 
-                // Build usages
-                for (SkyblockItemInfo info : tempMap.values()) {
+                // Build usages and inject mob drops
+                for (SkyblockItemInfo info : new ArrayList<>(tempMap.values())) {
                     if (info.recipes != null) {
                         Set<String> inputs = new HashSet<>();
                         for (JsonElement rel : info.recipes) {
                             JsonObject r = rel.getAsJsonObject();
+                            
+                            if (r.has("type") && "drops".equals(r.get("type").getAsString()) && r.has("drops") && r.get("drops").isJsonArray()) {
+                                for (JsonElement dropEl : r.getAsJsonArray("drops")) {
+                                    JsonObject dropObj = dropEl.getAsJsonObject();
+                                    if (dropObj.has("id")) {
+                                        String dropId = dropObj.get("id").getAsString().split(":")[0];
+                                        SkyblockItemInfo target = tempMap.get(dropId);
+                                        if (target != null) {
+                                            JsonObject mobDrop = new JsonObject();
+                                            mobDrop.addProperty("type", "mob_drop");
+                                            mobDrop.addProperty("mob_id", info.id);
+                                            mobDrop.addProperty("mob_name", info.name);
+                                            mobDrop.add("all_drops", r.getAsJsonArray("drops"));
+                                            
+                                            if (target.recipes == null) {
+                                                target = new SkyblockItemInfo(target.id, target.name, target.material, target.tier, target.skinValue, target.skinSignature, target.color, target.itemModel, target.lore, new JsonArray(), target.vanilla);
+                                                tempMap.put(target.id, target);
+                                            }
+                                            target.recipes.add(mobDrop);
+                                        }
+                                    }
+                                }
+                            }
+
                             for (String key : new String[]{"A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"}) {
                                 if (r.has(key)) {
                                     String val = r.get(key).getAsString();
@@ -494,6 +518,13 @@ public class SkyblockItemManager {
 
         if (info != null && color != -1) {
             stack.set(DataComponents.DYED_COLOR, new net.minecraft.world.item.component.DyedItemColor(color));
+        }
+        
+        if (skinValue != null && !skinValue.isEmpty()) {
+            net.minecraft.world.item.component.ResolvableProfile rp = createProfile(skinValue, null);
+            if (rp != null) {
+                stack.set(DataComponents.PROFILE, rp);
+            }
         }
 
         if (info != null && info.lore != null && !info.lore.isEmpty()) {

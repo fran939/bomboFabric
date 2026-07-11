@@ -155,6 +155,11 @@ public class BomboConfig {
         if (instance.particleHighlights == null) {
             instance.particleHighlights = new HashMap<>();
         }
+        if (instance.wardrobeKeys != null) {
+            while (instance.wardrobeKeys.size() < 12) {
+                instance.wardrobeKeys.add("");
+            }
+        }
     }
 
     public static void save() {
@@ -197,6 +202,8 @@ public class BomboConfig {
         public boolean leftClickEtherwarp = false;
         public int signCalcX = -1;
         public int signCalcY = -1;
+        public int storageGuiCols = 9;
+        public int storageGuiRows = 5;
         public boolean autoExperiments = false;
         public int experimentClickDelay = 200;
         public int experimentClickType = 1; // 0=Left, 1=Middle, 2=Shift
@@ -217,6 +224,7 @@ public class BomboConfig {
         public String prevPageKey = "";
         public String goBackKey = "";
         public String smartGoBackKey = "";
+        public String textureToggleKey = "";
         public Map<String, HighlightInfo> highlights = new HashMap<>();
         public boolean highlightsEnabled = false;
         public boolean debugMaster = false;
@@ -293,7 +301,7 @@ public class BomboConfig {
         
         public boolean autoCloseWardrobe = false;
         public boolean disableUnequipWardrobe = false;
-        public List<String> wardrobeKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", ""));
+        public List<String> wardrobeKeys = new ArrayList<>(java.util.Arrays.asList("", "", "", "", "", "", "", "", "", "", "", ""));
         public Map<String, Integer> anvilAutoCombine = new HashMap<>();
         public boolean anvilAutoCombineEnabled = false;
         public int anvilAutoCombineDelay = 200;
@@ -323,6 +331,7 @@ public class BomboConfig {
         public int itemListSearchX = -1;
         public int itemListSearchY = -1;
         public int itemListSearchW = 150;
+        public float itemListSearchScale = 1.0f;
         public CrosshairSettings customCrosshair = new CrosshairSettings();
 
         public boolean trophyHighlight = false;
@@ -446,7 +455,8 @@ public class BomboConfig {
         public String clipboardRunKey = "";
         public List<CustomPartyCommand> customPartyCommands = new ArrayList<>();
         public boolean bypassResourcePack = false;
-        public boolean restoreItemModels = false;
+        public boolean noResourcePack = false;
+        public boolean disableCustomTooltips = false;
         public Map<String, CustomItemOverride> customItemOverrides = new java.util.HashMap<>();
         public boolean customTooltipBg = false;
         public int tooltipBgColor = 0xF0100010;

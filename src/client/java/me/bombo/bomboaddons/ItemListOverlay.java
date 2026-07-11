@@ -609,10 +609,12 @@ private static void filterItems() {
                         String label = isBz ? "§6BZ: " : "§6Lowest BIN: ";
                         String priceText = label + "§e" + me.bombo.bomboaddons.LowestBinManager.formatPrice(price);
                         
-                        if (hoveredId.startsWith("PET-") || hoveredId.contains(";")) {
-                            long lvl100Price = me.bombo.bomboaddons.LowestBinManager.getLowestBin(hoveredId + "-100").getNow(-1L);
-                            if (lvl100Price > 0) {
-                                priceText += " §7(" + me.bombo.bomboaddons.LowestBinManager.formatPrice(lvl100Price) + ")";
+                        boolean isPet = hoveredId.startsWith("PET-") || hoveredId.contains(";");
+                        if (isPet) {
+                            int maxLvl = (hoveredId.contains("GOLDEN_DRAGON") || hoveredId.contains("JADE_DRAGON") || hoveredId.contains("ROSE_DRAGON")) ? 200 : 100;
+                            long lvlMaxPrice = me.bombo.bomboaddons.LowestBinManager.getLowestBin(hoveredId + "-" + maxLvl).getNow(-1L);
+                            if (lvlMaxPrice > 0) {
+                                priceText += " §7(" + me.bombo.bomboaddons.LowestBinManager.formatPrice(lvlMaxPrice) + ")";
                             }
                         }
                         
@@ -643,21 +645,32 @@ private static void filterItems() {
         if (!BomboConfig.get().itemListEnabled) return false;
         if (sidebarW < 120) return false;
         // Don't intercept clicks inside the search box, but check for double click and right click
-        if (searchBox != null && searchBox.isMouseOver(mouseX, mouseY)) {
-            if (button == 1) { // Right click
-                searchBox.setValue("");
-                searchBox.setFocused(false);
-                if (Minecraft.getInstance().screen != null) {
-                    Minecraft.getInstance().screen.setFocused(null);
+        if (searchBox != null) {
+            float scale = BomboConfig.get().itemListSearchScale;
+            double unscaledX = mouseX;
+            double unscaledY = mouseY;
+            if (scale != 1.0f) {
+                int tx = searchBox.getX();
+                int ty = searchBox.getY();
+                unscaledX = tx + (mouseX - tx) / scale;
+                unscaledY = ty + (mouseY - ty) / scale;
+            }
+            if (searchBox.isMouseOver(unscaledX, unscaledY)) {
+                if (button == 1) { // Right click
+                    searchBox.setValue("");
+                    searchBox.setFocused(false);
+                    if (Minecraft.getInstance().screen != null) {
+                        Minecraft.getInstance().screen.setFocused(null);
+                    }
+                    return true;
                 }
-                return true;
+                long now = System.currentTimeMillis();
+                if (now - lastSearchBoxClick < 300) {
+                    inventorySearchMode = !inventorySearchMode;
+                }
+                lastSearchBoxClick = now;
+                return false;
             }
-            long now = System.currentTimeMillis();
-            if (now - lastSearchBoxClick < 300) {
-                inventorySearchMode = !inventorySearchMode;
-            }
-            lastSearchBoxClick = now;
-            return false;
         }
 
         if (isHiddenState) return false;

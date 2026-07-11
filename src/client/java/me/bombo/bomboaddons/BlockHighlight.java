@@ -109,7 +109,10 @@ public class BlockHighlight {
 
     public static void render(LevelRenderContext context) {
         BomboConfig.Settings s = BomboConfig.get();
-        if (!s.blockHighlightsEnabled || highlightedBlocks.isEmpty()) {
+        if (!s.blockHighlightsEnabled && targetChestPos == null) {
+            return;
+        }
+        if (highlightedBlocks.isEmpty() && targetChestPos == null) {
             return;
         }
 
@@ -161,7 +164,35 @@ public class BlockHighlight {
                 BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, 2.0f);
             });
         }
+
+        if (targetChestPos != null) {
+            double x = targetChestPos.getX() - camPos.x;
+            double y = targetChestPos.getY() - camPos.y;
+            double z = targetChestPos.getZ() - camPos.z;
+            double dist = Math.sqrt(x * x + y * y + z * z);
+            if (dist <= 256.0) {
+                double scale = 1.0;
+                if (dist > 0.2) {
+                    scale = 0.2 / dist;
+                }
+                AABB box = new AABB(
+                        x * scale, y * scale, z * scale,
+                        (x + 1.0) * scale, (y + 1.0) * scale, (z + 1.0) * scale
+                );
+                collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                    BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, 0.0f, 1.0f, 0.0f, 0.85f, 2.0f);
+                });
+                
+                String text = "Target Chest §7(" + (int)dist + "m)";
+                BomboRenderUtils.drawText(poseStack, collector, text, (float)(x + 0.5), (float)(y + 1.5), (float)(z + 0.5), 0x00FF00, 0.03f, true, true);
+            }
+        } else {
+            targetChestPos = null;
+        }
     }
+
+    public static net.minecraft.core.BlockPos targetChestPos = null;
+    public static long targetChestTime = 0;
 
     private static int getMinBuildHeightReflect(net.minecraft.client.multiplayer.ClientLevel level) {
         try {

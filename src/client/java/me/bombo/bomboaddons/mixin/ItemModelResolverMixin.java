@@ -1,74 +1,63 @@
 package me.bombo.bomboaddons.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.authlib.GameProfile;
 import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.features.TextureToggleManager;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.ItemOwner;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.ResolvableProfile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ItemModelResolver.class)
 public class ItemModelResolverMixin {
 
-    @Redirect(
+    @WrapOperation(
         method = {"appendItemLayers", "shouldPlaySwapAnimation", "swapAnimationScale"},
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/item/ItemStack;get(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;"
         )
     )
-    private Object onGetItemModel(ItemStack stack, net.minecraft.core.component.DataComponentType<?> type) {
-        if (BomboConfig.get().restoreItemModels && type == DataComponents.ITEM_MODEL) {
-            String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
-            me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
-            if (id != null && !id.isEmpty()) {
-                customOverride = BomboConfig.get().customItemOverrides.get(id);
-            } else {
-                boolean originalRestore = BomboConfig.get().restoreItemModels;
-                BomboConfig.get().restoreItemModels = false;
-                Item orig = stack.getItem();
-                BomboConfig.get().restoreItemModels = originalRestore;
-                
-                if (orig != null) {
-                    String vanillaId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(orig).toString();
-                    customOverride = BomboConfig.get().customItemOverrides.get(vanillaId);
-                }
-            }
+    private Object onGetItemModel(ItemStack stack, DataComponentType<?> type, Operation<Object> original) {
+        Object origValue = original.call(stack, type);
 
-            if (customOverride != null && customOverride.material != null && !customOverride.material.isEmpty()) {
-                String mapped = me.bombo.bomboaddons.LF.guessItem(customOverride.material);
-                if (mapped == null) {
-                    mapped = "minecraft:" + customOverride.material.toLowerCase();
-                }
-                if (BomboConfig.get().debugMode) {
-                    System.out.println("[BomboDebug] ItemModelResolver: Overriding ITEM_MODEL to: " + mapped + " for " + stack.getHoverName().getString());
-                }
-                return Identifier.parse(mapped);
-            }
-
-            if (id != null && !id.isEmpty()) {
-                me.bombo.bomboaddons.SkyblockItemManager.SkyblockItemInfo info = me.bombo.bomboaddons.SkyblockItemManager.getInfo(id);
-                if (info != null) {
-                    String overrideModel = info.itemModel;
-                    if (overrideModel == null || overrideModel.isEmpty()) {
-                        overrideModel = info.material;
-                    }
-                    if (overrideModel != null && !overrideModel.isEmpty()) {
-                        String mapped = me.bombo.bomboaddons.LF.guessItem(overrideModel);
-                        if (mapped == null) {
-                            mapped = "minecraft:" + overrideModel.toLowerCase();
-                        }
-                        if (BomboConfig.get().debugMode) {
-                            System.out.println("[BomboDebug] ItemModelResolver: Overriding ITEM_MODEL to: " + mapped + " for " + stack.getHoverName().getString());
-                        }
-                        return Identifier.parse(mapped);
-                    }
-                }
+        if (BomboConfig.get().noResourcePack && origValue instanceof Identifier) {
+            Identifier modelId = (Identifier) origValue;
+            Identifier newModelId = TextureToggleManager.INSTANCE.fromModelId(stack, modelId);
+            if (newModelId != null && !newModelId.equals(modelId)) {
+                return newModelId;
             }
         }
-        return stack.get(type);
+
+        return origValue;
+    }
+
+    @WrapOperation(method = "appendItemLayers", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/item/ItemModel;update(Lnet/minecraft/client/renderer/item/ItemStackRenderState;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/client/renderer/item/ItemModelResolver;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/world/entity/ItemOwner;I)V"))
+    private void bomboaddons$onAppendLayer(ItemModel instance, ItemStackRenderState itemStackRenderState, ItemStack itemStack, ItemModelResolver itemModelResolver, ItemDisplayContext itemDisplayContext, ClientLevel clientLevel, ItemOwner itemOwner, int i, Operation<Void> original) {
+        if (!BomboConfig.get().noResourcePack) {
+            original.call(instance, itemStackRenderState, itemStack, itemModelResolver, itemDisplayContext, clientLevel, itemOwner, i);
+            return;
+        }
+
+        GameProfile gameProfile = TextureToggleManager.INSTANCE.gameProfile(itemStack);
+        if (gameProfile == null) {
+            original.call(instance, itemStackRenderState, itemStack, itemModelResolver, itemDisplayContext, clientLevel, itemOwner, i);
+            return;
+        }
+
+        ItemStack stack = itemStack.copy();
+        stack.set(DataComponents.PROFILE, ResolvableProfile.createResolved(gameProfile));
+        original.call(instance, itemStackRenderState, stack, itemModelResolver, itemDisplayContext, clientLevel, itemOwner, i);
     }
 }

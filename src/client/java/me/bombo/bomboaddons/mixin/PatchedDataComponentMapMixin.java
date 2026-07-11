@@ -30,26 +30,5 @@ public class PatchedDataComponentMapMixin {
             }
         }
 
-        if (!BomboConfig.get().restoreItemModels) return;
-
-        if (type == DataComponents.CUSTOM_MODEL_DATA) {
-            DataComponentMap map = (DataComponentMap) this;
-            String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(map);
-            if (id != null && !id.isEmpty()) {
-                boolean isOverridden = false;
-                if (BomboConfig.get().customItemOverrides.containsKey(id)) {
-                    isOverridden = true;
-                }
-                if (!isOverridden) {
-                    me.bombo.bomboaddons.SkyblockItemManager.SkyblockItemInfo info = me.bombo.bomboaddons.SkyblockItemManager.getInfo(id);
-                    if (info != null) {
-                        isOverridden = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItem(info.material) != null;
-                    }
-                }
-                if (isOverridden) {
-                    cir.setReturnValue(null);
-                }
-            }
-        }
     }
 }

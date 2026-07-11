@@ -15,7 +15,7 @@ public class SlotHighlight {
     );
     private static Set<Integer> targetSlots = new HashSet<>();
     private static Set<String> targetNames = new HashSet<>();
-    private static long highlightStartTime = 0;
+    public static long highlightStartTime = 0;
     private static int currentColor = 0x8000FF00;
     private static final long HIGHLIGHT_DURATION_MS = 10000; // 10 seconds
 

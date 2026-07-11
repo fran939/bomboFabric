@@ -70,6 +70,7 @@ public class BomboConfigGUI extends Screen {
 
     // Transient state for custom tracers
     private static String editingCustomTracer = null;
+    private static String customTracerIdInput = "";
     private static String customTracerColorInput = "GREEN";
     private static String newTracerIdInput = "";
     private static String newTracerNameInput = "";
@@ -361,9 +362,10 @@ public class BomboConfigGUI extends Screen {
                     partyCommandsHeight = ITEM_HEIGHT;
                     y2 = addBoolOption("Party Commands", s.partyCommandsEnabled, v -> s.partyCommandsEnabled = v, col2X,
                             col2W, y2);
-                    y2 = addBoolOption("Nuh uh", s.bypassResourcePack, v -> s.bypassResourcePack = v, col2X, col2W, y2);
-                    y2 = addBoolOption("Restore Item Models", s.restoreItemModels, v -> s.restoreItemModels = v, col2X,
+                    y2 = addBoolOption("Bypass Resource Pack", s.bypassResourcePack, v -> s.bypassResourcePack = v, col2X, col2W, y2);
+                    y2 = addBoolOption("NoResourcePack Feature", s.noResourcePack, v -> s.noResourcePack = v, col2X,
                             col2W, y2);
+                    y2 = addBoolOption("Disable Hypixel Tooltips", s.disableCustomTooltips, v -> s.disableCustomTooltips = v, col2X, col2W, y2);
                     y2 = addBoolOption("Hypixel Shortcut Button", s.hypixelShortcutButton,
                             v -> s.hypixelShortcutButton = v, col2X, col2W, y2);
                     y2 = addBoolOption("Smart Disconnect", s.smartDisconnect, v -> s.smartDisconnect = v, col2X, col2W,
@@ -560,6 +562,7 @@ public class BomboConfigGUI extends Screen {
                             curY);
                     curY = addKeyBindButton("Recipe", s.recipeKey, v -> s.recipeKey = v, "recipe", contentX,
                             contentWidth, curY);
+                    curY = addKeyBindButton("Texture Toggle", s.textureToggleKey, v -> s.textureToggleKey = v, "textureToggle", contentX, contentWidth, curY);
                     curY = addKeyBindButton("Usage", s.usageKey, v -> s.usageKey = v, "usage", contentX, contentWidth,
                             curY);
                     curY = addKeyBindButton("Show Info", s.showItemKey, v -> s.showItemKey = v, "showItem", contentX,
@@ -843,7 +846,7 @@ public class BomboConfigGUI extends Screen {
                     }
                     curY = addBoolOption("Disable Unequip", s.disableUnequipWardrobe, v -> s.disableUnequipWardrobe = v,
                             contentX, contentWidth, curY);
-                    for (int i = 0; i < 9; i++) {
+                    for (int i = 0; i < s.wardrobeKeys.size(); i++) {
                         final int index = i;
                         curY = addKeyBindButton("Slot " + (i + 1), s.wardrobeKeys.get(i),
                                 v -> s.wardrobeKeys.set(index, v), "wardrobe" + i, contentX, contentWidth, curY);
@@ -1992,12 +1995,19 @@ public class BomboConfigGUI extends Screen {
                     curY += 30;
 
                     if (editingCustomTracer != null) {
+                        curY = addTextBox("ID/UUID", customTracerIdInput, v -> customTracerIdInput = v, contentX, contentWidth, curY);
+                        curY += 5;
                         curY = addColorCycleButton("Color", customTracerColorInput, v -> customTracerColorInput = v, contentX, contentWidth, curY);
 
                         int finalCurY = curY;
-                        addRenderableWidget(Button.builder(Component.literal("§e✔ Save Color"), btn -> {
+                        addRenderableWidget(Button.builder(Component.literal("§e✔ Save Tracer"), btn -> {
                             if (s.customTracers.containsKey(editingCustomTracer)) {
-                                s.customTracers.get(editingCustomTracer).color = customTracerColorInput;
+                                BomboConfig.Settings.CustomTracerInfo info = s.customTracers.get(editingCustomTracer);
+                                info.color = customTracerColorInput;
+                                if (!editingCustomTracer.equals(customTracerIdInput)) {
+                                    s.customTracers.remove(editingCustomTracer);
+                                    s.customTracers.put(customTracerIdInput, info);
+                                }
                                 BomboConfig.save();
                             }
                             editingCustomTracer = null;
@@ -2022,6 +2032,7 @@ public class BomboConfigGUI extends Screen {
                         if (itemY > listStartY + 15 && itemY < height - 20) {
                             addRenderableWidget(Button.builder(Component.literal("§eEDIT"), btn -> {
                                 editingCustomTracer = tid;
+                                customTracerIdInput = tid;
                                 customTracerColorInput = s.customTracers.get(tid).color;
                                 init();
                             }).bounds(contentX + 180, itemY + 5, 40, 18).build());
@@ -2370,7 +2381,9 @@ public class BomboConfigGUI extends Screen {
                     y2 += ITEM_HEIGHT;
                     g.text(font, "§7Bypass Resource Pack", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
                     y2 += ITEM_HEIGHT;
-                    g.text(font, "§7Restore Item Models", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    g.text(font, "§7NoResourcePack Feature", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Disable Hypixel Tooltips", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
                     y2 += ITEM_HEIGHT;
                     g.text(font, "§7Hypixel Shortcut Button", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
                     y2 += ITEM_HEIGHT;
@@ -3587,6 +3600,7 @@ public class BomboConfigGUI extends Screen {
             case "trade" -> s.tradeKey = keyName;
             case "countItem" -> s.countItemKey = keyName;
             case "recipe" -> s.recipeKey = keyName;
+            case "textureToggle" -> s.textureToggleKey = keyName;
             case "usage" -> s.usageKey = keyName;
             case "showItem" -> s.showItemKey = keyName;
             case "copyNbt" -> s.copyNbtKey = keyName;

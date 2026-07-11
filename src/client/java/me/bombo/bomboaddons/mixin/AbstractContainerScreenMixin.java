@@ -134,6 +134,9 @@ public abstract class AbstractContainerScreenMixin extends net.minecraft.client.
         // Only highlight slots targeted during search navigation (temporary session results)
         if (SlotHighlight.isTargetSlot(slot.index)) {
             color = SlotHighlight.getCurrentColor();
+        } else if (slot.hasItem()) {
+            int nameColor = SlotHighlight.getHighlightColor(slot.getItem().getHoverName().getString());
+            if (nameColor != 0) color = nameColor;
         } 
 
         if (color != 0) {
@@ -175,7 +178,16 @@ public abstract class AbstractContainerScreenMixin extends net.minecraft.client.
     private void onMouseClicked(MouseButtonEvent event, boolean handled,
             CallbackInfoReturnable<Boolean> cir) {
         if (me.bombo.bomboaddons.ItemListOverlay.searchBox != null) {
-            if (event.button() == 0 && me.bombo.bomboaddons.ItemListOverlay.searchBox.isMouseOver(event.x(), event.y())) {
+            float scale = me.bombo.bomboaddons.BomboConfig.get().itemListSearchScale;
+            double unscaledX = event.x();
+            double unscaledY = event.y();
+            if (scale != 1.0f) {
+                int tx = me.bombo.bomboaddons.ItemListOverlay.searchBox.getX();
+                int ty = me.bombo.bomboaddons.ItemListOverlay.searchBox.getY();
+                unscaledX = tx + (event.x() - tx) / scale;
+                unscaledY = ty + (event.y() - ty) / scale;
+            }
+            if (event.button() == 0 && me.bombo.bomboaddons.ItemListOverlay.searchBox.isMouseOver(unscaledX, unscaledY)) {
                 me.bombo.bomboaddons.ItemListOverlay.searchBox.setFocused(true);
                 ((AbstractContainerScreen<?>)(Object)this).setFocused(me.bombo.bomboaddons.ItemListOverlay.searchBox);
             } else if (event.button() == 0 && me.bombo.bomboaddons.ItemListOverlay.searchBox.isFocused()) {
@@ -256,7 +268,9 @@ public abstract class AbstractContainerScreenMixin extends net.minecraft.client.
 
     @Inject(method = "onClose", at = @At("HEAD"))
     private void onGuiClose(CallbackInfo ci) {
-        SlotHighlight.clearTargetSlot();
+        if (System.currentTimeMillis() - me.bombo.bomboaddons.SlotHighlight.highlightStartTime > 500) {
+            SlotHighlight.clearTargetSlot();
+        }
     }
 
     @Inject(method = "extractRenderState", at = @At("TAIL"))

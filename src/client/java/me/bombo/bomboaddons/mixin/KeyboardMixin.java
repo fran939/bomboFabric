@@ -62,7 +62,12 @@ public abstract class KeyboardMixin {
             if (targetCode != -1 && key == targetCode) {
                String clip = mc.keyboardHandler.getClipboard();
                if (clip != null && !clip.trim().isEmpty()) {
-                  me.bombo.bomboaddons.BomboaddonsClient.executeTracked(clip.trim());
+                  String trimmed = clip.trim();
+                  if (trimmed.length() > 256) {
+                     me.bombo.bomboaddons.Bomboaddons.sendMessage("§c[Bombo] Clipboard text is too long to send! (" + trimmed.length() + " > 256)");
+                  } else {
+                     me.bombo.bomboaddons.BomboaddonsClient.executeTracked(trimmed);
+                  }
                }
                ci.cancel();
                return;

@@ -11,27 +11,39 @@ import net.minecraft.world.item.Item.TooltipContext;
 import java.util.List;
 
 public class WardrobeHelper {
-    private static int pendingSlotToClick = -1;
+    private static int pendingArmorNumber = -1;
 
     public static void equip(int armorNumber) {
         if (armorNumber < 1) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        int page = (armorNumber - 1) / 9 + 1;
-        int relativeSlot = (armorNumber - 1) % 9;
-        pendingSlotToClick = 36 + relativeSlot;
+        pendingArmorNumber = armorNumber;
 
+        int page = (armorNumber - 1) / 9 + 1;
         mc.player.connection.sendCommand("wd " + page);
     }
 
     public static void onGuiOpen(AbstractContainerScreen<?> screen) {
-        if (pendingSlotToClick == -1) return;
+        if (pendingArmorNumber == -1) return;
         String title = screen.getTitle().getString().toLowerCase();
-        if (title.contains("wardrobe")) {
+        if (title.contains("wardrobe") || title.contains("armor sets") || title.contains("equipment sets") || title.contains("loadouts")) {
             Minecraft mc = Minecraft.getInstance();
-            int slotToClick = pendingSlotToClick;
-            pendingSlotToClick = -1; // Reset immediately to prevent infinite click loop
+            int armorNumber = pendingArmorNumber;
+            pendingArmorNumber = -1; // Reset immediately to prevent infinite click loop
+            
+            int slotToClick = -1;
+            if (title.contains("loadouts")) {
+                int relativeSlot = (armorNumber - 1) % 12; // Loadouts has 12 per page
+                int row = relativeSlot / 3;
+                int col = relativeSlot % 3;
+                slotToClick = 14 + (row * 9) + col;
+            } else {
+                int relativeSlot = (armorNumber - 1) % 9; // Normal has 9 per page
+                slotToClick = 36 + relativeSlot;
+            }
+            
+            final int finalSlotToClick = slotToClick;
 
             new Thread(() -> {
                 try {
@@ -39,8 +51,8 @@ public class WardrobeHelper {
                     for (int i = 0; i < 20; i++) {
                         Thread.sleep(50L);
                         boolean success = mc.submit(() -> {
-                            if (mc.screen == screen && slotToClick < screen.getMenu().slots.size()) {
-                                Slot slot = screen.getMenu().slots.get(slotToClick);
+                            if (mc.screen == screen && finalSlotToClick < screen.getMenu().slots.size()) {
+                                Slot slot = screen.getMenu().slots.get(finalSlotToClick);
                                 ItemStack stack = slot.getItem();
                                 if (!stack.isEmpty()) {
                                     boolean isEquipped = false;

@@ -226,10 +226,66 @@ public class LF {
             sendMessage("&eSearch Results for '&f" + lowerQuery + "&e' in &b" + username
                     + (ctx.coopMode ? " (Coop)" : "") + "&e:");
             searchJsonRecursive(searchTarget, pathPrefix, lowerQuery, searchLore, matchCount, ctx, false, false, MAX_RESULTS, false);
+            
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null && removeColors(mc.player.getName().getString()).equalsIgnoreCase(username)) {
+                searchStorageTracker(lowerQuery, searchLore, matchCount);
+            }
+
             if (matchCount.get() == 0)
                 sendMessage("&cCould find 0 results for '&f" + lowerQuery + "&c'.");
         } catch (Exception e) {
             sendMessage("&cError parsing data: " + e.getMessage());
+        }
+    }
+
+    private static void searchStorageTracker(String query, boolean searchLore, AtomicInteger matchCount) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        net.minecraft.core.RegistryAccess registryAccess = mc.level.registryAccess();
+        RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registryAccess);
+        
+        for (Map.Entry<String, Map<Integer, String>> containerEntry : me.bombo.bomboaddons.features.StorageTracker.storageData.entrySet()) {
+            String containerName = containerEntry.getKey();
+            for (Map.Entry<Integer, String> slotEntry : containerEntry.getValue().entrySet()) {
+                if (matchCount.get() >= MAX_RESULTS) return;
+                
+                String nbtStr = slotEntry.getValue();
+                if (nbtStr == null || nbtStr.isEmpty()) continue;
+                
+                try {
+                    CompoundTag tag = net.minecraft.nbt.TagParser.parseCompoundFully(nbtStr);
+                    ItemStack stack = ItemStack.CODEC.parse(ops, tag).result().orElse(ItemStack.EMPTY);
+                    if (stack.isEmpty()) continue;
+                    
+                    String friendlyName = stack.getHoverName().getString();
+                    String cleanName = removeColors(friendlyName).toLowerCase();
+                    
+                    boolean matched = cleanName.contains(query);
+                    if (!matched && searchLore) {
+                        matched = nbtStr.toLowerCase().contains(query);
+                    }
+                    
+                    if (matched) {
+                        int count = stack.getCount();
+                        matchCount.incrementAndGet();
+                        String fullName = "§a" + friendlyName + (count > 1 ? " §7x" + count : "");
+                        
+                        String displayLoc = containerName;
+                        String[] locCmd = me.bombo.bomboaddons.features.StorageTracker.getDisplayLocAndCommand(displayLoc);
+                        displayLoc = locCmd[0];
+                        String cmd = locCmd[1];
+                        
+                        Component msg = Component.literal(fullName + " §8- §e" + displayLoc)
+                            .withStyle(Style.EMPTY
+                                .withHoverEvent(SBECommands.createHoverEvent("§a" + friendlyName + "\n§7Click to highlight in storage!"))
+                                .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/bombo_highlight_slot " + slotEntry.getKey() + (cmd.isEmpty() ? "" : " " + cmd)))
+                            );
+                        
+                        mc.player.sendSystemMessage(msg);
+                    }
+                } catch (Exception e) {}
+            }
         }
     }
 

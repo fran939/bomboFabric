@@ -10,6 +10,15 @@ public class HudMoveScreen extends Screen {
     private int dragOffsetX = 0;
     private int dragOffsetY = 0;
     private boolean isResizingItemList = false;
+    private HudTarget resizingTarget = null;
+    private int resizeCorner = -1; // 0=TL, 1=TR, 2=BL, 3=BR
+    private double resizeStartScale = 1.0;
+    private int resizeStartW = 0;
+    private int resizeStartH = 0;
+    private int resizeStartX = 0;
+    private int resizeStartY = 0;
+    private double resizeStartMouseX = 0;
+    private double resizeStartMouseY = 0;
 
     protected HudMoveScreen() {
         super(Component.literal("Move HUD"));
@@ -27,6 +36,14 @@ public class HudMoveScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, width, height, 0x88000000);
+        
+        // Draw inventory background for reference
+        net.minecraft.resources.Identifier invTex = net.minecraft.resources.Identifier.withDefaultNamespace("textures/gui/container/inventory.png");
+        int invW = 176;
+        int invH = 166;
+        int invX = (width - invW) / 2;
+        int invY = (height - invH) / 2;
+        g.blit(invTex, invX, invY, invX + invW, invY + invH, 0f, 176f/256f, 0f, 166f/256f);
         
         BomboConfig.Settings s = BomboConfig.get();
         
@@ -84,22 +101,65 @@ public class HudMoveScreen extends Screen {
             if (s.itemListSeparateSearch) {
                 int searchX = s.itemListSearchX == -1 ? width / 2 - 75 : s.itemListSearchX;
                 int searchY = s.itemListSearchY == -1 ? height / 2 + 20 : s.itemListSearchY;
-                renderTarget(g, mouseX, mouseY, searchX, searchY, s.itemListSearchW, 16, HudTarget.ITEM_LIST_SEARCH);
-                g.fill(searchX, searchY, searchX + s.itemListSearchW, searchY + 16, 0xAA000000);
-                g.outline(searchX, searchY, searchX + s.itemListSearchW, searchY + 16, 0xFFAAAAAA);
-                g.text(net.minecraft.client.Minecraft.getInstance().font, "Search...", searchX + 4, searchY + 4, 0xFFAAAAAA, false);
+                int searchW = (int)(s.itemListSearchW * s.itemListSearchScale);
+                int searchH = (int)(16 * s.itemListSearchScale);
+                renderTarget(g, mouseX, mouseY, searchX, searchY, searchW, searchH, HudTarget.ITEM_LIST_SEARCH);
+                g.pose().pushMatrix();
+                g.pose().translate((float)searchX, (float)searchY);
+                g.pose().scale(s.itemListSearchScale, s.itemListSearchScale);
+                g.fill(0, 0, s.itemListSearchW, 16, 0xAA000000);
+                g.outline(0, 0, s.itemListSearchW, 16, 0xFFAAAAAA);
+                g.text(net.minecraft.client.Minecraft.getInstance().font, "Search...", 4, 4, 0xFFAAAAAA, false);
+                g.pose().popMatrix();
             }
         }
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (isResizingItemList) {
+        if (resizingTarget != null) {
             BomboConfig.Settings s = BomboConfig.get();
-            int ilX = s.itemListX == -1 ? width - 150 : s.itemListX;
-            int ilY = s.itemListY == -1 ? 20 : s.itemListY;
-            s.itemListW = (int) Math.max(120, event.x() - ilX + 5);
-            s.itemListH = (int) Math.max(100, event.y() - ilY + 42); // Adjust offset so handle stays under mouse
+            double mx = event.x();
+            double my = event.y();
+            
+            double originX = resizeStartX + (resizeCorner == 1 || resizeCorner == 3 ? 0 : resizeStartW);
+            double originY = resizeStartY + (resizeCorner == 2 || resizeCorner == 3 ? 0 : resizeStartH);
+            
+            double oldDist = Math.hypot(resizeStartMouseX - originX, resizeStartMouseY - originY);
+            double newDist = Math.hypot(mx - originX, my - originY);
+            if (oldDist < 1) oldDist = 1;
+            float newScale = (float) (resizeStartScale * (newDist / oldDist));
+            newScale = Math.max(0.2f, Math.min(5.0f, newScale));
+
+            if (resizingTarget == HudTarget.ITEM_LIST) {
+                int dx = (int)(mx - resizeStartMouseX);
+                int dy = (int)(my - resizeStartMouseY);
+                if (resizeCorner == 0) {
+                    s.itemListX = resizeStartX + dx;
+                    s.itemListY = resizeStartY + dy;
+                    s.itemListW = Math.max(120, resizeStartW - dx);
+                    s.itemListH = Math.max(100, resizeStartH - dy);
+                } else if (resizeCorner == 1) {
+                    s.itemListY = resizeStartY + dy;
+                    s.itemListW = Math.max(120, resizeStartW + dx);
+                    s.itemListH = Math.max(100, resizeStartH - dy);
+                } else if (resizeCorner == 2) {
+                    s.itemListX = resizeStartX + dx;
+                    s.itemListW = Math.max(120, resizeStartW - dx);
+                    s.itemListH = Math.max(100, resizeStartH + dy);
+                } else if (resizeCorner == 3) {
+                    s.itemListW = Math.max(120, resizeStartW + dx);
+                    s.itemListH = Math.max(100, resizeStartH + dy);
+                }
+            } else if (resizingTarget == HudTarget.ITEM_LIST_SEARCH) {
+                s.itemListSearchScale = newScale;
+            } else if (resizingTarget == HudTarget.DICE) s.diceHudScale = newScale;
+            else if (resizingTarget == HudTarget.BAKERY) s.feastBakeryHudScale = newScale;
+            else if (resizingTarget == HudTarget.RNG) s.rngProfitHudScale = newScale;
+            else if (resizingTarget == HudTarget.KUUDRA) s.kuudraBlindnessTimerScale = newScale;
+            else if (resizingTarget == HudTarget.PAD_TIMERS) s.padTimersScale = newScale;
+            else if (resizingTarget == HudTarget.TIMERS) s.customTimerHudScale = newScale;
+            
             return true;
         }
         return super.mouseDragged(event, dragX, dragY);
@@ -107,7 +167,7 @@ public class HudMoveScreen extends Screen {
 
     private void renderTarget(GuiGraphicsExtractor g, int mouseX, int mouseY, int x, int y, int w, int h, HudTarget target) {
         BomboConfig.Settings s = BomboConfig.get();
-        boolean hovered = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+        boolean hovered = mouseX >= x - 12 && mouseX <= x + w + 12 && mouseY >= y - 12 && mouseY <= y + h + 12;
 
         if (draggingTarget == target) {
             if (target == HudTarget.DICE) {
@@ -138,8 +198,13 @@ public class HudMoveScreen extends Screen {
         }
 
         g.fill(x - 2, y - 2, x + w, y + h, 0x22FFFFFF);
-        if (hovered || draggingTarget == target) {
+        if (hovered || draggingTarget == target || resizingTarget == target) {
             g.outline(x - 2, y - 2, w + 2, h + 2, 0xFFFFFF00);
+            // 4 Corner Dots
+            g.fill(x - 5, y - 5, x + 3, y + 3, 0xFFFFFFFF); // TL
+            g.fill(x + w - 3, y - 5, x + w + 5, y + 3, 0xFFFFFFFF); // TR
+            g.fill(x - 5, y + h - 3, x + 3, y + h + 5, 0xFFFFFFFF); // BL
+            g.fill(x + w - 3, y + h - 3, x + w + 5, y + h + 5, 0xFFFFFFFF); // BR
         }
     }
 
@@ -156,6 +221,7 @@ public class HudMoveScreen extends Screen {
         // Check RNG
         int rngW = (int)(185 * s.rngProfitHudScale);
         int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
+        if (startCornerResize(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudTarget.RNG, s.rngProfitHudScale)) return true;
         if (checkHit(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH)) {
             startDragging(HudTarget.RNG, (int) mouseX - s.rngProfitHudX, (int) mouseY - s.rngProfitHudY);
             return true;
@@ -163,12 +229,16 @@ public class HudMoveScreen extends Screen {
         // Check Bakery
         int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
         int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
+        if (startCornerResize(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudTarget.BAKERY, s.feastBakeryHudScale)) return true;
         if (checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH)) {
             startDragging(HudTarget.BAKERY, (int) mouseX - s.feastBakeryHudX, (int) mouseY - s.feastBakeryHudY);
             return true;
         }
         // Check Dice
-        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260 * s.diceHudScale), (int)(52 * s.diceHudScale))) {
+        int diceW = (int)(260 * s.diceHudScale);
+        int diceH = (int)(52 * s.diceHudScale);
+        if (startCornerResize(mouseX, mouseY, s.diceHudX, s.diceHudY, diceW, diceH, HudTarget.DICE, s.diceHudScale)) return true;
+        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, diceW, diceH)) {
             if (button == 1 || button == 2) {
                 s.diceDisplayMode = "Current".equalsIgnoreCase(s.diceDisplayMode) ? "Lifetime" : "Current";
                 BomboConfig.save();
@@ -178,18 +248,25 @@ public class HudMoveScreen extends Screen {
             return true;
         }
         // Check Kuudra
-        if (checkHit(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, (int)(80 * s.kuudraBlindnessTimerScale), (int)(12 * s.kuudraBlindnessTimerScale))) {
+        int kuudraW = (int)(80 * s.kuudraBlindnessTimerScale);
+        int kuudraH = (int)(12 * s.kuudraBlindnessTimerScale);
+        if (startCornerResize(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudTarget.KUUDRA, s.kuudraBlindnessTimerScale)) return true;
+        if (checkHit(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH)) {
             startDragging(HudTarget.KUUDRA, (int) mouseX - s.kuudraBlindnessTimerX, (int) mouseY - s.kuudraBlindnessTimerY);
             return true;
         }
         // Check Pad Timers
-        if (checkHit(mouseX, mouseY, s.padTimersX, s.padTimersY, (int)(120 * s.padTimersScale), (int)(12 * s.padTimersScale))) {
+        int padW = (int)(120 * s.padTimersScale);
+        int padH = (int)(12 * s.padTimersScale);
+        if (startCornerResize(mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudTarget.PAD_TIMERS, s.padTimersScale)) return true;
+        if (checkHit(mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH)) {
             startDragging(HudTarget.PAD_TIMERS, (int) mouseX - s.padTimersX, (int) mouseY - s.padTimersY);
             return true;
         }
         // Check Custom Timers
         int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
         int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
+        if (startCornerResize(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH, HudTarget.TIMERS, s.customTimerHudScale)) return true;
         if (checkHit(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH)) {
             startDragging(HudTarget.TIMERS, (int) mouseX - s.customTimerHudX, (int) mouseY - s.customTimerHudY);
             return true;
@@ -199,7 +276,10 @@ public class HudMoveScreen extends Screen {
         if (s.itemListEnabled && s.itemListSeparateSearch) {
             int searchX = s.itemListSearchX == -1 ? width / 2 - 75 : s.itemListSearchX;
             int searchY = s.itemListSearchY == -1 ? height / 2 + 20 : s.itemListSearchY;
-            if (checkHit(mouseX, mouseY, searchX, searchY, s.itemListSearchW, 16)) {
+            int searchW = (int)(s.itemListSearchW * s.itemListSearchScale);
+            int searchH = (int)(16 * s.itemListSearchScale);
+            if (startCornerResize(mouseX, mouseY, searchX, searchY, searchW, searchH, HudTarget.ITEM_LIST_SEARCH, s.itemListSearchScale)) return true;
+            if (checkHit(mouseX, mouseY, searchX, searchY, searchW, searchH)) {
                 startDragging(HudTarget.ITEM_LIST_SEARCH, (int) mouseX - searchX, (int) mouseY - searchY);
                 return true;
             }
@@ -209,15 +289,8 @@ public class HudMoveScreen extends Screen {
         if (s.itemListEnabled && !s.itemListLocked) {
             int ilX = s.itemListX == -1 ? width - 150 : s.itemListX;
             int ilY = s.itemListY == -1 ? 20 : s.itemListY;
-            System.out.println("DEBUG: HudMoveScreen click check! mouse=(" + mouseX + ", " + mouseY + ") ilX=" + ilX + " ilY=" + ilY + " W=" + s.itemListW + " H=" + s.itemListH);
-            if (mouseX >= ilX && mouseX <= ilX + 5 && mouseY >= ilY + s.itemListH - 52 && mouseY <= ilY + s.itemListH - 32) {
-                isResizingItemList = true;
-                dragOffsetX = (int) mouseX;
-                dragOffsetY = (int) mouseY;
-                return true;
-            }
+            if (startCornerResize(mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH, HudTarget.ITEM_LIST, 1.0)) return true;
             if (checkHit(mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH)) {
-                System.out.println("DEBUG: Hit ITEM_LIST! startDragging called!");
                 startDragging(HudTarget.ITEM_LIST, (int) mouseX - ilX, (int) mouseY - ilY);
                 return true;
             }
@@ -274,7 +347,42 @@ public class HudMoveScreen extends Screen {
             BomboConfig.save();
             return true;
         }
+        // item list search width
+        if (s.itemListEnabled && s.itemListSeparateSearch) {
+            int searchX = s.itemListSearchX == -1 ? width / 2 - 75 : s.itemListSearchX;
+            int searchY = s.itemListSearchY == -1 ? height / 2 + 20 : s.itemListSearchY;
+            if (checkHit(mouseX, mouseY, searchX, searchY, s.itemListSearchW, 16)) {
+                s.itemListSearchW = (int) Math.max(30, s.itemListSearchW + vertical * 10);
+                BomboConfig.save();
+                return true;
+            }
+        }
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
+    }
+
+        private int getCornerHit(double mx, double my, int x, int y, int w, int h) {
+        if (mx >= x - 12 && mx <= x + 12 && my >= y - 12 && my <= y + 12) return 0;
+        if (mx >= x + w - 12 && mx <= x + w + 12 && my >= y - 12 && my <= y + 12) return 1;
+        if (mx >= x - 12 && mx <= x + 12 && my >= y + h - 12 && my <= y + h + 12) return 2;
+        if (mx >= x + w - 12 && mx <= x + w + 12 && my >= y + h - 12 && my <= y + h + 12) return 3;
+        return -1;
+    }
+
+    private boolean startCornerResize(double mx, double my, int x, int y, int w, int h, HudTarget target, double scale) {
+        int corner = getCornerHit(mx, my, x, y, w, h);
+        if (corner != -1) {
+            resizingTarget = target;
+            resizeCorner = corner;
+            resizeStartScale = scale;
+            resizeStartW = w;
+            resizeStartH = h;
+            resizeStartX = x;
+            resizeStartY = y;
+            resizeStartMouseX = mx;
+            resizeStartMouseY = my;
+            return true;
+        }
+        return false;
     }
 
     private boolean checkHit(double mx, double my, int x, int y, int w, int h) {
@@ -289,6 +397,11 @@ public class HudMoveScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (resizingTarget != null) {
+            resizingTarget = null;
+            BomboConfig.save();
+            return true;
+        }
         if (isResizingItemList) {
             isResizingItemList = false;
             BomboConfig.save();

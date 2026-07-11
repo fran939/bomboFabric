@@ -37,13 +37,7 @@ public class ItemCustomizeScreen extends Screen {
             this.itemKey = "";
         }
         
-        // Temporarily bypass restoreItemModels and overrides to fetch the original display name
-        boolean originalRestore = BomboConfig.get().restoreItemModels;
-        BomboConfig.get().restoreItemModels = false;
         CustomItemOverride tempOverride = BomboConfig.get().customItemOverrides.get(this.itemKey);
-        if (tempOverride != null) {
-            BomboConfig.get().customItemOverrides.remove(this.itemKey);
-        }
         
         this.originalDisplayName = this.heldStack.isEmpty() ? "None" : this.heldStack.getHoverName().getString();
         
@@ -51,7 +45,7 @@ public class ItemCustomizeScreen extends Screen {
         if (tempOverride != null) {
             BomboConfig.get().customItemOverrides.put(this.itemKey, tempOverride);
         }
-        BomboConfig.get().restoreItemModels = originalRestore;
+
         
         if (tempOverride != null) {
             this.initialMaterial = tempOverride.material != null ? tempOverride.material : "";

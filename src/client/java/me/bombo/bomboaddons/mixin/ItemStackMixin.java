@@ -29,111 +29,6 @@ import java.util.List;
 @Mixin(ItemStack.class)
 public abstract class ItemStackMixin {
 
-    private Item getOriginalItem() {
-        boolean originalRestore = BomboConfig.get().restoreItemModels;
-        BomboConfig.get().restoreItemModels = false;
-        Item originalItem = ((ItemStack) (Object) this).getItem();
-        BomboConfig.get().restoreItemModels = originalRestore;
-        return originalItem;
-    }
-
-    @Inject(method = "getItem", at = @At("HEAD"), cancellable = true)
-    private void onGetItem(CallbackInfoReturnable<Item> cir) {
-        ItemStack stack = (ItemStack) (Object) this;
-        String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
-        if (!BomboConfig.get().restoreItemModels) {
-            if (id == null || id.isEmpty()) return;
-        }
-
-        me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
-        if (id != null && !id.isEmpty()) {
-            customOverride = BomboConfig.get().customItemOverrides.get(id);
-        } else {
-            Item orig = getOriginalItem();
-            if (orig != null) {
-                String vanillaId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(orig).toString();
-                customOverride = BomboConfig.get().customItemOverrides.get(vanillaId);
-            }
-        }
-
-        if (customOverride != null && customOverride.material != null && !customOverride.material.isEmpty()) {
-            Item overrideItem = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItem(customOverride.material);
-            if (overrideItem != null) {
-                cir.setReturnValue(overrideItem);
-                return;
-            }
-        }
-
-        if (id != null && !id.isEmpty()) {
-            me.bombo.bomboaddons.SkyblockItemManager.SkyblockItemInfo info = me.bombo.bomboaddons.SkyblockItemManager.getInfo(id);
-            if (info != null) {
-                Item overrideItem = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItem(info.material);
-                if (overrideItem != null) {
-                    cir.setReturnValue(overrideItem);
-                }
-            }
-        }
-    }
-
-    @Inject(method = "typeHolder", at = @At("HEAD"), cancellable = true)
-    private void onGetTypeHolder(CallbackInfoReturnable<net.minecraft.core.Holder<Item>> cir) {
-        ItemStack stack = (ItemStack) (Object) this;
-        String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
-        if (!BomboConfig.get().restoreItemModels) {
-            if (id == null || id.isEmpty()) return;
-        }
-
-        me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
-        if (id != null && !id.isEmpty()) {
-            customOverride = BomboConfig.get().customItemOverrides.get(id);
-        } else {
-            Item orig = getOriginalItem();
-            if (orig != null) {
-                String vanillaId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(orig).toString();
-                customOverride = BomboConfig.get().customItemOverrides.get(vanillaId);
-            }
-        }
-
-        if (customOverride != null && customOverride.material != null && !customOverride.material.isEmpty()) {
-            net.minecraft.core.Holder<Item> overrideHolder = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItemHolder(customOverride.material);
-            if (overrideHolder != null) {
-                cir.setReturnValue(overrideHolder);
-                return;
-            }
-        }
-
-        if (id != null && !id.isEmpty()) {
-            me.bombo.bomboaddons.SkyblockItemManager.SkyblockItemInfo info = me.bombo.bomboaddons.SkyblockItemManager.getInfo(id);
-            if (info != null) {
-                net.minecraft.core.Holder<Item> overrideHolder = me.bombo.bomboaddons.SkyblockItemManager.getOverrideItemHolder(info.material);
-                if (overrideHolder != null) {
-                    cir.setReturnValue(overrideHolder);
-                }
-            }
-        }
-    }
-
-    @Inject(method = "getHoverName", at = @At("HEAD"), cancellable = true)
-    private void onGetHoverName(CallbackInfoReturnable<Component> cir) {
-        ItemStack stack = (ItemStack) (Object) this;
-        String id = me.bombo.bomboaddons.SkyblockUtils.getInternalIdRaw(stack);
-        me.bombo.bomboaddons.BomboConfig.CustomItemOverride customOverride = null;
-        if (id != null && !id.isEmpty()) {
-            customOverride = BomboConfig.get().customItemOverrides.get(id);
-        } else {
-            Item orig = getOriginalItem();
-            if (orig != null) {
-                String vanillaId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(orig).toString();
-                customOverride = BomboConfig.get().customItemOverrides.get(vanillaId);
-            }
-        }
-
-        if (customOverride != null && customOverride.name != null && !customOverride.name.isEmpty()) {
-            String formatted = customOverride.name.replace('&', '§');
-            cir.setReturnValue(Component.literal(formatted));
-        }
-    }
-
 
     @Inject(method = "getTooltipLines", at = @At("RETURN"))
     private void onGetTooltipLines(Item.TooltipContext context, Player player, TooltipFlag tooltipFlag, CallbackInfoReturnable<List<Component>> cir) {
@@ -254,14 +149,13 @@ public abstract class ItemStackMixin {
                     String priceText = label + "§e" + LowestBinManager.formatPrice(price);
                     
                     if (isPet) {
-                        long lvl100Price = -1;
-                        if (skyblockId.startsWith("PET-")) {
-                            lvl100Price = LowestBinManager.getLowestBin(skyblockId + "-100").getNow(-1L);
-                        } else if (skyblockId.contains(";")) {
-                            lvl100Price = LowestBinManager.getLowestBin(skyblockId + "-100").getNow(-1L);
+                        long lvlMaxPrice = -1;
+                        int maxLvl = (skyblockId.contains("GOLDEN_DRAGON") || skyblockId.contains("JADE_DRAGON") || skyblockId.contains("ROSE_DRAGON")) ? 200 : 100;
+                        if (skyblockId.startsWith("PET-") || skyblockId.contains(";")) {
+                            lvlMaxPrice = LowestBinManager.getLowestBin(skyblockId + "-" + maxLvl).getNow(-1L);
                         }
-                        if (lvl100Price > 0) {
-                            priceText += " §7(" + LowestBinManager.formatPrice(lvl100Price) + ")";
+                        if (lvlMaxPrice > 0) {
+                            priceText += " §7(" + LowestBinManager.formatPrice(lvlMaxPrice) + ")";
                         }
                     } else if (count > 1) {
                         priceText += " §7(" + LowestBinManager.formatPrice(price * count) + ")";

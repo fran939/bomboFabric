@@ -23,29 +23,47 @@ public abstract class DisconnectedScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
+        Button targetBtn = null;
         Button backBtn = null;
+        
         for (Renderable renderable : ((ScreenAccessor) (Object) this).getRenderables()) {
             if (renderable instanceof Button button) {
-                backBtn = button;
-                break;
+                String msg = button.getMessage().getString();
+                if (msg.contains("Report") || msg.contains("Open") || msg.contains("Log")) {
+                    targetBtn = button;
+                } else if (msg.contains("Back") || msg.contains("Menu")) {
+                    backBtn = button;
+                }
             }
         }
 
-        if (backBtn != null) {
-            int originalX = backBtn.getX();
-            int originalY = backBtn.getY();
-            int originalWidth = backBtn.getWidth();
-            int originalHeight = backBtn.getHeight();
+        // Default to backBtn if targetBtn wasn't found
+        Button referenceBtn = targetBtn != null ? targetBtn : backBtn;
+
+        if (referenceBtn != null) {
+            int originalX = referenceBtn.getX();
+            int originalY = referenceBtn.getY();
+            int originalWidth = referenceBtn.getWidth();
+            int originalHeight = referenceBtn.getHeight();
+            
+            // Hide the report button if we are replacing it
+            if (targetBtn != null) {
+                targetBtn.visible = false;
+                targetBtn.active = false;
+            }
 
             boolean auto = me.bombo.bomboaddons.BomboConfig.get().autoReconnect;
             boolean delayed = BomboaddonsClient.tempDisableReconnect;
 
             if (me.bombo.bomboaddons.BomboConfig.get().reconnectButton) {
+                // If we didn't find the target button, we place it above the back button
+                int newY = targetBtn != null ? originalY : originalY - originalHeight - 4;
+                
                 Button reconnectBtn = Button.builder(Component.literal(auto ? (delayed ? "Reconnect (300s)" : "Reconnect (5s)") : "Reconnect"), btn -> {
                     BomboaddonsClient.autoReconnectTicks = -1;
                     BomboaddonsClient.reconnect(this.parent, this.minecraft);
                 })
-                .bounds(originalX, originalY + originalHeight + 4, originalWidth, originalHeight)
+                .bounds(originalX, newY, originalWidth, originalHeight)
                 .build();
 
                 addRenderableWidget(reconnectBtn);

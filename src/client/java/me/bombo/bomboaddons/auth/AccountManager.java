@@ -215,10 +215,11 @@ public class AccountManager {
             try {
                 System.out.println("[BOMBO-AUTH] Attempting to refresh token for " + acc.username);
                 // Refresh Microsoft Token
-                String reqBody = "client_id=" + (acc.clientId != null && !acc.clientId.isEmpty() ? acc.clientId : CLIENT_ID) + "&refresh_token=" + acc.refreshToken + "&grant_type=refresh_token";
+                String reqBody = "client_id=" + (acc.clientId != null && !acc.clientId.isEmpty() ? acc.clientId : CLIENT_ID) + "&refresh_token=" + java.net.URLEncoder.encode(acc.refreshToken, "UTF-8") + "&grant_type=refresh_token";
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create("https://login.live.com/oauth20_token.srf"))
+                        .uri(URI.create("https://login.microsoftonline.com/consumers/oauth2/v2.0/token"))
                         .header("Content-Type", "application/x-www-form-urlencoded")
+                        .header("User-Agent", "Mozilla/5.0")
                         .POST(HttpRequest.BodyPublishers.ofString(reqBody)).build();
                 HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
                 System.out.println("[BOMBO-AUTH] MS Refresh response code: " + res.statusCode());
