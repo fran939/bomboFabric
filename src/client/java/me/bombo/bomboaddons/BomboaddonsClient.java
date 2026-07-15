@@ -54,6 +54,8 @@ public class BomboaddonsClient implements ClientModInitializer {
     }
 
     public static final java.util.List<PendingCommand> pendingCommands = new java.util.concurrent.CopyOnWriteArrayList<>();
+    public static final java.util.Set<String> clickedNpcOptions = new java.util.HashSet<>();
+    public static final java.util.Set<String> clickedNpcTextOptions = new java.util.HashSet<>();
 
     private static final String PREFIX = "§8[§3Bombo§8]§r ";
     private static boolean openGuiNextTick = false;
@@ -78,11 +80,37 @@ public class BomboaddonsClient implements ClientModInitializer {
     public static int locrawDelayTicks = -1;
     public static int expectingLocrawCount = 0;
 
+    private static void openProfileViewer(String username) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§eFetching profile for §b" + username + "§e..."));
+        }
+        me.bombo.bomboaddons.features.profile.ProfileFetcher.fetchProfile(username).thenAcceptAsync(data -> {
+            if (data == null) {
+                if (mc.player != null) {
+                    mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cFailed to fetch profile for " + username + "!"));
+                }
+            } else {
+                mc.setScreen(new me.bombo.bomboaddons.gui.ProfileViewerScreen(data));
+            }
+        }, mc::execute);
+    }
+
     public void onInitializeClient() {
         net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             net.minecraft.core.BlockPos pos = hitResult.getBlockPos();
-            if (me.bombo.bomboaddons.BlockHighlight.targetChestPos != null && pos.equals(me.bombo.bomboaddons.BlockHighlight.targetChestPos)) {
-                me.bombo.bomboaddons.BlockHighlight.targetChestPos = null;
+            if (!me.bombo.bomboaddons.BlockHighlight.targetChestPosList.isEmpty() && me.bombo.bomboaddons.BlockHighlight.targetChestPosList.contains(pos)) {
+                me.bombo.bomboaddons.BlockHighlight.targetChestPosList.remove(pos);
+                try {
+                    net.minecraft.world.level.block.state.BlockState state = world.getBlockState(pos);
+                    if (state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
+                        net.minecraft.world.level.block.state.properties.ChestType type = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE);
+                        if (type != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
+                            net.minecraft.core.Direction connectedDir = net.minecraft.world.level.block.ChestBlock.getConnectedDirection(state);
+                            me.bombo.bomboaddons.BlockHighlight.targetChestPosList.remove(pos.relative(connectedDir));
+                        }
+                    }
+                } catch (Exception e) {}
             }
             
             // Normalize double chest coordinates so both halves save to the same data
@@ -136,6 +164,14 @@ public class BomboaddonsClient implements ClientModInitializer {
             });
         });
         me.bombo.bomboaddons.auth.AccountManager.init();
+        if (me.bombo.bomboaddons.auth.AccountManager.currentAccount != null) {
+            me.bombo.bomboaddons.auth.AccountManager.refreshAccount(me.bombo.bomboaddons.auth.AccountManager.currentAccount)
+                .thenAccept(refreshed -> {
+                    if (refreshed != null) {
+                        me.bombo.bomboaddons.auth.AccountManager.setSession(refreshed);
+                    }
+                });
+        }
         me.bombo.bomboaddons.features.StorageTracker.init();
         me.bombo.bomboaddons.features.TextureToggleManager.INSTANCE.init();
         Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -924,6 +960,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     createHelpLine("/b custom", "/b custom",
                                             "Customizes the material and name of the held item.")
                                             .append(Component.literal(" §7- Customizes the held item")));
+                            context.getSource().sendFeedback(
+                                    createHelpLine("/b import", "/b import",
+                                            "Imports waypoints from your clipboard.")
+                                            .append(Component.literal(" §7- Imports waypoints")));
 
                             context.getSource().sendFeedback(
                                     Component.literal("§8---------------------------------------------------------"));
@@ -953,11 +993,87 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             return 1;
                                         })));
 
-                        builder.then(ClientCommands.literal("prof").executes(context -> {
-                            BomboConfigGUI.selectedCategory = 5;
-                            openGuiNextTick = true;
+                        builder.then(ClientCommands.literal("prof")
+                                .executes(context -> {
+                                    BomboConfigGUI.selectedCategory = 5;
+                                    openGuiNextTick = true;
+                                    return 1;
+                                })
+                                .then(ClientCommands.literal("list")
+                                        .executes(context -> {
+                                            me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
+                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §aYour Config Profiles:"));
+                                            List<String> profiles = new java.util.ArrayList<>(s.profileBinds.keySet());
+                                            if (!profiles.contains("default")) profiles.add(0, "default");
+                                            for (String p : profiles) {
+                                                if (p.equals(s.activeProfile)) {
+                                                    context.getSource().sendFeedback(Component.literal("§a▶ §e" + p + " §7(Active)"));
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal("§7- §e" + p));
+                                                }
+                                            }
+                                            return 1;
+                                        }))
+                                .then(ClientCommands.argument("name", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String name = StringArgumentType.getString(context, "name");
+                                            me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
+                                            
+                                            if (!s.profileBinds.containsKey(name) && !name.equals("default")) {
+                                                s.profileBinds.put(name, new java.util.ArrayList<>());
+                                                context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §aCreated new config profile: §e" + name));
+                                            }
+                                            
+                                            s.activeProfile = name;
+                                            me.bombo.bomboaddons.BomboConfig.save();
+                                            context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §aSwitched to config profile: §e" + name));
+                                            return 1;
+                                        })));
+
+                        builder.then(ClientCommands.literal("sounds").executes(context -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            mc.execute(() -> mc.setScreen(new me.bombo.bomboaddons.gui.CustomSoundsScreen(null)));
                             return 1;
                         }));
+
+                        builder.then(ClientCommands.literal("import").executes(context -> {
+                            try {
+                                String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
+                                if (clipboard != null && !clipboard.isEmpty()) {
+                                    int imported = GardenWaypoints.importWaypointsFromClipboard(clipboard);
+                                    if (imported > 0) {
+                                        context.getSource().sendFeedback(Component.literal("§aSuccessfully imported " + imported + " waypoints from clipboard."));
+                                    } else {
+                                        context.getSource().sendFeedback(Component.literal("§cNo valid waypoints found in clipboard."));
+                                    }
+                                } else {
+                                    context.getSource().sendFeedback(Component.literal("§cClipboard is empty."));
+                                }
+                            } catch (Exception e) {
+                                context.getSource().sendFeedback(Component.literal("§cFailed to import waypoints: " + e.getMessage()));
+                            }
+                            return 1;
+                        }));
+
+                        builder.then(ClientCommands.literal("wpo")
+                                .then(ClientCommands.literal("import").executes(context -> {
+                                    try {
+                                        String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
+                                        if (clipboard != null && !clipboard.isEmpty()) {
+                                            int imported = OrderedWaypoints.importWaypointsFromClipboard(clipboard);
+                                            if (imported > 0) {
+                                                context.getSource().sendFeedback(Component.literal("§aSuccessfully imported " + imported + " ordered waypoints from clipboard."));
+                                            } else {
+                                                context.getSource().sendFeedback(Component.literal("§cNo valid waypoints found in clipboard."));
+                                            }
+                                        } else {
+                                            context.getSource().sendFeedback(Component.literal("§cClipboard is empty."));
+                                        }
+                                    } catch (Exception e) {
+                                        context.getSource().sendFeedback(Component.literal("§cFailed to import ordered waypoints: " + e.getMessage()));
+                                    }
+                                    return 1;
+                                })));
 
                         builder.then(ClientCommands.literal("bw").executes(context -> {
                             BomboConfigGUI.selectedCategory = 23;
@@ -1164,6 +1280,22 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             }
                                             return 1;
                                         })));
+                        
+                        builder.then(ClientCommands.literal("import")
+                                .executes(context -> {
+                                    String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
+                                    if (clipboard == null || clipboard.trim().isEmpty()) {
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "\u00a7cClipboard is empty!"));
+                                        return 1;
+                                    }
+                                    int imported = GardenWaypoints.importWaypointsFromClipboard(clipboard);
+                                    if (imported > 0) {
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "\u00a7aSuccessfully imported " + imported + " waypoints!"));
+                                    } else {
+                                        context.getSource().sendFeedback(Component.literal(PREFIX + "\u00a7cFailed to parse any waypoints from clipboard. Make sure it's a valid Skyblocker or SkyHanni export."));
+                                    }
+                                    return 1;
+                                }));
 
                         // --- Utilities ---
                         builder.then(ClientCommands.literal("ec")
@@ -1266,6 +1398,25 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             GardenWaypoints.clear();
                                             context.getSource().sendFeedback(
                                                     Component.literal(PREFIX + "§aAll waypoints cleared!"));
+                                            return 1;
+                                        }))
+                                .then(ClientCommands.literal("import")
+                                        .executes(context -> {
+                                            try {
+                                                String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
+                                                if (clipboard != null && !clipboard.isEmpty()) {
+                                                    int imported = GardenWaypoints.importWaypointsFromClipboard(clipboard);
+                                                    if (imported > 0) {
+                                                        context.getSource().sendFeedback(Component.literal("§aSuccessfully imported " + imported + " waypoints from clipboard."));
+                                                    } else {
+                                                        context.getSource().sendFeedback(Component.literal("§cNo valid waypoints found in clipboard."));
+                                                    }
+                                                } else {
+                                                    context.getSource().sendFeedback(Component.literal("§cClipboard is empty."));
+                                                }
+                                            } catch (Exception e) {
+                                                context.getSource().sendFeedback(Component.literal("§cFailed to import waypoints: " + e.getMessage()));
+                                            }
                                             return 1;
                                         }))
                                 .then(ClientCommands.argument("x", StringArgumentType.word())
@@ -2856,6 +3007,41 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         return 1;
                                     })));
 
+                    dispatcher.register(ClientCommands.literal("pv")
+                            .executes(context -> {
+                                Minecraft mc = Minecraft.getInstance();
+                                if (mc.player != null) {
+                                    String username = mc.player.getGameProfile().name();
+                                    openProfileViewer(username);
+                                }
+                                return 1;
+                            }));
+
+                    dispatcher.register(ClientCommands.literal("bpv")
+                            .then(ClientCommands.argument("username", StringArgumentType.word())
+                                    .suggests((context, builder) -> {
+                                        Minecraft mc = Minecraft.getInstance();
+                                        if (mc.getConnection() != null) {
+                                            for (net.minecraft.client.multiplayer.PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
+                                                builder.suggest(playerInfo.getProfile().name());
+                                            }
+                                        }
+                                        return builder.buildFuture();
+                                    })
+                                    .executes(context -> {
+                                        String username = StringArgumentType.getString(context, "username");
+                                        openProfileViewer(username);
+                                        return 1;
+                                    }))
+                            .executes(context -> {
+                                Minecraft mc = Minecraft.getInstance();
+                                if (mc.player != null) {
+                                    String username = mc.player.getGameProfile().name();
+                                    openProfileViewer(username);
+                                }
+                                return 1;
+                            }));
+
                     dispatcher.register(ClientCommands.literal("mod")
                             .executes(context -> {
                                 Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
@@ -2946,6 +3132,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                 }
                 try {
                     GardenWaypoints.render(context);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+                try {
+                    OrderedWaypoints.render(context);
                 } catch (Throwable t) {
                     t.printStackTrace();
                 }
@@ -3058,14 +3249,113 @@ public class BomboaddonsClient implements ClientModInitializer {
                     locrawGametype = "";
                     locrawMode = "";
                     locrawMap = "";
+                    clickedNpcOptions.clear();
+                    clickedNpcTextOptions.clear();
 
                     // Schedule a locraw call in 2 seconds (40 ticks)
                     locrawDelayTicks = 40;
                 }
             });
 
+            net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents.MODIFY_GAME.register((message, overlay) -> {
+                if (me.bombo.bomboaddons.BomboConfig.get().showCommandOnHover) {
+                    message = addHoverToCommands(message);
+                }
+                return message;
+            });
+
             ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> {
                 String plain = message.getString().trim();
+                
+                if (me.bombo.bomboaddons.BomboConfig.get().autoHoppityCalls && !overlay) {
+                    if (plain.contains("BUZZ...") && plain.contains("[PICK UP]")) {
+                        message.visit((style, text) -> {
+                            if (style.getClickEvent() instanceof net.minecraft.network.chat.ClickEvent.RunCommand runCmd) {
+                                String command = runCmd.command();
+                                if (command.startsWith("/cb")) {
+                                    if (command.startsWith("/")) command = command.substring(1);
+                                    net.minecraft.client.Minecraft mcInstance = net.minecraft.client.Minecraft.getInstance();
+                                    if (mcInstance.player != null && mcInstance.player.connection != null) {
+                                        mcInstance.player.connection.send(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket(command));
+                                    }
+                                }
+                            }
+                            return java.util.Optional.empty();
+                        }, net.minecraft.network.chat.Style.EMPTY);
+                    }
+                }
+                if (me.bombo.bomboaddons.BomboConfig.get().autoAcceptNpcLore && !overlay) {
+                    if (plain.contains("[Debug]")) return true;
+                    if (plain.contains("Select an option:")) {
+                        class NpcOption {
+                            String text;
+                            String color;
+                            String command;
+                            NpcOption(String text, String color, String command) {
+                                this.text = text; this.color = color; this.command = command;
+                            }
+                        }
+                        java.util.List<NpcOption> options = new java.util.ArrayList<>();
+                        message.visit((style, text) -> {
+                            if (style.getClickEvent() instanceof net.minecraft.network.chat.ClickEvent.RunCommand runCmd) {
+                                String t = text.trim();
+                                if (!t.isEmpty() && !t.equals("[") && !t.equals("]")) {
+                                    options.add(new NpcOption(t, style.getColor() != null ? style.getColor().toString() : "none", runCmd.command()));
+                                }
+                            }
+                            return java.util.Optional.empty();
+                        }, net.minecraft.network.chat.Style.EMPTY);
+
+                        class MenuCache {
+                            static java.util.Map<String, java.util.Set<String>> menuToClickedOptions = new java.util.HashMap<>();
+                        }
+                        if (!options.isEmpty()) {
+                            String menuId = options.stream().map(o -> o.text).collect(java.util.stream.Collectors.joining("|"));
+                            java.util.Set<String> clickedHere = MenuCache.menuToClickedOptions.computeIfAbsent(menuId, k -> new java.util.HashSet<>());
+
+                            NpcOption toClick = null;
+                            for (NpcOption opt : options) {
+                                if (clickedHere.contains(opt.text)) continue;
+                                boolean isAffirmative = opt.text.equalsIgnoreCase("Absolutely!") || opt.text.equalsIgnoreCase("Yes") || opt.text.equalsIgnoreCase("Confirm");
+                                boolean isGreen = opt.color.contains("green") || opt.color.contains("55FF55");
+                                if (isAffirmative || isGreen) {
+                                    toClick = opt;
+                                    break;
+                                }
+                            }
+                            if (toClick == null) {
+                                for (NpcOption opt : options) {
+                                    if (clickedHere.contains(opt.text)) continue;
+                                    if (!opt.text.contains("Tell me more") && !opt.text.contains("Not right now")) {
+                                        toClick = opt;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (toClick == null) {
+                                for (NpcOption opt : options) {
+                                    if (!clickedHere.contains(opt.text)) {
+                                        toClick = opt;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (toClick != null) {
+                                clickedHere.add(toClick.text);
+                                String cmd = toClick.command;
+                                if (cmd.startsWith("/")) cmd = cmd.substring(1);
+                                if (me.bombo.bomboaddons.BomboConfig.get().npcLoreDebug && Minecraft.getInstance().player != null) {
+                                    Minecraft.getInstance().player.sendSystemMessage(net.minecraft.network.chat.Component.literal(PREFIX + "§d[Debug] §aExecuting: §e/" + cmd + " §7for option: §e" + toClick.text));
+                                }
+                                Minecraft.getInstance().getConnection().sendCommand(cmd);
+                            } else {
+                                if (me.bombo.bomboaddons.BomboConfig.get().npcLoreDebug && Minecraft.getInstance().player != null) {
+                                    Minecraft.getInstance().player.sendSystemMessage(net.minecraft.network.chat.Component.literal(PREFIX + "§c[Debug] §7All options exhausted for this NPC prompt."));
+                                }
+                            }
+                        }
+                    }
+                }
                 if (plain.contains("[BomboPlaytimeSyncRequest]")) {
                     try {
                         PlaytimeTracker.sendPlaytimeDataToCloud();
@@ -3126,6 +3416,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                 AFKManager.onChatMessage(clean);
                 me.bombo.bomboaddons.features.dungeons.ClearInfoHUD.onChatMessage(clean);
                 
+                if (!overlay && BomboConfig.get().customTimers != null) {
+                    for (BomboConfig.CustomTimerDef def : BomboConfig.get().customTimers) {
+                        if (def.enabled && def.triggerText != null && !def.triggerText.isEmpty() && clean.contains(def.triggerText)) {
+                            me.bombo.bomboaddons.CustomTimerManager.startTimer(def.name, def.durationSeconds * 1000, false, def.logoItemId, def.showOnlyWhenReady, def.keepReadyState);
+                        }
+                    }
+                }
                 java.util.regex.Matcher ratMatcher = java.util.regex.Pattern.compile("^CHEESE! You buffed (\\S+) giving them (.+) for\\s+(\\d+)\\s+seconds!").matcher(clean);
                 if (ratMatcher.find()) {
                     String target = ratMatcher.group(1);
@@ -3188,6 +3485,21 @@ public class BomboaddonsClient implements ClientModInitializer {
     }
 
     private void registerTickEvents() {
+        try {
+            Class<?> categoryClass = Class.forName("net.minecraft.client.gui.screens.options.controls.KeyBindsList$CategoryEntry");
+            System.out.println("CategoryEntry fields:");
+            for (java.lang.reflect.Field f : categoryClass.getDeclaredFields()) {
+                System.out.println(f.getName() + " " + f.getType().getName());
+            }
+            Class<?> keyClass = Class.forName("net.minecraft.client.gui.screens.options.controls.KeyBindsList$KeyEntry");
+            System.out.println("KeyEntry fields:");
+            for (java.lang.reflect.Field f : keyClass.getDeclaredFields()) {
+                System.out.println(f.getName() + " " + f.getType().getName());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             try {
                 CustomTimerManager.tick();
@@ -3195,6 +3507,10 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
             try {
                 me.bombo.bomboaddons.features.StorageTracker.onGuiTick();
+            } catch (Throwable t) {
+            }
+            try {
+                AutoFishing.onTick(client);
             } catch (Throwable t) {
             }
             try {
@@ -3880,7 +4196,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                     if (!args.isEmpty()) {
                         long durationMs = CustomTimerManager.parseTimeMs(args);
                         if (durationMs > 0) {
-                            CustomTimerManager.startTimer(senderName, durationMs, true);
+                            CustomTimerManager.startTimer(senderName, durationMs, true, null, false);
                             Bomboaddons.sendMessage("&8[&bBomboAddons&8] &7Started a &e" + args + " &7timer for &a"
                                     + senderName + "&7.");
                         }
@@ -4246,5 +4562,44 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             dispatcher.register(builder);
         }
+    }
+
+    private static net.minecraft.network.chat.Component extractHoverText(net.minecraft.network.chat.HoverEvent event) {
+        if (event == null) return null;
+        try {
+            for (java.lang.reflect.Field f : event.getClass().getDeclaredFields()) {
+                if (net.minecraft.network.chat.Component.class.isAssignableFrom(f.getType())) {
+                    f.setAccessible(true);
+                    return (net.minecraft.network.chat.Component) f.get(event);
+                }
+            }
+        } catch (Exception e) {}
+        return null;
+    }
+
+    private static net.minecraft.network.chat.Component addHoverToCommands(net.minecraft.network.chat.Component component) {
+        if (component == null) return null;
+        
+        net.minecraft.network.chat.MutableComponent newComp = component.copy();
+        newComp.getSiblings().clear();
+        
+        net.minecraft.network.chat.Style style = newComp.getStyle();
+        if (style != null && style.getClickEvent() instanceof net.minecraft.network.chat.ClickEvent.RunCommand runCmd) {
+            String command = runCmd.command();
+            net.minecraft.network.chat.HoverEvent existingHoverEvent = style.getHoverEvent();
+            net.minecraft.network.chat.Component oldText = extractHoverText(existingHoverEvent);
+            if (oldText != null) {
+                net.minecraft.network.chat.MutableComponent combined = net.minecraft.network.chat.Component.empty().append(oldText).append("\n§7Run on click: §e" + command);
+                newComp.setStyle(style.withHoverEvent(me.bombo.bomboaddons.SBECommands.createHoverEventFromComponent(combined)));
+            } else {
+                newComp.setStyle(style.withHoverEvent(me.bombo.bomboaddons.SBECommands.createHoverEvent("§7Run on click: §e" + command)));
+            }
+        }
+        
+        for (net.minecraft.network.chat.Component sibling : component.getSiblings()) {
+            newComp.append(addHoverToCommands(sibling));
+        }
+        
+        return newComp;
     }
 }

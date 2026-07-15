@@ -56,12 +56,15 @@ public class GlobalStorageScreen extends Screen {
 
     private static class AggregatedItem {
         ItemStack stack;
+        ItemStack renderStack;
         int totalCount = 0;
         Map<String, Integer> locations = new HashMap<>(); // "Ender Chest Page 1" -> 64
         String rawNbt;
 
         AggregatedItem(ItemStack stack, String nbt) {
             this.stack = stack.copy();
+            this.renderStack = stack.copy();
+            this.renderStack.setCount(1);
             this.rawNbt = nbt;
         }
 
@@ -103,6 +106,15 @@ public class GlobalStorageScreen extends Screen {
         updateSearch(searchBox.getValue());
     }
 
+    private static class ParsedItemInfo {
+        ItemStack stack;
+        String cleanName;
+        String id;
+        String name;
+        int sackStoredCount = -1;
+    }
+    private static final Map<String, ParsedItemInfo> nbtParseCache = new HashMap<>();
+
     private void aggregateItems() {
         if (me.bombo.bomboaddons.features.StorageTracker.lastUpdateTime == cachedStorageTime && !cachedAllItems.isEmpty()) {
             allItems = new ArrayList<>(cachedAllItems);
@@ -119,23 +131,24 @@ public class GlobalStorageScreen extends Screen {
                 if (nbtStr == null || nbtStr.isEmpty()) continue;
                 
                 try {
-                    CompoundTag tag = net.minecraft.nbt.TagParser.parseCompoundFully(nbtStr);
-                    ItemStack stack = ItemStack.CODEC.parse(ops, tag).result().orElse(ItemStack.EMPTY);
-                    
-                    if (!stack.isEmpty()) {
-                        if (!stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) continue;
-                        String cleanName = net.minecraft.ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim();
-                        if (cleanName.contains("Empty ") || cleanName.contains("Locked") || cleanName.equals("Back") || cleanName.equals("Close") || cleanName.contains(" Page") || cleanName.equals("Go Back")) {
-                            continue;
+                    ParsedItemInfo info = nbtParseCache.get(nbtStr);
+                    if (info == null) {
+                        CompoundTag tag;
+                        if (nbtStr.startsWith("B64:")) {
+                            byte[] decoded = java.util.Base64.getDecoder().decode(nbtStr.substring(4));
+                            java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(decoded);
+                            tag = net.minecraft.nbt.NbtIo.readCompressed(bais, net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+                        } else {
+                            tag = net.minecraft.nbt.TagParser.parseCompoundFully(nbtStr);
                         }
+                        ItemStack stack = ItemStack.CODEC.parse(ops, tag).result().orElse(ItemStack.EMPTY);
                         
                         // If this is a player head with no PROFILE, try to extract skin from legacy NBT
-                        if (stack.getItem() == net.minecraft.world.item.Items.PLAYER_HEAD && !stack.has(net.minecraft.core.component.DataComponents.PROFILE)) {
+                        if (!stack.isEmpty() && stack.getItem() == net.minecraft.world.item.Items.PLAYER_HEAD && !stack.has(net.minecraft.core.component.DataComponents.PROFILE)) {
                             try {
                                 net.minecraft.world.item.component.CustomData cd = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
                                 if (cd != null) {
                                     CompoundTag ct = cd.copyTag();
-                                    // Check SkullOwner legacy NBT
                                     if (ct.contains("SkullOwner")) {
                                         CompoundTag so = ct.getCompoundOrEmpty("SkullOwner");
                                         if (so.contains("Properties")) {
@@ -158,13 +171,47 @@ public class GlobalStorageScreen extends Screen {
                                 }
                             } catch (Exception ignored) {}
                         }
+
+                        if (!stack.isEmpty()) {
+                            info = new ParsedItemInfo();
+                            info.stack = stack;
+                            info.cleanName = net.minecraft.ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim();
+                            info.id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+                            info.name = stack.getHoverName().getString();
+                            
+                            net.minecraft.world.item.component.ItemLore lore = stack.get(net.minecraft.core.component.DataComponents.LORE);
+                            if (lore != null) {
+                                for (net.minecraft.network.chat.Component line : lore.lines()) {
+                                    String clean = line.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+                                    if (clean.startsWith("Stored: ")) {
+                                        String val = clean.substring(8).split("/")[0].replace(",", "").trim();
+                                        try {
+                                            info.sackStoredCount = Integer.parseInt(val);
+                                        } catch (NumberFormatException ignored) {}
+                                        break;
+                                    }
+                                }
+                            }
+                            nbtParseCache.put(nbtStr, info);
+                        }
+                    }
+                    
+                    if (info != null) {
+                        if (!info.stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA)) continue;
+                        if (info.cleanName.contains("Empty ") || info.cleanName.contains("Locked") || info.cleanName.equals("Back") || info.cleanName.equals("Close") || info.cleanName.contains(" Page") || info.cleanName.equals("Go Back")) {
+                            continue;
+                        }
                         
-                        String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-                        String name = stack.getHoverName().getString();
-                        String groupKey = id + ":" + name; 
+                        String groupKey = info.id + ":" + info.name; 
                         
-                        AggregatedItem agg = map.computeIfAbsent(groupKey, k -> new AggregatedItem(stack, nbtStr));
-                        agg.addLocation(containerName, stack.getCount());
+                        int count = info.stack.getCount();
+                        if ((containerName.contains("Sack") || containerName.equals("Inventory")) && info.sackStoredCount != -1) {
+                            count = info.sackStoredCount;
+                        }
+                        
+                        final ItemStack finalStack = info.stack;
+                        AggregatedItem agg = map.computeIfAbsent(groupKey, k -> new AggregatedItem(finalStack, nbtStr));
+                        agg.addLocation(containerName, count);
                     }
                 } catch (Exception e) {}
             }
@@ -184,6 +231,17 @@ public class GlobalStorageScreen extends Screen {
                 agg.locations.keySet().stream().anyMatch(loc -> loc.toLowerCase().contains(currentCategory.toLowerCase()));
             
             boolean textMatch = lowerQuery.isEmpty() || agg.stack.getHoverName().getString().toLowerCase().contains(lowerQuery);
+            if (!textMatch && !lowerQuery.isEmpty()) {
+                net.minecraft.world.item.component.ItemLore lore = agg.stack.get(net.minecraft.core.component.DataComponents.LORE);
+                if (lore != null) {
+                    for (net.minecraft.network.chat.Component line : lore.lines()) {
+                        if (line.getString().toLowerCase().contains(lowerQuery)) {
+                            textMatch = true;
+                            break;
+                        }
+                    }
+                }
+            }
             return categoryMatch && textMatch;
         }).collect(Collectors.toList());
         scrollOffset = 0;
@@ -236,27 +294,51 @@ public class GlobalStorageScreen extends Screen {
         }
 
         if (hoveredItem != null && !hoveredItem.locations.isEmpty()) {
-            String targetLoc = hoveredItem.locations.keySet().iterator().next();
-            String[] locCmd = me.bombo.bomboaddons.features.StorageTracker.getDisplayLocAndCommand(targetLoc);
-            String cmd = locCmd[1];
+            boolean addedPos = false;
+            me.bombo.bomboaddons.BlockHighlight.targetChestPosList.clear();
             
-            if (!cmd.isEmpty()) {
-                if (cmd.startsWith("/")) cmd = cmd.substring(1);
-                minecraft.player.connection.sendCommand(cmd);
+            for (String targetLoc : hoveredItem.locations.keySet()) {
+                String[] locCmd = me.bombo.bomboaddons.features.StorageTracker.getDisplayLocAndCommand(targetLoc);
+                String cmd = locCmd[1];
+                
+                if (!cmd.isEmpty()) {
+                    if (cmd.startsWith("/")) cmd = cmd.substring(1);
+                    minecraft.player.connection.sendCommand(cmd);
+                    me.bombo.bomboaddons.SlotHighlight.addTargetName(hoveredItem.stack.getHoverName().getString(), 0xAA00FF00);
+                    // If we found a command (like enderchest), we just open it and break. 
+                    // No need to highlight physical chests if we open a remote GUI.
+                    addedPos = true; 
+                    break;
+                } else if (targetLoc.contains(" @ ")) {
+                    try {
+                        String coords = targetLoc.substring(targetLoc.indexOf(" @ ") + 3);
+                        String[] parts = coords.split(",");
+                        if (parts.length == 3) {
+                            int x = Integer.parseInt(parts[0].trim());
+                            int y = Integer.parseInt(parts[1].trim());
+                            int z = Integer.parseInt(parts[2].trim());
+                            net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+                            me.bombo.bomboaddons.BlockHighlight.targetChestPosList.add(pos);
+                            
+                            try {
+                                net.minecraft.world.level.block.state.BlockState state = minecraft.level.getBlockState(pos);
+                                if (state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
+                                    net.minecraft.world.level.block.state.properties.ChestType type = state.getValue(net.minecraft.world.level.block.ChestBlock.TYPE);
+                                    if (type != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
+                                        net.minecraft.core.Direction connectedDir = net.minecraft.world.level.block.ChestBlock.getConnectedDirection(state);
+                                        me.bombo.bomboaddons.BlockHighlight.targetChestPosList.add(pos.relative(connectedDir));
+                                    }
+                                }
+                            } catch (Exception e) {}
+                            
+                            addedPos = true;
+                        }
+                    } catch (Exception e) {}
+                }
+            }
+            if (addedPos) {
+                me.bombo.bomboaddons.BlockHighlight.targetChestTime = System.currentTimeMillis();
                 me.bombo.bomboaddons.SlotHighlight.addTargetName(hoveredItem.stack.getHoverName().getString(), 0xAA00FF00);
-            } else if (targetLoc.contains(" @ ")) {
-                try {
-                    String coords = targetLoc.substring(targetLoc.indexOf(" @ ") + 3);
-                    String[] parts = coords.split(",");
-                    if (parts.length == 3) {
-                        int x = Integer.parseInt(parts[0].trim());
-                        int y = Integer.parseInt(parts[1].trim());
-                        int z = Integer.parseInt(parts[2].trim());
-                        me.bombo.bomboaddons.BlockHighlight.targetChestPos = new net.minecraft.core.BlockPos(x, y, z);
-                        me.bombo.bomboaddons.BlockHighlight.targetChestTime = System.currentTimeMillis();
-                        me.bombo.bomboaddons.SlotHighlight.addTargetName(hoveredItem.stack.getHoverName().getString(), 0xAA00FF00);
-                    }
-                } catch (Exception e) {}
             }
             this.minecraft.setScreen(null);
             return true;
@@ -368,10 +450,8 @@ public class GlobalStorageScreen extends Screen {
             int x = startX + col * itemSize;
             int y = startY + row * itemSize;
             
-            ItemStack renderStack = agg.stack.copy();
-            renderStack.setCount(1);
-            graphics.item(renderStack, x + 1, y + 1);
-            graphics.itemDecorations(this.font, renderStack, x + 1, y + 1);
+            graphics.item(agg.renderStack, x + 1, y + 1);
+            graphics.itemDecorations(this.font, agg.renderStack, x + 1, y + 1);
             
             if (agg.totalCount > 1) {
                 String amt = formatAmount(agg.totalCount);
@@ -407,6 +487,13 @@ public class GlobalStorageScreen extends Screen {
         if (this.hoveredItem != null) {
             List<net.minecraft.network.chat.Component> tooltip = new ArrayList<>();
             tooltip.add(this.hoveredItem.stack.getHoverName());
+            
+            net.minecraft.world.item.component.ItemLore lore = this.hoveredItem.stack.get(net.minecraft.core.component.DataComponents.LORE);
+            if (lore != null) {
+                tooltip.addAll(lore.lines());
+            }
+            
+            tooltip.add(net.minecraft.network.chat.Component.literal("§8----------------"));
             tooltip.add(net.minecraft.network.chat.Component.literal("§7Total Amount: §e" + this.hoveredItem.totalCount));
             tooltip.add(net.minecraft.network.chat.Component.literal("§8----------------"));
             for (Map.Entry<String, Integer> loc : this.hoveredItem.locations.entrySet()) {

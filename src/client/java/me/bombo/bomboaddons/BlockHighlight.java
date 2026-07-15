@@ -109,10 +109,10 @@ public class BlockHighlight {
 
     public static void render(LevelRenderContext context) {
         BomboConfig.Settings s = BomboConfig.get();
-        if (!s.blockHighlightsEnabled && targetChestPos == null) {
+        if (!s.blockHighlightsEnabled && targetChestPosList.isEmpty()) {
             return;
         }
-        if (highlightedBlocks.isEmpty() && targetChestPos == null) {
+        if (highlightedBlocks.isEmpty() && targetChestPosList.isEmpty()) {
             return;
         }
 
@@ -165,33 +165,76 @@ public class BlockHighlight {
             });
         }
 
-        if (targetChestPos != null) {
-            double x = targetChestPos.getX() - camPos.x;
-            double y = targetChestPos.getY() - camPos.y;
-            double z = targetChestPos.getZ() - camPos.z;
-            double dist = Math.sqrt(x * x + y * y + z * z);
-            if (dist <= 256.0) {
-                double scale = 1.0;
-                if (dist > 0.2) {
-                    scale = 0.2 / dist;
-                }
-                AABB box = new AABB(
-                        x * scale, y * scale, z * scale,
-                        (x + 1.0) * scale, (y + 1.0) * scale, (z + 1.0) * scale
-                );
-                collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
-                    BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, 0.0f, 1.0f, 0.0f, 0.85f, 2.0f);
-                });
+        if (!targetChestPosList.isEmpty()) {
+            java.util.Set<net.minecraft.core.BlockPos> rendered = new java.util.HashSet<>();
+            
+            for (net.minecraft.core.BlockPos targetChestPos : targetChestPosList) {
+                if (rendered.contains(targetChestPos)) continue;
                 
-                String text = "Target Chest §7(" + (int)dist + "m)";
-                BomboRenderUtils.drawText(poseStack, collector, text, (float)(x + 0.5), (float)(y + 1.5), (float)(z + 0.5), 0x00FF00, 0.03f, true, true);
+                net.minecraft.core.BlockPos partnerPos = null;
+                try {
+                    net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(targetChestPos);
+                    if (state.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
+                        net.minecraft.world.level.block.state.properties.ChestType type = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE);
+                        if (type != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
+                            net.minecraft.core.Direction connectedDir = net.minecraft.world.level.block.ChestBlock.getConnectedDirection(state);
+                            partnerPos = targetChestPos.relative(connectedDir);
+                        }
+                    }
+                } catch (Exception e) {}
+
+                rendered.add(targetChestPos);
+                if (partnerPos != null) rendered.add(partnerPos);
+
+                double minX = targetChestPos.getX();
+                double minY = targetChestPos.getY();
+                double minZ = targetChestPos.getZ();
+                double maxX = minX + 1.0;
+                double maxY = minY + 1.0;
+                double maxZ = minZ + 1.0;
+                
+                if (partnerPos != null && targetChestPosList.contains(partnerPos)) {
+                    minX = Math.min(minX, partnerPos.getX());
+                    minY = Math.min(minY, partnerPos.getY());
+                    minZ = Math.min(minZ, partnerPos.getZ());
+                    maxX = Math.max(maxX, partnerPos.getX() + 1.0);
+                    maxY = Math.max(maxY, partnerPos.getY() + 1.0);
+                    maxZ = Math.max(maxZ, partnerPos.getZ() + 1.0);
+                }
+
+                double rx = minX - camPos.x;
+                double ry = minY - camPos.y;
+                double rz = minZ - camPos.z;
+                double rMaxX = maxX - camPos.x;
+                double rMaxY = maxY - camPos.y;
+                double rMaxZ = maxZ - camPos.z;
+
+                double midX = (minX + maxX) / 2.0 - camPos.x;
+                double midY = (minY + maxY) / 2.0 - camPos.y;
+                double midZ = (minZ + maxZ) / 2.0 - camPos.z;
+                double dist = Math.sqrt(midX * midX + midY * midY + midZ * midZ);
+
+                if (dist <= 256.0) {
+                    double scale = 1.0;
+                    if (dist > 0.2) {
+                        scale = 0.2 / dist;
+                    }
+                    AABB box = new AABB(
+                            rx * scale, ry * scale, rz * scale,
+                            rMaxX * scale, rMaxY * scale, rMaxZ * scale
+                    );
+                    collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+                        BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, 0.0f, 1.0f, 0.0f, 0.85f, 2.0f);
+                    });
+                    
+                    String text = "Target Chest §7(" + (int)dist + "m)";
+                    BomboRenderUtils.drawText(poseStack, collector, text, (float)midX, (float)(rMaxY + 0.5), (float)midZ, 0x00FF00, 0.03f, true, true);
+                }
             }
-        } else {
-            targetChestPos = null;
         }
     }
 
-    public static net.minecraft.core.BlockPos targetChestPos = null;
+    public static java.util.List<net.minecraft.core.BlockPos> targetChestPosList = new java.util.ArrayList<>();
     public static long targetChestTime = 0;
 
     private static int getMinBuildHeightReflect(net.minecraft.client.multiplayer.ClientLevel level) {

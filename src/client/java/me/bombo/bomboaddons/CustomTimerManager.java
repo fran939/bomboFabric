@@ -20,11 +20,19 @@ public class CustomTimerManager {
         public final String name;
         public final long endTime;
         public final boolean isPartyTimer;
+        public final String logoItemId;
+        public final boolean showOnlyWhenReady;
+        public final boolean keepReadyState;
+        public boolean ready = false;
+        public long readyExpiration = -1;
 
-        public CustomTimer(String name, long durationMs, boolean isPartyTimer) {
+        public CustomTimer(String name, long durationMs, boolean isPartyTimer, String logoItemId, boolean showOnlyWhenReady, boolean keepReadyState) {
             this.name = name;
             this.endTime = System.currentTimeMillis() + durationMs;
             this.isPartyTimer = isPartyTimer;
+            this.logoItemId = logoItemId;
+            this.showOnlyWhenReady = showOnlyWhenReady;
+            this.keepReadyState = keepReadyState;
         }
     }
 
@@ -49,26 +57,7 @@ public class CustomTimerManager {
 
     public static void drawTimers(GuiGraphicsExtractor g, int x, int y, boolean isHovered) {
         BomboConfig.Settings s = BomboConfig.get();
-        List<String> lines = new ArrayList<>();
-
-        if (activeTimers.isEmpty()) {
-            if (isHovered) {
-                lines.add("§6§lTimers §7(Example)");
-                lines.add("§fTimer: §a02:45");
-                lines.add("§fbomboclas: §e04:59");
-            }
-        } else {
-            lines.add("§6§lActive Timers");
-            long now = System.currentTimeMillis();
-            for (CustomTimer timer : activeTimers) {
-                long remaining = timer.endTime - now;
-                if (remaining < 0) remaining = 0;
-                String timeColor = remaining < 10000 ? "§c" : (remaining < 30000 ? "§e" : "§a");
-                lines.add("§f" + timer.name + ": " + timeColor + formatTimeRemaining(remaining));
-            }
-        }
-
-        if (lines.isEmpty()) return;
+        if (activeTimers.isEmpty() && !isHovered) return;
 
         g.pose().pushMatrix();
         g.pose().translate((float) x, (float) y);
@@ -76,38 +65,52 @@ public class CustomTimerManager {
         g.pose().scale(scale, scale);
 
         int curY = 0;
-        for (String line : lines) {
-            g.text(Minecraft.getInstance().font, line, 0, curY, 0xFFFFFFFF, true);
-            curY += 10;
+        long now = System.currentTimeMillis();
+
+        if (activeTimers.isEmpty()) {
+            g.text(Minecraft.getInstance().font, "§6§lTimers §7(Example)", 0, curY, 0xFFFFFFFF, true);
+            curY += 14;
+            g.text(Minecraft.getInstance().font, "§fTimer: §a02:45", 0, curY, 0xFFFFFFFF, true);
+            curY += 14;
+            g.text(Minecraft.getInstance().font, "§fbomboclas: §e04:59", 0, curY, 0xFFFFFFFF, true);
+        } else {
+            for (CustomTimer timer : activeTimers) {
+                if (timer.showOnlyWhenReady && !timer.ready) continue;
+                int startX = 0;
+                if (timer.logoItemId != null && !timer.logoItemId.isEmpty()) {
+                    net.minecraft.world.item.ItemStack item = me.bombo.bomboaddons.SkyblockItemManager.createSkyblockItem(timer.logoItemId);
+                    if (item != null && !item.isEmpty()) {
+                        g.pose().pushMatrix();
+                        g.pose().translate(0f, (float)(curY - 3));
+                        g.pose().scale(0.8f, 0.8f);
+                        g.item(item, 0, 0);
+                        g.pose().popMatrix();
+                        startX += 14;
+                    }
+                }
+                
+                if (timer.ready) {
+                    g.text(Minecraft.getInstance().font, "§f" + timer.name + ": §a§lREADY", startX, curY, 0xFFFFFFFF, true);
+                } else {
+                    long remaining = timer.endTime - now;
+                    if (remaining < 0) remaining = 0;
+                    String timeColor = remaining < 10000 ? "§c" : (remaining < 30000 ? "§e" : "§a");
+                    g.text(Minecraft.getInstance().font, "§f" + timer.name + ": " + timeColor + formatTimeRemaining(remaining), startX, curY, 0xFFFFFFFF, true);
+                }
+                curY += 14;
+            }
         }
 
         g.pose().popMatrix();
     }
 
     public static int getWidth() {
-        int maxWidth = 60;
-        List<String> lines = new ArrayList<>();
-        if (activeTimers.isEmpty()) {
-            lines.add("§6§lTimers §7(Example)");
-            lines.add("§fTimer: §a02:45");
-            lines.add("§fbomboclas: §e04:59");
-        } else {
-            lines.add("§6§lActive Timers");
-            long now = System.currentTimeMillis();
-            for (CustomTimer timer : activeTimers) {
-                long remaining = timer.endTime - now;
-                lines.add("§f" + timer.name + ": §a" + formatTimeRemaining(remaining));
-            }
-        }
-        for (String line : lines) {
-            maxWidth = Math.max(maxWidth, Minecraft.getInstance().font.width(line.replaceAll("§.", "")));
-        }
-        return maxWidth;
+        return 120; // Fixed width for simplicity and room for icons
     }
 
     public static int getHeight() {
         int count = activeTimers.isEmpty() ? 3 : (1 + activeTimers.size());
-        return count * 10;
+        return count * 14;
     }
 
     public static String formatTimeRemaining(long remainingMs) {
@@ -153,10 +156,14 @@ public class CustomTimerManager {
     }
 
     public static void startTimer(String name, long durationMs) {
-        startTimer(name, durationMs, false);
+        startTimer(name, durationMs, false, null, false, false);
     }
 
-    public static void startTimer(String name, long durationMs, boolean isPartyTimer) {
+    public static void startTimer(String name, long durationMs, boolean isPartyTimer, String logoItemId, boolean showOnlyWhenReady) {
+        startTimer(name, durationMs, isPartyTimer, logoItemId, showOnlyWhenReady, false);
+    }
+
+    public static void startTimer(String name, long durationMs, boolean isPartyTimer, String logoItemId, boolean showOnlyWhenReady, boolean keepReadyState) {
         if (name == null || name.isEmpty()) {
             name = "Timer";
         }
@@ -166,14 +173,19 @@ public class CustomTimerManager {
                 activeTimers.remove(timer);
             }
         }
-        activeTimers.add(new CustomTimer(name, durationMs, isPartyTimer));
+        activeTimers.add(new CustomTimer(name, durationMs, isPartyTimer, logoItemId, showOnlyWhenReady, keepReadyState));
     }
 
     public static void tick() {
         long now = System.currentTimeMillis();
         for (CustomTimer timer : activeTimers) {
-            if (now >= timer.endTime) {
-                activeTimers.remove(timer);
+            if (timer.ready) {
+                if (!timer.keepReadyState && timer.readyExpiration != -1 && now > timer.readyExpiration) {
+                    activeTimers.remove(timer);
+                }
+            } else if (now >= timer.endTime) {
+                timer.ready = true;
+                timer.readyExpiration = timer.keepReadyState ? -1 : (now + 10000); // Keep ready for 10 seconds
                 Minecraft.getInstance().execute(() -> {
                     // Play Note Block Pling Sound
                     Minecraft.getInstance().getSoundManager().play(

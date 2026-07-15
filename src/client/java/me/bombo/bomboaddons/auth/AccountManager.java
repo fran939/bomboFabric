@@ -50,6 +50,7 @@ public class AccountManager {
     public static final List<Account> accounts = new ArrayList<>();
     public static Account currentAccount = null;
     public static Account originalAccount = null;
+    private static ScheduledExecutorService refreshTimer = null;
 
     private static final String CLIENT_ID = "54fd49e4-2103-4044-9603-2b028c814ec3";
     private static final String SCOPE = "XboxLive.signin%20offline_access";
@@ -63,6 +64,28 @@ public class AccountManager {
         User user = Minecraft.getInstance().getUser();
         originalAccount = new Account(user.getProfileId().toString(), user.getName(), user.getAccessToken(), "", "");
         loadAccounts();
+        
+        if (refreshTimer == null) {
+            refreshTimer = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "BomboAddons-Auth-Refresh");
+                t.setDaemon(true);
+                return t;
+            });
+            refreshTimer.scheduleAtFixedRate(() -> {
+                if (currentAccount != null && currentAccount.refreshToken != null && !currentAccount.refreshToken.isEmpty()) {
+                    if (!checkToken(currentAccount.accessToken)) {
+                        refreshAccount(currentAccount).thenAccept(refreshed -> {
+                            if (refreshed != null) {
+                                Minecraft.getInstance().execute(() -> {
+                                    setSession(refreshed);
+                                    System.out.println("[BOMBO-AUTH] Auto-refreshed expired session in background for " + refreshed.username);
+                                });
+                            }
+                        });
+                    }
+                }
+            }, 30, 30, TimeUnit.MINUTES);
+        }
     }
 
     public static void loadAccounts() {
@@ -158,6 +181,18 @@ public class AccountManager {
                     currentAccount = originalAccount;
                 }
             }
+            
+            // Auto refresh current account on startup in background
+            if (currentAccount != null && currentAccount.refreshToken != null && !currentAccount.refreshToken.isEmpty()) {
+                final Account toRefresh = currentAccount;
+                refreshAccount(toRefresh).thenAccept(refreshed -> {
+                    if (refreshed != null) {
+                        Minecraft.getInstance().execute(() -> {
+                            setSession(refreshed);
+                        });
+                    }
+                });
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -210,10 +245,24 @@ public class AccountManager {
         }
     }
 
+    public static boolean checkToken(String token) {
+        if (token == null || token.isEmpty()) return false;
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.minecraftservices.com/minecraft/profile"))
+                    .header("Authorization", "Bearer " + token)
+                    .GET().build();
+            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            return res.statusCode() == 200;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public static CompletableFuture<Account> refreshAccount(Account acc) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                System.out.println("[BOMBO-AUTH] Attempting to refresh token for " + acc.username);
+                System.out.println("[BOMBO-AUTH] Attempting to refresh token for " + acc.username + " (Forcing refresh for multiplayer)");
                 // Refresh Microsoft Token
                 String reqBody = "client_id=" + (acc.clientId != null && !acc.clientId.isEmpty() ? acc.clientId : CLIENT_ID) + "&refresh_token=" + java.net.URLEncoder.encode(acc.refreshToken, "UTF-8") + "&grant_type=refresh_token";
                 HttpRequest req = HttpRequest.newBuilder()
@@ -453,6 +502,18 @@ public class AccountManager {
             }
             if (userField != null) {
                 userField.setAccessible(true);
+                if (newUser != null) {
+                    for (java.lang.reflect.Field f : User.class.getDeclaredFields()) {
+                        if (f.getType() == Optional.class) {
+                            f.setAccessible(true);
+                            try {
+                                if (f.get(newUser) == null) {
+                                    f.set(newUser, Optional.empty());
+                                }
+                            } catch (Exception e) {}
+                        }
+                    }
+                }
                 userField.set(Minecraft.getInstance(), newUser);
             }
             

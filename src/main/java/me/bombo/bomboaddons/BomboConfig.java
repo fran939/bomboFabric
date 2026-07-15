@@ -152,6 +152,9 @@ public class BomboConfig {
         if (instance.blockHighlights == null) {
             instance.blockHighlights = new HashMap<>();
         }
+        if (instance.itemHighlights == null) {
+            instance.itemHighlights = new HashMap<>();
+        }
         if (instance.particleHighlights == null) {
             instance.particleHighlights = new HashMap<>();
         }
@@ -160,16 +163,26 @@ public class BomboConfig {
                 instance.wardrobeKeys.add("");
             }
         }
+        if (instance.customTimers == null) {
+            instance.customTimers = new ArrayList<>();
+        }
     }
 
     public static void save() {
         try {
-            if (!Files.exists(CONFIG_PATH.getParent())) {
-                Files.createDirectories(CONFIG_PATH.getParent());
-            }
-            try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
-                GSON.toJson(instance, writer);
-            }
+            String json = GSON.toJson(instance);
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    if (!Files.exists(CONFIG_PATH.getParent())) {
+                        Files.createDirectories(CONFIG_PATH.getParent());
+                    }
+                    try (Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
+                        writer.write(json);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -194,7 +207,19 @@ public class BomboConfig {
         public float scale = 1.0f;
     }
 
+    public static class CustomTimerDef {
+        public String name = "Timer";
+        public String timeStr = "1m";
+        public long durationSeconds = 60;
+        public String triggerText = "";
+        public String logoItemId = "";
+        public boolean enabled = true;
+        public boolean showOnlyWhenReady = false;
+        public boolean keepReadyState = false;
+    }
+
     public static class Settings {
+        public List<CustomTimerDef> customTimers = new ArrayList<>();
         public boolean signCalculator = false;
         public boolean chestClicker = false;
         public boolean autoClicker = false;
@@ -223,12 +248,21 @@ public class BomboConfig {
         public String nextPageKey = "";
         public String prevPageKey = "";
         public String goBackKey = "";
+        public boolean displayEsp = false;
+        public boolean displayEspTracer = false;
+        public String displayEspColor = "WHITE";
+        public float displayEspThickness = 2.0f;
+        public String displayEspFilter = "";
         public String smartGoBackKey = "";
         public String textureToggleKey = "";
         public Map<String, HighlightInfo> highlights = new HashMap<>();
         public boolean highlightsEnabled = false;
+        public Map<String, HighlightInfo> itemHighlights = new HashMap<>();
+        public boolean itemHighlightsEnabled = false;
         public boolean debugMaster = false;
         public boolean debugChat = false;
+        public boolean debugSounds = false;
+        public Map<String, Float> customSoundVolumes = new HashMap<>();
         public boolean debugGuis = false;
         public boolean debugEntities = false;
         public boolean debugCommands = false;
@@ -246,12 +280,21 @@ public class BomboConfig {
         public boolean hollowWandClickThrough = false;
         public boolean hollowWandAutoCombine = false;
         public boolean autoAcceptCarnival = false;
+        public boolean autoAcceptNpcLore = false;
+        public boolean npcLoreDebug = false;
         public boolean autoTrevorQuest = false;
         public boolean ignoreCapsLock = false;
         public boolean serverListButton = false;
+        
+        public boolean autoFishingEnabled = false;
+        public int autoFishingMinDelay = 150;
+        public int autoFishingMaxDelay = 350;
+        public boolean autoFishingDebug = false;
         public boolean reconnectButton = false;
         public boolean hideCheats = false;
         public boolean diceTracker = false;
+        public boolean showCommandOnHover = false;
+        public boolean autoHoppityCalls = false;
         public int diceHudX = 10;
         public int diceHudY = 50;
         

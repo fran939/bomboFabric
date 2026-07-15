@@ -71,9 +71,18 @@ public class DiceTracker {
     }
 
     public static void save() {
-        if (!SAVE_FILE.getParentFile().exists()) SAVE_FILE.getParentFile().mkdirs();
-        try (FileWriter writer = new FileWriter(SAVE_FILE)) {
-            GSON.toJson(stats, writer);
+        try {
+            String json = GSON.toJson(stats);
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    if (!SAVE_FILE.getParentFile().exists()) SAVE_FILE.getParentFile().mkdirs();
+                    try (FileWriter writer = new FileWriter(SAVE_FILE)) {
+                        writer.write(json);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

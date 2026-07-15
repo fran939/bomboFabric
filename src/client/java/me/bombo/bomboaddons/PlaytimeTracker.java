@@ -233,10 +233,17 @@ public class PlaytimeTracker {
     public static void save() {
         File userFile = getSaveFile();
         try {
-            if (!userFile.getParentFile().exists()) userFile.getParentFile().mkdirs();
-            try (FileWriter writer = new FileWriter(userFile)) {
-                GSON.toJson(areaDataMap, writer);
-            }
+            String json = GSON.toJson(areaDataMap);
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    if (!userFile.getParentFile().exists()) userFile.getParentFile().mkdirs();
+                    try (FileWriter writer = new FileWriter(userFile)) {
+                        writer.write(json);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }

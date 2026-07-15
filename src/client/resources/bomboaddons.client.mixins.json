@@ -56,7 +56,12 @@
         "WindowAccessor",
         "SlotMixin",
         "EffectsInInventoryMixin",
-        "InventoryScreenMixin"
+        "InventoryScreenMixin",
+        "AbstractSoundInstanceMixin",
+        "SoundEngineMixin",
+        "SoundOptionsScreenMixin",
+        "KeyBindsScreenMixin",
+        "KeyBindsListMixin"
     ],
     "injectors": {
         "defaultRequire": 1

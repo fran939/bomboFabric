@@ -154,12 +154,10 @@ public class SBECommands {
             mc.player.sendSystemMessage(component);
          });
       }
-
    }
 
-   public static HoverEvent createHoverEvent(String text) {
+   public static HoverEvent createHoverEventFromComponent(Component content) {
       try {
-         Component content = Component.literal(text.replace("&", "§"));
          Class[] var2 = HoverEvent.class.getDeclaredClasses();
          int var3 = var2.length;
 
@@ -224,10 +222,15 @@ public class SBECommands {
                }
             }
          }
-      } catch (Throwable var11) {
+      } catch (Exception var20) {
+         var20.printStackTrace();
       }
 
       return null;
+   }
+
+   public static HoverEvent createHoverEvent(String text) {
+      return createHoverEventFromComponent(Component.literal(text.replace("&", "§")));
    }
 
    private static void renderNetworth(JsonObject data) {

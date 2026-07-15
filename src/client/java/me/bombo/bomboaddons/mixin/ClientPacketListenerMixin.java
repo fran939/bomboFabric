@@ -95,4 +95,14 @@ public class ClientPacketListenerMixin {
             me.bombo.bomboaddons.GardenMacroDetector.onMovePlayerPacketTail();
         } catch (Throwable t) {}
     }
+
+    @Inject(method = "handleSetEntityPassengersPacket", at = @At("HEAD"), cancellable = true)
+    private void onHandlePassengers(net.minecraft.network.protocol.game.ClientboundSetPassengersPacket packet, CallbackInfo ci) {
+        if (Minecraft.getInstance().level != null) {
+            if (Minecraft.getInstance().level.getEntity(packet.getVehicle()) == null) {
+                // Suppress "Received passengers for unknown entity" log spam
+                ci.cancel();
+            }
+        }
+    }
 }

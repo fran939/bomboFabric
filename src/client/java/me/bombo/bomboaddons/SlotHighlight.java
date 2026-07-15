@@ -71,10 +71,12 @@ public class SlotHighlight {
         }
 
         // 2. Persistent highlights from configuration
-        for (Map.Entry<String, BomboConfig.HighlightInfo> entry : BomboConfig.get().highlights.entrySet()) {
-            if (!entry.getValue().enabled) continue;
-            if (cleanName.contains(entry.getKey().toLowerCase())) {
-                return getFormattingColor(entry.getValue().color);
+        if (BomboConfig.get().itemHighlightsEnabled) {
+            for (Map.Entry<String, BomboConfig.HighlightInfo> entry : BomboConfig.get().itemHighlights.entrySet()) {
+                if (!entry.getValue().enabled) continue;
+                if (cleanName.contains(entry.getKey().toLowerCase())) {
+                    return getFormattingColor(entry.getValue().color);
+                }
             }
         }
         

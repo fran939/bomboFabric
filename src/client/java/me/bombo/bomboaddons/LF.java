@@ -1099,7 +1099,7 @@ public class LF {
         return current;
     }
 
-    private static List<ItemStack> decodeToItems(String base64) {
+    public static List<ItemStack> decodeToItems(String base64) {
         List<ItemStack> result = new ArrayList<>();
         if (base64 == null || base64.trim().isEmpty()) return result;
         
@@ -1129,7 +1129,7 @@ public class LF {
         return result;
     }
 
-    private static ItemStack convertNbtToStack(CompoundTag itemNbt) {
+    public static ItemStack convertNbtToStack(CompoundTag itemNbt) {
         if (itemNbt == null || itemNbt.isEmpty()) return ItemStack.EMPTY;
         String idStr = "minecraft:air";
         try {

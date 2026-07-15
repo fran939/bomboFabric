@@ -116,7 +116,7 @@ public class AccountSwitcherScreen extends Screen {
             
             this.addRenderableWidget(Button.builder(label, button -> {
                 button.active = false;
-                button.setMessage(Component.literal("Refreshing..."));
+                button.setMessage(Component.literal("Checking..."));
                 AccountManager.refreshAccount(currentAcc).thenAccept(refreshed -> {
                     Minecraft.getInstance().execute(() -> {
                         if (refreshed != null) {

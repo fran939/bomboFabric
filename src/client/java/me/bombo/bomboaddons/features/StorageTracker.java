@@ -26,7 +26,8 @@ public class StorageTracker {
     private static final File STORAGE_FILE = new File(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().toFile(), "bomboaddons_storage.json");
     
     // Container Name -> Slot Index -> NBT String
-    public static final Map<String, Map<Integer, String>> storageData = new HashMap<>();
+    public static final Map<String, Map<Integer, String>> storageData = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String, Map<Integer, String>> uncompressedCache = new java.util.concurrent.ConcurrentHashMap<>();
     public static long lastUpdateTime = 0;
     private static long lastSave = 0;
 
@@ -40,7 +41,7 @@ public class StorageTracker {
                 JsonObject containers = root.getAsJsonObject("containers");
                 for (String containerName : containers.keySet()) {
                     JsonObject container = containers.getAsJsonObject(containerName);
-                    Map<Integer, String> slots = new HashMap<>();
+                    Map<Integer, String> slots = new java.util.concurrent.ConcurrentHashMap<>();
                     if (container.has("items")) {
                         JsonArray items = container.getAsJsonArray("items");
                         for (JsonElement elem : items) {
@@ -53,16 +54,99 @@ public class StorageTracker {
                     storageData.put(containerName, slots);
                 }
             }
+            
+            // Migrate legacy chest names
+            java.util.List<String> toRemove = new java.util.ArrayList<>();
+            Map<String, Map<Integer, String>> toAdd = new HashMap<>();
+            for (String key : storageData.keySet()) {
+                if (key.contains(" @ ") && !key.startsWith("Island Chest @ ")) {
+                    String newKey = "Island Chest @ " + key.substring(key.indexOf(" @ ") + 3);
+                    toRemove.add(key);
+                    toAdd.put(newKey, storageData.get(key));
+                }
+            }
+            for (String key : toRemove) storageData.remove(key);
+            storageData.putAll(toAdd);
+            
+            // Deduplicate double chests from migrated data
+            java.util.List<String> duplicates = new java.util.ArrayList<>();
+            for (String key : storageData.keySet()) {
+                if (duplicates.contains(key)) continue;
+                if (key.startsWith("Island Chest @ ")) {
+                    try {
+                        String[] parts = key.substring(15).split(",");
+                        int x = Integer.parseInt(parts[0].trim());
+                        int y = Integer.parseInt(parts[1].trim());
+                        int z = Integer.parseInt(parts[2].trim());
+                        net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+                        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                            net.minecraft.core.BlockPos adj = pos.relative(d);
+                            String adjKey = "Island Chest @ " + adj.getX() + ", " + adj.getY() + ", " + adj.getZ();
+                            if (storageData.containsKey(adjKey) && !duplicates.contains(adjKey)) {
+                                // keep the one with lower coordinate
+                                if (adj.compareTo(pos) < 0) {
+                                    duplicates.add(key);
+                                } else {
+                                    duplicates.add(adjKey);
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+            for (String key : duplicates) storageData.remove(key);
+            
+            // Clean up useless menu glass panes from loaded data
+            boolean cleaned = false;
+            for (Map<Integer, String> slotsMap : storageData.values()) {
+                java.util.Iterator<Map.Entry<Integer, String>> it = slotsMap.entrySet().iterator();
+                while (it.hasNext()) {
+                    String nbt = it.next().getValue();
+                    if (nbt.contains("\"minecraft:black_stained_glass_pane\"") && nbt.contains("hide_tooltip:1b") && nbt.contains("text:\"\"")) {
+                        it.remove();
+                        cleaned = true;
+                    }
+                }
+            }
+
+            if (!toRemove.isEmpty() || !duplicates.isEmpty() || cleaned) {
+                save(); // save migrated and cleaned data
+            }
+
+            // Async background migration to Base64 compressed NBT
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                boolean migrated = false;
+                for (Map<Integer, String> slotsMap : storageData.values()) {
+                    for (Map.Entry<Integer, String> entry : slotsMap.entrySet()) {
+                        String nbt = entry.getValue();
+                        if (nbt != null && !nbt.startsWith("B64:") && !nbt.isEmpty()) {
+                            try {
+                                net.minecraft.nbt.CompoundTag tag = net.minecraft.nbt.TagParser.parseCompoundFully(nbt);
+                                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                                net.minecraft.nbt.NbtIo.writeCompressed(tag, baos);
+                                entry.setValue("B64:" + java.util.Base64.getEncoder().encodeToString(baos.toByteArray()));
+                                migrated = true;
+                            } catch (Exception e) {}
+                        }
+                    }
+                }
+                if (migrated) {
+                    save();
+                }
+            });
+
             lastUpdateTime = System.currentTimeMillis();
         } catch (Exception e) {
             Bomboaddons.LOGGER.error("[BomboAddons] Failed to load storage cache", e);
         }
     }
 
-    public static void save() {
+    private static long lastSaveAttempt = 0;
+    public static synchronized void save() {
+        if (System.currentTimeMillis() - lastSaveAttempt < 2000) return;
+        lastSaveAttempt = System.currentTimeMillis();
         lastUpdateTime = System.currentTimeMillis();
         try {
-            STORAGE_FILE.getParentFile().mkdirs();
             JsonObject root = new JsonObject();
             JsonObject containers = new JsonObject();
             
@@ -80,11 +164,18 @@ public class StorageTracker {
             }
             root.add("containers", containers);
             
-            try (FileWriter writer = new FileWriter(STORAGE_FILE)) {
-                new GsonBuilder().setPrettyPrinting().create().toJson(root, writer);
-            }
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
+                try {
+                    STORAGE_FILE.getParentFile().mkdirs();
+                    try (FileWriter writer = new FileWriter(STORAGE_FILE)) {
+                        new GsonBuilder().setPrettyPrinting().create().toJson(root, writer);
+                    }
+                } catch (Exception e) {
+                    Bomboaddons.LOGGER.error("[BomboAddons] Failed to save storage cache", e);
+                }
+            });
         } catch (Exception e) {
-            Bomboaddons.LOGGER.error("[BomboAddons] Failed to save storage cache", e);
+            Bomboaddons.LOGGER.error("[BomboAddons] Failed to build storage cache JSON", e);
         }
     }
 
@@ -94,47 +185,75 @@ public class StorageTracker {
             String title = screen.getTitle().getString().replaceAll("§.", "").trim();
             
             if (isTrackableContainer(title)) {
+                boolean changed = false;
                 if (me.bombo.bomboaddons.SkyblockUtils.getLocation().equals("Private Island") && lastClickedBlockPos != null) {
-                    if (title.equals("Chest") || title.equals("Large Chest") || title.equals("Small Chest")) {
-                        title = title + String.format(" @ %d, %d, %d", lastClickedBlockPos.getX(), lastClickedBlockPos.getY(), lastClickedBlockPos.getZ());
+                    if (title.startsWith("Chest") || title.startsWith("Large Chest") || title.startsWith("Small Chest")) {
+                        title = "Island Chest @ " + lastClickedBlockPos.getX() + ", " + lastClickedBlockPos.getY() + ", " + lastClickedBlockPos.getZ();
+                        // Clear out adjacent chest positions to deduplicate old double chests
+                        for (net.minecraft.core.Direction d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                            net.minecraft.core.BlockPos adj = lastClickedBlockPos.relative(d);
+                            String oldKey = "Island Chest @ " + adj.getX() + ", " + adj.getY() + ", " + adj.getZ();
+                            if (storageData.containsKey(oldKey)) {
+                                storageData.remove(oldKey);
+                                changed = true;
+                            }
+                        }
                     }
                 }
                 if (title.startsWith("Museum ➜")) {
                     title = "Museum";
                 }
 
-                boolean changed = false;
-                Map<Integer, String> slots = storageData.computeIfAbsent(title, k -> new HashMap<>());
+                Map<Integer, String> slots = storageData.computeIfAbsent(title, k -> new java.util.concurrent.ConcurrentHashMap<>());
                 
                 RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, mc.level.registryAccess());
+                
+                Map<Integer, String> uncompressedSlots = uncompressedCache.computeIfAbsent(title, k -> new java.util.concurrent.ConcurrentHashMap<>());
                 
                 for (Slot slot : screen.getMenu().slots) {
                     if (slot.container == mc.player.getInventory()) continue;
                     
                     ItemStack stack = slot.getItem();
-                    String nbtStr = "";
+                    String uncompressedNbtStr = "";
                     if (!stack.isEmpty()) {
                         String name = net.minecraft.ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim();
-                        if (name.contains("Empty ") || name.contains("Locked") || name.equals("Back") || name.equals("Close") || name.contains(" Page") || name.equals("Go Back")) {
-                            nbtStr = "";
+                        if (name.isEmpty() || name.contains("Empty ") || name.contains("Locked") || name.equals("Back") || name.equals("Close") || name.contains(" Page") || name.equals("Go Back")) {
+                            uncompressedNbtStr = "";
                         } else {
                             try {
                                 Tag tag = ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
-                                nbtStr = tag.toString();
+                                uncompressedNbtStr = tag.toString();
                             } catch (Exception e) {
-                                nbtStr = "";
+                                uncompressedNbtStr = "";
                             }
                         }
                     }
                     
-                    String existing = slots.get(slot.index);
-                    if (existing == null && nbtStr.isEmpty()) continue;
-                    if (existing != null && existing.equals(nbtStr)) continue;
+                    String existingUncompressed = uncompressedSlots.get(slot.index);
+                    if (existingUncompressed == null && uncompressedNbtStr.isEmpty()) continue;
+                    if (existingUncompressed != null && existingUncompressed.equals(uncompressedNbtStr)) continue;
                     
-                    if (nbtStr.isEmpty()) {
+                    if (uncompressedNbtStr.isEmpty()) {
+                        uncompressedSlots.remove(slot.index);
                         slots.remove(slot.index);
                     } else {
-                        slots.put(slot.index, nbtStr);
+                        uncompressedSlots.put(slot.index, uncompressedNbtStr);
+                        try {
+                            Tag tag = ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
+                            if (tag instanceof net.minecraft.nbt.CompoundTag ct) {
+                                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                                net.minecraft.nbt.NbtIo.writeCompressed(ct, baos);
+                                String nbtStr = "B64:" + java.util.Base64.getEncoder().encodeToString(baos.toByteArray());
+                                slots.put(slot.index, nbtStr);
+                            } else {
+                                slots.put(slot.index, tag.toString());
+                            }
+                        } catch (Exception e) {
+                            slots.put(slot.index, uncompressedNbtStr);
+                        }
+                    }
+                    if (!changed) {
+                        Bomboaddons.LOGGER.info("[BomboAddons] Storage changed in GUI at slot " + slot.index + " in " + title);
                     }
                     changed = true;
                 }
@@ -211,35 +330,54 @@ public class StorageTracker {
         return new String[]{displayLoc, cmd};
     }
 
+    private static long lastPlayerInvUpdate = 0;
     public static void updatePlayerInventory(Minecraft mc) {
         if (mc.player == null) return;
+        if (System.currentTimeMillis() - lastPlayerInvUpdate < 10000) return;
+        lastPlayerInvUpdate = System.currentTimeMillis();
+        
         boolean changed = false;
-        Map<Integer, String> slots = storageData.computeIfAbsent("Inventory", k -> new HashMap<>());
+        Map<Integer, String> slots = storageData.computeIfAbsent("Inventory", k -> new java.util.concurrent.ConcurrentHashMap<>());
+        Map<Integer, String> uncompressedSlots = uncompressedCache.computeIfAbsent("Inventory", k -> new java.util.concurrent.ConcurrentHashMap<>());
         RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, mc.level.registryAccess());
         
         for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
             ItemStack stack = mc.player.getInventory().getItem(i);
-            String nbtStr = "";
+            String uncompressedNbtStr = "";
             if (!stack.isEmpty()) {
                 String name = net.minecraft.ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim();
                 if (!name.contains("Empty ") && !name.contains("Locked") && !name.equals("Back") && !name.equals("Close") && !name.contains(" Page") && !name.equals("Go Back")) {
                     try {
                         Tag tag = ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
-                        nbtStr = tag.toString();
+                        uncompressedNbtStr = tag.toString();
                     } catch (Exception e) {
-                        nbtStr = "";
+                        uncompressedNbtStr = "";
                     }
                 }
             }
             
-            String existing = slots.get(i);
-            if (existing == null && nbtStr.isEmpty()) continue;
-            if (existing != null && existing.equals(nbtStr)) continue;
+            String existingUncompressed = uncompressedSlots.get(i);
+            if (existingUncompressed == null && uncompressedNbtStr.isEmpty()) continue;
+            if (existingUncompressed != null && existingUncompressed.equals(uncompressedNbtStr)) continue;
             
-            if (nbtStr.isEmpty()) {
+            if (uncompressedNbtStr.isEmpty()) {
+                uncompressedSlots.remove(i);
                 slots.remove(i);
             } else {
-                slots.put(i, nbtStr);
+                uncompressedSlots.put(i, uncompressedNbtStr);
+                try {
+                    Tag tag = ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
+                    if (tag instanceof net.minecraft.nbt.CompoundTag ct) {
+                        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                        net.minecraft.nbt.NbtIo.writeCompressed(ct, baos);
+                        String nbtStr = "B64:" + java.util.Base64.getEncoder().encodeToString(baos.toByteArray());
+                        slots.put(i, nbtStr);
+                    } else {
+                        slots.put(i, tag.toString());
+                    }
+                } catch (Exception e) {
+                    slots.put(i, uncompressedNbtStr);
+                }
             }
             changed = true;
         }

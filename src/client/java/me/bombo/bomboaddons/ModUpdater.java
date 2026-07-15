@@ -21,6 +21,7 @@ public class ModUpdater {
     private static final String REPO = "fran939/bomboFabric";
     private static final String GITHUB_API_LIST = "https://api.github.com/repos/" + REPO + "/releases";
     public static boolean updatedThisSession = false;
+    public static boolean hasCheckedForUpdates = false;
     private static final Path PENDING_DELETE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_pending_delete.txt");
 
     public static void init() {
@@ -50,7 +51,8 @@ public class ModUpdater {
     }
 
     public static void checkAndUpdate(boolean silent) {
-        if (silent && updatedThisSession) return;
+        if (silent && hasCheckedForUpdates) return;
+        hasCheckedForUpdates = true;
         
         new Thread(() -> {
             try {
