@@ -1,0 +1,445 @@
+package at.hannibal2.skyhanni.features.mining
+
+import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.config.commands.CommandCategory
+import at.hannibal2.skyhanni.config.commands.CommandRegistrationEvent
+import at.hannibal2.skyhanni.data.IslandType
+import at.hannibal2.skyhanni.data.MiningApi
+import at.hannibal2.skyhanni.data.ProfileStorageData
+import at.hannibal2.skyhanni.data.achievements.Achievement
+import at.hannibal2.skyhanni.data.hotx.HotmData
+import at.hannibal2.skyhanni.data.hotx.HotmReward
+import at.hannibal2.skyhanni.data.model.TabWidget
+import at.hannibal2.skyhanni.events.IslandJoinEvent
+import at.hannibal2.skyhanni.events.IslandLeaveEvent
+import at.hannibal2.skyhanni.events.SecondPassedEvent
+import at.hannibal2.skyhanni.events.WidgetUpdateEvent
+import at.hannibal2.skyhanni.events.achievements.AchievementRegistrationEvent
+import at.hannibal2.skyhanni.events.chat.SkyHanniChatEvent
+import at.hannibal2.skyhanni.events.mining.OreMinedEvent
+import at.hannibal2.skyhanni.features.achievements.AchievementManager
+import at.hannibal2.skyhanni.features.mining.MineshaftPityDisplay.PityBlock.Companion.getPity
+import at.hannibal2.skyhanni.features.mining.MineshaftPityDisplay.PityBlock.Companion.getPityBlock
+import at.hannibal2.skyhanni.features.mining.OreType.Companion.getOreType
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.ChatUtils
+import at.hannibal2.skyhanni.utils.NumberUtil.addSeparators
+import at.hannibal2.skyhanni.utils.NumberUtil.formatInt
+import at.hannibal2.skyhanni.utils.NumberUtil.roundTo
+import at.hannibal2.skyhanni.utils.RegexUtils.matchMatcher
+import at.hannibal2.skyhanni.utils.RegexUtils.matches
+import at.hannibal2.skyhanni.utils.RenderDisplayHelper
+import at.hannibal2.skyhanni.utils.RenderUtils.renderRenderables
+import at.hannibal2.skyhanni.utils.SafeItemStack
+import at.hannibal2.skyhanni.utils.SimpleTimeMark
+import at.hannibal2.skyhanni.utils.TimeUtils.format
+import at.hannibal2.skyhanni.utils.chat.TextHelper
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.addOrPut
+import at.hannibal2.skyhanni.utils.compat.BlockCompat
+import at.hannibal2.skyhanni.utils.compat.ColoredBlockCompat
+import at.hannibal2.skyhanni.utils.compat.componentBuilder
+import at.hannibal2.skyhanni.utils.compat.hover
+import at.hannibal2.skyhanni.utils.compat.plus
+import at.hannibal2.skyhanni.utils.renderables.Renderable
+import at.hannibal2.skyhanni.utils.renderables.container.HorizontalContainerRenderable.Companion.horizontal
+import at.hannibal2.skyhanni.utils.renderables.container.VerticalContainerRenderable.Companion.vertical
+import at.hannibal2.skyhanni.utils.renderables.primitives.ItemStackRenderable.Companion.item
+import at.hannibal2.skyhanni.utils.renderables.primitives.placeholder
+import at.hannibal2.skyhanni.utils.renderables.primitives.text
+import at.hannibal2.skyhanni.utils.repopatterns.RepoPattern
+import com.google.gson.annotations.Expose
+import net.minecraft.world.level.block.Blocks
+
+@SkyHanniModule
+object MineshaftPityDisplay {
+    private val config get() = SkyHanniMod.feature.mining.mineshaftPityDisplay
+
+    private val profileStorage get() = ProfileStorageData.profileSpecific?.mining?.mineshaft
+
+    private var minedBlocks: MutableList<PityData>
+        get() = profileStorage?.blocksBroken ?: mutableListOf()
+        set(value) {
+            profileStorage?.blocksBroken = value
+        }
+
+    private var PityBlock.spreadBlocksBroken: Int
+        get() = minedBlocks.firstOrNull { it.pityBlock == this }?.spreadBlocksBroken ?: 0
+        set(value) {
+            minedBlocks.firstOrNull { it.pityBlock == this }?.let { it.spreadBlocksBroken = value } ?: run {
+                minedBlocks.add(PityData(this, spreadBlocksBroken = value))
+            }
+        }
+
+    private var PityBlock.blocksBroken: Int
+        get() = minedBlocks.firstOrNull { it.pityBlock == this }?.blocksBroken ?: 0
+        set(value) {
+            minedBlocks.firstOrNull { it.pityBlock == this }?.let { it.blocksBroken = value } ?: run {
+                minedBlocks.add(PityData(this, blocksBroken = value))
+            }
+        }
+
+    private var mineshaftTotalBlocks: Long
+        get() = profileStorage?.mineshaftTotalBlocks ?: 0L
+        set(value) {
+            profileStorage?.mineshaftTotalBlocks = value
+        }
+
+    private var mineshaftTotalCount: Int
+        get() = profileStorage?.mineshaftTotalCount ?: 0
+        set(value) {
+            profileStorage?.mineshaftTotalCount = value
+        }
+
+    private var sessionMineshafts = 0
+
+    var lastMineshaftSpawn = SimpleTimeMark.farPast()
+
+    private var display = listOf<Renderable>()
+
+    private const val MAX_COUNTER = 2000
+
+    private val group = RepoPattern.group("mineshaft.pity")
+
+
+    /**
+     * WRAPPED-REGEX-TEST: " Glacite Mineshafts: 124/2,000"
+     */
+    private val tabPityPattern by group.pattern(
+        "tablist",
+        " Glacite Mineshafts: (?<pity>[\\d,]+)/2,000",
+    )
+
+    @HandleEvent(onlyOnSkyblock = true)
+    fun onOreMined(event: OreMinedEvent) {
+        if (!MiningApi.inGlacialTunnels()) return
+
+        val originalOre = event.originalOre
+        originalOre?.getPityBlock()?.let { it.blocksBroken++ }
+        event.extraBlocks.toMutableMap()
+            .apply {
+                if (originalOre != null) addOrPut(originalOre, -1)
+            }
+            .map { (block, amount) ->
+                block.getPityBlock()?.let { it.spreadBlocksBroken += amount }
+            }
+
+        update()
+    }
+
+    private const val SHAFT_ACHIEVEMENT = "100 shaft"
+
+    @HandleEvent
+    fun onAchievementRegistration(event: AchievementRegistrationEvent) {
+        val achievement = Achievement(
+            name = "Quick Shafter",
+            description = "Spawn a Mineshaft in under 100 Pity",
+            userLuckAmount = 10f,
+        )
+        event.register(achievement, SHAFT_ACHIEVEMENT)
+    }
+
+    @HandleEvent
+    fun onChat(event: SkyHanniChatEvent.Modify) {
+        if (!MiningApi.inGlacialTunnels()) return
+        if (MiningNotifications.mineshaftSpawn.matches(event.message)) {
+            val pityCounter = calculateCounter()
+            val chance = calculateChance(pityCounter)
+            val counterUntilPity = MAX_COUNTER - pityCounter
+            val totalBlocks = PityBlock.entries.sumOf { it.blocksBroken + it.spreadBlocksBroken }
+
+            if (counterUntilPity < 100 && everFoundPityWidget) {
+                AchievementManager.completeAchievement(SHAFT_ACHIEVEMENT)
+            }
+
+            mineshaftTotalBlocks += totalBlocks
+            mineshaftTotalCount++
+            sessionMineshafts++
+
+            val message = event.chatComponent.copy() + " §e($counterUntilPity)"
+
+            val hoverText = buildList {
+                add("§7Blocks mined: §e$totalBlocks")
+                add("§7Pity Counter: §e$pityCounter")
+                add(
+                    "§7Chance: " +
+                        "§e1§6/§e${chance.roundTo(1)} " +
+                        "§7(§b${((1.0 / chance) * 100).addSeparators()}%§7)",
+                )
+                minedBlocks.forEach {
+                    add(
+                        "    §7${it.pityBlock.displayName} mined: " +
+                            "§e${it.blocksBroken.addSeparators()} [+${it.spreadBlocksBroken.addSeparators()} spread]" +
+                            " §6(${it.pityBlock.getPity().addSeparators()}/${counterUntilPity.addSeparators()})",
+                    )
+                }
+                add("")
+                add(
+                    "§7Average Blocks/Mineshaft: " +
+                        "§e${(mineshaftTotalBlocks / mineshaftTotalCount.toDouble()).addSeparators()}",
+                )
+
+                if (!lastMineshaftSpawn.isFarPast()) {
+                    add("")
+                    add("§7Time since Last Mineshaft: §b${lastMineshaftSpawn.passedSince().format()}")
+                }
+            }
+
+            resetCounter()
+
+            val newComponent = componentBuilder {
+                append(message)
+                hover = TextHelper.multiline(hoverText)
+            }
+
+            if (config.modifyChatMessage) event.replaceComponent(newComponent, "shaft_count")
+        }
+    }
+
+    @HandleEvent
+    fun onSecondPassed(event: SecondPassedEvent) {
+        if (!isDisplayEnabled()) return
+        update()
+    }
+
+    private var tablistPity = MAX_COUNTER
+    private var everFoundPityWidget = false
+
+    @HandleEvent(onlyOnIsland = IslandType.DWARVEN_MINES)
+    fun onPityWidget(event: WidgetUpdateEvent) {
+        if (!event.isWidget(TabWidget.PITY)) return
+        for (line in event.lines) {
+            tabPityPattern.matchMatcher(line) {
+                everFoundPityWidget = true
+                tablistPity = MAX_COUNTER - group("pity").formatInt()
+                update()
+            }
+        }
+    }
+
+    private fun calculateCounter(): Int {
+        return tablistPity
+
+        // use old code if hypixel ever fixes it
+        /* val counter = MAX_COUNTER
+        if (minedBlocks.isEmpty()) return counter
+        val difference = minedBlocks.sumOf { it.pityBlock.getPity() }
+        return (counter - difference).toInt().coerceAtLeast(0) */
+    }
+
+    // if the chance is 1/1500, it will return 1500
+    private fun calculateChance(counter: Int): Double {
+        val surveyorPercent = HotmData.SURVEYOR.getReward()[HotmReward.MINESHAFT_CHANCE] ?: 0.0
+        val peakMountainPercent = HotmData.CORE_OF_THE_MOUNTAIN.getReward()[HotmReward.MINESHAFT_CHANCE] ?: 0.0
+        val chance = counter / (1 + surveyorPercent / 100 + peakMountainPercent / 100)
+        return chance
+    }
+
+    // TODO extract into multiple smaller functions
+    private fun update() {
+        val pityCounter = calculateCounter()
+        val chance = calculateChance(pityCounter)
+        val counterUntilPity = MAX_COUNTER - pityCounter
+
+        val blocksToPityList = buildList {
+            val multipliers = PityBlock.entries.map { it.multiplier }.toSet().sorted()
+
+            multipliers.forEach { multiplier ->
+                val iconsList = PityBlock.entries
+                    .filter { it.multiplier == multiplier }
+                    .map { Renderable.item(it.displayItem) }
+                add(
+                    Renderable.horizontal(
+                        Renderable.horizontal(iconsList),
+                        Renderable.text("§b${pityCounter / multiplier}"),
+                        spacing = 2,
+                    ),
+                )
+            }
+        }
+
+        val neededToPityRenderable = Renderable.vertical(
+            Renderable.text("§3Needed to pity:"),
+            Renderable.horizontal(
+                Renderable.placeholder(10, 0),
+                Renderable.vertical(blocksToPityList),
+            ),
+        )
+
+        val map = mapOf(
+            MineshaftPityLine.TITLE to Renderable.text("§9§lMineshaft Pity Counter"),
+            MineshaftPityLine.COUNTER to Renderable.text("§3Pity Counter: §e$counterUntilPity§6/§e$MAX_COUNTER"),
+            MineshaftPityLine.CHANCE to Renderable.text(
+                "§3Chance: §e1§6/§e${
+                    chance.roundTo(1).addSeparators()
+                } §7(§b${((1.0 / chance) * 100).addSeparators()}%§7)",
+            ),
+            MineshaftPityLine.NEEDED_TO_PITY to neededToPityRenderable,
+            MineshaftPityLine.TIME_SINCE_MINESHAFT to
+                Renderable.text("§3Last Mineshaft: §e${lastMineshaftSpawn.passedSince().format()}"),
+            MineshaftPityLine.AVERAGE_BLOCKS_MINESHAFT to
+                Renderable.text(
+                    "§3Average Blocks/Mineshaft: §e${(mineshaftTotalBlocks / mineshaftTotalCount.toDouble()).addSeparators()}",
+                ),
+            MineshaftPityLine.MINESHAFTS_TOTAL to Renderable.text("§3Mineshafts total: §e${mineshaftTotalCount.addSeparators()}"),
+            MineshaftPityLine.MINESHAFTS_SESSION to Renderable.text("§3Mineshafts this session: §e${sessionMineshafts.addSeparators()}"),
+        )
+
+        val renderables = config.mineshaftPityLines.filter { it.shouldDisplay() }.mapNotNull { map[it] }
+        val renderableList = mutableListOf<Renderable>()
+        if (!everFoundPityWidget) {
+            renderableList.add(Renderable.text("§cPity Tab Widget Missing"))
+            renderableList.add(Renderable.text("§cDo /tab and enable the pity widget"))
+            renderableList.add(Renderable.text("§cRight click the widget > Click \"Shown Pity\" > Click Glacite Tunnels and enable"))
+        }
+        renderableList.addAll(renderables)
+        display = listOf(
+            Renderable.vertical(
+                renderableList,
+                spacing = 2,
+            ),
+        )
+    }
+
+    init {
+        RenderDisplayHelper(
+            condition = {
+                return@RenderDisplayHelper if (display.isEmpty()) {
+                    update()
+                    false
+                } else isDisplayEnabled()
+            },
+            outsideInventory = true,
+        ) {
+            config.position.renderRenderables(
+                display,
+                posLabel = "Mineshaft Pity Display",
+            )
+        }
+    }
+
+    private fun resetCounter() {
+        minedBlocks = mutableListOf()
+        lastMineshaftSpawn = SimpleTimeMark.now()
+        update()
+    }
+
+    @HandleEvent
+    fun onCommandRegistration(event: CommandRegistrationEvent) {
+        event.registerBrigadier("shresetmineshaftpitystats") {
+            description = "Resets the mineshaft pity display stats"
+            category = CommandCategory.USERS_RESET
+            simpleCallback {
+                ChatUtils.chat("Reset the mineshaft pity display stats!")
+                resetCounter()
+                mineshaftTotalBlocks = 0
+                mineshaftTotalCount = 0
+                sessionMineshafts = 0
+                lastMineshaftSpawn = SimpleTimeMark.farPast()
+                update()
+            }
+        }
+    }
+
+    @HandleEvent
+    fun onIslandChange(event: IslandJoinEvent) {
+        if (event.island == IslandType.MINESHAFT) {
+            resetCounter()
+        }
+    }
+
+    @HandleEvent
+    fun onIslandLeave(event: IslandLeaveEvent) {
+        if (event.island == IslandType.MINESHAFT) {
+            resetCounter()
+        }
+    }
+
+    private fun isDisplayEnabled() = (MiningApi.inGlacialTunnels() || MiningApi.inDwarvenBaseCamp()) && config.enabled
+
+    enum class MineshaftPityLine(private val display: String, val shouldDisplay: () -> Boolean = { true }) {
+        TITLE("§3§lMineshaft Pity Counter"),
+        COUNTER("§3Counter: §e561§6/§e2000"),
+        CHANCE("§3Chance: §e1§6/§e1439 §7(§b0.069%§7)"),
+        NEEDED_TO_PITY("§3Needed to pity:\n§7   <blocks>"),
+        TIME_SINCE_MINESHAFT("§3Last Mineshaft: §e21m 5s", { !lastMineshaftSpawn.isFarPast() }),
+        AVERAGE_BLOCKS_MINESHAFT("§3Average Blocks/Mineshaft: §e361.5", { mineshaftTotalCount != 0 }),
+        MINESHAFTS_TOTAL("§3Mineshafts total: §e23", { mineshaftTotalCount != 0 }),
+        MINESHAFTS_SESSION("§3Mineshafts this session: §e3", { sessionMineshafts != 0 }),
+        ;
+
+        override fun toString() = display
+    }
+
+    data class PityData(
+        @Expose val pityBlock: PityBlock,
+        @Expose var blocksBroken: Int = 0,
+        @Expose var spreadBlocksBroken: Int = 0,
+    )
+
+    enum class PityBlock(
+        val displayName: String,
+        val oreTypes: List<OreType>,
+        val multiplier: Int,
+        private val displayItemProvider: () -> SafeItemStack,
+    ) {
+        MITHRIL(
+            "Mithril",
+            listOf(OreType.MITHRIL),
+            2,
+            { ColoredBlockCompat.LIGHT_BLUE.createWoolStack() },
+        ),
+
+        // can't rename enum because config explodes
+        GEMSTONE(
+            "Low Tier Gemstone",
+            OreType.entries.filter { it.isLowTierGemstone() },
+            8,
+            { ColoredBlockCompat.RED.createGlassStack() },
+        ),
+        HIGH_TIER_GEMSTONE(
+            "High Tier Gemstone",
+            OreType.entries.filter { it.isHighTierGemstone() },
+            10,
+            { ColoredBlockCompat.BLUE.createGlassStack() },
+        ),
+        GLACITE(
+            "Glacite",
+            listOf(OreType.GLACITE),
+            4,
+            { SafeItemStack(Blocks.PACKED_ICE) },
+        ),
+        TUNGSTEN(
+            "Tungsten",
+            listOf(OreType.TUNGSTEN),
+            4,
+            { SafeItemStack(Blocks.CLAY) },
+        ),
+        UMBER(
+            "Umber",
+            listOf(OreType.UMBER),
+            4,
+            { SafeItemStack(Blocks.RED_SANDSTONE) },
+        ),
+
+        TITANIUM(
+            "Titanium",
+            listOf(OreType.TITANIUM),
+            8,
+            { BlockCompat.createSmoothDiorite() },
+        ),
+        ;
+
+        val displayItem: SafeItemStack by lazy { displayItemProvider() }
+
+        companion object {
+
+            fun OreBlock.getPityBlock(): PityBlock? {
+                val oreType = getOreType() ?: return null
+                return entries.firstOrNull { oreType in it.oreTypes }
+            }
+
+            fun PityBlock.getPity() = (blocksBroken + spreadBlocksBroken / 2.0) * multiplier
+        }
+    }
+}

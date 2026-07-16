@@ -97,6 +97,7 @@ public class BomboaddonsClient implements ClientModInitializer {
     }
 
     public void onInitializeClient() {
+        WaypointManager.init();
         net.fabricmc.fabric.api.event.player.UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             net.minecraft.core.BlockPos pos = hitResult.getBlockPos();
             if (!me.bombo.bomboaddons.BlockHighlight.targetChestPosList.isEmpty() && me.bombo.bomboaddons.BlockHighlight.targetChestPosList.contains(pos)) {
@@ -2596,6 +2597,21 @@ public class BomboaddonsClient implements ClientModInitializer {
                             }
                             return 1;
                         }));
+
+                        builder.then(ClientCommands.literal("wp")
+                            .then(ClientCommands.argument("x", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg())
+                            .then(ClientCommands.argument("y", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg())
+                            .then(ClientCommands.argument("z", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg())
+                            .then(ClientCommands.argument("name", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                            .executes(context -> {
+                                double x = com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "x");
+                                double y = com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "y");
+                                double z = com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "z");
+                                String name = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "name");
+                                WaypointManager.addWaypoint(x, y, z, name);
+                                context.getSource().sendFeedback(Component.literal("§aWaypoint added: §e" + name + " §a(" + x + ", " + y + ", " + z + ")"));
+                                return 1;
+                            }))))));
                     };
 
                     setupCommands.accept(bBuilder);
@@ -2612,6 +2628,106 @@ public class BomboaddonsClient implements ClientModInitializer {
                                 openGuiNextTick = true;
                                 return 1;
                             }));
+
+                    dispatcher.register(ClientCommands.literal("bnav")
+                        .executes(context -> {
+                            String currentLoc = SkyblockUtils.getLocation();
+                            if (currentLoc == null) currentLoc = "Unknown";
+                            String formattedLoc = currentLoc.replace(" ", "_");
+                            
+                            java.util.List<String> names = new java.util.ArrayList<>();
+                            for (SkyblockItemManager.SkyblockItemInfo npc : SkyblockItemManager.getAllNpcs()) {
+                                if (npc.island != null) {
+                                    String nIsle = npc.island.toLowerCase().replace(" ", "_");
+                                    String cLoc = currentLoc.toLowerCase().replace(" ", "_");
+                                    String fLoc = formattedLoc.toLowerCase();
+                                    
+                                    boolean matches = false;
+                                    if (nIsle.equals(cLoc) || nIsle.equals(fLoc)) matches = true;
+                                    else if (nIsle.equals("hub") && (cLoc.equals("the_hub") || cLoc.equals("village"))) matches = true;
+                                    else if (nIsle.equals("the_farming_islands") && (cLoc.contains("barn") || cLoc.contains("mushroom"))) matches = true;
+                                    else if (nIsle.equals("spider_den") && cLoc.equals("spider's_den")) matches = true;
+                                    
+                                    if (matches) {
+                                        names.add(npc.name != null ? npc.name.replaceAll("(?i)§[0-9a-fk-or]", "") : npc.id);
+                                    }
+                                }
+                            }
+                            java.util.Collections.sort(names);
+                            
+                            context.getSource().sendFeedback(net.minecraft.network.chat.Component.literal("§aNPCs on " + currentLoc + ":"));
+                            for (String n : names) {
+                                context.getSource().sendFeedback(net.minecraft.network.chat.Component.literal("§e- " + n));
+                            }
+                            return 1;
+                        })
+                        .then(ClientCommands.literal("clear")
+                            .executes(context -> {
+                                WaypointManager.clearNav();
+                                context.getSource().sendFeedback(net.minecraft.network.chat.Component.literal("§aNavigation cleared."));
+                                return 1;
+                            }))
+                        .then(ClientCommands.argument("npc", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                            .suggests((context, builder) -> {
+                                String currentLoc = SkyblockUtils.getLocation();
+                                if (currentLoc == null || currentLoc.equals("Unknown")) return builder.buildFuture();
+                                String formattedLoc = currentLoc.replace(" ", "_");
+                                
+                                java.util.List<String> suggestions = new java.util.ArrayList<>();
+                                for (SkyblockItemManager.SkyblockItemInfo npc : SkyblockItemManager.getAllNpcs()) {
+                                    if (npc.island != null) {
+                                        String nIsle = npc.island.toLowerCase().replace(" ", "_");
+                                        String cLoc = currentLoc.toLowerCase().replace(" ", "_");
+                                        String fLoc = formattedLoc.toLowerCase();
+                                        
+                                        boolean matches = false;
+                                        if (nIsle.equals(cLoc) || nIsle.equals(fLoc)) matches = true;
+                                        else if (nIsle.equals("hub") && (cLoc.equals("the_hub") || cLoc.equals("village"))) matches = true;
+                                        else if (nIsle.equals("the_farming_islands") && (cLoc.contains("barn") || cLoc.contains("mushroom"))) matches = true;
+                                        else if (nIsle.equals("spider_den") && cLoc.equals("spider's_den")) matches = true;
+                                        
+                                        if (matches) {
+                                            suggestions.add(npc.name != null ? npc.name.replaceAll("(?i)§[0-9a-fk-or]", "") : npc.id);
+                                        }
+                                    }
+                                }
+                                java.util.Collections.sort(suggestions);
+                                
+                                String remaining = builder.getRemaining().toLowerCase();
+                                for (String s : suggestions) {
+                                    if (s.toLowerCase().startsWith(remaining)) {
+                                        builder.suggest(s);
+                                    }
+                                }
+                                return builder.buildFuture();
+                            })
+                            .executes(context -> {
+                                String name = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "npc");
+                                String[] parts = name.split(" ");
+                                if (parts.length == 3) {
+                                    try {
+                                        double nx = Double.parseDouble(parts[0]);
+                                        double ny = Double.parseDouble(parts[1]);
+                                        double nz = Double.parseDouble(parts[2]);
+                                        WaypointManager.setNavPath(nx, ny, nz, "Destination", null);
+                                        context.getSource().sendFeedback(net.minecraft.network.chat.Component.literal("§aNavigating to §e" + nx + ", " + ny + ", " + nz));
+                                        return 1;
+                                    } catch (NumberFormatException ignored) {}
+                                }
+                                SkyblockItemManager.SkyblockItemInfo npc = SkyblockItemManager.getNpcByName(name);
+                                if (npc != null) {
+                                    WaypointManager.setNavPath(npc.x, npc.y, npc.z, npc.name, npc.island);
+                                    context.getSource().sendFeedback(net.minecraft.network.chat.Component.literal("§aNavigating to §e" + npc.name));
+                                    if (npc.island != null && !npc.island.isEmpty()) {
+                                        context.getSource().sendFeedback(net.minecraft.network.chat.Component.literal("§7(Island: " + npc.island + ")"));
+                                    }
+                                } else {
+                                    context.getSource().sendFeedback(net.minecraft.network.chat.Component.literal("§cNPC not found."));
+                                }
+                                return 1;
+                            }))
+                    );
+
                 } catch (Throwable t) {
                     Bomboaddons.LOGGER.error("[BomboAddons] FAILED to register /bombo commands!", t);
                 }
@@ -3136,6 +3252,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                     t.printStackTrace();
                 }
                 try {
+                    WaypointManager.render(context);
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+                try {
                     OrderedWaypoints.render(context);
                 } catch (Throwable t) {
                     t.printStackTrace();
@@ -3170,6 +3291,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                             BomboRenderUtils.draw2DLine(graphics, centerX, centerY, screenWidth - 100f, 100f, 0xFF00FF00, 3.0f);
                             BomboRenderUtils.draw2DLine(graphics, centerX, centerY, centerX, 50f, 0xFF0000FF, 3.0f);
                         }
+                        
+                        AutoFishing.renderTimer(graphics);
 
                         try {
                             if (BomboConfig.get().kuudraDebug) {

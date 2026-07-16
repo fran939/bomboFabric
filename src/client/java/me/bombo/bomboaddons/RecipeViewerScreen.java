@@ -116,6 +116,17 @@ public class RecipeViewerScreen extends Screen {
 
         SkyblockItemManager.ensureLoaded();
         
+        if (!usageMode) {
+            String npcId = SkyblockItemManager.getNpcSeller(itemId);
+            if (npcId != null) {
+                SkyblockItemManager.SkyblockItemInfo npcInfo = SkyblockItemManager.getNpc(npcId);
+                if (npcInfo != null) {
+                    Minecraft.getInstance().setScreenAndShow(new NpcShopScreen(npcInfo, parentScreen));
+                    return;
+                }
+            }
+        }
+        
         if (usageMode) {
             List<SkyblockItemManager.SkyblockItemInfo> usages = SkyblockItemManager.getUsages(itemId);
             for (SkyblockItemManager.SkyblockItemInfo info : usages) {

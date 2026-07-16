@@ -1,0 +1,407 @@
+package at.hannibal2.skyhanni.data.mob
+
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.data.IslandType
+import at.hannibal2.skyhanni.data.mob.MobFilter.isDisplayNpc
+import at.hannibal2.skyhanni.data.mob.MobFilter.isRealPlayer
+import at.hannibal2.skyhanni.data.mob.MobFilter.isSkyBlockMob
+import at.hannibal2.skyhanni.events.DebugDataCollectEvent
+import at.hannibal2.skyhanni.events.entity.EntityHealthUpdateEvent
+import at.hannibal2.skyhanni.events.minecraft.packet.PacketReceivedEvent
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.test.DevApi
+import at.hannibal2.skyhanni.utils.AllEntitiesGetter
+import at.hannibal2.skyhanni.utils.ChatUtils
+import at.hannibal2.skyhanni.utils.EntityUtils
+import at.hannibal2.skyhanni.utils.LocationUtils
+import at.hannibal2.skyhanni.utils.SkyBlockUtils
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.drainForEach
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.drainTo
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.put
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.refreshReference
+import at.hannibal2.skyhanni.utils.compat.MinecraftCompat
+import at.hannibal2.skyhanni.utils.compat.formattedTextCompatLessResets
+import at.hannibal2.skyhanni.utils.getLorenzVec
+import net.minecraft.client.player.LocalPlayer
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
+import net.minecraft.network.protocol.game.ClientboundLoginPacket
+import net.minecraft.world.damagesource.DamageSource
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.ambient.Bat
+import net.minecraft.world.entity.decoration.ArmorStand
+import net.minecraft.world.entity.monster.Creeper
+import net.minecraft.world.entity.npc.villager.Villager
+import net.minecraft.world.entity.player.Player
+import net.minecraft.world.level.Level
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
+import at.hannibal2.skyhanni.events.MobEvent.DeSpawn as DeSpawnEvent
+import at.hannibal2.skyhanni.events.MobEvent.FirstSeen as FirstSeenEvent
+import at.hannibal2.skyhanni.events.MobEvent.Hurt as HurtEvent
+import at.hannibal2.skyhanni.events.MobEvent.Spawn as SpawnEvent
+
+@SkyHanniModule
+object MobDetection {
+
+    /* Unsupported Entities
+        Nicked Players
+        Odonata
+        Silk Worm
+        Fairy (in Dungeon)
+        Totem of Corruption
+        Worm
+        Scatha
+        Butterfly
+        Exe
+        Wai
+        Zee
+     */
+
+    private const val MAX_RETRIES = 20 * 5
+
+    private val mainToggle get() = DevApi.mainToggles.mobDetection
+
+    private val shouldClear: AtomicBoolean = AtomicBoolean(false)
+
+    private fun mobDetectionReset() {
+        MobData.currentMobs.map {
+            it.createDeSpawnEvent()
+        }.forEach { it.post() }
+        MobData.retries.clear()
+    }
+
+    // TODO this is a unused debug function. maybe connect with a debug command or remove
+    private fun watchdog() {
+        val world = MinecraftCompat.localWorldOrNull ?: return
+        if (MobData.retries.any { it.value.entity.level() != world }) {
+            ChatUtils.chat("Watchdog: Retires")
+        }
+        if (MobData.currentMobs.any { it.watchdogCheck(world) }) {
+            ChatUtils.chat("Watchdog: Current Mobs")
+        }
+        if (MobData.players.any { it.watchdogCheck(world) }) {
+            ChatUtils.chat("Watchdog: Players")
+        }
+        if (MobData.displayNpcs.any { it.watchdogCheck(world) }) {
+            ChatUtils.chat("Watchdog: Display NPCs")
+        }
+        if (MobData.skyblockMobs.any { it.watchdogCheck(world) }) {
+            ChatUtils.chat("Watchdog: SkyBlockMobs")
+        }
+        if (MobData.summoningMobs.any { it.watchdogCheck(world) }) {
+            ChatUtils.chat("Watchdog: Summoning")
+        }
+        if (MobData.special.any { it.watchdogCheck(world) }) {
+            ChatUtils.chat("Watchdog: Special")
+        }
+        if (MobData.notSeenMobs.any { it.watchdogCheck(world) }) {
+            ChatUtils.chat("Watchdog: Not Seen Mobs")
+        }
+    }
+
+    private fun Mob.watchdogCheck(world: Level): Boolean =
+        this.baseEntity.level() != world || (
+            this.armorStand?.let { it.level() != world } ?: false
+            ) || this.extraEntities.any { it.level() != world }
+
+    @OptIn(AllEntitiesGetter::class)
+    @HandleEvent
+    fun onTick() {
+        if (shouldClear.get()) { // Needs to work outside skyblock since it needs clearing when leaving skyblock and joining limbo
+            mobDetectionReset()
+            shouldClear.set(false)
+        }
+        @Suppress("InSkyBlockEarlyReturn")
+        if (!SkyBlockUtils.inSkyBlock) return
+
+        makeEntityReferenceUpdate()
+
+        handleMobsFromPacket()
+
+        handleRetries()
+
+        MobData.previousEntityLiving.clear()
+        MobData.previousEntityLiving.addAll(MobData.currentEntityLiving)
+        MobData.currentEntityLiving.clear()
+        MobData.currentEntityLiving.addAll(
+            EntityUtils.getEntities<LivingEntity>()
+                .filter { it !is ArmorStand && it !is LocalPlayer },
+        )
+
+        if (!mainToggle) {
+            MobData.currentEntityLiving.clear() // Naturally removing the mobs using the despawn
+        }
+
+        (MobData.currentEntityLiving - MobData.previousEntityLiving).forEach { addRetry(it) } // Spawn
+        (MobData.previousEntityLiving - MobData.currentEntityLiving).forEach { entityDeSpawn(it) } // Despawn
+
+        MobData.notSeenMobs.removeIf(::canBeSeen)
+
+        if (!mainToggle) {
+            mobDetectionReset() // Ensure that all mobs are cleared 100%
+        }
+    }
+
+    /** Splits the entity into player, displayNPC and other */
+    private fun LivingEntity.getRoughType() = when {
+        this is Player && this.isRealPlayer() -> MobCategory.PLAYER
+        this.isDisplayNpc() -> MobCategory.DISPLAY_NPC
+        this.isSkyBlockMob() && !islandException() -> MobCategory.BASIC
+        else -> null
+    }
+
+    private fun addRetry(entity: LivingEntity) = entity.getRoughType()?.let { type ->
+        val re = MobData.RetryEntityInstancing(entity, 0, type)
+        MobData.retries.put(re.toKeyValuePair())
+    }
+
+    private fun removeRetry(entity: LivingEntity) = MobData.retries.remove(entity.id)
+
+    private fun getRetry(entity: LivingEntity) = MobData.retries[entity.id]
+
+    /** @return always true */
+    private fun mobDetectionError(string: String) = MobData.logger.log(string).let { true }
+
+    private fun canBeSeen(mob: Mob): Boolean {
+        val isVisible = !mob.isInvisible() && mob.canBeSeen()
+        if (isVisible) {
+            when (mob.category) {
+                MobCategory.PLAYER -> FirstSeenEvent.Player(mob)
+                MobCategory.SUMMON -> FirstSeenEvent.Summon(mob)
+                MobCategory.SPECIAL -> FirstSeenEvent.Special(mob)
+                MobCategory.PROJECTILE -> FirstSeenEvent.Projectile(mob)
+                MobCategory.DISPLAY_NPC -> FirstSeenEvent.DisplayNpc(mob)
+                MobCategory.BASIC, MobCategory.DUNGEON, MobCategory.BOSS, MobCategory.SLAYER -> FirstSeenEvent.SkyblockMob(mob)
+            }.post()
+        }
+        return isVisible
+    }
+
+    /**@return a false means that it should try again (later)*/
+    @Suppress("ReturnCount")
+    private fun entitySpawn(entity: LivingEntity, roughCategory: MobCategory): Boolean {
+        when (roughCategory) {
+            MobCategory.PLAYER -> SpawnEvent.Player(MobFactories.player(entity)).post()
+
+            MobCategory.DISPLAY_NPC -> return MobFilter.createDisplayNpc(entity)
+            MobCategory.BASIC -> {
+                val (result, mob) = MobFilter.createSkyblockEntity(entity)
+                when (result) {
+                    MobData.Result.NotYetFound -> return false
+                    MobData.Result.Illegal -> return true // Remove entity from the spawning queue
+                    MobData.Result.SomethingWentWrong -> return mobDetectionError("Something Went Wrong!")
+                    MobData.Result.Found -> {
+                        if (mob == null) return mobDetectionError("Mob is null even though result is Found")
+                        when (mob.category) {
+                            MobCategory.SUMMON -> SpawnEvent.Summon(mob)
+                            MobCategory.BASIC, MobCategory.DUNGEON, MobCategory.BOSS, MobCategory.SLAYER -> SpawnEvent.SkyblockMob(mob)
+                            MobCategory.SPECIAL -> SpawnEvent.Special(mob)
+                            MobCategory.PROJECTILE -> SpawnEvent.Projectile(mob)
+                            MobCategory.DISPLAY_NPC -> SpawnEvent.DisplayNpc(mob) // Needed for some special cases
+                            MobCategory.PLAYER -> return mobDetectionError("An Player Ended Here. How?")
+                        }.post()
+                    }
+                }
+            }
+
+            else -> return true
+        }
+        return true
+    }
+
+    private val entityFromPacket = ConcurrentLinkedQueue<Pair<EntityPacketType, Int>>()
+
+    /** For mobs that have default health of the entity */
+    private enum class EntityPacketType {
+        SPIRIT_BAT,
+        VILLAGER,
+        CREEPER_VAIL,
+    }
+
+    /** Handles some mobs that have default health of the entity, specially using the [EntityHealthUpdateEvent] */
+    private fun handleMobsFromPacket() = entityFromPacket.drainForEach { (type, id) ->
+        when (type) {
+            EntityPacketType.SPIRIT_BAT -> {
+                val entity = EntityUtils.getEntityByID(id) as? Bat ?: return@drainForEach
+                if (MobData.entityToMob[entity] != null) return@drainForEach
+                removeRetry(entity)
+                SpawnEvent.Projectile(MobFactories.projectile(entity, "Spirit Scepter Bat")).post()
+            }
+
+            EntityPacketType.VILLAGER -> {
+                val entity = EntityUtils.getEntityByID(id) as? Villager ?: return@drainForEach
+                val mob = MobData.entityToMob[entity]
+                if (mob != null && mob.category == MobCategory.DISPLAY_NPC) {
+                    DeSpawnEvent.DisplayNpc(mob)
+                    addRetry(entity)
+                    return@drainForEach
+                }
+                getRetry(entity)?.let {
+                    if (it.roughCategory == MobCategory.DISPLAY_NPC) {
+                        removeRetry(entity)
+                        addRetry(entity)
+                    }
+                }
+            }
+
+            EntityPacketType.CREEPER_VAIL -> {
+                val entity = EntityUtils.getEntityByID(id) as? Creeper ?: return@drainForEach
+                if (MobData.entityToMob[entity] != null) return@drainForEach
+                if (!entity.isPowered) return@drainForEach
+                removeRetry(entity)
+                SpawnEvent.Special(MobFactories.special(entity, "Creeper Veil")).post()
+            }
+        }
+    }
+
+    @HandleEvent
+    fun onEntityHealthUpdateEvent(event: EntityHealthUpdateEvent) {
+        when {
+            // Very high false positive rate
+            /*event.entity is Bat && event.health == 6 -> {
+                entityFromPacket.add(EntityPacketType.SPIRIT_BAT to event.entity.id)
+            }*/
+
+            event.entity is Villager && event.health != 20 -> {
+                entityFromPacket.add(EntityPacketType.VILLAGER to event.entity.id)
+            }
+
+            event.entity is Creeper && event.health == 20 -> {
+                entityFromPacket.add(EntityPacketType.CREEPER_VAIL to event.entity.id)
+            }
+        }
+    }
+
+    private fun islandException(): Boolean = when (SkyBlockUtils.currentIsland) {
+        IslandType.GARDEN_GUEST -> true
+        IslandType.PRIVATE_ISLAND_GUEST -> true
+        else -> false
+    }
+
+    private fun entityDeSpawn(entity: LivingEntity) {
+        MobData.entityToMob[entity]?.createDeSpawnEvent()?.post() ?: removeRetry(entity)
+        allEntitiesViaPacketId.remove(entity.id)
+    }
+
+    private fun Mob.createDeSpawnEvent() = when (this.category) {
+        MobCategory.PLAYER -> DeSpawnEvent.Player(this)
+        MobCategory.SUMMON -> DeSpawnEvent.Summon(this)
+        MobCategory.SPECIAL -> DeSpawnEvent.Special(this)
+        MobCategory.PROJECTILE -> DeSpawnEvent.Projectile(this)
+        MobCategory.DISPLAY_NPC -> DeSpawnEvent.DisplayNpc(this)
+        MobCategory.BASIC, MobCategory.DUNGEON, MobCategory.BOSS, MobCategory.SLAYER -> DeSpawnEvent.SkyblockMob(this)
+    }
+
+    fun postMobHurtEvent(mob: Mob, source: DamageSource, amount: Float) = when (mob.category) {
+        MobCategory.PLAYER -> HurtEvent.Player(mob, source, amount)
+        MobCategory.SUMMON -> HurtEvent.Summon(mob, source, amount)
+        MobCategory.SPECIAL -> HurtEvent.Special(mob, source, amount)
+        MobCategory.PROJECTILE -> HurtEvent.Projectile(mob, source, amount)
+        MobCategory.DISPLAY_NPC -> HurtEvent.DisplayNpc(mob, source, amount)
+        MobCategory.BASIC, MobCategory.DUNGEON, MobCategory.BOSS, MobCategory.SLAYER -> HurtEvent.SkyblockMob(mob, source, amount)
+    }.post()
+
+    private fun handleRetries() {
+        val iterator = MobData.retries.iterator()
+        while (iterator.hasNext()) {
+            val (_, retry) = iterator.next()
+
+            if (MobData.externRemoveOfRetryAmount > 0) {
+                iterator.remove()
+                MobData.externRemoveOfRetryAmount--
+                continue
+            }
+
+            if (retry.outsideRange()) continue
+
+            val entity = retry.entity
+            if (retry.times == MAX_RETRIES) {
+                MobData.logger.log(
+                    "`${retry.entity.name.formattedTextCompatLessResets()}`${retry.entity.id} missed {\n " +
+                        "is already Found: ${MobData.entityToMob[retry.entity] != null})." +
+                        "\n Position: ${retry.entity.getLorenzVec()}\n " +
+                        "DistanceC: ${
+                            entity.getLorenzVec().distanceChebyshevIgnoreY(LocationUtils.playerLocation())
+                        }\n" +
+                        "Relative Position: ${entity.getLorenzVec() - LocationUtils.playerLocation()}\n " +
+                        "}",
+                )
+                // Uncomment this to make it closed a loop
+                // iterator.remove()
+                // continue
+            }
+            if (!entitySpawn(entity, retry.roughCategory)) {
+                retry.times++
+                continue
+            }
+            iterator.remove()
+        }
+    }
+
+    private val entityUpdatePackets = ConcurrentLinkedQueue<Int>()
+    private val entitiesThatRequireUpdate = mutableSetOf<Int>() // needs to be distinct, therefore not using a queue
+
+    /** Refreshes the references of the entities in entitiesThatRequireUpdate */
+    private fun makeEntityReferenceUpdate() {
+        entitiesThatRequireUpdate.iterator().let { iterator ->
+            while (iterator.hasNext()) {
+                if (handleEntityUpdate(iterator.next())) iterator.remove()
+            }
+        }
+        entityUpdatePackets.drainTo(entitiesThatRequireUpdate)
+    }
+
+    private fun handleEntityUpdate(entityID: Int): Boolean {
+        val entity = EntityUtils.getEntityByID(entityID) as? LivingEntity ?: return false
+        getRetry(entity)?.entity = entity
+        MobData.currentEntityLiving.refreshReference(entity)
+        MobData.previousEntityLiving.refreshReference(entity)
+        // update map
+        MobData.entityToMob[entity]?.internalUpdateOfEntity(entity)
+        return true
+    }
+
+    @HandleEvent
+    fun onEntitySpawnPacket(event: PacketReceivedEvent) {
+        when (val packet = event.packet) {
+            is ClientboundAddEntityPacket -> addEntityUpdate(packet.id)
+            is ClientboundLoginPacket -> {
+                // one of the first packets that is sent when switching servers inside the BungeeCord Network
+                // (please some prove this, I just found it out via Testing)
+                shouldClear.set(true)
+                allEntitiesViaPacketId.clear()
+            }
+        }
+    }
+
+    private val allEntitiesViaPacketId = mutableSetOf<Int>()
+
+    private fun addEntityUpdate(id: Int) = if (allEntitiesViaPacketId.contains(id)) {
+        entityUpdatePackets.add(id)
+    } else {
+        allEntitiesViaPacketId.add(id)
+    }
+
+    @HandleEvent
+    fun onDisconnect() {
+        shouldClear.set(true)
+    }
+
+    @HandleEvent
+    fun onDebugDataCollect(event: DebugDataCollectEvent) {
+        event.title("Mob Detection")
+        if (!mainToggle) {
+            event.addData("Mob Detection is manually disabled!")
+        } else {
+            event.addIrrelevant {
+                add("normal enabled")
+                add("Active Mobs: ${MobData.currentMobs.size}")
+                val inDistanceMobs = MobData.retries.count { it.value.outsideRange() }
+                add("Searching for Mobs: ${MobData.retries.size - inDistanceMobs}")
+                add("Mobs over Max Search Count: ${MobData.retries.count { it.value.times > MAX_RETRIES }}")
+                add("Mobs outside of Range: $inDistanceMobs")
+            }
+        }
+    }
+
+}

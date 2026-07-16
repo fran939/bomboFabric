@@ -287,8 +287,10 @@ public class BomboConfig {
         public boolean serverListButton = false;
         
         public boolean autoFishingEnabled = false;
-        public int autoFishingMinDelay = 150;
-        public int autoFishingMaxDelay = 350;
+        public int autoFishingMinDelay = 75;
+        public int autoFishingMaxDelay = 90;
+        public boolean autoFishingSlugMode = false;
+        public float autoFishingSlugDelay = 10.0f;
         public boolean autoFishingDebug = false;
         public boolean reconnectButton = false;
         public boolean hideCheats = false;
@@ -752,6 +754,7 @@ public class BomboConfig {
                 out.name("color").value(value.color);
                 out.name("showInvisible").value(value.showInvisible);
                 out.name("enabled").value(value.enabled);
+                out.name("tracer").value(value.tracer);
                 out.endObject();
             }
         }
@@ -761,10 +764,11 @@ public class BomboConfig {
                 in.nextNull();
                 return null;
             } else if (in.peek() == JsonToken.STRING) {
-                return new HighlightInfo(in.nextString(), false, true);
+                return new HighlightInfo(in.nextString(), false, true, false);
             } else {
                 HighlightInfo info = new HighlightInfo();
                 info.enabled = true;
+                info.tracer = false;
                 in.beginObject();
                 while (in.hasNext()) {
                     String name = in.nextName();
@@ -774,6 +778,8 @@ public class BomboConfig {
                         info.showInvisible = in.nextBoolean();
                     } else if (name.equals("enabled")) {
                         info.enabled = in.nextBoolean();
+                    } else if (name.equals("tracer")) {
+                        info.tracer = in.nextBoolean();
                     } else {
                         in.skipValue();
                     }

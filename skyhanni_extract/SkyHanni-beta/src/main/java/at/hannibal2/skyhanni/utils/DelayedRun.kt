@@ -1,0 +1,63 @@
+package at.hannibal2.skyhanni.utils
+
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.test.command.ErrorManager
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.drainTo
+import net.minecraft.client.Minecraft
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.time.Duration
+
+// TODO add names for runs
+@SkyHanniModule
+object DelayedRun {
+
+    private val tasks = mutableListOf<Pair<() -> Any, SimpleTimeMark>>()
+    private val futureTasks = ConcurrentLinkedQueue<Pair<() -> Any, SimpleTimeMark>>()
+
+    fun runDelayed(duration: Duration, run: () -> Unit): SimpleTimeMark {
+        val time = SimpleTimeMark.now() + duration
+        futureTasks.add(run to time)
+        return time
+    }
+
+    fun <T> runDelayedReturning(duration: Duration, run: () -> T): Pair<SimpleTimeMark, () -> T> {
+        val time = SimpleTimeMark.now() + duration
+        val runnable = { run() }
+        @Suppress("UNCHECKED_CAST")
+        futureTasks.add((runnable as () -> Any) to time)
+        return time to runnable
+    }
+
+    /**
+     * Runs in the next game tick (up to 50ms delay), always on the main thread.
+     */
+    fun runNextTick(run: () -> Unit) = Minecraft.getInstance().schedule(run)
+
+    // TODO find out why, then fix/remove duplicate function
+    /**
+     * I'm not sure why, but this acts different to the above one
+     */
+    fun runNextTickOld(run: () -> Unit) = futureTasks.add(run to SimpleTimeMark.farPast())
+
+    /**
+     * Runs now if we are on the main thread, otherwise queues it for the next tick.
+     */
+    fun runOrNextTick(run: () -> Unit) = Minecraft.getInstance().execute(run)
+
+    @HandleEvent(priority = HandleEvent.LOWEST)
+    fun onTick() {
+        tasks.removeIf { (runnable, time) ->
+            val inPast = time.isInPast()
+            if (inPast) {
+                try {
+                    runnable()
+                } catch (e: Exception) {
+                    ErrorManager.logErrorWithData(e, "DelayedRun task crashed while executing: ${e.message}")
+                }
+            }
+            inPast
+        }
+        futureTasks.drainTo(tasks)
+    }
+}

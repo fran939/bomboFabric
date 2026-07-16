@@ -39,7 +39,7 @@ public class VirtualContainerGUI extends Screen {
         int y = (this.height - ySize) / 2;
         
         // Draw the chest background
-        graphics.blit(CHEST_GUI_TEXTURE, x, y, x + xSize, y + ySize, 0f, 1f, 0f, 1f);
+        graphics.blit(CHEST_GUI_TEXTURE, x, y, x + xSize, y + ySize, 0f, 176f/256f, 0f, 222f/256f);
         graphics.text(this.font, this.guiTitle, x + 8, y + 6, 4210752, false);
         
         if (System.currentTimeMillis() % 2000 < 50) {

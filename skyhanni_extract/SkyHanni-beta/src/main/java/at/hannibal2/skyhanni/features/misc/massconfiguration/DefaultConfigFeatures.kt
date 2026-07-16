@@ -1,0 +1,137 @@
+package at.hannibal2.skyhanni.features.misc.massconfiguration
+
+import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.config.ConfigFileType
+import at.hannibal2.skyhanni.config.commands.CommandRegistrationEvent
+import at.hannibal2.skyhanni.config.commands.brigadier.BrigadierArguments
+import at.hannibal2.skyhanni.config.commands.brigadier.BrigadierUtils
+import at.hannibal2.skyhanni.events.hypixel.HypixelJoinEvent
+import at.hannibal2.skyhanni.features.misc.update.ChangelogViewer
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.test.command.ErrorManager
+import at.hannibal2.skyhanni.utils.ChatUtils
+import io.github.notenoughupdates.moulconfig.processor.ConfigProcessorDriver
+
+@SkyHanniModule
+object DefaultConfigFeatures {
+
+    private var didNotifyOnce = false
+
+    @HandleEvent
+    fun onHypixelJoin(event: HypixelJoinEvent) {
+        if (didNotifyOnce) return
+        didNotifyOnce = true
+
+        val knownToggles = SkyHanniMod.knownFeaturesData.knownFeatures
+        val updated = SkyHanniMod.VERSION !in knownToggles
+        val processor = FeatureToggleProcessor()
+        val driver = ConfigProcessorDriver(processor)
+        driver.warnForPrivateFields = false
+        driver.processConfig(SkyHanniMod.feature)
+        knownToggles[SkyHanniMod.VERSION] = processor.allOptions.map { it.path }
+        SkyHanniMod.configManager.saveConfig(ConfigFileType.KNOWN_FEATURES, "Updated known feature flags")
+        if (!SkyHanniMod.feature.storage.hasPlayedBefore) {
+            SkyHanniMod.feature.storage.hasPlayedBefore = true
+            ChatUtils.clickableChat(
+                "Looks like this is the first time you are using SkyHanni. " +
+                    "Click here to configure default options, or run /shdefaultoptions.",
+                onClick = { onCommand("null", "null") },
+                "§eClick to run /shdefaultoptions!",
+            )
+        } else if (updated) {
+            val lastVersion = knownToggles.keys.lastOrNull { it != SkyHanniMod.VERSION }
+                ?: ErrorManager.skyHanniError(
+                    "lastVersion is null, this should never happen",
+                    "knownToggles" to knownToggles,
+                    "version" to SkyHanniMod.VERSION,
+                )
+            val command = "/shdefaultoptions $lastVersion ${SkyHanniMod.VERSION}"
+            ChatUtils.chat("Looks like you updated SkyHanni.")
+            ChatUtils.clickableChat(
+                "Click here to configure the newly introduced options, or run $command.",
+                onClick = { onCommand(lastVersion, SkyHanniMod.VERSION) },
+                "§eClick to run /shdefaultoptions $lastVersion ${SkyHanniMod.VERSION}!",
+            )
+            ChatUtils.clickableChat(
+                "Click here to see the changelog.",
+                onClick = {
+                    ChangelogViewer.showChangelog(lastVersion, SkyHanniMod.VERSION)
+                },
+            )
+        }
+    }
+
+    private fun onCommand(old: String, new: String) {
+        val processor = FeatureToggleProcessor()
+        val driver = ConfigProcessorDriver(processor)
+        driver.warnForPrivateFields = false
+        driver.processConfig(SkyHanniMod.feature)
+        var optionList = processor.orderedOptions
+        val knownToggles = SkyHanniMod.knownFeaturesData.knownFeatures
+        val togglesInNewVersion = knownToggles[new]
+        if (new != "null" && togglesInNewVersion == null) {
+            ChatUtils.chat("Unknown version $new")
+            return
+        }
+        val togglesInOldVersion = knownToggles[old]
+        if (old != "null" && togglesInOldVersion == null) {
+            ChatUtils.chat("Unknown version $old")
+            return
+        }
+        optionList = optionList
+            .mapValues { option ->
+                option.value.filter {
+                    (togglesInNewVersion == null || it.path in togglesInNewVersion) &&
+                        (togglesInOldVersion == null || it.path !in togglesInOldVersion)
+                }
+            }
+            .filter { (_, filteredOptions) -> filteredOptions.isNotEmpty() }
+        if (optionList.isEmpty()) {
+            ChatUtils.chat("There are no new options to configure between $old and $new")
+            return
+        }
+        SkyHanniMod.screenToOpen = DefaultConfigOptionGui(optionList, old, new)
+    }
+
+    fun applyCategorySelections(
+        resetSuggestionState: MutableMap<Category, ResetSuggestionState>,
+        orderedOptions: Map<Category, List<FeatureToggleableOption>>,
+    ) {
+        for ((cat, options) in orderedOptions) {
+            for (option in options) {
+                val resetState = option.toggleOverride ?: resetSuggestionState[cat]!!
+                if (resetState == ResetSuggestionState.LEAVE_DEFAULTS) continue
+                val onState = option.isTrueEnabled
+                val setTo = if (resetState == ResetSuggestionState.TURN_ALL_ON) {
+                    onState
+                } else {
+                    !onState
+                }
+                option.setter(setTo)
+            }
+        }
+    }
+
+    private val autocomplete get() = SkyHanniMod.knownFeaturesData.knownFeatures.keys + listOf("null")
+
+    @HandleEvent
+    fun onCommandRegistration(event: CommandRegistrationEvent) {
+        event.registerBrigadier("shdefaultoptions") {
+            description = "Select default options"
+            arg("oldVersion", BrigadierArguments.string(), BrigadierUtils.dynamicSuggestionProvider { autocomplete }) { oldVersion ->
+                arg("newVersion", BrigadierArguments.string(), BrigadierUtils.dynamicSuggestionProvider { autocomplete }) { newVersion ->
+                    callback {
+                        onCommand(getArg(oldVersion), getArg(newVersion))
+                    }
+                }
+                callback {
+                    onCommand(getArg(oldVersion), "null")
+                }
+            }
+            simpleCallback {
+                onCommand("null", "null")
+            }
+        }
+    }
+}

@@ -1,0 +1,27 @@
+package at.hannibal2.skyhanni.utils
+
+import at.hannibal2.skyhanni.utils.ItemUtils.getInternalNameOrNull
+import at.hannibal2.skyhanni.utils.ItemUtils.repoItemName
+import at.hannibal2.skyhanni.utils.NeuItems.getItemStack
+import at.hannibal2.skyhanni.utils.SafeItemStack
+
+data class PrimitiveItemStack(val internalName: NeuInternalName, val amount: Int) {
+
+    fun createItem(): SafeItemStack = internalName.getItemStack().apply { count = amount }
+
+    operator fun times(multiplier: Int): PrimitiveItemStack = PrimitiveItemStack(internalName, amount * multiplier)
+
+    operator fun plus(amount: Int): PrimitiveItemStack = PrimitiveItemStack(internalName, this.amount + amount)
+
+    val itemName by lazy { internalName.repoItemName }
+
+    fun toPair() = Pair(internalName, amount)
+
+    fun toPrimitiveIngredient() = PrimitiveIngredient(internalName, amount.toDouble())
+
+    companion object {
+
+        fun NeuInternalName.makePrimitiveStack(amount: Int = 1) = PrimitiveItemStack(this, amount)
+        fun SafeItemStack.toPrimitiveStackOrNull() = getInternalNameOrNull()?.let { PrimitiveItemStack(it, count) }
+    }
+}

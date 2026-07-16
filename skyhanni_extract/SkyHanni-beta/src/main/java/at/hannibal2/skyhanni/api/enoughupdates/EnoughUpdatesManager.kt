@@ -1,0 +1,384 @@
+package at.hannibal2.skyhanni.api.enoughupdates
+
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.config.ConfigManager
+import at.hannibal2.skyhanni.data.PetData
+import at.hannibal2.skyhanni.data.jsonobjects.repo.neu.NEURaritySpecificPetNums
+import at.hannibal2.skyhanni.data.jsonobjects.repo.neu.NeuItemJson
+import at.hannibal2.skyhanni.data.jsonobjects.repo.neu.NeuPetNumsJson
+import at.hannibal2.skyhanni.data.jsonobjects.repo.neu.NeuPetsJson
+import at.hannibal2.skyhanni.data.jsonobjects.repo.neu.recipe.NeuAbstractRecipe
+import at.hannibal2.skyhanni.data.repo.ChatProgressUpdates
+import at.hannibal2.skyhanni.events.NeuRepositoryReloadEvent
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.test.command.ErrorManager
+import at.hannibal2.skyhanni.utils.ChatUtils
+import at.hannibal2.skyhanni.utils.ComponentUtils
+import at.hannibal2.skyhanni.utils.ItemUtils.getLore
+import at.hannibal2.skyhanni.utils.ItemUtils.setLore
+import at.hannibal2.skyhanni.utils.NeuInternalName
+import at.hannibal2.skyhanni.utils.NeuInternalName.Companion.toInternalName
+import at.hannibal2.skyhanni.utils.NumberUtil.addSeparators
+import at.hannibal2.skyhanni.utils.PrimitiveRecipe
+import at.hannibal2.skyhanni.utils.SafeItemStack
+import at.hannibal2.skyhanni.utils.SkyBlockItemModifierUtils.getPetInfo
+import at.hannibal2.skyhanni.utils.StringUtils.cleanString
+import at.hannibal2.skyhanni.utils.StringUtils.removeUnusedDecimal
+import at.hannibal2.skyhanni.utils.chat.TextHelper.asComponent
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.mapNotNullAsync
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.takeIfNotEmpty
+// this is not unused
+import at.hannibal2.skyhanni.utils.compat.InventoryCompat.isNotEmpty
+import at.hannibal2.skyhanni.utils.compat.formattedTextCompatLeadingWhiteLessResets
+import at.hannibal2.skyhanni.utils.compat.getIdentifierString
+import at.hannibal2.skyhanni.utils.compat.getVanillaItem
+import at.hannibal2.skyhanni.utils.compat.setCustomItemName
+import at.hannibal2.skyhanni.utils.itemType
+import at.hannibal2.skyhanni.utils.json.fromJsonOrNull
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
+import net.minecraft.nbt.StringTag
+import java.io.File
+import java.util.TreeMap
+import kotlin.math.floor
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+//? if >= 26.1 {
+import at.hannibal2.skyhanni.utils.DeferredItemStack
+import net.minecraft.world.item.Item
+import net.minecraft.world.item.ItemStackTemplate
+//?}
+
+// Most functions are taken from NotEnoughUpdates
+@SkyHanniModule
+object EnoughUpdatesManager {
+
+    val configDirectory = File("config/notenoughupdates")
+    private val repoDirectory = File(configDirectory, "repo")
+    private val itemsFolder = File(repoDirectory, "items")
+
+    private val loadingMutex = Mutex()
+    private val itemMap = TreeMap<NeuInternalName, NeuItemJson>()
+    private val internalNameSet: MutableSet<NeuInternalName> = mutableSetOf()
+    private val itemStackCache = mutableMapOf<NeuInternalName, SafeItemStack>()
+    private val displayNameCache = mutableMapOf<NeuInternalName, String>()
+    private val recipesMap = HashMap<NeuInternalName, MutableSet<PrimitiveRecipe>>()
+
+    private var neuPetsJson: NeuPetsJson? = null
+    private var neuPetNums: NeuPetNumsJson? = null
+
+    val titleWordMap = TreeMap<String, MutableMap<String, MutableList<Int>>>()
+
+    fun getInternalNames() = internalNameSet
+    fun getItemInformation() = itemMap
+
+    fun inLoadingState() = loadingMutex.isLocked
+
+    /**
+     * Called by the Neu Repo Manager when the NEU repo is reloaded.
+     */
+    suspend fun reloadItemsFromRepo(progress: ChatProgressUpdates): Unit = loadingMutex.withLock {
+        progress.update("reloadItemsFromRepo")
+        progress.update("clearing caches and maps")
+        itemStackCache.clear()
+        displayNameCache.clear()
+        itemMap.clear()
+        internalNameSet.clear()
+        titleWordMap.clear()
+        recipesMap.clear()
+
+        val tempItemMap = TreeMap<NeuInternalName, NeuItemJson>()
+        loadItemMap(progress, tempItemMap)
+
+        progress.update("synchronized itemMap")
+        itemMap.putAll(tempItemMap)
+        progress.update("putAll tempItemMap")
+        internalNameSet.addAll(itemMap.keys)
+    }
+
+    fun getRecipesFor(internalName: NeuInternalName): Set<PrimitiveRecipe> = recipesMap.getOrDefault(internalName, emptySet())
+
+    private suspend fun loadItemMap(progress: ChatProgressUpdates, tempItemMap: TreeMap<NeuInternalName, NeuItemJson>) = coroutineScope {
+        progress.update("loadItemMap")
+        val fileSystem = EnoughUpdatesRepoManager.repoFileSystem
+        val list = fileSystem.list("items")
+        progress.innerProgressStart(list.size)
+        val parsedItems = list.mapNotNullAsync { name ->
+            try {
+                val internalName = name.removeSuffix(".json")
+                val itemJson = fileSystem.readJson("items/$name").asJsonObject
+                val tryParsedItem = parseItem(itemJson)
+                progress.innerProgressStep()
+                val parsedItem = tryParsedItem ?: return@mapNotNullAsync null
+                internalName.toInternalName() to parsedItem
+            } catch (e: Exception) {
+                progress.update("Failed to parse item: $name")
+                ErrorManager.logErrorWithData(e, "Failed to parse item: $name")
+                null
+            }
+        }
+        parsedItems.forEach { (internalName, item) ->
+            tempItemMap[internalName] = item
+            // Crafting type recipe
+            item.recipe?.loadAndRegister(item)
+            // Other types of recipes
+            item.recipes.forEach { recipe -> recipe.loadAndRegister(item) }
+            // Title word map
+            item.displayName?.let { displayName ->
+                for ((index, str) in displayName.split(" ").withIndex()) {
+                    val cleanedStr = str.cleanString()
+                    val internalMap = titleWordMap.getOrPut(cleanedStr) { TreeMap() }
+                    val indexList = internalMap.getOrPut(internalName.asString()) { mutableListOf() }
+                    indexList.add(index)
+                }
+            }
+        }
+    }
+
+    private fun NeuAbstractRecipe.loadAndRegister(itemJson: NeuItemJson) {
+        val ingredients = this.getPrimitiveInputs(itemJson).toSet()
+        val outputs = this.getPrimitiveOutputs(itemJson).toSet()
+        val recipe = PrimitiveRecipe(
+            ingredients,
+            outputs,
+            recipeType = this.type,
+            shouldUseForCraftCost = this.type.useForCraftCost,
+        )
+        for (internalName in recipe.outputs) {
+            val recipeSet = recipesMap.getOrPut(internalName.internalName) { mutableSetOf() }
+            recipeSet.add(recipe)
+        }
+    }
+
+    private fun parseItem(json: JsonObject): NeuItemJson? = runCatching {
+        val itemJson: NeuItemJson = ConfigManager.gson.fromJsonOrNull<NeuItemJson>(json) ?: return@runCatching null
+        itemJson.itemId.getVanillaItem()?.let { mcItem ->
+            itemJson.itemId = mcItem.getIdentifierString()
+        }
+        return itemJson
+    }.getOrThrow()
+
+    fun getItemById(id: String): NeuItemJson? = getItemById(id.toInternalName())
+    fun getItemById(internalName: NeuInternalName): NeuItemJson? =
+        if (inLoadingState()) null
+        else itemMap[internalName]
+
+    fun stackToJson(stack: SafeItemStack): JsonObject {
+        @Suppress("DEPRECATION")
+        val lore = stack.getLore()
+
+        val json = JsonObject()
+        json.addProperty("itemid", stack.itemType.getIdentifierString())
+        json.addProperty("displayname", stack.hoverName.formattedTextCompatLeadingWhiteLessResets())
+        json.add("nbttag", ComponentUtils.convertToNeuNbtInfoJson(stack))
+
+        val jsonLore = JsonArray()
+        for (line in lore) {
+            jsonLore.add(JsonPrimitive(line))
+        }
+        json.add("lore", jsonLore)
+        return json
+    }
+
+    fun neuItemToStack(neuItem: NeuItemJson, useCache: Boolean = true, useReplacements: Boolean = false): SafeItemStack =
+        neuItem.toStack(useCache, useReplacements)
+
+    private fun NeuItemJson?.toStack(
+        useCache: Boolean = true,
+        useReplacements: Boolean = false,
+    ): SafeItemStack {
+        this ?: return SafeItemStack.EMPTY
+
+        var usingCache = useCache && !useReplacements
+        if (internalName.asString() == "_") usingCache = false
+        if (usingCache) itemStackCache[internalName]?.let { return it.copy() }
+
+        val convertedItem = ComponentUtils.convertMinecraftIdToModern(itemId, damage ?: 0)
+        val baseItem = convertedItem.getVanillaItem() ?: return SafeItemStack.EMPTY
+
+        //? if >= 26.1 {
+        return buildDeferredStack(baseItem, count ?: 1, useReplacements).also { if (usingCache) itemStackCache[internalName] = it }.copy()
+        //?} else {
+        /*val stack = SafeItemStack(baseItem).takeIf { it.isNotEmpty() } ?: return SafeItemStack.EMPTY
+
+        count?.let { stack.count = it }
+        ComponentUtils.convertToComponents(stack, neuNbt)
+
+        var replacements = mapOf<String, String>()
+        if (useReplacements) {
+            replacements = stack.getPetLoreReplacements()
+            displayName?.let {
+                var name = it
+                for ((key, value) in replacements) {
+                    name = name.replace("{$key}", value)
+                }
+                stack.setCustomItemName(name)
+            }
+        }
+
+        lore.takeIfNotEmpty()?.let {
+            val componentLore = processLore(lore, replacements).map { it.value.asComponent() }
+            stack.setLore(componentLore)
+        }
+
+        if (usingCache) itemStackCache[internalName] = stack
+        return stack.copy()
+        *///?}
+    }
+
+    //? if >= 26.1 {
+    private fun NeuItemJson.buildDeferredStack(baseItem: Item, countVal: Int, useReplacements: Boolean): SafeItemStack {
+        val neuItemRef = this
+        val factory: () -> ItemStackTemplate = {
+            val freshStack = ItemStackTemplate(baseItem, countVal).create()
+            ComponentUtils.convertToComponents(freshStack, neuItemRef.neuNbt)
+            var innerReplacements = emptyMap<String, String>()
+            if (useReplacements) {
+                innerReplacements = freshStack.getPetLoreReplacements()
+                neuItemRef.displayName?.let {
+                    var name = it
+                    for ((key, value) in innerReplacements) name = name.replace("{$key}", value)
+                    freshStack.setCustomItemName(name)
+                }
+            }
+            neuItemRef.lore.takeIfNotEmpty()?.let {
+                val componentLore = processLore(neuItemRef.lore, innerReplacements).map { line -> line.value.asComponent() }
+                freshStack.setLore(componentLore)
+            }
+            ItemStackTemplate.fromNonEmptyStack(freshStack)
+        }
+        return DeferredItemStack(baseItem, factory, countVal)
+    }
+    //?}
+
+    private fun SafeItemStack?.getPetLoreReplacements(): Map<String, String> {
+        val petInfo = this?.getPetInfo() ?: return emptyMap()
+        val properInternalName = petInfo.type
+        // We let PetData do the heavy lifting of parsing the pet info
+        val petData = PetData(petInfo)
+        return buildMap {
+            put("LVL", petData.getLevelReplacement(properInternalName))
+            val raritySpecific = neuPetNums?.get(properInternalName)?.get(petData.rarity) ?: return@buildMap
+            if (petData.level == 0) addUnlevelledStatReplacements(raritySpecific)
+            else addLevelledStatReplacements(petData, raritySpecific)
+        }
+    }
+
+    private fun PetData.getLevelReplacement(properInternalName: String): String {
+        return if (level != 0) level.toString()
+        else neuPetsJson?.customPetLeveling?.get(properInternalName)?.let { petLeveling ->
+            val maxLevel = petLeveling.maxLevel ?: 100
+            "1➡$maxLevel"
+        } ?: "1➡100"
+    }
+
+    /**
+     * Displays stat ranges for pets in the case there is not a static level to check stats of.
+     */
+    private fun MutableMap<String, String>.addUnlevelledStatReplacements(nums: NEURaritySpecificPetNums) {
+        val otherNumsMin = nums.min.otherNums
+        val otherNumsMax = nums.max.otherNums
+
+        val addZero = nums.statLevellingType == 1
+
+        for (i in otherNumsMax.indices) {
+            val start = if (addZero) "0➡" else ""
+            this[i.toString()] = "$start${otherNumsMin[i]}➡${otherNumsMax[i]}"
+        }
+
+        for ((stat, statMax) in nums.max.statNums) {
+            val statMin = nums.min.statNums[stat] ?: continue
+            val start = "${if (addZero) "0➡" else ""}${if (statMin > 0) "+" else ""}"
+            this[stat.name] = "$start$statMin➡$statMax"
+        }
+    }
+
+    /**
+     * Adds 'true' calculated stats based on pet level.
+     */
+    private fun MutableMap<String, String>.addLevelledStatReplacements(petData: PetData, nums: NEURaritySpecificPetNums) {
+        val level = petData.level
+        val otherNumsMin = nums.min.otherNums
+        val otherNumsMax = nums.max.otherNums
+
+        val minStatLevel = nums.minStatsLevel ?: 0
+        val maxStatLevel = nums.maxStatsLevel ?: 100
+        val statLevellingType = nums.statLevellingType ?: -1
+        val statsLevel = if (statLevellingType in 0..1) {
+            if (level < minStatLevel) 1
+            else if (level < maxStatLevel) level - minStatLevel + 1
+            else maxStatLevel - minStatLevel + 1
+        } else level
+
+        val minMix = (maxStatLevel - (minStatLevel - (if (statLevellingType == -1) 0 else 1)) - statsLevel) / 99f
+        val maxMix = (statsLevel - 1) / 99f
+        for (i in otherNumsMax.indices) {
+            val num = otherNumsMin[i] * minMix + otherNumsMax[i] * maxMix
+            this[i.toString()] = if (statLevellingType == 1 && level < minStatLevel) "0"
+            else (floor(num * 10) / 10f).removeUnusedDecimal()
+        }
+
+        for ((stat, statMax) in nums.max.statNums) {
+            this[stat.name] = if (statLevellingType == 1 && level < minStatLevel) "0"
+            else {
+                val statMin = nums.min.statNums[stat] ?: continue
+                val num = statMin * minMix + statMax * maxMix
+                val baseFormat = (if (statMin > 0) "+" else "")
+                baseFormat + (floor(num * 10) / 10).removeUnusedDecimal()
+            }
+        }
+    }
+
+    private fun processLore(lore: List<String>, replacements: Map<String, String>): List<StringTag> = buildList {
+        lore.onEach { line ->
+            var replacedLine = line
+            for ((key, value) in replacements) {
+                replacedLine = replacedLine.replace("{$key}", value)
+            }
+            add(StringTag.valueOf(replacedLine))
+        }
+    }
+
+    fun getDisplayName(internalName: NeuInternalName): String = displayNameCache.getOrPut(internalName) {
+        // Intentionally toString() instead of asString() to indicate failure
+        val itemInfo = getItemById(internalName) ?: return@getOrPut internalName.toString()
+        itemInfo.displayName ?: run {
+            ErrorManager.skyHanniError("No display name for $internalName")
+        }
+    }
+
+    @HandleEvent
+    fun onNeuRepoReload(event: NeuRepositoryReloadEvent) {
+        neuPetsJson = event.getConstant<NeuPetsJson>("pets")
+        neuPetNums = event.getConstant<NeuPetNumsJson>("petnums")
+        if (itemMap.isNotEmpty()) {
+            ChatUtils.chat("Reloaded ${itemMap.size.addSeparators()} items in the NEU repo")
+        }
+    }
+
+    fun reportItemStatus() {
+        val loadedItems = itemMap.size
+        val directorySize = itemsFolder.listFiles()?.size ?: 0
+
+        val status = when {
+            directorySize == 0 -> "§cNo item directory entries found!"
+            loadedItems == 0 -> "§cNo items loaded!"
+            loadedItems < directorySize -> "§eLoaded $loadedItems/$directorySize items"
+            loadedItems > directorySize -> "§eLoaded Items: $loadedItems (more than directory size)"
+            else -> "§aLoaded all $loadedItems items!"
+        }
+        ChatUtils.chat("  §aNEU Repo Item Status:\n  $status", prefix = false)
+    }
+
+    fun reportRecipeStatus() {
+        val loadedRecipes = recipesMap.values.sumOf { it.size }
+        val status = when {
+            loadedRecipes == 0 -> "§cNo recipes loaded!"
+            else -> "§aLoaded $loadedRecipes recipes!"
+        }
+        ChatUtils.chat("  §aNEU Repo Recipe Status:\n  $status", prefix = false)
+    }
+}

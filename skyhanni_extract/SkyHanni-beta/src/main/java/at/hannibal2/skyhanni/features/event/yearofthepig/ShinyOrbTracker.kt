@@ -1,0 +1,129 @@
+package at.hannibal2.skyhanni.features.event.yearofthepig
+
+import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.config.commands.CommandCategory
+import at.hannibal2.skyhanni.config.commands.CommandRegistrationEvent
+import at.hannibal2.skyhanni.data.IslandType
+import at.hannibal2.skyhanni.events.yearofthepig.ShinyOrbLootedEvent
+import at.hannibal2.skyhanni.features.skillprogress.SkillType
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.InventoryUtils
+import at.hannibal2.skyhanni.utils.ItemUtils.getInternalNameOrNull
+import at.hannibal2.skyhanni.utils.NeuInternalName.Companion.toInternalName
+import at.hannibal2.skyhanni.utils.NumberUtil.addSeparators
+import at.hannibal2.skyhanni.utils.NumberUtil.formatPercentage
+import at.hannibal2.skyhanni.utils.NumberUtil.shortFormat
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.addOrPut
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.enumMapOf
+import at.hannibal2.skyhanni.utils.collection.RenderableCollectionUtils.addSearchString
+import at.hannibal2.skyhanni.utils.renderables.Searchable
+import at.hannibal2.skyhanni.utils.tracker.ItemTrackerData
+import at.hannibal2.skyhanni.utils.tracker.SessionUptime
+import at.hannibal2.skyhanni.utils.tracker.SkyHanniItemTracker
+import at.hannibal2.skyhanni.utils.tracker.TrackerUtils.addSkillXpInfo
+import com.google.gson.annotations.Expose
+
+@SkyHanniModule
+object ShinyOrbTracker {
+
+    private val config get() = SkyHanniMod.feature.event.yearOfThePig.shinyOrbTracker
+    private val SHINY_ORB_ITEM = "SHINY_ORB".toInternalName()
+    private val SHINY_ROD_ITEM = "SHINY_ROD".toInternalName()
+    private val SHINY_SHARD_ITEM = "SHINY_SHARD".toInternalName()
+    private val tracker = SkyHanniItemTracker(
+        "Shiny Orb Tracker",
+        ::ShinyOrbData,
+        { it.shinyOrbTracker },
+        trackerConfig = { config.perTrackerConfig },
+    ) { drawDisplay(it) }
+
+    private fun passesHoldingItem() = !config.holdingItems || InventoryUtils.getItemInHand()?.let {
+        it.getInternalNameOrNull() in setOf(SHINY_ORB_ITEM, SHINY_ROD_ITEM)
+    } == true
+
+    init {
+        tracker.initRenderer(
+            { config.position },
+        ) { config.enabled && IslandType.HUB.isInIsland() && passesHoldingItem() && PigFeaturesApi.isYearOfThePig() }
+    }
+
+    data class ShinyOrbData(
+        @Expose var orbsUsed: Long = 0L,
+        @Expose var orbsCompleted: Long = 0L,
+        @Expose var skillXpGained: MutableMap<SkillType, Long> = enumMapOf(),
+    ) : ItemTrackerData<SessionUptime.Normal>(SessionUptime.Normal::class) {
+        override fun getDescription(timesGained: Long): List<String> {
+            val percentage = timesGained.toDouble() / orbsCompleted
+            val perOrb = percentage.coerceAtMost(1.0).formatPercentage()
+
+            return listOf(
+                "§7Dropped §e${timesGained.addSeparators()} §7times.",
+                "§7Your drop chance per §6Shiny Orb§7: §c$perOrb",
+            )
+        }
+
+        override fun getCoinName(item: TrackedItem) = "§6Coins"
+
+        override fun getCoinDescription(item: TrackedItem): List<String> {
+            val coinsFormat = item.totalAmount.shortFormat()
+            return listOf(
+                "§6Shiny Orbs§7 occasionally drop coins as a reward.",
+                "§7You got §6$coinsFormat coins §7that way.",
+            )
+        }
+    }
+
+    @HandleEvent
+    fun onShinyOrbUsed() {
+        tracker.modify { it.orbsUsed++ }
+    }
+
+    @HandleEvent
+    fun onShinyOrbCharged() {
+        tracker.modify { it.orbsCompleted++ }
+    }
+
+    @HandleEvent
+    fun onShinyOrbLooted(event: ShinyOrbLootedEvent) {
+        tracker.addItem(SHINY_SHARD_ITEM, 1, command = false)
+        when {
+            event.loot != null -> {
+                val (internalName, amount) = event.loot.first to event.loot.second
+                tracker.addItem(internalName, amount, command = false)
+            }
+
+            event.coins != null -> tracker.addCoins(event.coins, command = false)
+            event.skillXp != null -> tracker.modify { tracker ->
+                val (skill, amount) = event.skillXp.first to event.skillXp.second
+                tracker.skillXpGained.addOrPut(skill, amount)
+            }
+        }
+    }
+
+    private fun drawDisplay(data: ShinyOrbData): List<Searchable> = buildList {
+        if (data.orbsUsed == 0L) return@buildList
+        addSearchString("§6§lShiny Orb Profit Tracker")
+        var profit = tracker.drawItems(data, { true }, this)
+
+        val orbPrice = 5000.0
+        val totalOrbPrice = data.orbsUsed * orbPrice
+        profit -= totalOrbPrice
+        addSearchString("§7${data.orbsUsed}x §6Shiny Orb§7: §c-${totalOrbPrice.shortFormat()} coins")
+
+        // Skill XP gains
+        addSkillXpInfo(data.skillXpGained)
+
+        val duration = data.getTotalUptime()
+        addAll(tracker.addTotalProfit(profit, data.orbsCompleted, "orb used", duration, "Orbs used"))
+    }
+
+    @HandleEvent
+    fun onCommandRegistration(event: CommandRegistrationEvent) {
+        event.registerBrigadier("shresetshinyorbtracker") {
+            description = "Resets the Shiny Orb Tracker"
+            category = CommandCategory.USERS_RESET
+            simpleCallback { tracker.resetCommand() }
+        }
+    }
+}

@@ -41,8 +41,12 @@ public class SkyblockItemManager {
         public final List<Component> lore;
         public final JsonArray recipes;
         public final boolean vanilla;
+        public final String island;
+        public final int x;
+        public final int y;
+        public final int z;
 
-        public SkyblockItemInfo(String id, String name, String material, String tier, String skinValue, String skinSignature, int color, String itemModel, List<Component> lore, JsonArray recipes, boolean vanilla) {
+        public SkyblockItemInfo(String id, String name, String material, String tier, String skinValue, String skinSignature, int color, String itemModel, List<Component> lore, JsonArray recipes, boolean vanilla, String island, int x, int y, int z) {
             this.id = id;
             this.name = name;
             this.material = material;
@@ -54,11 +58,17 @@ public class SkyblockItemManager {
             this.lore = lore;
             this.recipes = recipes;
             this.vanilla = vanilla;
+            this.island = island;
+            this.x = x;
+            this.y = y;
+            this.z = z;
         }
     }
 
     private static final Map<String, SkyblockItemInfo> itemCache = new ConcurrentHashMap<>();
     private static final Map<String, List<SkyblockItemInfo>> usageCache = new ConcurrentHashMap<>();
+    private static final Map<String, String> itemToNpcMap = new ConcurrentHashMap<>();
+    private static final Map<String, SkyblockItemInfo> npcMap = new ConcurrentHashMap<>();
     private static final AtomicBoolean isFetching = new AtomicBoolean(false);
     private static boolean loaded = false;
 
@@ -71,6 +81,32 @@ public class SkyblockItemManager {
     public static SkyblockItemInfo getInfo(String id) {
         ensureLoaded();
         return itemCache.get(id);
+    }
+    
+    public static String getNpcSeller(String itemId) {
+        ensureLoaded();
+        return itemToNpcMap.get(itemId);
+    }
+    
+    public static SkyblockItemInfo getNpc(String npcId) {
+        ensureLoaded();
+        return npcMap.get(npcId);
+    }
+
+    public static SkyblockItemInfo getNpcByName(String name) {
+        ensureLoaded();
+        String lowerName = name.toLowerCase();
+        for (SkyblockItemInfo npc : npcMap.values()) {
+            if (npc.name != null && npc.name.replaceAll("§[0-9a-fk-or]", "").toLowerCase().contains(lowerName)) {
+                return npc;
+            }
+        }
+        return npcMap.get(lowerName); // fallback to ID
+    }
+
+    public static java.util.Collection<SkyblockItemInfo> getAllNpcs() {
+        ensureLoaded();
+        return npcMap.values();
     }
 
     public static Item getOverrideItem(String material) {
@@ -325,8 +361,12 @@ public class SkyblockItemManager {
                             if (recipes.isEmpty()) recipes = null;
 
                             boolean isVanilla = obj.has("vanilla") && obj.get("vanilla").getAsBoolean();
+                            String island = obj.has("island") ? obj.get("island").getAsString() : null;
+                            int x = obj.has("x") ? obj.get("x").getAsInt() : 0;
+                            int y = obj.has("y") ? obj.get("y").getAsInt() : 0;
+                            int z = obj.has("z") ? obj.get("z").getAsInt() : 0;
 
-                            SkyblockItemInfo info = new SkyblockItemInfo(id, displayname, material, tier, skinValue, skinSignature, color, null, lore, recipes, isVanilla);
+                            SkyblockItemInfo info = new SkyblockItemInfo(id, displayname, material, tier, skinValue, skinSignature, color, null, lore, recipes, isVanilla, island, x, y, z);
                             tempMap.put(id, info);
 
                         } catch (Exception ex) {
@@ -356,7 +396,7 @@ public class SkyblockItemManager {
                                             mobDrop.add("all_drops", r.getAsJsonArray("drops"));
                                             
                                             if (target.recipes == null) {
-                                                target = new SkyblockItemInfo(target.id, target.name, target.material, target.tier, target.skinValue, target.skinSignature, target.color, target.itemModel, target.lore, new JsonArray(), target.vanilla);
+                                                target = new SkyblockItemInfo(target.id, target.name, target.material, target.tier, target.skinValue, target.skinSignature, target.color, target.itemModel, target.lore, new JsonArray(), target.vanilla, target.island, target.x, target.y, target.z);
                                                 tempMap.put(target.id, target);
                                             }
                                             target.recipes.add(mobDrop);
@@ -388,8 +428,30 @@ public class SkyblockItemManager {
                 itemCache.putAll(tempMap);
                 usageCache.clear();
                 usageCache.putAll(tempUsages);
+                
+                itemToNpcMap.clear();
+                npcMap.clear();
+                for (SkyblockItemInfo info : itemCache.values()) {
+                    if (info.recipes != null) {
+                        boolean isNpc = false;
+                        for (JsonElement el : info.recipes) {
+                            if (el.isJsonObject()) {
+                                JsonObject r = el.getAsJsonObject();
+                                if (r.has("type") && "npc_shop".equals(r.get("type").getAsString()) && r.has("result")) {
+                                    isNpc = true;
+                                    String resultId = r.get("result").getAsString().split(":")[0];
+                                    itemToNpcMap.put(resultId, info.id);
+                                }
+                            }
+                        }
+                        if (isNpc) {
+                            npcMap.put(info.id, info);
+                        }
+                    }
+                }
+                
                 loaded = true;
-                System.out.println("[BomboAddons] Loaded " + itemCache.size() + " items and " + usageCache.size() + " usages from NEU DB.");
+                System.out.println("[BomboAddons] Loaded " + itemCache.size() + " items, " + usageCache.size() + " usages, and " + npcMap.size() + " NPCs from NEU DB.");
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {

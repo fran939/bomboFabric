@@ -1,0 +1,261 @@
+package at.hannibal2.skyhanni.features.event.hoppity
+
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.config.commands.CommandCategory
+import at.hannibal2.skyhanni.config.commands.CommandRegistrationEvent
+import at.hannibal2.skyhanni.config.commands.brigadier.BrigadierArguments
+import at.hannibal2.skyhanni.data.InteractClickType
+import at.hannibal2.skyhanni.data.IslandGraphs
+import at.hannibal2.skyhanni.events.DebugDataCollectEvent
+import at.hannibal2.skyhanni.events.ItemClickEvent
+import at.hannibal2.skyhanni.events.ParticleEvent
+import at.hannibal2.skyhanni.events.hoppity.EggFoundEvent
+import at.hannibal2.skyhanni.events.hoppity.EggSpawnedEvent
+import at.hannibal2.skyhanni.events.minecraft.SkyHanniRenderWorldEvent
+import at.hannibal2.skyhanni.features.fame.ReminderUtils
+import at.hannibal2.skyhanni.features.garden.GardenApi
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.ColorUtils.toColor
+import at.hannibal2.skyhanni.utils.EntityUtils.getEntitiesNearby
+import at.hannibal2.skyhanni.utils.InventoryUtils
+import at.hannibal2.skyhanni.utils.ItemUtils.getInternalName
+import at.hannibal2.skyhanni.utils.LocationUtils.distanceToPlayer
+import at.hannibal2.skyhanni.utils.LorenzColor
+import at.hannibal2.skyhanni.utils.LorenzVec
+import at.hannibal2.skyhanni.utils.NeuInternalName.Companion.toInternalName
+import at.hannibal2.skyhanni.utils.ParticlePathBezierFitter
+import at.hannibal2.skyhanni.utils.RecalculatingValue
+import at.hannibal2.skyhanni.utils.SafeItemStack
+import at.hannibal2.skyhanni.utils.SimpleTimeMark
+import at.hannibal2.skyhanni.utils.SkyBlockUtils
+import at.hannibal2.skyhanni.utils.render.WorldRenderUtils.drawColor
+import at.hannibal2.skyhanni.utils.render.WorldRenderUtils.drawDynamicText
+import at.hannibal2.skyhanni.utils.render.WorldRenderUtils.drawLineToCrosshair
+import at.hannibal2.skyhanni.utils.render.WorldRenderUtils.drawWaypointFilled
+import net.minecraft.core.particles.ParticleTypes
+import net.minecraft.world.entity.projectile.FishingHook
+import kotlin.math.sign
+import kotlin.time.Duration.Companion.seconds
+
+@SkyHanniModule
+object HoppityEggLocator {
+    private val config get() = HoppityEggsManager.config
+    private val waypointsConfig get() = config.waypoints
+    val locatorItem = "EGGLOCATOR".toInternalName()
+
+    private var lastClick = SimpleTimeMark.farPast()
+
+    private var drawLocations = false
+
+    var sharedEggLocation: LorenzVec? = null
+    var possibleEggLocations = listOf<LorenzVec>()
+    var currentEggType: HoppityEggType? = null
+    var currentEggNote: String? = null
+
+    @HandleEvent
+    fun onEggFound(event: EggFoundEvent) {
+        if (event.type.isResetting) resetData()
+    }
+
+    @HandleEvent
+    fun onWorldChange() {
+        resetData()
+    }
+
+    private fun resetData() {
+        possibleEggLocations = emptyList()
+        drawLocations = false
+        sharedEggLocation = null
+        currentEggType = null
+        currentEggNote = null
+        bezierFitter.reset()
+    }
+
+    @HandleEvent
+    fun onEggSpawned(event: EggSpawnedEvent) {
+        if (event.eggType == currentEggType) resetData()
+    }
+
+    @HandleEvent
+    fun onRenderWorld(event: SkyHanniRenderWorldEvent) {
+        if (!isEnabled()) return
+
+        if (drawLocations) {
+            event.drawGuessLocations()
+            return
+        }
+
+        sharedEggLocation?.let {
+            if (waypointsConfig.shared) {
+                event.drawEggWaypoint(it, "§aShared Egg")
+                return
+            }
+        }
+
+        var islandEggsLocations = HoppityEggLocations.islandLocations
+
+        if (shouldShowAllEggs()) {
+            if (waypointsConfig.hideDuplicates) {
+                islandEggsLocations = islandEggsLocations.filter {
+                    !HoppityEggLocations.hasCollectedEgg(it)
+                }.toSet()
+            }
+            for (eggLocation in islandEggsLocations) {
+                event.drawEggWaypoint(eggLocation, "§aEgg")
+            }
+            return
+        }
+
+        event.drawDuplicateEggs(islandEggsLocations)
+    }
+
+    private fun SkyHanniRenderWorldEvent.drawGuessLocations() {
+        for ((index, eggLocation) in possibleEggLocations.withIndex()) {
+            val name = if (possibleEggLocations.size == 1) {
+                "§aGuess"
+            } else "§aGuess #${index + 1}"
+            drawEggWaypoint(eggLocation, name)
+            if (waypointsConfig.showLine) {
+                drawLineToCrosshair(eggLocation.blockCenter(), LorenzColor.GREEN.toChromaColor(), 2, false)
+            }
+        }
+    }
+
+    private fun SkyHanniRenderWorldEvent.drawDuplicateEggs(islandEggsLocations: Set<LorenzVec>) {
+        if (!waypointsConfig.highlightDuplicates) return
+        if (!waypointsConfig.showNearbyDuplicates) return
+        if (HoppityEggLocations.foundAllOnThisIsland) return
+
+        for (eggLocation in islandEggsLocations) {
+            val dist = eggLocation.distanceToPlayer()
+            if (dist < 10 && HoppityEggLocations.hasCollectedEgg(eggLocation)) {
+                val alpha = ((10 - dist) / 10).coerceAtMost(0.5).toFloat()
+                // TODO add chroma color support via config
+                drawColor(eggLocation, LorenzColor.RED.toChromaColor(), false, alpha)
+                drawDynamicText(eggLocation.up(), "§cDuplicate Location!", 1.5)
+
+            }
+        }
+    }
+
+    private fun SkyHanniRenderWorldEvent.drawEggWaypoint(location: LorenzVec, label: String) {
+        val shouldMarkDuplicate =
+            waypointsConfig.highlightDuplicates &&
+                HoppityEggLocations.hasCollectedEgg(location) &&
+                !HoppityEggLocations.foundAllOnThisIsland
+
+        val possibleDuplicateLabel = if (shouldMarkDuplicate) "$label §c(Duplicate Location)" else label
+
+        if (!shouldMarkDuplicate) {
+            drawWaypointFilled(location, waypointsConfig.color.toColor(), seeThroughBlocks = true)
+        } else {
+            drawColor(location, LorenzColor.RED.toChromaColor(), false, 0.5f)
+        }
+        drawDynamicText(location.up(), possibleDuplicateLabel, 1.5)
+    }
+
+    private fun shouldShowAllEggs() = waypointsConfig.showAll && !locatorInHotbar && HoppityEggType.anyEggsUnclaimed()
+
+    private val bezierFitter = ParticlePathBezierFitter(3)
+
+    @HandleEvent(onlyOnSkyblock = true, receiveCancelled = true)
+    fun onParticle(event: ParticleEvent) {
+        if (!isEnabled()) return
+        if (!event.isVillagerParticle()) return
+        if (lastClick.passedSince() > 5.seconds) return
+
+        val endCondition: (LorenzVec) -> Boolean = { it.getEntitiesNearby<FishingHook>(0.3).any() }
+        if (!bezierFitter.tryAdd(event.location, maxDistanceToLast = 3.0, endCondition = endCondition)) return
+
+        val guess = guessEggLocation() ?: return
+        if (!SkyBlockUtils.currentIsland.isInBounds(guess)) return
+        possibleEggLocations = listOf(guess)
+        drawLocations = true
+        if (possibleEggLocations.size == 1) {
+            trySendingGraph()
+        }
+    }
+
+    @HandleEvent(onlyOnSkyblock = true)
+    fun onItemClick(event: ItemClickEvent) {
+        if (!isEnabled()) return
+        val item = event.itemInHand ?: return
+
+        if (event.clickType == InteractClickType.RIGHT_CLICK && item.isLocatorItem && lastClick.passedSince() >= 5.seconds) {
+            lastClick = SimpleTimeMark.now()
+            MythicRabbitPetWarning.check()
+            trySendingGraph()
+            bezierFitter.reset()
+        }
+    }
+
+    private fun guessEggLocation(): LorenzVec? {
+        val guessLocation = bezierFitter.solve() ?: return null
+
+        val guessEgg = HoppityEggLocations.islandLocations.sortedWith { a, b ->
+            sign(a.distanceSq(guessLocation) - b.distanceSq(guessLocation)).toInt()
+        }.firstOrNull()
+
+        return guessEgg
+    }
+
+    private fun trySendingGraph() {
+        if (!waypointsConfig.showPathFinder) return
+        val location = possibleEggLocations.firstOrNull() ?: return
+        val color = waypointsConfig.color.toColor()
+
+        IslandGraphs.pathFind(location, "Hoppity Egg", color, condition = { waypointsConfig.showPathFinder })
+    }
+
+    fun isValidEggLocation(location: LorenzVec): Boolean = HoppityEggLocations.islandLocations.any {
+        it.distance(location) < 5.0
+    }
+
+    private fun ParticleEvent.isVillagerParticle() = type == ParticleTypes.HAPPY_VILLAGER && speed == 0f && count == 1
+
+    fun isEnabled() =
+        SkyBlockUtils.inSkyBlock && config.waypoints.enabled && !GardenApi.inGarden() && !ReminderUtils.isBusy(true) &&
+            HoppityApi.isHoppityEvent()
+
+    private val SafeItemStack.isLocatorItem get() = getInternalName() == locatorItem
+
+    private val locatorInHotbar by RecalculatingValue(1.seconds) {
+        SkyBlockUtils.inSkyBlock && InventoryUtils.getItemsInHotbar().any { it.isLocatorItem }
+    }
+
+    @HandleEvent
+    fun onDebugDataCollect(event: DebugDataCollectEvent) {
+        event.title("Hoppity Eggs Locations")
+
+        if (!isEnabled()) {
+            event.addIrrelevant("not in skyblock or waypoints are disabled")
+            return
+        }
+
+        event.addIrrelevant {
+            add("Possible Egg Locations: ${possibleEggLocations.size}")
+            add("Draw Locations: $drawLocations")
+            add("Shared Egg Location: ${sharedEggLocation ?: "None"}")
+            add("Current Egg Type: ${currentEggType ?: "None"}")
+            add("Current Egg Note: ${currentEggNote ?: "None"}")
+        }
+    }
+
+    @HandleEvent
+    fun onCommandRegistration(event: CommandRegistrationEvent) {
+        event.registerBrigadier("shtestrabbitpaths") {
+            description = "Tests pathfinding to rabbit eggs. Use a number 0-14."
+            category = CommandCategory.DEVELOPER_TEST
+            argCallback("target", BrigadierArguments.integer()) { target ->
+                HoppityEggLocations.apiEggLocations[SkyBlockUtils.currentIsland]?.let {
+                    for ((i, location) in it.values.withIndex()) {
+                        if (i == target) {
+                            IslandGraphs.pathFind(location, "Hoppity Test", condition = { true })
+                            return@argCallback
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,174 @@
+package at.hannibal2.skyhanni.features.gui.customscoreboard
+
+import at.hannibal2.skyhanni.data.HypixelData
+import at.hannibal2.skyhanni.data.ScoreboardData
+import at.hannibal2.skyhanni.test.command.ErrorManager
+import at.hannibal2.skyhanni.utils.ChatUtils
+import at.hannibal2.skyhanni.utils.RegexUtils.matches
+import at.hannibal2.skyhanni.utils.SimpleTimeMark
+import at.hannibal2.skyhanni.utils.SkyBlockUtils
+import at.hannibal2.skyhanni.utils.StringUtils.removeResets
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.editCopy
+import at.hannibal2.skyhanni.utils.collection.CollectionUtils.nextAfter
+import java.util.regex.Pattern
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import at.hannibal2.skyhanni.features.gui.customscoreboard.ScoreboardPattern as SBPattern
+
+internal var allUnknownLines = listOf<UnknownLine>()
+internal var lastRecentAlarmWarning = SimpleTimeMark.farPast()
+
+internal fun recentUnknownLines() = allUnknownLines.filter { it.lastFound.passedSince() < 3.seconds }
+
+internal class UnknownLine(val line: String) {
+    val firstFound = SimpleTimeMark.now()
+    var lastFound = SimpleTimeMark.now()
+    var lastWarned = SimpleTimeMark.farPast()
+}
+
+object UnknownLinesHandler {
+
+    private var remoteOnlyPatterns: Array<Pattern>? = null
+
+    internal fun invalidateRemoteOnlyPatterns() {
+        remoteOnlyPatterns = null
+    }
+
+    /**
+     * Remove known lines with patterns
+     **/
+    fun handleUnknownLines() {
+        val sidebarLines = ScoreboardData.sidebarLinesFormatted
+
+        var unknownLines = sidebarLines.map { it.removeResets() }.filter { it.isNotBlank() }.filter { it.trim().length > 3 }
+
+        val patternsToExclude = CustomScoreboard.activePatterns.toMutableList()
+
+        val remotePatterns = remoteOnlyPatterns
+            ?: SBPattern.computeRemoteOnlyPatterns().also { remoteOnlyPatterns = it }
+        patternsToExclude.addAll(remotePatterns)
+
+        unknownLines = unknownLines.filterNot { line ->
+            patternsToExclude.any { pattern -> pattern.matches(line) }
+        }
+
+        /**
+         * Remove Known Text
+         **/
+        // Remove objectives
+        val objectiveLine = sidebarLines.firstOrNull { SBPattern.objectivePattern.matches(it) } ?: "Objective"
+
+        unknownLines = unknownLines.filter { line ->
+            val nextLine = sidebarLines.nextAfter(objectiveLine)
+            val secondNextLine = sidebarLines.nextAfter(objectiveLine, 2)
+            val thirdNextLine = sidebarLines.nextAfter(objectiveLine, 3)
+
+            line != nextLine && line != secondNextLine && line != thirdNextLine && !SBPattern.thirdObjectiveLinePattern.matches(line)
+        }
+
+        // Remove jacobs contest
+        for (i in 1..3) {
+            unknownLines = unknownLines.filter {
+                sidebarLines.nextAfter(
+                    sidebarLines.firstOrNull { line ->
+                        SBPattern.jacobsContestPattern.matches(line)
+                    } ?: "§eJacob's Contest",
+                    i,
+                ) != it
+            }
+        }
+
+        // Remove Agatha contest
+        for (i in 1..2) {
+            unknownLines = unknownLines.filter {
+                sidebarLines.nextAfter(
+                    sidebarLines.firstOrNull { line ->
+                        SBPattern.agathasContestPattern.matches(line)
+                    } ?: "§eAgatha's Contest",
+                    i,
+                ) != it
+            }
+        }
+
+        // Remove slayer
+        for (i in 1..2) {
+            unknownLines = unknownLines.filter {
+                sidebarLines.nextAfter(
+                    sidebarLines.firstOrNull { line ->
+                        SBPattern.slayerQuestPattern.matches(line)
+                    } ?: "Slayer Quest",
+                    i,
+                ) != it
+            }
+        }
+
+        // remove trapper mob location
+        unknownLines = unknownLines.filter {
+            sidebarLines.nextAfter(
+                sidebarLines.firstOrNull { line ->
+                    SBPattern.mobLocationPattern.matches(line)
+                } ?: "Tracker Mob Location:",
+            ) != it
+        }
+
+        // da
+        unknownLines = unknownLines.filter {
+            sidebarLines.nextAfter(
+                sidebarLines.firstOrNull { line ->
+                    SBPattern.darkAuctionCurrentItemPattern.matches(line)
+                } ?: "Current Item:",
+            ) != it
+        }
+
+        /*
+         * Handle broken scoreboard lines
+         */
+        if (unknownLines.isEmpty()) return
+
+        for (line in unknownLines) {
+            val unknownLine = allUnknownLines.firstOrNull { it.line == line }
+            if (unknownLine == null) {
+                if (SkyBlockUtils.inSkyBlock) {
+                    ChatUtils.debug("Unknown Scoreboard line: '$line'")
+                }
+                allUnknownLines = allUnknownLines.editCopy {
+                    add(UnknownLine(line))
+                }
+            } else {
+                unknownLine.lastFound = SimpleTimeMark.now()
+                val firstFoundSince = unknownLine.firstFound.passedSince()
+                val lastWarnedSince = unknownLine.lastWarned.passedSince()
+                if (firstFoundSince > 10.seconds && lastWarnedSince > 30.minutes) {
+                    unknownLine.lastWarned = SimpleTimeMark.now()
+                    warn(line, "same line active for 10 seconds")
+                    continue
+                }
+            }
+        }
+
+        if (lastRecentAlarmWarning.passedSince() > 30.minutes) {
+            val recentAlarms = allUnknownLines.filter { it.firstFound.passedSince() < 6.seconds }
+            if (recentAlarms.size >= 5) {
+                warn(recentAlarms.first().line, "5 different lines in 5 seconds")
+            }
+        }
+    }
+
+    private fun warn(line: String, reason: String) {
+        if (!CustomScoreboard.config.unknownLinesWarning) return
+        ErrorManager.logErrorWithData(
+            // line included in chat message to not cache a previous message
+            Exception(line),
+            "CustomScoreboard detected an unknown line: '$line'",
+            "Unknown Line" to line,
+            "reason" to reason,
+            "Island" to SkyBlockUtils.currentIsland,
+            "Area" to HypixelData.skyBlockArea,
+            "Loaded Patterns" to CustomScoreboard.activePatterns.size,
+            "Full Scoreboard" to ScoreboardData.sidebarLinesFormatted,
+            noStackTrace = true,
+            betaOnly = true,
+        )
+
+    }
+}

@@ -1,0 +1,45 @@
+package at.hannibal2.skyhanni.features.mining.fossilexcavator
+
+import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.events.minecraft.ToolTipTextEvent
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.RegexUtils.matches
+import at.hannibal2.skyhanni.utils.compat.formattedTextCompatLeadingWhiteLessResets
+import at.hannibal2.skyhanni.utils.repopatterns.RepoPattern
+import net.minecraft.world.SimpleContainer
+
+@SkyHanniModule
+object ExcavatorTooltipHider {
+
+    private val config get() = SkyHanniMod.feature.mining.fossilExcavator.tooltipHider
+
+    /**
+     * REGEX-TEST: §6Dirt
+     */
+    private val dirtPattern by RepoPattern.pattern(
+        "excavator.dirt.name",
+        "Dirt",
+    )
+
+    @HandleEvent
+    fun onToolTip(event: ToolTipTextEvent) {
+        if (!isEnabled()) return
+        event.slot ?: return
+
+        if (event.slot.container !is SimpleContainer) return
+        if (config.hideEverything) {
+            event.cancel()
+            return
+        }
+
+        if (config.hideDirt) {
+            val isDirt = dirtPattern.matches(event.itemStack.hoverName)
+            if (isDirt) {
+                event.cancel()
+            }
+        }
+    }
+
+    fun isEnabled() = FossilExcavatorApi.excavatorInventory.isInside() && !FossilExcavatorApi.inExcavatorMenu
+}

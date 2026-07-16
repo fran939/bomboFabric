@@ -1,0 +1,193 @@
+package at.hannibal2.skyhanni.features.fishing.trophy
+
+import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.data.ProfileStorageData
+import at.hannibal2.skyhanni.data.jsonobjects.repo.TrophyFishInfo
+import at.hannibal2.skyhanni.data.jsonobjects.repo.TrophyFishJson
+import at.hannibal2.skyhanni.events.InventoryFullyOpenedEvent
+import at.hannibal2.skyhanni.events.ProfileViewerDataLoadedEvent
+import at.hannibal2.skyhanni.events.RepositoryReloadEvent
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.test.command.ErrorManager
+import at.hannibal2.skyhanni.utils.ChatUtils
+import at.hannibal2.skyhanni.utils.InventoryDetector
+import at.hannibal2.skyhanni.utils.ItemUtils.getLore
+import at.hannibal2.skyhanni.utils.NumberUtil.formatInt
+import at.hannibal2.skyhanni.utils.RegexUtils.matchMatcher
+import at.hannibal2.skyhanni.utils.compat.defaultStyleConstructor
+import at.hannibal2.skyhanni.utils.compat.formattedTextCompatLeadingWhiteLessResets
+import at.hannibal2.skyhanni.utils.compat.setHoverShowText
+import at.hannibal2.skyhanni.utils.repopatterns.RepoPattern
+import net.minecraft.network.chat.Style
+
+@SkyHanniModule
+object TrophyFishManager {
+
+    private val config get() = SkyHanniMod.feature.fishing.trophyFishing
+
+    private val patternGroup = RepoPattern.group("fishing.trophyfish")
+
+    /**
+     * REGEX-TEST: §6Gold §a✔§7 (1)
+     */
+    private val odgerRankPattern by patternGroup.pattern(
+        "odger.rank",
+        "§.(?<rarity>.*) §a✔§7 \\((?<amount>.*)\\)",
+    )
+
+    /**
+     * REGEX-TEST: §bDiamond §c✖
+     */
+    private val odgerRankEmptyPattern by patternGroup.pattern(
+        "odger.rank.empty",
+        "§.(?<rarity>.*) §c✖",
+    )
+
+    val odgerInventory = InventoryDetector { name -> name == "Trophy Fish" }
+
+    fun loadMissingTrophyFish(): Int {
+        val savedFishes = fish ?: return 0
+        var updatedFishes = 0
+        for (internalName in trophyFishInfo.keys) {
+            savedFishes.getOrPut(internalName) {
+                updatedFishes += 1
+                mutableMapOf()
+            }
+        }
+        return updatedFishes
+    }
+
+    @HandleEvent
+    fun onRepoReload(event: RepositoryReloadEvent) {
+        val data = event.getConstant<TrophyFishJson>("TrophyFish")
+        trophyFishInfo = data.trophyFish
+        loadMissingTrophyFish()
+        TrophyFishDisplay.update()
+    }
+
+    val fish: MutableMap<String, MutableMap<TrophyRarity, Int>>?
+        get() = ProfileStorageData.profileSpecific?.crimsonIsle?.trophyFishes
+
+    private var loadedPV = false
+
+    @HandleEvent
+    fun onProfileViewerDataLoaded(event: ProfileViewerDataLoadedEvent) {
+        if (loadedPV || !config.loadFromNeuPV) return
+
+        val caughtTrophyFish = event.getCurrentPlayerData()?.trophyFish?.caught ?: return
+
+        loadedPV = true
+
+        val savedFishes = fish ?: return
+        var changed = false
+
+        val pvData = mutableListOf<Triple<String, TrophyRarity, Int>>()
+        for ((fishName, apiAmount) in caughtTrophyFish) {
+            val rarity = TrophyRarity.getByName(fishName) ?: continue
+            val name = fishName.split("_").dropLast(1).joinToString("")
+
+            val savedFishData = savedFishes.getOrPut(name) { mutableMapOf() }
+
+            val currentSavedAmount = savedFishData[rarity] ?: 0
+            pvData.add(Triple(name, rarity, apiAmount))
+            if (apiAmount > currentSavedAmount) {
+                changed = true
+            }
+        }
+        if (changed) {
+            val message = "Click here to load Trophy Fishing data from SkyBlock Profile Viewer!"
+
+            ChatUtils.clickableChat(
+                message,
+                onClick = {
+                    updateFromPv(savedFishes, pvData)
+                },
+                "§eClick to load!",
+                oneTimeClick = true,
+            )
+        }
+    }
+
+    // Fetch when talking with Odger
+    // Not island-gated because Odger has an Abiphone contact
+    @HandleEvent(onlyOnSkyblock = true)
+    fun onInventoryFullyOpened(event: InventoryFullyOpenedEvent) {
+        if (event.inventoryName != "Trophy Fish") return
+
+        var updatedFishes = loadMissingTrophyFish()
+        val savedFishes = fish ?: return
+        for (stack in event.inventoryItems.values) {
+            val internalName = TrophyFishApi.getInternalName(stack.hoverName.string.replace("§k", ""))
+
+            fun getRarity(rawRarity: String, line: String): TrophyRarity =
+                TrophyRarity.getByName(rawRarity) ?: ErrorManager.skyHanniError(
+                    "unknown trophy fish rarity in odger inventory",
+                    "rawRarity" to rawRarity,
+                    "line" to line,
+                    "stack.name" to stack.hoverName.formattedTextCompatLeadingWhiteLessResets(),
+                    "internalName" to internalName,
+                )
+
+            var updated = false
+            for (line in stack.getLore()) {
+                val (rarity, amount) = odgerRankPattern.matchMatcher(line) {
+                    val rarity = getRarity(group("rarity"), line)
+                    val amount = group("amount").formatInt()
+                    rarity to amount
+                } ?: odgerRankEmptyPattern.matchMatcher(line) {
+                    val rarity = getRarity(group("rarity"), line)
+                    rarity to 0
+                } ?: continue
+
+                val stored = savedFishes[internalName]?.get(rarity) ?: -1
+                if (amount != stored) {
+                    updated = true
+                    savedFishes.getOrPut(internalName) { mutableMapOf() }[rarity] = amount
+                }
+            }
+            if (updated) {
+                updatedFishes++
+            }
+        }
+
+        if (updatedFishes > 0) {
+            ChatUtils.chat("Updated $updatedFishes Trophy Fishes from Odger.")
+            TrophyFishDisplay.update()
+        }
+    }
+
+    private fun updateFromPv(
+        savedFishes: Map<String, MutableMap<TrophyRarity, Int>>,
+        pvData: List<Triple<String, TrophyRarity, Int>>,
+    ) {
+        for ((name, rarity, newValue) in pvData) {
+            val saved = savedFishes[name] ?: continue
+
+            val current = saved[rarity] ?: 0
+            if (newValue > current) {
+                saved[rarity] = newValue
+                val message = "Updated trophy fishing data from SkyBlock Profile Viewer:  $name $rarity: $current -> $newValue"
+                ChatUtils.debug(message)
+            }
+        }
+        TrophyFishDisplay.update()
+        val message = "Updated Trophy Fishing data via SkyBlock Profile Viewer!"
+        ChatUtils.chat(message)
+    }
+
+    private var trophyFishInfo = mapOf<String, TrophyFishInfo>()
+
+    fun getInfo(internalName: String): TrophyFishInfo? = trophyFishInfo[internalName]
+
+    fun getInfoByName(name: String) = trophyFishInfo.values.find { it.displayName == name }
+
+    fun TrophyFishInfo.getFilletValue(rarity: TrophyRarity): Int {
+        return fillet.getOrDefault(rarity, -1)
+    }
+
+    fun getTooltip(internalName: String): Style? {
+        val display = TrophyFishApi.hoverInfo(internalName) ?: return null
+        return defaultStyleConstructor.setHoverShowText(display)
+    }
+}

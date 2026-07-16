@@ -1,0 +1,225 @@
+package at.hannibal2.skyhanni.features.combat
+
+import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.config.features.combat.FlareConfig
+import at.hannibal2.skyhanni.data.title.TitleManager
+import at.hannibal2.skyhanni.events.GuiRenderEvent
+import at.hannibal2.skyhanni.events.ParticleEvent
+import at.hannibal2.skyhanni.events.SecondPassedEvent
+import at.hannibal2.skyhanni.events.entity.EntityEquipmentChangeEvent
+import at.hannibal2.skyhanni.events.minecraft.SkyHanniRenderWorldEvent
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.ChatUtils
+import at.hannibal2.skyhanni.utils.ColorUtils.rgb
+import at.hannibal2.skyhanni.utils.ColorUtils.toColor
+import at.hannibal2.skyhanni.utils.EntityUtils.hasSkullTexture
+import at.hannibal2.skyhanni.utils.GuiRenderUtils
+import at.hannibal2.skyhanni.utils.LorenzVec
+import at.hannibal2.skyhanni.utils.RenderUtils.renderRenderables
+import at.hannibal2.skyhanni.utils.SimpleTimeMark
+import at.hannibal2.skyhanni.utils.SkullTextureHolder
+import at.hannibal2.skyhanni.utils.SoundUtils
+import at.hannibal2.skyhanni.utils.TimeUtils.format
+import at.hannibal2.skyhanni.utils.TimeUtils.ticks
+import at.hannibal2.skyhanni.utils.collection.RenderableCollectionUtils.addString
+import at.hannibal2.skyhanni.utils.compat.GuiScreenUtils
+import at.hannibal2.skyhanni.utils.getLorenzVec
+import at.hannibal2.skyhanni.utils.render.WorldRenderUtils.drawCircleWireframe
+import at.hannibal2.skyhanni.utils.render.WorldRenderUtils.drawDynamicText
+import at.hannibal2.skyhanni.utils.render.WorldRenderUtils.drawSphereInWorld
+import at.hannibal2.skyhanni.utils.render.WorldRenderUtils.drawSphereWireframeInWorld
+import at.hannibal2.skyhanni.utils.renderables.Renderable
+import net.minecraft.core.particles.ParticleTypes
+import net.minecraft.world.entity.decoration.ArmorStand
+import kotlin.math.sin
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+
+@SkyHanniModule
+object FlareDisplay {
+
+    private val config get() = SkyHanniMod.feature.combat.flare
+    private var display = emptyList<Renderable>()
+    private val flares = mutableListOf<Flare>()
+    private val enabled get() = config.enabled
+
+    private var activeWarning = false
+
+    class Flare(val type: FlareType, val entity: ArmorStand, val location: LorenzVec = entity.getLorenzVec())
+
+    private val MAX_FLARE_TIME = 3.minutes
+
+    private val FLARE_WARNING by SkullTextureHolder.texture("FLARE_WARNING")
+    private val FLARE_ALERT by SkullTextureHolder.texture("FLARE_ALERT")
+    private val FLARE_SOS by SkullTextureHolder.texture("FLARE_SOS")
+    private val flareSkins get() = mapOf(
+        FlareType.WARNING to FLARE_WARNING,
+        FlareType.ALERT to FLARE_ALERT,
+        FlareType.SOS to FLARE_SOS,
+    )
+
+    @HandleEvent(onlyOnSkyblock = true)
+    fun onGuiRenderOverlay(event: GuiRenderEvent.GuiOverlayRenderEvent) {
+        if (!enabled) return
+
+        if (config.flashScreen && activeWarning) {
+            val alpha = ((2 + sin(SimpleTimeMark.now().toMillis() / 1000.0)) * 255 / 4).toInt().coerceIn(0..255)
+            GuiRenderUtils.drawRect(
+                0,
+                0,
+                GuiScreenUtils.displayWidth,
+                GuiScreenUtils.displayHeight,
+                (alpha shl 24) or (config.flashColor.rgb and 0xFFFFFF),
+            )
+        }
+
+        if (config.displayType == FlareConfig.DisplayType.WORLD) return
+        config.position.renderRenderables(display, posLabel = "Flare Timer")
+    }
+
+    @HandleEvent(onlyOnSkyblock = true)
+    fun onEntitySpawn(event: EntityEquipmentChangeEvent<ArmorStand>) {
+        if (!enabled) return
+        val entity = event.entity
+        if (entity.tickCount.ticks > MAX_FLARE_TIME) return
+        if (isAlreadyKnownFlare(entity)) return
+        getFlareTypeForTexture(entity)?.let {
+            flares.add(Flare(it, entity))
+        }
+        activeWarning = false
+    }
+
+    @HandleEvent(onlyOnSkyblock = true)
+    fun onSecondPassed(event: SecondPassedEvent) {
+        if (!enabled) return
+        flares.removeIf { !it.entity.isAlive }
+        var newDisplay: List<Renderable>? = null
+        for (type in FlareType.entries) {
+            val flare = getFlareForType(type) ?: continue
+            val remainingTime = getRemainingTime(flare)
+
+            val name = type.displayName
+            if (newDisplay == null) {
+                newDisplay = buildList {
+                    val displayTime = if (remainingTime.isNegative()) "§eSoon" else "§b${remainingTime.format()}"
+                    addString("$name: $displayTime")
+                    if (config.showManaBuff) {
+                        type.manaBuff?.let {
+                            addString(" §b$it §7mana regen")
+                        }
+                    }
+                }
+            }
+            if (remainingTime !in 0.seconds..config.warnWhenAboutToExpire.seconds) continue
+            activeWarning = true
+            val message = "$name §eexpires in: §b${remainingTime.inWholeSeconds}s"
+            when (config.alertType) {
+                FlareConfig.AlertType.CHAT -> {
+                    ChatUtils.chat(message)
+                }
+
+                FlareConfig.AlertType.TITLE -> {
+                    TitleManager.sendTitle(message, duration = 1.seconds)
+                }
+
+                FlareConfig.AlertType.CHAT_TITLE -> {
+                    ChatUtils.chat(message)
+                    TitleManager.sendTitle(message, duration = 1.seconds)
+                }
+
+                else -> {}
+            }
+            if (config.expireSound) {
+                SoundUtils.playPlingSound()
+            }
+        }
+        display = newDisplay.orEmpty()
+    }
+
+    private fun getRemainingTime(flare: Flare): Duration {
+        val entity = flare.entity
+        val aliveTime = entity.tickCount.ticks
+        val remainingTime = (MAX_FLARE_TIME - aliveTime)
+        return remainingTime
+    }
+
+    private fun getFlareForType(type: FlareType): Flare? = flares.firstOrNull { it.type == type }
+
+    private fun getFlareTypeForTexture(entity: ArmorStand): FlareType? =
+        flareSkins.entries.firstOrNull { entity.hasSkullTexture(it.value) }?.key
+
+    private fun isAlreadyKnownFlare(entity: ArmorStand): Boolean =
+        flares.any { it.entity.id == entity.id }
+
+    @HandleEvent
+    fun onWorldChange() {
+        flares.clear()
+        display = emptyList()
+    }
+
+    @HandleEvent(onlyOnSkyblock = true)
+    fun onRenderWorld(event: SkyHanniRenderWorldEvent) {
+        if (!enabled) return
+
+        if (config.displayType != FlareConfig.DisplayType.GUI) {
+            for (flare in flares) {
+                val location = flare.location.add(-0.5, 0.0, -0.5)
+                val name = flare.type.displayName
+                val time = "§b${getRemainingTime(flare).format()}"
+                event.drawDynamicText(location, name, 1.5, seeThroughBlocks = false)
+                event.drawDynamicText(location, time, 1.5, yOff = 10f, seeThroughBlocks = false)
+            }
+        }
+
+        if (config.outlineType == FlareConfig.OutlineType.NONE) return
+
+        for (flare in flares) {
+            val entity = flare.entity
+            val location = flare.location
+
+            val color = when (flare.type) {
+                FlareType.WARNING -> config.warningColor
+                FlareType.ALERT -> config.alertColor
+                FlareType.SOS -> config.sosColor
+            }.toColor()
+
+            when (config.outlineType) {
+                FlareConfig.OutlineType.FILLED -> {
+                    event.drawSphereInWorld(color, location, 40f)
+                }
+
+                FlareConfig.OutlineType.WIREFRAME -> {
+                    event.drawSphereWireframeInWorld(color, location, 40f)
+                }
+
+                FlareConfig.OutlineType.CIRCLE -> {
+                    event.drawCircleWireframe(entity, 40.0, color)
+                }
+
+                else -> {}
+            }
+        }
+    }
+
+    @HandleEvent(onlyOnSkyblock = true)
+    fun onParticle(event: ParticleEvent) {
+        if (!enabled) return
+        if (!config.hideParticles) return
+
+        val location = event.location
+        val distance = flares.minOfOrNull { it.location.distance(location) } ?: return
+        if (distance < 2.5) {
+            if (event.type == ParticleTypes.FLAME) {
+                event.cancel()
+            }
+        }
+    }
+
+    enum class FlareType(val displayName: String, val manaBuff: String?) {
+        SOS("§5SOS Flare", "+125%"),
+        ALERT("§9Alert Flare", "+50%"),
+        WARNING("§aWarning Flare", null),
+    }
+}

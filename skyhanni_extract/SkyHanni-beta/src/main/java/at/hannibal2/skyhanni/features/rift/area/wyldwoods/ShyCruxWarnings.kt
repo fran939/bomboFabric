@@ -1,0 +1,35 @@
+package at.hannibal2.skyhanni.features.rift.area.wyldwoods
+
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.config.ConfigUpdaterMigrator
+import at.hannibal2.skyhanni.data.IslandType
+import at.hannibal2.skyhanni.data.title.TitleManager
+import at.hannibal2.skyhanni.features.rift.RiftApi
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.EntityUtils
+import net.minecraft.world.entity.Entity
+import kotlin.time.Duration.Companion.milliseconds
+
+@SkyHanniModule
+object ShyCruxWarnings {
+
+    private val config get() = RiftApi.config.area.wyldWoods
+    private val shyNames = setOf("I'm ugly! :(", "Eek!", "Don't look at me!", "Look away!")
+
+    @HandleEvent(onlyOnIsland = IslandType.THE_RIFT)
+    fun onTick() {
+        if (!config.shyWarning) return
+        checkForShy()
+    }
+
+    private fun checkForShy() {
+        if (EntityUtils.getEntitiesNearby<Entity>(8.0).any { it.name.string in shyNames }) {
+            TitleManager.sendTitle("§eLook away!", duration = 150.milliseconds)
+        }
+    }
+
+    @HandleEvent
+    fun onConfigFix(event: ConfigUpdaterMigrator.ConfigFixEvent) {
+        event.move(9, "rift.area.wyldWoodsConfig", "rift.area.wyldWoods")
+    }
+}

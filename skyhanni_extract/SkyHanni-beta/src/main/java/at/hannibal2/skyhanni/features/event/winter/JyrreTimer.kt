@@ -1,0 +1,95 @@
+package at.hannibal2.skyhanni.features.event.winter
+
+import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.event.HandleEvent
+import at.hannibal2.skyhanni.data.model.SkyblockStat
+import at.hannibal2.skyhanni.events.GuiRenderEvent
+import at.hannibal2.skyhanni.events.ProfileJoinEvent
+import at.hannibal2.skyhanni.events.SecondPassedEvent
+import at.hannibal2.skyhanni.events.chat.SkyHanniChatEvent
+import at.hannibal2.skyhanni.skyhannimodule.SkyHanniModule
+import at.hannibal2.skyhanni.utils.AutoUpdatingItemStack
+import at.hannibal2.skyhanni.utils.RegexUtils.matches
+import at.hannibal2.skyhanni.utils.RenderUtils.renderRenderable
+import at.hannibal2.skyhanni.utils.SkyBlockUtils
+import at.hannibal2.skyhanni.utils.TimeUtils.format
+import at.hannibal2.skyhanni.utils.collection.RenderableCollectionUtils.addItemStack
+import at.hannibal2.skyhanni.utils.collection.RenderableCollectionUtils.addString
+import at.hannibal2.skyhanni.utils.renderables.Renderable
+import at.hannibal2.skyhanni.utils.renderables.container.HorizontalContainerRenderable.Companion.horizontal
+import at.hannibal2.skyhanni.utils.repopatterns.RepoPattern
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+
+@SkyHanniModule
+object JyrreTimer {
+
+    private val config get() = SkyHanniMod.feature.event.winter.jyrreTimer
+
+    /**
+     * REGEX-TEST: §7You consumed a §r§6Refined Bottle of Jyrre §r§7and gained §r§b+300 Intelligence §r§7for §r§a60m§r§7!
+     */
+    @Suppress("MaxLineLength")
+    private val drankBottlePattern by RepoPattern.pattern(
+        "event.winter.drank.jyrre",
+        "§7You consumed a §r§6Refined Bottle of Jyrre §r§7and gained §r§b\\+300${SkyblockStat.INTELLIGENCE.hypixelIcon} Intelligence §r§7for §r§a60m§r§7!",
+    )
+    private var display: Renderable? = null
+    private var duration = 0.seconds
+
+    @HandleEvent
+    fun onProfileJoin(event: ProfileJoinEvent) {
+        resetDisplay()
+    }
+
+    private fun resetDisplay() {
+        if (display == null) return
+        display = if (config.showInactive) drawDisplay() else null
+        duration = 0.seconds
+    }
+
+    @HandleEvent
+    fun onChat(event: SkyHanniChatEvent.Allow) {
+        if (!isEnabled() || !drankBottlePattern.matches(event.message)) return
+        duration = 60.minutes
+    }
+
+    @HandleEvent
+    fun onGuiRenderOverlay(event: GuiRenderEvent.GuiOverlayRenderEvent) {
+        if (!isEnabled()) return
+        display?.let {
+            config.pos.renderRenderable(it, posLabel = "Refined Jyrre Timer")
+        }
+    }
+
+    @HandleEvent
+    fun onSecondPassed(event: SecondPassedEvent) {
+        if (!isEnabled()) return
+
+        if (display != null && !config.showInactive && duration <= 0.seconds) {
+            resetDisplay()
+            return
+        }
+
+        display = drawDisplay()
+    }
+
+    private val displayIcon by AutoUpdatingItemStack("REFINED_BOTTLE_OF_JYRRE")
+
+    fun drawDisplay(): Renderable {
+        duration -= 1.seconds
+
+        return Renderable.horizontal {
+            addItemStack(displayIcon)
+            addString("§aJyrre Boost: ")
+
+            if (duration <= 0.seconds && config.showInactive) {
+                addString("§cInactive!")
+            } else {
+                addString("§b${duration.format()}")
+            }
+        }
+    }
+
+    private fun isEnabled() = SkyBlockUtils.inSkyBlock && config.enabled
+}

@@ -17,11 +17,18 @@ public class AutoFishing {
     private static final Random random = new Random();
     private static boolean waitingForRecast = false;
     private static int lastCalculatedDelay = 0;
+    private static boolean debuggedSlugSkip = false;
+    private static int lastBobberId = -1;
 
     public static void onTick(Minecraft client) {
         if (!BomboConfig.get().autoFishingEnabled) return;
         if (client.player == null || client.level == null) return;
         if (!(client.player.getMainHandItem().getItem() instanceof FishingRodItem)) return;
+
+        if (client.player.fishing != null && client.player.fishing.getId() != lastBobberId) {
+            lastBobberId = client.player.fishing.getId();
+            debuggedSlugSkip = false;
+        }
 
         long now = System.currentTimeMillis();
 
@@ -64,6 +71,19 @@ public class AutoFishing {
                     if (name.contains("!!!")) {
                         // Found it!
                         
+                        // Check Slug Delay
+                        if (BomboConfig.get().autoFishingSlugMode && BomboConfig.get().autoFishingSlugDelay > 0) {
+                            if (client.player.fishing == null) continue; // No bobber exists
+                            int requiredTicks = (int) (BomboConfig.get().autoFishingSlugDelay * 20.0f);
+                            if (client.player.fishing.tickCount < requiredTicks) {
+                                if (BomboConfig.get().autoFishingDebug && !debuggedSlugSkip) {
+                                    client.player.sendSystemMessage(Component.literal("§c[AutoFishing] Slug mode: Skipping bite, bobber time " + String.format("%.1f", client.player.fishing.tickCount/20.0f) + "s < " + BomboConfig.get().autoFishingSlugDelay + "s"));
+                                    debuggedSlugSkip = true;
+                                }
+                                continue; // Wait until bobber has been out long enough
+                            }
+                        }
+                        
                         int min = BomboConfig.get().autoFishingMinDelay;
                         int max = BomboConfig.get().autoFishingMaxDelay;
                         if (max < min) max = min;
@@ -80,6 +100,25 @@ public class AutoFishing {
                         break;
                     }
                 }
+            }
+        }
+    }
+
+    public static void renderTimer(net.minecraft.client.gui.GuiGraphicsExtractor graphics) {
+        Minecraft client = Minecraft.getInstance();
+        if (client == null || client.player == null) return;
+        
+        if (BomboConfig.get().autoFishingEnabled && BomboConfig.get().autoFishingSlugMode) {
+            if (client.player.fishing != null) {
+                int tickCount = client.player.fishing.tickCount;
+                float seconds = tickCount / 20.0f;
+                String text = String.format("§bBobber Time: %.1fs", seconds);
+                
+                int screenWidth = client.getWindow().getGuiScaledWidth();
+                int screenHeight = client.getWindow().getGuiScaledHeight();
+                
+                int width = client.font.width(text);
+                graphics.text(client.font, text, screenWidth / 2 - width / 2, screenHeight / 2 + 15, 0xFFFFFFFF, true);
             }
         }
     }

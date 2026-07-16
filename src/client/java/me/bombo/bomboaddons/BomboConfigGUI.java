@@ -576,7 +576,7 @@ public class BomboConfigGUI extends Screen {
                     y2 = addBoolOption("Pest Tracers", s.pestEspTracer, v -> s.pestEspTracer = v, col2X, col2W, y2);
                     y2 = addBoolOption("Cheese Tracers", s.cheeseTracer, v -> s.cheeseTracer = v, col2X, col2W, y2);
                     y2 = addColorCycleButton("Pest Color", s.pestEspColor, v -> s.pestEspColor = v, col2X, col2W, y2);
-                    y2 = addFloatLabelSlider("Pest Size", s.pestEspThickness, 0.5f, 5.0f, v -> s.pestEspThickness = v,
+                    y2 = addFloatLabelSlider("Pest Size", s.pestEspThickness, 0.5f, 5.0f, 0.5f, v -> s.pestEspThickness = v,
                             col2X, col2W, y2);
                 }
                 case 4 -> { // Hotkeys
@@ -948,7 +948,7 @@ public class BomboConfigGUI extends Screen {
                     curY = addBoolOption("Display ESP Enabled", s.displayEsp, v -> s.displayEsp = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Display Tracers", s.displayEspTracer, v -> s.displayEspTracer = v, contentX, contentWidth, curY);
                     curY = addColorCycleButton("Display Color", s.displayEspColor, v -> s.displayEspColor = v, contentX, contentWidth, curY);
-                    curY = addFloatLabelSlider("Display Size", s.displayEspThickness, 0.5f, 5.0f, v -> s.displayEspThickness = v, contentX, contentWidth, curY);
+                    curY = addFloatLabelSlider("Display Size", s.displayEspThickness, 0.5f, 5.0f, 0.5f, v -> s.displayEspThickness = v, contentX, contentWidth, curY);
                     curY += ITEM_HEIGHT + 5;
                     curY = addTextBox("Display ESP Filter", s.displayEspFilter, v -> s.displayEspFilter = v, contentX, contentWidth, curY);
                 }
@@ -1427,7 +1427,7 @@ public class BomboConfigGUI extends Screen {
                             contentWidth, curY);
                     curY = addBoolOption("Dungeon Big Hitbox", s.dungeonBigHitbox, v -> s.dungeonBigHitbox = v,
                             contentX, contentWidth, curY);
-                    curY = addFloatLabelSlider("Purple Timer (s)", (float) s.padTimerPurpleTime, 1.0f, 10.0f,
+                    curY = addFloatLabelSlider("Purple Timer (s)", (float) s.padTimerPurpleTime, 1.0f, 10.0f, 0.1f,
                             v -> s.padTimerPurpleTime = (double) v, contentX, 150, curY);
                     curY += 10;
                     addRenderableWidget(Button.builder(Component.literal("§e§lMove HUD Elements"), btn -> {
@@ -1895,6 +1895,11 @@ public class BomboConfigGUI extends Screen {
                     curY = addIntLabelSlider("Min Delay (ms)", s.autoFishingMinDelay, 0, 2000, 5, v -> s.autoFishingMinDelay = v, contentX, contentWidth, curY);
                     curY += 5;
                     curY = addIntLabelSlider("Max Delay (ms)", s.autoFishingMaxDelay, 0, 2000, 5, v -> s.autoFishingMaxDelay = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addBoolOption("Slug Mode Enabled", s.autoFishingSlugMode, v -> s.autoFishingSlugMode = v, contentX, contentWidth, curY);
+                    curY += 5;
+                    curY = addFloatLabelSlider("Slug Min Bobber Time (s)", s.autoFishingSlugDelay, 10.0f, 20.0f, 0.5f, v -> s.autoFishingSlugDelay = v, contentX, contentWidth, curY);
+                    curY += 5;
                     curY = addBoolOption("Trophy Fish Highlight", s.trophyHighlight, v -> s.trophyHighlight = v, contentX, contentWidth, curY);
                 }
                 case 25 -> { // Custom Crosshair
@@ -2346,15 +2351,15 @@ public class BomboConfigGUI extends Screen {
         return y + ITEM_HEIGHT;
     }
 
-    private int addFloatLabelSlider(String label, float current, float min, float max, Consumer<Float> setter, int x,
+    private int addFloatLabelSlider(String label, float current, float min, float max, float increment, Consumer<Float> setter, int x,
             int w, int y) {
         addRenderableWidget(Button.builder(Component.literal("§7-"), btn -> {
-            setter.accept(Math.max(min, current - 0.1f));
+            setter.accept(Math.max(min, current - increment));
             BomboConfig.save();
             init();
         }).bounds(x + w - 45, y, 20, 20).build());
         addRenderableWidget(Button.builder(Component.literal("§7+"), btn -> {
-            setter.accept(Math.min(max, current + 0.1f));
+            setter.accept(Math.min(max, current + increment));
             BomboConfig.save();
             init();
         }).bounds(x + w - 20, y, 20, 20).build());
@@ -3501,7 +3506,11 @@ public class BomboConfigGUI extends Screen {
                     g.text(font, "§fMin Delay (ms): §a" + s.autoFishingMinDelay, contentX, curY + 4, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT + 5;
                     g.text(font, "§fMax Delay (ms): §a" + s.autoFishingMaxDelay, contentX, curY + 4, 0xFFFFFFFF);
-                    curY += ITEM_HEIGHT;
+                    curY += ITEM_HEIGHT + 5;
+                    g.text(font, "§7Slug Mode Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 5;
+                    g.text(font, "§fSlug Min Bobber Time (s): §a" + String.format("%.1f", s.autoFishingSlugDelay), contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
                     g.text(font, "§7Trophy Fish Highlight", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                 }
                 case 25 -> { // Custom Crosshair

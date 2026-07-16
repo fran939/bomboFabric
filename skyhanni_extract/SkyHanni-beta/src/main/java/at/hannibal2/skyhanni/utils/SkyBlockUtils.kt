@@ -1,0 +1,49 @@
+package at.hannibal2.skyhanni.utils
+
+import at.hannibal2.skyhanni.SkyHanniMod
+import at.hannibal2.skyhanni.api.hypixelapi.HypixelLocationApi
+import at.hannibal2.skyhanni.data.HypixelData
+import at.hannibal2.skyhanni.data.IslandType
+import at.hannibal2.skyhanni.features.misc.pathfind.IslandAreaBackend
+import at.hannibal2.skyhanni.test.SkyBlockIslandTest
+import at.hannibal2.skyhanni.test.TestBingo
+import at.hannibal2.skyhanni.utils.compat.MinecraftCompat
+
+object SkyBlockUtils {
+
+    val onHypixel get() = HypixelData.connectedToHypixel && MinecraftCompat.localPlayerExists
+
+    val isOnAlphaServer get() = onHypixel && HypixelData.hypixelAlpha
+
+    @JvmStatic
+    val inSkyBlock get() = onHypixel && HypixelLocationApi.inSkyblock
+
+    val inHypixelLobby get() = onHypixel && HypixelData.inLobby
+
+    /**
+     * Consider using [IslandType.isInIsland] instead
+     */
+    val currentIsland get() = SkyBlockIslandTest.testIsland ?: HypixelLocationApi.island
+
+    // almost always prefer this over scoreboardArea
+    val graphArea get() = if (inSkyBlock) IslandAreaBackend.currentArea else null
+
+    // Only use scoreboardArea if graph data is not usable in this scenario.
+    val scoreboardArea get() = if (inSkyBlock) HypixelData.skyBlockArea else null
+
+    val noTradeMode get() = HypixelData.noTrade
+
+    val isStrandedProfile get() = inSkyBlock && HypixelData.stranded
+
+    val isBingoProfile get() = inSkyBlock && (HypixelData.bingo || TestBingo.testBingo)
+
+    val isIronmanProfile get() = inSkyBlock && HypixelData.ironman
+
+    val lastWorldSwitch get() = HypixelData.joinedWorld
+
+    val debug: Boolean get() = onHypixel && SkyHanniMod.feature.dev.debug.enabled
+
+    fun inAnyIsland(vararg islandTypes: IslandType) = inSkyBlock && currentIsland in islandTypes
+
+    fun inAnyIsland(islandTypes: Collection<IslandType>) = inSkyBlock && currentIsland in islandTypes
+}
