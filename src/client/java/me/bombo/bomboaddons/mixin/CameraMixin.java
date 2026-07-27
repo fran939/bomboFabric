@@ -24,4 +24,11 @@ public abstract class CameraMixin {
         }
         return xRot;
     }
+
+    @org.spongepowered.asm.mixin.injection.Inject(method = "getFluidInCamera", at = @At("HEAD"), cancellable = true, require = 0)
+    private void onGetFluidInCamera(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<net.minecraft.world.level.material.FogType> cir) {
+        if (me.bombo.bomboaddons.BomboConfig.get().clearWaterAndLava) {
+            cir.setReturnValue(net.minecraft.world.level.material.FogType.NONE);
+        }
+    }
 }

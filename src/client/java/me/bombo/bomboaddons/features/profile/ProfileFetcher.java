@@ -114,10 +114,55 @@ public class ProfileFetcher {
                             merged.foragingMangrove = pvData.foragingMangrove;
                             merged.riftVisits = pvData.riftVisits;
                             merged.riftMotes = pvData.riftMotes;
+                            merged.riftLifetimeMotes = pvData.riftLifetimeMotes;
                             merged.riftGrubber = pvData.riftGrubber;
+                            merged.riftEnigmaSouls = pvData.riftEnigmaSouls;
+                            merged.riftDeadCats = pvData.riftDeadCats;
+                            merged.riftUnlockedEyes = pvData.riftUnlockedEyes;
+                            merged.riftSecondsSitting = pvData.riftSecondsSitting;
+                            merged.riftTrophies = pvData.riftTrophies;
                         }
                         if (merged != null) CACHE.put(username.toLowerCase(), new CachedProfile(merged));
                         return merged;
+                    }).thenCompose(merged -> {
+                        if (merged == null) return CompletableFuture.completedFuture(null);
+                        
+                        // Fetch Museum Data independently since it doesn't need auth
+                        if (!merged.museumWeapons.isEmpty() || !merged.museumArmor.isEmpty() || !merged.museumRarities.isEmpty() || !merged.museumSpecial.isEmpty()) {
+                            return CompletableFuture.completedFuture(merged);
+                        }
+                        
+                        HttpRequest mReq = HttpRequest.newBuilder()
+                            .uri(URI.create("https://skyblock-pv.thatgravyboat.tech/api/v1/museum/" + merged.profileId))
+                            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                            .timeout(Duration.ofSeconds(15))
+                            .GET().build();
+                        
+                        return CLIENT.sendAsync(mReq, HttpResponse.BodyHandlers.ofString()).thenApply(mRes -> {
+                            if (mRes.statusCode() == 200) {
+                                try {
+                                    JsonObject mJson = JsonParser.parseString(mRes.body()).getAsJsonObject();
+                                    
+                                    merged.museumWeapons.clear();
+                                    merged.museumArmor.clear();
+                                    merged.museumRarities.clear();
+                                    merged.museumSpecial.clear();
+                                    
+                                    if (mJson.has("members")) {
+                                        JsonObject members = mJson.getAsJsonObject("members");
+                                        String u = uuid != null ? uuid.replace("-", "") : "";
+                                        if (members.has(u)) {
+                                            JsonObject memberMuseum = members.getAsJsonObject(u);
+                                            parseMuseumData(memberMuseum, merged);
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            dumpProfileDebug(merged);
+                            return merged;
+                        });
                     });
                 });
             } catch (Exception e) {
@@ -128,6 +173,86 @@ public class ProfileFetcher {
             e.printStackTrace();
             return null;
         });
+    }
+
+    private static void dumpProfileDebug(ProfileData data) {
+        if (data == null) return;
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("=== PROFILE DEBUG LOG ===\n");
+            sb.append("Timestamp: ").append(new java.util.Date()).append("\n");
+            sb.append("Username: ").append(data.username).append("\n");
+            sb.append("Profile Name: ").append(data.profileName).append("\n");
+            sb.append("Profile ID: ").append(data.profileId).append("\n");
+            sb.append("Purse: ").append(data.purse).append("\n");
+            sb.append("Bank: ").append(data.bank).append("\n");
+            sb.append("Networth: ").append(data.networth).append("\n");
+            sb.append("SkyBlock Level: ").append(data.skyblockLevel).append("\n");
+            sb.append("--- SKILLS ---\n");
+            sb.append("Farming: ").append(data.farming).append("\n");
+            sb.append("Mining: ").append(data.mining).append(" (HotM Exp: ").append(data.hotmExp).append(")\n");
+            sb.append("Combat: ").append(data.combat).append("\n");
+            sb.append("Foraging: ").append(data.foraging).append(" (Whispers: ").append(data.foragingWhispers).append(", Spent: ").append(data.foragingSpentWhispers).append(", Fig: ").append(data.foragingFig).append(", Mangrove: ").append(data.foragingMangrove).append(")\n");
+            sb.append("Fishing: ").append(data.fishing).append("\n");
+            sb.append("Enchanting: ").append(data.enchanting).append("\n");
+            sb.append("Alchemy: ").append(data.alchemy).append("\n");
+            sb.append("Taming: ").append(data.taming).append("\n");
+            sb.append("--- RIFT ---\n");
+            sb.append("Visits: ").append(data.riftVisits).append(", Motes: ").append(data.riftMotes).append(", Lifetime: ").append(data.riftLifetimeMotes).append("\n");
+            sb.append("Grubber: ").append(data.riftGrubber).append(", Enigma: ").append(data.riftEnigmaSouls).append(", DeadCats: ").append(data.riftDeadCats).append(", Eyes: ").append(data.riftUnlockedEyes).append("\n");
+            sb.append("Trophies count: ").append(data.riftTrophies.size()).append("\n");
+            sb.append("--- MUSEUM ---\n");
+            sb.append("Weapons: ").append(data.museumWeapons.size()).append(", Armor: ").append(data.museumArmor.size()).append(", Rarities: ").append(data.museumRarities.size()).append(", Special: ").append(data.museumSpecial.size()).append("\n");
+            sb.append("--- CHOCOLATE FACTORY ---\n");
+            sb.append("Chocolate: ").append(data.cfChocolate).append(", Total: ").append(data.cfTotalChocolate).append(", Prestige: ").append(data.cfPrestigeLevel).append("\n");
+            sb.append("=== END DEBUG LOG ===\n");
+
+            java.nio.file.Files.writeString(
+                java.nio.file.Paths.get("bomboaddons_profile_debug.txt"),
+                sb.toString(),
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+            );
+        } catch (Exception ignored) {}
+    }
+    public static void parseMuseumData(JsonObject memberMuseum, ProfileData merged) {
+        if (memberMuseum.has("items")) {
+            JsonObject itemsObj = memberMuseum.getAsJsonObject("items");
+            for (java.util.Map.Entry<String, JsonElement> entry : itemsObj.entrySet()) {
+                JsonObject itemData = entry.getValue().getAsJsonObject();
+                if (itemData.has("items")) {
+                    JsonObject innerItems = itemData.getAsJsonObject("items");
+                    if (innerItems.has("data")) {
+                        java.util.List<net.minecraft.world.item.ItemStack> parsed = me.bombo.bomboaddons.LF.decodeToItems(innerItems.get("data").getAsString());
+                        for (net.minecraft.world.item.ItemStack stack : parsed) {
+                            if (stack == null || stack.isEmpty()) continue;
+                            String itemName = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().toLowerCase();
+                            if (itemName.contains("helmet") || itemName.contains("chestplate") || itemName.contains("leggings") || itemName.contains("boots") || itemName.contains("armor")) {
+                                merged.museumArmor.add(stack);
+                            } else if (itemName.contains("sword") || itemName.contains("bow") || itemName.contains("axe") || itemName.contains("weapon")) {
+                                merged.museumWeapons.add(stack);
+                            } else {
+                                merged.museumRarities.add(stack);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (memberMuseum.has("special")) {
+            com.google.gson.JsonArray specialArr = memberMuseum.getAsJsonArray("special");
+            for (JsonElement el : specialArr) {
+                if (el.isJsonObject() && el.getAsJsonObject().has("items")) {
+                    JsonObject innerItems = el.getAsJsonObject().getAsJsonObject("items");
+                    if (innerItems.has("data")) {
+                        java.util.List<net.minecraft.world.item.ItemStack> parsed = me.bombo.bomboaddons.LF.decodeToItems(innerItems.get("data").getAsString());
+                        for (net.minecraft.world.item.ItemStack stack : parsed) {
+                            if (stack != null && !stack.isEmpty()) merged.museumSpecial.add(stack);
+                        }
+                    }
+                }
+            }
+        }
     }
     
     private static CompletableFuture<String> authenticatePV() {
@@ -247,7 +372,52 @@ public class ProfileFetcher {
                             if (rift.has("playerStats") && !rift.get("playerStats").isJsonNull()) {
                                 JsonObject stats = rift.getAsJsonObject("playerStats");
                                 if (stats.has("visits")) data.riftVisits = stats.get("visits").getAsInt();
-                                if (stats.has("lifetime_motes_earned")) data.riftMotes = stats.get("lifetime_motes_earned").getAsInt();
+                                if (stats.has("lifetime_motes_earned")) data.riftLifetimeMotes = stats.get("lifetime_motes_earned").getAsInt();
+                            }
+                            if (rift.has("currency") && !rift.get("currency").isJsonNull()) {
+                                JsonObject currency = rift.getAsJsonObject("currency");
+                                if (currency.has("motes_purse")) data.riftMotes = currency.get("motes_purse").getAsInt();
+                            }
+                            if (rift.has("dead_cat") && !rift.get("dead_cat").isJsonNull()) {
+                                JsonObject dc = rift.getAsJsonObject("dead_cat");
+                                if (dc.has("found_cats") && !dc.get("found_cats").isJsonNull()) {
+                                    data.riftDeadCats = dc.getAsJsonArray("found_cats").size();
+                                }
+                            }
+                            if (rift.has("enigma") && !rift.get("enigma").isJsonNull()) {
+                                JsonObject enigma = rift.getAsJsonObject("enigma");
+                                if (enigma.has("found_souls") && !enigma.get("found_souls").isJsonNull()) {
+                                    data.riftEnigmaSouls = enigma.getAsJsonArray("found_souls").size();
+                                }
+                            }
+                            if (rift.has("eyes_unlocked") && !rift.get("eyes_unlocked").isJsonNull()) {
+                                data.riftUnlockedEyes = rift.getAsJsonArray("eyes_unlocked").size();
+                            }
+                            if (rift.has("village_plaza") && !rift.get("village_plaza").isJsonNull()) {
+                                JsonObject vp = rift.getAsJsonObject("village_plaza");
+                                if (vp.has("got_supreme_timecharm") && !vp.get("got_supreme_timecharm").isJsonNull() && vp.get("got_supreme_timecharm").getAsBoolean()) {
+                                    // time sitting parsing
+                                }
+                                if (vp.has("timecharms") && !vp.get("timecharms").isJsonNull()) {
+                                    JsonObject tc = vp.getAsJsonObject("timecharms");
+                                    if (tc.has("supreme") && !tc.get("supreme").isJsonNull()) {
+                                        JsonObject sup = tc.getAsJsonObject("supreme");
+                                        if (sup.has("seconds_sitting")) data.riftSecondsSitting = sup.get("seconds_sitting").getAsInt();
+                                    }
+                                }
+                            }
+                            if (rift.has("timecharms") && !rift.get("timecharms").isJsonNull()) {
+                                JsonObject timecharms = rift.getAsJsonObject("timecharms");
+                                if (timecharms.has("unlocked") && !timecharms.get("unlocked").isJsonNull()) {
+                                    for (JsonElement el : timecharms.getAsJsonArray("unlocked")) {
+                                        JsonObject tc = el.getAsJsonObject();
+                                        Trophy t = new Trophy();
+                                        t.type = tc.has("type") ? tc.get("type").getAsString() : "unknown";
+                                        t.visits = tc.has("visits") ? tc.get("visits").getAsInt() : 0;
+                                        t.timestamp = tc.has("timestamp") ? tc.get("timestamp").getAsLong() : 0;
+                                        data.riftTrophies.add(t);
+                                    }
+                                }
                             }
                         }
                     } catch (Exception ignored) {}
@@ -318,7 +488,7 @@ public class ProfileFetcher {
     }
 
     private static CompletableFuture<ProfileData> fetchFromBomboAPI(String uuid, String username) {
-        String url = "https://bomboapi.frandl938.workers.dev/" + uuid;
+        String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/" + uuid);
         Bomboaddons.logApiRequest(url);
         HttpRequest req = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofSeconds(30)).GET().build();
         return CLIENT.sendAsync(req, HttpResponse.BodyHandlers.ofString()).thenApply(res -> {
@@ -328,7 +498,15 @@ public class ProfileFetcher {
                 if (!json.has("raw_profile")) return null;
                 JsonObject rawProfile = json.getAsJsonObject("raw_profile");
                 String profileName = json.has("profile") ? json.get("profile").getAsString() : "Unknown";
-                return parseProfile(rawProfile, uuid, username, profileName);
+                ProfileData data = parseProfile(rawProfile, uuid, username, profileName);
+                if (data != null && rawProfile.has("museum")) {
+                    JsonObject museumData = rawProfile.getAsJsonObject("museum");
+                    String u = uuid != null ? uuid.replace("-", "") : "";
+                    if (museumData.has(u)) {
+                        parseMuseumData(museumData.getAsJsonObject(u), data);
+                    }
+                }
+                return data;
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -386,24 +564,160 @@ public class ProfileFetcher {
                 data.alchemy = xpToLevel(getRawXp(exp, "SKILL_ALCHEMY"), SKILL_XP);
                 data.taming = xpToLevel(getRawXp(exp, "SKILL_TAMING"), SKILL_XP);
             }
+            
+            if (pData.has("rift")) {
+                JsonObject pRift = pData.getAsJsonObject("rift");
+                if (pRift.has("visits")) data.riftVisits = pRift.get("visits").getAsInt();
+                if (pRift.has("lifetime_motes_earned")) data.riftLifetimeMotes = pRift.get("lifetime_motes_earned").getAsInt();
+            }
+        }
+        
+        if (memberData.has("currencies")) {
+            JsonObject currencies = memberData.getAsJsonObject("currencies");
+            if (currencies.has("motes_purse")) data.riftMotes = currencies.get("motes_purse").getAsInt();
         }
         
         if (memberData.has("slayer") && memberData.getAsJsonObject("slayer").has("slayer_bosses")) {
             JsonObject bosses = memberData.getAsJsonObject("slayer").getAsJsonObject("slayer_bosses");
-            data.zombieSlayer = xpToLevel(getSlayerXp(bosses, "zombie"), SLAYER_XP);
-            data.spiderSlayer = xpToLevel(getSlayerXp(bosses, "spider"), SLAYER_XP);
-            data.wolfSlayer = xpToLevel(getSlayerXp(bosses, "wolf"), SLAYER_XP);
-            data.endermanSlayer = xpToLevel(getSlayerXp(bosses, "enderman"), SLAYER_XP);
-            data.blazeSlayer = xpToLevel(getSlayerXp(bosses, "blaze"), SLAYER_XP);
-            data.vampireSlayer = xpToLevel(getSlayerXp(bosses, "vampire"), SLAYER_XP);
+            data.zombieSlayerInfo = parseSlayerInfo(bosses, "zombie");
+            data.zombieSlayer = data.zombieSlayerInfo.level;
+            
+            data.spiderSlayerInfo = parseSlayerInfo(bosses, "spider");
+            data.spiderSlayer = data.spiderSlayerInfo.level;
+
+            data.wolfSlayerInfo = parseSlayerInfo(bosses, "wolf");
+            data.wolfSlayer = data.wolfSlayerInfo.level;
+
+            data.endermanSlayerInfo = parseSlayerInfo(bosses, "enderman");
+            data.endermanSlayer = data.endermanSlayerInfo.level;
+
+            data.blazeSlayerInfo = parseSlayerInfo(bosses, "blaze");
+            data.blazeSlayer = data.blazeSlayerInfo.level;
+
+            data.vampireSlayerInfo = parseSlayerInfo(bosses, "vampire");
+            data.vampireSlayer = data.vampireSlayerInfo.level;
+        }
+
+        if (memberData.has("events")) {
+            JsonObject events = memberData.getAsJsonObject("events");
+            if (events.has("easter")) {
+                JsonObject easter = events.getAsJsonObject("easter");
+                if (easter.has("chocolate")) data.cfChocolate = easter.get("chocolate").getAsLong();
+                if (easter.has("total_chocolate")) data.cfTotalChocolate = easter.get("total_chocolate").getAsLong();
+                if (easter.has("chocolate_since_prestige")) data.cfChocolateSincePrestige = easter.get("chocolate_since_prestige").getAsLong();
+                if (easter.has("chocolate_level")) data.cfPrestigeLevel = easter.get("chocolate_level").getAsInt();
+                if (easter.has("chocolate_multiplier_upgrades")) data.cfMultiplierUpgrades = easter.get("chocolate_multiplier_upgrades").getAsInt();
+            }
+        }
+
+        if (memberData.has("rift") && !memberData.get("rift").isJsonNull()) {
+            JsonObject rift = memberData.getAsJsonObject("rift");
+            
+            if (rift.has("village_plaza") && !rift.get("village_plaza").isJsonNull()) {
+                JsonObject vp = rift.getAsJsonObject("village_plaza");
+                if (vp.has("lonely") && !vp.get("lonely").isJsonNull()) {
+                    JsonObject lonely = vp.getAsJsonObject("lonely");
+                    if (lonely.has("seconds_sitting")) {
+                        data.riftSecondsSitting = lonely.get("seconds_sitting").getAsInt();
+                    }
+                }
+            }
+            if (rift.has("dead_cats") && !rift.get("dead_cats").isJsonNull()) {
+                JsonObject deadCats = rift.getAsJsonObject("dead_cats");
+                if (deadCats.has("found_cats")) {
+                    data.riftDeadCats = deadCats.getAsJsonArray("found_cats").size();
+                }
+            }
+            if (rift.has("enigma") && !rift.get("enigma").isJsonNull()) {
+                JsonObject enigma = rift.getAsJsonObject("enigma");
+                if (enigma.has("found_souls")) {
+                    data.riftEnigmaSouls = enigma.getAsJsonArray("found_souls").size();
+                }
+            }
+            if (rift.has("wither_cage") && !rift.get("wither_cage").isJsonNull()) {
+                JsonObject witherCage = rift.getAsJsonObject("wither_cage");
+                if (witherCage.has("killed_eyes")) {
+                    data.riftUnlockedEyes = witherCage.getAsJsonArray("killed_eyes").size();
+                }
+            }
+            if (rift.has("castle") && !rift.get("castle").isJsonNull()) {
+                JsonObject castle = rift.getAsJsonObject("castle");
+                if (castle.has("grubber_stacks")) {
+                    data.riftGrubber = castle.get("grubber_stacks").getAsInt();
+                }
+            }
+            if (rift.has("gallery") && !rift.get("gallery").isJsonNull()) {
+                JsonObject gallery = rift.getAsJsonObject("gallery");
+                if (gallery.has("secured_trophies")) {
+                    for (JsonElement el : gallery.getAsJsonArray("secured_trophies")) {
+                        JsonObject obj = el.getAsJsonObject();
+                        Trophy t = new Trophy();
+                        if (obj.has("type")) t.type = obj.get("type").getAsString();
+                        if (obj.has("timestamp")) t.timestamp = obj.get("timestamp").getAsLong();
+                        if (obj.has("visits")) t.visits = obj.get("visits").getAsInt();
+                        data.riftTrophies.add(t);
+                    }
+                }
+            }
+        }
+
+        // Fallbacks for Rift Visits & Lifetime Motes
+        if (data.riftLifetimeMotes == 0 && data.riftMotes > 0) {
+            data.riftLifetimeMotes = data.riftMotes;
+        }
+        if (data.riftVisits == 0 && !data.riftTrophies.isEmpty()) {
+            int maxV = 0;
+            for (Trophy t : data.riftTrophies) {
+                if (t.visits > maxV) maxV = t.visits;
+            }
+            data.riftVisits = maxV;
         }
         
-        if (memberData.has("dungeons") && memberData.getAsJsonObject("dungeons").has("dungeon_types")) {
-            JsonObject dTypes = memberData.getAsJsonObject("dungeons").getAsJsonObject("dungeon_types");
-            if (dTypes.has("catacombs")) {
-                JsonObject cata = dTypes.getAsJsonObject("catacombs");
-                if (cata.has("experience")) {
-                    data.catacombs = xpToLevel(cata.get("experience").getAsDouble(), CATA_XP);
+        if (memberData.has("dungeons")) {
+            JsonObject dungeons = memberData.getAsJsonObject("dungeons");
+            if (dungeons.has("secrets")) data.totalSecrets = dungeons.get("secrets").getAsLong();
+            if (dungeons.has("selected_dungeon_class")) data.selectedDungeonClass = dungeons.get("selected_dungeon_class").getAsString();
+            
+            if (dungeons.has("player_classes")) {
+                JsonObject pClasses = dungeons.getAsJsonObject("player_classes");
+                for (java.util.Map.Entry<String, JsonElement> entry : pClasses.entrySet()) {
+                    if (entry.getValue().isJsonObject() && entry.getValue().getAsJsonObject().has("experience")) {
+                        double exp = entry.getValue().getAsJsonObject().get("experience").getAsDouble();
+                        data.classXpMap.put(entry.getKey(), exp);
+                        data.classLevelMap.put(entry.getKey(), xpToLevel(exp, CATA_XP));
+                    }
+                }
+            }
+            
+            if (dungeons.has("dungeon_types")) {
+                JsonObject dTypes = dungeons.getAsJsonObject("dungeon_types");
+                if (dTypes.has("catacombs") && dTypes.get("catacombs").isJsonObject()) {
+                    JsonObject cata = dTypes.getAsJsonObject("catacombs");
+                    if (cata.has("experience")) {
+                        data.catacombsXp = cata.get("experience").getAsDouble();
+                        data.catacombs = xpToLevel(data.catacombsXp, CATA_XP);
+                    }
+                    if (cata.has("tier_completions") && cata.get("tier_completions").isJsonObject()) {
+                        JsonObject comps = cata.getAsJsonObject("tier_completions");
+                        for (java.util.Map.Entry<String, JsonElement> e : comps.entrySet()) {
+                            try {
+                                int floor = Integer.parseInt(e.getKey());
+                                data.normalFloorCompletions.put(floor, e.getValue().getAsInt());
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }
+                if (dTypes.has("master_catacombs") && dTypes.get("master_catacombs").isJsonObject()) {
+                    JsonObject mcata = dTypes.getAsJsonObject("master_catacombs");
+                    if (mcata.has("tier_completions") && mcata.get("tier_completions").isJsonObject()) {
+                        JsonObject comps = mcata.getAsJsonObject("tier_completions");
+                        for (java.util.Map.Entry<String, JsonElement> e : comps.entrySet()) {
+                            try {
+                                int floor = Integer.parseInt(e.getKey());
+                                data.masterFloorCompletions.put(floor, e.getValue().getAsInt());
+                            } catch (Exception ignored) {}
+                        }
+                    }
                 }
             }
         }
@@ -411,6 +725,19 @@ public class ProfileFetcher {
         if (memberData.has("mining_core")) {
             JsonObject mc = memberData.getAsJsonObject("mining_core");
             if (mc.has("experience")) data.hotmExp = mc.get("experience").getAsDouble();
+            if (mc.has("nodes")) {
+                JsonObject nodesObj = mc.getAsJsonObject("nodes");
+                if (nodesObj.has("mining_core") && nodesObj.get("mining_core").isJsonObject()) {
+                    nodesObj = nodesObj.getAsJsonObject("mining_core");
+                }
+                for (java.util.Map.Entry<String, JsonElement> entry : nodesObj.entrySet()) {
+                    try {
+                        if (entry.getValue().isJsonPrimitive()) {
+                            data.hotmNodes.put(entry.getKey(), entry.getValue().getAsInt());
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
         }
         if (memberData.has("collection")) {
             data.totalCollections = memberData.getAsJsonObject("collection").size();
@@ -522,6 +849,7 @@ public class ProfileFetcher {
         ProfileData data = new ProfileData();
         data.username = username;
         data.profileName = profileName;
+        data.profileId = profileObject.has("profile_id") ? profileObject.get("profile_id").getAsString() : null;
         
         if (profileObject.has("currencies")) {
             JsonObject currencies = profileObject.getAsJsonObject("currencies");
@@ -545,6 +873,32 @@ public class ProfileFetcher {
         return 0;
     }
 
+    public static class SlayerInfo {
+        public double xp = 0;
+        public int level = 0;
+        public java.util.Map<Integer, Integer> kills = new java.util.HashMap<>();
+    }
+
+    private static SlayerInfo parseSlayerInfo(JsonObject bosses, String bossName) {
+        SlayerInfo info = new SlayerInfo();
+        if (bosses.has(bossName)) {
+            JsonObject boss = bosses.getAsJsonObject(bossName);
+            if (boss.has("xp")) {
+                info.xp = boss.get("xp").getAsDouble();
+                info.level = xpToLevel(info.xp, SLAYER_XP);
+            }
+            for (java.util.Map.Entry<String, JsonElement> entry : boss.entrySet()) {
+                if (entry.getKey().startsWith("boss_kills_tier_")) {
+                    try {
+                        int tier = Integer.parseInt(entry.getKey().replace("boss_kills_tier_", "")) + 1;
+                        info.kills.put(tier, entry.getValue().getAsInt());
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        return info;
+    }
+
     private static double getSlayerXp(JsonObject bosses, String bossName) {
         if (bosses.has(bossName)) {
             JsonObject boss = bosses.getAsJsonObject(bossName);
@@ -563,6 +917,7 @@ public class ProfileFetcher {
         public double bank;
         public double skyblockLevel;
         public double taming = 0;
+        public java.util.Map<String, Integer> hotmNodes = new java.util.HashMap<>();
         
         public int foragingWhispers = 0;
         public int foragingSpentWhispers = 0;
@@ -571,13 +926,40 @@ public class ProfileFetcher {
         
         public int riftVisits = 0;
         public int riftMotes = 0;
+        public int riftLifetimeMotes = 0;
         public int riftGrubber = 0;
+        public int riftEnigmaSouls = 0;
+        public int riftDeadCats = 0;
+        public int riftUnlockedEyes = 0;
+        public int riftSecondsSitting = 0;
+        public java.util.List<Trophy> riftTrophies = new java.util.ArrayList<>();
+        
+        public long cfChocolate = 0;
+        public long cfTotalChocolate = 0;
+        public long cfChocolateSincePrestige = 0;
+        public int cfPrestigeLevel = 0;
+        public int cfMultiplierUpgrades = 0;
         
         public double networth;
+        
+        public SlayerInfo zombieSlayerInfo = new SlayerInfo();
+        public SlayerInfo spiderSlayerInfo = new SlayerInfo();
+        public SlayerInfo wolfSlayerInfo = new SlayerInfo();
+        public SlayerInfo endermanSlayerInfo = new SlayerInfo();
+        public SlayerInfo blazeSlayerInfo = new SlayerInfo();
+        public SlayerInfo vampireSlayerInfo = new SlayerInfo();
         
         public int farming, mining, combat, foraging, fishing, enchanting, alchemy;
         public int zombieSlayer, spiderSlayer, wolfSlayer, endermanSlayer, blazeSlayer, vampireSlayer;
         public int catacombs;
+        public double catacombsXp;
+        public long totalSecrets;
+        public String selectedDungeonClass = "None";
+        public java.util.Map<String, Double> classXpMap = new java.util.HashMap<>();
+        public java.util.Map<String, Integer> classLevelMap = new java.util.HashMap<>();
+        public java.util.Map<Integer, Integer> normalFloorCompletions = new java.util.TreeMap<>();
+        public java.util.Map<Integer, Integer> masterFloorCompletions = new java.util.TreeMap<>();
+        
         public double hotmExp;
         public int totalCollections;
 
@@ -608,6 +990,12 @@ public class ProfileFetcher {
         public String tier;
         public boolean active;
         public double exp;
+    }
+
+    public static class Trophy {
+        public String type;
+        public int visits;
+        public long timestamp;
     }
 }
 

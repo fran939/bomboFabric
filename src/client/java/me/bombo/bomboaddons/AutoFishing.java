@@ -108,7 +108,8 @@ public class AutoFishing {
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.player == null) return;
         
-        if (BomboConfig.get().autoFishingEnabled && BomboConfig.get().autoFishingSlugMode) {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s.showBobberTime) {
             if (client.player.fishing != null) {
                 int tickCount = client.player.fishing.tickCount;
                 float seconds = tickCount / 20.0f;

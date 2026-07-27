@@ -83,14 +83,14 @@ public class DungeonSecretsTracker {
         String dashedUuid = uuid.toString();
         String undashedUuid = dashedUuid.replace("-", "");
 
-        // Try workers url 1 (frandl938) with dashed UUID
-        tryFetch(name, "https://bomboapi.frandl938.workers.dev/" + dashedUuid, isStart, failed1 -> {
+        // Try main bomboapi URL with dashed UUID
+        tryFetch(name, me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/" + dashedUuid), isStart, failed1 -> {
             if (failed1) {
                 // Try workers url 2 (snailify) with dashed UUID
                 tryFetch(name, "https://profile.snailify.workers.dev/?uuid=" + dashedUuid, isStart, failed2 -> {
                     if (failed2) {
-                        // Try workers url 1 with undashed UUID
-                        tryFetch(name, "https://bomboapi.frandl938.workers.dev/" + undashedUuid, isStart, failed3 -> {
+                        // Try main bomboapi URL with undashed UUID
+                        tryFetch(name, me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/" + undashedUuid), isStart, failed3 -> {
                             if (failed3) {
                                 // Try workers url 2 with undashed UUID
                                 tryFetch(name, "https://profile.snailify.workers.dev/?uuid=" + undashedUuid, isStart, failed4 -> {
@@ -204,11 +204,11 @@ public class DungeonSecretsTracker {
         String dashedUuid = uuid.toString();
         String undashedUuid = dashedUuid.replace("-", "");
 
-        tryFetchSingle(name, "https://bomboapi.frandl938.workers.dev/" + dashedUuid, failed1 -> {
+        tryFetchSingle(name, me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/" + dashedUuid), failed1 -> {
             if (failed1) {
                 tryFetchSingle(name, "https://profile.snailify.workers.dev/?uuid=" + dashedUuid, failed2 -> {
                     if (failed2) {
-                        tryFetchSingle(name, "https://bomboapi.frandl938.workers.dev/" + undashedUuid, failed3 -> {
+                        tryFetchSingle(name, me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/" + undashedUuid), failed3 -> {
                             if (failed3) {
                                 tryFetchSingle(name, "https://profile.snailify.workers.dev/?uuid=" + undashedUuid, failed4 -> {
                                     Minecraft.getInstance().execute(() -> {

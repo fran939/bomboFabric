@@ -93,4 +93,8 @@ public class DungeonPadTimers {
 
         g.pose().popMatrix();
     }
+
+    public static boolean isActive() {
+        return active;
+    }
 }

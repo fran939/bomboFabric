@@ -23,6 +23,10 @@ public abstract class DisconnectedScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
+        try {
+            me.bombo.bomboaddons.PlaytimeTracker.sendPlaytimeDataToCloud(true);
+        } catch (Throwable ignored) {}
+        
         Button targetBtn = null;
         Button backBtn = null;
         
@@ -46,24 +50,30 @@ public abstract class DisconnectedScreenMixin extends Screen {
             int originalWidth = referenceBtn.getWidth();
             int originalHeight = referenceBtn.getHeight();
             
-            // Hide the report button if we are replacing it
+            // Hide report/extra button if present
             if (targetBtn != null) {
                 targetBtn.visible = false;
                 targetBtn.active = false;
             }
 
+            // Position backBtn and reconnectBtn cleanly at the bottom of the screen
+            int targetY = this.height - 35;
+            backBtn.setY(targetY);
+
             boolean auto = me.bombo.bomboaddons.BomboConfig.get().autoReconnect;
             boolean delayed = BomboaddonsClient.tempDisableReconnect;
 
             if (me.bombo.bomboaddons.BomboConfig.get().reconnectButton) {
-                // If we didn't find the target button, we place it above the back button
-                int newY = targetBtn != null ? originalY : originalY - originalHeight - 4;
+                int reconnectY = targetY - originalHeight - 4;
                 
                 Button reconnectBtn = Button.builder(Component.literal(auto ? (delayed ? "Reconnect (300s)" : "Reconnect (5s)") : "Reconnect"), btn -> {
                     BomboaddonsClient.autoReconnectTicks = -1;
+                    if (me.bombo.bomboaddons.BomboConfig.get().debugReconnect) {
+                        me.bombo.bomboaddons.DebugUtils.debug("reconnect", "Manual Reconnect button clicked.");
+                    }
                     BomboaddonsClient.reconnect(this.parent, this.minecraft);
                 })
-                .bounds(originalX, newY, originalWidth, originalHeight)
+                .bounds(originalX, reconnectY, originalWidth, originalHeight)
                 .build();
 
                 addRenderableWidget(reconnectBtn);
@@ -78,6 +88,11 @@ public abstract class DisconnectedScreenMixin extends Screen {
                 BomboaddonsClient.tempDisableReconnect = false; // Reset the flag
             } else {
                 BomboaddonsClient.autoReconnectTicks = -1;
+            }
+
+            if (me.bombo.bomboaddons.BomboConfig.get().debugReconnect) {
+                String serverIp = BomboaddonsClient.lastServerData != null ? BomboaddonsClient.lastServerData.ip : "null (fallback to hypixel.net)";
+                me.bombo.bomboaddons.DebugUtils.debug("reconnect", "DisconnectedScreen opened. Auto: " + auto + ", Server: " + serverIp + ", TargetTicks: " + BomboaddonsClient.autoReconnectTicks);
             }
         }
     }

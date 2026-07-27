@@ -27,8 +27,20 @@ public class BomboConfigGUI extends Screen {
     private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles",
             "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases",
             "Chat Triggers", "Dungeons", "Coord Binds", "Mining", "Party Settings", "Block Highlights",
-            "Particle Highlights", "Bedwars", "Fishing", "Custom Crosshair", "Custom Slots", "Custom Tracers", "Item Highlights", "Ordered Waypoints", "Timers");
+            "Particle Highlights", "Bedwars", "Fishing", "Custom Crosshair", "Custom Slots", "Custom Tracers", "Item Highlights", "Ordered Waypoints", "Timers", "Widgets");
     public static int selectedCategory = 0;
+
+    // Transient state for Tab Widgets category
+    private static String widgetNameInput = "";
+    private static String widgetIslandInput = "All";
+    private static boolean widgetEnabledInput = true;
+    private static int editingWidgetIndex = -1;
+
+    // Transient state for List Picker Modal
+    private String listPickerTitle = null;
+    private List<String> listPickerOptions = null;
+    private Consumer<String> listPickerSetter = null;
+    private float listPickerScroll = 0f;
 
     private static int partyCommandsX = -1;
     private static int partyCommandsY = -1;
@@ -333,7 +345,9 @@ public class BomboConfigGUI extends Screen {
                     int col2X = contentX + contentWidth / 2 + 10;
                     int col2W = contentWidth / 2 - 10;
 
-                    int y1 = contentBaseY + ITEM_HEIGHT;
+                    int y1 = contentBaseY + ITEM_HEIGHT - (int) scrollAmount;
+                    y1 = addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava, v -> s.clearWaterAndLava = v, col1X, col1W,
+                            y1);
                     y1 = addBoolOption("Sign Calculator", s.signCalculator, v -> s.signCalculator = v, col1X, col1W,
                             y1);
                     y1 = addBoolOption("SBE Commands", s.sbeCommands, v -> s.sbeCommands = v, col1X, col1W, y1);
@@ -350,8 +364,11 @@ public class BomboConfigGUI extends Screen {
                     y1 = addBoolOption("Auto Accept NPC Lore", s.autoAcceptNpcLore, v -> s.autoAcceptNpcLore = v,
                             col1X, col1W, y1);
                     y1 = addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Raw Craft Cost Tooltip", s.craftCostTooltip, v -> s.craftCostTooltip = v, col1X, col1W, y1);
                     y1 = addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, col1X, col1W, y1);
                     y1 = addBoolOption("Auto Trevor Quest", s.autoTrevorQuest, v -> s.autoTrevorQuest = v, col1X, col1W,
+                            y1);
+                    y1 = addBoolOption("Daily Reward Helper", s.dailyRewardHelper, v -> s.dailyRewardHelper = v, col1X, col1W,
                             y1);
                     y1 += 10;
                     y1 += ITEM_HEIGHT;
@@ -366,8 +383,9 @@ public class BomboConfigGUI extends Screen {
                             y1);
                     y1 = addBoolOption("Egg Finder Through Walls", s.eggFinderThroughWalls,
                             v -> s.eggFinderThroughWalls = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Hoppity Egg HUD", s.hoppityHud, v -> s.hoppityHud = v, col1X, col1W, y1);
 
-                    int y2 = contentBaseY + ITEM_HEIGHT;
+                    int y2 = contentBaseY + ITEM_HEIGHT - (int) scrollAmount;
                     y2 = addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, col2X, col2W,
                             y2);
                     y2 = addBoolOption("Server List Button", s.serverListButton, v -> s.serverListButton = v, col2X,
@@ -426,6 +444,9 @@ public class BomboConfigGUI extends Screen {
                             v -> s.rngProfitHudOpacity = v, col1X, col1W, y1);
                     y1 = addBoolOption("Custom Timers HUD", s.customTimerHudEnabled, v -> s.customTimerHudEnabled = v,
                             col1X, col1W, y1);
+                    y1 = addBoolOption("Tab Widget HUD", s.tabWidgetHudEnabled, v -> s.tabWidgetHudEnabled = v, col1X, col1W, y1);
+                    y1 = addBoolOption("Hoppity Egg HUD", s.hoppityHud, v -> s.hoppityHud = v, col1X, col1W, y1);
+                    y1 = addTextBox("Tab Widget Name", s.tabWidgetQuery, v -> s.tabWidgetQuery = v, col1X, col1W, y1);
                     y1 = addBoolOption("Item List Enabled", s.itemListEnabled, v -> s.itemListEnabled = v, col1X, col1W,
                             y1);
                     y1 = addBoolOption("Lock Item List Position", s.itemListLocked, v -> s.itemListLocked = v, col1X, col1W,
@@ -564,6 +585,8 @@ public class BomboConfigGUI extends Screen {
                     y1 = addKeyBindButton("Use", s.gardenUseKey, v -> s.gardenUseKey = v, "gardenU", col1X, col1W, y1);
 
                     int y2 = contentBaseY + ITEM_HEIGHT;
+                    y2 = addBoolOption("Composter HUD", s.composterHud, v -> s.composterHud = v, col2X, col2W, y2);
+                    y2 = addBoolOption("Composter Timer HUD", s.composterTimerHud, v -> s.composterTimerHud = v, col2X, col2W, y2);
                     y2 = addBoolOption("Pest ESP Enabled", s.pestEsp, v -> s.pestEsp = v, col2X, col2W, y2);
                     y2 = addBoolOption("Pest Waypoints", s.pestSpawnWaypoint, v -> s.pestSpawnWaypoint = v, col2X,
                             col2W, y2);
@@ -870,6 +893,8 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 8 -> { // Wardrobe
                     curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava, v -> s.clearWaterAndLava = v,
+                            contentX, contentWidth, curY);
                     if (!s.hideCheats) {
                         curY = addBoolOption("Auto Close Wardrobe", s.autoCloseWardrobe, v -> s.autoCloseWardrobe = v,
                                 contentX, contentWidth, curY);
@@ -943,8 +968,12 @@ public class BomboConfigGUI extends Screen {
                             contentWidth, curY);
                     curY = addBoolOption("NPC Lore Debug", s.npcLoreDebug, v -> s.npcLoreDebug = v, contentX,
                             contentWidth, curY);
+                    curY = addBoolOption("Composter Debug", s.composterDebug, v -> s.composterDebug = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Auto Fishing Debug", s.autoFishingDebug, v -> s.autoFishingDebug = v, contentX, 
                             contentWidth, curY);
+                    curY = addBoolOption("Croesus Debug", s.croesusDebug, v -> s.croesusDebug = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Auto Reconnect Debug", s.debugReconnect, v -> s.debugReconnect = v, contentX, contentWidth, curY);
+                    curY = addBoolOption("Daily Reward Debug", s.debugDailyReward, v -> s.debugDailyReward = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Display ESP Enabled", s.displayEsp, v -> s.displayEsp = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Display Tracers", s.displayEspTracer, v -> s.displayEspTracer = v, contentX, contentWidth, curY);
                     curY = addColorCycleButton("Display Color", s.displayEspColor, v -> s.displayEspColor = v, contentX, contentWidth, curY);
@@ -1415,6 +1444,7 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 17 -> { // Dungeons
                     curY += ITEM_HEIGHT;
+                    curY = addBoolOption("Croesus Helper", s.croesusHelper, v -> s.croesusHelper = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Dungeon Secrets Tracker", s.dungeonSecretsTracker,
                             v -> s.dungeonSecretsTracker = v, contentX, contentWidth, curY);
                     curY = addBoolOption("Dungeon Secrets Debug", s.dungeonSecretsDebug, v -> s.dungeonSecretsDebug = v,
@@ -1892,6 +1922,8 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     curY = addBoolOption("Auto Fishing Enabled", s.autoFishingEnabled, v -> s.autoFishingEnabled = v, contentX, contentWidth, curY);
                     curY += 5;
+                    curY = addBoolOption("Show Bobber Time", s.showBobberTime, v -> s.showBobberTime = v, contentX, contentWidth, curY);
+                    curY += 5;
                     curY = addIntLabelSlider("Min Delay (ms)", s.autoFishingMinDelay, 0, 2000, 5, v -> s.autoFishingMinDelay = v, contentX, contentWidth, curY);
                     curY += 5;
                     curY = addIntLabelSlider("Max Delay (ms)", s.autoFishingMaxDelay, 0, 2000, 5, v -> s.autoFishingMaxDelay = v, contentX, contentWidth, curY);
@@ -2298,9 +2330,103 @@ public class BomboConfigGUI extends Screen {
                         }
                     }
                 }
+                case 31 -> { // Widgets category
+                    curY += ITEM_HEIGHT;
+
+                    // Preset & active tab list modal list picker
+                    List<String> presetWidgets = new ArrayList<>(TabWidgetHud.getAvailableTabWidgets());
+                    for (String w : TabWidgetHud.COMMON_WIDGETS) {
+                        if (!presetWidgets.contains(w)) presetWidgets.add(w);
+                    }
+                    presetWidgets.add("Custom...");
+
+                    String selectedPreset = presetWidgets.contains(widgetNameInput) ? widgetNameInput : "Custom...";
+                    curY = addListPickerOption("Select Preset", selectedPreset, presetWidgets, v -> {
+                        if (!v.equals("Custom...")) {
+                            widgetNameInput = v;
+                        }
+                        init();
+                    }, contentX, contentWidth, curY);
+
+                    curY = addTextBox("Widget Name", widgetNameInput, v -> widgetNameInput = v, contentX, contentWidth, curY);
+
+                    List<String> islandOptions = List.of(
+                        "All", "The Garden", "Private Island", "The Hub", "Dwarven Mines", "Crystal Hollows", "Crimson Isle",
+                        "The End", "Spider's Den", "The Park", "Deep Caverns", "Gold Mine", "Farming Islands",
+                        "The Rift", "Jerry's Workshop", "Dark Auction", "Dungeon Hub", "Kuudra's Hollow", "Dungeons"
+                    );
+                    curY = addListPickerOption("Island Only", widgetIslandInput, islandOptions, v -> widgetIslandInput = v, contentX, contentWidth, curY);
+
+                    curY = addBoolOption("Enabled", widgetEnabledInput, v -> widgetEnabledInput = v, contentX, contentWidth, curY);
+
+                    String addBtnText = editingWidgetIndex != -1 ? "§e✔ Save Widget" : "§a+ Add Widget";
+                    addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                        if (!widgetNameInput.trim().isEmpty()) {
+                            BomboConfig.TabWidgetInfo info = new BomboConfig.TabWidgetInfo(widgetNameInput.trim(), widgetIslandInput, widgetEnabledInput, 10, 50 + s.tabWidgets.size() * 30, 1.0f);
+                            if (editingWidgetIndex != -1 && editingWidgetIndex < s.tabWidgets.size()) {
+                                info.x = s.tabWidgets.get(editingWidgetIndex).x;
+                                info.y = s.tabWidgets.get(editingWidgetIndex).y;
+                                info.scale = s.tabWidgets.get(editingWidgetIndex).scale;
+                                s.tabWidgets.set(editingWidgetIndex, info);
+                            } else {
+                                s.tabWidgets.add(info);
+                            }
+                            BomboConfig.save();
+                            widgetNameInput = "";
+                            widgetIslandInput = "All";
+                            widgetEnabledInput = true;
+                            editingWidgetIndex = -1;
+                            init();
+                        }
+                    }).bounds(contentX, curY, contentWidth / 2 - 5, 20).build());
+
+                    if (editingWidgetIndex != -1) {
+                        addRenderableWidget(Button.builder(Component.literal("§cCancel Edit"), btn -> {
+                            widgetNameInput = "";
+                            widgetIslandInput = "All";
+                            widgetEnabledInput = true;
+                            editingWidgetIndex = -1;
+                            init();
+                        }).bounds(contentX + contentWidth / 2 + 5, curY, contentWidth / 2 - 5, 20).build());
+                    }
+
+                    curY += 30;
+
+                    int listStartY = curY;
+                    for (int i = 0; i < s.tabWidgets.size(); i++) {
+                        final int idx = i;
+                        BomboConfig.TabWidgetInfo info = s.tabWidgets.get(i);
+                        int itemY = listStartY + i * 24 - (int) scrollAmount;
+
+                        if (itemY > listStartY - 10 && itemY < height - 50) {
+                            // Edit
+                            addRenderableWidget(Button.builder(Component.literal("§eEdit"), btn -> {
+                                widgetNameInput = info.name;
+                                widgetIslandInput = info.island;
+                                widgetEnabledInput = info.enabled;
+                                editingWidgetIndex = idx;
+                                init();
+                            }).bounds(contentX + contentWidth - 95, itemY, 40, 18).build());
+
+                            // Delete
+                            addRenderableWidget(Button.builder(Component.literal("§cDEL"), btn -> {
+                                s.tabWidgets.remove(idx);
+                                if (editingWidgetIndex == idx) {
+                                    editingWidgetIndex = -1;
+                                    widgetNameInput = "";
+                                }
+                                BomboConfig.save();
+                                init();
+                            }).bounds(contentX + contentWidth - 50, itemY, 45, 18).build());
+                        }
+                    }
+                }
             }
             if (colorPickerTarget != null) {
                 renderColorPicker(contentX, HEADER_HEIGHT + 30, contentWidth);
+            }
+            if (listPickerTitle != null) {
+                renderListPicker(contentX, HEADER_HEIGHT + 30, contentWidth);
             }
 
             addRenderableWidget(Button.builder(Component.literal("§lSave & Close"), btn -> {
@@ -2488,6 +2614,53 @@ public class BomboConfigGUI extends Screen {
         }
     }
 
+    private int addListPickerOption(String label, String current, List<String> options, Consumer<String> setter, int x, int w, int y) {
+        addRenderableWidget(Button.builder(Component.literal(current.isEmpty() ? "Select..." : current), btn -> {
+            listPickerTitle = label;
+            listPickerOptions = options;
+            listPickerSetter = setter;
+            listPickerScroll = 0f;
+            init();
+        }).bounds(x + w / 2, y, w / 2, 16).build());
+        return y + ITEM_HEIGHT;
+    }
+
+    private void renderListPicker(int x, int y, int w) {
+        int pickerW = 200;
+        int pickerH = height - 80;
+        int pickerX = x + (w - pickerW) / 2;
+        int pickerY = 40;
+
+        // Close button
+        addRenderableWidget(Button.builder(Component.literal("§c✕"), btn -> {
+            listPickerTitle = null;
+            listPickerOptions = null;
+            listPickerSetter = null;
+            init();
+        }).bounds(pickerX + pickerW - 22, pickerY + 2, 20, 20).build());
+
+        int btnW = 180;
+        int btnH = 18;
+        int spacing = 3;
+        int startX = pickerX + 10;
+        int startY = pickerY + 28;
+
+        for (int i = 0; i < listPickerOptions.size(); i++) {
+            String opt = listPickerOptions.get(i);
+            int itemY = startY + i * (btnH + spacing) - (int) listPickerScroll;
+            if (itemY >= startY && itemY <= pickerY + pickerH - 24) {
+                addRenderableWidget(Button.builder(Component.literal("§e" + opt), btn -> {
+                    listPickerSetter.accept(opt);
+                    listPickerTitle = null;
+                    listPickerOptions = null;
+                    listPickerSetter = null;
+                    BomboConfig.save();
+                    init();
+                }).bounds(startX, itemY, btnW, btnH).build());
+            }
+        }
+    }
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         try {
@@ -2507,6 +2680,17 @@ public class BomboConfigGUI extends Screen {
                 g.fill(pickerX, pickerY, pickerX + pickerW, pickerY + pickerH, 0xFF1E1E2E);
                 g.fill(pickerX, pickerY, pickerX + pickerW, pickerY + 24, 0xFF11111B);
                 g.text(font, "§6Select Color", pickerX + 10, pickerY + 8, 0xFFFFFFFF);
+            }
+
+            if (listPickerTitle != null) {
+                g.fill(0, 0, width, height, 0xAA000000);
+                int pickerW = 200;
+                int pickerH = height - 80;
+                int pickerX = (SIDEBAR_WIDTH + PADDING * 2) + ((width - SIDEBAR_WIDTH - PADDING * 3) - pickerW) / 2;
+                int pickerY = 40;
+                g.fill(pickerX, pickerY, pickerX + pickerW, pickerY + pickerH, 0xFF1E1E2E);
+                g.fill(pickerX, pickerY, pickerX + pickerW, pickerY + 24, 0xFF11111B);
+                g.text(font, "§6Select " + listPickerTitle, pickerX + 10, pickerY + 8, 0xFFFFFFFF);
             }
 
             // Draw sidebar category buttons with scissor clipping
@@ -2582,8 +2766,10 @@ public class BomboConfigGUI extends Screen {
                     int col1X = contentX;
                     int col2X = contentX + contentWidth / 2 + 10;
 
-                    int y1 = contentBaseY;
+                    int y1 = contentBaseY - (int) scrollAmount;
                     g.text(font, "§6§lMod Settings", col1X, y1, 0xFFFFAA00, true);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Clear Water & Lava Vision", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7Sign Calculator", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
@@ -2605,9 +2791,13 @@ public class BomboConfigGUI extends Screen {
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7Lowest BIN Tooltip", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Raw Craft Cost Tooltip", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
                     g.text(font, "§7NPC Sell Price Tooltip", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7Auto Trevor Quest", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Daily Reward Helper", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
 
                     y1 += ITEM_HEIGHT;
                     y1 += 10;
@@ -2620,8 +2810,10 @@ public class BomboConfigGUI extends Screen {
                     g.text(font, "§7Egg Finder Beacon", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7Egg Finder Through Walls", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Hoppity Egg HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
 
-                    int y2 = contentBaseY;
+                    int y2 = contentBaseY - (int) scrollAmount;
                     g.text(font, "§6§lClient Settings", col2X, y2, 0xFFFFAA00, true);
                     y2 += ITEM_HEIGHT;
                     g.text(font, "§7Ignore Caps Lock", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
@@ -2679,6 +2871,12 @@ public class BomboConfigGUI extends Screen {
                             0xFFFFFFFF);
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7Custom Timers HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Tab Widget HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§7Hoppity Egg HUD", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
+                    y1 += ITEM_HEIGHT;
+                    g.text(font, "§fTab Widget Name:", col1X, y1, 0xFFFFFFFF);
                     y1 += ITEM_HEIGHT;
                     g.text(font, "§7Item List Enabled", col1X + 24, y1 + 4, 0xFFFFFFFF, false);
                     y1 += ITEM_HEIGHT;
@@ -2847,7 +3045,11 @@ public class BomboConfigGUI extends Screen {
                     g.text(font, "§fUse:", col1X, y1, 0xFFFFFFFF);
 
                     int y2 = contentBaseY;
-                    g.text(font, "§6§lPest Settings", col2X, y2, 0xFFFFAA00, true);
+                    g.text(font, "§6§lComposter & Pests", col2X, y2, 0xFFFFAA00, true);
+                    y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Composter HUD", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
+                    y2 += ITEM_HEIGHT;
+                    g.text(font, "§7Composter Timer HUD", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
                     y2 += ITEM_HEIGHT;
                     g.text(font, "§7Pest ESP Enabled", col2X + 24, y2 + 4, 0xFFFFFFFF, false);
                     y2 += ITEM_HEIGHT;
@@ -3063,7 +3265,15 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7NPC Lore Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
+                    g.text(font, "§7Composter Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
                     g.text(font, "§7Auto Fishing Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Croesus Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Auto Reconnect Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Daily Reward Debug", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7Display ESP Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
@@ -3071,7 +3281,7 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.text(font, "§fDisplay Color:", contentX, curY + 4, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT;
-                    g.text(font, "§fDisplay Size: §e" + BomboConfig.get().displayEspThickness, contentX, curY + 4, 0xFFFFFFFF);
+                    g.text(font, "§fDisplay Size: §e" + String.format("%.1f", BomboConfig.get().displayEspThickness), contentX, curY + 4, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT + 5;
                     g.text(font, "§fDisplay Filter:", contentX, curY + 4, 0xFFFFFFFF);
                 }
@@ -3280,6 +3490,8 @@ public class BomboConfigGUI extends Screen {
                 }
                 case 17 -> { // Dungeons
                     g.text(font, "§6§lDungeons Settings", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§7Croesus Helper", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7Dungeon Secrets Tracker", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT;
@@ -3503,6 +3715,8 @@ public class BomboConfigGUI extends Screen {
                     curY += ITEM_HEIGHT;
                     g.text(font, "§7Auto Fishing Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
                     curY += ITEM_HEIGHT + 5;
+                    g.text(font, "§7Show Bobber Time", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 5;
                     g.text(font, "§fMin Delay (ms): §a" + s.autoFishingMinDelay, contentX, curY + 4, 0xFFFFFFFF);
                     curY += ITEM_HEIGHT + 5;
                     g.text(font, "§fMax Delay (ms): §a" + s.autoFishingMaxDelay, contentX, curY + 4, 0xFFFFFFFF);
@@ -3718,6 +3932,34 @@ public class BomboConfigGUI extends Screen {
                             BomboConfig.CustomTimerDef def = s.customTimers.get(i);
                             g.enableScissor(contentX, listY, contentX + contentWidth - 145, listY + 24);
                             g.text(font, "§e" + def.name + " §7- " + def.timeStr + " §7- Triggers on: §b" + def.triggerText, contentX, listY + 7, 0xFFFFFFFF, true);
+                            g.disableScissor();
+                        }
+                        listY += 24;
+                    }
+                }
+                case 31 -> { // Widgets category
+                    g.text(font, "§6§lTab Widgets Manager", contentX, curY, 0xFFFFAA00, true);
+                    curY += ITEM_HEIGHT;
+                    g.text(font, "§fWidget Name:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.text(font, "§fIsland Only:", contentX, curY + 4, 0xFFFFFFFF);
+                    curY += ITEM_HEIGHT + 5;
+                    g.text(font, "§7Enabled", contentX + 24, curY + 4, 0xFFFFFFFF, false);
+                    curY += ITEM_HEIGHT + 5;
+
+                    curY += 30;
+
+                    int listTitleY = curY;
+                    g.text(font, "§9§lConfigured Tab Widgets", contentX, listTitleY, 0xFF5555FF, true);
+                    int listY = listTitleY + 20 - (int) scrollAmount;
+
+                    for (int i = 0; i < s.tabWidgets.size(); i++) {
+                        if (listY > listTitleY + 15 && listY < height - 15) {
+                            BomboConfig.TabWidgetInfo info = s.tabWidgets.get(i);
+                            String statusStr = info.enabled ? "§a[ON]" : "§c[OFF]";
+                            String islandStr = info.island.equalsIgnoreCase("All") ? "§7[All Islands]" : "§b[" + info.island + "]";
+                            g.enableScissor(contentX, listY, contentX + contentWidth - 100, listY + 24);
+                            g.text(font, statusStr + " §e" + info.name + " " + islandStr, contentX, listY + 5, 0xFFFFFFFF, true);
                             g.disableScissor();
                         }
                         listY += 24;

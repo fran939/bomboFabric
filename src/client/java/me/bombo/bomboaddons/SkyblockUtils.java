@@ -365,7 +365,13 @@ public class SkyblockUtils {
         List<Component> lines = new ArrayList<>();
         if (mc.getConnection() == null) return lines;
 
-        Collection<PlayerInfo> players = mc.getConnection().getOnlinePlayers();
+        java.util.Comparator<PlayerInfo> ENTRY_ORDERING = java.util.Comparator
+            .comparingInt((PlayerInfo p) -> p.getGameMode() == net.minecraft.world.level.GameType.SPECTATOR ? 1 : 0)
+            .thenComparing(p -> p.getProfile().name().toLowerCase());
+
+        List<PlayerInfo> players = new ArrayList<>(mc.getConnection().getOnlinePlayers());
+        players.sort(ENTRY_ORDERING);
+
         for (PlayerInfo info : players) {
             Component displayName = info.getTabListDisplayName();
             if (displayName != null) {
@@ -374,7 +380,82 @@ public class SkyblockUtils {
                 lines.add(Component.literal(info.getProfile().name()));
             }
         }
+
+        // Dump tab contents to tab_debug.log
+        try {
+            java.io.File file = new java.io.File("tab_debug.log");
+            try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter(file, false))) {
+                pw.println("=== TAB DUMP (" + lines.size() + " lines) ===");
+                for (int i = 0; i < lines.size(); i++) {
+                    Component c = lines.get(i);
+                    pw.println("Line " + i + ": getString() = [" + c.getString() + "]");
+                    pw.println("        getFormatted() = [" + getFormattedComponentText(c) + "]");
+                }
+                pw.println("=============================================");
+            }
+        } catch (Exception ignored) {}
+
         return lines;
+    }
+
+    public static String getFormattedComponentText(Component comp) {
+        if (comp == null) return "";
+        StringBuilder sb = new StringBuilder();
+        appendFormattedText(comp, sb);
+        return sb.toString();
+    }
+
+    private static void appendFormattedText(Component comp, StringBuilder sb) {
+        if (comp == null) return;
+        net.minecraft.network.chat.Style style = comp.getStyle();
+        if (style != null && style.getColor() != null) {
+            int rgb = style.getColor().getValue();
+            String code = getClosestColorCode(rgb);
+            sb.append("§").append(code);
+        }
+        if (style != null && style.isBold()) sb.append("§l");
+        if (style != null && style.isItalic()) sb.append("§o");
+        if (style != null && style.isUnderlined()) sb.append("§n");
+        if (style != null && style.isStrikethrough()) sb.append("§m");
+        if (style != null && style.isObfuscated()) sb.append("§k");
+
+        if (comp.getContents() instanceof net.minecraft.network.chat.contents.PlainTextContents plain) {
+            sb.append(plain.text());
+        } else {
+            sb.append(comp.getString());
+            return;
+        }
+
+        for (Component child : comp.getSiblings()) {
+            appendFormattedText(child, sb);
+        }
+    }
+
+    private static String getClosestColorCode(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+
+        int[] colors = {
+            0x000000, 0x0000AA, 0x00AA00, 0x00AAAA, 0xAA0000, 0xAA00AA, 0xFFAA00, 0xAAAAAA,
+            0x555555, 0x5555FF, 0x55FF55, 0x55FFFF, 0xFF5555, 0xFF55FF, 0xFFFF55, 0xFFFFFF
+        };
+        char[] codes = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
+
+        double minDist = Double.MAX_VALUE;
+        char bestCode = 'f';
+
+        for (int i = 0; i < colors.length; i++) {
+            int cr = (colors[i] >> 16) & 0xFF;
+            int cg = (colors[i] >> 8) & 0xFF;
+            int cb = colors[i] & 0xFF;
+            double dist = Math.pow(r - cr, 2) + Math.pow(g - cg, 2) + Math.pow(b - cb, 2);
+            if (dist < minDist) {
+                minDist = dist;
+                bestCode = codes[i];
+            }
+        }
+        return String.valueOf(bestCode);
     }
 
     public static String getInternalId(ItemStack stack) {

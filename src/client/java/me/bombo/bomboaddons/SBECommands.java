@@ -31,10 +31,12 @@ public class SBECommands {
          sendMessage("§cSBEC Commands are currently disabled in /bombo!");
       } else {
          String var10000 = command.equals("skills") ? "skill" : command;
-         String url = "https://sbecommands-api.icarusphantom.dev/v1/sbecommands/" + var10000 + "/" + name;
+         String subPath = var10000 + "/" + name;
          if (profile != null && !profile.equalsIgnoreCase("selected")) {
-            url = url + "/" + profile;
+            subPath = subPath + "/" + profile;
          }
+         String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/" + subPath);
+         String fallbackUrl = "https://sbecommands-api.icarusphantom.dev/v1/sbecommands/" + subPath;
          Bomboaddons.logApiRequest(url);
 
          Minecraft mc = Minecraft.getInstance();
@@ -44,9 +46,34 @@ public class SBECommands {
              sendMessage("§b[Debug] API: " + url);
          }
          HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
-               .header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.11) " + selfUuid).timeout(Duration.ofSeconds(60L))
+               .header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.11) " + selfUuid).timeout(Duration.ofSeconds(15L))
                .GET().build();
          client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body).thenAccept((body) -> {
+            if (body == null || body.trim().isEmpty() || body.contains("404") || body.contains("Error")) {
+                sendFallbackRequest(fallbackUrl, command, name, selfUuid);
+                return;
+            }
+            parseAndDisplay(body, command, name);
+         }).exceptionally(e -> {
+            sendFallbackRequest(fallbackUrl, command, name, selfUuid);
+            return null;
+         });
+      }
+   }
+
+   private static void sendFallbackRequest(String fallbackUrl, String command, String name, String selfUuid) {
+      HttpRequest request = HttpRequest.newBuilder().uri(URI.create(fallbackUrl))
+            .header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.11) " + selfUuid).timeout(Duration.ofSeconds(30L))
+            .GET().build();
+      client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body).thenAccept((body) -> {
+         parseAndDisplay(body, command, name);
+      }).exceptionally(e -> {
+         sendMessage("§cError fetching data for " + name + ": " + e.getMessage());
+         return null;
+      });
+   }
+
+   private static void parseAndDisplay(String body, String command, String name) {
             try {
                if (body == null || body.trim().isEmpty()) {
                   sendMessage("§cError: Empty response from API.");
@@ -129,12 +156,6 @@ public class SBECommands {
             } catch (Exception var8) {
                sendMessage("§cFailed to parse API response: " + var8.getMessage());
             }
-
-         }).exceptionally((ex) -> {
-            sendMessage("§cAPI Request failed: " + ex.getMessage());
-            return null;
-         });
-      }
    }
 
    private static void sendMessage(String message) {
@@ -237,12 +258,7 @@ public class SBECommands {
       if (data.has("networth") && !data.get("networth").isJsonNull()) {
          JsonObject nw = data.getAsJsonObject("networth");
          String var10000;
-         if (nw.has("noInventory") && nw.get("noInventory").getAsBoolean()) {
-            var10000 = formatUsername(data);
-            sendMessage(var10000 + " §r§chas inventory API disabled in profile '"
-                  + data.get("profileName").getAsString() + "'!§r");
-         } else {
-            sendComponent(Component.literal(formatUsername(data) + "§r§c's Networth:§r"));
+         sendComponent(Component.literal(formatUsername(data) + "§r§c's Networth:§r"));
             long totalNw = nw.has("networth") ? nw.get("networth").getAsLong() : 0L;
             sendMessage("§d ⦾ §6$" + formatCommas(totalNw));
             sendMessage("§r");
@@ -312,7 +328,6 @@ public class SBECommands {
                }
             }
 
-         }
       } else {
          sendMessage(formatUsername(data) + " §r§c's Networth:§r");
          sendMessage("§cNo Networth data found.");

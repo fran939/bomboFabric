@@ -166,6 +166,9 @@ public class BomboConfig {
         if (instance.customTimers == null) {
             instance.customTimers = new ArrayList<>();
         }
+        if (instance.tabWidgets == null) {
+            instance.tabWidgets = new ArrayList<>();
+        }
     }
 
     public static void save() {
@@ -220,6 +223,16 @@ public class BomboConfig {
 
     public static class Settings {
         public List<CustomTimerDef> customTimers = new ArrayList<>();
+        public boolean discordBridgeEnabled = true;
+        public String discordWebhookUrl = "https://discord.com/api/webhooks/1529963890102894662/OaAomxObuWepopSDpWtVNmf_qhhmdpgbtjVg3UO3wfSAZ_40uqmfgII-wHTVSCllgHtj";
+        public boolean discordBridgeGuild = true;
+        public boolean discordBridgeParty = true;
+        public boolean discordBridgeDm = true;
+        public boolean discordBridgeBcChat = true;
+        public boolean discordBridgeAllChat = false;
+        public boolean dailyRewardHelper = true;
+        public boolean debugDailyReward = false;
+        public boolean debugReconnect = false;
         public boolean signCalculator = false;
         public boolean chestClicker = false;
         public boolean autoClicker = false;
@@ -235,6 +248,7 @@ public class BomboConfig {
         public boolean experimentAutoClose = false;
         public int experimentSerumCount = 0;
         public boolean experimentGetMaxXp = false;
+        public boolean clearWaterAndLava = false;
         public boolean sphinxMacro = false;
         public String chatPeekKey = "y";
         public String tradeKey = "n";
@@ -290,6 +304,7 @@ public class BomboConfig {
         public int autoFishingMinDelay = 75;
         public int autoFishingMaxDelay = 90;
         public boolean autoFishingSlugMode = false;
+        public boolean showBobberTime = false;
         public float autoFishingSlugDelay = 10.0f;
         public boolean autoFishingDebug = false;
         public boolean reconnectButton = false;
@@ -299,6 +314,30 @@ public class BomboConfig {
         public boolean autoHoppityCalls = false;
         public int diceHudX = 10;
         public int diceHudY = 50;
+        
+        public boolean composterHud = false;
+        public int composterHudX = 10;
+        public int composterHudY = 150;
+        public float composterHudScale = 1.0f;
+        public boolean composterDebug = false;
+        public boolean composterTimerHud = false;
+        public int composterTimerHudX = 10;
+        public int composterTimerHudY = 230;
+        public float composterTimerHudScale = 1.0f;
+        public int composterSpeedLevel = -1;
+        public int composterCostReductionLevel = -1;
+        public double composterLastOrganic = -1;
+        public double composterLastFuel = -1;
+        public double composterLastMaxOrganic = -1;
+        public double composterLastMaxFuel = -1;
+        public long composterLastSavedTime = 0;
+
+        public boolean tabWidgetHudEnabled = false;
+        public String tabWidgetQuery = "";
+        public int tabWidgetHudX = 10;
+        public int tabWidgetHudY = 270;
+        public float tabWidgetHudScale = 1.0f;
+        public List<TabWidgetInfo> tabWidgets = new ArrayList<>();
         
         public boolean feastBakeryHud = false;
         public boolean quickJoinCommands = false;
@@ -327,6 +366,7 @@ public class BomboConfig {
         public String gardenBreakKey = "b";
         public String gardenUseKey = "u";
         
+        public boolean craftCostTooltip = true;
         public boolean lowestBin = false;
         public boolean npcPrice = false;
         public Map<String, String> calculatorAliases = new HashMap<>();
@@ -415,6 +455,8 @@ public class BomboConfig {
         public String diceDisplayMode = "Current";
         public boolean dungeonSecretsTracker = false;
         public boolean dungeonSecretsDebug = false;
+        public boolean croesusHelper = false;
+        public boolean croesusDebug = false;
         public boolean clearInfoHud = false;
         public int clearInfoHudX = 10;
         public int clearInfoHudY = 100;
@@ -423,6 +465,7 @@ public class BomboConfig {
         public int kuudraBlindnessTimerX = 10;
         public int kuudraBlindnessTimerY = 150;
         
+        public boolean showOnlyActiveHuds = false;
         public float diceHudScale = 1.0f;
         public float feastBakeryHudScale = 1.0f;
         public float rngProfitHudScale = 1.0f;
@@ -473,6 +516,9 @@ public class BomboConfig {
         public boolean eggFinderChat = false;
         public boolean eggFinderBeacon = false;
         public boolean eggFinderThroughWalls = false;
+        public boolean hoppityHud = false;
+        public int hoppityHudX = 10;
+        public int hoppityHudY = 100;
         public boolean dungeonBigHitbox = false;
         public Map<String, List<CoordBind>> coordBinds = new HashMap<>();
 
@@ -787,6 +833,26 @@ public class BomboConfig {
                 in.endObject();
                 return info;
             }
+        }
+    }
+
+    public static class TabWidgetInfo {
+        public String name = "";
+        public String island = "All"; // "All", "The Garden", "Private Island", etc.
+        public boolean enabled = true;
+        public int x = 10;
+        public int y = 50;
+        public float scale = 1.0f;
+
+        public TabWidgetInfo() {}
+
+        public TabWidgetInfo(String name, String island, boolean enabled, int x, int y, float scale) {
+            this.name = name;
+            this.island = island;
+            this.enabled = enabled;
+            this.x = x;
+            this.y = y;
+            this.scale = scale;
         }
     }
 }

@@ -122,6 +122,18 @@ public class TextureToggleManager {
         return map.get("model");
     }
 
+    public String getRawModel(String sbId) {
+        if (sbId == null || itemIds == null) return null;
+        var map = itemIds.get(sbId);
+        return map != null ? map.get("model") : null;
+    }
+
+    public String getRawValue(String sbId) {
+        if (sbId == null || itemIds == null) return null;
+        var map = itemIds.get(sbId);
+        return map != null ? map.get("value") : null;
+    }
+
     public GameProfile gameProfile(String sbId) {
         if (blacklistMode && !whitelistedItems.contains(sbId)) return null;
         if (whitelistedItems.contains(sbId) && !blacklistMode) return null;

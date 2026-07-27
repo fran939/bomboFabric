@@ -26,10 +26,11 @@ public abstract class SignEditMixin {
 
 
    @Inject(
-      method = {"onClose"},
-      at = {@At("HEAD")}
+      method = {"onDone", "onClose"},
+      at = {@At("HEAD")},
+      require = 0
    )
-   private void onClose(CallbackInfo ci) {
+   private void onDoneOrClose(CallbackInfo ci) {
       if (BomboConfig.get().signCalculator) {
          for(int i = 0; i < this.messages.length; ++i) {
             if (this.messages[i] != null && !this.messages[i].isEmpty()) {

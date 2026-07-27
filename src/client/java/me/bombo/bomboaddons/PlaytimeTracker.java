@@ -325,8 +325,8 @@ public class PlaytimeTracker {
         // Auto-save every 1 minute
         if (now % 60000 < delta) save();
         
-        // Sync to cloud every 1 hour
-        if (now - lastCloudSyncTime > 3600000) {
+        // Sync to cloud every 5 minutes (300,000 ms)
+        if (now - lastCloudSyncTime > 300000) {
             lastCloudSyncTime = now;
             sendPlaytimeDataToCloud();
         }
@@ -400,8 +400,9 @@ public class PlaytimeTracker {
         
         Runnable r = () -> {
             try {
-                java.net.URL url = new java.net.URI("https://bomboapi.frandl938.workers.dev/playtime").toURL();
-                Bomboaddons.logApiRequest("https://bomboapi.frandl938.workers.dev/playtime");
+                String apiUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/playtime");
+                java.net.URL url = new java.net.URI(apiUrl).toURL();
+                Bomboaddons.logApiRequest(apiUrl);
                 java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");

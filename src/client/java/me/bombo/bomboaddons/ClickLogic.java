@@ -315,10 +315,23 @@ public class ClickLogic {
       for (int i = 0; i < menu.slots.size(); i++) {
          ItemStack stack = menu.getSlot(i).getItem();
          if (stack.isEmpty()) continue;
-         String name = stack.getHoverName().getString().toLowerCase();
+         String name = stack.getHoverName().getString().toLowerCase().trim();
+
+         // Ignore false positives like Backpack or Backwater Bayou
+         if (name.contains("backpack") || name.contains("backwater") || name.contains("background") || name.contains("backbone")) {
+            continue;
+         }
+
          if (BomboConfig.get().apiDebug) DebugUtils.debug("nav", "Checking slot " + i + ": " + name);
          for (String kw : keywords) {
-            if (name.contains(kw.toLowerCase())) {
+            String kwLower = kw.toLowerCase().trim();
+            boolean isMatch = false;
+            if (kwLower.equals("back")) {
+               isMatch = name.equals("back") || name.startsWith("back ") || name.endsWith(" back") || name.contains("go back") || name.contains("back to");
+            } else {
+               isMatch = name.contains(kwLower);
+            }
+            if (isMatch) {
                if (BomboConfig.get().apiDebug) Bomboaddons.sendMessage("§a[Debug] Clicking navigation item: " + name + " in slot " + i);
                mc.gameMode.handleContainerInput(menu.containerId, i, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, mc.player);
                return true;

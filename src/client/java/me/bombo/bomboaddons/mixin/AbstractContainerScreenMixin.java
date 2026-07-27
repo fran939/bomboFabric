@@ -42,6 +42,7 @@ public abstract class AbstractContainerScreenMixin extends net.minecraft.client.
 
     @Inject(method = "init", at = @At("TAIL"))
     private void onInitTail(CallbackInfo ci) {
+        me.bombo.bomboaddons.CroesusHelper.onContainerTick((AbstractContainerScreen)(Object)this);
         me.bombo.bomboaddons.ItemListOverlay.updateLayout(this.leftPos, this.imageWidth, this.topPos, this.width, this.height);
         
         if (me.bombo.bomboaddons.ItemListOverlay.sidebarW >= 120) {
@@ -78,6 +79,28 @@ public abstract class AbstractContainerScreenMixin extends net.minecraft.client.
             me.bombo.bomboaddons.ItemListOverlay.searchBox = box;
         } else {
             me.bombo.bomboaddons.ItemListOverlay.searchBox = null;
+        }
+
+        if (me.bombo.bomboaddons.StopwatchManager.isActive()) {
+            int swX = 10;
+            int swY = 215;
+            String pauseLabel = me.bombo.bomboaddons.StopwatchManager.isPaused() ? "§a▶" : "§e❚❚";
+            this.addRenderableWidget(net.minecraft.client.gui.components.Button.builder(
+                net.minecraft.network.chat.Component.literal(pauseLabel),
+                btn -> {
+                    me.bombo.bomboaddons.StopwatchManager.togglePause();
+                    btn.setMessage(net.minecraft.network.chat.Component.literal(me.bombo.bomboaddons.StopwatchManager.isPaused() ? "§a▶" : "§e❚❚"));
+                }
+            ).bounds(swX, swY, 25, 16).build());
+
+            this.addRenderableWidget(net.minecraft.client.gui.components.Button.builder(
+                net.minecraft.network.chat.Component.literal("§c⬛"),
+                btn -> {
+                    me.bombo.bomboaddons.StopwatchManager.stop();
+                    this.clearWidgets();
+                    this.init(); // Refresh GUI without the stopwatch buttons
+                }
+            ).bounds(swX + 28, swY, 25, 16).build());
         }
     }
 
@@ -277,6 +300,9 @@ public abstract class AbstractContainerScreenMixin extends net.minecraft.client.
     private void onExtractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (!((Object)this instanceof net.minecraft.client.gui.screens.inventory.EffectsInInventory)) {
             me.bombo.bomboaddons.ItemListOverlay.render(graphics, net.minecraft.client.Minecraft.getInstance().font, mouseX, mouseY);
+        }
+        if (me.bombo.bomboaddons.StopwatchManager.isActive()) {
+            me.bombo.bomboaddons.StopwatchManager.drawStopwatch(graphics, 10, 200);
         }
     }
 

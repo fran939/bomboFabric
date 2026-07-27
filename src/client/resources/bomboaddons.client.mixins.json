@@ -57,6 +57,7 @@
         "SlotMixin",
         "EffectsInInventoryMixin",
         "InventoryScreenMixin",
+        "BookScreenMixin",
         "AbstractSoundInstanceMixin",
         "SoundEngineMixin",
         "SoundOptionsScreenMixin",

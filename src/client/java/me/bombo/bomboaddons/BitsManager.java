@@ -67,7 +67,7 @@ public class BitsManager {
         }
         lastAttemptTime = now;
 
-        String url = "https://bomboapi.frandl938.workers.dev/bi";
+        String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/commands/bits");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
@@ -325,7 +325,7 @@ public class BitsManager {
     }
 
     public static CompletableFuture<List<String>> fetchTopBits(int amount) {
-        String url = "https://bomboapi.frandl938.workers.dev/bi";
+        String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/commands/bits");
         Bomboaddons.logApiRequest(url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -360,10 +360,10 @@ public class BitsManager {
                             
                             items.sort(Comparator.comparingDouble((BitItem b) -> b.profitPerBit).reversed());
                             
-                            results.add("§6Profit Per Bit");
+                            results.add("§b[Bits] §6Top Bits Profit / Bit:");
                             for (int i = 0; i < Math.min(amount, items.size()); i++) {
                                 BitItem item = items.get(i);
-                                results.add(String.format("§e%s: §a%d", item.formattedName, Math.round(item.profitPerBit)));
+                                results.add(String.format("§e#%d %s: §a%,d coins/bit", (i + 1), item.formattedName, Math.round(item.profitPerBit)));
                             }
                             
                         } catch (Exception e) {

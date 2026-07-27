@@ -102,7 +102,7 @@ public class RankCache {
 
         new Thread(() -> {
             try {
-                java.net.URL url = new java.net.URI("https://sbecommands-api.icarusphantom.dev/v1/sbecommands/nw/" + username).toURL();
+                java.net.URL url = new java.net.URI(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/nw/" + username)).toURL();
                 java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");

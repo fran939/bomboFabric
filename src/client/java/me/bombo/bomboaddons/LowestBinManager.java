@@ -25,6 +25,7 @@ public class LowestBinManager {
     private static final Map<String, Long> npcCache = new ConcurrentHashMap<>();
     private static final Map<String, Double> bazaarCache = new ConcurrentHashMap<>();
     private static final Map<String, Double> bazaarSellCache = new ConcurrentHashMap<>();
+    private static final Map<String, Long> craftCostCache = new ConcurrentHashMap<>();
     private static final AtomicBoolean isFetchingBazaar = new AtomicBoolean(false);
     private static final AtomicBoolean isFetchingPrices = new AtomicBoolean(false);
     private static final AtomicBoolean isFetchingNpc = new AtomicBoolean(false);
@@ -339,6 +340,7 @@ public class LowestBinManager {
                                     }
                                 }
                                 lastBazaarFetch = System.currentTimeMillis();
+                                craftCostCache.clear();
                                 if (BomboConfig.get().debugMode) {
                                     Bomboaddons.sendMessage("§7[Debug] Loaded " + products.size() + " Bazaar prices");
                                 }
@@ -368,11 +370,11 @@ public class LowestBinManager {
             })
             .thenCompose(success -> {
                 if (success) return CompletableFuture.completedFuture(true);
-                return fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices2");
+                return fetchFromUrl(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/prices2"));
             })
             .thenCompose(success -> {
                 if (success) return CompletableFuture.completedFuture(true);
-                return fetchFromUrl("https://bomboapi.frandl938.workers.dev/prices");
+                return fetchFromUrl(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/prices"));
             })
             .whenComplete((res, ex) -> isFetchingPrices.set(false));
     }
@@ -412,6 +414,7 @@ public class LowestBinManager {
                                     }
                                 }
                                 lastNpcFetch = System.currentTimeMillis();
+                                craftCostCache.clear();
                                 if (BomboConfig.get().debugMode) {
                                     Bomboaddons.sendMessage("§7[Debug] Loaded " + count + " NPC prices");
                                 }
@@ -508,6 +511,7 @@ public class LowestBinManager {
 
                             if (count > 0) {
                                 lastFetchTime = System.currentTimeMillis();
+                                craftCostCache.clear();
                                 if (BomboConfig.get().debugMode) {
                                     Bomboaddons.sendMessage("§7[Debug] Loaded " + count + " prices from " + url);
                                 }
@@ -523,6 +527,134 @@ public class LowestBinManager {
                     return false;
                 });
     }
+
+    public static long getCraftCostCached(String skyblockId) {
+        if (skyblockId == null || skyblockId.isEmpty()) return -1L;
+        if (!SkyblockItemManager.isLoaded()) return -1L;
+        if (craftCostCache.containsKey(skyblockId)) {
+            return craftCostCache.get(skyblockId);
+        }
+        long cost = getCraftCost(skyblockId, new java.util.HashSet<>());
+        craftCostCache.put(skyblockId, cost);
+        return cost;
+    }
+
+    private static long getCraftCost(String skyblockId, java.util.Set<String> visited) {
+        if (skyblockId == null || skyblockId.isEmpty() || visited.contains(skyblockId)) return -1L;
+        if (craftCostCache.containsKey(skyblockId)) return craftCostCache.get(skyblockId);
+        
+        visited.add(skyblockId);
+
+        SkyblockItemManager.SkyblockItemInfo info = SkyblockItemManager.getInfo(skyblockId);
+        if (info == null || info.recipes == null || info.recipes.isEmpty()) {
+            visited.remove(skyblockId);
+            return -1L;
+        }
+
+        long minCraftCost = -1L;
+
+        for (JsonElement el : info.recipes) {
+            if (!el.isJsonObject()) continue;
+            JsonObject recipeObj = el.getAsJsonObject();
+            
+            long currentRecipeCost = 0L;
+            boolean canCraft = true;
+
+            int outputCount = recipeObj.has("count") ? parseJsonCount(recipeObj.get("count")) : 1;
+            
+            java.util.Map<String, Integer> requiredItems = new java.util.HashMap<>();
+            
+            if (recipeObj.has("A1")) {
+                String[] keys = {"A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"};
+                for (String key : keys) {
+                    if (recipeObj.has(key)) {
+                        String inputStr = recipeObj.get(key).getAsString();
+                        if (!inputStr.isEmpty()) {
+                            String[] parts = inputStr.split(":");
+                            String inId = parts[0];
+                            int inCount = parts.length > 1 ? parseCount(parts[1]) : 1;
+                            requiredItems.put(inId, requiredItems.getOrDefault(inId, 0) + inCount);
+                        }
+                    }
+                }
+            } else if (recipeObj.has("inputs") && recipeObj.get("inputs").isJsonArray()) {
+                JsonArray inputs = recipeObj.getAsJsonArray("inputs");
+                for (int i = 0; i < inputs.size(); i++) {
+                    String inputStr = inputs.get(i).getAsString();
+                    if (!inputStr.isEmpty()) {
+                        String[] parts = inputStr.split(":");
+                        String inId = parts[0];
+                        int inCount = parts.length > 1 ? parseCount(parts[1]) : 1;
+                        requiredItems.put(inId, requiredItems.getOrDefault(inId, 0) + inCount);
+                    }
+                }
+            }
+            
+            if (requiredItems.isEmpty()) continue;
+
+            for (Map.Entry<String, Integer> entry : requiredItems.entrySet()) {
+                String reqId = entry.getKey();
+                int count = entry.getValue();
+                
+                long itemCost = getCachedPrice(reqId);
+                
+                if (itemCost <= 0) {
+                    itemCost = getCraftCost(reqId, visited);
+                } else {
+                    long subCraftCost = getCraftCost(reqId, visited);
+                    if (subCraftCost > 0 && subCraftCost < itemCost) {
+                        itemCost = subCraftCost;
+                    }
+                }
+
+                if (itemCost <= 0) {
+                    canCraft = false;
+                    break;
+                }
+                
+                currentRecipeCost += itemCost * count;
+            }
+
+            if (canCraft) {
+                long costPerItem = currentRecipeCost / outputCount;
+                if (minCraftCost == -1L || costPerItem < minCraftCost) {
+                    minCraftCost = costPerItem;
+                }
+            }
+        }
+        
+        visited.remove(skyblockId);
+        if (minCraftCost > 0) {
+            craftCostCache.put(skyblockId, minCraftCost);
+        }
+        return minCraftCost;
+    }
+
+    private static int parseCount(String str) {
+        if (str == null || str.isEmpty()) return 1;
+        try {
+            String clean = str.trim();
+            if (clean.contains(".")) {
+                return (int) Math.round(Double.parseDouble(clean));
+            }
+            return Integer.parseInt(clean);
+        } catch (Exception e) {
+            return 1;
+        }
+    }
+
+    private static int parseJsonCount(JsonElement el) {
+        if (el == null || el.isJsonNull()) return 1;
+        try {
+            if (el.isJsonPrimitive()) {
+                String str = el.getAsString();
+                return parseCount(str);
+            }
+        } catch (Exception e) {}
+        return 1;
+    }
+
+
 
     public static String formatPrice(long price) {
         if (price >= 1000000000L) {

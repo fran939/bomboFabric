@@ -49,12 +49,65 @@ public abstract class ChatMixin implements me.bombo.bomboaddons.util.IChatCompon
    private void onAddMessage(Component message, MessageSignature signature, GuiMessageSource source, GuiMessageTag tag, CallbackInfo ci) {
       if (message != null) {
          String raw = message.getString();
+         if (raw.contains("DailyRewardDebug") || raw.contains("[BomboAddons]")) return;
          SphinxMacro.onChatMessage(raw);
          CarnivalAuto.onChatMessage(raw);
          me.bombo.bomboaddons.KuudraPerkClicker.onChatMessage(raw);
          me.bombo.bomboaddons.kuudra.pearls.Pearls.onChatMessage(raw);
+         // me.bombo.bomboaddons.DiscordBridge.onChatMessage(raw);
+         if (me.bombo.bomboaddons.BomboConfig.get().debugDailyReward && minecraft != null && minecraft.player != null) {
+             if (raw.contains("Reward") || raw.contains("rewards.hypixel.net") || raw.contains("Claim")) {
+                 minecraft.player.sendSystemMessage(Component.literal("§8[§bDailyRewardDebug§8] §7Chat message: " + raw));
+             }
+         }
+         if (me.bombo.bomboaddons.BomboConfig.get().dailyRewardHelper) {
+             String url = findRewardUrl(message);
+             if (url != null) {
+                 String key = me.bombo.bomboaddons.DailyRewardHelper.extractRewardKey(url);
+                 if (key != null) {
+                     me.bombo.bomboaddons.DailyRewardHelper.fetchAndOpenRewardPage(key);
+                 }
+             }
+         }
       }
 
+   }
+
+   @Unique
+   private static String findRewardUrl(Component component) {
+      if (component == null) return null;
+      if (component.getStyle() != null && component.getStyle().getClickEvent() != null) {
+          net.minecraft.network.chat.ClickEvent event = component.getStyle().getClickEvent();
+          String val = extractClickEventValue(event);
+          if (val != null && val.contains("rewards.hypixel.net")) {
+              return val;
+          }
+      }
+      String raw = component.getString();
+      if (raw.contains("rewards.hypixel.net")) {
+          return raw;
+      }
+      for (Component sibling : component.getSiblings()) {
+          String found = findRewardUrl(sibling);
+          if (found != null) return found;
+      }
+      return null;
+   }
+
+   @Unique
+   private static String extractClickEventValue(net.minecraft.network.chat.ClickEvent clickEvent) {
+       if (clickEvent == null) return null;
+       try {
+           for (java.lang.reflect.Field f : clickEvent.getClass().getDeclaredFields()) {
+               f.setAccessible(true);
+               Object v = f.get(clickEvent);
+               if (v != null) {
+                   String str = v.toString();
+                   if (str.contains("rewards.hypixel.net")) return str;
+               }
+           }
+       } catch (Throwable t) {}
+       return clickEvent.toString();
    }
 
    @Unique

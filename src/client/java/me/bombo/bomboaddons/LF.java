@@ -692,7 +692,7 @@ public class LF {
     }
 
     private static CompletableFuture<String> getFeatureData(String username, String cleanUuid) {
-        String url = "https://bomboapi.frandl938.workers.dev/" + username;
+        String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/" + username);
         if (BomboConfig.get().apiDebug) {
             sendMessage("&b[Debug] API: " + url);
         }
@@ -701,7 +701,7 @@ public class LF {
                 return CompletableFuture.completedFuture(response);
             }
             // Fallback to UUID
-            String uuidUrl = "https://bomboapi.frandl938.workers.dev/" + cleanUuid;
+            String uuidUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/" + cleanUuid);
             if (BomboConfig.get().apiDebug)
                 sendMessage("&7[Debug] Username API failed, trying UUID: " + uuidUrl);
             return fetchString(uuidUrl).thenCompose(uuidRes -> {

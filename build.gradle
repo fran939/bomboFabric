@@ -116,8 +116,6 @@ tasks.register("printClientClasspath") {
         sourceSets.client.compileClasspath.each { println it }
     }
 }
-
-
-
-
-
+test {
+    failOnNoDiscoveredTests = false
+}

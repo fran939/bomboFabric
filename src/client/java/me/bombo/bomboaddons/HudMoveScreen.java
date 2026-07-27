@@ -4,11 +4,15 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.input.MouseButtonEvent;
+import java.util.List;
 
 public class HudMoveScreen extends Screen {
+    private static boolean showOnlyActiveHuds = false;
+
     private HudTarget draggingTarget = null;
     private int dragOffsetX = 0;
     private int dragOffsetY = 0;
+    private int editingWidgetIdx = -1;
     private boolean isResizingItemList = false;
     private HudTarget resizingTarget = null;
     private int resizeCorner = -1; // 0=TL, 1=TR, 2=BL, 3=BR
@@ -31,13 +35,22 @@ public class HudMoveScreen extends Screen {
             me.bombo.bomboaddons.ItemListOverlay.updateLayout(0, width, 0, width, height);
             me.bombo.bomboaddons.ItemListOverlay.searchBox = null;
         }
+
+        // Toggle button for showing all vs active HUDs
+        BomboConfig.Settings s = BomboConfig.get();
+        String toggleText = s.showOnlyActiveHuds ? "§e[ Mode: Active HUDs ]" : "§a[ Mode: All HUDs ]";
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.literal(toggleText), btn -> {
+            s.showOnlyActiveHuds = !s.showOnlyActiveHuds;
+            BomboConfig.save();
+            init();
+        }).bounds(10, 10, 140, 20).build());
     }
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         g.fill(0, 0, width, height, 0x88000000);
         
-        // Draw inventory background for reference
+        // Draw inventory background for reference (translucent)
         net.minecraft.resources.Identifier invTex = net.minecraft.resources.Identifier.withDefaultNamespace("textures/gui/container/inventory.png");
         int invW = 176;
         int invH = 166;
@@ -48,43 +61,110 @@ public class HudMoveScreen extends Screen {
         BomboConfig.Settings s = BomboConfig.get();
         
         // 1. Dice Tracker
-        renderTarget(g, mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260 * s.diceHudScale), (int)(52 * s.diceHudScale), HudTarget.DICE);
-        DiceHud.drawDiceInfo(g, s.diceHudX, s.diceHudY, draggingTarget == HudTarget.DICE);
-        g.text(font, "§aRight-click to swap modes!", s.diceHudX, s.diceHudY - 10, 0xFFFFFFFF, true);
+        if (!s.showOnlyActiveHuds || (s.diceTracker && DiceTracker.shouldShowHud())) {
+            renderTarget(g, mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260 * s.diceHudScale), (int)(52 * s.diceHudScale), HudTarget.DICE);
+            DiceHud.drawDiceInfo(g, s.diceHudX, s.diceHudY, draggingTarget == HudTarget.DICE);
+            g.text(font, "§aRight-click to swap modes!", s.diceHudX, s.diceHudY - 10, 0xFFFFFFFF, true);
+        }
 
         // 2. Feast Bakery
-        int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
-        int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale); // 3 dummy items in edit screen
-        renderTarget(g, mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudTarget.BAKERY);
-        java.util.List<FeastBakeryHud.DetectedItem> dummy = new java.util.ArrayList<>();
-        dummy.add(new FeastBakeryHud.DetectedItem("FRESHLY_BAKED_TALISMAN", "Baked Talisman", 25));
-        dummy.add(new FeastBakeryHud.DetectedItem("POPCORN_RING", "Popcorn Ring", 125));
-        dummy.add(new FeastBakeryHud.DetectedItem("ENCHANTMENT_FEAST_1", "Enchanted Book (Feast I)", 500));
-        FeastBakeryHud.drawBakeryInfo(g, s.feastBakeryHudX, s.feastBakeryHudY, dummy);
+        if (!s.showOnlyActiveHuds || s.feastBakeryHud) {
+            int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
+            int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale); // 3 dummy items in edit screen
+            renderTarget(g, mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudTarget.BAKERY);
+            java.util.List<FeastBakeryHud.DetectedItem> dummy = new java.util.ArrayList<>();
+            dummy.add(new FeastBakeryHud.DetectedItem("FRESHLY_BAKED_TALISMAN", "Baked Talisman", 25));
+            dummy.add(new FeastBakeryHud.DetectedItem("POPCORN_RING", "Popcorn Ring", 125));
+            dummy.add(new FeastBakeryHud.DetectedItem("ENCHANTMENT_FEAST_1", "Enchanted Book (Feast I)", 500));
+            FeastBakeryHud.drawBakeryInfo(g, s.feastBakeryHudX, s.feastBakeryHudY, dummy);
+        }
 
         // 3. RNG Experiments Profit
-        int rngW = (int)(185 * s.rngProfitHudScale);
-        int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
-        renderTarget(g, mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudTarget.RNG);
-        ExperimentationTableHud.onHudRender(g);
+        if (!s.showOnlyActiveHuds || s.rngProfitHud) {
+            int rngW = (int)(185 * s.rngProfitHudScale);
+            int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
+            renderTarget(g, mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudTarget.RNG);
+            ExperimentationTableHud.onHudRender(g);
+        }
 
         // 4. Kuudra Blindness Timer
-        int kuudraW = (int)(80 * s.kuudraBlindnessTimerScale);
-        int kuudraH = (int)(12 * s.kuudraBlindnessTimerScale);
-        renderTarget(g, mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudTarget.KUUDRA);
-        KuudraTimer.drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, true);
+        if (!s.showOnlyActiveHuds || (s.kuudraBlindnessTimer && KuudraTimer.isActive())) {
+            int kuudraW = (int)(80 * s.kuudraBlindnessTimerScale);
+            int kuudraH = (int)(12 * s.kuudraBlindnessTimerScale);
+            renderTarget(g, mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudTarget.KUUDRA);
+            KuudraTimer.drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, true);
+        }
 
         // 5. Dungeon Pad Timers
-        int padW = (int)(120 * s.padTimersScale);
-        int padH = (int)(12 * s.padTimersScale);
-        renderTarget(g, mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudTarget.PAD_TIMERS);
-        DungeonPadTimers.drawTimerInfo(g, s.padTimersX, s.padTimersY, true);
+        if (!s.showOnlyActiveHuds || ((s.padTimersPurple || s.padTimersGreen) && DungeonPadTimers.isActive())) {
+            int padW = (int)(120 * s.padTimersScale);
+            int padH = (int)(12 * s.padTimersScale);
+            renderTarget(g, mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudTarget.PAD_TIMERS);
+            DungeonPadTimers.drawTimerInfo(g, s.padTimersX, s.padTimersY, true);
+        }
 
         // 6. Custom Timers
-        int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
-        int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
-        renderTarget(g, mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH, HudTarget.TIMERS);
-        CustomTimerManager.drawTimers(g, s.customTimerHudX, s.customTimerHudY, true);
+        if (!s.showOnlyActiveHuds || (s.customTimeEnabled && !CustomTimerManager.activeTimers.isEmpty())) {
+            int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
+            int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
+            renderTarget(g, mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH, HudTarget.TIMERS);
+            CustomTimerManager.drawTimers(g, s.customTimerHudX, s.customTimerHudY, true);
+        }
+
+        // 7. Composter Hud
+        boolean compDataExists = s.composterLastOrganic >= 0 || s.composterLastFuel >= 0;
+        if (!s.showOnlyActiveHuds || (s.composterHud && compDataExists)) {
+            int compW = (int)(ComposterHud.getWidth() * s.composterHudScale);
+            int compH = (int)(ComposterHud.getHeight() * s.composterHudScale);
+            renderTarget(g, mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH, HudTarget.COMPOSTER);
+            ComposterHud.drawComposterInfo(g, s.composterHudX, s.composterHudY, !compDataExists);
+        }
+
+        // 8. Composter Timer Hud
+        if (!s.showOnlyActiveHuds || (s.composterTimerHud && compDataExists)) {
+            int compTimerW = (int)(140 * s.composterTimerHudScale);
+            int compTimerH = (int)(12 * s.composterTimerHudScale);
+            renderTarget(g, mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH, HudTarget.COMPOSTER_TIMER);
+            ComposterHud.drawComposterTimerInfo(g, s.composterTimerHudX, s.composterTimerHudY, !compDataExists);
+        }
+
+        // 8.5. Hoppity Egg HUD
+        if (!s.showOnlyActiveHuds || s.hoppityHud) {
+            renderTarget(g, mouseX, mouseY, s.hoppityHudX, s.hoppityHudY, 90, 45, HudTarget.HOPPITY);
+        }
+
+        // 9. Tab Widget Huds
+        if (s.tabWidgets != null) {
+            for (int i = 0; i < s.tabWidgets.size(); i++) {
+                BomboConfig.TabWidgetInfo widget = s.tabWidgets.get(i);
+                if (!widget.enabled && s.showOnlyActiveHuds) continue;
+
+                // Try real active tab lines first
+                List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, false);
+                if (lines.isEmpty()) {
+                    if (s.showOnlyActiveHuds) continue;
+                    lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
+                }
+
+                int widgetW = (int)(TabWidgetHud.getWidth() * widget.scale);
+                int widgetH = (int)(TabWidgetHud.getHeight(lines.size()) * widget.scale);
+                
+                // Draw outline for edit screen
+                boolean hovered = mouseX >= widget.x - 12 && mouseX <= widget.x + widgetW + 12 && mouseY >= widget.y - 12 && mouseY <= widget.y + widgetH + 12;
+                if (draggingTarget == HudTarget.TAB_WIDGET && editingWidgetIdx == i) {
+                    widget.x = mouseX - dragOffsetX;
+                    widget.y = mouseY - dragOffsetY;
+                }
+                g.fill(widget.x - 2, widget.y - 2, widget.x + widgetW, widget.y + widgetH, 0x22FFFFFF);
+                if (hovered || (draggingTarget == HudTarget.TAB_WIDGET && editingWidgetIdx == i)) {
+                    g.outline(widget.x - 2, widget.y - 2, widgetW + 2, widgetH + 2, 0xFFFFFF00);
+                    g.text(font, "§eWidget: " + widget.name, widget.x, widget.y - 12, 0xFFFFFFFF, true);
+                } else {
+                    g.outline(widget.x - 2, widget.y - 2, widgetW + 2, widgetH + 2, 0xFF555555);
+                }
+                TabWidgetHud.drawWidgetInfo(g, widget.x, widget.y, widget.scale, lines);
+            }
+        }
 
         g.centeredText(font, "§e§lHUD EDIT MODE", width / 2, 10, 0xFFFFFFFF);
         g.centeredText(font, "§7Drag elements to reposition them, scroll wheel to resize", width / 2, 22, 0xFFFFFFFF);
@@ -159,6 +239,9 @@ public class HudMoveScreen extends Screen {
             else if (resizingTarget == HudTarget.KUUDRA) s.kuudraBlindnessTimerScale = newScale;
             else if (resizingTarget == HudTarget.PAD_TIMERS) s.padTimersScale = newScale;
             else if (resizingTarget == HudTarget.TIMERS) s.customTimerHudScale = newScale;
+            else if (resizingTarget == HudTarget.COMPOSTER) s.composterHudScale = newScale;
+            else if (resizingTarget == HudTarget.COMPOSTER_TIMER) s.composterTimerHudScale = newScale;
+            else if (resizingTarget == HudTarget.TAB_WIDGET) s.tabWidgetHudScale = newScale;
             
             return true;
         }
@@ -188,12 +271,24 @@ public class HudMoveScreen extends Screen {
             } else if (target == HudTarget.TIMERS) {
                 s.customTimerHudX = mouseX - dragOffsetX;
                 s.customTimerHudY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.COMPOSTER) {
+                s.composterHudX = mouseX - dragOffsetX;
+                s.composterHudY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.COMPOSTER_TIMER) {
+                s.composterTimerHudX = mouseX - dragOffsetX;
+                s.composterTimerHudY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.TAB_WIDGET) {
+                s.tabWidgetHudX = mouseX - dragOffsetX;
+                s.tabWidgetHudY = mouseY - dragOffsetY;
             } else if (target == HudTarget.ITEM_LIST) {
                 s.itemListX = mouseX - dragOffsetX;
                 s.itemListY = mouseY - dragOffsetY;
             } else if (target == HudTarget.ITEM_LIST_SEARCH) {
                 s.itemListSearchX = mouseX - dragOffsetX;
                 s.itemListSearchY = mouseY - dragOffsetY;
+            } else if (target == HudTarget.HOPPITY) {
+                s.hoppityHudX = mouseX - dragOffsetX;
+                s.hoppityHudY = mouseY - dragOffsetY;
             }
         }
 
@@ -205,6 +300,22 @@ public class HudMoveScreen extends Screen {
             g.fill(x + w - 3, y - 5, x + w + 5, y + 3, 0xFFFFFFFF); // TR
             g.fill(x - 5, y + h - 3, x + 3, y + h + 5, 0xFFFFFFFF); // BL
             g.fill(x + w - 3, y + h - 3, x + w + 5, y + h + 5, 0xFFFFFFFF); // BR
+
+            String targetName = switch (target) {
+                case DICE -> "Dice Tracker HUD";
+                case BAKERY -> "Feast Bakery HUD";
+                case RNG -> "RNG Profit HUD";
+                case KUUDRA -> "Kuudra Blindness Timer";
+                case PAD_TIMERS -> "Pad Timers";
+                case TIMERS -> "Custom Timers";
+                case COMPOSTER -> "Composter Status HUD";
+                case COMPOSTER_TIMER -> "Composter Timer HUD";
+                case TAB_WIDGET -> "Tab Widget HUD";
+                case ITEM_LIST -> "Item List HUD";
+                case ITEM_LIST_SEARCH -> "Item List Search";
+                case HOPPITY -> "Hoppity Egg HUD";
+            };
+            g.text(font, "§e" + targetName, x, y - 12, 0xFFFFFFFF, true);
         }
     }
 
@@ -270,6 +381,48 @@ public class HudMoveScreen extends Screen {
         if (checkHit(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH)) {
             startDragging(HudTarget.TIMERS, (int) mouseX - s.customTimerHudX, (int) mouseY - s.customTimerHudY);
             return true;
+        }
+        // Check Composter Hud
+        int compW = (int)(ComposterHud.getWidth() * s.composterHudScale);
+        int compH = (int)(ComposterHud.getHeight() * s.composterHudScale);
+        if (startCornerResize(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH, HudTarget.COMPOSTER, s.composterHudScale)) return true;
+        if (checkHit(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH)) {
+            startDragging(HudTarget.COMPOSTER, (int) mouseX - s.composterHudX, (int) mouseY - s.composterHudY);
+            return true;
+        }
+
+        // Check Composter Timer Hud
+        int compTimerW = (int)(140 * s.composterTimerHudScale);
+        int compTimerH = (int)(12 * s.composterTimerHudScale);
+        if (startCornerResize(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH, HudTarget.COMPOSTER_TIMER, s.composterTimerHudScale)) return true;
+        if (checkHit(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH)) {
+            startDragging(HudTarget.COMPOSTER_TIMER, (int) mouseX - s.composterTimerHudX, (int) mouseY - s.composterTimerHudY);
+            return true;
+        }
+
+        // Check Hoppity Egg Hud
+        if (checkHit(mouseX, mouseY, s.hoppityHudX, s.hoppityHudY, 90, 45)) {
+            startDragging(HudTarget.HOPPITY, (int) mouseX - s.hoppityHudX, (int) mouseY - s.hoppityHudY);
+            return true;
+        }
+
+        // Check Tab Widgets
+        if (s.tabWidgets != null) {
+            for (int i = 0; i < s.tabWidgets.size(); i++) {
+                BomboConfig.TabWidgetInfo widget = s.tabWidgets.get(i);
+                List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
+                int widgetW = (int)(TabWidgetHud.getWidth() * widget.scale);
+                int widgetH = (int)(TabWidgetHud.getHeight(lines.size()) * widget.scale);
+                if (startCornerResize(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH, HudTarget.TAB_WIDGET, widget.scale)) {
+                    editingWidgetIdx = i;
+                    return true;
+                }
+                if (checkHit(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH)) {
+                    editingWidgetIdx = i;
+                    startDragging(HudTarget.TAB_WIDGET, (int) mouseX - widget.x, (int) mouseY - widget.y);
+                    return true;
+                }
+            }
         }
 
         // Check Separate Search
@@ -346,6 +499,33 @@ public class HudMoveScreen extends Screen {
             s.customTimerHudScale = (float) Math.max(0.5, Math.min(3.0, s.customTimerHudScale + vertical * 0.1));
             BomboConfig.save();
             return true;
+        }
+        // composter hud
+        int compW = (int)(ComposterHud.getWidth() * s.composterHudScale);
+        int compH = (int)(ComposterHud.getHeight() * s.composterHudScale);
+        if (checkHit(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH)) {
+            s.composterHudScale = (float) Math.max(0.5, Math.min(3.0, s.composterHudScale + vertical * 0.1));
+            BomboConfig.save();
+            return true;
+        }
+        // composter timer hud
+        if (checkHit(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, (int)(140 * s.composterTimerHudScale), (int)(12 * s.composterTimerHudScale))) {
+            s.composterTimerHudScale = (float) Math.max(0.5, Math.min(3.0, s.composterTimerHudScale + vertical * 0.1));
+            BomboConfig.save();
+            return true;
+        }
+        // tab widgets
+        if (s.tabWidgets != null) {
+            for (BomboConfig.TabWidgetInfo widget : s.tabWidgets) {
+                List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
+                int widgetW = (int)(TabWidgetHud.getWidth() * widget.scale);
+                int widgetH = (int)(TabWidgetHud.getHeight(lines.size()) * widget.scale);
+                if (checkHit(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH)) {
+                    widget.scale = (float) Math.max(0.5, Math.min(3.0, widget.scale + vertical * 0.1));
+                    BomboConfig.save();
+                    return true;
+                }
+            }
         }
         // item list search width
         if (s.itemListEnabled && s.itemListSeparateSearch) {
@@ -425,6 +605,6 @@ public class HudMoveScreen extends Screen {
     }
 
     private enum HudTarget {
-        DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS, ITEM_LIST, ITEM_LIST_SEARCH
+        DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS, COMPOSTER, COMPOSTER_TIMER, TAB_WIDGET, ITEM_LIST, ITEM_LIST_SEARCH, HOPPITY
     }
 }

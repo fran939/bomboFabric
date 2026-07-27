@@ -78,6 +78,10 @@ public class SkyblockItemManager {
         }
     }
 
+    public static boolean isLoaded() {
+        return loaded;
+    }
+
     public static SkyblockItemInfo getInfo(String id) {
         ensureLoaded();
         return itemCache.get(id);
@@ -527,6 +531,9 @@ public class SkyblockItemManager {
         String skinValue = null;
         int color = -1;
 
+        String nrpModel = me.bombo.bomboaddons.features.TextureToggleManager.INSTANCE.getRawModel(id);
+        String nrpValue = me.bombo.bomboaddons.features.TextureToggleManager.INSTANCE.getRawValue(id);
+
         if (info != null) {
             skinValue = info.skinValue;
             color = info.color;
@@ -560,6 +567,14 @@ public class SkyblockItemManager {
                     }
                 }
             }
+        }
+
+        if (skinValue == null && nrpValue != null) {
+            skinValue = nrpValue;
+        }
+
+        if ("minecraft:player_head".equals(nrpModel) || (skinValue != null && !skinValue.isEmpty() && baseItem == Items.PAPER)) {
+            baseItem = Items.PLAYER_HEAD;
         }
         
         ItemStack stack = new ItemStack(baseItem);

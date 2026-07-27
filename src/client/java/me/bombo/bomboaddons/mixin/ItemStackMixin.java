@@ -166,6 +166,18 @@ public abstract class ItemStackMixin {
                 }
             }
             
+            boolean shouldShowCraftCost = BomboConfig.get().craftCostTooltip;
+            if (shouldShowCraftCost && !isPet) {
+                long craftCost = LowestBinManager.getCraftCostCached(skyblockId);
+                if (craftCost > 0) {
+                    String costText = "§6Raw Craft Cost: §e" + LowestBinManager.formatPrice(craftCost);
+                    if (count > 1) {
+                        costText += " §7(" + LowestBinManager.formatPrice(craftCost * count) + ")";
+                    }
+                    lines.add(Component.literal(costText));
+                }
+            }
+            
             if (BomboConfig.get().npcPrice) {
                 long npcPrice = LowestBinManager.getNpcPrice(skyblockId);
                 if (npcPrice > 0) {

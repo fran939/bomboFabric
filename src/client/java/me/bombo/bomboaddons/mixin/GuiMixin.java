@@ -45,4 +45,11 @@ public class GuiMixin {
             ci.cancel();
         }
     }
+
+    @Inject(method = "renderTextureOverlay", at = @At("HEAD"), cancellable = true, require = 0)
+    private void onRenderTextureOverlay(GuiGraphicsExtractor guiGraphics, net.minecraft.resources.Identifier texture, float alpha, CallbackInfo ci) {
+        if (BomboConfig.get().clearWaterAndLava) {
+            ci.cancel();
+        }
+    }
 }

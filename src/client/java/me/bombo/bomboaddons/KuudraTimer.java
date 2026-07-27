@@ -89,4 +89,8 @@ public class KuudraTimer {
 
         g.pose().popMatrix();
     }
+
+    public static boolean isActive() {
+        return System.currentTimeMillis() < nowEndTime;
+    }
 }
