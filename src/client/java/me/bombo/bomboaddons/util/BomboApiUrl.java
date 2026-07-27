@@ -15,13 +15,11 @@ public class BomboApiUrl {
     private static final long CHECK_INTERVAL_MS = 60000; // Re-check health every 60 seconds
 
     public static String getApiBase() {
-        checkHealthIfNeeded();
-        return useMainDomain.get() ? MAIN_API_BASE : BACKUP_API_BASE;
+        return MAIN_API_BASE;
     }
 
     public static String getWebBase() {
-        checkHealthIfNeeded();
-        return useMainDomain.get() ? MAIN_WEB_BASE : BACKUP_API_BASE;
+        return MAIN_WEB_BASE;
     }
 
     public static String getApiUrl(String path) {
