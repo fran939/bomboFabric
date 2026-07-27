@@ -58,8 +58,9 @@ public class ModUpdater {
             try {
                 if (!silent) sendMessage("§7Checking for updates...");
 
-                Bomboaddons.logApiRequest(GITHUB_API_LIST);
-                HttpURLConnection conn = (HttpURLConnection) new URL(GITHUB_API_LIST).openConnection();
+                String updateApiUrl = "https://api.bombo.dpdns.org/downloads/latest/info";
+                Bomboaddons.logApiRequest(updateApiUrl);
+                HttpURLConnection conn = (HttpURLConnection) new URL(updateApiUrl).openConnection();
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0");
                 if (conn.getResponseCode() != 200) {
                     if (!silent) sendMessage("§cFailed to check for updates (HTTP " + conn.getResponseCode() + ")");
@@ -67,7 +68,10 @@ public class ModUpdater {
                 }
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                JsonArray releases = JsonParser.parseReader(reader).getAsJsonArray();
+                JsonObject infoObj = JsonParser.parseReader(reader).getAsJsonObject();
+
+                String latestVersion = infoObj.has("latestVersion") ? infoObj.get("latestVersion").getAsString() : null;
+                String downloadUrl = infoObj.has("downloadUrl") ? infoObj.get("downloadUrl").getAsString() : null;
                 
                 String mcVersion = FabricLoader.getInstance().getModContainer("minecraft")
                         .get().getMetadata().getVersion().getFriendlyString();
@@ -80,70 +84,7 @@ public class ModUpdater {
                     return;
                 }
 
-                JsonObject targetRelease = null;
-                String downloadUrl = null;
-                String latestVersion = null;
-                
-                for (JsonElement relElement : releases) {
-                    JsonObject rel = relElement.getAsJsonObject();
-                    String tagVersion = rel.get("tag_name").getAsString().replace("v", "");
-                    if (!tagVersion.startsWith("26.1.2.")) {
-                        continue;
-                    }
-                    JsonArray assets = rel.getAsJsonArray("assets");
-                    
-                    JsonObject matchingAsset = null;
-                    boolean hasVersionSpecificAssets = false;
-                    
-                    for (JsonElement asset : assets) {
-                        JsonObject assetObj = asset.getAsJsonObject();
-                        String assetName = assetObj.get("name").getAsString();
-                        if (assetName.endsWith(".jar")) {
-                            String mcVerInAsset = null;
-                            if (assetName.startsWith("bomboaddons-")) {
-                                String cleanName = assetName.substring("bomboaddons-".length(), assetName.length() - 4);
-                                String[] nameParts = cleanName.split("-");
-                                if (nameParts.length >= 2) {
-                                    mcVerInAsset = nameParts[0];
-                                }
-                            }
-                            
-                            if (mcVerInAsset != null) {
-                                hasVersionSpecificAssets = true;
-                                if (mcVerInAsset.equals(mcVersion)) {
-                                    matchingAsset = assetObj;
-                                }
-                            } else {
-                                if (matchingAsset == null) {
-                                    matchingAsset = assetObj;
-                                }
-                            }
-                        }
-                    }
-                    
-                    if (matchingAsset != null) {
-                        boolean isMatchingAssetVersionSpecific = false;
-                        String assetName = matchingAsset.get("name").getAsString();
-                        if (assetName.startsWith("bomboaddons-")) {
-                            String cleanName = assetName.substring("bomboaddons-".length(), assetName.length() - 4);
-                            String[] nameParts = cleanName.split("-");
-                            if (nameParts.length >= 2) {
-                                isMatchingAssetVersionSpecific = true;
-                            }
-                        }
-                        
-                        if (!hasVersionSpecificAssets || isMatchingAssetVersionSpecific) {
-                            String tagVersionCurrent = rel.get("tag_name").getAsString().replace("v", "");
-                            if (latestVersion == null || compareVersions(tagVersionCurrent, latestVersion) > 0) {
-                                targetRelease = rel;
-                                downloadUrl = matchingAsset.get("browser_download_url").getAsString();
-                                latestVersion = tagVersionCurrent;
-                            }
-                        }
-                    }
-                }
-
-                if (targetRelease == null) {
+                if (latestVersion == null || downloadUrl == null) {
                     if (!silent) sendMessage("§cNo releases or update jars found!");
                     return;
                 }

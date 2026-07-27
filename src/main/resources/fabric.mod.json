@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "bomboaddons",
-	"version": "26.1.2.15",
+	"version": "${version}",
 	"name": "Bomboaddons",
 	"description": "Hypixel skyblock mod",
 	"authors": [
