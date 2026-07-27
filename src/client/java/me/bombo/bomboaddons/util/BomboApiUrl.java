@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class BomboApiUrl {
     public static final String MAIN_API_BASE = "https://api.bombo.dpdns.org";
-    public static final String MAIN_WEB_BASE = "https://bombo.dpdns.org/do";
+    public static final String MAIN_WEB_BASE = "https://bombo.dpdns.org";
     public static final String BACKUP_API_BASE = "https://bomboapi.frandl938.workers.dev";
 
     private static final AtomicBoolean useMainDomain = new AtomicBoolean(true);
