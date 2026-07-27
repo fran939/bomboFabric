@@ -182,16 +182,18 @@ public class AccountManager {
                 }
             }
             
-            // Auto refresh current account on startup in background
-            if (currentAccount != null && currentAccount.refreshToken != null && !currentAccount.refreshToken.isEmpty()) {
-                final Account toRefresh = currentAccount;
-                refreshAccount(toRefresh).thenAccept(refreshed -> {
-                    if (refreshed != null) {
-                        Minecraft.getInstance().execute(() -> {
-                            setSession(refreshed);
-                        });
-                    }
-                });
+            // Auto refresh ALL saved accounts on startup in background for instant account switching
+            for (Account acc : new ArrayList<>(accounts)) {
+                if (acc != null && acc.refreshToken != null && !acc.refreshToken.isEmpty()) {
+                    final Account toRefresh = acc;
+                    refreshAccount(toRefresh).thenAccept(refreshed -> {
+                        if (refreshed != null && refreshed == currentAccount) {
+                            Minecraft.getInstance().execute(() -> {
+                                setSession(refreshed);
+                            });
+                        }
+                    });
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

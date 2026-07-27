@@ -45,11 +45,24 @@ public abstract class ChatMixin implements me.bombo.bomboaddons.util.IChatCompon
    @Shadow
    public abstract int getWidth();
 
-   @Inject(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V", at = @At("HEAD"))
+   @Shadow
+   protected abstract void addMessage(Component component, MessageSignature messageSignature, GuiMessageSource guiMessageSource, GuiMessageTag guiMessageTag);
+
+   @Inject(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V", at = @At("HEAD"), cancellable = true)
    private void onAddMessage(Component message, MessageSignature signature, GuiMessageSource source, GuiMessageTag tag, CallbackInfo ci) {
       if (message != null) {
          String raw = message.getString();
          if (raw.contains("DailyRewardDebug") || raw.contains("[BomboAddons]")) return;
+
+         if (raw.contains("&") && !raw.contains("[BomboAddons]")) {
+             String legacyFormatted = raw.replace('&', '§');
+             if (!legacyFormatted.equals(raw)) {
+                 ci.cancel();
+                 this.addMessage(Component.literal(legacyFormatted), signature, source, tag);
+                 return;
+             }
+         }
+
          SphinxMacro.onChatMessage(raw);
          CarnivalAuto.onChatMessage(raw);
          me.bombo.bomboaddons.KuudraPerkClicker.onChatMessage(raw);
