@@ -49,13 +49,13 @@ public class SBECommands {
                .header("User-Agent", "Mozilla/5.0 (Bomboaddons 1.21.11) " + selfUuid).timeout(Duration.ofSeconds(15L))
                .GET().build();
          client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body).thenAccept((body) -> {
-            if (body == null || body.trim().isEmpty() || body.contains("404") || body.contains("Error")) {
-                sendFallbackRequest(fallbackUrl, command, name, selfUuid);
+            if (body == null || body.trim().isEmpty()) {
+                sendMessage("§cEmpty response from API.");
                 return;
             }
             parseAndDisplay(body, command, name);
          }).exceptionally(e -> {
-            sendFallbackRequest(fallbackUrl, command, name, selfUuid);
+            sendMessage("§cError fetching data for " + name + ": " + e.getMessage());
             return null;
          });
       }
@@ -262,15 +262,20 @@ public class SBECommands {
             long totalNw = nw.has("networth") ? nw.get("networth").getAsLong() : 0L;
             sendMessage("§d ⦾ §6$" + formatCommas(totalNw));
             sendMessage("§r");
-            long purse = nw.has("purse") ? nw.get("purse").getAsLong() : 0L;
-            long bank = nw.has("bank") ? nw.get("bank").getAsLong() : 0L;
-            MutableComponent coins = Component.literal("§a | §bCoins: §6" + formatNotation(purse + bank));
-            MutableComponent coinsDetails = Component.literal(" - §7(Details)§r");
-            var10000 = formatCommas(purse);
-            HoverEvent coinsHover = createHoverEvent("§bPurse: §6" + var10000 + "\n§bBank: §6" + formatCommas(bank));
-            if (coinsHover != null) {
-               coinsDetails.setStyle(Style.EMPTY.withHoverEvent(coinsHover));
-            }
+             long purse = nw.has("purse") ? nw.get("purse").getAsLong() : 0L;
+             long bank = nw.has("bank") ? nw.get("bank").getAsLong() : 0L;
+             long personalBank = nw.has("personalBank") ? nw.get("personalBank").getAsLong() : 0L;
+             MutableComponent coins = Component.literal("§a | §bCoins: §6" + formatNotation(purse + bank + personalBank));
+             MutableComponent coinsDetails = Component.literal(" - §7(Details)§r");
+             var10000 = formatCommas(purse);
+             String hoverStr = "§bPurse: §6" + var10000 + "\n§bBank: §6" + formatCommas(bank);
+             if (personalBank > 0) {
+                hoverStr += "\n§bPersonal Bank: §6" + formatCommas(personalBank);
+             }
+             HoverEvent coinsHover = createHoverEvent(hoverStr);
+             if (coinsHover != null) {
+                coinsDetails.setStyle(Style.EMPTY.withHoverEvent(coinsHover));
+             }
 
             coins.append(coinsDetails);
             sendComponent(coins);

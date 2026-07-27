@@ -23,14 +23,18 @@ public class BomboApiUrl {
     }
 
     public static String getApiUrl(String path) {
-        if (path == null) path = "";
-        if (!path.startsWith("/")) path = "/" + path;
+        if (path == null)
+            path = "";
+        if (!path.startsWith("/"))
+            path = "/" + path;
         return getApiBase() + path;
     }
 
     public static String getWebUrl(String path) {
-        if (path == null) path = "";
-        if (!path.startsWith("/")) path = "/" + path;
+        if (path == null)
+            path = "";
+        if (!path.startsWith("/"))
+            path = "/" + path;
         return getWebBase() + path;
     }
 
@@ -44,7 +48,8 @@ public class BomboApiUrl {
         new Thread(() -> {
             boolean ok = testUrl(MAIN_API_BASE + "/") || testUrl(MAIN_WEB_BASE + "/");
             useMainDomain.set(ok);
-            System.out.println("[BomboAddons] Main domain health check: " + (ok ? "ONLINE (using api.bombo.dpdns.org)" : "OFFLINE (falling back to workers.dev)"));
+            System.out.println("[BomboAddons] Main domain health check: "
+                    + (ok ? "ONLINE (using api.bombo.dpdns.org)" : "OFFLINE (falling back to workers.dev)"));
         }, "BomboApi-HealthCheck").start();
     }
 
