@@ -142,32 +142,6 @@ public class IRCClient {
 
                 currentNick = cleanUsername;
 
-                // Attempt 1: Raw TCP Socket to chat.bombo.dpdns.org:6667
-                try {
-                    System.out.println("[BomboAddons-IRC] Trying TCP socket to chat.bombo.dpdns.org:6667...");
-                    Socket sock = new Socket();
-                    sock.connect(new java.net.InetSocketAddress("chat.bombo.dpdns.org", 6667), 4000);
-                    tcpSocket = sock;
-                    tcpWriter = new PrintWriter(sock.getOutputStream(), true);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(sock.getInputStream(), "UTF-8"));
-
-                    sendRaw("NICK " + currentNick);
-                    sendRaw("USER " + currentNick + " 0 * :BomboAddons User");
-                    lastError = "None (Connected via TCP)";
-                    System.out.println("[BomboAddons-IRC] Connected via TCP!");
-
-                    String line;
-                    while (running && BomboConfig.get().ircChatEnabled && tcpSocket != null && !tcpSocket.isClosed()) {
-                        line = reader.readLine();
-                        if (line == null) break;
-                        handleLine(line);
-                    }
-                    closeQuietly();
-                    continue;
-                } catch (Throwable t1) {
-                    lastError = "TCP 6667 failed: " + t1.getMessage();
-                    System.err.println("[BomboAddons-IRC] TCP 6667 failed: " + t1.getMessage());
-                }
 
                 // Attempt 2: WebSocket wss://bombo.dpdns.org/bombochat
                 try {
