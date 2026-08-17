@@ -51,7 +51,7 @@ public class IRCClient {
             String name = mc.getUser().getName();
             String clean = name.replaceAll("[^a-zA-Z0-9_]", "");
             if (!clean.isEmpty()) {
-               String modVer = "26.1.2.18";
+               String modVer = "26.1.2.19";
                String area = BomboaddonsClient.currentArea != null && !BomboaddonsClient.currentArea.isEmpty() ? BomboaddonsClient.currentArea : "None";
                onlinePlayers.put(clean, new ModUser(clean, modVer, area));
             }
@@ -194,7 +194,7 @@ public class IRCClient {
                   cleanUsername = "bombo_" + random.nextInt(10000);
                }
 
-               String modVersion = "26.1.2.18".replace('.', '_');
+               String modVersion = "26.1.2.19".replace('.', '_');
                String currentArea = BomboaddonsClient.currentArea != null && !BomboaddonsClient.currentArea.isEmpty() ? BomboaddonsClient.currentArea.replaceAll("[^a-zA-Z0-9]", "_") : "None";
                currentNick = "b_" + cleanUsername + "_v" + modVersion + "__" + currentArea;
 
