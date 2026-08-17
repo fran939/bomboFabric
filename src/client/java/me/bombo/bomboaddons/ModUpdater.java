@@ -66,22 +66,52 @@ public class ModUpdater {
                   sendMessage("§7Checking for updates...");
                }
 
+               String latestVersion = null;
+               String downloadUrl = null;
+
                String updateApiUrl = "https://api.bombo.dpdns.org/downloads/latest/info";
-               Bomboaddons.logApiRequest(updateApiUrl);
-               HttpURLConnection conn = (HttpURLConnection)(new URL(updateApiUrl)).openConnection();
-               conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-               if (conn.getResponseCode() != 200) {
-                  if (!silent) {
-                     sendMessage("§cFailed to check for updates (HTTP " + conn.getResponseCode() + ")");
+               try {
+                  Bomboaddons.logApiRequest(updateApiUrl);
+                  HttpURLConnection conn = (HttpURLConnection)(new URL(updateApiUrl)).openConnection();
+                  conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                  conn.setConnectTimeout(3000);
+                  conn.setReadTimeout(3000);
+                  if (conn.getResponseCode() == 200) {
+                     BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                     JsonObject infoObj = JsonParser.parseReader(reader).getAsJsonObject();
+                     if (infoObj.has("latestVersion")) latestVersion = infoObj.get("latestVersion").getAsString();
+                     if (infoObj.has("downloadUrl")) downloadUrl = infoObj.get("downloadUrl").getAsString();
                   }
+               } catch (Throwable ignored) {}
 
-                  return;
+               if (latestVersion == null || downloadUrl == null) {
+                  try {
+                     String ghUrl = "https://api.github.com/repos/fran939/bomboFabric/releases/latest";
+                     HttpURLConnection ghConn = (HttpURLConnection)(new URL(ghUrl)).openConnection();
+                     ghConn.setRequestProperty("User-Agent", "BomboAddons");
+                     ghConn.setConnectTimeout(5000);
+                     ghConn.setReadTimeout(5000);
+                     if (ghConn.getResponseCode() == 200) {
+                        BufferedReader ghReader = new BufferedReader(new InputStreamReader(ghConn.getInputStream()));
+                        JsonObject ghObj = JsonParser.parseReader(ghReader).getAsJsonObject();
+                        if (ghObj.has("tag_name")) {
+                           String tag = ghObj.get("tag_name").getAsString();
+                           latestVersion = tag.startsWith("v") ? tag.substring(1) : tag;
+                        }
+                        if (ghObj.has("assets")) {
+                           com.google.gson.JsonArray assets = ghObj.getAsJsonArray("assets");
+                           for (com.google.gson.JsonElement el : assets) {
+                              JsonObject a = el.getAsJsonObject();
+                              String name = a.get("name").getAsString();
+                              if (name.endsWith(".jar") && !name.contains("sources") && !name.contains("dev")) {
+                                 downloadUrl = a.get("browser_download_url").getAsString();
+                                 break;
+                              }
+                           }
+                        }
+                     }
+                  } catch (Throwable ignored) {}
                }
-
-               BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-               JsonObject infoObj = JsonParser.parseReader(reader).getAsJsonObject();
-               String latestVersion = infoObj.has("latestVersion") ? infoObj.get("latestVersion").getAsString() : null;
-               String downloadUrl = infoObj.has("downloadUrl") ? infoObj.get("downloadUrl").getAsString() : null;
                String mcVersion = ((ModContainer)FabricLoader.getInstance().getModContainer("minecraft").get()).getMetadata().getVersion().getFriendlyString();
                String currentVersion = ((ModContainer)FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
                if (currentVersion.equals("${version}")) {

@@ -18,7 +18,8 @@ if (-not $env:GH_TOKEN) {
     } catch {}
 }
 
-Write-Host "Creating GitHub Release for v$version..." -ForegroundColor Cyan
+Write-Host "Creating/Uploading GitHub Release for v$version..." -ForegroundColor Cyan
 & "C:\Program Files\GitHub CLI\gh.exe" release create "v$version" $jarPath --repo "fran939/bomboFabric" --title "v$version" --notes "Release v${version} - Bestiary highlight GUI check, item hotkeys, texture toggle, and modifier swap fixes."
+& "C:\Program Files\GitHub CLI\gh.exe" release upload "v$version" $jarPath --repo "fran939/bomboFabric" --clobber
 
 Write-Host "Successfully uploaded v$version!" -ForegroundColor Green
