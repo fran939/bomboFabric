@@ -12,12 +12,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Environment(EnvType.CLIENT)
-@Mixin({ Minecraft.class })
+@Mixin({Minecraft.class})
 public class BomboGuiMixin {
-   @Inject(method = { "setScreen" }, at = { @At("RETURN") })
+   @Inject(
+      method = {"setScreen"},
+      at = {@At("RETURN")}
+   )
    private void onSetScreen(Screen screen, CallbackInfo ci) {
-      if (screen instanceof AbstractContainerScreen) {
-         AbstractContainerScreen containerScreen = (AbstractContainerScreen) screen;
+      if (screen instanceof AbstractContainerScreen containerScreen) {
          ClickLogic.onGuiOpen(containerScreen);
       }
 

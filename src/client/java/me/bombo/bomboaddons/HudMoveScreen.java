@@ -1,610 +1,677 @@
 package me.bombo.bomboaddons;
 
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.client.input.MouseButtonEvent;
+import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 public class HudMoveScreen extends Screen {
-    private static boolean showOnlyActiveHuds = false;
+   private static boolean showOnlyActiveHuds = false;
+   private HudTarget draggingTarget = null;
+   private int dragOffsetX = 0;
+   private int dragOffsetY = 0;
+   private int editingWidgetIdx = -1;
+   private boolean isResizingItemList = false;
+   private HudTarget resizingTarget = null;
+   private int resizeCorner = -1;
+   private double resizeStartScale = (double)1.0F;
+   private int resizeStartW = 0;
+   private int resizeStartH = 0;
+   private int resizeStartX = 0;
+   private int resizeStartY = 0;
+   private double resizeStartMouseX = (double)0.0F;
+   private double resizeStartMouseY = (double)0.0F;
 
-    private HudTarget draggingTarget = null;
-    private int dragOffsetX = 0;
-    private int dragOffsetY = 0;
-    private int editingWidgetIdx = -1;
-    private boolean isResizingItemList = false;
-    private HudTarget resizingTarget = null;
-    private int resizeCorner = -1; // 0=TL, 1=TR, 2=BL, 3=BR
-    private double resizeStartScale = 1.0;
-    private int resizeStartW = 0;
-    private int resizeStartH = 0;
-    private int resizeStartX = 0;
-    private int resizeStartY = 0;
-    private double resizeStartMouseX = 0;
-    private double resizeStartMouseY = 0;
+   protected HudMoveScreen() {
+      super(Component.literal("Move HUD"));
+   }
 
-    protected HudMoveScreen() {
-        super(Component.literal("Move HUD"));
-    }
+   protected void init() {
+      super.init();
+      if (BomboConfig.get().itemListEnabled) {
+         ItemListOverlay.updateLayout(0, this.width, 0, this.width, this.height);
+         ItemListOverlay.searchBox = null;
+      }
 
-    @Override
-    protected void init() {
-        super.init();
-        if (BomboConfig.get().itemListEnabled) {
-            me.bombo.bomboaddons.ItemListOverlay.updateLayout(0, width, 0, width, height);
-            me.bombo.bomboaddons.ItemListOverlay.searchBox = null;
-        }
+      BomboConfig.Settings s = BomboConfig.get();
+      String toggleText = s.showOnlyActiveHuds ? "§e[ Mode: Active HUDs ]" : "§a[ Mode: All HUDs ]";
+      this.addRenderableWidget(Button.builder(Component.literal(toggleText), (btn) -> {
+         s.showOnlyActiveHuds = !s.showOnlyActiveHuds;
+         BomboConfig.save();
+         this.init();
+      }).bounds(10, 10, 140, 20).build());
+   }
 
-        // Toggle button for showing all vs active HUDs
-        BomboConfig.Settings s = BomboConfig.get();
-        String toggleText = s.showOnlyActiveHuds ? "§e[ Mode: Active HUDs ]" : "§a[ Mode: All HUDs ]";
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.literal(toggleText), btn -> {
-            s.showOnlyActiveHuds = !s.showOnlyActiveHuds;
-            BomboConfig.save();
-            init();
-        }).bounds(10, 10, 140, 20).build());
-    }
+   public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+      g.fill(0, 0, this.width, this.height, -2013265920);
+      Identifier invTex = Identifier.withDefaultNamespace("textures/gui/container/inventory.png");
+      int invW = 176;
+      int invH = 166;
+      int invX = (this.width - invW) / 2;
+      int invY = (this.height - invH) / 2;
+      g.blit(invTex, invX, invY, invX + invW, invY + invH, 0.0F, 0.6875F, 0.0F, 0.6484375F);
+      BomboConfig.Settings s = BomboConfig.get();
+      if (!s.showOnlyActiveHuds || s.diceTracker && DiceTracker.shouldShowHud()) {
+         this.renderTarget(g, mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260.0F * s.diceHudScale), (int)(52.0F * s.diceHudScale), HudMoveScreen.HudTarget.DICE);
+         DiceHud.drawDiceInfo(g, s.diceHudX, s.diceHudY, this.draggingTarget == HudMoveScreen.HudTarget.DICE);
+         g.text(this.font, "§aRight-click to swap modes!", s.diceHudX, s.diceHudY - 10, -1, true);
+      }
 
-    @Override
-    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        g.fill(0, 0, width, height, 0x88000000);
-        
-        // Draw inventory background for reference (translucent)
-        net.minecraft.resources.Identifier invTex = net.minecraft.resources.Identifier.withDefaultNamespace("textures/gui/container/inventory.png");
-        int invW = 176;
-        int invH = 166;
-        int invX = (width - invW) / 2;
-        int invY = (height - invH) / 2;
-        g.blit(invTex, invX, invY, invX + invW, invY + invH, 0f, 176f/256f, 0f, 166f/256f);
-        
-        BomboConfig.Settings s = BomboConfig.get();
-        
-        // 1. Dice Tracker
-        if (!s.showOnlyActiveHuds || (s.diceTracker && DiceTracker.shouldShowHud())) {
-            renderTarget(g, mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260 * s.diceHudScale), (int)(52 * s.diceHudScale), HudTarget.DICE);
-            DiceHud.drawDiceInfo(g, s.diceHudX, s.diceHudY, draggingTarget == HudTarget.DICE);
-            g.text(font, "§aRight-click to swap modes!", s.diceHudX, s.diceHudY - 10, 0xFFFFFFFF, true);
-        }
+      if (!s.showOnlyActiveHuds || s.feastBakeryHud) {
+         int bakeryW = (int)((float)FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
+         int bakeryH = (int)((float)FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
+         this.renderTarget(g, mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudMoveScreen.HudTarget.BAKERY);
+         List<FeastBakeryHud.DetectedItem> dummy = new ArrayList();
+         dummy.add(new FeastBakeryHud.DetectedItem("FRESHLY_BAKED_TALISMAN", "Baked Talisman", 25));
+         dummy.add(new FeastBakeryHud.DetectedItem("POPCORN_RING", "Popcorn Ring", 125));
+         dummy.add(new FeastBakeryHud.DetectedItem("ENCHANTMENT_FEAST_1", "Enchanted Book (Feast I)", 500));
+         FeastBakeryHud.drawBakeryInfo(g, s.feastBakeryHudX, s.feastBakeryHudY, dummy);
+      }
 
-        // 2. Feast Bakery
-        if (!s.showOnlyActiveHuds || s.feastBakeryHud) {
-            int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
-            int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale); // 3 dummy items in edit screen
-            renderTarget(g, mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudTarget.BAKERY);
-            java.util.List<FeastBakeryHud.DetectedItem> dummy = new java.util.ArrayList<>();
-            dummy.add(new FeastBakeryHud.DetectedItem("FRESHLY_BAKED_TALISMAN", "Baked Talisman", 25));
-            dummy.add(new FeastBakeryHud.DetectedItem("POPCORN_RING", "Popcorn Ring", 125));
-            dummy.add(new FeastBakeryHud.DetectedItem("ENCHANTMENT_FEAST_1", "Enchanted Book (Feast I)", 500));
-            FeastBakeryHud.drawBakeryInfo(g, s.feastBakeryHudX, s.feastBakeryHudY, dummy);
-        }
+      if (!s.showOnlyActiveHuds || s.rngProfitHud) {
+         int rngW = (int)(185.0F * s.rngProfitHudScale);
+         int rngH = (int)((float)ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
+         this.renderTarget(g, mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudMoveScreen.HudTarget.RNG);
+         ExperimentationTableHud.onHudRender(g);
+      }
 
-        // 3. RNG Experiments Profit
-        if (!s.showOnlyActiveHuds || s.rngProfitHud) {
-            int rngW = (int)(185 * s.rngProfitHudScale);
-            int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
-            renderTarget(g, mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudTarget.RNG);
-            ExperimentationTableHud.onHudRender(g);
-        }
+      if (!s.showOnlyActiveHuds || s.kuudraBlindnessTimer && KuudraTimer.isActive()) {
+         int kuudraW = (int)(80.0F * s.kuudraBlindnessTimerScale);
+         int kuudraH = (int)(12.0F * s.kuudraBlindnessTimerScale);
+         this.renderTarget(g, mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudMoveScreen.HudTarget.KUUDRA);
+         KuudraTimer.drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, true);
+      }
 
-        // 4. Kuudra Blindness Timer
-        if (!s.showOnlyActiveHuds || (s.kuudraBlindnessTimer && KuudraTimer.isActive())) {
-            int kuudraW = (int)(80 * s.kuudraBlindnessTimerScale);
-            int kuudraH = (int)(12 * s.kuudraBlindnessTimerScale);
-            renderTarget(g, mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudTarget.KUUDRA);
-            KuudraTimer.drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, true);
-        }
+      if (!s.showOnlyActiveHuds || (s.padTimersPurple || s.padTimersGreen) && DungeonPadTimers.isActive()) {
+         int padW = (int)(120.0F * s.padTimersScale);
+         int padH = (int)(12.0F * s.padTimersScale);
+         this.renderTarget(g, mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudMoveScreen.HudTarget.PAD_TIMERS);
+         DungeonPadTimers.drawTimerInfo(g, s.padTimersX, s.padTimersY, true);
+      }
 
-        // 5. Dungeon Pad Timers
-        if (!s.showOnlyActiveHuds || ((s.padTimersPurple || s.padTimersGreen) && DungeonPadTimers.isActive())) {
-            int padW = (int)(120 * s.padTimersScale);
-            int padH = (int)(12 * s.padTimersScale);
-            renderTarget(g, mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudTarget.PAD_TIMERS);
-            DungeonPadTimers.drawTimerInfo(g, s.padTimersX, s.padTimersY, true);
-        }
+      if (!s.showOnlyActiveHuds || s.customTimeEnabled && !CustomTimerManager.activeTimers.isEmpty()) {
+         int timerW = (int)((float)CustomTimerManager.getWidth() * s.customTimerHudScale);
+         int timerH = (int)((float)CustomTimerManager.getHeight() * s.customTimerHudScale);
+         this.renderTarget(g, mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH, HudMoveScreen.HudTarget.TIMERS);
+         CustomTimerManager.drawTimers(g, s.customTimerHudX, s.customTimerHudY, true);
+      }
 
-        // 6. Custom Timers
-        if (!s.showOnlyActiveHuds || (s.customTimeEnabled && !CustomTimerManager.activeTimers.isEmpty())) {
-            int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
-            int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
-            renderTarget(g, mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH, HudTarget.TIMERS);
-            CustomTimerManager.drawTimers(g, s.customTimerHudX, s.customTimerHudY, true);
-        }
+      boolean compDataExists = s.composterLastOrganic >= (double)0.0F || s.composterLastFuel >= (double)0.0F;
+      if (!s.showOnlyActiveHuds || s.composterHud && compDataExists) {
+         int compW = (int)((float)ComposterHud.getWidth() * s.composterHudScale);
+         int compH = (int)((float)ComposterHud.getHeight() * s.composterHudScale);
+         this.renderTarget(g, mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH, HudMoveScreen.HudTarget.COMPOSTER);
+         ComposterHud.drawComposterInfo(g, s.composterHudX, s.composterHudY, !compDataExists);
+      }
 
-        // 7. Composter Hud
-        boolean compDataExists = s.composterLastOrganic >= 0 || s.composterLastFuel >= 0;
-        if (!s.showOnlyActiveHuds || (s.composterHud && compDataExists)) {
-            int compW = (int)(ComposterHud.getWidth() * s.composterHudScale);
-            int compH = (int)(ComposterHud.getHeight() * s.composterHudScale);
-            renderTarget(g, mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH, HudTarget.COMPOSTER);
-            ComposterHud.drawComposterInfo(g, s.composterHudX, s.composterHudY, !compDataExists);
-        }
+      if (!s.showOnlyActiveHuds || s.composterTimerHud && compDataExists) {
+         int compTimerW = (int)(140.0F * s.composterTimerHudScale);
+         int compTimerH = (int)(12.0F * s.composterTimerHudScale);
+         this.renderTarget(g, mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH, HudMoveScreen.HudTarget.COMPOSTER_TIMER);
+         ComposterHud.drawComposterTimerInfo(g, s.composterTimerHudX, s.composterTimerHudY, !compDataExists);
+      }
 
-        // 8. Composter Timer Hud
-        if (!s.showOnlyActiveHuds || (s.composterTimerHud && compDataExists)) {
-            int compTimerW = (int)(140 * s.composterTimerHudScale);
-            int compTimerH = (int)(12 * s.composterTimerHudScale);
-            renderTarget(g, mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH, HudTarget.COMPOSTER_TIMER);
-            ComposterHud.drawComposterTimerInfo(g, s.composterTimerHudX, s.composterTimerHudY, !compDataExists);
-        }
+      if (!s.showOnlyActiveHuds || s.hoppityHud) {
+         this.renderTarget(g, mouseX, mouseY, s.hoppityHudX, s.hoppityHudY, 90, 45, HudMoveScreen.HudTarget.HOPPITY);
+      }
 
-        // 8.5. Hoppity Egg HUD
-        if (!s.showOnlyActiveHuds || s.hoppityHud) {
-            renderTarget(g, mouseX, mouseY, s.hoppityHudX, s.hoppityHudY, 90, 45, HudTarget.HOPPITY);
-        }
+      if (!s.showOnlyActiveHuds || s.alphaTrackerHud) {
+         int alphaW = (int)((float)AlphaTrackerHud.getHudWidth() * s.alphaTrackerHudScale);
+         int alphaH = (int)((float)AlphaTrackerHud.getHudHeight() * s.alphaTrackerHudScale);
+         this.renderTarget(g, mouseX, mouseY, s.alphaTrackerHudX, s.alphaTrackerHudY, alphaW, alphaH, HudMoveScreen.HudTarget.ALPHA_TRACKER);
+         AlphaTrackerHud.drawAlphaInfo(g, this.font, s.alphaTrackerHudX, s.alphaTrackerHudY);
+      }
 
-        // 9. Tab Widget Huds
-        if (s.tabWidgets != null) {
-            for (int i = 0; i < s.tabWidgets.size(); i++) {
-                BomboConfig.TabWidgetInfo widget = s.tabWidgets.get(i);
-                if (!widget.enabled && s.showOnlyActiveHuds) continue;
+      if (!s.showOnlyActiveHuds || s.autoCroesusHud) {
+         int croesusW = (int)(220.0F * s.autoCroesusHudScale);
+         int croesusH = (int)(110.0F * s.autoCroesusHudScale);
+         this.renderTarget(g, mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, croesusW, croesusH, HudMoveScreen.HudTarget.AUTO_CROESUS);
+         AutoCroesusHud.drawCroesusInfo(g, s.autoCroesusHudX, s.autoCroesusHudY, s.autoCroesusHudScale, true);
+      }
 
-                // Try real active tab lines first
-                List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, false);
-                if (lines.isEmpty()) {
-                    if (s.showOnlyActiveHuds) continue;
-                    lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
-                }
+      if (s.tabWidgets != null) {
+         for(int i = 0; i < s.tabWidgets.size(); ++i) {
+            BomboConfig.TabWidgetInfo widget = (BomboConfig.TabWidgetInfo)s.tabWidgets.get(i);
+            if (widget.enabled || !s.showOnlyActiveHuds) {
+               List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, false);
+               if (lines.isEmpty()) {
+                  if (s.showOnlyActiveHuds) {
+                     continue;
+                  }
 
-                int widgetW = (int)(TabWidgetHud.getWidth() * widget.scale);
-                int widgetH = (int)(TabWidgetHud.getHeight(lines.size()) * widget.scale);
-                
-                // Draw outline for edit screen
-                boolean hovered = mouseX >= widget.x - 12 && mouseX <= widget.x + widgetW + 12 && mouseY >= widget.y - 12 && mouseY <= widget.y + widgetH + 12;
-                if (draggingTarget == HudTarget.TAB_WIDGET && editingWidgetIdx == i) {
-                    widget.x = mouseX - dragOffsetX;
-                    widget.y = mouseY - dragOffsetY;
-                }
-                g.fill(widget.x - 2, widget.y - 2, widget.x + widgetW, widget.y + widgetH, 0x22FFFFFF);
-                if (hovered || (draggingTarget == HudTarget.TAB_WIDGET && editingWidgetIdx == i)) {
-                    g.outline(widget.x - 2, widget.y - 2, widgetW + 2, widgetH + 2, 0xFFFFFF00);
-                    g.text(font, "§eWidget: " + widget.name, widget.x, widget.y - 12, 0xFFFFFFFF, true);
-                } else {
-                    g.outline(widget.x - 2, widget.y - 2, widgetW + 2, widgetH + 2, 0xFF555555);
-                }
-                TabWidgetHud.drawWidgetInfo(g, widget.x, widget.y, widget.scale, lines);
+                  lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
+               }
+
+               int widgetW = (int)((float)TabWidgetHud.getWidth() * widget.scale);
+               int widgetH = (int)((float)TabWidgetHud.getHeight(lines.size()) * widget.scale);
+               boolean hovered = mouseX >= widget.x - 12 && mouseX <= widget.x + widgetW + 12 && mouseY >= widget.y - 12 && mouseY <= widget.y + widgetH + 12;
+               if (this.draggingTarget == HudMoveScreen.HudTarget.TAB_WIDGET && this.editingWidgetIdx == i) {
+                  widget.x = mouseX - this.dragOffsetX;
+                  widget.y = mouseY - this.dragOffsetY;
+               }
+
+               g.fill(widget.x - 2, widget.y - 2, widget.x + widgetW, widget.y + widgetH, 587202559);
+               if (!hovered && (this.draggingTarget != HudMoveScreen.HudTarget.TAB_WIDGET || this.editingWidgetIdx != i)) {
+                  g.outline(widget.x - 2, widget.y - 2, widgetW + 2, widgetH + 2, -11184811);
+               } else {
+                  g.outline(widget.x - 2, widget.y - 2, widgetW + 2, widgetH + 2, -256);
+                  g.text(this.font, "§eWidget: " + widget.name, widget.x, widget.y - 12, -1, true);
+               }
+
+               TabWidgetHud.drawWidgetInfo(g, widget.x, widget.y, widget.scale, lines);
             }
-        }
+         }
+      }
 
-        g.centeredText(font, "§e§lHUD EDIT MODE", width / 2, 10, 0xFFFFFFFF);
-        g.centeredText(font, "§7Drag elements to reposition them, scroll wheel to resize", width / 2, 22, 0xFFFFFFFF);
-        g.centeredText(font, "§cPress ESC to save and close", width / 2, height - 20, 0xFFFFFFFF);
-        
-        super.extractRenderState(g, mouseX, mouseY, partialTick);
-        super.extractRenderState(g, mouseX, mouseY, partialTick);
-        if (BomboConfig.get().itemListEnabled) {
-            int ilX = s.itemListX == -1 ? width - 150 : s.itemListX;
-            int ilY = s.itemListY == -1 ? 20 : s.itemListY;
-            renderTarget(g, mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH, HudTarget.ITEM_LIST);
-            me.bombo.bomboaddons.ItemListOverlay.render(g, net.minecraft.client.Minecraft.getInstance().font, mouseX, mouseY);
-            
-            if (s.itemListSeparateSearch) {
-                int searchX = s.itemListSearchX == -1 ? width / 2 - 75 : s.itemListSearchX;
-                int searchY = s.itemListSearchY == -1 ? height / 2 + 20 : s.itemListSearchY;
-                int searchW = (int)(s.itemListSearchW * s.itemListSearchScale);
-                int searchH = (int)(16 * s.itemListSearchScale);
-                renderTarget(g, mouseX, mouseY, searchX, searchY, searchW, searchH, HudTarget.ITEM_LIST_SEARCH);
-                g.pose().pushMatrix();
-                g.pose().translate((float)searchX, (float)searchY);
-                g.pose().scale(s.itemListSearchScale, s.itemListSearchScale);
-                g.fill(0, 0, s.itemListSearchW, 16, 0xAA000000);
-                g.outline(0, 0, s.itemListSearchW, 16, 0xFFAAAAAA);
-                g.text(net.minecraft.client.Minecraft.getInstance().font, "Search...", 4, 4, 0xFFAAAAAA, false);
-                g.pose().popMatrix();
+      g.centeredText(this.font, "§e§lHUD EDIT MODE", this.width / 2, 10, -1);
+      g.centeredText(this.font, "§7Drag elements to reposition them, scroll wheel to resize", this.width / 2, 22, -1);
+      g.centeredText(this.font, "§cPress ESC to save and close", this.width / 2, this.height - 20, -1);
+      super.extractRenderState(g, mouseX, mouseY, partialTick);
+      super.extractRenderState(g, mouseX, mouseY, partialTick);
+      if (BomboConfig.get().itemListEnabled) {
+         int ilX = s.itemListX == -1 ? this.width - 150 : s.itemListX;
+         int ilY = s.itemListY == -1 ? 20 : s.itemListY;
+         this.renderTarget(g, mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH, HudMoveScreen.HudTarget.ITEM_LIST);
+         ItemListOverlay.render(g, Minecraft.getInstance().font, mouseX, mouseY);
+         if (s.itemListSeparateSearch) {
+            int searchX = s.itemListSearchX == -1 ? this.width / 2 - 75 : s.itemListSearchX;
+            int searchY = s.itemListSearchY == -1 ? this.height / 2 + 20 : s.itemListSearchY;
+            int searchW = (int)((float)s.itemListSearchW * s.itemListSearchScale);
+            int searchH = (int)(16.0F * s.itemListSearchScale);
+            this.renderTarget(g, mouseX, mouseY, searchX, searchY, searchW, searchH, HudMoveScreen.HudTarget.ITEM_LIST_SEARCH);
+            g.pose().pushMatrix();
+            g.pose().translate((float)searchX, (float)searchY);
+            g.pose().scale(s.itemListSearchScale, s.itemListSearchScale);
+            g.fill(0, 0, s.itemListSearchW, 16, -1442840576);
+            g.outline(0, 0, s.itemListSearchW, 16, -5592406);
+            g.text(Minecraft.getInstance().font, "Search...", 4, 4, -5592406, false);
+            g.pose().popMatrix();
+         }
+      }
+
+   }
+
+   public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+      if (this.resizingTarget == null) {
+         return super.mouseDragged(event, dragX, dragY);
+      } else {
+         BomboConfig.Settings s = BomboConfig.get();
+         double mx = event.x();
+         double my = event.y();
+         double originX = (double)(this.resizeStartX + (this.resizeCorner != 1 && this.resizeCorner != 3 ? this.resizeStartW : 0));
+         double originY = (double)(this.resizeStartY + (this.resizeCorner != 2 && this.resizeCorner != 3 ? this.resizeStartH : 0));
+         double oldDist = Math.hypot(this.resizeStartMouseX - originX, this.resizeStartMouseY - originY);
+         double newDist = Math.hypot(mx - originX, my - originY);
+         if (oldDist < (double)1.0F) {
+            oldDist = (double)1.0F;
+         }
+
+         float newScale = (float)(this.resizeStartScale * (newDist / oldDist));
+         newScale = Math.max(0.2F, Math.min(5.0F, newScale));
+         if (this.resizingTarget == HudMoveScreen.HudTarget.ITEM_LIST) {
+            int dx = (int)(mx - this.resizeStartMouseX);
+            int dy = (int)(my - this.resizeStartMouseY);
+            if (this.resizeCorner == 0) {
+               s.itemListX = this.resizeStartX + dx;
+               s.itemListY = this.resizeStartY + dy;
+               s.itemListW = Math.max(120, this.resizeStartW - dx);
+               s.itemListH = Math.max(100, this.resizeStartH - dy);
+            } else if (this.resizeCorner == 1) {
+               s.itemListY = this.resizeStartY + dy;
+               s.itemListW = Math.max(120, this.resizeStartW + dx);
+               s.itemListH = Math.max(100, this.resizeStartH - dy);
+            } else if (this.resizeCorner == 2) {
+               s.itemListX = this.resizeStartX + dx;
+               s.itemListW = Math.max(120, this.resizeStartW - dx);
+               s.itemListH = Math.max(100, this.resizeStartH + dy);
+            } else if (this.resizeCorner == 3) {
+               s.itemListW = Math.max(120, this.resizeStartW + dx);
+               s.itemListH = Math.max(100, this.resizeStartH + dy);
             }
-        }
-    }
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.ITEM_LIST_SEARCH) {
+            s.itemListSearchScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.DICE) {
+            s.diceHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.BAKERY) {
+            s.feastBakeryHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.RNG) {
+            s.rngProfitHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.KUUDRA) {
+            s.kuudraBlindnessTimerScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.PAD_TIMERS) {
+            s.padTimersScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.TIMERS) {
+            s.customTimerHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.COMPOSTER) {
+            s.composterHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.COMPOSTER_TIMER) {
+            s.composterTimerHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.TAB_WIDGET) {
+            s.tabWidgetHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.ALPHA_TRACKER) {
+            s.alphaTrackerHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.AUTO_CROESUS) {
+            s.autoCroesusHudScale = newScale;
+         }
 
-    @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (resizingTarget != null) {
-            BomboConfig.Settings s = BomboConfig.get();
-            double mx = event.x();
-            double my = event.y();
-            
-            double originX = resizeStartX + (resizeCorner == 1 || resizeCorner == 3 ? 0 : resizeStartW);
-            double originY = resizeStartY + (resizeCorner == 2 || resizeCorner == 3 ? 0 : resizeStartH);
-            
-            double oldDist = Math.hypot(resizeStartMouseX - originX, resizeStartMouseY - originY);
-            double newDist = Math.hypot(mx - originX, my - originY);
-            if (oldDist < 1) oldDist = 1;
-            float newScale = (float) (resizeStartScale * (newDist / oldDist));
-            newScale = Math.max(0.2f, Math.min(5.0f, newScale));
+         return true;
+      }
+   }
 
-            if (resizingTarget == HudTarget.ITEM_LIST) {
-                int dx = (int)(mx - resizeStartMouseX);
-                int dy = (int)(my - resizeStartMouseY);
-                if (resizeCorner == 0) {
-                    s.itemListX = resizeStartX + dx;
-                    s.itemListY = resizeStartY + dy;
-                    s.itemListW = Math.max(120, resizeStartW - dx);
-                    s.itemListH = Math.max(100, resizeStartH - dy);
-                } else if (resizeCorner == 1) {
-                    s.itemListY = resizeStartY + dy;
-                    s.itemListW = Math.max(120, resizeStartW + dx);
-                    s.itemListH = Math.max(100, resizeStartH - dy);
-                } else if (resizeCorner == 2) {
-                    s.itemListX = resizeStartX + dx;
-                    s.itemListW = Math.max(120, resizeStartW - dx);
-                    s.itemListH = Math.max(100, resizeStartH + dy);
-                } else if (resizeCorner == 3) {
-                    s.itemListW = Math.max(120, resizeStartW + dx);
-                    s.itemListH = Math.max(100, resizeStartH + dy);
-                }
-            } else if (resizingTarget == HudTarget.ITEM_LIST_SEARCH) {
-                s.itemListSearchScale = newScale;
-            } else if (resizingTarget == HudTarget.DICE) s.diceHudScale = newScale;
-            else if (resizingTarget == HudTarget.BAKERY) s.feastBakeryHudScale = newScale;
-            else if (resizingTarget == HudTarget.RNG) s.rngProfitHudScale = newScale;
-            else if (resizingTarget == HudTarget.KUUDRA) s.kuudraBlindnessTimerScale = newScale;
-            else if (resizingTarget == HudTarget.PAD_TIMERS) s.padTimersScale = newScale;
-            else if (resizingTarget == HudTarget.TIMERS) s.customTimerHudScale = newScale;
-            else if (resizingTarget == HudTarget.COMPOSTER) s.composterHudScale = newScale;
-            else if (resizingTarget == HudTarget.COMPOSTER_TIMER) s.composterTimerHudScale = newScale;
-            else if (resizingTarget == HudTarget.TAB_WIDGET) s.tabWidgetHudScale = newScale;
-            
+   private void renderTarget(GuiGraphicsExtractor g, int mouseX, int mouseY, int x, int y, int w, int h, HudTarget target) {
+      BomboConfig.Settings s = BomboConfig.get();
+      boolean hovered = mouseX >= x - 12 && mouseX <= x + w + 12 && mouseY >= y - 12 && mouseY <= y + h + 12;
+      if (this.draggingTarget == target) {
+         if (target == HudMoveScreen.HudTarget.DICE) {
+            s.diceHudX = mouseX - this.dragOffsetX;
+            s.diceHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.BAKERY) {
+            s.feastBakeryHudX = mouseX - this.dragOffsetX;
+            s.feastBakeryHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.RNG) {
+            s.rngProfitHudX = mouseX - this.dragOffsetX;
+            s.rngProfitHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.KUUDRA) {
+            s.kuudraBlindnessTimerX = mouseX - this.dragOffsetX;
+            s.kuudraBlindnessTimerY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.PAD_TIMERS) {
+            s.padTimersX = mouseX - this.dragOffsetX;
+            s.padTimersY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.TIMERS) {
+            s.customTimerHudX = mouseX - this.dragOffsetX;
+            s.customTimerHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.COMPOSTER) {
+            s.composterHudX = mouseX - this.dragOffsetX;
+            s.composterHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.COMPOSTER_TIMER) {
+            s.composterTimerHudX = mouseX - this.dragOffsetX;
+            s.composterTimerHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.TAB_WIDGET) {
+            s.tabWidgetHudX = mouseX - this.dragOffsetX;
+            s.tabWidgetHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.ITEM_LIST) {
+            s.itemListX = mouseX - this.dragOffsetX;
+            s.itemListY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.ITEM_LIST_SEARCH) {
+            s.itemListSearchX = mouseX - this.dragOffsetX;
+            s.itemListSearchY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.HOPPITY) {
+            s.hoppityHudX = mouseX - this.dragOffsetX;
+            s.hoppityHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.ALPHA_TRACKER) {
+            s.alphaTrackerHudX = mouseX - this.dragOffsetX;
+            s.alphaTrackerHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.AUTO_CROESUS) {
+            s.autoCroesusHudX = mouseX - this.dragOffsetX;
+            s.autoCroesusHudY = mouseY - this.dragOffsetY;
+         }
+      }
+
+      g.fill(x - 2, y - 2, x + w, y + h, 587202559);
+      if (hovered || this.draggingTarget == target || this.resizingTarget == target) {
+         g.outline(x - 2, y - 2, w + 2, h + 2, -256);
+         g.fill(x - 5, y - 5, x + 3, y + 3, -1);
+         g.fill(x + w - 3, y - 5, x + w + 5, y + 3, -1);
+         g.fill(x - 5, y + h - 3, x + 3, y + h + 5, -1);
+         g.fill(x + w - 3, y + h - 3, x + w + 5, y + h + 5, -1);
+         String var10000;
+         switch (target.ordinal()) {
+            case 0 -> var10000 = "Dice Tracker HUD";
+            case 1 -> var10000 = "Feast Bakery HUD";
+            case 2 -> var10000 = "RNG Profit HUD";
+            case 3 -> var10000 = "Kuudra Blindness Timer";
+            case 4 -> var10000 = "Pad Timers";
+            case 5 -> var10000 = "Custom Timers";
+            case 6 -> var10000 = "Composter Status HUD";
+            case 7 -> var10000 = "Composter Timer HUD";
+            case 8 -> var10000 = "Tab Widget HUD";
+            case 9 -> var10000 = "Item List HUD";
+            case 10 -> var10000 = "Item List Search";
+            case 11 -> var10000 = "Hoppity Egg HUD";
+            case 12 -> var10000 = "Alpha Tracker HUD";
+            case 13 -> var10000 = "Auto Croesus HUD";
+            default -> throw new MatchException((String)null, (Throwable)null);
+         }
+
+         String targetName = var10000;
+         g.text(this.font, "§e" + targetName, x, y - 12, -1, true);
+      }
+
+   }
+
+   public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
+      if (BomboConfig.get().itemListEnabled && ItemListOverlay.mouseClicked(event.x(), event.y(), event.button())) {
+         return true;
+      } else {
+         BomboConfig.Settings s = BomboConfig.get();
+         double mouseX = event.x();
+         double mouseY = event.y();
+         int button = event.button();
+         int rngW = (int)(185.0F * s.rngProfitHudScale);
+         int rngH = (int)((float)ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
+         if (this.startCornerResize(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudMoveScreen.HudTarget.RNG, (double)s.rngProfitHudScale)) {
             return true;
-        }
-        return super.mouseDragged(event, dragX, dragY);
-    }
+         } else if (this.checkHit(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH)) {
+            this.startDragging(HudMoveScreen.HudTarget.RNG, (int)mouseX - s.rngProfitHudX, (int)mouseY - s.rngProfitHudY);
+            return true;
+         } else {
+            int bakeryW = (int)((float)FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
+            int bakeryH = (int)((float)FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
+            if (this.startCornerResize(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudMoveScreen.HudTarget.BAKERY, (double)s.feastBakeryHudScale)) {
+               return true;
+            } else if (this.checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH)) {
+               this.startDragging(HudMoveScreen.HudTarget.BAKERY, (int)mouseX - s.feastBakeryHudX, (int)mouseY - s.feastBakeryHudY);
+               return true;
+            } else {
+               int diceW = (int)(260.0F * s.diceHudScale);
+               int diceH = (int)(52.0F * s.diceHudScale);
+               if (this.startCornerResize(mouseX, mouseY, s.diceHudX, s.diceHudY, diceW, diceH, HudMoveScreen.HudTarget.DICE, (double)s.diceHudScale)) {
+                  return true;
+               } else if (this.checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, diceW, diceH)) {
+                  if (button != 1 && button != 2) {
+                     this.startDragging(HudMoveScreen.HudTarget.DICE, (int)mouseX - s.diceHudX, (int)mouseY - s.diceHudY);
+                     return true;
+                  } else {
+                     s.diceDisplayMode = "Current".equalsIgnoreCase(s.diceDisplayMode) ? "Lifetime" : "Current";
+                     BomboConfig.save();
+                     return true;
+                  }
+               } else {
+                  int kuudraW = (int)(80.0F * s.kuudraBlindnessTimerScale);
+                  int kuudraH = (int)(12.0F * s.kuudraBlindnessTimerScale);
+                  if (this.startCornerResize(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudMoveScreen.HudTarget.KUUDRA, (double)s.kuudraBlindnessTimerScale)) {
+                     return true;
+                  } else if (this.checkHit(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH)) {
+                     this.startDragging(HudMoveScreen.HudTarget.KUUDRA, (int)mouseX - s.kuudraBlindnessTimerX, (int)mouseY - s.kuudraBlindnessTimerY);
+                     return true;
+                  } else {
+                     int padW = (int)(120.0F * s.padTimersScale);
+                     int padH = (int)(12.0F * s.padTimersScale);
+                     if (this.startCornerResize(mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudMoveScreen.HudTarget.PAD_TIMERS, (double)s.padTimersScale)) {
+                        return true;
+                     } else if (this.checkHit(mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH)) {
+                        this.startDragging(HudMoveScreen.HudTarget.PAD_TIMERS, (int)mouseX - s.padTimersX, (int)mouseY - s.padTimersY);
+                        return true;
+                     } else {
+                        int timerW = (int)((float)CustomTimerManager.getWidth() * s.customTimerHudScale);
+                        int timerH = (int)((float)CustomTimerManager.getHeight() * s.customTimerHudScale);
+                        if (this.startCornerResize(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH, HudMoveScreen.HudTarget.TIMERS, (double)s.customTimerHudScale)) {
+                           return true;
+                        } else if (this.checkHit(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH)) {
+                           this.startDragging(HudMoveScreen.HudTarget.TIMERS, (int)mouseX - s.customTimerHudX, (int)mouseY - s.customTimerHudY);
+                           return true;
+                        } else {
+                           int compW = (int)((float)ComposterHud.getWidth() * s.composterHudScale);
+                           int compH = (int)((float)ComposterHud.getHeight() * s.composterHudScale);
+                           if (this.startCornerResize(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH, HudMoveScreen.HudTarget.COMPOSTER, (double)s.composterHudScale)) {
+                              return true;
+                           } else if (this.checkHit(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH)) {
+                              this.startDragging(HudMoveScreen.HudTarget.COMPOSTER, (int)mouseX - s.composterHudX, (int)mouseY - s.composterHudY);
+                              return true;
+                           } else {
+                              int compTimerW = (int)(140.0F * s.composterTimerHudScale);
+                              int compTimerH = (int)(12.0F * s.composterTimerHudScale);
+                              if (this.startCornerResize(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH, HudMoveScreen.HudTarget.COMPOSTER_TIMER, (double)s.composterTimerHudScale)) {
+                                 return true;
+                              } else if (this.checkHit(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH)) {
+                                 this.startDragging(HudMoveScreen.HudTarget.COMPOSTER_TIMER, (int)mouseX - s.composterTimerHudX, (int)mouseY - s.composterTimerHudY);
+                                 return true;
+                              } else if (this.checkHit(mouseX, mouseY, s.hoppityHudX, s.hoppityHudY, 90, 45)) {
+                                 this.startDragging(HudMoveScreen.HudTarget.HOPPITY, (int)mouseX - s.hoppityHudX, (int)mouseY - s.hoppityHudY);
+                                 return true;
+                              } else {
+                                 int croesusW = (int)(220.0F * s.autoCroesusHudScale);
+                                 int croesusH = (int)(110.0F * s.autoCroesusHudScale);
+                                 if (this.startCornerResize(mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, croesusW, croesusH, HudMoveScreen.HudTarget.AUTO_CROESUS, (double)s.autoCroesusHudScale)) {
+                                    return true;
+                                 } else if (this.checkHit(mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, croesusW, croesusH)) {
+                                    this.startDragging(HudMoveScreen.HudTarget.AUTO_CROESUS, (int)mouseX - s.autoCroesusHudX, (int)mouseY - s.autoCroesusHudY);
+                                    return true;
+                                 } else {
+                                    int alphaW = (int)((float)AlphaTrackerHud.getHudWidth() * s.alphaTrackerHudScale);
+                                    int alphaH = (int)((float)AlphaTrackerHud.getHudHeight() * s.alphaTrackerHudScale);
+                                    if (this.startCornerResize(mouseX, mouseY, s.alphaTrackerHudX, s.alphaTrackerHudY, alphaW, alphaH, HudMoveScreen.HudTarget.ALPHA_TRACKER, (double)s.alphaTrackerHudScale)) {
+                                       return true;
+                                    } else if (this.checkHit(mouseX, mouseY, s.alphaTrackerHudX, s.alphaTrackerHudY, alphaW, alphaH)) {
+                                       this.startDragging(HudMoveScreen.HudTarget.ALPHA_TRACKER, (int)mouseX - s.alphaTrackerHudX, (int)mouseY - s.alphaTrackerHudY);
+                                       return true;
+                                    } else {
+                                       if (s.tabWidgets != null) {
+                                          for(int i = 0; i < s.tabWidgets.size(); ++i) {
+                                             BomboConfig.TabWidgetInfo widget = (BomboConfig.TabWidgetInfo)s.tabWidgets.get(i);
+                                             List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
+                                             int widgetW = (int)((float)TabWidgetHud.getWidth() * widget.scale);
+                                             int widgetH = (int)((float)TabWidgetHud.getHeight(lines.size()) * widget.scale);
+                                             if (this.startCornerResize(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH, HudMoveScreen.HudTarget.TAB_WIDGET, (double)widget.scale)) {
+                                                this.editingWidgetIdx = i;
+                                                return true;
+                                             }
 
-    private void renderTarget(GuiGraphicsExtractor g, int mouseX, int mouseY, int x, int y, int w, int h, HudTarget target) {
-        BomboConfig.Settings s = BomboConfig.get();
-        boolean hovered = mouseX >= x - 12 && mouseX <= x + w + 12 && mouseY >= y - 12 && mouseY <= y + h + 12;
+                                             if (this.checkHit(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH)) {
+                                                this.editingWidgetIdx = i;
+                                                this.startDragging(HudMoveScreen.HudTarget.TAB_WIDGET, (int)mouseX - widget.x, (int)mouseY - widget.y);
+                                                return true;
+                                             }
+                                          }
+                                       }
+                                    }
 
-        if (draggingTarget == target) {
-            if (target == HudTarget.DICE) {
-                s.diceHudX = mouseX - dragOffsetX;
-                s.diceHudY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.BAKERY) {
-                s.feastBakeryHudX = mouseX - dragOffsetX;
-                s.feastBakeryHudY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.RNG) {
-                s.rngProfitHudX = mouseX - dragOffsetX;
-                s.rngProfitHudY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.KUUDRA) {
-                s.kuudraBlindnessTimerX = mouseX - dragOffsetX;
-                s.kuudraBlindnessTimerY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.PAD_TIMERS) {
-                s.padTimersX = mouseX - dragOffsetX;
-                s.padTimersY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.TIMERS) {
-                s.customTimerHudX = mouseX - dragOffsetX;
-                s.customTimerHudY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.COMPOSTER) {
-                s.composterHudX = mouseX - dragOffsetX;
-                s.composterHudY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.COMPOSTER_TIMER) {
-                s.composterTimerHudX = mouseX - dragOffsetX;
-                s.composterTimerHudY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.TAB_WIDGET) {
-                s.tabWidgetHudX = mouseX - dragOffsetX;
-                s.tabWidgetHudY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.ITEM_LIST) {
-                s.itemListX = mouseX - dragOffsetX;
-                s.itemListY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.ITEM_LIST_SEARCH) {
-                s.itemListSearchX = mouseX - dragOffsetX;
-                s.itemListSearchY = mouseY - dragOffsetY;
-            } else if (target == HudTarget.HOPPITY) {
-                s.hoppityHudX = mouseX - dragOffsetX;
-                s.hoppityHudY = mouseY - dragOffsetY;
+                                    if (s.itemListEnabled && s.itemListSeparateSearch) {
+                                       int searchX = s.itemListSearchX == -1 ? this.width / 2 - 75 : s.itemListSearchX;
+                                       int searchY = s.itemListSearchY == -1 ? this.height / 2 + 20 : s.itemListSearchY;
+                                       int searchW = (int)((float)s.itemListSearchW * s.itemListSearchScale);
+                                       int searchH = (int)(16.0F * s.itemListSearchScale);
+                                       if (this.startCornerResize(mouseX, mouseY, searchX, searchY, searchW, searchH, HudMoveScreen.HudTarget.ITEM_LIST_SEARCH, (double)s.itemListSearchScale)) {
+                                          return true;
+                                       }
+
+                                       if (this.checkHit(mouseX, mouseY, searchX, searchY, searchW, searchH)) {
+                                          this.startDragging(HudMoveScreen.HudTarget.ITEM_LIST_SEARCH, (int)mouseX - searchX, (int)mouseY - searchY);
+                                          return true;
+                                       }
+                                    }
+
+                                    if (s.itemListEnabled && !s.itemListLocked) {
+                                       int ilX = s.itemListX == -1 ? this.width - 150 : s.itemListX;
+                                       int ilY = s.itemListY == -1 ? 20 : s.itemListY;
+                                       if (this.startCornerResize(mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH, HudMoveScreen.HudTarget.ITEM_LIST, (double)1.0F)) {
+                                          return true;
+                                       }
+
+                                       if (this.checkHit(mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH)) {
+                                          this.startDragging(HudMoveScreen.HudTarget.ITEM_LIST, (int)mouseX - ilX, (int)mouseY - ilY);
+                                          return true;
+                                       }
+                                    }
+
+                                    return super.mouseClicked(event, handled);
+                                 }
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
             }
-        }
+         }
+      }
+   }
 
-        g.fill(x - 2, y - 2, x + w, y + h, 0x22FFFFFF);
-        if (hovered || draggingTarget == target || resizingTarget == target) {
-            g.outline(x - 2, y - 2, w + 2, h + 2, 0xFFFFFF00);
-            // 4 Corner Dots
-            g.fill(x - 5, y - 5, x + 3, y + 3, 0xFFFFFFFF); // TL
-            g.fill(x + w - 3, y - 5, x + w + 5, y + 3, 0xFFFFFFFF); // TR
-            g.fill(x - 5, y + h - 3, x + 3, y + h + 5, 0xFFFFFFFF); // BL
-            g.fill(x + w - 3, y + h - 3, x + w + 5, y + h + 5, 0xFFFFFFFF); // BR
-
-            String targetName = switch (target) {
-                case DICE -> "Dice Tracker HUD";
-                case BAKERY -> "Feast Bakery HUD";
-                case RNG -> "RNG Profit HUD";
-                case KUUDRA -> "Kuudra Blindness Timer";
-                case PAD_TIMERS -> "Pad Timers";
-                case TIMERS -> "Custom Timers";
-                case COMPOSTER -> "Composter Status HUD";
-                case COMPOSTER_TIMER -> "Composter Timer HUD";
-                case TAB_WIDGET -> "Tab Widget HUD";
-                case ITEM_LIST -> "Item List HUD";
-                case ITEM_LIST_SEARCH -> "Item List Search";
-                case HOPPITY -> "Hoppity Egg HUD";
-            };
-            g.text(font, "§e" + targetName, x, y - 12, 0xFFFFFFFF, true);
-        }
-    }
-
-    @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
-        if (BomboConfig.get().itemListEnabled && me.bombo.bomboaddons.ItemListOverlay.mouseClicked(event.x(), event.y(), event.button())) {
+   public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+      if (BomboConfig.get().itemListEnabled && ItemListOverlay.mouseScrolled(mouseX, mouseY, vertical)) {
+         return true;
+      } else {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (this.checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260.0F * s.diceHudScale), (int)(52.0F * s.diceHudScale))) {
+            s.diceHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.diceHudScale + vertical * 0.1));
+            BomboConfig.save();
             return true;
-        }
-        BomboConfig.Settings s = BomboConfig.get();
-        double mouseX = event.x();
-        double mouseY = event.y();
-        int button = event.button();
+         } else {
+            int bakeryW = (int)((float)FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
+            int bakeryH = (int)((float)FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
+            if (this.checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH)) {
+               s.feastBakeryHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.feastBakeryHudScale + vertical * 0.1));
+               BomboConfig.save();
+               return true;
+            } else {
+               int rngW = (int)(185.0F * s.rngProfitHudScale);
+               int rngH = (int)((float)ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
+               if (this.checkHit(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH)) {
+                  s.rngProfitHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.rngProfitHudScale + vertical * 0.1));
+                  BomboConfig.save();
+                  return true;
+               } else if (this.checkHit(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, (int)(80.0F * s.kuudraBlindnessTimerScale), (int)(12.0F * s.kuudraBlindnessTimerScale))) {
+                  s.kuudraBlindnessTimerScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.kuudraBlindnessTimerScale + vertical * 0.1));
+                  BomboConfig.save();
+                  return true;
+               } else if (this.checkHit(mouseX, mouseY, s.padTimersX, s.padTimersY, (int)(120.0F * s.padTimersScale), (int)(12.0F * s.padTimersScale))) {
+                  s.padTimersScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.padTimersScale + vertical * 0.1));
+                  BomboConfig.save();
+                  return true;
+               } else {
+                  int timerW = (int)((float)CustomTimerManager.getWidth() * s.customTimerHudScale);
+                  int timerH = (int)((float)CustomTimerManager.getHeight() * s.customTimerHudScale);
+                  if (this.checkHit(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH)) {
+                     s.customTimerHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.customTimerHudScale + vertical * 0.1));
+                     BomboConfig.save();
+                     return true;
+                  } else {
+                     int compW = (int)((float)ComposterHud.getWidth() * s.composterHudScale);
+                     int compH = (int)((float)ComposterHud.getHeight() * s.composterHudScale);
+                     if (this.checkHit(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH)) {
+                        s.composterHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.composterHudScale + vertical * 0.1));
+                        BomboConfig.save();
+                        return true;
+                     } else if (this.checkHit(mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, (int)(220.0F * s.autoCroesusHudScale), (int)(110.0F * s.autoCroesusHudScale))) {
+                        s.autoCroesusHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.autoCroesusHudScale + vertical * 0.1));
+                        BomboConfig.save();
+                        return true;
+                     } else if (this.checkHit(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, (int)(140.0F * s.composterTimerHudScale), (int)(12.0F * s.composterTimerHudScale))) {
+                        s.composterTimerHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.composterTimerHudScale + vertical * 0.1));
+                        BomboConfig.save();
+                        return true;
+                     } else {
+                        if (s.tabWidgets != null) {
+                           for(BomboConfig.TabWidgetInfo widget : s.tabWidgets) {
+                              List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
+                              int widgetW = (int)((float)TabWidgetHud.getWidth() * widget.scale);
+                              int widgetH = (int)((float)TabWidgetHud.getHeight(lines.size()) * widget.scale);
+                              if (this.checkHit(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH)) {
+                                 widget.scale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)widget.scale + vertical * 0.1));
+                                 BomboConfig.save();
+                                 return true;
+                              }
+                           }
+                        }
 
-        // Check RNG
-        int rngW = (int)(185 * s.rngProfitHudScale);
-        int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
-        if (startCornerResize(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudTarget.RNG, s.rngProfitHudScale)) return true;
-        if (checkHit(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH)) {
-            startDragging(HudTarget.RNG, (int) mouseX - s.rngProfitHudX, (int) mouseY - s.rngProfitHudY);
-            return true;
-        }
-        // Check Bakery
-        int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
-        int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
-        if (startCornerResize(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH, HudTarget.BAKERY, s.feastBakeryHudScale)) return true;
-        if (checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH)) {
-            startDragging(HudTarget.BAKERY, (int) mouseX - s.feastBakeryHudX, (int) mouseY - s.feastBakeryHudY);
-            return true;
-        }
-        // Check Dice
-        int diceW = (int)(260 * s.diceHudScale);
-        int diceH = (int)(52 * s.diceHudScale);
-        if (startCornerResize(mouseX, mouseY, s.diceHudX, s.diceHudY, diceW, diceH, HudTarget.DICE, s.diceHudScale)) return true;
-        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, diceW, diceH)) {
-            if (button == 1 || button == 2) {
-                s.diceDisplayMode = "Current".equalsIgnoreCase(s.diceDisplayMode) ? "Lifetime" : "Current";
-                BomboConfig.save();
-                return true;
+                        if (s.itemListEnabled && s.itemListSeparateSearch) {
+                           int searchX = s.itemListSearchX == -1 ? this.width / 2 - 75 : s.itemListSearchX;
+                           int searchY = s.itemListSearchY == -1 ? this.height / 2 + 20 : s.itemListSearchY;
+                           if (this.checkHit(mouseX, mouseY, searchX, searchY, s.itemListSearchW, 16)) {
+                              s.itemListSearchW = (int)Math.max((double)30.0F, (double)s.itemListSearchW + vertical * (double)10.0F);
+                              BomboConfig.save();
+                              return true;
+                           }
+                        }
+
+                        return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
+                     }
+                  }
+               }
             }
-            startDragging(HudTarget.DICE, (int) mouseX - s.diceHudX, (int) mouseY - s.diceHudY);
-            return true;
-        }
-        // Check Kuudra
-        int kuudraW = (int)(80 * s.kuudraBlindnessTimerScale);
-        int kuudraH = (int)(12 * s.kuudraBlindnessTimerScale);
-        if (startCornerResize(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH, HudTarget.KUUDRA, s.kuudraBlindnessTimerScale)) return true;
-        if (checkHit(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, kuudraW, kuudraH)) {
-            startDragging(HudTarget.KUUDRA, (int) mouseX - s.kuudraBlindnessTimerX, (int) mouseY - s.kuudraBlindnessTimerY);
-            return true;
-        }
-        // Check Pad Timers
-        int padW = (int)(120 * s.padTimersScale);
-        int padH = (int)(12 * s.padTimersScale);
-        if (startCornerResize(mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH, HudTarget.PAD_TIMERS, s.padTimersScale)) return true;
-        if (checkHit(mouseX, mouseY, s.padTimersX, s.padTimersY, padW, padH)) {
-            startDragging(HudTarget.PAD_TIMERS, (int) mouseX - s.padTimersX, (int) mouseY - s.padTimersY);
-            return true;
-        }
-        // Check Custom Timers
-        int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
-        int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
-        if (startCornerResize(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH, HudTarget.TIMERS, s.customTimerHudScale)) return true;
-        if (checkHit(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH)) {
-            startDragging(HudTarget.TIMERS, (int) mouseX - s.customTimerHudX, (int) mouseY - s.customTimerHudY);
-            return true;
-        }
-        // Check Composter Hud
-        int compW = (int)(ComposterHud.getWidth() * s.composterHudScale);
-        int compH = (int)(ComposterHud.getHeight() * s.composterHudScale);
-        if (startCornerResize(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH, HudTarget.COMPOSTER, s.composterHudScale)) return true;
-        if (checkHit(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH)) {
-            startDragging(HudTarget.COMPOSTER, (int) mouseX - s.composterHudX, (int) mouseY - s.composterHudY);
-            return true;
-        }
+         }
+      }
+   }
 
-        // Check Composter Timer Hud
-        int compTimerW = (int)(140 * s.composterTimerHudScale);
-        int compTimerH = (int)(12 * s.composterTimerHudScale);
-        if (startCornerResize(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH, HudTarget.COMPOSTER_TIMER, s.composterTimerHudScale)) return true;
-        if (checkHit(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, compTimerW, compTimerH)) {
-            startDragging(HudTarget.COMPOSTER_TIMER, (int) mouseX - s.composterTimerHudX, (int) mouseY - s.composterTimerHudY);
-            return true;
-        }
+   private int getCornerHit(double mx, double my, int x, int y, int w, int h) {
+      if (mx >= (double)(x - 12) && mx <= (double)(x + 12) && my >= (double)(y - 12) && my <= (double)(y + 12)) {
+         return 0;
+      } else if (mx >= (double)(x + w - 12) && mx <= (double)(x + w + 12) && my >= (double)(y - 12) && my <= (double)(y + 12)) {
+         return 1;
+      } else if (mx >= (double)(x - 12) && mx <= (double)(x + 12) && my >= (double)(y + h - 12) && my <= (double)(y + h + 12)) {
+         return 2;
+      } else {
+         return mx >= (double)(x + w - 12) && mx <= (double)(x + w + 12) && my >= (double)(y + h - 12) && my <= (double)(y + h + 12) ? 3 : -1;
+      }
+   }
 
-        // Check Hoppity Egg Hud
-        if (checkHit(mouseX, mouseY, s.hoppityHudX, s.hoppityHudY, 90, 45)) {
-            startDragging(HudTarget.HOPPITY, (int) mouseX - s.hoppityHudX, (int) mouseY - s.hoppityHudY);
-            return true;
-        }
+   private boolean startCornerResize(double mx, double my, int x, int y, int w, int h, HudTarget target, double scale) {
+      int corner = this.getCornerHit(mx, my, x, y, w, h);
+      if (corner != -1) {
+         this.resizingTarget = target;
+         this.resizeCorner = corner;
+         this.resizeStartScale = scale;
+         this.resizeStartW = w;
+         this.resizeStartH = h;
+         this.resizeStartX = x;
+         this.resizeStartY = y;
+         this.resizeStartMouseX = mx;
+         this.resizeStartMouseY = my;
+         return true;
+      } else {
+         return false;
+      }
+   }
 
-        // Check Tab Widgets
-        if (s.tabWidgets != null) {
-            for (int i = 0; i < s.tabWidgets.size(); i++) {
-                BomboConfig.TabWidgetInfo widget = s.tabWidgets.get(i);
-                List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
-                int widgetW = (int)(TabWidgetHud.getWidth() * widget.scale);
-                int widgetH = (int)(TabWidgetHud.getHeight(lines.size()) * widget.scale);
-                if (startCornerResize(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH, HudTarget.TAB_WIDGET, widget.scale)) {
-                    editingWidgetIdx = i;
-                    return true;
-                }
-                if (checkHit(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH)) {
-                    editingWidgetIdx = i;
-                    startDragging(HudTarget.TAB_WIDGET, (int) mouseX - widget.x, (int) mouseY - widget.y);
-                    return true;
-                }
-            }
-        }
+   private boolean checkHit(double mx, double my, int x, int y, int w, int h) {
+      return mx >= (double)x && mx <= (double)(x + w) && my >= (double)y && my <= (double)(y + h);
+   }
 
-        // Check Separate Search
-        if (s.itemListEnabled && s.itemListSeparateSearch) {
-            int searchX = s.itemListSearchX == -1 ? width / 2 - 75 : s.itemListSearchX;
-            int searchY = s.itemListSearchY == -1 ? height / 2 + 20 : s.itemListSearchY;
-            int searchW = (int)(s.itemListSearchW * s.itemListSearchScale);
-            int searchH = (int)(16 * s.itemListSearchScale);
-            if (startCornerResize(mouseX, mouseY, searchX, searchY, searchW, searchH, HudTarget.ITEM_LIST_SEARCH, s.itemListSearchScale)) return true;
-            if (checkHit(mouseX, mouseY, searchX, searchY, searchW, searchH)) {
-                startDragging(HudTarget.ITEM_LIST_SEARCH, (int) mouseX - searchX, (int) mouseY - searchY);
-                return true;
-            }
-        }
+   private void startDragging(HudTarget target, int ox, int oy) {
+      this.draggingTarget = target;
+      this.dragOffsetX = ox;
+      this.dragOffsetY = oy;
+   }
 
-        // Check Item List Resize Handle
-        if (s.itemListEnabled && !s.itemListLocked) {
-            int ilX = s.itemListX == -1 ? width - 150 : s.itemListX;
-            int ilY = s.itemListY == -1 ? 20 : s.itemListY;
-            if (startCornerResize(mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH, HudTarget.ITEM_LIST, 1.0)) return true;
-            if (checkHit(mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH)) {
-                startDragging(HudTarget.ITEM_LIST, (int) mouseX - ilX, (int) mouseY - ilY);
-                return true;
-            }
-        }
+   public boolean mouseReleased(MouseButtonEvent event) {
+      if (this.resizingTarget != null) {
+         this.resizingTarget = null;
+         BomboConfig.save();
+         return true;
+      } else if (this.isResizingItemList) {
+         this.isResizingItemList = false;
+         BomboConfig.save();
+         return true;
+      } else {
+         this.draggingTarget = null;
+         BomboConfig.save();
+         return super.mouseReleased(event);
+      }
+   }
 
-        return super.mouseClicked(event, handled);
-    }
+   public void onClose() {
+      BomboConfig.save();
+      super.onClose();
+   }
 
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
-        if (BomboConfig.get().itemListEnabled && me.bombo.bomboaddons.ItemListOverlay.mouseScrolled(mouseX, mouseY, vertical)) {
-            return true;
-        }
-        BomboConfig.Settings s = BomboConfig.get();
-        // dice
-        if (checkHit(mouseX, mouseY, s.diceHudX, s.diceHudY, (int)(260 * s.diceHudScale), (int)(52 * s.diceHudScale))) {
-            s.diceHudScale = (float) Math.max(0.5, Math.min(3.0, s.diceHudScale + vertical * 0.1));
-            BomboConfig.save();
-            return true;
-        }
-        // bakery
-        int bakeryW = (int)(FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
-        int bakeryH = (int)(FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
-        if (checkHit(mouseX, mouseY, s.feastBakeryHudX, s.feastBakeryHudY, bakeryW, bakeryH)) {
-            s.feastBakeryHudScale = (float) Math.max(0.5, Math.min(3.0, s.feastBakeryHudScale + vertical * 0.1));
-            BomboConfig.save();
-            return true;
-        }
-        // rng
-        int rngW = (int)(185 * s.rngProfitHudScale);
-        int rngH = (int)(ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
-        if (checkHit(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH)) {
-            s.rngProfitHudScale = (float) Math.max(0.5, Math.min(3.0, s.rngProfitHudScale + vertical * 0.1));
-            BomboConfig.save();
-            return true;
-        }
-        // kuudra
-        if (checkHit(mouseX, mouseY, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, (int)(80 * s.kuudraBlindnessTimerScale), (int)(12 * s.kuudraBlindnessTimerScale))) {
-            s.kuudraBlindnessTimerScale = (float) Math.max(0.5, Math.min(3.0, s.kuudraBlindnessTimerScale + vertical * 0.1));
-            BomboConfig.save();
-            return true;
-        }
-        // pad timers
-        if (checkHit(mouseX, mouseY, s.padTimersX, s.padTimersY, (int)(120 * s.padTimersScale), (int)(12 * s.padTimersScale))) {
-            s.padTimersScale = (float) Math.max(0.5, Math.min(3.0, s.padTimersScale + vertical * 0.1));
-            BomboConfig.save();
-            return true;
-        }
-        // custom timers
-        int timerW = (int)(CustomTimerManager.getWidth() * s.customTimerHudScale);
-        int timerH = (int)(CustomTimerManager.getHeight() * s.customTimerHudScale);
-        if (checkHit(mouseX, mouseY, s.customTimerHudX, s.customTimerHudY, timerW, timerH)) {
-            s.customTimerHudScale = (float) Math.max(0.5, Math.min(3.0, s.customTimerHudScale + vertical * 0.1));
-            BomboConfig.save();
-            return true;
-        }
-        // composter hud
-        int compW = (int)(ComposterHud.getWidth() * s.composterHudScale);
-        int compH = (int)(ComposterHud.getHeight() * s.composterHudScale);
-        if (checkHit(mouseX, mouseY, s.composterHudX, s.composterHudY, compW, compH)) {
-            s.composterHudScale = (float) Math.max(0.5, Math.min(3.0, s.composterHudScale + vertical * 0.1));
-            BomboConfig.save();
-            return true;
-        }
-        // composter timer hud
-        if (checkHit(mouseX, mouseY, s.composterTimerHudX, s.composterTimerHudY, (int)(140 * s.composterTimerHudScale), (int)(12 * s.composterTimerHudScale))) {
-            s.composterTimerHudScale = (float) Math.max(0.5, Math.min(3.0, s.composterTimerHudScale + vertical * 0.1));
-            BomboConfig.save();
-            return true;
-        }
-        // tab widgets
-        if (s.tabWidgets != null) {
-            for (BomboConfig.TabWidgetInfo widget : s.tabWidgets) {
-                List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
-                int widgetW = (int)(TabWidgetHud.getWidth() * widget.scale);
-                int widgetH = (int)(TabWidgetHud.getHeight(lines.size()) * widget.scale);
-                if (checkHit(mouseX, mouseY, widget.x, widget.y, widgetW, widgetH)) {
-                    widget.scale = (float) Math.max(0.5, Math.min(3.0, widget.scale + vertical * 0.1));
-                    BomboConfig.save();
-                    return true;
-                }
-            }
-        }
-        // item list search width
-        if (s.itemListEnabled && s.itemListSeparateSearch) {
-            int searchX = s.itemListSearchX == -1 ? width / 2 - 75 : s.itemListSearchX;
-            int searchY = s.itemListSearchY == -1 ? height / 2 + 20 : s.itemListSearchY;
-            if (checkHit(mouseX, mouseY, searchX, searchY, s.itemListSearchW, 16)) {
-                s.itemListSearchW = (int) Math.max(30, s.itemListSearchW + vertical * 10);
-                BomboConfig.save();
-                return true;
-            }
-        }
-        return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
-    }
+   public boolean isPauseScreen() {
+      return false;
+   }
 
-        private int getCornerHit(double mx, double my, int x, int y, int w, int h) {
-        if (mx >= x - 12 && mx <= x + 12 && my >= y - 12 && my <= y + 12) return 0;
-        if (mx >= x + w - 12 && mx <= x + w + 12 && my >= y - 12 && my <= y + 12) return 1;
-        if (mx >= x - 12 && mx <= x + 12 && my >= y + h - 12 && my <= y + h + 12) return 2;
-        if (mx >= x + w - 12 && mx <= x + w + 12 && my >= y + h - 12 && my <= y + h + 12) return 3;
-        return -1;
-    }
+   private static enum HudTarget {
+      DICE,
+      BAKERY,
+      RNG,
+      KUUDRA,
+      PAD_TIMERS,
+      TIMERS,
+      COMPOSTER,
+      COMPOSTER_TIMER,
+      TAB_WIDGET,
+      ITEM_LIST,
+      ITEM_LIST_SEARCH,
+      HOPPITY,
+      ALPHA_TRACKER,
+      AUTO_CROESUS;
 
-    private boolean startCornerResize(double mx, double my, int x, int y, int w, int h, HudTarget target, double scale) {
-        int corner = getCornerHit(mx, my, x, y, w, h);
-        if (corner != -1) {
-            resizingTarget = target;
-            resizeCorner = corner;
-            resizeStartScale = scale;
-            resizeStartW = w;
-            resizeStartH = h;
-            resizeStartX = x;
-            resizeStartY = y;
-            resizeStartMouseX = mx;
-            resizeStartMouseY = my;
-            return true;
-        }
-        return false;
-    }
-
-    private boolean checkHit(double mx, double my, int x, int y, int w, int h) {
-        return mx >= x && mx <= x + w && my >= y && my <= y + h;
-    }
-
-    private void startDragging(HudTarget target, int ox, int oy) {
-        draggingTarget = target;
-        dragOffsetX = ox;
-        dragOffsetY = oy;
-    }
-
-    @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
-        if (resizingTarget != null) {
-            resizingTarget = null;
-            BomboConfig.save();
-            return true;
-        }
-        if (isResizingItemList) {
-            isResizingItemList = false;
-            BomboConfig.save();
-            return true;
-        }
-
-        draggingTarget = null;
-        BomboConfig.save();
-        return super.mouseReleased(event);
-    }
-
-    @Override
-    public void onClose() {
-        BomboConfig.save();
-        super.onClose();
-    }
-    
-    @Override
-    public boolean isPauseScreen() {
-        return false;
-    }
-
-    private enum HudTarget {
-        DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS, COMPOSTER, COMPOSTER_TIMER, TAB_WIDGET, ITEM_LIST, ITEM_LIST_SEARCH, HOPPITY
-    }
+      // $FF: synthetic method
+      private static HudTarget[] $values() {
+         return new HudTarget[]{DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS, COMPOSTER, COMPOSTER_TIMER, TAB_WIDGET, ITEM_LIST, ITEM_LIST_SEARCH, HOPPITY, ALPHA_TRACKER, AUTO_CROESUS};
+      }
+   }
 }

@@ -21,9 +21,10 @@ public class ChatPeekScrollMixin {
    private void onScroll(long window, double horizontal, double vertical, CallbackInfo ci) {
       if (ChatPeek.isPeeking()) {
          ci.cancel();
-         if (vertical != 0.0D) {
+         if (vertical != (double)0.0F) {
             Minecraft.getInstance().gui.getChat().scrollChat((int)vertical);
          }
       }
+
    }
 }

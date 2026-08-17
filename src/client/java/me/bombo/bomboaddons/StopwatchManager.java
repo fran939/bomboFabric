@@ -1,79 +1,81 @@
 package me.bombo.bomboaddons;
 
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 
 public class StopwatchManager {
-    private static boolean active = false;
-    private static boolean paused = false;
-    private static long startTimeMs = 0;
-    private static long accumulatedTimeMs = 0;
+   private static boolean active = false;
+   private static boolean paused = false;
+   private static long startTimeMs = 0L;
+   private static long accumulatedTimeMs = 0L;
 
-    public static void init() {
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "stopwatch_hud"), StopwatchManager::render);
-    }
+   public static void init() {
+      HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "stopwatch_hud"), StopwatchManager::render);
+   }
 
-    public static void start() {
-        active = true;
-        paused = false;
-        startTimeMs = System.currentTimeMillis();
-        accumulatedTimeMs = 0;
-    }
+   public static void start() {
+      active = true;
+      paused = false;
+      startTimeMs = System.currentTimeMillis();
+      accumulatedTimeMs = 0L;
+   }
 
-    public static void togglePause() {
-        if (!active) return;
-        if (paused) {
-            // Resume
+   public static void togglePause() {
+      if (active) {
+         if (paused) {
             paused = false;
             startTimeMs = System.currentTimeMillis();
-        } else {
-            // Pause
+         } else {
             paused = true;
-            accumulatedTimeMs += (System.currentTimeMillis() - startTimeMs);
-        }
-    }
+            accumulatedTimeMs += System.currentTimeMillis() - startTimeMs;
+         }
 
-    public static void stop() {
-        active = false;
-        paused = false;
-        startTimeMs = 0;
-        accumulatedTimeMs = 0;
-    }
+      }
+   }
 
-    public static boolean isActive() {
-        return active;
-    }
+   public static void stop() {
+      active = false;
+      paused = false;
+      startTimeMs = 0L;
+      accumulatedTimeMs = 0L;
+   }
 
-    public static boolean isPaused() {
-        return paused;
-    }
+   public static boolean isActive() {
+      return active;
+   }
 
-    public static long getElapsedTimeMs() {
-        if (!active) return 0;
-        if (paused) return accumulatedTimeMs;
-        return accumulatedTimeMs + (System.currentTimeMillis() - startTimeMs);
-    }
+   public static boolean isPaused() {
+      return paused;
+   }
 
-    private static void render(GuiGraphicsExtractor g, net.minecraft.client.DeltaTracker tickDelta) {
-        if (!active) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options.hideGui) return;
+   public static long getElapsedTimeMs() {
+      if (!active) {
+         return 0L;
+      } else {
+         return paused ? accumulatedTimeMs : accumulatedTimeMs + (System.currentTimeMillis() - startTimeMs);
+      }
+   }
 
-        drawStopwatch(g, 10, 200);
-    }
+   private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
+      if (active) {
+         Minecraft mc = Minecraft.getInstance();
+         if (!mc.options.hideGui) {
+            drawStopwatch(g, 10, 200);
+         }
+      }
+   }
 
-    public static void drawStopwatch(GuiGraphicsExtractor g, int x, int y) {
-        long elapsed = getElapsedTimeMs();
-        long totalSecs = elapsed / 1000;
-        long mins = totalSecs / 60;
-        long secs = totalSecs % 60;
-        long millis = (elapsed % 1000) / 10;
-
-        String formatted = String.format("%02d:%02d.%02d", mins, secs, millis);
-        String text = "§b§lStopwatch: §f" + formatted + (paused ? " §c(PAUSED)" : "");
-
-        g.text(Minecraft.getInstance().font, text, x, y, 0xFFFFFFFF, true);
-    }
+   public static void drawStopwatch(GuiGraphicsExtractor g, int x, int y) {
+      long elapsed = getElapsedTimeMs();
+      long totalSecs = elapsed / 1000L;
+      long mins = totalSecs / 60L;
+      long secs = totalSecs % 60L;
+      long millis = elapsed % 1000L / 10L;
+      String formatted = String.format("%02d:%02d.%02d", mins, secs, millis);
+      String text = "§b§lStopwatch: §f" + formatted + (paused ? " §c(PAUSED)" : "");
+      g.text(Minecraft.getInstance().font, text, x, y, -1, true);
+   }
 }

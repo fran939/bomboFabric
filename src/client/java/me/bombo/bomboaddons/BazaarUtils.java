@@ -36,7 +36,6 @@ public class BazaarUtils {
                            bazaarProducts.clear();
                            bazaarProducts.addAll(products.keySet());
                         }
-
                      }
                   } catch (Throwable var9) {
                      try {
@@ -56,6 +55,7 @@ public class BazaarUtils {
 
          });
       }
+
    }
 
    public static int getProductCount() {

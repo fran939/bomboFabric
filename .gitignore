@@ -1,44 +1,23 @@
-# gradle
-
 .gradle/
 build/
-out/
-classes/
-
-# eclipse
-
-*.launch
-
-# idea
-
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# vscode
-
-.settings/
-.vscode/
-bin/
-.classpath
-.project
-
-# macos
-
-*.DS_Store
-
-# fabric
-
 run/
-
-# java
-
-hs_err_*.log
-replay_*.log
-*.hprof
-*.jfr
-test/
-temp_sources/
-auto_push.bat
-logs/
+.tmp.driveupload/
+.vscode/
+.settings/
+.project
+.classpath
+bin/
+*.log
+*.rar
+*.zip
+*.lnk
+*.tmp
+*.bat
+temp.txt
+build_errors.txt
+bombo_test*.json
+repo_tree.json
+skyhanni_tree.json
+data_contents.json
+mojang.json
+snailify.json

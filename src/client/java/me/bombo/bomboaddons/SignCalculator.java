@@ -40,7 +40,7 @@ public class SignCalculator {
          try {
             String expression = preprocess(text);
             double result = eval(expression);
-            return result == (double) ((long) result) ? String.valueOf((long) result) : String.valueOf(result);
+            return result == (double)((long)result) ? String.valueOf((long)result) : String.valueOf(result);
          } catch (Exception var4) {
             return text;
          }
@@ -61,30 +61,30 @@ public class SignCalculator {
             } else {
                return text.toLowerCase().matches(".*[kmbes].*") ? text + " = " + formatted : text + " = " + formatted;
             }
-         } catch (Exception var5) {
+         } catch (Exception var6) {
             return text + " = ?";
          }
       }
    }
 
    public static String formatResultOnly(double result) {
-      return result == (double) ((long) result) ? String.format("%,d", (long) result) : String.format("%,.2f", result);
+      return result == (double)((long)result) ? String.format("%,d", (long)result) : String.format("%,.2f", result);
    }
 
    public static double getResult(String text) {
       if (!isValidExpression(text)) {
-         return 0.0D;
+         return (double)0.0F;
       } else {
          try {
             String expression = preprocess(text);
             return eval(expression);
          } catch (Exception var2) {
-            return 0.0D;
+            return (double)0.0F;
          }
       }
    }
 
-   public static double eval(String str) {
+   public static double eval(final String str) {
       return (new Object() {
          int pos = -1;
          int ch;
@@ -120,15 +120,15 @@ public class SignCalculator {
             double x = this.parseTerm();
 
             while(true) {
-               while(!this.eat(43)) {
-                  if (!this.eat(45)) {
-                     return x;
-                  }
-
-                  x -= this.parseTerm();
+               while(this.eat(43)) {
+                  x += this.parseTerm();
                }
 
-               x += this.parseTerm();
+               if (!this.eat(45)) {
+                  return x;
+               }
+
+               x -= this.parseTerm();
             }
          }
 
@@ -136,15 +136,15 @@ public class SignCalculator {
             double x = this.parseFactor();
 
             while(true) {
-               while(!this.eat(42)) {
-                  if (!this.eat(47)) {
-                     return x;
-                  }
-
-                  x /= this.parseFactor();
+               while(this.eat(42)) {
+                  x *= this.parseFactor();
                }
 
-               x *= this.parseFactor();
+               if (!this.eat(47)) {
+                  return x;
+               }
+
+               x /= this.parseFactor();
             }
          }
 

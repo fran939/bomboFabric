@@ -9,16 +9,15 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.network.chat.Component;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 @Environment(EnvType.CLIENT)
 public class SphinxMacro {
@@ -55,9 +54,9 @@ public class SphinxMacro {
                   resetBlock();
                }
             }
-
          }
       }
+
    }
 
    private static void tryAnswerAndSend() {
@@ -67,10 +66,8 @@ public class SphinxMacro {
             String normExpected = norm(expected);
             int matchedIdx = -1;
 
-            int i;
-            String opt;
-            for(i = 0; i < 3; ++i) {
-               opt = options[i];
+            for(int i = 0; i < 3; ++i) {
+               String opt = options[i];
                if (opt != null && norm(opt).equals(normExpected)) {
                   matchedIdx = i;
                   break;
@@ -78,12 +75,12 @@ public class SphinxMacro {
             }
 
             if (matchedIdx == -1) {
-               for(i = 0; i < 3; ++i) {
-                  opt = options[i];
+               for(int var6 = 0; var6 < 3; ++var6) {
+                  String opt = options[var6];
                   if (opt != null) {
                      String n = norm(opt);
                      if (n.contains(normExpected) || normExpected.contains(n)) {
-                        matchedIdx = i;
+                        matchedIdx = var6;
                         break;
                      }
                   }
@@ -188,12 +185,16 @@ public class SphinxMacro {
    public static void load() {
       if (OLD_DATA_FILE.exists()) {
          try {
-            if (!DATA_FILE.getParentFile().exists()) DATA_FILE.getParentFile().mkdirs();
-            java.nio.file.Files.move(OLD_DATA_FILE.toPath(), DATA_FILE.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            if (!DATA_FILE.getParentFile().exists()) {
+               DATA_FILE.getParentFile().mkdirs();
+            }
+
+            Files.move(OLD_DATA_FILE.toPath(), DATA_FILE.toPath(), StandardCopyOption.REPLACE_EXISTING);
          } catch (Exception e) {
             e.printStackTrace();
          }
       }
+
       if (DATA_FILE.exists()) {
          try {
             InputStreamReader r = new InputStreamReader(Files.newInputStream(DATA_FILE.toPath()), StandardCharsets.UTF_8);
@@ -205,14 +206,14 @@ public class SphinxMacro {
                   QUESTIONS.clear();
                   QUESTIONS.putAll(read);
                }
-            } catch (Throwable var4) {
+            } catch (Throwable var51) {
                try {
                   r.close();
                } catch (Throwable var3) {
-                  var4.addSuppressed(var3);
+                  var51.addSuppressed(var3);
                }
 
-               throw var4;
+               throw var51;
             }
 
             r.close();
@@ -282,10 +283,8 @@ public class SphinxMacro {
       defaults.put("What does Junker Joel collect?", "Junk");
       defaults.put("Where is the Titanoboa found?", "Backwater Bayou");
       int changed = 0;
-      Iterator var2 = defaults.entrySet().iterator();
 
-      while(var2.hasNext()) {
-         Entry<String, String> e = (Entry)var2.next();
+      for(Map.Entry<String, String> e : defaults.entrySet()) {
          if (!QUESTIONS.containsKey(e.getKey())) {
             QUESTIONS.put((String)e.getKey(), (String)e.getValue());
             ++changed;

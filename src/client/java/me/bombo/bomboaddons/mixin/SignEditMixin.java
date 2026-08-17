@@ -1,7 +1,6 @@
 package me.bombo.bomboaddons.mixin;
 
 import me.bombo.bomboaddons.BomboConfig;
-import me.bombo.bomboaddons.Bomboaddons;
 import me.bombo.bomboaddons.SignCalculator;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -24,7 +23,6 @@ public abstract class SignEditMixin {
    @Shadow
    private int line;
 
-
    @Inject(
       method = {"onDone", "onClose"},
       at = {@At("HEAD")},
@@ -37,8 +35,8 @@ public abstract class SignEditMixin {
                this.messages[i] = SignCalculator.calculate(this.messages[i]);
             }
          }
-
       }
+
    }
 
    @Inject(
@@ -52,8 +50,6 @@ public abstract class SignEditMixin {
          int baseX = screenWidth / 2;
          int baseY = 55;
          String currentLineText = this.messages[this.line];
-         String totalText;
-         int totalWidth;
          if (currentLineText != null && !currentLineText.isEmpty() && SignCalculator.isPotentialExpression(currentLineText)) {
             String preview = SignCalculator.getPreviewText(currentLineText);
             boolean isValid = SignCalculator.isValidExpression(currentLineText);
@@ -62,18 +58,15 @@ public abstract class SignEditMixin {
                preview = currentLineText + " = ?";
             }
 
-            totalText = color + preview;
-            totalWidth = mc.font.width(totalText);
+            String totalText = color + preview;
+            int totalWidth = mc.font.width(totalText);
             guiGraphics.text(mc.font, totalText, baseX - totalWidth / 2, baseY, -1, true);
          }
 
-         double total = 0.0D;
+         double total = (double)0.0F;
          boolean hasAnyExpression = false;
-         String[] var20 = this.messages;
-         totalWidth = var20.length;
 
-         for(int var16 = 0; var16 < totalWidth; ++var16) {
-            String msg = var20[var16];
+         for(String msg : this.messages) {
             if (SignCalculator.isValidExpression(msg)) {
                total += SignCalculator.getResult(msg);
                hasAnyExpression = true;
@@ -81,11 +74,11 @@ public abstract class SignEditMixin {
          }
 
          if (hasAnyExpression) {
-            totalText = "§6Total: §e" + SignCalculator.formatResultOnly(total);
-            totalWidth = mc.font.width(totalText);
-            guiGraphics.text(mc.font, totalText, baseX - totalWidth / 2, baseY - 30, -1, true);
+            String totalText = "§6Total: §e" + SignCalculator.formatResultOnly(total);
+            int var21 = mc.font.width(totalText);
+            guiGraphics.text(mc.font, totalText, baseX - var21 / 2, baseY - 30, -1, true);
          }
-
       }
+
    }
 }
