@@ -59,6 +59,7 @@ public class ClickLogic {
       }
       int code = CustomBindsProcessor.getGlfwCodeForName(name);
       if (code != -1) {
+         if (code >= 1000 && code <= 1007) return code - 1000;
          return code;
       }
       if (name.startsWith("key_")) {
@@ -512,7 +513,7 @@ public class ClickLogic {
 
                   if (isMatch) {
                      if (BomboConfig.get().apiDebug) {
-                        Bomboaddons.sendMessage("§a[Debug] Clicking navigation item: " + name + " in slot " + i);
+                        Bomboaddons.sendMessage("Â§a[Debug] Clicking navigation item: " + name + " in slot " + i);
                      }
 
                      mc.gameMode.handleContainerInput(menu.containerId, i, 0, ContainerInput.PICKUP, mc.player);
@@ -527,13 +528,13 @@ public class ClickLogic {
    }
 
    public static void listTargets(FabricClientCommandSource source) {
-      source.sendFeedback(Component.literal("§8[§bBomboAddons§8]§r §6--- Click Targets ---"));
+      source.sendFeedback(Component.literal("Â§8[Â§bBomboAddonsÂ§8]Â§r Â§6--- Click Targets ---"));
       if (targets.isEmpty()) {
-         source.sendFeedback(Component.literal("§7  None"));
+         source.sendFeedback(Component.literal("Â§7  None"));
       } else {
          for(int i = 0; i < targets.size(); ++i) {
             ClickTarget t = (ClickTarget)targets.get(i);
-            source.sendFeedback(Component.literal("§7" + i + ". §e" + t.item + " §7(GUI: §b" + t.gui + "§7, Key: §d" + t.keyName + "§7, Type: §a" + t.type + "§7, Auto: " + (t.auto ? "§aYes" : "§cNo") + "§7)"));
+            source.sendFeedback(Component.literal("Â§7" + i + ". Â§e" + t.item + " Â§7(GUI: Â§b" + t.gui + "Â§7, Key: Â§d" + t.keyName + "Â§7, Type: Â§a" + t.type + "Â§7, Auto: " + (t.auto ? "Â§aYes" : "Â§cNo") + "Â§7)"));
          }
       }
 
@@ -561,10 +562,10 @@ public class ClickLogic {
 
          try {
             mc.player.connection.sendCommand(command);
-            mc.player.sendOverlayMessage(Component.literal("§b[Bomboaddons] Executing command: /" + command));
+            mc.player.sendOverlayMessage(Component.literal("Â§b[Bomboaddons] Executing command: /" + command));
          } catch (Exception e) {
             DebugUtils.debug("clicker", "Failed to send command: " + e.getMessage());
-            mc.player.sendOverlayMessage(Component.literal("§c[Bomboaddons] Failed to execute command: " + e.getMessage()));
+            mc.player.sendOverlayMessage(Component.literal("Â§c[Bomboaddons] Failed to execute command: " + e.getMessage()));
          }
 
       } else if (screen != null) {
@@ -611,7 +612,7 @@ public class ClickLogic {
                      mc.gameMode.handleContainerInput(screen.getMenu().containerId, slot.index, button, ContainerInput.PICKUP, mc.player);
                      LocalPlayer var10000 = mc.player;
                      String var10001 = stack.getHoverName().getString();
-                     var10000.sendOverlayMessage(Component.literal("§b[Bomboaddons] Clicking " + var10001 + " (Slot " + slot.index + ") in " + screen.getTitle().getString()));
+                     var10000.sendOverlayMessage(Component.literal("Â§b[Bomboaddons] Clicking " + var10001 + " (Slot " + slot.index + ") in " + screen.getTitle().getString()));
                   }
 
                   return;

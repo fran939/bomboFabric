@@ -112,7 +112,7 @@ public class CustomBindsProcessor {
                         && isKeybindAllowed(cb.requiredProfile, cb.requiredIsland, cb.requiredArmor)
                         && matchesKey(cb.keyName, keyCode)) {
                      if (BomboConfig.get().debugKeys) {
-                        Bomboaddons.sendMessage("§a[KeyDebug] Matched GUI Keybind: " + cb.keyName + " -> " + cb.command);
+                        Bomboaddons.sendMessage("Â§a[KeyDebug] Matched GUI Keybind: " + cb.keyName + " -> " + cb.command);
                      }
                      executeCommandOrChat(cb.command);
                      matchedAny = true;
@@ -280,12 +280,6 @@ public class CustomBindsProcessor {
                return 1000 + (num - 1);
             }
          } catch (Exception ignored) {}
-      }
-
-      // Check ClickLogic KEY_MAP
-      int fromClickLogic = ClickLogic.getKeyCode(clean);
-      if (fromClickLogic != -1) {
-         return fromClickLogic;
       }
 
       // Key prefixes
@@ -519,7 +513,7 @@ public class CustomBindsProcessor {
       Minecraft mc = Minecraft.getInstance();
       mc.execute(() -> {
          if (mc.gui != null) {
-            mc.gui.setTitle(Component.literal(titleText.replace("&", "§")));
+            mc.gui.setTitle(Component.literal(titleText.replace("&", "Â§")));
          }
 
       });

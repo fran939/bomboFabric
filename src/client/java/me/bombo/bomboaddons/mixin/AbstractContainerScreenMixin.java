@@ -299,13 +299,6 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             cir.setReturnValue(true);
             return;
          }
-         if (CustomBindsProcessor.isAnyGuiModifierHeld()) {
-            if (BomboConfig.get().debugKeys) {
-               Bomboaddons.sendMessage("§e[KeyDebug] AbstractContainerScreen.keyPressed blocked by held modifier for key: " + event.key());
-            }
-            cir.setReturnValue(true);
-            return;
-         }
       }
       if (ItemListOverlay.searchBox != null && ItemListOverlay.searchBox.isFocused()) {
          if (event.key() == 257 || event.key() == 335) {

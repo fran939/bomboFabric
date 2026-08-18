@@ -72,9 +72,9 @@ public abstract class KeyboardMixin {
 
          if (mc.screen != null && !(mc.screen instanceof BomboConfigGUI)) {
             if (BomboConfig.get().preventSlotSwapOnGuiKeybind) {
-               if (CustomBindsProcessor.hasHandledGuiKeyRecently(key) || CustomBindsProcessor.isAnyGuiModifierHeld()) {
+               if (CustomBindsProcessor.hasHandledGuiKeyRecently(key)) {
                   if (BomboConfig.get().debugKeys) {
-                     Bomboaddons.sendMessage("§e[KeyDebug] KeyboardHandler canceled event for key: " + key);
+                     Bomboaddons.sendMessage("§e[KeyDebug] KeyboardHandler canceled event for handled GUI key: " + key);
                   }
                   ci.cancel();
                   return;

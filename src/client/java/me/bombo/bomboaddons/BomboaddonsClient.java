@@ -2367,6 +2367,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Subcommands: list, remove <name>, clear, toggle <name>"));
                      return 1;
                   }));
+                  builder.then(highlightCmd);
                   builder.then(ClientCommands.literal("left").executes((context) -> {
                      BomboConfig.get().gardenMovement = true;
                      GardenMovement.toggleLeft();

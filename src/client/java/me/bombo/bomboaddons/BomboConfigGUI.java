@@ -2154,8 +2154,12 @@ extends Screen {
                     curY = this.addBoolOption("Block Highlights Enabled", s.blockHighlightsEnabled, v -> {
                         s.blockHighlightsEnabled = v;
                         if (!v.booleanValue()) {
-                            BlockHighlight.highlightedBlocks.clear();
+                           BlockHighlight.highlightedBlocks.clear();
                         }
+                    }, contentX, contentWidth, curY);
+                    curY = this.addIntLabelSlider("Block Scan Radius: " + s.blockScanRadius + " blocks", s.blockScanRadius, 4, 256, 4, v -> {
+                        s.blockScanRadius = v;
+                        BlockHighlight.highlightedBlocks.clear();
                     }, contentX, contentWidth, curY);
                     curY += 10;
                     curY = this.addTextBox("Block Name/ID", blockNameInput, v -> {
@@ -3906,6 +3910,7 @@ extends Screen {
                 case 21: {
                     g.text(this.font, "\u00a76\u00a7lAdd Block Highlight", contentX, curY, -22016, true);
                     g.text(this.font, "\u00a77Block Highlights Enabled", contentX + 24, (curY += 24) + 4, -1, false);
+                    g.text(this.font, "\u00a7fBlock Scan Radius: \u00a7e" + s.blockScanRadius + " \u00a77blocks", contentX, (curY += 24) + 4, -1);
                     g.text(this.font, "\u00a7fBlock Name/ID:", contentX, (curY += 34) + 4, -1);
                     g.text(this.font, "\u00a7fColor:", contentX, (curY += 29) + 4, -1);
                     g.text(this.font, "\u00a77See Through Walls", contentX + 24, (curY += 29) + 4, -1, false);
