@@ -301,12 +301,6 @@ public class CustomBindsProcessor {
          } catch (Exception ignored) {}
       }
 
-      // Direct integer
-      try {
-         int direct = Integer.parseInt(clean);
-         if (direct > 0) return direct;
-      } catch (Exception ignored) {}
-
       // Modifiers
       if (clean.equals("shift") || clean.equals("lshift") || clean.equals("left_shift") || clean.equals("left shift")) return 340;
       if (clean.equals("rshift") || clean.equals("right_shift") || clean.equals("right shift")) return 344;
@@ -335,18 +329,42 @@ public class CustomBindsProcessor {
       if (clean.equals("kp_divide") || clean.equals("kpdivide") || clean.equals("kp_slash")) return 331;
       if (clean.equals("kp_decimal") || clean.equals("kpdecimal") || clean.equals("kp_period")) return 330;
 
-      // F keys
-      if (clean.matches("f[1-9]|f1[0-2]")) {
-         int num = Integer.parseInt(clean.substring(1));
+      // F keys (f1 - f12)
+      if (clean.matches("^f_?[1-9]$|^f_?1[0-2]$|^key_?f_?[1-9]$|^key_?f_?1[0-2]$")) {
+         int num = Integer.parseInt(clean.replaceAll("[^0-9]", ""));
          return 289 + num;
       }
 
-      // Single characters 0-9, a-z
+      // Single characters 0-9, a-z, symbols
       if (clean.length() == 1) {
          char ch = clean.charAt(0);
-         if (ch >= '0' && ch <= '9') return 48 + (ch - 48);
-         if (ch >= 'a' && ch <= 'z') return 65 + (ch - 97);
+         if (ch >= '0' && ch <= '9') return 48 + (ch - '0');
+         if (ch >= 'a' && ch <= 'z') return 65 + (ch - 'a');
+         if (ch == '.') return 46;
+         if (ch == ',') return 44;
+         if (ch == '/') return 47;
+         if (ch == ';') return 59;
+         if (ch == '\'') return 39;
+         if (ch == '[') return 91;
+         if (ch == ']') return 93;
+         if (ch == '-') return 45;
+         if (ch == '=') return 61;
+         if (ch == '`') return 96;
+         if (ch == '\\') return 92;
       }
+
+      // Key prefixes
+      if (clean.startsWith("key_")) {
+         try {
+            return Integer.parseInt(clean.substring(4));
+         } catch (Exception ignored) {}
+      }
+
+      // Direct integer keycode
+      try {
+         int direct = Integer.parseInt(clean);
+         if (direct >= 32) return direct;
+      } catch (Exception ignored) {}
 
       return -1;
    }
