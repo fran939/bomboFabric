@@ -386,9 +386,9 @@ public abstract class AbstractContainerScreenMixin extends Screen {
    )
    private void onCheckHotbarKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
       if (BomboConfig.get().preventSlotSwapOnGuiKeybind) {
-         if (CustomBindsProcessor.hasHandledGuiKeyRecently(event.key()) || CustomBindsProcessor.isAnyGuiModifierHeld()) {
+         if (CustomBindsProcessor.hasHandledGuiKeyRecently(event.key()) || CustomBindsProcessor.matchesAnyRegisteredGuiBind(event.key())) {
             if (BomboConfig.get().debugKeys) {
-               Bomboaddons.sendMessage("§e[KeyDebug] Blocked checkHotbarKeyPressed for key: " + event.key() + " (modifier/bind active)");
+               Bomboaddons.sendMessage("§e[KeyDebug] Blocked checkHotbarKeyPressed for key: " + event.key() + " (matching bind active)");
             }
             cir.setReturnValue(true);
          }
