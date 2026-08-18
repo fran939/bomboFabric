@@ -48,11 +48,14 @@ public class Bomboaddons implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("[BomboAddons] Initialized common/server mod features.");
 
-        // Aspect of the Void (AOTV) & Etherwarp handler for Diamond Shovel
+        // Aspect of the Void (AOTV) & Etherwarp handler for Diamond Shovel (Server side only)
         UseItemCallback.EVENT.register((player, world, hand) -> {
+            if (world.isClientSide()) {
+                return InteractionResult.PASS;
+            }
             ItemStack stack = player.getItemInHand(hand);
             if (stack != null && stack.is(Items.DIAMOND_SHOVEL)) {
-                if (!world.isClientSide() && player instanceof ServerPlayer serverPlayer && world instanceof ServerLevel serverLevel) {
+                if (player instanceof ServerPlayer serverPlayer && world instanceof ServerLevel serverLevel) {
                     handleAOTV(serverPlayer, serverLevel);
                 }
                 return InteractionResult.SUCCESS;

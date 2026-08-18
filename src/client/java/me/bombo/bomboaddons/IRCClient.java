@@ -120,30 +120,26 @@ public class IRCClient {
       if (!BomboConfig.get().ircChatEnabled) {
          closeQuietly();
       }
-
    }
 
-   private static void closeQuietly() {
+   private static synchronized void closeQuietly() {
       activeEndpoint = "None";
       if (webSocket != null) {
          try {
-            webSocket.sendClose(1000, "Bye");
-         } catch (Throwable var2) {
+            webSocket.abort();
+         } catch (Throwable ignored) {
          }
-
          webSocket = null;
       }
 
       if (tcpSocket != null) {
          try {
             tcpSocket.close();
-         } catch (Throwable var1) {
+         } catch (Throwable ignored) {
          }
-
          tcpSocket = null;
          tcpWriter = null;
       }
-
    }
 
    private static HttpClient createInsecureHttpClient() {
@@ -174,7 +170,6 @@ public class IRCClient {
       while(running) {
          if (!BomboConfig.get().ircChatEnabled) {
             closeQuietly();
-
             try {
                Thread.sleep(1000L);
             } catch (InterruptedException var10) {
@@ -199,10 +194,12 @@ public class IRCClient {
                currentNick = "b_" + cleanUsername + "_v" + modVersion + "__" + currentArea;
 
                // Attempt 1: WebSocket (WSS - Default)
+               CompletableFuture<WebSocket> wsFuture1 = null;
                try {
+                  closeQuietly();
                   System.out.println("[BomboAddons-IRC] Trying WSS wss://bombo.dpdns.org/bombochat (Default)...");
-                  CompletableFuture<WebSocket> wsFuture = client.newWebSocketBuilder().buildAsync(URI.create("wss://bombo.dpdns.org/bombochat"), new WebSocketListener());
-                  webSocket = (WebSocket)wsFuture.get(5L, TimeUnit.SECONDS);
+                  wsFuture1 = client.newWebSocketBuilder().buildAsync(URI.create("wss://bombo.dpdns.org/bombochat"), new WebSocketListener());
+                  webSocket = (WebSocket)wsFuture1.get(5L, TimeUnit.SECONDS);
                   sendRaw("NICK " + currentNick);
                   sendRaw("USER " + currentNick + " 0 * :BomboAddons User");
                   sendRaw("JOIN #bomboaddons_chat");
@@ -218,14 +215,24 @@ public class IRCClient {
                   closeQuietly();
                   continue;
                } catch (Throwable tWss) {
+                  if (wsFuture1 != null) {
+                     wsFuture1.cancel(true);
+                     try {
+                        if (wsFuture1.isDone() && !wsFuture1.isCompletedExceptionally()) {
+                           wsFuture1.get().abort();
+                        }
+                     } catch (Throwable ignored) {}
+                  }
+                  closeQuietly();
                   lastError = "WSS WebSocket failed: " + tWss.getMessage();
                   System.err.println("[BomboAddons-IRC] WSS WebSocket failed: " + tWss.getMessage());
 
                   // Attempt 2: WebSocket (WS port 6668)
+                  CompletableFuture<WebSocket> wsFuture2 = null;
                   try {
                      System.out.println("[BomboAddons-IRC] Trying WS ws://chat.bombo.dpdns.org:6668 (Fallback WS)...");
-                     CompletableFuture<WebSocket> wsFuture = client.newWebSocketBuilder().buildAsync(URI.create("ws://chat.bombo.dpdns.org:6668"), new WebSocketListener());
-                     webSocket = (WebSocket)wsFuture.get(5L, TimeUnit.SECONDS);
+                     wsFuture2 = client.newWebSocketBuilder().buildAsync(URI.create("ws://chat.bombo.dpdns.org:6668"), new WebSocketListener());
+                     webSocket = (WebSocket)wsFuture2.get(5L, TimeUnit.SECONDS);
                      sendRaw("NICK " + currentNick);
                      sendRaw("USER " + currentNick + " 0 * :BomboAddons User");
                      sendRaw("JOIN #bomboaddons_chat");
@@ -241,6 +248,15 @@ public class IRCClient {
                      closeQuietly();
                      continue;
                   } catch (Throwable tWs) {
+                     if (wsFuture2 != null) {
+                        wsFuture2.cancel(true);
+                        try {
+                           if (wsFuture2.isDone() && !wsFuture2.isCompletedExceptionally()) {
+                              wsFuture2.get().abort();
+                           }
+                        } catch (Throwable ignored) {}
+                     }
+                     closeQuietly();
                      lastError = "WS 6668 failed: " + tWs.getMessage();
                      System.err.println("[BomboAddons-IRC] WS 6668 failed: " + tWs.getMessage());
 
@@ -272,6 +288,7 @@ public class IRCClient {
                         closeQuietly();
                         continue;
                      } catch (Throwable tTcp1) {
+                        closeQuietly();
                         lastError = "TCP 6667 failed: " + tTcp1.getMessage();
                         System.err.println("[BomboAddons-IRC] TCP 6667 failed: " + tTcp1.getMessage());
 
@@ -303,6 +320,7 @@ public class IRCClient {
                            closeQuietly();
                            continue;
                         } catch (Throwable tTcp2) {
+                           closeQuietly();
                            lastError = "Direct IP 6667 failed: " + tTcp2.getMessage();
                            System.err.println("[BomboAddons-IRC] Direct IP 6667 failed: " + tTcp2.getMessage());
                         }
@@ -320,7 +338,6 @@ public class IRCClient {
             }
          }
       }
-
    }
 
    private static void sendRaw(String msg) {
@@ -344,7 +361,13 @@ public class IRCClient {
 
    }
 
+   private static long lastPrivMsgTime = 0L;
+   private static String lastPrivMsgPayload = "";
+
    private static void handleLine(String line) {
+      if (!running || !BomboConfig.get().ircChatEnabled) {
+         return;
+      }
       try {
          if (BomboConfig.get().debugChat) {
             DebugUtils.debug("chat", "§b[IRC-In] " + line);
@@ -400,11 +423,18 @@ public class IRCClient {
             int privmsgIdx = line.indexOf(" PRIVMSG ");
             int colonIdx = line.indexOf(" :", privmsgIdx);
             if (privmsgIdx != -1 && colonIdx != -1) {
+               String payload = line.substring(colonIdx + 2);
+               long now = System.currentTimeMillis();
+               if (payload.equals(lastPrivMsgPayload) && (now - lastPrivMsgTime < 400L)) {
+                  return; // Drop duplicate echo
+               }
+               lastPrivMsgPayload = payload;
+               lastPrivMsgTime = now;
+
                String senderPart = line.substring(1, privmsgIdx);
                String senderNick = senderPart.split("!")[0];
                ModUser senderMu = parseNick(senderNick);
                onlinePlayers.put(senderMu.username, senderMu);
-               String payload = line.substring(colonIdx + 2);
                String[] msgParts = payload.split("\u0002", 3);
                String formattedMessage;
                if (!payload.contains("[DC]") && !senderNick.equalsIgnoreCase("Discord")) {
@@ -453,7 +483,7 @@ public class IRCClient {
                Minecraft mc = Minecraft.getInstance();
                if (mc != null && mc.player != null) {
                   mc.execute(() -> {
-                     if (mc.player != null) {
+                     if (mc.player != null && BomboConfig.get().ircChatEnabled) {
                         mc.player.sendSystemMessage(Component.literal(formattedMessage));
                      }
 
@@ -523,10 +553,18 @@ public class IRCClient {
       private final StringBuilder textBuffer = new StringBuilder();
 
       public void onOpen(WebSocket ws) {
+         if (ws != IRCClient.webSocket || !running || !BomboConfig.get().ircChatEnabled) {
+            try { ws.abort(); } catch (Throwable ignored) {}
+            return;
+         }
          ws.request(1L);
       }
 
       public CompletionStage<?> onText(WebSocket ws, CharSequence data, boolean last) {
+         if (ws != IRCClient.webSocket || !running || !BomboConfig.get().ircChatEnabled) {
+            try { ws.abort(); } catch (Throwable ignored) {}
+            return null;
+         }
          this.textBuffer.append(data);
          if (last) {
             String fullMessage = this.textBuffer.toString();
@@ -544,12 +582,16 @@ public class IRCClient {
       }
 
       public CompletionStage<?> onClose(WebSocket ws, int statusCode, String reason) {
-         IRCClient.webSocket = null;
+         if (ws == IRCClient.webSocket) {
+            IRCClient.webSocket = null;
+         }
          return null;
       }
 
       public void onError(WebSocket ws, Throwable error) {
-         IRCClient.webSocket = null;
+         if (ws == IRCClient.webSocket) {
+            IRCClient.webSocket = null;
+         }
       }
    }
 }

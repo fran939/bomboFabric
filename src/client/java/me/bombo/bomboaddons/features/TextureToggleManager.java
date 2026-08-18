@@ -69,26 +69,6 @@ public class TextureToggleManager {
    public void init() {
       this.loadConfig();
       ClientLifecycleEvents.CLIENT_STOPPING.register((ClientLifecycleEvents.ClientStopping)(client) -> this.saveConfig());
-      ScreenEvents.BEFORE_INIT.register((ScreenEvents.BeforeInit)(client, screen, i, i1) -> ScreenKeyboardEvents.allowKeyRelease(screen).register((ScreenKeyboardEvents.AllowKeyRelease)(screen1, event) -> {
-            if (!BomboConfig.get().noResourcePack) {
-               return true;
-            } else {
-               int boundKey = ClickLogic.getKeyCode(BomboConfig.get().textureToggleKey);
-               if (boundKey != -1 && event.key() == boundKey && screen instanceof AbstractContainerScreen) {
-                  AbstractContainerScreen<?> containerScreen = (AbstractContainerScreen)screen;
-                  Slot hoveredSlot = ((AbstractContainerScreenAccessor)containerScreen).getHoveredSlot();
-                  if (hoveredSlot != null && hoveredSlot.hasItem()) {
-                     ItemStack stack = hoveredSlot.getItem();
-                     String sbId = this.skyblockId(stack);
-                     if (sbId != null) {
-                        this.toggleItem(sbId);
-                     }
-                  }
-               }
-
-               return true;
-            }
-         }));
    }
 
    public void toggleItem(String sbId) {
