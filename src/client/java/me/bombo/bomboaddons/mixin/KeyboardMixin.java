@@ -51,13 +51,14 @@ public abstract class KeyboardMixin {
          }
       }
 
+      CustomBindsProcessor.onKeyInput(event.key(), action);
+
       if (action == 1) {
          int key = event.key();
          if (BomboConfig.get().debugKeys) {
             String keyStr = CustomBindsProcessor.getKeyNameForGlfwCode(key);
             Bomboaddons.sendMessage("§b[KeyDebug] KeyPress: " + keyStr + " (code: " + key + ", screen: " + (mc.screen == null ? "None" : mc.screen.getClass().getSimpleName()) + ", modifierHeld: " + CustomBindsProcessor.isAnyGuiModifierHeld() + ")");
          }
-         CustomBindsProcessor.onKeyInput(key, action);
          if (mc.screen instanceof ChatScreen || mc.screen instanceof AbstractSignEditScreen) {
             return;
          }

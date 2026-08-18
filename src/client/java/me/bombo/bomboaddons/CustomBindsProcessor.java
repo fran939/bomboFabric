@@ -397,31 +397,31 @@ public class CustomBindsProcessor {
          // Shift: either left or right shift if generic "shift", or specific
          if (code == 340 || code == 344 || clean.contains("shift")) {
             if (clean.equals("left_shift") || clean.equals("lshift") || clean.equals("left shift")) {
-               return GLFW.glfwGetKey(windowHandle, 340) == 1 || pressedKeys.contains(340);
+               return GLFW.glfwGetKey(windowHandle, 340) == 1;
             } else if (clean.equals("right_shift") || clean.equals("rshift") || clean.equals("right shift")) {
-               return GLFW.glfwGetKey(windowHandle, 344) == 1 || pressedKeys.contains(344);
+               return GLFW.glfwGetKey(windowHandle, 344) == 1;
             }
-            return GLFW.glfwGetKey(windowHandle, 340) == 1 || GLFW.glfwGetKey(windowHandle, 344) == 1 || pressedKeys.contains(340) || pressedKeys.contains(344);
+            return GLFW.glfwGetKey(windowHandle, 340) == 1 || GLFW.glfwGetKey(windowHandle, 344) == 1;
          }
          // Ctrl: either left or right ctrl if generic "ctrl"/"control", or specific
          if (code == 341 || code == 345 || clean.contains("ctrl") || clean.contains("control")) {
             if (clean.equals("left_control") || clean.equals("left_ctrl") || clean.equals("lctrl") || clean.equals("left control") || clean.equals("left ctrl")) {
-               return GLFW.glfwGetKey(windowHandle, 341) == 1 || pressedKeys.contains(341);
+               return GLFW.glfwGetKey(windowHandle, 341) == 1;
             } else if (clean.equals("right_control") || clean.equals("right_ctrl") || clean.equals("rctrl") || clean.equals("right control") || clean.equals("right ctrl")) {
-               return GLFW.glfwGetKey(windowHandle, 345) == 1 || pressedKeys.contains(345);
+               return GLFW.glfwGetKey(windowHandle, 345) == 1;
             }
-            return GLFW.glfwGetKey(windowHandle, 341) == 1 || GLFW.glfwGetKey(windowHandle, 345) == 1 || pressedKeys.contains(341) || pressedKeys.contains(345);
+            return GLFW.glfwGetKey(windowHandle, 341) == 1 || GLFW.glfwGetKey(windowHandle, 345) == 1;
          }
          // Alt: either left or right alt if generic "alt", or specific
          if (code == 342 || code == 346 || clean.contains("alt")) {
             if (clean.equals("left_alt") || clean.equals("lalt") || clean.equals("left alt")) {
-               return GLFW.glfwGetKey(windowHandle, 342) == 1 || pressedKeys.contains(342);
+               return GLFW.glfwGetKey(windowHandle, 342) == 1;
             } else if (clean.equals("right_alt") || clean.equals("ralt") || clean.equals("right alt")) {
-               return GLFW.glfwGetKey(windowHandle, 346) == 1 || pressedKeys.contains(346);
+               return GLFW.glfwGetKey(windowHandle, 346) == 1;
             }
-            return GLFW.glfwGetKey(windowHandle, 342) == 1 || GLFW.glfwGetKey(windowHandle, 346) == 1 || pressedKeys.contains(342) || pressedKeys.contains(346);
+            return GLFW.glfwGetKey(windowHandle, 342) == 1 || GLFW.glfwGetKey(windowHandle, 346) == 1;
          }
-         return GLFW.glfwGetKey(windowHandle, code) == 1 || pressedKeys.contains(code);
+         return GLFW.glfwGetKey(windowHandle, code) == 1;
       }
       return false;
    }
