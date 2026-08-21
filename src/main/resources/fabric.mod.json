@@ -13,11 +13,8 @@
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/bomboaddons/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
-		"main": [
-			"me.bombo.bomboaddons.Bomboaddons"
-		],
 		"client": [
 			"me.bombo.bomboaddons.BomboaddonsClient"
 		]
