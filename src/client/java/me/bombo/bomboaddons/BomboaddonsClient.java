@@ -5585,7 +5585,8 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
       }
       ClickEvent copyUuid = LF.createClickEventRobust("COPY_TO_CLIPBOARD", uuidStr);
-      ClickEvent addHlTarget = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add " + rawName + " GOLD");
+      String hlTarget = rawName.contains(" ") ? "\"" + rawName + "\"" : rawName;
+      ClickEvent addHlTarget = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add " + hlTarget + " GOLD");
       ClickEvent toggleTracer = LF.createClickEventRobust("RUN_COMMAND", "/b tracer");
       ClickEvent removeHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight remove");
       Component actionRow = Component.literal(" §a[+ Highlight]")

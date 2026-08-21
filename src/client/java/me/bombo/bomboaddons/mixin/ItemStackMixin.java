@@ -30,14 +30,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ItemStackMixin {
    @Inject(
       method = {"getTooltipLines"},
-      at = {@At("RETURN")}
+      at = {@At("RETURN")},
+      cancellable = true
    )
    private void onGetTooltipLines(Item.TooltipContext context, Player player, TooltipFlag tooltipFlag, CallbackInfoReturnable<List<Component>> cir) {
-      ItemStack currentStack = (ItemStack)(Object)this;
-      List<Component> tooltipResultLines = (List)cir.getReturnValue();
-      if (tooltipResultLines != null) {
-         me.bombo.bomboaddons.features.SupercraftHelper.appendTooltip(currentStack, tooltipResultLines);
+      List<Component> originalLines = (List)cir.getReturnValue();
+      if (originalLines == null) return;
+      List<Component> lines;
+      if (originalLines instanceof java.util.ArrayList) {
+         lines = originalLines;
+      } else {
+         lines = new java.util.ArrayList<>(originalLines);
+         cir.setReturnValue(lines);
       }
+
+      ItemStack currentStack = (ItemStack)(Object)this;
+      me.bombo.bomboaddons.features.SupercraftHelper.appendTooltip(currentStack, lines);
+
       if (BomboConfig.get().lowestBin) {
          ItemStack stack = (ItemStack)(Object)this;
          String skyblockId = null;
