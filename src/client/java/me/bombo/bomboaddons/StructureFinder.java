@@ -377,25 +377,27 @@ public class StructureFinder {
       lastAlertedAccuracy.put(key, accuracy);
 
       Minecraft mc = Minecraft.getInstance();
-      if (mc.player != null) {
-         MutableComponent msg = Component.literal("§8[§3Bombo§8] §6★ Found Structure: §b" + name + " §a(" + accuracy + "% match) §7at §e" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + " ");
-         MutableComponent wpBtn = Component.literal("§a§l[ADD WAYPOINT] ").withStyle(style ->
-            style.withClickEvent(new ClickEvent.RunCommand("/b wp " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + " " + name))
-         );
-         MutableComponent copyBtn = Component.literal("§b§l[COPY]").withStyle(style ->
-            style.withClickEvent(new ClickEvent.RunCommand("/b scan copy"))
-         );
-         msg.append(wpBtn).append(copyBtn);
-         if (mc.gui != null && mc.gui.getChat() != null) {
-            mc.gui.getChat().addClientSystemMessage(msg);
-         } else {
-            mc.player.sendSystemMessage(msg);
-         }
+      mc.execute(() -> {
+         if (mc.player != null) {
+            MutableComponent msg = Component.literal("§8[§3Bombo§8] §6★ Found Structure: §b" + name + " §a(" + accuracy + "% match) §7at §e" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + " ");
+            MutableComponent wpBtn = Component.literal("§a§l[ADD WAYPOINT] ").withStyle(style ->
+               style.withClickEvent(new ClickEvent.RunCommand("/b wp " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + " " + name))
+            );
+            MutableComponent copyBtn = Component.literal("§b§l[COPY]").withStyle(style ->
+               style.withClickEvent(new ClickEvent.RunCommand("/b scan copy"))
+            );
+            msg.append(wpBtn).append(copyBtn);
+            if (mc.gui != null && mc.gui.getChat() != null) {
+               mc.gui.getChat().addClientSystemMessage(msg);
+            } else {
+               mc.player.sendSystemMessage(msg);
+            }
 
-         // Add persistent waypoint on the catwalk floor
-         GardenWaypoints.addWaypoint(new Vec3(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5), "[Structure] " + name + " (" + accuracy + "%)");
-         WaypointManager.addWaypoint(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, "[Structure] " + name + " (" + accuracy + "%)");
-      }
+            // Add persistent waypoint on the structure center
+            GardenWaypoints.addWaypoint(new Vec3(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5), "[Structure] " + name + " (" + accuracy + "%)");
+            WaypointManager.addWaypoint(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, "[Structure] " + name + " (" + accuracy + "%)");
+         }
+      });
    }
 
    public static void render(LevelRenderContext context) {

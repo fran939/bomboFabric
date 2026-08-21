@@ -577,6 +577,9 @@ public class StructureScanner {
                   String json = Files.readString(f.toPath());
                   StructurePattern pat = gson.fromJson(json, StructurePattern.class);
                   if (pat != null && pat.name != null) {
+                     if (pat.name.equalsIgnoreCase("goldendragon1") || f.getName().equalsIgnoreCase("goldendragon1.json") || f.getName().equalsIgnoreCase("corleone 1.json")) {
+                        continue;
+                     }
                      sanitizePattern(pat);
                      loadedPatterns.put(pat.name.toLowerCase(), pat);
                   }
