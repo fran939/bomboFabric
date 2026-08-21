@@ -36,11 +36,18 @@ public class EntityVariantHelper {
          try {
             ItemStack stack = null;
             if (entity instanceof Display.ItemDisplay id) {
-               stack = id.getItemItemStack();
-            } else {
-               Method m = entity.getClass().getMethod("getItemItemStack");
-               Object res = m.invoke(entity);
-               if (res instanceof ItemStack is) stack = is;
+               stack = id.getItemStack();
+            }
+            if (stack == null || stack.isEmpty()) {
+               for (Method m : entity.getClass().getMethods()) {
+                  if (m.getParameterCount() == 0 && m.getReturnType() == ItemStack.class) {
+                     Object res = m.invoke(entity);
+                     if (res instanceof ItemStack is && !is.isEmpty()) {
+                        stack = is;
+                        break;
+                     }
+                  }
+               }
             }
             if (stack != null && !stack.isEmpty()) {
                String itemPath = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
@@ -48,8 +55,14 @@ public class EntityVariantHelper {
                String sbId = SkyblockUtils.getSkyblockId(stack);
                String transform = "";
                try {
-                  if (entity instanceof Display.ItemDisplay id) {
-                     transform = id.getItemTransform().getSerializedName();
+                  for (Method m : entity.getClass().getMethods()) {
+                     if (m.getParameterCount() == 0 && m.getName().toLowerCase(Locale.ROOT).contains("transform")) {
+                        Object res = m.invoke(entity);
+                        if (res != null) {
+                           transform = res.toString().toLowerCase(Locale.ROOT);
+                           break;
+                        }
+                     }
                   }
                } catch (Throwable ignored) {}
                

@@ -407,16 +407,15 @@ public class HighlightESP {
       return computed;
    }
 
-   public static boolean isNametagForHighlightedEntity(Entity self) {
+   public static boolean isNametagForLivingEntity(Entity self) {
       if (self == null || self.level() == null || !(self instanceof ArmorStand as)) return false;
       if (!as.isInvisible() && !as.isMarker()) return false;
-      AABB box = self.getBoundingBox().inflate(1.2, 3.0, 1.2);
+      if (!as.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).isEmpty()) return false;
+      AABB box = self.getBoundingBox().inflate(1.5, 4.0, 1.5);
       for (Entity other : self.level().getEntities(self, box)) {
-         if (other != self && !(other instanceof ArmorStand)) {
-            EntityHighlightInfo otherInfo = getHighlightInfo(other);
-            if (otherInfo != null && otherInfo.isHighlighted) {
-               return true;
-            }
+         if (other != self && other instanceof net.minecraft.world.entity.LivingEntity && !(other instanceof ArmorStand)) {
+            return true;
+         }
       }
       return false;
    }
@@ -439,7 +438,7 @@ public class HighlightESP {
          if (self == mc.player || ignoredEntities.contains(self.getId())) {
             return new EntityHighlightInfo(now, false, null, false, 0xFFFFFF, false);
          }
-         if (isNametagForHighlightedEntity(self)) {
+         if (isNametagForLivingEntity(self)) {
             return new EntityHighlightInfo(now, false, null, false, 0xFFFFFF, false);
          }
          BomboConfig.Settings s = BomboConfig.get();
