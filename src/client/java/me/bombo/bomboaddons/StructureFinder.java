@@ -265,9 +265,10 @@ public class StructureFinder {
             }
          }
 
-         int accuracy = loadedTotal > 0 ? (int) Math.round(((double) matched / (double) loadedTotal) * 100.0) : 0;
-         int minRequiredMatches = Math.min(pat.blocks.size(), Math.max(30, (int)(pat.blocks.size() * 0.35)));
-         int minLoadedThreshold = Math.min(pat.blocks.size(), Math.max(40, (int)(pat.blocks.size() * 0.40)));
+         // Accuracy is strictly measured against the full structure template
+         int accuracy = total > 0 ? (int) Math.round(((double) matched / (double) total) * 100.0) : 0;
+         int minRequiredMatches = (int) Math.round(total * 0.65);
+         int minLoadedThreshold = (int) Math.round(total * 0.70);
          if (loadedTotal >= minLoadedThreshold && matched >= minRequiredMatches && accuracy >= 65 && accuracy > highestAccuracy) {
             highestAccuracy = accuracy;
             int minRotX = Math.min(getRotatedX(0, 0, rot), getRotatedX(pat.sizeX - 1, pat.sizeZ - 1, rot));
@@ -290,10 +291,9 @@ public class StructureFinder {
                int wy = worldOriginY + b.relY;
                int wz = worldOriginZ + getRotatedZ(b.relX, b.relZ, rot);
                BlockState st = level.getBlockState(mut.set(wx, wy, wz));
-               if (matchesScannedId(st, b.blockId) && !st.isAir()) {
-                  String actualId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(st.getBlock()).toString().replace("minecraft:", "");
-                  actualBlocks.add(new StructureScanner.ScannedBlock(b.relX, b.relY, b.relZ, actualId, true));
-               }
+               boolean isMatch = matchesScannedId(st, b.blockId);
+               String actualId = !st.isAir() ? net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(st.getBlock()).toString().replace("minecraft:", "") : b.blockId;
+               actualBlocks.add(new StructureScanner.ScannedBlock(b.relX, b.relY, b.relZ, actualId, isMatch));
             }
             String displayName = getDisplayName(pat.name);
             bestMatch = new FoundStructure(displayName, center, box, accuracy, pat, worldOriginX, worldOriginY, worldOriginZ, rot, actualBlocks);

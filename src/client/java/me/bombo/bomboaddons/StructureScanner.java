@@ -384,54 +384,38 @@ public class StructureScanner {
 
       int matchedBlocksCount = 0;
 
-      // Copy actual world blocks within the structure's world bounding box so the user can inspect in Singleplayer why it matched!
-      if (fs.bounds != null) {
-         int minX = (int) Math.floor(fs.bounds.minX);
-         int maxX = (int) Math.ceil(fs.bounds.maxX);
-         int minY = (int) Math.max(mc.level.getMinY(), Math.floor(fs.bounds.minY));
-         int maxY = (int) Math.min(mc.level.getMaxY(), Math.ceil(fs.bounds.maxY));
-         int minZ = (int) Math.floor(fs.bounds.minZ);
-         int maxZ = (int) Math.ceil(fs.bounds.maxZ);
-
-         int sizeX = Math.min(100, Math.max(1, maxX - minX + 1));
-         int sizeY = Math.min(60, Math.max(1, maxY - minY + 1));
-         int sizeZ = Math.min(100, Math.max(1, maxZ - minZ + 1));
+      if (fs.matchedPattern != null) {
+         copy.sizeX = fs.matchedPattern.sizeX;
+         copy.sizeY = fs.matchedPattern.sizeY;
+         copy.sizeZ = fs.matchedPattern.sizeZ;
+         copy.anchorBlockId = fs.matchedPattern.anchorBlockId;
+         copy.anchorRelX = fs.matchedPattern.anchorRelX;
+         copy.anchorRelY = fs.matchedPattern.anchorRelY;
+         copy.anchorRelZ = fs.matchedPattern.anchorRelZ;
 
          BlockPos.MutableBlockPos mpos = new BlockPos.MutableBlockPos();
-         for (int x = 0; x < sizeX; x++) {
-            for (int y = 0; y < sizeY; y++) {
-               for (int z = 0; z < sizeZ; z++) {
-                  int wx = minX + x;
-                  int wy = minY + y;
-                  int wz = minZ + z;
-                  BlockState st = mc.level.getBlockState(mpos.set(wx, wy, wz));
-                  if (!st.isAir()) {
-                     String id = BuiltInRegistries.BLOCK.getKey(st.getBlock()).toString().replace("minecraft:", "");
-                     boolean isMatch = !isNoiseBlock(id) && isMatchingSignatureBlock(fs, st, id);
-                     if (isMatch) matchedBlocksCount++;
-                     copy.blocks.add(new ScannedBlock(x, y, z, id, isMatch));
-                  }
-               }
-            }
+         for (ScannedBlock sb : fs.matchedPattern.blocks) {
+            int wx = fs.worldOriginX + StructureFinder.getRotatedX(sb.relX, sb.relZ, fs.rotation);
+            int wy = fs.worldOriginY + sb.relY;
+            int wz = fs.worldOriginZ + StructureFinder.getRotatedZ(sb.relX, sb.relZ, fs.rotation);
+            BlockState st = mc.level.getBlockState(mpos.set(wx, wy, wz));
+            String actualId = !st.isAir() ? BuiltInRegistries.BLOCK.getKey(st.getBlock()).toString().replace("minecraft:", "") : sb.blockId;
+            boolean isMatch = !st.isAir() && isMatchingSignatureBlock(fs, st, actualId);
+            if (isMatch) matchedBlocksCount++;
+            copy.blocks.add(new ScannedBlock(sb.relX, sb.relY, sb.relZ, actualId, isMatch));
          }
-         copy.sizeX = sizeX;
-         copy.sizeY = sizeY;
-         copy.sizeZ = sizeZ;
       } else if (fs.actualWorldBlocks != null && !fs.actualWorldBlocks.isEmpty()) {
          for (ScannedBlock sb : fs.actualWorldBlocks) {
             copy.blocks.add(new ScannedBlock(sb.relX, sb.relY, sb.relZ, sb.blockId, sb.matched));
             if (sb.matched) matchedBlocksCount++;
          }
-         copy.sizeX = fs.matchedPattern != null ? fs.matchedPattern.sizeX : 25;
-         copy.sizeY = fs.matchedPattern != null ? fs.matchedPattern.sizeY : 10;
-         copy.sizeZ = fs.matchedPattern != null ? fs.matchedPattern.sizeZ : 25;
+         copy.sizeX = 25;
+         copy.sizeY = 10;
+         copy.sizeZ = 25;
       }
 
       if (!copy.blocks.isEmpty()) {
          copy.anchorBlockId = copy.blocks.get(0).blockId;
-         copy.anchorRelX = copy.blocks.get(0).relX;
-         copy.anchorRelY = copy.blocks.get(0).relY;
-         copy.anchorRelZ = copy.blocks.get(0).relZ;
       }
 
       lastCopiedPattern = copy;
