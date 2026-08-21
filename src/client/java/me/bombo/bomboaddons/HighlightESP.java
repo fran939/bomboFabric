@@ -689,6 +689,47 @@ public class HighlightESP {
              String mainGene = panda.getMainGene().getSerializedName().toLowerCase(Locale.ROOT);
              return mainGene.contains(variantReq);
           }
+          if (entity instanceof net.minecraft.world.entity.animal.axolotl.Axolotl axolotl) {
+             return axolotl.getVariant().getName().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.Cat cat) {
+             try {
+                var vKey = cat.getVariant().unwrapKey();
+                if (vKey.isPresent() && vKey.get().identifier().getPath().toLowerCase(Locale.ROOT).contains(variantReq)) return true;
+             } catch (Throwable ignored) {}
+             return cat.getCollarColor().getName().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.Wolf wolf) {
+             try {
+                var vKey = wolf.getVariant().unwrapKey();
+                if (vKey.isPresent() && vKey.get().identifier().getPath().toLowerCase(Locale.ROOT).contains(variantReq)) return true;
+             } catch (Throwable ignored) {}
+             return wolf.getCollarColor().getName().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.horse.Horse horse) {
+             return horse.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq) || horse.getMarkings().name().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.horse.Llama llama) {
+             return llama.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.Parrot parrot) {
+             return parrot.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.Rabbit rabbit) {
+             return rabbit.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.Sheep sheep) {
+             return sheep.getColor().getName().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.Fox fox) {
+             return fox.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.MushroomCow cow) {
+             return cow.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
+          }
+          if (entity instanceof net.minecraft.world.entity.animal.goat.Goat goat) {
+             if (variantReq.contains("scream")) return goat.isScreamingGoat();
+          }
       }
 
       if (typeStr.contains(cleanTarget)) return true;

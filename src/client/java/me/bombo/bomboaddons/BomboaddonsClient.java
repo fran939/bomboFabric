@@ -4546,12 +4546,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
          }
 
-         if (s.replaceGrayCarpetDwarven) {
-            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: DwarvenCarpetReplacer")) {
-               DwarvenCarpetReplacer.onTick();
-            } catch (Throwable ignored) {
-            }
-         }
+
 
          if (s.anvilAutoCombineEnabled && !s.hideCheats && (client.screen instanceof net.minecraft.client.gui.screens.inventory.AnvilScreen || (client.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> acs && (acs.getTitle().getString().toLowerCase().contains("anvil") || acs.getTitle().getString().toLowerCase().contains("combine"))))) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: AutoCombine")) {
@@ -5572,6 +5567,146 @@ public class BomboaddonsClient implements ClientModInitializer {
          ClickEvent addPandaHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add panda:" + mainGene.toLowerCase(Locale.ROOT) + " GOLD");
          if (addPandaHl != null) {
             src.sendFeedback(Component.literal(" §a[+ Highlight " + mainGene + " Panda]").withStyle(s -> s.withClickEvent(addPandaHl)));
+         }
+      }
+
+      // Specialized inspection for Axolotl
+      if (target instanceof net.minecraft.world.entity.animal.axolotl.Axolotl axolotl) {
+         String varName = axolotl.getVariant().getName().toUpperCase(Locale.ROOT);
+         src.sendFeedback(Component.literal(" §7Axolotl Variant: §e" + varName));
+         ClickEvent addAxoHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add axolotl:" + varName.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addAxoHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + varName + " Axolotl]").withStyle(s -> s.withClickEvent(addAxoHl)));
+         }
+      }
+
+      // Specialized inspection for Cat
+      if (target instanceof net.minecraft.world.entity.animal.Cat cat) {
+         String catVar = "UNKNOWN";
+         try {
+            var vKey = cat.getVariant().unwrapKey();
+            if (vKey.isPresent()) catVar = vKey.get().identifier().getPath().toUpperCase(Locale.ROOT);
+         } catch (Throwable ignored) {}
+         String collar = cat.isTame() ? " §7| Collar: §d" + cat.getCollarColor().getName() : "";
+         src.sendFeedback(Component.literal(" §7Cat Variant: §e" + catVar + collar));
+         ClickEvent addCatHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add cat:" + catVar.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addCatHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + catVar + " Cat]").withStyle(s -> s.withClickEvent(addCatHl)));
+         }
+      }
+
+      // Specialized inspection for Wolf
+      if (target instanceof net.minecraft.world.entity.animal.Wolf wolf) {
+         String wolfVar = "UNKNOWN";
+         try {
+            var vKey = wolf.getVariant().unwrapKey();
+            if (vKey.isPresent()) wolfVar = vKey.get().identifier().getPath().toUpperCase(Locale.ROOT);
+         } catch (Throwable ignored) {}
+         String collar = wolf.isTame() ? " §7| Collar: §d" + wolf.getCollarColor().getName() : "";
+         src.sendFeedback(Component.literal(" §7Wolf Variant: §e" + wolfVar + collar));
+         ClickEvent addWolfHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add wolf:" + wolfVar.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addWolfHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + wolfVar + " Wolf]").withStyle(s -> s.withClickEvent(addWolfHl)));
+         }
+      }
+
+      // Specialized inspection for Horse
+      if (target instanceof net.minecraft.world.entity.animal.horse.Horse horse) {
+         String color = horse.getVariant().name();
+         String markings = horse.getMarkings().name();
+         src.sendFeedback(Component.literal(" §7Horse: Color: §e" + color + " §7| Markings: §f" + markings));
+         ClickEvent addHorseHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add horse:" + color.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addHorseHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + color + " Horse]").withStyle(s -> s.withClickEvent(addHorseHl)));
+         }
+      }
+
+      // Specialized inspection for Llama
+      if (target instanceof net.minecraft.world.entity.animal.horse.Llama llama) {
+         String llamaVar = llama.getVariant().name();
+         src.sendFeedback(Component.literal(" §7Llama Variant: §e" + llamaVar));
+         ClickEvent addLlamaHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add llama:" + llamaVar.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addLlamaHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + llamaVar + " Llama]").withStyle(s -> s.withClickEvent(addLlamaHl)));
+         }
+      }
+
+      // Specialized inspection for Parrot
+      if (target instanceof net.minecraft.world.entity.animal.Parrot parrot) {
+         String parrotVar = parrot.getVariant().name();
+         src.sendFeedback(Component.literal(" §7Parrot Variant: §e" + parrotVar));
+         ClickEvent addParrotHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add parrot:" + parrotVar.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addParrotHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + parrotVar + " Parrot]").withStyle(s -> s.withClickEvent(addParrotHl)));
+         }
+      }
+
+      // Specialized inspection for Rabbit
+      if (target instanceof net.minecraft.world.entity.animal.Rabbit rabbit) {
+         String rabbitVar = rabbit.getVariant().name();
+         src.sendFeedback(Component.literal(" §7Rabbit Variant: §e" + rabbitVar));
+         ClickEvent addRabbitHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add rabbit:" + rabbitVar.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addRabbitHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + rabbitVar + " Rabbit]").withStyle(s -> s.withClickEvent(addRabbitHl)));
+         }
+      }
+
+      // Specialized inspection for Sheep
+      if (target instanceof net.minecraft.world.entity.animal.Sheep sheep) {
+         String sheepCol = sheep.getColor().getName().toUpperCase(Locale.ROOT);
+         src.sendFeedback(Component.literal(" §7Sheep Color: §e" + sheepCol));
+         ClickEvent addSheepHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add sheep:" + sheepCol.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addSheepHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + sheepCol + " Sheep]").withStyle(s -> s.withClickEvent(addSheepHl)));
+         }
+      }
+
+      // Specialized inspection for Fox
+      if (target instanceof net.minecraft.world.entity.animal.Fox fox) {
+         String foxVar = fox.getVariant().name();
+         src.sendFeedback(Component.literal(" §7Fox Variant: §e" + foxVar));
+         ClickEvent addFoxHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add fox:" + foxVar.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addFoxHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + foxVar + " Fox]").withStyle(s -> s.withClickEvent(addFoxHl)));
+         }
+      }
+
+      // Specialized inspection for Mooshroom
+      if (target instanceof net.minecraft.world.entity.animal.MushroomCow cow) {
+         String cowVar = cow.getVariant().name();
+         src.sendFeedback(Component.literal(" §7Mooshroom Variant: §e" + cowVar));
+         ClickEvent addCowHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add mooshroom:" + cowVar.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addCowHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + cowVar + " Mooshroom]").withStyle(s -> s.withClickEvent(addCowHl)));
+         }
+      }
+
+      // Specialized inspection for Villager
+      if (target instanceof net.minecraft.world.entity.npc.Villager villager) {
+         var vData = villager.getVillagerData();
+         String vType = vData.getType().toString();
+         String vProf = vData.getProfession().name();
+         int vLevel = vData.getLevel();
+         src.sendFeedback(Component.literal(" §7Villager: Type: §e" + vType + " §7| Profession: §a" + vProf + " §7(Level §b" + vLevel + "§7)"));
+      }
+
+      // Specialized inspection for Zombie Villager
+      if (target instanceof net.minecraft.world.entity.monster.ZombieVillager zv) {
+         var vData = zv.getVillagerData();
+         String vType = vData.getType().toString();
+         String vProf = vData.getProfession().name();
+         src.sendFeedback(Component.literal(" §7Zombie Villager: Type: §e" + vType + " §7| Profession: §a" + vProf));
+      }
+
+      // Specialized inspection for Goat
+      if (target instanceof net.minecraft.world.entity.animal.goat.Goat goat) {
+         String goatType = goat.isScreamingGoat() ? "SCREAMING" : "NORMAL";
+         src.sendFeedback(Component.literal(" §7Goat Type: §e" + goatType));
+         if (goat.isScreamingGoat()) {
+            ClickEvent addGoatHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add goat:screaming GOLD");
+            if (addGoatHl != null) {
+               src.sendFeedback(Component.literal(" §a[+ Highlight Screaming Goat]").withStyle(s -> s.withClickEvent(addGoatHl)));
+            }
          }
       }
 

@@ -28,7 +28,8 @@ public class BlockModelShaperMixin {
    private void onGetBlockModel(BlockState state, CallbackInfoReturnable<BlockModel> cir) {
       BomboConfig.Settings s = BomboConfig.get();
       if (s != null && s.replaceGrayCarpetDwarven && state != null && (state.is(Blocks.GRAY_CARPET) || state.is(Blocks.LIGHT_GRAY_CARPET))) {
-         String area = me.bombo.bomboaddons.BomboaddonsClient.currentArea;
+         String area = me.bombo.bomboaddons.SkyblockUtils.getLocation();
+         if (area == null) area = me.bombo.bomboaddons.BomboaddonsClient.currentArea;
          if (area != null && area.toLowerCase().contains("dwarven")) {
             BlockModel redCarpetModel = (BlockModel)this.blockModelByStateCache.get(Blocks.RED_CARPET.defaultBlockState());
             if (redCarpetModel != null) {

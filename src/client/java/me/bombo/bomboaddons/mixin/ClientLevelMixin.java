@@ -17,9 +17,7 @@ public class ClientLevelMixin {
       argsOnly = true
    )
    private BlockState modifyBlockState(BlockState state, BlockPos pos) {
-      BlockState diorite = FuckDiorite.checkAndReplace(pos, state);
-      if (diorite != state) return diorite;
-      return me.bombo.bomboaddons.DwarvenCarpetReplacer.checkAndReplace(state);
+      return FuckDiorite.checkAndReplace(pos, state);
    }
 
    @ModifyVariable(
