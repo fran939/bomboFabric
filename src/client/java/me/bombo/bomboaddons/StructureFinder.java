@@ -154,18 +154,25 @@ public class StructureFinder {
          }
       }
       if (checkGoldenDragon) {
-         for (String name : new String[]{"goldendragon1", "gdrag2", "gdrag"}) {
+         for (String name : new String[]{"gdrag1", "gdrag2", "gdrag3", "goldendragon1"}) {
             StructureScanner.StructurePattern gdrag = StructureScanner.loadedPatterns.get(name);
             if (gdrag != null && !activePatterns.contains(gdrag)) activePatterns.add(gdrag);
+         }
+         for (Map.Entry<String, StructureScanner.StructurePattern> entry : StructureScanner.loadedPatterns.entrySet()) {
+            String k = entry.getKey().toLowerCase();
+            if ((k.startsWith("gdrag") || k.contains("golden dragon") || k.contains("goldendragon")) && !activePatterns.contains(entry.getValue())) {
+               activePatterns.add(entry.getValue());
+            }
          }
       }
 
       for (Map.Entry<String, StructureScanner.StructurePattern> entry : StructureScanner.loadedPatterns.entrySet()) {
-         String key = entry.getKey();
+         String key = entry.getKey().toLowerCase();
          if (!key.startsWith("corleone") &&
              !key.startsWith("goldendragon") &&
              !key.startsWith("gdrag") &&
-             !key.equalsIgnoreCase("golden dragon") && !key.equalsIgnoreCase("bugged") &&
+             !key.contains("golden dragon") &&
+             !key.equalsIgnoreCase("bugged") && !key.equalsIgnoreCase("copy") &&
              !activePatterns.contains(entry.getValue())) {
             activePatterns.add(entry.getValue());
          }
