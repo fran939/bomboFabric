@@ -537,6 +537,7 @@ public class HighlightESP {
                 }
 
                 // STRICT ATTRIBUTE FILTERS:
+                if (info.itemDisplayId != null && !info.itemDisplayId.trim().isEmpty() && !matchesItemDisplay(self, info.itemDisplayId)) continue;
                 if (info.mobSize != null && !info.mobSize.trim().isEmpty() && !matchesMobSize(self, info.mobSize)) continue;
                 if (info.armorPiece != null && !info.armorPiece.trim().isEmpty() && !matchesArmorPiece(self, info.armorPiece)) continue;
                 if (info.armorType != null && !info.armorType.trim().isEmpty() && !matchesArmor(self, info.armorType)) continue;
@@ -544,6 +545,9 @@ public class HighlightESP {
                 if (info.heldItem != null && !info.heldItem.trim().isEmpty() && !matchesHeldItem(self, info.heldItem)) continue;
 
                 boolean matched = false;
+                if (info.itemDisplayId != null && !info.itemDisplayId.trim().isEmpty()) {
+                   matched = true;
+                }
                 boolean isDirectHeadRule = (info.headHashes != null && !info.headHashes.isEmpty()) || (key.length() == 64 && key.matches("^[0-9a-fA-F]{64}$"));
                 String hashToUse = isDirectHeadRule ? directSkullHash : skullHash;
 
@@ -824,6 +828,22 @@ public class HighlightESP {
       if (!(entity instanceof net.minecraft.world.entity.LivingEntity)) return false;
       ItemStack main = ((net.minecraft.world.entity.LivingEntity) entity).getMainHandItem();
       return !main.isEmpty() && main.getItem().toString().toLowerCase(Locale.ROOT).contains(heldItem.toLowerCase(Locale.ROOT));
+   }
+
+   public static boolean matchesItemDisplay(Entity entity, String targetId) {
+      if (entity == null || targetId == null || targetId.trim().isEmpty()) return true;
+      String simpleName = entity.getClass().getSimpleName();
+      if (!simpleName.equalsIgnoreCase("ItemDisplay") && !simpleName.toLowerCase(Locale.ROOT).contains("itemdisplay")) {
+         return false;
+      }
+      EntityVariantHelper.VariantResult vr = EntityVariantHelper.inspect(entity);
+      if (vr != null) {
+         String target = targetId.toLowerCase(Locale.ROOT).trim();
+         if (target.equals("*") || target.equals("any") || target.equals("item_display") || target.equals("display")) return true;
+         if (vr.matchKeyword != null && vr.matchKeyword.contains(target)) return true;
+         if (vr.lineText != null && vr.lineText.toLowerCase(Locale.ROOT).contains(target)) return true;
+      }
+      return false;
    }
 
    public static boolean isEntityHighlighted(Entity self) {

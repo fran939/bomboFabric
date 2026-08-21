@@ -921,6 +921,7 @@ public class BomboConfig {
       public String playerName = "";
       public String ridingType = "";
       public String heldItem = "";
+      public String itemDisplayId = "";
       public String requiredSubarea = "";
       public boolean isAdvanced = false;
       public boolean showTitleOnSpawn = false;
@@ -1007,6 +1008,7 @@ public class BomboConfig {
             out.name("playerName").value(value.playerName != null ? value.playerName : "");
             out.name("ridingType").value(value.ridingType != null ? value.ridingType : "");
             out.name("heldItem").value(value.heldItem != null ? value.heldItem : "");
+            out.name("itemDisplayId").value(value.itemDisplayId != null ? value.itemDisplayId : "");
             out.name("requiredSubarea").value(value.requiredSubarea != null ? value.requiredSubarea : "");
             out.name("isAdvanced").value(value.isAdvanced);
             out.name("mobSize").value(value.mobSize != null ? value.mobSize : "");
@@ -1069,6 +1071,8 @@ public class BomboConfig {
                   info.ridingType = in.nextString();
                } else if (name.equals("heldItem")) {
                   info.heldItem = in.nextString();
+               } else if (name.equals("itemDisplayId")) {
+                  info.itemDisplayId = in.nextString();
                } else if (name.equals("requiredSubarea")) {
                   info.requiredSubarea = in.nextString();
                } else if (name.equals("isAdvanced")) {

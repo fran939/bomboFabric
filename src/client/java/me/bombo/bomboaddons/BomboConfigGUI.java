@@ -159,6 +159,7 @@ extends Screen {
     private static String highIslandInput = "";
     private static String editingHighMob = null;
     private static String advEntityTypeInput = "";
+    private static String advItemDisplayInput = "";
     private static String advHeadHashInput = "";
     private static String advMobSizeInput = "";
     private static String advArmorPieceInput = "";
@@ -187,6 +188,7 @@ extends Screen {
                     hi.playerName = e.getValue().playerName;
                     hi.ridingType = e.getValue().ridingType;
                     hi.heldItem = e.getValue().heldItem;
+                    hi.itemDisplayId = e.getValue().itemDisplayId;
                     hi.requiredSubarea = e.getValue().requiredSubarea;
                     hi.isAdvanced = e.getValue().isAdvanced;
                     hi.mobSize = e.getValue().mobSize;
@@ -220,6 +222,7 @@ extends Screen {
                         hi.playerName = e.getValue().playerName;
                         hi.ridingType = e.getValue().ridingType;
                         hi.heldItem = e.getValue().heldItem;
+                        hi.itemDisplayId = e.getValue().itemDisplayId;
                         hi.requiredSubarea = e.getValue().requiredSubarea;
                         hi.isAdvanced = e.getValue().isAdvanced;
                         hi.mobSize = e.getValue().mobSize;
@@ -246,6 +249,7 @@ extends Screen {
                     hi.playerName = e.getValue().playerName;
                     hi.ridingType = e.getValue().ridingType;
                     hi.heldItem = e.getValue().heldItem;
+                    hi.itemDisplayId = e.getValue().itemDisplayId;
                     hi.requiredSubarea = e.getValue().requiredSubarea;
                     hi.isAdvanced = e.getValue().isAdvanced;
                     hi.mobSize = e.getValue().mobSize;
@@ -279,6 +283,7 @@ extends Screen {
                         hi.playerName = e.getValue().playerName;
                         hi.ridingType = e.getValue().ridingType;
                         hi.heldItem = e.getValue().heldItem;
+                        hi.itemDisplayId = e.getValue().itemDisplayId;
                         hi.requiredSubarea = e.getValue().requiredSubarea;
                         hi.isAdvanced = e.getValue().isAdvanced;
                         hi.mobSize = e.getValue().mobSize;
@@ -1119,6 +1124,7 @@ extends Screen {
 
                     if (s.highlightAdvancedMode) {
                         curY = this.addTextBox("Nametag / Regex", highMobInput, v -> highMobInput = v, contentX, contentWidth, curY);
+                        curY = this.addTextBox("Item Display ID / Name", advItemDisplayInput, v -> advItemDisplayInput = v, contentX, contentWidth, curY);
                         curY = this.addTextBox("Entity Type (e.g. zombie, tropical_fish:blue)", advEntityTypeInput, v -> advEntityTypeInput = v, contentX, contentWidth, curY);
                         curY = this.addTextBox("Head Texture Hash", advHeadHashInput, v -> advHeadHashInput = v, contentX, contentWidth, curY);
                         curY = this.addTextBox("Mob Size (e.g. 24, 10+, big, small)", advMobSizeInput, v -> advMobSizeInput = v, contentX, contentWidth, curY);
@@ -1134,7 +1140,7 @@ extends Screen {
                         int finalCurY = curY += 6;
                         String addBtnText = editingHighMob != null ? "§e✔ Save Advanced Highlight" : "§a+ Add Advanced Highlight";
                         this.addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
-                            String key = !highMobInput.trim().isEmpty() ? highMobInput.trim() : (!advEntityTypeInput.trim().isEmpty() ? advEntityTypeInput.trim() : advHeadHashInput.trim());
+                            String key = !highMobInput.trim().isEmpty() ? highMobInput.trim() : (!advItemDisplayInput.trim().isEmpty() ? "display:" + advItemDisplayInput.trim() : (!advEntityTypeInput.trim().isEmpty() ? advEntityTypeInput.trim() : advHeadHashInput.trim()));
                             if (!key.isEmpty()) {
                                 pushHighlightHistory();
                                 if (editingHighMob != null) {
@@ -1143,7 +1149,8 @@ extends Screen {
                                 boolean showInvis = "ALL".equals(advVisibilityInput) || "ONLY_INVISIBLE".equals(advVisibilityInput);
                                 BomboConfig.HighlightInfo hi = new BomboConfig.HighlightInfo(highColorInput.toUpperCase(Locale.ROOT), showInvis, true, highTracerInput, highIslandInput.trim());
                                 hi.isAdvanced = true;
-                                hi.targetType = "ADVANCED";
+                                hi.targetType = !advItemDisplayInput.trim().isEmpty() ? "ITEM_DISPLAY" : "ADVANCED";
+                                hi.itemDisplayId = advItemDisplayInput.trim();
                                 hi.entityType = advEntityTypeInput.trim();
                                 if (!advHeadHashInput.trim().isEmpty()) {
                                     hi.headHashes = new ArrayList<>(List.of(advHeadHashInput.trim().toLowerCase(Locale.ROOT)));
@@ -1156,6 +1163,7 @@ extends Screen {
                                 s.highlights.put(key.toLowerCase(Locale.ROOT), hi);
                                 BomboConfig.save();
                                 highMobInput = "";
+                                advItemDisplayInput = "";
                                 advEntityTypeInput = "";
                                 advHeadHashInput = "";
                                 advMobSizeInput = "";
@@ -1172,6 +1180,7 @@ extends Screen {
                         if (editingHighMob != null) {
                             this.addRenderableWidget(Button.builder(Component.literal("§cCancel Edit"), btn -> {
                                 highMobInput = "";
+                                advItemDisplayInput = "";
                                 advEntityTypeInput = "";
                                 advHeadHashInput = "";
                                 advMobSizeInput = "";
@@ -1318,8 +1327,9 @@ extends Screen {
                                 highShowInvis = info.showInvisible;
                                 highIslandInput = info.requiredIsland != null ? info.requiredIsland : "";
                                 editingHighMob = mobName;
-                                if (info.isAdvanced || (info.mobSize != null && !info.mobSize.isEmpty()) || (info.entityType != null && !info.entityType.isEmpty()) || (info.headHashes != null && !info.headHashes.isEmpty())) {
+                                if (info.isAdvanced || (info.itemDisplayId != null && !info.itemDisplayId.isEmpty()) || (info.mobSize != null && !info.mobSize.isEmpty()) || (info.entityType != null && !info.entityType.isEmpty()) || (info.headHashes != null && !info.headHashes.isEmpty())) {
                                     s.highlightAdvancedMode = true;
+                                    advItemDisplayInput = info.itemDisplayId != null ? info.itemDisplayId : "";
                                     advEntityTypeInput = info.entityType != null ? info.entityType : "";
                                     advHeadHashInput = info.headHashes != null && !info.headHashes.isEmpty() ? info.headHashes.get(0) : "";
                                     advMobSizeInput = info.mobSize != null ? info.mobSize : "";
@@ -4023,6 +4033,8 @@ extends Screen {
                     curY += 26; // Mode switch button
                     if (s.highlightAdvancedMode) {
                         g.text(this.font, "§fNametag / Regex:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fItem Display ID / Name:", contentX, curY + 6, -1);
                         curY += 24;
                         g.text(this.font, "§fEntity Type:", contentX, curY + 6, -1);
                         curY += 24;
