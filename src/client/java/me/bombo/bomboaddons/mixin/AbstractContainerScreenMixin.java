@@ -73,7 +73,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
    private void onInitTail(CallbackInfo ci) {
       CroesusHelper.onContainerTick((AbstractContainerScreen)(Object)this);
       ItemListOverlay.updateLayout(this.leftPos, this.imageWidth, this.topPos, this.width, this.height);
-      if (ItemListOverlay.sidebarW >= 120) {
+      if (BomboConfig.get().itemListEnabled && ItemListOverlay.sidebarW >= 120) {
          int searchX = ItemListOverlay.sidebarX + 5;
          int searchY = ItemListOverlay.sidebarY + ItemListOverlay.sidebarH - 52;
          int searchW = ItemListOverlay.sidebarW - 10;
@@ -84,6 +84,9 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             searchY = s.itemListSearchY == -1 ? this.height / 2 + 20 : s.itemListSearchY;
          }
 
+         if (ItemListOverlay.searchBox != null) {
+            this.removeWidget(ItemListOverlay.searchBox);
+         }
          EditBox box = new EditBox(Minecraft.getInstance().font, searchX, searchY, searchW, 16, Component.literal("Search..."));
          box.setValue(ItemListOverlay.query);
          box.setResponder((val) -> ItemListOverlay.setQuery(val));
@@ -257,6 +260,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          cir.setReturnValue(true);
       } else {
          if (this.hoveredSlot != null) {
+            if (Minecraft.getInstance().hasControlDown() && me.bombo.bomboaddons.features.SupercraftHelper.handleCtrlClick((AbstractContainerScreen)(Object)this, this.hoveredSlot)) {
+               cir.setReturnValue(true);
+               return;
+            }
             ItemStack override = CustomSlotManager.getOverride(this.hoveredSlot);
             if (override != null) {
                if (Minecraft.getInstance().hasControlDown()) {
@@ -291,6 +298,28 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       cancellable = true
    )
    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+      int focusKey = ClickLogic.getKeyCode(BomboConfig.get().itemListFocusKey);
+      if (focusKey != -1 && event.key() == focusKey) {
+         if (ItemListOverlay.searchBox != null) {
+            boolean focused = !ItemListOverlay.searchBox.isFocused();
+            ItemListOverlay.searchBox.setFocused(focused);
+            if (focused) {
+               ((AbstractContainerScreen<?>)(Object)this).setFocused(ItemListOverlay.searchBox);
+               ItemListOverlay.isHiddenState = false;
+               ItemListOverlay.searchBox.setVisible(true);
+            }
+            cir.setReturnValue(true);
+            return;
+         }
+      }
+
+      if (event.key() == 258 && focusKey != 258) {
+         if (ItemListOverlay.searchBox != null && !ItemListOverlay.searchBox.isFocused()) {
+            cir.setReturnValue(true);
+            return;
+         }
+      }
+
       if (BomboConfig.get().preventSlotSwapOnGuiKeybind) {
          if (CustomBindsProcessor.checkGuiKeybinds(event.key())) {
             if (BomboConfig.get().debugKeys) {
@@ -355,7 +384,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       at = {@At("TAIL")}
    )
    private void onExtractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-      if (!(((Object)this) instanceof EffectsInInventory)) {
+      if (!(((Object)this) instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen)) {
          ItemListOverlay.render(graphics, Minecraft.getInstance().font, mouseX, mouseY);
       }
 

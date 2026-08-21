@@ -1,0 +1,748 @@
+{
+  "Private Island": [
+    {
+      "name": "Bat",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "bat"
+    },
+    {
+      "name": "Creeper",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "creeper"
+    },
+    {
+      "name": "Enderman",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "enderman"
+    },
+    {
+      "name": "Skeleton",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "skeleton"
+    },
+    {
+      "name": "Slime",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "slime"
+    },
+    {
+      "name": "Spider",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Witch",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "witch"
+    },
+    {
+      "name": "Zombie",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "zombie"
+    }
+  ],
+  "Hub": [
+    {
+      "name": "Crypt Ghoul",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "zombie",
+      "armor": "chainmail_no_helmet"
+    },
+    {
+      "name": "Golden Ghoul",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "zombie",
+      "armor": "gold_no_helmet"
+    },
+    {
+      "name": "Graveyard Zombie",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "zombie",
+      "armor": "no_armor"
+    },
+    {
+      "name": "Old Wolf",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "wolf"
+    },
+    {
+      "name": "Shiny Pig",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "pig"
+    },
+    {
+      "name": "Wolf",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "wolf"
+    },
+    {
+      "name": "Zombie Villager",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "zombie_villager"
+    }
+  ],
+  "The Farming Islands": [
+    {
+      "name": "Chicken",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "chicken"
+    },
+    {
+      "name": "Cow",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "cow"
+    },
+    {
+      "name": "Mushroom Cow",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "mooshroom"
+    },
+    {
+      "name": "Pig",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "pig"
+    },
+    {
+      "name": "Rabbit",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "rabbit"
+    },
+    {
+      "name": "Sheep",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "sheep"
+    }
+  ],
+  "Spider's Den": [
+    {
+      "name": "Arachne",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Arachne's Brood",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Arachne's Keeper",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "cave_spider"
+    },
+    {
+      "name": "Broodmother",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Dasher Spider",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Flint Skeleton",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "skeleton"
+    },
+    {
+      "name": "Rain Slime",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "slime"
+    },
+    {
+      "name": "Silverfish",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "silverfish"
+    },
+    {
+      "name": "Spider Jockey",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Splitter Spider",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Voracious Spider",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Weaver Spider",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "spider"
+    }
+  ],
+  "The End": [
+    {
+      "name": "Dragon",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "ender_dragon"
+    },
+    {
+      "name": "End Stone Protector",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "iron_golem"
+    },
+    {
+      "name": "Enderman",
+      "max_tier": "XXV",
+      "tier_num": 25,
+      "entity_type": "enderman"
+    },
+    {
+      "name": "Endermite",
+      "max_tier": "XXV",
+      "tier_num": 25,
+      "entity_type": "endermite"
+    },
+    {
+      "name": "Obsidian Defender",
+      "max_tier": "XXV",
+      "tier_num": 25,
+      "entity_type": "wither_skeleton"
+    },
+    {
+      "name": "Seer",
+      "max_tier": "XXV",
+      "tier_num": 25,
+      "entity_type": "skeleton"
+    },
+    {
+      "name": "Voidling Extremist",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "enderman"
+    },
+    {
+      "name": "Voidling Fanatic",
+      "max_tier": "XXV",
+      "tier_num": 25,
+      "entity_type": "enderman"
+    },
+    {
+      "name": "Zealot",
+      "max_tier": "XXV",
+      "tier_num": 25,
+      "entity_type": "enderman"
+    }
+  ],
+  "Crimson Isle": [
+    {
+      "name": "Ashfang",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "blaze"
+    },
+    {
+      "name": "Barbarian Duke",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "player",
+      "player_name": "dukebarb"
+    },
+    {
+      "name": "Bladesoul",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "a630094f27b11a2e902e26c16fe5dfe35fb4931ab5f947bbc9accab2ee501704"
+      ]
+    },
+    {
+      "name": "Blaze",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "blaze"
+    },
+    {
+      "name": "Flaming Spider",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "spider"
+    },
+    {
+      "name": "Flare",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "blaze"
+    },
+    {
+      "name": "Ghast",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "ghast"
+    },
+    {
+      "name": "Kada Knight",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "zombified_piglin",
+      "riding": "chicken"
+    },
+    {
+      "name": "Mage Outlaw",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "8b07ee571a3898deaa0104efcba450d8011b0e3cd8f6034aba36a6fe043d8f49"
+      ]
+    },
+    {
+      "name": "Magma Boss",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "magma_cube",
+      "size": "big",
+      "details": "24x magma cube"
+    },
+    {
+      "name": "Magma Cube",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "magma_cube"
+    },
+    {
+      "name": "Magma Cube Rider",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "zombified_piglin",
+      "riding": "magma_cube"
+    },
+    {
+      "name": "Matcho",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "ef2daabb78a1f7aa12d145d88c0ca46b9e856f5534e9286e555faf0c291f4fd5"
+      ]
+    },
+    {
+      "name": "Millennia-Aged Blaze",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "blaze"
+    },
+    {
+      "name": "Mushroom Bull",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "mooshroom"
+    },
+    {
+      "name": "Smoldering Blaze",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "blaze"
+    },
+    {
+      "name": "Tentacle",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "ghast",
+      "details": "multiple dinnerboned ghasts"
+    },
+    {
+      "name": "Vanquisher",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "wither"
+    },
+    {
+      "name": "Wither Skeleton",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "wither_skeleton"
+    },
+    {
+      "name": "Wither Spectre",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "heads": [
+        "f6aa5acfd973f67ba8e249ae07a11ae7ca713c900d90d09ce0903c79ddd7dd9e"
+      ]
+    }
+  ],
+  "Deep Caverns": [
+    {
+      "name": "Emerald Slime",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "slime"
+    },
+    {
+      "name": "Lapis Zombie",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "zombie",
+      "armor": "leather_blue"
+    },
+    {
+      "name": "Miner Skeleton",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "skeleton",
+      "armor": "diamond"
+    },
+    {
+      "name": "Miner Zombie",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "zombie",
+      "armor": "diamond"
+    },
+    {
+      "name": "Redstone Pigman",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "zombified_piglin"
+    },
+    {
+      "name": "Sneaky Creeper",
+      "max_tier": "V",
+      "tier_num": 5,
+      "entity_type": "creeper"
+    }
+  ],
+  "Dwarven Mines": [
+    {
+      "name": "Diamond Goblin",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "player",
+      "player_name": "goblin",
+      "armor": "diamond"
+    },
+    {
+      "name": "Ghost",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "creeper"
+    },
+    {
+      "name": "Glacite Bowman",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "3e1cef33161ec42226aa8220f1b1cc02e8ede6dea7cdd487402f559f3c8fdab6"
+      ]
+    },
+    {
+      "name": "Glacite Caver",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "ef3178fb4bd2c629c218ec03fd4a96bfdc846b1f5625743c49eb205b873ae0d5"
+      ]
+    },
+    {
+      "name": "Glacite Mage",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "f941d0e9413b50507919e2679a02a034a37cd0661b7c2de646a076d636033f42"
+      ]
+    },
+    {
+      "name": "Glacite Mutt",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "wolf"
+    },
+    {
+      "name": "Glacite Walker",
+      "max_tier": "X",
+      "tier_num": 10,
+      "heads": [
+        "374c6b90ceedba3d8bb1d1a84dff402115964ef333de563bcd6799f3738bed06"
+      ]
+    },
+    {
+      "name": "Goblin",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "entity_type": "player",
+      "player_name": "goblin"
+    },
+    {
+      "name": "Goblin Raiders",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "player",
+      "player_name": "goblin"
+    },
+    {
+      "name": "Golden Goblin",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "player",
+      "player_name": "goblin",
+      "armor": "gold"
+    },
+    {
+      "name": "Littlefoot",
+      "max_tier": "V",
+      "tier_num": 5,
+      "heads": [
+        "f2b33640bfb71557e0e1d852287263ceafc9bec205301acf046b7c29fe8cb37b"
+      ]
+    },
+    {
+      "name": "Powder Ghast",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "ghast"
+    },
+    {
+      "name": "Star Sentry",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "d87b8f3cf1c1014883276f230501d5af1397699071bfab1ee294c861722cc2f"
+      ]
+    },
+    {
+      "name": "Treasure Hoarder",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "374c6b90ceedba3d8bb1d1a84dff402115964ef333de563bcd6799f3738bed06"
+      ]
+    }
+  ],
+  "Crystal Hollows": [
+    {
+      "name": "Automaton",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "iron_golem"
+    },
+    {
+      "name": "Bal",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "magma_cube",
+      "size": "big"
+    },
+    {
+      "name": "Boss Corleone",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "player",
+      "player_name": "corleone"
+    },
+    {
+      "name": "Butterfly",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "8761e236d861db4c8c6ac0783807dd19d440b50a203d1ab70ff187c61d4a5158",
+        "9fd806defdfdf59b1f2609c8ee364666de66127a623415b5430c9358c601ef7c",
+        "38658bb6eee3400235b1e680488cbd9937bcc675ee87d6cc75355ee9667df3b5"
+      ]
+    },
+    {
+      "name": "Grunt",
+      "max_tier": "X",
+      "tier_num": 10,
+      "heads": [
+        "4c85bdda8ffc233e738fb3ca7715e947a8e62a351031682da1ef6efcecf48f79",
+        "ef5e03b8de119f8589a808224cbea737f5dcf24235799b7378ac5bf06abf6dd4",
+        "eaf2a8dfe1f8b21c446008a5c2a76b9dcc7ec202c2e08bbe4b5c29a898895451",
+        "8030adf55b9f8a5acc8aca9488df08c3f3bf630926b347a755fd7e1b44e3ad60",
+        "c5d59b06b1cd545f24a092449aacef267de26c8c6b4dca0b85e7ef237f09d688",
+        "56a64f3e6c3613f0c4dae8ab8abebcf43cef2c16232d887d37aeb9713bbad399",
+        "75494eb5b1fb74bd9fb221803cb5e9f903209fc76e72aa42799a6313b2a4e1ec",
+        "b4dd4a5bd4e1145a09861987a92b991c94917baa3e4116ec980c74cc8c9426c6",
+        "83a4985545a3318293e7362b05293116063a6de86fbd45df5cce6662f4728133"
+      ]
+    },
+    {
+      "name": "Key Guardian",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "zombie",
+      "subarea": "Jungle",
+      "held_item": "bone"
+    },
+    {
+      "name": "Sludge",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "slime"
+    },
+    {
+      "name": "Stoneworm",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "heads": [
+        "81807fd066600290842afc30f0152ab9d8528312463c6b57c8db6503a9d95397",
+        "df03ad96092f3f789902436709cdf69de6b727c121b3c2daef9ffa1ccaed186c"
+      ]
+    },
+    {
+      "name": "Thyst",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "endermite"
+    },
+    {
+      "name": "Yog",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "magma_cube",
+      "size": "normal"
+    }
+  ],
+  "The Park": [
+    {
+      "name": "Howling Spirit",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "wolf"
+    },
+    {
+      "name": "Pack Spirit",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "wolf"
+    },
+    {
+      "name": "Soul of the Alpha",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "wolf"
+    }
+  ],
+  "Moonglade Marsh": [
+    {
+      "name": "Azure",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "tropical_fish:light_blue",
+      "details": "light blue tropical fish"
+    },
+    {
+      "name": "Bambuleaf",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "panda"
+    },
+    {
+      "name": "Birries",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "pig"
+    },
+    {
+      "name": "Bogged",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "bogged"
+    },
+    {
+      "name": "Chill",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "stray"
+    },
+    {
+      "name": "Cod",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "cod"
+    },
+    {
+      "name": "Coralot",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "axolotl"
+    },
+    {
+      "name": "Dreadwing",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "bat"
+    },
+    {
+      "name": "Ent",
+      "max_tier": "XX",
+      "tier_num": 20,
+      "heads": [
+        "30519f79e5829136c3df10b6bd727db255717c87e5c102892ef67e7f46929515"
+      ]
+    },
+    {
+      "name": "Hewver",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "mooshroom"
+    },
+    {
+      "name": "Verdant",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "tropical_fish:green",
+      "details": "green tropical fish"
+    },
+    {
+      "name": "The Loch Emperor",
+      "max_tier": "XV",
+      "tier_num": 15,
+      "entity_type": "skeleton",
+      "riding": "guardian",
+      "details": "skeleton on top of guardian"
+    },
+    {
+      "name": "Phanflare",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "phantom",
+      "mob_size": "1.5x"
+    },
+    {
+      "name": "Phanpyre",
+      "max_tier": "X",
+      "tier_num": 10,
+      "entity_type": "phantom",
+      "mob_size": "0.6x"
+    }
+  ]
+}

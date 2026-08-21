@@ -47,38 +47,40 @@ public abstract class SignEditMixin {
       if (BomboConfig.get().signCalculator) {
          Minecraft mc = Minecraft.getInstance();
          int screenWidth = mc.getWindow().getGuiScaledWidth();
-         int baseX = screenWidth / 2;
-         int baseY = 55;
+         BomboConfig.Settings s = BomboConfig.get();
+         int baseX = (s.signCalculatorX >= 0) ? s.signCalculatorX : (screenWidth / 2);
+         int baseY = s.signCalculatorY;
+
          String currentLineText = this.messages[this.line];
-         if (currentLineText != null && !currentLineText.isEmpty() && SignCalculator.isPotentialExpression(currentLineText)) {
-            String preview = SignCalculator.getPreviewText(currentLineText);
-            boolean isValid = SignCalculator.isValidExpression(currentLineText);
-            String color = isValid ? "§a" : "§c";
-            if (!isValid) {
-               preview = currentLineText + " = ?";
-            }
+         double currentVal = (currentLineText != null && !currentLineText.trim().isEmpty()) ? SignCalculator.parseNumberOrExpr(currentLineText) : Double.NaN;
+         boolean isExpr = currentLineText != null && SignCalculator.isValidExpression(currentLineText);
 
-            String totalText = color + preview;
-            int totalWidth = mc.font.width(totalText);
-            guiGraphics.text(mc.font, totalText, baseX - totalWidth / 2, baseY, -1, true);
-         }
+         double total = 0.0;
+         int numberLines = 0;
 
-         double total = (double)0.0F;
-         boolean hasAnyExpression = false;
-
-         for(String msg : this.messages) {
-            if (SignCalculator.isValidExpression(msg)) {
-               total += SignCalculator.getResult(msg);
-               hasAnyExpression = true;
+         for (String msg : this.messages) {
+            double val = SignCalculator.parseNumberOrExpr(msg);
+            if (!Double.isNaN(val)) {
+               total += val;
+               numberLines++;
             }
          }
 
-         if (hasAnyExpression) {
+         if (numberLines > 0) {
             String totalText = "§6Total: §e" + SignCalculator.formatResultOnly(total);
-            int var21 = mc.font.width(totalText);
-            guiGraphics.text(mc.font, totalText, baseX - var21 / 2, baseY - 30, -1, true);
+            int tw = mc.font.width(totalText);
+            guiGraphics.text(mc.font, totalText, baseX - tw / 2, baseY - 14, -1, true);
+         }
+
+         if (isExpr) {
+            String preview = "§a" + SignCalculator.getPreviewText(currentLineText);
+            int w = mc.font.width(preview);
+            guiGraphics.text(mc.font, preview, baseX - w / 2, baseY, -1, true);
+         } else if (numberLines > 1 && !Double.isNaN(currentVal)) {
+            String preview = "§b" + SignCalculator.formatResultOnly(currentVal);
+            int w = mc.font.width(preview);
+            guiGraphics.text(mc.font, preview, baseX - w / 2, baseY, -1, true);
          }
       }
-
    }
 }

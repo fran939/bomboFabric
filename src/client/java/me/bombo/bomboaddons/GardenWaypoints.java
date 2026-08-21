@@ -44,12 +44,15 @@ public class GardenWaypoints {
       }
    }
 
+   public static void clearStructureWaypoints() {
+      synchronized(waypoints) {
+         waypoints.removeIf(wp -> wp.label != null && (wp.label.startsWith("[Structure]") || wp.label.equalsIgnoreCase("Corleone 1")));
+      }
+   }
+
    public static boolean hasAnyVisibleWaypoints() {
-      boolean isGarden = SkyblockUtils.isInGarden();
-      if (isGarden) {
-         synchronized(waypoints) {
-            if (!waypoints.isEmpty()) return true;
-         }
+      synchronized(waypoints) {
+         if (!waypoints.isEmpty()) return true;
       }
       BomboConfig.Settings s = BomboConfig.get();
       if (s != null) {
@@ -194,23 +197,21 @@ public class GardenWaypoints {
          boolean isGarden = "Garden".equalsIgnoreCase(BomboaddonsClient.currentArea) || "The Garden".equalsIgnoreCase(BomboaddonsClient.currentArea);
 
          List<Waypoint> activeWaypoints = Collections.emptyList();
-         if (isGarden && !waypoints.isEmpty()) {
+         if (!waypoints.isEmpty()) {
             long now = System.currentTimeMillis();
             List<Waypoint> toRemove = new ArrayList();
             synchronized(waypoints) {
                for(Waypoint wp : waypoints) {
-                  if (s.pestWaypointDuration > 0 && now - wp.creationTime >= (long)s.pestWaypointDuration * 1000L) {
+                  if (isGarden && s.pestWaypointDuration > 0 && now - wp.creationTime >= (long)s.pestWaypointDuration * 1000L) {
                      toRemove.add(wp);
-                  } else {
+                  } else if (isGarden && s.pestWaypointRemoveOnNear) {
                      double dist = wp.position.distanceTo(playerPos);
-                     if (s.pestWaypointRemoveOnNear) {
-                        if (!wp.hasLeftRadius) {
-                           if (dist > (double)15.0F) {
-                              wp.hasLeftRadius = true;
-                           }
-                        } else if (dist <= (double)10.0F) {
-                           toRemove.add(wp);
+                     if (!wp.hasLeftRadius) {
+                        if (dist > (double)15.0F) {
+                           wp.hasLeftRadius = true;
                         }
+                     } else if (dist <= (double)10.0F) {
+                        toRemove.add(wp);
                      }
                   }
                }
@@ -258,7 +259,7 @@ public class GardenWaypoints {
             }
          }
 
-         boolean hasActive = isGarden && !activeWaypoints.isEmpty();
+         boolean hasActive = !activeWaypoints.isEmpty();
          boolean hasCustom = !customWps.isEmpty();
          boolean hasCoord = !coordWps.isEmpty();
          if (!hasActive && !hasCustom && !hasCoord) {

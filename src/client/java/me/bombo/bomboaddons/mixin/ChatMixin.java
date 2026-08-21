@@ -69,6 +69,17 @@ public abstract class ChatMixin implements IChatComponent {
    protected abstract void addMessage(Component var1, MessageSignature var2, GuiMessageSource var3, GuiMessageTag var4);
 
    @Inject(
+      method = {"extractRenderState"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onExtractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor g, net.minecraft.client.gui.Font font, int tickCount, int mouseX, int mouseY, net.minecraft.client.gui.components.ChatComponent.DisplayMode displayMode, boolean chatOpen, CallbackInfo ci) {
+      if (chatOpen && me.bombo.bomboaddons.util.ChatSearchHelper.isChatSearchActive()) {
+         ci.cancel();
+      }
+   }
+
+   @Inject(
       method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V"},
       at = {@At("HEAD")},
       cancellable = true
@@ -79,6 +90,25 @@ public abstract class ChatMixin implements IChatComponent {
             ChatMessageTracker.addMessage(message);
             String raw = message.getString();
             if (raw.contains("DailyRewardDebug") || raw.contains("[BomboAddons]")) {
+               return;
+            }
+
+            if (me.bombo.bomboaddons.ChatModifier.shouldHide(raw)) {
+               ci.cancel();
+               return;
+            }
+
+            me.bombo.bomboaddons.BomboaddonsClient.trackCommandFromChat(raw);
+
+            String modifiedChat = me.bombo.bomboaddons.ChatModifier.modifyText(raw);
+            if (!modifiedChat.equals(raw)) {
+               ci.cancel();
+               isFormattingMessage.set(true);
+               try {
+                  this.addMessage(Component.literal(modifiedChat), signature, source, tag);
+               } finally {
+                  isFormattingMessage.set(false);
+               }
                return;
             }
 
@@ -104,7 +134,7 @@ public abstract class ChatMixin implements IChatComponent {
             }
 
             if (raw.contains("&") && !raw.contains("[BomboAddons]")) {
-               String legacyFormatted = raw.replace('&', '§');
+               String legacyFormatted = formatColorsSafe(raw);
                if (!legacyFormatted.equals(raw)) {
                   ci.cancel();
                   isFormattingMessage.set(true);
@@ -205,8 +235,34 @@ public abstract class ChatMixin implements IChatComponent {
    }
 
    @Unique
+   public List<GuiMessage> bombo$getAllMessages() {
+      return this.allMessages;
+   }
+
+   @Unique
    public double bombo$getScale() {
       return this.getScale();
+   }
+
+   @Unique
+   private static String formatColorsSafe(String text) {
+      if (text == null || !text.contains("&")) return text;
+      StringBuilder sb = new StringBuilder();
+      String[] parts = text.split("(?=https?://)");
+      for (String part : parts) {
+         if (part.startsWith("http://") || part.startsWith("https://")) {
+            int spaceIdx = part.indexOf(' ');
+            if (spaceIdx != -1) {
+               sb.append(part, 0, spaceIdx);
+               sb.append(part.substring(spaceIdx).replaceAll("&(?=[0-9a-fk-orA-FK-OR])", "§"));
+            } else {
+               sb.append(part);
+            }
+         } else {
+            sb.append(part.replaceAll("&(?=[0-9a-fk-orA-FK-OR])", "§"));
+         }
+      }
+      return sb.toString();
    }
 
    @Unique

@@ -20,6 +20,83 @@ import net.minecraft.world.item.component.ItemLore;
 
 public class BestiaryManager {
 
+   private static final java.util.regex.Pattern BESTIARY_LEVELUP_PATTERN = java.util.regex.Pattern.compile("(?i)BESTIARY\\s+(.+?)\\s+([0-9IVXLCDM]+)\\s*(?:➜|➡|->|»|\\u27A1|\\u2794|\\u00BB)\\s*([0-9IVXLCDM]+)");
+
+   public static int parseRomanOrInt(String s) {
+      if (s == null) return 0;
+      s = s.trim().toUpperCase(Locale.ROOT);
+      try {
+         return Integer.parseInt(s);
+      } catch (NumberFormatException e) {
+         int total = 0;
+         int prev = 0;
+         for (int i = s.length() - 1; i >= 0; i--) {
+            int val = 0;
+            switch (s.charAt(i)) {
+               case 'I': val = 1; break;
+               case 'V': val = 5; break;
+               case 'X': val = 10; break;
+               case 'L': val = 50; break;
+               case 'C': val = 100; break;
+               case 'D': val = 500; break;
+               case 'M': val = 1000; break;
+               default: val = 0; break;
+            }
+            if (val < prev) total -= val;
+            else { total += val; prev = val; }
+         }
+         return total;
+      }
+   }
+
+   public static void onChatMessage(String rawMessage) {
+      if (rawMessage == null || !rawMessage.toUpperCase(Locale.ROOT).contains("BESTIARY")) return;
+      String clean = rawMessage.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+      java.util.regex.Matcher m = BESTIARY_LEVELUP_PATTERN.matcher(clean);
+      if (m.find()) {
+         String mobName = m.group(1).trim();
+         int newTier = parseRomanOrInt(m.group(2).trim());
+         int targetTier = parseRomanOrInt(m.group(3).trim());
+         int finalTier = Math.max(newTier, targetTier);
+         checkAndDisableMaxedMob(mobName, finalTier);
+      }
+   }
+
+   public static void checkAndDisableMaxedMob(String mobName, int currentTier) {
+      BestiaryDataFetcher.BestiaryMobRule rule = BestiaryDataFetcher.getRule(mobName, null);
+      int maxTier = (rule != null && rule.maxTier > 0) ? rule.maxTier : 20;
+      if (currentTier >= maxTier) {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s.highlights != null) {
+            String cleanMob = mobName.toLowerCase(Locale.ROOT).trim();
+            List<String> toRemove = new ArrayList<>();
+            for (String k : s.highlights.keySet()) {
+               String cleanKey = k.toLowerCase(Locale.ROOT).trim().replaceAll("(?i)\\s+(?:X{0,3}(?:IX|IV|V?I{1,3})|L|C|D|M|[0-9]+)$", "").trim();
+               if (cleanKey.equals(cleanMob) || k.equalsIgnoreCase(mobName)) {
+                  toRemove.add(k);
+               }
+            }
+            if (!toRemove.isEmpty()) {
+               for (String k : toRemove) {
+                  s.highlights.remove(k);
+               }
+               BomboConfig.save();
+               Minecraft mc = Minecraft.getInstance();
+               if (mc.player != null) {
+                  Component msg = Component.literal("§8[§3Bombo§8] §aMaxed bestiary reached for §e" + mobName + "§a, disabling highlight. ")
+                     .append(Component.literal("§b§n[Click to re-enable]")
+                        .withStyle(style -> style
+                           .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/b behighlight add " + mobName))
+                           .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick to re-enable highlight for " + mobName)))
+                        )
+                     );
+                  mc.player.sendSystemMessage(msg);
+               }
+            }
+         }
+      }
+   }
+
    public static boolean isBestiaryGui(AbstractContainerScreen<?> screen) {
       if (screen == null) return false;
       String rawTitle = screen.getTitle() != null ? screen.getTitle().getString() : "";
@@ -227,6 +304,15 @@ public class BestiaryManager {
       return grouped;
    }
 
+      public static String cleanMobName(String raw) {
+      if (raw == null) return "";
+      String clean = raw.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+      if (clean.endsWith(" (Unlocked)")) {
+         clean = clean.substring(0, clean.length() - 11).trim();
+      }
+      return clean.replaceAll("(?i)\\s+(?:M{0,4}(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})|[0-9]+)$", "").trim();
+   }
+
    public static String cleanMobName(ItemStack stack) {
       if (stack == null || stack.isEmpty()) return "";
       String raw = stack.getHoverName().getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
@@ -234,7 +320,7 @@ public class BestiaryManager {
          raw = raw.substring(0, raw.length() - 11).trim();
       }
       // Strip trailing Roman numerals and tiers (e.g. "Crypt Ghoul VIII" -> "Crypt Ghoul", "Wolf XV" -> "Wolf")
-      raw = raw.replaceAll("(?i)\\s+(?:X{0,3}(?:IX|IV|V?I{1,3})|L|C|D|M|[0-9]+)$", "").trim();
+      raw = raw.replaceAll("(?i)\\s+(?:M{0,4}(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})|[0-9]+)$", "").trim();
       return raw;
    }
 
@@ -411,7 +497,18 @@ public class BestiaryManager {
       
       BomboConfig.Settings s = BomboConfig.get();
       if (s.highlights == null) s.highlights = new java.util.HashMap<>();
-      s.highlights.put(mobName.toLowerCase(Locale.ROOT), new BomboConfig.HighlightInfo(color, false, true, tracer, islandReq, true));
+      BomboConfig.HighlightInfo info = new BomboConfig.HighlightInfo(color, false, true, tracer, islandReq, true);
+      BestiaryDataFetcher.BestiaryMobRule rule = BestiaryDataFetcher.getRule(mobName, islandReq);
+      if (rule != null) {
+         if (rule.entityType != null) info.entityType = rule.entityType;
+         if (rule.heads != null && !rule.heads.isEmpty()) info.headHashes = new ArrayList<>(rule.heads);
+         if (rule.armor != null) info.armorType = rule.armor;
+         if (rule.playerName != null) info.playerName = rule.playerName;
+         if (rule.riding != null) info.ridingType = rule.riding;
+         if (rule.heldItem != null) info.heldItem = rule.heldItem;
+         if (rule.subarea != null) info.requiredSubarea = rule.subarea;
+      }
+      s.highlights.put(mobName.toLowerCase(Locale.ROOT), info);
       s.highlightsEnabled = true;
       BomboConfig.save();
 
@@ -442,7 +539,18 @@ public class BestiaryManager {
             if (!isNavigationalOrInvalid(stack) && !isMobCompleted(stack)) {
                String mobName = cleanMobName(stack);
                if (!mobName.isEmpty()) {
-                  s.highlights.put(mobName.toLowerCase(Locale.ROOT), new BomboConfig.HighlightInfo(color, false, true, tracer, islandReq, true));
+                  BomboConfig.HighlightInfo info = new BomboConfig.HighlightInfo(color, false, true, tracer, islandReq, true);
+                  BestiaryDataFetcher.BestiaryMobRule rule = BestiaryDataFetcher.getRule(mobName, islandReq);
+                  if (rule != null) {
+                     if (rule.entityType != null) info.entityType = rule.entityType;
+                     if (rule.heads != null && !rule.heads.isEmpty()) info.headHashes = new ArrayList<>(rule.heads);
+                     if (rule.armor != null) info.armorType = rule.armor;
+                     if (rule.playerName != null) info.playerName = rule.playerName;
+                     if (rule.riding != null) info.ridingType = rule.riding;
+                     if (rule.heldItem != null) info.heldItem = rule.heldItem;
+                     if (rule.subarea != null) info.requiredSubarea = rule.subarea;
+                  }
+                  s.highlights.put(mobName.toLowerCase(Locale.ROOT), info);
                   addedCount++;
                }
             }

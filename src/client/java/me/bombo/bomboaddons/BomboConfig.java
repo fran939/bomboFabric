@@ -283,6 +283,11 @@ public class BomboConfig {
       public boolean discordBridgeBcChat = true;
       public boolean discordBridgeAllChat = false;
       public boolean dailyRewardHelper = true;
+      public boolean frozenBlazeWarning = false;
+      public boolean fbWarnSound = true;
+      public boolean fbWarnTitle = true;
+      public boolean fbWarnChat = true;
+      public int fbWarnSeconds = 28;
       public boolean storagePreview = true;
       public boolean storagePreviewDebug = false;
       public boolean preventSlotSwapOnGuiKeybind = true;
@@ -318,6 +323,7 @@ public class BomboConfig {
       public String showItemKey = "o";
       public String copyNbtKey = "p";
       public String gfsMaxKey = "k";
+      public String itemListFocusKey = "TAB";
       public String gfsStackKey = "l";
       public String nextPageKey = "";
       public String prevPageKey = "";
@@ -330,13 +336,16 @@ public class BomboConfig {
       public String smartGoBackKey = "";
       public String textureToggleKey = "";
       public String bestiaryHighlightKey = "h";
+      public String saveInventoryKey = "";
       public Map<String, String> bestiaryCategoryColors = new HashMap();
       public Map<String, Boolean> bestiaryCategoryTracers = new HashMap();
       public Set<String> collapsedBestiaryCategories = new HashSet();
       public Map<String, HighlightInfo> highlights = new HashMap();
       public boolean highlightsEnabled = false;
+      public boolean highlightAdvancedMode = false;
       public Map<String, HighlightInfo> itemHighlights = new HashMap();
       public boolean itemHighlightsEnabled = false;
+      public boolean debugCopyChat = false;
       public boolean debugMaster = false;
       public boolean debugChat = false;
       public boolean debugSounds = false;
@@ -345,6 +354,10 @@ public class BomboConfig {
       public boolean debugEntities = false;
       public boolean debugCommands = false;
       public boolean debugMode = false;
+      public boolean copyCanceledOrderAmount = true;
+      public boolean loreAdditionsEnabled = true;
+      public boolean startsInAbsoluteTime = true;
+      public boolean supercraftMaxCalculator = true;
       public boolean apiDebug = false;
       public boolean apiChatMessages = false;
       public boolean copyChat = false;
@@ -357,6 +370,7 @@ public class BomboConfig {
       public Map<String, List<CommandBind>> keybindBinds = new HashMap();
       public boolean hollowWandClickThrough = false;
       public boolean hollowWandAutoCombine = false;
+      public boolean lassoClickThroughBats = true;
       public boolean autoAcceptCarnival = false;
       public boolean autoAcceptNpcLore = false;
       public boolean npcLoreDebug = false;
@@ -384,6 +398,7 @@ public class BomboConfig {
       public boolean autoHoppityCalls = false;
       public int diceHudX = 10;
       public int diceHudY = 50;
+      public boolean composterHelper = true;
       public boolean composterHud = false;
       public int composterHudX = 10;
       public int composterHudY = 150;
@@ -461,7 +476,7 @@ public class BomboConfig {
       public String savePetKey = "";
       public boolean disableUnequipPet = false;
       public boolean showPetLowestBin = false;
-      public boolean itemListEnabled = true;
+      public boolean itemListEnabled = false;
       public boolean itemListRemoveBackground = false;
       public boolean itemListColoredBackground = false;
       public boolean itemListLocked = false;
@@ -502,9 +517,20 @@ public class BomboConfig {
       public boolean tracerMosquito = true;
       public List<CustomSlot> customSlots = new ArrayList();
       public int customTimeHour = 12;
+      public boolean customWeatherEnabled = false;
+      public int customWeatherMode = 0; // 0=Clear, 1=Rain, 2=Thunder
+      public boolean chatSearchBar = false;
+      public boolean chatSearchBackground = true;
+      public int chatSearchX = 4;
+      public int chatSearchY = -1;
+      public float chatSearchScale = 1.0F;
+      public int signCalculatorX = -1;
+      public int signCalculatorY = 55;
+      public float signCalculatorScale = 1.0F;
       public boolean corpseEspStyleTracer = false;
       public String customSlotPrefillKey = "";
       public String freelookKey = "";
+      public boolean freelookToggle = false;
       public boolean tracerLapis = true;
       public boolean tracerTungsten = true;
       public boolean tracerUmber = true;
@@ -575,8 +601,14 @@ public class BomboConfig {
       public boolean eggFinder = false;
       public boolean eggFinderChat = false;
       public boolean eggFinderBeacon = false;
-      public boolean eggFinderThroughWalls = false;
+      public boolean eggFinderThroughWalls = true;
       public boolean goldenDragonNestFinder = false;
+      public boolean structureFinder = false;
+      public boolean structureFinderCorleone1 = true;
+      public boolean structureFinderTracers = true;
+      public String structureFinderColor = "AQUA";
+      public int structureFinderRadius = 256;
+      public float tracerWidth = 2.0F;
       public boolean hoppityHud = false;
       public boolean hoppityHideWhenInactive = true;
       public int hoppityHudX = 10;
@@ -676,6 +708,8 @@ public class BomboConfig {
       public String triggerText = "";
       public String commandToRun = "";
       public String titleToShow = "";
+      public String soundToPlay = "";
+      public int soundTimes = 1;
       public boolean enabled = true;
 
       public ChatTrigger() {
@@ -685,6 +719,14 @@ public class BomboConfig {
          this.triggerText = triggerText;
          this.commandToRun = commandToRun;
          this.titleToShow = titleToShow;
+      }
+
+      public ChatTrigger(String triggerText, String commandToRun, String titleToShow, String soundToPlay, int soundTimes) {
+         this.triggerText = triggerText;
+         this.commandToRun = commandToRun;
+         this.titleToShow = titleToShow;
+         this.soundToPlay = soundToPlay;
+         this.soundTimes = soundTimes;
       }
    }
 
@@ -861,6 +903,17 @@ public class BomboConfig {
       public boolean tracer = false;
       public String requiredIsland = "";
       public boolean isBestiary = false;
+      public String targetType = "MOB";
+      public String mobSize = ""; // MOB, ENTITY, HEAD, PLAYER, NAMETAG
+      public String entityType = "";
+      public List<String> headHashes = new ArrayList<>();
+      public String armorType = "";
+      public String armorPiece = "";
+      public String playerName = "";
+      public String ridingType = "";
+      public String heldItem = "";
+      public String requiredSubarea = "";
+      public boolean isAdvanced = false;
 
       public HighlightInfo() {
       }
@@ -936,6 +989,24 @@ public class BomboConfig {
             out.name("tracer").value(value.tracer);
             out.name("requiredIsland").value(value.requiredIsland != null ? value.requiredIsland : "");
             out.name("isBestiary").value(value.isBestiary);
+            out.name("targetType").value(value.targetType != null ? value.targetType : "MOB");
+            out.name("entityType").value(value.entityType != null ? value.entityType : "");
+            out.name("armorType").value(value.armorType != null ? value.armorType : "");
+            out.name("armorPiece").value(value.armorPiece != null ? value.armorPiece : "");
+            out.name("playerName").value(value.playerName != null ? value.playerName : "");
+            out.name("ridingType").value(value.ridingType != null ? value.ridingType : "");
+            out.name("heldItem").value(value.heldItem != null ? value.heldItem : "");
+            out.name("requiredSubarea").value(value.requiredSubarea != null ? value.requiredSubarea : "");
+            out.name("isAdvanced").value(value.isAdvanced);
+            out.name("mobSize").value(value.mobSize != null ? value.mobSize : "");
+            if (value.headHashes != null && !value.headHashes.isEmpty()) {
+               out.name("headHashes");
+               out.beginArray();
+               for (String h : value.headHashes) {
+                  out.value(h);
+               }
+               out.endArray();
+            }
             out.endObject();
          }
 
@@ -968,6 +1039,33 @@ public class BomboConfig {
                   info.requiredIsland = in.nextString();
                } else if (name.equals("isBestiary")) {
                   info.isBestiary = in.nextBoolean();
+               } else if (name.equals("targetType")) {
+                  info.targetType = in.nextString();
+               } else if (name.equals("entityType")) {
+                  info.entityType = in.nextString();
+               } else if (name.equals("armorType")) {
+                  info.armorType = in.nextString();
+               } else if (name.equals("armorPiece")) {
+                  info.armorPiece = in.nextString();
+               } else if (name.equals("playerName")) {
+                  info.playerName = in.nextString();
+               } else if (name.equals("ridingType")) {
+                  info.ridingType = in.nextString();
+               } else if (name.equals("heldItem")) {
+                  info.heldItem = in.nextString();
+               } else if (name.equals("requiredSubarea")) {
+                  info.requiredSubarea = in.nextString();
+               } else if (name.equals("isAdvanced")) {
+                  info.isAdvanced = in.nextBoolean();
+               } else if (name.equals("mobSize")) {
+                  info.mobSize = in.nextString();
+               } else if (name.equals("headHashes")) {
+                  info.headHashes = new ArrayList<>();
+                  in.beginArray();
+                  while (in.hasNext()) {
+                     info.headHashes.add(in.nextString());
+                  }
+                  in.endArray();
                } else {
                   in.skipValue();
                }

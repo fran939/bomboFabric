@@ -27,7 +27,7 @@ public class HudMoveScreen extends Screen {
    private double resizeStartMouseX = (double)0.0F;
    private double resizeStartMouseY = (double)0.0F;
 
-   protected HudMoveScreen() {
+   public HudMoveScreen() {
       super(Component.literal("Move HUD"));
    }
 
@@ -127,11 +127,41 @@ public class HudMoveScreen extends Screen {
          AlphaTrackerHud.drawAlphaInfo(g, this.font, s.alphaTrackerHudX, s.alphaTrackerHudY);
       }
 
+      if (!s.showOnlyActiveHuds || s.signCalculator) {
+         int signW = (int)(150.0F * s.signCalculatorScale);
+         int signH = (int)(30.0F * s.signCalculatorScale);
+         int signX = s.signCalculatorX >= 0 ? s.signCalculatorX : (this.width / 2 - signW / 2);
+         int signY = s.signCalculatorY;
+         this.renderTarget(g, mouseX, mouseY, signX, signY, signW, signH, HudMoveScreen.HudTarget.SIGN_CALCULATOR);
+         g.text(this.font, "\u00a76Total: \u00a7e100,000", signX + 4, signY + 4, -1, true);
+         g.text(this.font, "\u00a7a100000+1 = 100,001", signX + 4, signY + 16, -1, true);
+      }
+
+      if (!s.showOnlyActiveHuds || s.chatSearchBar) {
+         int csW = (int)(160.0F * s.chatSearchScale);
+         int csH = (int)(14.0F * s.chatSearchScale);
+         int csX = s.chatSearchX >= 0 ? s.chatSearchX : 4;
+         int csY = s.chatSearchY >= 0 ? s.chatSearchY : (this.height - 28);
+         this.renderTarget(g, mouseX, mouseY, csX, csY, csW, csH, HudMoveScreen.HudTarget.CHAT_SEARCH);
+         g.text(this.font, "\u00a7eIn-Chat Search Bar", csX + 4, csY + 3, -1, true);
+      }
+
       if (!s.showOnlyActiveHuds || s.autoCroesusHud) {
          int croesusW = (int)(220.0F * s.autoCroesusHudScale);
          int croesusH = (int)(110.0F * s.autoCroesusHudScale);
          this.renderTarget(g, mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, croesusW, croesusH, HudMoveScreen.HudTarget.AUTO_CROESUS);
          AutoCroesusHud.drawCroesusInfo(g, s.autoCroesusHudX, s.autoCroesusHudY, s.autoCroesusHudScale, true);
+      }
+
+      if (!s.showOnlyActiveHuds || s.tabWidgetHudEnabled) {
+         List<String> lines = TabWidgetHud.getMatchedWidgetLines(s.tabWidgetQuery != null && !s.tabWidgetQuery.isEmpty() ? s.tabWidgetQuery : "Bestiary", false);
+         if (lines.isEmpty()) {
+            lines = TabWidgetHud.getMatchedWidgetLines(s.tabWidgetQuery != null && !s.tabWidgetQuery.isEmpty() ? s.tabWidgetQuery : "Bestiary", true);
+         }
+         int tabW = (int)((float)TabWidgetHud.getWidth() * s.tabWidgetHudScale);
+         int tabH = (int)((float)TabWidgetHud.getHeight(lines.size()) * s.tabWidgetHudScale);
+         this.renderTarget(g, mouseX, mouseY, s.tabWidgetHudX, s.tabWidgetHudY, tabW, tabH, HudMoveScreen.HudTarget.TAB_WIDGET);
+         TabWidgetHud.drawWidgetInfo(g, s.tabWidgetHudX, s.tabWidgetHudY, s.tabWidgetHudScale, lines);
       }
 
       if (s.tabWidgets != null) {
@@ -140,10 +170,6 @@ public class HudMoveScreen extends Screen {
             if (widget.enabled || !s.showOnlyActiveHuds) {
                List<String> lines = TabWidgetHud.getMatchedWidgetLines(widget.name, false);
                if (lines.isEmpty()) {
-                  if (s.showOnlyActiveHuds) {
-                     continue;
-                  }
-
                   lines = TabWidgetHud.getMatchedWidgetLines(widget.name, true);
                }
 
@@ -292,8 +318,14 @@ public class HudMoveScreen extends Screen {
             s.composterTimerHudX = mouseX - this.dragOffsetX;
             s.composterTimerHudY = mouseY - this.dragOffsetY;
          } else if (target == HudMoveScreen.HudTarget.TAB_WIDGET) {
-            s.tabWidgetHudX = mouseX - this.dragOffsetX;
-            s.tabWidgetHudY = mouseY - this.dragOffsetY;
+            if (this.editingWidgetIdx == -1) {
+               s.tabWidgetHudX = mouseX - this.dragOffsetX;
+               s.tabWidgetHudY = mouseY - this.dragOffsetY;
+            } else if (this.editingWidgetIdx >= 0 && s.tabWidgets != null && this.editingWidgetIdx < s.tabWidgets.size()) {
+               BomboConfig.TabWidgetInfo twi = (BomboConfig.TabWidgetInfo)s.tabWidgets.get(this.editingWidgetIdx);
+               twi.x = mouseX - this.dragOffsetX;
+               twi.y = mouseY - this.dragOffsetY;
+            }
          } else if (target == HudMoveScreen.HudTarget.ITEM_LIST) {
             s.itemListX = mouseX - this.dragOffsetX;
             s.itemListY = mouseY - this.dragOffsetY;
@@ -306,6 +338,12 @@ public class HudMoveScreen extends Screen {
          } else if (target == HudMoveScreen.HudTarget.ALPHA_TRACKER) {
             s.alphaTrackerHudX = mouseX - this.dragOffsetX;
             s.alphaTrackerHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.SIGN_CALCULATOR) {
+            s.signCalculatorX = mouseX - this.dragOffsetX;
+            s.signCalculatorY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.CHAT_SEARCH) {
+            s.chatSearchX = mouseX - this.dragOffsetX;
+            s.chatSearchY = mouseY - this.dragOffsetY;
          } else if (target == HudMoveScreen.HudTarget.AUTO_CROESUS) {
             s.autoCroesusHudX = mouseX - this.dragOffsetX;
             s.autoCroesusHudY = mouseY - this.dragOffsetY;
@@ -320,22 +358,24 @@ public class HudMoveScreen extends Screen {
          g.fill(x - 5, y + h - 3, x + 3, y + h + 5, -1);
          g.fill(x + w - 3, y + h - 3, x + w + 5, y + h + 5, -1);
          String var10000;
-         switch (target.ordinal()) {
-            case 0 -> var10000 = "Dice Tracker HUD";
-            case 1 -> var10000 = "Feast Bakery HUD";
-            case 2 -> var10000 = "RNG Profit HUD";
-            case 3 -> var10000 = "Kuudra Blindness Timer";
-            case 4 -> var10000 = "Pad Timers";
-            case 5 -> var10000 = "Custom Timers";
-            case 6 -> var10000 = "Composter Status HUD";
-            case 7 -> var10000 = "Composter Timer HUD";
-            case 8 -> var10000 = "Tab Widget HUD";
-            case 9 -> var10000 = "Item List HUD";
-            case 10 -> var10000 = "Item List Search";
-            case 11 -> var10000 = "Hoppity Egg HUD";
-            case 12 -> var10000 = "Alpha Tracker HUD";
-            case 13 -> var10000 = "Auto Croesus HUD";
-            default -> throw new MatchException((String)null, (Throwable)null);
+         switch (target) {
+            case DICE -> var10000 = "Dice Tracker HUD";
+            case BAKERY -> var10000 = "Feast Bakery HUD";
+            case RNG -> var10000 = "RNG Profit HUD";
+            case KUUDRA -> var10000 = "Kuudra Blindness Timer";
+            case PAD_TIMERS -> var10000 = "Pad Timers";
+            case TIMERS -> var10000 = "Custom Timers";
+            case COMPOSTER -> var10000 = "Composter Status HUD";
+            case COMPOSTER_TIMER -> var10000 = "Composter Timer HUD";
+            case TAB_WIDGET -> var10000 = "Tab Widget HUD";
+            case ITEM_LIST -> var10000 = "Item List HUD";
+            case ITEM_LIST_SEARCH -> var10000 = "Item List Search";
+            case HOPPITY -> var10000 = "Hoppity Egg HUD";
+            case ALPHA_TRACKER -> var10000 = "Alpha Tracker HUD";
+            case AUTO_CROESUS -> var10000 = "Auto Croesus HUD";
+            case SIGN_CALCULATOR -> var10000 = "Sign Calculator";
+            case CHAT_SEARCH -> var10000 = "In-Chat Search Bar";
+            default -> var10000 = target.name();
          }
 
          String targetName = var10000;
@@ -352,6 +392,26 @@ public class HudMoveScreen extends Screen {
          double mouseX = event.x();
          double mouseY = event.y();
          int button = event.button();
+         if (!s.showOnlyActiveHuds || s.signCalculator) {
+            int signW = (int)(150.0F * s.signCalculatorScale);
+            int signH = (int)(30.0F * s.signCalculatorScale);
+            int signX = s.signCalculatorX >= 0 ? s.signCalculatorX : (this.width / 2 - signW / 2);
+            int signY = s.signCalculatorY;
+            if (this.checkHit(mouseX, mouseY, signX, signY, signW, signH)) {
+               this.startDragging(HudMoveScreen.HudTarget.SIGN_CALCULATOR, (int)mouseX - signX, (int)mouseY - signY);
+               return true;
+            }
+         }
+         if (!s.showOnlyActiveHuds || s.chatSearchBar) {
+            int csW = (int)(160.0F * s.chatSearchScale);
+            int csH = (int)(14.0F * s.chatSearchScale);
+            int csX = s.chatSearchX >= 0 ? s.chatSearchX : 4;
+            int csY = s.chatSearchY >= 0 ? s.chatSearchY : (this.height - 28);
+            if (this.checkHit(mouseX, mouseY, csX, csY, csW, csH)) {
+               this.startDragging(HudMoveScreen.HudTarget.CHAT_SEARCH, (int)mouseX - csX, (int)mouseY - csY);
+               return true;
+            }
+         }
          int rngW = (int)(185.0F * s.rngProfitHudScale);
          int rngH = (int)((float)ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
          if (this.startCornerResize(mouseX, mouseY, s.rngProfitHudX, s.rngProfitHudY, rngW, rngH, HudMoveScreen.HudTarget.RNG, (double)s.rngProfitHudScale)) {
@@ -441,6 +501,18 @@ public class HudMoveScreen extends Screen {
                                        this.startDragging(HudMoveScreen.HudTarget.ALPHA_TRACKER, (int)mouseX - s.alphaTrackerHudX, (int)mouseY - s.alphaTrackerHudY);
                                        return true;
                                     } else {
+                                       if (!s.showOnlyActiveHuds || s.tabWidgetHudEnabled) {
+                                          int mainTabW = (int)((float)TabWidgetHud.getWidth() * s.tabWidgetHudScale);
+                                          List<String> mainLines = TabWidgetHud.getMatchedWidgetLines(s.tabWidgetQuery != null && !s.tabWidgetQuery.isEmpty() ? s.tabWidgetQuery : "Area", true);
+                                          int mainTabH = (int)((float)TabWidgetHud.getHeight(mainLines.size()) * s.tabWidgetHudScale);
+                                          if (this.startCornerResize(mouseX, mouseY, s.tabWidgetHudX, s.tabWidgetHudY, mainTabW, mainTabH, HudMoveScreen.HudTarget.TAB_WIDGET, (double)s.tabWidgetHudScale)) {
+                                             return true;
+                                          } else if (this.checkHit(mouseX, mouseY, s.tabWidgetHudX, s.tabWidgetHudY, mainTabW, mainTabH)) {
+                                             this.startDragging(HudMoveScreen.HudTarget.TAB_WIDGET, (int)mouseX - s.tabWidgetHudX, (int)mouseY - s.tabWidgetHudY);
+                                             return true;
+                                          }
+                                       }
+
                                        if (s.tabWidgets != null) {
                                           for(int i = 0; i < s.tabWidgets.size(); ++i) {
                                              BomboConfig.TabWidgetInfo widget = (BomboConfig.TabWidgetInfo)s.tabWidgets.get(i);
@@ -547,7 +619,17 @@ public class HudMoveScreen extends Screen {
                         s.composterHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.composterHudScale + vertical * 0.1));
                         BomboConfig.save();
                         return true;
-                     } else if (this.checkHit(mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, (int)(220.0F * s.autoCroesusHudScale), (int)(110.0F * s.autoCroesusHudScale))) {
+                     } else if (this.checkHit(mouseX, mouseY, s.signCalculatorX >= 0 ? s.signCalculatorX : (this.width / 2 - 75), s.signCalculatorY, (int)(150.0F * s.signCalculatorScale), (int)(30.0F * s.signCalculatorScale))) {
+         s.signCalculatorScale = (float)Math.max(0.5, Math.min(3.0, (double)s.signCalculatorScale + vertical * 0.1));
+         BomboConfig.save();
+         return true;
+      }
+      if (this.checkHit(mouseX, mouseY, s.chatSearchX >= 0 ? s.chatSearchX : 4, s.chatSearchY >= 0 ? s.chatSearchY : (this.height - 28), (int)(160.0F * s.chatSearchScale), (int)(14.0F * s.chatSearchScale))) {
+         s.chatSearchScale = (float)Math.max(0.5, Math.min(3.0, (double)s.chatSearchScale + vertical * 0.1));
+         BomboConfig.save();
+         return true;
+      }
+      if (this.checkHit(mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, (int)(220.0F * s.autoCroesusHudScale), (int)(110.0F * s.autoCroesusHudScale))) {
                         s.autoCroesusHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.autoCroesusHudScale + vertical * 0.1));
                         BomboConfig.save();
                         return true;
@@ -589,15 +671,11 @@ public class HudMoveScreen extends Screen {
    }
 
    private int getCornerHit(double mx, double my, int x, int y, int w, int h) {
-      if (mx >= (double)(x - 12) && mx <= (double)(x + 12) && my >= (double)(y - 12) && my <= (double)(y + 12)) {
-         return 0;
-      } else if (mx >= (double)(x + w - 12) && mx <= (double)(x + w + 12) && my >= (double)(y - 12) && my <= (double)(y + 12)) {
-         return 1;
-      } else if (mx >= (double)(x - 12) && mx <= (double)(x + 12) && my >= (double)(y + h - 12) && my <= (double)(y + h + 12)) {
-         return 2;
-      } else {
-         return mx >= (double)(x + w - 12) && mx <= (double)(x + w + 12) && my >= (double)(y + h - 12) && my <= (double)(y + h + 12) ? 3 : -1;
+      // Only bottom-right corner handles resize so clicking the body always drags!
+      if (mx >= (double)(x + w - 8) && mx <= (double)(x + w + 4) && my >= (double)(y + h - 8) && my <= (double)(y + h + 4)) {
+         return 3;
       }
+      return -1;
    }
 
    private boolean startCornerResize(double mx, double my, int x, int y, int w, int h, HudTarget target, double scale) {
@@ -667,7 +745,9 @@ public class HudMoveScreen extends Screen {
       ITEM_LIST_SEARCH,
       HOPPITY,
       ALPHA_TRACKER,
-      AUTO_CROESUS;
+      AUTO_CROESUS,
+      SIGN_CALCULATOR,
+      CHAT_SEARCH;
 
       // $FF: synthetic method
       private static HudTarget[] $values() {

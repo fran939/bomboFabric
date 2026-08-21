@@ -14,6 +14,10 @@ import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 public class CustomBindsProcessor {
+   private static final ThreadLocal<Integer> ALIAS_DEPTH = ThreadLocal.withInitial(() -> 0);
+   private static final ThreadLocal<Integer> CHAT_TRIGGER_DEPTH = ThreadLocal.withInitial(() -> 0);
+   private static long lastTriggerExecTime = 0L;
+   private static String lastTriggerCmd = "";
    private static final Set<Integer> pressedKeys = new HashSet();
    private static long lastGuiKeybindHandledTime = 0L;
    private static int lastGuiKeybindHandledKey = -1;
@@ -21,7 +25,11 @@ public class CustomBindsProcessor {
    public static void onKeyInput(int key, int action) {
       if (action == 1) {
          pressedKeys.add(key);
-         if (Minecraft.getInstance().screen == null) {
+         net.minecraft.client.gui.screens.Screen screen = Minecraft.getInstance().screen;
+         if (screen instanceof BomboConfigGUI || screen instanceof HudMoveScreen) {
+            return;
+         }
+         if (screen == null) {
             checkKeybinds(key);
          } else {
             checkGuiKeybinds(key);
@@ -29,7 +37,6 @@ public class CustomBindsProcessor {
       } else if (action == 0) {
          pressedKeys.remove(key);
       }
-
    }
 
    public static boolean isKeybindAllowed(String reqProfile, String reqIsland, String reqArmor) {
@@ -55,16 +62,11 @@ public class CustomBindsProcessor {
       return true;
    }
 
-   public static java.util.List<BomboConfig.CommandBind> getAllActiveBinds() {
+   public static java.util.List<BomboConfig.CommandBind> getInGameBinds() {
       BomboConfig.Settings s = BomboConfig.get();
       if (s == null) return java.util.Collections.emptyList();
       java.util.List<BomboConfig.CommandBind> list = new java.util.ArrayList<>();
       String activeProf = s.activeProfile != null ? s.activeProfile : "default";
-
-      if (s.profileBinds != null) {
-         List<BomboConfig.CommandBind> pb = s.profileBinds.get(activeProf);
-         if (pb != null) list.addAll(pb);
-      }
       if (s.keybindBinds != null) {
          List<BomboConfig.CommandBind> kb = s.keybindBinds.get(activeProf);
          if (kb != null) list.addAll(kb);
@@ -75,8 +77,27 @@ public class CustomBindsProcessor {
       return list;
    }
 
+   public static java.util.List<BomboConfig.CommandBind> getGuiProfileBinds() {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null) return java.util.Collections.emptyList();
+      java.util.List<BomboConfig.CommandBind> list = new java.util.ArrayList<>();
+      String activeProf = s.activeProfile != null ? s.activeProfile : "default";
+      if (s.profileBinds != null) {
+         List<BomboConfig.CommandBind> pb = s.profileBinds.get(activeProf);
+         if (pb != null) list.addAll(pb);
+      }
+      return list;
+   }
+
+   public static java.util.List<BomboConfig.CommandBind> getAllActiveBinds() {
+      java.util.List<BomboConfig.CommandBind> list = new java.util.ArrayList<>(getInGameBinds());
+      list.addAll(getGuiProfileBinds());
+      return list;
+   }
+
    private static void checkKeybinds(int keyCode) {
-      List<BomboConfig.CommandBind> binds = getAllActiveBinds();
+      if (Minecraft.getInstance().screen != null) return;
+      List<BomboConfig.CommandBind> binds = getInGameBinds();
       for (BomboConfig.CommandBind cb : binds) {
          if (cb != null && cb.enabled && cb.command != null && !cb.command.trim().isEmpty()
                && isKeybindAllowed(cb.requiredProfile, cb.requiredIsland, cb.requiredArmor)
@@ -94,7 +115,7 @@ public class CustomBindsProcessor {
    }
 
    public static boolean matchesAnyRegisteredGuiBind(int keyCode) {
-      List<BomboConfig.CommandBind> binds = getAllActiveBinds();
+      List<BomboConfig.CommandBind> binds = getGuiProfileBinds();
       for (BomboConfig.CommandBind cb : binds) {
          if (cb != null && cb.enabled && cb.command != null && !cb.command.trim().isEmpty()
                && isKeybindAllowed(cb.requiredProfile, cb.requiredIsland, cb.requiredArmor)
@@ -118,7 +139,7 @@ public class CustomBindsProcessor {
                return false;
             } else {
                boolean matchedAny = false;
-               List<BomboConfig.CommandBind> binds = getAllActiveBinds();
+               List<BomboConfig.CommandBind> binds = getGuiProfileBinds();
                for (BomboConfig.CommandBind cb : binds) {
                   if (cb != null && cb.enabled && cb.command != null && !cb.command.trim().isEmpty()
                         && isKeybindAllowed(cb.requiredProfile, cb.requiredIsland, cb.requiredArmor)
@@ -167,7 +188,7 @@ public class CustomBindsProcessor {
       }
 
       // Check modifier keys used across active profile binds
-      List<BomboConfig.CommandBind> binds = getAllActiveBinds();
+      List<BomboConfig.CommandBind> binds = getGuiProfileBinds();
       for (BomboConfig.CommandBind cb : binds) {
          if (cb != null && cb.enabled && cb.keyName != null && cb.keyName.contains("+")) {
             String[] parts = cb.keyName.split("\\+");
@@ -188,8 +209,6 @@ public class CustomBindsProcessor {
          pressedKeys.add(mouseKeyCode);
          if (Minecraft.getInstance().screen == null) {
             checkKeybinds(mouseKeyCode);
-         } else {
-            checkGuiKeybinds(mouseKeyCode);
          }
       } else if (action == 0) {
          pressedKeys.remove(mouseKeyCode);
@@ -502,6 +521,9 @@ public class CustomBindsProcessor {
 
    public static void processChatTrigger(String chatMessage) {
       if (chatMessage != null && !chatMessage.trim().isEmpty()) {
+         if (CHAT_TRIGGER_DEPTH.get() > 2) {
+            return;
+         }
          BomboConfig.Settings s = BomboConfig.get();
          if (s != null) {
             List<BomboConfig.ChatTrigger> triggers = null;
@@ -515,8 +537,20 @@ public class CustomBindsProcessor {
             if (triggers != null) {
                for(BomboConfig.ChatTrigger cte : triggers) {
                   if (cte != null && cte.enabled && cte.triggerText != null && !cte.triggerText.trim().isEmpty() && chatMessage.contains(cte.triggerText.trim())) {
-                     if (cte.commandToRun != null && !cte.commandToRun.trim().isEmpty()) {
-                        executeCommandOrChat(cte.commandToRun.trim());
+                     long now = System.currentTimeMillis();
+                     String cmd = cte.commandToRun != null ? cte.commandToRun.trim() : "";
+                     if (!cmd.isEmpty()) {
+                        if (cmd.equalsIgnoreCase(lastTriggerCmd) && (now - lastTriggerExecTime < 300L)) {
+                           continue;
+                        }
+                        lastTriggerExecTime = now;
+                        lastTriggerCmd = cmd;
+                        CHAT_TRIGGER_DEPTH.set(CHAT_TRIGGER_DEPTH.get() + 1);
+                        try {
+                           executeCommandOrChat(cmd);
+                        } finally {
+                           CHAT_TRIGGER_DEPTH.set(Math.max(0, CHAT_TRIGGER_DEPTH.get() - 1));
+                        }
                      }
 
                      if (cte.titleToShow != null && !cte.titleToShow.trim().isEmpty()) {

@@ -1,5 +1,6 @@
 package me.bombo.bomboaddons;
 
+import java.util.Locale;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -41,6 +42,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import net.minecraft.world.phys.BlockHitResult;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -145,6 +147,15 @@ import net.minecraft.world.scores.Scoreboard;
 
 @Environment(EnvType.CLIENT)
 public class BomboaddonsClient implements ClientModInitializer {
+   public static final java.util.List<String> commandHistory = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+   public static void recordCommand(String cmd) {
+      if (cmd == null || cmd.trim().isEmpty()) return;
+      if (commandHistory.size() > 0 && commandHistory.get(commandHistory.size() - 1).equalsIgnoreCase(cmd)) return;
+      commandHistory.add(cmd);
+      if (commandHistory.size() > 200) commandHistory.remove(0);
+   }
+
     public static class NpcOptionItem {
         public String text;
         public String color;
@@ -183,6 +194,19 @@ public class BomboaddonsClient implements ClientModInitializer {
    public static long lastHoppityCallHeaderTime = 0L;
    public static int locrawDelayTicks = -1;
    public static int expectingLocrawCount = 0;
+   public static String lastDetectedCommand = null;
+
+   public static void trackCommandFromChat(String rawMessage) {
+      if (rawMessage == null) return;
+      String clean = rawMessage.replaceAll("§[0-9a-fk-orxX]", "").trim();
+      int slashIdx = clean.indexOf("/");
+      if (slashIdx != -1) {
+         String possibleCmd = clean.substring(slashIdx).trim();
+         if (!clean.contains("://") && possibleCmd.matches("^/[a-zA-Z0-9_-]+.*")) {
+            lastDetectedCommand = possibleCmd;
+         }
+      }
+   }
 
    private static void openProfileViewer(String username) {
       Minecraft mc = Minecraft.getInstance();
@@ -207,7 +231,9 @@ public class BomboaddonsClient implements ClientModInitializer {
 
    public void onInitializeClient() {
       BomboConfig.load();
+      ChatModifier.load();
       WaypointManager.init();
+      StructureScanner.loadPatterns();
       ComposterHud.init();
       TabWidgetHud.init();
       HoppityHud.init();
@@ -367,174 +393,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                Minecraft.getInstance().player.connection.sendCommand(toSend);
                return 1;
             }))));
-
-            try {
-               dispatcher.register((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("skyblocker").then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("eggFinder").then(ClientCommands.literal("shareLocation").then(ClientCommands.argument("eggType", StringArgumentType.word()).executes((context) -> {
-                  String typeStr = StringArgumentType.getString(context, "eggType");
-                  EggFinder.EggType type = EggFinder.EggType.getTypeByName(typeStr);
-                  if (type == null) {
-                     ((FabricClientCommandSource)context.getSource()).sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
-                     return 1;
-                  } else {
-                     List<EggFinder.EggWaypoint> wps = EggFinder.getActiveWaypoints();
-                     EggFinder.EggWaypoint targetWp = null;
-
-                     for(EggFinder.EggWaypoint wp : wps) {
-                        if (wp.type == type) {
-                           targetWp = wp;
-                           break;
-                        }
-                     }
-
-                     if (targetWp == null) {
-                        ((FabricClientCommandSource)context.getSource()).sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
-                        return 1;
-                     } else {
-                        String var10000 = type.name;
-                        String chatMsg = "[Skyblocker] Chocolate " + var10000 + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
-                        Minecraft.getInstance().player.connection.sendChat(chatMsg);
-                        return 1;
-                     }
-                  }
-               })))).then(ClientCommands.literal("sharelocation").then(ClientCommands.argument("eggType", StringArgumentType.word()).executes((context) -> {
-                  String typeStr = StringArgumentType.getString(context, "eggType");
-                  EggFinder.EggType type = EggFinder.EggType.getTypeByName(typeStr);
-                  if (type == null) {
-                     ((FabricClientCommandSource)context.getSource()).sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
-                     return 1;
-                  } else {
-                     List<EggFinder.EggWaypoint> wps = EggFinder.getActiveWaypoints();
-                     EggFinder.EggWaypoint targetWp = null;
-
-                     for(EggFinder.EggWaypoint wp : wps) {
-                        if (wp.type == type) {
-                           targetWp = wp;
-                           break;
-                        }
-                     }
-
-                     if (targetWp == null) {
-                        ((FabricClientCommandSource)context.getSource()).sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
-                        return 1;
-                     } else {
-                        String var10000 = type.name;
-                        String chatMsg = "[Skyblocker] Chocolate " + var10000 + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
-                        Minecraft.getInstance().player.connection.sendChat(chatMsg);
-                        return 1;
-                     }
-                  }
-               })))).then(ClientCommands.literal("status").executes((context) -> {
-                  boolean connected = EggWebSocket.isConnected();
-                  boolean connecting = EggWebSocket.isConnecting();
-                  String sub = EggWebSocket.getActiveSubscription();
-                  String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
-                  return 1;
-               }))).then(ClientCommands.literal("reconnect").executes((context) -> {
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
-                  EggAuth.forceUpdateToken();
-                  EggWebSocket.forceReconnect();
-                  return 1;
-               })))).then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("eggfinder").then(ClientCommands.literal("shareLocation").then(ClientCommands.argument("eggType", StringArgumentType.word()).executes((context) -> {
-                  String typeStr = StringArgumentType.getString(context, "eggType");
-                  EggFinder.EggType type = EggFinder.EggType.getTypeByName(typeStr);
-                  if (type == null) {
-                     ((FabricClientCommandSource)context.getSource()).sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
-                     return 1;
-                  } else {
-                     List<EggFinder.EggWaypoint> wps = EggFinder.getActiveWaypoints();
-                     EggFinder.EggWaypoint targetWp = null;
-
-                     for(EggFinder.EggWaypoint wp : wps) {
-                        if (wp.type == type) {
-                           targetWp = wp;
-                           break;
-                        }
-                     }
-
-                     if (targetWp == null) {
-                        ((FabricClientCommandSource)context.getSource()).sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
-                        return 1;
-                     } else {
-                        String var10000 = type.name;
-                        String chatMsg = "[Skyblocker] Chocolate " + var10000 + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
-                        Minecraft.getInstance().player.connection.sendChat(chatMsg);
-                        return 1;
-                     }
-                  }
-               })))).then(ClientCommands.literal("sharelocation").then(ClientCommands.argument("eggType", StringArgumentType.word()).executes((context) -> {
-                  String typeStr = StringArgumentType.getString(context, "eggType");
-                  EggFinder.EggType type = EggFinder.EggType.getTypeByName(typeStr);
-                  if (type == null) {
-                     ((FabricClientCommandSource)context.getSource()).sendError(Component.literal("§8[§bBomboAddons§8] §cInvalid egg type: " + typeStr));
-                     return 1;
-                  } else {
-                     List<EggFinder.EggWaypoint> wps = EggFinder.getActiveWaypoints();
-                     EggFinder.EggWaypoint targetWp = null;
-
-                     for(EggFinder.EggWaypoint wp : wps) {
-                        if (wp.type == type) {
-                           targetWp = wp;
-                           break;
-                        }
-                     }
-
-                     if (targetWp == null) {
-                        ((FabricClientCommandSource)context.getSource()).sendError(Component.literal("§8[§bBomboAddons§8] §cUnable to share egg location - not found."));
-                        return 1;
-                     } else {
-                        String var10000 = type.name;
-                        String chatMsg = "[Skyblocker] Chocolate " + var10000 + " Egg found at " + targetWp.pos.getX() + ", " + targetWp.pos.getY() + ", " + targetWp.pos.getZ();
-                        Minecraft.getInstance().player.connection.sendChat(chatMsg);
-                        return 1;
-                     }
-                  }
-               })))).then(ClientCommands.literal("status").executes((context) -> {
-                  boolean connected = EggWebSocket.isConnected();
-                  boolean connecting = EggWebSocket.isConnecting();
-                  String sub = EggWebSocket.getActiveSubscription();
-                  String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
-                  return 1;
-               }))).then(ClientCommands.literal("reconnect").executes((context) -> {
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
-                  EggAuth.forceUpdateToken();
-                  EggWebSocket.forceReconnect();
-                  return 1;
-               }))));
-               dispatcher.register((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("eggfinder").then(ClientCommands.literal("status").executes((context) -> {
-                  boolean connected = EggWebSocket.isConnected();
-                  boolean connecting = EggWebSocket.isConnecting();
-                  String sub = EggWebSocket.getActiveSubscription();
-                  String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
-                  return 1;
-               }))).then(ClientCommands.literal("reconnect").executes((context) -> {
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
-                  EggAuth.forceUpdateToken();
-                  EggWebSocket.forceReconnect();
-                  return 1;
-               })));
-               dispatcher.register((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("eggFinder").then(ClientCommands.literal("status").executes((context) -> {
-                  boolean connected = EggWebSocket.isConnected();
-                  boolean connecting = EggWebSocket.isConnecting();
-                  String sub = EggWebSocket.getActiveSubscription();
-                  String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
-                  return 1;
-               }))).then(ClientCommands.literal("reconnect").executes((context) -> {
-                  ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
-                  EggAuth.forceUpdateToken();
-                  EggWebSocket.forceReconnect();
-                  return 1;
-               })));
-            } catch (Throwable t) {
-               Bomboaddons.LOGGER.error("[BomboAddons] Failed to register skyblocker eggFinder commands!", t);
-            }
 
             registerAllAliases();
 
@@ -837,6 +695,25 @@ public class BomboaddonsClient implements ClientModInitializer {
                      mc.execute(() -> mc.setScreen(BomboConfigGUI.create()));
                      return 1;
                   });
+                  builder.then(((LiteralArgumentBuilder)ClientCommands.literal("history").executes((context) -> {
+                     return showCommandHistory((FabricClientCommandSource)context.getSource(), 5, null);
+                  })).then(ClientCommands.argument("query", StringArgumentType.greedyString()).executes((context) -> {
+                     String q = StringArgumentType.getString(context, "query").trim();
+                     if (q.startsWith("|")) q = q.substring(1).trim();
+                     try {
+                        int count = Integer.parseInt(q);
+                        return showCommandHistory((FabricClientCommandSource)context.getSource(), count, null);
+                     } catch (NumberFormatException ignored) {
+                        return showCommandHistory((FabricClientCommandSource)context.getSource(), 20, q);
+                     }
+                  })));
+                  builder.then(((LiteralArgumentBuilder)ClientCommands.literal("behighlight").then(ClientCommands.literal("add").then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
+                     String mob = StringArgumentType.getString(context, "mob").trim();
+                     return handleBestiaryAddCommand((FabricClientCommandSource)context.getSource(), mob, null);
+                  })))).then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
+                     String mob = StringArgumentType.getString(context, "mob").trim();
+                     return handleBestiaryAddCommand((FabricClientCommandSource)context.getSource(), mob, null);
+                  })));
                   builder.then(ClientCommands.literal("help").executes((context) -> {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8----------------- §b[BomboAddons Help] §8-----------------"));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Hover over any command to see what it does! Click to suggest it.\n"));
@@ -874,46 +751,100 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b chat", "/b chat", "Toggles the global IRC mod chat.").append(Component.literal(" §7- Toggles IRC chat")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b custom", "/b custom", "Customizes the material and name of the held item.").append(Component.literal(" §7- Customizes the held item")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b import", "/b import", "Imports waypoints from your clipboard.").append(Component.literal(" §7- Imports waypoints")));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug [api|chat]", "/b debug ", "Runs diagnostics for APIs or BomboChat socket.").append(Component.literal(" §7- Debug diagnostics (api, chat)")));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b player", "/b player", "Gets skin and UUID of the player/mob in front to copy.").append(Component.literal(" §7- Inspects player/mob skin & UUID")));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug [api|chat]", "/b debug ", "Runs diagnostics for APIs or BomboChat socket.").append(Component.literal(" §7- Debug diagnostics (api, chat)")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8---------------------------------------------------------"));
                      return 1;
                   }));
-                  builder.then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("debug").executes((context) -> {
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== Debug Diagnostics ==="));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug api", "/b debug api", "Tests all API endpoints for status.").append(Component.literal(" §7- Tests Lowest BIN, Hypixel & GitHub APIs")));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug chat", "/b debug chat", "Displays detailed BomboChat socket & connection info.").append(Component.literal(" §7- BomboChat socket/port diagnostics")));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug chat toggle", "/b debug chat toggle", "Toggles live raw BomboChat debug logging.").append(Component.literal(" §7- Toggles raw chat debug logs")));
+                                    builder.then(((LiteralArgumentBuilder)ClientCommands.literal("player").executes((context) -> {
+                     Minecraft mc = Minecraft.getInstance();
+                     if (mc.player == null || mc.level == null) return 0;
+                     Entity target = mc.crosshairPickEntity;
+                     if (target == null) {
+                        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
+                        net.minecraft.world.phys.Vec3 view = mc.player.getViewVector(1.0F);
+                        net.minecraft.world.phys.Vec3 reach = eye.add(view.x * 12.0, view.y * 12.0, view.z * 12.0);
+                        net.minecraft.world.phys.AABB aabb = mc.player.getBoundingBox().expandTowards(view.scale(12.0)).inflate(1.0);
+                        double closestDist = 12.0 * 12.0;
+                        for (Entity e : mc.level.getEntities(mc.player, aabb, ent -> ent != mc.player)) {
+                           net.minecraft.world.phys.AABB eBox = e.getBoundingBox().inflate(0.3);
+                           var hit = eBox.clip(eye, reach);
+                           if (hit.isPresent()) {
+                              double d = eye.distanceToSqr(hit.get());
+                              if (d < closestDist) {
+                                 target = e;
+                                 closestDist = d;
+                              }
+                           }
+                        }
+                     }
+
+                     if (target == null) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo player/mob found in front of you."));
+                        return 0;
+                     }
+
+                     String entName = target.getName().getString();
+                     String uuid = target.getUUID().toString();
+                     String tex = TargetPests.getHeadTextureValue(target);
+                     String hash = tex != null ? TargetPests.extractTextureHash(tex) : null;
+                     String copyVal = hash != null ? hash : uuid;
+                     mc.keyboardHandler.setClipboard(copyVal);
+
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §a=== Targeted Entity Info ==="));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Name: §e" + entName + " §7(Type: " + target.getType().getDescription().getString() + ")"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- UUID: §d" + uuid));
+                     if (hash != null) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Skin Hash: §b" + hash));
+                     }
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§a✔ Copied §e" + (hash != null ? "Skin Hash" : "UUID") + " §ato clipboard! You can use it in Highlights or Custom Tracers."));
                      return 1;
-                  })).then(ClientCommands.literal("api").executes((context) -> {
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eTesting API endpoints..."));
-                     (new Thread(() -> {
-                        checkApiEndpoint("Moulberry Lowest BIN API", "https://moulberry.codes/lowestbin.json");
-                        checkApiEndpoint("Hypixel Bazaar API", "https://api.hypixel.net/v2/skyblock/bazaar");
-                        checkApiEndpoint("GitHub Release API", "https://api.github.com/repos/fran939/bomboFabric/releases/latest");
-                     })).start();
-                     return 1;
-                  }))).then(((LiteralArgumentBuilder)ClientCommands.literal("chat").executes((context) -> {
-                     boolean connected = IRCClient.isConnected();
-                     String connType = IRCClient.getConnectionType();
-                     String endpoint = IRCClient.activeEndpoint;
-                     String err = IRCClient.lastError;
-                     int users = IRCClient.getOnlinePlayers().size();
-                     boolean isDebug = BomboConfig.get().debugChat;
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== BomboChat Diagnostic Report ==="));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Status: " + (connected ? "§aCONNECTED" : "§cDISCONNECTED")));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Connection Type: §b" + connType));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Active Endpoint: §f" + endpoint));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Last Log / Socket Info: §f" + err));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Online Mod Users: §a" + users + " §7(Use §e/b online§7 to list)"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Raw Chat Debug Logs: " + (isDebug ? "§aENABLED" : "§cDISABLED") + " §7(Run §e/b debug chat toggle§7 to flip)"));
-                     return 1;
-                  })).then(ClientCommands.literal("toggle").executes((context) -> {
-                     BomboConfig.get().debugMaster = true;
-                     BomboConfig.get().debugChat = !BomboConfig.get().debugChat;
-                     BomboConfig.save();
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7BomboChat Raw Debug Logs set to: " + (BomboConfig.get().debugChat ? "§aENABLED" : "§cDISABLED")));
-                     return 1;
-                  }))));
+                  })));
+
+                  builder.then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("debug").executes((context) -> {
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== Debug Diagnostics ==="));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug api", "/b debug api", "Tests all API endpoints for status.").append(Component.literal(" §7- Tests Lowest BIN, Hypixel & GitHub APIs")));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug bestiary", "/b debug bestiary", "Shows live Bestiary sync diagnostics.").append(Component.literal(" §7- Bestiary rules, heads & counts")));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug chat", "/b debug chat", "Displays detailed BomboChat socket & connection info.").append(Component.literal(" §7- BomboChat socket/port diagnostics")));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b debug chat toggle", "/b debug chat toggle", "Toggles live raw BomboChat debug logging.").append(Component.literal(" §7- Toggles raw chat debug logs")));
+                      return 1;
+                   })).then(ClientCommands.literal("api").executes((context) -> {
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eTesting API endpoints..."));
+                      (new Thread(() -> {
+                         checkApiEndpoint("Moulberry Lowest BIN API", "https://moulberry.codes/lowestbin.json");
+                         checkApiEndpoint("Hypixel Bazaar API", "https://api.hypixel.net/v2/skyblock/bazaar");
+                         checkApiEndpoint("GitHub Release API", "https://api.github.com/repos/fran939/bomboFabric/releases/latest");
+                      })).start();
+                      return 1;
+                   }))).then(ClientCommands.literal("bestiary").executes((context) -> {
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eFetching & refreshing live Bestiary database..."));
+                      me.bombo.bomboaddons.features.BestiaryDataFetcher.fetchBestiaryDataAsync();
+                      int rulesCount = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRulesCount();
+                      int skullCount = me.bombo.bomboaddons.features.BestiaryDataFetcher.getHeadLookupCount();
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §aBestiary Database Status: §e" + rulesCount + " §amob rules, §e" + skullCount + " §ahead texture mappings loaded."));
+                      return 1;
+                   }))).then(((LiteralArgumentBuilder)ClientCommands.literal("chat").executes((context) -> {
+                      boolean connected = IRCClient.isConnected();
+                      String connType = IRCClient.getConnectionType();
+                      String endpoint = IRCClient.activeEndpoint;
+                      String err = IRCClient.lastError;
+                      int users = IRCClient.getOnlinePlayers().size();
+                      boolean isDebug = BomboConfig.get().debugChat;
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== BomboChat Diagnostic Report ==="));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Status: " + (connected ? "§aCONNECTED" : "§cDISCONNECTED")));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Connection Type: §b" + connType));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Active Endpoint: §f" + endpoint));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Last Log / Socket Info: §f" + err));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Online Mod Users: §a" + users + " §7(Use §e/b online§7 to list)"));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Raw Chat Debug Logs: " + (isDebug ? "§aENABLED" : "§cDISABLED") + " §7(Run §e/b debug chat toggle§7 to flip)"));
+                      return 1;
+                   })).then(ClientCommands.literal("toggle").executes((context) -> {
+                      BomboConfig.get().debugMaster = true;
+                      BomboConfig.get().debugChat = !BomboConfig.get().debugChat;
+                      BomboConfig.save();
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7BomboChat Raw Debug Logs set to: " + (BomboConfig.get().debugChat ? "§aENABLED" : "§cDISABLED")));
+                      return 1;
+                   }))));
                   builder.then(ClientCommands.literal("play").then(ClientCommands.argument("ip", StringArgumentType.greedyString()).executes((context) -> {
                      String rawIp = StringArgumentType.getString(context, "ip");
                      if (!rawIp.equalsIgnoreCase("a") && !rawIp.equalsIgnoreCase("alpha")) {
@@ -1066,6 +997,69 @@ public class BomboaddonsClient implements ClientModInitializer {
                   builder.then(ClientCommands.literal("area").executes((context) -> {
                      String loc = SkyblockUtils.getLocation();
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + loc));
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("block").executes((context) -> {
+                     Minecraft mc = Minecraft.getInstance();
+                     if (mc.player == null || mc.level == null) return 0;
+                     
+                     BlockPos targetPos = null;
+                     if (mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK && mc.hitResult instanceof BlockHitResult bhr) {
+                        targetPos = bhr.getBlockPos();
+                     } else {
+                        Vec3 eye = mc.player.getEyePosition();
+                        Vec3 view = mc.player.getViewVector(1.0F);
+                        Vec3 reach = eye.add(view.scale(16.0));
+                        BlockHitResult bhr = mc.level.clip(new net.minecraft.world.level.ClipContext(eye, reach, net.minecraft.world.level.ClipContext.Block.OUTLINE, net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
+                        if (bhr != null && bhr.getType() == HitResult.Type.BLOCK) {
+                           targetPos = bhr.getBlockPos();
+                        }
+                     }
+
+                     if (targetPos == null) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cNo block found in front of you."));
+                        return 0;
+                     }
+
+                     BlockState state = mc.level.getBlockState(targetPos);
+                     String rawId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                     String shortId = rawId.replace("minecraft:", "");
+                     String blockName = state.getBlock().getName().getString();
+                     String coordsStr = targetPos.getX() + " " + targetPos.getY() + " " + targetPos.getZ();
+
+                     mc.keyboardHandler.setClipboard(shortId);
+
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §a=== Targeted Block Info ==="));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Name: §e" + blockName));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- ID: §b" + rawId + " §7(short: §e" + shortId + "§7)"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Coords: §6" + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ()));
+
+                     MutableComponent actions = Component.literal("§7Actions: ");
+
+                     MutableComponent copyIdBtn = Component.literal("§b[Copy ID] ");
+                     copyIdBtn.setStyle(copyIdBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(shortId)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy '" + shortId + "' to clipboard"))));
+                     actions.append(copyIdBtn);
+
+                     MutableComponent copyCoordsBtn = Component.literal("§6[Copy Coords] ");
+                     copyCoordsBtn.setStyle(copyCoordsBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(coordsStr)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy coords: " + coordsStr))));
+                     actions.append(copyCoordsBtn);
+
+                     MutableComponent highlightBtn = Component.literal("§a[+ Highlight Block]");
+                     highlightBtn.setStyle(highlightBtn.getStyle().withClickEvent(new ClickEvent.SuggestCommand("/b blockhighlight add " + shortId)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to highlight " + shortId))));
+                     actions.append(highlightBtn);
+
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(actions);
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§a✔ Copied §e" + shortId + " §ato clipboard!"));
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("pos1").executes((context) -> {
+                     BlockPos pos = StructureScanner.getTargetOrPlayerPos();
+                     StructureScanner.setPos1(pos);
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("pos2").executes((context) -> {
+                     BlockPos pos = StructureScanner.getTargetOrPlayerPos();
+                     StructureScanner.setPos2(pos);
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("chroma").then(ClientCommands.literal("test").executes((context) -> {
@@ -1414,6 +1408,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                            Vec3 targetPos = new Vec3(x, y, z);
                            GardenWaypoints.addWaypoint(targetPos, name);
+                           WaypointManager.addWaypoint(x, y, z, name);
                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aAdded waypoint '§e" + name + "§a' at " + String.format("%.1f, %.1f, %.1f", x, y, z)));
                            return 1;
                         }
@@ -1421,7 +1416,78 @@ public class BomboaddonsClient implements ClientModInitializer {
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §cInvalid coordinates format!"));
                         return 0;
                      }
-                  }))))));
+                   }))))));
+
+                   builder.then(ClientCommands.literal("scan").executes((context) -> {
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §6Usage: §e/b scan copy§7, §e/b scan paste [name]§7, §e/b scan pos1§7, §e/b scan pos2§7, §e/b scan clear§7, §e/b scan <name> [radius]§7, §e/b scan list§7, §e/b scan reload"));
+                      return 1;
+                   }).then(ClientCommands.literal("copy").executes((context) -> {
+                      StructureScanner.copyMatchedStructure();
+                      return 1;
+                   })).then(ClientCommands.literal("paste").executes((context) -> {
+                      Minecraft mc = Minecraft.getInstance();
+                      if (mc.player == null) return 0;
+                      BlockPos origin = mc.player.blockPosition();
+                      StructureScanner.pasteStructure(null, origin);
+                      return 1;
+                   }).then(ClientCommands.argument("name", StringArgumentType.word()).executes((context) -> {
+                      String name = StringArgumentType.getString(context, "name");
+                      Minecraft mc = Minecraft.getInstance();
+                      if (mc.player == null) return 0;
+                      BlockPos origin = mc.player.blockPosition();
+                      StructureScanner.pasteStructure(name, origin);
+                      return 1;
+                   }))).then(ClientCommands.literal("pos1").executes((context) -> {
+                      BlockPos pos = StructureScanner.getTargetOrPlayerPos();
+                      StructureScanner.setPos1(pos);
+                      return 1;
+                   })).then(ClientCommands.literal("pos2").executes((context) -> {
+                      BlockPos pos = StructureScanner.getTargetOrPlayerPos();
+                      StructureScanner.setPos2(pos);
+                      return 1;
+                   })).then(ClientCommands.literal("clear").executes((context) -> {
+                      StructureScanner.pos1 = null;
+                      StructureScanner.pos2 = null;
+                      StructureScanner.pastedStructureOrigin = null;
+                      StructureScanner.pastedStructurePattern = null;
+                      StructureFinder.clear();
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aStructure scan positions, waypoints, and markers cleared!"));
+                      return 1;
+                   })).then(ClientCommands.literal("list").executes((context) -> {
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §6--- Loaded Structure Templates ---"));
+                      if (StructureScanner.loadedPatterns.isEmpty()) {
+                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §7No patterns loaded."));
+                      } else {
+                         for (StructureScanner.StructurePattern p : StructureScanner.loadedPatterns.values()) {
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §e" + p.name + " §7(" + p.blocks.size() + " blocks, size: " + p.sizeX + "x" + p.sizeY + "x" + p.sizeZ + ")"));
+                         }
+                      }
+                      return 1;
+                   })).then(ClientCommands.literal("reload").executes((context) -> {
+                      StructureScanner.loadPatterns();
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aReloaded " + StructureScanner.loadedPatterns.size() + " structure templates!"));
+                      return 1;
+                   })).then(ClientCommands.argument("name", StringArgumentType.word()).executes((context) -> {
+                      String name = StringArgumentType.getString(context, "name");
+                      StructureScanner.scanArea(name, 16);
+                      return 1;
+                   }).then(ClientCommands.argument("radius", IntegerArgumentType.integer(1, 128)).executes((context) -> {
+                      String name = StringArgumentType.getString(context, "name");
+                      int rad = IntegerArgumentType.getInteger(context, "radius");
+                      StructureScanner.scanArea(name, rad);
+                      return 1;
+                   }))));
+
+                   builder.then(ClientCommands.literal("pos1").executes((context) -> {
+                      BlockPos pos = StructureScanner.getTargetOrPlayerPos();
+                      StructureScanner.setPos1(pos);
+                      return 1;
+                   }));
+                   builder.then(ClientCommands.literal("pos2").executes((context) -> {
+                      BlockPos pos = StructureScanner.getTargetOrPlayerPos();
+                      StructureScanner.setPos2(pos);
+                      return 1;
+                   }));
                   builder.then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("cycle").executes((context) -> {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §cUsage: /b cycle add <name> <commands...>, /b cycle apply <name>, /b cycle remove <name>, or /b cycle list"));
                      return 1;
@@ -2576,10 +2642,30 @@ public class BomboaddonsClient implements ClientModInitializer {
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aParticle history cleared."));
                         return 1;
                      })));
-                     builder.then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("debug").executes((context) -> {
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §6Usage: /b debug api, /b debug chat, or /b debug api events"));
+                     builder.then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("debug").executes((context) -> {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §6Usage: /b debug off, /b debug commands, /b debug chat, /b debug api"));
                         return 1;
-                     })).then(ClientCommands.literal("chat").executes((context) -> {
+                     })).then(ClientCommands.literal("off").executes((context) -> {
+                        BomboConfig.Settings s = BomboConfig.get();
+                        s.debugMaster = false;
+                        s.debugCommands = false;
+                        s.debugChat = false;
+                        s.debugGuis = false;
+                        s.debugEntities = false;
+                        s.debugSounds = false;
+                        s.debugParticles = false;
+                        s.debugMode = false;
+                        s.apiDebug = false;
+                        BomboConfig.save();
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aAll debug logs and overlays have been disabled."));
+                        return 1;
+                     }))).then(ClientCommands.literal("commands").executes((context) -> {
+                        BomboConfig.Settings s = BomboConfig.get();
+                        s.debugCommands = !s.debugCommands;
+                        BomboConfig.save();
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Command debug logging: " + (s.debugCommands ? "§aENABLED" : "§cDISABLED")));
+                        return 1;
+                     }))).then(((LiteralArgumentBuilder)ClientCommands.literal("chat").executes((context) -> {
                         boolean connected = IRCClient.isConnected();
                         String connType = IRCClient.getConnectionType();
                         String endpoint = IRCClient.activeEndpoint;
@@ -2594,6 +2680,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Online Mod Users: §a" + users + " §7(Use §e/b online§7 to list)"));
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Raw Chat Debug Logs: " + (isDebug ? "§aENABLED" : "§cDISABLED") + " §7(Run §e/b debug chat toggle§7 to flip)"));
                         return 1;
+                     })).then(ClientCommands.literal("toggle").executes((context) -> {
+                        BomboConfig.Settings s = BomboConfig.get();
+                        s.debugChat = !s.debugChat;
+                        BomboConfig.save();
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Chat debug logging: " + (s.debugChat ? "§aENABLED" : "§cDISABLED")));
+                        return 1;
                      }))).then(ClientCommands.literal("events").executes((context) -> {
                         showDebugApiEvents((FabricClientCommandSource)context.getSource());
                         return 1;
@@ -2603,6 +2695,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                      })).then(ClientCommands.literal("events").executes((context) -> {
                         showDebugApiEvents((FabricClientCommandSource)context.getSource());
                         return 1;
+                     }))).then(((LiteralArgumentBuilder)ClientCommands.literal("bestiary").executes((context) -> {
+                        return showBestiaryDebug((FabricClientCommandSource)context.getSource(), null);
+                     })).then(ClientCommands.argument("query", StringArgumentType.greedyString()).executes((context) -> {
+                        String q = StringArgumentType.getString(context, "query").trim();
+                        return showBestiaryDebug((FabricClientCommandSource)context.getSource(), q);
                      }))));
                   }
 
@@ -2877,8 +2974,57 @@ public class BomboaddonsClient implements ClientModInitializer {
                      BomboConfig.save();
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aAdded get target: §e" + itemId + " §7(Target: " + number + ") under alias §b" + alias));
                      return 1;
-                  })))));
-                  builder.then(ClientCommands.literal("online").executes((context) -> {
+                   })))));
+                   builder.then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("egg").then(ClientCommands.literal("status").executes((context) -> {
+                      boolean connected = EggWebSocket.isConnected();
+                      boolean connecting = EggWebSocket.isConnecting();
+                      String sub = EggWebSocket.getActiveSubscription();
+                      String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                      return 1;
+                   }))).then(ClientCommands.literal("reconnect").executes((context) -> {
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                      EggAuth.forceUpdateToken();
+                      EggWebSocket.forceReconnect();
+                      return 1;
+                   }))).executes((context) -> {
+                      boolean connected = EggWebSocket.isConnected();
+                      boolean connecting = EggWebSocket.isConnecting();
+                      String sub = EggWebSocket.getActiveSubscription();
+                      String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Usage: §e/b egg status §7or §e/b egg reconnect"));
+                      return 1;
+                   }));
+                  builder.then(ClientCommands.literal("command").executes((context) -> {
+                      if (lastDetectedCommand != null && !lastDetectedCommand.isEmpty()) {
+                         Minecraft mc = Minecraft.getInstance();
+                         if (mc.player != null && mc.player.connection != null) {
+                            String toRun = lastDetectedCommand.startsWith("/") ? lastDetectedCommand.substring(1) : lastDetectedCommand;
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aExecuting: §e/" + toRun));
+                            mc.player.connection.sendCommand(toRun);
+                         }
+                      } else {
+                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cNo command detected in recent chat messages."));
+                      }
+                      return 1;
+                   }));
+                   builder.then(ClientCommands.literal("cmd").executes((context) -> {
+                      if (lastDetectedCommand != null && !lastDetectedCommand.isEmpty()) {
+                         Minecraft mc = Minecraft.getInstance();
+                         if (mc.player != null && mc.player.connection != null) {
+                            String toRun = lastDetectedCommand.startsWith("/") ? lastDetectedCommand.substring(1) : lastDetectedCommand;
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aExecuting: §e/" + toRun));
+                            mc.player.connection.sendCommand(toRun);
+                         }
+                      } else {
+                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cNo command detected in recent chat messages."));
+                      }
+                      return 1;
+                   }));
+                   builder.then(ClientCommands.literal("online").executes((context) -> {
                      if (!BomboConfig.get().ircChatEnabled) {
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §cIRC Chat is currently disabled. Toggle it ON in the config GUI to see online users."));
                         return 1;
@@ -3021,15 +3167,6 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                      return 1;
                   }));
-                  builder.then(ClientCommands.literal("wp").then(ClientCommands.argument("x", DoubleArgumentType.doubleArg()).then(ClientCommands.argument("y", DoubleArgumentType.doubleArg()).then(ClientCommands.argument("z", DoubleArgumentType.doubleArg()).then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes((context) -> {
-                     double x = DoubleArgumentType.getDouble(context, "x");
-                     double y = DoubleArgumentType.getDouble(context, "y");
-                     double z = DoubleArgumentType.getDouble(context, "z");
-                     String name = StringArgumentType.getString(context, "name");
-                     WaypointManager.addWaypoint(x, y, z, name);
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§aWaypoint added: §e" + name + " §a(" + x + ", " + y + ", " + z + ")"));
-                     return 1;
-                  }))))));
                };
                setupCommands.accept(bBuilder);
                setupCommands.accept(baBuilder);
@@ -3501,32 +3638,35 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                   return 1;
                })));
-               dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("tp").then(ClientCommands.argument("plot", StringArgumentType.word()).suggests((context, builder) -> {
+               dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("tp").then(ClientCommands.argument("plot", StringArgumentType.greedyString()).suggests((context, builder) -> {
                   if (SkyblockUtils.isInGarden()) {
-                     for(int i = 1; i <= 24; ++i) {
+                     builder.suggest("barn");
+                     for (int i = 1; i <= 24; ++i) {
                         builder.suggest(String.valueOf(i));
                      }
                   } else {
                      Minecraft mc = Minecraft.getInstance();
                      if (mc.getConnection() != null) {
-                        for(PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
+                        for (net.minecraft.client.multiplayer.PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
                            builder.suggest(playerInfo.getProfile().name());
                         }
                      }
                   }
-
                   return builder.buildFuture();
                }).executes((context) -> {
-                  String plot = StringArgumentType.getString(context, "plot");
+                  String plot = StringArgumentType.getString(context, "plot").trim();
                   Minecraft mc = Minecraft.getInstance();
-                  if (mc.player != null && mc.player.connection != null) {
+                  if (mc.player != null && mc.getConnection() != null) {
                      if (SkyblockUtils.isInGarden()) {
-                        mc.player.connection.sendCommand("tptoplot " + plot);
+                        if (plot.equalsIgnoreCase("barn")) {
+                           mc.player.connection.sendCommand("warp garden");
+                        } else {
+                           mc.player.connection.sendCommand("tptoplot " + plot);
+                        }
                      } else {
-                        mc.player.connection.sendCommand("tp " + plot);
+                        mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket("tp " + plot));
                      }
                   }
-
                   return 1;
                })));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("pv").executes((context) -> {
@@ -3689,6 +3829,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                   GoldenDragonNestFinder.render(context);
                } catch (Throwable ignored) {}
             }
+
+            if (s.structureFinder && (StructureFinder.isScanAllowed() || "Crystal Hollows".equalsIgnoreCase(currentArea) || "Hollows".equalsIgnoreCase(currentArea))) {
+               try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: StructureFinder")) {
+                  StructureFinder.render(context);
+               } catch (Throwable ignored) {}
+            }
+
+            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: StructureScanner")) {
+               StructureScanner.render(context);
+            } catch (Throwable ignored) {}
          });
          HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "main_hud"), (graphics, deltaTracker) -> {
             if (BomboConfig.get().tracerTestMode) {
@@ -3731,6 +3881,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                ExperimentationTableHud.onHudRender(graphics);
             }));
          ClientPlayConnectionEvents.JOIN.register((ClientPlayConnectionEvents.Join)(handler, sender, client) -> {
+            StructureFinder.clear();
+            me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.reset();
             currentHypixelChannel = "a";
             if (client.getCurrentServer() != null) {
                lastServerData = client.getCurrentServer();
@@ -3757,6 +3909,8 @@ public class BomboaddonsClient implements ClientModInitializer {
 
          });
          ClientPlayConnectionEvents.DISCONNECT.register((ClientPlayConnectionEvents.Disconnect)(handler, client) -> {
+            StructureFinder.clear();
+            me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.reset();
             PlaytimeTracker.sendPlaytimeDataToCloud();
 
             try {
@@ -3773,6 +3927,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
          });
          ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((ClientLevelEvents.AfterClientLevelChange)(client, world) -> {
+            StructureFinder.clear();
             if (world != null && SkyblockUtils.isConnectedToHypixel()) {
                locrawServer = "";
                locrawGametype = "";
@@ -3937,7 +4092,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                      try {
                         JsonObject json = JsonParser.parseString(plain).getAsJsonObject();
                         if (json.has("server")) {
-                           locrawServer = json.get("server").getAsString();
+                           String newServer = json.get("server").getAsString();
+                           if (!newServer.equals(locrawServer)) {
+                              StructureFinder.clear();
+                           }
+                           locrawServer = newServer;
                         }
 
                         if (json.has("gametype")) {
@@ -4163,6 +4322,12 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
          }
 
+         if (s.frozenBlazeWarning) {
+            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: FrozenBlazeAFK")) {
+               me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.onTick(client);
+            } catch (Throwable ignored) {}
+         }
+
          if (client.player != null && client.player.tickCount % 10 == 0 && s.highlightsEnabled && HighlightESP.hasActiveTracers(s)) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: HighlightESP")) {
                HighlightESP.onTick();
@@ -4200,8 +4365,12 @@ public class BomboaddonsClient implements ClientModInitializer {
 
          if (client.player != null) {
             if (client.player.tickCount % 20 == 0) {
+               String prevArea = currentArea;
                currentArea = SkyblockUtils.getLocation();
                currentSubArea = SkyblockUtils.getSubArea();
+               if (currentArea != null && !currentArea.equals("None") && !currentArea.equals("Unknown") && !currentArea.equals(prevArea)) {
+                  IRCClient.broadcastArea(currentArea);
+               }
             }
 
             try {
@@ -4382,6 +4551,18 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
 
          try {
+            if (BomboConfig.get().goldenDragonNestFinder && ("Crystal Hollows".equalsIgnoreCase(currentArea) || "Hollows".equalsIgnoreCase(currentArea))) {
+               try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: GoldenDragonNestFinder")) {
+                  GoldenDragonNestFinder.onTick();
+               } catch (Throwable var21) {}
+            }
+
+            if (BomboConfig.get().structureFinder && (StructureFinder.isScanAllowed() || "Crystal Hollows".equalsIgnoreCase(currentArea) || "Hollows".equalsIgnoreCase(currentArea))) {
+               try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: StructureFinder")) {
+                  StructureFinder.onTick();
+               } catch (Throwable var21) {}
+            }
+
             if (BomboConfig.get().debugEntities && client.player != null && client.player.tickCount % 100 == 0 && client.level != null) {
                int count = 0;
                StringBuilder info = new StringBuilder("Entities near you: ");
@@ -4615,7 +4796,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
    public static void copyClientCommands(CommandDispatcher<FabricClientCommandSource> source, CommandDispatcher<ClientSuggestionProvider> target) {
       try {
-         String[] toWipe = new String[]{"b", "bomboaddons", "bombo", "tp", "w", "tell", "msg", "p", "party"};
+         String[] toWipe = new String[]{"b", "bomboaddons", "bombo", "tp", "w", "tell", "msg", "p", "party", "f", "friend", "v", "visit"};
 
          for(String cmd : toWipe) {
             removeCommand(target, cmd);
@@ -4624,16 +4805,26 @@ public class BomboaddonsClient implements ClientModInitializer {
          RootCommandNode<FabricClientCommandSource> sourceRoot = source.getRoot();
          RootCommandNode<ClientSuggestionProvider> targetRoot = target.getRoot();
 
+         java.util.Set<String> bomboCommands = new java.util.HashSet<>(java.util.Arrays.asList(
+            "b", "bomboaddons", "bombo", "tp", "w", "tell", "msg", "p", "party", "f", "friend", "v", "visit",
+            "bc", "bombochat", "lf", "lfc", "lb", "nw", "nwc", "cata", "skills", "slayer", "trophyfish", "crimson", "crimsom",
+            "bombo_highlight_slot", "bombo_museum_click"
+         ));
+         if (BomboConfig.get() != null && BomboConfig.get().commandAliases != null) {
+            bomboCommands.addAll(BomboConfig.get().commandAliases.keySet());
+         }
+
          for(CommandNode<FabricClientCommandSource> child : sourceRoot.getChildren()) {
-            CommandNode<ClientSuggestionProvider> connectionChild = wrapNode(child);
-            if (connectionChild != null) {
-               targetRoot.addChild(connectionChild);
+            if (bomboCommands.contains(child.getName().toLowerCase())) {
+               CommandNode<ClientSuggestionProvider> connectionChild = wrapNode(child);
+               if (connectionChild != null) {
+                  targetRoot.addChild(connectionChild);
+               }
             }
          }
       } catch (Throwable t) {
          Bomboaddons.LOGGER.error("Failed to copy client commands to connection dispatcher", t);
       }
-
    }
 
    public static CommandNode<ClientSuggestionProvider> wrapNode(CommandNode<FabricClientCommandSource> node) {
@@ -4824,6 +5015,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
    public static void processChatMessage(String rawMessage) {
       if (rawMessage != null) {
+         me.bombo.bomboaddons.features.BestiaryManager.onChatMessage(rawMessage);
          try {
             TabCompletionManager.onChatMessage(rawMessage);
          } catch (Throwable var22) {
@@ -5016,6 +5208,34 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
    }
 
+   public static void playTriggerSound(String soundId, int times) {
+      if (soundId == null || soundId.trim().isEmpty()) return;
+      int count = Math.max(1, times);
+      Minecraft mc = Minecraft.getInstance();
+      mc.execute(() -> {
+         try {
+            String clean = soundId.trim();
+            Identifier id = Identifier.tryParse(clean.contains(":") ? clean : "minecraft:" + clean);
+            if (id != null) {
+               net.minecraft.sounds.SoundEvent se = net.minecraft.sounds.SoundEvent.createVariableRangeEvent(id);
+               for (int i = 0; i < count; i++) {
+                  final int delay = i * 150;
+                  if (delay == 0) {
+                     mc.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(se, 1.0F));
+                  } else {
+                     new Thread(() -> {
+                        try {
+                           Thread.sleep(delay);
+                           mc.execute(() -> mc.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(se, 1.0F)));
+                        } catch (Exception ignored) {}
+                     }).start();
+                  }
+               }
+            }
+         } catch (Exception ignored) {}
+      });
+   }
+
    public static Map<String, Integer> getEnchantments(ItemStack stack) {
       return AutoCombine.getEnchantments(stack);
    }
@@ -5152,6 +5372,108 @@ public class BomboaddonsClient implements ClientModInitializer {
       }, "Rank-Fetch-Command-" + username)).start();
    }
 
+      public static int showCommandHistory(FabricClientCommandSource src, int limit, String filter) {
+      if (commandHistory.isEmpty()) {
+         src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo command history recorded yet."));
+         return 0;
+      }
+      java.util.List<String> list = new java.util.ArrayList<>(commandHistory);
+      if (filter != null && !filter.trim().isEmpty()) {
+         String f = filter.toLowerCase(Locale.ROOT).trim();
+         list.removeIf(cmd -> !cmd.toLowerCase(Locale.ROOT).contains(f));
+      }
+      if (list.isEmpty()) {
+         src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo commands matched filter: §e" + filter));
+         return 0;
+      }
+      int total = list.size();
+      int start = Math.max(0, total - limit);
+      src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== Command History (" + (total - start) + "/" + total + ") ==="));
+      for (int i = start; i < total; i++) {
+         String cmd = list.get(i);
+         ClickEvent runClick = LF.createClickEventRobust("RUN_COMMAND", cmd);
+         ClickEvent sugClick = LF.createClickEventRobust("SUGGEST_COMMAND", cmd);
+         Component line = Component.literal(" §7" + (i + 1) + ". §f" + cmd + " ")
+            .append(Component.literal("§a[Run]").withStyle(st -> runClick != null ? st.withClickEvent(runClick) : st))
+            .append(Component.literal(" "))
+            .append(Component.literal("§b[Suggest]").withStyle(st -> sugClick != null ? st.withClickEvent(sugClick) : st));
+         src.sendFeedback(line);
+      }
+      return 1;
+   }
+
+      public static int showBestiaryDebug(FabricClientCommandSource src, String filter) {
+      String island = SkyblockUtils.getLocation();
+      String subarea = SkyblockUtils.getSubArea();
+      int totalRules = me.bombo.bomboaddons.features.BestiaryDataFetcher.getTotalRuleCount();
+      src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== Bestiary Diagnostics ==="));
+      src.sendFeedback(Component.literal("§7- Current Island: §e" + (island.isEmpty() ? "Unknown" : island)));
+      src.sendFeedback(Component.literal("§7- Current SubArea: §b" + (subarea.isEmpty() ? "None" : subarea)));
+      src.sendFeedback(Component.literal("§7- Total Loaded Rules: §a" + totalRules + " §7(from https://api.bombo.dpdns.org/mod/bestiary)"));
+      
+      java.util.List<me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule> list = new java.util.ArrayList<>();
+      if (filter != null && !filter.trim().isEmpty()) {
+         String f = filter.toLowerCase(Locale.ROOT).trim();
+         var allRules = me.bombo.bomboaddons.features.BestiaryDataFetcher.getAllRules();
+         if (allRules != null) {
+            for (var rule : allRules) {
+               if (rule.name != null && rule.name.toLowerCase(Locale.ROOT).contains(f)) {
+                  list.add(rule);
+               }
+            }
+         }
+         src.sendFeedback(Component.literal("§7- Matching Mobs for filter '§e" + filter + "§7' (" + list.size() + "):"));
+      } else {
+         var islandRules = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRulesForIsland(island);
+         if (islandRules != null) list.addAll(islandRules);
+         src.sendFeedback(Component.literal("§7- Mobs for " + island + " (" + list.size() + "):"));
+      }
+      
+      for (var r : list) {
+         String ent = r.entityType != null && !r.entityType.isEmpty() ? r.entityType : "entity";
+         String extra = "";
+         if (r.armor != null && !r.armor.isEmpty()) extra += " §8(armor: " + r.armor + "§8)";
+         String sz = r.mobSize != null && !r.mobSize.isEmpty() ? r.mobSize : r.size;
+         if (sz != null && !sz.isEmpty()) extra += " §8(size: " + sz + "§8)";
+         if (r.subarea != null && !r.subarea.isEmpty()) extra += " §8(subarea: " + r.subarea + "§8)";
+         src.sendFeedback(Component.literal(" §7• §e" + r.name + " §7| Max Tier: §a" + (r.maxTier > 0 ? r.maxTier : 20) + " §7| Entity: §f" + ent + extra));
+      }
+      return 1;
+   }
+
+      public static int handleBestiaryAddCommand(FabricClientCommandSource src, String rawMob, String colorOverride) {
+      if (rawMob == null || rawMob.trim().isEmpty()) {
+         src.sendFeedback(Component.literal("§8[§3Bombo§8] §cUsage: /b behighlight add <mob name>"));
+         return 0;
+      }
+      String cleanMob = me.bombo.bomboaddons.features.BestiaryManager.cleanMobName(rawMob).trim();
+      var rule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(cleanMob, null);
+      String islandReq = (rule != null && rule.island != null) ? rule.island : "";
+      String cat = me.bombo.bomboaddons.features.BestiaryManager.getCategoryForIsland(islandReq);
+      String color = (colorOverride != null && !colorOverride.trim().isEmpty()) ? colorOverride.toUpperCase(Locale.ROOT) : me.bombo.bomboaddons.features.BestiaryManager.getCategoryColor(cat);
+      boolean tracer = me.bombo.bomboaddons.features.BestiaryManager.getCategoryTracer(cat);
+
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s.highlights == null) s.highlights = new java.util.HashMap<>();
+      BomboConfig.HighlightInfo info = new BomboConfig.HighlightInfo(color, false, true, tracer, islandReq, true);
+      if (rule != null) {
+         if (rule.entityType != null) info.entityType = rule.entityType;
+         if (rule.heads != null && !rule.heads.isEmpty()) info.headHashes = new java.util.ArrayList<>(rule.heads);
+         if (rule.armor != null) info.armorType = rule.armor;
+         if (rule.playerName != null) info.playerName = rule.playerName;
+         if (rule.riding != null) info.ridingType = rule.riding;
+         if (rule.heldItem != null) info.heldItem = rule.heldItem;
+         if (rule.subarea != null) info.requiredSubarea = rule.subarea;
+      }
+      s.highlights.put(cleanMob.toLowerCase(Locale.ROOT), info);
+      s.highlightsEnabled = true;
+      BomboConfig.save();
+
+      String islandDisplay = islandReq.isEmpty() ? "Everywhere" : islandReq;
+      src.sendFeedback(Component.literal("§8[§3Bombo§8] §aAdded Bestiary highlight for §e" + cleanMob + " §7(Category: §b" + cat + "§7, Color: " + me.bombo.bomboaddons.features.BestiaryManager.getColorFormatting(color) + color + "§7)"));
+      return 1;
+   }
+
    public static void displayEntityDetails(FabricClientCommandSource src, Minecraft mc, Entity target, int index, int total) {
       if (target == null) return;
       String type = target.getType().getDescription().getString();
@@ -5172,8 +5494,64 @@ public class BomboaddonsClient implements ClientModInitializer {
       if (!customName.equals("None")) {
          src.sendFeedback(Component.literal(" §7Custom Name: §f" + customName));
       }
-      src.sendFeedback(Component.literal(" §7UUID: §e" + uuidStr + " §7| ID: §a" + id + " §7| Dist: §b" + String.format("%.1fm", dist)));
+      src.sendFeedback(Component.literal(" §7UUID: §e" + uuidStr + " §7| ID: §a" + id + " §7| Dist: §b" + String.format(Locale.ROOT, "%.1fm", dist)));
       src.sendFeedback(Component.literal(" §7Position: §f" + x + ", " + y + ", " + z));
+
+      double w = target.getBbWidth();
+      double h = target.getBbHeight();
+      double scale = Math.max(w / 0.6, h / 1.8);
+      String sizeCategory = "normal";
+      if (target instanceof net.minecraft.world.entity.monster.Slime) {
+         int sz = ((net.minecraft.world.entity.monster.Slime)target).getSize();
+         if (sz >= 4) sizeCategory = "Big";
+         else if (sz == 1) sizeCategory = "Small";
+         else sizeCategory = "Medium";
+         scale = (double) sz;
+      } else if (scale >= 2.0) {
+         sizeCategory = "Big";
+      } else if (scale <= 0.6) {
+         sizeCategory = "Small";
+      }
+      String sizeStr = String.format(Locale.ROOT, "%.2f (%s)", scale, sizeCategory);
+      src.sendFeedback(Component.literal(" §7Size: §f" + sizeStr));
+
+      // Specialized inspection for Shulker
+      if (target instanceof net.minecraft.world.entity.monster.Shulker shulker) {
+         net.minecraft.world.item.DyeColor dye = shulker.getColor();
+         String colName = dye != null ? dye.getName().toUpperCase(Locale.ROOT) : "DEFAULT";
+         src.sendFeedback(Component.literal(" §7Shulker Color: §e" + colName));
+         ClickEvent addShulkerHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add shulker:" + colName.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addShulkerHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + colName + " Shulker]").withStyle(s -> s.withClickEvent(addShulkerHl)));
+         }
+      }
+
+      // Specialized inspection for Tropical Fish
+      if (target instanceof net.minecraft.world.entity.animal.fish.TropicalFish fish) {
+         String baseColor = fish.getBaseColor().getName();
+         String patColor = fish.getPatternColor().getName();
+         String pattern = fish.getPattern().name();
+         src.sendFeedback(Component.literal(" §7Tropical Fish: Base: §b" + baseColor + " §7| Pattern: §e" + patColor + " (" + pattern + ")"));
+         ClickEvent addFishHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add tropical_fish:" + baseColor.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addFishHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + baseColor + " Fish]").withStyle(s -> s.withClickEvent(addFishHl)));
+         }
+      }
+
+      // Equipment Inspection
+      if (target instanceof net.minecraft.world.entity.LivingEntity living) {
+         StringBuilder equipStr = new StringBuilder();
+         for (net.minecraft.world.entity.EquipmentSlot slot : net.minecraft.world.entity.EquipmentSlot.values()) {
+            ItemStack is = living.getItemBySlot(slot);
+            if (!is.isEmpty()) {
+               if (equipStr.length() > 0) equipStr.append(", ");
+               equipStr.append(slot.getName()).append(": ").append(is.getHoverName().getString());
+            }
+         }
+         if (equipStr.length() > 0) {
+            src.sendFeedback(Component.literal(" §7Equipment: §f" + equipStr.toString()));
+         }
+      }
 
       String headTex = TargetPests.getHeadTextureValue(target);
       if (headTex == null) {
@@ -5460,12 +5838,12 @@ public class BomboaddonsClient implements ClientModInitializer {
    }
 
    public static void registerMultiPlayerPartyCommands(CommandDispatcher<FabricClientCommandSource> dispatcher) {
-      String[] cmdNames = new String[]{"p", "party", "v", "w", "tell"};
+      String[] cmdNames = new String[]{"p", "party", "f", "friend", "v", "visit", "w", "tell"};
 
       for(String name : cmdNames) {
          RequiredArgumentBuilder<FabricClientCommandSource, String> argsNode = (RequiredArgumentBuilder)ClientCommands.argument("args", StringArgumentType.greedyString()).suggests(TabCompletionManager::getUsernameSuggestions).executes((context) -> {
             String args = StringArgumentType.getString(context, "args");
-            String actualName = name.equals("v") ? "visit" : (name.equals("p") ? "party" : (!name.equals("w") && !name.equals("tell") ? name : "msg"));
+            String actualName = name.equals("v") ? "visit" : (name.equals("p") ? "party" : (name.equals("f") ? "friend" : (!name.equals("w") && !name.equals("tell") ? name : "msg")));
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && mc.player.connection != null) {
                mc.player.connection.send(new ServerboundChatCommandPacket(actualName + " " + args));
@@ -5474,7 +5852,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             return 1;
          });
          LiteralArgumentBuilder<FabricClientCommandSource> builder = (LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal(name).executes((context) -> {
-            String actualName = name.equals("v") ? "visit" : (name.equals("p") ? "party" : (!name.equals("w") && !name.equals("tell") ? name : "msg"));
+            String actualName = name.equals("v") ? "visit" : (name.equals("p") ? "party" : (name.equals("f") ? "friend" : (!name.equals("w") && !name.equals("tell") ? name : "msg")));
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && mc.player.connection != null) {
                mc.player.connection.send(new ServerboundChatCommandPacket(actualName));
@@ -5483,6 +5861,10 @@ public class BomboaddonsClient implements ClientModInitializer {
             return 1;
          })).then(argsNode);
          dispatcher.register(builder);
+         dispatcher.register(ClientCommands.literal("B").executes((context) -> { openGuiNextTick = true; return 1; }));
+         dispatcher.register(ClientCommands.literal("bombo").executes((context) -> { openGuiNextTick = true; return 1; }));
+         dispatcher.register(ClientCommands.literal("Bombo").executes((context) -> { openGuiNextTick = true; return 1; }));
+         dispatcher.register(ClientCommands.literal("BOMBO").executes((context) -> { openGuiNextTick = true; return 1; }));
       }
 
    }

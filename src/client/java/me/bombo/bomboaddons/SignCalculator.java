@@ -9,6 +9,20 @@ public class SignCalculator {
       }
    }
 
+   public static double parseNumberOrExpr(String text) {
+      if (text == null || text.trim().isEmpty()) return Double.NaN;
+      String t = text.trim();
+      if (isValidExpression(t)) {
+         return getResult(t);
+      }
+      try {
+         String clean = t.replaceAll("[, ]", "");
+         return Double.parseDouble(clean);
+      } catch (Exception ignored) {
+         return Double.NaN;
+      }
+   }
+
    public static boolean isValidExpression(String text) {
       if (!isPotentialExpression(text)) {
          return false;

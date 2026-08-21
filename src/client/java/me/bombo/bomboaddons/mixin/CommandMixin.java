@@ -17,6 +17,42 @@ public class CommandMixin {
    )
    private void onSendCommand(String command, CallbackInfo ci) {
       CommandTracker.onCommandSent(command);
+      me.bombo.bomboaddons.BomboaddonsClient.recordCommand(command);
+      String trimmed = command.trim();
+      if (trimmed.equalsIgnoreCase("b") || trimmed.equalsIgnoreCase("bombo") || trimmed.equalsIgnoreCase("bomboaddons")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreen(me.bombo.bomboaddons.BomboConfigGUI.create()));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b gui") || trimmed.equalsIgnoreCase("bombo gui")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreen(new me.bombo.bomboaddons.HudMoveScreen()));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.toLowerCase().startsWith("tp ") && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
+         String arg = trimmed.substring(3).trim();
+         if (arg.equalsIgnoreCase("barn")) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null && mc.player.connection != null) {
+               mc.player.connection.sendCommand("tpbarn");
+            }
+            ci.cancel();
+            return;
+         }
+         try {
+            int p = Integer.parseInt(arg);
+            if (p >= 1 && p <= 24) {
+               net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+               if (mc.player != null && mc.player.connection != null) {
+                  mc.player.connection.sendCommand("tptoplot " + p);
+               }
+               ci.cancel();
+               return;
+            }
+         } catch (Exception ignored) {}
+      }
       if (CustomBindsProcessor.processAlias(command)) {
          ci.cancel();
       }
@@ -29,6 +65,42 @@ public class CommandMixin {
       cancellable = true
    )
    private void onSendChat(String message, CallbackInfo ci) {
+      if (message.startsWith("/")) me.bombo.bomboaddons.BomboaddonsClient.recordCommand(message.substring(1));
+      String trimmed = message.trim();
+      if (trimmed.equalsIgnoreCase("/b") || trimmed.equalsIgnoreCase("/bombo") || trimmed.equalsIgnoreCase("/bomboaddons")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreen(me.bombo.bomboaddons.BomboConfigGUI.create()));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b gui") || trimmed.equalsIgnoreCase("/bombo gui")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreen(new me.bombo.bomboaddons.HudMoveScreen()));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.toLowerCase().startsWith("/tp ") && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
+         String arg = trimmed.substring(4).trim();
+         if (arg.equalsIgnoreCase("barn")) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null && mc.player.connection != null) {
+               mc.player.connection.sendCommand("tpbarn");
+            }
+            ci.cancel();
+            return;
+         }
+         try {
+            int p = Integer.parseInt(arg);
+            if (p >= 1 && p <= 24) {
+               net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+               if (mc.player != null && mc.player.connection != null) {
+                  mc.player.connection.sendCommand("tptoplot " + p);
+               }
+               ci.cancel();
+               return;
+            }
+         } catch (Exception ignored) {}
+      }
       if (CustomBindsProcessor.processAlias(message)) {
          ci.cancel();
       }

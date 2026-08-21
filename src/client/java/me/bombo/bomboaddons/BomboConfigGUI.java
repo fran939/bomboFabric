@@ -18,6 +18,8 @@
  */
 package me.bombo.bomboaddons;
 
+import java.util.Locale;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -66,8 +68,68 @@ extends Screen {
     private static final int ITEM_HEIGHT = 24;
     private static final int PADDING = 8;
     private final Screen parent;
-    private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles", "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons", "Coord Binds", "Mining", "Party Settings", "Block Highlights", "Particle Highlights", "Bedwars", "Fishing", "Custom Crosshair", "Custom Slots", "Custom Tracers", "Item Highlights", "Ordered Waypoints", "Timers", "Widgets");
+    private final List<String> categories = List.of("General", "HUDs", "Experiments", "Garden", "Hotkeys", "Profiles", "Clicker", "Highlights", "Wardrobe", "Anvil", "Debug", "Kuudra", "Pets", "Keybinds", "Waypoints", "Aliases", "Chat Triggers", "Dungeons", "Coord Binds", "Mining", "Party Settings", "Block Highlights", "Particle Highlights", "Bedwars", "Fishing", "Custom Crosshair", "Custom Slots", "Custom Tracers", "Item Highlights", "Ordered Waypoints", "Timers", "Widgets", "Chat Modifier");
     public static int selectedCategory = 0;
+    public static boolean loreAdditionsSubmenu = false;
+    private static int loreAdditionsX = -1, loreAdditionsY = -1, loreAdditionsW = -1, loreAdditionsH = -1;
+    public static boolean frozenBlazeWarnSubmenu = false;
+    private static int frozenBlazeWarnX = -1, frozenBlazeWarnY = -1, frozenBlazeWarnW = -1, frozenBlazeWarnH = -1;
+    public static boolean structureFinderSubmenu = false;
+    private static int structureFinderX = -1, structureFinderY = -1, structureFinderW = -1, structureFinderH = -1;
+        private int drawSectionHeader(GuiGraphicsExtractor g, String title, int x, int y) {
+        if (!optionMatchesSearch(title)) return y;
+        g.text(this.font, title, x, y, -22016, true);
+        return y + 14;
+    }
+
+    public static boolean optionMatchesSearch(String label) {
+        if (configSearchTerm == null || configSearchTerm.trim().isEmpty()) return true;
+        String q = configSearchTerm.toLowerCase().trim();
+        String l = label.replaceAll("\u00a7[0-9a-fk-orxX]", "").toLowerCase();
+        return l.contains(q);
+    }
+
+    private int drawOptionLabel(GuiGraphicsExtractor g, String label, int x, int y, int color, boolean shadow) {
+        if (!optionMatchesSearch(label)) return y;
+        g.text(this.font, label, x, y + 4, color, shadow);
+        return y + 24;
+    }
+    private static final Map<String, List<String>> CATEGORY_KEYWORDS = Map.ofEntries(
+        Map.entry("General", List.of("water", "lava", "sign", "calculator", "sbe", "copy chat", "etherwarp", "sphinx", "hollow wand", "lasso", "carnival", "npc lore", "lowest bin", "craft cost", "npc sell", "trevor", "daily reward", "egg finder", "caps lock", "server list", "reconnect", "f1", "m1", "auto reconnect", "party commands", "resource pack", "command hover", "hoppity", "hypixel tooltips", "shortcut", "borderless", "diorite", "time", "weather", "search bar", "paste")),
+        Map.entry("HUDs", List.of("dice", "feast", "bakery", "rng", "custom timer", "tab widget", "hoppity", "egg", "alpha", "item list", "tooltip")),
+        Map.entry("Experiments", List.of("chronomatron", "ultrasequencer", "superpairs")),
+        Map.entry("Garden", List.of("movement", "pest", "spray", "composter", "desk")),
+        Map.entry("Hotkeys", List.of("wardrobe", "pets", "freelook", "bestiary", "focus", "item list", "search", "trade", "recipe", "usage", "gfs", "save")),
+        Map.entry("Profiles", List.of("profile", "save", "load", "delete")),
+        Map.entry("Clicker", List.of("auto click", "cps", "left click", "right click", "key click")),
+        Map.entry("Highlights", List.of("mob highlight", "tracer", "color", "invis")),
+        Map.entry("Wardrobe", List.of("wardrobe", "armor", "slot", "key")),
+        Map.entry("Anvil", List.of("anvil", "combine", "books")),
+        Map.entry("Debug", List.of("chat", "sounds", "guis", "entities", "commands", "api", "pet price", "messages", "lb", "particles", "lore", "composter", "fishing", "croesus", "reconnect", "performance", "keys", "esp", "filter")),
+        Map.entry("Kuudra", List.of("kuudra", "perks", "keys", "crates", "pearls", "timer", "blindness")),
+        Map.entry("Pets", List.of("pet", "swap", "keybind", "slot")),
+        Map.entry("Keybinds", List.of("bind", "key", "command", "combo", "island")),
+        Map.entry("Waypoints", List.of("waypoint", "coords", "beacon", "wall", "color")),
+        Map.entry("Aliases", List.of("alias", "command", "shortcut")),
+        Map.entry("Chat Triggers", List.of("trigger", "chat", "command", "title")),
+        Map.entry("Dungeons", List.of("dungeon", "secrets", "croesus", "clear")),
+        Map.entry("Coord Binds", List.of("coord bind", "radius", "delay")),
+        Map.entry("Mining", List.of("corpse", "mineshaft", "glacite", "tracer", "vanguard", "umber", "tungsten", "structure", "corleone", "catwalk")),
+        Map.entry("Block Highlights", List.of("block", "outline", "through walls")),
+        Map.entry("Particle Highlights", List.of("particle", "highlight")),
+        Map.entry("Bedwars", List.of("bedwars", "spawner", "timer", "tracker")),
+        Map.entry("Fishing", List.of("fishing", "reel", "catch", "sea creature")),
+        Map.entry("Custom Crosshair", List.of("crosshair", "preset", "color", "dot", "plus", "circle")),
+        Map.entry("Custom Slots", List.of("custom slot", "icon", "command")),
+        Map.entry("Custom Tracers", List.of("custom tracer", "target", "color")),
+        Map.entry("Item Highlights", List.of("item highlight", "inventory")),
+        Map.entry("Ordered Waypoints", List.of("ordered", "route", "loop")),
+        Map.entry("Timers", List.of("timer", "countdown", "duration", "alert")),
+        Map.entry("Widgets", List.of("widget", "tab", "island")),
+        Map.entry("Chat Modifier", List.of("chat modifier", "rule", "replace", "hide", "suppress", "regex"))
+    );
+    private static String configSearchTerm = "";
+    private EditBox searchBoxWidget = null;
     private static String widgetNameInput = "";
     private static String widgetIslandInput = "All";
     private static boolean widgetEnabledInput = true;
@@ -96,6 +158,136 @@ extends Screen {
     private static boolean highShowInvis = false;
     private static String highIslandInput = "";
     private static String editingHighMob = null;
+    private static String advEntityTypeInput = "";
+    private static String advHeadHashInput = "";
+    private static String advMobSizeInput = "";
+    private static String advArmorPieceInput = "";
+    private static String advPlayerNameInput = "";
+    private static String advVisibilityInput = "ALL";
+
+    // Highlight History (Undo / Redo)
+    private static final java.util.Deque<Map<String, BomboConfig.HighlightInfo>> highlightUndoStack = new java.util.ArrayDeque<>();
+    private static final java.util.Deque<Map<String, BomboConfig.HighlightInfo>> highlightRedoStack = new java.util.ArrayDeque<>();
+
+    public static void pushHighlightHistory() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s.highlights != null) {
+            Map<String, BomboConfig.HighlightInfo> clone = new java.util.HashMap<>();
+            for (Map.Entry<String, BomboConfig.HighlightInfo> e : s.highlights.entrySet()) {
+                if (e.getValue() != null) {
+                    BomboConfig.HighlightInfo hi = new BomboConfig.HighlightInfo(
+                        e.getValue().color, e.getValue().showInvisible, e.getValue().enabled,
+                        e.getValue().tracer, e.getValue().requiredIsland, e.getValue().isBestiary
+                    );
+                    hi.targetType = e.getValue().targetType;
+                    hi.entityType = e.getValue().entityType;
+                    hi.armorType = e.getValue().armorType;
+                    hi.playerName = e.getValue().playerName;
+                    hi.ridingType = e.getValue().ridingType;
+                    hi.heldItem = e.getValue().heldItem;
+                    hi.requiredSubarea = e.getValue().requiredSubarea;
+                    hi.isAdvanced = e.getValue().isAdvanced;
+                    hi.mobSize = e.getValue().mobSize;
+                    hi.armorPiece = e.getValue().armorPiece;
+                    if (e.getValue().headHashes != null) hi.headHashes = new java.util.ArrayList<>(e.getValue().headHashes);
+                    clone.put(e.getKey(), hi);
+                }
+            }
+            if (highlightUndoStack.size() >= 100) highlightUndoStack.removeLast();
+            highlightUndoStack.push(clone);
+            highlightRedoStack.clear();
+        }
+    }
+
+    public static boolean undoHighlight() {
+        if (!highlightUndoStack.isEmpty()) {
+            BomboConfig.Settings s = BomboConfig.get();
+            Map<String, BomboConfig.HighlightInfo> currentClone = new java.util.HashMap<>();
+            if (s.highlights != null) {
+                for (Map.Entry<String, BomboConfig.HighlightInfo> e : s.highlights.entrySet()) {
+                    if (e.getValue() != null) {
+                        BomboConfig.HighlightInfo hi = new BomboConfig.HighlightInfo(
+                            e.getValue().color, e.getValue().showInvisible, e.getValue().enabled,
+                            e.getValue().tracer, e.getValue().requiredIsland, e.getValue().isBestiary
+                        );
+                        hi.targetType = e.getValue().targetType;
+                        hi.entityType = e.getValue().entityType;
+                        hi.armorType = e.getValue().armorType;
+                        hi.playerName = e.getValue().playerName;
+                        hi.ridingType = e.getValue().ridingType;
+                        hi.heldItem = e.getValue().heldItem;
+                        hi.requiredSubarea = e.getValue().requiredSubarea;
+                        hi.isAdvanced = e.getValue().isAdvanced;
+                        hi.mobSize = e.getValue().mobSize;
+                        hi.armorPiece = e.getValue().armorPiece;
+                        if (e.getValue().headHashes != null) hi.headHashes = new java.util.ArrayList<>(e.getValue().headHashes);
+                        currentClone.put(e.getKey(), hi);
+                    }
+                }
+            }
+            highlightRedoStack.push(currentClone);
+            Map<String, BomboConfig.HighlightInfo> popped = highlightUndoStack.pop();
+            s.highlights = new java.util.HashMap<>();
+            for (Map.Entry<String, BomboConfig.HighlightInfo> e : popped.entrySet()) {
+                if (e.getValue() != null) {
+                    BomboConfig.HighlightInfo hi = new BomboConfig.HighlightInfo(
+                        e.getValue().color, e.getValue().showInvisible, e.getValue().enabled,
+                        e.getValue().tracer, e.getValue().requiredIsland, e.getValue().isBestiary
+                    );
+                    hi.targetType = e.getValue().targetType;
+                    hi.entityType = e.getValue().entityType;
+                    hi.armorType = e.getValue().armorType;
+                    hi.playerName = e.getValue().playerName;
+                    hi.ridingType = e.getValue().ridingType;
+                    hi.heldItem = e.getValue().heldItem;
+                    hi.requiredSubarea = e.getValue().requiredSubarea;
+                    hi.isAdvanced = e.getValue().isAdvanced;
+                    hi.mobSize = e.getValue().mobSize;
+                    hi.armorPiece = e.getValue().armorPiece;
+                    if (e.getValue().headHashes != null) hi.headHashes = new java.util.ArrayList<>(e.getValue().headHashes);
+                    s.highlights.put(e.getKey(), hi);
+                }
+            }
+            BomboConfig.save();
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean redoHighlight() {
+        if (!highlightRedoStack.isEmpty()) {
+            BomboConfig.Settings s = BomboConfig.get();
+            Map<String, BomboConfig.HighlightInfo> currentClone = new java.util.HashMap<>();
+            if (s.highlights != null) {
+                for (Map.Entry<String, BomboConfig.HighlightInfo> e : s.highlights.entrySet()) {
+                    if (e.getValue() != null) {
+                        BomboConfig.HighlightInfo hi = new BomboConfig.HighlightInfo(
+                            e.getValue().color, e.getValue().showInvisible, e.getValue().enabled,
+                            e.getValue().tracer, e.getValue().requiredIsland, e.getValue().isBestiary
+                        );
+                        hi.targetType = e.getValue().targetType;
+                        hi.entityType = e.getValue().entityType;
+                        hi.armorType = e.getValue().armorType;
+                        hi.playerName = e.getValue().playerName;
+                        hi.ridingType = e.getValue().ridingType;
+                        hi.heldItem = e.getValue().heldItem;
+                        hi.requiredSubarea = e.getValue().requiredSubarea;
+                        hi.isAdvanced = e.getValue().isAdvanced;
+                        hi.mobSize = e.getValue().mobSize;
+                        hi.armorPiece = e.getValue().armorPiece;
+                        if (e.getValue().headHashes != null) hi.headHashes = new java.util.ArrayList<>(e.getValue().headHashes);
+                        currentClone.put(e.getKey(), hi);
+                    }
+                }
+            }
+            highlightUndoStack.push(currentClone);
+            s.highlights = highlightRedoStack.pop();
+            BomboConfig.save();
+            return true;
+        }
+        return false;
+    }
+
     private static String listeningForKeyTarget = "";
     private static String timerNameInput = "";
     private static String timerTimeInput = "";
@@ -139,6 +331,8 @@ extends Screen {
     private static String triggerTextInput = "";
     private static String triggerCommandInput = "";
     private static String triggerTitleInput = "";
+    private static String triggerSoundInput = "";
+    private static int triggerSoundTimesInput = 1;
     private static int editingTriggerIdx = -1;
     private static String customPartyTriggerInput = "";
     private static String customPartyCommandInput = "";
@@ -244,10 +438,8 @@ extends Screen {
 
     public BomboConfigGUI(Screen parent) {
         super((Component)Component.literal((String)"Bomboaddons Configuration"));
-        System.out.println("DEBUG: BomboConfigGUI constructor start");
-        this.parent = parent;
-        System.out.println("DEBUG: BomboConfigGUI constructor end");
-    }
+                this.parent = parent;
+            }
 
     public static Screen create() {
         Screen current = Minecraft.getInstance().screen;
@@ -264,14 +456,31 @@ extends Screen {
     }
 
     protected void init() {
-        System.out.println("DEBUG: BomboConfigGUI init start");
-        try {
+                try {
             int contentBaseY;
             super.init();
             BomboConfig.Settings s = BomboConfig.get();
             this.activeBoxes.clear();
             this.clearWidgets();
             this.sidebarButtons.clear();
+
+            // Search Bar at Top of Sidebar
+            boolean wasSearchFocused = (this.searchBoxWidget != null && this.searchBoxWidget.isFocused());
+            int prevCursor = this.searchBoxWidget != null ? this.searchBoxWidget.getCursorPosition() : configSearchTerm.length();
+            this.searchBoxWidget = new EditBox(this.font, 8, 38, 114, 16, Component.literal("Search..."));
+            this.searchBoxWidget.setHint(Component.literal("§8Search..."));
+            this.searchBoxWidget.setValue(configSearchTerm);
+            if (wasSearchFocused) {
+                this.searchBoxWidget.setFocused(true);
+                this.setFocused(this.searchBoxWidget);
+                this.searchBoxWidget.setCursorPosition(Math.min(configSearchTerm.length(), prevCursor));
+            }
+            this.searchBoxWidget.setResponder(val -> {
+                configSearchTerm = val;
+                this.init();
+            });
+            this.addWidget(this.searchBoxWidget);
+            this.activeBoxes.add(this.searchBoxWidget);
             int renderCount = 0;
             int totalRendered = 0;
             for (int i = 0; i < this.categories.size(); ++i) {
@@ -286,12 +495,28 @@ extends Screen {
                 boolean visible;
                 int idx = i;
                 if (s.hideCheats && (idx == 2 || idx == 9 || idx == 24) || this.categories.get(idx).equals("Party Settings")) continue;
+                String catName = this.categories.get(idx);
+                if (configSearchTerm != null && !configSearchTerm.trim().isEmpty()) {
+                    String q = configSearchTerm.toLowerCase().trim();
+                    boolean nameMatch = catName.toLowerCase().contains(q);
+                    boolean featureMatch = false;
+                    List<String> keywords = CATEGORY_KEYWORDS.get(catName);
+                    if (keywords != null) {
+                        for (String kw : keywords) {
+                            if (kw.contains(q)) { featureMatch = true; break; }
+                        }
+                    }
+                    if (!nameMatch && !featureMatch) continue;
+                }
                 int catY = 64 + renderCount * 26 - (int)this.categoryScrollAmount;
                 ++renderCount;
                 String label = (idx == selectedCategory ? "\u00a76\u00a7l> " : "\u00a77") + this.categories.get(idx);
                 Button btn2 = Button.builder((Component)Component.literal((String)label), b -> {
                     selectedCategory = idx;
                     this.scrollAmount = 0.0;
+                    loreAdditionsSubmenu = false;
+                    frozenBlazeWarnSubmenu = false;
+                    structureFinderSubmenu = false;
                     confirmProfileDelete = false;
                     colorPickerTarget = null;
                     editingWaypointIdx = -1;
@@ -327,139 +552,124 @@ extends Screen {
                     int col2X = contentX + contentWidth / 2 + 10;
                     int col2W = contentWidth / 2 - 10;
                     int y1 = contentBaseY + 24 - (int)this.scrollAmount;
-                    y1 = this.addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava, v -> {
-                        s.clearWaterAndLava = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Sign Calculator", s.signCalculator, v -> {
-                        s.signCalculator = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("SBE Commands", s.sbeCommands, v -> {
-                        s.sbeCommands = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Copy Chat", s.copyChat, v -> {
-                        s.copyChat = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Left Click Etherwarp", s.leftClickEtherwarp, v -> {
-                        s.leftClickEtherwarp = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Sphinx Macro", s.sphinxMacro, v -> {
-                        s.sphinxMacro = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Hollow Wand Fix", s.hollowWandClickThrough, v -> {
-                        s.hollowWandClickThrough = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Hollow Wand Double Click", s.hollowWandAutoCombine, v -> {
-                        s.hollowWandAutoCombine = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Auto Accept Carnival", s.autoAcceptCarnival, v -> {
-                        s.autoAcceptCarnival = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Auto Accept NPC Lore", s.autoAcceptNpcLore, v -> {
-                        s.autoAcceptNpcLore = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> {
-                        s.lowestBin = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Raw Craft Cost Tooltip", s.craftCostTooltip, v -> {
-                        s.craftCostTooltip = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> {
-                        s.npcPrice = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Auto Trevor Quest", s.autoTrevorQuest, v -> {
-                        s.autoTrevorQuest = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Daily Reward Helper", s.dailyRewardHelper, v -> {
-                        s.dailyRewardHelper = v;
-                    }, col1X, col1W, y1);
+
+                    if (loreAdditionsSubmenu) {
+                        this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> { loreAdditionsSubmenu = false; this.scrollAmount = 0.0; this.init(); }).bounds(col1X, y1, 140, 20).build());
+                        y1 += 28;
+                        y1 = this.addBoolOption("Copy Canceled Order Amount (Ctrl+Click)", s.copyCanceledOrderAmount, v -> s.copyCanceledOrderAmount = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Supercraft Max Calculator (Ctrl+Click)", s.supercraftMaxCalculator, v -> s.supercraftMaxCalculator = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Starts In Absolute Time", s.startsInAbsoluteTime, v -> s.startsInAbsoluteTime = v, col1X, col1W * 2, y1);
+                        break;
+                    }
+
+                    if (frozenBlazeWarnSubmenu) {
+                        this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> { frozenBlazeWarnSubmenu = false; this.scrollAmount = 0.0; this.init(); }).bounds(col1X, y1, 140, 20).build());
+                        y1 += 28;
+                        y1 = this.addBoolOption("Frozen Blaze Warning Enabled", s.frozenBlazeWarning, v -> s.frozenBlazeWarning = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Play Warning Sound", s.fbWarnSound, v -> s.fbWarnSound = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Show Title On Screen", s.fbWarnTitle, v -> s.fbWarnTitle = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Send Chat Warning", s.fbWarnChat, v -> s.fbWarnChat = v, col1X, col1W * 2, y1);
+                        y1 = this.addIntLabelSlider("AFK Warning Time (Seconds)", s.fbWarnSeconds, 5, 120, 1, v -> s.fbWarnSeconds = v, col1X, col1W * 2, y1);
+                        break;
+                    }
+
+                    y1 = this.addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava, v -> s.clearWaterAndLava = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Sign Calculator", s.signCalculator, v -> s.signCalculator = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("SBE Commands", s.sbeCommands, v -> s.sbeCommands = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Copy Chat", s.copyChat, v -> s.copyChat = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Left Click Etherwarp", s.leftClickEtherwarp, v -> s.leftClickEtherwarp = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Sphinx Macro", s.sphinxMacro, v -> s.sphinxMacro = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Hollow Wand Fix", s.hollowWandClickThrough, v -> s.hollowWandClickThrough = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Hollow Wand Double Click", s.hollowWandAutoCombine, v -> s.hollowWandAutoCombine = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Lasso Fix", s.lassoClickThroughBats, v -> s.lassoClickThroughBats = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Auto Accept Carnival", s.autoAcceptCarnival, v -> s.autoAcceptCarnival = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Auto Accept NPC Lore", s.autoAcceptNpcLore, v -> s.autoAcceptNpcLore = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Raw Craft Cost Tooltip", s.craftCostTooltip, v -> s.craftCostTooltip = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Auto Trevor Quest", s.autoTrevorQuest, v -> s.autoTrevorQuest = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Daily Reward Helper", s.dailyRewardHelper, v -> s.dailyRewardHelper = v, col1X, col1W, y1);
+                    
+                    loreAdditionsX = col1X;
+                    loreAdditionsY = y1;
+                    loreAdditionsW = col1W;
+                    loreAdditionsH = 24;
+                    y1 = this.addBoolOption("Lore Additions", s.loreAdditionsEnabled, v -> s.loreAdditionsEnabled = v, col1X, col1W, y1);
+
+                    y1 = this.addBoolOption("In-Chat Search Bar", s.chatSearchBar, v -> s.chatSearchBar = v, col1X, col1W, y1);
+                    if (s.chatSearchBar) {
+                        y1 = this.addBoolOption("Chat Search Background", s.chatSearchBackground, v -> s.chatSearchBackground = v, col1X, col1W, y1);
+                    }
+                    y1 = this.addBoolOption("Custom Time Enabled", s.customTimeEnabled, v -> s.customTimeEnabled = v, col1X, col1W, y1);
+                    if (s.customTimeEnabled) {
+                        y1 = this.addIntLabelSlider("Custom Time Hour", s.customTimeHour, 0, 23, 1, v -> s.customTimeHour = v, col1X, col1W, y1);
+                        this.addRenderableWidget(Button.builder(Component.literal("Day"), b -> { s.customTimeHour = 12; BomboConfig.save(); this.init(); }).bounds(col1X, y1, col1W / 4 - 2, 18).build());
+                        this.addRenderableWidget(Button.builder(Component.literal("Night"), b -> { s.customTimeHour = 0; BomboConfig.save(); this.init(); }).bounds(col1X + col1W / 4, y1, col1W / 4 - 2, 18).build());
+                        this.addRenderableWidget(Button.builder(Component.literal("Sunrise"), b -> { s.customTimeHour = 6; BomboConfig.save(); this.init(); }).bounds(col1X + 2 * (col1W / 4), y1, col1W / 4 - 2, 18).build());
+                        this.addRenderableWidget(Button.builder(Component.literal("Sunset"), b -> { s.customTimeHour = 18; BomboConfig.save(); this.init(); }).bounds(col1X + 3 * (col1W / 4), y1, col1W / 4 - 2, 18).build());
+                        y1 += 22;
+                    }
+                    y1 = this.addBoolOption("Weather Override Enabled", s.customWeatherEnabled, v -> s.customWeatherEnabled = v, col1X, col1W, y1);
+                    if (s.customWeatherEnabled) {
+                        String[] weatherModes = new String[]{"Clear", "Rain", "Thunder"};
+                        Button wBtn = Button.builder(Component.literal("Weather: " + weatherModes[Math.max(0, Math.min(2, s.customWeatherMode))]), b -> {
+                            s.customWeatherMode = (s.customWeatherMode + 1) % 3;
+                            b.setMessage(Component.literal("Weather: " + weatherModes[s.customWeatherMode]));
+                            BomboConfig.save();
+                        }).bounds(col1X + 24, y1, Math.min(col1W - 24, 160), 20).build();
+                        wBtn.visible = (y1 >= 56 && y1 <= this.height - 44);
+                        this.addRenderableWidget(wBtn);
+                        y1 += 26;
+                    }
                     y1 += 10;
-                    y1 += 24;
                     y1 = this.addBoolOption("Hoppity Egg Finder", s.eggFinder, v -> {
                         s.eggFinder = v;
                         if (!v.booleanValue()) {
                             EggFinder.clearEggs();
                         }
                     }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Egg Finder Chat Alerts", s.eggFinderChat, v -> {
-                        s.eggFinderChat = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Egg Finder Beacon", s.eggFinderBeacon, v -> {
-                        s.eggFinderBeacon = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Egg Finder Through Walls", s.eggFinderThroughWalls, v -> {
-                        s.eggFinderThroughWalls = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Hoppity Egg HUD", s.hoppityHud, v -> {
-                        s.hoppityHud = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Golden Dragon Nest Finder", s.goldenDragonNestFinder, v -> {
-                        s.goldenDragonNestFinder = v;
-                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Egg Finder Chat Alerts", s.eggFinderChat, v -> s.eggFinderChat = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Egg Finder Beacon", s.eggFinderBeacon, v -> s.eggFinderBeacon = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Egg Finder Through Walls", s.eggFinderThroughWalls, v -> s.eggFinderThroughWalls = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Hoppity Egg HUD", s.hoppityHud, v -> s.hoppityHud = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Golden Dragon Nest Finder", s.goldenDragonNestFinder, v -> s.goldenDragonNestFinder = v, col1X, col1W, y1);
+
                     int y2 = contentBaseY + 24 - (int)this.scrollAmount;
-                    y2 = this.addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> {
-                        s.ignoreCapsLock = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Server List Button", s.serverListButton, v -> {
-                        s.serverListButton = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Reconnect Button", s.reconnectButton, v -> {
-                        s.reconnectButton = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Quick Join Commands (/f1, /m1, etc)", s.quickJoinCommands, v -> {
-                        s.quickJoinCommands = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Auto Reconnect", s.autoReconnect, v -> {
-                        s.autoReconnect = v;
-                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Ignore Caps Lock", s.ignoreCapsLock, v -> s.ignoreCapsLock = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Server List Button", s.serverListButton, v -> s.serverListButton = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Reconnect Button", s.reconnectButton, v -> s.reconnectButton = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Quick Join Commands (/f1, /m1, etc)", s.quickJoinCommands, v -> s.quickJoinCommands = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Auto Reconnect", s.autoReconnect, v -> s.autoReconnect = v, col2X, col2W, y2);
                     partyCommandsX = col2X;
                     partyCommandsY = y2;
                     partyCommandsWidth = col2W;
                     partyCommandsHeight = 24;
-                    y2 = this.addBoolOption("Party Commands", s.partyCommandsEnabled, v -> {
-                        s.partyCommandsEnabled = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Bypass Resource Pack", s.bypassResourcePack, v -> {
-                        s.bypassResourcePack = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("NoResourcePack Feature", s.noResourcePack, v -> {
-                        s.noResourcePack = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Show Command On Hover", s.showCommandOnHover, v -> {
-                        s.showCommandOnHover = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Auto Hoppity Calls", s.autoHoppityCalls, v -> {
-                        s.autoHoppityCalls = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Disable Hypixel Tooltips", s.disableCustomTooltips, v -> {
-                        s.disableCustomTooltips = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Hypixel Shortcut Button", s.hypixelShortcutButton, v -> {
-                        s.hypixelShortcutButton = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Smart Disconnect", s.smartDisconnect, v -> {
-                        s.smartDisconnect = v;
-                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Party Commands", s.partyCommandsEnabled, v -> s.partyCommandsEnabled = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Bypass Resource Pack", s.bypassResourcePack, v -> s.bypassResourcePack = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("NoResourcePack Feature", s.noResourcePack, v -> s.noResourcePack = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Show Command On Hover", s.showCommandOnHover, v -> s.showCommandOnHover = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Auto Hoppity Calls", s.autoHoppityCalls, v -> s.autoHoppityCalls = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Disable Hypixel Tooltips", s.disableCustomTooltips, v -> s.disableCustomTooltips = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Hypixel Shortcut Button", s.hypixelShortcutButton, v -> s.hypixelShortcutButton = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Smart Disconnect", s.smartDisconnect, v -> s.smartDisconnect = v, col2X, col2W, y2);
                     y2 = this.addBoolOption("Borderless Fullscreen", s.borderlessFullscreen, v -> {
                         s.borderlessFullscreen = v;
                         BomboConfig.save();
                         try {
                             ((WindowAccessor)(Object)Minecraft.getInstance().getWindow()).invokeUpdateFullscreen((Boolean)Minecraft.getInstance().options.enableVsync().get());
-                        }
-                        catch (Throwable throwable) {
-                            // empty catch block
-                        }
+                        } catch (Throwable ignored) {}
                     }, col2X, col2W, y2);
                     y2 += 10;
-                    y2 += 24;
-                    y2 = this.addBoolOption("Fuck Diorite", s.fuckDiorite, v -> {
-                        s.fuckDiorite = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Fuck Diorite Pillar Color", s.fuckDioritePillarColor, v -> {
-                        s.fuckDioritePillarColor = v;
-                    }, col2X, col2W, y2);
-                    y2 = this.addColorCycleButton("Fuck Diorite Color", s.fuckDioriteColor, v -> {
-                        s.fuckDioriteColor = v;
-                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Fuck Diorite", s.fuckDiorite, v -> s.fuckDiorite = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Fuck Diorite Pillar Color", s.fuckDioritePillarColor, v -> s.fuckDioritePillarColor = v, col2X, col2W, y2);
+                    if (s.fuckDioritePillarColor) {
+                        y2 = this.addColorCycleButton("Fuck Diorite Color", s.fuckDioriteColor, v -> s.fuckDioriteColor = v, col2X, col2W, y2);
+                    }
+                    frozenBlazeWarnX = col2X;
+                    frozenBlazeWarnY = y2;
+                    frozenBlazeWarnW = col2W;
+                    frozenBlazeWarnH = 24;
+                    y2 = this.addBoolOption("Frozen Blaze Warning §8(Right-Click)", s.frozenBlazeWarning, v -> s.frozenBlazeWarning = v, col2X, col2W, y2);
                     break;
                 }
                 case 1: {
@@ -467,93 +677,35 @@ extends Screen {
                     int col1W = contentWidth / 2 - 10;
                     int col2X = contentX + contentWidth / 2 + 10;
                     int col2W = contentWidth / 2 - 10;
-                    int y1 = contentBaseY + 24;
-                    y1 = this.addBoolOption("Dice Tracker HUD", s.diceTracker, v -> {
-                        s.diceTracker = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Feast Bakery HUD", s.feastBakeryHud, v -> {
-                        s.feastBakeryHud = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("RNG Profit HUD", s.rngProfitHud, v -> {
-                        s.rngProfitHud = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addIntLabelSlider("RNG HUD Opacity", s.rngProfitHudOpacity, 0, 100, 10, v -> {
-                        s.rngProfitHudOpacity = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Custom Timers HUD", s.customTimerHudEnabled, v -> {
-                        s.customTimerHudEnabled = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Tab Widget HUD", s.tabWidgetHudEnabled, v -> {
-                        s.tabWidgetHudEnabled = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Hoppity Egg HUD", s.hoppityHud, v -> {
-                        s.hoppityHud = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Alpha Tracker HUD", s.alphaTrackerHud, v -> {
-                        s.alphaTrackerHud = v;
-                    }, col1X, col1W, y1);
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
+                    y1 = this.addBoolOption("Dice Tracker HUD", s.diceTracker, v -> s.diceTracker = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Feast Bakery HUD", s.feastBakeryHud, v -> s.feastBakeryHud = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("RNG Profit HUD", s.rngProfitHud, v -> s.rngProfitHud = v, col1X, col1W, y1);
+                    y1 = this.addIntLabelSlider("RNG HUD Opacity", s.rngProfitHudOpacity, 0, 100, 10, v -> s.rngProfitHudOpacity = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Custom Timers HUD", s.customTimerHudEnabled, v -> s.customTimerHudEnabled = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Tab Widget HUD", s.tabWidgetHudEnabled, v -> s.tabWidgetHudEnabled = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Hoppity Egg HUD", s.hoppityHud, v -> s.hoppityHud = v, col1X, col1W, y1);
+                    this.addRenderableWidget(Button.builder(Component.literal("Move HUD Elements"), b -> Minecraft.getInstance().setScreenAndShow(new HudMoveScreen())).bounds(col1X, y1, col1W, 20).build());
+                    y1 += 26;
+                    y1 = this.addBoolOption("Alpha Tracker HUD", s.alphaTrackerHud, v -> s.alphaTrackerHud = v, col1X, col1W, y1);
                     if (s.alphaTrackerHud) {
-                        y1 = this.addBoolOption("Alpha Only When Open", s.alphaTrackerOnlyWhenOpen, v -> {
-                            s.alphaTrackerOnlyWhenOpen = v;
-                            s.alphaTrackerHideWhenClosed = v;
-                        }, col1X, col1W, y1);
-                        y1 = this.addBoolOption("Alpha Show Players", s.alphaTrackerShowPlayers, v -> {
-                            s.alphaTrackerShowPlayers = v;
-                        }, col1X, col1W, y1);
+                        y1 = this.addBoolOption("Alpha Only When Open", s.alphaTrackerOnlyWhenOpen, v -> s.alphaTrackerOnlyWhenOpen = v, col1X, col1W, y1);
+                        y1 = this.addBoolOption("Alpha Hide When Closed", s.alphaTrackerHideWhenClosed, v -> s.alphaTrackerHideWhenClosed = v, col1X, col1W, y1);
+                        y1 = this.addBoolOption("Alpha Show Players", s.alphaTrackerShowPlayers, v -> s.alphaTrackerShowPlayers = v, col1X, col1W, y1);
                     }
-                    y1 = this.addTextBox("Tab Widget Name", s.tabWidgetQuery, v -> {
-                        s.tabWidgetQuery = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Item List Enabled", s.itemListEnabled, v -> {
-                        s.itemListEnabled = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Lock Item List Position", s.itemListLocked, v -> {
-                        s.itemListLocked = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Separate IL Search", s.itemListSeparateSearch, v -> {
-                        s.itemListSeparateSearch = v;
-                    }, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Keep IL Search Vis", s.itemListSearchAlwaysVisible, v -> {
-                        s.itemListSearchAlwaysVisible = v;
-                    }, col1X, col1W, y1);
-                    int y2 = contentBaseY + 24;
-                    y2 = this.addBoolOption("Custom Tooltip Background", s.customTooltipBg, v -> {
-                        s.customTooltipBg = v;
-                    }, col2X, col2W, y2);
-                    int btnW = col2W / 2 - 2;
-                    this.addRenderableWidget(Button.builder((Component)Component.literal((String)(colorPickerMode == 0 ? "\u00a7a\u00a7lBg Color" : "\u00a77Bg Color")), btn -> {
-                        colorPickerMode = 0;
-                        int currentRgb = s.tooltipBgColor & 0xFFFFFF;
-                        float[] hsvTemp = BomboConfigGUI.rgbToHsv(currentRgb >> 16 & 0xFF, currentRgb >> 8 & 0xFF, currentRgb & 0xFF);
-                        currentHue = hsvTemp[0];
-                        this.init();
-                    }).bounds(col2X, y2, btnW, 16).build());
-                    this.addRenderableWidget(Button.builder((Component)Component.literal((String)(colorPickerMode == 1 ? "\u00a7a\u00a7lBorder Color" : "\u00a77Border Color")), btn -> {
-                        colorPickerMode = 1;
-                        int currentRgb = s.tooltipBorderColor & 0xFFFFFF;
-                        float[] hsvTemp = BomboConfigGUI.rgbToHsv(currentRgb >> 16 & 0xFF, currentRgb >> 8 & 0xFF, currentRgb & 0xFF);
-                        currentHue = hsvTemp[0];
-                        this.init();
-                    }).bounds(col2X + btnW + 4, y2, btnW, 16).build());
-                    int pickerY = y2 += 20;
-                    this.addRenderableWidget(Button.builder((Component)Component.literal((String)"Reset"), btn -> {
-                        s.tooltipBgColor = -267386864;
-                        s.tooltipBorderColor = 0x505000FF;
-                        int currentRgb = colorPickerMode == 0 ? s.tooltipBgColor & 0xFFFFFF : s.tooltipBorderColor & 0xFFFFFF;
-                        float[] hsvTemp = BomboConfigGUI.rgbToHsv(currentRgb >> 16 & 0xFF, currentRgb >> 8 & 0xFF, currentRgb & 0xFF);
-                        currentHue = hsvTemp[0];
-                        BomboConfig.save();
-                        this.init();
-                    }).bounds(col2X + 126, pickerY + 63, 40, 16).build());
-                    y2 += 90;
-                    int activeRgb = colorPickerMode == 0 ? s.tooltipBgColor & 0xFFFFFF : s.tooltipBorderColor & 0xFFFFFF;
-                    float[] hsv = BomboConfigGUI.rgbToHsv(activeRgb >> 16 & 0xFF, activeRgb >> 8 & 0xFF, activeRgb & 0xFF);
-                    if (!isDraggingHue && !isDraggingSv) {
-                        currentHue = hsv[0];
-                    }
-                    curY = Math.max(y1, y2);
-                    this.addRenderableWidget(Button.builder((Component)Component.literal((String)"\u00a7e\u00a7lMove HUD Elements"), btn -> Minecraft.getInstance().setScreenAndShow((Screen)new HudMoveScreen())).bounds(contentX, curY += 10, contentWidth / 2, 20).build());
-                    curY += 30;
+                    y1 = this.addBoolOption("Item List Enabled", s.itemListEnabled, v -> s.itemListEnabled = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Rarity Background", s.itemListColoredBackground, v -> s.itemListColoredBackground = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Remove Background", s.itemListRemoveBackground, v -> s.itemListRemoveBackground = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Lock Item List Position", s.itemListLocked, v -> s.itemListLocked = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Separate IL Search", s.itemListSeparateSearch, v -> s.itemListSeparateSearch = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Keep IL Search Vis", s.itemListSearchAlwaysVisible, v -> s.itemListSearchAlwaysVisible = v, col1X, col1W, y1);
+
+                    int y2 = contentBaseY + 24 - (int)this.scrollAmount;
+                    y2 = this.addBoolOption("Custom Tooltip Bg", s.customTooltipBg, v -> s.customTooltipBg = v, col2X, col2W, y2);
+                    y2 += 24;
+                    this.addRenderableWidget(Button.builder(Component.literal("Bg Color"), b -> colorPickerMode = 0).bounds(col2X, y2, col2W / 2 - 2, 18).build());
+                    this.addRenderableWidget(Button.builder(Component.literal("Border Color"), b -> colorPickerMode = 1).bounds(col2X + col2W / 2 + 2, y2, col2W / 2 - 2, 18).build());
+                    y2 += 22;
                     break;
                 }
                 case 2: {
@@ -591,7 +743,7 @@ extends Screen {
                     int col1W = contentWidth / 2 - 10;
                     int col2X = contentX + contentWidth / 2 + 10;
                     int col2W = contentWidth / 2 - 10;
-                    int y1 = contentBaseY + 24;
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
                     y1 = this.addBoolOption("Garden Movement", s.gardenMovement, v -> {
                         s.gardenMovement = v;
                         if (!v.booleanValue()) {
@@ -643,7 +795,10 @@ extends Screen {
                     y1 = this.addKeyBindButton("Use", s.gardenUseKey, v -> {
                         s.gardenUseKey = v;
                     }, "gardenU", col1X, col1W, y1);
-                    int y2 = contentBaseY + 24;
+                    int y2 = contentBaseY + 24 - (int)this.scrollAmount;
+                    y2 = this.addBoolOption("Composter Helper", s.composterHelper, v -> {
+                        s.composterHelper = v;
+                    }, col2X, col2W, y2);
                     y2 = this.addBoolOption("Composter HUD", s.composterHud, v -> {
                         s.composterHud = v;
                     }, col2X, col2W, y2);
@@ -713,6 +868,9 @@ extends Screen {
                     y1 = this.addKeyBindButton("GFS Stack", s.gfsStackKey, v -> {
                         s.gfsStackKey = v;
                     }, "gfsStack", col1X, col1W, y1);
+                    y1 = this.addKeyBindButton("Save Inventory", s.saveInventoryKey, v -> {
+                        s.saveInventoryKey = v;
+                    }, "saveInventory", col1X, col1W, y1);
 
                     y2 = this.addKeyBindButton("Chat Peek", s.chatPeekKey, v -> {
                         s.chatPeekKey = v;
@@ -738,9 +896,16 @@ extends Screen {
                     y2 = this.addKeyBindButton("Freelook", s.freelookKey, v -> {
                         s.freelookKey = v;
                     }, "freelook", col2X, col2W, y2);
+                    y2 = this.addCycleOption("Freelook Mode", s.freelookToggle ? "Toggle" : "Hold", List.of("Hold", "Toggle"), v -> {
+                        s.freelookToggle = "Toggle".equalsIgnoreCase(v);
+                        BomboConfig.save();
+                    }, col2X, col2W, y2);
                     y2 = this.addKeyBindButton("Bestiary Highlight", s.bestiaryHighlightKey, v -> {
                         s.bestiaryHighlightKey = v;
                     }, "bestiaryHighlight", col2X, col2W, y2);
+                    y2 = this.addKeyBindButton("Item List Search Focus", s.itemListFocusKey, v -> {
+                        s.itemListFocusKey = v;
+                    }, "itemListFocus", col2X, col2W, y2);
                     break;
                 }
                 case 6: {
@@ -915,51 +1080,122 @@ extends Screen {
                     }
                     break;
                 }
-                case 7: {
+                                                case 7: {
                     curY += 24;
                     curY = this.addBoolOption("Highlights Enabled", s.highlightsEnabled, v -> {
                         s.highlightsEnabled = v;
                     }, contentX, contentWidth, curY);
-                    curY += 6;
-                    curY = this.addTextBox("Mob Name", highMobInput, v -> {
-                        highMobInput = v;
+                    
+                    curY = this.addFloatLabelSlider("Tracer Width: " + String.format("%.1f", s.tracerWidth), s.tracerWidth, 0.5f, 10.0f, 0.5f, v -> {
+                        s.tracerWidth = v;
                     }, contentX, contentWidth, curY);
-                    curY = this.addTextBox("Island (e.g. garden, !garden)", highIslandInput, v -> {
-                        highIslandInput = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addColorCycleButton("Color", highColorInput, v -> {
-                        highColorInput = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Tracer", highTracerInput, v -> {
-                        highTracerInput = v;
-                    }, contentX, contentWidth, curY);
-                    int finalCurY = curY += 6;
-                    String addBtnText = editingHighMob != null ? "\u00a7e\u2714 Save Highlight" : "\u00a7a+ Add Highlight";
-                    this.addRenderableWidget(Button.builder((Component)Component.literal((String)addBtnText), btn -> {
-                        String cleanMob = highMobInput.trim().replaceAll("^\"+|\"+$", "").trim();
-                        if (!cleanMob.isEmpty()) {
-                            if (editingHighMob != null) {
-                                s.highlights.remove(editingHighMob);
+
+                    int modeBtnY = curY;
+                    curY += 26;
+                    String modeBtnText = s.highlightAdvancedMode ? "§bMode: §e[ Advanced Mode ] §7(Click to switch)" : "§bMode: §a[ Basic Mode ] §7(Click to switch)";
+                    this.addRenderableWidget(Button.builder(Component.literal(modeBtnText), btn -> {
+                        s.highlightAdvancedMode = !s.highlightAdvancedMode;
+                        BomboConfig.save();
+                        this.init();
+                    }).bounds(contentX, modeBtnY, 240, 20).build());
+
+
+
+                    if (s.highlightAdvancedMode) {
+                        curY = this.addTextBox("Nametag / Regex", highMobInput, v -> highMobInput = v, contentX, contentWidth, curY);
+                        curY = this.addTextBox("Entity Type (e.g. zombie, tropical_fish:blue)", advEntityTypeInput, v -> advEntityTypeInput = v, contentX, contentWidth, curY);
+                        curY = this.addTextBox("Head Texture Hash", advHeadHashInput, v -> advHeadHashInput = v, contentX, contentWidth, curY);
+                        curY = this.addTextBox("Mob Size (e.g. 24, 10+, big, small)", advMobSizeInput, v -> advMobSizeInput = v, contentX, contentWidth, curY);
+                        curY = this.addTextBox("Armor Piece (e.g. chainmail, diamond)", advArmorPieceInput, v -> advArmorPieceInput = v, contentX, contentWidth, curY);
+                        curY = this.addTextBox("Player Name / Skin", advPlayerNameInput, v -> advPlayerNameInput = v, contentX, contentWidth, curY);
+                        curY = this.addTextBox("Island / Subarea", highIslandInput, v -> highIslandInput = v, contentX, contentWidth, curY);
+                        curY = this.addCycleOption("Visibility", advVisibilityInput, List.of("ALL", "ONLY_VISIBLE", "ONLY_INVISIBLE"), v -> advVisibilityInput = v, contentX, contentWidth, curY);
+                        curY = this.addColorCycleButton("Color", highColorInput, v -> highColorInput = v, contentX, contentWidth, curY);
+                        curY = this.addBoolOption("Tracer", highTracerInput, v -> highTracerInput = v, contentX, contentWidth, curY);
+
+                        int finalCurY = curY += 6;
+                        String addBtnText = editingHighMob != null ? "§e✔ Save Advanced Highlight" : "§a+ Add Advanced Highlight";
+                        this.addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                            String key = !highMobInput.trim().isEmpty() ? highMobInput.trim() : (!advEntityTypeInput.trim().isEmpty() ? advEntityTypeInput.trim() : advHeadHashInput.trim());
+                            if (!key.isEmpty()) {
+                                pushHighlightHistory();
+                                if (editingHighMob != null) {
+                                    s.highlights.remove(editingHighMob);
+                                }
+                                boolean showInvis = "ALL".equals(advVisibilityInput) || "ONLY_INVISIBLE".equals(advVisibilityInput);
+                                BomboConfig.HighlightInfo hi = new BomboConfig.HighlightInfo(highColorInput.toUpperCase(Locale.ROOT), showInvis, true, highTracerInput, highIslandInput.trim());
+                                hi.isAdvanced = true;
+                                hi.targetType = "ADVANCED";
+                                hi.entityType = advEntityTypeInput.trim();
+                                if (!advHeadHashInput.trim().isEmpty()) {
+                                    hi.headHashes = new ArrayList<>(List.of(advHeadHashInput.trim().toLowerCase(Locale.ROOT)));
+                                }
+                                hi.mobSize = advMobSizeInput.trim();
+                                hi.armorPiece = advArmorPieceInput.trim();
+                                hi.playerName = advPlayerNameInput.trim();
+                                s.highlights.put(key.toLowerCase(Locale.ROOT), hi);
+                                BomboConfig.save();
+                                highMobInput = "";
+                                advEntityTypeInput = "";
+                                advHeadHashInput = "";
+                                advMobSizeInput = "";
+                                advArmorPieceInput = "";
+                                advPlayerNameInput = "";
+                                highIslandInput = "";
+                                editingHighMob = null;
+                                this.init();
                             }
-                            s.highlights.put(cleanMob.toLowerCase(), new BomboConfig.HighlightInfo(highColorInput.toUpperCase(), true, true, highTracerInput, highIslandInput.trim()));
-                            BomboConfig.save();
-                            highMobInput = "";
-                            highIslandInput = "";
-                            highColorInput = "GOLD";
-                            highTracerInput = false;
-                            editingHighMob = null;
-                            this.init();
+                        }).bounds(contentX, finalCurY, 180, 20).build());
+
+                        if (editingHighMob != null) {
+                            this.addRenderableWidget(Button.builder(Component.literal("§cCancel Edit"), btn -> {
+                                highMobInput = "";
+                                advEntityTypeInput = "";
+                                advHeadHashInput = "";
+                                advMobSizeInput = "";
+                                advArmorPieceInput = "";
+                                advPlayerNameInput = "";
+                                highIslandInput = "";
+                                editingHighMob = null;
+                                this.init();
+                            }).bounds(contentX + 185, finalCurY, 80, 20).build());
                         }
-                    }).bounds(contentX, finalCurY, 140, 20).build());
-                    if (editingHighMob != null) {
-                        this.addRenderableWidget(Button.builder((Component)Component.literal((String)"\u00a7cCancel Edit"), btn -> {
-                            highMobInput = "";
-                            highIslandInput = "";
-                            highColorInput = "GOLD";
-                            highTracerInput = false;
-                            editingHighMob = null;
-                            this.init();
-                        }).bounds(contentX + 145, finalCurY, 80, 20).build());
+                    } else {
+                        curY = this.addTextBox("Mob Name", highMobInput, v -> highMobInput = v, contentX, contentWidth, curY);
+                        curY = this.addTextBox("Island (e.g. garden, !garden)", highIslandInput, v -> highIslandInput = v, contentX, contentWidth, curY);
+                        curY = this.addColorCycleButton("Color", highColorInput, v -> highColorInput = v, contentX, contentWidth, curY);
+                        curY = this.addBoolOption("Tracer", highTracerInput, v -> highTracerInput = v, contentX, contentWidth, curY);
+
+                        int finalCurY = curY += 6;
+                        String addBtnText = editingHighMob != null ? "§e✔ Save Highlight" : "§a+ Add Highlight";
+                        this.addRenderableWidget(Button.builder(Component.literal(addBtnText), btn -> {
+                            String cleanMob = highMobInput.trim().replace("\"", "").trim();
+                            if (!cleanMob.isEmpty()) {
+                                pushHighlightHistory();
+                                if (editingHighMob != null) {
+                                    s.highlights.remove(editingHighMob);
+                                }
+                                s.highlights.put(cleanMob.toLowerCase(Locale.ROOT), new BomboConfig.HighlightInfo(highColorInput.toUpperCase(Locale.ROOT), true, true, highTracerInput, highIslandInput.trim()));
+                                BomboConfig.save();
+                                highMobInput = "";
+                                highIslandInput = "";
+                                highColorInput = "GOLD";
+                                highTracerInput = false;
+                                editingHighMob = null;
+                                this.init();
+                            }
+                        }).bounds(contentX, finalCurY, 140, 20).build());
+
+                        if (editingHighMob != null) {
+                            this.addRenderableWidget(Button.builder(Component.literal("§cCancel Edit"), btn -> {
+                                highMobInput = "";
+                                highIslandInput = "";
+                                highColorInput = "GOLD";
+                                highTracerInput = false;
+                                editingHighMob = null;
+                                this.init();
+                            }).bounds(contentX + 145, finalCurY, 80, 20).build());
+                        }
                     }
                     int listStartY = curY += 30;
                     List<String> generalMobs = me.bombo.bomboaddons.features.BestiaryManager.getGeneralHighlights(s.highlights);
@@ -1012,6 +1248,7 @@ extends Screen {
                         }).bounds(contentX + contentWidth - 85, generalHeaderY + 2, 40, 18).build());
 
                         this.addRenderableWidget(Button.builder((Component)Component.literal("\u00a7cDEL"), btn -> {
+                            pushHighlightHistory();
                             for (String m : generalMobs) {
                                 s.highlights.remove(m);
                             }
@@ -1055,12 +1292,22 @@ extends Screen {
                                 highColorInput = info.color;
                                 highTracerInput = info.tracer;
                                 highShowInvis = info.showInvisible;
-                                highIslandInput = info.requiredIsland;
+                                highIslandInput = info.requiredIsland != null ? info.requiredIsland : "";
                                 editingHighMob = mobName;
+                                if (info.isAdvanced || (info.mobSize != null && !info.mobSize.isEmpty()) || (info.entityType != null && !info.entityType.isEmpty()) || (info.headHashes != null && !info.headHashes.isEmpty())) {
+                                    s.highlightAdvancedMode = true;
+                                    advEntityTypeInput = info.entityType != null ? info.entityType : "";
+                                    advHeadHashInput = info.headHashes != null && !info.headHashes.isEmpty() ? info.headHashes.get(0) : "";
+                                    advMobSizeInput = info.mobSize != null ? info.mobSize : "";
+                                    advArmorPieceInput = info.armorPiece != null ? info.armorPiece : "";
+                                    advPlayerNameInput = info.playerName != null ? info.playerName : "";
+                                    advVisibilityInput = info.showInvisible ? "ALL" : "ONLY_VISIBLE";
+                                }
                                 this.init();
                             }).bounds(contentX + contentWidth - 60, itemY + 2, 32, 18).build());
 
                             this.addRenderableWidget(Button.builder((Component)Component.literal("\u00a7cDEL"), b -> {
+                                pushHighlightHistory();
                                 s.highlights.remove(mobName);
                                 BomboConfig.save();
                                 if (editingHighMob != null && editingHighMob.equals(mobName)) {
@@ -1130,6 +1377,7 @@ extends Screen {
                         }).bounds(contentX + contentWidth - 85, bestiaryHeaderY + 2, 40, 18).build());
 
                         this.addRenderableWidget(Button.builder((Component)Component.literal("\u00a7cDEL"), btn -> {
+                            pushHighlightHistory();
                             for (List<String> list : groupedBestiary.values()) {
                                 for (String m : list) {
                                     s.highlights.remove(m);
@@ -1189,6 +1437,7 @@ extends Screen {
                                 }).bounds(contentX + contentWidth - 85, headerY + 2, 40, 18).build());
 
                                 this.addRenderableWidget(Button.builder((Component)Component.literal("\u00a7cDEL"), btn -> {
+                                    pushHighlightHistory();
                                     for (String m : mobsInCat) {
                                         s.highlights.remove(m);
                                     }
@@ -1238,6 +1487,7 @@ extends Screen {
                                     }).bounds(contentX + contentWidth - 60, itemY + 2, 32, 18).build());
 
                                     this.addRenderableWidget(Button.builder((Component)Component.literal("\u00a7cDEL"), b -> {
+                                        pushHighlightHistory();
                                         s.highlights.remove(mobName);
                                         BomboConfig.save();
                                         if (editingHighMob != null && editingHighMob.equals(mobName)) {
@@ -1302,11 +1552,31 @@ extends Screen {
                     break;
                 }
                 case 10: {
-                    curY += 24;
+                    curY = contentBaseY + 24 - (int)this.scrollAmount;
+                    this.addRenderableWidget(Button.builder(Component.literal("§eDump GUI Layout Debug to File"), b -> {
+                        try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("bomboaddons_gui_debug.log"))) {
+                            pw.println("=== BOMBOADDONS GUI DEBUG ===");
+                            pw.println("selectedCategory: " + selectedCategory);
+                            pw.println("scrollAmount: " + this.scrollAmount);
+                            pw.println("categoryScrollAmount: " + this.categoryScrollAmount);
+                            pw.println("configSearchTerm: " + configSearchTerm);
+                            pw.println("width: " + this.width + ", height: " + this.height);
+                            pw.println("Total widgets: " + this.children().size());
+                            for (var child : this.children()) {
+                                pw.println(" - Widget: " + child.getClass().getName());
+                            }
+                            pw.println("=============================");
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        me.bombo.bomboaddons.Bomboaddons.sendMessage("§a[BomboAddons] Dumped GUI debug to bomboaddons_gui_debug.log!");
+                    }).bounds(contentX, curY, 220, 20).build());
+                    curY += 26;
                     curY = this.addBoolOption("MASTER DEBUG", s.debugMaster, v -> {
                         s.debugMaster = v;
                     }, contentX, contentWidth, curY);
-                    this.addRenderableWidget(Button.builder((Component)Component.literal((String)"\u00a7a[Enable All Debug]"), btn -> {
+                    int btnY = curY;
+                    this.addRenderableWidget(Button.builder(Component.literal("§a[Enable All Debug]"), btn -> {
                         s.debugChat = true;
                         s.debugGuis = true;
                         s.debugEntities = true;
@@ -1314,8 +1584,35 @@ extends Screen {
                         s.debugSounds = true;
                         s.debugMaster = true;
                         s.debugParticles = true;
-                    }).bounds(contentX, curY, contentWidth, 20).build());
+                        s.debugCopyChat = true;
+                        BomboConfig.save();
+                        this.init();
+                    }).bounds(contentX, btnY, contentWidth / 2 - 5, 20).build());
+                    this.addRenderableWidget(Button.builder(Component.literal("§c[Disable All Debug]"), btn -> {
+                        s.debugMaster = false;
+                        s.debugChat = false;
+                        s.debugSounds = false;
+                        s.debugGuis = false;
+                        s.debugEntities = false;
+                        s.debugCommands = false;
+                        s.debugMode = false;
+                        s.apiDebug = false;
+                        s.petPriceDebug = false;
+                        s.apiChatMessages = false;
+                        s.lbDebug = false;
+                        s.debugParticles = false;
+                        s.npcLoreDebug = false;
+                        s.composterDebug = false;
+                        s.autoFishingDebug = false;
+                        s.croesusDebug = false;
+                        s.debugReconnect = false;
+                        s.performanceDebug = false;
+                        s.debugCopyChat = false;
+                        BomboConfig.save();
+                        this.init();
+                    }).bounds(contentX + contentWidth / 2 + 5, btnY, contentWidth / 2 - 5, 20).build());
                     curY += 28;
+                    curY = this.addBoolOption("Copy Chat Debug", s.debugCopyChat, v -> s.debugCopyChat = v, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Chat Debug", s.debugChat, v -> {
                         s.debugChat = v;
                     }, contentX, contentWidth, curY);
@@ -1764,7 +2061,7 @@ extends Screen {
                         BomboConfig.save();
                         this.init();
                     }).bounds(contentX + 175, curY, 20, 20).build());
-                    curY += 29;
+                    curY += 24;
                     curY = this.addTextBox("If Chat Contains", triggerTextInput, v -> {
                         triggerTextInput = v;
                     }, contentX, contentWidth, curY);
@@ -1774,12 +2071,18 @@ extends Screen {
                     curY = this.addTextBox("Show Title", triggerTitleInput, v -> {
                         triggerTitleInput = v;
                     }, contentX, contentWidth, curY);
+                    curY = this.addSoundTextBox("Play Sound (TAB)", triggerSoundInput, v -> {
+                        triggerSoundInput = v;
+                    }, contentX, contentWidth, curY);
+                    curY = this.addIntLabelSlider("Sound Times: " + triggerSoundTimesInput, triggerSoundTimesInput, 1, 10, 1, v -> {
+                        triggerSoundTimesInput = v;
+                    }, contentX, contentWidth, curY);
                     List triggers = s.profileChatTriggers.computeIfAbsent(s.activeProfile, k -> new ArrayList());
-                    int finalCurY = curY;
+                    int finalCurY = curY + 6;
                     String addBtnText = editingTriggerIdx != -1 ? "\u00a7e\u2714 Save Trigger" : "\u00a7a+ Add Trigger";
                     this.addRenderableWidget(Button.builder((Component)Component.literal((String)addBtnText), btn -> {
-                        if (!(triggerTextInput.isEmpty() || triggerCommandInput.isEmpty() && triggerTitleInput.isEmpty())) {
-                            BomboConfig.ChatTrigger ct = new BomboConfig.ChatTrigger(triggerTextInput, triggerCommandInput, triggerTitleInput);
+                        if (!(triggerTextInput.isEmpty() || (triggerCommandInput.isEmpty() && triggerTitleInput.isEmpty() && triggerSoundInput.isEmpty()))) {
+                            BomboConfig.ChatTrigger ct = new BomboConfig.ChatTrigger(triggerTextInput, triggerCommandInput, triggerTitleInput, triggerSoundInput, triggerSoundTimesInput);
                             if (editingTriggerIdx != -1) {
                                 triggers.set(editingTriggerIdx, ct);
                                 editingTriggerIdx = -1;
@@ -1819,6 +2122,8 @@ extends Screen {
                             triggerTextInput = trigger.triggerText;
                             triggerCommandInput = trigger.commandToRun;
                             triggerTitleInput = trigger.titleToShow;
+                            triggerSoundInput = trigger.soundToPlay != null ? trigger.soundToPlay : "";
+                            triggerSoundTimesInput = trigger.soundTimes > 0 ? trigger.soundTimes : 1;
                             this.init();
                         }).bounds(contentX + 180, itemY + 5, 40, 18).build());
                         this.addRenderableWidget(Button.builder((Component)Component.literal((String)"\u00a7cDEL"), btn -> {
@@ -2011,7 +2316,18 @@ extends Screen {
                     int col1W = contentWidth / 2 - 10;
                     int col2X = contentX + contentWidth / 2 + 10;
                     int col2W = contentWidth / 2 - 10;
-                    int y1 = contentBaseY + 24;
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
+
+                    if (structureFinderSubmenu) {
+                        this.addRenderableWidget(Button.builder(Component.literal("§c← Back to Mining"), b -> { structureFinderSubmenu = false; this.scrollAmount = 0.0; this.init(); }).bounds(col1X, y1, 140, 20).build());
+                        y1 += 28;
+                        y1 = this.addBoolOption("Corleone 1", s.structureFinderCorleone1, v -> s.structureFinderCorleone1 = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Structure Tracers", s.structureFinderTracers, v -> s.structureFinderTracers = v, col1X, col1W * 2, y1);
+                        y1 = this.addColorCycleButton("Structure Color", s.structureFinderColor, v -> s.structureFinderColor = v, col1X, col1W * 2, y1);
+                        y1 = this.addIntLabelSlider("Scan Radius: " + s.structureFinderRadius + " blocks", s.structureFinderRadius, 32, 512, 16, v -> s.structureFinderRadius = v, col1X, col1W * 2, y1);
+                        break;
+                    }
+
                     y1 = this.addBoolOption("Corpse ESP Enabled", s.corpseEsp, v -> {
                         s.corpseEsp = v;
                     }, col1X, col1W, y1);
@@ -2036,7 +2352,14 @@ extends Screen {
                     y1 = this.addBoolOption("Golden Dragon Nest Finder", s.goldenDragonNestFinder, v -> {
                         s.goldenDragonNestFinder = v;
                     }, col1X, col1W, y1);
-                    int y2 = contentBaseY + 24;
+
+                    structureFinderX = col1X;
+                    structureFinderY = y1;
+                    structureFinderW = col1W;
+                    structureFinderH = 24;
+                    y1 = this.addBoolOption("Structure Finder (Right Click)", s.structureFinder, v -> s.structureFinder = v, col1X, col1W, y1);
+
+                    int y2 = contentBaseY + 24 - (int)this.scrollAmount;
                     y2 = this.addColorCycleButton("Lapis Outline Color", s.lapisOutlineColor, v -> {
                         s.lapisOutlineColor = v;
                     }, col2X, col2W, y2);
@@ -2157,7 +2480,7 @@ extends Screen {
                            BlockHighlight.highlightedBlocks.clear();
                         }
                     }, contentX, contentWidth, curY);
-                    curY = this.addIntLabelSlider("Block Scan Radius: " + s.blockScanRadius + " blocks", s.blockScanRadius, 4, 256, 4, v -> {
+                    curY = this.addIntLabelSlider("Block Scan Radius: " + s.blockScanRadius + " blocks", s.blockScanRadius, 4, 512, 4, v -> {
                         s.blockScanRadius = v;
                         BlockHighlight.highlightedBlocks.clear();
                     }, contentX, contentWidth, curY);
@@ -2874,6 +3197,18 @@ extends Screen {
                     }
                     break;
                 }
+                case 32: {
+                    int col1X = contentX;
+                    int col1W = contentWidth / 2 - 10;
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
+                    this.addRenderableWidget(Button.builder(Component.literal("§bOpen Chat Modifier Rules Manager"), b -> {
+                        if (this.minecraft != null) {
+                            this.minecraft.setScreen(new ChatModifierScreen(this));
+                        }
+                    }).bounds(col1X, y1, 240, 24).build());
+                    y1 += 34;
+                    break;
+                }
             }
             if (colorPickerTarget != null) {
                 this.renderColorPicker(contentX, 70, contentWidth);
@@ -2885,8 +3220,7 @@ extends Screen {
                 BomboConfig.save();
                 this.minecraft.setScreenAndShow(this.parent);
             }).bounds(this.width / 2 - 75, this.height - 32, 150, 24).build());
-            System.out.println("DEBUG: BomboConfigGUI init end");
-        }
+                    }
         catch (Throwable e) {
             Bomboaddons.LOGGER.error("[BomboAddons] Error during init!", e);
             try {
@@ -2904,6 +3238,7 @@ extends Screen {
     }
 
     private int addBoolOption(String label, boolean value, Consumer<Boolean> setter, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
         Checkbox cb = Checkbox.builder((Component)Component.literal((String)""), (Font)this.font).pos(x, y).selected(value).onValueChange((box, val) -> {
             setter.accept(val);
             BomboConfig.save();
@@ -2916,6 +3251,7 @@ extends Screen {
     }
 
     private int addIntLabelSlider(String label, int current, int min, int max, int step, IntConsumer setter, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
         Button b1 = Button.builder((Component)Component.literal((String)"\u00a77-"), btn -> {
             setter.accept(Math.max(min, current - step));
             BomboConfig.save();
@@ -2935,6 +3271,7 @@ extends Screen {
     }
 
     private int addFloatLabelSlider(String label, float current, float min, float max, float increment, Consumer<Float> setter, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
         Button b1 = Button.builder((Component)Component.literal((String)"\u00a77-"), btn -> {
             setter.accept(Float.valueOf(Math.max(min, current - increment)));
             BomboConfig.save();
@@ -2953,7 +3290,59 @@ extends Screen {
         return y + 24;
     }
 
+        private static EditBox activeSoundBox = null;
+    private static List<String> soundSuggestions = new ArrayList<>();
+    private static boolean isTabCyclingSound = false;
+    private static int selectedSoundSuggestion = 0;
+    private static int soundBoxX = 0;
+    private static int soundBoxY = 0;
+    private static int soundBoxW = 0;
+
+
+    private int addSoundTextBox(String label, String current, Consumer<String> setter, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
+        int bx = x + w / 2;
+        int bw = w / 2;
+        soundBoxX = bx;
+        soundBoxY = y;
+        soundBoxW = bw;
+        EditBox box = new EditBox(this.font, bx, y, bw, 16, Component.literal(label));
+        box.setMaxLength(1024);
+        box.setValue(current);
+        box.setResponder(val -> {
+            setter.accept(val);
+            BomboConfig.save();
+            if (!isTabCyclingSound) {
+                updateSoundSuggestions(val);
+            }
+        });
+        box.setBordered(true);
+        box.setVisible(y >= 56 && y <= this.height - 44);
+        this.addRenderableWidget(box);
+        this.activeBoxes.add(box);
+        activeSoundBox = box;
+        updateSoundSuggestions(current);
+        return y + 24;
+    }
+
+    private static void updateSoundSuggestions(String query) {
+        soundSuggestions.clear();
+        selectedSoundSuggestion = 0;
+        if (query == null || query.trim().isEmpty()) return;
+        String raw = query.trim().toLowerCase();
+        String prefix = raw.startsWith("minecraft:") ? raw.substring(10) : raw;
+        for (net.minecraft.resources.Identifier id : net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.keySet()) {
+            String full = id.toString();
+            String path = id.getPath();
+            if (full.toLowerCase().contains(prefix) || path.toLowerCase().contains(prefix)) {
+                soundSuggestions.add(full);
+                if (soundSuggestions.size() >= 8) break;
+            }
+        }
+    }
+
     private int addTextBox(String label, String current, Consumer<String> setter, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
         EditBox box = new EditBox(this.font, x + w / 2, y, w / 2, 16, (Component)Component.literal((String)label));
         box.setMaxLength(1024);
         box.setValue(current);
@@ -2969,6 +3358,7 @@ extends Screen {
     }
 
     private int addKeyBindButton(String label, String current, Consumer<String> setter, String target, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
         boolean listening = listeningForKeyTarget.equals(target);
         String displayKey = ClickLogic.getKeyDisplayName(current);
         String txt = listening ? "\u00a7e[PRESS KEY]" : "\u00a7f" + label + ": \u00a7d" + (current.isEmpty() ? "None" : displayKey);
@@ -2982,6 +3372,7 @@ extends Screen {
     }
 
     private int addComboBindButton(String label, String current, Consumer<String> setter, String target, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
         boolean listening = listeningForKeyTarget.equals(target);
         String txt = listening ? "\u00a7e[PRESS KEYS...]" : "\u00a7f" + label + ": \u00a7d" + (current.isEmpty() ? "None" : current);
         Button btn = Button.builder((Component)Component.literal((String)txt), b -> {
@@ -3020,6 +3411,7 @@ extends Screen {
     }
 
     private int addCycleOption(String label, String current, List<String> options, Consumer<String> setter, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
         Button btn = Button.builder((Component)Component.literal((String)current), b -> {
             int idx = options.indexOf(current);
             int next = (idx + 1) % options.size();
@@ -3033,13 +3425,14 @@ extends Screen {
     }
 
     private int addColorCycleButton(String label, String current, Consumer<String> setter, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
         String formatting = this.getColorFormatting(current);
         String btnText = label + ": " + formatting + current.toUpperCase();
         Button btn = Button.builder((Component)Component.literal((String)btnText), b -> {
             colorPickerTarget = label;
             colorPickerSetter = setter;
             this.init();
-        }).bounds(x + w / 2, y, w / 2, 16).build();
+        }).bounds(x + 24, y, Math.min(w - 24, 200), 20).build();
         btn.visible = (y >= 56 && y <= this.height - 44);
         this.addRenderableWidget(btn);
         return y + 24;
@@ -3120,6 +3513,7 @@ extends Screen {
 
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         try {
+            
             int contentBaseY;
             int pickerY;
             int pickerX;
@@ -3172,7 +3566,43 @@ extends Screen {
                 g.fill(trackX, trackY, trackX + 2, trackY + trackH, 0x15FFFFFF);
                 g.fill(trackX, thumbY, trackX + 2, thumbY + thumbH, 0x55FFFFFF);
             }
+                        // Render sound suggestions popup list if activeSoundBox is focused
+            if (activeSoundBox != null && activeSoundBox.isFocused() && !soundSuggestions.isEmpty() && activeSoundBox.getY() > 0) {
+                int bx = activeSoundBox.getX();
+                int bw = activeSoundBox.getWidth();
+                int by = activeSoundBox.getY();
+                int listH = Math.min(soundSuggestions.size() * 14 + 4, 120);
+                int listY = by + 18;
+                if (listY + listH > this.height - 20) {
+                    listY = by - listH - 2;
+                }
+                g.fill(bx, listY, bx + bw, listY + listH, 0xF0101015);
+                g.outline(bx, listY, bw, listH, 0xFF555555);
+                for (int sIdx = 0; sIdx < soundSuggestions.size(); sIdx++) {
+                    int itemY = listY + 2 + sIdx * 14;
+                    String sName = soundSuggestions.get(sIdx);
+                    if (sIdx == selectedSoundSuggestion) {
+                        g.fill(bx + 1, itemY, bx + bw - 1, itemY + 13, 0xFF335588);
+                    }
+                    g.text(this.font, "§e" + sName, bx + 4, itemY + 3, -1, false);
+                }
+            }
             super.extractRenderState(g, mouseX, mouseY, partialTick);
+            if (selectedCategory == 0 && loreAdditionsX != -1 && mouseX >= loreAdditionsX && mouseX <= loreAdditionsX + loreAdditionsW && mouseY >= loreAdditionsY && mouseY <= loreAdditionsY + loreAdditionsH) {
+                List<String> tooltip = List.of("§eLore Additions", "§7Adds extra info to item lores.", "§bRight-click §7to configure options.");
+                int tX = Math.max(loreAdditionsX + loreAdditionsW - 60, mouseX + 30);
+                int tY = mouseY - 16;
+                int width = 180;
+                int height = tooltip.size() * 10 + 4;
+                g.fill(tX - 4, tY - 4, tX + width, tY + height, -15198184);
+                g.fill(tX - 5, tY - 5, tX - 4, tY + height + 1, -11184811);
+                g.fill(tX + width, tY - 5, tX + width + 1, tY + height + 1, -11184811);
+                g.fill(tX - 5, tY - 5, tX + width + 1, tY - 4, -11184811);
+                g.fill(tX - 5, tY + height, tX + width + 1, tY + height + 1, -11184811);
+                for (int idx = 0; idx < tooltip.size(); ++idx) {
+                    g.text(this.font, tooltip.get(idx), tX, tY + idx * 10, -1, false);
+                }
+            }
             if (selectedCategory == 0 && partyCommandsX != -1 && mouseX >= partyCommandsX && mouseX <= partyCommandsX + partyCommandsWidth && mouseY >= partyCommandsY && mouseY <= partyCommandsY + partyCommandsHeight) {
                 List<String> tooltip = List.of("\u00a7eParty Commands Automation", "\u00a77Allows party members to trigger commands.", "\u00a7bRight-click \u00a77to configure options.");
                 int tX = mouseX + 12;
@@ -3188,8 +3618,24 @@ extends Screen {
                     g.text(this.font, tooltip.get(idx), tX, tY + idx * 10, -1, true);
                 }
             }
+            if (selectedCategory == 0 && frozenBlazeWarnX != -1 && mouseX >= frozenBlazeWarnX && mouseX <= frozenBlazeWarnX + frozenBlazeWarnW && mouseY >= frozenBlazeWarnY && mouseY <= frozenBlazeWarnY + frozenBlazeWarnH) {
+                List<String> tooltip = List.of("§eFrozen Blaze Warning", "§7Alerts when AFK with Frozen Blaze.", "§bRight-click §7to configure options.");
+                int tX = mouseX + 12;
+                int tY = mouseY;
+                int width = 180;
+                int height = tooltip.size() * 10 + 4;
+                g.fill(tX - 4, tY - 4, tX + width, tY + height, -15198184);
+                g.fill(tX - 5, tY - 5, tX - 4, tY + height + 1, -11184811);
+                g.fill(tX + width, tY - 5, tX + width + 1, tY + height + 1, -11184811);
+                g.fill(tX - 5, tY - 5, tX + width + 1, tY - 4, -11184811);
+                g.fill(tX - 5, tY + height, tX + width + 1, tY + height + 1, -11184811);
+                for (int idx = 0; idx < tooltip.size(); ++idx) {
+                    g.text(this.font, tooltip.get(idx), tX, tY + idx * 10, -1, true);
+                }
+            }
             g.text(this.font, "\u00a76\u00a7lBomboaddons \u00a7r\u00a77Config", 138, 14, -1, true);
-            g.text(this.font, "\u00a7f\u00a7lCATEGORIES", 8, 28, -1, true);
+            g.text(this.font, "\u00a7f\u00a7lCATEGORIES", 8, 26, -1, true);
+            if (this.searchBoxWidget != null) { this.searchBoxWidget.extractRenderState(g, mouseX, mouseY, partialTick); }
             int contentX = 146;
             int contentWidth = this.width - 130 - 24;
             int categoryTitleY = 56;
@@ -3200,52 +3646,90 @@ extends Screen {
                 case 0: {
                     int col1X = contentX;
                     int col2X = contentX + contentWidth / 2 + 10;
-                    int y1 = contentBaseY - (int)this.scrollAmount;
-                    g.text(this.font, "\u00a76\u00a7lMod Settings", col1X, y1, -22016, true);
-                    g.text(this.font, "\u00a77Clear Water & Lava Vision", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Sign Calculator", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77SBE Commands", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Copy Chat", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Left Click Etherwarp", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Sphinx Macro", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Hollow Wand Fix", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Hollow Wand Double Click", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Auto Accept Carnival", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Auto Accept NPC Lore", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Lowest BIN Tooltip", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Raw Craft Cost Tooltip", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77NPC Sell Price Tooltip", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Auto Trevor Quest", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Daily Reward Helper", col1X + 24, (y1 += 24) + 4, -1, false);
-                    y1 += 24;
-                    g.text(this.font, "\u00a76\u00a7lHoppity Egg Finder", col1X, y1 += 10, -22016, true);
-                    g.text(this.font, "\u00a77Enable Egg Finder", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Egg Finder Chat Alerts", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Egg Finder Beacon", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Egg Finder Through Walls", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Hoppity Egg HUD", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Golden Dragon Nest Finder", col1X + 24, (y1 += 24) + 4, -1, false);
-                    int y2 = contentBaseY - (int)this.scrollAmount;
-                    g.text(this.font, "\u00a76\u00a7lClient Settings", col2X, y2, -22016, true);
-                    g.text(this.font, "\u00a77Ignore Caps Lock", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Server List Button", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Reconnect Button", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Quick Join Commands (/f1, /m1, etc)", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Auto Reconnect", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Party Commands", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Bypass Resource Pack", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77NoResourcePack Feature", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Show Command On Hover", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Auto Hoppity Calls", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Disable Hypixel Tooltips", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Hypixel Shortcut Button", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Smart Disconnect", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Borderless Fullscreen", col2X + 24, (y2 += 24) + 4, -1, false);
-                    y2 += 24;
-                    g.text(this.font, "\u00a76\u00a7lFuck Diorite Settings", col2X, y2 += 10, -22016, true);
-                    g.text(this.font, "\u00a77Fuck Diorite", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Fuck Diorite Pillar Color", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a7fFuck Diorite Color:", col2X, y2 += 24, -1);
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
+
+                    if (loreAdditionsSubmenu) {
+                        g.text(this.font, "§6§lLore Additions Settings", col1X, y1, -22016, true);
+                        y1 += 28;
+                        y1 = this.drawOptionLabel(g, "§7Copy Canceled Order Amount (Ctrl+Click)", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Supercraft Max Calculator (Ctrl+Click)", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Starts In Absolute Time", col1X + 24, y1, -1, false);
+                        break;
+                    }
+
+                    if (frozenBlazeWarnSubmenu) {
+                        g.text(this.font, "§6§lFrozen Blaze Warning Settings", col1X, y1, -22016, true);
+                        y1 += 28;
+                        y1 = this.drawOptionLabel(g, "§7Frozen Blaze Warning Enabled", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Play Warning Sound", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Show Title On Screen", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Send Chat Warning", col1X + 24, y1, -1, false);
+                        g.text(this.font, "§fAFK Warning Time: §e" + s.fbWarnSeconds + "s", col1X, (y1 += 24) + 4, -1);
+                        break;
+                    }
+
+                    y1 = this.drawOptionLabel(g, "§7Clear Water & Lava Vision", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Sign Calculator", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7SBE Commands", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Copy Chat", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Left Click Etherwarp", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Sphinx Macro", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Hollow Wand Fix", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Hollow Wand Double Click", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Lasso Fix", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Auto Accept Carnival", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Auto Accept NPC Lore", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Lowest BIN Tooltip", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Raw Craft Cost Tooltip", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7NPC Sell Price Tooltip", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Auto Trevor Quest", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Daily Reward Helper", col1X + 24, y1, -1, false);
+                    
+                    y1 = this.drawOptionLabel(g, "§7Lore Additions §b(Right-Click)", col1X + 24, y1, -1, false);
+
+                    y1 = this.drawOptionLabel(g, "§7In-Chat Search Bar", col1X + 24, y1, -1, false);
+                    if (s.chatSearchBar) {
+                        y1 = this.drawOptionLabel(g, "§7Chat Search Background", col1X + 24, y1, -1, false);
+                    }
+                    y1 = this.drawOptionLabel(g, "§7Custom Time Enabled", col1X + 24, y1, -1, false);
+                    if (s.customTimeEnabled) {
+                        g.text(this.font, "§fCustom Time Hour: §e" + BomboConfig.get().customTimeHour + ":00", col1X, (y1 += 24) + 4, -1);
+                        y1 += 22;
+                    }
+                    y1 = this.drawOptionLabel(g, "§7Weather Override Enabled", col1X + 24, y1, -1, false);
+                    if (s.customWeatherEnabled) {
+                        y1 += 26;
+                    }
+                    y1 += 10;
+                    y1 = this.drawOptionLabel(g, "§7Enable Egg Finder", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Egg Finder Chat Alerts", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Egg Finder Beacon", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Egg Finder Through Walls", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Hoppity Egg HUD", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Golden Dragon Nest Finder", col1X + 24, y1, -1, false);
+
+                    int y2 = contentBaseY + 24 - (int)this.scrollAmount;
+                    y2 = this.drawOptionLabel(g, "§7Ignore Caps Lock", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Server List Button", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Reconnect Button", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Quick Join Commands (/f1, /m1, etc)", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Auto Reconnect", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Party Commands §b(Right-Click)", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Bypass Resource Pack", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7NoResourcePack Feature", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Show Command On Hover", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Auto Hoppity Calls", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Disable Hypixel Tooltips", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Hypixel Shortcut Button", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Smart Disconnect", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Borderless Fullscreen", col2X + 24, y2, -1, false);
+                    y2 += 10;
+                    y2 = this.drawOptionLabel(g, "§7Fuck Diorite", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Fuck Diorite Pillar Color", col2X + 24, y2, -1, false);
+                    if (s.fuckDioritePillarColor && optionMatchesSearch("Fuck Diorite Color")) {
+                        y2 += 24;
+                    }
+                    y2 = this.drawOptionLabel(g, "§7Frozen Blaze Warning §b(Right-Click)", col2X + 24, y2, -1, false);
                     break;
                 }
                 case 1: {
@@ -3253,32 +3737,35 @@ extends Screen {
                     int rgb;
                     int col1X = contentX;
                     int col2X = contentX + contentWidth / 2 + 10;
-                    int y1 = contentBaseY;
-                    g.text(this.font, "\u00a76\u00a7lHUD Settings", col1X, y1, -22016, true);
-                    g.text(this.font, "\u00a77Dice Tracker HUD", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Feast Bakery HUD", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77RNG Profit HUD", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a7fRNG HUD Opacity: \u00a7e" + BomboConfig.get().rngProfitHudOpacity + "%", col1X, (y1 += 24) + 4, -1);
-                    g.text(this.font, "\u00a77Custom Timers HUD", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Tab Widget HUD", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Hoppity Egg HUD", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Alpha Tracker HUD", col1X + 24, (y1 += 24) + 4, -1, false);
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
+                    y1 = this.drawOptionLabel(g, "§7Dice Tracker HUD", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Feast Bakery HUD", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7RNG Profit HUD", col1X + 24, y1, -1, false);
+                    g.text(this.font, "§fRNG HUD Opacity: §e" + BomboConfig.get().rngProfitHudOpacity + "%", col1X, y1 + 4, -1);
+                    y1 += 24;
+                    y1 = this.drawOptionLabel(g, "§7Custom Timers HUD", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Tab Widget HUD", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Hoppity Egg HUD", col1X + 24, y1, -1, false);
+                    y1 += 26; // button offset
+                    y1 = this.drawOptionLabel(g, "§7Alpha Tracker HUD", col1X + 24, y1, -1, false);
                     if (BomboConfig.get().alphaTrackerHud) {
-                        g.text(this.font, "\u00a77Alpha Only When Open", col1X + 24, (y1 += 24) + 4, -1, false);
-                        g.text(this.font, "\u00a77Alpha Hide When Closed", col1X + 24, (y1 += 24) + 4, -1, false);
-                        g.text(this.font, "\u00a77Alpha Show Players", col1X + 24, (y1 += 24) + 4, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Alpha Only When Open", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Alpha Hide When Closed", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Alpha Show Players", col1X + 24, y1, -1, false);
                     }
-                    g.text(this.font, "\u00a7fTab Widget Name:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a77Item List Enabled", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Lock Item List Position", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Separate IL Search", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Keep IL Search Vis", col1X + 24, (y1 += 24) + 4, -1, false);
-                    int y2 = contentBaseY;
-                    g.text(this.font, "\u00a76\u00a7lTooltip Customization", col2X, y2, -22016, true);
-                    g.text(this.font, "\u00a77Custom Tooltip Bg", col2X + 24, (y2 += 24) + 4, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Item List Enabled", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Rarity Background", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Remove Background", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Lock Item List Position", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Separate IL Search", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Keep IL Search Vis", col1X + 24, y1, -1, false);
+
+                    int y2 = contentBaseY + 24 - (int)this.scrollAmount;
+                    y2 = this.drawOptionLabel(g, "§7Custom Tooltip Bg", col2X + 24, y2, -1, false);
                     y2 += 24;
+                    y2 += 22; // buttons offset
                     int pickerX2 = col2X;
-                    int pickerY2 = y2 += 20;
+                    int pickerY2 = y2;
                     int svSize = 80;
                     if (isDraggingSv || isDraggingHue || isDraggingAlpha) {
                         if (isDraggingSv) {
@@ -3353,31 +3840,32 @@ extends Screen {
                     g.text(this.font, "A: " + activeAlpha, pickerX2 + 128, pickerY2 + 57, -1);
                     break;
                 }
-                case 2: {
-                    g.text(this.font, "\u00a76\u00a7lExperiment Solver", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Auto Experiments", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a7fClick Delay: \u00a7e" + BomboConfig.get().experimentClickDelay + "ms", contentX, curY += 24, -1);
-                    g.text(this.font, "\u00a7fSerum Count: \u00a7e" + BomboConfig.get().experimentSerumCount, contentX, curY += 24, -1);
-                    g.text(this.font, "\u00a77Auto Close", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Get Max XP", contentX + 24, (curY += 24) + 4, -1, false);
+                                case 2: {
+                    curY += 24;
+                    curY = this.drawOptionLabel(g, "§7Auto Experiments", contentX + 24, curY, -1, false);
+                    g.text(this.font, "§fClick Delay: §e" + BomboConfig.get().experimentClickDelay + "ms", contentX, curY + 4, -1);
+                    curY += 24;
+                    g.text(this.font, "§fSerum Count: §e" + BomboConfig.get().experimentSerumCount, contentX, curY + 4, -1);
+                    curY += 24;
+                    curY = this.drawOptionLabel(g, "§7Auto Close", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "§7Get Max XP", contentX + 24, curY, -1, false);
                     break;
                 }
                 case 3: {
                     int col1X = contentX;
                     int col2X = contentX + contentWidth / 2 + 10;
-                    int y1 = contentBaseY;
-                    g.text(this.font, "\u00a76\u00a7lGarden Settings", col1X, y1, -22016, true);
-                    g.text(this.font, "\u00a77Garden Movement", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Lock Mouse on Movement", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Sugar Cane Mode", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Direction Helper Warning", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Macro Check Detector", col1X + 24, (y1 += 24) + 4, -1, false);
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
+                    y1 = this.drawOptionLabel(g, "§7Garden Movement", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Lock Mouse on Movement", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Sugar Cane Mode", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Direction Helper Warning", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Macro Check Detector", col1X + 24, y1, -1, false);
                     y1 += 24;
                     if (BomboConfig.get().gardenMacroCheckDetector) {
                         g.text(this.font, "\u00a77Stop Movement on Check", col1X + 24, y1 + 4, -1, false);
-                        g.text(this.font, "\u00a7fAlarm Sound:", col1X, (y1 += 24) + 4, -1, false);
+                        y1 = this.drawOptionLabel(g, "\u00a7fAlarm Sound:", col1X, y1, -1, false);
                         g.text(this.font, "\u00a7fSound Repeats: \u00a7e" + BomboConfig.get().gardenMacroCheckSoundCount, col1X, (y1 += 24) + 4, -1, false);
-                        g.text(this.font, "\u00a7fSound Delay: \u00a7e" + BomboConfig.get().gardenMacroCheckSoundDelay + "ms", col1X, (y1 += 24) + 4, -1, false);
+                        y1 = this.drawOptionLabel(g, "\u00a7fSound Delay: \u00a7e" + BomboConfig.get().gardenMacroCheckSoundDelay + "ms", col1X, y1, -1, false);
                         y1 += 24;
                     }
                     g.text(this.font, "\u00a7fForward:", col1X, y1 += 10, -1);
@@ -3386,16 +3874,17 @@ extends Screen {
                     g.text(this.font, "\u00a7fRight:", col1X, y1 += 24, -1);
                     g.text(this.font, "\u00a7fBreak:", col1X, y1 += 24, -1);
                     g.text(this.font, "\u00a7fUse:", col1X, y1 += 24, -1);
-                    int y2 = contentBaseY;
-                    g.text(this.font, "\u00a76\u00a7lComposter & Pests", col2X, y2, -22016, true);
-                    g.text(this.font, "\u00a77Composter HUD", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Composter Timer HUD", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Pest ESP Enabled", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Pest Waypoints", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Remove Waypoint On Return", col2X + 24, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Pest Waypoint Beacon", col2X + 24, (y2 += 24) + 4, -1, false);
+                    int y2 = contentBaseY + 24 - (int)this.scrollAmount;
+                    y2 = this.drawOptionLabel(g, "§7Composter Helper", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Composter HUD", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Composter Timer HUD", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Pest ESP Enabled", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Pest Waypoints", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Remove Waypoint On Return", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Pest Waypoint Beacon", col2X + 24, y2, -1, false);
                     g.text(this.font, "\u00a7fPest Waypoint Duration: \u00a7e" + (String)(BomboConfig.get().pestWaypointDuration == 0 ? "Infinite" : BomboConfig.get().pestWaypointDuration + "s"), col2X, (y2 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Pest Tracers", col2X + 24, (y2 += 24) + 4, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Pest Tracers", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Cheese Tracers", col2X + 24, y2, -1, false);
                     g.text(this.font, "\u00a7fPest Color:", col2X, y2 += 24, -1);
                     g.text(this.font, "\u00a7fPest Thickness: \u00a7e" + BomboConfig.get().pestEspThickness, col2X, y2 += 24, -1);
                     break;
@@ -3406,26 +3895,29 @@ extends Screen {
                     int col2X = contentX + col1W + 20;
                     int y1 = contentBaseY + 24 - (int)this.scrollAmount;
                     int y2 = contentBaseY + 24 - (int)this.scrollAmount;
-                    g.text(this.font, "\u00a76\u00a7lHotkey Shortcuts", contentX, y1 - 24, -22016, true);
-                    g.text(this.font, "\u00a7fTrade:", col1X, y1, -1);
-                    g.text(this.font, "\u00a7fRecipe:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fTexture Toggle:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fUsage:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fShow Info:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fCount Items:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fCopy NBT:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fGFS Max:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fGFS Stack:", col1X, y1 += 24, -1);
+                    g.text(this.font, "\u00a76\u00a7lHotkey Shortcuts", contentX, contentBaseY - (int)this.scrollAmount, -22016, true);
+                    if (optionMatchesSearch("Trade")) { g.text(this.font, "\u00a7fTrade:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("Recipe")) { g.text(this.font, "\u00a7fRecipe:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("Texture Toggle")) { g.text(this.font, "\u00a7fTexture Toggle:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("Usage")) { g.text(this.font, "\u00a7fUsage:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("Show Info")) { g.text(this.font, "\u00a7fShow Info:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("Count Items")) { g.text(this.font, "\u00a7fCount Items:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("Copy NBT")) { g.text(this.font, "\u00a7fCopy NBT:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("GFS Max")) { g.text(this.font, "\u00a7fGFS Max:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("GFS Stack")) { g.text(this.font, "\u00a7fGFS Stack:", col1X, y1 + 4, -1); y1 += 24; }
+                    if (optionMatchesSearch("Save Inventory")) { g.text(this.font, "\u00a7fSave Inventory:", col1X, y1 + 4, -1); y1 += 24; }
 
-                    g.text(this.font, "\u00a7fChat Peek:", col2X, y2, -1);
-                    g.text(this.font, "\u00a7fNext Page:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fPrev Page:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fGo Back:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fSmart Back:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fSave Pet:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fRun Clipboard Cmd:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fFreelook:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fBestiary Highlight:", col2X, y2 += 24, -1);
+                    if (optionMatchesSearch("Chat Peek")) { g.text(this.font, "\u00a7fChat Peek:", col2X, y2 + 4, -1); y2 += 24; }
+                    if (optionMatchesSearch("Next Page")) { g.text(this.font, "\u00a7fNext Page:", col2X, y2 + 4, -1); y2 += 24; }
+                    if (optionMatchesSearch("Prev Page")) { g.text(this.font, "\u00a7fPrev Page:", col2X, y2 + 4, -1); y2 += 24; }
+                    if (optionMatchesSearch("Go Back")) { g.text(this.font, "\u00a7fGo Back:", col2X, y2 + 4, -1); y2 += 24; }
+                    if (optionMatchesSearch("Smart Back")) { g.text(this.font, "\u00a7fSmart Back:", col2X, y2 + 4, -1); y2 += 24; }
+                    if (optionMatchesSearch("Save Pet")) { g.text(this.font, "\u00a7fSave Pet:", col2X, y2 + 4, -1); y2 += 24; }
+                    if (optionMatchesSearch("Run Clipboard Cmd")) { g.text(this.font, "\u00a7fRun Clipboard Cmd:", col2X, y2 + 4, -1); y2 += 24; }
+                    if (optionMatchesSearch("Freelook")) { g.text(this.font, "\u00a7fFreelook:", col2X, y2 + 4, -1); y2 += 24; }
+                    y2 = this.drawOptionLabel(g, "\u00a77Freelook Mode: " + (s.freelookToggle ? "Toggle" : "Hold"), col2X + 24, y2, -1, false);
+                    if (optionMatchesSearch("Bestiary Highlight")) { g.text(this.font, "\u00a7fBestiary Highlight:", col2X, y2 + 4, -1); y2 += 24; }
+                    if (optionMatchesSearch("Item List Search Focus")) { g.text(this.font, "\u00a7fItem List Search Focus:", col2X, y2 + 4, -1); y2 += 24; }
                     break;
                 }
                 case 6: {
@@ -3475,17 +3967,44 @@ extends Screen {
                     }
                     break;
                 }
-                case 7: {
-                    g.text(this.font, "\u00a76\u00a7lAdd Highlight", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Highlights Enabled", contentX + 24, (curY += 24) + 4, -1, false);
-                    curY += 6;
-                    g.text(this.font, "\u00a7fMob Name:", contentX, (curY += 24) + 4, -1);
-                    g.text(this.font, "\u00a7fIsland:", contentX, (curY += 24) + 4, -1);
-                    g.text(this.font, "\u00a7fColor:", contentX, (curY += 24) + 4, -1);
-                    g.text(this.font, "\u00a77Tracer", contentX + 24, (curY += 24) + 4, -1, false);
-                    curY += 6;
-                    curY += 20;
-                    int listTitleY = curY += 30;
+                                                case 7: {
+                    curY += 24;
+                    curY = this.drawOptionLabel(g, "§7Highlights Enabled", contentX + 24, curY, -1, false);
+                    g.text(this.font, "§fTracer Width: §e" + String.format("%.1f", s.tracerWidth), contentX, curY + 6, -1);
+                    curY += 24;
+                    curY += 26; // Mode switch button
+                    if (s.highlightAdvancedMode) {
+                        g.text(this.font, "§fNametag / Regex:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fEntity Type:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fHead Hash:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fMob Size:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fArmor Piece:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fPlayer / Skin:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fIsland / Subarea:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fVisibility:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fColor:", contentX, curY + 6, -1);
+                        curY += 24;
+                        curY = this.drawOptionLabel(g, "§7Tracer", contentX + 24, curY, -1, false);
+                        curY += 30; // Button offset
+                    } else {
+                        g.text(this.font, "§fMob Name:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fIsland:", contentX, curY + 6, -1);
+                        curY += 24;
+                        g.text(this.font, "§fColor:", contentX, curY + 6, -1);
+                        curY += 24;
+                        curY = this.drawOptionLabel(g, "§7Tracer", contentX + 24, curY, -1, false);
+                        curY += 30; // Button offset
+                    }
+                    int listTitleY = curY;
                     g.text(this.font, "\u00a79\u00a7lBestiary & Custom Highlights", contentX, listTitleY, -11184641, true);
                     int listY = listTitleY + 15 - (int)this.scrollAmount;
 
@@ -3501,6 +4020,7 @@ extends Screen {
                         g.enableScissor(contentX + 26, generalHeaderY, contentX + contentWidth - 215, generalHeaderY + 20);
                         g.text(this.font, "\u00a76\u00a7lGeneral Highlights \u00a77(" + generalMobs.size() + ")", contentX + 26, generalHeaderY + 6, -22016, true);
                         g.disableScissor();
+                        g.fill(contentX + 16, generalHeaderY + 21, contentX + contentWidth, generalHeaderY + 22, 0x44888888);
                     }
 
                     if (!isGeneralCollapsed) {
@@ -3515,6 +4035,7 @@ extends Screen {
                                     g.text(this.font, "  \u00a77• " + prefix + mobName, contentX + 24, itemY + 6, -1, false);
                                     g.disableScissor();
                                 }
+                                g.fill(contentX + 16, itemY + 21, contentX + contentWidth, itemY + 22, 0x44888888);
                             }
                         }
                     }
@@ -3535,6 +4056,7 @@ extends Screen {
                         g.enableScissor(contentX + 26, bestiaryHeaderY, contentX + contentWidth - 215, bestiaryHeaderY + 20);
                         g.text(this.font, "\u00a73\u00a7lBestiary \u00a77(" + totalBestiaryMobs + " mobs in " + groupedBestiary.size() + " categories)", contentX + 26, bestiaryHeaderY + 6, -11184641, true);
                         g.disableScissor();
+                        g.fill(contentX + 16, bestiaryHeaderY + 21, contentX + contentWidth, bestiaryHeaderY + 22, 0x44888888);
                     }
 
                     if (!isBestiaryParentCollapsed) {
@@ -3545,10 +4067,7 @@ extends Screen {
                             boolean isCollapsed = s.collapsedBestiaryCategories != null && s.collapsedBestiaryCategories.contains(cat);
 
                             if (catIndex > 0) {
-                                if (listY > listTitleY + 5 && listY < this.height - 15) {
-                                    g.fill(contentX + 16, listY + 2, contentX + contentWidth, listY + 3, 0x33888888);
-                                }
-                                listY += 6;
+                                listY += 4;
                             }
                             catIndex++;
 
@@ -3559,6 +4078,7 @@ extends Screen {
                                 g.enableScissor(contentX + 42, headerY, contentX + contentWidth - 215, headerY + 20);
                                 g.text(this.font, "\u00a76\u00a7l" + cat + " \u00a77(" + mobsInCat.size() + ")", contentX + 42, headerY + 6, -22016, true);
                                 g.disableScissor();
+                                g.fill(contentX + 16, headerY + 21, contentX + contentWidth, headerY + 22, 0x44888888);
                             }
 
                             if (!isCollapsed) {
@@ -3573,6 +4093,7 @@ extends Screen {
                                             g.text(this.font, "  \u00a77• " + prefix + mobName, contentX + 36, itemY + 6, -1, false);
                                             g.disableScissor();
                                         }
+                                        g.fill(contentX + 16, itemY + 21, contentX + contentWidth, itemY + 22, 0x44888888);
                                     }
                                 }
                             }
@@ -3581,7 +4102,6 @@ extends Screen {
                     break;
                 }
                 case 8: {
-                    g.text(this.font, "\u00a76\u00a7lWardrobe Settings", contentX, curY, -22016, true);
                     curY += 24;
                     if (!s.hideCheats) {
                         g.text(this.font, "\u00a77Auto Close", contentX + 24, curY + 4, -1, false);
@@ -3597,9 +4117,9 @@ extends Screen {
                 }
                 case 9: {
                     g.text(this.font, "\u00a76\u00a7lAnvil Auto-Combine", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Auto Combine", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Auto Combine", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fCombine Delay: \u00a7e" + s.anvilAutoCombineDelay + "ms", contentX, curY += 24, -1);
-                    g.text(this.font, "\u00a77Require Keybind", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Require Keybind", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fTrigger Key:", contentX, curY += 24, -1);
                     g.text(this.font, "\u00a79\u00a7lTarget Enchantments", contentX, curY += 44, -11184641, true);
                     int listY = curY + 20 - (int)this.scrollAmount;
@@ -3615,29 +4135,34 @@ extends Screen {
                     break;
                 }
                 case 10: {
-                    g.text(this.font, "\u00a7c\u00a7lDebug Settings", contentX, curY, -43691, true);
-                    g.text(this.font, "\u00a77MASTER DEBUG", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Chat Debug", contentX + 24, (curY += 48) + 4, -1, false);
-                    g.text(this.font, "\u00a77Sounds Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77GUIs Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Entities Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Command Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Debug Mode (Legacy)", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77API Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Pet Price Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77API Chat Messages", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77LB Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Particle Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77NPC Lore Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Composter Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Auto Fishing Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Croesus Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Auto Reconnect Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Performance Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Keys Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Daily Reward Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Display ESP Enabled", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Display Tracers", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = contentBaseY + 24 - (int)this.scrollAmount;
+                    g.text(this.font, "§c§lDebug Settings", contentX, curY - 24, -43691, true);
+                    curY += 26; // Space for Dump button
+                    curY = this.drawOptionLabel(g, "§7MASTER DEBUG", contentX + 24, curY, -1, false);
+                    curY += 28; // Space for [Enable/Disable All Debug] buttons
+                    curY = this.drawOptionLabel(g, "§7Copy Chat Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "§7Chat Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "§7Sounds Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77GUIs Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Entities Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Command Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Debug Mode (Legacy)", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77API Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Pet Price Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77API Chat Messages", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77LB Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Particle Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77NPC Lore Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "§7Composter Debug", contentX + 24, curY, -1, false);
+
+                    curY = this.drawOptionLabel(g, "\u00a77Auto Fishing Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Croesus Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Auto Reconnect Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Performance Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Keys Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Daily Reward Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Display ESP Enabled", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Display Tracers", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fDisplay Color:", contentX, (curY += 24) + 4, -1);
                     g.text(this.font, "\u00a7fDisplay Size: \u00a7e" + String.format("%.1f", Float.valueOf(BomboConfig.get().displayEspThickness)), contentX, (curY += 24) + 4, -1);
                     g.text(this.font, "\u00a7fDisplay Filter:", contentX, (curY += 29) + 4, -1);
@@ -3645,26 +4170,26 @@ extends Screen {
                 }
                 case 11: {
                     g.text(this.font, "\u00a76\u00a7lKuudra Settings", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Blindness Timer", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Disable Blindness", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Perk Menu Clicker", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Auto GFS Toxic", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Blindness Timer", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Disable Blindness", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Perk Menu Clicker", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Auto GFS Toxic", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fToxic Count: \u00a7e" + BomboConfig.get().autoGfsToxicCount, contentX, (curY += 24) + 4, -1);
-                    g.text(this.font, "\u00a77Auto GFS Twilight", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Auto GFS Twilight", contentX + 24, curY, -1, false);
                     curY += 24;
                     g.text(this.font, "\u00a77Pearl Waypoints & Timers", contentX + 24, (curY += 10) + 4, -1, false);
-                    g.text(this.font, "\u00a77Show Pearl Throw Timer", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Show All Pearl Spots", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Show Sky Pearl Spots", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Show Flat Pearl Spots", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Show Double Pearl Spots", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Kuudra Debug Mode", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Show Pearl Throw Timer", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Show All Pearl Spots", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Show Sky Pearl Spots", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Show Flat Pearl Spots", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Show Double Pearl Spots", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Kuudra Debug Mode", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fTalisman Tier: \u00a7e" + BomboConfig.get().kuudraTalisman, contentX, (curY += 24) + 4, -1);
                     break;
                 }
                 case 12: {
                     g.text(this.font, "\u00a76\u00a7lPets Settings", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Show Pet Lowest BIN", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Show Pet Lowest BIN", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a77Disable Unequip", contentX + 24, (curY += 29) + 4, -1, false);
                     curY += 24;
                     for (int i = 0; i < 9; ++i) {
@@ -3726,7 +4251,7 @@ extends Screen {
                     g.text(this.font, "\u00a7fCoords (X Y Z):", contentX, (curY += 29) + 4, -1);
                     g.text(this.font, "\u00a7fOnly on Island:", contentX, (curY += 29) + 4, -1);
                     g.text(this.font, "\u00a77Show Through Walls", contentX + 24, (curY += 29) + 4, -1, false);
-                    g.text(this.font, "\u00a77Show Beacon", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Show Beacon", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fColor:", contentX, curY += 24, -1);
                     curY += 24;
                     int activeWaypointsTitleY = curY += 35;
@@ -3770,11 +4295,12 @@ extends Screen {
                 case 16: {
                     g.text(this.font, "\u00a76\u00a7lChat Triggers & Actions", contentX, curY, -22016, true);
                     g.text(this.font, "\u00a7fActive Profile: \u00a7e" + s.activeProfile, contentX, (curY += 24) + 4, -1);
-                    g.text(this.font, "\u00a7fIf Chat Contains:", contentX, (curY += 29) + 4, -1);
-                    g.text(this.font, "\u00a7fRun Command:", contentX, (curY += 29) + 4, -1);
-                    g.text(this.font, "\u00a7fShow Title:", contentX, (curY += 29) + 4, -1);
-                    curY += 29;
-                    int activeTriggersTitleY = curY += 35;
+                    g.text(this.font, "\u00a7fIf Chat Contains:", contentX, (curY += 24) + 4, -1);
+                    g.text(this.font, "\u00a7fRun Command:", contentX, (curY += 24) + 4, -1);
+                    g.text(this.font, "\u00a7fShow Title:", contentX, (curY += 24) + 4, -1);
+                    g.text(this.font, "\u00a7fPlay Sound (TAB):", contentX, (curY += 24) + 4, -1);
+                    g.text(this.font, "\u00a7fSound Times: \u00a7e" + triggerSoundTimesInput, contentX, (curY += 24) + 4, -1);
+                    int activeTriggersTitleY = (curY += 34) + 30;
                     g.text(this.font, "\u00a79\u00a7lActive Triggers", contentX, activeTriggersTitleY, -11184641, true);
                     int listY = activeTriggersTitleY + 20 - (int)this.scrollAmount;
                     List<BomboConfig.ChatTrigger> activeTriggers = s.profileChatTriggers.get(s.activeProfile);
@@ -3798,13 +4324,13 @@ extends Screen {
                 }
                 case 17: {
                     g.text(this.font, "\u00a76\u00a7lDungeons Settings", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Croesus Helper", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Dungeon Secrets Tracker", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Dungeon Secrets Debug", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Clear Info HUD", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Pad Timers Purple", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Pad Timers Green", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Dungeon Big Hitbox", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Croesus Helper", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Dungeon Secrets Tracker", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Dungeon Secrets Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Clear Info HUD", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Pad Timers Purple", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Pad Timers Green", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Dungeon Big Hitbox", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fPurple Timer: \u00a7e" + String.format("%.1fs", s.padTimerPurpleTime), contentX, curY += 24, -1);
                     break;
                 }
@@ -3849,31 +4375,32 @@ extends Screen {
                 case 19: {
                     int col1X = contentX;
                     int col2X = contentX + contentWidth / 2 + 10;
-                    int y1 = contentBaseY;
-                    g.text(this.font, "\u00a76\u00a7lCorpse ESP Settings", col1X, y1, -22016, true);
-                    g.text(this.font, "\u00a77Corpse ESP Enabled", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Hide Opened Corpses", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a7fESP Style:", col1X, y1 += 29, -1);
-                    g.text(this.font, "\u00a77Golden Dragon Nest Finder", col1X + 24, (y1 += 24) + 4, -1, false);
-                    int y2 = contentBaseY;
-                    g.text(this.font, "\u00a76\u00a7lCorpse Colors", col2X, y2, -22016, true);
-                    g.text(this.font, "\u00a7fLapis Outline:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fLapis Fill:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fTungsten Outline:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fTungsten Fill:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fUmber Outline:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fUmber Fill:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fVanguard Outline:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fVanguard Fill:", col2X, y2 += 24, -1);
+                    int y1 = contentBaseY - (int)this.scrollAmount;
+                    if (structureFinderSubmenu) {
+                        g.text(this.font, "§6§lStructure Finder Settings", col1X, y1, -22016, true);
+                        y1 += 52;
+                        y1 = this.drawOptionLabel(g, "§7Corleone 1", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Structure Tracers", col1X + 24, y1, -1, false);
+                        break;
+                    }
+                    g.text(this.font, "§6§lCorpse ESP Settings", col1X, y1, -22016, true);
+                    y1 += 24;
+                    y1 = this.drawOptionLabel(g, "§7Corpse ESP Enabled", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Hide Opened Corpses", col1X + 24, y1, -1, false);
+                    y1 += 29;
+                    y1 = this.drawOptionLabel(g, "§7Golden Dragon Nest Finder", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Structure Finder (Right Click)", col1X + 24, y1, -1, false);
+                    int y2 = contentBaseY - (int)this.scrollAmount;
+                    g.text(this.font, "§6§lCorpse Colors", col2X, y2, -22016, true);
                     break;
                 }
                 case 20: {
                     int col1X = contentX;
                     int y1 = contentBaseY;
                     g.text(this.font, "\u00a76\u00a7lParty Commands Config", col1X, y1, -22016, true);
-                    g.text(this.font, "\u00a77Toggle !timer command", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Toggle !warp command (runs /party warp)", col1X + 24, (y1 += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Toggle !psa command (runs /party settings allinvite)", col1X + 24, (y1 += 24) + 4, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Toggle !timer command", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Toggle !warp command (runs /party warp)", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Toggle !psa command (runs /party settings allinvite)", col1X + 24, y1, -1, false);
                     g.text(this.font, "\u00a7fPrefixes (e.g. !,.,?):", col1X, (y1 += 34) + 4, -1);
                     int col2X = contentX + contentWidth / 2 + 10;
                     int y2 = contentBaseY;
@@ -3909,7 +4436,7 @@ extends Screen {
                 }
                 case 21: {
                     g.text(this.font, "\u00a76\u00a7lAdd Block Highlight", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Block Highlights Enabled", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Block Highlights Enabled", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fBlock Scan Radius: \u00a7e" + s.blockScanRadius + " \u00a77blocks", contentX, (curY += 24) + 4, -1);
                     g.text(this.font, "\u00a7fBlock Name/ID:", contentX, (curY += 34) + 4, -1);
                     g.text(this.font, "\u00a7fColor:", contentX, (curY += 29) + 4, -1);
@@ -3934,7 +4461,7 @@ extends Screen {
                 }
                 case 22: {
                     g.text(this.font, "\u00a76\u00a7lAdd Particle Highlight", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Particle Highlights Enabled", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Particle Highlights Enabled", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fParticle Name:", contentX, (curY += 34) + 4, -1);
                     g.text(this.font, "\u00a7fColor:", contentX, (curY += 29) + 4, -1);
                     curY += 29;
@@ -3956,15 +4483,15 @@ extends Screen {
                 }
                 case 23: {
                     g.text(this.font, "\u00a76\u00a7lBedwars ESP Settings", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Bedwars ESP Enabled", contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Highlight Own Team", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Bedwars ESP Enabled", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Highlight Own Team", contentX + 24, curY, -1, false);
                     break;
                 }
                 case 24: {
                     g.enableScissor(contentX - 10, 56, this.width, this.height - 40);
                     int textY = contentBaseY - (int)this.scrollAmount;
                     g.text(this.font, "\u00a76\u00a7lFishing Settings", contentX, textY, -22016, true);
-                    g.text(this.font, "\u00a77Auto Fishing Enabled", contentX + 24, (textY += 24) + 4, -1, false);
+                    textY = this.drawOptionLabel(g, "\u00a77Auto Fishing Enabled", contentX + 24, textY, -1, false);
                     g.text(this.font, "\u00a77Show Bobber Time", contentX + 24, (textY += 29) + 4, -1, false);
                     g.text(this.font, "\u00a7fMin Delay (ms): \u00a7a" + s.autoFishingMinDelay, contentX, (textY += 29) + 4, -1);
                     g.text(this.font, "\u00a7fMax Delay (ms): \u00a7a" + s.autoFishingMaxDelay, contentX, (textY += 29) + 4, -1);
@@ -3988,7 +4515,7 @@ extends Screen {
                     String[] presetNames2;
                     BomboConfig.CrosshairSettings crosshair = BomboConfig.get().customCrosshair;
                     g.text(this.font, "\u00a76\u00a7lCustom Crosshair", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Enable Custom Crosshair", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Enable Custom Crosshair", contentX + 24, curY, -1, false);
                     curY += 24;
                     g.text(this.font, "\u00a77Chroma", contentX + 24, (curY += 5) + 4, -1, false);
                     curY += 24;
@@ -4085,7 +4612,7 @@ extends Screen {
                 }
                 case 28: {
                     g.text(this.font, "\u00a76\u00a7lAdd Item Highlight", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Item Highlights Enabled", contentX + 24, (curY += 24) + 4, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Item Highlights Enabled", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fTarget Name:", contentX, (curY += 34) + 4, -1);
                     g.text(this.font, "\u00a7fColor:", contentX, (curY += 29) + 4, -1);
                     g.text(this.font, "\u00a77Show Invis", contentX + 24, (curY += 29) + 4, -1, false);
@@ -4185,6 +4712,14 @@ extends Screen {
                     }
                     break;
                 }
+                case 32: {
+                    int col1X = contentX;
+                    int y1 = contentBaseY - (int)this.scrollAmount;
+                    g.text(this.font, "\u00a76\u00a7lChat Modifier Rules", col1X, y1, -22016, true);
+                    g.text(this.font, "\u00a77Create customizable rules to replace or hide chat messages (Regex supported).", col1X, y1 + 50, -1, false);
+                    g.text(this.font, "\u00a77Total active rules: \u00a7e" + ChatModifier.rules.size(), col1X, y1 + 65, -1, false);
+                    break;
+                }
             }
         }
         catch (Throwable e) {
@@ -4218,8 +4753,83 @@ extends Screen {
         return codes;
     }
 
+
     public boolean keyPressed(KeyEvent event) {
         int keyCode = event.key();
+        long window = Minecraft.getInstance().getWindow().handle();
+        boolean isCtrl = event.hasControlDown() || org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL) == org.lwjgl.glfw.GLFW.GLFW_PRESS || org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_CONTROL) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        if (selectedCategory == 7 && isCtrl) {
+            if (keyCode == 90 || keyCode == 122 || keyCode == 309 || keyCode == GLFW.GLFW_KEY_Z) {
+                if (undoHighlight()) {
+                    Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.2F));
+                    if (Minecraft.getInstance().player != null) {
+                        Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §a✔ Undone highlight change! (Ctrl+Z)"));
+                    }
+                    this.init();
+                    return true;
+                } else {
+                    if (Minecraft.getInstance().player != null) {
+                        Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §eNo highlight actions in undo history."));
+                    }
+                }
+            } else if (keyCode == 89 || keyCode == 121 || keyCode == 310 || keyCode == GLFW.GLFW_KEY_Y) {
+                if (redoHighlight()) {
+                    Minecraft.getInstance().getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.2F));
+                    if (Minecraft.getInstance().player != null) {
+                        Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §a✔ Redone highlight change! (Ctrl+Y)"));
+                    }
+                    this.init();
+                    return true;
+                } else {
+                    if (Minecraft.getInstance().player != null) {
+                        Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §eNo highlight actions in redo history."));
+                    }
+                }
+            }
+        }
+        if (activeSoundBox != null && activeSoundBox.isFocused() && !soundSuggestions.isEmpty()) {
+            if (keyCode == 258) { // TAB -> cycle to next option
+                selectedSoundSuggestion = (selectedSoundSuggestion + 1) % soundSuggestions.size();
+                String selected = soundSuggestions.get(selectedSoundSuggestion);
+                isTabCyclingSound = true;
+                activeSoundBox.setValue(selected);
+                triggerSoundInput = selected;
+                isTabCyclingSound = false;
+                return true;
+            } else if (keyCode == 264) { // Down arrow
+                selectedSoundSuggestion = (selectedSoundSuggestion + 1) % soundSuggestions.size();
+                String selected = soundSuggestions.get(selectedSoundSuggestion);
+                isTabCyclingSound = true;
+                activeSoundBox.setValue(selected);
+                triggerSoundInput = selected;
+                isTabCyclingSound = false;
+                return true;
+            } else if (keyCode == 265) { // Up arrow
+                selectedSoundSuggestion = (selectedSoundSuggestion - 1 + soundSuggestions.size()) % soundSuggestions.size();
+                String selected = soundSuggestions.get(selectedSoundSuggestion);
+                isTabCyclingSound = true;
+                activeSoundBox.setValue(selected);
+                triggerSoundInput = selected;
+                isTabCyclingSound = false;
+                return true;
+            } else if (keyCode == 257 || keyCode == 335) { // ENTER
+                String selected = soundSuggestions.get(selectedSoundSuggestion);
+                isTabCyclingSound = true;
+                activeSoundBox.setValue(selected);
+                triggerSoundInput = selected;
+                isTabCyclingSound = false;
+                soundSuggestions.clear();
+                return true;
+            } else if (keyCode == 256) { // ESCAPE
+                soundSuggestions.clear();
+                return true;
+            }
+        }
+        for (EditBox box : this.activeBoxes) {
+            if (box != null && box.isFocused()) {
+                if (box.keyPressed(event)) return true;
+            }
+        }
         if (colorPickerTarget != null && keyCode == 256) {
             colorPickerTarget = null;
             this.init();
@@ -4319,6 +4929,30 @@ extends Screen {
     }
 
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        if (activeSoundBox != null && activeSoundBox.isFocused() && !soundSuggestions.isEmpty() && activeSoundBox.getY() > 0) {
+            int bx = activeSoundBox.getX();
+            int bw = activeSoundBox.getWidth();
+            int by = activeSoundBox.getY();
+            int listH = Math.min(soundSuggestions.size() * 14 + 4, 120);
+            int listY = by + 18;
+            if (listY + listH > this.height - 20) {
+                listY = by - listH - 2;
+            }
+            if (mouseX >= (double)bx && mouseX <= (double)(bx + bw) && mouseY >= (double)listY && mouseY <= (double)(listY + listH)) {
+                int clickedIdx = (int)((mouseY - (double)listY - 2) / 14);
+                if (clickedIdx >= 0 && clickedIdx < soundSuggestions.size()) {
+                    String selected = soundSuggestions.get(clickedIdx);
+                    isTabCyclingSound = true;
+                    activeSoundBox.setValue(selected);
+                    triggerSoundInput = selected;
+                    isTabCyclingSound = false;
+                    soundSuggestions.clear();
+                    return true;
+                }
+            }
+        }
         int button;
         double my;
         double mx;
@@ -4328,8 +4962,29 @@ extends Screen {
         if (event.button() == 1) {
             mx = event.x();
             my = event.y();
+            if (selectedCategory == 0 && loreAdditionsX != -1 && mx >= (double)loreAdditionsX && mx <= (double)(loreAdditionsX + loreAdditionsW) && my >= (double)loreAdditionsY && my <= (double)(loreAdditionsY + loreAdditionsH)) {
+                loreAdditionsSubmenu = true;
+                configSearchTerm = "";
+                this.scrollAmount = 0.0;
+                this.init();
+                return true;
+            }
+            if (selectedCategory == 0 && frozenBlazeWarnX != -1 && mx >= (double)frozenBlazeWarnX && mx <= (double)(frozenBlazeWarnX + frozenBlazeWarnW) && my >= (double)frozenBlazeWarnY && my <= (double)(frozenBlazeWarnY + frozenBlazeWarnH)) {
+                frozenBlazeWarnSubmenu = true;
+                configSearchTerm = "";
+                this.scrollAmount = 0.0;
+                this.init();
+                return true;
+            }
             if (selectedCategory == 0 && partyCommandsX != -1 && mx >= (double)partyCommandsX && mx <= (double)(partyCommandsX + partyCommandsWidth) && my >= (double)partyCommandsY && my <= (double)(partyCommandsY + partyCommandsHeight)) {
                 selectedCategory = this.categories.indexOf("Party Settings");
+                this.scrollAmount = 0.0;
+                this.init();
+                return true;
+            }
+            if (selectedCategory == 19 && structureFinderX != -1 && mx >= (double)structureFinderX && mx <= (double)(structureFinderX + structureFinderW) && my >= (double)structureFinderY && my <= (double)(structureFinderY + structureFinderH)) {
+                structureFinderSubmenu = true;
+                configSearchTerm = "";
                 this.scrollAmount = 0.0;
                 this.init();
                 return true;
@@ -4473,6 +5128,10 @@ extends Screen {
                 s.gfsStackKey = keyName;
                 break;
             }
+            case "saveInventory": {
+                s.saveInventoryKey = keyName;
+                break;
+            }
             case "chatPeek": {
                 s.chatPeekKey = keyName;
                 break;
@@ -4539,6 +5198,10 @@ extends Screen {
             }
             case "bestiaryHighlight": {
                 s.bestiaryHighlightKey = keyName;
+                break;
+            }
+            case "itemListFocus": {
+                s.itemListFocusKey = keyName;
                 break;
             }
         }
@@ -4668,6 +5331,8 @@ extends Screen {
         }
         return r << 16 | g << 8 | b;
     }
+
+
 
     private boolean[] getPresetGrid(String name) {
         int index = 0;

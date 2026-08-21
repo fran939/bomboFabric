@@ -1,5 +1,7 @@
 package me.bombo.bomboaddons;
 
+import java.util.Locale;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -270,12 +272,13 @@ public class HighlightESP {
             float r = (float) (colorInt >> 16 & 0xFF) / 255.0F;
             float g = (float) (colorInt >> 8 & 0xFF) / 255.0F;
             float b = (float) (colorInt & 0xFF) / 255.0F;
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, r, g, b, 1.0F, 2.0F));
+            float trWidth = Math.max(0.5F, Math.min(s.tracerWidth, 10.0F));
+            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, r, g, b, 1.0F, trWidth));
             HighlightTracer tracer = new HighlightTracer();
             tracer.start = new Vector2f(startX, startY);
             tracer.end = new Vector2f(endX, endY);
             tracer.color = colorInt;
-            tracer.thickness = 2.0F;
+            tracer.thickness = trWidth;
             TRACERS.add(tracer);
             ++lastTracersAdded;
          }
@@ -413,6 +416,7 @@ public class HighlightESP {
             return new EntityHighlightInfo(now, false, null, false, 0xFFFFFF, false);
          }
 
+
          Integer bedwarsColor = BedwarsESP.getEntityColor(self);
          if (bedwarsColor != null) {
             return new EntityHighlightInfo(now, true, bedwarsColor, false, bedwarsColor, true);
@@ -477,22 +481,291 @@ public class HighlightESP {
             String name = cache != null ? cache.combinedName : "";
             String nametagName = cache != null ? cache.nametagName : null;
             boolean isPlayer = self instanceof Player;
+            String headTex = TargetPests.getHeadTextureValue(self);
+            String skullHash = headTex != null ? TargetPests.extractTextureHash(headTex) : null;
+
             for (Map.Entry<String, BomboConfig.HighlightInfo> entry : s.highlights.entrySet()) {
-               String key = entry.getKey();
-               if (key == null || key.isEmpty()) continue;
-               boolean keyIsPlayer = key.equalsIgnoreCase("player") || key.equalsIgnoreCase("players");
-               boolean matches = (isPlayer && keyIsPlayer)
-                  || matchesKey(name, key)
-                  || (nametagName != null && matchesKey(nametagName, key));
-               if (!matches) continue;
-               BomboConfig.HighlightInfo info = entry.getValue();
-               if (info == null || !info.enabled || !matchesIsland(info.requiredIsland) || (self.isInvisible() && !info.showInvisible)) continue;
-               int color = BomboRenderUtils.colorNameToHex(info.color);
-               return new EntityHighlightInfo(now, true, color, info.tracer, color, info.showInvisible);
-            }
+                String key = entry.getKey();
+                if (key == null || key.isEmpty()) continue;
+                BomboConfig.HighlightInfo info = entry.getValue();
+                if (info == null || !info.enabled) continue;
+                if (!matchesIsland(info.requiredIsland)) continue;
+                if (info.requiredSubarea != null && !info.requiredSubarea.isEmpty() && !matchesSubarea(info.requiredSubarea)) continue;
+                if (self.isInvisible() && !info.showInvisible) continue;
+
+                // STRICT ATTRIBUTE FILTERS:
+                // If any filter is specified on this highlight entry, the entity MUST satisfy it!
+                if (info.mobSize != null && !info.mobSize.trim().isEmpty() && !matchesMobSize(self, info.mobSize)) continue;
+                if (info.armorPiece != null && !info.armorPiece.trim().isEmpty() && !matchesArmorPiece(self, info.armorPiece)) continue;
+                if (info.armorType != null && !info.armorType.trim().isEmpty() && !matchesArmor(self, info.armorType)) continue;
+                if (info.ridingType != null && !info.ridingType.trim().isEmpty() && !matchesRiding(self, info.ridingType)) continue;
+                if (info.heldItem != null && !info.heldItem.trim().isEmpty() && !matchesHeldItem(self, info.heldItem)) continue;
+
+                boolean matched = false;
+
+                // 1. Skull hash match
+                if (skullHash != null) {
+                   if (info.headHashes != null && !info.headHashes.isEmpty()) {
+                      for (String h : info.headHashes) {
+                         if (h != null && h.equalsIgnoreCase(skullHash)) {
+                            matched = true;
+                            break;
+                         }
+                      }
+                   }
+                   if (!matched) {
+                      me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule bestiaryRule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(key, info.requiredIsland);
+                      if (bestiaryRule != null && bestiaryRule.hasHead(skullHash)) {
+                         matched = true;
+                      }
+                   }
+                   if (!matched) {
+                      me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule headRule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRuleByHead(skullHash);
+                      if (headRule != null && (matchesKey(headRule.name, key) || key.equalsIgnoreCase(headRule.name) || (headRule.name != null && headRule.name.toLowerCase(Locale.ROOT).contains(key.toLowerCase(Locale.ROOT))))) {
+                         matched = true;
+                      }
+                   }
+                }
+
+                // 2. Player name match
+                if (!matched && info.playerName != null && !info.playerName.isEmpty()) {
+                   if (isPlayer && self.getName().getString().toLowerCase(Locale.ROOT).contains(info.playerName.toLowerCase(Locale.ROOT))) {
+                      matched = true;
+                   }
+                }
+
+                // 3. Entity Type match (with nametag check for sub-mobs like "old wolf" vs "wolf")
+                if (!matched && info.entityType != null && !info.entityType.isEmpty()) {
+                   if (matchesEntityType(self, info.entityType)) {
+                      String cleanKey = key.toLowerCase(Locale.ROOT).trim();
+                      boolean wolfActive = s.highlights.containsKey("wolf") && s.highlights.get("wolf").enabled;
+                      boolean oldWolfActive = s.highlights.containsKey("old wolf") && s.highlights.get("old wolf").enabled;
+                      boolean bothWolvesActive = wolfActive && oldWolfActive;
+                      boolean isOldWolfMob = (nametagName != null && nametagName.toLowerCase(Locale.ROOT).contains("old wolf")) || name.toLowerCase(Locale.ROOT).contains("old wolf");
+
+                      if (cleanKey.equals("old wolf")) {
+                         if (isOldWolfMob) {
+                            matched = true;
+                         } else if (bothWolvesActive) {
+                            matched = true;
+                         }
+                      } else if (cleanKey.equals("wolf")) {
+                         if (bothWolvesActive) {
+                            matched = true;
+                         } else {
+                            if (!isOldWolfMob && (nametagName == null || !nametagName.toLowerCase(Locale.ROOT).contains("old wolf"))) {
+                               matched = true;
+                            }
+                         }
+                      } else if (cleanKey.contains(" ")) {
+                         if ((nametagName != null && nametagName.contains(cleanKey)) || name.toLowerCase(Locale.ROOT).contains(cleanKey)) {
+                            matched = true;
+                         }
+                      } else {
+                         matched = true;
+                      }
+                   }
+                }
+
+                // 4. Bestiary Rule fallback
+                if (!matched && info.isBestiary) {
+                   me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule rule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(key, info.requiredIsland);
+                   if (rule != null) {
+                      if (rule.heads != null && !rule.heads.isEmpty() && skullHash != null && rule.hasHead(skullHash)) {
+                         matched = true;
+                      }
+                      if (!matched && rule.playerName != null && !rule.playerName.isEmpty() && isPlayer && self.getName().getString().toLowerCase(Locale.ROOT).contains(rule.playerName.toLowerCase(Locale.ROOT))) {
+                         matched = true;
+                      }
+                      if (!matched && rule.entityType != null && !rule.entityType.isEmpty()) {
+                         if (matchesEntityType(self, rule.entityType) && matchesArmor(self, rule.armor) && matchesRiding(self, rule.riding) && matchesHeldItem(self, rule.heldItem) && matchesSubarea(rule.subarea, self) && matchesMobSize(self, rule.mobSize != null && !rule.mobSize.isEmpty() ? rule.mobSize : rule.size)) {
+                            String cleanKey = key.toLowerCase(Locale.ROOT).trim();
+                            if (cleanKey.equals("old wolf")) {
+                               if ((nametagName != null && nametagName.contains("old wolf")) || name.toLowerCase(Locale.ROOT).contains("old wolf")) {
+                                  matched = true;
+                               }
+                            } else if (cleanKey.equals("wolf")) {
+                               if (nametagName == null || !nametagName.contains("old wolf")) {
+                                  matched = true;
+                               }
+                            } else {
+                               matched = true;
+                            }
+                         }
+                      }
+                   }
+                }
+
+                // 5. Name / Nametag / Raw key match
+                if (!matched) {
+                   boolean keyIsPlayer = key.equalsIgnoreCase("player") || key.equalsIgnoreCase("players");
+                   String cleanKey = key.toLowerCase(Locale.ROOT).trim();
+                   if (cleanKey.equals("wolf") && nametagName != null && nametagName.contains("old wolf")) {
+                      // Skip old wolves when matching regular wolf
+                   } else if ((isPlayer && keyIsPlayer) || matchesKey(name, key) || (nametagName != null && matchesKey(nametagName, key)) || (skullHash != null && matchesKey(skullHash, key))) {
+                      matched = true;
+                   }
+                }
+
+                if (matched) {
+                   int color = BomboRenderUtils.colorNameToHex(info.color);
+                   return new EntityHighlightInfo(now, true, color, info.tracer, color, info.showInvisible);
+                }
+             }
          }
       } catch (Throwable ignored) {}
       return new EntityHighlightInfo(now, false, null, false, 0xFFFFFF, false);
+   }
+
+   
+    public static boolean matchesSubarea(String requiredSubarea) {
+       return matchesSubarea(requiredSubarea, null);
+    }
+
+    public static boolean matchesSubarea(String requiredSubarea, Entity entity) {
+       if (requiredSubarea == null || requiredSubarea.isEmpty()) return true;
+       if (requiredSubarea.equalsIgnoreCase("jungle") && entity != null) {
+          double x = entity.getX();
+          double z = entity.getZ();
+          if (x >= 201.0 && x <= 512.0 && z >= 201.0 && z <= 512.0) return true;
+       }
+       String subarea = SkyblockUtils.getSubArea();
+       return subarea != null && subarea.toLowerCase(Locale.ROOT).contains(requiredSubarea.toLowerCase(Locale.ROOT));
+    }
+
+      public static boolean matchesEntityType(Entity entity, String targetType) {
+      if (entity == null || targetType == null || targetType.isEmpty()) return false;
+      String typeStr = entity.getType().toString().toLowerCase(Locale.ROOT);
+      String cleanTarget = targetType.toLowerCase(Locale.ROOT).replace(" ", "_");
+      
+      // Check for variant tag like tropical_fish:blue or tropical_fish:green
+      if (cleanTarget.contains(":")) {
+         String[] parts = cleanTarget.split(":", 2);
+         String baseType = parts[0].trim();
+         String variantReq = parts[1].trim();
+         if (!typeStr.contains(baseType)) return false;
+         if (entity instanceof net.minecraft.world.entity.animal.fish.TropicalFish fish) {
+            String baseCol = fish.getBaseColor().getName().toLowerCase(Locale.ROOT);
+            String patCol = fish.getPatternColor().getName().toLowerCase(Locale.ROOT);
+            String patName = fish.getPattern().name().toLowerCase(Locale.ROOT);
+            return baseCol.contains(variantReq) || patCol.contains(variantReq) || patName.contains(variantReq);
+         }
+         if (entity instanceof net.minecraft.world.entity.monster.Shulker shulker) {
+            net.minecraft.world.item.DyeColor dye = shulker.getColor();
+            String colName = dye != null ? dye.getName().toLowerCase(Locale.ROOT) : "default";
+            return colName.contains(variantReq);
+         }
+      }
+
+      if (typeStr.contains(cleanTarget)) return true;
+      if (cleanTarget.equals("mooshroom") && typeStr.contains("cow")) return true;
+      if (cleanTarget.equals("magma_cube") && (typeStr.contains("magma") || typeStr.contains("slime"))) return true;
+      if (cleanTarget.equals("zombified_piglin") && (typeStr.contains("zombified_piglin") || typeStr.contains("piglin") || typeStr.contains("pig_zombie"))) return true;
+      return false;
+   }
+
+   public static boolean matchesArmor(Entity entity, String armorType) {
+      if (armorType == null || armorType.isEmpty()) return true;
+      if (!(entity instanceof net.minecraft.world.entity.LivingEntity)) return false;
+      net.minecraft.world.entity.LivingEntity living = (net.minecraft.world.entity.LivingEntity) entity;
+      ItemStack head = living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
+      ItemStack chest = living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST);
+      ItemStack legs = living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.LEGS);
+      ItemStack feet = living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET);
+
+      switch (armorType.toLowerCase(Locale.ROOT)) {
+         case "chainmail_no_helmet":
+            return head.isEmpty() && chest.is(net.minecraft.world.item.Items.CHAINMAIL_CHESTPLATE) && legs.is(net.minecraft.world.item.Items.CHAINMAIL_LEGGINGS) && feet.is(net.minecraft.world.item.Items.CHAINMAIL_BOOTS);
+         case "gold_no_helmet":
+            return head.isEmpty() && chest.is(net.minecraft.world.item.Items.GOLDEN_CHESTPLATE) && legs.is(net.minecraft.world.item.Items.GOLDEN_LEGGINGS) && feet.is(net.minecraft.world.item.Items.GOLDEN_BOOTS);
+         case "no_armor":
+            return head.isEmpty() && chest.isEmpty() && legs.isEmpty() && feet.isEmpty();
+         case "diamond":
+            return chest.is(net.minecraft.world.item.Items.DIAMOND_CHESTPLATE) || legs.is(net.minecraft.world.item.Items.DIAMOND_LEGGINGS) || feet.is(net.minecraft.world.item.Items.DIAMOND_BOOTS) || head.is(net.minecraft.world.item.Items.DIAMOND_HELMET);
+         case "gold":
+            return chest.is(net.minecraft.world.item.Items.GOLDEN_CHESTPLATE) || legs.is(net.minecraft.world.item.Items.GOLDEN_LEGGINGS) || feet.is(net.minecraft.world.item.Items.GOLDEN_BOOTS) || head.is(net.minecraft.world.item.Items.GOLDEN_HELMET);
+         case "leather_blue":
+            return chest.is(net.minecraft.world.item.Items.LEATHER_CHESTPLATE) || legs.is(net.minecraft.world.item.Items.LEATHER_LEGGINGS) || feet.is(net.minecraft.world.item.Items.LEATHER_BOOTS);
+         default:
+            return true;
+      }
+   }
+
+   public static boolean matchesRiding(Entity entity, String ridingType) {
+      if (ridingType == null || ridingType.isEmpty()) return true;
+      Entity vehicle = entity.getVehicle();
+      if (vehicle == null) return false;
+      String vType = vehicle.getType().toString().toLowerCase(Locale.ROOT);
+      return vType.contains(ridingType.toLowerCase(Locale.ROOT));
+   }
+
+   
+      public static boolean matchesMobSize(Entity entity, String reqSize) {
+      if (reqSize == null || reqSize.trim().isEmpty()) return true;
+      String req = reqSize.trim().toLowerCase(Locale.ROOT);
+      double w = entity.getBbWidth();
+      double h = entity.getBbHeight();
+      double scale = Math.max(w / 0.6, h / 1.8);
+      if (entity instanceof net.minecraft.world.entity.monster.Slime) {
+         int sz = ((net.minecraft.world.entity.monster.Slime) entity).getSize();
+         scale = (double) sz;
+         if (req.equals("big")) return sz >= 4;
+         if (req.equals("small")) return sz == 1;
+         if (req.equals("medium")) return sz > 1 && sz < 4;
+      }
+      if (req.equals("big")) return scale >= 2.0;
+      if (req.equals("small")) return scale <= 0.6;
+      if (req.equals("normal")) return scale > 0.6 && scale < 2.0;
+
+      try {
+         if (req.endsWith("+")) {
+            double min = Double.parseDouble(req.substring(0, req.length() - 1).trim());
+            return scale >= (min - 0.1);
+         } else if (req.startsWith(">=")) {
+            double min = Double.parseDouble(req.substring(2).trim());
+            return scale >= (min - 0.1);
+         } else if (req.startsWith(">")) {
+            double min = Double.parseDouble(req.substring(1).trim());
+            return scale > (min + 0.1);
+         } else if (req.endsWith("-")) {
+            double max = Double.parseDouble(req.substring(0, req.length() - 1).trim());
+            return scale <= (max + 0.1);
+         } else if (req.startsWith("<=")) {
+            double max = Double.parseDouble(req.substring(2).trim());
+            return scale <= (max + 0.1);
+         } else if (req.startsWith("<")) {
+            double max = Double.parseDouble(req.substring(1).trim());
+            return scale < (max - 0.1);
+         }
+         double target = Double.parseDouble(req.replace("x", "").trim());
+         return Math.abs(scale - target) <= 0.6;
+      } catch (Throwable ignored) {}
+      return true;
+   }
+
+   public static boolean matchesArmorPiece(Entity entity, String armorPiece) {
+      if (armorPiece == null || armorPiece.trim().isEmpty()) return true;
+      if (!(entity instanceof net.minecraft.world.entity.LivingEntity)) return false;
+      net.minecraft.world.entity.LivingEntity living = (net.minecraft.world.entity.LivingEntity) entity;
+      String p = armorPiece.trim().toLowerCase(Locale.ROOT).replace(" ", "_");
+      for (net.minecraft.world.entity.EquipmentSlot slot : net.minecraft.world.entity.EquipmentSlot.values()) {
+         if (slot.isArmor()) {
+            ItemStack item = living.getItemBySlot(slot);
+            if (!item.isEmpty()) {
+               String id = item.getItem().toString().toLowerCase(Locale.ROOT);
+               String name = item.getHoverName().getString().toLowerCase(Locale.ROOT);
+               if (id.contains(p) || name.contains(p)) return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   public static boolean matchesHeldItem(Entity entity, String heldItem) {
+      if (heldItem == null || heldItem.isEmpty()) return true;
+      if (!(entity instanceof net.minecraft.world.entity.LivingEntity)) return false;
+      ItemStack main = ((net.minecraft.world.entity.LivingEntity) entity).getMainHandItem();
+      return !main.isEmpty() && main.getItem().toString().toLowerCase(Locale.ROOT).contains(heldItem.toLowerCase(Locale.ROOT));
    }
 
    public static boolean isEntityHighlighted(Entity self) {

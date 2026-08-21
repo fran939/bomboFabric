@@ -114,14 +114,15 @@ public class TargetPests {
       return null;
    }
 
+   private static final java.util.regex.Pattern HASH_PATTERN = java.util.regex.Pattern.compile("[0-9a-fA-F]{64}");
+
    private static String getHeadTextureValueInternal(Entity entity) {
       if (entity instanceof net.minecraft.world.entity.item.ItemEntity) {
          ItemStack stack = ((net.minecraft.world.entity.item.ItemEntity)entity).getItem();
          String tex = getHeadTextureFromStack(stack);
          if (tex != null) return tex;
       }
-      if (entity instanceof net.minecraft.world.entity.player.Player) {
-         net.minecraft.world.entity.player.Player player = (net.minecraft.world.entity.player.Player)entity;
+      if (entity instanceof net.minecraft.world.entity.player.Player player) {
          if (player.getGameProfile() != null && player.getGameProfile().properties() != null) {
             for (Property prop : player.getGameProfile().properties().get("textures")) {
                if (prop != null && prop.value() != null && !prop.value().isEmpty()) {
@@ -129,39 +130,69 @@ public class TargetPests {
                }
             }
          }
+         try {
+            if (player instanceof net.minecraft.client.player.AbstractClientPlayer acp) {
+               Object skin = acp.getSkin();
+               if (skin != null) {
+                  for (java.lang.reflect.Method m : skin.getClass().getMethods()) {
+                     if (m.getParameterCount() == 0 && (m.getName().equals("texture") || m.getName().equals("body") || m.getName().equals("skin") || m.getName().equals("textureUrl"))) {
+                        Object res = m.invoke(skin);
+                        if (res != null) return res.toString();
+                     }
+                  }
+                  return skin.toString();
+               }
+            }
+         } catch (Throwable ignored) {}
+         ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
+         String tex = getHeadTextureFromStack(head);
+         if (tex != null) return tex;
       }
-      if (entity instanceof net.minecraft.world.entity.LivingEntity) {
-         net.minecraft.world.entity.LivingEntity living = (net.minecraft.world.entity.LivingEntity)entity;
+      if (entity instanceof net.minecraft.world.entity.LivingEntity living) {
          for (EquipmentSlot slot : EquipmentSlot.values()) {
             ItemStack stack = living.getItemBySlot(slot);
             String tex = getHeadTextureFromStack(stack);
             if (tex != null) return tex;
          }
       }
+      if (entity != null) {
+         for (Entity pass : entity.getPassengers()) {
+            if (pass instanceof net.minecraft.world.entity.LivingEntity passLiving) {
+               ItemStack head = passLiving.getItemBySlot(EquipmentSlot.HEAD);
+               String tex = getHeadTextureFromStack(head);
+               if (tex != null) return tex;
+            }
+         }
+         if (entity.getVehicle() instanceof net.minecraft.world.entity.LivingEntity vLiving) {
+            ItemStack head = vLiving.getItemBySlot(EquipmentSlot.HEAD);
+            String tex = getHeadTextureFromStack(head);
+            if (tex != null) return tex;
+         }
+         if (entity.level() != null && !(entity instanceof ArmorStand)) {
+            net.minecraft.world.phys.AABB box = entity.getBoundingBox().inflate(0.5, 2.0, 0.5);
+            for (Entity e2 : entity.level().getEntities(entity, box)) {
+               if (e2 instanceof ArmorStand stand) {
+                  ItemStack h = stand.getItemBySlot(EquipmentSlot.HEAD);
+                  String tex = getHeadTextureFromStack(h);
+                  if (tex != null) return tex;
+               }
+            }
+         }
+      }
       return null;
    }
 
-   public static String extractTextureHash(String base64) {
-      if (base64 == null || base64.isEmpty()) return null;
-      if (base64.length() == 64 && base64.matches("^[a-fA-F0-9]+$")) {
-         return base64.toLowerCase();
+   public static String extractTextureHash(String input) {
+      if (input == null || input.isEmpty()) return null;
+      java.util.regex.Matcher m = HASH_PATTERN.matcher(input);
+      if (m.find()) {
+         return m.group().toLowerCase();
       }
       try {
-         String decoded = new String(java.util.Base64.getDecoder().decode(base64), java.nio.charset.StandardCharsets.UTF_8);
-         int urlIndex = decoded.indexOf("\"url\"");
-         if (urlIndex != -1) {
-            int httpIndex = decoded.indexOf("http", urlIndex);
-            if (httpIndex != -1) {
-               int endQuote = decoded.indexOf("\"", httpIndex);
-               if (endQuote != -1) {
-                  String url = decoded.substring(httpIndex, endQuote);
-                  int lastSlash = url.lastIndexOf('/');
-                  if (lastSlash != -1 && lastSlash < url.length() - 1) {
-                     return url.substring(lastSlash + 1);
-                  }
-                  return url;
-               }
-            }
+         String decoded = new String(java.util.Base64.getDecoder().decode(input), java.nio.charset.StandardCharsets.UTF_8);
+         java.util.regex.Matcher m2 = HASH_PATTERN.matcher(decoded);
+         if (m2.find()) {
+            return m2.group().toLowerCase();
          }
       } catch (Exception ignored) {
       }

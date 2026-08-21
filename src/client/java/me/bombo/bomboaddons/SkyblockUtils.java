@@ -54,6 +54,15 @@ public class SkyblockUtils {
                result = result.replace("$coord", "x: " + x + ", y: " + y + ", z: " + z);
             }
 
+            if (result.contains("$paste")) {
+               String clip = "";
+               try {
+                  clip = mc.keyboardHandler.getClipboard();
+               } catch (Exception ignored) {}
+               if (clip == null) clip = "";
+               result = result.replace("$paste", clip);
+            }
+
             if (result.contains("$x")) {
                result = result.replace("$x", String.valueOf(x));
             }

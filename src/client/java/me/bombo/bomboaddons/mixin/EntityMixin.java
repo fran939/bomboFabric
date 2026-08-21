@@ -52,6 +52,10 @@ public abstract class EntityMixin {
       cancellable = true
    )
    private void onIsCurrentlyGlowing(CallbackInfoReturnable<Boolean> cir) {
+      if (BomboConfig.get().debugEntities) {
+         cir.setReturnValue(true);
+         return;
+      }
       Entity entity = (Entity)(Object)this;
       if (HighlightESP.isEntityHighlighted(entity)) {
          BomboConfig.Settings s = BomboConfig.get();

@@ -38,4 +38,24 @@ public class PlayerMixin {
       }
 
    }
+
+   @Inject(
+      method = {"isPickable"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onIsPickable(CallbackInfoReturnable<Boolean> cir) {
+      if ((Object)this instanceof net.minecraft.world.entity.ambient.Bat && BomboConfig.get().lassoClickThroughBats) {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player != null) {
+            net.minecraft.world.item.ItemStack main = mc.player.getMainHandItem();
+            net.minecraft.world.item.ItemStack off = mc.player.getOffhandItem();
+            String mainName = main != null && !main.isEmpty() ? main.getHoverName().getString().replaceAll("§.", "").toLowerCase() : "";
+            String offName = off != null && !off.isEmpty() ? off.getHoverName().getString().replaceAll("§.", "").toLowerCase() : "";
+            if (mainName.contains("lasso") || offName.contains("lasso")) {
+               cir.setReturnValue(false);
+            }
+         }
+      }
+   }
 }

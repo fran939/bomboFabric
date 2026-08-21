@@ -227,9 +227,9 @@ public class ItemListOverlay {
       init();
       if (BomboConfig.get().itemListX == -1) {
          sidebarW = 180;
-         sidebarH = 250;
-         sidebarX = 10;
-         sidebarY = Math.max(10, height - sidebarH - 10);
+         sidebarH = Math.min(250, height - 20);
+         sidebarX = Math.max(10, width - sidebarW - 10);
+         sidebarY = 10;
       } else {
          sidebarX = BomboConfig.get().itemListX;
          sidebarY = BomboConfig.get().itemListY;
@@ -314,8 +314,11 @@ public class ItemListOverlay {
 
       BomboConfig.Settings s = BomboConfig.get();
       int globalScreenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-      sidebarX = s.itemListX == -1 ? globalScreenWidth - 150 : s.itemListX;
-      sidebarY = s.itemListY == -1 ? 20 : s.itemListY;
+      sidebarX = s.itemListX == -1 ? Math.max(10, globalScreenWidth - sidebarW - 10) : s.itemListX;
+      sidebarY = s.itemListY == -1 ? 10 : s.itemListY;
+      if (searchBox != null && !s.itemListSeparateSearch) {
+         searchBox.setPosition(sidebarX + 5, sidebarY + sidebarH - 52);
+      }
       if (s.itemListW != sidebarW || s.itemListH != sidebarH) {
          sidebarW = s.itemListW;
          sidebarH = s.itemListH;

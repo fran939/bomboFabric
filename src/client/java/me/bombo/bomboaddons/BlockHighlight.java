@@ -45,7 +45,7 @@ public class BlockHighlight {
                isScanning = true;
                ClientLevel level = mc.level;
                Vec3 playerPos = mc.player.position();
-               int scanRadius = Math.max(4, Math.min(s.blockScanRadius, 256));
+               int scanRadius = Math.max(4, Math.min(s.blockScanRadius, 512));
                Map<String, BomboConfig.BlockHighlightInfo> targets = new HashMap();
                if (s.blockHighlights != null) {
                   targets.putAll(s.blockHighlights);
@@ -83,8 +83,7 @@ public class BlockHighlight {
       int startY = Math.max(minHeight, py - radius);
       int endY = Math.min(maxHeight - 1, py + radius);
 
-      // Pre-resolve matching blocks once to eliminate thousands of registry & string
-      // lookups
+      // Pre-resolve matching blocks once to eliminate thousands of registry & string lookups
       java.util.Map<net.minecraft.world.level.block.Block, BomboConfig.BlockHighlightInfo> matchingBlocks = new java.util.IdentityHashMap<>();
       for (net.minecraft.world.level.block.Block b : BuiltInRegistries.BLOCK) {
          Identifier key = BuiltInRegistries.BLOCK.getKey(b);
@@ -105,21 +104,46 @@ public class BlockHighlight {
          return;
       }
 
-      BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+      int minChunkX = (px - radius) >> 4;
+      int maxChunkX = (px + radius) >> 4;
+      int minChunkZ = (pz - radius) >> 4;
+      int maxChunkZ = (pz + radius) >> 4;
 
-      for (int x = px - radius; x <= px + radius; ++x) {
-         for (int z = pz - radius; z <= pz + radius; ++z) {
-            for (int y = startY; y <= endY; ++y) {
-               mutablePos.set(x, y, z);
-               try {
-                  BlockState state = level.getBlockState(mutablePos);
-                  if (!state.isAir()) {
-                     BomboConfig.BlockHighlightInfo info = matchingBlocks.get(state.getBlock());
-                     if (info != null) {
-                        newHighlights.put(new BlockPos(x, y, z), info);
+      for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
+         for (int cz = minChunkZ; cz <= maxChunkZ; ++cz) {
+            if (!level.hasChunk(cx, cz)) continue;
+            net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
+            if (chunk == null) continue;
+
+            net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
+            for (int sIdx = 0; sIdx < sections.length; ++sIdx) {
+               net.minecraft.world.level.chunk.LevelChunkSection sec = sections[sIdx];
+               if (sec == null || sec.hasOnlyAir()) continue;
+
+               int secMinY = chunk.getSectionYFromSectionIndex(sIdx) << 4;
+               if (secMinY + 15 < startY || secMinY > endY) continue;
+
+               int baseBlockX = cx << 4;
+               int baseBlockZ = cz << 4;
+
+               for (int lx = 0; lx < 16; ++lx) {
+                  int bx = baseBlockX + lx;
+                  if (bx < px - radius || bx > px + radius) continue;
+                  for (int lz = 0; lz < 16; ++lz) {
+                     int bz = baseBlockZ + lz;
+                     if (bz < pz - radius || bz > pz + radius) continue;
+                     for (int ly = 0; ly < 16; ++ly) {
+                        int by = secMinY + ly;
+                        if (by < startY || by > endY) continue;
+                        BlockState state = sec.getBlockState(lx, ly, lz);
+                        if (!state.isAir()) {
+                           BomboConfig.BlockHighlightInfo info = matchingBlocks.get(state.getBlock());
+                           if (info != null) {
+                              newHighlights.put(new BlockPos(bx, by, bz), info);
+                           }
+                        }
                      }
                   }
-               } catch (Throwable ignored) {
                }
             }
          }
@@ -128,51 +152,65 @@ public class BlockHighlight {
       highlightedBlocks = newHighlights;
    }
 
+   public static boolean hasHighlights() {
+      return !highlightedBlocks.isEmpty() || !targetChestPosList.isEmpty();
+   }
+
    public static void render(LevelRenderContext context) {
+      if (highlightedBlocks.isEmpty() && targetChestPosList.isEmpty()) {
+         return;
+      }
       try {
-         BomboConfig.Settings s = BomboConfig.get();
-         if (s == null || (!s.blockHighlightsEnabled && targetChestPosList.isEmpty()))
-            return;
-         if (highlightedBlocks.isEmpty() && targetChestPosList.isEmpty())
-            return;
          Minecraft mc = Minecraft.getInstance();
-         if (mc.level == null || mc.gameRenderer == null || mc.gameRenderer.getMainCamera() == null)
+         if (mc.level == null || mc.player == null) {
             return;
+         }
+
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s == null || !s.blockHighlightsEnabled) {
+            return;
+         }
+
          Vec3 camPos = mc.gameRenderer.getMainCamera().position();
          PoseStack poseStack = context.poseStack();
-         OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.bufferSource());
+         OrderedSubmitNodeCollector collector = null;
          Map<BlockPos, BomboConfig.BlockHighlightInfo> currentHighlights = highlightedBlocks;
 
-         for (Map.Entry<BlockPos, BomboConfig.BlockHighlightInfo> entry : currentHighlights.entrySet()) {
-            BlockPos pos = (BlockPos) entry.getKey();
-            BomboConfig.BlockHighlightInfo info = (BomboConfig.BlockHighlightInfo) entry.getValue();
-            if (info.enabled) {
-               double x = (double) pos.getX() - camPos.x;
-               double y = (double) pos.getY() - camPos.y;
-               double z = (double) pos.getZ() - camPos.z;
-               double dist = Math.sqrt(x * x + y * y + z * z);
-               if (!(dist > (double) 64.0F)) {
-                  int colorHex = BomboRenderUtils.colorNameToHex(info.color);
-                  float r = (float) (colorHex >> 16 & 255) / 255.0F;
-                  float g = (float) (colorHex >> 8 & 255) / 255.0F;
-                  float b = (float) (colorHex & 255) / 255.0F;
-                  float a = 1.0F;
-                  boolean throughWalls = !s.hideCheats && (info.throughWalls || s.blockHighlightsEnabled);
-                  RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
+         double maxRenderDist = Math.max(64.0, (double) s.blockScanRadius);
+         double maxDistSq = maxRenderDist * maxRenderDist;
 
-                  BlockState state = mc.level.getBlockState(pos);
-                  net.minecraft.world.phys.shapes.VoxelShape shape = state.getShape(mc.level, pos);
-                  List<AABB> aabbs = shape.isEmpty() ? Collections.singletonList(new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0))
-                        : shape.toAabbs();
-                  float scale = (throughWalls && dist > 0.2) ? (float) (0.2 / dist) : 1.0F;
-                  for (AABB subBox : aabbs) {
-                     double minX = (x + subBox.minX) * (double) scale;
-                     double minY = (y + subBox.minY) * (double) scale;
-                     double minZ = (z + subBox.minZ) * (double) scale;
-                     double maxX = (x + subBox.maxX) * (double) scale;
-                     double maxY = (y + subBox.maxY) * (double) scale;
-                     double maxZ = (z + subBox.maxZ) * (double) scale;
+         if (!currentHighlights.isEmpty()) {
+            for (Map.Entry<BlockPos, BomboConfig.BlockHighlightInfo> entry : currentHighlights.entrySet()) {
+               BlockPos pos = entry.getKey();
+               BomboConfig.BlockHighlightInfo info = entry.getValue();
+               if (info != null && info.enabled) {
+                  double x = (double) pos.getX() - camPos.x;
+                  double y = (double) pos.getY() - camPos.y;
+                  double z = (double) pos.getZ() - camPos.z;
+                  double distSq = x * x + y * y + z * z;
+                  if (distSq <= maxDistSq) {
+                     double dist = Math.sqrt(distSq);
+                     int colorHex = BomboRenderUtils.colorNameToHex(info.color);
+                     float r = (float) (colorHex >> 16 & 255) / 255.0F;
+                     float g = (float) (colorHex >> 8 & 255) / 255.0F;
+                     float b = (float) (colorHex & 255) / 255.0F;
+                     float a = 1.0F;
+                     boolean throughWalls = !s.hideCheats && (info.throughWalls || s.blockHighlightsEnabled);
+                     RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
+
+                     float scale = (throughWalls && dist > 0.2) ? (float) (0.2 / dist) : 1.0F;
+                     double minX = x * scale;
+                     double minY = y * scale;
+                     double minZ = z * scale;
+                     double maxX = (x + 1.0) * scale;
+                     double maxY = (y + 1.0) * scale;
+                     double maxZ = (z + 1.0) * scale;
                      AABB box = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+
+                     if (collector == null) {
+                        collector = new OrderedSubmitNodeCollector(context.bufferSource());
+                     }
+
                      collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils
                            .drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, 2.0F));
                   }
@@ -181,7 +219,7 @@ public class BlockHighlight {
          }
 
          if (!targetChestPosList.isEmpty()) {
-            Set<BlockPos> rendered = new HashSet();
+            Set<BlockPos> rendered = new HashSet<>();
 
             for (BlockPos targetChestPos : targetChestPosList) {
                if (!rendered.contains(targetChestPos)) {
@@ -196,16 +234,16 @@ public class BlockHighlight {
                            partnerPos = targetChestPos.relative(connectedDir);
                         }
                      }
-                  } catch (Exception var28) {
+                  } catch (Exception ignored) {
                   }
 
                   rendered.add(targetChestPos);
                   double minX = (double) targetChestPos.getX();
                   double minY = (double) targetChestPos.getY();
                   double minZ = (double) targetChestPos.getZ();
-                  double maxX = minX + (double) 1.0F;
-                  double maxY = minY + (double) 1.0F;
-                  double maxZ = minZ + (double) 1.0F;
+                  double maxX = minX + 1.0;
+                  double maxY = minY + 1.0;
+                  double maxZ = minZ + 1.0;
                   if (partnerPos != null) {
                      rendered.add(partnerPos);
                      minX = Math.min(minX, (double) partnerPos.getX());
@@ -222,75 +260,27 @@ public class BlockHighlight {
                   double rMaxX = maxX - camPos.x;
                   double rMaxY = maxY - camPos.y;
                   double rMaxZ = maxZ - camPos.z;
-                  double midX = (minX + maxX) / (double) 2.0F - camPos.x;
-                  double midY = (minY + maxY) / (double) 2.0F - camPos.y;
-                  double midZ = (minZ + maxZ) / (double) 2.0F - camPos.z;
-                  double dist = Math.sqrt(midX * midX + midY * midY + midZ * midZ);
-                  if (dist <= (double) 256.0F) {
+                  double midX = (minX + maxX) / 2.0 - camPos.x;
+                  double midY = (minY + maxY) / 2.0 - camPos.y;
+                  double midZ = (minZ + maxZ) / 2.0 - camPos.z;
+                  double distSq = midX * midX + midY * midY + midZ * midZ;
+                  if (distSq <= 256.0 * 256.0) {
+                     double dist = Math.sqrt(distSq);
                      AABB box = new AABB(rx, ry, rz, rMaxX, rMaxY, rMaxZ);
+                     if (collector == null) {
+                        collector = new OrderedSubmitNodeCollector(context.bufferSource());
+                     }
                      collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
                            (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, 0.0F,
                                  1.0F, 0.0F, 0.85F, 2.0F));
                      String text = "Target Chest §7(" + (int) dist + "m)";
                      BomboRenderUtils.drawText(poseStack, collector, text, (float) midX,
-                           (float) (rMaxY + (double) 0.5F), (float) midZ, 65280, 0.03F, true, true);
+                           (float) (rMaxY + 0.5), (float) midZ, 65280, 0.03F, true, true);
                   }
                }
             }
          }
       } catch (Throwable ignored) {
-      }
-   }
-
-   private static int getMinBuildHeightReflect(ClientLevel level) {
-      try {
-         try {
-            Method m = level.getClass().getMethod("getBottomY");
-            return (Integer) m.invoke(level);
-         } catch (NoSuchMethodException var6) {
-            try {
-               Method m = level.getClass().getMethod("getMinBuildHeight");
-               return (Integer) m.invoke(level);
-            } catch (NoSuchMethodException var5) {
-               try {
-                  Method m = level.getClass().getMethod("getMinY");
-                  return (Integer) m.invoke(level);
-               } catch (NoSuchMethodException var4) {
-                  return -64;
-               }
-            }
-         }
-      } catch (Throwable var7) {
-         return -64;
-      }
-   }
-
-   private static int getMaxBuildHeightReflect(ClientLevel level) {
-      try {
-         try {
-            Method m = level.getClass().getMethod("getTopY");
-            return (Integer) m.invoke(level);
-         } catch (NoSuchMethodException var9) {
-            try {
-               Method m = level.getClass().getMethod("getMaxBuildHeight");
-               return (Integer) m.invoke(level);
-            } catch (NoSuchMethodException var8) {
-               try {
-                  Method m = level.getClass().getMethod("getMaxY");
-                  return (Integer) m.invoke(level);
-               } catch (NoSuchMethodException var7) {
-                  try {
-                     Method m = level.getClass().getMethod("getHeight");
-                     int height = (Integer) m.invoke(level);
-                     return getMinBuildHeightReflect(level) + height;
-                  } catch (NoSuchMethodException var6) {
-                     return 320;
-                  }
-               }
-            }
-         }
-      } catch (Throwable var10) {
-         return 320;
       }
    }
 }

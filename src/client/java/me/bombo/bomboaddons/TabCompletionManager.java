@@ -232,6 +232,39 @@ public class TabCompletionManager {
       suggestions.addAll(guild);
       suggestions.addAll(party);
 
+      if (lastSpaceIndex == -1) {
+         String input = builder.getInput().trim().toLowerCase();
+         if (input.startsWith("/f ") || input.startsWith("f ") || input.startsWith("/friend ") || input.startsWith("friend ")) {
+            suggestions.add("add");
+            suggestions.add("remove");
+            suggestions.add("list");
+            suggestions.add("accept");
+            suggestions.add("deny");
+            suggestions.add("toggle");
+            suggestions.add("help");
+            suggestions.add("requests");
+            suggestions.add("notifications");
+            suggestions.add("removeall");
+            suggestions.add("best");
+            suggestions.add("unbest");
+         } else if (input.startsWith("/p ") || input.startsWith("p ") || input.startsWith("/party ") || input.startsWith("party ")) {
+            suggestions.add("invite");
+            suggestions.add("kick");
+            suggestions.add("disband");
+            suggestions.add("leave");
+            suggestions.add("transfer");
+            suggestions.add("promote");
+            suggestions.add("demote");
+            suggestions.add("warp");
+            suggestions.add("poll");
+            suggestions.add("settings");
+            suggestions.add("list");
+            suggestions.add("help");
+            suggestions.add("private");
+            suggestions.add("chat");
+         }
+      }
+
       for(String name : suggestions) {
          if (name.toLowerCase().startsWith(remaining) && name.matches("^[a-zA-Z0-9_]{3,16}$")) {
             actualBuilder.suggest(name);

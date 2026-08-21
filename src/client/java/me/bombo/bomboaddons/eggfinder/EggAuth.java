@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import me.bombo.bomboaddons.AlphaTrackerHud;
+import java.lang.reflect.Method;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ProfileKeyPairManager;
@@ -26,9 +28,9 @@ import org.slf4j.LoggerFactory;
 
 public class EggAuth {
    private static final Logger LOGGER = LoggerFactory.getLogger("bomboaddons-eggauth");
-   private static final String AUTH_URL = "https://api.azureaaron.net/authenticate";
+   private static final String AUTH_URL = "https://hysky.de/api/aaron/authenticate";
    private static final String ALGORITHM = "SHA256withRSA";
-   private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10L)).build();
+   private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).connectTimeout(Duration.ofSeconds(10L)).build();
    private static final Gson GSON = new Gson();
    private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor((r) -> {
       Thread thread = new Thread(r, "EggAuth-Scheduler");
@@ -39,6 +41,18 @@ public class EggAuth {
    private static volatile boolean authenticating = false;
 
    public static String getToken() {
+      if (token == null && FabricLoader.getInstance().isModLoaded("skyblocker")) {
+         try {
+            Class<?> apiAuthClass = Class.forName("de.hysky.skyblocker.utils.ApiAuthentication");
+            Method m = apiAuthClass.getMethod("getToken");
+            Object tok = m.invoke(null);
+            if (tok instanceof String && !((String) tok).isEmpty()) {
+               token = (String) tok;
+               return token;
+            }
+         } catch (Throwable ignored) {}
+      }
+
       if (token == null && !authenticating) {
          updateToken();
       }
@@ -59,7 +73,22 @@ public class EggAuth {
       } else if (!authenticating) {
          authenticating = true;
          Minecraft client = Minecraft.getInstance();
-         if (client.getUser() != null && client.getUser().getProfileId() != null) {
+         if (FabricLoader.getInstance().isModLoaded("skyblocker")) {
+            try {
+               Class<?> apiAuthClass = Class.forName("de.hysky.skyblocker.utils.ApiAuthentication");
+               Method m = apiAuthClass.getMethod("getToken");
+               Object tok = m.invoke(null);
+               if (tok instanceof String && !((String) tok).isEmpty()) {
+                  token = (String) tok;
+                  LOGGER.info("Successfully fetched API token directly from loaded Skyblocker mod.");
+                  authenticating = false;
+                  EggWebSocket.onTokenRefreshed();
+                  return;
+               }
+            } catch (Throwable ignored) {}
+         }
+
+         if (client != null && client.getUser() != null) {
             ProfileKeyPairManager profileKeys = client.getProfileKeyPairManager();
             if (profileKeys == null) {
                LOGGER.error("Cannot authenticate: ProfileKeyPairManager is null.");
@@ -77,7 +106,7 @@ public class EggAuth {
                      }
 
                      ProfileKeyPair playerKeyPair = (ProfileKeyPair)playerKeypairOpt.get();
-                     String publicKey = Base64.getMimeEncoder().encodeToString(playerKeyPair.publicKey().data().key().getEncoded());
+                     String publicKey = Base64.getEncoder().encodeToString(playerKeyPair.publicKey().data().key().getEncoded());
                      byte[] publicKeySignature = playerKeyPair.publicKey().data().keySignature();
                      long expiresAt = playerKeyPair.publicKey().data().expiresAt().toEpochMilli();
                      JsonObject keyPairJson = new JsonObject();
@@ -97,13 +126,14 @@ public class EggAuth {
                      signedDataJson.addProperty("original", Base64.getEncoder().encodeToString(signedData.original));
                      signedDataJson.addProperty("signed", Base64.getEncoder().encodeToString(signedData.signed));
                      JsonObject root = new JsonObject();
-                     root.add("keyPair", keyPairJson);
+                     root.add("keyPairInfo", keyPairJson);
                      root.add("signedData", signedDataJson);
                      root.addProperty("mod", "skyblocker");
                      root.addProperty("minecraftVersion", SharedConstants.getCurrentVersion().name());
-                     root.addProperty("modVersion", "1.7.1");
+                     root.addProperty("modVersion", "6.9.1");
                      String requestJson = GSON.toJson(root);
-                     HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://api.azureaaron.net/authenticate")).header("Content-Type", "application/json").header("User-Agent", "Skyblocker/1.7.1 (" + SharedConstants.getCurrentVersion().name() + ")").POST(BodyPublishers.ofString(requestJson)).build();
+                     LOGGER.info("[EggAuth-Debug] Sending auth request for UUID: " + client.getUser().getProfileId() + " (User: " + client.getUser().getName() + "), KeyExpiresAt: " + expiresAt);
+                     HttpRequest request = HttpRequest.newBuilder().uri(URI.create("https://hysky.de/api/aaron/authenticate")).header("Content-Type", "application/json").header("Accept", "application/json").header("User-Agent", "Skyblocker/6.9.1 (" + SharedConstants.getCurrentVersion().name() + ")").POST(BodyPublishers.ofString(requestJson)).build();
                      HTTP_CLIENT.sendAsync(request, BodyHandlers.ofString()).thenAccept((response) -> {
                         try {
                            if (response.statusCode() == 200) {
@@ -119,7 +149,8 @@ public class EggAuth {
                            } else {
                               Logger var10000 = LOGGER;
                               int var10001 = response.statusCode();
-                              var10000.error("API Auth responded with HTTP status " + var10001 + ": " + (String)response.body());
+                              var10000.error("[EggAuth-Debug] API Auth responded with HTTP " + var10001 + ": " + (String)response.body());
+                              LOGGER.error("[EggAuth-Debug] Payload sent: " + requestJson);
                               LOGGER.error("Retrying API Auth in 5 minutes.");
                               SCHEDULER.schedule(EggAuth::updateToken, 5L, TimeUnit.MINUTES);
                            }
@@ -158,7 +189,9 @@ public class EggAuth {
 
    private static SignedData getRandomSignedData(PrivateKey privateKey) {
       try {
-         Signature signature = Signature.getInstance("SHA256withRSA");
+         String keyAlgo = privateKey.getAlgorithm();
+         String sigAlgo = "EC".equalsIgnoreCase(keyAlgo) || "ECDSA".equalsIgnoreCase(keyAlgo) ? "SHA256withECDSA" : "SHA256withRSA";
+         Signature signature = Signature.getInstance(sigAlgo);
          UUID uuid = UUID.randomUUID();
          ByteBuffer buf = ByteBuffer.allocate(16).putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
          signature.initSign(privateKey);

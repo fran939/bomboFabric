@@ -1,0 +1,8292 @@
+{
+  "name": "corleone1",
+  "sizeX": 28,
+  "sizeY": 17,
+  "sizeZ": 33,
+  "anchorBlockId": "light_gray_terracotta",
+  "anchorRelX": -1,
+  "anchorRelY": 0,
+  "anchorRelZ": -1,
+  "blocks": [
+    {
+      "relX": -14,
+      "relY": 3,
+      "relZ": 3,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": -14,
+      "relY": 3,
+      "relZ": 4,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": -14,
+      "relY": 4,
+      "relZ": 3,
+      "blockId": "torch"
+    },
+    {
+      "relX": -14,
+      "relY": 4,
+      "relZ": 4,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": -14,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "lime_stained_glass"
+    },
+    {
+      "relX": -14,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "lime_stained_glass"
+    },
+    {
+      "relX": -13,
+      "relY": 3,
+      "relZ": 4,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": -13,
+      "relY": 3,
+      "relZ": 5,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": -13,
+      "relY": 3,
+      "relZ": 6,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -13,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -13,
+      "relY": 4,
+      "relZ": 4,
+      "blockId": "torch"
+    },
+    {
+      "relX": -13,
+      "relY": 4,
+      "relZ": 5,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": -13,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -12,
+      "relY": 2,
+      "relZ": 3,
+      "blockId": "red_stained_glass_pane"
+    },
+    {
+      "relX": -12,
+      "relY": 3,
+      "relZ": 6,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -12,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -12,
+      "relY": 4,
+      "relZ": 6,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -12,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -12,
+      "relY": 5,
+      "relZ": 5,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -12,
+      "relY": 10,
+      "relZ": 11,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -12,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 13,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 13,
+      "relZ": 15,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 14,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 14,
+      "relZ": 15,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 14,
+      "relZ": 16,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -12,
+      "relY": 15,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 15,
+      "relZ": 15,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -12,
+      "relY": 15,
+      "relZ": 16,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -12,
+      "relY": 16,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 2,
+      "relZ": 3,
+      "blockId": "red_stained_glass_pane"
+    },
+    {
+      "relX": -11,
+      "relY": 2,
+      "relZ": 4,
+      "blockId": "red_stained_glass"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -11,
+      "relY": 4,
+      "relZ": 6,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -11,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -11,
+      "relY": 5,
+      "relZ": 5,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -11,
+      "relY": 5,
+      "relZ": 6,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -11,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "clay"
+    },
+    {
+      "relX": -11,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -11,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -11,
+      "relY": 13,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 13,
+      "relZ": 15,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 14,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 14,
+      "relZ": 15,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 15,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 15,
+      "relZ": 15,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -11,
+      "relY": 16,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 0,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 0,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 1,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 1,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 2,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 2,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 4,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 4,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -10,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 5,
+      "relZ": 5,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -10,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 7,
+      "relZ": 5,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -10,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -10,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -10,
+      "relY": 13,
+      "relZ": 9,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -10,
+      "relY": 13,
+      "relZ": 15,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -10,
+      "relY": 14,
+      "relZ": 9,
+      "blockId": "torch"
+    },
+    {
+      "relX": -10,
+      "relY": 14,
+      "relZ": 15,
+      "blockId": "torch"
+    },
+    {
+      "relX": -9,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -9,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": 1,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -9,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -9,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -9,
+      "relY": 7,
+      "relZ": 4,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -9,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -9,
+      "relY": 8,
+      "relZ": 5,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": -9,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -9,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -8,
+      "relY": 1,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 2,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": 1,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": 5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 4,
+      "relZ": 5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -8,
+      "relY": 4,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 5,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 7,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -8,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -8,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -7,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -7,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": 1,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -7,
+      "relY": 4,
+      "relZ": 6,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -7,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -7,
+      "relY": 5,
+      "relZ": 4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -7,
+      "relY": 5,
+      "relZ": 6,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -7,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -7,
+      "relY": 7,
+      "relZ": 4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -7,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": -7,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 9,
+      "relZ": 5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -7,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 10,
+      "relZ": 5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -7,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -7,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": 1,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": 4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 4,
+      "relZ": 4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -6,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 7,
+      "relZ": 5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -6,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -6,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": 1,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": 5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 4,
+      "relZ": 5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": -5,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 9,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -5,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": 1,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 9,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -4,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": 1,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 4,
+      "relZ": -8,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 4,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 4,
+      "relZ": -6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 5,
+      "relZ": -8,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 5,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 5,
+      "relZ": -6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 7,
+      "relZ": -8,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 7,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 7,
+      "relZ": -6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 8,
+      "relZ": -8,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 8,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 8,
+      "relZ": -6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 9,
+      "relZ": -8,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 9,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 9,
+      "relZ": -6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 9,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 10,
+      "relZ": -8,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 10,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 10,
+      "relZ": -6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": -8,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": -6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -3,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": -13,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": 0,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -14,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -13,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -12,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -11,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -10,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -9,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -8,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -6,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -5,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -4,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -3,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -2,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": -1,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 0,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 1,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 2,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 3,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 4,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 5,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 6,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -2,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "ladder"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 7,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 7,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 7,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 7,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 7,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 7,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 8,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 8,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 8,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 8,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 8,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 8,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -12,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -11,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -4,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 4,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -14,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": -1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 0,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": -1,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": -11,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": -3,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": 5,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": -16,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": -16,
+      "blockId": "lime_stained_glass"
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": -11,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": -3,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": 5,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 0,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -14,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": -1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 0,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 0,
+      "relY": 13,
+      "relZ": -12,
+      "blockId": "stone_brick_stairs"
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": -16,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 7,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 7,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 7,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 8,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 8,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 8,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 1,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -14,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": -1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 0,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 1,
+      "relY": 13,
+      "relZ": -13,
+      "blockId": "stone_brick_stairs"
+    },
+    {
+      "relX": 1,
+      "relY": 13,
+      "relZ": -11,
+      "blockId": "stone_brick_stairs"
+    },
+    {
+      "relX": 1,
+      "relY": 14,
+      "relZ": -12,
+      "blockId": "fire"
+    },
+    {
+      "relX": 1,
+      "relY": 16,
+      "relZ": -12,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -11,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -3,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": 5,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 7,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 7,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 7,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 7,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 7,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 7,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 8,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 8,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 8,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 8,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 8,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 8,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": -12,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": -11,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": -10,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": -4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": -3,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": -2,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": 4,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": 5,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": 6,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 2,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -14,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": -1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 0,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 2,
+      "relY": 13,
+      "relZ": -12,
+      "blockId": "stone_brick_stairs"
+    },
+    {
+      "relX": 3,
+      "relY": 0,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 0,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 0,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 0,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 0,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 1,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 1,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 1,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 1,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 1,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 2,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 2,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 2,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 2,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 2,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 3,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 3,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 4,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 4,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 4,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 4,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 4,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 5,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 5,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 5,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 5,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 5,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 7,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 7,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 7,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 7,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 7,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 7,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 8,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 8,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 8,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 8,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 8,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 8,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -12,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -11,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -4,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 4,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 5,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -14,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": -1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 0,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 1,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 2,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 3,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 4,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 5,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 6,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 3,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -14,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -13,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -12,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -11,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -10,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -9,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -8,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -6,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -5,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -4,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -3,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -2,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": -1,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 0,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 1,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 2,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 3,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 4,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 5,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 6,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 4,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 9,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 5,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 6,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 4,
+      "relZ": -3,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 6,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 5,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 6,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 9,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 6,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 2,
+      "relZ": -16,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": 7,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 4,
+      "relZ": -6,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 7,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 8,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 9,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 9,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 10,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 7,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 2,
+      "relZ": -16,
+      "blockId": "lime_stained_glass_pane"
+    },
+    {
+      "relX": 8,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 5,
+      "relZ": -6,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 5,
+      "relZ": -2,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 7,
+      "relZ": -2,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 8,
+      "relZ": -2,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 9,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 9,
+      "relZ": -2,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 10,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 8,
+      "relY": 13,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 14,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 8,
+      "relY": 15,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 9,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 9,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 9,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 9,
+      "relY": 4,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 4,
+      "relZ": -2,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 9,
+      "relY": 5,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 5,
+      "relZ": -3,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 9,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 9,
+      "relY": 8,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 9,
+      "relZ": -4,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 9,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 9,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 10,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 10,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 10,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 11,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 11,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 11,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 11,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 11,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 11,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "polished_granite"
+    },
+    {
+      "relX": 11,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 11,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 5,
+      "relZ": -13,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": 12,
+      "relY": 5,
+      "relZ": -12,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": 12,
+      "relY": 5,
+      "relZ": -11,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": 12,
+      "relY": 5,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "torch"
+    },
+    {
+      "relX": 12,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": 12,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": 12,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 7,
+      "relZ": -12,
+      "blockId": "torch"
+    },
+    {
+      "relX": 12,
+      "relY": 7,
+      "relZ": -11,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": 12,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 8,
+      "relZ": -11,
+      "blockId": "torch"
+    },
+    {
+      "relX": 12,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 15,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 11,
+      "relZ": 16,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 12,
+      "relY": 13,
+      "relZ": 9,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 12,
+      "relY": 13,
+      "relZ": 15,
+      "blockId": "cobblestone_wall"
+    },
+    {
+      "relX": 12,
+      "relY": 14,
+      "relZ": 9,
+      "blockId": "torch"
+    },
+    {
+      "relX": 12,
+      "relY": 14,
+      "relZ": 15,
+      "blockId": "torch"
+    },
+    {
+      "relX": 13,
+      "relY": 0,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 1,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 2,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 3,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 3,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 4,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 4,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 5,
+      "relZ": -11,
+      "blockId": "oak_fence"
+    },
+    {
+      "relX": 13,
+      "relY": 5,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 5,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "torch"
+    },
+    {
+      "relX": 13,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 7,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 7,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 8,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 8,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 9,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 9,
+      "relZ": 9,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 10,
+      "relZ": 6,
+      "blockId": "spruce_log"
+    },
+    {
+      "relX": 13,
+      "relY": 10,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 3,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 4,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 5,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 6,
+      "blockId": "spruce_planks"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 7,
+      "blockId": "stone_bricks"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 8,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 10,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 11,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 12,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 13,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 11,
+      "relZ": 14,
+      "blockId": "cyan_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 13,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 14,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 15,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 16,
+      "relZ": 9,
+      "blockId": "light_gray_terracotta"
+    },
+    {
+      "relX": 13,
+      "relY": 16,
+      "relZ": 15,
+      "blockId": "light_gray_terracotta"
+    }
+  ]
+}

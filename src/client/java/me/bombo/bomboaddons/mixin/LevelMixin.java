@@ -37,4 +37,38 @@ public abstract class LevelMixin {
       }
 
    }
+
+   @Inject(
+      method = {"getRainLevel"},
+      at = {@At("HEAD")},
+      cancellable = true,
+      require = 0
+   )
+   private void onGetRainLevel(float delta, CallbackInfoReturnable<Float> cir) {
+      if (((Object)this) instanceof ClientLevel && BomboConfig.get().customWeatherEnabled) {
+         int mode = BomboConfig.get().customWeatherMode;
+         if (mode == 0) {
+            cir.setReturnValue(0.0F);
+         } else if (mode == 1 || mode == 2) {
+            cir.setReturnValue(1.0F);
+         }
+      }
+   }
+
+   @Inject(
+      method = {"getThunderLevel"},
+      at = {@At("HEAD")},
+      cancellable = true,
+      require = 0
+   )
+   private void onGetThunderLevel(float delta, CallbackInfoReturnable<Float> cir) {
+      if (((Object)this) instanceof ClientLevel && BomboConfig.get().customWeatherEnabled) {
+         int mode = BomboConfig.get().customWeatherMode;
+         if (mode == 2) {
+            cir.setReturnValue(1.0F);
+         } else {
+            cir.setReturnValue(0.0F);
+         }
+      }
+   }
 }

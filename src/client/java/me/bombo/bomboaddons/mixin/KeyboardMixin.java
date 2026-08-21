@@ -37,16 +37,24 @@ public abstract class KeyboardMixin {
       if (flKey != null && !flKey.isEmpty()) {
          int targetCode = ClickLogic.getKeyCode(flKey);
          if (targetCode != -1 && event.key() == targetCode && mc.screen == null) {
-            if (action == 1) {
-               FreelookManager.toggleFreelook(true);
-               ci.cancel();
-               return;
-            }
+            if (BomboConfig.get().freelookToggle) {
+               if (action == 1) {
+                  FreelookManager.toggleFreelook(!FreelookManager.isFreelookActive());
+                  ci.cancel();
+                  return;
+               }
+            } else {
+               if (action == 1) {
+                  FreelookManager.toggleFreelook(true);
+                  ci.cancel();
+                  return;
+               }
 
-            if (action == 0) {
-               FreelookManager.toggleFreelook(false);
-               ci.cancel();
-               return;
+               if (action == 0) {
+                  FreelookManager.toggleFreelook(false);
+                  ci.cancel();
+                  return;
+               }
             }
          }
       }
@@ -103,11 +111,6 @@ public abstract class KeyboardMixin {
          }
 
          if (mc.screen instanceof BomboConfigGUI) {
-            if (key != 256 && !mc.options.keyInventory.matches(event)) {
-               ci.cancel();
-               return;
-            }
-
             return;
          }
 
@@ -117,7 +120,8 @@ public abstract class KeyboardMixin {
          }
 
          GardenMovement.handleKey(key);
-         if (key == 80 && mc.screen instanceof AbstractContainerScreen) {
+         int saveInvKey = ClickLogic.getKeyCode(BomboConfig.get().saveInventoryKey);
+         if (saveInvKey != -1 && key == saveInvKey && mc.screen instanceof AbstractContainerScreen) {
             InventoryManager.captureCurrentGUI();
          }
       }

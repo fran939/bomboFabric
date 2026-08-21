@@ -2,21 +2,19 @@ package me.bombo.bomboaddons;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 
 public class TabWidgetHud {
-   public static final List<String> COMMON_WIDGETS = List.of("Area", "Profile", "Pet", "Stats", "Composter", "Pests", "Crop Milestones", "Visitors", "Jacob's Contest", "Pest Traps", "Active Effects", "Skills", "Daily Quests", "Coop", "Minions", "Event");
+   public static final List<String> COMMON_WIDGETS = List.of(
+      "Bestiary", "Visitors", "Stats", "Jacob's Contest", "Pests", "Crop Milestones", "Skills", "Area", "Profile", "Bank", "Election", "Events"
+   );
 
    public static void init() {
-      HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "tab_widget_hud"), TabWidgetHud::render);
    }
 
-   private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
+   public static void onHudRender(GuiGraphicsExtractor g) {
       BomboConfig.Settings s = BomboConfig.get();
       if (s.tabWidgets != null && !s.tabWidgets.isEmpty()) {
          Minecraft client = Minecraft.getInstance();
@@ -39,7 +37,7 @@ public class TabWidgetHud {
    }
 
    public static List<String> getAvailableTabWidgets() {
-      List<String> headers = new ArrayList();
+      List<String> headers = new ArrayList(COMMON_WIDGETS);
 
       for(Component comp : SkyblockUtils.getTabListLines()) {
          String raw = comp.getString();
@@ -72,6 +70,36 @@ public class TabWidgetHud {
             dummy.add(Component.literal(" §fFarming Fortune: §6526"));
             dummy.add(Component.literal(" §fStrength: §c481"));
             dummy.add(Component.literal(" §fBonus Pest Chance: §2190"));
+         } else if (lower.contains("bestiary")) {
+            dummy.add(Component.literal("§6§lBestiary:"));
+            dummy.add(Component.literal(" §fLava Flame 16: §b408/425"));
+            dummy.add(Component.literal(" §fAnt 0: §b0/1"));
+            dummy.add(Component.literal(" §fBeeheemoth 0: §b0/1"));
+            dummy.add(Component.literal(" §fBlue Jay 0: §b0/1"));
+            dummy.add(Component.literal(" §fBrineling 0: §b0/2"));
+            dummy.add(Component.literal(" §fBunbun 0: §b0/1"));
+            dummy.add(Component.literal(" §fDrybark 0: §b0/1"));
+            dummy.add(Component.literal(" §fDustybit 0: §b0/1"));
+            dummy.add(Component.literal(" §fEmber 0: §b0/1"));
+            dummy.add(Component.literal(" §fFirefox 0: §b0/1"));
+            dummy.add(Component.literal(" §fGiant Isopod 0: §b0/1"));
+            dummy.add(Component.literal(" §fGrizzly Bear 0: §b0/1"));
+            dummy.add(Component.literal(" §fGroundhog 0: §b0/1"));
+            dummy.add(Component.literal(" §fHaggard 0: §b0/2"));
+            dummy.add(Component.literal(" §fHideonsun 0: §b0/1"));
+            dummy.add(Component.literal(" §fHivethief 0: §b0/1"));
+            dummy.add(Component.literal(" §fHoneybuzz 0: §b0/1"));
+            dummy.add(Component.literal(" §fMountain Goat 0: §b0/1"));
+            dummy.add(Component.literal(" §fPangolin 0: §b0/1"));
+            dummy.add(Component.literal(" §fParched 0: §b0/1"));
+            dummy.add(Component.literal(" §fPollendart 0: §b0/1"));
+            dummy.add(Component.literal(" §fPuck 0: §b0/1"));
+            dummy.add(Component.literal(" §fQueen Ant 0: §b0/5"));
+            dummy.add(Component.literal(" §fSepialot 0: §b0/1"));
+            dummy.add(Component.literal(" §fSilkbreeze 0: §b0/1"));
+            dummy.add(Component.literal(" §fSolar 0: §b0/1"));
+            dummy.add(Component.literal(" §fSprawl 0: §b0/1"));
+            dummy.add(Component.literal(" §fTiki 0: §b0/1"));
          } else if (!lower.contains("crop") && !lower.contains("milestone")) {
             if (lower.contains("jacob")) {
                dummy.add(Component.literal("§e§lJacob's Contest:"));
@@ -121,8 +149,12 @@ public class TabWidgetHud {
                   Component comp = (Component)tabLines.get(i);
                   String rawLine = comp.getString();
                   String unformattedLine = rawLine.replaceAll("(?i)§[0-9a-fk-or]", "");
-                  if (!unformattedLine.trim().isEmpty()) {
-                     if (!unformattedLine.startsWith(" ") && !unformattedLine.startsWith("\t")) {
+                  String clean = unformattedLine.trim();
+                  if (!clean.isEmpty()) {
+                     if (clean.equalsIgnoreCase("Info") || clean.startsWith("Info ") || clean.startsWith("Info:") || clean.endsWith("Info")) {
+                        continue;
+                     }
+                     if (!unformattedLine.startsWith(" ") && !unformattedLine.startsWith("\t") && !clean.contains(":") && !clean.contains("/")) {
                         break;
                      }
 

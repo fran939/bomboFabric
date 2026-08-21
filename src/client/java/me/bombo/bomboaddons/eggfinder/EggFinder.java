@@ -39,7 +39,12 @@ public class EggFinder {
    private static final Pattern EGG_FOUND_PATTERN = Pattern.compile("(?:HOPPITY'S HUNT You found a Chocolate|You have already collected this Chocolate) (Breakfast|Lunch|Dinner|Brunch|D[eé]jeuner|Supper) Egg", 2);
    private static final Pattern NO_EGGS_PATTERN = Pattern.compile("There are no hidden Chocolate Rabbit Eggs nearby! Try again later!", 2);
    private static final Pattern RABBIT_FOUND_PATTERN = Pattern.compile("HOPPITY'S HUNT You found (.+) \\(([A-Z]+)\\)!", 2);
-   private static final Set<String> VALID_LOCATIONS = Set.of("Backwater Bayou", "Crimson Isle", "Crystal Hollows", "Deep Caverns", "Dungeon Hub", "Dwarven Mines", "Galatea", "Gold Mine", "Hub", "Lotus Atoll", "Spider's Den", "The End", "The Farming Islands", "The Park");
+   private static final Set<String> VALID_LOCATIONS = Set.of(
+      "Backwater Bayou", "Crimson Isle", "Crystal Hollows", "Deep Caverns",
+      "Dungeon Hub", "Dwarven Mines", "Galatea", "Gold Mine", "Hub",
+      "Lotus Atoll", "Spider's Den", "The End", "The Farming Islands", "The Park",
+      "Torrhus Canyon", "The Rift", "Jerry's Workshop", "Garden"
+   );
    private static final List<EggWaypoint> activeWaypoints = new ArrayList();
    private static SkyblockTimeInfo lastTime = null;
    private static String lastLoc = null;
@@ -59,8 +64,14 @@ public class EggFinder {
    }
 
    public static boolean hasWaypoints() {
+      if (activeWaypoints.isEmpty()) {
+         return false;
+      }
       synchronized(activeWaypoints) {
-         return !activeWaypoints.isEmpty();
+         for (EggWaypoint wp : activeWaypoints) {
+            if (!wp.collected) return true;
+         }
+         return false;
       }
    }
 
@@ -80,7 +91,7 @@ public class EggFinder {
             LOGGER.info("[EggFinder] Location changed from " + lastLoc + " to " + currentLoc);
             lastLoc = currentLoc;
             clearWaypoints();
-            if (VALID_LOCATIONS.contains(currentLoc)) {
+            if (currentLoc != null && VALID_LOCATIONS.contains(currentLoc)) {
                EggWebSocket.updateSubscription(currentLoc);
             } else {
                EggWebSocket.updateSubscription((String)null);
@@ -104,6 +115,38 @@ public class EggFinder {
                   }
                }
             }
+         }
+
+         if (time.isSpring && currentLoc != null && VALID_LOCATIONS.contains(currentLoc) && BomboConfig.get().eggFinder) {
+            try {
+               List<ArmorStand> nearbyStands = mc.level.getEntitiesOfClass(ArmorStand.class, mc.player.getBoundingBox().inflate(64.0));
+               for (ArmorStand stand : nearbyStands) {
+                  for (EggType type : EggFinder.EggType.values()) {
+                     if (!type.collected && checkIfEgg(stand, type)) {
+                        BlockPos eggPos = stand.blockPosition().above(2);
+                        boolean added = false;
+                        synchronized(activeWaypoints) {
+                           boolean exists = false;
+                           for (EggWaypoint wp : activeWaypoints) {
+                              if (wp.type == type && wp.pos.equals(eggPos)) {
+                                 exists = true;
+                                 break;
+                              }
+                           }
+                           if (!exists) {
+                              activeWaypoints.removeIf((wp) -> wp.type == type);
+                              activeWaypoints.add(new EggWaypoint(eggPos, type));
+                              added = true;
+                           }
+                        }
+                        if (added && EggWebSocket.isConnected()) {
+                           EggWebSocket.sendPublish(currentLoc, type.name, eggPos);
+                        }
+                        break;
+                     }
+                  }
+               }
+            } catch (Throwable ignored) {}
          }
 
          lastTime = time;
@@ -269,53 +312,71 @@ public class EggFinder {
    }
 
    public static void render(LevelRenderContext context) {
-      if (BomboConfig.get().eggFinder) {
-         SkyblockTimeInfo time = lastTime;
-         if (time != null && time.isSpring) {
-            List<EggWaypoint> wps;
-            synchronized(activeWaypoints) {
-               wps = new ArrayList(activeWaypoints);
+      if (!BomboConfig.get().eggFinder) {
+         return;
+      }
+      SkyblockTimeInfo time = lastTime;
+      if (time == null || !time.isSpring) {
+         return;
+      }
+      if (activeWaypoints.isEmpty()) {
+         return;
+      }
+
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level == null || mc.player == null) {
+         return;
+      }
+
+      Vec3 camPos = mc.gameRenderer.getMainCamera().position();
+      PoseStack poseStack = context.poseStack();
+      OrderedSubmitNodeCollector collector = null;
+
+      synchronized (activeWaypoints) {
+         for (int i = 0; i < activeWaypoints.size(); i++) {
+            EggWaypoint wp = activeWaypoints.get(i);
+            if (wp.collected) continue;
+
+            double x = (double) wp.pos.getX() + 0.5 - camPos.x;
+            double y = (double) wp.pos.getY() + 0.5 - camPos.y;
+            double z = (double) wp.pos.getZ() + 0.5 - camPos.z;
+            double distSq = x * x + y * y + z * z;
+            if (distSq > 256.0 * 256.0) continue;
+
+            float distance = (float) Math.sqrt(distSq);
+            float scale = 1.0F;
+            if (BomboConfig.get().eggFinderThroughWalls && distance > 0.2F) {
+               scale = 0.2F / distance;
             }
 
-            if (!wps.isEmpty()) {
-               Minecraft mc = Minecraft.getInstance();
-               Vec3 camPos = mc.gameRenderer.getMainCamera().position();
-               PoseStack poseStack = context.poseStack();
-               OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.bufferSource());
-
-               for(EggWaypoint wp : wps) {
-                  double x = (double)wp.pos.getX() + (double)0.5F - camPos.x;
-                  double y = (double)wp.pos.getY() + (double)0.5F - camPos.y;
-                  double z = (double)wp.pos.getZ() + (double)0.5F - camPos.z;
-                  double dist = wp.pos.distToCenterSqr(camPos.x, camPos.y, camPos.z);
-                  float distance = (float)Math.sqrt(dist);
-                  float scale = 1.0F;
-                  if (BomboConfig.get().eggFinderThroughWalls && distance > 0.2F) {
-                     scale = 0.2F / distance;
-                  }
-
-                  float boxWidth = 0.5F * scale;
-                  float boxHeight = 0.5F * scale;
-                  float scaledX = (float)x * scale;
-                  float scaledY = (float)y * scale;
-                  float scaledZ = (float)z * scale;
-                  float r = (float)(wp.type.hexColor >> 16 & 255) / 255.0F;
-                  float g = (float)(wp.type.hexColor >> 8 & 255) / 255.0F;
-                  float b = (float)(wp.type.hexColor & 255) / 255.0F;
-                  float a = 1.0F;
-                  AABB box = new AABB((double)(scaledX - boxWidth), (double)(scaledY - boxHeight), (double)(scaledZ - boxWidth), (double)(scaledX + boxWidth), (double)(scaledY + boxHeight), (double)(scaledZ + boxWidth));
-                  collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, 2.0F));
-                  if (BomboConfig.get().eggFinderBeacon) {
-                     float beaconWidth = 0.15F * scale;
-                     AABB beaconBox = new AABB((double)(scaledX - beaconWidth), (double)scaledY, (double)(scaledZ - beaconWidth), (double)(scaledX + beaconWidth), (double)(scaledY + 256.0F * scale), (double)(scaledZ + beaconWidth));
-                     collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, beaconBox, r, g, b, 0.4F, 2.0F));
-                  }
-
-                  String label = wp.type.name + " Egg §7(" + (int)distance + "m)";
-                  BomboRenderUtils.drawText(poseStack, collector, label, (float)x, (float)y + 0.8F, (float)z, wp.type.hexColor, 0.03F, true, BomboConfig.get().eggFinderThroughWalls);
-               }
-
+            if (collector == null) {
+               collector = new OrderedSubmitNodeCollector(context.bufferSource());
             }
+
+            float boxWidth = 0.5F * scale;
+            float boxHeight = 0.5F * scale;
+            float scaledX = (float) x * scale;
+            float scaledY = (float) y * scale;
+            float scaledZ = (float) z * scale;
+            float r = (float) (wp.type.hexColor >> 16 & 255) / 255.0F;
+            float g = (float) (wp.type.hexColor >> 8 & 255) / 255.0F;
+            float b = (float) (wp.type.hexColor & 255) / 255.0F;
+            float a = 1.0F;
+            AABB box = new AABB((double) (scaledX - boxWidth), (double) (scaledY - boxHeight), (double) (scaledZ - boxWidth),
+                                (double) (scaledX + boxWidth), (double) (scaledY + boxHeight), (double) (scaledZ + boxWidth));
+            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
+               (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, 2.0F));
+
+            if (BomboConfig.get().eggFinderBeacon) {
+               float beaconWidth = 0.15F * scale;
+               AABB beaconBox = new AABB((double) (scaledX - beaconWidth), (double) scaledY, (double) (scaledZ - beaconWidth),
+                                         (double) (scaledX + beaconWidth), (double) (scaledY + 256.0F * scale), (double) (scaledZ - beaconWidth));
+               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
+                  (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, beaconBox, r, g, b, 0.4F, 2.0F));
+            }
+
+            String label = wp.type.name + " Egg §7(" + (int) distance + "m)";
+            BomboRenderUtils.drawText(poseStack, collector, label, (float) x, (float) y + 0.8F, (float) z, wp.type.hexColor, 0.03F, true, BomboConfig.get().eggFinderThroughWalls);
          }
       }
    }
@@ -323,58 +384,63 @@ public class EggFinder {
    public static String getSkyblockerLocationName(String bomboLocation) {
       if (bomboLocation == null) {
          return null;
-      } else {
-         String lower = bomboLocation.toLowerCase().trim();
-         if (!lower.contains("bayou") && !lower.contains("backwater")) {
-            if (!lower.contains("crimson") && !lower.contains("isle")) {
-               if (!lower.contains("crystal") && !lower.contains("hollows")) {
-                  if (!lower.contains("deep") && !lower.contains("cavern")) {
-                     if (lower.contains("dungeon hub")) {
-                        return "Dungeon Hub";
-                     } else if (!lower.contains("dwarven") && (!lower.contains("mines") || lower.contains("gold") || lower.contains("coal"))) {
-                        if (lower.contains("galatea")) {
-                           return "Galatea";
-                        } else if (!lower.contains("gold mine") && !lower.equals("gold") && (!lower.contains("gold") || !lower.contains("mine"))) {
-                           if (!lower.equals("hub") && !lower.contains("the hub") && !lower.equals("village") && !lower.equals("ruins") && !lower.equals("bazaar")) {
-                              if (!lower.contains("lotus") && !lower.contains("atoll")) {
-                                 if (!lower.contains("spider") && !lower.equals("spider's den") && !lower.equals("spiders den")) {
-                                    if (!lower.contains("end") && !lower.equals("nest")) {
-                                       if (!lower.contains("farming") && !lower.contains("barn") && !lower.contains("desert") && !lower.contains("mushroom") && !lower.contains("oasis") && !lower.contains("windmill")) {
-                                          return !lower.contains("park") && !lower.contains("spruce") && !lower.contains("birch") && !lower.contains("savanna") && !lower.contains("howling") && !lower.contains("melancholy") && !lower.contains("thicket") ? bomboLocation : "The Park";
-                                       } else {
-                                          return "The Farming Islands";
-                                       }
-                                    } else {
-                                       return "The End";
-                                    }
-                                 } else {
-                                    return "Spider's Den";
-                                 }
-                              } else {
-                                 return "Lotus Atoll";
-                              }
-                           } else {
-                              return "Hub";
-                           }
-                        } else {
-                           return "Gold Mine";
-                        }
-                     } else {
-                        return "Dwarven Mines";
-                     }
-                  } else {
-                     return "Deep Caverns";
-                  }
-               } else {
-                  return "Crystal Hollows";
-               }
-            } else {
-               return "Crimson Isle";
-            }
-         } else {
-            return "Backwater Bayou";
-         }
       }
+      String lower = bomboLocation.toLowerCase().trim();
+      if (lower.contains("torrhus") || lower.contains("canyon")) {
+         return "Torrhus Canyon";
+      }
+      if (lower.contains("bayou") || lower.contains("backwater")) {
+         return "Backwater Bayou";
+      }
+      if (lower.contains("crimson") || lower.contains("isle")) {
+         return "Crimson Isle";
+      }
+      if (lower.contains("crystal") || lower.contains("hollows")) {
+         return "Crystal Hollows";
+      }
+      if (lower.contains("deep") || lower.contains("cavern")) {
+         return "Deep Caverns";
+      }
+      if (lower.contains("dungeon hub")) {
+         return "Dungeon Hub";
+      }
+      if (lower.contains("dwarven") || (lower.contains("mines") && !lower.contains("gold") && !lower.contains("coal"))) {
+         return "Dwarven Mines";
+      }
+      if (lower.contains("galatea")) {
+         return "Galatea";
+      }
+      if (lower.contains("gold mine") || lower.equals("gold")) {
+         return "Gold Mine";
+      }
+      if (lower.contains("lotus") || lower.contains("atoll")) {
+         return "Lotus Atoll";
+      }
+      if (lower.contains("spider")) {
+         return "Spider's Den";
+      }
+      if (lower.contains("the end") || lower.equals("end") || lower.contains("dragons nest")) {
+         return "The End";
+      }
+      if (lower.contains("farming") || lower.contains("barn") || lower.contains("desert") || lower.contains("mushroom") || lower.contains("oasis") || lower.contains("windmill")) {
+         return "The Farming Islands";
+      }
+      if (lower.contains("park") || lower.contains("spruce") || lower.contains("birch") || lower.contains("savanna") || lower.contains("howling") || lower.contains("melancholy") || lower.contains("thicket")) {
+         return "The Park";
+      }
+      if (lower.contains("rift")) {
+         return "The Rift";
+      }
+      if (lower.contains("jerry")) {
+         return "Jerry's Workshop";
+      }
+      if (lower.contains("garden")) {
+         return "Garden";
+      }
+      if (lower.equals("hub") || lower.contains("the hub") || lower.equals("village") || lower.equals("ruins") || lower.equals("bazaar")) {
+         return "Hub";
+      }
+      return bomboLocation;
    }
 
    public static List<EggWaypoint> getActiveWaypoints() {
@@ -443,13 +509,15 @@ public class EggFinder {
 
       public SkyblockTimeInfo(long epochMs) {
          long sbMillis = epochMs - 1560275700000L;
-         double hourLen = (double)50000.0F;
-         double dayLen = hourLen * (double)24.0F;
-         double monthLen = dayLen * (double)31.0F;
-         this.month = (int)(Math.floor((double)sbMillis / monthLen) % (double)12.0F);
-         this.day = (int)(Math.floor((double)sbMillis / dayLen) % (double)31.0F + (double)1.0F);
-         this.hour = (int)(Math.floor((double)sbMillis / hourLen) % (double)24.0F);
-         this.isSpring = this.month / 3 == 0;
+         long hourLen = 50000L;
+         long dayLen = hourLen * 24L; // 1,200,000 ms
+         long monthLen = dayLen * 31L; // 37,200,000 ms
+         long yearLen = monthLen * 12L; // 446,400,000 ms
+         long yearCycle = (sbMillis % yearLen + yearLen) % yearLen;
+         this.month = (int) (yearCycle / monthLen);
+         this.day = (int) ((yearCycle % monthLen) / dayLen) + 1;
+         this.hour = (int) ((yearCycle % dayLen) / hourLen);
+         this.isSpring = this.month < 3;
       }
    }
 }

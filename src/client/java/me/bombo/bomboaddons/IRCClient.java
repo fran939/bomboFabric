@@ -51,7 +51,7 @@ public class IRCClient {
             String name = mc.getUser().getName();
             String clean = name.replaceAll("[^a-zA-Z0-9_]", "");
             if (!clean.isEmpty()) {
-               String modVer = "26.1.2.21";
+               String modVer = "26.1.2.22";
                String area = BomboaddonsClient.currentArea != null && !BomboaddonsClient.currentArea.isEmpty() ? BomboaddonsClient.currentArea : "None";
                onlinePlayers.put(clean, new ModUser(clean, modVer, area));
             }
@@ -189,7 +189,7 @@ public class IRCClient {
                   cleanUsername = "bombo_" + random.nextInt(10000);
                }
 
-               String modVersion = "26.1.2.21".replace('.', '_');
+               String modVersion = "26.1.2.22".replace('.', '_');
                String currentArea = BomboaddonsClient.currentArea != null && !BomboaddonsClient.currentArea.isEmpty() ? BomboaddonsClient.currentArea.replaceAll("[^a-zA-Z0-9]", "_") : "None";
                currentNick = "b_" + cleanUsername + "_v" + modVersion + "__" + currentArea;
 
@@ -419,21 +419,69 @@ public class IRCClient {
             }
          }
 
-         if (line.contains(" PRIVMSG ")) {
+          if (line.contains(" NOTICE ")) {
+             int noticeIdx = line.indexOf(" NOTICE ");
+             int colonIdx = line.indexOf(" :", noticeIdx);
+             if (noticeIdx != -1 && colonIdx != -1) {
+                String payload = line.substring(colonIdx + 2);
+                String senderPart = line.substring(1, noticeIdx);
+                String senderNick = senderPart.split("!")[0];
+                ModUser senderMu = parseNick(senderNick);
+                if (payload.startsWith("[AREA]")) {
+                   String[] parts = payload.split("\u0002", 3);
+                   String userArea = "Unknown";
+                   String userVer = senderMu.version;
+                   if (parts.length >= 2) {
+                      userArea = parts[1];
+                      if (parts.length >= 3) {
+                         userVer = parts[2];
+                      }
+                   } else if (payload.contains(":")) {
+                      String[] colonParts = payload.split(":", 2);
+                      userArea = colonParts[0].replace("[AREA]", "").trim();
+                      if (colonParts.length > 1) {
+                         userVer = colonParts[1].trim();
+                      }
+                   }
+                   if (!userArea.isEmpty()) {
+                      onlinePlayers.put(senderMu.username, new ModUser(senderMu.username, userVer, userArea));
+                   }
+                }
+             }
+             return;
+          }
+
+          if (line.contains(" PRIVMSG ")) {
             int privmsgIdx = line.indexOf(" PRIVMSG ");
             int colonIdx = line.indexOf(" :", privmsgIdx);
             if (privmsgIdx != -1 && colonIdx != -1) {
                String payload = line.substring(colonIdx + 2);
-               long now = System.currentTimeMillis();
-               if (payload.equals(lastPrivMsgPayload) && (now - lastPrivMsgTime < 400L)) {
-                  return; // Drop duplicate echo
-               }
-               lastPrivMsgPayload = payload;
-               lastPrivMsgTime = now;
-
                String senderPart = line.substring(1, privmsgIdx);
                String senderNick = senderPart.split("!")[0];
                ModUser senderMu = parseNick(senderNick);
+
+               if (payload.startsWith("[AREA]")) {
+                  String[] parts = payload.split("\u0002", 3);
+                  String userArea = "Unknown";
+                  String userVer = senderMu.version;
+                  if (parts.length >= 2) {
+                     userArea = parts[1];
+                     if (parts.length >= 3) {
+                        userVer = parts[2];
+                     }
+                  } else if (payload.contains(":")) {
+                     String[] colonParts = payload.split(":", 2);
+                     userArea = colonParts[0].replace("[AREA]", "").trim();
+                     if (colonParts.length > 1) {
+                        userVer = colonParts[1].trim();
+                     }
+                  }
+                  if (!userArea.isEmpty()) {
+                     onlinePlayers.put(senderMu.username, new ModUser(senderMu.username, userVer, userArea));
+                  }
+                  return;
+               }
+
                onlinePlayers.put(senderMu.username, senderMu);
                String[] msgParts = payload.split("\u0002", 3);
                String formattedMessage;
@@ -484,7 +532,7 @@ public class IRCClient {
                if (mc != null && mc.player != null) {
                   mc.execute(() -> {
                      if (mc.player != null && BomboConfig.get().ircChatEnabled) {
-                        mc.player.sendSystemMessage(Component.literal(formattedMessage));
+                        mc.player.sendSystemMessage(formatWithLinks(formattedMessage));
                      }
 
                   });
@@ -494,6 +542,51 @@ public class IRCClient {
       } catch (Throwable var14) {
       }
 
+   }
+
+   public static Component formatWithLinks(String rawText) {
+      if (rawText == null) return Component.empty();
+      java.util.regex.Pattern urlPattern = java.util.regex.Pattern.compile("(https?://[^\\s]+)");
+      java.util.regex.Matcher matcher = urlPattern.matcher(rawText);
+      net.minecraft.network.chat.MutableComponent root = Component.empty();
+      int lastIdx = 0;
+      while (matcher.find()) {
+         int start = matcher.start();
+         int end = matcher.end();
+         if (start > lastIdx) {
+            root.append(Component.literal(rawText.substring(lastIdx, start)));
+         }
+         String urlStr = matcher.group(1);
+         try {
+            java.net.URI uri = java.net.URI.create(urlStr);
+            root.append(Component.literal(urlStr).withStyle(style -> 
+               style.withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(uri))
+                    .withUnderlined(true)
+            ));
+         } catch (Throwable t) {
+            root.append(Component.literal(urlStr));
+         }
+         lastIdx = end;
+      }
+      if (lastIdx < rawText.length()) {
+         root.append(Component.literal(rawText.substring(lastIdx)));
+      }
+      return root;
+   }
+
+   public static void broadcastArea(String area) {
+      if (area == null || area.isEmpty()) {
+         area = "None";
+      }
+      String finalArea = area;
+      ensureSelfInOnlinePlayers();
+      if (running && BomboConfig.get().ircChatEnabled) {
+         (new Thread(() -> {
+            try {
+               sendRaw("NOTICE #bomboaddons_chat :[AREA]\u0002" + finalArea + "\u000226.1.2.22");
+            } catch (Throwable ignored) {}
+         })).start();
+      }
    }
 
    public static void sendMessage(String msg) {
@@ -553,7 +646,7 @@ public class IRCClient {
       private final StringBuilder textBuffer = new StringBuilder();
 
       public void onOpen(WebSocket ws) {
-         if (ws != IRCClient.webSocket || !running || !BomboConfig.get().ircChatEnabled) {
+         if (!running || !BomboConfig.get().ircChatEnabled) {
             try { ws.abort(); } catch (Throwable ignored) {}
             return;
          }
@@ -561,7 +654,7 @@ public class IRCClient {
       }
 
       public CompletionStage<?> onText(WebSocket ws, CharSequence data, boolean last) {
-         if (ws != IRCClient.webSocket || !running || !BomboConfig.get().ircChatEnabled) {
+         if (!running || !BomboConfig.get().ircChatEnabled) {
             try { ws.abort(); } catch (Throwable ignored) {}
             return null;
          }

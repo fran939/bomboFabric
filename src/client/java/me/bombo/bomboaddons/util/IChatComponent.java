@@ -13,6 +13,8 @@ public interface IChatComponent {
 
    List<GuiMessage.Line> bombo$getFullMessageLines(GuiMessage.Line var1);
 
+   List<GuiMessage> bombo$getAllMessages();
+
    double bombo$getScale();
 
    void bombo$removeProfileListMessages();

@@ -33,6 +33,11 @@ public abstract class ItemStackMixin {
       at = {@At("RETURN")}
    )
    private void onGetTooltipLines(Item.TooltipContext context, Player player, TooltipFlag tooltipFlag, CallbackInfoReturnable<List<Component>> cir) {
+      ItemStack currentStack = (ItemStack)(Object)this;
+      List<Component> tooltipResultLines = (List)cir.getReturnValue();
+      if (tooltipResultLines != null) {
+         me.bombo.bomboaddons.features.SupercraftHelper.appendTooltip(currentStack, tooltipResultLines);
+      }
       if (BomboConfig.get().lowestBin) {
          ItemStack stack = (ItemStack)(Object)this;
          String skyblockId = null;

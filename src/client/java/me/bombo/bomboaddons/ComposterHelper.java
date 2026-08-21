@@ -14,6 +14,9 @@ public class ComposterHelper {
    private static final Pattern VALUE_PATTERN = Pattern.compile("([\\d,]+(?:\\.\\d+)?)([kmb])?/([\\d,]+(?:\\.\\d+)?)([kmb])?");
 
    public static boolean onMouseClicked(AbstractContainerScreen<?> screen, Slot slot, int button) {
+      if (!BomboConfig.get().composterHelper) {
+         return false;
+      }
       if (slot != null && button == 0) {
          String title = screen.getTitle().getString();
          if (!title.contains("Composter")) {

@@ -104,7 +104,7 @@ public class EggWebSocket {
          } else {
             connecting = true;
             LOGGER.info("Connecting to Skyblocker WebSocket...");
-            HTTP_CLIENT.newWebSocketBuilder().header("Authorization", "Bearer " + token).header("User-Agent", "Skyblocker/1.7.1 (" + SharedConstants.getCurrentVersion().name() + ")").buildAsync(URI.create("wss://ws.hysky.de"), new SocketListener()).thenAccept((ws) -> {
+            HTTP_CLIENT.newWebSocketBuilder().header("Authorization", "Bearer " + token).header("User-Agent", "Skyblocker/6.9.1 (" + SharedConstants.getCurrentVersion().name() + ")").buildAsync(URI.create("wss://ws.hysky.de"), new SocketListener()).thenAccept((ws) -> {
                synchronized(EggWebSocket.class) {
                   webSocket = ws;
                   connecting = false;
@@ -120,9 +120,12 @@ public class EggWebSocket {
                   Throwable cause = t.getCause() != null ? t.getCause() : t;
                   if (cause instanceof WebSocketHandshakeException handshakeEx) {
                      HttpResponse<?> resp = handshakeEx.getResponse();
-                     Logger var10000 = LOGGER;
-                     int var10001 = resp.statusCode();
-                     var10000.error("Failed to connect to WebSocket: Handshake Exception. Status: " + var10001 + ", Headers: " + String.valueOf(resp.headers().map()));
+                     int status = resp.statusCode();
+                     LOGGER.error("Failed to connect to WebSocket: Handshake Exception. Status: " + status + ", Headers: " + String.valueOf(resp.headers().map()));
+                     if (status == 401) {
+                        LOGGER.warn("WebSocket returned 401 Unauthorized - forcing token refresh.");
+                        EggAuth.forceUpdateToken();
+                     }
                   } else {
                      LOGGER.error("Failed to connect to WebSocket: " + cause.getMessage(), cause);
                   }
@@ -217,6 +220,10 @@ public class EggWebSocket {
 
    private static class SocketListener implements WebSocket.Listener {
       private final List<CharSequence> parts = new ArrayList();
+
+      public void onOpen(WebSocket ws) {
+         ws.request(1L);
+      }
 
       public CompletionStage<?> onText(WebSocket ws, CharSequence data, boolean last) {
          this.parts.add(data);

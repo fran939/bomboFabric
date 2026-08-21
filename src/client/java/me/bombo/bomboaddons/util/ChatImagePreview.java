@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.ClickEvent;
@@ -56,21 +57,39 @@ public class ChatImagePreview {
 
    public static String cleanUrl(String url) {
       if (url == null) return null;
-      // Strip formatting codes (e.g. §r, §x§f..., §is=... corrupted by section signs)
       String cleaned = url.replaceAll("§[0-9a-fk-orxX]", "").replaceAll("§", "&");
+      cleaned = cleaned.replaceAll("\\s+", "");
+      if (cleaned.contains("discordapp") || cleaned.contains("discord.com")) {
+         cleaned = cleaned.replaceAll("(?<=[a-f0-9])s=", "&is=");
+         cleaned = cleaned.replaceAll("(?<=[a-f0-9])m=", "&hm=");
+      }
       cleaned = cleaned.replaceAll("[.,!?;:)]+$", "").trim();
       return cleaned;
    }
 
    public static String extractImageUrl(String text) {
       if (text == null) return null;
-      // Clean section signs from text
       String cleanText = text.replaceAll("§[0-9a-fk-orxX]", "").replaceAll("§", "&");
       Matcher matcher = URL_PATTERN.matcher(cleanText);
       while (matcher.find()) {
          String url = cleanUrl(matcher.group());
          if (isImageUrl(url)) {
             return url;
+         }
+      }
+      // Re-try after removing spaces in discord / cdn links
+      if (cleanText.contains("cdn.discordapp.com") || cleanText.contains("media.discordapp.net")) {
+         int idx = cleanText.indexOf("https://");
+         if (idx == -1) idx = cleanText.indexOf("http://");
+         if (idx != -1) {
+            String sub = cleanText.substring(idx).replaceAll("\\s+", "");
+            Matcher m2 = URL_PATTERN.matcher(sub);
+            if (m2.find()) {
+               String url = cleanUrl(m2.group());
+               if (isImageUrl(url)) {
+                  return url;
+               }
+            }
          }
       }
       return null;
@@ -104,6 +123,18 @@ public class ChatImagePreview {
          }
       }
 
+      java.util.List<GuiMessage> allMsgs = chatAccessor.bombo$getAllMessages();
+      if (allMsgs != null) {
+         for (GuiMessage m : allMsgs) {
+            if (m.addedTime() == line.addedTime()) {
+               String extracted = extractImageUrl(m.content().getString());
+               if (extracted != null) {
+                  return extracted;
+               }
+            }
+         }
+      }
+
       String plain = IChatComponent.getLinePlainText(line.content());
       String extracted = extractImageUrl(plain);
       if (extracted != null) {
@@ -111,12 +142,17 @@ public class ChatImagePreview {
       }
 
       java.util.List<GuiMessage.Line> fullLines = chatAccessor.bombo$getFullMessageLines(line);
-      StringBuilder fullMsg = new StringBuilder();
+      StringBuilder fullMsgWithSpace = new StringBuilder();
+      StringBuilder fullMsgNoSpace = new StringBuilder();
       for (GuiMessage.Line l : fullLines) {
-         if (fullMsg.length() > 0) fullMsg.append(" ");
-         fullMsg.append(IChatComponent.getLinePlainText(l.content()));
+         String t = IChatComponent.getLinePlainText(l.content());
+         if (fullMsgWithSpace.length() > 0) fullMsgWithSpace.append(" ");
+         fullMsgWithSpace.append(t);
+         fullMsgNoSpace.append(t);
       }
-      return extractImageUrl(fullMsg.toString());
+      String res = extractImageUrl(fullMsgWithSpace.toString());
+      if (res != null) return res;
+      return extractImageUrl(fullMsgNoSpace.toString());
    }
 
    public static void fetchImage(String url) {
@@ -184,8 +220,12 @@ public class ChatImagePreview {
       LoadedImage img = TEXTURE_CACHE.get(url);
       if (img == null || img.id == null) return;
 
-      int maxW = 200;
-      int maxH = 150;
+      int screenW = mc.getWindow().getGuiScaledWidth();
+      int screenH = mc.getWindow().getGuiScaledHeight();
+      boolean isShift = com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 340) || com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 344);
+
+      int maxW = isShift ? Math.max(100, screenW - 40) : Math.min(480, screenW - 30);
+      int maxH = isShift ? Math.max(100, screenH - 40) : Math.min(340, screenH - 30);
       int w = img.width;
       int h = img.height;
 
@@ -195,23 +235,29 @@ public class ChatImagePreview {
          h = Math.max(1, (int) Math.round(h * ratio));
       }
 
-      int screenW = mc.getWindow().getGuiScaledWidth();
-      int screenH = mc.getWindow().getGuiScaledHeight();
+      int previewX;
+      int previewY;
 
-      int previewX = mouseX + 12;
-      int previewY = mouseY - h / 2;
+      if (isShift) {
+         previewX = (screenW - w) / 2;
+         previewY = (screenH - h) / 2;
+         g.fill(0, 0, screenW, screenH, 0xB0000000);
+      } else {
+         previewX = mouseX + 12;
+         previewY = mouseY - h / 2;
 
-      if (previewX + w + 8 > screenW) {
-         previewX = mouseX - w - 12;
-      }
-      if (previewX < 4) {
-         previewX = 4;
-      }
-      if (previewY + h + 8 > screenH) {
-         previewY = screenH - h - 8;
-      }
-      if (previewY < 4) {
-         previewY = 4;
+         if (previewX + w + 8 > screenW) {
+            previewX = mouseX - w - 12;
+         }
+         if (previewX < 4) {
+            previewX = 4;
+         }
+         if (previewY + h + 8 > screenH) {
+            previewY = screenH - h - 8;
+         }
+         if (previewY < 4) {
+            previewY = 4;
+         }
       }
 
       // Draw shadow / background border
