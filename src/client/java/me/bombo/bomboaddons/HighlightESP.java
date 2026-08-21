@@ -151,9 +151,11 @@ public class HighlightESP {
    }
 
    public static final Map<Integer, EntityHighlightInfo> HIGHLIGHT_CACHE = new ConcurrentHashMap<>();
+   public static final java.util.Set<Integer> ALERTED_SPAWN_IDS = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
    public static void clearHighlightCache() {
       HIGHLIGHT_CACHE.clear();
+      ALERTED_SPAWN_IDS.clear();
       TargetPests.infoCache.clear();
    }
 
@@ -607,10 +609,28 @@ public class HighlightESP {
                    }
                 }
 
-                if (matched) {
-                   int color = BomboRenderUtils.colorNameToHex(info.color);
-                   return new EntityHighlightInfo(now, true, color, info.tracer, color, info.showInvisible);
-                }
+                 if (matched) {
+                    if (info.showTitleOnSpawn || info.playSoundOnSpawn) {
+                       int entId = self.getId();
+                       if (!ALERTED_SPAWN_IDS.contains(entId)) {
+                          ALERTED_SPAWN_IDS.add(entId);
+                          if (ALERTED_SPAWN_IDS.size() > 5000) ALERTED_SPAWN_IDS.clear();
+                          String titleName = nametagName != null && !nametagName.isEmpty() ? nametagName : (name != null ? name : key);
+                          Minecraft client = Minecraft.getInstance();
+                          client.execute(() -> {
+                             if (info.showTitleOnSpawn && client.gui != null) {
+                                client.gui.setTitle(net.minecraft.network.chat.Component.literal("§e" + titleName + " §aSpawned!"));
+                                client.gui.setTimes(10, 40, 10);
+                             }
+                             if (info.playSoundOnSpawn && client.player != null) {
+                                client.player.playSound(net.minecraft.sounds.SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.5F);
+                             }
+                          });
+                       }
+                    }
+                    int color = BomboRenderUtils.colorNameToHex(info.color);
+                    return new EntityHighlightInfo(now, true, color, info.tracer, color, info.showInvisible);
+                 }
              }
          }
       } catch (Throwable ignored) {}

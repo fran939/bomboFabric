@@ -284,6 +284,54 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             }
          }
 
+         if (BomboConfig.get().hoppityWarp && this.hoveredSlot != null && this.hoveredSlot.hasItem() && event.button() == 0) {
+            String screenTitle = this.getTitle().getString();
+            if (screenTitle != null && screenTitle.contains("Hoppity's Collection")) {
+               ItemStack stack = this.hoveredSlot.getItem();
+               String targetWarp = null;
+               for (Component c : stack.getTooltipLines(TooltipContext.of(Minecraft.getInstance().level), Minecraft.getInstance().player, Default.NORMAL)) {
+                  String line = net.minecraft.ChatFormatting.stripFormatting(c.getString()).toLowerCase(java.util.Locale.ROOT);
+                  if (line.contains("moonglade marsh resident")) {
+                     targetWarp = "moonglade";
+                     break;
+                  } else if (line.contains("oasis resident")) {
+                     targetWarp = "oasis";
+                     break;
+                  } else if (line.contains("mushroom gorge resident")) {
+                     targetWarp = "desert";
+                     break;
+                  } else if (line.contains("spider's den resident") || line.contains("spiders den resident")) {
+                     targetWarp = "spider";
+                     break;
+                  } else if (line.contains("the barn resident") || line.contains("barn resident")) {
+                     targetWarp = "barn";
+                     break;
+                  } else if (line.contains("birch park resident") || line.contains("spruce woods resident") || line.contains("dark thicket resident") || line.contains("savanna woodland resident") || line.contains("jungle island resident") || line.contains("howling cave resident") || line.contains("park resident")) {
+                     targetWarp = "park";
+                     break;
+                  } else if (line.contains("dragon's lair resident") || line.contains("goblin holdout resident") || line.contains("precursor remnants resident") || line.contains("jungle resident") || line.contains("crystal hollows resident")) {
+                     targetWarp = "ch";
+                     break;
+                  } else if (line.contains("mithril deposits resident") || line.contains("lava springs resident") || line.contains("royal mines resident") || line.contains("cliffside veins resident") || line.contains("rampart's quarry resident") || line.contains("dwarven village resident") || line.contains("the mist resident") || line.contains("dwarven mines resident") || line.contains("mines resident")) {
+                     targetWarp = "mines";
+                     break;
+                  } else if (line.contains("highland resident") || line.contains("village resident") || line.contains("farm resident") || line.contains("forest resident") || line.contains("mountain resident") || line.contains("ruins resident") || line.contains("graveyard resident") || line.contains("coal mine resident") || line.contains("wilderness resident") || line.contains("colosseum resident") || line.contains("hub resident")) {
+                     targetWarp = "hub";
+                     break;
+                  }
+               }
+               if (targetWarp != null) {
+                  Minecraft mc = Minecraft.getInstance();
+                  if (mc.player != null) {
+                     mc.player.connection.sendCommand("warp " + targetWarp);
+                     mc.player.closeContainer();
+                     cir.setReturnValue(true);
+                     return;
+                  }
+               }
+            }
+         }
+
          if (ComposterHelper.onMouseClicked((AbstractContainerScreen)(Object)this, this.hoveredSlot, event.button())) {
             cir.setReturnValue(true);
          } else if (this.hoveredSlot == null || !SlotHighlight.isTargetSlot(this.hoveredSlot.index) && this.hoveredSlot.index != 45 && this.hoveredSlot.index != 53) {

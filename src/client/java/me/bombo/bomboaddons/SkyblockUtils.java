@@ -75,11 +75,55 @@ public class SkyblockUtils {
                result = result.replace("$z", String.valueOf(z));
             }
 
+            if (result.contains("$handid")) {
+               net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
+               String sbId = "";
+               if (held != null && !held.isEmpty()) {
+                  sbId = getSkyblockId(held);
+                  if (sbId == null || sbId.isEmpty()) {
+                     sbId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).getPath().toUpperCase();
+                  }
+               }
+               result = result.replace("$handid", sbId != null ? sbId : "");
+            }
+
+            if (result.contains("$hand")) {
+               net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
+               String handName = "";
+               if (held != null && !held.isEmpty()) {
+                  handName = net.minecraft.ChatFormatting.stripFormatting(held.getHoverName().getString());
+               }
+               result = result.replace("$hand", handName != null ? handName : "");
+            }
+
             return result;
          }
       } else {
          return text;
       }
+   }
+
+   public static String getSkyblockId(net.minecraft.world.item.ItemStack itemStack) {
+      if (itemStack == null || itemStack.isEmpty()) return "";
+      try {
+         net.minecraft.world.item.component.CustomData customData = (net.minecraft.world.item.component.CustomData)itemStack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+         if (customData != null) {
+            net.minecraft.nbt.CompoundTag tag = customData.copyTag();
+            String id = tag.getString("id").orElse("");
+            if (!id.isEmpty()) {
+               return id;
+            }
+
+            net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (ea != null) {
+               return ea.getString("id").orElse("");
+            }
+         }
+      } catch (Throwable ignored) {}
+      try {
+         return net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(itemStack.getItem()).getPath().toUpperCase();
+      } catch (Throwable ignored) {}
+      return "";
    }
 
    public static boolean isConnectedToHypixel() {

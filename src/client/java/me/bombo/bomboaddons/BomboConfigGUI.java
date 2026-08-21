@@ -95,14 +95,14 @@ extends Screen {
         return y + 24;
     }
     private static final Map<String, List<String>> CATEGORY_KEYWORDS = Map.ofEntries(
-        Map.entry("General", List.of("water", "lava", "sign", "calculator", "sbe", "copy chat", "etherwarp", "sphinx", "hollow wand", "lasso", "carnival", "npc lore", "lowest bin", "craft cost", "npc sell", "trevor", "daily reward", "egg finder", "caps lock", "server list", "reconnect", "f1", "m1", "auto reconnect", "party commands", "resource pack", "command hover", "hoppity", "hypixel tooltips", "shortcut", "borderless", "diorite", "time", "weather", "search bar", "paste")),
+        Map.entry("General", List.of("water", "lava", "sign", "calculator", "sbe", "copy chat", "etherwarp", "sphinx", "hollow wand", "lasso", "carnival", "npc lore", "lowest bin", "craft cost", "npc sell", "trevor", "daily reward", "egg finder", "caps lock", "server list", "reconnect", "f1", "m1", "auto reconnect", "party commands", "resource pack", "command hover", "hoppity", "warp", "hypixel tooltips", "shortcut", "borderless", "diorite", "time", "weather", "search bar", "paste")),
         Map.entry("HUDs", List.of("dice", "feast", "bakery", "rng", "custom timer", "tab widget", "hoppity", "egg", "alpha", "item list", "tooltip")),
         Map.entry("Experiments", List.of("chronomatron", "ultrasequencer", "superpairs")),
         Map.entry("Garden", List.of("movement", "pest", "spray", "composter", "desk")),
         Map.entry("Hotkeys", List.of("wardrobe", "pets", "freelook", "bestiary", "focus", "item list", "search", "trade", "recipe", "usage", "gfs", "save")),
         Map.entry("Profiles", List.of("profile", "save", "load", "delete")),
         Map.entry("Clicker", List.of("auto click", "cps", "left click", "right click", "key click")),
-        Map.entry("Highlights", List.of("mob highlight", "tracer", "color", "invis")),
+        Map.entry("Highlights", List.of("mob highlight", "tracer", "color", "invis", "sound", "title", "spawn")),
         Map.entry("Wardrobe", List.of("wardrobe", "armor", "slot", "key")),
         Map.entry("Anvil", List.of("anvil", "combine", "books")),
         Map.entry("Debug", List.of("chat", "sounds", "guis", "entities", "commands", "api", "pet price", "messages", "lb", "particles", "lore", "composter", "fishing", "croesus", "reconnect", "performance", "keys", "esp", "filter")),
@@ -114,7 +114,7 @@ extends Screen {
         Map.entry("Chat Triggers", List.of("trigger", "chat", "command", "title")),
         Map.entry("Dungeons", List.of("dungeon", "secrets", "croesus", "clear")),
         Map.entry("Coord Binds", List.of("coord bind", "radius", "delay")),
-        Map.entry("Mining", List.of("corpse", "mineshaft", "glacite", "tracer", "vanguard", "umber", "tungsten", "structure", "corleone", "catwalk")),
+        Map.entry("Mining", List.of("corpse", "mineshaft", "glacite", "tracer", "vanguard", "umber", "tungsten", "structure", "corleone", "catwalk", "carpet", "dwarven", "red carpet")),
         Map.entry("Block Highlights", List.of("block", "outline", "through walls")),
         Map.entry("Particle Highlights", List.of("particle", "highlight")),
         Map.entry("Bedwars", List.of("bedwars", "spawner", "timer", "tracker")),
@@ -164,6 +164,8 @@ extends Screen {
     private static String advArmorPieceInput = "";
     private static String advPlayerNameInput = "";
     private static String advVisibilityInput = "ALL";
+    private static boolean advShowTitleInput = false;
+    private static boolean advPlaySoundInput = false;
 
     // Highlight History (Undo / Redo)
     private static final java.util.Deque<Map<String, BomboConfig.HighlightInfo>> highlightUndoStack = new java.util.ArrayDeque<>();
@@ -189,6 +191,8 @@ extends Screen {
                     hi.isAdvanced = e.getValue().isAdvanced;
                     hi.mobSize = e.getValue().mobSize;
                     hi.armorPiece = e.getValue().armorPiece;
+                    hi.showTitleOnSpawn = e.getValue().showTitleOnSpawn;
+                    hi.playSoundOnSpawn = e.getValue().playSoundOnSpawn;
                     if (e.getValue().headHashes != null) hi.headHashes = new java.util.ArrayList<>(e.getValue().headHashes);
                     clone.put(e.getKey(), hi);
                 }
@@ -220,6 +224,8 @@ extends Screen {
                         hi.isAdvanced = e.getValue().isAdvanced;
                         hi.mobSize = e.getValue().mobSize;
                         hi.armorPiece = e.getValue().armorPiece;
+                        hi.showTitleOnSpawn = e.getValue().showTitleOnSpawn;
+                        hi.playSoundOnSpawn = e.getValue().playSoundOnSpawn;
                         if (e.getValue().headHashes != null) hi.headHashes = new java.util.ArrayList<>(e.getValue().headHashes);
                         currentClone.put(e.getKey(), hi);
                     }
@@ -244,6 +250,8 @@ extends Screen {
                     hi.isAdvanced = e.getValue().isAdvanced;
                     hi.mobSize = e.getValue().mobSize;
                     hi.armorPiece = e.getValue().armorPiece;
+                    hi.showTitleOnSpawn = e.getValue().showTitleOnSpawn;
+                    hi.playSoundOnSpawn = e.getValue().playSoundOnSpawn;
                     if (e.getValue().headHashes != null) hi.headHashes = new java.util.ArrayList<>(e.getValue().headHashes);
                     s.highlights.put(e.getKey(), hi);
                 }
@@ -275,6 +283,8 @@ extends Screen {
                         hi.isAdvanced = e.getValue().isAdvanced;
                         hi.mobSize = e.getValue().mobSize;
                         hi.armorPiece = e.getValue().armorPiece;
+                        hi.showTitleOnSpawn = e.getValue().showTitleOnSpawn;
+                        hi.playSoundOnSpawn = e.getValue().playSoundOnSpawn;
                         if (e.getValue().headHashes != null) hi.headHashes = new java.util.ArrayList<>(e.getValue().headHashes);
                         currentClone.put(e.getKey(), hi);
                     }
@@ -632,6 +642,7 @@ extends Screen {
                     y1 = this.addBoolOption("Egg Finder Beacon", s.eggFinderBeacon, v -> s.eggFinderBeacon = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Egg Finder Through Walls", s.eggFinderThroughWalls, v -> s.eggFinderThroughWalls = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Hoppity Egg HUD", s.hoppityHud, v -> s.hoppityHud = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Hoppity Warp", s.hoppityWarp, v -> s.hoppityWarp = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Golden Dragon Nest Finder", s.goldenDragonNestFinder, v -> s.goldenDragonNestFinder = v, col1X, col1W, y1);
 
                     int y2 = contentBaseY + 24 - (int)this.scrollAmount;
@@ -1112,6 +1123,8 @@ extends Screen {
                         curY = this.addCycleOption("Visibility", advVisibilityInput, List.of("ALL", "ONLY_VISIBLE", "ONLY_INVISIBLE"), v -> advVisibilityInput = v, contentX, contentWidth, curY);
                         curY = this.addColorCycleButton("Color", highColorInput, v -> highColorInput = v, contentX, contentWidth, curY);
                         curY = this.addBoolOption("Tracer", highTracerInput, v -> highTracerInput = v, contentX, contentWidth, curY);
+                        curY = this.addBoolOption("Show Title On Spawn", advShowTitleInput, v -> advShowTitleInput = v, contentX, contentWidth, curY);
+                        curY = this.addBoolOption("Play Sound On Spawn", advPlaySoundInput, v -> advPlaySoundInput = v, contentX, contentWidth, curY);
 
                         int finalCurY = curY += 6;
                         String addBtnText = editingHighMob != null ? "§e✔ Save Advanced Highlight" : "§a+ Add Advanced Highlight";
@@ -1133,6 +1146,8 @@ extends Screen {
                                 hi.mobSize = advMobSizeInput.trim();
                                 hi.armorPiece = advArmorPieceInput.trim();
                                 hi.playerName = advPlayerNameInput.trim();
+                                hi.showTitleOnSpawn = advShowTitleInput;
+                                hi.playSoundOnSpawn = advPlaySoundInput;
                                 s.highlights.put(key.toLowerCase(Locale.ROOT), hi);
                                 BomboConfig.save();
                                 highMobInput = "";
@@ -1141,6 +1156,8 @@ extends Screen {
                                 advMobSizeInput = "";
                                 advArmorPieceInput = "";
                                 advPlayerNameInput = "";
+                                advShowTitleInput = false;
+                                advPlaySoundInput = false;
                                 highIslandInput = "";
                                 editingHighMob = null;
                                 this.init();
@@ -1155,6 +1172,8 @@ extends Screen {
                                 advMobSizeInput = "";
                                 advArmorPieceInput = "";
                                 advPlayerNameInput = "";
+                                advShowTitleInput = false;
+                                advPlaySoundInput = false;
                                 highIslandInput = "";
                                 editingHighMob = null;
                                 this.init();
@@ -1302,6 +1321,8 @@ extends Screen {
                                     advArmorPieceInput = info.armorPiece != null ? info.armorPiece : "";
                                     advPlayerNameInput = info.playerName != null ? info.playerName : "";
                                     advVisibilityInput = info.showInvisible ? "ALL" : "ONLY_VISIBLE";
+                                    advShowTitleInput = info.showTitleOnSpawn;
+                                    advPlaySoundInput = info.playSoundOnSpawn;
                                 }
                                 this.init();
                             }).bounds(contentX + contentWidth - 60, itemY + 2, 32, 18).build());
@@ -2354,11 +2375,20 @@ extends Screen {
                         s.goldenDragonNestFinder = v;
                     }, col1X, col1W, y1);
 
-                    structureFinderX = col1X;
-                    structureFinderY = y1;
-                    structureFinderW = col1W;
-                    structureFinderH = 24;
-                    y1 = this.addBoolOption("Structure Finder (Right Click)", s.structureFinder, v -> s.structureFinder = v, col1X, col1W, y1);
+                    if (!s.hideCheats) {
+                        structureFinderX = col1X;
+                        structureFinderY = y1;
+                        structureFinderW = col1W;
+                        structureFinderH = 24;
+                        y1 = this.addBoolOption("Structure Finder (Right Click)", s.structureFinder, v -> s.structureFinder = v, col1X, col1W, y1);
+                    } else {
+                        structureFinderX = -1;
+                        structureFinderY = -1;
+                        structureFinderW = -1;
+                        structureFinderH = -1;
+                    }
+
+                    y1 = this.addBoolOption("Dwarven Red Carpets", s.replaceGrayCarpetDwarven, v -> s.replaceGrayCarpetDwarven = v, col1X, col1W, y1);
 
                     int y2 = contentBaseY + 24 - (int)this.scrollAmount;
                     y2 = this.addColorCycleButton("Lapis Outline Color", s.lapisOutlineColor, v -> {
@@ -3707,6 +3737,7 @@ extends Screen {
                     y1 = this.drawOptionLabel(g, "§7Egg Finder Beacon", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Egg Finder Through Walls", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Hoppity Egg HUD", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Hoppity Warp", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Golden Dragon Nest Finder", col1X + 24, y1, -1, false);
 
                     int y2 = contentBaseY + 24 - (int)this.scrollAmount;
@@ -4391,7 +4422,10 @@ extends Screen {
                     y1 = this.drawOptionLabel(g, "§7Hide Opened Corpses", col1X + 24, y1, -1, false);
                     y1 += 29;
                     y1 = this.drawOptionLabel(g, "§7Golden Dragon Nest Finder", col1X + 24, y1, -1, false);
-                    y1 = this.drawOptionLabel(g, "§7Structure Finder (Right Click)", col1X + 24, y1, -1, false);
+                    if (!s.hideCheats) {
+                        y1 = this.drawOptionLabel(g, "§7Structure Finder (Right Click)", col1X + 24, y1, -1, false);
+                    }
+                    y1 = this.drawOptionLabel(g, "§7Dwarven Red Carpets", col1X + 24, y1, -1, false);
                     int y2 = contentBaseY - (int)this.scrollAmount;
                     g.text(this.font, "§6§lCorpse Colors", col2X, y2, -22016, true);
                     break;

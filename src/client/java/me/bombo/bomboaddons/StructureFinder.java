@@ -88,7 +88,7 @@ public class StructureFinder {
       }
 
       BomboConfig.Settings s = BomboConfig.get();
-      if (!s.structureFinder) {
+      if (!s.structureFinder || s.hideCheats) {
          if (!foundStructures.isEmpty()) {
             clear();
          }
@@ -425,7 +425,7 @@ public class StructureFinder {
       if (mc.level == null || mc.player == null || foundStructures.isEmpty()) return;
 
       BomboConfig.Settings s = BomboConfig.get();
-      if (!s.structureFinder) return;
+      if (!s.structureFinder || s.hideCheats) return;
 
       Vec3 camPos = mc.gameRenderer.getMainCamera().position();
       PoseStack poseStack = context.poseStack();

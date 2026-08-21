@@ -612,6 +612,8 @@ public class BomboConfig {
       public float tracerWidth = 2.0F;
       public boolean hoppityHud = false;
       public boolean hoppityHideWhenInactive = true;
+      public boolean hoppityWarp = false;
+      public boolean replaceGrayCarpetDwarven = false;
       public int hoppityHudX = 10;
       public int hoppityHudY = 100;
       public boolean alphaTrackerHud = false;
@@ -915,6 +917,8 @@ public class BomboConfig {
       public String heldItem = "";
       public String requiredSubarea = "";
       public boolean isAdvanced = false;
+      public boolean showTitleOnSpawn = false;
+      public boolean playSoundOnSpawn = false;
 
       public HighlightInfo() {
       }
@@ -1000,6 +1004,8 @@ public class BomboConfig {
             out.name("requiredSubarea").value(value.requiredSubarea != null ? value.requiredSubarea : "");
             out.name("isAdvanced").value(value.isAdvanced);
             out.name("mobSize").value(value.mobSize != null ? value.mobSize : "");
+            out.name("showTitleOnSpawn").value(value.showTitleOnSpawn);
+            out.name("playSoundOnSpawn").value(value.playSoundOnSpawn);
             if (value.headHashes != null && !value.headHashes.isEmpty()) {
                out.name("headHashes");
                out.beginArray();
@@ -1060,6 +1066,10 @@ public class BomboConfig {
                   info.isAdvanced = in.nextBoolean();
                } else if (name.equals("mobSize")) {
                   info.mobSize = in.nextString();
+               } else if (name.equals("showTitleOnSpawn")) {
+                  info.showTitleOnSpawn = in.nextBoolean();
+               } else if (name.equals("playSoundOnSpawn")) {
+                  info.playSoundOnSpawn = in.nextBoolean();
                } else if (name.equals("headHashes")) {
                   info.headHashes = new ArrayList<>();
                   in.beginArray();
