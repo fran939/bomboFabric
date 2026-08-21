@@ -57,14 +57,23 @@ public class StructureScanner {
       public int anchorRelY = 0;
       public int anchorRelZ = 0;
       public List<ScannedBlock> blocks = new ArrayList<>();
-      public transient List<ScannedBlock> sampleBlocks = new ArrayList<>();
+      public transient List<ScannedBlock> sampleAnchors = new ArrayList<>();
 
       public void buildSamples() {
-         sampleBlocks.clear();
+         sampleAnchors.clear();
          if (blocks.isEmpty()) return;
-         int step = Math.max(1, blocks.size() / 16);
-         for (int i = 0; i < blocks.size() && sampleBlocks.size() < 16; i += step) {
-            sampleBlocks.add(blocks.get(i));
+         Map<String, Integer> typeCounts = new HashMap<>();
+         for (ScannedBlock b : blocks) {
+            if (b.blockId == null || isNoiseBlock(b.blockId)) continue;
+            int count = typeCounts.getOrDefault(b.blockId, 0);
+            if (count < 3) {
+               sampleAnchors.add(b);
+               typeCounts.put(b.blockId, count + 1);
+               if (sampleAnchors.size() >= 12) break;
+            }
+         }
+         if (sampleAnchors.isEmpty()) {
+            sampleAnchors.add(blocks.get(0));
          }
       }
    }
@@ -539,7 +548,7 @@ public class StructureScanner {
       loadedPatterns.clear();
 
       // 1. Load built-in default patterns from jar resources
-      String[] builtIns = new String[]{"corleone1", "goldendragon1"};
+      String[] builtIns = new String[]{"corleone1", "corleone2", "goldendragon1"};
       for (String bName : builtIns) {
          try (java.io.InputStream in = StructureScanner.class.getResourceAsStream("/structures/" + bName + ".json")) {
             if (in != null) {

@@ -2,6 +2,7 @@ package me.bombo.bomboaddons;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,8 +131,8 @@ public class StructureFinder {
 
    public static String getDisplayName(String name) {
       if (name == null) return "Structure";
-      if (name.equalsIgnoreCase("corleone1") || name.equalsIgnoreCase("corleone 1")) return "Corleone 1";
-      if (name.equalsIgnoreCase("goldendragon1") || name.equalsIgnoreCase("goldendragon 1") || name.equalsIgnoreCase("golden dragon")) return "Golden Dragon";
+      if (name.toLowerCase().startsWith("corleone")) return "Corleone 1";
+      if (name.toLowerCase().startsWith("goldendragon") || name.equalsIgnoreCase("golden dragon")) return "Golden Dragon";
       return name;
    }
 
@@ -152,8 +153,10 @@ public class StructureFinder {
 
       List<StructureScanner.StructurePattern> activePatterns = new ArrayList<>();
       if (checkCorleone1) {
-         StructureScanner.StructurePattern corleone = StructureScanner.loadedPatterns.get("corleone1");
-         if (corleone != null) activePatterns.add(corleone);
+         StructureScanner.StructurePattern corleone1 = StructureScanner.loadedPatterns.get("corleone1");
+         if (corleone1 != null) activePatterns.add(corleone1);
+         StructureScanner.StructurePattern corleone2 = StructureScanner.loadedPatterns.get("corleone2");
+         if (corleone2 != null && !activePatterns.contains(corleone2)) activePatterns.add(corleone2);
       }
       if (checkGoldenDragon) {
          StructureScanner.StructurePattern gdrag = StructureScanner.loadedPatterns.get("goldendragon1");
@@ -162,8 +165,8 @@ public class StructureFinder {
 
       for (Map.Entry<String, StructureScanner.StructurePattern> entry : StructureScanner.loadedPatterns.entrySet()) {
          String key = entry.getKey();
-         if (!key.equalsIgnoreCase("corleone1") && !key.equalsIgnoreCase("corleone 1") &&
-             !key.equalsIgnoreCase("goldendragon1") && !key.equalsIgnoreCase("goldendragon 1") &&
+         if (!key.startsWith("corleone") &&
+             !key.startsWith("goldendragon") &&
              !key.equalsIgnoreCase("golden dragon") && !key.equalsIgnoreCase("bugged") &&
              !activePatterns.contains(entry.getValue())) {
             activePatterns.add(entry.getValue());
@@ -201,13 +204,19 @@ public class StructureFinder {
                         if (st.isAir()) continue;
 
                         for (StructureScanner.StructurePattern pat : activePatterns) {
-                           if (matchesScannedId(st, pat.anchorBlockId)) {
-                              FoundStructure found = matchRotatedPatternAt(level, bx, by, bz, pat);
-                              if (found != null) {
-                                 String displayName = getDisplayName(pat.name);
-                                 FoundStructure current = bestMatches.get(displayName);
-                                 if (current == null || found.accuracy > current.accuracy) {
-                                    bestMatches.put(displayName, found);
+                           List<StructureScanner.ScannedBlock> anchors = (pat.sampleAnchors != null && !pat.sampleAnchors.isEmpty())
+                              ? pat.sampleAnchors
+                              : Collections.singletonList(new StructureScanner.ScannedBlock(pat.anchorRelX, pat.anchorRelY, pat.anchorRelZ, pat.anchorBlockId));
+
+                           for (StructureScanner.ScannedBlock anchor : anchors) {
+                              if (matchesScannedId(st, anchor.blockId)) {
+                                 FoundStructure found = matchRotatedPatternAtAnchor(level, bx, by, bz, pat, anchor);
+                                 if (found != null) {
+                                    String displayName = getDisplayName(pat.name);
+                                    FoundStructure current = bestMatches.get(displayName);
+                                    if (current == null || found.accuracy > current.accuracy) {
+                                       bestMatches.put(displayName, found);
+                                    }
                                  }
                               }
                            }
@@ -226,7 +235,7 @@ public class StructureFinder {
       }
    }
 
-   private static FoundStructure matchRotatedPatternAt(ClientLevel level, int anchorX, int anchorY, int anchorZ, StructureScanner.StructurePattern pat) {
+   private static FoundStructure matchRotatedPatternAtAnchor(ClientLevel level, int worldAnchorX, int worldAnchorY, int worldAnchorZ, StructureScanner.StructurePattern pat, StructureScanner.ScannedBlock anchor) {
       if (pat.blocks.isEmpty()) return null;
 
       BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
@@ -234,16 +243,16 @@ public class StructureFinder {
       int highestAccuracy = 0;
 
       for (int rot = 0; rot < 4; ++rot) {
-         int ancRx = pat.anchorRelX;
-         int ancRy = pat.anchorRelY;
-         int ancRz = pat.anchorRelZ;
+         int ancRx = anchor.relX;
+         int ancRy = anchor.relY;
+         int ancRz = anchor.relZ;
 
          int rotatedAncDx = getRotatedX(ancRx, ancRz, rot);
          int rotatedAncDz = getRotatedZ(ancRx, ancRz, rot);
 
-         int worldOriginX = anchorX - rotatedAncDx;
-         int worldOriginY = anchorY - ancRy;
-         int worldOriginZ = anchorZ - rotatedAncDz;
+         int worldOriginX = worldAnchorX - rotatedAncDx;
+         int worldOriginY = worldAnchorY - ancRy;
+         int worldOriginZ = worldAnchorZ - rotatedAncDz;
 
          int total = pat.blocks.size();
          int loadedTotal = 0;
@@ -265,11 +274,11 @@ public class StructureFinder {
             }
          }
 
-         // Accuracy is strictly measured against the full structure template
+         // Accuracy is measured against the full structure template
          int accuracy = total > 0 ? (int) Math.round(((double) matched / (double) total) * 100.0) : 0;
-         int minRequiredMatches = (int) Math.round(total * 0.65);
-         int minLoadedThreshold = (int) Math.round(total * 0.70);
-         if (loadedTotal >= minLoadedThreshold && matched >= minRequiredMatches && accuracy >= 65 && accuracy > highestAccuracy) {
+         int minRequiredMatches = Math.max(20, (int) Math.round(total * 0.40));
+         int minLoadedThreshold = Math.max(30, (int) Math.round(total * 0.45));
+         if (loadedTotal >= minLoadedThreshold && matched >= minRequiredMatches && accuracy >= 40 && accuracy > highestAccuracy) {
             highestAccuracy = accuracy;
             int minRotX = Math.min(getRotatedX(0, 0, rot), getRotatedX(pat.sizeX - 1, pat.sizeZ - 1, rot));
             int maxRotX = Math.max(getRotatedX(0, 0, rot), getRotatedX(pat.sizeX - 1, pat.sizeZ - 1, rot));
@@ -332,6 +341,10 @@ public class StructureFinder {
          return true;
       }
       if (id.contains("spruce") && stId.contains("spruce")) {
+         return true;
+      }
+      // Catwalk terracotta tolerance: In Skyblock, griefed or naturally generated catwalks can have mixed terracotta or smooth stone
+      if ((id.contains("terracotta") || id.contains("smooth_stone")) && (stId.contains("terracotta") || stId.contains("smooth_stone"))) {
          return true;
       }
       return false;
