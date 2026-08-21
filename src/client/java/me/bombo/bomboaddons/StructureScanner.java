@@ -451,8 +451,18 @@ public class StructureScanner {
    private static boolean isMatchingSignatureBlock(StructureFinder.FoundStructure fs, BlockState st, String id) {
       if (st == null || id == null) return false;
       String idLower = id.toLowerCase();
+      if (fs != null && fs.matchedPattern != null) {
+         for (ScannedBlock sb : fs.matchedPattern.blocks) {
+            if (sb.blockId != null && (sb.blockId.equalsIgnoreCase(idLower) || (sb.blockId.contains("stone_brick") && idLower.contains("stone_brick")))) {
+               return true;
+            }
+         }
+      }
       if (fs != null && fs.name != null && fs.name.toLowerCase().contains("corleone")) {
-         return idLower.contains("stone_brick") || idLower.contains("terracotta") || idLower.contains("smooth_stone");
+         return idLower.contains("stone_brick") || idLower.contains("terracotta") || idLower.contains("smooth_stone") || idLower.contains("lime_stained_glass") || idLower.contains("oak_fence") || idLower.contains("torch");
+      }
+      if (fs != null && fs.name != null && fs.name.toLowerCase().contains("dragon")) {
+         return idLower.contains("gold_block") || idLower.contains("polished_andesite") || idLower.contains("dragon_egg");
       }
       return isSignatureAnchor(idLower);
    }

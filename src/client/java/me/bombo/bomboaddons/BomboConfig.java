@@ -605,6 +605,7 @@ public class BomboConfig {
       public boolean goldenDragonNestFinder = false;
       public boolean structureFinder = false;
       public boolean structureFinderCorleone1 = true;
+      public boolean structureFinderGoldenDragon = true;
       public boolean structureFinderTracers = true;
       public String structureFinderColor = "AQUA";
       public int structureFinderRadius = 256;

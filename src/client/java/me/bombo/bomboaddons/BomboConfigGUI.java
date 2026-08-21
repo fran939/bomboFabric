@@ -2322,6 +2322,7 @@ extends Screen {
                         this.addRenderableWidget(Button.builder(Component.literal("§c← Back to Mining"), b -> { structureFinderSubmenu = false; this.scrollAmount = 0.0; this.init(); }).bounds(col1X, y1, 140, 20).build());
                         y1 += 28;
                         y1 = this.addBoolOption("Corleone 1", s.structureFinderCorleone1, v -> s.structureFinderCorleone1 = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Golden Dragon", s.structureFinderGoldenDragon, v -> s.structureFinderGoldenDragon = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Structure Tracers", s.structureFinderTracers, v -> s.structureFinderTracers = v, col1X, col1W * 2, y1);
                         y1 = this.addColorCycleButton("Structure Color", s.structureFinderColor, v -> s.structureFinderColor = v, col1X, col1W * 2, y1);
                         y1 = this.addIntLabelSlider("Scan Radius: " + s.structureFinderRadius + " blocks", s.structureFinderRadius, 32, 512, 16, v -> s.structureFinderRadius = v, col1X, col1W * 2, y1);
@@ -4380,6 +4381,7 @@ extends Screen {
                         g.text(this.font, "§6§lStructure Finder Settings", col1X, y1, -22016, true);
                         y1 += 52;
                         y1 = this.drawOptionLabel(g, "§7Corleone 1", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Golden Dragon", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Structure Tracers", col1X + 24, y1, -1, false);
                         break;
                     }
