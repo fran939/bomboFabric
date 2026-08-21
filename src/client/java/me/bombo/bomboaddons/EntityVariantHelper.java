@@ -32,7 +32,7 @@ public class EntityVariantHelper {
       String simpleName = entity.getClass().getSimpleName();
 
       // 0. Display Entities (ItemDisplay, BlockDisplay, TextDisplay)
-      if (entity instanceof Display.ItemDisplay itemDisplay || simpleName.equalsIgnoreCase("ItemDisplay")) {
+      if (entity instanceof Display.ItemDisplay || simpleName.equalsIgnoreCase("ItemDisplay")) {
          try {
             ItemStack stack = null;
             if (entity instanceof Display.ItemDisplay id) {
@@ -60,13 +60,13 @@ public class EntityVariantHelper {
                   " §7Item Display: §e" + hoverName + " §8(" + itemPath + idInfo + "§8)" + transInfo,
                   "§a[+ Highlight " + key + " Display]",
                   "/b highlight add display:" + key.toLowerCase(Locale.ROOT) + " GOLD",
-                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName + " " + transform).toLowerCase(Locale.ROOT)
+                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName + " " + transform + " item_display display").toLowerCase(Locale.ROOT)
                );
             }
          } catch (Throwable ignored) {}
       }
 
-      if (entity instanceof Display.BlockDisplay blockDisplay || simpleName.equalsIgnoreCase("BlockDisplay")) {
+      if (entity instanceof Display.BlockDisplay || simpleName.equalsIgnoreCase("BlockDisplay")) {
          try {
             BlockState state = null;
             if (entity instanceof Display.BlockDisplay bd) {
@@ -82,13 +82,13 @@ public class EntityVariantHelper {
                   " §7Block Display: §e" + blockPath,
                   "§a[+ Highlight " + blockPath + " Display]",
                   "/b highlight add display:" + blockPath.toLowerCase(Locale.ROOT) + " GOLD",
-                  blockPath.toLowerCase(Locale.ROOT)
+                  (blockPath + " block_display display").toLowerCase(Locale.ROOT)
                );
             }
          } catch (Throwable ignored) {}
       }
 
-      if (entity instanceof Display.TextDisplay textDisplay || simpleName.equalsIgnoreCase("TextDisplay")) {
+      if (entity instanceof Display.TextDisplay || simpleName.equalsIgnoreCase("TextDisplay")) {
          try {
             String text = "";
             if (entity instanceof Display.TextDisplay td) {
@@ -102,13 +102,13 @@ public class EntityVariantHelper {
                " §7Text Display: §f\"" + text + "§f\"",
                "§a[+ Highlight Text Display]",
                "/b highlight add text_display GOLD",
-               text.toLowerCase(Locale.ROOT)
+               (text + " text_display display").toLowerCase(Locale.ROOT)
             );
          } catch (Throwable ignored) {}
       }
 
       // ItemFrame
-      if (entity instanceof ItemFrame frame || simpleName.toLowerCase(Locale.ROOT).contains("itemframe")) {
+      if (entity instanceof ItemFrame || simpleName.toLowerCase(Locale.ROOT).contains("itemframe")) {
          try {
             ItemStack stack = null;
             if (entity instanceof ItemFrame f) {
@@ -128,14 +128,14 @@ public class EntityVariantHelper {
                   " §7Item Frame Item: §e" + hoverName + " §8(" + itemPath + idInfo + "§8)",
                   "§a[+ Highlight " + key + " Frame]",
                   "/b highlight add item_frame:" + key.toLowerCase(Locale.ROOT) + " GOLD",
-                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName).toLowerCase(Locale.ROOT)
+                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName + " item_frame frame").toLowerCase(Locale.ROOT)
                );
             }
          } catch (Throwable ignored) {}
       }
 
       // ItemEntity (Ground Drops)
-      if (entity instanceof ItemEntity itemEntity || simpleName.equalsIgnoreCase("ItemEntity")) {
+      if (entity instanceof ItemEntity || simpleName.equalsIgnoreCase("ItemEntity")) {
          try {
             ItemStack stack = null;
             if (entity instanceof ItemEntity ie) {
@@ -155,7 +155,7 @@ public class EntityVariantHelper {
                   " §7Item Drop: §e" + hoverName + " x" + stack.getCount() + " §8(" + itemPath + idInfo + "§8)",
                   "§a[+ Highlight " + key + " Drop]",
                   "/b highlight add item:" + key.toLowerCase(Locale.ROOT) + " GOLD",
-                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName).toLowerCase(Locale.ROOT)
+                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName + " item drop").toLowerCase(Locale.ROOT)
                );
             }
          } catch (Throwable ignored) {}
@@ -173,11 +173,19 @@ public class EntityVariantHelper {
                if (res instanceof Enum<?> e) varName = e.name().toUpperCase(Locale.ROOT);
             }
          } catch (Throwable ignored) {}
+         String friendly = switch (varName) {
+            case "LUCY" -> "Pink";
+            case "WILD" -> "Brown";
+            case "GOLD" -> "Yellow";
+            case "CYAN" -> "Cyan";
+            case "BLUE" -> "Rare Blue";
+            default -> varName;
+         };
          return new VariantResult(
-            " §7Axolotl Variant: §e" + varName,
+            " §7Axolotl Variant: §e" + varName + " §7(§b" + friendly + "§7)",
             "§a[+ Highlight " + varName + " Axolotl]",
             "/b highlight add axolotl:" + varName.toLowerCase(Locale.ROOT) + " GOLD",
-            varName.toLowerCase(Locale.ROOT)
+            (varName + " " + friendly + " axolotl").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -193,11 +201,19 @@ public class EntityVariantHelper {
                if (res instanceof Enum<?> e) varName = e.name().toUpperCase(Locale.ROOT);
             }
          } catch (Throwable ignored) {}
+         String friendly = switch (varName) {
+            case "RED_BLUE" -> "Red";
+            case "BLUE" -> "Blue";
+            case "GREEN" -> "Green";
+            case "YELLOW_BLUE" -> "Cyan/Yellow";
+            case "GRAY" -> "Gray";
+            default -> varName;
+         };
          return new VariantResult(
-            " §7Parrot Variant: §e" + varName,
+            " §7Parrot Variant: §e" + varName + " §7(§b" + friendly + "§7)",
             "§a[+ Highlight " + varName + " Parrot]",
             "/b highlight add parrot:" + varName.toLowerCase(Locale.ROOT) + " GOLD",
-            varName.toLowerCase(Locale.ROOT)
+            (varName + " " + friendly + " parrot").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -223,7 +239,7 @@ public class EntityVariantHelper {
             " §7Cat Variant: §e" + catVar + collar,
             "§a[+ Highlight " + catVar + " Cat]",
             "/b highlight add cat:" + catVar.toLowerCase(Locale.ROOT) + " GOLD",
-            catVar.toLowerCase(Locale.ROOT)
+            (catVar + " cat").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -249,7 +265,7 @@ public class EntityVariantHelper {
             " §7Wolf Variant: §e" + wolfVar + collar,
             "§a[+ Highlight " + wolfVar + " Wolf]",
             "/b highlight add wolf:" + wolfVar.toLowerCase(Locale.ROOT) + " GOLD",
-            wolfVar.toLowerCase(Locale.ROOT)
+            (wolfVar + " wolf").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -266,7 +282,7 @@ public class EntityVariantHelper {
             " §7Frog Variant: §e" + frogVar,
             "§a[+ Highlight " + frogVar + " Frog]",
             "/b highlight add frog:" + frogVar.toLowerCase(Locale.ROOT) + " GOLD",
-            frogVar.toLowerCase(Locale.ROOT)
+            (frogVar + " frog").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -284,7 +300,7 @@ public class EntityVariantHelper {
             " §7Panda Gene: §e" + mainGene + " §7(Hidden: §8" + hiddenGene + "§7)",
             "§a[+ Highlight " + mainGene + " Panda]",
             "/b highlight add panda:" + mainGene.toLowerCase(Locale.ROOT) + " GOLD",
-            mainGene.toLowerCase(Locale.ROOT)
+            (mainGene + " panda").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -302,7 +318,7 @@ public class EntityVariantHelper {
             " §7Horse: Color: §e" + color + " §7| Markings: §f" + markings,
             "§a[+ Highlight " + color + " Horse]",
             "/b highlight add horse:" + color.toLowerCase(Locale.ROOT) + " GOLD",
-            color.toLowerCase(Locale.ROOT)
+            (color + " horse").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -318,7 +334,7 @@ public class EntityVariantHelper {
             " §7Llama Variant: §e" + llamaVar,
             "§a[+ Highlight " + llamaVar + " Llama]",
             "/b highlight add llama:" + llamaVar.toLowerCase(Locale.ROOT) + " GOLD",
-            llamaVar.toLowerCase(Locale.ROOT)
+            (llamaVar + " llama").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -334,7 +350,7 @@ public class EntityVariantHelper {
             " §7Rabbit Variant: §e" + rabbitVar,
             "§a[+ Highlight " + rabbitVar + " Rabbit]",
             "/b highlight add rabbit:" + rabbitVar.toLowerCase(Locale.ROOT) + " GOLD",
-            rabbitVar.toLowerCase(Locale.ROOT)
+            (rabbitVar + " rabbit").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -350,7 +366,7 @@ public class EntityVariantHelper {
             " §7Sheep Color: §e" + sheepCol,
             "§a[+ Highlight " + sheepCol + " Sheep]",
             "/b highlight add sheep:" + sheepCol.toLowerCase(Locale.ROOT) + " GOLD",
-            sheepCol.toLowerCase(Locale.ROOT)
+            (sheepCol + " sheep").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -366,7 +382,7 @@ public class EntityVariantHelper {
             " §7Fox Variant: §e" + foxVar,
             "§a[+ Highlight " + foxVar + " Fox]",
             "/b highlight add fox:" + foxVar.toLowerCase(Locale.ROOT) + " GOLD",
-            foxVar.toLowerCase(Locale.ROOT)
+            (foxVar + " fox").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -382,7 +398,7 @@ public class EntityVariantHelper {
             " §7Mooshroom Variant: §e" + cowVar,
             "§a[+ Highlight " + cowVar + " Mooshroom]",
             "/b highlight add mooshroom:" + cowVar.toLowerCase(Locale.ROOT) + " GOLD",
-            cowVar.toLowerCase(Locale.ROOT)
+            (cowVar + " mooshroom").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -399,7 +415,7 @@ public class EntityVariantHelper {
             " §7Goat Type: §e" + typeStr,
             screaming ? "§a[+ Highlight Screaming Goat]" : null,
             screaming ? "/b highlight add goat:screaming GOLD" : null,
-            typeStr.toLowerCase(Locale.ROOT)
+            (typeStr + " goat").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -416,7 +432,7 @@ public class EntityVariantHelper {
             " §7Shulker Color: §e" + colName,
             "§a[+ Highlight " + colName + " Shulker]",
             "/b highlight add shulker:" + colName.toLowerCase(Locale.ROOT) + " GOLD",
-            colName.toLowerCase(Locale.ROOT)
+            (colName + " shulker").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -436,7 +452,7 @@ public class EntityVariantHelper {
             " §7Tropical Fish: Base: §b" + baseColor + " §7| Pattern: §e" + patColor + " (" + pattern + ")",
             "§a[+ Highlight " + baseColor + " Fish]",
             "/b highlight add tropical_fish:" + baseColor.toLowerCase(Locale.ROOT) + " GOLD",
-            baseColor.toLowerCase(Locale.ROOT)
+            (baseColor + " " + patColor + " " + pattern + " tropical_fish").toLowerCase(Locale.ROOT)
          );
       }
 
@@ -450,7 +466,7 @@ public class EntityVariantHelper {
                int vLevel = vData.getLevel();
                return new VariantResult(
                   " §7Villager: Type: §e" + vType + " §7| Profession: §a" + vProf + " §7(Level §b" + vLevel + "§7)",
-                  null, null, vProf.toLowerCase(Locale.ROOT)
+                  null, null, (vProf + " " + vType + " villager").toLowerCase(Locale.ROOT)
                );
             }
          } catch (Throwable ignored) {}
@@ -465,7 +481,7 @@ public class EntityVariantHelper {
                String vProf = vData.getProfession().name();
                return new VariantResult(
                   " §7Zombie Villager: Type: §e" + vType + " §7| Profession: §a" + vProf,
-                  null, null, vProf.toLowerCase(Locale.ROOT)
+                  null, null, (vProf + " " + vType + " zombie_villager").toLowerCase(Locale.ROOT)
                );
             }
          } catch (Throwable ignored) {}
@@ -478,7 +494,7 @@ public class EntityVariantHelper {
       if (entity == null || variantReq == null) return false;
       VariantResult res = inspect(entity);
       if (res != null) {
-         String req = variantReq.toLowerCase(Locale.ROOT);
+         String req = variantReq.toLowerCase(Locale.ROOT).trim();
          if (res.matchKeyword != null && res.matchKeyword.contains(req)) {
             return true;
          }

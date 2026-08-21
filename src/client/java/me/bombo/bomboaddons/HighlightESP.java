@@ -604,7 +604,7 @@ public class HighlightESP {
                    String cleanKey = key.toLowerCase(Locale.ROOT).trim();
                    if (cleanKey.equals("wolf") && nametagName != null && nametagName.contains("old wolf")) {
                       // Skip old wolves when matching regular wolf
-                   } else if ((isPlayer && keyIsPlayer) || matchesKey(name, key) || (nametagName != null && matchesKey(nametagName, key)) || (skullHash != null && matchesKey(skullHash, key))) {
+                   } else if ((isPlayer && keyIsPlayer) || matchesKey(name, key) || (nametagName != null && matchesKey(nametagName, key)) || (skullHash != null && matchesKey(skullHash, key)) || EntityVariantHelper.matchesVariant(self, cleanKey)) {
                       matched = true;
                    }
                 }
