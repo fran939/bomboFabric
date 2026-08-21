@@ -569,6 +569,11 @@ extends Screen {
                         y1 = this.addBoolOption("Copy Canceled Order Amount (Ctrl+Click)", s.copyCanceledOrderAmount, v -> s.copyCanceledOrderAmount = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Supercraft Max Calculator (Ctrl+Click)", s.supercraftMaxCalculator, v -> s.supercraftMaxCalculator = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Starts In Absolute Time", s.startsInAbsoluteTime, v -> s.startsInAbsoluteTime = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Dungeon Item Quality", s.showDungeonQuality, v -> s.showDungeonQuality = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Item Creation Date", s.showItemCreationDate, v -> s.showItemCreationDate = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Leather Armor Hex Color", s.showLeatherColor, v -> s.showLeatherColor = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Museum Donated Status", s.showMuseumDonated, v -> s.showMuseumDonated = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Skyblock Item ID", s.showSkyblockId, v -> s.showSkyblockId = v, col1X, col1W * 2, y1);
                         break;
                     }
 
@@ -3691,6 +3696,11 @@ extends Screen {
                         y1 = this.drawOptionLabel(g, "§7Copy Canceled Order Amount (Ctrl+Click)", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Supercraft Max Calculator (Ctrl+Click)", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Starts In Absolute Time", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Dungeon Item Quality", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Item Creation Date", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Leather Armor Hex Color", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Museum Donated Status", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Skyblock Item ID", col1X + 24, y1, -1, false);
                         break;
                     }
 

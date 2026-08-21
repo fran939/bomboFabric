@@ -358,6 +358,11 @@ public class BomboConfig {
       public boolean loreAdditionsEnabled = true;
       public boolean startsInAbsoluteTime = true;
       public boolean supercraftMaxCalculator = true;
+      public boolean showDungeonQuality = true;
+      public boolean showItemCreationDate = true;
+      public boolean showLeatherColor = true;
+      public boolean showMuseumDonated = true;
+      public boolean showSkyblockId = true;
       public boolean apiDebug = false;
       public boolean apiChatMessages = false;
       public boolean copyChat = false;

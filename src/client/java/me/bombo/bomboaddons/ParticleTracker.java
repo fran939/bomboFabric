@@ -18,20 +18,10 @@ public class ParticleTracker {
    public static boolean espEnabled = false;
 
    public static boolean isParticleTrackingNeeded() {
-      if (espEnabled) return true;
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s == null) return false;
-      if (s.debugParticles) return true;
-      if (s.particleHighlightsEnabled && s.particleHighlights != null) {
-         for (BomboConfig.HighlightInfo hi : s.particleHighlights.values()) {
-            if (hi != null && hi.enabled) return true;
-         }
-      }
-      return false;
+      return true;
    }
 
    public static void onParticle(String typeName, double x, double y, double z) {
-      if (!isParticleTrackingNeeded()) return;
       Minecraft mc = Minecraft.getInstance();
       Player player = mc.player;
       if (player != null) {
@@ -39,8 +29,8 @@ public class ParticleTracker {
          double dy = y - player.getY();
          double dz = z - player.getZ();
          double distSq = dx * dx + dy * dy + dz * dz;
-         double maxR = Math.max(espRadius, (double)32.0F);
-         if (!(distSq > maxR * maxR)) {
+         double maxR = Math.max(espRadius, 64.0);
+         if (distSq <= maxR * maxR) {
             ENTRIES.add(new ParticleEntry(cleanTypeName(typeName), typeName, x, y, z));
          }
       }

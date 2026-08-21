@@ -8,6 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.Bomboaddons;
+import me.bombo.bomboaddons.SkyblockUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.component.DataComponents;
@@ -138,6 +139,99 @@ public class SupercraftHelper {
                   }
                }
             }
+         }
+      }
+
+      net.minecraft.world.item.component.CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+      net.minecraft.nbt.CompoundTag tag = customData != null ? customData.copyTag() : null;
+      net.minecraft.nbt.CompoundTag ea = tag != null ? tag.getCompound("ExtraAttributes").orElse(tag) : null;
+
+      // 4. Dungeon Item Quality
+      if (BomboConfig.get().showDungeonQuality && ea != null) {
+         int quality = 0;
+         if (ea.getInt("baseStatBoostPercentage").isPresent()) {
+            quality = ea.getInt("baseStatBoostPercentage").get();
+         } else if (tag.getInt("baseStatBoostPercentage").isPresent()) {
+            quality = tag.getInt("baseStatBoostPercentage").get();
+         }
+
+         if (quality > 0) {
+            String skillReq = ea.getString("dungeon_skill_req").orElse(tag.getString("dungeon_skill_req").orElse(""));
+            String floor = null;
+            int reqNum = -1;
+            if (!skillReq.isEmpty()) {
+               String numStr = skillReq.replaceAll("[^0-9]", "");
+               if (!numStr.isEmpty()) {
+                  try {
+                     reqNum = Integer.parseInt(numStr);
+                  } catch (Exception ignored) {}
+               }
+            }
+            if (reqNum >= 36) floor = "M7";
+            else if (reqNum >= 34) floor = "M6";
+            else if (reqNum >= 32) floor = "M5";
+            else if (reqNum >= 30) floor = "M4";
+            else if (reqNum >= 28) floor = "M3";
+            else if (reqNum >= 26) floor = "M2";
+            else if (reqNum >= 24) floor = "M1/F7";
+            else if (reqNum >= 19) floor = "F6";
+            else if (reqNum >= 14) floor = "F5";
+            else if (reqNum >= 9) floor = "F4";
+            else if (reqNum >= 5) floor = "F3";
+            else if (reqNum >= 3) floor = "F2";
+            else if (reqNum >= 1) floor = "F1";
+
+            if (floor != null) {
+               lines.add(Component.literal("§7Quality §6" + quality + "% §8(§c" + floor + "§8)"));
+            } else {
+               lines.add(Component.literal("§7Quality §6" + quality + "%"));
+            }
+         }
+      }
+
+      // 5. Item Creation Date (Timestamp)
+      if (BomboConfig.get().showItemCreationDate && ea != null) {
+         long ts = ea.getLong("timestamp").orElse(tag.getLong("timestamp").orElse(0L));
+         if (ts > 0L) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ROOT);
+            lines.add(Component.literal("§7Created: §e" + sdf.format(new Date(ts))));
+         }
+      }
+
+      // 6. Leather Armor Hex Color
+      if (BomboConfig.get().showLeatherColor) {
+         net.minecraft.world.item.component.DyedItemColor dyed = stack.get(DataComponents.DYED_COLOR);
+         if (dyed != null) {
+            int rgb = dyed.rgb();
+            lines.add(Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)));
+         } else if (tag != null) {
+            if (tag.getCompound("display").isPresent() && tag.getCompound("display").get().getInt("color").isPresent()) {
+               int rgb = tag.getCompound("display").get().getInt("color").get();
+               lines.add(Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)));
+            } else if (tag.getInt("color").isPresent()) {
+               int rgb = tag.getInt("color").get();
+               lines.add(Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)));
+            }
+         }
+      }
+
+      // 7. Museum Donated Status
+      if (BomboConfig.get().showMuseumDonated && ea != null) {
+         boolean donated = ea.getBoolean("donated_museum").orElse(false)
+            || (ea.getByte("donated_museum").orElse((byte)0) == 1)
+            || (ea.getInt("donated_museum").orElse(0) == 1)
+            || tag.getBoolean("donated_museum").orElse(false)
+            || (tag.getByte("donated_museum").orElse((byte)0) == 1);
+         if (donated) {
+            lines.add(Component.literal("§dDonated to Museum"));
+         }
+      }
+
+      // 8. Skyblock Item ID
+      if (BomboConfig.get().showSkyblockId) {
+         String sbId = SkyblockUtils.getSkyblockId(stack);
+         if (sbId != null && !sbId.isEmpty()) {
+            lines.add(Component.literal("§7Skyblock ID: §8" + sbId));
          }
       }
    }

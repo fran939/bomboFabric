@@ -36,4 +36,32 @@ public class ClientLevelMixin {
          return time;
       }
    }
+
+   @org.spongepowered.asm.mixin.injection.Inject(
+      method = {"addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V", "addAlwaysVisibleParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V"},
+      at = @At("HEAD"),
+      require = 0
+   )
+   private void onAddParticleDirect(net.minecraft.core.particles.ParticleOptions options, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+      if (options != null) {
+         try {
+            String typeName = net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.getKey(options.getType()).toString();
+            me.bombo.bomboaddons.ParticleTracker.onParticle(typeName, x, y, z);
+         } catch (Throwable ignored) {}
+      }
+   }
+
+   @org.spongepowered.asm.mixin.injection.Inject(
+      method = {"addParticle(Lnet/minecraft/core/particles/ParticleOptions;ZDDDDDD)V", "addAlwaysVisibleParticle(Lnet/minecraft/core/particles/ParticleOptions;ZDDDDDD)V"},
+      at = @At("HEAD"),
+      require = 0
+   )
+   private void onAddParticleBool(net.minecraft.core.particles.ParticleOptions options, boolean overrideLimiter, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+      if (options != null) {
+         try {
+            String typeName = net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.getKey(options.getType()).toString();
+            me.bombo.bomboaddons.ParticleTracker.onParticle(typeName, x, y, z);
+         } catch (Throwable ignored) {}
+      }
+   }
 }
