@@ -21,10 +21,7 @@
 	},
 	"mixins": [
 		{
-			"config": "bomboaddons.mixins.json"
-		},
-		{
-			"config": "bomboaddons.client.mixins.json",
+			"config": "bomboaddons.mixins.json",
 			"environment": "client"
 		}
 	],
