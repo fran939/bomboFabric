@@ -398,6 +398,8 @@ public class StructureFinder {
       }
       lastAlertedAccuracy.put(key, accuracy);
 
+      Bomboaddons.LOGGER.info("[StructureFinder] Found " + name + " (" + accuracy + "%) at " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ());
+
       Minecraft mc = Minecraft.getInstance();
       mc.execute(() -> {
          if (mc.player != null) {
@@ -409,11 +411,7 @@ public class StructureFinder {
                style.withClickEvent(new ClickEvent.RunCommand("/b scan copy"))
             );
             msg.append(wpBtn).append(copyBtn);
-            if (mc.gui != null && mc.gui.getChat() != null) {
-               mc.gui.getChat().addClientSystemMessage(msg);
-            } else {
-               mc.player.sendSystemMessage(msg);
-            }
+            mc.player.sendSystemMessage(msg);
 
             // Add persistent waypoint on the structure center
             GardenWaypoints.addWaypoint(new Vec3(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5), "[Structure] " + name + " (" + accuracy + "%)");
