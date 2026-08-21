@@ -142,7 +142,6 @@ public abstract class ItemStackMixin {
          }
 
          if (skyblockId != null) {
-            List<Component> lines = (List)cir.getReturnValue();
             int count = stack.getCount();
             if (stack.getHoverName().getString().contains("Collect Compost")) {
                ItemLore lore = (ItemLore)stack.get(DataComponents.LORE);
