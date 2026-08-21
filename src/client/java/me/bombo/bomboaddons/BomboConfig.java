@@ -603,7 +603,7 @@ public class BomboConfig {
       public boolean eggFinderBeacon = false;
       public boolean eggFinderThroughWalls = true;
       public boolean goldenDragonNestFinder = false;
-      public boolean structureFinder = false;
+      public boolean structureFinder = true;
       public boolean structureFinderCorleone1 = true;
       public boolean structureFinderGoldenDragon = true;
       public boolean structureFinderTracers = true;

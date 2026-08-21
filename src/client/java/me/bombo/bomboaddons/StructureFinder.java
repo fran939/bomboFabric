@@ -182,46 +182,68 @@ public class StructureFinder {
 
       Map<String, FoundStructure> bestMatches = new HashMap<>();
 
+      int centerChunkX = px >> 4;
+      int centerChunkZ = pz >> 4;
+
+      List<long[]> chunkCoords = new ArrayList<>();
       for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
          for (int cz = minChunkZ; cz <= maxChunkZ; ++cz) {
-            if (!level.hasChunk(cx, cz)) continue;
-            net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
-            if (chunk == null) continue;
+            if (level.hasChunk(cx, cz)) {
+               long dx = cx - centerChunkX;
+               long dz = cz - centerChunkZ;
+               chunkCoords.add(new long[]{cx, cz, dx * dx + dz * dz});
+            }
+         }
+      }
+      // Sort radially: closest chunks to player scanned first!
+      chunkCoords.sort((a, b) -> Long.compare(a[2], b[2]));
 
-            net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
-            for (int sIdx = 0; sIdx < sections.length; ++sIdx) {
-               net.minecraft.world.level.chunk.LevelChunkSection sec = sections[sIdx];
-               if (sec == null || sec.hasOnlyAir()) continue;
+      for (long[] coord : chunkCoords) {
+         int cx = (int) coord[0];
+         int cz = (int) coord[1];
+         net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
+         if (chunk == null) continue;
 
-               int secMinY = chunk.getSectionYFromSectionIndex(sIdx) << 4;
-               if (secMinY + 15 < minY || secMinY > maxY) continue;
+         net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
+         for (int sIdx = 0; sIdx < sections.length; ++sIdx) {
+            net.minecraft.world.level.chunk.LevelChunkSection sec = sections[sIdx];
+            if (sec == null || sec.hasOnlyAir()) continue;
 
-               int baseBlockX = cx << 4;
-               int baseBlockZ = cz << 4;
+            int secMinY = chunk.getSectionYFromSectionIndex(sIdx) << 4;
+            if (secMinY + 15 < minY || secMinY > maxY) continue;
 
-               for (int lx = 0; lx < 16; ++lx) {
-                  int bx = baseBlockX + lx;
-                  for (int lz = 0; lz < 16; ++lz) {
-                     int bz = baseBlockZ + lz;
-                     for (int ly = 0; ly < 16; ++ly) {
-                        int by = secMinY + ly;
-                        BlockState st = sec.getBlockState(lx, ly, lz);
-                        if (st.isAir()) continue;
+            int baseBlockX = cx << 4;
+            int baseBlockZ = cz << 4;
 
-                        for (StructureScanner.StructurePattern pat : activePatterns) {
-                           List<StructureScanner.ScannedBlock> anchors = (pat.sampleAnchors != null && !pat.sampleAnchors.isEmpty())
-                              ? pat.sampleAnchors
-                              : Collections.singletonList(new StructureScanner.ScannedBlock(pat.anchorRelX, pat.anchorRelY, pat.anchorRelZ, pat.anchorBlockId));
+            for (int lx = 0; lx < 16; ++lx) {
+               int bx = baseBlockX + lx;
+               for (int lz = 0; lz < 16; ++lz) {
+                  int bz = baseBlockZ + lz;
+                  for (int ly = 0; ly < 16; ++ly) {
+                     int by = secMinY + ly;
+                     BlockState st = sec.getBlockState(lx, ly, lz);
+                     if (st.isAir()) continue;
 
-                           for (StructureScanner.ScannedBlock anchor : anchors) {
-                              if (matchesScannedId(st, anchor.blockId)) {
-                                 FoundStructure found = matchRotatedPatternAtAnchor(level, bx, by, bz, pat, anchor);
-                                 if (found != null) {
-                                    String displayName = getDisplayName(pat.name);
-                                    FoundStructure current = bestMatches.get(displayName);
-                                    if (current == null || found.accuracy > current.accuracy) {
-                                       bestMatches.put(displayName, found);
-                                    }
+                     String stId = StructureScanner.getBlockIdentifier(st);
+                     // Fast signature pre-filtering: skip stone, dirt, bedrock, lava, etc. in O(1)
+                     if (!stId.contains("terracotta") && !stId.contains("sandstone") && !stId.contains("stone_brick") &&
+                         !stId.contains("prismarine") && !stId.contains("wool") && !stId.contains("spruce") && !stId.contains("smooth_stone")) {
+                        continue;
+                     }
+
+                     for (StructureScanner.StructurePattern pat : activePatterns) {
+                        List<StructureScanner.ScannedBlock> anchors = (pat.sampleAnchors != null && !pat.sampleAnchors.isEmpty())
+                           ? pat.sampleAnchors
+                           : Collections.singletonList(new StructureScanner.ScannedBlock(pat.anchorRelX, pat.anchorRelY, pat.anchorRelZ, pat.anchorBlockId));
+
+                        for (StructureScanner.ScannedBlock anchor : anchors) {
+                           if (matchesScannedId(st, anchor.blockId)) {
+                              FoundStructure found = matchRotatedPatternAtAnchor(level, bx, by, bz, pat, anchor);
+                              if (found != null) {
+                                 String displayName = getDisplayName(pat.name);
+                                 FoundStructure current = bestMatches.get(displayName);
+                                 if (current == null || found.accuracy > current.accuracy) {
+                                    bestMatches.put(displayName, found);
                                  }
                               }
                            }

@@ -1470,7 +1470,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                    })).then(ClientCommands.literal("debug").executes((context) -> {
                       StructureScanner.runScanDebug();
                       return 1;
-                   })).then(ClientCommands.argument("name", StringArgumentType.word()).executes((context) -> {
+                   })).then(ClientCommands.literal("find").then(ClientCommands.argument("name", StringArgumentType.word()).executes((context) -> {
                       String name = StringArgumentType.getString(context, "name");
                       StructureScanner.scanArea(name, 16);
                       return 1;
@@ -1479,7 +1479,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                       int rad = IntegerArgumentType.getInteger(context, "radius");
                       StructureScanner.scanArea(name, rad);
                       return 1;
-                   }))));
+                   })))));
 
                    builder.then(ClientCommands.literal("pos1").executes((context) -> {
                       BlockPos pos = StructureScanner.getTargetOrPlayerPos();
