@@ -182,19 +182,47 @@ public class TargetPests {
       return null;
    }
 
+   public static String getDirectHeadTextureValue(Entity entity) {
+      if (entity == null) return null;
+      if (entity instanceof net.minecraft.world.entity.item.ItemEntity ie) {
+         return getHeadTextureFromStack(ie.getItem());
+      }
+      if (entity instanceof net.minecraft.world.entity.player.Player player) {
+         if (player.getGameProfile() != null && player.getGameProfile().properties() != null) {
+            for (Property prop : player.getGameProfile().properties().get("textures")) {
+               if (prop != null && prop.value() != null && !prop.value().isEmpty()) {
+                  return prop.value();
+               }
+            }
+         }
+         ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
+         return getHeadTextureFromStack(head);
+      }
+      if (entity instanceof net.minecraft.world.entity.LivingEntity living) {
+         ItemStack head = living.getItemBySlot(EquipmentSlot.HEAD);
+         return getHeadTextureFromStack(head);
+      }
+      return null;
+   }
+
    public static String extractTextureHash(String input) {
       if (input == null || input.isEmpty()) return null;
-      java.util.regex.Matcher m = HASH_PATTERN.matcher(input);
-      if (m.find()) {
-         return m.group().toLowerCase();
+      String trimmed = input.trim();
+      if (trimmed.startsWith("http://textures.minecraft.net/texture/") || trimmed.startsWith("https://textures.minecraft.net/texture/")) {
+         return trimmed.substring(trimmed.lastIndexOf('/') + 1).toLowerCase(Locale.ROOT);
       }
-      try {
-         String decoded = new String(java.util.Base64.getDecoder().decode(input), java.nio.charset.StandardCharsets.UTF_8);
-         java.util.regex.Matcher m2 = HASH_PATTERN.matcher(decoded);
-         if (m2.find()) {
-            return m2.group().toLowerCase();
-         }
-      } catch (Exception ignored) {
+      if (trimmed.length() > 64 || trimmed.startsWith("ewog") || trimmed.startsWith("eyJ") || trimmed.endsWith("=")) {
+         try {
+            String decoded = new String(java.util.Base64.getDecoder().decode(trimmed), java.nio.charset.StandardCharsets.UTF_8);
+            java.util.regex.Matcher m = HASH_PATTERN.matcher(decoded);
+            if (m.find()) {
+               return m.group().toLowerCase(Locale.ROOT);
+            }
+         } catch (Throwable ignored) {}
+      }
+      java.util.regex.Matcher m = HASH_PATTERN.matcher(trimmed);
+      if (m.find()) {
+         return m.group().toLowerCase(Locale.ROOT);
       }
       return null;
    }

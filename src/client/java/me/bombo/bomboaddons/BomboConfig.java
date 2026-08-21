@@ -906,8 +906,9 @@ public class BomboConfig {
 
    public static class HighlightInfo {
       public String color = "RED";
-      public boolean showInvisible = false;
-      public boolean enabled = true;
+       public boolean showInvisible = false;
+       public String visibility = "ALL"; // ALL, VISIBLE_ONLY, INVISIBLE_ONLY
+       public boolean enabled = true;
       public boolean tracer = false;
       public String requiredIsland = "";
       public boolean isBestiary = false;
@@ -1009,6 +1010,7 @@ public class BomboConfig {
             out.name("requiredSubarea").value(value.requiredSubarea != null ? value.requiredSubarea : "");
             out.name("isAdvanced").value(value.isAdvanced);
             out.name("mobSize").value(value.mobSize != null ? value.mobSize : "");
+            out.name("visibility").value(value.visibility != null ? value.visibility : "ALL");
             out.name("showTitleOnSpawn").value(value.showTitleOnSpawn);
             out.name("playSoundOnSpawn").value(value.playSoundOnSpawn);
             if (value.headHashes != null && !value.headHashes.isEmpty()) {
@@ -1043,6 +1045,8 @@ public class BomboConfig {
                   info.color = in.nextString();
                } else if (name.equals("showInvisible")) {
                   info.showInvisible = in.nextBoolean();
+               } else if (name.equals("visibility")) {
+                  info.visibility = in.nextString();
                } else if (name.equals("enabled")) {
                   info.enabled = in.nextBoolean();
                } else if (name.equals("tracer")) {

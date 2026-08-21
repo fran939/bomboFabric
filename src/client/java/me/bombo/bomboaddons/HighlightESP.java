@@ -417,7 +417,18 @@ public class HighlightESP {
             if (otherInfo != null && otherInfo.isHighlighted) {
                return true;
             }
-         }
+      }
+      return false;
+   }
+
+   public static boolean isEntityEffectivelyVisible(Entity entity) {
+      if (entity == null) return false;
+      if (!entity.isInvisible()) return true;
+      if (entity instanceof ArmorStand as) {
+         return !as.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).isEmpty()
+             || !as.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST).isEmpty()
+             || !as.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.LEGS).isEmpty()
+             || !as.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET).isEmpty();
       }
       return false;
    }
@@ -436,14 +447,13 @@ public class HighlightESP {
             return new EntityHighlightInfo(now, false, null, false, 0xFFFFFF, false);
          }
 
-
-         Integer bedwarsColor = BedwarsESP.getEntityColor(self);
-         if (bedwarsColor != null) {
-            return new EntityHighlightInfo(now, true, bedwarsColor, false, bedwarsColor, true);
+         if (s.tracerTestAllEntities) {
+            return new EntityHighlightInfo(now, true, 16776960, true, 16776960, true);
          }
 
-         if (s.tracerTestAllEntities) {
-            return new EntityHighlightInfo(now, true, 0xFFFF00, true, 0xFFFF00, true);
+         Integer bwColor = BedwarsESP.getEntityColor(self);
+         if (bwColor != null) {
+            return new EntityHighlightInfo(now, true, bwColor, false, 0xFFFFFF, true);
          }
 
          if (s.cheeseTracer && self instanceof ItemEntity) {
@@ -503,6 +513,8 @@ public class HighlightESP {
             boolean isPlayer = self instanceof Player;
             String headTex = TargetPests.getHeadTextureValue(self);
             String skullHash = headTex != null ? TargetPests.extractTextureHash(headTex) : null;
+            String directHeadTex = TargetPests.getDirectHeadTextureValue(self);
+            String directSkullHash = directHeadTex != null ? TargetPests.extractTextureHash(directHeadTex) : null;
 
             for (Map.Entry<String, BomboConfig.HighlightInfo> entry : s.highlights.entrySet()) {
                 String key = entry.getKey();
@@ -511,10 +523,21 @@ public class HighlightESP {
                 if (info == null || !info.enabled) continue;
                 if (!matchesIsland(info.requiredIsland)) continue;
                 if (info.requiredSubarea != null && !info.requiredSubarea.isEmpty() && !matchesSubarea(info.requiredSubarea)) continue;
-                if (self.isInvisible() && !info.showInvisible) continue;
+
+                // VISIBILITY FILTER:
+                boolean effVis = isEntityEffectivelyVisible(self);
+                if (info.visibility != null && !info.visibility.trim().isEmpty()) {
+                   String v = info.visibility.trim().toUpperCase(Locale.ROOT);
+                   if (v.equals("VISIBLE_ONLY") || v.equals("VISIBLE")) {
+                      if (!effVis) continue;
+                   } else if (v.equals("INVISIBLE_ONLY") || v.equals("INVISIBLE")) {
+                      if (effVis) continue;
+                   }
+                } else {
+                   if (!effVis && !info.showInvisible) continue;
+                }
 
                 // STRICT ATTRIBUTE FILTERS:
-                // If any filter is specified on this highlight entry, the entity MUST satisfy it!
                 if (info.mobSize != null && !info.mobSize.trim().isEmpty() && !matchesMobSize(self, info.mobSize)) continue;
                 if (info.armorPiece != null && !info.armorPiece.trim().isEmpty() && !matchesArmorPiece(self, info.armorPiece)) continue;
                 if (info.armorType != null && !info.armorType.trim().isEmpty() && !matchesArmor(self, info.armorType)) continue;
@@ -522,12 +545,14 @@ public class HighlightESP {
                 if (info.heldItem != null && !info.heldItem.trim().isEmpty() && !matchesHeldItem(self, info.heldItem)) continue;
 
                 boolean matched = false;
+                boolean isDirectHeadRule = (info.headHashes != null && !info.headHashes.isEmpty()) || (key.length() == 64 && key.matches("^[0-9a-fA-F]{64}$"));
+                String hashToUse = isDirectHeadRule ? directSkullHash : skullHash;
 
                 // 1. Skull hash match
-                if (skullHash != null) {
+                if (hashToUse != null) {
                    if (info.headHashes != null && !info.headHashes.isEmpty()) {
                       for (String h : info.headHashes) {
-                         if (h != null && h.equalsIgnoreCase(skullHash)) {
+                         if (h != null && h.equalsIgnoreCase(hashToUse)) {
                             matched = true;
                             break;
                          }
@@ -535,12 +560,12 @@ public class HighlightESP {
                    }
                    if (!matched) {
                       me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule bestiaryRule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(key, info.requiredIsland);
-                      if (bestiaryRule != null && bestiaryRule.hasHead(skullHash)) {
+                      if (bestiaryRule != null && bestiaryRule.hasHead(hashToUse)) {
                          matched = true;
                       }
                    }
                    if (!matched) {
-                      me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule headRule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRuleByHead(skullHash);
+                      me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule headRule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRuleByHead(hashToUse);
                       if (headRule != null && (matchesKey(headRule.name, key) || key.equalsIgnoreCase(headRule.name) || (headRule.name != null && headRule.name.toLowerCase(Locale.ROOT).contains(key.toLowerCase(Locale.ROOT))))) {
                          matched = true;
                       }
@@ -591,7 +616,7 @@ public class HighlightESP {
                 if (!matched && info.isBestiary) {
                    me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule rule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(key, info.requiredIsland);
                    if (rule != null) {
-                      if (rule.heads != null && !rule.heads.isEmpty() && skullHash != null && rule.hasHead(skullHash)) {
+                      if (rule.heads != null && !rule.heads.isEmpty() && hashToUse != null && rule.hasHead(hashToUse)) {
                          matched = true;
                       }
                       if (!matched && rule.playerName != null && !rule.playerName.isEmpty() && isPlayer && self.getName().getString().toLowerCase(Locale.ROOT).contains(rule.playerName.toLowerCase(Locale.ROOT))) {
@@ -620,9 +645,10 @@ public class HighlightESP {
                 if (!matched) {
                    boolean keyIsPlayer = key.equalsIgnoreCase("player") || key.equalsIgnoreCase("players");
                    String cleanKey = key.toLowerCase(Locale.ROOT).trim();
+                   String hashForRaw = isDirectHeadRule ? directSkullHash : skullHash;
                    if (cleanKey.equals("wolf") && nametagName != null && nametagName.contains("old wolf")) {
                       // Skip old wolves when matching regular wolf
-                   } else if ((isPlayer && keyIsPlayer) || matchesKey(name, key) || (nametagName != null && matchesKey(nametagName, key)) || (skullHash != null && matchesKey(skullHash, key)) || EntityVariantHelper.matchesVariant(self, cleanKey)) {
+                   } else if ((isPlayer && keyIsPlayer) || (!isDirectHeadRule && matchesKey(name, key)) || (!isDirectHeadRule && nametagName != null && matchesKey(nametagName, key)) || (hashForRaw != null && matchesKey(hashForRaw, key)) || EntityVariantHelper.matchesVariant(self, cleanKey)) {
                       matched = true;
                    }
                 }
