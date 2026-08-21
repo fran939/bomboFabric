@@ -5564,6 +5564,17 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
       }
 
+      // Specialized inspection for Panda
+      if (target instanceof net.minecraft.world.entity.animal.Panda panda) {
+         String mainGene = panda.getMainGene().getSerializedName().toUpperCase(Locale.ROOT);
+         String hiddenGene = panda.getHiddenGene().getSerializedName().toUpperCase(Locale.ROOT);
+         src.sendFeedback(Component.literal(" §7Panda Gene: §e" + mainGene + " §7(Hidden: §8" + hiddenGene + "§7)"));
+         ClickEvent addPandaHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add panda:" + mainGene.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addPandaHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + mainGene + " Panda]").withStyle(s -> s.withClickEvent(addPandaHl)));
+         }
+      }
+
       // Equipment Inspection
       if (target instanceof net.minecraft.world.entity.LivingEntity living) {
          StringBuilder equipStr = new StringBuilder();

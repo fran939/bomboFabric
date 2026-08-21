@@ -685,6 +685,10 @@ public class HighlightESP {
              } catch (Throwable ignored) {}
              return variantName.contains(variantReq);
           }
+          if (entity instanceof net.minecraft.world.entity.animal.Panda panda) {
+             String mainGene = panda.getMainGene().getSerializedName().toLowerCase(Locale.ROOT);
+             return mainGene.contains(variantReq);
+          }
       }
 
       if (typeStr.contains(cleanTarget)) return true;
