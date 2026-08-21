@@ -3,9 +3,13 @@ package me.bombo.bomboaddons;
 import java.lang.reflect.Method;
 import java.util.Locale;
 import net.minecraft.core.Holder;
-import net.minecraft.network.chat.ClickEvent;
-import net.minecraft.network.chat.Component;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class EntityVariantHelper {
 
@@ -26,6 +30,136 @@ public class EntityVariantHelper {
    public static VariantResult inspect(Entity entity) {
       if (entity == null) return null;
       String simpleName = entity.getClass().getSimpleName();
+
+      // 0. Display Entities (ItemDisplay, BlockDisplay, TextDisplay)
+      if (entity instanceof Display.ItemDisplay itemDisplay || simpleName.equalsIgnoreCase("ItemDisplay")) {
+         try {
+            ItemStack stack = null;
+            if (entity instanceof Display.ItemDisplay id) {
+               stack = id.getItemItemStack();
+            } else {
+               Method m = entity.getClass().getMethod("getItemItemStack");
+               Object res = m.invoke(entity);
+               if (res instanceof ItemStack is) stack = is;
+            }
+            if (stack != null && !stack.isEmpty()) {
+               String itemPath = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+               String hoverName = stack.getHoverName().getString();
+               String sbId = SkyblockUtils.getSkyblockId(stack);
+               String transform = "";
+               try {
+                  if (entity instanceof Display.ItemDisplay id) {
+                     transform = id.getItemTransform().getSerializedName();
+                  }
+               } catch (Throwable ignored) {}
+               
+               String idInfo = sbId != null ? " | §b" + sbId : " | §8" + itemPath;
+               String transInfo = !transform.isEmpty() && !transform.equalsIgnoreCase("none") ? " §7[§d" + transform + "§7]" : "";
+               String key = sbId != null ? sbId : itemPath;
+               return new VariantResult(
+                  " §7Item Display: §e" + hoverName + " §8(" + itemPath + idInfo + "§8)" + transInfo,
+                  "§a[+ Highlight " + key + " Display]",
+                  "/b highlight add display:" + key.toLowerCase(Locale.ROOT) + " GOLD",
+                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName + " " + transform).toLowerCase(Locale.ROOT)
+               );
+            }
+         } catch (Throwable ignored) {}
+      }
+
+      if (entity instanceof Display.BlockDisplay blockDisplay || simpleName.equalsIgnoreCase("BlockDisplay")) {
+         try {
+            BlockState state = null;
+            if (entity instanceof Display.BlockDisplay bd) {
+               state = bd.getBlockState();
+            } else {
+               Method m = entity.getClass().getMethod("getBlockState");
+               Object res = m.invoke(entity);
+               if (res instanceof BlockState bs) state = bs;
+            }
+            if (state != null) {
+               String blockPath = BuiltInRegistries.BLOCK.getKey(state.getBlock()).getPath();
+               return new VariantResult(
+                  " §7Block Display: §e" + blockPath,
+                  "§a[+ Highlight " + blockPath + " Display]",
+                  "/b highlight add display:" + blockPath.toLowerCase(Locale.ROOT) + " GOLD",
+                  blockPath.toLowerCase(Locale.ROOT)
+               );
+            }
+         } catch (Throwable ignored) {}
+      }
+
+      if (entity instanceof Display.TextDisplay textDisplay || simpleName.equalsIgnoreCase("TextDisplay")) {
+         try {
+            String text = "";
+            if (entity instanceof Display.TextDisplay td) {
+               text = td.getText().getString();
+            } else {
+               Method m = entity.getClass().getMethod("getText");
+               Object res = m.invoke(entity);
+               if (res instanceof net.minecraft.network.chat.Component c) text = c.getString();
+            }
+            return new VariantResult(
+               " §7Text Display: §f\"" + text + "§f\"",
+               "§a[+ Highlight Text Display]",
+               "/b highlight add text_display GOLD",
+               text.toLowerCase(Locale.ROOT)
+            );
+         } catch (Throwable ignored) {}
+      }
+
+      // ItemFrame
+      if (entity instanceof ItemFrame frame || simpleName.toLowerCase(Locale.ROOT).contains("itemframe")) {
+         try {
+            ItemStack stack = null;
+            if (entity instanceof ItemFrame f) {
+               stack = f.getItem();
+            } else {
+               Method m = entity.getClass().getMethod("getItem");
+               Object res = m.invoke(entity);
+               if (res instanceof ItemStack is) stack = is;
+            }
+            if (stack != null && !stack.isEmpty()) {
+               String itemPath = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+               String hoverName = stack.getHoverName().getString();
+               String sbId = SkyblockUtils.getSkyblockId(stack);
+               String idInfo = sbId != null ? " | §b" + sbId : " | §8" + itemPath;
+               String key = sbId != null ? sbId : itemPath;
+               return new VariantResult(
+                  " §7Item Frame Item: §e" + hoverName + " §8(" + itemPath + idInfo + "§8)",
+                  "§a[+ Highlight " + key + " Frame]",
+                  "/b highlight add item_frame:" + key.toLowerCase(Locale.ROOT) + " GOLD",
+                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName).toLowerCase(Locale.ROOT)
+               );
+            }
+         } catch (Throwable ignored) {}
+      }
+
+      // ItemEntity (Ground Drops)
+      if (entity instanceof ItemEntity itemEntity || simpleName.equalsIgnoreCase("ItemEntity")) {
+         try {
+            ItemStack stack = null;
+            if (entity instanceof ItemEntity ie) {
+               stack = ie.getItem();
+            } else {
+               Method m = entity.getClass().getMethod("getItem");
+               Object res = m.invoke(entity);
+               if (res instanceof ItemStack is) stack = is;
+            }
+            if (stack != null && !stack.isEmpty()) {
+               String itemPath = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+               String hoverName = stack.getHoverName().getString();
+               String sbId = SkyblockUtils.getSkyblockId(stack);
+               String idInfo = sbId != null ? " | §b" + sbId : " | §8" + itemPath;
+               String key = sbId != null ? sbId : itemPath;
+               return new VariantResult(
+                  " §7Item Drop: §e" + hoverName + " x" + stack.getCount() + " §8(" + itemPath + idInfo + "§8)",
+                  "§a[+ Highlight " + key + " Drop]",
+                  "/b highlight add item:" + key.toLowerCase(Locale.ROOT) + " GOLD",
+                  (itemPath + " " + (sbId != null ? sbId : "") + " " + hoverName).toLowerCase(Locale.ROOT)
+               );
+            }
+         } catch (Throwable ignored) {}
+      }
 
       // 1. Axolotl
       if (simpleName.equalsIgnoreCase("Axolotl") || entity instanceof net.minecraft.world.entity.animal.axolotl.Axolotl) {
@@ -344,10 +478,11 @@ public class EntityVariantHelper {
       if (entity == null || variantReq == null) return false;
       VariantResult res = inspect(entity);
       if (res != null) {
-         if (res.matchKeyword != null && res.matchKeyword.contains(variantReq.toLowerCase(Locale.ROOT))) {
+         String req = variantReq.toLowerCase(Locale.ROOT);
+         if (res.matchKeyword != null && res.matchKeyword.contains(req)) {
             return true;
          }
-         if (res.lineText != null && res.lineText.toLowerCase(Locale.ROOT).contains(variantReq.toLowerCase(Locale.ROOT))) {
+         if (res.lineText != null && res.lineText.toLowerCase(Locale.ROOT).contains(req)) {
             return true;
          }
       }

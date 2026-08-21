@@ -663,12 +663,13 @@ public class HighlightESP {
          String[] parts = cleanTarget.split(":", 2);
          String baseType = parts[0].trim();
          String variantReq = parts[1].trim();
-         if (typeStr.contains(baseType) && EntityVariantHelper.matchesVariant(entity, variantReq)) {
+         if ((typeStr.contains(baseType) || (baseType.equals("display") && typeStr.contains("display"))) && EntityVariantHelper.matchesVariant(entity, variantReq)) {
             return true;
          }
       }
 
       if (typeStr.contains(cleanTarget)) return true;
+      if (EntityVariantHelper.matchesVariant(entity, cleanTarget)) return true;
       if (cleanTarget.equals("mooshroom") && typeStr.contains("cow")) return true;
       if (cleanTarget.equals("magma_cube") && (typeStr.contains("magma") || typeStr.contains("slime"))) return true;
       if (cleanTarget.equals("zombified_piglin") && (typeStr.contains("zombified_piglin") || typeStr.contains("piglin") || typeStr.contains("pig_zombie"))) return true;
