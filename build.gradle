@@ -64,8 +64,16 @@ processResources {
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25
 	it.options.encoding = "UTF-8"
-	it.options.incremental = true
+	it.options.incremental = false
 	it.options.fork = false
+}
+
+sourceSets {
+	client {
+		java {
+			destinationDirectory = layout.buildDirectory.dir("classes/java/client_classes")
+		}
+	}
 }
 
 compileJava.enabled = false

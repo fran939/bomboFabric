@@ -680,12 +680,12 @@ public class HighlightESP {
              try {
                 var vKey = frog.getVariant().unwrapKey();
                 if (vKey.isPresent()) {
-                   variantName = vKey.get().location().getPath().toLowerCase(Locale.ROOT);
+                   variantName = vKey.get().identifier().getPath().toLowerCase(Locale.ROOT);
                 }
              } catch (Throwable ignored) {}
              return variantName.contains(variantReq);
           }
-          if (entity instanceof net.minecraft.world.entity.animal.Panda panda) {
+          if (entity instanceof net.minecraft.world.entity.animal.panda.Panda panda) {
              String mainGene = panda.getMainGene().getSerializedName().toLowerCase(Locale.ROOT);
              return mainGene.contains(variantReq);
           }

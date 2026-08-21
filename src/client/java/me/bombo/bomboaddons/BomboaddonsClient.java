@@ -5554,7 +5554,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          try {
             var vKey = frog.getVariant().unwrapKey();
             if (vKey.isPresent()) {
-               variantName = vKey.get().location().getPath().toUpperCase(Locale.ROOT);
+               variantName = vKey.get().identifier().getPath().toUpperCase(Locale.ROOT);
             }
          } catch (Throwable ignored) {}
          src.sendFeedback(Component.literal(" §7Frog Variant: §e" + variantName));
@@ -5565,7 +5565,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
 
       // Specialized inspection for Panda
-      if (target instanceof net.minecraft.world.entity.animal.Panda panda) {
+      if (target instanceof net.minecraft.world.entity.animal.panda.Panda panda) {
          String mainGene = panda.getMainGene().getSerializedName().toUpperCase(Locale.ROOT);
          String hiddenGene = panda.getHiddenGene().getSerializedName().toUpperCase(Locale.ROOT);
          src.sendFeedback(Component.literal(" §7Panda Gene: §e" + mainGene + " §7(Hidden: §8" + hiddenGene + "§7)"));
