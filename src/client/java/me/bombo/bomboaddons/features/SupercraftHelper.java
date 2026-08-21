@@ -89,8 +89,9 @@ public class SupercraftHelper {
    }
 
    public static void appendTooltip(ItemStack stack, List<Component> lines) {
-      if (!BomboConfig.get().loreAdditionsEnabled || stack == null || stack.isEmpty()) return;
-      String name = stack.getHoverName().getString().replaceAll("(?i)§[0-9a-fk-or]", "");
+      if (!BomboConfig.get().loreAdditionsEnabled || stack == null || stack.isEmpty() || lines == null) return;
+      try {
+         String name = stack.getHoverName().getString().replaceAll("(?i)§[0-9a-fk-or]", "");
 
       // 1. Cancel Order Tooltip
       if (BomboConfig.get().copyCanceledOrderAmount && name.contains("Cancel Order")) {
@@ -234,6 +235,7 @@ public class SupercraftHelper {
             lines.add(Component.literal("§7Skyblock ID: §8" + sbId));
          }
       }
+      } catch (Throwable ignored) {}
    }
 
    public static boolean handleCtrlClick(AbstractContainerScreen<?> screen, Slot slot) {

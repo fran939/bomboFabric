@@ -407,10 +407,28 @@ public class HighlightESP {
       return computed;
    }
 
+   public static boolean isNametagForHighlightedEntity(Entity self) {
+      if (self == null || self.level() == null || !(self instanceof ArmorStand as)) return false;
+      if (!as.isInvisible() && !as.isMarker()) return false;
+      AABB box = self.getBoundingBox().inflate(1.2, 3.0, 1.2);
+      for (Entity other : self.level().getEntities(self, box)) {
+         if (other != self && !(other instanceof ArmorStand)) {
+            EntityHighlightInfo otherInfo = getHighlightInfo(other);
+            if (otherInfo != null && otherInfo.isHighlighted) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
    private static EntityHighlightInfo computeHighlightInfo(Entity self, long now) {
       try {
          Minecraft mc = Minecraft.getInstance();
          if (self == mc.player || ignoredEntities.contains(self.getId())) {
+            return new EntityHighlightInfo(now, false, null, false, 0xFFFFFF, false);
+         }
+         if (isNametagForHighlightedEntity(self)) {
             return new EntityHighlightInfo(now, false, null, false, 0xFFFFFF, false);
          }
          BomboConfig.Settings s = BomboConfig.get();
@@ -653,10 +671,13 @@ public class HighlightESP {
        return subarea != null && subarea.toLowerCase(Locale.ROOT).contains(requiredSubarea.toLowerCase(Locale.ROOT));
     }
 
-      public static boolean matchesEntityType(Entity entity, String targetType) {
+   public static boolean matchesEntityType(Entity entity, String targetType) {
       if (entity == null || targetType == null || targetType.isEmpty()) return false;
-      String typeStr = entity.getType().toString().toLowerCase(Locale.ROOT);
       String cleanTarget = targetType.toLowerCase(Locale.ROOT).replace(" ", "_");
+      if (entity instanceof ArmorStand && !cleanTarget.contains("armor") && !cleanTarget.contains("stand")) {
+         return false;
+      }
+      String typeStr = entity.getType().toString().toLowerCase(Locale.ROOT);
       
       // Check for variant tag like tropical_fish:blue or tropical_fish:green
       if (cleanTarget.contains(":")) {
