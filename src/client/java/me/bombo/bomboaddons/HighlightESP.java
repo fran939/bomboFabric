@@ -663,73 +663,9 @@ public class HighlightESP {
          String[] parts = cleanTarget.split(":", 2);
          String baseType = parts[0].trim();
          String variantReq = parts[1].trim();
-         if (!typeStr.contains(baseType)) return false;
-         if (entity instanceof net.minecraft.world.entity.animal.fish.TropicalFish fish) {
-            String baseCol = fish.getBaseColor().getName().toLowerCase(Locale.ROOT);
-            String patCol = fish.getPatternColor().getName().toLowerCase(Locale.ROOT);
-            String patName = fish.getPattern().name().toLowerCase(Locale.ROOT);
-            return baseCol.contains(variantReq) || patCol.contains(variantReq) || patName.contains(variantReq);
+         if (typeStr.contains(baseType) && EntityVariantHelper.matchesVariant(entity, variantReq)) {
+            return true;
          }
-         if (entity instanceof net.minecraft.world.entity.monster.Shulker shulker) {
-            net.minecraft.world.item.DyeColor dye = shulker.getColor();
-            String colName = dye != null ? dye.getName().toLowerCase(Locale.ROOT) : "default";
-            return colName.contains(variantReq);
-         }
-          if (entity instanceof net.minecraft.world.entity.animal.frog.Frog frog) {
-             String variantName = "";
-             try {
-                var vKey = frog.getVariant().unwrapKey();
-                if (vKey.isPresent()) {
-                   variantName = vKey.get().identifier().getPath().toLowerCase(Locale.ROOT);
-                }
-             } catch (Throwable ignored) {}
-             return variantName.contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.panda.Panda panda) {
-             String mainGene = panda.getMainGene().getSerializedName().toLowerCase(Locale.ROOT);
-             return mainGene.contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.axolotl.Axolotl axolotl) {
-             return axolotl.getVariant().getName().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.Cat cat) {
-             try {
-                var vKey = cat.getVariant().unwrapKey();
-                if (vKey.isPresent() && vKey.get().identifier().getPath().toLowerCase(Locale.ROOT).contains(variantReq)) return true;
-             } catch (Throwable ignored) {}
-             return cat.getCollarColor().getName().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.Wolf wolf) {
-             try {
-                var vKey = wolf.getVariant().unwrapKey();
-                if (vKey.isPresent() && vKey.get().identifier().getPath().toLowerCase(Locale.ROOT).contains(variantReq)) return true;
-             } catch (Throwable ignored) {}
-             return wolf.getCollarColor().getName().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.horse.Horse horse) {
-             return horse.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq) || horse.getMarkings().name().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.horse.Llama llama) {
-             return llama.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.Parrot parrot) {
-             return parrot.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.Rabbit rabbit) {
-             return rabbit.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.Sheep sheep) {
-             return sheep.getColor().getName().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.Fox fox) {
-             return fox.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.MushroomCow cow) {
-             return cow.getVariant().name().toLowerCase(Locale.ROOT).contains(variantReq);
-          }
-          if (entity instanceof net.minecraft.world.entity.animal.goat.Goat goat) {
-             if (variantReq.contains("scream")) return goat.isScreamingGoat();
-          }
       }
 
       if (typeStr.contains(cleanTarget)) return true;
