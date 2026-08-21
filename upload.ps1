@@ -2,7 +2,7 @@ $version = Select-String -Path "gradle.properties" -Pattern "mod_version=(.*)" |
 $jarPath = "build/libs/bomboaddons-$version.jar"
 
 Write-Host "Building project for v$version..." -ForegroundColor Yellow
-cmd /c 'gradlew.bat classes clientClasses jar'
+cmd /c 'gradlew.bat compileClientJava jar -x processResources'
 
 if (-not $env:GH_TOKEN) {
     try {
