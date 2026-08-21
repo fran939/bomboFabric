@@ -77,13 +77,7 @@ public class StructureFinder {
          return true; // Singleplayer testing support!
       }
       String area = BomboaddonsClient.currentArea;
-      if (area != null) {
-         String lower = area.toLowerCase();
-         if (lower.contains("crystal") || lower.contains("hollow") || lower.contains("mithril") || lower.contains("mine") || lower.contains("goblin") || lower.contains("jungle") || lower.contains("precursor")) {
-            return true;
-         }
-      }
-      return SkyblockUtils.matchesIslandRequirement("Crystal Hollows") || SkyblockUtils.matchesIslandRequirement("Mithril Deposits");
+      return area != null && !area.equalsIgnoreCase("None") && !area.equalsIgnoreCase("Lobby") && !area.equalsIgnoreCase("Limbo");
    }
 
    public static void onTick() {
@@ -338,7 +332,7 @@ public class StructureFinder {
       }
    }
 
-   private static boolean matchesScannedId(BlockState st, String id) {
+   public static boolean matchesScannedId(BlockState st, String id) {
       if (st == null || id == null) return false;
       String stId = StructureScanner.getBlockIdentifier(st);
       if (stId.equalsIgnoreCase(id)) return true;

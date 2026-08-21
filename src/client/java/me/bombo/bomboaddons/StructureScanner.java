@@ -7,8 +7,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -691,5 +693,152 @@ public class StructureScanner {
          );
          BomboRenderUtils.drawText(poseStack, collector, "§b[Pasted: " + pastedStructurePattern.name + "§b] §a(Green = Matched, Red = Unmatched)", (float)(ox + pastedStructurePattern.sizeX / 2.0), (float)(oy + pastedStructurePattern.sizeY + 0.8), (float)(oz + pastedStructurePattern.sizeZ / 2.0), 65280, 0.035F, true, true);
       }
+   }
+
+   public static void runScanDebug() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player == null || mc.level == null) return;
+
+      BlockPos p = mc.player.blockPosition();
+      int px = p.getX();
+      int py = p.getY();
+      int pz = p.getZ();
+
+      int radX = 15;
+      int radZ = 15;
+      int radYDown = 8;
+      int radYUp = 12;
+
+      int minX = px - radX;
+      int maxX = px + radX;
+      int minY = Math.max(mc.level.getMinY(), py - radYDown);
+      int maxY = Math.min(mc.level.getMaxY() - 1, py + radYUp);
+      int minZ = pz - radZ;
+      int maxZ = pz + radZ;
+
+      ClientLevel level = mc.level;
+      BlockPos.MutableBlockPos mut = new BlockPos.MutableBlockPos();
+
+      List<ScannedBlock> scanned = new ArrayList<>();
+      Map<String, Integer> blockCounts = new HashMap<>();
+
+      for (int x = minX; x <= maxX; ++x) {
+         for (int y = minY; y <= maxY; ++y) {
+            for (int z = minZ; z <= maxZ; ++z) {
+               BlockState st = level.getBlockState(mut.set(x, y, z));
+               if (!st.isAir()) {
+                  String id = getBlockIdentifier(st);
+                  scanned.add(new ScannedBlock(x - px, y - py, z - pz, id, true));
+                  blockCounts.put(id, blockCounts.getOrDefault(id, 0) + 1);
+               }
+            }
+         }
+      }
+
+      File dir = new File(mc.gameDirectory, "config/bomboaddons");
+      if (!dir.exists()) dir.mkdirs();
+
+      Map<String, Object> dump = new LinkedHashMap<>();
+      dump.put("timestamp", System.currentTimeMillis());
+      dump.put("playerPos", px + ", " + py + ", " + pz);
+      dump.put("area", BomboaddonsClient.currentArea);
+      dump.put("totalBlocksIn30x30", scanned.size());
+      dump.put("blockCounts", blockCounts);
+      dump.put("blocks", scanned);
+
+      try {
+         File debugJson = new File(dir, "scan_debug.json");
+         Gson gson = new GsonBuilder().setPrettyPrinting().create();
+         try (FileWriter fw = new FileWriter(debugJson)) {
+            gson.toJson(dump, fw);
+         }
+      } catch (Throwable ignored) {}
+
+      sendMessage(Component.literal("§8[§3Bombo§8] §a=== Scan Debug (31x31x21 Area) ==="));
+      sendMessage(Component.literal("§8[§3Bombo§8] §7Player Pos: §e" + px + ", " + py + ", " + pz + " §7| Area: §b" + BomboaddonsClient.currentArea));
+      sendMessage(Component.literal("§8[§3Bombo§8] §7Dumped §b" + scanned.size() + " blocks §7to §econfig/bomboaddons/scan_debug.json§7!"));
+
+      StringBuilder report = new StringBuilder();
+      report.append("=== Structure Match Diagnostics ===\n");
+      report.append("Position: ").append(px).append(", ").append(py).append(", ").append(pz).append("\n");
+      report.append("Area: ").append(BomboaddonsClient.currentArea).append("\n");
+      report.append("Total Non-Air Blocks in 30x30: ").append(scanned.size()).append("\n\n");
+
+      for (Map.Entry<String, StructurePattern> entry : loadedPatterns.entrySet()) {
+         String pName = entry.getKey();
+         StructurePattern pat = entry.getValue();
+         if (pat == null || pat.blocks.isEmpty()) continue;
+
+         int bestMatchCount = 0;
+         int bestRot = 0;
+         int bestAccuracy = 0;
+         int bestAnchorX = 0, bestAnchorY = 0, bestAnchorZ = 0;
+         String bestAnchorId = "";
+
+         List<ScannedBlock> anchors = (pat.sampleAnchors != null && !pat.sampleAnchors.isEmpty())
+            ? pat.sampleAnchors
+            : Collections.singletonList(new ScannedBlock(pat.anchorRelX, pat.anchorRelY, pat.anchorRelZ, pat.anchorBlockId));
+
+         for (int x = minX; x <= maxX; ++x) {
+            for (int y = minY; y <= maxY; ++y) {
+               for (int z = minZ; z <= maxZ; ++z) {
+                  BlockState st = level.getBlockState(mut.set(x, y, z));
+                  if (st.isAir()) continue;
+
+                  for (ScannedBlock anchor : anchors) {
+                     if (StructureFinder.matchesScannedId(st, anchor.blockId)) {
+                        for (int rot = 0; rot < 4; ++rot) {
+                           int ancRx = anchor.relX;
+                           int ancRy = anchor.relY;
+                           int ancRz = anchor.relZ;
+
+                           int rotatedAncDx = StructureFinder.getRotatedX(ancRx, ancRz, rot);
+                           int rotatedAncDz = StructureFinder.getRotatedZ(ancRx, ancRz, rot);
+
+                           int originX = x - rotatedAncDx;
+                           int originY = y - ancRy;
+                           int originZ = z - rotatedAncDz;
+
+                           int matched = 0;
+                           for (ScannedBlock b : pat.blocks) {
+                              int wx = originX + StructureFinder.getRotatedX(b.relX, b.relZ, rot);
+                              int wy = originY + b.relY;
+                              int wz = originZ + StructureFinder.getRotatedZ(b.relX, b.relZ, rot);
+                              BlockState bs = level.getBlockState(mut.set(wx, wy, wz));
+                              if (StructureFinder.matchesScannedId(bs, b.blockId)) {
+                                 matched++;
+                              }
+                           }
+
+                           int acc = (int) Math.round(((double) matched / (double) pat.blocks.size()) * 100.0);
+                           if (acc > bestAccuracy || (acc == bestAccuracy && matched > bestMatchCount)) {
+                              bestAccuracy = acc;
+                              bestMatchCount = matched;
+                              bestRot = rot;
+                              bestAnchorX = x;
+                              bestAnchorY = y;
+                              bestAnchorZ = z;
+                              bestAnchorId = anchor.blockId;
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+
+         String line = "Pattern '" + pat.name + "' (" + pat.blocks.size() + " blocks) -> Best Match: " + bestAccuracy + "% (" + bestMatchCount + "/" + pat.blocks.size() + " blocks at rot " + (bestRot * 90) + "deg, anchor=" + bestAnchorId + " at " + bestAnchorX + "," + bestAnchorY + "," + bestAnchorZ + ")";
+         report.append(line).append("\n");
+
+         String color = bestAccuracy >= 70 ? "§a" : (bestAccuracy >= 40 ? "§e" : "§c");
+         sendMessage(Component.literal("§8[§3Bombo§8] §6Pattern '§e" + pat.name + "§6' (" + pat.blocks.size() + " blk) -> " + color + "Best: " + bestAccuracy + "% §7(" + bestMatchCount + "/" + pat.blocks.size() + " blocks, rot " + (bestRot * 90) + "°)"));
+      }
+
+      try {
+         File debugTxt = new File(dir, "scan_debug.txt");
+         try (FileWriter fw = new FileWriter(debugTxt)) {
+            fw.write(report.toString());
+         }
+      } catch (Throwable ignored) {}
    }
 }

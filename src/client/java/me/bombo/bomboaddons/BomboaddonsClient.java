@@ -1467,6 +1467,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                       StructureScanner.loadPatterns();
                       ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aReloaded " + StructureScanner.loadedPatterns.size() + " structure templates!"));
                       return 1;
+                   })).then(ClientCommands.literal("debug").executes((context) -> {
+                      StructureScanner.runScanDebug();
+                      return 1;
                    })).then(ClientCommands.argument("name", StringArgumentType.word()).executes((context) -> {
                       String name = StringArgumentType.getString(context, "name");
                       StructureScanner.scanArea(name, 16);
