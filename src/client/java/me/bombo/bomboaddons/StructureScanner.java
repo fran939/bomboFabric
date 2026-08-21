@@ -548,7 +548,7 @@ public class StructureScanner {
       loadedPatterns.clear();
 
       // 1. Load built-in default patterns from jar resources
-      String[] builtIns = new String[]{"corleone1", "corleone2", "goldendragon1"};
+      String[] builtIns = new String[]{"corleone1", "corleone2", "goldendragon1", "gdrag2"};
       for (String bName : builtIns) {
          try (java.io.InputStream in = StructureScanner.class.getResourceAsStream("/structures/" + bName + ".json")) {
             if (in != null) {

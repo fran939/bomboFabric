@@ -131,8 +131,9 @@ public class StructureFinder {
 
    public static String getDisplayName(String name) {
       if (name == null) return "Structure";
-      if (name.toLowerCase().startsWith("corleone")) return "Corleone 1";
-      if (name.toLowerCase().startsWith("goldendragon") || name.equalsIgnoreCase("golden dragon")) return "Golden Dragon";
+      String lower = name.toLowerCase();
+      if (lower.startsWith("corleone")) return "Corleone 1";
+      if (lower.startsWith("goldendragon") || lower.startsWith("gdrag") || lower.contains("golden dragon")) return "Golden Dragon";
       return name;
    }
 
@@ -153,20 +154,23 @@ public class StructureFinder {
 
       List<StructureScanner.StructurePattern> activePatterns = new ArrayList<>();
       if (checkCorleone1) {
-         StructureScanner.StructurePattern corleone1 = StructureScanner.loadedPatterns.get("corleone1");
-         if (corleone1 != null) activePatterns.add(corleone1);
-         StructureScanner.StructurePattern corleone2 = StructureScanner.loadedPatterns.get("corleone2");
-         if (corleone2 != null && !activePatterns.contains(corleone2)) activePatterns.add(corleone2);
+         for (String name : new String[]{"corleone1", "corleone2"}) {
+            StructureScanner.StructurePattern corleone = StructureScanner.loadedPatterns.get(name);
+            if (corleone != null && !activePatterns.contains(corleone)) activePatterns.add(corleone);
+         }
       }
       if (checkGoldenDragon) {
-         StructureScanner.StructurePattern gdrag = StructureScanner.loadedPatterns.get("goldendragon1");
-         if (gdrag != null) activePatterns.add(gdrag);
+         for (String name : new String[]{"goldendragon1", "gdrag2", "gdrag"}) {
+            StructureScanner.StructurePattern gdrag = StructureScanner.loadedPatterns.get(name);
+            if (gdrag != null && !activePatterns.contains(gdrag)) activePatterns.add(gdrag);
+         }
       }
 
       for (Map.Entry<String, StructureScanner.StructurePattern> entry : StructureScanner.loadedPatterns.entrySet()) {
          String key = entry.getKey();
          if (!key.startsWith("corleone") &&
              !key.startsWith("goldendragon") &&
+             !key.startsWith("gdrag") &&
              !key.equalsIgnoreCase("golden dragon") && !key.equalsIgnoreCase("bugged") &&
              !activePatterns.contains(entry.getValue())) {
             activePatterns.add(entry.getValue());
@@ -276,9 +280,13 @@ public class StructureFinder {
 
          // Accuracy is measured against the full structure template
          int accuracy = total > 0 ? (int) Math.round(((double) matched / (double) total) * 100.0) : 0;
-         int minRequiredMatches = Math.max(20, (int) Math.round(total * 0.40));
-         int minLoadedThreshold = Math.max(30, (int) Math.round(total * 0.45));
-         if (loadedTotal >= minLoadedThreshold && matched >= minRequiredMatches && accuracy >= 40 && accuracy > highestAccuracy) {
+         int reqThreshold = 40;
+         if (pat.name != null && (pat.name.toLowerCase().contains("gdrag") || pat.name.toLowerCase().contains("dragon") || pat.name.toLowerCase().contains("gold"))) {
+            reqThreshold = 75;
+         }
+         int minRequiredMatches = Math.max(20, (int) Math.round(total * (reqThreshold / 100.0)));
+         int minLoadedThreshold = Math.max(30, (int) Math.round(total * Math.min(0.70, reqThreshold / 100.0)));
+         if (loadedTotal >= minLoadedThreshold && matched >= minRequiredMatches && accuracy >= reqThreshold && accuracy > highestAccuracy) {
             highestAccuracy = accuracy;
             int minRotX = Math.min(getRotatedX(0, 0, rot), getRotatedX(pat.sizeX - 1, pat.sizeZ - 1, rot));
             int maxRotX = Math.max(getRotatedX(0, 0, rot), getRotatedX(pat.sizeX - 1, pat.sizeZ - 1, rot));
@@ -341,6 +349,15 @@ public class StructureFinder {
          return true;
       }
       if (id.contains("spruce") && stId.contains("spruce")) {
+         return true;
+      }
+      if (id.contains("sandstone") && stId.contains("sandstone") && !id.contains("red_") && !stId.contains("red_")) {
+         return true;
+      }
+      if (id.contains("red_sandstone") && stId.contains("red_sandstone")) {
+         return true;
+      }
+      if (id.contains("wool") && stId.contains("wool")) {
          return true;
       }
       // Catwalk terracotta tolerance: In Skyblock, griefed or naturally generated catwalks can have mixed terracotta or smooth stone
