@@ -280,20 +280,10 @@ public class ParticleESP {
                            double relX = centerX - camPos.x;
                            double relY = centerY - camPos.y;
                            double relZ = centerZ - camPos.z;
-                           float dist = (float)Math.sqrt(relX * relX + relY * relY + relZ * relZ);
-                           float scale = 1.0F;
-                           if (dist > 0.2F) {
-                              scale = 0.2F / dist;
-                           }
-
-                           double scaledX = relX * (double)scale;
-                           double scaledY = relY * (double)scale;
-                           double scaledZ = relZ * (double)scale;
-                           float scaledRadius = radius * scale;
                            if (isFlat) {
-                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)scaledX, (float)scaledY, (float)scaledZ, scaledRadius, r, g, b, 0.85F, 2.0F));
+                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, radius, r, g, b, 0.85F, 2.0F));
                            } else {
-                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawSphere(pose.pose(), vertexConsumer, (float)scaledX, (float)scaledY, (float)scaledZ, scaledRadius, r, g, b, 0.85F, 2.0F));
+                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawSphere(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, radius, r, g, b, 0.85F, 2.0F));
                            }
 
                            float nameOffset = radius + 0.4F;
@@ -404,19 +394,9 @@ public class ParticleESP {
                            double relX = centerX - camPos.x;
                            double relY = minY - camPos.y;
                            double relZ = centerZ - camPos.z;
-                           float dist = (float)Math.sqrt(relX * relX + relY * relY + relZ * relZ);
-                           float scale = 1.0F;
-                           if (dist > 0.2F) {
-                              scale = 0.2F / dist;
-                           }
-
-                           double scaledX = relX * (double)scale;
-                           double scaledY = relY * (double)scale;
-                           double scaledZ = relZ * (double)scale;
-                           float scaledRadius = radius * scale;
-                           float scaledHs = 0.25F * scale;
-                           collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)scaledX, (float)scaledY, (float)scaledZ, scaledRadius, r, g, b, 0.85F, 2.0F));
-                           AABB box = new AABB(scaledX - (double)scaledHs, scaledY - (double)scaledHs, scaledZ - (double)scaledHs, scaledX + (double)scaledHs, scaledY + (double)scaledHs, scaledZ + (double)scaledHs);
+                           float hs = 0.25F;
+                           collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, radius, r, g, b, 0.85F, 2.0F));
+                           AABB box = new AABB(relX - (double)hs, relY - (double)hs, relZ - (double)hs, relX + (double)hs, relY + (double)hs, relZ + (double)hs);
                            collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85F, 1.5F));
                            BomboRenderUtils.drawText(poseStack, collector, "§e[Hotspot] §f" + firstType + " (" + cluster.size() + ")", (float)relX, (float)relY + 0.4F, (float)relZ, colorInt, 0.022F, true, true);
                         }
@@ -425,7 +405,7 @@ public class ParticleESP {
                      int count = 0;
 
                      for(ParticleTracker.ParticleEntry entry : points) {
-                        if (count++ > 150) {
+                        if (count++ > 300) {
                            break;
                         }
 
@@ -436,19 +416,10 @@ public class ParticleESP {
                         double relX = entry.x - camPos.x;
                         double relY = entry.y - camPos.y;
                         double relZ = entry.z - camPos.z;
-                        float dist = (float)Math.sqrt(relX * relX + relY * relY + relZ * relZ);
-                        float scale = 1.0F;
-                        if (dist > 0.2F) {
-                           scale = 0.2F / dist;
-                        }
-
-                        double scaledX = relX * (double)scale;
-                        double scaledY = relY * (double)scale;
-                        double scaledZ = relZ * (double)scale;
-                        float scaledHs = 0.15F * scale;
-                        AABB box = new AABB(scaledX - (double)scaledHs, scaledY - (double)scaledHs, scaledZ - (double)scaledHs, scaledX + (double)scaledHs, scaledY + (double)scaledHs, scaledZ + (double)scaledHs);
+                        double hs = 0.12;
+                        AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
                         collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85F, 1.5F));
-                        BomboRenderUtils.drawText(poseStack, collector, "§f" + entry.type, (float)relX, (float)relY + 0.3F, (float)relZ, colorInt, 0.018F, true, true);
+                        BomboRenderUtils.drawText(poseStack, collector, "§f" + entry.type, (float)relX, (float)relY + 0.25F, (float)relZ, colorInt, 0.018F, true, true);
                      }
                   }
                }

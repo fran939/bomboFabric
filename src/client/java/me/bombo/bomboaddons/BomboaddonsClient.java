@@ -3842,6 +3842,10 @@ public class BomboaddonsClient implements ClientModInitializer {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: StructureScanner")) {
                StructureScanner.render(context);
             } catch (Throwable ignored) {}
+
+            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: ParticleESP")) {
+               ParticleESP.render(context);
+            } catch (Throwable ignored) {}
          });
          HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "main_hud"), (graphics, deltaTracker) -> {
             if (BomboConfig.get().tracerTestMode) {
@@ -5572,7 +5576,14 @@ public class BomboaddonsClient implements ClientModInitializer {
 
       // Specialized inspection for Axolotl
       if (target instanceof net.minecraft.world.entity.animal.axolotl.Axolotl axolotl) {
-         String varName = axolotl.getVariant().getName().toUpperCase(Locale.ROOT);
+         String varName = "LUCY";
+         try {
+            varName = axolotl.getVariant().name().toUpperCase(Locale.ROOT);
+         } catch (Throwable ignored) {
+            try {
+               varName = axolotl.getVariant().getName().toUpperCase(Locale.ROOT);
+            } catch (Throwable ignored2) {}
+         }
          src.sendFeedback(Component.literal(" §7Axolotl Variant: §e" + varName));
          ClickEvent addAxoHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add axolotl:" + varName.toLowerCase(Locale.ROOT) + " GOLD");
          if (addAxoHl != null) {
