@@ -4546,6 +4546,13 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
          }
 
+         if (s.replaceGrayCarpetDwarven) {
+            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: DwarvenCarpetReplacer")) {
+               DwarvenCarpetReplacer.onTick();
+            } catch (Throwable ignored) {
+            }
+         }
+
          if (s.anvilAutoCombineEnabled && !s.hideCheats && (client.screen instanceof net.minecraft.client.gui.screens.inventory.AnvilScreen || (client.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> acs && (acs.getTitle().getString().toLowerCase().contains("anvil") || acs.getTitle().getString().toLowerCase().contains("combine"))))) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: AutoCombine")) {
                AutoCombine.onTick();

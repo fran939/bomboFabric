@@ -18,6 +18,9 @@ public class BlockRenderDispatcherMixin {
       argsOnly = true
    )
    private BlockState modifyRenderState(BlockState state, BlockQuadOutput quadOutput, float f1, float f2, float f3, BlockAndTintGetter level, BlockPos pos) {
-      return FuckDiorite.inDungeonsOrPrivateIsland ? FuckDiorite.checkAndReplace(pos, state) : state;
+      if (FuckDiorite.inDungeonsOrPrivateIsland) {
+         return FuckDiorite.checkAndReplace(pos, state);
+      }
+      return me.bombo.bomboaddons.DwarvenCarpetReplacer.checkAndReplace(state);
    }
 }

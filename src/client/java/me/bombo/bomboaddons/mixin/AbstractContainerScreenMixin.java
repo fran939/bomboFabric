@@ -285,37 +285,58 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          }
 
          if (BomboConfig.get().hoppityWarp && this.hoveredSlot != null && this.hoveredSlot.hasItem() && event.button() == 0) {
-            String screenTitle = this.getTitle().getString();
-            if (screenTitle != null && screenTitle.contains("Hoppity's Collection")) {
+            String screenTitle = net.minecraft.ChatFormatting.stripFormatting(this.getTitle().getString());
+            if (screenTitle != null && screenTitle.toLowerCase(java.util.Locale.ROOT).contains("hoppity")) {
                ItemStack stack = this.hoveredSlot.getItem();
                String targetWarp = null;
                for (Component c : stack.getTooltipLines(TooltipContext.of(Minecraft.getInstance().level), Minecraft.getInstance().player, Default.NORMAL)) {
                   String line = net.minecraft.ChatFormatting.stripFormatting(c.getString()).toLowerCase(java.util.Locale.ROOT);
-                  if (line.contains("moonglade marsh resident")) {
+                  if (line.contains("crimson") || line.contains("isle resident") || line.contains("kuudra") || line.contains("dragontail") || line.contains("scarleton") || line.contains("smoldering") || line.contains("wasteland") || line.contains("ashfang") || line.contains("volcano") || line.contains("bastion")) {
+                     targetWarp = "crimson";
+                     break;
+                  } else if (line.contains("moonglade")) {
                      targetWarp = "moonglade";
                      break;
-                  } else if (line.contains("oasis resident")) {
-                     targetWarp = "oasis";
-                     break;
-                  } else if (line.contains("mushroom gorge resident")) {
+                  } else if (line.contains("oasis") || line.contains("mushroom gorge") || line.contains("gorge resident") || line.contains("desert settlement") || line.contains("desert resident")) {
                      targetWarp = "desert";
                      break;
-                  } else if (line.contains("spider's den resident") || line.contains("spiders den resident")) {
+                  } else if (line.contains("spider")) {
                      targetWarp = "spider";
                      break;
-                  } else if (line.contains("the barn resident") || line.contains("barn resident")) {
+                  } else if (line.contains("the barn") || line.contains("barn resident") || line.contains("windmill")) {
                      targetWarp = "barn";
                      break;
-                  } else if (line.contains("birch park resident") || line.contains("spruce woods resident") || line.contains("dark thicket resident") || line.contains("savanna woodland resident") || line.contains("jungle island resident") || line.contains("howling cave resident") || line.contains("park resident")) {
-                     targetWarp = "park";
+                  } else if (line.contains("end resident") || line.contains("dragon's nest") || line.contains("void sepulture") || line.contains("zealot")) {
+                     targetWarp = "end";
                      break;
-                  } else if (line.contains("dragon's lair resident") || line.contains("goblin holdout resident") || line.contains("precursor remnants resident") || line.contains("jungle resident") || line.contains("crystal hollows resident")) {
+                  } else if (line.contains("garden resident")) {
+                     targetWarp = "garden";
+                     break;
+                  } else if (line.contains("gold mine")) {
+                     targetWarp = "gold";
+                     break;
+                  } else if (line.contains("deep caverns") || line.contains("gunpowder") || line.contains("lapis quarry") || line.contains("pigman") || line.contains("slimehill") || line.contains("diamond reserve") || line.contains("obsidian sanctuary")) {
+                     targetWarp = "deep";
+                     break;
+                  } else if (line.contains("dragon's lair") || line.contains("goblin holdout") || line.contains("precursor") || line.contains("crystal hollows") || line.contains("mineshaft") || line.contains("glacite")) {
                      targetWarp = "ch";
                      break;
-                  } else if (line.contains("mithril deposits resident") || line.contains("lava springs resident") || line.contains("royal mines resident") || line.contains("cliffside veins resident") || line.contains("rampart's quarry resident") || line.contains("dwarven village resident") || line.contains("the mist resident") || line.contains("dwarven mines resident") || line.contains("mines resident")) {
+                  } else if (line.contains("dwarven") || line.contains("royal mines") || line.contains("cliffside") || line.contains("rampart") || line.contains("the mist") || line.contains("lava springs") || line.contains("mithril deposits")) {
                      targetWarp = "mines";
                      break;
-                  } else if (line.contains("highland resident") || line.contains("village resident") || line.contains("farm resident") || line.contains("forest resident") || line.contains("mountain resident") || line.contains("ruins resident") || line.contains("graveyard resident") || line.contains("coal mine resident") || line.contains("wilderness resident") || line.contains("colosseum resident") || line.contains("hub resident")) {
+                  } else if (line.contains("birch") || line.contains("spruce") || line.contains("dark thicket") || line.contains("savanna woodland") || line.contains("jungle") || line.contains("howling cave") || line.contains("park resident")) {
+                     targetWarp = "park";
+                     break;
+                  } else if (line.contains("rift") || line.contains("wyld woods") || line.contains("dreadfarm") || line.contains("black lagoon") || line.contains("west village") || line.contains("plaza")) {
+                     targetWarp = "wizard";
+                     break;
+                  } else if (line.contains("dungeon hub")) {
+                     targetWarp = "dungeon_hub";
+                     break;
+                  } else if (line.contains("jerry") || line.contains("winter island")) {
+                     targetWarp = "jerry";
+                     break;
+                  } else if (line.contains("hub resident") || line.contains("village resident") || line.contains("farm resident") || line.contains("forest resident") || line.contains("mountain resident") || line.contains("ruins resident") || line.contains("graveyard resident") || line.contains("coal mine") || line.contains("wilderness") || line.contains("colosseum") || line.contains("highland") || line.contains("castle") || line.contains("canvas")) {
                      targetWarp = "hub";
                      break;
                   }

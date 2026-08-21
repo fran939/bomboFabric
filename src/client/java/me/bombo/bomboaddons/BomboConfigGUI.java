@@ -2388,7 +2388,13 @@ extends Screen {
                         structureFinderH = -1;
                     }
 
-                    y1 = this.addBoolOption("Dwarven Red Carpets", s.replaceGrayCarpetDwarven, v -> s.replaceGrayCarpetDwarven = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Dwarven Red Carpets", s.replaceGrayCarpetDwarven, v -> {
+                        s.replaceGrayCarpetDwarven = v;
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.levelRenderer != null) {
+                            mc.levelRenderer.allChanged();
+                        }
+                    }, col1X, col1W, y1);
 
                     int y2 = contentBaseY + 24 - (int)this.scrollAmount;
                     y2 = this.addColorCycleButton("Lapis Outline Color", s.lapisOutlineColor, v -> {
@@ -4025,6 +4031,8 @@ extends Screen {
                         g.text(this.font, "§fColor:", contentX, curY + 6, -1);
                         curY += 24;
                         curY = this.drawOptionLabel(g, "§7Tracer", contentX + 24, curY, -1, false);
+                        curY = this.drawOptionLabel(g, "§7Show Title On Spawn", contentX + 24, curY, -1, false);
+                        curY = this.drawOptionLabel(g, "§7Play Sound On Spawn", contentX + 24, curY, -1, false);
                         curY += 30; // Button offset
                     } else {
                         g.text(this.font, "§fMob Name:", contentX, curY + 6, -1);
