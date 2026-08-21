@@ -675,6 +675,16 @@ public class HighlightESP {
             String colName = dye != null ? dye.getName().toLowerCase(Locale.ROOT) : "default";
             return colName.contains(variantReq);
          }
+          if (entity instanceof net.minecraft.world.entity.animal.frog.Frog frog) {
+             String variantName = "";
+             try {
+                var vKey = frog.getVariant().unwrapKey();
+                if (vKey.isPresent()) {
+                   variantName = vKey.get().location().getPath().toLowerCase(Locale.ROOT);
+                }
+             } catch (Throwable ignored) {}
+             return variantName.contains(variantReq);
+          }
       }
 
       if (typeStr.contains(cleanTarget)) return true;

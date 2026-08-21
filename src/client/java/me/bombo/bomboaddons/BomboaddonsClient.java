@@ -5548,6 +5548,22 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
       }
 
+      // Specialized inspection for Frog
+      if (target instanceof net.minecraft.world.entity.animal.frog.Frog frog) {
+         String variantName = "TEMPERATE";
+         try {
+            var vKey = frog.getVariant().unwrapKey();
+            if (vKey.isPresent()) {
+               variantName = vKey.get().location().getPath().toUpperCase(Locale.ROOT);
+            }
+         } catch (Throwable ignored) {}
+         src.sendFeedback(Component.literal(" §7Frog Variant: §e" + variantName));
+         ClickEvent addFrogHl = LF.createClickEventRobust("RUN_COMMAND", "/b highlight add frog:" + variantName.toLowerCase(Locale.ROOT) + " GOLD");
+         if (addFrogHl != null) {
+            src.sendFeedback(Component.literal(" §a[+ Highlight " + variantName + " Frog]").withStyle(s -> s.withClickEvent(addFrogHl)));
+         }
+      }
+
       // Equipment Inspection
       if (target instanceof net.minecraft.world.entity.LivingEntity living) {
          StringBuilder equipStr = new StringBuilder();
