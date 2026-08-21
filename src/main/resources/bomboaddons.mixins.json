@@ -2,12 +2,11 @@
 	"required": true,
 	"package": "me.bombo.bomboaddons.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"mixins": [
+	"mixins": [],
+	"client": [
 		"BlockStateBaseMixin",
 		"LeavesBlockMixin",
-		"FallingBlockMixin"
-	],
-	"client": [
+		"FallingBlockMixin",
 		"AbstractContainerScreenAccessor",
 		"AbstractContainerScreenMixin",
 		"AbstractSoundInstanceMixin",
