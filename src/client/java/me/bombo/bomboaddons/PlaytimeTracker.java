@@ -49,7 +49,7 @@ public class PlaytimeTracker {
          username = mc.getUser().getName().toLowerCase(Locale.ROOT);
       }
 
-      return new File(mc.gameDirectory, "config/bomboaddons/bombo_playtime_" + username + ".json");
+      return new File(mc.gameDirectory, "config/bombo/bombo_playtime_" + username + ".json");
    }
 
    public static void load() {
@@ -73,18 +73,6 @@ public class PlaytimeTracker {
          }
       }
 
-      File oldBomboUserFile = new File(mc.gameDirectory, "config/bombo/bombo_playtime_" + username + ".json");
-      if (oldBomboUserFile.exists() && !userFile.exists()) {
-         try {
-            if (!userFile.getParentFile().exists()) {
-               userFile.getParentFile().mkdirs();
-            }
-            Files.move(oldBomboUserFile.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-         } catch (Exception e) {
-            e.printStackTrace();
-         }
-      }
-
       if (!userFile.exists() && SAVE_FILE.exists()) {
          try {
             Files.copy(SAVE_FILE.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -102,13 +90,13 @@ public class PlaytimeTracker {
             try {
                Type type = (new TypeToken<Map<String, AreaData>>() {
                }).getType();
-               Map<String, AreaData> loaded = (Map)GSON.fromJson(reader, type);
+               Map<String, AreaData> loaded = (Map) GSON.fromJson(reader, type);
                if (loaded != null) {
                   areaDataMap = new HashMap();
                   loaded.forEach((k, v) -> {
                      String norm = normalizeAreaName(k);
                      if (areaDataMap.containsKey(norm)) {
-                        mergeData((AreaData)areaDataMap.get(norm), v);
+                        mergeData((AreaData) areaDataMap.get(norm), v);
                      } else {
                         areaDataMap.put(norm, v);
                      }
@@ -136,21 +124,23 @@ public class PlaytimeTracker {
          }
       }
 
-      // Fetch cloud backup from server to restore / merge if local file is missing or out of date
+      // Fetch cloud backup from server to restore / merge if local file is missing or
+      // out of date
       final String finalTargetUser = username;
       if (!finalTargetUser.equals("default")) {
          CompletableFuture.runAsync(() -> {
             try {
                String apiUrl = BomboApiUrl.getApiUrl("/playtime/" + finalTargetUser);
                URL url = (new URI(apiUrl)).toURL();
-               HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+               HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                conn.setRequestMethod("GET");
                conn.setConnectTimeout(5000);
                conn.setReadTimeout(5000);
                int code = conn.getResponseCode();
                if (code == 200) {
                   try (java.io.InputStream is = conn.getInputStream();
-                       java.io.InputStreamReader isr = new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8)) {
+                        java.io.InputStreamReader isr = new java.io.InputStreamReader(is,
+                              java.nio.charset.StandardCharsets.UTF_8)) {
                      com.google.gson.JsonObject cloudObj = GSON.fromJson(isr, com.google.gson.JsonObject.class);
                      if (cloudObj != null && cloudObj.has("areaDataMap")) {
                         com.google.gson.JsonObject areas = cloudObj.getAsJsonObject("areaDataMap");
@@ -193,12 +183,14 @@ public class PlaytimeTracker {
    private static void mergeData(AreaData target, AreaData source) {
       target.totalTime += source.totalTime;
       target.afkTime += source.afkTime;
-      source.dailyTime.forEach((date, time) -> target.dailyTime.put(date, (Long)target.dailyTime.getOrDefault(date, 0L) + time));
-      source.dailyAfk.forEach((date, time) -> target.dailyAfk.put(date, (Long)target.dailyAfk.getOrDefault(date, 0L) + time));
+      source.dailyTime
+            .forEach((date, time) -> target.dailyTime.put(date, (Long) target.dailyTime.getOrDefault(date, 0L) + time));
+      source.dailyAfk
+            .forEach((date, time) -> target.dailyAfk.put(date, (Long) target.dailyAfk.getOrDefault(date, 0L) + time));
       source.subAreas.forEach((subName, subData) -> {
          String normSub = normalizeAreaName(subName);
          if (target.subAreas.containsKey(normSub)) {
-            mergeData((AreaData)target.subAreas.get(normSub), subData);
+            mergeData((AreaData) target.subAreas.get(normSub), subData);
          } else {
             target.subAreas.put(normSub, subData);
          }
@@ -208,12 +200,12 @@ public class PlaytimeTracker {
 
    private static void migrateMenuData() {
       if (areaDataMap.containsKey("Main Menu") || areaDataMap.containsKey("Multiplayer Menu")) {
-         AreaData menuData = (AreaData)areaDataMap.computeIfAbsent("Menu", (k) -> new AreaData());
-         String[] legacyNames = new String[]{"Main Menu", "Multiplayer Menu"};
+         AreaData menuData = (AreaData) areaDataMap.computeIfAbsent("Menu", (k) -> new AreaData());
+         String[] legacyNames = new String[] { "Main Menu", "Multiplayer Menu" };
 
-         for(String oldName : legacyNames) {
+         for (String oldName : legacyNames) {
             if (areaDataMap.containsKey(oldName)) {
-               AreaData oldData = (AreaData)areaDataMap.remove(oldName);
+               AreaData oldData = (AreaData) areaDataMap.remove(oldName);
                mergeData(menuData, oldData);
                menuData.subAreas.put(oldName, oldData);
             }
@@ -223,13 +215,14 @@ public class PlaytimeTracker {
    }
 
    private static void migrateFarmingIslandsData() {
-      if (areaDataMap.containsKey("The Barn") || areaDataMap.containsKey("Barn") || areaDataMap.containsKey("Mushroom Desert") || areaDataMap.containsKey("MushroomDesert")) {
-         AreaData farmingData = (AreaData)areaDataMap.computeIfAbsent("Farming Islands", (k) -> new AreaData());
-         String[] legacyNames = new String[]{"The Barn", "Barn", "Mushroom Desert", "MushroomDesert"};
+      if (areaDataMap.containsKey("The Barn") || areaDataMap.containsKey("Barn")
+            || areaDataMap.containsKey("Mushroom Desert") || areaDataMap.containsKey("MushroomDesert")) {
+         AreaData farmingData = (AreaData) areaDataMap.computeIfAbsent("Farming Islands", (k) -> new AreaData());
+         String[] legacyNames = new String[] { "The Barn", "Barn", "Mushroom Desert", "MushroomDesert" };
 
-         for(String oldName : legacyNames) {
+         for (String oldName : legacyNames) {
             if (areaDataMap.containsKey(oldName)) {
-               AreaData oldData = (AreaData)areaDataMap.remove(oldName);
+               AreaData oldData = (AreaData) areaDataMap.remove(oldName);
                mergeData(farmingData, oldData);
                String normName = oldName;
                if (oldName.equalsIgnoreCase("Barn")) {
@@ -248,13 +241,14 @@ public class PlaytimeTracker {
    }
 
    private static void migrateKuudraData() {
-      if (areaDataMap.containsKey("Kuudra") || areaDataMap.containsKey("T1") || areaDataMap.containsKey("T2") || areaDataMap.containsKey("T3") || areaDataMap.containsKey("T4") || areaDataMap.containsKey("T5")) {
-         AreaData kuudraData = (AreaData)areaDataMap.computeIfAbsent("Kuudra's Hollow", (k) -> new AreaData());
-         String[] legacyNames = new String[]{"Kuudra", "T1", "T2", "T3", "T4", "T5"};
+      if (areaDataMap.containsKey("Kuudra") || areaDataMap.containsKey("T1") || areaDataMap.containsKey("T2")
+            || areaDataMap.containsKey("T3") || areaDataMap.containsKey("T4") || areaDataMap.containsKey("T5")) {
+         AreaData kuudraData = (AreaData) areaDataMap.computeIfAbsent("Kuudra's Hollow", (k) -> new AreaData());
+         String[] legacyNames = new String[] { "Kuudra", "T1", "T2", "T3", "T4", "T5" };
 
-         for(String oldName : legacyNames) {
+         for (String oldName : legacyNames) {
             if (areaDataMap.containsKey(oldName)) {
-               AreaData oldData = (AreaData)areaDataMap.remove(oldName);
+               AreaData oldData = (AreaData) areaDataMap.remove(oldName);
                mergeData(kuudraData, oldData);
                String normName = oldName;
                if (oldName.equalsIgnoreCase("Kuudra")) {
@@ -270,20 +264,23 @@ public class PlaytimeTracker {
 
    private static void migrateUnknownData() {
       if (areaDataMap.containsKey("Unknown")) {
-         AreaData unknownData = (AreaData)areaDataMap.get("Unknown");
+         AreaData unknownData = (AreaData) areaDataMap.get("Unknown");
          if (unknownData != null && unknownData.subAreas != null && !unknownData.subAreas.isEmpty()) {
             List<String> migratedSubs = new ArrayList();
             unknownData.subAreas.forEach((subNamex, subDatax) -> {
                String mappedArea = SkyblockUtils.mapSubAreaToMainArea(subNamex);
                if (!mappedArea.equals("Unknown")) {
-                  AreaData targetArea = (AreaData)areaDataMap.computeIfAbsent(normalizeAreaName(mappedArea), (k) -> new AreaData());
+                  AreaData targetArea = (AreaData) areaDataMap.computeIfAbsent(normalizeAreaName(mappedArea),
+                        (k) -> new AreaData());
                   targetArea.totalTime += subDatax.totalTime;
                   targetArea.afkTime += subDatax.afkTime;
-                  subDatax.dailyTime.forEach((date, time) -> targetArea.dailyTime.put(date, (Long)targetArea.dailyTime.getOrDefault(date, 0L) + time));
-                  subDatax.dailyAfk.forEach((date, time) -> targetArea.dailyAfk.put(date, (Long)targetArea.dailyAfk.getOrDefault(date, 0L) + time));
+                  subDatax.dailyTime.forEach((date, time) -> targetArea.dailyTime.put(date,
+                        (Long) targetArea.dailyTime.getOrDefault(date, 0L) + time));
+                  subDatax.dailyAfk.forEach((date, time) -> targetArea.dailyAfk.put(date,
+                        (Long) targetArea.dailyAfk.getOrDefault(date, 0L) + time));
                   String normSub = normalizeAreaName(subNamex);
                   if (targetArea.subAreas.containsKey(normSub)) {
-                     mergeData((AreaData)targetArea.subAreas.get(normSub), subDatax);
+                     mergeData((AreaData) targetArea.subAreas.get(normSub), subDatax);
                   } else {
                      targetArea.subAreas.put(normSub, subDatax);
                   }
@@ -293,17 +290,17 @@ public class PlaytimeTracker {
 
             });
 
-            for(String subName : migratedSubs) {
-               AreaData subData = (AreaData)unknownData.subAreas.remove(subName);
+            for (String subName : migratedSubs) {
+               AreaData subData = (AreaData) unknownData.subAreas.remove(subName);
                if (subData != null) {
                   unknownData.totalTime = Math.max(0L, unknownData.totalTime - subData.totalTime);
                   unknownData.afkTime = Math.max(0L, unknownData.afkTime - subData.afkTime);
                   subData.dailyTime.forEach((date, time) -> {
-                     long oldVal = (Long)unknownData.dailyTime.getOrDefault(date, 0L);
+                     long oldVal = (Long) unknownData.dailyTime.getOrDefault(date, 0L);
                      unknownData.dailyTime.put(date, Math.max(0L, oldVal - time));
                   });
                   subData.dailyAfk.forEach((date, time) -> {
-                     long oldVal = (Long)unknownData.dailyAfk.getOrDefault(date, 0L);
+                     long oldVal = (Long) unknownData.dailyAfk.getOrDefault(date, 0L);
                      unknownData.dailyAfk.put(date, Math.max(0L, oldVal - time));
                   });
                }
@@ -405,27 +402,27 @@ public class PlaytimeTracker {
 
       String area = normalizeAreaName(BomboaddonsClient.currentArea);
       String subArea = normalizeAreaName(BomboaddonsClient.currentSubArea);
-      AreaData data = (AreaData)areaDataMap.computeIfAbsent(area, (k) -> new AreaData());
+      AreaData data = (AreaData) areaDataMap.computeIfAbsent(area, (k) -> new AreaData());
       data.totalTime += delta;
       data.sessionTime += delta;
-      data.dailyTime.put(today, (Long)data.dailyTime.getOrDefault(today, 0L) + delta);
+      data.dailyTime.put(today, (Long) data.dailyTime.getOrDefault(today, 0L) + delta);
       if (isAfk) {
          data.afkTime += delta;
          data.sessionAfkTime += delta;
-         data.dailyAfk.put(today, (Long)data.dailyAfk.getOrDefault(today, 0L) + delta);
+         data.dailyAfk.put(today, (Long) data.dailyAfk.getOrDefault(today, 0L) + delta);
       }
 
       if (!subArea.equals("None") && !subArea.equalsIgnoreCase(area)) {
          String mappedMain = normalizeAreaName(SkyblockUtils.mapSubAreaToMainArea(subArea));
          if (mappedMain.equals("Unknown") || mappedMain.equalsIgnoreCase(area)) {
-            AreaData subData = (AreaData)data.subAreas.computeIfAbsent(subArea, (k) -> new AreaData());
+            AreaData subData = (AreaData) data.subAreas.computeIfAbsent(subArea, (k) -> new AreaData());
             subData.totalTime += delta;
             subData.sessionTime += delta;
-            subData.dailyTime.put(today, (Long)subData.dailyTime.getOrDefault(today, 0L) + delta);
+            subData.dailyTime.put(today, (Long) subData.dailyTime.getOrDefault(today, 0L) + delta);
             if (isAfk) {
                subData.afkTime += delta;
                subData.sessionAfkTime += delta;
-               subData.dailyAfk.put(today, (Long)subData.dailyAfk.getOrDefault(today, 0L) + delta);
+               subData.dailyAfk.put(today, (Long) subData.dailyAfk.getOrDefault(today, 0L) + delta);
             }
          }
       }
@@ -503,7 +500,7 @@ public class PlaytimeTracker {
                String apiUrl = BomboApiUrl.getApiUrl("/playtime");
                URL url = (new URI(apiUrl)).toURL();
                Bomboaddons.logApiRequest(apiUrl);
-               HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+               HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                conn.setRequestMethod("POST");
                conn.setRequestProperty("Content-Type", "application/json");
                conn.setDoOutput(true);
@@ -533,7 +530,8 @@ public class PlaytimeTracker {
                if (responseCode != 200) {
                   mc.execute(() -> {
                      if (mc.player != null) {
-                        mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §cFailed to sync playtime data (HTTP " + responseCode + ")"));
+                        mc.player.sendSystemMessage(Component.literal(
+                              "§8[§bBomboAddons§8] §cFailed to sync playtime data (HTTP " + responseCode + ")"));
                      }
 
                   });
@@ -542,7 +540,8 @@ public class PlaytimeTracker {
                DebugUtils.debug("playtime", "Cloud sync failed: " + e.getMessage());
                mc.execute(() -> {
                   if (mc.player != null) {
-                     mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getMessage()));
+                     mc.player.sendSystemMessage(
+                           Component.literal("§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getMessage()));
                   }
 
                });
@@ -560,7 +559,7 @@ public class PlaytimeTracker {
 
    static {
       OLD_SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bombo_playtime.json");
-      SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bomboaddons/bombo_playtime.json");
+      SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bombo/bombo_playtime.json");
       GSON = (new GsonBuilder()).setPrettyPrinting().create();
       areaDataMap = new HashMap();
       currentTrackedUser = null;

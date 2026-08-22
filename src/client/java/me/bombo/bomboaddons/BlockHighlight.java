@@ -93,11 +93,13 @@ public class BlockHighlight {
       }
 
       public boolean matches(BlockState state) {
-         if (state == null) return false;
+         if (state == null)
+            return false;
          Identifier key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
          String rawId = key.toString().toLowerCase();
          String path = key.getPath().toLowerCase();
-         if (!rawId.contains(blockId) && !path.contains(blockId)) return false;
+         if (!rawId.contains(blockId) && !path.contains(blockId))
+            return false;
          if (requiredProps != null && !requiredProps.isEmpty()) {
             String stateStr = state.toString().toLowerCase();
             String[] reqs = requiredProps.split("[,;]");
@@ -142,30 +144,37 @@ public class BlockHighlight {
 
       for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
          for (int cz = minChunkZ; cz <= maxChunkZ; ++cz) {
-            if (!level.hasChunk(cx, cz)) continue;
+            if (!level.hasChunk(cx, cz))
+               continue;
             net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
-            if (chunk == null) continue;
+            if (chunk == null)
+               continue;
 
             net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
             for (int sIdx = 0; sIdx < sections.length; ++sIdx) {
                net.minecraft.world.level.chunk.LevelChunkSection sec = sections[sIdx];
-               if (sec == null || sec.hasOnlyAir()) continue;
+               if (sec == null || sec.hasOnlyAir())
+                  continue;
 
                int secMinY = chunk.getSectionYFromSectionIndex(sIdx) << 4;
-               if (secMinY + 15 < startY || secMinY > endY) continue;
+               if (secMinY + 15 < startY || secMinY > endY)
+                  continue;
 
                int baseBlockX = cx << 4;
                int baseBlockZ = cz << 4;
 
                for (int lx = 0; lx < 16; ++lx) {
                   int bx = baseBlockX + lx;
-                  if (bx < px - radius || bx > px + radius) continue;
+                  if (bx < px - radius || bx > px + radius)
+                     continue;
                   for (int lz = 0; lz < 16; ++lz) {
                      int bz = baseBlockZ + lz;
-                     if (bz < pz - radius || bz > pz + radius) continue;
+                     if (bz < pz - radius || bz > pz + radius)
+                        continue;
                      for (int ly = 0; ly < 16; ++ly) {
                         int by = secMinY + ly;
-                        if (by < startY || by > endY) continue;
+                        if (by < startY || by > endY)
+                           continue;
                         BlockState state = sec.getBlockState(lx, ly, lz);
                         if (!state.isAir()) {
                            for (ParsedBlockRule rule : activeRules) {
@@ -228,7 +237,7 @@ public class BlockHighlight {
                      float g = (float) (colorHex >> 8 & 255) / 255.0F;
                      float b = (float) (colorHex & 255) / 255.0F;
                      float a = 1.0F;
-                     boolean throughWalls = !s.hideCheats;
+                     boolean throughWalls = !s.hideCheats && (info.throughWalls || s.blockHighlightsEnabled);
                      RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
 
                      float scale = (throughWalls && dist > 0.2) ? (float) (0.2 / dist) : 1.0F;
