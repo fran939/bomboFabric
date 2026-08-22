@@ -228,7 +228,7 @@ public class BlockHighlight {
                      float g = (float) (colorHex >> 8 & 255) / 255.0F;
                      float b = (float) (colorHex & 255) / 255.0F;
                      float a = 1.0F;
-                     boolean throughWalls = !s.hideCheats && (info.throughWalls || s.blockHighlightsEnabled);
+                     boolean throughWalls = !s.hideCheats;
                      RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
 
                      float scale = (throughWalls && dist > 0.2) ? (float) (0.2 / dist) : 1.0F;

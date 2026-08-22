@@ -1630,8 +1630,14 @@ extends Screen {
                     break;
                 }
                 case 10: {
-                    curY = contentBaseY + 24 - (int)this.scrollAmount;
-                    this.addRenderableWidget(Button.builder(Component.literal("§eDump GUI Layout Debug to File"), b -> {
+                    int col1X = contentX;
+                    int col1W = (contentWidth - 20) / 2;
+                    int col2X = contentX + col1W + 20;
+                    int col2W = col1W;
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
+                    int y2 = contentBaseY + 24 - (int)this.scrollAmount;
+
+                    this.addRenderableWidget(Button.builder(Component.literal("§eDump GUI Debug to File"), b -> {
                         try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("bomboaddons_gui_debug.log"))) {
                             pw.println("=== BOMBOADDONS GUI DEBUG ===");
                             pw.println("selectedCategory: " + selectedCategory);
@@ -1648,12 +1654,14 @@ extends Screen {
                             e.printStackTrace();
                         }
                         me.bombo.bomboaddons.Bomboaddons.sendMessage("§a[BomboAddons] Dumped GUI debug to bomboaddons_gui_debug.log!");
-                    }).bounds(contentX, curY, 220, 20).build());
-                    curY += 26;
-                    curY = this.addBoolOption("MASTER DEBUG", s.debugMaster, v -> {
+                    }).bounds(col1X, y1, col1W, 20).build());
+                    y1 += 26;
+
+                    y1 = this.addBoolOption("MASTER DEBUG", s.debugMaster, v -> {
                         s.debugMaster = v;
-                    }, contentX, contentWidth, curY);
-                    int btnY = curY;
+                    }, col1X, col1W, y1);
+
+                    int btnY = y1;
                     this.addRenderableWidget(Button.builder(Component.literal("§a[Enable All Debug]"), btn -> {
                         s.debugChat = true;
                         s.debugGuis = true;
@@ -1664,9 +1672,10 @@ extends Screen {
                         s.debugMaster = true;
                         s.debugParticles = true;
                         s.debugCopyChat = true;
+                        s.dungeonSecretsDebug = true;
                         BomboConfig.save();
                         this.init();
-                    }).bounds(contentX, btnY, contentWidth / 2 - 5, 20).build());
+                    }).bounds(col1X, btnY, col1W / 2 - 2, 20).build());
                     this.addRenderableWidget(Button.builder(Component.literal("§c[Disable All Debug]"), btn -> {
                         s.debugMaster = false;
                         s.debugChat = false;
@@ -1688,90 +1697,97 @@ extends Screen {
                         s.debugReconnect = false;
                         s.performanceDebug = false;
                         s.debugCopyChat = false;
+                        s.dungeonSecretsDebug = false;
                         BomboConfig.save();
                         this.init();
-                    }).bounds(contentX + contentWidth / 2 + 5, btnY, contentWidth / 2 - 5, 20).build());
-                    curY += 28;
-                    curY = this.addBoolOption("Copy Chat Debug", s.debugCopyChat, v -> s.debugCopyChat = v, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Chat Debug", s.debugChat, v -> {
+                    }).bounds(col1X + col1W / 2 + 2, btnY, col1W / 2 - 2, 20).build());
+                    y1 += 28;
+
+                    y1 = this.addBoolOption("Copy Chat Debug", s.debugCopyChat, v -> s.debugCopyChat = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Chat Debug", s.debugChat, v -> {
                         s.debugChat = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Sounds Debug", s.debugSounds, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Sounds Debug", s.debugSounds, v -> {
                         s.debugSounds = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("GUIs Debug", s.debugGuis, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("GUIs Debug", s.debugGuis, v -> {
                         s.debugGuis = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Entities Debug", s.debugEntities, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Entities Debug", s.debugEntities, v -> {
                         s.debugEntities = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Command Debug", s.debugCommands, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Command Debug", s.debugCommands, v -> {
                         s.debugCommands = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Armor Swap Debug", s.debugArmor, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Armor Swap Debug", s.debugArmor, v -> {
                         s.debugArmor = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Debug Mode (Legacy)", s.debugMode, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Debug Mode (Legacy)", s.debugMode, v -> {
                         s.debugMode = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("API Debug", s.apiDebug, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("API Debug", s.apiDebug, v -> {
                         s.apiDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Pet Price Debug", s.petPriceDebug, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Pet Price Debug", s.petPriceDebug, v -> {
                         s.petPriceDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("API Chat Messages", s.apiChatMessages, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("API Chat Messages", s.apiChatMessages, v -> {
                         s.apiChatMessages = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("LB Debug", s.lbDebug, v -> {
+                    }, col1X, col1W, y1);
+                    y1 = this.addBoolOption("LB Debug", s.lbDebug, v -> {
                         s.lbDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Particle Debug", s.debugParticles, v -> {
-                        s.debugParticles = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("NPC Lore Debug", s.npcLoreDebug, v -> {
-                        s.npcLoreDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Composter Debug", s.composterDebug, v -> {
-                        s.composterDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Auto Fishing Debug", s.autoFishingDebug, v -> {
-                        s.autoFishingDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Croesus Debug", s.croesusDebug, v -> {
-                        s.croesusDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Auto Reconnect Debug", s.debugReconnect, v -> {
-                        s.debugReconnect = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Performance Debug", s.performanceDebug, v -> {
-                        s.performanceDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Keys Debug", s.debugKeys, v -> {
-                        s.debugKeys = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Daily Reward Debug", s.debugDailyReward, v -> {
-                        s.debugDailyReward = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Kuudra Debug Mode", s.kuudraDebug, v -> {
+                    }, col1X, col1W, y1);
+
+                    // Column 2
+                    y2 = this.addBoolOption("Dungeon Secrets Debug", s.dungeonSecretsDebug, v -> {
+                        s.dungeonSecretsDebug = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Kuudra Debug Mode", s.kuudraDebug, v -> {
                         s.kuudraDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Display ESP Enabled", s.displayEsp, v -> {
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Particle Debug", s.debugParticles, v -> {
+                        s.debugParticles = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("NPC Lore Debug", s.npcLoreDebug, v -> {
+                        s.npcLoreDebug = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Composter Debug", s.composterDebug, v -> {
+                        s.composterDebug = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Auto Fishing Debug", s.autoFishingDebug, v -> {
+                        s.autoFishingDebug = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Croesus Debug", s.croesusDebug, v -> {
+                        s.croesusDebug = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Auto Reconnect Debug", s.debugReconnect, v -> {
+                        s.debugReconnect = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Performance Debug", s.performanceDebug, v -> {
+                        s.performanceDebug = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Keys Debug", s.debugKeys, v -> {
+                        s.debugKeys = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Daily Reward Debug", s.debugDailyReward, v -> {
+                        s.debugDailyReward = v;
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Display ESP Enabled", s.displayEsp, v -> {
                         s.displayEsp = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Display Tracers", s.displayEspTracer, v -> {
+                    }, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Display Tracers", s.displayEspTracer, v -> {
                         s.displayEspTracer = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addColorCycleButton("Display Color", s.displayEspColor, v -> {
+                    }, col2X, col2W, y2);
+                    y2 = this.addColorCycleButton("Display Color", s.displayEspColor, v -> {
                         s.displayEspColor = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addFloatLabelSlider("Display Size", s.displayEspThickness, 0.5f, 5.0f, 0.5f, v -> {
+                    }, col2X, col2W, y2);
+                    y2 = this.addFloatLabelSlider("Display Size", s.displayEspThickness, 0.5f, 5.0f, 0.5f, v -> {
                         s.displayEspThickness = v.floatValue();
-                    }, contentX, contentWidth, curY);
-                    curY += 29;
-                    curY = this.addTextBox("Display ESP Filter", s.displayEspFilter, v -> {
+                    }, col2X, col2W, y2);
+                    y2 += 29;
+                    y2 = this.addTextBox("Display ESP Filter", s.displayEspFilter, v -> {
                         s.displayEspFilter = v;
-                    }, contentX, contentWidth, curY);
+                    }, col2X, col2W, y2);
                     break;
                 }
                 case 11: {
@@ -2196,9 +2212,6 @@ extends Screen {
                     curY = this.addBoolOption("Dungeon Secrets Tracker", s.dungeonSecretsTracker, v -> {
                         s.dungeonSecretsTracker = v;
                     }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Dungeon Secrets Debug", s.dungeonSecretsDebug, v -> {
-                        s.dungeonSecretsDebug = v;
-                    }, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Clear Info HUD", s.clearInfoHud, v -> {
                         s.clearInfoHud = v;
                     }, contentX, contentWidth, curY);
@@ -2561,16 +2574,19 @@ extends Screen {
                     curY = this.addColorCycleButton("Color", blockColorInput, v -> {
                         blockColorInput = v;
                     }, contentX, contentWidth, curY);
-                    int finalCurY = curY = this.addBoolOption("See Through Walls", blockThroughWallsInput, v -> {
-                        blockThroughWallsInput = v;
-                    }, contentX, contentWidth, curY);
+                    if (!s.hideCheats) {
+                        curY = this.addBoolOption("See Through Walls", blockThroughWallsInput, v -> {
+                            blockThroughWallsInput = v;
+                        }, contentX, contentWidth, curY);
+                    }
+                    int finalCurY = curY;
                     String addBtnText = editingBlockName != null ? "\u00a7e\u2714 Save Block Highlight" : "\u00a7a+ Add Block Highlight";
                     this.addRenderableWidget(Button.builder((Component)Component.literal((String)addBtnText), btn -> {
                         if (!blockNameInput.isEmpty()) {
                             if (editingBlockName != null) {
                                 s.blockHighlights.remove(editingBlockName);
                             }
-                            s.blockHighlights.put(blockNameInput.toLowerCase(), new BomboConfig.BlockHighlightInfo(blockColorInput.toUpperCase(), blockThroughWallsInput));
+                            s.blockHighlights.put(blockNameInput.toLowerCase(), new BomboConfig.BlockHighlightInfo(blockColorInput.toUpperCase(), s.hideCheats ? false : blockThroughWallsInput));
                             BomboConfig.save();
                             blockNameInput = "";
                             blockColorInput = "GOLD";
@@ -4093,11 +4109,13 @@ extends Screen {
                     y2 = this.drawOptionLabel(g, "\u00a77Pest Waypoints", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Remove Waypoint On Return", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Pest Waypoint Beacon", col2X + 24, y2, -1, false);
-                    g.text(this.font, "\u00a7fPest Waypoint Duration: \u00a7e" + (String)(BomboConfig.get().pestWaypointDuration == 0 ? "Infinite" : BomboConfig.get().pestWaypointDuration + "s"), col2X, (y2 += 24) + 4, -1, false);
+                    g.text(this.font, "\u00a7fPest Waypoint Duration: \u00a7e" + (String)(BomboConfig.get().pestWaypointDuration == 0 ? "Infinite" : BomboConfig.get().pestWaypointDuration + "s"), col2X, y2 + 4, -1, false);
+                    y2 += 24;
                     y2 = this.drawOptionLabel(g, "\u00a77Pest Tracers", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Cheese Tracers", col2X + 24, y2, -1, false);
-                    g.text(this.font, "\u00a7fPest Color:", col2X, (y2 += 24) + 4, -1);
-                    g.text(this.font, "\u00a7fPest Thickness: \u00a7e" + BomboConfig.get().pestEspThickness, col2X, (y2 += 24) + 4, -1);
+                    g.text(this.font, "\u00a7fPest Color:", col2X, y2 + 4, -1);
+                    y2 += 24;
+                    g.text(this.font, "\u00a7fPest Thickness: \u00a7e" + BomboConfig.get().pestEspThickness, col2X, y2 + 4, -1);
                     break;
                 }
                 case 4: {
@@ -4236,7 +4254,7 @@ extends Screen {
                         g.enableScissor(contentX + 26, generalHeaderY, contentX + contentWidth - 215, generalHeaderY + 20);
                         g.text(this.font, "\u00a76\u00a7lGeneral Highlights \u00a77(" + generalMobs.size() + ")", contentX + 26, generalHeaderY + 6, -22016, true);
                         g.disableScissor();
-                        g.fill(contentX + 16, generalHeaderY + 21, contentX + contentWidth, generalHeaderY + 22, 0x44888888);
+                        g.fill(contentX, generalHeaderY + 22, contentX + contentWidth - 215, generalHeaderY + 23, 0x44888888);
                     }
 
                     if (!isGeneralCollapsed) {
@@ -4251,7 +4269,7 @@ extends Screen {
                                     g.text(this.font, "  \u00a77• " + prefix + mobName, contentX + 24, itemY + 6, -1, false);
                                     g.disableScissor();
                                 }
-                                g.fill(contentX + 16, itemY + 20, contentX + contentWidth, itemY + 21, 0x33888888);
+                                g.fill(contentX, itemY + 21, contentX + contentWidth - 215, itemY + 22, 0x33888888);
                             }
                         }
                     }
@@ -4272,7 +4290,7 @@ extends Screen {
                         g.enableScissor(contentX + 26, bestiaryHeaderY, contentX + contentWidth - 215, bestiaryHeaderY + 20);
                         g.text(this.font, "\u00a73\u00a7lBestiary \u00a77(" + totalBestiaryMobs + " mobs in " + groupedBestiary.size() + " categories)", contentX + 26, bestiaryHeaderY + 6, -11184641, true);
                         g.disableScissor();
-                        g.fill(contentX + 16, bestiaryHeaderY + 21, contentX + contentWidth, bestiaryHeaderY + 22, 0x44888888);
+                        g.fill(contentX, bestiaryHeaderY + 22, contentX + contentWidth - 215, bestiaryHeaderY + 23, 0x44888888);
                     }
 
                     if (!isBestiaryParentCollapsed) {
@@ -4294,7 +4312,7 @@ extends Screen {
                                 g.enableScissor(contentX + 42, headerY, contentX + contentWidth - 215, headerY + 20);
                                 g.text(this.font, "\u00a76\u00a7l" + cat + " \u00a77(" + mobsInCat.size() + ")", contentX + 42, headerY + 6, -22016, true);
                                 g.disableScissor();
-                                g.fill(contentX + 16, headerY + 21, contentX + contentWidth, headerY + 22, 0x44888888);
+                                g.fill(contentX + 16, headerY + 22, contentX + contentWidth - 215, headerY + 23, 0x44888888);
                             }
 
                             if (!isCollapsed) {
@@ -4309,7 +4327,7 @@ extends Screen {
                                             g.text(this.font, "  \u00a77• " + prefix + mobName, contentX + 36, itemY + 6, -1, false);
                                             g.disableScissor();
                                         }
-                                        g.fill(contentX + 16, itemY + 20, contentX + contentWidth, itemY + 21, 0x33888888);
+                                        g.fill(contentX + 16, itemY + 21, contentX + contentWidth - 215, itemY + 22, 0x33888888);
                                     }
                                 }
                             }
@@ -4346,46 +4364,59 @@ extends Screen {
                     break;
                 }
                 case 10: {
-                    curY = contentBaseY + 24 - (int)this.scrollAmount;
-                    g.text(this.font, "§c§lDebug Settings", contentX, curY - 24, -43691, true);
-                    curY += 26; // Space for Dump button
-                    curY = this.drawOptionLabel(g, "§7MASTER DEBUG", contentX + 24, curY, -1, false);
-                    curY += 28; // Space for [Enable/Disable All Debug] buttons
-                    curY = this.drawOptionLabel(g, "§7Copy Chat Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "§7Chat Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "§7Sounds Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77GUIs Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Entities Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Command Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "§7Armor Swap Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Debug Mode (Legacy)", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77API Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Pet Price Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77API Chat Messages", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77LB Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Particle Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77NPC Lore Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "§7Composter Debug", contentX + 24, curY, -1, false);
+                    int col1X = contentX;
+                    int col1W = (contentWidth - 20) / 2;
+                    int col2X = contentX + col1W + 20;
+                    int y1 = contentBaseY + 24 - (int)this.scrollAmount;
+                    int y2 = contentBaseY + 24 - (int)this.scrollAmount;
 
-                    curY = this.drawOptionLabel(g, "\u00a77Auto Fishing Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Croesus Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Auto Reconnect Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Performance Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Keys Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Daily Reward Debug", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Kuudra Debug Mode", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Display ESP Enabled", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Display Tracers", contentX + 24, curY, -1, false);
-                    curY += 24;
-                    curY = this.drawOptionLabel(g, "§7Display ESP Filter", contentX + 24, curY, -1, false);
+                    g.text(this.font, "§c§lDebug Settings", contentX, y1 - 24, -43691, true);
+                    y1 += 26; // Dump button
+                    y1 = this.drawOptionLabel(g, "§7MASTER DEBUG", col1X + 24, y1, -1, false);
+                    y1 += 28; // [Enable/Disable All Debug] buttons
+                    y1 = this.drawOptionLabel(g, "§7Copy Chat Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Chat Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Sounds Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77GUIs Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Entities Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Command Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Armor Swap Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Debug Mode (Legacy)", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77API Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77Pet Price Debug", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77API Chat Messages", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "\u00a77LB Debug", col1X + 24, y1, -1, false);
+
+                    // Column 2
+                    y2 = this.drawOptionLabel(g, "§7Dungeon Secrets Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Kuudra Debug Mode", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Particle Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77NPC Lore Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "§7Composter Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Auto Fishing Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Croesus Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Auto Reconnect Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Performance Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Keys Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Daily Reward Debug", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Display ESP Enabled", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Display Tracers", col2X + 24, y2, -1, false);
+                    g.text(this.font, "\u00a7fDisplay Color:", col2X, y2 + 4, -1);
+                    y2 += 24;
+                    g.text(this.font, "\u00a7fDisplay Size: \u00a7e" + s.displayEspThickness, col2X, y2 + 4, -1);
+                    y2 += 24;
+                    y2 += 29;
+                    g.text(this.font, "§fDisplay ESP Filter:", col2X, y2 + 4, -1);
                     break;
                 }
                 case 11: {
                     g.text(this.font, "\u00a76\u00a7lKuudra Settings", contentX, curY, -22016, true);
+                    curY += 24;
                     curY = this.drawOptionLabel(g, "\u00a77Blindness Timer", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Perk Menu Clicker", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Auto GFS Toxic", contentX + 24, curY, -1, false);
-                    g.text(this.font, "\u00a7fToxic Count: \u00a7e" + BomboConfig.get().autoGfsToxicCount, contentX, (curY += 24) + 4, -1);
+                    g.text(this.font, "\u00a7fToxic Count: \u00a7e" + BomboConfig.get().autoGfsToxicCount, contentX, curY + 4, -1);
+                    curY += 24;
                     curY = this.drawOptionLabel(g, "\u00a77Auto GFS Twilight", contentX + 24, curY, -1, false);
                     break;
                 }
@@ -4528,7 +4559,6 @@ extends Screen {
                     curY += 24;
                     curY = this.drawOptionLabel(g, "\u00a77Croesus Helper", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Dungeon Secrets Tracker", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Dungeon Secrets Debug", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Clear Info HUD", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Pad Timers Purple", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Pad Timers Green", contentX + 24, curY, -1, false);
@@ -4649,7 +4679,9 @@ extends Screen {
                     curY += 29;
                     g.text(this.font, "§fColor:", contentX, curY + 4, -1);
                     curY += 24;
-                    curY = this.drawOptionLabel(g, "\u00a77See Through Walls", contentX + 24, curY, -1, false);
+                    if (!s.hideCheats) {
+                        curY = this.drawOptionLabel(g, "\u00a77See Through Walls", contentX + 24, curY, -1, false);
+                    }
                     curY += 20; // Add Button
                     int listTitleY = curY += 35;
                     g.text(this.font, "\u00a79\u00a7lActive Block Highlights", contentX, listTitleY, -11184641, true);
@@ -4661,7 +4693,7 @@ extends Screen {
                             BomboConfig.BlockHighlightInfo info = s.blockHighlights.get(bName);
                             String prefix = info.enabled ? "\u00a7e" : "\u00a78\u00a7m";
                             String color = info.color;
-                            String twText = info.throughWalls ? " \u00a77(X-Ray)" : " \u00a78(Depth)";
+                            String twText = s.hideCheats ? "" : (info.throughWalls ? " \u00a77(X-Ray)" : " \u00a78(Depth)");
                             g.text(this.font, prefix + bName + " \u00a77- " + this.getColorFormatting(color) + color + twText, contentX, listY + 5, -1, false);
                         }
                         listY += 22;
@@ -5250,8 +5282,12 @@ extends Screen {
                 BomboConfig.Settings s = BomboConfig.get();
                 int contentWidth = this.width - 130 - 24;
                 int contentX = 146;
-                int curY = 86;
+                int curY = 56 + 30 + 24;
+                curY += 24; // Highlights Enabled
+                curY += 24; // Tracer Width slider
+                curY += 26; // Mode switch button
                 if (s.highlightAdvancedMode) {
+                    curY += 24; // Nametag / Regex
                     curY += 24; // Item Display
                     curY += 24; // Entity Type
                     curY += 24; // Head Hash
@@ -5259,19 +5295,20 @@ extends Screen {
                     curY += 24; // Armor Piece
                     curY += 24; // Player Name
                     curY += 24; // Island
-                    curY += 24; // Subarea
                     curY += 24; // Visibility
                     curY += 24; // Color
                     curY += 24; // Tracer
                     curY += 24; // Show Title
                     curY += 24; // Play Sound
-                    curY += 30; // Button offset
+                    curY += 6;  // Add button offset
+                    curY += 24; // Button height / spacing
                 } else {
                     curY += 24; // Mob Name
                     curY += 24; // Island
                     curY += 24; // Color
                     curY += 24; // Tracer
-                    curY += 30; // Button offset
+                    curY += 6;  // Add button offset
+                    curY += 24; // Button height / spacing
                 }
                 int listStartY = curY += 30;
                 List<String> generalMobs = me.bombo.bomboaddons.features.BestiaryManager.getGeneralHighlights(s.highlights);

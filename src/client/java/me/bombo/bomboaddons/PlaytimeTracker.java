@@ -49,7 +49,7 @@ public class PlaytimeTracker {
          username = mc.getUser().getName().toLowerCase(Locale.ROOT);
       }
 
-      return new File(mc.gameDirectory, "config/bombo/bombo_playtime_" + username + ".json");
+      return new File(mc.gameDirectory, "config/bomboaddons/bombo_playtime_" + username + ".json");
    }
 
    public static void load() {
@@ -68,6 +68,18 @@ public class PlaytimeTracker {
             }
 
             Files.move(OLD_SAVE_FILE.toPath(), SAVE_FILE.toPath(), StandardCopyOption.REPLACE_EXISTING);
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+      }
+
+      File oldBomboUserFile = new File(mc.gameDirectory, "config/bombo/bombo_playtime_" + username + ".json");
+      if (oldBomboUserFile.exists() && !userFile.exists()) {
+         try {
+            if (!userFile.getParentFile().exists()) {
+               userFile.getParentFile().mkdirs();
+            }
+            Files.move(oldBomboUserFile.toPath(), userFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
          } catch (Exception e) {
             e.printStackTrace();
          }
@@ -548,7 +560,7 @@ public class PlaytimeTracker {
 
    static {
       OLD_SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bombo_playtime.json");
-      SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bombo/bombo_playtime.json");
+      SAVE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bomboaddons/bombo_playtime.json");
       GSON = (new GsonBuilder()).setPrettyPrinting().create();
       areaDataMap = new HashMap();
       currentTrackedUser = null;

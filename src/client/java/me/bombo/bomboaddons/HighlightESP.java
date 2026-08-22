@@ -606,85 +606,95 @@ public class HighlightESP {
                       matched = true;
                    }
                 }
+                
+                // 3. Entity Type match (with nametag check for sub-mobs like "old wolf" vs "wolf" and bees like "honeybuzz" vs "pollendart")
+                 boolean hasHeadRequirement = (info.headHashes != null && !info.headHashes.isEmpty());
+                 if (!matched && info.entityType != null && !info.entityType.isEmpty() && !hasHeadRequirement) {
+                    if (matchesEntityType(self, info.entityType)) {
+                       String cleanKey = key.toLowerCase(Locale.ROOT).trim();
+                       boolean wolfActive = s.highlights.containsKey("wolf") && s.highlights.get("wolf").enabled;
+                       boolean oldWolfActive = s.highlights.containsKey("old wolf") && s.highlights.get("old wolf").enabled;
+                       boolean bothWolvesActive = wolfActive && oldWolfActive;
+                       boolean isOldWolfMob = (nametagName != null && nametagName.toLowerCase(Locale.ROOT).contains("old wolf")) || name.toLowerCase(Locale.ROOT).contains("old wolf");
 
-                // 3. Entity Type match (with nametag check for sub-mobs like "old wolf" vs "wolf")
-                boolean hasHeadRequirement = (info.headHashes != null && !info.headHashes.isEmpty());
-                if (!matched && info.entityType != null && !info.entityType.isEmpty() && !hasHeadRequirement) {
-                   if (matchesEntityType(self, info.entityType)) {
-                      String cleanKey = key.toLowerCase(Locale.ROOT).trim();
-                      boolean wolfActive = s.highlights.containsKey("wolf") && s.highlights.get("wolf").enabled;
-                      boolean oldWolfActive = s.highlights.containsKey("old wolf") && s.highlights.get("old wolf").enabled;
-                      boolean bothWolvesActive = wolfActive && oldWolfActive;
-                      boolean isOldWolfMob = (nametagName != null && nametagName.toLowerCase(Locale.ROOT).contains("old wolf")) || name.toLowerCase(Locale.ROOT).contains("old wolf");
+                       if (cleanKey.equals("old wolf")) {
+                          if (isOldWolfMob) {
+                             matched = true;
+                          } else if (bothWolvesActive) {
+                             matched = true;
+                          }
+                       } else if (cleanKey.equals("wolf")) {
+                          if (bothWolvesActive) {
+                             matched = true;
+                          } else {
+                             if (!isOldWolfMob && (nametagName == null || !nametagName.toLowerCase(Locale.ROOT).contains("old wolf"))) {
+                                matched = true;
+                             }
+                          }
+                       } else if (cleanKey.equals("honeybuzz") || cleanKey.equals("pollendart")) {
+                          if ((nametagName != null && nametagName.contains(cleanKey)) || name.toLowerCase(Locale.ROOT).contains(cleanKey)) {
+                             matched = true;
+                          }
+                       } else if (cleanKey.contains(" ")) {
+                          if ((nametagName != null && nametagName.contains(cleanKey)) || name.toLowerCase(Locale.ROOT).contains(cleanKey)) {
+                             matched = true;
+                          }
+                       } else {
+                          matched = true;
+                       }
+                    }
+                 }
 
-                      if (cleanKey.equals("old wolf")) {
-                         if (isOldWolfMob) {
-                            matched = true;
-                         } else if (bothWolvesActive) {
-                            matched = true;
-                         }
-                      } else if (cleanKey.equals("wolf")) {
-                         if (bothWolvesActive) {
-                            matched = true;
-                         } else {
-                            if (!isOldWolfMob && (nametagName == null || !nametagName.toLowerCase(Locale.ROOT).contains("old wolf"))) {
-                               matched = true;
-                            }
-                         }
-                      } else if (cleanKey.contains(" ")) {
-                         if ((nametagName != null && nametagName.contains(cleanKey)) || name.toLowerCase(Locale.ROOT).contains(cleanKey)) {
-                            matched = true;
-                         }
-                      } else {
-                         matched = true;
-                      }
-                   }
-                }
+                 // 4. Bestiary Rule fallback
+                 if (!matched && info.isBestiary) {
+                    me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule rule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(key, info.requiredIsland);
+                    if (rule != null) {
+                       if (rule.heads != null && !rule.heads.isEmpty() && hashToUse != null && rule.hasHead(hashToUse)) {
+                          matched = true;
+                       }
+                       if (!matched && rule.playerName != null && !rule.playerName.isEmpty() && isPlayer && self.getName().getString().toLowerCase(Locale.ROOT).contains(rule.playerName.toLowerCase(Locale.ROOT))) {
+                          matched = true;
+                       }
+                        if (!matched && rule.entityType != null && !rule.entityType.isEmpty() && (rule.heads == null || rule.heads.isEmpty())) {
+                           if (matchesEntityType(self, rule.entityType) && matchesArmor(self, rule.armor) && matchesRiding(self, rule.riding) && matchesHeldItem(self, rule.heldItem) && matchesSubarea(rule.subarea, self) && matchesMobSize(self, rule.mobSize != null && !rule.mobSize.isEmpty() ? rule.mobSize : rule.size)) {
+                             String cleanKey = key.toLowerCase(Locale.ROOT).trim();
+                             if (cleanKey.equals("old wolf")) {
+                                if ((nametagName != null && nametagName.contains("old wolf")) || name.toLowerCase(Locale.ROOT).contains("old wolf")) {
+                                   matched = true;
+                                }
+                             } else if (cleanKey.equals("wolf")) {
+                                if (nametagName == null || !nametagName.contains("old wolf")) {
+                                   matched = true;
+                                }
+                             } else if (cleanKey.equals("honeybuzz") || cleanKey.equals("pollendart")) {
+                                if ((nametagName != null && nametagName.contains(cleanKey)) || name.toLowerCase(Locale.ROOT).contains(cleanKey)) {
+                                   matched = true;
+                                }
+                             } else {
+                                matched = true;
+                             }
+                          }
+                       }
+                    }
+                 }
 
-                // 4. Bestiary Rule fallback
-                if (!matched && info.isBestiary) {
-                   me.bombo.bomboaddons.features.BestiaryDataFetcher.BestiaryMobRule rule = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(key, info.requiredIsland);
-                   if (rule != null) {
-                      if (rule.heads != null && !rule.heads.isEmpty() && hashToUse != null && rule.hasHead(hashToUse)) {
-                         matched = true;
-                      }
-                      if (!matched && rule.playerName != null && !rule.playerName.isEmpty() && isPlayer && self.getName().getString().toLowerCase(Locale.ROOT).contains(rule.playerName.toLowerCase(Locale.ROOT))) {
-                         matched = true;
-                      }
-                       if (!matched && rule.entityType != null && !rule.entityType.isEmpty() && (rule.heads == null || rule.heads.isEmpty())) {
-                          if (matchesEntityType(self, rule.entityType) && matchesArmor(self, rule.armor) && matchesRiding(self, rule.riding) && matchesHeldItem(self, rule.heldItem) && matchesSubarea(rule.subarea, self) && matchesMobSize(self, rule.mobSize != null && !rule.mobSize.isEmpty() ? rule.mobSize : rule.size)) {
-                            String cleanKey = key.toLowerCase(Locale.ROOT).trim();
-                            if (cleanKey.equals("old wolf")) {
-                               if ((nametagName != null && nametagName.contains("old wolf")) || name.toLowerCase(Locale.ROOT).contains("old wolf")) {
-                                  matched = true;
-                               }
-                            } else if (cleanKey.equals("wolf")) {
-                               if (nametagName == null || !nametagName.contains("old wolf")) {
-                                  matched = true;
-                               }
-                            } else {
-                               matched = true;
-                            }
-                         }
-                      }
-                   }
-                }
-
-                // 5. Name / Nametag / Raw key match
-                if (!matched) {
-                   boolean hasSpecificHead = (info.headHashes != null && !info.headHashes.isEmpty());
-                   boolean isArmorStandWithoutName = self instanceof ArmorStand && !self.hasCustomName();
-                   if (!hasSpecificHead) {
-                      boolean keyIsPlayer = key.equalsIgnoreCase("player") || key.equalsIgnoreCase("players");
-                      String cleanKey = key.toLowerCase(Locale.ROOT).trim();
-                      String hashForRaw = isDirectHeadRule ? directSkullHash : skullHash;
-                      if (cleanKey.equals("wolf") && nametagName != null && nametagName.contains("old wolf")) {
-                         // Skip old wolves when matching regular wolf
-                      } else if ((isPlayer && keyIsPlayer) || (!isDirectHeadRule && matchesKey(name, key)) || (!isDirectHeadRule && nametagName != null && matchesKey(nametagName, key)) || (hashForRaw != null && matchesKey(hashForRaw, key)) || EntityVariantHelper.matchesVariant(self, cleanKey)) {
-                         matched = true;
-                      }
-                   }
-                }
+                 // 5. Name / Nametag / Raw key match
+                 if (!matched) {
+                    boolean hasSpecificHead = (info.headHashes != null && !info.headHashes.isEmpty());
+                    boolean isArmorStandWithoutName = self instanceof ArmorStand && !self.hasCustomName();
+                    if (!hasSpecificHead) {
+                       boolean keyIsPlayer = key.equalsIgnoreCase("player") || key.equalsIgnoreCase("players");
+                       String cleanKey = key.toLowerCase(Locale.ROOT).trim();
+                       String hashForRaw = isDirectHeadRule ? directSkullHash : skullHash;
+                       if (cleanKey.equals("wolf") && nametagName != null && nametagName.contains("old wolf")) {
+                          // Skip old wolves when matching regular wolf
+                       } else if ((cleanKey.equals("honeybuzz") || cleanKey.equals("pollendart")) && (nametagName == null || !nametagName.contains(cleanKey)) && !name.toLowerCase(Locale.ROOT).contains(cleanKey)) {
+                          // Skip bee if nametag does not match the specific bee bestiary mob
+                       } else if ((isPlayer && keyIsPlayer) || (!isDirectHeadRule && matchesKey(name, key)) || (!isDirectHeadRule && nametagName != null && matchesKey(nametagName, key)) || (hashForRaw != null && matchesKey(hashForRaw, key)) || EntityVariantHelper.matchesVariant(self, cleanKey)) {
+                          matched = true;
+                       }
+                    }
+                 }
 
                 if (matched) {
                     if (info.showTitleOnSpawn || info.playSoundOnSpawn) {
