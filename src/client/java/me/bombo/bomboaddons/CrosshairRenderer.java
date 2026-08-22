@@ -38,15 +38,7 @@ public class CrosshairRenderer {
                         int y2 = (int)((float)centerY + py + scale);
                         if (settings.outline) {
                            int ox = Math.max(1, (int)(scale * 0.2F));
-                           int pixelOutline = outlineColor;
-                           if (row == 7 && col == 7) {
-                              int r = outlineColor >> 16 & 255;
-                              int g = outlineColor >> 8 & 255;
-                              int b = outlineColor & 255;
-                              pixelOutline = -16777216 | 255 - r << 16 | 255 - g << 8 | 255 - b;
-                           }
-
-                           graphics.fill(x1 - ox, y1 - ox, x2 + ox, y2 + ox, pixelOutline);
+                           graphics.fill(x1 - ox, y1 - ox, x2 + ox, y2 + ox, outlineColor);
                         }
                      }
                   }
@@ -62,15 +54,7 @@ public class CrosshairRenderer {
                         int y1 = (int)((float)centerY + py);
                         int x2 = (int)((float)centerX + px + scale);
                         int y2 = (int)((float)centerY + py + scale);
-                        int pixelColor = mainColor;
-                        if (row == 7 && col == 7) {
-                           int r = mainColor >> 16 & 255;
-                           int g = mainColor >> 8 & 255;
-                           int b = mainColor & 255;
-                           pixelColor = -16777216 | 255 - r << 16 | 255 - g << 8 | 255 - b;
-                        }
-
-                        graphics.fill(x1, y1, x2, y2, pixelColor);
+                        graphics.fill(x1, y1, x2, y2, mainColor);
                      }
                   }
                }

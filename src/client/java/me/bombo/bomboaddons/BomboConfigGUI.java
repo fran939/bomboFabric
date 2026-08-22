@@ -4817,7 +4817,7 @@ public class BomboConfigGUI
                         g.text(this.font, "\u00a76\u00a7lGeneral Highlights \u00a77(" + generalMobs.size() + ")",
                                 contentX + 26, generalHeaderY + 6, -22016, true);
                         g.disableScissor();
-                        g.fill(contentX + 16, generalHeaderY + 21, contentX + contentWidth, generalHeaderY + 22,
+                        g.fill(contentX + 16, generalHeaderY + 23, contentX + contentWidth, generalHeaderY + 24,
                                 0x44888888);
                     }
 
@@ -4834,7 +4834,7 @@ public class BomboConfigGUI
                                             false);
                                     g.disableScissor();
                                 }
-                                g.fill(contentX + 16, itemY + 20, contentX + contentWidth, itemY + 21, 0x33888888);
+                                g.fill(contentX + 16, itemY + 21, contentX + contentWidth, itemY + 22, 0x33888888);
                             }
                         }
                     }
@@ -4861,7 +4861,7 @@ public class BomboConfigGUI
                                         + groupedBestiary.size() + " categories)",
                                 contentX + 26, bestiaryHeaderY + 6, -11184641, true);
                         g.disableScissor();
-                        g.fill(contentX + 16, bestiaryHeaderY + 21, contentX + contentWidth, bestiaryHeaderY + 22,
+                        g.fill(contentX + 16, bestiaryHeaderY + 23, contentX + contentWidth, bestiaryHeaderY + 24,
                                 0x44888888);
                     }
 
@@ -4886,7 +4886,7 @@ public class BomboConfigGUI
                                 g.text(this.font, "\u00a76\u00a7l" + cat + " \u00a77(" + mobsInCat.size() + ")",
                                         contentX + 42, headerY + 6, -22016, true);
                                 g.disableScissor();
-                                g.fill(contentX + 16, headerY + 21, contentX + contentWidth, headerY + 22, 0x44888888);
+                                g.fill(contentX + 16, headerY + 23, contentX + contentWidth, headerY + 24, 0x44888888);
                             }
 
                             if (!isCollapsed) {
@@ -4903,7 +4903,7 @@ public class BomboConfigGUI
                                                     itemY + 6, -1, false);
                                             g.disableScissor();
                                         }
-                                        g.fill(contentX + 16, itemY + 20, contentX + contentWidth, itemY + 21,
+                                        g.fill(contentX + 16, itemY + 21, contentX + contentWidth, itemY + 22,
                                                 0x33888888);
                                     }
                                 }
@@ -5875,8 +5875,8 @@ public class BomboConfigGUI
             }
         }
         int button;
-        double my;
-        double mx;
+        double mx = event.x();
+        double my = event.y();
         if (selectedCategory == 25 && event.button() <= 1 && BomboConfig.get().customCrosshair != null
                 && BomboConfig.get().customCrosshair.enabled) {
             this.handleCrosshairDraw(event.x(), event.y(), event.button());
@@ -5928,97 +5928,99 @@ public class BomboConfigGUI
                 this.init();
                 return true;
             }
-            if (selectedCategory == 7) {
-                BomboConfig.Settings s = BomboConfig.get();
-                int contentWidth = this.width - 130 - 24;
-                int contentX = 146;
-                int curY = 86;
-                curY += 24; // Highlights Enabled
-                curY += 24; // Tracer Width
-                curY += 26; // Mode switch button
-                if (s.highlightAdvancedMode) {
-                    curY += 24; // Nametag / Regex
-                    curY += 24; // Item Display
-                    curY += 24; // Entity Type
-                    curY += 24; // Head Hash
-                    curY += 24; // Mob Size
-                    curY += 24; // Armor Piece
-                    curY += 24; // Player Name
-                    curY += 24; // Island
-                    curY += 24; // Visibility
-                    curY += 24; // Color
-                    curY += 24; // Tracer
-                    curY += 24; // Show Title
-                    curY += 24; // Play Sound
-                    curY += 36; // Button offset (curY += 6, then listStartY = curY += 30)
-                } else {
-                    curY += 24; // Mob Name
-                    curY += 24; // Island
-                    curY += 24; // Color
-                    curY += 24; // Tracer
-                    curY += 36; // Button offset (curY += 6, then listStartY = curY += 30)
-                }
-                int listStartY = curY;
-                List<String> generalMobs = me.bombo.bomboaddons.features.BestiaryManager
-                        .getGeneralHighlights(s.highlights);
-                Map<String, List<String>> groupedBestiary = me.bombo.bomboaddons.features.BestiaryManager
-                        .getGroupedBestiary(s.highlights);
-                int currentListY = listStartY + 15 - (int) this.scrollAmount;
+        }
+        if (selectedCategory == 7 && (event.button() == 0 || event.button() == 1)) {
+            BomboConfig.Settings s = BomboConfig.get();
+            int contentWidth = this.width - 130 - 24;
+            int contentX = 146;
+            int curY = 86;
+            curY += 24; // Highlights Enabled
+            curY += 24; // Tracer Width
+            curY += 26; // Mode switch button
+            if (s.highlightAdvancedMode) {
+                curY += 24; // Nametag / Regex
+                curY += 24; // Item Display
+                curY += 24; // Entity Type
+                curY += 24; // Head Hash
+                curY += 24; // Mob Size
+                curY += 24; // Armor Piece
+                curY += 24; // Player Name
+                curY += 24; // Island
+                curY += 24; // Visibility
+                curY += 24; // Color
+                curY += 24; // Tracer
+                curY += 24; // Show Title
+                curY += 24; // Play Sound
+                curY += 36; // Button offset (curY += 6, then listStartY = curY += 30)
+            } else {
+                curY += 24; // Mob Name
+                curY += 24; // Island
+                curY += 24; // Color
+                curY += 24; // Tracer
+                curY += 36; // Button offset (curY += 6, then listStartY = curY += 30)
+            }
+            int listStartY = curY;
+            List<String> generalMobs = me.bombo.bomboaddons.features.BestiaryManager
+                    .getGeneralHighlights(s.highlights);
+            Map<String, List<String>> groupedBestiary = me.bombo.bomboaddons.features.BestiaryManager
+                    .getGroupedBestiary(s.highlights);
+            int currentListY = listStartY + 15 - (int) this.scrollAmount;
 
-                boolean isGeneralCollapsed = s.collapsedBestiaryCategories != null
-                        && s.collapsedBestiaryCategories.contains("General");
-                currentListY += 24; // General header
+            boolean isGeneralCollapsed = s.collapsedBestiaryCategories != null
+                    && s.collapsedBestiaryCategories.contains("General");
+            currentListY += 24; // General header
 
-                if (!isGeneralCollapsed) {
-                    for (String mobName : generalMobs) {
-                        int itemY = currentListY;
-                        currentListY += 22;
-                        if (mx >= (double) contentX && mx <= (double) (contentX + contentWidth - 170)
-                                && my >= (double) itemY && my < (double) (itemY + 20)) {
-                            BomboConfig.HighlightInfo info = s.highlights.get(mobName);
-                            if (info != null) {
-                                pushHighlightHistory();
-                                info.enabled = !info.enabled;
-                                BomboConfig.save();
-                                this.init();
-                                return true;
-                            }
+            if (!isGeneralCollapsed) {
+                for (String mobName : generalMobs) {
+                    int itemY = currentListY;
+                    currentListY += 22;
+                    if (itemY > listStartY + 5 && itemY < this.height - 20
+                            && mx >= (double) contentX && mx <= (double) (contentX + contentWidth - 215)
+                            && my >= (double) itemY && my < (double) (itemY + 20)) {
+                        BomboConfig.HighlightInfo info = s.highlights.get(mobName);
+                        if (info != null) {
+                            pushHighlightHistory();
+                            info.enabled = !info.enabled;
+                            BomboConfig.save();
+                            this.init();
+                            return true;
                         }
                     }
                 }
+            }
 
-                currentListY += 8; // Spacer
-                boolean isBestiaryParentCollapsed = s.collapsedBestiaryCategories != null
-                        && s.collapsedBestiaryCategories.contains("Bestiary");
-                currentListY += 24; // Bestiary parent header
+            currentListY += 8; // Spacer
+            boolean isBestiaryParentCollapsed = s.collapsedBestiaryCategories != null
+                    && s.collapsedBestiaryCategories.contains("Bestiary");
+            currentListY += 24; // Bestiary parent header
 
-                if (!isBestiaryParentCollapsed) {
-                    int catIndex = 0;
-                    for (Map.Entry<String, List<String>> entry : groupedBestiary.entrySet()) {
-                        String cat = entry.getKey();
-                        List<String> mobsInCat = entry.getValue();
-                        boolean isCollapsed = s.collapsedBestiaryCategories != null
-                                && s.collapsedBestiaryCategories.contains(cat);
-                        if (catIndex > 0) {
-                            currentListY += 6;
-                        }
-                        catIndex++;
-                        currentListY += 24; // Category header
+            if (!isBestiaryParentCollapsed) {
+                int catIndex = 0;
+                for (Map.Entry<String, List<String>> entry : groupedBestiary.entrySet()) {
+                    String cat = entry.getKey();
+                    List<String> mobsInCat = entry.getValue();
+                    boolean isCollapsed = s.collapsedBestiaryCategories != null
+                            && s.collapsedBestiaryCategories.contains(cat);
+                    if (catIndex > 0) {
+                        currentListY += 6;
+                    }
+                    catIndex++;
+                    currentListY += 24; // Category header
 
-                        if (!isCollapsed) {
-                            for (String mobName : mobsInCat) {
-                                int itemY = currentListY;
-                                currentListY += 22;
-                                if (mx >= (double) contentX && mx <= (double) (contentX + contentWidth - 170)
-                                        && my >= (double) itemY && my < (double) (itemY + 20)) {
-                                    BomboConfig.HighlightInfo info = s.highlights.get(mobName);
-                                    if (info != null) {
-                                        pushHighlightHistory();
-                                        info.enabled = !info.enabled;
-                                        BomboConfig.save();
-                                        this.init();
-                                        return true;
-                                    }
+                    if (!isCollapsed) {
+                        for (String mobName : mobsInCat) {
+                            int itemY = currentListY;
+                            currentListY += 22;
+                            if (itemY > listStartY + 5 && itemY < this.height - 20
+                                    && mx >= (double) contentX && mx <= (double) (contentX + contentWidth - 215)
+                                    && my >= (double) itemY && my < (double) (itemY + 20)) {
+                                BomboConfig.HighlightInfo info = s.highlights.get(mobName);
+                                if (info != null) {
+                                    pushHighlightHistory();
+                                    info.enabled = !info.enabled;
+                                    BomboConfig.save();
+                                    this.init();
+                                    return true;
                                 }
                             }
                         }
