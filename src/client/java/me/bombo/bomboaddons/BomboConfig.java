@@ -693,6 +693,7 @@ public class BomboConfig {
       public boolean blockHighlightsEnabled = false;
       public Map<String, HighlightInfo> particleHighlights = new HashMap();
       public boolean particleHighlightsEnabled = false;
+      public String particleHighlightsIsland = "";
       public boolean bedwarsEsp = false;
       public boolean bedwarsEspOwnTeam = false;
       public boolean borderlessFullscreen = false;

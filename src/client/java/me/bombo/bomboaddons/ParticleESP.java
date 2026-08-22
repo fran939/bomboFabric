@@ -17,10 +17,24 @@ public class ParticleESP {
 
    public static void render(LevelRenderContext context) {
       BomboConfig.Settings settings = BomboConfig.get();
-      if (ParticleTracker.espEnabled || settings.debugParticles || settings.particleHighlightsEnabled) {
+      boolean particleHighlightsActive = false;
+      if (settings.particleHighlightsEnabled) {
+         if (settings.particleHighlightsIsland == null || settings.particleHighlightsIsland.trim().isEmpty() || HighlightESP.matchesIsland(settings.particleHighlightsIsland.trim())) {
+            if (settings.particleHighlights != null) {
+               for (BomboConfig.HighlightInfo info : settings.particleHighlights.values()) {
+                  if (info != null && info.enabled) {
+                     particleHighlightsActive = true;
+                     break;
+                  }
+               }
+            }
+         }
+      }
+
+      if (ParticleTracker.espEnabled || settings.debugParticles || particleHighlightsActive) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.level != null && mc.player != null) {
-            String filter = !settings.debugParticles && !settings.particleHighlightsEnabled ? typeFilter : null;
+            String filter = !settings.debugParticles && !particleHighlightsActive ? typeFilter : null;
             List<ParticleTracker.ParticleEntry> points = ParticleTracker.getEspPoints(filter);
             if (!points.isEmpty()) {
                Vec3 camPos = mc.gameRenderer.getMainCamera().position();
@@ -31,7 +45,7 @@ public class ParticleESP {
                Map<String, Integer> typeColors = new HashMap<>();
 
                // 1. Particle Highlights
-               if (settings.particleHighlightsEnabled) {
+               if (particleHighlightsActive) {
                   Map<String, List<ParticleTracker.ParticleEntry>> highlightedByType = new HashMap<>();
                   for (ParticleTracker.ParticleEntry p : points) {
                      BomboConfig.HighlightInfo highlight = settings.particleHighlights.get(p.type.toLowerCase());

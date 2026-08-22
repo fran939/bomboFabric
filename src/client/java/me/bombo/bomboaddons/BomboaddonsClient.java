@@ -5686,16 +5686,26 @@ public class BomboaddonsClient implements ClientModInitializer {
 
       // Equipment Inspection
       if (target instanceof net.minecraft.world.entity.LivingEntity living) {
-         StringBuilder equipStr = new StringBuilder();
+         MutableComponent equipComp = Component.literal(" §7Equipment: ");
+         boolean hasEquip = false;
          for (net.minecraft.world.entity.EquipmentSlot slot : net.minecraft.world.entity.EquipmentSlot.values()) {
             ItemStack is = living.getItemBySlot(slot);
             if (!is.isEmpty()) {
-               if (equipStr.length() > 0) equipStr.append(", ");
-               equipStr.append(slot.getName()).append(": ").append(is.getHoverName().getString());
+               if (hasEquip) equipComp.append(Component.literal("§7, "));
+               hasEquip = true;
+               MutableComponent itemComp = Component.literal("§7" + slot.getName() + ": §f" + is.getHoverName().getString());
+               MutableComponent hoverTooltip = Component.empty();
+               hoverTooltip.append(is.getHoverName()).append("\n");
+               List<Component> lore = SkyblockUtils.getLore(is);
+               for (Component l : lore) {
+                  hoverTooltip.append(l).append("\n");
+               }
+               itemComp.setStyle(itemComp.getStyle().withHoverEvent(new HoverEvent.ShowText(hoverTooltip)));
+               equipComp.append(itemComp);
             }
          }
-         if (equipStr.length() > 0) {
-            src.sendFeedback(Component.literal(" §7Equipment: §f" + equipStr.toString()));
+         if (hasEquip) {
+            src.sendFeedback(equipComp);
          }
       }
 

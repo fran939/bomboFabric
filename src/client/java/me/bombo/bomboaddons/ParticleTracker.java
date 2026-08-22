@@ -20,7 +20,25 @@ public class ParticleTracker {
    public static boolean isParticleTrackingNeeded() {
       BomboConfig.Settings s = BomboConfig.get();
       if (s == null) return false;
-      return espEnabled || s.debugParticles || s.particleHighlightsEnabled;
+      if (s.particleHighlightsEnabled) {
+         if (s.particleHighlightsIsland != null && !s.particleHighlightsIsland.trim().isEmpty()) {
+            if (!HighlightESP.matchesIsland(s.particleHighlightsIsland.trim())) {
+               return espEnabled || s.debugParticles;
+            }
+         }
+         // If particle highlights is enabled, only track if there is at least one active particle rule
+         boolean hasActiveRule = false;
+         if (s.particleHighlights != null) {
+            for (BomboConfig.HighlightInfo info : s.particleHighlights.values()) {
+               if (info != null && info.enabled) {
+                  hasActiveRule = true;
+                  break;
+               }
+            }
+         }
+         if (hasActiveRule) return true;
+      }
+      return espEnabled || s.debugParticles;
    }
 
    public static void onParticle(String typeName, double x, double y, double z) {

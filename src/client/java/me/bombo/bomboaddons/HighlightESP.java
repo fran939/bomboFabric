@@ -361,10 +361,21 @@ public class HighlightESP {
          if (!(e2 instanceof ArmorStand) || !e2.hasCustomName()) continue;
          String name = ChatFormatting.stripFormatting(e2.getCustomName().getString());
          if (name != null && !name.isEmpty()) {
-            return name.toLowerCase();
+            return cleanMobNametag(name);
          }
       }
       return null;
+   }
+
+   public static String cleanMobNametag(String raw) {
+      if (raw == null) return "";
+      String stripped = ChatFormatting.stripFormatting(raw).trim();
+      // Remove trailing/leading health like [Lv100] Crypt Ghoul 2000/2000❤ or Crypt Ghoul 1.5k/2k ❤
+      String cleaned = stripped.replaceAll("(?i)\\s*\\d+(\\.\\d+)?[kmb]?/\\d+(\\.\\d+)?[kmb]?\\s*❤?", "")
+                               .replaceAll("(?i)\\s*\\d+(\\.\\d+)?[kmb]?\\s*❤", "")
+                               .replaceAll("(?i)\\[lv\\s*\\d+\\]", "")
+                               .trim();
+      return cleaned.isEmpty() ? stripped.toLowerCase(Locale.ROOT) : cleaned.toLowerCase(Locale.ROOT);
    }
 
    public static boolean isEntityVisibleCached(Minecraft mc, Entity entity) {
@@ -670,17 +681,21 @@ public class HighlightESP {
                    }
                 }
 
-                 if (matched) {
+                if (matched) {
                     if (info.showTitleOnSpawn || info.playSoundOnSpawn) {
                        int entId = self.getId();
                        if (!ALERTED_SPAWN_IDS.contains(entId)) {
                           ALERTED_SPAWN_IDS.add(entId);
                           if (ALERTED_SPAWN_IDS.size() > 5000) ALERTED_SPAWN_IDS.clear();
                           String titleName = nametagName != null && !nametagName.isEmpty() ? nametagName : (name != null ? name : key);
+                          if (titleName.contains(" | ")) {
+                             titleName = titleName.substring(0, titleName.indexOf(" | ")).trim();
+                          }
+                          final String finalTitle = titleName;
                           Minecraft client = Minecraft.getInstance();
                           client.execute(() -> {
                              if (info.showTitleOnSpawn && client.gui != null) {
-                                client.gui.setTitle(net.minecraft.network.chat.Component.literal("§e" + titleName + " §aSpawned!"));
+                                client.gui.setTitle(net.minecraft.network.chat.Component.literal("§e" + finalTitle + " §aSpawned!"));
                                 client.gui.setTimes(10, 40, 10);
                              }
                              if (info.playSoundOnSpawn && client.player != null) {

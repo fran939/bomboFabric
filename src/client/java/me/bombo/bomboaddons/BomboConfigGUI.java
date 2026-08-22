@@ -651,16 +651,15 @@ extends Screen {
                     y1 = this.addBoolOption("Weather Override Enabled", s.customWeatherEnabled, v -> s.customWeatherEnabled = v, col1X, col1W, y1);
                     if (s.customWeatherEnabled) {
                         String[] weatherModes = new String[]{"Clear", "Rain", "Thunder"};
-                        Button wBtn = Button.builder(Component.literal("Weather: " + weatherModes[Math.max(0, Math.min(2, s.customWeatherMode))]), b -> {
+                        Button wBtn = Button.builder(Component.literal("Mode: " + weatherModes[Math.max(0, Math.min(2, s.customWeatherMode))]), b -> {
                             s.customWeatherMode = (s.customWeatherMode + 1) % 3;
-                            b.setMessage(Component.literal("Weather: " + weatherModes[s.customWeatherMode]));
+                            b.setMessage(Component.literal("Mode: " + weatherModes[s.customWeatherMode]));
                             BomboConfig.save();
-                        }).bounds(col1X + 24, y1, Math.min(col1W - 24, 160), 20).build();
+                        }).bounds(col1X + 24, y1, Math.min(col1W - 24, 140), 18).build();
                         wBtn.visible = (y1 >= 56 && y1 <= this.height - 44);
                         this.addRenderableWidget(wBtn);
-                        y1 += 26;
+                        y1 += 24;
                     }
-                    y1 += 10;
                     y1 = this.addBoolOption("Hoppity Egg Finder", s.eggFinder, v -> {
                         s.eggFinder = v;
                         if (!v.booleanValue()) {
@@ -2631,6 +2630,9 @@ extends Screen {
                     curY = this.addBoolOption("Particle Highlights Enabled", s.particleHighlightsEnabled, v -> {
                         s.particleHighlightsEnabled = v;
                     }, contentX, contentWidth, curY);
+                    curY = this.addTextBox("Show Only On Island (e.g. crimson_isle, garden, hub)", s.particleHighlightsIsland, v -> {
+                        s.particleHighlightsIsland = v;
+                    }, contentX, contentWidth, curY);
                     curY += 10;
                     curY = this.addParticleTextBox("Particle Name", partHighInput, v -> {
                         partHighInput = v;
@@ -3868,12 +3870,21 @@ extends Screen {
                         break;
                     }
 
+                    if (dojoUtilitiesSubmenu) {
+                        g.text(this.font, "§6§lDojo Utilities Settings", col1X, y1, -22016, true);
+                        y1 += 28;
+                        y1 = this.drawOptionLabel(g, "§7Dojo Utilities Enabled", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Auto Sword Swap by Helmet", col1X + 24, y1, -1, false);
+                        break;
+                    }
+
                     y1 = this.drawOptionLabel(g, "§7Clear Water & Lava Vision", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Sign Calculator", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7SBE Commands", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Copy Chat", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Left Click Etherwarp", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Sphinx Macro", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Dojo Utilities §b(Right-Click)", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Hollow Wand Fix", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Hollow Wand Double Click", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Lasso Fix", col1X + 24, y1, -1, false);
@@ -3898,9 +3909,8 @@ extends Screen {
                     }
                     y1 = this.drawOptionLabel(g, "§7Weather Override Enabled", col1X + 24, y1, -1, false);
                     if (s.customWeatherEnabled) {
-                        y1 += 26;
+                        y1 += 24;
                     }
-                    y1 += 10;
                     y1 = this.drawOptionLabel(g, "§7Enable Egg Finder", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Egg Finder Chat Alerts", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Egg Finder Beacon", col1X + 24, y1, -1, false);
@@ -4351,6 +4361,7 @@ extends Screen {
                     curY = this.drawOptionLabel(g, "\u00a77GUIs Debug", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Entities Debug", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Command Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "§7Armor Swap Debug", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Debug Mode (Legacy)", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77API Debug", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Pet Price Debug", contentX + 24, curY, -1, false);
@@ -4368,9 +4379,8 @@ extends Screen {
                     curY = this.drawOptionLabel(g, "\u00a77Daily Reward Debug", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Display ESP Enabled", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Display Tracers", contentX + 24, curY, -1, false);
-                    g.text(this.font, "\u00a7fDisplay Color:", contentX, (curY += 24) + 4, -1);
-                    g.text(this.font, "\u00a7fDisplay Size: \u00a7e" + String.format("%.1f", Float.valueOf(BomboConfig.get().displayEspThickness)), contentX, (curY += 24) + 4, -1);
-                    g.text(this.font, "\u00a7fDisplay Filter:", contentX, (curY += 29) + 4, -1);
+                    curY += 24;
+                    curY = this.drawOptionLabel(g, "§7Display ESP Filter", contentX + 24, curY, -1, false);
                     break;
                 }
                 case 11: {
