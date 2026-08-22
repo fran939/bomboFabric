@@ -15,6 +15,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -107,6 +110,16 @@ public class SupercraftHelper {
 
       int totalItemsCanHold = emptySlots * maxStackSize;
       return totalItemsCanHold / craftAmount;
+   }
+
+   public static Component formatLeatherColorComponent(int rgb) {
+      int cleanRgb = rgb & 0xFFFFFF;
+      String hexStr = String.format("#%06X", cleanRgb);
+      MutableComponent comp = Component.literal("§7Color: ");
+      MutableComponent hexPart = Component.literal(hexStr);
+      hexPart.setStyle(Style.EMPTY.withColor(TextColor.fromRgb(cleanRgb)));
+      comp.append(hexPart);
+      return comp;
    }
 
    public static void appendTooltip(ItemStack stack, List<Component> lines) {
@@ -234,14 +247,14 @@ public class SupercraftHelper {
                net.minecraft.world.item.component.DyedItemColor dyed = stack.get(DataComponents.DYED_COLOR);
                if (dyed != null) {
                   int rgb = dyed.rgb();
-                  additions.add(new LoreAddition("leatherColor", Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
+                  additions.add(new LoreAddition("leatherColor", formatLeatherColorComponent(rgb), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
                } else if (tag != null) {
                   if (tag.getCompound("display").isPresent() && tag.getCompound("display").get().getInt("color").isPresent()) {
                      int rgb = tag.getCompound("display").get().getInt("color").get();
-                     additions.add(new LoreAddition("leatherColor", Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
+                     additions.add(new LoreAddition("leatherColor", formatLeatherColorComponent(rgb), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
                   } else if (tag.getInt("color").isPresent()) {
                      int rgb = tag.getInt("color").get();
-                     additions.add(new LoreAddition("leatherColor", Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
+                     additions.add(new LoreAddition("leatherColor", formatLeatherColorComponent(rgb), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
                   }
                }
             }

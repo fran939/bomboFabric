@@ -152,6 +152,10 @@ public class TextureToggleManager {
       return null;
    }
 
+   public boolean hasNrpEntry(String sbId) {
+      return sbId != null && this.itemIds != null && this.itemIds.containsKey(sbId);
+   }
+
    public boolean isPaperItem(ItemStack itemStack) {
       if (itemStack == null || itemStack.isEmpty()) return false;
       if (itemStack.is(net.minecraft.world.item.Items.PAPER)) return true;
@@ -180,10 +184,13 @@ public class TextureToggleManager {
       if (this.blacklistMode) {
          return this.whitelistedItems.contains(sbId);
       } else {
-         if (this.isPaperItem(itemStack)) {
+         if (this.whitelistedItems.contains(sbId)) {
             return false;
          }
-         return !this.whitelistedItems.contains(sbId);
+         if (!this.hasNrpEntry(sbId) && this.isPaperItem(itemStack)) {
+            return false;
+         }
+         return true;
       }
    }
 
