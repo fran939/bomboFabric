@@ -1,9 +1,13 @@
 package me.bombo.bomboaddons.features;
 
 import me.bombo.bomboaddons.BomboConfig;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
@@ -18,6 +22,10 @@ public class FrozenBlazeAFKTracker {
    private static int pendingAlerts = 0;
    private static long nextSubAlertTime = 0;
    private static boolean hasWarnedForCurrentAfk = false;
+
+   public static void init() {
+      HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "fb_afk_hud"), FrozenBlazeAFKTracker::render);
+   }
 
    public static void onTick(Minecraft mc) {
       if (mc.player == null || mc.level == null) return;
@@ -48,13 +56,13 @@ public class FrozenBlazeAFKTracker {
          return;
       }
 
-      // Check if player moved at least 1 full block from anchor position
+      // Check if player moved
       double dx = px - anchorX;
       double dy = py - anchorY;
       double dz = pz - anchorZ;
       double distSq = dx * dx + dy * dy + dz * dz;
 
-      if (distSq >= 1.0) {
+      if (distSq >= 0.25) {
          anchorX = px;
          anchorY = py;
          anchorZ = pz;
@@ -84,6 +92,36 @@ public class FrozenBlazeAFKTracker {
             hasWarnedForCurrentAfk = false;
          }
       }
+   }
+
+   public static void render(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player == null || mc.level == null) return;
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null || !s.frozenBlazeWarning || !s.fbWarnTimerOnScreen) return;
+      if (!isWearingFrozenBlaze(mc)) return;
+
+      long now = System.currentTimeMillis();
+      long elapsedMs = now - lastMovedTime;
+      if (elapsedMs < 1000L) return;
+
+      long totalSecs = elapsedMs / 1000L;
+      long mins = totalSecs / 60;
+      long secs = totalSecs % 60;
+      String timeStr = String.format("%02d:%02d", mins, secs);
+
+      boolean isWarning = totalSecs >= s.fbWarnSeconds;
+      String timerText = (isWarning ? "§c§lAFK: " : "§eAFK: ") + "§f" + timeStr;
+
+      int x = s.fbWarnTimerX > 0 ? s.fbWarnTimerX : 10;
+      int y = s.fbWarnTimerY > 0 ? s.fbWarnTimerY : 120;
+
+      g.pose().pushMatrix();
+      if (s.fbWarnTimerScale != 1.0F && s.fbWarnTimerScale > 0.0F) {
+         g.pose().scale(s.fbWarnTimerScale, s.fbWarnTimerScale);
+      }
+      g.text(mc.font, timerText, x, y, -1, true);
+      g.pose().popMatrix();
    }
 
    public static boolean isWearingFrozenBlaze(Minecraft mc) {

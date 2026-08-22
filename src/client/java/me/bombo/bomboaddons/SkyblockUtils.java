@@ -126,6 +126,26 @@ public class SkyblockUtils {
       return "";
    }
 
+   public static String getStrictSkyblockId(net.minecraft.world.item.ItemStack itemStack) {
+      if (itemStack == null || itemStack.isEmpty()) return "";
+      try {
+         net.minecraft.world.item.component.CustomData customData = (net.minecraft.world.item.component.CustomData)itemStack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+         if (customData != null) {
+            net.minecraft.nbt.CompoundTag tag = customData.copyTag();
+            String id = tag.getString("id").orElse("");
+            if (!id.isEmpty()) {
+               return id;
+            }
+
+            net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (ea != null) {
+               return ea.getString("id").orElse("");
+            }
+         }
+      } catch (Throwable ignored) {}
+      return "";
+   }
+
    public static boolean isConnectedToHypixel() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.getCurrentServer() == null) {

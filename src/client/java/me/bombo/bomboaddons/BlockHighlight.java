@@ -72,6 +72,46 @@ public class BlockHighlight {
       }
    }
 
+   public static class ParsedBlockRule {
+      public final String blockId;
+      public final String requiredProps;
+      public final BomboConfig.BlockHighlightInfo info;
+
+      public ParsedBlockRule(String query, BomboConfig.BlockHighlightInfo info) {
+         this.info = info;
+         String q = query.toLowerCase().trim();
+         if (q.contains("[") && q.endsWith("]")) {
+            this.blockId = q.substring(0, q.indexOf('[')).trim();
+            this.requiredProps = q.substring(q.indexOf('[') + 1, q.length() - 1).trim();
+         } else if (q.contains(":") && !q.startsWith("minecraft:")) {
+            this.blockId = q.substring(0, q.indexOf(':')).trim();
+            this.requiredProps = q.substring(q.indexOf(':') + 1).trim();
+         } else {
+            this.blockId = q;
+            this.requiredProps = null;
+         }
+      }
+
+      public boolean matches(BlockState state) {
+         if (state == null) return false;
+         Identifier key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+         String rawId = key.toString().toLowerCase();
+         String path = key.getPath().toLowerCase();
+         if (!rawId.contains(blockId) && !path.contains(blockId)) return false;
+         if (requiredProps != null && !requiredProps.isEmpty()) {
+            String stateStr = state.toString().toLowerCase();
+            String[] reqs = requiredProps.split("[,;]");
+            for (String req : reqs) {
+               String cleanReq = req.trim().toLowerCase();
+               if (!cleanReq.isEmpty() && !stateStr.contains(cleanReq)) {
+                  return false;
+               }
+            }
+         }
+         return true;
+      }
+   }
+
    private static void scanBlocks(ClientLevel level, Vec3 playerPos,
          Map<String, BomboConfig.BlockHighlightInfo> targets, int radius) {
       Map<BlockPos, BomboConfig.BlockHighlightInfo> newHighlights = new HashMap<>();
@@ -83,23 +123,14 @@ public class BlockHighlight {
       int startY = Math.max(minHeight, py - radius);
       int endY = Math.min(maxHeight - 1, py + radius);
 
-      // Pre-resolve matching blocks once to eliminate thousands of registry & string lookups
-      java.util.Map<net.minecraft.world.level.block.Block, BomboConfig.BlockHighlightInfo> matchingBlocks = new java.util.IdentityHashMap<>();
-      for (net.minecraft.world.level.block.Block b : BuiltInRegistries.BLOCK) {
-         Identifier key = BuiltInRegistries.BLOCK.getKey(b);
-         String idLower = key.toString().toLowerCase();
-         String pathLower = key.getPath().toLowerCase();
-         for (Map.Entry<String, BomboConfig.BlockHighlightInfo> entry : targets.entrySet()) {
-            String query = entry.getKey().toLowerCase();
-            BomboConfig.BlockHighlightInfo info = entry.getValue();
-            if (info != null && info.enabled && (idLower.contains(query) || pathLower.contains(query))) {
-               matchingBlocks.put(b, info);
-               break;
-            }
+      List<ParsedBlockRule> activeRules = new ArrayList<>();
+      for (Map.Entry<String, BomboConfig.BlockHighlightInfo> entry : targets.entrySet()) {
+         if (entry.getValue() != null && entry.getValue().enabled) {
+            activeRules.add(new ParsedBlockRule(entry.getKey(), entry.getValue()));
          }
       }
 
-      if (matchingBlocks.isEmpty()) {
+      if (activeRules.isEmpty()) {
          highlightedBlocks = newHighlights;
          return;
       }
@@ -137,9 +168,11 @@ public class BlockHighlight {
                         if (by < startY || by > endY) continue;
                         BlockState state = sec.getBlockState(lx, ly, lz);
                         if (!state.isAir()) {
-                           BomboConfig.BlockHighlightInfo info = matchingBlocks.get(state.getBlock());
-                           if (info != null) {
-                              newHighlights.put(new BlockPos(bx, by, bz), info);
+                           for (ParsedBlockRule rule : activeRules) {
+                              if (rule.matches(state)) {
+                                 newHighlights.put(new BlockPos(bx, by, bz), rule.info);
+                                 break;
+                              }
                            }
                         }
                      }

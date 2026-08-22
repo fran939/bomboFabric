@@ -287,6 +287,10 @@ public class BomboConfig {
       public boolean fbWarnSound = true;
       public boolean fbWarnTitle = true;
       public boolean fbWarnChat = true;
+      public boolean fbWarnTimerOnScreen = false;
+      public int fbWarnTimerX = 10;
+      public int fbWarnTimerY = 120;
+      public float fbWarnTimerScale = 1.0F;
       public int fbWarnSeconds = 28;
       public boolean storagePreview = true;
       public boolean storagePreviewDebug = false;
@@ -363,6 +367,28 @@ public class BomboConfig {
       public boolean showLeatherColor = true;
       public boolean showMuseumDonated = true;
       public boolean showSkyblockId = true;
+      public Map<String, String> lorePosition = new HashMap<>();
+      public Map<String, Integer> loreOrder = new HashMap<>();
+
+      public String getLorePos(String key, String def) {
+         if (lorePosition == null) lorePosition = new HashMap<>();
+         return lorePosition.getOrDefault(key, def);
+      }
+
+      public void setLorePos(String key, String pos) {
+         if (lorePosition == null) lorePosition = new HashMap<>();
+         lorePosition.put(key, pos);
+      }
+
+      public int getLoreOrder(String key, int def) {
+         if (loreOrder == null) loreOrder = new HashMap<>();
+         return loreOrder.getOrDefault(key, def);
+      }
+
+      public void setLoreOrder(String key, int order) {
+         if (loreOrder == null) loreOrder = new HashMap<>();
+         loreOrder.put(key, Math.max(1, order));
+      }
       public boolean apiDebug = false;
       public boolean apiChatMessages = false;
       public boolean copyChat = false;

@@ -162,7 +162,9 @@ public abstract class ItemStackMixin {
                }
             }
 
-            boolean shouldShowLowestBin = BomboConfig.get().lowestBin;
+            BomboConfig.Settings s = BomboConfig.get();
+            List<me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition> priceAdditions = new java.util.ArrayList<>();
+            boolean shouldShowLowestBin = s.lowestBin;
             boolean isPet = skyblockId.startsWith("PET-") || skyblockId.contains(";");
             if (shouldShowLowestBin) {
                long price = (Long)LowestBinManager.getLowestBin(skyblockId).getNow(-1L);
@@ -184,13 +186,13 @@ public abstract class ItemStackMixin {
                      priceText = priceText + " §7(" + LowestBinManager.formatPrice(price * (long)count) + ")";
                   }
 
-                  lines.add(Component.literal(priceText));
-               } else if (BomboConfig.get().debugMode) {
-                  lines.add(Component.literal("§c[Debug] No BIN for: " + skyblockId));
+                  priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("lowestBin", Component.literal(priceText), s.getLorePos("lowestBin", "BOTTOM"), s.getLoreOrder("lowestBin", 9)));
+               } else if (s.debugMode) {
+                  priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("lowestBin", Component.literal("§c[Debug] No BIN for: " + skyblockId), s.getLorePos("lowestBin", "BOTTOM"), s.getLoreOrder("lowestBin", 9)));
                }
             }
 
-            boolean shouldShowCraftCost = BomboConfig.get().craftCostTooltip;
+            boolean shouldShowCraftCost = s.craftCostTooltip;
             if (shouldShowCraftCost && !isPet) {
                long craftCost = LowestBinManager.getCraftCostCached(skyblockId);
                if (craftCost > 0L) {
@@ -199,11 +201,11 @@ public abstract class ItemStackMixin {
                      costText = costText + " §7(" + LowestBinManager.formatPrice(craftCost * (long)count) + ")";
                   }
 
-                  lines.add(Component.literal(costText));
+                  priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("craftCost", Component.literal(costText), s.getLorePos("craftCost", "BOTTOM"), s.getLoreOrder("craftCost", 10)));
                }
             }
 
-            if (BomboConfig.get().npcPrice) {
+            if (s.npcPrice) {
                long npcPrice = LowestBinManager.getNpcPrice(skyblockId);
                if (npcPrice > 0L) {
                   String text = "§6NPC: §e" + LowestBinManager.formatPrice(npcPrice);
@@ -211,9 +213,9 @@ public abstract class ItemStackMixin {
                      text = text + " §7(" + LowestBinManager.formatPrice(npcPrice * (long)count) + ")";
                   }
 
-                  lines.add(Component.literal(text));
-               } else if (BomboConfig.get().debugMode) {
-                  lines.add(Component.literal("§c[Debug] No NPC for: " + skyblockId));
+                  priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("npcPrice", Component.literal(text), s.getLorePos("npcPrice", "BOTTOM"), s.getLoreOrder("npcPrice", 11)));
+               } else if (s.debugMode) {
+                  priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("npcPrice", Component.literal("§c[Debug] No NPC for: " + skyblockId), s.getLorePos("npcPrice", "BOTTOM"), s.getLoreOrder("npcPrice", 11)));
                }
             }
 
@@ -224,8 +226,10 @@ public abstract class ItemStackMixin {
                   bitsText = bitsText + " §7(" + LowestBinManager.formatPrice((long)bitCost * (long)count) + " bits)";
                }
 
-               lines.add(Component.literal(bitsText));
+               priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("bitCost", Component.literal(bitsText), s.getLorePos("bitCost", "BOTTOM"), s.getLoreOrder("bitCost", 12)));
             }
+
+            me.bombo.bomboaddons.features.SupercraftHelper.applyAdditionsToLines(lines, priceAdditions);
          }
 
       }

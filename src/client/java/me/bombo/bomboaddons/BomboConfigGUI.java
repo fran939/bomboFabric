@@ -571,14 +571,17 @@ extends Screen {
                     if (loreAdditionsSubmenu) {
                         this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> { loreAdditionsSubmenu = false; this.scrollAmount = 0.0; this.init(); }).bounds(col1X, y1, 140, 20).build());
                         y1 += 28;
-                        y1 = this.addBoolOption("Copy Canceled Order Amount (Ctrl+Click)", s.copyCanceledOrderAmount, v -> s.copyCanceledOrderAmount = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Supercraft Max Calculator (Ctrl+Click)", s.supercraftMaxCalculator, v -> s.supercraftMaxCalculator = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Starts In Absolute Time", s.startsInAbsoluteTime, v -> s.startsInAbsoluteTime = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Dungeon Item Quality", s.showDungeonQuality, v -> s.showDungeonQuality = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Item Creation Date", s.showItemCreationDate, v -> s.showItemCreationDate = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Leather Armor Hex Color", s.showLeatherColor, v -> s.showLeatherColor = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Museum Donated Status", s.showMuseumDonated, v -> s.showMuseumDonated = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Skyblock Item ID", s.showSkyblockId, v -> s.showSkyblockId = v, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Copy Canceled Order Amount (Ctrl+Click)", "copyCanceled", s.copyCanceledOrderAmount, v -> s.copyCanceledOrderAmount = v, 1, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Supercraft Max Calculator (Ctrl+Click)", "supercraft", s.supercraftMaxCalculator, v -> s.supercraftMaxCalculator = v, 2, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Starts In Absolute Time", "startsIn", s.startsInAbsoluteTime, v -> s.startsInAbsoluteTime = v, 3, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Dungeon Item Quality", "dungeonQuality", s.showDungeonQuality, v -> s.showDungeonQuality = v, 4, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Item Creation Date", "itemCreationDate", s.showItemCreationDate, v -> s.showItemCreationDate = v, 5, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Leather Armor Hex Color", "leatherColor", s.showLeatherColor, v -> s.showLeatherColor = v, 6, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Museum Donated Status", "museumDonated", s.showMuseumDonated, v -> s.showMuseumDonated = v, 7, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Skyblock Item ID", "skyblockId", s.showSkyblockId, v -> s.showSkyblockId = v, 8, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Lowest BIN / BZ Price", "lowestBin", s.lowestBin, v -> s.lowestBin = v, 9, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Raw Craft Cost", "craftCost", s.craftCostTooltip, v -> s.craftCostTooltip = v, 10, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("NPC Sell Price", "npcPrice", s.npcPrice, v -> s.npcPrice = v, 11, col1X, col1W * 2, y1);
                         break;
                     }
 
@@ -586,6 +589,7 @@ extends Screen {
                         this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> { frozenBlazeWarnSubmenu = false; this.scrollAmount = 0.0; this.init(); }).bounds(col1X, y1, 140, 20).build());
                         y1 += 28;
                         y1 = this.addBoolOption("Frozen Blaze Warning Enabled", s.frozenBlazeWarning, v -> s.frozenBlazeWarning = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Show AFK Timer On Screen", s.fbWarnTimerOnScreen, v -> s.fbWarnTimerOnScreen = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Play Warning Sound", s.fbWarnSound, v -> s.fbWarnSound = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Show Title On Screen", s.fbWarnTitle, v -> s.fbWarnTitle = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Send Chat Warning", s.fbWarnChat, v -> s.fbWarnChat = v, col1X, col1W * 2, y1);
@@ -3302,6 +3306,57 @@ extends Screen {
         return y + 24;
     }
 
+    private int addLoreOptionWithOrder(String label, String key, boolean value, Consumer<Boolean> setter, int defaultOrder, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
+        BomboConfig.Settings s = BomboConfig.get();
+        Checkbox cb = Checkbox.builder(Component.literal(""), (Font)this.font).pos(x, y).selected(value).onValueChange((box, val) -> {
+            setter.accept(val);
+            BomboConfig.save();
+        }).build();
+        cb.setX(x);
+        cb.setY(y);
+        cb.visible = (y >= 56 && y <= this.height - 44);
+        this.addRenderableWidget(cb);
+
+        String currentPos = s.getLorePos(key, "BOTTOM");
+        int currentOrder = s.getLoreOrder(key, defaultOrder);
+        int btnBaseX = x + w - 145;
+
+        String posLabel = "TOP".equalsIgnoreCase(currentPos) ? "§a[TOP]" : "§7[BOT]";
+        Button posBtn = Button.builder(Component.literal(posLabel), b -> {
+            String nextPos = "TOP".equalsIgnoreCase(s.getLorePos(key, "BOTTOM")) ? "BOTTOM" : "TOP";
+            s.setLorePos(key, nextPos);
+            BomboConfig.save();
+            this.init();
+        }).bounds(btnBaseX, y, 46, 18).build();
+        posBtn.visible = (y >= 56 && y <= this.height - 44);
+        this.addRenderableWidget(posBtn);
+
+        Button minusBtn = Button.builder(Component.literal("§7-"), b -> {
+            int newOrder = Math.max(1, s.getLoreOrder(key, defaultOrder) - 1);
+            s.setLoreOrder(key, newOrder);
+            BomboConfig.save();
+            this.init();
+        }).bounds(btnBaseX + 50, y, 20, 18).build();
+        minusBtn.visible = (y >= 56 && y <= this.height - 44);
+        this.addRenderableWidget(minusBtn);
+
+        Button orderLabelBtn = Button.builder(Component.literal("§e#" + currentOrder), b -> {}).bounds(btnBaseX + 72, y, 34, 18).build();
+        orderLabelBtn.visible = (y >= 56 && y <= this.height - 44);
+        this.addRenderableWidget(orderLabelBtn);
+
+        Button plusBtn = Button.builder(Component.literal("§7+"), b -> {
+            int newOrder = Math.min(99, s.getLoreOrder(key, defaultOrder) + 1);
+            s.setLoreOrder(key, newOrder);
+            BomboConfig.save();
+            this.init();
+        }).bounds(btnBaseX + 108, y, 20, 18).build();
+        plusBtn.visible = (y >= 56 && y <= this.height - 44);
+        this.addRenderableWidget(plusBtn);
+
+        return y + 24;
+    }
+
     private int addIntLabelSlider(String label, int current, int min, int max, int step, IntConsumer setter, int x, int w, int y) {
         if (!optionMatchesSearch(label)) return y;
         Button b1 = Button.builder((Component)Component.literal((String)"\u00a77-"), btn -> {
@@ -3711,6 +3766,9 @@ extends Screen {
                         y1 = this.drawOptionLabel(g, "§7Leather Armor Hex Color", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Museum Donated Status", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Skyblock Item ID", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Lowest BIN / BZ Price", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Raw Craft Cost", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7NPC Sell Price", col1X + 24, y1, -1, false);
                         break;
                     }
 
@@ -3718,6 +3776,7 @@ extends Screen {
                         g.text(this.font, "§6§lFrozen Blaze Warning Settings", col1X, y1, -22016, true);
                         y1 += 28;
                         y1 = this.drawOptionLabel(g, "§7Frozen Blaze Warning Enabled", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Show AFK Timer On Screen", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Play Warning Sound", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Show Title On Screen", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Send Chat Warning", col1X + 24, y1, -1, false);

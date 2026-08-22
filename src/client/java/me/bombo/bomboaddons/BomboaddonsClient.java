@@ -1013,6 +1013,60 @@ public class BomboaddonsClient implements ClientModInitializer {
                         BlockHitResult bhr = mc.level.clip(new net.minecraft.world.level.ClipContext(eye, reach, net.minecraft.world.level.ClipContext.Block.OUTLINE, net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
                         if (bhr != null && bhr.getType() == HitResult.Type.BLOCK) {
                            targetPos = bhr.getBlockPos();
+                           BlockState state = mc.level.getBlockState(targetPos);
+                           String rawId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                           String shortId = rawId.replace("minecraft:", "");
+                           String blockName = state.getBlock().getName().getString();
+                           String coordsStr = targetPos.getX() + " " + targetPos.getY() + " " + targetPos.getZ();
+
+                           StringBuilder propsSb = new StringBuilder();
+                           for (net.minecraft.world.level.block.state.properties.Property<?> prop : state.getProperties()) {
+                              if (propsSb.length() > 0) propsSb.append(", ");
+                              propsSb.append(prop.getName()).append("=").append(state.getValue(prop).toString());
+                           }
+                           String propsStr = propsSb.toString();
+                           String stateWithProps = shortId + (!propsStr.isEmpty() ? "[" + propsStr + "]" : "");
+
+                           mc.keyboardHandler.setClipboard(shortId);
+
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §a=== Targeted Block Info ==="));
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Name: §e" + blockName));
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- ID: §b" + rawId + " §7(short: §e" + shortId + "§7)"));
+                           if (!propsStr.isEmpty()) {
+                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Properties: §f" + propsStr));
+                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Full State: §e" + stateWithProps));
+                           }
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Coords: §6" + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ()));
+
+                           MutableComponent actions = Component.literal("§7Actions: ");
+
+                           MutableComponent copyIdBtn = Component.literal("§b[Copy ID] ");
+                           copyIdBtn.setStyle(copyIdBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(shortId)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy '" + shortId + "' to clipboard"))));
+                           actions.append(copyIdBtn);
+
+                           if (!propsStr.isEmpty()) {
+                              MutableComponent copyStateBtn = Component.literal("§e[Copy State] ");
+                              copyStateBtn.setStyle(copyStateBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(stateWithProps)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy '" + stateWithProps + "' to clipboard"))));
+                              actions.append(copyStateBtn);
+                           }
+
+                           MutableComponent copyCoordsBtn = Component.literal("§6[Copy Coords] ");
+                           copyCoordsBtn.setStyle(copyCoordsBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(coordsStr)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy coords: " + coordsStr))));
+                           actions.append(copyCoordsBtn);
+
+                           MutableComponent highlightBtn = Component.literal("§a[+ Highlight Block] ");
+                           highlightBtn.setStyle(highlightBtn.getStyle().withClickEvent(new ClickEvent.SuggestCommand("/b bh add " + shortId + " GOLD")).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to highlight all " + shortId))));
+                           actions.append(highlightBtn);
+
+                           if (!propsStr.isEmpty()) {
+                              MutableComponent highlightStateBtn = Component.literal("§d[+ Highlight State]");
+                              highlightStateBtn.setStyle(highlightStateBtn.getStyle().withClickEvent(new ClickEvent.SuggestCommand("/b bh add " + stateWithProps + " GOLD")).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to highlight exact state " + stateWithProps))));
+                              actions.append(highlightStateBtn);
+                           }
+
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(actions);
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§a✔ Copied §e" + shortId + " §ato clipboard!"));
+                           return 1;
                         }
                      }
 
@@ -1020,36 +1074,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cNo block found in front of you."));
                         return 0;
                      }
-
-                     BlockState state = mc.level.getBlockState(targetPos);
-                     String rawId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-                     String shortId = rawId.replace("minecraft:", "");
-                     String blockName = state.getBlock().getName().getString();
-                     String coordsStr = targetPos.getX() + " " + targetPos.getY() + " " + targetPos.getZ();
-
-                     mc.keyboardHandler.setClipboard(shortId);
-
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §a=== Targeted Block Info ==="));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Name: §e" + blockName));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- ID: §b" + rawId + " §7(short: §e" + shortId + "§7)"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Coords: §6" + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ()));
-
-                     MutableComponent actions = Component.literal("§7Actions: ");
-
-                     MutableComponent copyIdBtn = Component.literal("§b[Copy ID] ");
-                     copyIdBtn.setStyle(copyIdBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(shortId)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy '" + shortId + "' to clipboard"))));
-                     actions.append(copyIdBtn);
-
-                     MutableComponent copyCoordsBtn = Component.literal("§6[Copy Coords] ");
-                     copyCoordsBtn.setStyle(copyCoordsBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(coordsStr)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy coords: " + coordsStr))));
-                     actions.append(copyCoordsBtn);
-
-                     MutableComponent highlightBtn = Component.literal("§a[+ Highlight Block]");
-                     highlightBtn.setStyle(highlightBtn.getStyle().withClickEvent(new ClickEvent.SuggestCommand("/b blockhighlight add " + shortId)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to highlight " + shortId))));
-                     actions.append(highlightBtn);
-
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(actions);
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§a✔ Copied §e" + shortId + " §ato clipboard!"));
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("pos1").executes((context) -> {
@@ -2437,6 +2461,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                      return 1;
                   }));
                   builder.then(highlightCmd);
+                  builder.then(createBlockHighlightCommand("bh"));
+                  builder.then(createBlockHighlightCommand("blockhighlight"));
                   builder.then(ClientCommands.literal("left").executes((context) -> {
                      BomboConfig.get().gardenMovement = true;
                      GardenMovement.toggleLeft();
@@ -3177,6 +3203,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(bBuilder);
                dispatcher.register(baBuilder);
                dispatcher.register(bomboBuilder);
+               dispatcher.register(createBlockHighlightCommand("bh"));
+               dispatcher.register(createBlockHighlightCommand("blockhighlight"));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("bomboprof").executes((context) -> {
                   pendingConfigSearch = "Profile";
                   openGuiNextTick = true;
@@ -3779,6 +3807,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          CustomTimerManager.init();
          DungeonPadTimers.init();
          CorpseHighlight.init();
+         me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.init();
          HighlightESP.fetchOnlineAliasesAsync();
          IRCClient.start();
          LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register((LevelRenderEvents.AfterTranslucentFeatures)(context) -> {
@@ -4332,6 +4361,12 @@ public class BomboaddonsClient implements ClientModInitializer {
          if (s.frozenBlazeWarning) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: FrozenBlazeAFK")) {
                me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.onTick(client);
+            } catch (Throwable ignored) {}
+         }
+
+         if (s.replaceGrayCarpetDwarven) {
+            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: DwarvenCarpet")) {
+               DwarvenCarpetReplacer.tick(client);
             } catch (Throwable ignored) {}
          }
 
@@ -6359,6 +6394,69 @@ public class BomboaddonsClient implements ClientModInitializer {
             t.printStackTrace();
          }
       });
+   }
+
+   public static LiteralArgumentBuilder<FabricClientCommandSource> createBlockHighlightCommand(String name) {
+      LiteralArgumentBuilder<FabricClientCommandSource> cmd = ClientCommands.literal(name);
+      cmd.then(ClientCommands.literal("add").then(ClientCommands.argument("block", StringArgumentType.string()).executes((ctx) -> {
+         String block = StringArgumentType.getString(ctx, "block").toLowerCase().trim();
+         BomboConfig.get().blockHighlights.put(block, new BomboConfig.BlockHighlightInfo("GOLD", false));
+         BomboConfig.get().blockHighlightsEnabled = true;
+         BomboConfig.save();
+         BlockHighlight.highlightedBlocks.clear();
+         ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aAdded block highlight for: §e" + block + " §7(Color: GOLD)"));
+         return 1;
+      }).then(ClientCommands.argument("color", StringArgumentType.string()).executes((ctx) -> {
+         String block = StringArgumentType.getString(ctx, "block").toLowerCase().trim();
+         String color = StringArgumentType.getString(ctx, "color").toUpperCase().trim();
+         BomboConfig.get().blockHighlights.put(block, new BomboConfig.BlockHighlightInfo(color, false));
+         BomboConfig.get().blockHighlightsEnabled = true;
+         BomboConfig.save();
+         BlockHighlight.highlightedBlocks.clear();
+         ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aAdded block highlight for: §e" + block + " §7(Color: " + color + ")"));
+         return 1;
+      }))));
+      cmd.then(ClientCommands.literal("remove").then(ClientCommands.argument("block", StringArgumentType.greedyString()).executes((ctx) -> {
+         String block = StringArgumentType.getString(ctx, "block").toLowerCase().trim();
+         if (BomboConfig.get().blockHighlights.remove(block) != null) {
+            BomboConfig.save();
+            BlockHighlight.highlightedBlocks.clear();
+            ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aRemoved block highlight for: §e" + block));
+         } else {
+            ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cNo block highlight found for: §e" + block));
+         }
+         return 1;
+      })));
+      cmd.then(ClientCommands.literal("clear").executes((ctx) -> {
+         BomboConfig.get().blockHighlights.clear();
+         BomboConfig.save();
+         BlockHighlight.highlightedBlocks.clear();
+         ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aCleared all block highlights!"));
+         return 1;
+      }));
+      cmd.then(ClientCommands.literal("toggle").executes((ctx) -> {
+         BomboConfig.get().blockHighlightsEnabled = !BomboConfig.get().blockHighlightsEnabled;
+         BomboConfig.save();
+         BlockHighlight.highlightedBlocks.clear();
+         ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aBlock highlights " + (BomboConfig.get().blockHighlightsEnabled ? "enabled" : "disabled") + "!"));
+         return 1;
+      }));
+      cmd.then(ClientCommands.literal("list").executes((ctx) -> {
+         ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §6=== Block Highlights ==="));
+         if (BomboConfig.get().blockHighlights.isEmpty()) {
+            ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("  §7None"));
+         } else {
+            for (Map.Entry<String, BomboConfig.BlockHighlightInfo> entry : BomboConfig.get().blockHighlights.entrySet()) {
+               ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("  §7• §e" + entry.getKey() + " §7(Color: " + entry.getValue().color + ")"));
+            }
+         }
+         return 1;
+      }));
+      cmd.executes((ctx) -> {
+         ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §7Usage: /b bh add <block> [color], /b bh remove <block>, /b bh list, /b bh toggle, /b bh clear"));
+         return 1;
+      });
+      return cmd;
    }
 
    public static class PendingCommand {
