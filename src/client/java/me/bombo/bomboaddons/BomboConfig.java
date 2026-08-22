@@ -26,18 +26,60 @@ import net.fabricmc.loader.api.FabricLoader;
 
 public class BomboConfig {
    private static final Path OLD_CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons.json");
-   private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons.json");
+   private static final Path OLD_BOMBO_DIR = FabricLoader.getInstance().getConfigDir().resolve("bombo");
+   private static final Path BOMBOADDONS_DIR = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons");
+   private static final Path CONFIG_PATH = BOMBOADDONS_DIR.resolve("bomboaddons.json");
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().registerTypeAdapter(HighlightInfo.class, new HighlightInfoAdapter()).create();
    private static Settings instance = new Settings();
 
    public static void load() {
+      // 1. If old loose config file exists in config/bomboaddons.json
       if (Files.exists(OLD_CONFIG_PATH, new LinkOption[0])) {
          try {
-            if (!Files.exists(CONFIG_PATH.getParent(), new LinkOption[0])) {
-               Files.createDirectories(CONFIG_PATH.getParent());
+            if (!Files.exists(BOMBOADDONS_DIR, new LinkOption[0])) {
+               Files.createDirectories(BOMBOADDONS_DIR);
             }
-
             Files.move(OLD_CONFIG_PATH, CONFIG_PATH, StandardCopyOption.REPLACE_EXISTING);
+         } catch (Exception e) {
+            e.printStackTrace();
+         }
+      }
+
+      // 2. Merge entire config/bombo folder into config/bomboaddons folder and remove config/bombo
+      if (Files.exists(OLD_BOMBO_DIR, new LinkOption[0])) {
+         try {
+            if (!Files.exists(BOMBOADDONS_DIR, new LinkOption[0])) {
+               Files.createDirectories(BOMBOADDONS_DIR);
+            }
+            try (java.util.stream.Stream<Path> stream = Files.walk(OLD_BOMBO_DIR)) {
+               stream.forEach(source -> {
+                  try {
+                     Path dest = BOMBOADDONS_DIR.resolve(OLD_BOMBO_DIR.relativize(source));
+                     if (Files.isDirectory(source)) {
+                        if (!Files.exists(dest)) {
+                           Files.createDirectories(dest);
+                        }
+                     } else {
+                        if (!Files.exists(dest)) {
+                           Files.move(source, dest, StandardCopyOption.REPLACE_EXISTING);
+                        } else {
+                           // If destination exists, replace or delete source
+                           Files.deleteIfExists(source);
+                        }
+                     }
+                  } catch (Exception ex) {
+                     ex.printStackTrace();
+                  }
+               });
+            }
+            // Delete old bombo directory recursively
+            try (java.util.stream.Stream<Path> stream = Files.walk(OLD_BOMBO_DIR)) {
+               stream.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                  try {
+                     Files.deleteIfExists(p);
+                  } catch (Exception ignored) {}
+               });
+            }
          } catch (Exception e) {
             e.printStackTrace();
          }
@@ -424,7 +466,7 @@ public class BomboConfig {
       public String autoFishingStopChatMessage = "";
       public boolean autoFishingDebug = false;
       public boolean reconnectButton = false;
-      public boolean hideCheats = false;
+      public boolean hideCheats = true;
       public boolean diceTracker = false;
       public boolean showCommandOnHover = false;
       public boolean autoHoppityCalls = false;
@@ -635,7 +677,7 @@ public class BomboConfig {
       public boolean eggFinderBeacon = false;
       public boolean eggFinderThroughWalls = true;
       public boolean goldenDragonNestFinder = false;
-      public boolean structureFinder = true;
+      public boolean structureFinder = false;
       public boolean structureFinderCorleone1 = true;
       public boolean structureFinderGoldenDragon = true;
       public boolean structureFinderTracers = true;

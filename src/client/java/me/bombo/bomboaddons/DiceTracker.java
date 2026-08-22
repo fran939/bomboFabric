@@ -15,7 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
 
 public class DiceTracker {
-   private static final File SAVE_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo/dice_stats.json").toFile();
+   private static final File SAVE_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/dice_stats.json").toFile();
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
    private static final Pattern DICE_PATTERN = Pattern.compile("^Your (High Class )?Archfiend Dice rolled a ([1-7])!");
    private static long lastRollTime = 0L;

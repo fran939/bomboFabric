@@ -23,7 +23,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 
 public class RankCache {
-   private static final Path CACHE_PATH = FabricLoader.getInstance().getConfigDir().resolve("bombo/ranks.json");
+   private static final Path CACHE_PATH = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/ranks.json");
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
    private static final Map<String, String> cache = new ConcurrentHashMap();
    private static final Set<String> pendingFetches = ConcurrentHashMap.newKeySet();

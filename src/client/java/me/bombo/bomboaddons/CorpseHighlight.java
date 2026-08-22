@@ -196,6 +196,9 @@ public class CorpseHighlight {
                      }
 
                      String outlineColorName = var10000;
+                     if (outlineColorName == null || outlineColorName.equalsIgnoreCase("DISABLED") || outlineColorName.equalsIgnoreCase("NONE")) {
+                        continue;
+                     }
                      switch (type.ordinal()) {
                         case 0 -> var10000 = s.lapisFillColor;
                         case 1 -> var10000 = s.tungstenFillColor;

@@ -501,7 +501,7 @@ extends Screen {
             int renderCount = 0;
             int totalRendered = 0;
             for (int i = 0; i < this.categories.size(); ++i) {
-                if (s.hideCheats && (i == 2 || i == 9 || i == 24) || this.categories.get(i).equals("Party Settings")) continue;
+                if (s.hideCheats && (i == 2 || i == 9 || i == 23 || i == 24) || this.categories.get(i).equals("Party Settings")) continue;
                 ++totalRendered;
             }
             int totalHeight = totalRendered * 26;
@@ -511,7 +511,7 @@ extends Screen {
             for (int i = 0; i < this.categories.size(); ++i) {
                 boolean visible;
                 int idx = i;
-                if (s.hideCheats && (idx == 2 || idx == 9 || idx == 24) || this.categories.get(idx).equals("Party Settings")) continue;
+                if (s.hideCheats && (idx == 2 || idx == 9 || idx == 23 || idx == 24) || this.categories.get(idx).equals("Party Settings")) continue;
                 String catName = this.categories.get(idx);
                 if (configSearchTerm != null && !configSearchTerm.trim().isEmpty()) {
                     String q = configSearchTerm.toLowerCase().trim();
@@ -584,6 +584,7 @@ extends Screen {
                         y1 = this.addLoreOptionWithOrder("Lowest BIN / BZ Price", "lowestBin", s.lowestBin, v -> s.lowestBin = v, 9, col1X, col1W * 2, y1);
                         y1 = this.addLoreOptionWithOrder("Raw Craft Cost", "craftCost", s.craftCostTooltip, v -> s.craftCostTooltip = v, 10, col1X, col1W * 2, y1);
                         y1 = this.addLoreOptionWithOrder("NPC Sell Price", "npcPrice", s.npcPrice, v -> s.npcPrice = v, 11, col1X, col1W * 2, y1);
+                        y1 = this.addLoreOptionWithOrder("Pet Lowest BIN", "petLowestBin", s.showPetLowestBin, v -> s.showPetLowestBin = v, 12, col1X, col1W * 2, y1);
                         break;
                     }
 
@@ -610,7 +611,6 @@ extends Screen {
                     }
 
                     y1 = this.addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava, v -> s.clearWaterAndLava = v, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Disable Blindness", s.disableBlindness, v -> s.disableBlindness = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Sign Calculator", s.signCalculator, v -> s.signCalculator = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("SBE Commands", s.sbeCommands, v -> s.sbeCommands = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Copy Chat", s.copyChat, v -> s.copyChat = v, col1X, col1W, y1);
@@ -703,6 +703,7 @@ extends Screen {
                     }, col2X, col2W, y2);
                     if (!s.hideCheats) {
                         y2 += 10;
+                        y2 = this.addBoolOption("Disable Blindness", s.disableBlindness, v -> s.disableBlindness = v, col2X, col2W, y2);
                         y2 = this.addBoolOption("Fuck Diorite", s.fuckDiorite, v -> s.fuckDiorite = v, col2X, col2W, y2);
                         y2 = this.addBoolOption("Fuck Diorite Pillar Color", s.fuckDioritePillarColor, v -> s.fuckDioritePillarColor = v, col2X, col2W, y2);
                         if (s.fuckDioritePillarColor) {
@@ -937,13 +938,15 @@ extends Screen {
                     y2 = this.addKeyBindButton("Run Clipboard Cmd", s.clipboardRunKey, v -> {
                         s.clipboardRunKey = v;
                     }, "clipboardRun", col2X, col2W, y2);
-                    y2 = this.addKeyBindButton("Freelook", s.freelookKey, v -> {
-                        s.freelookKey = v;
-                    }, "freelook", col2X, col2W, y2);
-                    y2 = this.addCycleOption("Freelook Mode", s.freelookToggle ? "Toggle" : "Hold", List.of("Hold", "Toggle"), v -> {
-                        s.freelookToggle = "Toggle".equalsIgnoreCase(v);
-                        BomboConfig.save();
-                    }, col2X, col2W, y2);
+                    if (!s.hideCheats) {
+                        y2 = this.addKeyBindButton("Freelook", s.freelookKey, v -> {
+                            s.freelookKey = v;
+                        }, "freelook", col2X, col2W, y2);
+                        y2 = this.addCycleOption("Freelook Mode", s.freelookToggle ? "Toggle" : "Hold", List.of("Hold", "Toggle"), v -> {
+                            s.freelookToggle = "Toggle".equalsIgnoreCase(v);
+                            BomboConfig.save();
+                        }, col2X, col2W, y2);
+                    }
                     y2 = this.addKeyBindButton("Bestiary Highlight", s.bestiaryHighlightKey, v -> {
                         s.bestiaryHighlightKey = v;
                     }, "bestiaryHighlight", col2X, col2W, y2);
@@ -954,9 +957,6 @@ extends Screen {
                 }
                 case 6: {
                     curY += 24;
-                    curY = this.addBoolOption("Auto GUI Clicker", s.autoClicker, v -> {
-                        s.autoClicker = v;
-                    }, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Keypress Clicker", s.chestClicker, v -> {
                         s.chestClicker = v;
                     }, contentX, contentWidth, curY);
@@ -1574,11 +1574,7 @@ extends Screen {
                     break;
                 }
                 case 8: {
-                    int i;
                     curY += 24;
-                    curY = this.addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava, v -> {
-                        s.clearWaterAndLava = v;
-                    }, contentX, contentWidth, curY);
                     if (!s.hideCheats) {
                         curY = this.addBoolOption("Auto Close Wardrobe", s.autoCloseWardrobe, v -> {
                             s.autoCloseWardrobe = v;
@@ -1587,9 +1583,20 @@ extends Screen {
                     curY = this.addBoolOption("Disable Unequip", s.disableUnequipWardrobe, v -> {
                         s.disableUnequipWardrobe = v;
                     }, contentX, contentWidth, curY);
-                    for (i = 0; i < s.wardrobeKeys.size(); ++i) {
+                    for (int i = 0; i < s.wardrobeKeys.size(); ++i) {
                         int index = i;
-                        curY = this.addKeyBindButton("Slot " + (i + 1), s.wardrobeKeys.get(i), v -> s.wardrobeKeys.set(index, (String)v), "wardrobe" + i, contentX, contentWidth, curY);
+                        int slotY = curY;
+                        curY += 22;
+                        boolean listening = listeningForKeyTarget.equals("wardrobe" + index);
+                        String currentKey = s.wardrobeKeys.get(index);
+                        String displayKey = ClickLogic.getKeyDisplayName(currentKey);
+                        String keyText = listening ? "§e[PRESS KEY]" : "§fSlot " + (index + 1) + ": §d" + (currentKey.isEmpty() ? "None" : displayKey);
+                        Button btn = Button.builder(Component.literal(keyText), b -> {
+                            listeningForKeyTarget = "wardrobe" + index;
+                            this.init();
+                        }).bounds(contentX, slotY, Math.min(contentWidth, 200), 18).build();
+                        btn.visible = (slotY >= 56 && slotY <= this.height - 44);
+                        this.addRenderableWidget(btn);
                     }
                     break;
                 }
@@ -1746,6 +1753,9 @@ extends Screen {
                     curY = this.addBoolOption("Daily Reward Debug", s.debugDailyReward, v -> {
                         s.debugDailyReward = v;
                     }, contentX, contentWidth, curY);
+                    curY = this.addBoolOption("Kuudra Debug Mode", s.kuudraDebug, v -> {
+                        s.kuudraDebug = v;
+                    }, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Display ESP Enabled", s.displayEsp, v -> {
                         s.displayEsp = v;
                     }, contentX, contentWidth, curY);
@@ -1781,40 +1791,11 @@ extends Screen {
                     curY = this.addBoolOption("Auto GFS Twilight", s.autoGfsTwilight, v -> {
                         s.autoGfsTwilight = v;
                     }, contentX, contentWidth, curY);
-                    curY += 10;
-                    curY = this.addBoolOption("Pearl Waypoints & Timers", s.pearlCalculator, v -> {
-                        s.pearlCalculator = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Show Pearl Throw Timer", s.showTimer, v -> {
-                        s.showTimer = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Show All Pearl Spots", s.showAll, v -> {
-                        s.showAll = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Show Sky Pearl Spots", s.showSkyPearls, v -> {
-                        s.showSkyPearls = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Show Flat Pearl Spots", s.showFlatPearls, v -> {
-                        s.showFlatPearls = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Show Double Pearl Spots", s.showDoublePearls, v -> {
-                        s.showDoublePearls = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Kuudra Debug Mode", s.kuudraDebug, v -> {
-                        s.kuudraDebug = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addIntLabelSlider("Talisman Tier (0-3)", s.kuudraTalisman, 0, 3, 1, v -> {
-                        s.kuudraTalisman = v;
-                    }, contentX, 150, curY);
                     break;
                 }
                 case 12: {
                     int i;
                     curY += 24;
-                    curY = this.addBoolOption("Show Pet Lowest BIN", s.showPetLowestBin, v -> {
-                        s.showPetLowestBin = v;
-                    }, contentX, contentWidth, curY);
-                    curY += 5;
                     curY = this.addBoolOption("Disable Unequip", s.disableUnequipPet, v -> {
                         s.disableUnequipPet = v;
                     }, contentX, contentWidth, curY);
@@ -2402,14 +2383,14 @@ extends Screen {
                         break;
                     }
 
-                    y1 = this.addBoolOption("Corpse ESP Enabled", s.corpseEsp, v -> {
+                    y1 = this.addBoolOption("Corpse Highlight Enabled", s.corpseEsp, v -> {
                         s.corpseEsp = v;
                     }, col1X, col1W, y1);
                     y1 = this.addBoolOption("Hide Opened Corpses", s.hideOpenedCorpses, v -> {
                         s.hideOpenedCorpses = v;
                     }, col1X, col1W, y1);
                     String[] styleNames = new String[]{"Outline", "Filled", "Both"};
-                    String styleLabel = "ESP Style: " + s.corpseEspStyle;
+                    String styleLabel = "Highlight Style: " + s.corpseEspStyle;
                     this.addRenderableWidget(Button.builder((Component)Component.literal((String)styleLabel), btn -> {
                         int currentIdx = 0;
                         if ("Filled".equals(s.corpseEspStyle)) {
@@ -2789,7 +2770,6 @@ extends Screen {
                     curY = this.addBoolOption("Enable Custom Crosshair", crosshair.enabled, v -> {
                         crosshair.enabled = v;
                     }, contentX, contentWidth, curY);
-                    curY += 5;
                     curY = this.addBoolOption("Chroma", crosshair.chroma, v -> {
                         crosshair.chroma = v;
                     }, contentX, contentWidth, curY);
@@ -3639,8 +3619,8 @@ extends Screen {
         int startX = pickerX + 10;
         int startY = pickerY + 25;
         ArrayList<String> colorsToUse = new ArrayList<String>();
-        if ("Fuck Diorite Color".equals(colorPickerTarget)) {
-            colorsToUse.add("NONE");
+        if (colorPickerTarget != null && (colorPickerTarget.contains("Corpse") || colorPickerTarget.contains("Fuck Diorite") || colorPickerTarget.contains("Outline") || colorPickerTarget.contains("Fill"))) {
+            colorsToUse.add("DISABLED");
         }
         colorsToUse.addAll(SlotHighlight.COLORS);
         for (int i = 0; i < colorsToUse.size(); ++i) {
@@ -3737,7 +3717,7 @@ extends Screen {
             g.disableScissor();
             int totalRendered = 0;
             for (int i = 0; i < this.categories.size(); ++i) {
-                if (s.hideCheats && (i == 2 || i == 9 || i == 24) || this.categories.get(i).equals("Party Settings")) continue;
+                if (s.hideCheats && (i == 2 || i == 9 || i == 23 || i == 24) || this.categories.get(i).equals("Party Settings")) continue;
                 ++totalRendered;
             }
             int totalHeight = totalRendered * 26;
@@ -3895,7 +3875,6 @@ extends Screen {
                     }
 
                     y1 = this.drawOptionLabel(g, "§7Clear Water & Lava Vision", col1X + 24, y1, -1, false);
-                    y1 = this.drawOptionLabel(g, "§7Disable Blindness", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Sign Calculator", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7SBE Commands", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Copy Chat", col1X + 24, y1, -1, false);
@@ -3953,6 +3932,7 @@ extends Screen {
                     y2 = this.drawOptionLabel(g, "§7Borderless Fullscreen", col2X + 24, y2, -1, false);
                     if (!s.hideCheats) {
                         y2 += 10;
+                        y2 = this.drawOptionLabel(g, "§7Disable Blindness", col2X + 24, y2, -1, false);
                         y2 = this.drawOptionLabel(g, "§7Fuck Diorite", col2X + 24, y2, -1, false);
                         y2 = this.drawOptionLabel(g, "§7Fuck Diorite Pillar Color", col2X + 24, y2, -1, false);
                         if (s.fuckDioritePillarColor && optionMatchesSearch("Fuck Diorite Color")) {
@@ -4145,16 +4125,17 @@ extends Screen {
                     if (optionMatchesSearch("Smart Back")) { g.text(this.font, "\u00a7fSmart Back:", col2X, y2 + 4, -1); y2 += 24; }
                     if (optionMatchesSearch("Save Pet")) { g.text(this.font, "\u00a7fSave Pet:", col2X, y2 + 4, -1); y2 += 24; }
                     if (optionMatchesSearch("Run Clipboard Cmd")) { g.text(this.font, "\u00a7fRun Clipboard Cmd:", col2X, y2 + 4, -1); y2 += 24; }
-                    if (optionMatchesSearch("Freelook")) { g.text(this.font, "\u00a7fFreelook:", col2X, y2 + 4, -1); y2 += 24; }
-                    y2 = this.drawOptionLabel(g, "\u00a77Freelook Mode: " + (s.freelookToggle ? "Toggle" : "Hold"), col2X + 24, y2, -1, false);
+                    if (!s.hideCheats) {
+                        if (optionMatchesSearch("Freelook")) { g.text(this.font, "\u00a7fFreelook:", col2X, y2 + 4, -1); y2 += 24; }
+                        y2 = this.drawOptionLabel(g, "\u00a77Freelook Mode: " + (s.freelookToggle ? "Toggle" : "Hold"), col2X + 24, y2, -1, false);
+                    }
                     if (optionMatchesSearch("Bestiary Highlight")) { g.text(this.font, "\u00a7fBestiary Highlight:", col2X, y2 + 4, -1); y2 += 24; }
                     if (optionMatchesSearch("Item List Search Focus")) { g.text(this.font, "\u00a7fItem List Search Focus:", col2X, y2 + 4, -1); y2 += 24; }
                     break;
                 }
                 case 6: {
                     g.text(this.font, "\u00a76\u00a7lClicker Targets", contentX, curY, -22016, true);
-                    g.text(this.font, "\u00a77Auto GUI: " + (s.autoClicker ? "\u00a7aON" : "\u00a7cOFF"), contentX + 24, (curY += 24) + 4, -1, false);
-                    g.text(this.font, "\u00a77Keypress: " + (s.chestClicker ? "\u00a7aON" : "\u00a7cOFF"), contentX + 24, (curY += 24) + 4, -1, false);
+                    g.text(this.font, "\u00a77Keypress Clicker: " + (s.chestClicker ? "\u00a7aON" : "\u00a7cOFF"), contentX + 24, (curY += 24) + 4, -1, false);
                     g.text(this.font, "\u00a7fGUI Name:", contentX, (curY += 34) + 4, -1);
                     g.text(this.font, "\u00a7fItem Name:", contentX, (curY += 29) + 4, -1);
                     g.text(this.font, "\u00a7fKey to Press:", contentX, (curY += 29) + 4, -1);
@@ -4392,6 +4373,7 @@ extends Screen {
                     curY = this.drawOptionLabel(g, "\u00a77Performance Debug", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Keys Debug", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Daily Reward Debug", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77Kuudra Debug Mode", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Display ESP Enabled", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Display Tracers", contentX + 24, curY, -1, false);
                     curY += 24;
@@ -4405,22 +4387,11 @@ extends Screen {
                     curY = this.drawOptionLabel(g, "\u00a77Auto GFS Toxic", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fToxic Count: \u00a7e" + BomboConfig.get().autoGfsToxicCount, contentX, (curY += 24) + 4, -1);
                     curY = this.drawOptionLabel(g, "\u00a77Auto GFS Twilight", contentX + 24, curY, -1, false);
-                    curY += 24;
-                    g.text(this.font, "\u00a77Pearl Waypoints & Timers", contentX + 24, (curY += 10) + 4, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Show Pearl Throw Timer", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Show All Pearl Spots", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Show Sky Pearl Spots", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Show Flat Pearl Spots", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Show Double Pearl Spots", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Kuudra Debug Mode", contentX + 24, curY, -1, false);
-                    g.text(this.font, "\u00a7fTalisman Tier: \u00a7e" + BomboConfig.get().kuudraTalisman, contentX, (curY += 24) + 4, -1);
                     break;
                 }
                 case 12: {
                     g.text(this.font, "\u00a76\u00a7lPets Settings", contentX, curY, -22016, true);
-                    curY = this.drawOptionLabel(g, "\u00a77Show Pet Lowest BIN", contentX + 24, curY, -1, false);
-                    g.text(this.font, "\u00a77Disable Unequip", contentX + 24, (curY += 29) + 4, -1, false);
-                    curY += 24;
+                    curY = this.drawOptionLabel(g, "\u00a77Disable Unequip", contentX + 24, curY + 24, -1, false);
                     for (int i = 0; i < 9; ++i) {
                         String uuid = s.petKeybinds.get(String.valueOf(i + 1));
                         Object boundInfo = "";
@@ -4479,9 +4450,10 @@ extends Screen {
                     g.text(this.font, "\u00a7fName:", contentX, (curY += 29) + 4, -1);
                     g.text(this.font, "\u00a7fCoords (X Y Z):", contentX, (curY += 29) + 4, -1);
                     g.text(this.font, "\u00a7fOnly on Island:", contentX, (curY += 29) + 4, -1);
-                    g.text(this.font, "\u00a77Show Through Walls", contentX + 24, (curY += 29) + 4, -1, false);
+                    curY += 29;
+                    curY = this.drawOptionLabel(g, "\u00a77Show Through Walls", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Show Beacon", contentX + 24, curY, -1, false);
-                    g.text(this.font, "\u00a7fColor:", contentX, curY += 24, -1);
+                    g.text(this.font, "\u00a7fColor:", contentX, curY + 4, -1);
                     curY += 24;
                     int activeWaypointsTitleY = curY += 35;
                     g.text(this.font, "\u00a79\u00a7lActive Waypoints", contentX, activeWaypointsTitleY, -11184641, true);
@@ -4553,6 +4525,7 @@ extends Screen {
                 }
                 case 17: {
                     g.text(this.font, "\u00a76\u00a7lDungeons Settings", contentX, curY, -22016, true);
+                    curY += 24;
                     curY = this.drawOptionLabel(g, "\u00a77Croesus Helper", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Dungeon Secrets Tracker", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Dungeon Secrets Debug", contentX + 24, curY, -1, false);
@@ -4560,7 +4533,7 @@ extends Screen {
                     curY = this.drawOptionLabel(g, "\u00a77Pad Timers Purple", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Pad Timers Green", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Dungeon Big Hitbox", contentX + 24, curY, -1, false);
-                    g.text(this.font, "\u00a7fPurple Timer: \u00a7e" + String.format("%.1fs", s.padTimerPurpleTime), contentX, curY += 24, -1);
+                    g.text(this.font, "\u00a7fPurple Timer: \u00a7e" + String.format("%.1fs", s.padTimerPurpleTime), contentX, curY + 4, -1);
                     break;
                 }
                 case 18: {
@@ -4613,9 +4586,9 @@ extends Screen {
                         y1 = this.drawOptionLabel(g, "§7Structure Tracers", col1X + 24, y1, -1, false);
                         break;
                     }
-                    g.text(this.font, "§6§lCorpse ESP Settings", col1X, y1, -22016, true);
+                    g.text(this.font, "§6§lCorpse Highlight Settings", col1X, y1, -22016, true);
                     y1 += 24;
-                    y1 = this.drawOptionLabel(g, "§7Corpse ESP Enabled", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Corpse Highlight Enabled", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Hide Opened Corpses", col1X + 24, y1, -1, false);
                     y1 += 29;
                     y1 = this.drawOptionLabel(g, "§7Golden Dragon Nest Finder", col1X + 24, y1, -1, false);
@@ -4668,14 +4641,16 @@ extends Screen {
                     break;
                 }
                 case 21: {
-                    g.text(this.font, "\u00a76\u00a7lBlock Highlights Settings", contentX, curY - 24, -22016, true);
+                    g.text(this.font, "\u00a76\u00a7lBlock Highlights Settings", contentX, curY, -22016, true);
+                    curY += 24;
                     curY = this.drawOptionLabel(g, "\u00a77Block Highlights Enabled", contentX + 24, curY, -1, false);
                     curY += 24; // Slider
-                    curY += 10;
-                    curY = this.drawOptionLabel(g, "§7Block Name/ID", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "§7Color", contentX + 24, curY, -1, false);
+                    g.text(this.font, "§fBlock Name/ID:", contentX, (curY += 10) + 4, -1);
+                    curY += 29;
+                    g.text(this.font, "§fColor:", contentX, curY + 4, -1);
+                    curY += 24;
                     curY = this.drawOptionLabel(g, "\u00a77See Through Walls", contentX + 24, curY, -1, false);
-                    curY += 24; // Add Button
+                    curY += 20; // Add Button
                     int listTitleY = curY += 35;
                     g.text(this.font, "\u00a79\u00a7lActive Block Highlights", contentX, listTitleY, -11184641, true);
                     int listY = listTitleY + 20 - (int)this.scrollAmount;
@@ -4694,13 +4669,16 @@ extends Screen {
                     break;
                 }
                 case 22: {
-                    g.text(this.font, "\u00a76\u00a7lParticle Highlights Settings", contentX, curY - 24, -22016, true);
+                    g.text(this.font, "\u00a76\u00a7lParticle Highlights Settings", contentX, curY, -22016, true);
+                    curY += 24;
                     curY = this.drawOptionLabel(g, "\u00a77Particle Highlights Enabled", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "§7Show Only On Island", contentX + 24, curY, -1, false);
-                    curY += 10;
-                    curY = this.drawOptionLabel(g, "§7Particle Name", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "§7Color", contentX + 24, curY, -1, false);
-                    curY += 24; // Add Button
+                    g.text(this.font, "§fShow Only On Island:", contentX, curY + 4, -1);
+                    curY += 29;
+                    g.text(this.font, "§fParticle Name:", contentX, (curY += 10) + 4, -1);
+                    curY += 29;
+                    g.text(this.font, "§fColor:", contentX, curY + 4, -1);
+                    curY += 24;
+                    curY += 20; // Add Button
                     int listTitleY = curY += 35;
                     g.text(this.font, "\u00a79\u00a7lActive Particle Highlights", contentX, listTitleY, -11184641, true);
                     int listY = listTitleY + 20 - (int)this.scrollAmount;
@@ -4751,16 +4729,14 @@ extends Screen {
                     String[] presetNames2;
                     BomboConfig.CrosshairSettings crosshair = BomboConfig.get().customCrosshair;
                     g.text(this.font, "\u00a76\u00a7lCustom Crosshair", contentX, curY, -22016, true);
+                    curY += 24;
                     curY = this.drawOptionLabel(g, "\u00a77Enable Custom Crosshair", contentX + 24, curY, -1, false);
-                    curY += 24;
-                    g.text(this.font, "\u00a77Chroma", contentX + 24, (curY += 5) + 4, -1, false);
-                    curY += 24;
+                    curY = this.drawOptionLabel(g, "\u00a77Chroma", contentX + 24, curY, -1, false);
                     if (!crosshair.chroma) {
                         g.text(this.font, "\u00a7fColor:", contentX, curY + 4, -1, false);
                         curY += 24;
                     }
-                    g.text(this.font, "\u00a77Outline", contentX + 24, curY + 4, -1, false);
-                    curY += 24;
+                    curY = this.drawOptionLabel(g, "\u00a77Outline", contentX + 24, curY, -1, false);
                     if (crosshair.outline) {
                         g.text(this.font, "\u00a7fOutline Color:", contentX, curY + 4, -1, false);
                         curY += 24;

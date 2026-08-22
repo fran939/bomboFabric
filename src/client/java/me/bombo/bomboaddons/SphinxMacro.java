@@ -23,7 +23,7 @@ import net.minecraft.network.chat.Component;
 public class SphinxMacro {
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
    private static final File OLD_DATA_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_sphinx.json").toFile();
-   private static final File DATA_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons_sphinx.json").toFile();
+   private static final File DATA_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/bomboaddons_sphinx.json").toFile();
    private static final Map<String, String> QUESTIONS = new HashMap();
    private static boolean inBlock = false;
    private static String currentQuestion = null;

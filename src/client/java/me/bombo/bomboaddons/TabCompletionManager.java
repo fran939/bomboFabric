@@ -26,7 +26,7 @@ public class TabCompletionManager {
    public static final Set<String> friends = Collections.newSetFromMap(new ConcurrentHashMap());
    public static final Set<String> guild = Collections.newSetFromMap(new ConcurrentHashMap());
    public static final Set<String> party = Collections.newSetFromMap(new ConcurrentHashMap());
-   private static final Path FILE_PATH = FabricLoader.getInstance().getConfigDir().resolve("bombo/autocomplete.json");
+   private static final Path FILE_PATH = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/autocomplete.json");
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
 
    public static void load() {

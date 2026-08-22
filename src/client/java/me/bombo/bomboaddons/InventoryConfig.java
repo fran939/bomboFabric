@@ -17,7 +17,7 @@ import net.fabricmc.loader.api.FabricLoader;
 public class InventoryConfig {
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
    private static final File OLD_CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_inventories.json").toFile();
-   private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons_inventories.json").toFile();
+   private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/bomboaddons_inventories.json").toFile();
    private static List<InventorySnapshot> snapshots = new ArrayList();
 
    public static void load() {

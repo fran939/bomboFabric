@@ -27,7 +27,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class CustomTimerManager {
    public static final List<CustomTimer> activeTimers = new CopyOnWriteArrayList();
-   private static final Path TIMERS_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo").resolve("active_timers.json");
+   private static final Path TIMERS_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons").resolve("active_timers.json");
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
 
    public static boolean hasTimers() {

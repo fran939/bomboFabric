@@ -47,7 +47,7 @@ public class StoragePreviewManager {
    private static final Map<String, ParsedTooltipCache> parsedItemCache = new ConcurrentHashMap();
    private static boolean initialApiCheckDone = false;
    private static boolean initGuard = false;
-   private static final File CACHE_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo").resolve("bombo_storage.json").toFile();
+   private static final File CACHE_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons").resolve("bombo_storage.json").toFile();
 
    public static void init() {
       if (!initGuard) {

@@ -17,7 +17,7 @@ import net.fabricmc.loader.api.FabricLoader;
 public class HotbarConfig {
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
    private static final File OLD_CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_hotbars.json").toFile();
-   private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons_hotbars.json").toFile();
+   private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/bomboaddons_hotbars.json").toFile();
    private static Map<String, SlotData[]> snapshots = new HashMap();
 
    public static void load() {

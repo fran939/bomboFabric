@@ -4714,7 +4714,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                } catch (Throwable var21) {}
             }
 
-            if (BomboConfig.get().structureFinder && (StructureFinder.isScanAllowed() || "Crystal Hollows".equalsIgnoreCase(currentArea) || "Hollows".equalsIgnoreCase(currentArea))) {
+            if (!BomboConfig.get().hideCheats && BomboConfig.get().structureFinder && (StructureFinder.isScanAllowed() || "Crystal Hollows".equalsIgnoreCase(currentArea) || "Hollows".equalsIgnoreCase(currentArea))) {
                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: StructureFinder")) {
                   StructureFinder.onTick();
                } catch (Throwable var21) {}

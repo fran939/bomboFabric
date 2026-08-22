@@ -17,7 +17,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 
 public class ChatModifier {
-   private static final Path FILE_PATH = FabricLoader.getInstance().getConfigDir().resolve("bombo/chat_modifier.json");
+   private static final Path FILE_PATH = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/chat_modifier.json");
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
    public static final List<ChatRule> rules = new CopyOnWriteArrayList<>();
 

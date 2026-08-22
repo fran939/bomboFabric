@@ -27,7 +27,7 @@ import net.minecraft.world.item.component.ItemLore;
 public class ExperimentationTableHud {
    private static final Map<String, DetectedRngItem> storedRewards = new ConcurrentHashMap();
    private static int scrollIndex = 0;
-   private static final Path RNG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons_rng.json");
+   private static final Path RNG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/bomboaddons_rng.json");
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
    private static long lastRenderFrame = -1L;
    private static boolean lastInMenu = false;

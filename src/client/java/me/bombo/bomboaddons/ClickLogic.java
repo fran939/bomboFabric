@@ -46,7 +46,7 @@ public class ClickLogic {
    private static boolean debugMode = false;
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
    private static final File OLD_CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_clicks.json").toFile();
-   private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bombo/bomboaddons_clicks.json").toFile();
+   private static final File CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/bomboaddons_clicks.json").toFile();
    private static final Map<String, Integer> KEY_MAP = new HashMap();
 
    public static int getKeyCode(String keyName) {
