@@ -32,11 +32,13 @@ public class FrozenBlazeAFKTracker {
    public static void onTick(Minecraft mc) {
       if (mc.player == null || mc.level == null) return;
       BomboConfig.Settings s = BomboConfig.get();
-      if (s == null || !s.frozenBlazeWarning) return;
+      if (s == null) return;
 
       if (++tickCounter % 4 != 0 && pendingAlerts == 0) return;
 
       boolean wearing = isWearingFrozenBlaze(mc);
+      if (!s.frozenBlazeWarning) return;
+
       if (!wearing) {
          wasWearing = false;
          pendingAlerts = 0;
@@ -157,7 +159,7 @@ public class FrozenBlazeAFKTracker {
             && isFrozenBlazePiece(legs, EquipmentSlot.LEGS)
             && isFrozenBlazePiece(feet, EquipmentSlot.FEET);
 
-         if (BomboConfig.get().debugMode) {
+         if (BomboConfig.get().debugMode || BomboConfig.get().debugArmor) {
             String hName = head.isEmpty() ? "None" : head.getHoverName().getString();
             String cName = chest.isEmpty() ? "None" : chest.getHoverName().getString();
             String lName = legs.isEmpty() ? "None" : legs.getHoverName().getString();

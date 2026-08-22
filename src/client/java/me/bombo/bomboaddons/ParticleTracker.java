@@ -18,10 +18,13 @@ public class ParticleTracker {
    public static boolean espEnabled = false;
 
    public static boolean isParticleTrackingNeeded() {
-      return true;
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null) return false;
+      return espEnabled || s.debugParticles || s.particleHighlightsEnabled;
    }
 
    public static void onParticle(String typeName, double x, double y, double z) {
+      if (!isParticleTrackingNeeded()) return;
       Minecraft mc = Minecraft.getInstance();
       Player player = mc.player;
       if (player != null) {
@@ -31,13 +34,21 @@ public class ParticleTracker {
          double distSq = dx * dx + dy * dy + dz * dz;
          double maxR = Math.max(espRadius, 64.0);
          if (distSq <= maxR * maxR) {
+            if (ENTRIES.size() > 2000) {
+               // Safety clear old entries if overflowing
+               long cutoff = System.currentTimeMillis() - 2500L;
+               ENTRIES.removeIf(e -> e.timestamp < cutoff);
+            }
             ENTRIES.add(new ParticleEntry(cleanTypeName(typeName), typeName, x, y, z));
          }
       }
    }
 
+   private static int tickCounter = 0;
+
    public static void onTick() {
       if (ENTRIES.isEmpty()) return;
+      if (++tickCounter % 5 != 0) return; // Prune every 5 ticks (4 times a second)
       long cutoff = System.currentTimeMillis() - 5000L;
       ENTRIES.removeIf((e) -> e.timestamp < cutoff);
    }

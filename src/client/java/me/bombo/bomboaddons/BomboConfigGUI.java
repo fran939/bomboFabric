@@ -76,6 +76,8 @@ extends Screen {
     private static int frozenBlazeWarnX = -1, frozenBlazeWarnY = -1, frozenBlazeWarnW = -1, frozenBlazeWarnH = -1;
     public static boolean structureFinderSubmenu = false;
     private static int structureFinderX = -1, structureFinderY = -1, structureFinderW = -1, structureFinderH = -1;
+    public static boolean dojoUtilitiesSubmenu = false;
+    private static int dojoUtilitiesX = -1, dojoUtilitiesY = -1, dojoUtilitiesW = -1, dojoUtilitiesH = -1;
         private int drawSectionHeader(GuiGraphicsExtractor g, String title, int x, int y) {
         if (!optionMatchesSearch(title)) return y;
         g.text(this.font, title, x, y, -22016, true);
@@ -597,12 +599,25 @@ extends Screen {
                         break;
                     }
 
+                    if (dojoUtilitiesSubmenu) {
+                        this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> { dojoUtilitiesSubmenu = false; this.scrollAmount = 0.0; this.init(); }).bounds(col1X, y1, 140, 20).build());
+                        y1 += 28;
+                        y1 = this.addBoolOption("Dojo Utilities Enabled", s.dojoUtilities, v -> s.dojoUtilities = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Auto Sword Swap by Helmet", s.dojoUtilities, v -> s.dojoUtilities = v, col1X, col1W * 2, y1);
+                        break;
+                    }
+
                     y1 = this.addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava, v -> s.clearWaterAndLava = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Sign Calculator", s.signCalculator, v -> s.signCalculator = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("SBE Commands", s.sbeCommands, v -> s.sbeCommands = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Copy Chat", s.copyChat, v -> s.copyChat = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Left Click Etherwarp", s.leftClickEtherwarp, v -> s.leftClickEtherwarp = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Sphinx Macro", s.sphinxMacro, v -> s.sphinxMacro = v, col1X, col1W, y1);
+                    dojoUtilitiesX = col1X;
+                    dojoUtilitiesY = y1;
+                    dojoUtilitiesW = col1W;
+                    dojoUtilitiesH = 24;
+                    y1 = this.addBoolOption("Dojo Utilities", s.dojoUtilities, v -> s.dojoUtilities = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Hollow Wand Fix", s.hollowWandClickThrough, v -> s.hollowWandClickThrough = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Hollow Wand Double Click", s.hollowWandAutoCombine, v -> s.hollowWandAutoCombine = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Lasso Fix", s.lassoClickThroughBats, v -> s.lassoClickThroughBats = v, col1X, col1W, y1);
@@ -1621,6 +1636,7 @@ extends Screen {
                         s.debugGuis = true;
                         s.debugEntities = true;
                         s.debugCommands = true;
+                        s.debugArmor = true;
                         s.debugSounds = true;
                         s.debugMaster = true;
                         s.debugParticles = true;
@@ -1635,6 +1651,7 @@ extends Screen {
                         s.debugGuis = false;
                         s.debugEntities = false;
                         s.debugCommands = false;
+                        s.debugArmor = false;
                         s.debugMode = false;
                         s.apiDebug = false;
                         s.petPriceDebug = false;
@@ -1667,6 +1684,9 @@ extends Screen {
                     }, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Command Debug", s.debugCommands, v -> {
                         s.debugCommands = v;
+                    }, contentX, contentWidth, curY);
+                    curY = this.addBoolOption("Armor Swap Debug", s.debugArmor, v -> {
+                        s.debugArmor = v;
                     }, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Debug Mode (Legacy)", s.debugMode, v -> {
                         s.debugMode = v;
@@ -5198,6 +5218,13 @@ extends Screen {
             }
             if (selectedCategory == 0 && frozenBlazeWarnX != -1 && mx >= (double)frozenBlazeWarnX && mx <= (double)(frozenBlazeWarnX + frozenBlazeWarnW) && my >= (double)frozenBlazeWarnY && my <= (double)(frozenBlazeWarnY + frozenBlazeWarnH)) {
                 frozenBlazeWarnSubmenu = true;
+                configSearchTerm = "";
+                this.scrollAmount = 0.0;
+                this.init();
+                return true;
+            }
+            if (selectedCategory == 0 && dojoUtilitiesX != -1 && mx >= (double)dojoUtilitiesX && mx <= (double)(dojoUtilitiesX + dojoUtilitiesW) && my >= (double)dojoUtilitiesY && my <= (double)(dojoUtilitiesY + dojoUtilitiesH)) {
+                dojoUtilitiesSubmenu = true;
                 configSearchTerm = "";
                 this.scrollAmount = 0.0;
                 this.init();

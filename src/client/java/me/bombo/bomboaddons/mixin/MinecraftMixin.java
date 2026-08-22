@@ -18,6 +18,7 @@ public class MinecraftMixin {
       cancellable = true
    )
    private void onStartAttack(CallbackInfoReturnable<Boolean> cir) {
+      me.bombo.bomboaddons.features.DojoUtilities.onPreAttack((Minecraft)(Object)this);
       if (KuudraPerkClicker.shouldBlockAttack()) {
          cir.setReturnValue(false);
          cir.cancel();

@@ -357,6 +357,7 @@ public class BomboConfig {
       public boolean debugGuis = false;
       public boolean debugEntities = false;
       public boolean debugCommands = false;
+      public boolean debugArmor = false;
       public boolean debugMode = false;
       public boolean copyCanceledOrderAmount = true;
       public boolean loreAdditionsEnabled = true;
@@ -695,6 +696,7 @@ public class BomboConfig {
       public boolean bedwarsEsp = false;
       public boolean bedwarsEspOwnTeam = false;
       public boolean borderlessFullscreen = false;
+      public boolean dojoUtilities = false;
 
       public static class CustomTracerInfo {
          public String name = "";

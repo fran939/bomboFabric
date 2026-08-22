@@ -243,21 +243,22 @@ public class ParticleESP {
       }
    }
 
-   private static List<List<ParticleTracker.ParticleEntry>> clusterPoints(List<ParticleTracker.ParticleEntry> points, double maxDistSq) {
+   private static List<List<ParticleTracker.ParticleEntry>> clusterPoints(List<ParticleTracker.ParticleEntry> points, double maxDist) {
       List<List<ParticleTracker.ParticleEntry>> clusters = new ArrayList<>();
-      for (ParticleTracker.ParticleEntry p : points) {
+      double maxDistSq = maxDist * maxDist;
+      int maxProcess = Math.min(points.size(), 300);
+      for (int i = 0; i < maxProcess; i++) {
+         ParticleTracker.ParticleEntry p = points.get(i);
          List<ParticleTracker.ParticleEntry> foundCluster = null;
          for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
-            for (ParticleTracker.ParticleEntry member : cluster) {
-               double dx = p.x - member.x;
-               double dy = p.y - member.y;
-               double dz = p.z - member.z;
-               if (dx * dx + dy * dy + dz * dz < maxDistSq * maxDistSq) {
-                  foundCluster = cluster;
-                  break;
-               }
+            ParticleTracker.ParticleEntry rep = cluster.get(0);
+            double dx = p.x - rep.x;
+            double dy = p.y - rep.y;
+            double dz = p.z - rep.z;
+            if (dx * dx + dy * dy + dz * dz < maxDistSq) {
+               foundCluster = cluster;
+               break;
             }
-            if (foundCluster != null) break;
          }
          if (foundCluster != null) {
             foundCluster.add(p);

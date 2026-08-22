@@ -999,6 +999,90 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + loc));
                      return 1;
                   }));
+                  builder.then(ClientCommands.literal("entity").executes((context) -> {
+                     Minecraft mc = Minecraft.getInstance();
+                     if (mc.player == null || mc.level == null) return 0;
+
+                     net.minecraft.world.entity.Entity targetEntity = null;
+                     if (mc.hitResult != null && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.ENTITY && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult ehr) {
+                        targetEntity = ehr.getEntity();
+                     } else {
+                        net.minecraft.world.phys.Vec3 eye = mc.player.getEyePosition();
+                        net.minecraft.world.phys.Vec3 view = mc.player.getViewVector(1.0F);
+                        net.minecraft.world.phys.Vec3 reach = eye.add(view.scale(16.0));
+                        net.minecraft.world.phys.AABB box = mc.player.getBoundingBox().expandTowards(view.scale(16.0)).inflate(1.0);
+                        double closestDist = Double.MAX_VALUE;
+                        for (net.minecraft.world.entity.Entity e : mc.level.getEntities(mc.player, box, ent -> ent != mc.player && !ent.isSpectator())) {
+                           net.minecraft.world.phys.AABB eb = e.getBoundingBox().inflate(e.getPickRadius() + 0.3);
+                           java.util.Optional<net.minecraft.world.phys.Vec3> hit = eb.clip(eye, reach);
+                           if (hit.isPresent()) {
+                              double d = eye.distanceToSqr(hit.get());
+                              if (d < closestDist) {
+                                 closestDist = d;
+                                 targetEntity = e;
+                              }
+                           }
+                        }
+                     }
+
+                     if (targetEntity == null) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cNo entity found in front of you."));
+                        return 0;
+                     }
+
+                     String rawType = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(targetEntity.getType()).toString();
+                     String shortType = rawType.replace("minecraft:", "");
+                     String name = targetEntity.getName().getString();
+                     String customName = targetEntity.hasCustomName() ? targetEntity.getCustomName().getString() : "None";
+                     String coordsStr = String.format("%.1f %.1f %.1f", targetEntity.getX(), targetEntity.getY(), targetEntity.getZ());
+                     String headHash = TargetPests.extractTextureHash(TargetPests.getHeadTextureValue(targetEntity));
+
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §6=== Targeted Entity Info ==="));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Name: §e" + name + (targetEntity.hasCustomName() ? " §7(Custom: §f" + customName + "§7)" : "")));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Type: §b" + rawType + " §7(short: §e" + shortType + "§7)"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- ID: §f" + targetEntity.getId() + " §7| Coords: §6" + coordsStr));
+                     if (headHash != null) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Head Hash: §d" + headHash));
+                     }
+
+                     if (targetEntity instanceof net.minecraft.world.entity.LivingEntity living) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Health: §a" + String.format("%.1f", living.getHealth()) + "§7/§a" + String.format("%.1f", living.getMaxHealth())));
+
+                        net.minecraft.world.item.ItemStack mainHand = living.getMainHandItem();
+                        net.minecraft.world.item.ItemStack offHand = living.getOffhandItem();
+                        net.minecraft.world.item.ItemStack head = living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD);
+                        net.minecraft.world.item.ItemStack chest = living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST);
+                        net.minecraft.world.item.ItemStack legs = living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.LEGS);
+                        net.minecraft.world.item.ItemStack feet = living.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET);
+
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§e--- Equipment (Hover for Lore) ---"));
+                        sendEquipmentLine((FabricClientCommandSource)context.getSource(), "Main Hand", mainHand);
+                        sendEquipmentLine((FabricClientCommandSource)context.getSource(), "Off Hand", offHand);
+                        sendEquipmentLine((FabricClientCommandSource)context.getSource(), "Helmet", head);
+                        sendEquipmentLine((FabricClientCommandSource)context.getSource(), "Chestplate", chest);
+                        sendEquipmentLine((FabricClientCommandSource)context.getSource(), "Leggings", legs);
+                        sendEquipmentLine((FabricClientCommandSource)context.getSource(), "Boots", feet);
+                     }
+
+                     net.minecraft.network.chat.MutableComponent actions = Component.literal("§7Actions: ");
+                     net.minecraft.network.chat.MutableComponent copyTypeBtn = Component.literal("§b[Copy Type] ");
+                     copyTypeBtn.setStyle(copyTypeBtn.getStyle().withClickEvent(new net.minecraft.network.chat.ClickEvent.CopyToClipboard(shortType)).withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick to copy '" + shortType + "'"))));
+                     actions.append(copyTypeBtn);
+
+                     if (headHash != null) {
+                        net.minecraft.network.chat.MutableComponent copyHashBtn = Component.literal("§d[Copy Hash] ");
+                        copyHashBtn.setStyle(copyHashBtn.getStyle().withClickEvent(new net.minecraft.network.chat.ClickEvent.CopyToClipboard(headHash)).withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick to copy skull hash"))));
+                        actions.append(copyHashBtn);
+                     }
+
+                     net.minecraft.network.chat.MutableComponent highlightBtn = Component.literal("§a[+ Highlight Entity]");
+                     String highlightTarget = headHash != null ? headHash : (targetEntity.hasCustomName() ? customName : shortType);
+                     highlightBtn.setStyle(highlightBtn.getStyle().withClickEvent(new net.minecraft.network.chat.ClickEvent.SuggestCommand("/b mob add " + highlightTarget + " GOLD")).withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick to highlight " + highlightTarget))));
+                     actions.append(highlightBtn);
+
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(actions);
+                     return 1;
+                  }));
                   builder.then(ClientCommands.literal("block").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
                      if (mc.player == null || mc.level == null) return 0;
@@ -4270,6 +4354,27 @@ public class BomboaddonsClient implements ClientModInitializer {
 
    }
 
+   private static void sendEquipmentLine(FabricClientCommandSource source, String slotName, net.minecraft.world.item.ItemStack stack) {
+      if (stack == null || stack.isEmpty()) {
+         source.sendFeedback(Component.literal("§7- " + slotName + ": §8(None)"));
+         return;
+      }
+      String itemName = stack.getHoverName().getString();
+      String sbId = SkyblockUtils.getSkyblockId(stack);
+      List<Component> lore = SkyblockUtils.getLore(stack);
+
+      MutableComponent line = Component.literal("§7- " + slotName + ": §f" + itemName + (!sbId.isEmpty() ? " §8(" + sbId + ")" : ""));
+
+      MutableComponent hoverComp = Component.empty();
+      hoverComp.append(stack.getHoverName()).append("\n");
+      for (Component l : lore) {
+         hoverComp.append(l).append("\n");
+      }
+      line.setStyle(line.getStyle().withHoverEvent(new HoverEvent.ShowText(hoverComp)));
+
+      source.sendFeedback(line);
+   }
+
    private void registerTickEvents() {
       try {
          Class<?> categoryClass = Class.forName("net.minecraft.client.gui.screens.options.controls.KeyBindsList$CategoryEntry");
@@ -4364,7 +4469,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
          }
 
-         if (s.frozenBlazeWarning) {
+         if (s.frozenBlazeWarning || s.debugMode || s.debugArmor) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: FrozenBlazeAFK")) {
                me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.onTick(client);
             } catch (Throwable ignored) {}
