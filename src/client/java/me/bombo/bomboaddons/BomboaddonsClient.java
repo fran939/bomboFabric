@@ -817,11 +817,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                       })).start();
                       return 1;
                    }))).then(ClientCommands.literal("bestiary").executes((context) -> {
-                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eFetching & refreshing live Bestiary database..."));
-                      me.bombo.bomboaddons.features.BestiaryDataFetcher.fetchBestiaryDataAsync();
-                      int rulesCount = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRulesCount();
-                      int skullCount = me.bombo.bomboaddons.features.BestiaryDataFetcher.getHeadLookupCount();
-                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §aBestiary Database Status: §e" + rulesCount + " §amob rules, §e" + skullCount + " §ahead texture mappings loaded."));
+                      FabricClientCommandSource src = (FabricClientCommandSource)context.getSource();
+                      src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §eConnecting to https://api.bombo.dpdns.org/mod/bestiary to update live Bestiary database..."));
+                      me.bombo.bomboaddons.features.BestiaryDataFetcher.forceRefresh(() -> {
+                         int rulesCount = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRulesCount();
+                         int skullCount = me.bombo.bomboaddons.features.BestiaryDataFetcher.getHeadLookupCount();
+                         src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §aSuccessfully updated Bestiary Database from API! Loaded §e" + rulesCount + " §amob rules, §e" + skullCount + " §ahead texture mappings."));
+                      });
                       return 1;
                    }))).then(((LiteralArgumentBuilder)ClientCommands.literal("chat").executes((context) -> {
                       boolean connected = IRCClient.isConnected();
@@ -5694,11 +5696,18 @@ public class BomboaddonsClient implements ClientModInitializer {
                if (hasEquip) equipComp.append(Component.literal("§7, "));
                hasEquip = true;
                MutableComponent itemComp = Component.literal("§7" + slot.getName() + ": §f" + is.getHoverName().getString());
+               
                MutableComponent hoverTooltip = Component.empty();
-               hoverTooltip.append(is.getHoverName()).append("\n");
+               hoverTooltip.append(is.getHoverName());
+               String sbId = SkyblockUtils.getSkyblockId(is);
+               if (!sbId.isEmpty()) {
+                  hoverTooltip.append("\n§8ID: " + sbId);
+               }
                List<Component> lore = SkyblockUtils.getLore(is);
-               for (Component l : lore) {
-                  hoverTooltip.append(l).append("\n");
+               if (!lore.isEmpty()) {
+                  for (Component l : lore) {
+                     hoverTooltip.append("\n").append(l);
+                  }
                }
                itemComp.setStyle(itemComp.getStyle().withHoverEvent(new HoverEvent.ShowText(hoverTooltip)));
                equipComp.append(itemComp);

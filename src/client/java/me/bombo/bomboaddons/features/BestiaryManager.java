@@ -212,10 +212,16 @@ public class BestiaryManager {
       if (lower.contains("dungeon") || lower.contains("catacomb")) {
          return "Dungeons";
       }
+      if (lower.contains("torrhus") || lower.contains("canyon")) {
+         return "Torrhus Canyon";
+      }
+      if (lower.contains("galatea")) {
+         return "Galatea";
+      }
       if (lower.contains("fishing") || lower.contains("mythological") || lower.contains("jerry") || lower.contains("spooky") || lower.contains("event")) {
          return ""; // Everywhere / Global
       }
-      return ""; // Default everywhere
+      return categoryName.trim(); // Default to category name directly as island if unknown
    }
 
    public static String getCategoryForIsland(String requiredIsland) {
@@ -237,6 +243,8 @@ public class BestiaryManager {
       if (lower.contains("rift")) return "The Rift Bestiary";
       if (lower.contains("garden")) return "Garden Bestiary";
       if (lower.contains("dungeon") || lower.contains("catacomb")) return "Dungeons Bestiary";
+      if (lower.contains("torrhus") || lower.contains("canyon")) return "Torrhus Canyon Bestiary";
+      if (lower.contains("galatea")) return "Galatea Bestiary";
       if (lower.contains("fishing")) return "Fishing Bestiary";
       if (lower.contains("mythological")) return "Mythological Creatures Bestiary";
       if (lower.contains("jerry")) return "Jerry Bestiary";

@@ -671,13 +671,17 @@ public class HighlightESP {
 
                 // 5. Name / Nametag / Raw key match
                 if (!matched) {
-                   boolean keyIsPlayer = key.equalsIgnoreCase("player") || key.equalsIgnoreCase("players");
-                   String cleanKey = key.toLowerCase(Locale.ROOT).trim();
-                   String hashForRaw = isDirectHeadRule ? directSkullHash : skullHash;
-                   if (cleanKey.equals("wolf") && nametagName != null && nametagName.contains("old wolf")) {
-                      // Skip old wolves when matching regular wolf
-                   } else if ((isPlayer && keyIsPlayer) || (!isDirectHeadRule && matchesKey(name, key)) || (!isDirectHeadRule && nametagName != null && matchesKey(nametagName, key)) || (hashForRaw != null && matchesKey(hashForRaw, key)) || EntityVariantHelper.matchesVariant(self, cleanKey)) {
-                      matched = true;
+                   boolean hasSpecificHead = (info.headHashes != null && !info.headHashes.isEmpty());
+                   boolean isArmorStandWithoutName = self instanceof ArmorStand && !self.hasCustomName();
+                   if (!hasSpecificHead) {
+                      boolean keyIsPlayer = key.equalsIgnoreCase("player") || key.equalsIgnoreCase("players");
+                      String cleanKey = key.toLowerCase(Locale.ROOT).trim();
+                      String hashForRaw = isDirectHeadRule ? directSkullHash : skullHash;
+                      if (cleanKey.equals("wolf") && nametagName != null && nametagName.contains("old wolf")) {
+                         // Skip old wolves when matching regular wolf
+                      } else if ((isPlayer && keyIsPlayer) || (!isDirectHeadRule && matchesKey(name, key)) || (!isDirectHeadRule && nametagName != null && matchesKey(nametagName, key)) || (hashForRaw != null && matchesKey(hashForRaw, key)) || EntityVariantHelper.matchesVariant(self, cleanKey)) {
+                         matched = true;
+                      }
                    }
                 }
 

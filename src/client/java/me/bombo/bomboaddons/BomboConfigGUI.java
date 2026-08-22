@@ -4654,13 +4654,14 @@ extends Screen {
                     break;
                 }
                 case 21: {
-                    g.text(this.font, "\u00a76\u00a7lAdd Block Highlight", contentX, curY, -22016, true);
+                    g.text(this.font, "\u00a76\u00a7lBlock Highlights Settings", contentX, curY - 24, -22016, true);
                     curY = this.drawOptionLabel(g, "\u00a77Block Highlights Enabled", contentX + 24, curY, -1, false);
-                    g.text(this.font, "\u00a7fBlock Scan Radius: \u00a7e" + s.blockScanRadius + " \u00a77blocks", contentX, (curY += 24) + 4, -1);
-                    g.text(this.font, "\u00a7fBlock Name/ID:", contentX, (curY += 34) + 4, -1);
-                    g.text(this.font, "\u00a7fColor:", contentX, (curY += 29) + 4, -1);
-                    g.text(this.font, "\u00a77See Through Walls", contentX + 24, (curY += 29) + 4, -1, false);
-                    curY += 24;
+                    curY += 24; // Slider
+                    curY += 10;
+                    curY = this.drawOptionLabel(g, "§7Block Name/ID", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "§7Color", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "\u00a77See Through Walls", contentX + 24, curY, -1, false);
+                    curY += 24; // Add Button
                     int listTitleY = curY += 35;
                     g.text(this.font, "\u00a79\u00a7lActive Block Highlights", contentX, listTitleY, -11184641, true);
                     int listY = listTitleY + 20 - (int)this.scrollAmount;
@@ -4679,11 +4680,13 @@ extends Screen {
                     break;
                 }
                 case 22: {
-                    g.text(this.font, "\u00a76\u00a7lAdd Particle Highlight", contentX, curY, -22016, true);
+                    g.text(this.font, "\u00a76\u00a7lParticle Highlights Settings", contentX, curY - 24, -22016, true);
                     curY = this.drawOptionLabel(g, "\u00a77Particle Highlights Enabled", contentX + 24, curY, -1, false);
-                    g.text(this.font, "\u00a7fParticle Name:", contentX, (curY += 34) + 4, -1);
-                    g.text(this.font, "\u00a7fColor:", contentX, (curY += 29) + 4, -1);
-                    curY += 29;
+                    curY = this.drawOptionLabel(g, "§7Show Only On Island", contentX + 24, curY, -1, false);
+                    curY += 10;
+                    curY = this.drawOptionLabel(g, "§7Particle Name", contentX + 24, curY, -1, false);
+                    curY = this.drawOptionLabel(g, "§7Color", contentX + 24, curY, -1, false);
+                    curY += 24; // Add Button
                     int listTitleY = curY += 35;
                     g.text(this.font, "\u00a79\u00a7lActive Particle Highlights", contentX, listTitleY, -11184641, true);
                     int listY = listTitleY + 20 - (int)this.scrollAmount;

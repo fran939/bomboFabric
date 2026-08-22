@@ -1,6 +1,7 @@
 package me.bombo.bomboaddons.features;
 
 import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.SkyblockUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -130,11 +131,18 @@ public class FrozenBlazeAFKTracker {
       g.pose().popMatrix();
    }
 
-   private static ItemStack lastHead = ItemStack.EMPTY;
-   private static ItemStack lastChest = ItemStack.EMPTY;
-   private static ItemStack lastLegs = ItemStack.EMPTY;
-   private static ItemStack lastFeet = ItemStack.EMPTY;
+   private static String lastHeadDesc = "";
+   private static String lastChestDesc = "";
+   private static String lastLegsDesc = "";
+   private static String lastFeetDesc = "";
    private static boolean cachedWearingFB = false;
+
+   private static String getArmorPieceDesc(ItemStack stack) {
+      if (stack == null || stack.isEmpty()) return "None";
+      String name = stack.getHoverName().getString();
+      String sbId = SkyblockUtils.getSkyblockId(stack);
+      return sbId.isEmpty() ? name : name + " (" + sbId + ")";
+   }
 
    public static boolean isWearingFrozenBlaze(Minecraft mc) {
       if (mc.player == null) return false;
@@ -143,29 +151,41 @@ public class FrozenBlazeAFKTracker {
       ItemStack legs = mc.player.getItemBySlot(EquipmentSlot.LEGS);
       ItemStack feet = mc.player.getItemBySlot(EquipmentSlot.FEET);
 
-      boolean changed = !ItemStack.matches(head, lastHead)
-         || !ItemStack.matches(chest, lastChest)
-         || !ItemStack.matches(legs, lastLegs)
-         || !ItemStack.matches(feet, lastFeet);
+      String curHeadDesc = getArmorPieceDesc(head);
+      String curChestDesc = getArmorPieceDesc(chest);
+      String curLegsDesc = getArmorPieceDesc(legs);
+      String curFeetDesc = getArmorPieceDesc(feet);
 
-      if (changed) {
-         lastHead = head.copy();
-         lastChest = chest.copy();
-         lastLegs = legs.copy();
-         lastFeet = feet.copy();
+      boolean headChanged = !curHeadDesc.equals(lastHeadDesc);
+      boolean chestChanged = !curChestDesc.equals(lastChestDesc);
+      boolean legsChanged = !curLegsDesc.equals(lastLegsDesc);
+      boolean feetChanged = !curFeetDesc.equals(lastFeetDesc);
+
+      if (headChanged || chestChanged || legsChanged || feetChanged) {
+         if (BomboConfig.get().debugArmor) {
+            if (headChanged) {
+               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo Debug§8] §eArmor Helmet swapped from: §f" + (lastHeadDesc.isEmpty() ? "None" : lastHeadDesc) + " §eto: §f" + curHeadDesc));
+            }
+            if (chestChanged) {
+               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo Debug§8] §eArmor Chestplate swapped from: §f" + (lastChestDesc.isEmpty() ? "None" : lastChestDesc) + " §eto: §f" + curChestDesc));
+            }
+            if (legsChanged) {
+               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo Debug§8] §eArmor Leggings swapped from: §f" + (lastLegsDesc.isEmpty() ? "None" : lastLegsDesc) + " §eto: §f" + curLegsDesc));
+            }
+            if (feetChanged) {
+               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo Debug§8] §eArmor Boots swapped from: §f" + (lastFeetDesc.isEmpty() ? "None" : lastFeetDesc) + " §eto: §f" + curFeetDesc));
+            }
+         }
+
+         lastHeadDesc = curHeadDesc;
+         lastChestDesc = curChestDesc;
+         lastLegsDesc = curLegsDesc;
+         lastFeetDesc = curFeetDesc;
 
          cachedWearingFB = isFrozenBlazePiece(head, EquipmentSlot.HEAD)
             && isFrozenBlazePiece(chest, EquipmentSlot.CHEST)
             && isFrozenBlazePiece(legs, EquipmentSlot.LEGS)
             && isFrozenBlazePiece(feet, EquipmentSlot.FEET);
-
-         if (BomboConfig.get().debugMode || BomboConfig.get().debugArmor) {
-            String hName = head.isEmpty() ? "None" : head.getHoverName().getString();
-            String cName = chest.isEmpty() ? "None" : chest.getHoverName().getString();
-            String lName = legs.isEmpty() ? "None" : legs.getHoverName().getString();
-            String fName = feet.isEmpty() ? "None" : feet.getHoverName().getString();
-            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo Debug§8] §eArmor swapped to: §f" + hName + "§7, §f" + cName + "§7, §f" + lName + "§7, §f" + fName + " §7(FB: " + (cachedWearingFB ? "§a4/4" : "§cNo") + "§7)"));
-         }
       }
       return cachedWearingFB;
    }
