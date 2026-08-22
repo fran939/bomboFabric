@@ -173,18 +173,21 @@ public abstract class ChatScreenMixin extends Screen {
       }
    }
 
-   @Override
-   public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+   @Inject(
+      method = {"mouseScrolled"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onMouseScrolled(double mouseX, double mouseY, double horizontal, double vertical, CallbackInfoReturnable<Boolean> cir) {
       if (this.searchBox != null && !this.searchBox.getValue().trim().isEmpty()) {
          if (vertical > 0) {
             this.searchScrollOffset = Math.max(0, this.searchScrollOffset - 1);
-            return true;
+            cir.setReturnValue(true);
          } else if (vertical < 0) {
             this.searchScrollOffset += 1;
-            return true;
+            cir.setReturnValue(true);
          }
       }
-      return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
    }
 
    @Unique
