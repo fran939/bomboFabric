@@ -124,20 +124,44 @@ public class FrozenBlazeAFKTracker {
       g.pose().popMatrix();
    }
 
+   private static ItemStack lastHead = ItemStack.EMPTY;
+   private static ItemStack lastChest = ItemStack.EMPTY;
+   private static ItemStack lastLegs = ItemStack.EMPTY;
+   private static ItemStack lastFeet = ItemStack.EMPTY;
+   private static boolean cachedWearingFB = false;
+
    public static boolean isWearingFrozenBlaze(Minecraft mc) {
       if (mc.player == null) return false;
-      EquipmentSlot[] slots = new EquipmentSlot[]{
-         EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
-      };
-      for (EquipmentSlot slot : slots) {
-         ItemStack stack = mc.player.getItemBySlot(slot);
-         if (stack == null || stack.isEmpty()) return false;
+      ItemStack head = mc.player.getItemBySlot(EquipmentSlot.HEAD);
+      ItemStack chest = mc.player.getItemBySlot(EquipmentSlot.CHEST);
+      ItemStack legs = mc.player.getItemBySlot(EquipmentSlot.LEGS);
+      ItemStack feet = mc.player.getItemBySlot(EquipmentSlot.FEET);
 
-         if (!isFrozenBlazePiece(stack, slot)) {
-            return false;
+      boolean changed = !ItemStack.matches(head, lastHead)
+         || !ItemStack.matches(chest, lastChest)
+         || !ItemStack.matches(legs, lastLegs)
+         || !ItemStack.matches(feet, lastFeet);
+
+      if (changed) {
+         lastHead = head.copy();
+         lastChest = chest.copy();
+         lastLegs = legs.copy();
+         lastFeet = feet.copy();
+
+         cachedWearingFB = isFrozenBlazePiece(head, EquipmentSlot.HEAD)
+            && isFrozenBlazePiece(chest, EquipmentSlot.CHEST)
+            && isFrozenBlazePiece(legs, EquipmentSlot.LEGS)
+            && isFrozenBlazePiece(feet, EquipmentSlot.FEET);
+
+         if (BomboConfig.get().debugMode) {
+            String hName = head.isEmpty() ? "None" : head.getHoverName().getString();
+            String cName = chest.isEmpty() ? "None" : chest.getHoverName().getString();
+            String lName = legs.isEmpty() ? "None" : legs.getHoverName().getString();
+            String fName = feet.isEmpty() ? "None" : feet.getHoverName().getString();
+            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo Debug§8] §eArmor swapped to: §f" + hName + "§7, §f" + cName + "§7, §f" + lName + "§7, §f" + fName + " §7(FB: " + (cachedWearingFB ? "§a4/4" : "§cNo") + "§7)"));
          }
       }
-      return true;
+      return cachedWearingFB;
    }
 
    private static boolean isFrozenBlazePiece(ItemStack stack, EquipmentSlot slot) {

@@ -2612,7 +2612,7 @@ extends Screen {
                         s.particleHighlightsEnabled = v;
                     }, contentX, contentWidth, curY);
                     curY += 10;
-                    curY = this.addTextBox("Particle Name", partHighInput, v -> {
+                    curY = this.addParticleTextBox("Particle Name", partHighInput, v -> {
                         partHighInput = v;
                     }, contentX, contentWidth, curY);
                     int finalCurY = curY = this.addColorCycleButton("Color", partHighColorInput, v -> {
@@ -3448,6 +3448,49 @@ extends Screen {
         }
     }
 
+    private static EditBox activeParticleBox = null;
+    private static List<String> particleSuggestions = new ArrayList<>();
+    private static boolean isTabCyclingParticle = false;
+    private static int selectedParticleSuggestion = 0;
+
+    private int addParticleTextBox(String label, String current, Consumer<String> setter, int x, int w, int y) {
+        if (!optionMatchesSearch(label)) return y;
+        int bx = x + w / 2;
+        int bw = w / 2;
+        EditBox box = new EditBox(this.font, bx, y, bw, 16, Component.literal(label));
+        box.setMaxLength(1024);
+        box.setValue(current);
+        box.setResponder(val -> {
+            setter.accept(val);
+            if (!isTabCyclingParticle) {
+                updateParticleSuggestions(val);
+            }
+        });
+        box.setBordered(true);
+        box.setVisible(y >= 56 && y <= this.height - 44);
+        this.addRenderableWidget(box);
+        this.activeBoxes.add(box);
+        activeParticleBox = box;
+        updateParticleSuggestions(current);
+        return y + 24;
+    }
+
+    private static void updateParticleSuggestions(String query) {
+        particleSuggestions.clear();
+        selectedParticleSuggestion = 0;
+        if (query == null || query.trim().isEmpty()) return;
+        String raw = query.trim().toLowerCase();
+        String prefix = raw.startsWith("minecraft:") ? raw.substring(10) : raw;
+        for (net.minecraft.resources.Identifier id : net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.keySet()) {
+            String full = id.toString();
+            String path = id.getPath();
+            if (full.toLowerCase().contains(prefix) || path.toLowerCase().contains(prefix)) {
+                particleSuggestions.add(full);
+                if (particleSuggestions.size() >= 8) break;
+            }
+        }
+    }
+
     private int addTextBox(String label, String current, Consumer<String> setter, int x, int w, int y) {
         if (!optionMatchesSearch(label)) return y;
         EditBox box = new EditBox(this.font, x + w / 2, y, w / 2, 16, (Component)Component.literal((String)label));
@@ -3692,6 +3735,27 @@ extends Screen {
                         g.fill(bx + 1, itemY, bx + bw - 1, itemY + 13, 0xFF335588);
                     }
                     g.text(this.font, "§e" + sName, bx + 4, itemY + 3, -1, false);
+                }
+            }
+
+            if (activeParticleBox != null && activeParticleBox.isFocused() && !particleSuggestions.isEmpty() && activeParticleBox.getY() > 0) {
+                int bx = activeParticleBox.getX();
+                int bw = activeParticleBox.getWidth();
+                int by = activeParticleBox.getY();
+                int listH = Math.min(particleSuggestions.size() * 14 + 4, 120);
+                int listY = by + 18;
+                if (listY + listH > this.height - 20) {
+                    listY = by - listH - 2;
+                }
+                g.fill(bx, listY, bx + bw, listY + listH, 0xF0101015);
+                g.outline(bx, listY, bw, listH, 0xFF555555);
+                for (int sIdx = 0; sIdx < particleSuggestions.size(); sIdx++) {
+                    int itemY = listY + 2 + sIdx * 14;
+                    String pName = particleSuggestions.get(sIdx);
+                    if (sIdx == selectedParticleSuggestion) {
+                        g.fill(bx + 1, itemY, bx + bw - 1, itemY + 13, 0xFF335588);
+                    }
+                    g.text(this.font, "§e" + pName, bx + 4, itemY + 3, -1, false);
                 }
             }
             super.extractRenderState(g, mouseX, mouseY, partialTick);
@@ -4947,6 +5011,44 @@ extends Screen {
                 return true;
             } else if (keyCode == 256) { // ESCAPE
                 soundSuggestions.clear();
+                return true;
+            }
+        }
+        if (activeParticleBox != null && activeParticleBox.isFocused() && !particleSuggestions.isEmpty()) {
+            if (keyCode == 258) { // TAB -> cycle to next option
+                selectedParticleSuggestion = (selectedParticleSuggestion + 1) % particleSuggestions.size();
+                String selected = particleSuggestions.get(selectedParticleSuggestion);
+                isTabCyclingParticle = true;
+                activeParticleBox.setValue(selected);
+                partHighInput = selected;
+                isTabCyclingParticle = false;
+                return true;
+            } else if (keyCode == 264) { // Down arrow
+                selectedParticleSuggestion = (selectedParticleSuggestion + 1) % particleSuggestions.size();
+                String selected = particleSuggestions.get(selectedParticleSuggestion);
+                isTabCyclingParticle = true;
+                activeParticleBox.setValue(selected);
+                partHighInput = selected;
+                isTabCyclingParticle = false;
+                return true;
+            } else if (keyCode == 265) { // Up arrow
+                selectedParticleSuggestion = (selectedParticleSuggestion - 1 + particleSuggestions.size()) % particleSuggestions.size();
+                String selected = particleSuggestions.get(selectedParticleSuggestion);
+                isTabCyclingParticle = true;
+                activeParticleBox.setValue(selected);
+                partHighInput = selected;
+                isTabCyclingParticle = false;
+                return true;
+            } else if (keyCode == 257 || keyCode == 335) { // ENTER
+                String selected = particleSuggestions.get(selectedParticleSuggestion);
+                isTabCyclingParticle = true;
+                activeParticleBox.setValue(selected);
+                partHighInput = selected;
+                isTabCyclingParticle = false;
+                particleSuggestions.clear();
+                return true;
+            } else if (keyCode == 256) { // ESCAPE
+                particleSuggestions.clear();
                 return true;
             }
         }

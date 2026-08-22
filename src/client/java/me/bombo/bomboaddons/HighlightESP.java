@@ -510,10 +510,10 @@ public class HighlightESP {
             String name = cache != null ? cache.combinedName : "";
             String nametagName = cache != null ? cache.nametagName : null;
             boolean isPlayer = self instanceof Player;
-            String headTex = TargetPests.getHeadTextureValue(self);
-            String skullHash = headTex != null ? TargetPests.extractTextureHash(headTex) : null;
-            String directHeadTex = TargetPests.getDirectHeadTextureValue(self);
-            String directSkullHash = directHeadTex != null ? TargetPests.extractTextureHash(directHeadTex) : null;
+            String skullHash = null;
+            String directSkullHash = null;
+            boolean checkedSkullHash = false;
+            boolean checkedDirectSkullHash = false;
 
             for (Map.Entry<String, BomboConfig.HighlightInfo> entry : s.highlights.entrySet()) {
                 String key = entry.getKey();
@@ -549,6 +549,20 @@ public class HighlightESP {
                    matched = true;
                 }
                 boolean isDirectHeadRule = (info.headHashes != null && !info.headHashes.isEmpty()) || (key.length() == 64 && key.matches("^[0-9a-fA-F]{64}$"));
+
+                if (isDirectHeadRule) {
+                   if (!checkedDirectSkullHash) {
+                      checkedDirectSkullHash = true;
+                      String directHeadTex = TargetPests.getDirectHeadTextureValue(self);
+                      directSkullHash = directHeadTex != null ? TargetPests.extractTextureHash(directHeadTex) : null;
+                   }
+                } else {
+                   if (!checkedSkullHash) {
+                      checkedSkullHash = true;
+                      String headTex = TargetPests.getHeadTextureValue(self);
+                      skullHash = headTex != null ? TargetPests.extractTextureHash(headTex) : null;
+                   }
+                }
                 String hashToUse = isDirectHeadRule ? directSkullHash : skullHash;
 
                 // 1. Skull hash match

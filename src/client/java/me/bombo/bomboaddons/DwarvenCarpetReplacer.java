@@ -7,13 +7,14 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class DwarvenCarpetReplacer {
    private static int tickCounter = 0;
+   private static BlockPos lastPos = null;
 
    public static void tick(Minecraft mc) {
       if (mc == null || mc.level == null || mc.player == null) return;
       BomboConfig.Settings s = BomboConfig.get();
       if (s == null || !s.replaceGrayCarpetDwarven) return;
 
-      if (++tickCounter % 4 != 0) return; // Run every 4 ticks
+      if (++tickCounter % 10 != 0) return; // Run every 10 ticks (0.5s)
 
       String area = SkyblockUtils.getLocation();
       if (area == null) area = BomboaddonsClient.currentArea;
@@ -22,11 +23,11 @@ public class DwarvenCarpetReplacer {
       }
 
       BlockPos pPos = mc.player.blockPosition();
-      int radius = 24;
+      int radius = 5;
       BlockPos.MutableBlockPos mpos = new BlockPos.MutableBlockPos();
       for (int x = -radius; x <= radius; x++) {
          for (int z = -radius; z <= radius; z++) {
-            for (int y = -8; y <= 8; y++) {
+            for (int y = -3; y <= 3; y++) {
                mpos.set(pPos.getX() + x, pPos.getY() + y, pPos.getZ() + z);
                if (mc.level.isLoaded(mpos)) {
                   BlockState state = mc.level.getBlockState(mpos);

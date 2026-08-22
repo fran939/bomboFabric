@@ -1029,8 +1029,10 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                      StringBuilder propsSb = new StringBuilder();
                      for (net.minecraft.world.level.block.state.properties.Property<?> prop : state.getProperties()) {
-                        if (propsSb.length() > 0) propsSb.append(", ");
-                        propsSb.append(prop.getName()).append("=").append(state.getValue(prop).toString());
+                        String propName = prop.getName();
+                        if (propName.equalsIgnoreCase("waterlogged")) continue;
+                        if (propsSb.length() > 0) propsSb.append(",");
+                        propsSb.append(propName).append("=").append(state.getValue(prop).toString());
                      }
                      String propsStr = propsSb.toString();
                      String stateWithProps = shortId + (!propsStr.isEmpty() ? "[" + propsStr + "]" : "");
@@ -3868,13 +3870,17 @@ public class BomboaddonsClient implements ClientModInitializer {
                } catch (Throwable ignored) {}
             }
 
-            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: StructureScanner")) {
-               StructureScanner.render(context);
-            } catch (Throwable ignored) {}
+             if (StructureScanner.pos1 != null || StructureScanner.pos2 != null || StructureScanner.pastedStructurePattern != null) {
+                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: StructureScanner")) {
+                   StructureScanner.render(context);
+                } catch (Throwable ignored) {}
+             }
 
-            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: ParticleESP")) {
-               ParticleESP.render(context);
-            } catch (Throwable ignored) {}
+             if (ParticleTracker.espEnabled || s.debugParticles || s.particleHighlightsEnabled) {
+                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: ParticleESP")) {
+                   ParticleESP.render(context);
+                } catch (Throwable ignored) {}
+             }
          });
          HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "main_hud"), (graphics, deltaTracker) -> {
             if (BomboConfig.get().tracerTestMode) {
@@ -6398,24 +6404,31 @@ public class BomboaddonsClient implements ClientModInitializer {
 
    public static LiteralArgumentBuilder<FabricClientCommandSource> createBlockHighlightCommand(String name) {
       LiteralArgumentBuilder<FabricClientCommandSource> cmd = ClientCommands.literal(name);
-      cmd.then(ClientCommands.literal("add").then(ClientCommands.argument("block", StringArgumentType.string()).executes((ctx) -> {
-         String block = StringArgumentType.getString(ctx, "block").toLowerCase().trim();
-         BomboConfig.get().blockHighlights.put(block, new BomboConfig.BlockHighlightInfo("GOLD", false));
-         BomboConfig.get().blockHighlightsEnabled = true;
-         BomboConfig.save();
-         BlockHighlight.highlightedBlocks.clear();
-         ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aAdded block highlight for: §e" + block + " §7(Color: GOLD)"));
-         return 1;
-      }).then(ClientCommands.argument("color", StringArgumentType.string()).executes((ctx) -> {
-         String block = StringArgumentType.getString(ctx, "block").toLowerCase().trim();
-         String color = StringArgumentType.getString(ctx, "color").toUpperCase().trim();
+      cmd.then(ClientCommands.literal("add").then(ClientCommands.argument("args", StringArgumentType.greedyString()).executes((ctx) -> {
+         String rawArgs = StringArgumentType.getString(ctx, "args").trim();
+         String block = rawArgs;
+         String color = "GOLD";
+
+         int lastSpace = rawArgs.lastIndexOf(' ');
+         if (lastSpace != -1) {
+            String possibleColor = rawArgs.substring(lastSpace + 1).toUpperCase().trim();
+            int lastBracketClose = rawArgs.lastIndexOf(']');
+            int lastBracketOpen = rawArgs.lastIndexOf('[');
+            boolean isInsideBracket = (lastBracketOpen != -1 && (lastBracketClose == -1 || (lastSpace < lastBracketClose && lastSpace > lastBracketOpen)));
+
+            if (!isInsideBracket && (possibleColor.equals("RED") || possibleColor.equals("GOLD") || possibleColor.equals("YELLOW") || possibleColor.equals("GREEN") || possibleColor.equals("AQUA") || possibleColor.equals("BLUE") || possibleColor.equals("LIGHT_PURPLE") || possibleColor.equals("WHITE") || possibleColor.equals("GRAY") || possibleColor.equals("DARK_GRAY") || possibleColor.equals("BLACK") || possibleColor.equals("DARK_BLUE") || possibleColor.equals("DARK_GREEN") || possibleColor.equals("DARK_AQUA") || possibleColor.equals("DARK_RED") || possibleColor.equals("DARK_PURPLE"))) {
+               block = rawArgs.substring(0, lastSpace).trim();
+               color = possibleColor;
+            }
+         }
+         block = block.toLowerCase().replace(" ", "");
          BomboConfig.get().blockHighlights.put(block, new BomboConfig.BlockHighlightInfo(color, false));
          BomboConfig.get().blockHighlightsEnabled = true;
          BomboConfig.save();
          BlockHighlight.highlightedBlocks.clear();
          ((FabricClientCommandSource)ctx.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aAdded block highlight for: §e" + block + " §7(Color: " + color + ")"));
          return 1;
-      }))));
+      })));
       cmd.then(ClientCommands.literal("remove").then(ClientCommands.argument("block", StringArgumentType.greedyString()).executes((ctx) -> {
          String block = StringArgumentType.getString(ctx, "block").toLowerCase().trim();
          if (BomboConfig.get().blockHighlights.remove(block) != null) {

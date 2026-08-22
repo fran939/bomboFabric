@@ -48,13 +48,54 @@ public class ParticleESP {
                      float g = (float)(colorInt >> 8 & 255) / 255.0F;
                      float b = (float)(colorInt & 255) / 255.0F;
 
-                     for (ParticleTracker.ParticleEntry p : typePoints) {
-                        double relX = p.x - camPos.x;
-                        double relY = p.y - camPos.y;
-                        double relZ = p.z - camPos.z;
-                        double hs = 0.15;
-                        AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
-                        collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85F, 1.5F));
+                     List<List<ParticleTracker.ParticleEntry>> clusters = clusterPoints(typePoints, 0.75);
+                     for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
+                        if (cluster.size() >= 3) {
+                           double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
+                           double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+                           double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+                           for (ParticleTracker.ParticleEntry p : cluster) {
+                              if (p.x < minX) minX = p.x;
+                              if (p.x > maxX) maxX = p.x;
+                              if (p.y < minY) minY = p.y;
+                              if (p.y > maxY) maxY = p.y;
+                              if (p.z < minZ) minZ = p.z;
+                              if (p.z > maxZ) maxZ = p.z;
+                           }
+                           double centerX = (minX + maxX) / 2.0;
+                           double centerZ = (minZ + maxZ) / 2.0;
+                           boolean isFlat = (maxY - minY) < 1.2;
+                           double centerY = isFlat ? minY : (minY + maxY) / 2.0;
+
+                           double maxDist = 0.0;
+                           for (ParticleTracker.ParticleEntry p : cluster) {
+                              double dx = p.x - centerX;
+                              double dy = isFlat ? 0.0 : p.y - centerY;
+                              double dz = p.z - centerZ;
+                              double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                              if (dist > maxDist) maxDist = dist;
+                           }
+                           float radius = Math.max(0.35F, (float)maxDist + 0.15F);
+                           final float finalRadius = radius;
+                           double relX = centerX - camPos.x;
+                           double relY = centerY - camPos.y;
+                           double relZ = centerZ - camPos.z;
+
+                           if (isFlat) {
+                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, finalRadius, r, g, b, 0.85F, 2.0F));
+                           } else {
+                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawSphere(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, finalRadius, r, g, b, 0.85F, 2.0F));
+                           }
+                        } else {
+                           for (ParticleTracker.ParticleEntry p : cluster) {
+                              double relX = p.x - camPos.x;
+                              double relY = p.y - camPos.y;
+                              double relZ = p.z - camPos.z;
+                              double hs = 0.15;
+                              AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
+                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85F, 1.5F));
+                           }
+                        }
                      }
                   }
                }
