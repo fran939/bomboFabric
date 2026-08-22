@@ -3852,7 +3852,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                } catch (Throwable ignored) {}
             }
 
-            if (s.blockHighlightsEnabled && s.blockHighlights != null && !s.blockHighlights.isEmpty()) {
+            if (s.blockHighlightsEnabled && s.blockHighlights != null && !s.blockHighlights.isEmpty() && !BlockHighlight.highlightedBlocks.isEmpty()) {
                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: BlockHighlight")) {
                   BlockHighlight.render(context);
                } catch (Throwable ignored) {}
@@ -3864,7 +3864,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                } catch (Throwable ignored) {}
             }
 
-            if (s.structureFinder && (StructureFinder.isScanAllowed() || "Crystal Hollows".equalsIgnoreCase(currentArea) || "Hollows".equalsIgnoreCase(currentArea))) {
+            if (s.structureFinder && (StructureFinder.isScanAllowed() || "Crystal Hollows".equalsIgnoreCase(currentArea) || "Hollows".equalsIgnoreCase(currentArea)) && !StructureFinder.foundStructures.isEmpty()) {
                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: StructureFinder")) {
                   StructureFinder.render(context);
                } catch (Throwable ignored) {}

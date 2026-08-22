@@ -5286,6 +5286,32 @@ extends Screen {
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        if (activeSoundBox != null && activeSoundBox.isFocused() && !soundSuggestions.isEmpty()) {
+            if (vertical > 0) {
+                selectedSoundSuggestion = (selectedSoundSuggestion - 1 + soundSuggestions.size()) % soundSuggestions.size();
+            } else if (vertical < 0) {
+                selectedSoundSuggestion = (selectedSoundSuggestion + 1) % soundSuggestions.size();
+            }
+            String selected = soundSuggestions.get(selectedSoundSuggestion);
+            isTabCyclingSound = true;
+            activeSoundBox.setValue(selected);
+            triggerSoundInput = selected;
+            isTabCyclingSound = false;
+            return true;
+        }
+        if (activeParticleBox != null && activeParticleBox.isFocused() && !particleSuggestions.isEmpty()) {
+            if (vertical > 0) {
+                selectedParticleSuggestion = (selectedParticleSuggestion - 1 + particleSuggestions.size()) % particleSuggestions.size();
+            } else if (vertical < 0) {
+                selectedParticleSuggestion = (selectedParticleSuggestion + 1) % particleSuggestions.size();
+            }
+            String selected = particleSuggestions.get(selectedParticleSuggestion);
+            isTabCyclingParticle = true;
+            activeParticleBox.setValue(selected);
+            partHighInput = selected;
+            isTabCyclingParticle = false;
+            return true;
+        }
         if (mouseX < 130.0) {
             this.categoryScrollAmount = Math.max(0.0, this.categoryScrollAmount - vertical * 15.0);
         } else {

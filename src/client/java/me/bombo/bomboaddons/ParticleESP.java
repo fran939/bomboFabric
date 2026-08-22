@@ -26,7 +26,8 @@ public class ParticleESP {
                Vec3 camPos = mc.gameRenderer.getMainCamera().position();
                PoseStack poseStack = context.poseStack();
                OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.bufferSource());
-               RenderType renderType = settings.hideCheats ? RenderTypes.lines() : RenderTypes.linesTranslucent();
+               boolean throughWalls = !settings.hideCheats;
+               RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
                Map<String, Integer> typeColors = new HashMap<>();
 
                // 1. Particle Highlights
@@ -76,10 +77,17 @@ public class ParticleESP {
                               if (dist > maxDist) maxDist = dist;
                            }
                            float radius = Math.max(0.35F, (float)maxDist + 0.15F);
-                           final float finalRadius = radius;
-                           double relX = centerX - camPos.x;
-                           double relY = centerY - camPos.y;
-                           double relZ = centerZ - camPos.z;
+
+                           double dx = centerX - camPos.x;
+                           double dy = centerY - camPos.y;
+                           double dz = centerZ - camPos.z;
+                           double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                           float scale = (throughWalls && dist > 0.2) ? (float)(0.2 / dist) : 1.0F;
+
+                           final float finalRadius = radius * scale;
+                           double relX = dx * scale;
+                           double relY = dy * scale;
+                           double relZ = dz * scale;
 
                            if (isFlat) {
                               collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, finalRadius, r, g, b, 0.85F, 2.0F));
@@ -88,10 +96,16 @@ public class ParticleESP {
                            }
                         } else {
                            for (ParticleTracker.ParticleEntry p : cluster) {
-                              double relX = p.x - camPos.x;
-                              double relY = p.y - camPos.y;
-                              double relZ = p.z - camPos.z;
-                              double hs = 0.15;
+                              double dx = p.x - camPos.x;
+                              double dy = p.y - camPos.y;
+                              double dz = p.z - camPos.z;
+                              double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                              float scale = (throughWalls && dist > 0.2) ? (float)(0.2 / dist) : 1.0F;
+
+                              double hs = 0.15 * scale;
+                              double relX = dx * scale;
+                              double relY = dy * scale;
+                              double relZ = dz * scale;
                               AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
                               collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85F, 1.5F));
                            }

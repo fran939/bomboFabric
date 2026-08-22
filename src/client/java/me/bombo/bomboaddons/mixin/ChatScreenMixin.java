@@ -35,6 +35,8 @@ public abstract class ChatScreenMixin extends Screen {
    public abstract void moveInHistory(int msgAmount);
    @org.spongepowered.asm.mixin.Unique
    private EditBox searchBox;
+   @org.spongepowered.asm.mixin.Unique
+   private int searchScrollOffset = 0;
 
    protected ChatScreenMixin(Component title) {
       super(title);
@@ -45,6 +47,7 @@ public abstract class ChatScreenMixin extends Screen {
       at = {@At("TAIL")}
    )
    private void onInit(CallbackInfo ci) {
+      this.searchScrollOffset = 0;
       if (BomboConfig.get().chatSearchBar) {
          BomboConfig.Settings s = BomboConfig.get();
          int defaultSearchY = this.input != null ? this.input.getY() - 18 : this.height - 32;
@@ -53,6 +56,7 @@ public abstract class ChatScreenMixin extends Screen {
          this.searchBox = new EditBox(this.font, searchX, searchY, 150, 12, Component.literal(""));
          this.searchBox.setValue(me.bombo.bomboaddons.util.ChatSearchHelper.activeSearchQuery);
          this.searchBox.setResponder((val) -> {
+            this.searchScrollOffset = 0;
             me.bombo.bomboaddons.util.ChatSearchHelper.activeSearchQuery = val != null ? val.trim() : "";
          });
          if (!s.chatSearchBackground) {
@@ -112,8 +116,12 @@ public abstract class ChatScreenMixin extends Screen {
 
                // Draw matching messages from bottom up
                java.util.List<Integer> list = new java.util.ArrayList<>(matchedIndices);
+               int maxOffset = Math.max(0, list.size() - 5);
+               if (this.searchScrollOffset > maxOffset) this.searchScrollOffset = maxOffset;
+               int startK = Math.min(list.size() - 1, list.size() - 1 - this.searchScrollOffset);
+
                int rendered = 0;
-               for (int k = list.size() - 1; k >= 0; k--) {
+               for (int k = startK; k >= 0; k--) {
                   int idx = list.get(k);
                   GuiMessage msg = all.get(idx);
                   if (drawY >= topY + 16) {
@@ -165,6 +173,20 @@ public abstract class ChatScreenMixin extends Screen {
       }
    }
 
+   @Override
+   public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+      if (this.searchBox != null && !this.searchBox.getValue().trim().isEmpty()) {
+         if (vertical > 0) {
+            this.searchScrollOffset = Math.max(0, this.searchScrollOffset - 1);
+            return true;
+         } else if (vertical < 0) {
+            this.searchScrollOffset += 1;
+            return true;
+         }
+      }
+      return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
+   }
+
    @Unique
    private GuiMessage bombo$getSearchResultAt(double mouseX, double mouseY) {
       if (this.searchBox == null || this.searchBox.getValue().trim().isEmpty()) return null;
@@ -200,7 +222,8 @@ public abstract class ChatScreenMixin extends Screen {
 
       if (mouseX >= searchX - 2 && mouseX <= searchX + boxW && mouseY >= topY && mouseY <= searchY - 2) {
          java.util.List<Integer> list = new java.util.ArrayList<>(matchedIndices);
-         for (int k = list.size() - 1; k >= 0; k--) {
+         int startK = Math.min(list.size() - 1, list.size() - 1 - this.searchScrollOffset);
+         for (int k = startK; k >= 0; k--) {
             int idx = list.get(k);
             if (drawY >= topY + 16) {
                if (mouseY >= drawY - 1 && mouseY <= drawY + 9) {

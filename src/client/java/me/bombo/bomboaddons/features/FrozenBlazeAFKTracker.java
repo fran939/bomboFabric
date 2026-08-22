@@ -27,10 +27,14 @@ public class FrozenBlazeAFKTracker {
       HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "fb_afk_hud"), FrozenBlazeAFKTracker::render);
    }
 
+   private static int tickCounter = 0;
+
    public static void onTick(Minecraft mc) {
       if (mc.player == null || mc.level == null) return;
       BomboConfig.Settings s = BomboConfig.get();
       if (s == null || !s.frozenBlazeWarning) return;
+
+      if (++tickCounter % 4 != 0 && pendingAlerts == 0) return;
 
       boolean wearing = isWearingFrozenBlaze(mc);
       if (!wearing) {
