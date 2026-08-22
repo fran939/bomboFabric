@@ -152,6 +152,20 @@ public class TextureToggleManager {
       return null;
    }
 
+   public boolean isPaperItem(ItemStack itemStack) {
+      if (itemStack == null || itemStack.isEmpty()) return false;
+      if (itemStack.is(net.minecraft.world.item.Items.PAPER)) return true;
+      String path = BuiltInRegistries.ITEM.getKey(itemStack.getItem()).getPath();
+      if (path.equalsIgnoreCase("paper")) return true;
+      String sbId = this.skyblockId(itemStack);
+      if (sbId != null) {
+         if (sbId.contains("PAPER") || sbId.contains("SILK") || sbId.contains("SCROLL") || sbId.contains("ENCHANTED_PAPER")) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    public boolean shouldBypass(ItemStack itemStack) {
       if (!BomboConfig.get().noResourcePack) {
          return false;
@@ -166,6 +180,9 @@ public class TextureToggleManager {
       if (this.blacklistMode) {
          return this.whitelistedItems.contains(sbId);
       } else {
+         if (this.isPaperItem(itemStack)) {
+            return false;
+         }
          return !this.whitelistedItems.contains(sbId);
       }
    }

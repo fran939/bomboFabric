@@ -104,7 +104,10 @@ public class RecipeViewerScreen extends Screen {
       }).bounds(x + 150, y + 155, 20, 20).build());
       this.viewRecipeBtn = (Button)this.addRenderableWidget(Button.builder(Component.literal("/viewrecipe"), (btn) -> {
          if (Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.connection.sendCommand("viewrecipe " + this.itemId);
+            String targetId = (!this.recipeOutputs.isEmpty() && this.currentRecipeIndex < this.recipeOutputs.size())
+               ? (String)this.recipeOutputs.get(this.currentRecipeIndex)
+               : this.itemId;
+            Minecraft.getInstance().player.connection.sendCommand("viewrecipe " + targetId);
             Minecraft.getInstance().setScreenAndShow((Screen)null);
          }
 

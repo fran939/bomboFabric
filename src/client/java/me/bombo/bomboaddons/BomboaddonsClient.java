@@ -1013,60 +1013,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                         BlockHitResult bhr = mc.level.clip(new net.minecraft.world.level.ClipContext(eye, reach, net.minecraft.world.level.ClipContext.Block.OUTLINE, net.minecraft.world.level.ClipContext.Fluid.NONE, mc.player));
                         if (bhr != null && bhr.getType() == HitResult.Type.BLOCK) {
                            targetPos = bhr.getBlockPos();
-                           BlockState state = mc.level.getBlockState(targetPos);
-                           String rawId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-                           String shortId = rawId.replace("minecraft:", "");
-                           String blockName = state.getBlock().getName().getString();
-                           String coordsStr = targetPos.getX() + " " + targetPos.getY() + " " + targetPos.getZ();
-
-                           StringBuilder propsSb = new StringBuilder();
-                           for (net.minecraft.world.level.block.state.properties.Property<?> prop : state.getProperties()) {
-                              if (propsSb.length() > 0) propsSb.append(", ");
-                              propsSb.append(prop.getName()).append("=").append(state.getValue(prop).toString());
-                           }
-                           String propsStr = propsSb.toString();
-                           String stateWithProps = shortId + (!propsStr.isEmpty() ? "[" + propsStr + "]" : "");
-
-                           mc.keyboardHandler.setClipboard(shortId);
-
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §a=== Targeted Block Info ==="));
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Name: §e" + blockName));
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- ID: §b" + rawId + " §7(short: §e" + shortId + "§7)"));
-                           if (!propsStr.isEmpty()) {
-                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Properties: §f" + propsStr));
-                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Full State: §e" + stateWithProps));
-                           }
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Coords: §6" + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ()));
-
-                           MutableComponent actions = Component.literal("§7Actions: ");
-
-                           MutableComponent copyIdBtn = Component.literal("§b[Copy ID] ");
-                           copyIdBtn.setStyle(copyIdBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(shortId)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy '" + shortId + "' to clipboard"))));
-                           actions.append(copyIdBtn);
-
-                           if (!propsStr.isEmpty()) {
-                              MutableComponent copyStateBtn = Component.literal("§e[Copy State] ");
-                              copyStateBtn.setStyle(copyStateBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(stateWithProps)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy '" + stateWithProps + "' to clipboard"))));
-                              actions.append(copyStateBtn);
-                           }
-
-                           MutableComponent copyCoordsBtn = Component.literal("§6[Copy Coords] ");
-                           copyCoordsBtn.setStyle(copyCoordsBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(coordsStr)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy coords: " + coordsStr))));
-                           actions.append(copyCoordsBtn);
-
-                           MutableComponent highlightBtn = Component.literal("§a[+ Highlight Block] ");
-                           highlightBtn.setStyle(highlightBtn.getStyle().withClickEvent(new ClickEvent.SuggestCommand("/b bh add " + shortId + " GOLD")).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to highlight all " + shortId))));
-                           actions.append(highlightBtn);
-
-                           if (!propsStr.isEmpty()) {
-                              MutableComponent highlightStateBtn = Component.literal("§d[+ Highlight State]");
-                              highlightStateBtn.setStyle(highlightStateBtn.getStyle().withClickEvent(new ClickEvent.SuggestCommand("/b bh add " + stateWithProps + " GOLD")).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to highlight exact state " + stateWithProps))));
-                              actions.append(highlightStateBtn);
-                           }
-
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(actions);
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§a✔ Copied §e" + shortId + " §ato clipboard!"));
-                           return 1;
                         }
                      }
 
@@ -1074,6 +1020,60 @@ public class BomboaddonsClient implements ClientModInitializer {
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cNo block found in front of you."));
                         return 0;
                      }
+
+                     BlockState state = mc.level.getBlockState(targetPos);
+                     String rawId = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+                     String shortId = rawId.replace("minecraft:", "");
+                     String blockName = state.getBlock().getName().getString();
+                     String coordsStr = targetPos.getX() + " " + targetPos.getY() + " " + targetPos.getZ();
+
+                     StringBuilder propsSb = new StringBuilder();
+                     for (net.minecraft.world.level.block.state.properties.Property<?> prop : state.getProperties()) {
+                        if (propsSb.length() > 0) propsSb.append(", ");
+                        propsSb.append(prop.getName()).append("=").append(state.getValue(prop).toString());
+                     }
+                     String propsStr = propsSb.toString();
+                     String stateWithProps = shortId + (!propsStr.isEmpty() ? "[" + propsStr + "]" : "");
+
+                     mc.keyboardHandler.setClipboard(shortId);
+
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §a=== Targeted Block Info ==="));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Name: §e" + blockName));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- ID: §b" + rawId + " §7(short: §e" + shortId + "§7)"));
+                     if (!propsStr.isEmpty()) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Properties: §f" + propsStr));
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Full State: §e" + stateWithProps));
+                     }
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7- Coords: §6" + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ()));
+
+                     MutableComponent actions = Component.literal("§7Actions: ");
+
+                     MutableComponent copyIdBtn = Component.literal("§b[Copy ID] ");
+                     copyIdBtn.setStyle(copyIdBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(shortId)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy '" + shortId + "' to clipboard"))));
+                     actions.append(copyIdBtn);
+
+                     if (!propsStr.isEmpty()) {
+                        MutableComponent copyStateBtn = Component.literal("§e[Copy State] ");
+                        copyStateBtn.setStyle(copyStateBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(stateWithProps)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy '" + stateWithProps + "' to clipboard"))));
+                        actions.append(copyStateBtn);
+                     }
+
+                     MutableComponent copyCoordsBtn = Component.literal("§6[Copy Coords] ");
+                     copyCoordsBtn.setStyle(copyCoordsBtn.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(coordsStr)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy coords: " + coordsStr))));
+                     actions.append(copyCoordsBtn);
+
+                     MutableComponent highlightBtn = Component.literal("§a[+ Highlight Block] ");
+                     highlightBtn.setStyle(highlightBtn.getStyle().withClickEvent(new ClickEvent.SuggestCommand("/b bh add " + shortId + " GOLD")).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to highlight all " + shortId))));
+                     actions.append(highlightBtn);
+
+                     if (!propsStr.isEmpty()) {
+                        MutableComponent highlightStateBtn = Component.literal("§d[+ Highlight State]");
+                        highlightStateBtn.setStyle(highlightStateBtn.getStyle().withClickEvent(new ClickEvent.SuggestCommand("/b bh add " + stateWithProps + " GOLD")).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to highlight exact state " + stateWithProps))));
+                        actions.append(highlightStateBtn);
+                     }
+
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(actions);
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§a✔ Copied §e" + shortId + " §ato clipboard!"));
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("pos1").executes((context) -> {

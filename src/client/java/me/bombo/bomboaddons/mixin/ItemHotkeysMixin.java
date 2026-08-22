@@ -202,7 +202,11 @@ public abstract class ItemHotkeysMixin {
 
       if (skyblockId != null) {
          if (action.equalsIgnoreCase("RECIPE") || action.equalsIgnoreCase("USAGE")) {
-            Minecraft.getInstance().setScreenAndShow(new RecipeViewerScreen(skyblockId, Minecraft.getInstance().screen));
+            RecipeViewerScreen rvs = new RecipeViewerScreen(skyblockId, Minecraft.getInstance().screen);
+            if (action.equalsIgnoreCase("USAGE")) {
+               rvs.setUsageMode(true);
+            }
+            Minecraft.getInstance().setScreenAndShow(rvs);
             return true;
          }
 

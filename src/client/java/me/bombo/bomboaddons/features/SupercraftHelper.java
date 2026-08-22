@@ -223,17 +223,26 @@ public class SupercraftHelper {
 
          // 6. Leather Armor Hex Color
          if (s.showLeatherColor) {
-            net.minecraft.world.item.component.DyedItemColor dyed = stack.get(DataComponents.DYED_COLOR);
-            if (dyed != null) {
-               int rgb = dyed.rgb();
-               additions.add(new LoreAddition("leatherColor", Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
-            } else if (tag != null) {
-               if (tag.getCompound("display").isPresent() && tag.getCompound("display").get().getInt("color").isPresent()) {
-                  int rgb = tag.getCompound("display").get().getInt("color").get();
+            boolean alreadyHasColor = false;
+            for (Component line : lines) {
+               if (line != null && line.getString().toLowerCase().contains("color: #")) {
+                  alreadyHasColor = true;
+                  break;
+               }
+            }
+            if (!alreadyHasColor) {
+               net.minecraft.world.item.component.DyedItemColor dyed = stack.get(DataComponents.DYED_COLOR);
+               if (dyed != null) {
+                  int rgb = dyed.rgb();
                   additions.add(new LoreAddition("leatherColor", Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
-               } else if (tag.getInt("color").isPresent()) {
-                  int rgb = tag.getInt("color").get();
-                  additions.add(new LoreAddition("leatherColor", Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
+               } else if (tag != null) {
+                  if (tag.getCompound("display").isPresent() && tag.getCompound("display").get().getInt("color").isPresent()) {
+                     int rgb = tag.getCompound("display").get().getInt("color").get();
+                     additions.add(new LoreAddition("leatherColor", Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
+                  } else if (tag.getInt("color").isPresent()) {
+                     int rgb = tag.getInt("color").get();
+                     additions.add(new LoreAddition("leatherColor", Component.literal("§7Color: §e#" + String.format("%06X", rgb & 0xFFFFFF)), s.getLorePos("leatherColor", "BOTTOM"), s.getLoreOrder("leatherColor", 6)));
+                  }
                }
             }
          }
