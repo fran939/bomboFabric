@@ -603,11 +603,14 @@ extends Screen {
                         this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> { dojoUtilitiesSubmenu = false; this.scrollAmount = 0.0; this.init(); }).bounds(col1X, y1, 140, 20).build());
                         y1 += 28;
                         y1 = this.addBoolOption("Dojo Utilities Enabled", s.dojoUtilities, v -> s.dojoUtilities = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Auto Sword Swap by Helmet", s.dojoUtilities, v -> s.dojoUtilities = v, col1X, col1W * 2, y1);
+                        if (!s.hideCheats) {
+                            y1 = this.addBoolOption("Auto Sword Swap by Helmet", s.dojoUtilities, v -> s.dojoUtilities = v, col1X, col1W * 2, y1);
+                        }
                         break;
                     }
 
                     y1 = this.addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava, v -> s.clearWaterAndLava = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Disable Blindness", s.disableBlindness, v -> s.disableBlindness = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Sign Calculator", s.signCalculator, v -> s.signCalculator = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("SBE Commands", s.sbeCommands, v -> s.sbeCommands = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Copy Chat", s.copyChat, v -> s.copyChat = v, col1X, col1W, y1);
@@ -626,7 +629,7 @@ extends Screen {
                     y1 = this.addBoolOption("Lowest BIN Tooltip", s.lowestBin, v -> s.lowestBin = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Raw Craft Cost Tooltip", s.craftCostTooltip, v -> s.craftCostTooltip = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("NPC Sell Price Tooltip", s.npcPrice, v -> s.npcPrice = v, col1X, col1W, y1);
-                    y1 = this.addBoolOption("Auto Trevor Quest", s.autoTrevorQuest, v -> s.autoTrevorQuest = v, col1X, col1W, y1);
+                    y1 = this.addBoolOption("Auto Accept Trevor", s.autoTrevorQuest, v -> s.autoTrevorQuest = v, col1X, col1W, y1);
                     y1 = this.addBoolOption("Daily Reward Helper", s.dailyRewardHelper, v -> s.dailyRewardHelper = v, col1X, col1W, y1);
                     
                     loreAdditionsX = col1X;
@@ -644,8 +647,8 @@ extends Screen {
                         y1 = this.addIntLabelSlider("Custom Time Hour", s.customTimeHour, 0, 23, 1, v -> s.customTimeHour = v, col1X, col1W, y1);
                         this.addRenderableWidget(Button.builder(Component.literal("Day"), b -> { s.customTimeHour = 12; BomboConfig.save(); this.init(); }).bounds(col1X, y1, col1W / 4 - 2, 18).build());
                         this.addRenderableWidget(Button.builder(Component.literal("Night"), b -> { s.customTimeHour = 0; BomboConfig.save(); this.init(); }).bounds(col1X + col1W / 4, y1, col1W / 4 - 2, 18).build());
-                        this.addRenderableWidget(Button.builder(Component.literal("Sunrise"), b -> { s.customTimeHour = 6; BomboConfig.save(); this.init(); }).bounds(col1X + 2 * (col1W / 4), y1, col1W / 4 - 2, 18).build());
-                        this.addRenderableWidget(Button.builder(Component.literal("Sunset"), b -> { s.customTimeHour = 18; BomboConfig.save(); this.init(); }).bounds(col1X + 3 * (col1W / 4), y1, col1W / 4 - 2, 18).build());
+                        this.addRenderableWidget(Button.builder(Component.literal("Sunset"), b -> { s.customTimeHour = 18; BomboConfig.save(); this.init(); }).bounds(col1X + (col1W / 4) * 2, y1, col1W / 4 - 2, 18).build());
+                        this.addRenderableWidget(Button.builder(Component.literal("Sunrise"), b -> { s.customTimeHour = 6; BomboConfig.save(); this.init(); }).bounds(col1X + (col1W / 4) * 3, y1, col1W / 4 - 2, 18).build());
                         y1 += 22;
                     }
                     y1 = this.addBoolOption("Weather Override Enabled", s.customWeatherEnabled, v -> s.customWeatherEnabled = v, col1X, col1W, y1);
@@ -683,7 +686,7 @@ extends Screen {
                     partyCommandsY = y2;
                     partyCommandsWidth = col2W;
                     partyCommandsHeight = 24;
-                    y2 = this.addBoolOption("Party Commands", s.partyCommandsEnabled, v -> s.partyCommandsEnabled = v, col2X, col2W, y2);
+                    y2 = this.addBoolOption("Party Commands §b(Right-Click)", s.partyCommandsEnabled, v -> s.partyCommandsEnabled = v, col2X, col2W, y2);
                     y2 = this.addBoolOption("Bypass Resource Pack", s.bypassResourcePack, v -> s.bypassResourcePack = v, col2X, col2W, y2);
                     y2 = this.addBoolOption("NoResourcePack Feature", s.noResourcePack, v -> s.noResourcePack = v, col2X, col2W, y2);
                     y2 = this.addBoolOption("Show Command On Hover", s.showCommandOnHover, v -> s.showCommandOnHover = v, col2X, col2W, y2);
@@ -698,11 +701,13 @@ extends Screen {
                             ((WindowAccessor)(Object)Minecraft.getInstance().getWindow()).invokeUpdateFullscreen((Boolean)Minecraft.getInstance().options.enableVsync().get());
                         } catch (Throwable ignored) {}
                     }, col2X, col2W, y2);
-                    y2 += 10;
-                    y2 = this.addBoolOption("Fuck Diorite", s.fuckDiorite, v -> s.fuckDiorite = v, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Fuck Diorite Pillar Color", s.fuckDioritePillarColor, v -> s.fuckDioritePillarColor = v, col2X, col2W, y2);
-                    if (s.fuckDioritePillarColor) {
-                        y2 = this.addColorCycleButton("Fuck Diorite Color", s.fuckDioriteColor, v -> s.fuckDioriteColor = v, col2X, col2W, y2);
+                    if (!s.hideCheats) {
+                        y2 += 10;
+                        y2 = this.addBoolOption("Fuck Diorite", s.fuckDiorite, v -> s.fuckDiorite = v, col2X, col2W, y2);
+                        y2 = this.addBoolOption("Fuck Diorite Pillar Color", s.fuckDioritePillarColor, v -> s.fuckDioritePillarColor = v, col2X, col2W, y2);
+                        if (s.fuckDioritePillarColor) {
+                            y2 = this.addColorCycleButton("Fuck Diorite Color", s.fuckDioriteColor, v -> s.fuckDioriteColor = v, col2X, col2W, y2);
+                        }
                     }
                     frozenBlazeWarnX = col2X;
                     frozenBlazeWarnY = y2;
@@ -779,9 +784,9 @@ extends Screen {
                 }
                 case 3: {
                     int col1X = contentX;
-                    int col1W = contentWidth / 2 - 10;
-                    int col2X = contentX + contentWidth / 2 + 10;
-                    int col2W = contentWidth / 2 - 10;
+                    int col1W = (contentWidth - 20) / 2;
+                    int col2X = contentX + col1W + 20;
+                    int col2W = col1W;
                     int y1 = contentBaseY + 24 - (int)this.scrollAmount;
                     y1 = this.addBoolOption("Garden Movement", s.gardenMovement, v -> {
                         s.gardenMovement = v;
@@ -844,7 +849,7 @@ extends Screen {
                     y2 = this.addBoolOption("Composter Timer HUD", s.composterTimerHud, v -> {
                         s.composterTimerHud = v;
                     }, col2X, col2W, y2);
-                    y2 = this.addBoolOption("Pest ESP Enabled", s.pestEsp, v -> {
+                    y2 = this.addBoolOption("Pest Highlight", s.pestEsp, v -> {
                         s.pestEsp = v;
                     }, col2X, col2W, y2);
                     y2 = this.addBoolOption("Pest Waypoints", s.pestSpawnWaypoint, v -> {
@@ -1537,6 +1542,18 @@ extends Screen {
                                         highShowInvis = info.showInvisible;
                                         highIslandInput = info.requiredIsland;
                                         editingHighMob = mobName;
+                                        if (info.isAdvanced || (info.itemDisplayId != null && !info.itemDisplayId.isEmpty()) || (info.mobSize != null && !info.mobSize.isEmpty()) || (info.entityType != null && !info.entityType.isEmpty()) || (info.headHashes != null && !info.headHashes.isEmpty())) {
+                                            s.highlightAdvancedMode = true;
+                                            advItemDisplayInput = info.itemDisplayId != null ? info.itemDisplayId : "";
+                                            advEntityTypeInput = info.entityType != null ? info.entityType : "";
+                                            advHeadHashInput = info.headHashes != null && !info.headHashes.isEmpty() ? info.headHashes.get(0) : "";
+                                            advMobSizeInput = info.mobSize != null ? info.mobSize : "";
+                                            advArmorPieceInput = info.armorPiece != null ? info.armorPiece : "";
+                                            advPlayerNameInput = info.playerName != null ? info.playerName : "";
+                                            advVisibilityInput = info.showInvisible ? "ALL" : "ONLY_VISIBLE";
+                                            advShowTitleInput = info.showTitleOnSpawn;
+                                            advPlaySoundInput = info.playSoundOnSpawn;
+                                        }
                                         this.init();
                                     }).bounds(contentX + contentWidth - 60, itemY + 2, 32, 18).build());
 
@@ -1751,9 +1768,6 @@ extends Screen {
                     curY += 24;
                     curY = this.addBoolOption("Blindness Timer", s.kuudraBlindnessTimer, v -> {
                         s.kuudraBlindnessTimer = v;
-                    }, contentX, contentWidth, curY);
-                    curY = this.addBoolOption("Disable Blindness", s.disableBlindness, v -> {
-                        s.disableBlindness = v;
                     }, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Perk Menu Clicker", s.perkMenuClicker, v -> {
                         s.perkMenuClicker = v;
@@ -3874,11 +3888,14 @@ extends Screen {
                         g.text(this.font, "§6§lDojo Utilities Settings", col1X, y1, -22016, true);
                         y1 += 28;
                         y1 = this.drawOptionLabel(g, "§7Dojo Utilities Enabled", col1X + 24, y1, -1, false);
-                        y1 = this.drawOptionLabel(g, "§7Auto Sword Swap by Helmet", col1X + 24, y1, -1, false);
+                        if (!s.hideCheats) {
+                            y1 = this.drawOptionLabel(g, "§7Auto Sword Swap by Helmet", col1X + 24, y1, -1, false);
+                        }
                         break;
                     }
 
                     y1 = this.drawOptionLabel(g, "§7Clear Water & Lava Vision", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Disable Blindness", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Sign Calculator", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7SBE Commands", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Copy Chat", col1X + 24, y1, -1, false);
@@ -3893,7 +3910,7 @@ extends Screen {
                     y1 = this.drawOptionLabel(g, "§7Lowest BIN Tooltip", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Raw Craft Cost Tooltip", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7NPC Sell Price Tooltip", col1X + 24, y1, -1, false);
-                    y1 = this.drawOptionLabel(g, "§7Auto Trevor Quest", col1X + 24, y1, -1, false);
+                    y1 = this.drawOptionLabel(g, "§7Auto Accept Trevor", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Daily Reward Helper", col1X + 24, y1, -1, false);
                     
                     y1 = this.drawOptionLabel(g, "§7Lore Additions §b(Right-Click)", col1X + 24, y1, -1, false);
@@ -3934,11 +3951,13 @@ extends Screen {
                     y2 = this.drawOptionLabel(g, "§7Hypixel Shortcut Button", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "§7Smart Disconnect", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "§7Borderless Fullscreen", col2X + 24, y2, -1, false);
-                    y2 += 10;
-                    y2 = this.drawOptionLabel(g, "§7Fuck Diorite", col2X + 24, y2, -1, false);
-                    y2 = this.drawOptionLabel(g, "§7Fuck Diorite Pillar Color", col2X + 24, y2, -1, false);
-                    if (s.fuckDioritePillarColor && optionMatchesSearch("Fuck Diorite Color")) {
-                        y2 += 24;
+                    if (!s.hideCheats) {
+                        y2 += 10;
+                        y2 = this.drawOptionLabel(g, "§7Fuck Diorite", col2X + 24, y2, -1, false);
+                        y2 = this.drawOptionLabel(g, "§7Fuck Diorite Pillar Color", col2X + 24, y2, -1, false);
+                        if (s.fuckDioritePillarColor && optionMatchesSearch("Fuck Diorite Color")) {
+                            y2 += 24;
+                        }
                     }
                     y2 = this.drawOptionLabel(g, "§7Frozen Blaze Warning §b(Right-Click)", col2X + 24, y2, -1, false);
                     break;
@@ -4064,40 +4083,41 @@ extends Screen {
                 }
                 case 3: {
                     int col1X = contentX;
-                    int col2X = contentX + contentWidth / 2 + 10;
+                    int col1W = (contentWidth - 20) / 2;
+                    int col2X = contentX + col1W + 20;
                     int y1 = contentBaseY + 24 - (int)this.scrollAmount;
                     y1 = this.drawOptionLabel(g, "§7Garden Movement", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "\u00a77Lock Mouse on Movement", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "\u00a77Sugar Cane Mode", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "\u00a77Direction Helper Warning", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "\u00a77Macro Check Detector", col1X + 24, y1, -1, false);
-                    y1 += 24;
                     if (BomboConfig.get().gardenMacroCheckDetector) {
-                        g.text(this.font, "\u00a77Stop Movement on Check", col1X + 24, y1 + 4, -1, false);
+                        y1 = this.drawOptionLabel(g, "\u00a77Stop Movement on Check", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "\u00a7fAlarm Sound:", col1X, y1, -1, false);
                         g.text(this.font, "\u00a7fSound Repeats: \u00a7e" + BomboConfig.get().gardenMacroCheckSoundCount, col1X, (y1 += 24) + 4, -1, false);
                         y1 = this.drawOptionLabel(g, "\u00a7fSound Delay: \u00a7e" + BomboConfig.get().gardenMacroCheckSoundDelay + "ms", col1X, y1, -1, false);
-                        y1 += 24;
                     }
-                    g.text(this.font, "\u00a7fForward:", col1X, y1 += 10, -1);
-                    g.text(this.font, "\u00a7fBackward:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fLeft:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fRight:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fBreak:", col1X, y1 += 24, -1);
-                    g.text(this.font, "\u00a7fUse:", col1X, y1 += 24, -1);
+                    y1 += 10;
+                    g.text(this.font, "\u00a7fForward:", col1X, y1 + 4, -1); y1 += 24;
+                    g.text(this.font, "\u00a7fBackward:", col1X, y1 + 4, -1); y1 += 24;
+                    g.text(this.font, "\u00a7fLeft:", col1X, y1 + 4, -1); y1 += 24;
+                    g.text(this.font, "\u00a7fRight:", col1X, y1 + 4, -1); y1 += 24;
+                    g.text(this.font, "\u00a7fBreak:", col1X, y1 + 4, -1); y1 += 24;
+                    g.text(this.font, "\u00a7fUse:", col1X, y1 + 4, -1); y1 += 24;
+
                     int y2 = contentBaseY + 24 - (int)this.scrollAmount;
                     y2 = this.drawOptionLabel(g, "§7Composter Helper", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Composter HUD", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Composter Timer HUD", col2X + 24, y2, -1, false);
-                    y2 = this.drawOptionLabel(g, "\u00a77Pest ESP Enabled", col2X + 24, y2, -1, false);
+                    y2 = this.drawOptionLabel(g, "\u00a77Pest Highlight", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Pest Waypoints", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Remove Waypoint On Return", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Pest Waypoint Beacon", col2X + 24, y2, -1, false);
                     g.text(this.font, "\u00a7fPest Waypoint Duration: \u00a7e" + (String)(BomboConfig.get().pestWaypointDuration == 0 ? "Infinite" : BomboConfig.get().pestWaypointDuration + "s"), col2X, (y2 += 24) + 4, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Pest Tracers", col2X + 24, y2, -1, false);
                     y2 = this.drawOptionLabel(g, "\u00a77Cheese Tracers", col2X + 24, y2, -1, false);
-                    g.text(this.font, "\u00a7fPest Color:", col2X, y2 += 24, -1);
-                    g.text(this.font, "\u00a7fPest Thickness: \u00a7e" + BomboConfig.get().pestEspThickness, col2X, y2 += 24, -1);
+                    g.text(this.font, "\u00a7fPest Color:", col2X, (y2 += 24) + 4, -1);
+                    g.text(this.font, "\u00a7fPest Thickness: \u00a7e" + BomboConfig.get().pestEspThickness, col2X, (y2 += 24) + 4, -1);
                     break;
                 }
                 case 4: {
@@ -4250,7 +4270,7 @@ extends Screen {
                                     g.text(this.font, "  \u00a77• " + prefix + mobName, contentX + 24, itemY + 6, -1, false);
                                     g.disableScissor();
                                 }
-                                g.fill(contentX + 16, itemY + 21, contentX + contentWidth, itemY + 22, 0x44888888);
+                                g.fill(contentX + 16, itemY + 20, contentX + contentWidth, itemY + 21, 0x33888888);
                             }
                         }
                     }
@@ -4282,7 +4302,7 @@ extends Screen {
                             boolean isCollapsed = s.collapsedBestiaryCategories != null && s.collapsedBestiaryCategories.contains(cat);
 
                             if (catIndex > 0) {
-                                listY += 4;
+                                listY += 6;
                             }
                             catIndex++;
 
@@ -4308,7 +4328,7 @@ extends Screen {
                                             g.text(this.font, "  \u00a77• " + prefix + mobName, contentX + 36, itemY + 6, -1, false);
                                             g.disableScissor();
                                         }
-                                        g.fill(contentX + 16, itemY + 21, contentX + contentWidth, itemY + 22, 0x44888888);
+                                        g.fill(contentX + 16, itemY + 20, contentX + contentWidth, itemY + 21, 0x33888888);
                                     }
                                 }
                             }
@@ -4323,11 +4343,6 @@ extends Screen {
                         curY += 24;
                     }
                     g.text(this.font, "\u00a77Disable Unequip", contentX + 24, curY + 4, -1, false);
-                    curY += 24;
-                    for (int i = 0; i < 9; ++i) {
-                        g.text(this.font, "\u00a7fSlot " + (i + 1) + ":", contentX, curY, -1);
-                        curY += 24;
-                    }
                     break;
                 }
                 case 9: {
@@ -4386,7 +4401,6 @@ extends Screen {
                 case 11: {
                     g.text(this.font, "\u00a76\u00a7lKuudra Settings", contentX, curY, -22016, true);
                     curY = this.drawOptionLabel(g, "\u00a77Blindness Timer", contentX + 24, curY, -1, false);
-                    curY = this.drawOptionLabel(g, "\u00a77Disable Blindness", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Perk Menu Clicker", contentX + 24, curY, -1, false);
                     curY = this.drawOptionLabel(g, "\u00a77Auto GFS Toxic", contentX + 24, curY, -1, false);
                     g.text(this.font, "\u00a7fToxic Count: \u00a7e" + BomboConfig.get().autoGfsToxicCount, contentX, (curY += 24) + 4, -1);
@@ -5255,6 +5269,93 @@ extends Screen {
                 this.scrollAmount = 0.0;
                 this.init();
                 return true;
+            }
+            if (selectedCategory == 7) {
+                BomboConfig.Settings s = BomboConfig.get();
+                int contentWidth = this.width - 130 - 24;
+                int contentX = 146;
+                int curY = 86;
+                if (s.highlightAdvancedMode) {
+                    curY += 24; // Item Display
+                    curY += 24; // Entity Type
+                    curY += 24; // Head Hash
+                    curY += 24; // Mob Size
+                    curY += 24; // Armor Piece
+                    curY += 24; // Player Name
+                    curY += 24; // Island
+                    curY += 24; // Subarea
+                    curY += 24; // Visibility
+                    curY += 24; // Color
+                    curY += 24; // Tracer
+                    curY += 24; // Show Title
+                    curY += 24; // Play Sound
+                    curY += 30; // Button offset
+                } else {
+                    curY += 24; // Mob Name
+                    curY += 24; // Island
+                    curY += 24; // Color
+                    curY += 24; // Tracer
+                    curY += 30; // Button offset
+                }
+                int listStartY = curY += 30;
+                List<String> generalMobs = me.bombo.bomboaddons.features.BestiaryManager.getGeneralHighlights(s.highlights);
+                Map<String, List<String>> groupedBestiary = me.bombo.bomboaddons.features.BestiaryManager.getGroupedBestiary(s.highlights);
+                int currentListY = listStartY + 15 - (int)this.scrollAmount;
+
+                boolean isGeneralCollapsed = s.collapsedBestiaryCategories != null && s.collapsedBestiaryCategories.contains("General");
+                currentListY += 24; // General header
+
+                if (!isGeneralCollapsed) {
+                    for (String mobName : generalMobs) {
+                        int itemY = currentListY;
+                        currentListY += 22;
+                        if (mx >= (double)contentX && mx <= (double)(contentX + contentWidth - 215) && my >= (double)itemY && my < (double)(itemY + 20)) {
+                            BomboConfig.HighlightInfo info = s.highlights.get(mobName);
+                            if (info != null) {
+                                pushHighlightHistory();
+                                info.enabled = !info.enabled;
+                                BomboConfig.save();
+                                this.init();
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                currentListY += 8; // Spacer
+                boolean isBestiaryParentCollapsed = s.collapsedBestiaryCategories != null && s.collapsedBestiaryCategories.contains("Bestiary");
+                currentListY += 24; // Bestiary parent header
+
+                if (!isBestiaryParentCollapsed) {
+                    int catIndex = 0;
+                    for (Map.Entry<String, List<String>> entry : groupedBestiary.entrySet()) {
+                        String cat = entry.getKey();
+                        List<String> mobsInCat = entry.getValue();
+                        boolean isCollapsed = s.collapsedBestiaryCategories != null && s.collapsedBestiaryCategories.contains(cat);
+                        if (catIndex > 0) {
+                            currentListY += 6;
+                        }
+                        catIndex++;
+                        currentListY += 24; // Category header
+
+                        if (!isCollapsed) {
+                            for (String mobName : mobsInCat) {
+                                int itemY = currentListY;
+                                currentListY += 22;
+                                if (mx >= (double)contentX && mx <= (double)(contentX + contentWidth - 215) && my >= (double)itemY && my < (double)(itemY + 20)) {
+                                    BomboConfig.HighlightInfo info = s.highlights.get(mobName);
+                                    if (info != null) {
+                                        pushHighlightHistory();
+                                        info.enabled = !info.enabled;
+                                        BomboConfig.save();
+                                        this.init();
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         if (event.button() == 0 && selectedCategory == 1) {

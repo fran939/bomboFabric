@@ -56,13 +56,10 @@ public class PestESP {
                         double z = entity.getZ() - camPos.z;
                         float dist = (float)Math.sqrt(x * x + y * y + z * z);
                         float scale = 1.0F;
-                        if (!s.hideCheats && dist > 0.2F) {
-                           scale = 0.2F / dist;
-                        }
 
-                        float boxWidth = 1.0F * scale;
-                        float boxHeight = 1.0F * scale;
-                        float boxYOffset = 1.3F * scale;
+                        float boxWidth = 1.0F;
+                        float boxHeight = 1.0F;
+                        float boxYOffset = 1.3F;
                         if (pestName.contains("worm")) {
                            boxYOffset = 0.5F * scale;
                            boxHeight = 0.8F * scale;

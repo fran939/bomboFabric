@@ -438,12 +438,18 @@ public class ClickLogic {
             if (var3 instanceof AbstractContainerScreen) {
                AbstractContainerScreen<?> contScreen = (AbstractContainerScreen)var3;
                if (key != -1) {
-                  if (key == getKeyCode(BomboConfig.get().nextPageKey) && tryClickNavigation(mc, contScreen, "Next Page", "Levels ", "Next ")) {
-                     return true;
+                  if (key == getKeyCode(BomboConfig.get().nextPageKey)) {
+                     if (tryClickNavigation(mc, contScreen, "Next Page", "Levels ", "Next ")
+                         || tryClickNavigation(mc, contScreen, "Scroll Right", "Scroll Up")) {
+                        return true;
+                     }
                   }
 
-                  if (key == getKeyCode(BomboConfig.get().prevPageKey) && tryClickNavigation(mc, contScreen, "Previous Page", "Previous ")) {
-                     return true;
+                  if (key == getKeyCode(BomboConfig.get().prevPageKey)) {
+                     if (tryClickNavigation(mc, contScreen, "Previous Page", "Previous ")
+                         || tryClickNavigation(mc, contScreen, "Scroll Left", "Scroll Down")) {
+                        return true;
+                     }
                   }
 
                   if (key == getKeyCode(BomboConfig.get().goBackKey) && tryClickNavigation(mc, contScreen, "Go Back", "Close", "Menu", "Back")) {
@@ -451,7 +457,9 @@ public class ClickLogic {
                   }
 
                   if (key == getKeyCode(BomboConfig.get().smartGoBackKey)) {
-                     if (tryClickNavigation(mc, contScreen, "Go Back", "Close", "Menu", "Back")) {
+                     if (tryClickNavigation(mc, contScreen, "Previous Page", "Previous ")
+                         || tryClickNavigation(mc, contScreen, "Scroll Left", "Scroll Down")
+                         || tryClickNavigation(mc, contScreen, "Go Back", "Close", "Menu", "Back")) {
                         return true;
                      }
                   }

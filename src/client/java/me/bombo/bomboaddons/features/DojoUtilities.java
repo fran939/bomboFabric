@@ -29,7 +29,7 @@ public class DojoUtilities {
    public static void onPreAttack(Minecraft mc) {
       if (mc.player == null || mc.level == null) return;
       BomboConfig.Settings s = BomboConfig.get();
-      if (s == null || !s.dojoUtilities) return;
+      if (s == null || !s.dojoUtilities || s.hideCheats) return;
 
       if (!isInDojo()) return;
 

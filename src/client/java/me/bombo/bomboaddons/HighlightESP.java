@@ -608,7 +608,8 @@ public class HighlightESP {
                 }
 
                 // 3. Entity Type match (with nametag check for sub-mobs like "old wolf" vs "wolf")
-                if (!matched && info.entityType != null && !info.entityType.isEmpty()) {
+                boolean hasHeadRequirement = (info.headHashes != null && !info.headHashes.isEmpty());
+                if (!matched && info.entityType != null && !info.entityType.isEmpty() && !hasHeadRequirement) {
                    if (matchesEntityType(self, info.entityType)) {
                       String cleanKey = key.toLowerCase(Locale.ROOT).trim();
                       boolean wolfActive = s.highlights.containsKey("wolf") && s.highlights.get("wolf").enabled;
@@ -650,8 +651,8 @@ public class HighlightESP {
                       if (!matched && rule.playerName != null && !rule.playerName.isEmpty() && isPlayer && self.getName().getString().toLowerCase(Locale.ROOT).contains(rule.playerName.toLowerCase(Locale.ROOT))) {
                          matched = true;
                       }
-                      if (!matched && rule.entityType != null && !rule.entityType.isEmpty()) {
-                         if (matchesEntityType(self, rule.entityType) && matchesArmor(self, rule.armor) && matchesRiding(self, rule.riding) && matchesHeldItem(self, rule.heldItem) && matchesSubarea(rule.subarea, self) && matchesMobSize(self, rule.mobSize != null && !rule.mobSize.isEmpty() ? rule.mobSize : rule.size)) {
+                       if (!matched && rule.entityType != null && !rule.entityType.isEmpty() && (rule.heads == null || rule.heads.isEmpty())) {
+                          if (matchesEntityType(self, rule.entityType) && matchesArmor(self, rule.armor) && matchesRiding(self, rule.riding) && matchesHeldItem(self, rule.heldItem) && matchesSubarea(rule.subarea, self) && matchesMobSize(self, rule.mobSize != null && !rule.mobSize.isEmpty() ? rule.mobSize : rule.size)) {
                             String cleanKey = key.toLowerCase(Locale.ROOT).trim();
                             if (cleanKey.equals("old wolf")) {
                                if ((nametagName != null && nametagName.contains("old wolf")) || name.toLowerCase(Locale.ROOT).contains("old wolf")) {
