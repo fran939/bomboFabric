@@ -85,8 +85,6 @@ public class BomboConfigGUI
     private static int dojoUtilitiesX = -1, dojoUtilitiesY = -1, dojoUtilitiesW = -1, dojoUtilitiesH = -1;
     public static boolean cameraSettingsSubmenu = false;
     private static int cameraSettingsX = -1, cameraSettingsY = -1, cameraSettingsW = -1, cameraSettingsH = -1;
-    public static boolean discordBridgeSubmenu = false;
-    private static int discordBridgeX = -1, discordBridgeY = -1, discordBridgeW = -1, discordBridgeH = -1;
     public static int highlightListStartY = -1;
     private static final Map<String, int[]> mobRowHitboxes = new HashMap<>();
 
@@ -572,7 +570,6 @@ public class BomboConfigGUI
                     loreAdditionsSubmenu = false;
                     frozenBlazeWarnSubmenu = false;
                     structureFinderSubmenu = false;
-                    discordBridgeSubmenu = false;
                     confirmProfileDelete = false;
                     colorPickerTarget = null;
                     editingWaypointIdx = -1;
@@ -715,35 +712,6 @@ public class BomboConfigGUI
                         }
                         break;
                     }
-
-                    if (discordBridgeSubmenu) {
-                        this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> {
-                            discordBridgeSubmenu = false;
-                            this.scrollAmount = 0.0;
-                            this.init();
-                        }).bounds(col1X, y1 + 24, 140, 20).build());
-                        y1 += 52;
-                        y1 = this.addBoolOption("Discord Bridge Enabled", s.discordBridgeEnabled,
-                                v -> s.discordBridgeEnabled = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Forward Guild Chat", s.discordBridgeGuild,
-                                v -> s.discordBridgeGuild = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Forward Party Chat", s.discordBridgeParty,
-                                v -> s.discordBridgeParty = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Forward Direct Messages", s.discordBridgeDm,
-                                v -> s.discordBridgeDm = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Forward Bombo Chat", s.discordBridgeBcChat,
-                                v -> s.discordBridgeBcChat = v, col1X, col1W * 2, y1);
-                        y1 = this.addBoolOption("Forward All Chat", s.discordBridgeAllChat,
-                                v -> s.discordBridgeAllChat = v, col1X, col1W * 2, y1);
-                        break;
-                    }
-
-                    discordBridgeX = col1X;
-                    discordBridgeY = y1;
-                    discordBridgeW = col1W;
-                    discordBridgeH = 24;
-                    y1 = this.addBoolOption("Discord Bridge §b(Right-Click)", s.discordBridgeEnabled,
-                            v -> s.discordBridgeEnabled = v, col1X, col1W, y1);
 
                     cameraSettingsX = col1X;
                     cameraSettingsY = y1;
@@ -4512,19 +4480,6 @@ public class BomboConfigGUI
                         break;
                     }
 
-                    if (discordBridgeSubmenu) {
-                        g.text(this.font, "§6§lDiscord Bridge Settings", col1X, y1, -22016, true);
-                        y1 += 52;
-                        y1 = this.drawOptionLabel(g, "§7Discord Bridge Enabled", col1X + 24, y1, -1, false);
-                        y1 = this.drawOptionLabel(g, "§7Forward Guild Chat", col1X + 24, y1, -1, false);
-                        y1 = this.drawOptionLabel(g, "§7Forward Party Chat", col1X + 24, y1, -1, false);
-                        y1 = this.drawOptionLabel(g, "§7Forward Direct Messages", col1X + 24, y1, -1, false);
-                        y1 = this.drawOptionLabel(g, "§7Forward Bombo Chat", col1X + 24, y1, -1, false);
-                        y1 = this.drawOptionLabel(g, "§7Forward All Chat", col1X + 24, y1, -1, false);
-                        break;
-                    }
-
-                    y1 = this.drawOptionLabel(g, "§7Discord Bridge §b(Right-Click)", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Camera Settings §b(Right-Click)", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Clear Water & Lava Vision", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Sign Calculator", col1X + 24, y1, -1, false);
@@ -6068,15 +6023,6 @@ public class BomboConfigGUI
                     && mx <= (double) (frozenBlazeWarnX + frozenBlazeWarnW) && my >= (double) frozenBlazeWarnY
                     && my <= (double) (frozenBlazeWarnY + frozenBlazeWarnH)) {
                 frozenBlazeWarnSubmenu = true;
-                configSearchTerm = "";
-                this.scrollAmount = 0.0;
-                this.init();
-                return true;
-            }
-            if (selectedCategory == 0 && discordBridgeX != -1 && mx >= (double) discordBridgeX
-                    && mx <= (double) (discordBridgeX + discordBridgeW) && my >= (double) discordBridgeY
-                    && my <= (double) (discordBridgeY + discordBridgeH)) {
-                discordBridgeSubmenu = true;
                 configSearchTerm = "";
                 this.scrollAmount = 0.0;
                 this.init();

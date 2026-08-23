@@ -168,7 +168,6 @@ public abstract class ChatMixin implements IChatComponent {
             AutoFishing.onChatMessage(raw);
             KuudraPerkClicker.onChatMessage(raw);
             Pearls.onChatMessage(raw);
-            me.bombo.bomboaddons.DiscordBridge.onChatMessage(raw);
             if (BomboConfig.get().debugDailyReward && this.minecraft != null && this.minecraft.player != null && (raw.contains("Reward") || raw.contains("rewards.hypixel.net") || raw.contains("Claim"))) {
                this.minecraft.player.sendSystemMessage(Component.literal("§8[§bDailyRewardDebug§8] §7Chat message: " + raw));
             }
