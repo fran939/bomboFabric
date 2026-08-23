@@ -4,9 +4,6 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],
 	"client": [
-		"BlockStateBaseMixin",
-		"LeavesBlockMixin",
-		"FallingBlockMixin",
 		"AbstractContainerScreenAccessor",
 		"AbstractContainerScreenMixin",
 		"AbstractSoundInstanceMixin",
