@@ -3,7 +3,12 @@ $jarPath = "build/libs/bomboaddons-$version.jar"
 
 Write-Host "Building project for v$version..." -ForegroundColor Yellow
 Remove-Item -Path "build\resources" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "build\classes" -Recurse -Force -ErrorAction SilentlyContinue
 cmd /c 'gradlew.bat compileClientJava processResources jar --no-daemon'
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Build failed with exit code $LASTEXITCODE! Aborting upload." -ForegroundColor Red
+    exit 1
+}
 
 if (-not $env:GH_TOKEN) {
     try {

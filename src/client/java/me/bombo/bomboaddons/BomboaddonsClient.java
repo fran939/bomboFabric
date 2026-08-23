@@ -1357,7 +1357,14 @@ public class BomboaddonsClient implements ClientModInitializer {
                      if (arg.startsWith("&") || arg.startsWith("§")) {
                         BomboConfig.get().ircNameColor = arg;
                         BomboConfig.save();
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aSet your IRC name color to: " + arg.replace('&', '§') + "SampleName"));
+                        String myName = "Player";
+                        try {
+                           Minecraft mc = Minecraft.getInstance();
+                           if (mc != null && mc.getUser() != null) {
+                              myName = mc.getUser().getName();
+                           }
+                        } catch (Throwable ignored) {}
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aSet your IRC name color to: " + arg.replace('&', '§') + myName));
                      } else {
                         BomboConfig.get().ircDiscordUser = arg;
                         BomboConfig.save();

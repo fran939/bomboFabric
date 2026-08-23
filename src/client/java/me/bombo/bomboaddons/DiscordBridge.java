@@ -25,8 +25,8 @@ public class DiscordBridge {
          if (rawMessage != null && !rawMessage.trim().isEmpty()) {
             String clean = ChatFormatting.stripFormatting(rawMessage).trim();
             if (!clean.isEmpty()) {
-               if (!clean.contains("DailyRewardDebug") && !clean.contains("[BomboAddons]") && !clean.contains("[DiscordBridge]")) {
-                  boolean isBcChat = clean.startsWith("[Bombo] ");
+               if (!clean.contains("DailyRewardDebug") && !clean.contains("[BomboAddons]") && !clean.contains("[DiscordBridge]") && !clean.contains("Set your IRC name color to:") && !clean.contains("Set your linked Discord username")) {
+                  boolean isBcChat = clean.startsWith("[Bombo] ") && clean.contains(": ");
                   boolean isGuild = clean.startsWith("Guild >") || clean.contains("Officer >");
                   boolean isParty = clean.startsWith("Party >");
                   boolean isDm = clean.startsWith("From ") || clean.startsWith("To ");
@@ -49,23 +49,32 @@ public class DiscordBridge {
                            return;
                         }
                      } else {
-                        boolean match = BomboConfig.get().discordBridgeGuild && isGuild || BomboConfig.get().discordBridgeParty && isParty || BomboConfig.get().discordBridgeDm && isDm;
+                        boolean match = (BomboConfig.get().discordBridgeGuild && isGuild)
+                              || (BomboConfig.get().discordBridgeParty && isParty)
+                              || (BomboConfig.get().discordBridgeDm && isDm);
                         if (!match && !BomboConfig.get().discordBridgeAllChat) {
                            return;
                         }
                      }
 
                      String sender = "Player";
+                     String msgContent = clean;
 
-                     try {
-                        Minecraft mc = Minecraft.getInstance();
-                        if (mc != null && mc.getUser() != null) {
-                           sender = extractCleanUsername(mc.getUser().getName());
-                        }
-                     } catch (Exception var10) {
+                     // Extract sender from Party >, Guild >, From / To messages
+                     int colonIdx = clean.indexOf(": ");
+                     if (colonIdx != -1) {
+                        sender = extractCleanUsername(clean.substring(0, colonIdx));
+                        msgContent = clean.substring(colonIdx + 2);
+                     } else {
+                        try {
+                           Minecraft mc = Minecraft.getInstance();
+                           if (mc != null && mc.getUser() != null) {
+                              sender = extractCleanUsername(mc.getUser().getName());
+                           }
+                        } catch (Exception ignored) {}
                      }
 
-                     sendWebhookAsync(sender, clean);
+                     sendWebhookAsync(sender, msgContent);
                   }
                }
             }
