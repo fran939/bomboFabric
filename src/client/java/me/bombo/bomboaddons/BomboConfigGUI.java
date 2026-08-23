@@ -721,8 +721,8 @@ public class BomboConfigGUI
                             discordBridgeSubmenu = false;
                             this.scrollAmount = 0.0;
                             this.init();
-                        }).bounds(col1X, y1, 140, 20).build());
-                        y1 += 28;
+                        }).bounds(col1X, y1 + 24, 140, 20).build());
+                        y1 += 52;
                         y1 = this.addBoolOption("Discord Bridge Enabled", s.discordBridgeEnabled,
                                 v -> s.discordBridgeEnabled = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Forward Guild Chat", s.discordBridgeGuild,
@@ -4514,7 +4514,7 @@ public class BomboConfigGUI
 
                     if (discordBridgeSubmenu) {
                         g.text(this.font, "§6§lDiscord Bridge Settings", col1X, y1, -22016, true);
-                        y1 += 28;
+                        y1 += 52;
                         y1 = this.drawOptionLabel(g, "§7Discord Bridge Enabled", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Forward Guild Chat", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Forward Party Chat", col1X + 24, y1, -1, false);

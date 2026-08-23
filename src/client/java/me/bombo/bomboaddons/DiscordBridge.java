@@ -44,17 +44,12 @@ public class DiscordBridge {
                         sendWebhookAsync(sender, msgContent);
                      }
                   } else {
-                     if (!BomboConfig.get().discordBridgeGuild && !BomboConfig.get().discordBridgeParty && !BomboConfig.get().discordBridgeDm) {
-                        if (!BomboConfig.get().discordBridgeAllChat && !isGuild && !isParty && !isDm) {
-                           return;
-                        }
-                     } else {
-                        boolean match = (BomboConfig.get().discordBridgeGuild && isGuild)
-                              || (BomboConfig.get().discordBridgeParty && isParty)
-                              || (BomboConfig.get().discordBridgeDm && isDm);
-                        if (!match && !BomboConfig.get().discordBridgeAllChat) {
-                           return;
-                        }
+                     boolean match = (BomboConfig.get().discordBridgeGuild && isGuild)
+                           || (BomboConfig.get().discordBridgeParty && isParty)
+                           || (BomboConfig.get().discordBridgeDm && isDm)
+                           || (BomboConfig.get().discordBridgeAllChat && !isGuild && !isParty && !isDm);
+                     if (!match) {
+                        return;
                      }
 
                      String sender = "Player";
