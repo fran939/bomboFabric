@@ -4512,6 +4512,19 @@ public class BomboConfigGUI
                         break;
                     }
 
+                    if (discordBridgeSubmenu) {
+                        g.text(this.font, "§6§lDiscord Bridge Settings", col1X, y1, -22016, true);
+                        y1 += 28;
+                        y1 = this.drawOptionLabel(g, "§7Discord Bridge Enabled", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Forward Guild Chat", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Forward Party Chat", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Forward Direct Messages", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Forward Bombo Chat", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Forward All Chat", col1X + 24, y1, -1, false);
+                        break;
+                    }
+
+                    y1 = this.drawOptionLabel(g, "§7Discord Bridge §b(Right-Click)", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Camera Settings §b(Right-Click)", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Clear Water & Lava Vision", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Sign Calculator", col1X + 24, y1, -1, false);

@@ -31,12 +31,6 @@ public class ClientPacketListenerMixin {
          ci.cancel();
          ClientPacketListener listener = (ClientPacketListener)(Object)this;
          listener.sendChat(replaced);
-      } else {
-         if (BomboConfig.get().ircChatEnabled && BomboConfig.get().ircDefaultChat) {
-            IRCClient.sendMessage(replaced);
-            ci.cancel();
-         }
-
       }
    }
 
