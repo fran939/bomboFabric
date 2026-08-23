@@ -2,7 +2,8 @@ $version = Select-String -Path "gradle.properties" -Pattern "mod_version=(.*)" |
 $jarPath = "build/libs/bomboaddons-$version.jar"
 
 Write-Host "Building project for v$version..." -ForegroundColor Yellow
-cmd /c 'gradlew.bat compileClientJava processResources jar'
+Remove-Item -Path "build\resources" -Recurse -Force -ErrorAction SilentlyContinue
+cmd /c 'gradlew.bat compileClientJava processResources jar --no-daemon'
 
 if (-not $env:GH_TOKEN) {
     try {
