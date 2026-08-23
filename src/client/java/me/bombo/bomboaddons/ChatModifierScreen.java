@@ -125,15 +125,27 @@ public class ChatModifierScreen extends Screen {
             g.fill(20, y, this.width - 20, y + 22, bg);
             g.outline(20, y, this.width - 40, 22, (i == this.selectedIndex) ? 0xFF00AAFF : 0xFF333333);
 
+            int maxTextW = this.width - 150 - 30;
             String statusStr = rule.enabled ? "§a[ON]" : "§c[OFF]";
             String typeStr = rule.hideMessage ? "§c[HIDE]" : "§e[REPLACE]";
-            String regexStr = rule.isRegex ? " §b(Regex)" : "";
+            String regexStr = rule.isRegex ? " §b(Regex)" : (rule.pattern != null && rule.pattern.contains("${") ? " §d(Template)" : "");
 
-            g.text(this.font, statusStr + " " + typeStr + regexStr + " §f\"§e" + rule.pattern + "§f\"", 26, y + 6, -1, false);
-
-            if (!rule.hideMessage) {
-               g.text(this.font, "§7-> §r\"" + (rule.replacement != null ? rule.replacement.replace('&', '§') : "") + "§r\"", 250, y + 6, -1, false);
+            String fullDisplay;
+            if (rule.hideMessage) {
+               fullDisplay = statusStr + " " + typeStr + regexStr + " §f\"§e" + rule.pattern + "§f\"";
+            } else {
+               String repl = rule.replacement != null ? rule.replacement.replace('&', '§') : "";
+               fullDisplay = statusStr + " " + typeStr + regexStr + " §f\"§e" + rule.pattern + "§f\" §7-> §r\"§b" + repl + "§r\"";
             }
+
+            if (this.font.width(fullDisplay) > maxTextW) {
+               while (fullDisplay.length() > 4 && this.font.width(fullDisplay + "...") > maxTextW) {
+                  fullDisplay = fullDisplay.substring(0, fullDisplay.length() - 1);
+               }
+               fullDisplay += "...";
+            }
+
+            g.text(this.font, fullDisplay, 26, y + 6, -1, false);
 
             // Buttons previewed on right
             int btnX = this.width - 140;

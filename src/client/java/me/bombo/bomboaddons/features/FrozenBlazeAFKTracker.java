@@ -23,12 +23,22 @@ public class FrozenBlazeAFKTracker {
    private static int pendingAlerts = 0;
    private static long nextSubAlertTime = 0;
    private static boolean hasWarnedForCurrentAfk = false;
+   private static int tickCounter = 0;
 
    public static void init() {
       HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "fb_afk_hud"), FrozenBlazeAFKTracker::render);
    }
 
-   private static int tickCounter = 0;
+   public static boolean isHoldingRod(Minecraft mc) {
+      if (mc.player == null) return false;
+      ItemStack held = mc.player.getMainHandItem();
+      if (held == null || held.isEmpty()) return false;
+      if (held.getItem() instanceof net.minecraft.world.item.FishingRodItem) return true;
+      String path = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).getPath().toLowerCase();
+      if (path.contains("rod")) return true;
+      String sbId = SkyblockUtils.getSkyblockId(held);
+      return sbId != null && sbId.toUpperCase().contains("ROD");
+   }
 
    public static void onTick(Minecraft mc) {
       if (mc.player == null || mc.level == null) return;
@@ -63,11 +73,10 @@ public class FrozenBlazeAFKTracker {
          return;
       }
 
-      // Check if player moved
+      // Check if player moved horizontally (jumping / Y axis doesn't count as moving)
       double dx = px - anchorX;
-      double dy = py - anchorY;
       double dz = pz - anchorZ;
-      double distSq = dx * dx + dy * dy + dz * dz;
+      double distSq = dx * dx + dz * dz;
 
       if (distSq >= 0.25) {
          anchorX = px;
@@ -77,6 +86,7 @@ public class FrozenBlazeAFKTracker {
          pendingAlerts = 0;
          hasWarnedForCurrentAfk = false;
       } else {
+         anchorY = py; // update Y so we track ground level without resetting AFK timer
          long warnMs = (long) Math.max(1, s.fbWarnSeconds) * 1000L;
          if (now - lastMovedTime >= warnMs) {
             // Warn only 3 times per AFK stationary session, not repeatedly until movement
@@ -90,7 +100,7 @@ public class FrozenBlazeAFKTracker {
 
       // Fire the 3 alert bursts spaced 400ms apart
       if (pendingAlerts > 0 && now >= nextSubAlertTime) {
-         if (isWearingFrozenBlaze(mc)) {
+         if (isWearingFrozenBlaze(mc) && (!s.fbWarnRequireRod || isHoldingRod(mc))) {
             pendingAlerts--;
             nextSubAlertTime = now + 400L;
             triggerWarning(mc, s);
@@ -101,34 +111,46 @@ public class FrozenBlazeAFKTracker {
       }
    }
 
+   public static void drawTimerInfo(GuiGraphicsExtractor g, int x, int y, float scale, boolean preview) {
+      Minecraft mc = Minecraft.getInstance();
+      BomboConfig.Settings s = BomboConfig.get();
+      String timerText;
+      if (preview) {
+         timerText = "§eAFK: §f00:30";
+      } else {
+         long now = System.currentTimeMillis();
+         long elapsedMs = now - lastMovedTime;
+         if (elapsedMs < 1000L) return;
+         long totalSecs = elapsedMs / 1000L;
+         long mins = totalSecs / 60;
+         long secs = totalSecs % 60;
+         String timeStr = String.format("%02d:%02d", mins, secs);
+         boolean isWarning = totalSecs >= (s != null ? s.fbWarnSeconds : 60);
+         timerText = (isWarning ? "§c§lAFK: " : "§eAFK: ") + "§f" + timeStr;
+      }
+
+      g.pose().pushMatrix();
+      if (scale != 1.0F && scale > 0.0F) {
+         g.pose().scale(scale, scale);
+         g.text(mc.font, timerText, (int)((float)x / scale), (int)((float)y / scale), -1, true);
+      } else {
+         g.text(mc.font, timerText, x, y, -1, true);
+      }
+      g.pose().popMatrix();
+   }
+
    public static void render(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null || mc.level == null) return;
       BomboConfig.Settings s = BomboConfig.get();
       if (s == null || !s.frozenBlazeWarning || !s.fbWarnTimerOnScreen) return;
       if (!isWearingFrozenBlaze(mc)) return;
-
-      long now = System.currentTimeMillis();
-      long elapsedMs = now - lastMovedTime;
-      if (elapsedMs < 1000L) return;
-
-      long totalSecs = elapsedMs / 1000L;
-      long mins = totalSecs / 60;
-      long secs = totalSecs % 60;
-      String timeStr = String.format("%02d:%02d", mins, secs);
-
-      boolean isWarning = totalSecs >= s.fbWarnSeconds;
-      String timerText = (isWarning ? "§c§lAFK: " : "§eAFK: ") + "§f" + timeStr;
+      if (s.fbWarnRequireRod && !isHoldingRod(mc)) return;
 
       int x = s.fbWarnTimerX > 0 ? s.fbWarnTimerX : 10;
       int y = s.fbWarnTimerY > 0 ? s.fbWarnTimerY : 120;
-
-      g.pose().pushMatrix();
-      if (s.fbWarnTimerScale != 1.0F && s.fbWarnTimerScale > 0.0F) {
-         g.pose().scale(s.fbWarnTimerScale, s.fbWarnTimerScale);
-      }
-      g.text(mc.font, timerText, x, y, -1, true);
-      g.pose().popMatrix();
+      float scale = s.fbWarnTimerScale > 0.0F ? s.fbWarnTimerScale : 1.0F;
+      drawTimerInfo(g, x, y, scale, false);
    }
 
    private static String lastHeadDesc = "";

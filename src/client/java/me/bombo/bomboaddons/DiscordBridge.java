@@ -105,6 +105,7 @@ public class DiscordBridge {
    public static void sendWebhookAsync(String username, String content) {
       String webhookUrl = BomboConfig.get().discordWebhookUrl;
       if (webhookUrl != null && !webhookUrl.trim().isEmpty()) {
+         String formattedContent = formatForDiscord(content);
          EXECUTOR.submit(() -> {
             try {
                URL url = new URL(webhookUrl.trim());
@@ -116,7 +117,7 @@ public class DiscordBridge {
                conn.setConnectTimeout(5000);
                conn.setReadTimeout(5000);
                String safeUsername = escapeJson(username);
-               String safeContent = escapeJson(content);
+               String safeContent = escapeJson(formattedContent);
                String avatarUrl = "https://mc-heads.net/avatar/" + safeUsername + "/100.png";
                String jsonPayload = "{\"username\":\"" + safeUsername + "\",\"avatar_url\":\"" + avatarUrl + "\",\"content\":\"" + safeContent + "\"}";
                OutputStream os = conn.getOutputStream();
@@ -149,6 +150,32 @@ public class DiscordBridge {
             }
 
          });
+      }
+   }
+
+   private static String formatForDiscord(String input) {
+      if (input == null || !input.contains("[SHOW:")) {
+         return input;
+      }
+      try {
+         java.util.regex.Pattern p = java.util.regex.Pattern.compile("\\[SHOW:([^\\]:]+):([A-Za-z0-9+/=\\r\\n]+)\\]");
+         java.util.regex.Matcher m = p.matcher(input);
+         StringBuilder sb = new StringBuilder();
+         while (m.find()) {
+            String name = m.group(1).replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+            String b64 = m.group(2).replaceAll("\\s+", "");
+            try {
+               byte[] decoded = java.util.Base64.getDecoder().decode(b64);
+               String lore = new String(decoded, StandardCharsets.UTF_8).replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+               m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement("\n```yaml\n" + lore + "\n```\n"));
+            } catch (Throwable t) {
+               m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement("[" + name + "]"));
+            }
+         }
+         m.appendTail(sb);
+         return sb.toString();
+      } catch (Throwable t) {
+         return input;
       }
    }
 

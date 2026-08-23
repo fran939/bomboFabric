@@ -59,6 +59,23 @@ public abstract class KeyboardMixin {
          }
       }
 
+      if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_F5 && action == 1 && mc.screen == null) {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s != null && s.cameraSettingsEnabled && s.disableFrontCamera) {
+            if (mc.options.getCameraType() == net.minecraft.client.CameraType.THIRD_PERSON_BACK) {
+               mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+               ci.cancel();
+               return;
+            }
+         }
+      }
+
+      if (me.bombo.bomboaddons.features.AutoAhSell.isRunning()) {
+         if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE || event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_GRAVE_ACCENT) {
+            me.bombo.bomboaddons.features.AutoAhSell.stop();
+         }
+      }
+
       CustomBindsProcessor.onKeyInput(event.key(), action);
 
       if (action == 1) {

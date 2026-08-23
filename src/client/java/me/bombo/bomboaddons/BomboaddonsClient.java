@@ -1340,7 +1340,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      showRankCommand((FabricClientCommandSource)context.getSource(), name);
                      return 1;
                   })));
-                  builder.then(ClientCommands.literal("chat").executes((context) -> {
+                  builder.then(((LiteralArgumentBuilder)ClientCommands.literal("chat").executes((context) -> {
                      try {
                         BomboConfig.get().ircChatEnabled = !BomboConfig.get().ircChatEnabled;
                         BomboConfig.save();
@@ -1352,7 +1352,102 @@ public class BomboaddonsClient implements ClientModInitializer {
                      }
 
                      return 1;
-                  }));
+                  })).then(ClientCommands.argument("arg", StringArgumentType.greedyString()).executes((context) -> {
+                     String arg = StringArgumentType.getString(context, "arg").trim();
+                     if (arg.startsWith("&") || arg.startsWith("§")) {
+                        BomboConfig.get().ircNameColor = arg;
+                        BomboConfig.save();
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aSet your IRC name color to: " + arg.replace('&', '§') + "SampleName"));
+                     } else {
+                        BomboConfig.get().ircDiscordUser = arg;
+                        BomboConfig.save();
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aSet your linked Discord username/ID to: §e" + arg));
+                     }
+                     return 1;
+                  })));
+                  builder.then(((LiteralArgumentBuilder)ClientCommands.literal("title").then(ClientCommands.argument("targetOrText", StringArgumentType.string()).then(ClientCommands.argument("text", StringArgumentType.greedyString()).executes((context) -> {
+                     String targetOrText = StringArgumentType.getString(context, "targetOrText");
+                     String text = StringArgumentType.getString(context, "text");
+                     handleTitleCommand(targetOrText, text);
+                     return 1;
+                  })))).then(ClientCommands.argument("textOnly", StringArgumentType.greedyString()).executes((context) -> {
+                     String text = StringArgumentType.getString(context, "textOnly");
+                     handleTitleCommand("self", text);
+                     return 1;
+                  })));
+                  builder.then(ClientCommands.literal("sound")
+                     .then(ClientCommands.argument("sound", StringArgumentType.string())
+                        .suggests((c, b) -> {
+                           String remaining = b.getRemaining().toLowerCase();
+                           for (Identifier id : net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.keySet()) {
+                              String str = id.toString();
+                              String path = id.getPath();
+                              if (str.toLowerCase().contains(remaining) || path.toLowerCase().contains(remaining)) {
+                                 b.suggest(str);
+                              }
+                           }
+                           return b.buildFuture();
+                        })
+                        .executes((context) -> {
+                           String sound = StringArgumentType.getString(context, "sound");
+                           handleSoundCommand("self", sound, 1);
+                           return 1;
+                        })
+                        .then(ClientCommands.argument("count", IntegerArgumentType.integer(1, 100))
+                           .executes((context) -> {
+                              String sound = StringArgumentType.getString(context, "sound");
+                              int count = IntegerArgumentType.getInteger(context, "count");
+                              handleSoundCommand("self", sound, count);
+                              return 1;
+                           })
+                        )
+                     )
+                  );
+                  builder.then(ClientCommands.literal("sell")
+                     .then(ClientCommands.literal("stop").executes((context) -> {
+                        me.bombo.bomboaddons.features.AutoAhSell.stop();
+                        return 1;
+                     }))
+                     .then(ClientCommands.literal("bypass").executes((context) -> {
+                        me.bombo.bomboaddons.features.AutoAhSell.onConfirmWarning();
+                        return 1;
+                     }))
+                     .then(ClientCommands.literal("setting")
+                        .then(ClientCommands.literal("time")
+                           .then(ClientCommands.argument("timeMs", IntegerArgumentType.integer(50, 2000)).executes((context) -> {
+                              int ms = IntegerArgumentType.getInteger(context, "timeMs");
+                              BomboConfig.get().autoAhSellDelayMs = ms;
+                              BomboConfig.save();
+                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§6AutoSell§8] §aAction delay set to §e" + ms + "ms§a."));
+                              return 1;
+                           }))
+                        )
+                     )
+                     .then(ClientCommands.argument("price", StringArgumentType.string()).executes((context) -> {
+                        String price = StringArgumentType.getString(context, "price");
+                        if (price.equalsIgnoreCase("bypass")) {
+                           me.bombo.bomboaddons.features.AutoAhSell.onConfirmWarning();
+                        } else if (price.equalsIgnoreCase("stop") || price.equalsIgnoreCase("cancel")) {
+                           me.bombo.bomboaddons.features.AutoAhSell.stop();
+                        } else {
+                           me.bombo.bomboaddons.features.AutoAhSell.start(price);
+                        }
+                        return 1;
+                     }))
+                  );
+                  builder.then(ClientCommands.literal("show").then(ClientCommands.literal("bc").executes((context) -> {
+                     Minecraft mc = Minecraft.getInstance();
+                     if (mc.player != null) {
+                        net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
+                        if (held != null && !held.isEmpty()) {
+                           String serialized = SkyblockUtils.serializeItemForChat(held);
+                           IRCClient.sendMessage(serialized);
+                        } else {
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §cYou are not holding an item!"));
+                        }
+                     }
+                     return 1;
+                  })));
                   builder.then(ClientCommands.literal("wp").then(ClientCommands.literal("import").executes((context) -> {
                      String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
                      if (clipboard != null && !clipboard.trim().isEmpty()) {
@@ -3243,18 +3338,18 @@ public class BomboaddonsClient implements ClientModInitializer {
                    })));
                   builder.then(ClientCommands.literal("color").executes((context) -> {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8---------------- §b[Color Codes] §8----------------"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §0&0 - Black        §1&1 - Dark Blue"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §2&2 - Dark Green   §3&3 - Dark Aqua"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §4&4 - Dark Red     §5&5 - Dark Purple"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §6&6 - Gold         §7&7 - Gray"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §8&8 - Dark Gray    §9&9 - Blue"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §a&a - Green        §b&b - Aqua"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §c&c - Red          §d&d - Light Purple"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §e&e - Yellow       §f&f - White"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §80 §0- Black        §81 §1- Dark Blue"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §82 §2- Dark Green   §83 §3- Dark Aqua"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §84 §4- Dark Red     §85 §5- Dark Purple"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §86 §6- Gold         §87 §7- Gray"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §88 §8- Dark Gray    §89 §9- Blue"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §8a §a- Green        §8b §b- Aqua"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §8c §c- Red          §8d §d- Light Purple"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §8e §e- Yellow       §8f §f- White"));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8Formatting Codes:"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §k&k - Obfuscated   §l&l - Bold"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §m&m - Strikethrough§n&n - Underline"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §o&o - Italic       §r&r - Reset"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §8k §f- §kObfuscated§r   §8l §f- §lBold§r"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §8m §f- §mStrikethrough§r§8n §f- §nUnderline§r"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("  §8o §f- §oItalic§r       §8r §f- Reset"));
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("area").executes((context) -> {
@@ -3896,6 +3991,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          DungeonPadTimers.init();
          CorpseHighlight.init();
          me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.init();
+         me.bombo.bomboaddons.features.DojoUtilities.init();
          HighlightESP.fetchOnlineAliasesAsync();
          IRCClient.start();
          LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register((LevelRenderEvents.AfterTranslucentFeatures)(context) -> {
@@ -3965,6 +4061,12 @@ public class BomboaddonsClient implements ClientModInitializer {
              if (ParticleTracker.espEnabled || s.debugParticles || s.particleHighlightsEnabled) {
                 try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: ParticleESP")) {
                    ParticleESP.render(context);
+                } catch (Throwable ignored) {}
+             }
+
+             if (s.dojoUtilities && s.dojoMasteryWool && me.bombo.bomboaddons.features.DojoUtilities.isMasteryChallengeActive(Minecraft.getInstance()) && !me.bombo.bomboaddons.features.DojoUtilities.trackedWoolList.isEmpty()) {
+                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: DojoTracers")) {
+                   me.bombo.bomboaddons.features.DojoUtilities.renderTracers(context);
                 } catch (Throwable ignored) {}
              }
          });
@@ -4476,6 +4578,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.onTick(client);
             } catch (Throwable ignored) {}
          }
+
+         if (s.dojoUtilities && s.dojoMasteryWool) {
+            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: DojoMasteryWool")) {
+               me.bombo.bomboaddons.features.DojoUtilities.onClientTick(client);
+            } catch (Throwable ignored) {}
+         }
+
+         try {
+            me.bombo.bomboaddons.features.AutoAhSell.onClientTick();
+         } catch (Throwable ignored) {}
 
          if (s.replaceGrayCarpetDwarven) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: DwarvenCarpet")) {
@@ -5362,6 +5474,68 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
          }
 
+      }
+   }
+
+   public static void showTitle(String text) {
+      if (text == null || text.trim().isEmpty()) return;
+      Minecraft mc = Minecraft.getInstance();
+      String formattedTitle = text.replace('&', '§');
+      mc.execute(() -> {
+         if (mc.gui != null) {
+            mc.gui.setTimes(10, 70, 20);
+            mc.gui.setTitle(Component.literal(formattedTitle));
+         }
+      });
+   }
+
+   public static void handleTitleCommand(String arg1, String arg2) {
+      Minecraft mc = Minecraft.getInstance();
+      String selfName = mc.getUser() != null ? mc.getUser().getName() : "";
+      
+      String target = arg1;
+      String text = arg2;
+      if (text == null || text.trim().isEmpty()) {
+         // Only one argument was given: e.g. /b title <titleText>
+         target = "self";
+         text = arg1;
+      }
+
+      if (target.equalsIgnoreCase("self") || (selfName != null && target.equalsIgnoreCase(selfName))) {
+         showTitle(text);
+      } else {
+         // Broadcast remote command over IRC
+         IRCClient.sendRemoteCommand("TITLE", target, text);
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aSent title to §e" + target + "§a: §r" + text.replace('&', '§')));
+         }
+      }
+   }
+
+   public static void handleSoundCommand(String arg1, String arg2) {
+      handleSoundCommand(arg1, arg2, 1);
+   }
+
+   public static void handleSoundCommand(String arg1, String arg2, int times) {
+      Minecraft mc = Minecraft.getInstance();
+      String selfName = mc.getUser() != null ? mc.getUser().getName() : "";
+      
+      String target = arg1;
+      String soundName = arg2;
+      if (soundName == null || soundName.trim().isEmpty()) {
+         // Only one argument was given: e.g. /b sound <soundName>
+         target = "self";
+         soundName = arg1;
+      }
+
+      if (target.equalsIgnoreCase("self") || (selfName != null && target.equalsIgnoreCase(selfName))) {
+         playTriggerSound(soundName, times);
+      } else {
+         // Broadcast remote command over IRC
+         IRCClient.sendRemoteCommand("SOUND", target, soundName + (times > 1 ? " " + times : ""));
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aSent sound to §e" + target + "§a: §e" + soundName + (times > 1 ? " §7(x" + times + ")" : "")));
+         }
       }
    }
 

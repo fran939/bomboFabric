@@ -32,6 +32,37 @@ public abstract class CameraMixin {
       return FreelookManager.isFreelookActive() ? FreelookManager.getFreelookPitch() : xRot;
    }
 
+   @ModifyVariable(
+      method = {"getMaxZoom"},
+      at = @At("HEAD"),
+      argsOnly = true
+   )
+   private float modifyMaxZoomDistance(float originalDist) {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s != null && s.cameraSettingsEnabled) {
+         float dist = s.cameraDistance;
+         if (s.hideCheats) {
+            return Math.min(4.0F, Math.max(0.5F, dist));
+         } else {
+            return Math.max(0.5F, dist);
+         }
+      }
+      return originalDist;
+   }
+
+   @Inject(
+      method = {"clipToDistance"},
+      at = {@At("HEAD")},
+      cancellable = true,
+      require = 0
+   )
+   private void onClipToDistance(float f, CallbackInfoReturnable<Float> cir) {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s != null && s.cameraSettingsEnabled && !s.hideCheats && s.cameraPassThroughWalls) {
+         cir.setReturnValue(f);
+      }
+   }
+
    @Inject(
       method = {"getFluidInCamera"},
       at = {@At("HEAD")},

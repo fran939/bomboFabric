@@ -62,7 +62,7 @@ public abstract class AbstractWidgetMixin {
          int w = this.getWidth();
          int h = this.getHeight();
          boolean active = this.active;
-         boolean hovered = this.isHoveredOrFocused();
+         boolean hovered = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
          if (self instanceof Checkbox) {
             Checkbox cb = (Checkbox)self;
             boolean selected = cb.selected();

@@ -25,6 +25,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,10 @@ public class BomboConfigGUI
     private static int structureFinderX = -1, structureFinderY = -1, structureFinderW = -1, structureFinderH = -1;
     public static boolean dojoUtilitiesSubmenu = false;
     private static int dojoUtilitiesX = -1, dojoUtilitiesY = -1, dojoUtilitiesW = -1, dojoUtilitiesH = -1;
+    public static boolean cameraSettingsSubmenu = false;
+    private static int cameraSettingsX = -1, cameraSettingsY = -1, cameraSettingsW = -1, cameraSettingsH = -1;
+    public static int highlightListStartY = -1;
+    private static final Map<String, int[]> mobRowHitboxes = new HashMap<>();
 
     private int drawSectionHeader(GuiGraphicsExtractor g, String title, int x, int y) {
         if (!optionMatchesSearch(title))
@@ -644,6 +649,8 @@ public class BomboConfigGUI
                         y1 += 28;
                         y1 = this.addBoolOption("Frozen Blaze Warning Enabled", s.frozenBlazeWarning,
                                 v -> s.frozenBlazeWarning = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Only When Holding Rod", s.fbWarnRequireRod,
+                                v -> s.fbWarnRequireRod = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Show AFK Timer On Screen", s.fbWarnTimerOnScreen,
                                 v -> s.fbWarnTimerOnScreen = v, col1X, col1W * 2, y1);
                         y1 = this.addBoolOption("Play Warning Sound", s.fbWarnSound, v -> s.fbWarnSound = v, col1X,
@@ -657,6 +664,31 @@ public class BomboConfigGUI
                         break;
                     }
 
+                    if (cameraSettingsSubmenu) {
+                        this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> {
+                            cameraSettingsSubmenu = false;
+                            this.scrollAmount = 0.0;
+                            this.init();
+                        }).bounds(col1X, y1 + 24, 140, 20).build());
+                        y1 += 52;
+                        y1 = this.addBoolOption("Camera Settings Enabled", s.cameraSettingsEnabled,
+                                v -> s.cameraSettingsEnabled = v, col1X, col1W * 2, y1);
+                        if (s.hideCheats) {
+                            // Legit version: allow nearer only (0.5 to 4.0 blocks)
+                            y1 = this.addFloatLabelSlider("Third Person Distance", s.cameraDistance, 0.5F, 4.0F, 0.1F, 4.0F,
+                                    v -> s.cameraDistance = v, col1X, col1W * 2, y1);
+                        } else {
+                            // Cheats version: allow nearer, farther, and wall pass-through
+                            y1 = this.addFloatLabelSlider("Third Person Distance", s.cameraDistance, 0.5F, 30.0F, 0.5F, 4.0F,
+                                    v -> s.cameraDistance = v, col1X, col1W * 2, y1);
+                            y1 = this.addBoolOption("Pass Through Walls", s.cameraPassThroughWalls,
+                                    v -> s.cameraPassThroughWalls = v, col1X, col1W * 2, y1);
+                            y1 = this.addBoolOption("Disable Front Camera", s.disableFrontCamera,
+                                    v -> s.disableFrontCamera = v, col1X, col1W * 2, y1);
+                        }
+                        break;
+                    }
+
                     if (dojoUtilitiesSubmenu) {
                         this.addRenderableWidget(Button.builder(Component.literal("§c← Back to General"), b -> {
                             dojoUtilitiesSubmenu = false;
@@ -666,12 +698,27 @@ public class BomboConfigGUI
                         y1 += 28;
                         y1 = this.addBoolOption("Dojo Utilities Enabled", s.dojoUtilities, v -> s.dojoUtilities = v,
                                 col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Mastery Wool Tracers", s.dojoMasteryWool,
+                                v -> s.dojoMasteryWool = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Tracer To Next Wool", s.dojoNextWoolTracer,
+                                v -> s.dojoNextWoolTracer = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Show SHOOT On Screen", s.dojoShootHud,
+                                v -> s.dojoShootHud = v, col1X, col1W * 2, y1);
+                        y1 = this.addBoolOption("Play Sound On Shoot", s.dojoShootSound,
+                                v -> s.dojoShootSound = v, col1X, col1W * 2, y1);
                         if (!s.hideCheats) {
                             y1 = this.addBoolOption("Auto Sword Swap by Helmet", s.dojoUtilities,
                                     v -> s.dojoUtilities = v, col1X, col1W * 2, y1);
                         }
                         break;
                     }
+
+                    cameraSettingsX = col1X;
+                    cameraSettingsY = y1;
+                    cameraSettingsW = col1W;
+                    cameraSettingsH = 24;
+                    y1 = this.addBoolOption("Camera Settings §b(Right-Click)", s.cameraSettingsEnabled,
+                            v -> s.cameraSettingsEnabled = v, col1X, col1W, y1);
 
                     y1 = this.addBoolOption("Clear Water & Lava Vision", s.clearWaterAndLava,
                             v -> s.clearWaterAndLava = v, col1X, col1W, y1);
@@ -686,7 +733,7 @@ public class BomboConfigGUI
                     dojoUtilitiesY = y1;
                     dojoUtilitiesW = col1W;
                     dojoUtilitiesH = 24;
-                    y1 = this.addBoolOption("Dojo Utilities", s.dojoUtilities, v -> s.dojoUtilities = v, col1X, col1W,
+                    y1 = this.addBoolOption("Dojo Utilities §b(Right-Click)", s.dojoUtilities, v -> s.dojoUtilities = v, col1X, col1W,
                             y1);
                     y1 = this.addBoolOption("Hollow Wand Fix", s.hollowWandClickThrough,
                             v -> s.hollowWandClickThrough = v, col1X, col1W, y1);
@@ -1452,6 +1499,8 @@ public class BomboConfigGUI
                         }
                     }
                     int listStartY = curY += 30;
+                    highlightListStartY = listStartY;
+                    mobRowHitboxes.clear();
                     List<String> generalMobs = me.bombo.bomboaddons.features.BestiaryManager
                             .getGeneralHighlights(s.highlights);
                     Map<String, List<String>> groupedBestiary = me.bombo.bomboaddons.features.BestiaryManager
@@ -1487,6 +1536,7 @@ public class BomboConfigGUI
                                 btn -> {
                                     colorPickerTarget = "General Color";
                                     colorPickerSetter = color -> {
+                                        pushHighlightHistory();
                                         for (String m : generalMobs) {
                                             if (s.highlights.containsKey(m))
                                                 s.highlights.get(m).color = color;
@@ -1496,22 +1546,24 @@ public class BomboConfigGUI
                                         BomboConfig.save();
                                     };
                                     this.init();
-                                }).bounds(contentX + contentWidth - 210, generalHeaderY + 3, 60, 16).build());
+                                }).bounds(contentX + contentWidth - 212, generalHeaderY + 3, 62, 16).build());
 
                         boolean anyGeneralTracer = generalMobs.stream()
                                 .anyMatch(m -> s.highlights.containsKey(m) && s.highlights.get(m).tracer);
                         this.addRenderableWidget(Button.builder(
                                 (Component) Component.literal(anyGeneralTracer ? "\u00a7bTR" : "\u00a77NO TR"),
                                 btn -> {
+                                    pushHighlightHistory();
                                     for (String m : generalMobs) {
                                         if (s.highlights.containsKey(m))
                                             s.highlights.get(m).tracer = !anyGeneralTracer;
                                     }
                                     BomboConfig.save();
                                     this.init();
-                                }).bounds(contentX + contentWidth - 145, generalHeaderY + 3, 38, 16).build());
+                                }).bounds(contentX + contentWidth - 146, generalHeaderY + 3, 40, 16).build());
 
                         this.addRenderableWidget(Button.builder((Component) Component.literal("\u00a7aALL"), btn -> {
+                            pushHighlightHistory();
                             boolean anyDisabled = generalMobs.stream()
                                     .anyMatch(m -> s.highlights.containsKey(m) && !s.highlights.get(m).enabled);
                             for (String m : generalMobs) {
@@ -1520,7 +1572,7 @@ public class BomboConfigGUI
                             }
                             BomboConfig.save();
                             this.init();
-                        }).bounds(contentX + contentWidth - 102, generalHeaderY + 3, 38, 16).build());
+                        }).bounds(contentX + contentWidth - 102, generalHeaderY + 3, 36, 16).build());
 
                         this.addRenderableWidget(Button.builder((Component) Component.literal("\u00a7cDEL"), btn -> {
                             pushHighlightHistory();
@@ -1529,7 +1581,7 @@ public class BomboConfigGUI
                             }
                             BomboConfig.save();
                             this.init();
-                        }).bounds(contentX + contentWidth - 25, generalHeaderY + 3, 25, 16).build());
+                        }).bounds(contentX + contentWidth - 62, generalHeaderY + 3, 62, 16).build());
                     }
 
                     if (!isGeneralCollapsed) {
@@ -1538,6 +1590,7 @@ public class BomboConfigGUI
                             currentListY += 22;
                             if (itemY <= listStartY + 5 || itemY >= this.height - 20)
                                 continue;
+                            mobRowHitboxes.put(mobName, new int[] { contentX, itemY, contentWidth - 220, 22 });
                             BomboConfig.HighlightInfo info = s.highlights.get(mobName);
                             if (info == null)
                                 continue;
@@ -1547,27 +1600,30 @@ public class BomboConfigGUI
                                     btn -> {
                                         colorPickerTarget = mobName + " Color";
                                         colorPickerSetter = color -> {
+                                            pushHighlightHistory();
                                             info.color = color;
                                             BomboConfig.save();
                                         };
                                         this.init();
-                                    }).bounds(contentX + contentWidth - 210, itemY + 3, 60, 16).build());
+                                    }).bounds(contentX + contentWidth - 212, itemY - 1, 62, 16).build());
 
                             this.addRenderableWidget(Button
                                     .builder((Component) Component.literal(info.tracer ? "\u00a7bTR" : "\u00a77OFF"),
                                             btn -> {
+                                                pushHighlightHistory();
                                                 info.tracer = !info.tracer;
                                                 BomboConfig.save();
                                                 this.init();
                                             })
-                                    .bounds(contentX + contentWidth - 145, itemY + 3, 38, 16).build());
+                                    .bounds(contentX + contentWidth - 146, itemY - 1, 40, 16).build());
 
                             String toggleLabel = info.enabled ? "\u00a7aON" : "\u00a7cOFF";
                             this.addRenderableWidget(Button.builder((Component) Component.literal(toggleLabel), btn -> {
+                                pushHighlightHistory();
                                 info.enabled = !info.enabled;
                                 BomboConfig.save();
                                 this.init();
-                            }).bounds(contentX + contentWidth - 102, itemY + 3, 38, 16).build());
+                            }).bounds(contentX + contentWidth - 102, itemY - 1, 36, 16).build());
 
                             this.addRenderableWidget(Button.builder((Component) Component.literal("\u00a7eEDIT"), b -> {
                                 highMobInput = mobName;
@@ -1594,7 +1650,7 @@ public class BomboConfigGUI
                                     advPlaySoundInput = info.playSoundOnSpawn;
                                 }
                                 this.init();
-                            }).bounds(contentX + contentWidth - 60, itemY + 3, 32, 16).build());
+                            }).bounds(contentX + contentWidth - 62, itemY - 1, 32, 16).build());
 
                             this.addRenderableWidget(Button.builder((Component) Component.literal("\u00a7cDEL"), b -> {
                                 pushHighlightHistory();
@@ -1605,7 +1661,7 @@ public class BomboConfigGUI
                                     editingHighMob = null;
                                 }
                                 this.init();
-                            }).bounds(contentX + contentWidth - 25, itemY + 3, 25, 16).build());
+                            }).bounds(contentX + contentWidth - 26, itemY - 1, 26, 16).build());
                         }
                     }
 
@@ -1646,6 +1702,7 @@ public class BomboConfigGUI
                                         btn -> {
                                             colorPickerTarget = "Bestiary Color";
                                             colorPickerSetter = color -> {
+                                                pushHighlightHistory();
                                                 for (String c : groupedBestiary.keySet()) {
                                                     me.bombo.bomboaddons.features.BestiaryManager.setCategoryColor(c,
                                                             color);
@@ -1654,21 +1711,23 @@ public class BomboConfigGUI
                                                         .setCategoryColor("Bestiary", color);
                                             };
                                             this.init();
-                                        }).bounds(contentX + contentWidth - 210, bestiaryHeaderY + 3, 60, 16).build());
+                                        }).bounds(contentX + contentWidth - 212, bestiaryHeaderY + 3, 62, 16).build());
 
                         boolean anyBestiaryTracer = groupedBestiary.keySet().stream()
                                 .anyMatch(me.bombo.bomboaddons.features.BestiaryManager::getCategoryTracer);
                         this.addRenderableWidget(Button.builder(
                                 (Component) Component.literal(anyBestiaryTracer ? "\u00a7bTR" : "\u00a77NO TR"),
                                 btn -> {
+                                    pushHighlightHistory();
                                     for (String c : groupedBestiary.keySet()) {
                                         me.bombo.bomboaddons.features.BestiaryManager.setCategoryTracer(c,
                                                 !anyBestiaryTracer);
                                     }
                                     this.init();
-                                }).bounds(contentX + contentWidth - 145, bestiaryHeaderY + 3, 38, 16).build());
+                                }).bounds(contentX + contentWidth - 146, bestiaryHeaderY + 3, 40, 16).build());
 
                         this.addRenderableWidget(Button.builder((Component) Component.literal("\u00a7aALL"), btn -> {
+                            pushHighlightHistory();
                             boolean anyDisabled = false;
                             for (List<String> list : groupedBestiary.values()) {
                                 for (String m : list) {
@@ -1684,7 +1743,7 @@ public class BomboConfigGUI
                             }
                             BomboConfig.save();
                             this.init();
-                        }).bounds(contentX + contentWidth - 102, bestiaryHeaderY + 2, 38, 18).build());
+                        }).bounds(contentX + contentWidth - 102, bestiaryHeaderY + 3, 36, 16).build());
 
                         this.addRenderableWidget(Button.builder((Component) Component.literal("\u00a7cDEL"), btn -> {
                             pushHighlightHistory();
@@ -1695,7 +1754,7 @@ public class BomboConfigGUI
                             }
                             BomboConfig.save();
                             this.init();
-                        }).bounds(contentX + contentWidth - 25, bestiaryHeaderY + 2, 25, 18).build());
+                        }).bounds(contentX + contentWidth - 62, bestiaryHeaderY + 3, 62, 16).build());
                     }
 
                     if (!isBestiaryParentCollapsed) {
@@ -1707,7 +1766,7 @@ public class BomboConfigGUI
                                     && s.collapsedBestiaryCategories.contains(cat);
 
                             if (catIndex > 0) {
-                                currentListY += 6;
+                                currentListY += 4;
                             }
                             catIndex++;
 
@@ -1727,7 +1786,7 @@ public class BomboConfigGUI
                                                     BomboConfig.save();
                                                     this.init();
                                                 })
-                                        .bounds(contentX + 16, headerY + 2, 22, 18).build());
+                                        .bounds(contentX + 16, headerY + 3, 22, 16).build());
 
                                 String catColor = me.bombo.bomboaddons.features.BestiaryManager.getCategoryColor(cat);
                                 this.addRenderableWidget(Button.builder(
@@ -1735,24 +1794,27 @@ public class BomboConfigGUI
                                         btn -> {
                                             colorPickerTarget = cat + " Color";
                                             colorPickerSetter = color -> {
+                                                pushHighlightHistory();
                                                 me.bombo.bomboaddons.features.BestiaryManager.setCategoryColor(cat,
                                                         color);
                                             };
                                             this.init();
-                                        }).bounds(contentX + contentWidth - 210, headerY + 3, 60, 16).build());
+                                        }).bounds(contentX + contentWidth - 212, headerY + 3, 62, 16).build());
 
                                 boolean catTracer = me.bombo.bomboaddons.features.BestiaryManager
                                         .getCategoryTracer(cat);
                                 this.addRenderableWidget(Button.builder(
                                         (Component) Component.literal(catTracer ? "\u00a7bTR" : "\u00a77NO TR"),
                                         btn -> {
+                                            pushHighlightHistory();
                                             me.bombo.bomboaddons.features.BestiaryManager.setCategoryTracer(cat,
                                                     !catTracer);
                                             this.init();
-                                        }).bounds(contentX + contentWidth - 145, headerY + 3, 38, 16).build());
+                                        }).bounds(contentX + contentWidth - 146, headerY + 3, 40, 16).build());
 
                                 this.addRenderableWidget(
                                         Button.builder((Component) Component.literal("\u00a7aALL"), btn -> {
+                                            pushHighlightHistory();
                                             boolean anyDisabled = mobsInCat.stream().anyMatch(
                                                     m -> s.highlights.containsKey(m) && !s.highlights.get(m).enabled);
                                             for (String m : mobsInCat) {
@@ -1761,7 +1823,7 @@ public class BomboConfigGUI
                                             }
                                             BomboConfig.save();
                                             this.init();
-                                        }).bounds(contentX + contentWidth - 102, headerY + 3, 38, 16).build());
+                                        }).bounds(contentX + contentWidth - 102, headerY + 3, 36, 16).build());
 
                                 this.addRenderableWidget(
                                         Button.builder((Component) Component.literal("\u00a7cDEL"), btn -> {
@@ -1771,7 +1833,7 @@ public class BomboConfigGUI
                                             }
                                             BomboConfig.save();
                                             this.init();
-                                        }).bounds(contentX + contentWidth - 25, headerY + 3, 25, 16).build());
+                                        }).bounds(contentX + contentWidth - 62, headerY + 3, 62, 16).build());
                             }
 
                             if (!isCollapsed) {
@@ -1780,6 +1842,7 @@ public class BomboConfigGUI
                                     currentListY += 22;
                                     if (itemY <= listStartY + 5 || itemY >= this.height - 20)
                                         continue;
+                                    mobRowHitboxes.put(mobName, new int[] { contentX, itemY, contentWidth - 220, 22 });
                                     BomboConfig.HighlightInfo info = s.highlights.get(mobName);
                                     if (info == null)
                                         continue;
@@ -1791,28 +1854,31 @@ public class BomboConfigGUI
                                                     btn -> {
                                                         colorPickerTarget = mobName + " Color";
                                                         colorPickerSetter = color -> {
+                                                            pushHighlightHistory();
                                                             info.color = color;
                                                             BomboConfig.save();
                                                         };
                                                         this.init();
-                                                    }).bounds(contentX + contentWidth - 210, itemY + 3, 60, 16)
+                                                    }).bounds(contentX + contentWidth - 212, itemY - 1, 62, 16)
                                                     .build());
 
                                     this.addRenderableWidget(Button.builder(
                                             (Component) Component.literal(info.tracer ? "\u00a7bTR" : "\u00a77OFF"),
                                             btn -> {
+                                                pushHighlightHistory();
                                                 info.tracer = !info.tracer;
                                                 BomboConfig.save();
                                                 this.init();
-                                            }).bounds(contentX + contentWidth - 145, itemY + 3, 38, 16).build());
+                                            }).bounds(contentX + contentWidth - 146, itemY - 1, 40, 16).build());
 
                                     String toggleLabel = info.enabled ? "\u00a7aON" : "\u00a7cOFF";
                                     this.addRenderableWidget(
                                             Button.builder((Component) Component.literal(toggleLabel), btn -> {
+                                                pushHighlightHistory();
                                                 info.enabled = !info.enabled;
                                                 BomboConfig.save();
                                                 this.init();
-                                            }).bounds(contentX + contentWidth - 102, itemY + 3, 38, 16).build());
+                                            }).bounds(contentX + contentWidth - 102, itemY - 1, 36, 16).build());
 
                                     this.addRenderableWidget(
                                             Button.builder((Component) Component.literal("\u00a7eEDIT"), b -> {
@@ -1842,7 +1908,7 @@ public class BomboConfigGUI
                                                     advPlaySoundInput = info.playSoundOnSpawn;
                                                 }
                                                 this.init();
-                                            }).bounds(contentX + contentWidth - 60, itemY + 3, 32, 16).build());
+                                            }).bounds(contentX + contentWidth - 62, itemY - 1, 32, 16).build());
 
                                     this.addRenderableWidget(
                                             Button.builder((Component) Component.literal("\u00a7cDEL"), b -> {
@@ -1854,7 +1920,7 @@ public class BomboConfigGUI
                                                     editingHighMob = null;
                                                 }
                                                 this.init();
-                                            }).bounds(contentX + contentWidth - 25, itemY + 3, 25, 16).build());
+                                            }).bounds(contentX + contentWidth - 26, itemY - 1, 26, 16).build());
                                 }
                             }
                         }
@@ -2047,6 +2113,9 @@ public class BomboConfigGUI
                     }, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Daily Reward Debug", s.debugDailyReward, v -> {
                         s.debugDailyReward = v;
+                    }, contentX, contentWidth, curY);
+                    curY = this.addBoolOption("Dojo Mastery Debug", s.dojoDebug, v -> {
+                        s.dojoDebug = v;
                     }, contentX, contentWidth, curY);
                     curY = this.addBoolOption("Kuudra Debug Mode", s.kuudraDebug, v -> {
                         s.kuudraDebug = v;
@@ -3783,12 +3852,12 @@ public class BomboConfigGUI
         posBtn.visible = (y >= 56 && y <= this.height - 44);
         this.addRenderableWidget(posBtn);
 
-        Button minusBtn = Button.builder(Component.literal("§7-"), b -> {
+        Button minusBtn = createHoldableButton("§7-", btnBaseX + 50, y, 20, 18, () -> {
             int newOrder = Math.max(1, s.getLoreOrder(key, defaultOrder) - 1);
             s.setLoreOrder(key, newOrder);
             BomboConfig.save();
             this.init();
-        }).bounds(btnBaseX + 50, y, 20, 18).build();
+        });
         minusBtn.visible = (y >= 56 && y <= this.height - 44);
         this.addRenderableWidget(minusBtn);
 
@@ -3797,35 +3866,46 @@ public class BomboConfigGUI
         orderLabelBtn.visible = (y >= 56 && y <= this.height - 44);
         this.addRenderableWidget(orderLabelBtn);
 
-        Button plusBtn = Button.builder(Component.literal("§7+"), b -> {
+        Button plusBtn = createHoldableButton("§7+", btnBaseX + 108, y, 20, 18, () -> {
             int newOrder = Math.min(99, s.getLoreOrder(key, defaultOrder) + 1);
             s.setLoreOrder(key, newOrder);
             BomboConfig.save();
             this.init();
-        }).bounds(btnBaseX + 108, y, 20, 18).build();
+        });
         plusBtn.visible = (y >= 56 && y <= this.height - 44);
         this.addRenderableWidget(plusBtn);
 
         return y + 24;
     }
 
+    private static Runnable activeHoldAction = null;
+    private static long holdStartTime = 0L;
+    private static long lastHoldRepeatTime = 0L;
+
+    private Button createHoldableButton(String label, int x, int y, int w, int h, Runnable action) {
+        return Button.builder(Component.literal(label), b -> {
+            activeHoldAction = action;
+            holdStartTime = System.currentTimeMillis();
+            lastHoldRepeatTime = holdStartTime;
+            action.run();
+            BomboConfig.save();
+            this.init();
+        }).bounds(x, y, w, h).build();
+    }
+
     private int addIntLabelSlider(String label, int current, int min, int max, int step, IntConsumer setter, int x,
             int w, int y) {
         if (!optionMatchesSearch(label))
             return y;
-        Button b1 = Button.builder((Component) Component.literal((String) "\u00a77-"), btn -> {
+        Button b1 = createHoldableButton("§7-", x + w - 45, y, 20, 20, () -> {
             setter.accept(Math.max(min, current - step));
-            BomboConfig.save();
-            this.init();
-        }).bounds(x + w - 45, y, 20, 20).build();
+        });
         b1.visible = (y >= 56 && y <= this.height - 44);
         this.addRenderableWidget(b1);
 
-        Button b2 = Button.builder((Component) Component.literal((String) "\u00a77+"), btn -> {
+        Button b2 = createHoldableButton("§7+", x + w - 20, y, 20, 20, () -> {
             setter.accept(Math.min(max, current + step));
-            BomboConfig.save();
-            this.init();
-        }).bounds(x + w - 20, y, 20, 20).build();
+        });
         b2.visible = (y >= 56 && y <= this.height - 44);
         this.addRenderableWidget(b2);
         return y + 24;
@@ -3833,23 +3913,48 @@ public class BomboConfigGUI
 
     private int addFloatLabelSlider(String label, float current, float min, float max, float increment,
             Consumer<Float> setter, int x, int w, int y) {
+        return addFloatLabelSlider(label, current, min, max, increment, -1.0F, setter, x, w, y);
+    }
+
+    private int addFloatLabelSlider(String label, float current, float min, float max, float increment, float defaultVal,
+            Consumer<Float> setter, int x, int w, int y) {
         if (!optionMatchesSearch(label))
             return y;
-        Button b1 = Button.builder((Component) Component.literal((String) "\u00a77-"), btn -> {
-            setter.accept(Float.valueOf(Math.max(min, current - increment)));
-            BomboConfig.save();
-            this.init();
-        }).bounds(x + w - 45, y, 20, 20).build();
-        b1.visible = (y >= 56 && y <= this.height - 44);
-        this.addRenderableWidget(b1);
+        int btnW = 20;
+        int btnH = 20;
+        if (defaultVal >= 0.0F) {
+            Button b1 = createHoldableButton("§7-", x + w - 68, y, btnW, btnH, () -> {
+                setter.accept(Float.valueOf(Math.max(min, current - increment)));
+            });
+            b1.visible = (y >= 56 && y <= this.height - 44);
+            this.addRenderableWidget(b1);
 
-        Button b2 = Button.builder((Component) Component.literal((String) "\u00a77+"), btn -> {
-            setter.accept(Float.valueOf(Math.min(max, current + increment)));
-            BomboConfig.save();
-            this.init();
-        }).bounds(x + w - 20, y, 20, 20).build();
-        b2.visible = (y >= 56 && y <= this.height - 44);
-        this.addRenderableWidget(b2);
+            Button bReset = Button.builder(Component.literal("§e⟲"), btn -> {
+                setter.accept(Float.valueOf(defaultVal));
+                BomboConfig.save();
+                this.init();
+            }).bounds(x + w - 46, y, btnW, btnH).build();
+            bReset.visible = (y >= 56 && y <= this.height - 44);
+            this.addRenderableWidget(bReset);
+
+            Button b2 = createHoldableButton("§7+", x + w - 24, y, btnW, btnH, () -> {
+                setter.accept(Float.valueOf(Math.min(max, current + increment)));
+            });
+            b2.visible = (y >= 56 && y <= this.height - 44);
+            this.addRenderableWidget(b2);
+        } else {
+            Button b1 = createHoldableButton("§7-", x + w - 45, y, 20, 20, () -> {
+                setter.accept(Float.valueOf(Math.max(min, current - increment)));
+            });
+            b1.visible = (y >= 56 && y <= this.height - 44);
+            this.addRenderableWidget(b1);
+
+            Button b2 = createHoldableButton("§7+", x + w - 20, y, 20, 20, () -> {
+                setter.accept(Float.valueOf(Math.min(max, current + increment)));
+            });
+            b2.visible = (y >= 56 && y <= this.height - 44);
+            this.addRenderableWidget(b2);
+        }
         return y + 24;
     }
 
@@ -4339,6 +4444,7 @@ public class BomboConfigGUI
                         g.text(this.font, "§6§lFrozen Blaze Warning Settings", col1X, y1, -22016, true);
                         y1 += 28;
                         y1 = this.drawOptionLabel(g, "§7Frozen Blaze Warning Enabled", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Only When Holding Rod", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Show AFK Timer On Screen", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Play Warning Sound", col1X + 24, y1, -1, false);
                         y1 = this.drawOptionLabel(g, "§7Show Title On Screen", col1X + 24, y1, -1, false);
@@ -4347,16 +4453,34 @@ public class BomboConfigGUI
                         break;
                     }
 
+                    if (cameraSettingsSubmenu) {
+                        g.text(this.font, "§6§lCamera Settings", col1X, y1, -22016, true);
+                        y1 += 52;
+                        y1 = this.drawOptionLabel(g, "§7Camera Settings Enabled", col1X + 24, y1, -1, false);
+                        g.text(this.font, "§fThird Person Distance: §e" + String.format("%.1f", s.cameraDistance) + " blocks", col1X, y1 + 4, -1);
+                        y1 += 24;
+                        if (!s.hideCheats) {
+                            y1 = this.drawOptionLabel(g, "§7Pass Through Walls", col1X + 24, y1, -1, false);
+                            y1 = this.drawOptionLabel(g, "§7Disable Front Camera", col1X + 24, y1, -1, false);
+                        }
+                        break;
+                    }
+
                     if (dojoUtilitiesSubmenu) {
                         g.text(this.font, "§6§lDojo Utilities Settings", col1X, y1, -22016, true);
                         y1 += 28;
                         y1 = this.drawOptionLabel(g, "§7Dojo Utilities Enabled", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Mastery Wool Tracers", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Tracer To Next Wool", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Show SHOOT On Screen", col1X + 24, y1, -1, false);
+                        y1 = this.drawOptionLabel(g, "§7Play Sound On Shoot", col1X + 24, y1, -1, false);
                         if (!s.hideCheats) {
                             y1 = this.drawOptionLabel(g, "§7Auto Sword Swap by Helmet", col1X + 24, y1, -1, false);
                         }
                         break;
                     }
 
+                    y1 = this.drawOptionLabel(g, "§7Camera Settings §b(Right-Click)", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Clear Water & Lava Vision", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7Sign Calculator", col1X + 24, y1, -1, false);
                     y1 = this.drawOptionLabel(g, "§7SBE Commands", col1X + 24, y1, -1, false);
@@ -4796,9 +4920,11 @@ public class BomboConfigGUI
                         curY += 30; // Button offset
                     }
                     int listTitleY = curY;
+                    g.fill(contentX, listTitleY - 8, contentX + contentWidth, listTitleY - 7, 0x66FFFFFF);
                     g.text(this.font, "\u00a79\u00a7lBestiary & Custom Highlights", contentX, listTitleY, -11184641,
                             true);
-                    int listY = listTitleY + 15 - (int) this.scrollAmount;
+                    g.fill(contentX, listTitleY + 12, contentX + contentWidth, listTitleY + 13, 0x44888888);
+                    int listY = listTitleY + 18 - (int) this.scrollAmount;
 
                     List<String> generalMobs = me.bombo.bomboaddons.features.BestiaryManager
                             .getGeneralHighlights(s.highlights);
@@ -5902,6 +6028,15 @@ public class BomboConfigGUI
                 this.init();
                 return true;
             }
+            if (selectedCategory == 0 && cameraSettingsX != -1 && mx >= (double) cameraSettingsX
+                    && mx <= (double) (cameraSettingsX + cameraSettingsW) && my >= (double) cameraSettingsY
+                    && my <= (double) (cameraSettingsY + cameraSettingsH)) {
+                cameraSettingsSubmenu = true;
+                configSearchTerm = "";
+                this.scrollAmount = 0.0;
+                this.init();
+                return true;
+            }
             if (selectedCategory == 0 && dojoUtilitiesX != -1 && mx >= (double) dojoUtilitiesX
                     && mx <= (double) (dojoUtilitiesX + dojoUtilitiesW) && my >= (double) dojoUtilitiesY
                     && my <= (double) (dojoUtilitiesY + dojoUtilitiesH)) {
@@ -5928,101 +6063,22 @@ public class BomboConfigGUI
                 this.init();
                 return true;
             }
-        }
-        if (selectedCategory == 7 && (event.button() == 0 || event.button() == 1)) {
-            BomboConfig.Settings s = BomboConfig.get();
-            int contentWidth = this.width - 130 - 24;
-            int contentX = 146;
-            int curY = 86;
-            curY += 24; // Highlights Enabled
-            curY += 24; // Tracer Width
-            curY += 26; // Mode switch button
-            if (s.highlightAdvancedMode) {
-                curY += 24; // Nametag / Regex
-                curY += 24; // Item Display
-                curY += 24; // Entity Type
-                curY += 24; // Head Hash
-                curY += 24; // Mob Size
-                curY += 24; // Armor Piece
-                curY += 24; // Player Name
-                curY += 24; // Island
-                curY += 24; // Visibility
-                curY += 24; // Color
-                curY += 24; // Tracer
-                curY += 24; // Show Title
-                curY += 24; // Play Sound
-                curY += 36; // Button offset (curY += 6, then listStartY = curY += 30)
-            } else {
-                curY += 24; // Mob Name
-                curY += 24; // Island
-                curY += 24; // Color
-                curY += 24; // Tracer
-                curY += 36; // Button offset (curY += 6, then listStartY = curY += 30)
-            }
-            int listStartY = curY;
-            List<String> generalMobs = me.bombo.bomboaddons.features.BestiaryManager
-                    .getGeneralHighlights(s.highlights);
-            Map<String, List<String>> groupedBestiary = me.bombo.bomboaddons.features.BestiaryManager
-                    .getGroupedBestiary(s.highlights);
-            int currentListY = listStartY + 15 - (int) this.scrollAmount;
-
-            boolean isGeneralCollapsed = s.collapsedBestiaryCategories != null
-                    && s.collapsedBestiaryCategories.contains("General");
-            currentListY += 24; // General header
-
-            if (!isGeneralCollapsed) {
-                for (String mobName : generalMobs) {
-                    int itemY = currentListY;
-                    currentListY += 22;
-                    if (itemY > listStartY + 5 && itemY < this.height - 20
-                            && mx >= (double) contentX && mx <= (double) (contentX + contentWidth - 215)
-                            && my >= (double) itemY && my < (double) (itemY + 20)) {
-                        BomboConfig.HighlightInfo info = s.highlights.get(mobName);
+            if (selectedCategory == 7) {
+                BomboConfig.Settings s = BomboConfig.get();
+                for (Map.Entry<String, int[]> entry : mobRowHitboxes.entrySet()) {
+                    int[] box = entry.getValue();
+                    int rx = box[0];
+                    int ry = box[1];
+                    int rw = box[2];
+                    int rh = box[3];
+                    if (mx >= (double) rx && mx <= (double) (rx + rw) && my >= (double) ry && my < (double) (ry + rh)) {
+                        BomboConfig.HighlightInfo info = s.highlights.get(entry.getKey());
                         if (info != null) {
                             pushHighlightHistory();
                             info.enabled = !info.enabled;
                             BomboConfig.save();
                             this.init();
                             return true;
-                        }
-                    }
-                }
-            }
-
-            currentListY += 8; // Spacer
-            boolean isBestiaryParentCollapsed = s.collapsedBestiaryCategories != null
-                    && s.collapsedBestiaryCategories.contains("Bestiary");
-            currentListY += 24; // Bestiary parent header
-
-            if (!isBestiaryParentCollapsed) {
-                int catIndex = 0;
-                for (Map.Entry<String, List<String>> entry : groupedBestiary.entrySet()) {
-                    String cat = entry.getKey();
-                    List<String> mobsInCat = entry.getValue();
-                    boolean isCollapsed = s.collapsedBestiaryCategories != null
-                            && s.collapsedBestiaryCategories.contains(cat);
-                    if (catIndex > 0) {
-                        currentListY += 6;
-                    }
-                    catIndex++;
-                    currentListY += 24; // Category header
-
-                    if (!isCollapsed) {
-                        for (String mobName : mobsInCat) {
-                            int itemY = currentListY;
-                            currentListY += 22;
-                            if (itemY > listStartY + 5 && itemY < this.height - 20
-                                    && mx >= (double) contentX && mx <= (double) (contentX + contentWidth - 215)
-                                    && my >= (double) itemY && my < (double) (itemY + 20)) {
-                                BomboConfig.HighlightInfo info = s.highlights.get(mobName);
-                                if (info != null) {
-                                    pushHighlightHistory();
-                                    info.enabled = !info.enabled;
-                                    BomboConfig.save();
-                                    this.init();
-                                    return true;
-                                }
-                            }
                         }
                     }
                 }
@@ -6075,12 +6131,34 @@ public class BomboConfigGUI
         isDraggingSv = false;
         isDraggingHue = false;
         isDraggingAlpha = false;
+        activeHoldAction = null;
+        holdStartTime = 0L;
         BomboConfig.save();
         return super.mouseReleased(event);
     }
 
     public void tick() {
         super.tick();
+        if (activeHoldAction != null) {
+            Minecraft mc = Minecraft.getInstance();
+            long window = mc.getWindow().handle();
+            // Check if left mouse button is still pressed
+            if (org.lwjgl.glfw.GLFW.glfwGetMouseButton(window, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_1) == org.lwjgl.glfw.GLFW.GLFW_PRESS) {
+                long now = System.currentTimeMillis();
+                long elapsed = now - holdStartTime;
+                if (elapsed >= 250L) { // Initial delay 250ms
+                    long repeatDelay = elapsed >= 1200L ? 40L : 75L; // Accelerate
+                    if (now - lastHoldRepeatTime >= repeatDelay) {
+                        lastHoldRepeatTime = now;
+                        activeHoldAction.run();
+                        this.init();
+                    }
+                }
+            } else {
+                activeHoldAction = null;
+                holdStartTime = 0L;
+            }
+        }
         if (listeningForKeyTarget.equals("profileCombo") && !recordedComboKeys.isEmpty()) {
             Minecraft mc = Minecraft.getInstance();
             long window = mc.getWindow().handle();

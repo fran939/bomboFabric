@@ -89,7 +89,6 @@ public class AutoFishing {
             case 1:
                if (now >= nextActionTime) {
                   client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
-                  client.player.swing(InteractionHand.MAIN_HAND);
                   if (BomboConfig.get().autoFishingDebug) {
                      client.player.sendSystemMessage(Component.literal("§a[AutoFishing] Reeled in!"));
                   }
@@ -141,9 +140,8 @@ public class AutoFishing {
                      int clickType = BomboConfig.get().autoFishingClickType;
                      if (clickType == 0) {
                         client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
-                        client.player.swing(InteractionHand.MAIN_HAND);
                      } else {
-                        client.player.swing(InteractionHand.MAIN_HAND);
+                        client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
                      }
 
                      int min = BomboConfig.get().autoFishingClickDelayMin;

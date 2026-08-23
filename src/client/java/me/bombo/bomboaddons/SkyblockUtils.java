@@ -75,6 +75,26 @@ public class SkyblockUtils {
                result = result.replace("$z", String.valueOf(z));
             }
 
+            if (result.toLowerCase().contains("!wiki hand")) {
+               net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
+               String sbId = "";
+               if (held != null && !held.isEmpty()) {
+                  sbId = getSkyblockId(held);
+                  if (sbId == null || sbId.isEmpty()) {
+                     sbId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).getPath().toUpperCase();
+                  }
+               }
+               result = result.replaceAll("(?i)!wiki\\s+hand\\b", "!wiki " + (sbId != null ? sbId : ""));
+            }
+
+            if (result.contains("$show") || result.contains("[item]") || result.contains("$lore")) {
+               net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
+               if (held != null && !held.isEmpty()) {
+                  String serialized = serializeItemForChat(held);
+                  result = result.replace("$show", serialized).replace("[item]", serialized).replace("$lore", serialized);
+               }
+            }
+
             if (result.contains("$handid")) {
                net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
                String sbId = "";
@@ -99,7 +119,51 @@ public class SkyblockUtils {
             return result;
          }
       } else {
+         if (text != null && text.toLowerCase().contains("!wiki hand")) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+               net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
+               String sbId = "";
+               if (held != null && !held.isEmpty()) {
+                  sbId = getSkyblockId(held);
+                  if (sbId == null || sbId.isEmpty()) {
+                     sbId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).getPath().toUpperCase();
+                  }
+               }
+               return text.replaceAll("(?i)!wiki\\s+hand\\b", "!wiki " + (sbId != null ? sbId : ""));
+            }
+         }
+         if (text != null && (text.contains("$show") || text.contains("[item]") || text.contains("$lore"))) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+               net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
+               if (held != null && !held.isEmpty()) {
+                  String serialized = serializeItemForChat(held);
+                  return text.replace("$show", serialized).replace("[item]", serialized).replace("$lore", serialized);
+               }
+            }
+         }
          return text;
+      }
+   }
+
+   public static String serializeItemForChat(net.minecraft.world.item.ItemStack itemStack) {
+      if (itemStack == null || itemStack.isEmpty()) return "";
+      try {
+         String displayName = itemStack.getHoverName().getString();
+         List<String> loreLines = new ArrayList<>();
+         loreLines.add(displayName);
+         net.minecraft.world.item.component.ItemLore itemLore = (net.minecraft.world.item.component.ItemLore)itemStack.get(net.minecraft.core.component.DataComponents.LORE);
+         if (itemLore != null) {
+            for (Component line : itemLore.lines()) {
+               loreLines.add(line.getString());
+            }
+         }
+         String combined = String.join("\n", loreLines);
+         String encoded = java.util.Base64.getEncoder().encodeToString(combined.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+         return "[SHOW:" + displayName + ":" + encoded + "]";
+      } catch (Throwable t) {
+         return itemStack.getHoverName().getString();
       }
    }
 

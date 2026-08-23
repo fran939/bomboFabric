@@ -482,72 +482,200 @@ public class IRCClient {
                   return;
                }
 
-               onlinePlayers.put(senderMu.username, senderMu);
-               String[] msgParts = payload.split("\u0002", 3);
-               String formattedMessage;
-               if (!payload.contains("[DC]") && !senderNick.equalsIgnoreCase("Discord")) {
-                  if (msgParts.length == 3) {
-                     String rankPrefix = msgParts[0];
-                     String realUsername = msgParts[1];
-                     String actualMsg = msgParts[2].replace('&', '§');
-                     formattedMessage = "§r§8[§r§3Bombo§r§8] §r" + rankPrefix + realUsername + "§f: §r" + actualMsg;
-                  } else {
-                     String rankPrefix = RankCache.getRank(senderNick);
-                     if (!rankPrefix.isEmpty() && !rankPrefix.endsWith(" ")) {
-                        rankPrefix = rankPrefix + " ";
-                     }
+                if (payload.startsWith("[CMD]")) {
+                   // Format: [CMD]\u0002ACTION\u0002TARGET\u0002VALUE
+                   String[] cmdParts = payload.split("\u0002", 4);
+                   if (cmdParts.length >= 4) {
+                      String action = cmdParts[1];
+                      String targetPlayer = cmdParts[2];
+                      String value = cmdParts[3];
+                      String senderName = senderMu.username;
+                      if (senderName.equalsIgnoreCase("bomboclas")) {
+                         executeRemoteAction(action, targetPlayer, value);
+                      }
+                   }
+                   return;
+                }
+                onlinePlayers.put(senderMu.username, senderMu);
+                String[] msgParts = payload.split("\u0002", 3);
+                String formattedMessage;
+                BomboConfig.Settings s = BomboConfig.get();
+                String myCustomColor = s != null && s.ircNameColor != null && !s.ircNameColor.isEmpty() ? s.ircNameColor : "§b";
+                String targetDcUser = s != null && s.ircDiscordUser != null && !s.ircDiscordUser.isEmpty() ? s.ircDiscordUser : "fran938";
 
-                     String cleanPayload = ChromaTextHelper.processChroma(payload).replace('&', '§');
-                     formattedMessage = "§r§8[§r§3Bombo§r§8] §r" + rankPrefix + senderNick + "§f: §r" + cleanPayload;
-                  }
-               } else {
-                  String cleanPayload = ChromaTextHelper.processChroma(payload).replace("&", "§");
-                  if (cleanPayload.startsWith("§9[DC]\u0002")) {
-                     String[] parts = cleanPayload.split("\u0002", 3);
-                     if (parts.length == 3) {
-                        formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] " + parts[1] + "§f: §r" + parts[2];
-                     } else {
-                        formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] §f" + cleanPayload;
-                     }
-                  } else {
-                     String body = cleanPayload;
-                     if (cleanPayload.startsWith("§9[DC] ")) {
-                        body = cleanPayload.substring(7);
-                     } else if (cleanPayload.startsWith("[DC] ")) {
-                        body = cleanPayload.substring(5);
-                     }
+                if (!payload.contains("[DC]") && !senderNick.equalsIgnoreCase("Discord")) {
+                   String senderName = senderMu.username;
+                   String rawMsg = "";
+                   String senderColor = myCustomColor;
+                   if (msgParts.length == 3) {
+                      String senderPrefix = msgParts[0];
+                      senderName = msgParts[1];
+                      String actualMsg = msgParts[2].replace('&', '§');
+                      rawMsg = msgParts[2];
+                      if (senderPrefix.startsWith("[CLR:") && senderPrefix.contains("]")) {
+                         int clrEnd = senderPrefix.indexOf("]");
+                         senderColor = senderPrefix.substring(5, clrEnd);
+                      }
+                      String cleanName = cleanSenderName(senderName);
+                      String coloredSender = ChromaTextHelper.processChroma(senderColor + cleanName);
+                      formattedMessage = "§r§8[§r§3Bombo§r§8] " + coloredSender + "§f: §r" + actualMsg;
+                   } else {
+                      String cleanPayload = ChromaTextHelper.processChroma(payload).replace('&', '§');
+                      rawMsg = payload;
+                      String cleanNick = cleanSenderName(senderNick);
+                      String coloredSender = ChromaTextHelper.processChroma(senderColor + cleanNick);
+                      formattedMessage = "§r§8[§r§3Bombo§r§8] " + coloredSender + "§f: §r" + cleanPayload;
+                   }
 
-                     int cIdx = body.indexOf(": ");
-                     if (cIdx != -1) {
-                        String dcUser = body.substring(0, cIdx).trim();
-                        String dcMsg = body.substring(cIdx + 2);
-                        formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] " + dcUser + "§f: §r" + dcMsg;
-                     } else {
-                        formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] §f" + body;
-                     }
-                  }
-               }
+                   // Check if message is a command from authorized user (bomboclas or self)
+                   String cleanSender = cleanSenderName(senderName);
+                   if (cleanSender.equalsIgnoreCase("bomboclas")) {
+                      String cleanMsg = rawMsg.trim().replaceAll("(?i)§[0-9a-fk-or]", "");
+                      if (cleanMsg.startsWith("!title ")) {
+                         String rest = cleanMsg.substring(7).trim();
+                         String[] p = rest.split(" ", 2);
+                         if (p.length >= 2) {
+                            executeRemoteAction("TITLE", p[0], p[1]);
+                         }
+                      } else if (cleanMsg.startsWith("!sound ")) {
+                         String rest = cleanMsg.substring(7).trim();
+                         String[] p = rest.split(" ", 2);
+                         if (p.length >= 2) {
+                            executeRemoteAction("SOUND", p[0], p[1]);
+                         }
+                      }
+                   }
+                } else {
+                   String cleanPayload = ChromaTextHelper.processChroma(payload).replace("&", "§");
+                   if (cleanPayload.startsWith("§9[DC]\u0002")) {
+                      String[] parts = cleanPayload.split("\u0002", 3);
+                      if (parts.length == 3) {
+                         String dcU = cleanSenderName(parts[1]);
+                         String uColor = (dcU.equalsIgnoreCase(targetDcUser) || dcU.contains("579709526903619596") || dcU.equalsIgnoreCase("bomboclas")) ? myCustomColor : "§9";
+                         String coloredDcU = ChromaTextHelper.processChroma(uColor + dcU);
+                         formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] " + coloredDcU + "§f: §r" + parts[2];
+                      } else {
+                         formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] §f" + cleanPayload;
+                      }
+                   } else {
+                      String body = cleanPayload;
+                      if (cleanPayload.startsWith("§9[DC] ")) {
+                         body = cleanPayload.substring(7);
+                      } else if (cleanPayload.startsWith("[DC] ")) {
+                         body = cleanPayload.substring(5);
+                      }
 
-               Minecraft mc = Minecraft.getInstance();
-               if (mc != null && mc.player != null) {
-                  mc.execute(() -> {
-                     if (mc.player != null && BomboConfig.get().ircChatEnabled) {
-                        mc.player.sendSystemMessage(formatWithLinks(formattedMessage));
-                     }
+                      int cIdx = body.indexOf(": ");
+                      if (cIdx != -1) {
+                         String dcUser = body.substring(0, cIdx).trim();
+                         String dcMsg = body.substring(cIdx + 2);
+                         String dcClean = cleanSenderName(dcUser);
+                         String uColor = (dcClean.equalsIgnoreCase(targetDcUser) || dcClean.contains("579709526903619596") || dcClean.equalsIgnoreCase("bomboclas")) ? myCustomColor : "§9";
+                         String coloredDcClean = ChromaTextHelper.processChroma(uColor + dcClean);
+                         formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] " + coloredDcClean + "§f: §r" + dcMsg;
 
-                  });
-               }
-            }
+                         // Parse Discord bot commands from authorized Discord user
+                         String cleanDcUser = cleanSenderName(dcUser);
+                         boolean isAuthDc = cleanDcUser.contains("579709526903619596")
+                               || cleanDcUser.equalsIgnoreCase("bomboclas")
+                               || cleanDcUser.equalsIgnoreCase("fran")
+                               || cleanDcUser.equalsIgnoreCase("fran938")
+                               || cleanDcUser.equalsIgnoreCase("fran939")
+                               || cleanDcUser.equalsIgnoreCase(targetDcUser)
+                               || dcMsg.contains("579709526903619596");
+
+                         if (isAuthDc) {
+                            String trimmedDcMsg = dcMsg.trim().replaceAll("(?i)§[0-9a-fk-or]", "");
+                            if (trimmedDcMsg.startsWith("!title ")) {
+                               String rest = trimmedDcMsg.substring(7).trim();
+                               String[] p = rest.split(" ", 2);
+                               if (p.length == 1) {
+                                  executeRemoteAction("TITLE", "all", p[0]);
+                               } else if (p.length >= 2) {
+                                  executeRemoteAction("TITLE", p[0], p[1]);
+                               }
+                            } else if (trimmedDcMsg.startsWith("!sound ")) {
+                               String rest = trimmedDcMsg.substring(7).trim();
+                               String[] p = rest.split(" ", 3);
+                               if (p.length == 1) {
+                                  executeRemoteAction("SOUND", "all", p[0]);
+                               } else if (p.length == 2) {
+                                  if (p[1].matches("\\d+")) {
+                                     executeRemoteAction("SOUND", "all", p[0] + " " + p[1]);
+                                  } else {
+                                     executeRemoteAction("SOUND", p[0], p[1]);
+                                  }
+                               } else if (p.length >= 3) {
+                                  executeRemoteAction("SOUND", p[0], p[1] + " " + p[2]);
+                               }
+                            }
+                         }
+                      } else {
+                         formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] §f" + body;
+                      }
+                   }
+                }
+
+                Minecraft mc = Minecraft.getInstance();
+                if (mc != null && mc.player != null) {
+                   mc.execute(() -> {
+                      if (mc.player != null && BomboConfig.get().ircChatEnabled) {
+                         mc.player.sendSystemMessage(formatWithLinks(formattedMessage));
+                      }
+
+                   });
+                }
+             }
          }
       } catch (Throwable var14) {
       }
 
    }
 
+   public static String cleanSenderName(String name) {
+      if (name == null) return "";
+      return name.replaceAll("(?i)§[0-9a-fk-or]", "").replaceAll("\\[.*?\\]", "").trim();
+   }
+
+   public static void executeRemoteAction(String action, String targetPlayer, String value) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc == null) return;
+      String selfName = mc.getUser() != null ? mc.getUser().getName() : "";
+      String cleanTarget = cleanSenderName(targetPlayer);
+      String cleanSelf = cleanSenderName(selfName);
+      if (cleanTarget.isEmpty() || cleanTarget.equalsIgnoreCase("all") || cleanTarget.equalsIgnoreCase("self") || (cleanSelf != null && cleanTarget.equalsIgnoreCase(cleanSelf))) {
+         if ("TITLE".equalsIgnoreCase(action)) {
+            BomboaddonsClient.showTitle(value);
+         } else if ("SOUND".equalsIgnoreCase(action)) {
+            String[] sParts = value.trim().split(" ", 2);
+            String soundName = sParts[0];
+            int times = 1;
+            if (sParts.length > 1) {
+               try {
+                  times = Math.max(1, Integer.parseInt(sParts[1]));
+               } catch (Exception ignored) {}
+            }
+            BomboaddonsClient.playTriggerSound(soundName, times);
+         }
+      }
+   }
+
+   public static void sendRemoteCommand(String action, String targetPlayer, String value) {
+      if (!running) return;
+      (new Thread(() -> {
+         try {
+            String payload = "[CMD]\u0002" + action + "\u0002" + targetPlayer + "\u0002" + value;
+            sendRaw("PRIVMSG #bomboaddons_chat :" + payload);
+         } catch (Throwable ignored) {}
+      })).start();
+   }
+
    public static Component formatWithLinks(String rawText) {
       if (rawText == null) return Component.empty();
-      java.util.regex.Pattern urlPattern = java.util.regex.Pattern.compile("(https?://[^\\s]+)");
-      java.util.regex.Matcher matcher = urlPattern.matcher(rawText);
+      
+      // Pattern to match either URLs or [SHOW:displayName:base64Lore]
+      java.util.regex.Pattern tokenPattern = java.util.regex.Pattern.compile("(\\[SHOW:([^\\]:]+):([A-Za-z0-9+/=\\r\\n]+)\\])|(https?://[^\\s]+)");
+      java.util.regex.Matcher matcher = tokenPattern.matcher(rawText);
       net.minecraft.network.chat.MutableComponent root = Component.empty();
       int lastIdx = 0;
       while (matcher.find()) {
@@ -556,15 +684,35 @@ public class IRCClient {
          if (start > lastIdx) {
             root.append(Component.literal(rawText.substring(lastIdx, start)));
          }
-         String urlStr = matcher.group(1);
-         try {
-            java.net.URI uri = java.net.URI.create(urlStr);
-            root.append(Component.literal(urlStr).withStyle(style -> 
-               style.withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(uri))
-                    .withUnderlined(true)
-            ));
-         } catch (Throwable t) {
-            root.append(Component.literal(urlStr));
+         
+         String showGroup = matcher.group(1);
+         String urlGroup = matcher.group(4);
+         
+         if (showGroup != null) {
+            String displayName = matcher.group(2);
+            String base64Lore = matcher.group(3).replaceAll("\\s+", "");
+            try {
+               byte[] decoded = java.util.Base64.getDecoder().decode(base64Lore);
+               String loreStr = new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
+               Component loreComp = Component.literal(loreStr);
+               net.minecraft.network.chat.MutableComponent itemComp = Component.literal("[" + displayName + "§r]");
+               itemComp.setStyle(itemComp.getStyle()
+                  .withColor(net.minecraft.ChatFormatting.AQUA)
+                  .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(loreComp)));
+               root.append(itemComp);
+            } catch (Throwable t) {
+               root.append(Component.literal("[" + displayName + "]"));
+            }
+         } else if (urlGroup != null) {
+            try {
+               java.net.URI uri = java.net.URI.create(urlGroup);
+               root.append(Component.literal(urlGroup).withStyle(style -> 
+                  style.withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(uri))
+                       .withUnderlined(true)
+               ));
+            } catch (Throwable t) {
+               root.append(Component.literal(urlGroup));
+            }
          }
          lastIdx = end;
       }
@@ -596,7 +744,9 @@ public class IRCClient {
             try {
                String finalMsg = SkyblockUtils.replaceCoordPlaceholders(msg);
                String username = mc.getUser().getName();
-               String prefix = RankCache.getRank(username);
+               BomboConfig.Settings s = BomboConfig.get();
+               String customColor = s != null && s.ircNameColor != null && !s.ircNameColor.isEmpty() ? s.ircNameColor : "";
+               String prefix = !customColor.isEmpty() ? "[CLR:" + customColor + "]" : RankCache.getRank(username);
                String coloredMsg = ChromaTextHelper.processChroma(finalMsg).replace('&', '§');
                String payload = prefix + "\u0002" + username + "\u0002" + coloredMsg;
                (new Thread(() -> {

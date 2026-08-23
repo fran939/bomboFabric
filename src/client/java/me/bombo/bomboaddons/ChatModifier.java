@@ -97,8 +97,17 @@ public class ChatModifier {
          if (!rule.enabled || rule.hideMessage || rule.pattern == null || rule.pattern.isEmpty()) continue;
          try {
             String replacement = rule.replacement != null ? rule.replacement.replace('&', '§') : "";
+            
             if (rule.isRegex) {
                current = current.replaceAll("(?i)" + rule.pattern, replacement);
+            } else if (rule.pattern.contains("${")) {
+               // Support wildcard/template placeholders like ${1}, ${x}, ${any}
+               // Example: "x: ${1}, y: ${2}, z: ${3}" -> converts to regex and replaces with capture groups
+               String regexPattern = convertTemplateToRegex(rule.pattern);
+               String regexReplacement = convertTemplateReplacement(replacement);
+               current = Pattern.compile(regexPattern, Pattern.CASE_INSENSITIVE)
+                               .matcher(current)
+                               .replaceAll(regexReplacement);
             } else {
                current = Pattern.compile(Pattern.quote(rule.pattern), Pattern.CASE_INSENSITIVE)
                                .matcher(current)
@@ -107,5 +116,35 @@ public class ChatModifier {
          } catch (Throwable ignored) {}
       }
       return current;
+   }
+
+   private static String convertTemplateToRegex(String template) {
+      StringBuilder sb = new StringBuilder();
+      int i = 0;
+      while (i < template.length()) {
+         int start = template.indexOf("${", i);
+         if (start == -1) {
+            sb.append(Pattern.quote(template.substring(i)));
+            break;
+         }
+         if (start > i) {
+            sb.append(Pattern.quote(template.substring(i, start)));
+         }
+         int end = template.indexOf('}', start);
+         if (end != -1) {
+            // Capture anything lazily until next literal text
+            sb.append("(.*?)");
+            i = end + 1;
+         } else {
+            sb.append(Pattern.quote(template.substring(start)));
+            break;
+         }
+      }
+      return sb.toString();
+   }
+
+   private static String convertTemplateReplacement(String replacement) {
+      // Convert ${1} to $1, ${2} to $2, etc.
+      return replacement.replaceAll("\\$\\{([0-9]+)\\}", "\\$$1");
    }
 }

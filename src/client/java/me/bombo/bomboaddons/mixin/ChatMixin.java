@@ -118,22 +118,36 @@ public abstract class ChatMixin implements IChatComponent {
             }
 
             if (BomboConfig.get().clickableChatCommands) {
-               Component clickable = makeChatCommandsClickable(message);
-               if (clickable != message) {
-                  ci.cancel();
-                  isFormattingMessage.set(true);
-
-                  try {
-                     this.addMessage(clickable, signature, source, tag);
-                  } finally {
-                     isFormattingMessage.set(false);
+               // Only format if message does not already contain hover events (e.g. [SHOW:...] item tooltips)
+               boolean hasHover = false;
+               if (message.getStyle() != null && message.getStyle().getHoverEvent() != null) {
+                  hasHover = true;
+               } else {
+                  for (Component sibling : message.getSiblings()) {
+                     if (sibling.getStyle() != null && sibling.getStyle().getHoverEvent() != null) {
+                        hasHover = true;
+                        break;
+                     }
                   }
+               }
+               if (!hasHover) {
+                  Component clickable = makeChatCommandsClickable(message);
+                  if (clickable != message) {
+                     ci.cancel();
+                     isFormattingMessage.set(true);
 
-                  return;
+                     try {
+                        this.addMessage(clickable, signature, source, tag);
+                     } finally {
+                        isFormattingMessage.set(false);
+                     }
+
+                     return;
+                  }
                }
             }
 
-            if (raw.contains("&") && !raw.contains("[BomboAddons]")) {
+            if (raw.contains("&") && !raw.contains("[BomboAddons]") && !raw.contains("[SHOW:")) {
                String legacyFormatted = formatColorsSafe(raw);
                if (!legacyFormatted.equals(raw)) {
                   ci.cancel();
@@ -154,6 +168,7 @@ public abstract class ChatMixin implements IChatComponent {
             AutoFishing.onChatMessage(raw);
             KuudraPerkClicker.onChatMessage(raw);
             Pearls.onChatMessage(raw);
+            me.bombo.bomboaddons.DiscordBridge.onChatMessage(raw);
             if (BomboConfig.get().debugDailyReward && this.minecraft != null && this.minecraft.player != null && (raw.contains("Reward") || raw.contains("rewards.hypixel.net") || raw.contains("Claim"))) {
                this.minecraft.player.sendSystemMessage(Component.literal("§8[§bDailyRewardDebug§8] §7Chat message: " + raw));
             }
