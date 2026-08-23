@@ -317,12 +317,12 @@ public class BomboConfig {
 
    public static class Settings {
       public List<CustomTimerDef> customTimers = new ArrayList();
-      public boolean discordBridgeEnabled = true;
-      public String discordWebhookUrl = "https://discord.com/api/webhooks/1529963890102894662/OaAomxObuWepopSDpWtVNmf_qhhmdpgbtjVg3UO3wfSAZ_40uqmfgII-wHTVSCllgHtj";
-      public boolean discordBridgeGuild = true;
-      public boolean discordBridgeParty = true;
-      public boolean discordBridgeDm = true;
-      public boolean discordBridgeBcChat = true;
+      public boolean discordBridgeEnabled = false;
+      public String discordWebhookUrl = "";
+      public boolean discordBridgeGuild = false;
+      public boolean discordBridgeParty = false;
+      public boolean discordBridgeDm = false;
+      public boolean discordBridgeBcChat = false;
       public boolean discordBridgeAllChat = false;
       public boolean dailyRewardHelper = true;
       public boolean frozenBlazeWarning = false;
