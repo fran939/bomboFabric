@@ -1401,14 +1401,21 @@ public class BomboConfigGUI
                                                     : advHeadHashInput.trim()));
                             if (!key.isEmpty()) {
                                 pushHighlightHistory();
+                                boolean prevIsBestiary = false;
                                 if (editingHighMob != null) {
-                                    s.highlights.remove(editingHighMob);
+                                    BomboConfig.HighlightInfo old = s.highlights.remove(editingHighMob);
+                                    if (old != null) {
+                                        prevIsBestiary = old.isBestiary;
+                                    }
+                                }
+                                if (!prevIsBestiary && me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(key, highIslandInput.trim()) != null) {
+                                    prevIsBestiary = true;
                                 }
                                 boolean showInvis = "ALL".equals(advVisibilityInput)
                                         || "ONLY_INVISIBLE".equals(advVisibilityInput);
                                 BomboConfig.HighlightInfo hi = new BomboConfig.HighlightInfo(
                                         highColorInput.toUpperCase(Locale.ROOT), showInvis, true, highTracerInput,
-                                        highIslandInput.trim());
+                                        highIslandInput.trim(), prevIsBestiary);
                                 hi.isAdvanced = true;
                                 hi.targetType = !advItemDisplayInput.trim().isEmpty() ? "ITEM_DISPLAY" : "ADVANCED";
                                 hi.itemDisplayId = advItemDisplayInput.trim();
@@ -1471,12 +1478,19 @@ public class BomboConfigGUI
                             String cleanMob = highMobInput.trim().replace("\"", "").trim();
                             if (!cleanMob.isEmpty()) {
                                 pushHighlightHistory();
+                                boolean prevIsBestiary = false;
                                 if (editingHighMob != null) {
-                                    s.highlights.remove(editingHighMob);
+                                    BomboConfig.HighlightInfo old = s.highlights.remove(editingHighMob);
+                                    if (old != null) {
+                                        prevIsBestiary = old.isBestiary;
+                                    }
+                                }
+                                if (!prevIsBestiary && me.bombo.bomboaddons.features.BestiaryDataFetcher.getRule(cleanMob, highIslandInput.trim()) != null) {
+                                    prevIsBestiary = true;
                                 }
                                 s.highlights.put(cleanMob.toLowerCase(Locale.ROOT),
                                         new BomboConfig.HighlightInfo(highColorInput.toUpperCase(Locale.ROOT), true,
-                                                true, highTracerInput, highIslandInput.trim()));
+                                                true, highTracerInput, highIslandInput.trim(), prevIsBestiary));
                                 BomboConfig.save();
                                 highMobInput = "";
                                 highIslandInput = "";

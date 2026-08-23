@@ -332,9 +332,32 @@ public class BestiaryDataFetcher {
    }
 
    public static List<BestiaryMobRule> getRulesForIsland(String island) {
-      if (island == null) return Collections.emptyList();
+      if (island == null || island.trim().isEmpty()) return Collections.emptyList();
       if (!initialized) init();
-      List<BestiaryMobRule> list = islandRules.get(cleanKey(island));
-      return list != null ? list : Collections.emptyList();
+      String key = cleanKey(island);
+      List<BestiaryMobRule> list = islandRules.get(key);
+      if (list != null && !list.isEmpty()) return list;
+
+      // Fuzzy check if key matches or is contained in an island name
+      for (Map.Entry<String, List<BestiaryMobRule>> entry : islandRules.entrySet()) {
+         String eKey = entry.getKey();
+         if (eKey.equalsIgnoreCase(key) || eKey.contains(key) || key.contains(eKey)) {
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+               return entry.getValue();
+            }
+         }
+      }
+
+      // Check mob rule island properties directly
+      List<BestiaryMobRule> matched = new ArrayList<>();
+      for (BestiaryMobRule r : allRulesByNameAndIsland.values()) {
+         if (r.island != null && !r.island.isEmpty()) {
+            String rIsl = cleanKey(r.island);
+            if (rIsl.equalsIgnoreCase(key) || rIsl.contains(key) || key.contains(rIsl)) {
+               if (!matched.contains(r)) matched.add(r);
+            }
+         }
+      }
+      return matched;
    }
 }

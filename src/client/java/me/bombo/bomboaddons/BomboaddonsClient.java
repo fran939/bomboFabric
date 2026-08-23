@@ -823,6 +823,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                          int rulesCount = me.bombo.bomboaddons.features.BestiaryDataFetcher.getRulesCount();
                          int skullCount = me.bombo.bomboaddons.features.BestiaryDataFetcher.getHeadLookupCount();
                          src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §aSuccessfully updated Bestiary Database from API! Loaded §e" + rulesCount + " §amob rules, §e" + skullCount + " §ahead texture mappings."));
+                         showBestiaryDebug(src, null);
                       });
                       return 1;
                    }))).then(((LiteralArgumentBuilder)ClientCommands.literal("chat").executes((context) -> {

@@ -218,6 +218,9 @@ public class BestiaryManager {
       if (lower.contains("galatea")) {
          return "Galatea";
       }
+      if (lower.contains("lotus") || lower.contains("atoll")) {
+         return "Lotus Atoll";
+      }
       if (lower.contains("fishing") || lower.contains("mythological") || lower.contains("jerry") || lower.contains("spooky") || lower.contains("event")) {
          return ""; // Everywhere / Global
       }
@@ -245,6 +248,7 @@ public class BestiaryManager {
       if (lower.contains("dungeon") || lower.contains("catacomb")) return "Dungeons Bestiary";
       if (lower.contains("torrhus") || lower.contains("canyon")) return "Torrhus Canyon Bestiary";
       if (lower.contains("galatea")) return "Galatea Bestiary";
+      if (lower.contains("lotus") || lower.contains("atoll")) return "Lotus Atoll Bestiary";
       if (lower.contains("fishing")) return "Fishing Bestiary";
       if (lower.contains("mythological")) return "Mythological Creatures Bestiary";
       if (lower.contains("jerry")) return "Jerry Bestiary";
@@ -286,6 +290,9 @@ public class BestiaryManager {
          "Glacite Mineshafts Bestiary",
          "The Rift Bestiary",
          "Dungeons Bestiary",
+         "Torrhus Canyon Bestiary",
+         "Galatea Bestiary",
+         "Lotus Atoll Bestiary",
          "Fishing Bestiary",
          "Mythological Creatures Bestiary",
          "Jerry Bestiary",
