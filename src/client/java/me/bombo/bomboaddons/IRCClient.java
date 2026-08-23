@@ -51,7 +51,7 @@ public class IRCClient {
             String name = mc.getUser().getName();
             String clean = name.replaceAll("[^a-zA-Z0-9_]", "");
             if (!clean.isEmpty()) {
-               String modVer = "26.1.2.22";
+               String modVer = "26.1.2.23";
                String area = BomboaddonsClient.currentArea != null && !BomboaddonsClient.currentArea.isEmpty() ? BomboaddonsClient.currentArea : "None";
                onlinePlayers.put(clean, new ModUser(clean, modVer, area));
             }
@@ -189,7 +189,7 @@ public class IRCClient {
                   cleanUsername = "bombo_" + random.nextInt(10000);
                }
 
-               String modVersion = "26.1.2.22".replace('.', '_');
+               String modVersion = "26.1.2.23".replace('.', '_');
                String currentArea = BomboaddonsClient.currentArea != null && !BomboaddonsClient.currentArea.isEmpty() ? BomboaddonsClient.currentArea.replaceAll("[^a-zA-Z0-9]", "_") : "None";
                currentNick = "b_" + cleanUsername + "_v" + modVersion + "__" + currentArea;
 
@@ -731,7 +731,7 @@ public class IRCClient {
       if (running && BomboConfig.get().ircChatEnabled) {
          (new Thread(() -> {
             try {
-               sendRaw("NOTICE #bomboaddons_chat :[AREA]\u0002" + finalArea + "\u000226.1.2.22");
+               sendRaw("NOTICE #bomboaddons_chat :[AREA]\u0002" + finalArea + "\u000226.1.2.23");
             } catch (Throwable ignored) {}
          })).start();
       }
