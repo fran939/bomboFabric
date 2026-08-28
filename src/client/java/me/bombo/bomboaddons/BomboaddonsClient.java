@@ -147,6 +147,18 @@ import net.minecraft.world.scores.Scoreboard;
 
 @Environment(EnvType.CLIENT)
 public class BomboaddonsClient implements ClientModInitializer {
+   public static String getModVersion() {
+      try {
+         return net.fabricmc.loader.api.FabricLoader.getInstance()
+                 .getModContainer("bomboaddons")
+                 .map(c -> c.getMetadata().getVersion().getFriendlyString())
+                 .orElse("26.1.2.24");
+      } catch (Throwable t) {
+         return "26.1.2.24";
+      }
+   }
+
+   public static final String MOD_VERSION = getModVersion();
    public static final java.util.List<String> commandHistory = new java.util.concurrent.CopyOnWriteArrayList<>();
    private static final java.io.File COMMAND_HISTORY_FILE = new java.io.File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "config/bomboaddons/command_history.txt");
 
