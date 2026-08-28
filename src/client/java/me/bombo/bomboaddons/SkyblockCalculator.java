@@ -103,7 +103,7 @@ public class SkyblockCalculator {
          }
 
          double result = evaluateInfix(resolved);
-         String formattedRes = result == (double)((long)result) ? String.valueOf((long)result) : String.format("%.3f", result);
+         String formattedRes = result == (double)((long)result) ? String.format("%,d", (long)result) : String.format("%,.2f", result);
          Component finalBreakdown = Component.literal("§6Result: §b" + formattedRes + " §7(§b" + LowestBinManager.formatPrice(result) + "§7) §7(§f");
 
          for(Component part : breakdownParts) {

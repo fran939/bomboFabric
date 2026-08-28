@@ -5,10 +5,15 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
 @Environment(EnvType.CLIENT)
 public class LeftClickEtherwarp {
@@ -27,7 +32,6 @@ public class LeftClickEtherwarp {
          } else if (state == 1) {
             if (mc.gameMode != null) {
                mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-               mc.player.swing(InteractionHand.MAIN_HAND);
                GardenMacroDetector.recordWeaponUse();
             }
 
@@ -64,14 +68,67 @@ public class LeftClickEtherwarp {
       }
    }
 
+   public static int getEtherwarpMaxDistance(ItemStack stack) {
+      if (stack == null || stack.isEmpty()) return 61;
+      try {
+         net.minecraft.world.item.component.ItemLore lore = (net.minecraft.world.item.component.ItemLore)stack.get(net.minecraft.core.component.DataComponents.LORE);
+         if (lore != null) {
+            for (Component line : lore.lines()) {
+               String clean = line.getString().replaceAll("(?i)§.", "");
+               // e.g. "to 61 blocks away." or "to 57 blocks away."
+               if (clean.contains("blocks away") && clean.contains("to ")) {
+                  int idx = clean.indexOf("to ");
+                  String afterTo = clean.substring(idx + 3).trim();
+                  int bIdx = afterTo.indexOf(" blocks");
+                  if (bIdx != -1) {
+                     String distStr = afterTo.substring(0, bIdx).trim();
+                     return Integer.parseInt(distStr);
+                  }
+               }
+            }
+         }
+      } catch (Throwable ignored) {}
+      return 61;
+   }
+
    public static boolean onLeftClick() {
       if (isHoldingEtherwarp()) {
          Minecraft mc = Minecraft.getInstance();
+         if (mc.player == null || mc.level == null) return false;
+
+         BomboConfig.Settings s = BomboConfig.get();
+         ItemStack heldItem = mc.player.getMainHandItem();
+         double maxDist = getEtherwarpMaxDistance(heldItem);
+
+         // Raycast from eyes along look vector
+         Vec3 eyePos = mc.player.getEyePosition();
+         Vec3 lookVec = mc.player.getViewVector(1.0F);
+         Vec3 endPos = eyePos.add(lookVec.scale(maxDist));
+         BlockHitResult hit = mc.level.clip(new ClipContext(eyePos, endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
+
+         boolean isLookingAtBlockInRange = (hit.getType() == HitResult.Type.BLOCK);
+
+         if (s.etherwarpBlockOnly) {
+            if (!isLookingAtBlockInRange) {
+               if (s.etherwarpFallbackRightClick) {
+                  // Perform normal right click without sneak (e.g. AOTV normal teleport / use item) without arm swing
+                  if (mc.gameMode != null) {
+                     mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                     GardenMacroDetector.recordWeaponUse();
+                  }
+                  return true;
+               } else {
+                  // Do nothing, block the attack/swing
+                  return true;
+               }
+            }
+         }
+
+         // Target block in range (or etherwarpBlockOnly is false) -> perform etherwarp sneak + right click
          if (state == 0) {
             if (mc.options.keyShift.isDown()) {
                if (mc.gameMode != null) {
                   mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                  mc.player.swing(InteractionHand.MAIN_HAND);
                   GardenMacroDetector.recordWeaponUse();
                }
             } else {

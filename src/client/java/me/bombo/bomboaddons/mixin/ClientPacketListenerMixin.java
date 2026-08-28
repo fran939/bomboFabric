@@ -34,18 +34,29 @@ public class ClientPacketListenerMixin {
       }
    }
 
+   private static final ThreadLocal<Boolean> IS_HANDLING_SEND_COMMAND = ThreadLocal.withInitial(() -> false);
+
    @Inject(
       method = {"sendCommand"},
       at = {@At("HEAD")},
       cancellable = true
    )
    private void onSendCommand(String command, CallbackInfo ci) {
+      if (IS_HANDLING_SEND_COMMAND.get()) {
+         return;
+      }
       if (command != null) {
          String replaced = SkyblockUtils.replaceCoordPlaceholders(command);
          if (!replaced.equals(command)) {
             ci.cancel();
-            ClientPacketListener listener = (ClientPacketListener)(Object)this;
-            listener.sendCommand(replaced);
+            IS_HANDLING_SEND_COMMAND.set(true);
+            try {
+               ClientPacketListener listener = (ClientPacketListener)(Object)this;
+               listener.sendCommand(replaced);
+            } finally {
+               IS_HANDLING_SEND_COMMAND.set(false);
+            }
+            return;
          } else {
             String clean = command.trim();
             if (clean.startsWith("/")) {

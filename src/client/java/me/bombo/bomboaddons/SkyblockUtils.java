@@ -147,16 +147,92 @@ public class SkyblockUtils {
       }
    }
 
+   public static String getItemRarityColor(net.minecraft.world.item.ItemStack itemStack) {
+      if (itemStack == null || itemStack.isEmpty()) return "§f";
+      try {
+         // 1. Check ExtraAttributes
+         net.minecraft.world.item.component.CustomData customData = (net.minecraft.world.item.component.CustomData)itemStack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+         if (customData != null) {
+            net.minecraft.nbt.CompoundTag tag = customData.copyTag();
+            net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (ea != null) {
+               String tier = ea.getString("tier").orElse("");
+               if (!tier.isEmpty()) {
+                  return getRarityCode(tier);
+               }
+               // Check petInfo
+               String petInfo = ea.getString("petInfo").orElse("");
+               if (!petInfo.isEmpty() && petInfo.contains("\"tier\":\"")) {
+                  int tIdx = petInfo.indexOf("\"tier\":\"");
+                  int end = petInfo.indexOf("\"", tIdx + 8);
+                  if (end != -1) {
+                     return getRarityCode(petInfo.substring(tIdx + 8, end));
+                  }
+               }
+            }
+         }
+
+         // 2. Scan lore for rarity footer (e.g. COMMON, RARE, LEGENDARY DUNGEON SWORD)
+         net.minecraft.world.item.component.ItemLore itemLore = (net.minecraft.world.item.component.ItemLore)itemStack.get(net.minecraft.core.component.DataComponents.LORE);
+         if (itemLore != null && !itemLore.lines().isEmpty()) {
+            List<Component> lines = itemLore.lines();
+            for (int i = lines.size() - 1; i >= 0; --i) {
+               String str = lines.get(i).getString();
+               String clean = str.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+               if (clean.contains("COMMON") || clean.contains("UNCOMMON") || clean.contains("RARE") || clean.contains("EPIC") || clean.contains("LEGENDARY") || clean.contains("MYTHIC") || clean.contains("DIVINE") || clean.contains("SPECIAL") || clean.contains("VERY SPECIAL") || clean.contains("SUPREME")) {
+                  if (clean.contains("VERY SPECIAL") || clean.contains("SPECIAL")) return "§c";
+                  if (clean.contains("SUPREME") || clean.contains("DIVINE")) return "§b";
+                  if (clean.contains("MYTHIC")) return "§d";
+                  if (clean.contains("LEGENDARY")) return "§6";
+                  if (clean.contains("EPIC")) return "§5";
+                  if (clean.contains("RARE")) return "§9";
+                  if (clean.contains("UNCOMMON")) return "§a";
+                  if (clean.contains("COMMON")) return "§f";
+               }
+            }
+         }
+      } catch (Throwable ignored) {}
+      return "§f";
+   }
+
+   public static String getRarityCode(String tier) {
+      if (tier == null) return "§f";
+      switch (tier.toUpperCase()) {
+         case "UNCOMMON": return "§a";
+         case "RARE": return "§9";
+         case "EPIC": return "§5";
+         case "LEGENDARY": return "§6";
+         case "MYTHIC": return "§d";
+         case "DIVINE":
+         case "SUPREME": return "§b";
+         case "SPECIAL":
+         case "VERY_SPECIAL":
+         case "VERY SPECIAL": return "§c";
+         case "COMMON":
+         default: return "§f";
+      }
+   }
+
    public static String serializeItemForChat(net.minecraft.world.item.ItemStack itemStack) {
       if (itemStack == null || itemStack.isEmpty()) return "";
       try {
-         String displayName = itemStack.getHoverName().getString();
+         String formattedDisplayName = getFormattedComponentText(itemStack.getHoverName());
+         String displayName = formattedDisplayName;
+         if (displayName.isEmpty() || !displayName.contains("§")) {
+            String color = getItemRarityColor(itemStack);
+            displayName = color + itemStack.getHoverName().getString();
+         }
+
          List<String> loreLines = new ArrayList<>();
          loreLines.add(displayName);
          net.minecraft.world.item.component.ItemLore itemLore = (net.minecraft.world.item.component.ItemLore)itemStack.get(net.minecraft.core.component.DataComponents.LORE);
          if (itemLore != null) {
             for (Component line : itemLore.lines()) {
-               loreLines.add(line.getString());
+               String formattedLine = getFormattedComponentText(line);
+               if (formattedLine.isEmpty()) {
+                  formattedLine = line.getString();
+               }
+               loreLines.add(formattedLine);
             }
          }
          String combined = String.join("\n", loreLines);
@@ -611,6 +687,7 @@ public class SkyblockUtils {
             }
          }
 
+         // Scoreboard zone line e.g. "⏣ Village", "Village", "⏣ Farm", "⏣ Wilderness"
          if (clean.startsWith("⏏") || clean.startsWith("⏣") || clean.startsWith("ф") || clean.startsWith("📍") || clean.startsWith("\uD83D\uDCCD") || clean.startsWith("\uE067") || clean.startsWith("\uE000") || (clean.length() > 2 && clean.charAt(0) > 127 && !Character.isLetterOrDigit(clean.charAt(0)))) {
             String sub = clean.replaceFirst("^[⏏⏣ф📍\\uD83D\\uDCCD\\uE067\\uE000-\\uF8FF\\s]+", "").trim();
             if (sub.startsWith("Area:") || sub.startsWith("Zone:")) {
@@ -626,6 +703,13 @@ public class SkyblockUtils {
                }
             }
 
+            if (!sub.isEmpty()) {
+               return sub;
+            }
+         }
+
+         if (clean.startsWith("Area:") || clean.startsWith("Zone:")) {
+            String sub = clean.substring(clean.indexOf(":") + 1).trim();
             if (!sub.isEmpty()) {
                return sub;
             }

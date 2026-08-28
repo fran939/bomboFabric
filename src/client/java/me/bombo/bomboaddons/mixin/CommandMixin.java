@@ -31,6 +31,26 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("b history") || trimmed.equalsIgnoreCase("bombo history") || trimmed.equalsIgnoreCase("bomboaddons history")) {
+         me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, 25, null);
+         ci.cancel();
+         return;
+      }
+      if (trimmed.toLowerCase().startsWith("b history ") || trimmed.toLowerCase().startsWith("bombo history ") || trimmed.toLowerCase().startsWith("bomboaddons history ")) {
+         String q = trimmed.substring(trimmed.indexOf("history ") + 8).trim();
+         if (q.equalsIgnoreCase("all") || q.equalsIgnoreCase("*")) {
+            me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, Integer.MAX_VALUE, null);
+         } else {
+            try {
+               int count = Integer.parseInt(q);
+               me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, count, null);
+            } catch (NumberFormatException ignored) {
+               me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, 20, q);
+            }
+         }
+         ci.cancel();
+         return;
+      }
       if (trimmed.toLowerCase().startsWith("b title ") || trimmed.toLowerCase().startsWith("bombo title ")) {
          String rest = trimmed.substring(trimmed.indexOf("title ") + 6).trim();
          String[] parts = rest.split(" ", 2);
@@ -49,6 +69,37 @@ public class CommandMixin {
             me.bombo.bomboaddons.BomboaddonsClient.handleSoundCommand("self", parts[0]);
          } else {
             me.bombo.bomboaddons.BomboaddonsClient.handleSoundCommand(parts[0], parts[1]);
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b stat") || trimmed.equalsIgnoreCase("b stats") || trimmed.equalsIgnoreCase("b stat mf") || trimmed.equalsIgnoreCase("b stats mf") || trimmed.equalsIgnoreCase("bombo stat mf") || trimmed.equalsIgnoreCase("bombo stats mf")) {
+         me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null);
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b stat mf diana") || trimmed.equalsIgnoreCase("b stats mf diana") || trimmed.equalsIgnoreCase("bombo stat mf diana") || trimmed.equalsIgnoreCase("bombo stats mf diana")) {
+         me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA);
+         ci.cancel();
+         return;
+      }
+      if (trimmed.toLowerCase().startsWith("b stat mf ") || trimmed.toLowerCase().startsWith("b stats mf ") || trimmed.toLowerCase().startsWith("bombo stat mf ") || trimmed.toLowerCase().startsWith("bombo stats mf ")) {
+         String targetUser = trimmed.substring(trimmed.lastIndexOf(" ") + 1).trim();
+         if (targetUser.equalsIgnoreCase("diana")) {
+            me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA);
+         } else {
+            me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, targetUser);
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.toLowerCase().startsWith("bombochromatest") || trimmed.toLowerCase().startsWith("/bombochromatest")) {
+         String text = trimmed.contains(" ") ? trimmed.substring(trimmed.indexOf(" ") + 1).trim() : "&w(This is a test of animated chroma text! 12345)";
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (mc.player != null) {
+            String processed = me.bombo.bomboaddons.ChromaTextHelper.processChroma(text);
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bChromaDebug§8] Raw input: §7" + text));
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bChromaDebug§8] Output: §r" + processed));
          }
          ci.cancel();
          return;
@@ -101,6 +152,26 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("/b history") || trimmed.equalsIgnoreCase("/bombo history") || trimmed.equalsIgnoreCase("/bomboaddons history")) {
+         me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, 25, null);
+         ci.cancel();
+         return;
+      }
+      if (trimmed.toLowerCase().startsWith("/b history ") || trimmed.toLowerCase().startsWith("/bombo history ") || trimmed.toLowerCase().startsWith("/bomboaddons history ")) {
+         String q = trimmed.substring(trimmed.indexOf("history ") + 8).trim();
+         if (q.equalsIgnoreCase("all") || q.equalsIgnoreCase("*")) {
+            me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, Integer.MAX_VALUE, null);
+         } else {
+            try {
+               int count = Integer.parseInt(q);
+               me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, count, null);
+            } catch (NumberFormatException ignored) {
+               me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, 20, q);
+            }
+         }
+         ci.cancel();
+         return;
+      }
       if (trimmed.toLowerCase().startsWith("/b title ") || trimmed.toLowerCase().startsWith("/bombo title ")) {
          String rest = trimmed.substring(trimmed.indexOf("title ") + 6).trim();
          String[] parts = rest.split(" ", 2);
@@ -119,6 +190,37 @@ public class CommandMixin {
             me.bombo.bomboaddons.BomboaddonsClient.handleSoundCommand("self", parts[0]);
          } else {
             me.bombo.bomboaddons.BomboaddonsClient.handleSoundCommand(parts[0], parts[1]);
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/stat") || trimmed.equalsIgnoreCase("/stats") || trimmed.equalsIgnoreCase("/stat mf") || trimmed.equalsIgnoreCase("/stats mf") || trimmed.equalsIgnoreCase("/stat magicfind") || trimmed.equalsIgnoreCase("/stats magicfind") || trimmed.equalsIgnoreCase("/b stat") || trimmed.equalsIgnoreCase("/b stats") || trimmed.equalsIgnoreCase("/b stat mf") || trimmed.equalsIgnoreCase("/b stats mf") || trimmed.equalsIgnoreCase("/bombo stat mf") || trimmed.equalsIgnoreCase("/bombo stats mf")) {
+         me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null);
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/stat mf diana") || trimmed.equalsIgnoreCase("/stats mf diana") || trimmed.equalsIgnoreCase("/b stat mf diana") || trimmed.equalsIgnoreCase("/b stats mf diana") || trimmed.equalsIgnoreCase("/bombo stat mf diana") || trimmed.equalsIgnoreCase("/bombo stats mf diana")) {
+         me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA);
+         ci.cancel();
+         return;
+      }
+      if (trimmed.toLowerCase().startsWith("/stat mf ") || trimmed.toLowerCase().startsWith("/stats mf ") || trimmed.toLowerCase().startsWith("/stat magicfind ") || trimmed.toLowerCase().startsWith("/stats magicfind ") || trimmed.toLowerCase().startsWith("/b stat mf ") || trimmed.toLowerCase().startsWith("/b stats mf ")) {
+         String targetUser = trimmed.substring(trimmed.lastIndexOf(" ") + 1).trim();
+         if (targetUser.equalsIgnoreCase("diana")) {
+            me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA);
+         } else {
+            me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, targetUser);
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.toLowerCase().startsWith("/bombochromatest")) {
+         String text = trimmed.contains(" ") ? trimmed.substring(trimmed.indexOf(" ") + 1).trim() : "&w(This is a test of animated chroma text! 12345)";
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (mc.player != null) {
+            String processed = me.bombo.bomboaddons.ChromaTextHelper.processChroma(text);
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bChromaDebug§8] Raw input: §7" + text));
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bChromaDebug§8] Output: §r" + processed));
          }
          ci.cancel();
          return;

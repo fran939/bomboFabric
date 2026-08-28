@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -27,10 +28,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import me.bombo.bomboaddons.Bomboaddons;
 import me.bombo.bomboaddons.LF;
+import me.bombo.bomboaddons.SkyblockUtils;
 import me.bombo.bomboaddons.util.BomboApiUrl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 public class ProfileFetcher {
@@ -40,7 +43,51 @@ public class ProfileFetcher {
    private static final double[] CATA_XP = new double[]{(double)0.0F, (double)50.0F, (double)125.0F, (double)235.0F, (double)395.0F, (double)625.0F, (double)955.0F, (double)1425.0F, (double)2095.0F, (double)3045.0F, (double)4385.0F, (double)6275.0F, (double)8940.0F, (double)12700.0F, (double)17960.0F, (double)25340.0F, (double)35640.0F, (double)50040.0F, (double)70040.0F, (double)98040.0F, (double)137040.0F, (double)191040.0F, (double)265040.0F, (double)365040.0F, (double)500040.0F, (double)680040.0F, (double)910040.0F, (double)1200040.0F, (double)1550040.0F, (double)1970040.0F, (double)2470040.0F, (double)3070040.0F, (double)3800040.0F, (double)4700040.0F, (double)5800040.0F, (double)7150040.0F, (double)8800040.0F, (double)1.080004E7F, (double)1.320004E7F, (double)1.610004E7F, (double)1.960004E7F, (double)2.390004E7F, (double)2.920004E7F, (double)3.570004E7F, (double)4.360004E7F, (double)5.320004E7F, (double)6.480004E7F, (double)7.880004E7F, (double)9.560004E7F, (double)1.1560004E8F, 1.3960004E8};
    private static final Map<String, CachedProfile> CACHE = new ConcurrentHashMap();
    private static final Map<String, String> UUID_CACHE = new ConcurrentHashMap();
+   private static final File DISK_CACHE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bomboaddons/profile_cache.json");
    private static String pvApiKey = null;
+
+   static {
+      loadDiskCache();
+   }
+
+   private static void loadDiskCache() {
+      try {
+         if (DISK_CACHE_FILE.exists()) {
+            String content = Files.readString(DISK_CACHE_FILE.toPath());
+            JsonObject obj = JsonParser.parseString(content).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+               if (entry.getValue().isJsonObject()) {
+                  JsonObject p = entry.getValue().getAsJsonObject();
+                  ProfileData data = new ProfileData();
+                  data.username = entry.getKey();
+                  if (p.has("sbLevel")) data.skyblockLevel = p.get("sbLevel").getAsDouble();
+                  if (p.has("networth")) data.networth = p.get("networth").getAsDouble();
+                  long ts = p.has("ts") ? p.get("ts").getAsLong() : System.currentTimeMillis();
+                  CACHE.put(entry.getKey().toLowerCase(), new CachedProfile(data));
+               }
+            }
+         }
+      } catch (Throwable ignored) {}
+   }
+
+   private static void saveDiskCache() {
+      try {
+         if (!DISK_CACHE_FILE.getParentFile().exists()) {
+            DISK_CACHE_FILE.getParentFile().mkdirs();
+         }
+         JsonObject root = new JsonObject();
+         for (Map.Entry<String, CachedProfile> entry : CACHE.entrySet()) {
+            if (entry.getValue() != null && entry.getValue().data != null) {
+               JsonObject p = new JsonObject();
+               p.addProperty("sbLevel", entry.getValue().data.skyblockLevel);
+               p.addProperty("networth", entry.getValue().data.networth);
+               p.addProperty("ts", entry.getValue().timestamp);
+               root.add(entry.getKey(), p);
+            }
+         }
+         Files.writeString(DISK_CACHE_FILE.toPath(), root.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+      } catch (Throwable ignored) {}
+   }
 
    private static int xpToLevel(double xp, double[] table) {
       for(int i = table.length - 1; i >= 0; --i) {
@@ -52,11 +99,44 @@ public class ProfileFetcher {
       return 0;
    }
 
+   public static ProfileData getCachedProfile(String username) {
+      if (username == null) return null;
+      CachedProfile cached = CACHE.get(username.toLowerCase());
+      return cached != null ? cached.data : null;
+   }
+
+   public static String getTabSkyBlockLevel(String username) {
+      if (username == null || username.isEmpty()) return null;
+      try {
+         for (Component comp : SkyblockUtils.getTabListLines()) {
+            String raw = comp.getString();
+            String clean = raw.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+            if (clean.contains(username) && clean.contains("[") && clean.contains("]")) {
+               int start = clean.indexOf("[");
+               int end = clean.indexOf("]", start);
+               if (start != -1 && end != -1) {
+                  String lvlNum = clean.substring(start + 1, end).trim();
+                  if (lvlNum.matches("\\d+")) {
+                     String formatted = SkyblockUtils.getFormattedComponentText(comp);
+                     int fStart = formatted.indexOf("[");
+                     int fEnd = formatted.indexOf("]", fStart);
+                     if (fStart != -1 && fEnd != -1) {
+                        return formatted.substring(fStart, fEnd + 1);
+                     }
+                     return "§3[§b" + lvlNum + "§3]";
+                  }
+               }
+            }
+         }
+      } catch (Throwable ignored) {}
+      return null;
+   }
+
    public static CompletableFuture<ProfileData> fetchProfile(String username) {
       String lowerName = username.toLowerCase();
       if (CACHE.containsKey(lowerName)) {
          CachedProfile cached = (CachedProfile)CACHE.get(lowerName);
-         if (System.currentTimeMillis() - cached.timestamp < 60000L) {
+         if (System.currentTimeMillis() - cached.timestamp < 300000L) {
             return CompletableFuture.completedFuture(cached.data);
          }
       }
@@ -88,6 +168,7 @@ public class ProfileFetcher {
 
                if (merged != null) {
                   CACHE.put(username.toLowerCase(), new CachedProfile(merged));
+                  saveDiskCache();
                }
 
                return merged;
@@ -138,6 +219,7 @@ public class ProfileFetcher {
 
                            if (merged != null) {
                               CACHE.put(username.toLowerCase(), new CachedProfile(merged));
+                              saveDiskCache();
                            }
 
                            return merged;
@@ -546,22 +628,56 @@ public class ProfileFetcher {
       });
    }
 
+   private static CompletableFuture<Double> fetchNetworthFromBomboAPI(String usernameOrUuid) {
+      String url = BomboApiUrl.getApiUrl("/nw/" + usernameOrUuid);
+      Bomboaddons.logApiRequest(url);
+      HttpRequest req = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofSeconds(15L)).GET().build();
+      return CLIENT.sendAsync(req, BodyHandlers.ofString()).thenApply((res) -> {
+         if (res.statusCode() != 200) return 0.0;
+         try {
+            JsonObject json = JsonParser.parseString((String)res.body()).getAsJsonObject();
+            if (json.has("data") && json.get("data").isJsonObject()) {
+               JsonObject d = json.getAsJsonObject("data");
+               if (d.has("networth")) {
+                  if (d.get("networth").isJsonObject()) {
+                     JsonObject nwObj = d.getAsJsonObject("networth");
+                     if (nwObj.has("networth")) {
+                        return nwObj.get("networth").getAsDouble();
+                     }
+                  } else if (d.get("networth").isJsonPrimitive()) {
+                     return d.get("networth").getAsDouble();
+                  }
+               }
+            } else if (json.has("networth")) {
+               if (json.get("networth").isJsonObject()) {
+                  JsonObject nwObj = json.getAsJsonObject("networth");
+                  if (nwObj.has("networth")) {
+                     return nwObj.get("networth").getAsDouble();
+                  }
+               } else if (json.get("networth").isJsonPrimitive()) {
+                  return json.get("networth").getAsDouble();
+               }
+            }
+         } catch (Exception ignored) {}
+         return 0.0;
+      }).exceptionally((e) -> 0.0);
+   }
+
    private static CompletableFuture<ProfileData> fetchFromBomboAPI(String uuid, String username) {
-      String url = BomboApiUrl.getApiUrl("/" + uuid);
+      String url = BomboApiUrl.getApiUrl("/data/" + uuid);
       Bomboaddons.logApiRequest(url);
       HttpRequest req = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofSeconds(30L)).GET().build();
-      return CLIENT.sendAsync(req, BodyHandlers.ofString()).thenApply((res) -> {
+      return CLIENT.sendAsync(req, BodyHandlers.ofString()).thenCompose((res) -> {
          if (res.statusCode() != 200) {
-            return null;
+            return CompletableFuture.completedFuture(null);
          } else {
             try {
                JsonObject json = JsonParser.parseString((String)res.body()).getAsJsonObject();
-               if (!json.has("raw_profile")) {
-                  return null;
-               } else {
+               ProfileData data = null;
+               if (json.has("raw_profile")) {
                   JsonObject rawProfile = json.getAsJsonObject("raw_profile");
                   String profileName = json.has("profile") ? json.get("profile").getAsString() : "Unknown";
-                  ProfileData data = parseProfile(rawProfile, uuid, username, profileName);
+                  data = parseProfile(rawProfile, uuid, username, profileName);
                   if (data != null && rawProfile.has("museum")) {
                      JsonObject museumData = rawProfile.getAsJsonObject("museum");
                      String u = uuid != null ? uuid.replace("-", "") : "";
@@ -569,12 +685,25 @@ public class ProfileFetcher {
                         parseMuseumData(museumData.getAsJsonObject(u), data);
                      }
                   }
-
-                  return data;
+               } else if (json.has("members")) {
+                  // Direct profile object returned from /data/:uuid
+                  String profileName = json.has("cute_name") ? json.get("cute_name").getAsString() : "Unknown";
+                  data = parseProfile(json, uuid, username, profileName);
                }
+
+               if (data != null) {
+                  final ProfileData finalData = data;
+                  return fetchNetworthFromBomboAPI(username != null ? username : uuid).thenApply((nw) -> {
+                     if (nw > 0.0) {
+                        finalData.networth = nw;
+                     }
+                     return finalData;
+                  });
+               }
+               return CompletableFuture.completedFuture(null);
             } catch (Exception e) {
                e.printStackTrace();
-               return null;
+               return CompletableFuture.completedFuture(null);
             }
          }
       }).exceptionally((e) -> null);
@@ -995,6 +1124,7 @@ public class ProfileFetcher {
                pet.tier = petObj.has("tier") ? petObj.get("tier").getAsString() : "COMMON";
                pet.active = petObj.has("active") && petObj.get("active").getAsBoolean();
                pet.exp = petObj.has("exp") ? petObj.get("exp").getAsDouble() : (double)0.0F;
+               pet.heldItem = petObj.has("heldItem") && !petObj.get("heldItem").isJsonNull() ? petObj.get("heldItem").getAsString() : null;
                data.pets.add(pet);
             }
          }
@@ -1169,6 +1299,7 @@ public class ProfileFetcher {
       public List<ItemStack> quiver = new ArrayList();
       public List<ItemStack> candyBag = new ArrayList();
       public List<ItemStack> museumWeapons = new ArrayList();
+      public Map<String, Integer> bestiaryKills = new HashMap();
       public List<ItemStack> museumArmor = new ArrayList();
       public List<ItemStack> museumRarities = new ArrayList();
       public List<ItemStack> museumSpecial = new ArrayList();
@@ -1179,6 +1310,7 @@ public class ProfileFetcher {
       public String tier;
       public boolean active;
       public double exp;
+      public String heldItem;
    }
 
    public static class Trophy {

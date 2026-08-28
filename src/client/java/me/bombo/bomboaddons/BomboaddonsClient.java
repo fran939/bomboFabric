@@ -148,12 +148,52 @@ import net.minecraft.world.scores.Scoreboard;
 @Environment(EnvType.CLIENT)
 public class BomboaddonsClient implements ClientModInitializer {
    public static final java.util.List<String> commandHistory = new java.util.concurrent.CopyOnWriteArrayList<>();
+   private static final java.io.File COMMAND_HISTORY_FILE = new java.io.File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "config/bomboaddons/command_history.txt");
+
+   public static void loadCommandHistory() {
+      try {
+         if (!COMMAND_HISTORY_FILE.exists()) return;
+         java.util.List<String> lines = java.nio.file.Files.readAllLines(COMMAND_HISTORY_FILE.toPath(), java.nio.charset.StandardCharsets.UTF_8);
+         commandHistory.clear();
+         for (String line : lines) {
+            String trimmed = line.trim();
+            if (!trimmed.isEmpty()) {
+               commandHistory.add(trimmed);
+            }
+         }
+         while (commandHistory.size() > 500) {
+            commandHistory.remove(0);
+         }
+      } catch (Throwable t) {
+         System.err.println("[BomboAddons] Failed to load command history: " + t.getMessage());
+      }
+   }
 
    public static void recordCommand(String cmd) {
       if (cmd == null || cmd.trim().isEmpty()) return;
-      if (commandHistory.size() > 0 && commandHistory.get(commandHistory.size() - 1).equalsIgnoreCase(cmd)) return;
-      commandHistory.add(cmd);
-      if (commandHistory.size() > 200) commandHistory.remove(0);
+      String formatted = cmd.trim();
+      if (!formatted.startsWith("/")) {
+         formatted = "/" + formatted;
+      }
+      if (commandHistory.size() > 0 && commandHistory.get(commandHistory.size() - 1).equalsIgnoreCase(formatted)) return;
+      commandHistory.add(formatted);
+      if (commandHistory.size() > 500) commandHistory.remove(0);
+      
+      final String toSave = formatted;
+      java.util.concurrent.CompletableFuture.runAsync(() -> {
+         try {
+            if (COMMAND_HISTORY_FILE.getParentFile() != null && !COMMAND_HISTORY_FILE.getParentFile().exists()) {
+               COMMAND_HISTORY_FILE.getParentFile().mkdirs();
+            }
+            java.nio.file.Files.writeString(
+               COMMAND_HISTORY_FILE.toPath(),
+               toSave + System.lineSeparator(),
+               java.nio.charset.StandardCharsets.UTF_8,
+               java.nio.file.StandardOpenOption.CREATE,
+               java.nio.file.StandardOpenOption.APPEND
+            );
+         } catch (Throwable ignored) {}
+      });
    }
 
     public static class NpcOptionItem {
@@ -229,9 +269,45 @@ public class BomboaddonsClient implements ClientModInitializer {
       var10000.thenAcceptAsync(var10001, mc::execute);
    }
 
+   public static void openMagicFindOptimizer(FabricClientCommandSource src, String username) {
+      openMagicFindOptimizer(src, username, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.GENERAL);
+   }
+
+   public static void openMagicFindOptimizer(FabricClientCommandSource src, String username, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode mode) {
+      Minecraft mc = Minecraft.getInstance();
+      String target = (username != null && !username.trim().isEmpty() && !username.equalsIgnoreCase("diana")) ? username.trim() : (mc.getUser() != null ? mc.getUser().getName() : "Player");
+      if (username != null && username.equalsIgnoreCase("diana")) {
+         mode = me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA;
+      }
+      final me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode finalMode = mode;
+      Component startMsg = Component.literal("§8[§6MagicFind§8] §7Fetching profile data and optimizing Magic Find (" + finalMode.displayName + ") for §e" + target + "§7...");
+      if (src != null) {
+         src.sendFeedback(startMsg);
+      } else if (mc.player != null) {
+         mc.player.sendSystemMessage(startMsg);
+      }
+      me.bombo.bomboaddons.features.profile.ProfileFetcher.fetchProfile(target).thenAccept(data -> {
+         mc.execute(() -> {
+            mc.setScreen(new me.bombo.bomboaddons.features.magicfind.MagicFindScreen(data, finalMode));
+         });
+      }).exceptionally(ex -> {
+         mc.execute(() -> {
+            Component errFeedback = Component.literal("§8[§6MagicFind§8] §cFailed to fetch profile: §e" + ex.getMessage() + " §7(Opening with base data)");
+            if (src != null) {
+               src.sendFeedback(errFeedback);
+            } else if (mc.player != null) {
+               mc.player.sendSystemMessage(errFeedback);
+            }
+            mc.setScreen(new me.bombo.bomboaddons.features.magicfind.MagicFindScreen(null, finalMode));
+         });
+         return null;
+      });
+   }
+
    public void onInitializeClient() {
       BomboConfig.load();
       ChatModifier.load();
+      loadCommandHistory();
       WaypointManager.init();
       StructureScanner.loadPatterns();
       ComposterHud.init();
@@ -680,6 +756,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   AFKManager.toggleAfk(island);
                   return 1;
                })));
+
             } catch (Throwable t) {
                System.err.println("[Bombo] FAILED to register server command!");
                t.printStackTrace();
@@ -696,10 +773,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                      return 1;
                   });
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("history").executes((context) -> {
-                     return showCommandHistory((FabricClientCommandSource)context.getSource(), 5, null);
+                     return showCommandHistory((FabricClientCommandSource)context.getSource(), 25, null);
                   })).then(ClientCommands.argument("query", StringArgumentType.greedyString()).executes((context) -> {
                      String q = StringArgumentType.getString(context, "query").trim();
                      if (q.startsWith("|")) q = q.substring(1).trim();
+                     if (q.equalsIgnoreCase("all") || q.equalsIgnoreCase("*")) {
+                        return showCommandHistory((FabricClientCommandSource)context.getSource(), Integer.MAX_VALUE, null);
+                     }
                      try {
                         int count = Integer.parseInt(q);
                         return showCommandHistory((FabricClientCommandSource)context.getSource(), count, null);
@@ -713,6 +793,61 @@ public class BomboaddonsClient implements ClientModInitializer {
                   })))).then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
                      String mob = StringArgumentType.getString(context, "mob").trim();
                      return handleBestiaryAddCommand((FabricClientCommandSource)context.getSource(), mob, null);
+                  })));
+                  builder.then(ClientCommands.literal("hovertest").executes((context) -> {
+                     if (!BomboConfig.get().ircChatEnabled) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §cIRC Chat is currently disabled! Toggle it on with §e/b chat§c."));
+                        return 1;
+                     }
+                     if (!IRCClient.isConnected()) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §cIRC Chat is not connected to the bridge server yet!"));
+                        return 1;
+                     }
+                     String hoverDetails = "§6§l=== Bridge Player Info ===\n" +
+                             "§7Player: §fTestUser\n" +
+                             "§7Rank: §a[VIP§6+§a]\n" +
+                             "§7Guild Role: §eMember\n" +
+                             "§7Networth: §62.45B\n" +
+                             "§7Magic Find: §b✯ 342.5\n" +
+                             "§7Catacombs: §c48.2\n" +
+                             "§7Current Profile: §aApple\n" +
+                             "§8--------------------------\n" +
+                             "§eClick to copy profile stats!";
+                     String encoded = java.util.Base64.getEncoder().encodeToString(hoverDetails.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                     String token = "[SHOW:§e§lStats & Data:" + encoded + "]";
+                     IRCClient.sendMessage(token + " §7- Welcome to the bridge!");
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("perf").executes((context) -> {
+                     BomboConfig.Settings s = BomboConfig.get();
+                     s.performanceDebug = !s.performanceDebug;
+                     BomboConfig.save();
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §7Performance Diagnostics: " + (s.performanceDebug ? "§aEnabled" : "§cDisabled")));
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("stat").then(ClientCommands.literal("mf").then(ClientCommands.argument("target", StringArgumentType.greedyString()).executes((ctx) -> {
+                     String target = StringArgumentType.getString(ctx, "target");
+                     if (target.equalsIgnoreCase("diana")) {
+                        openMagicFindOptimizer((FabricClientCommandSource)ctx.getSource(), null, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA);
+                     } else {
+                        openMagicFindOptimizer((FabricClientCommandSource)ctx.getSource(), target);
+                     }
+                     return 1;
+                  })).executes((ctx) -> {
+                     openMagicFindOptimizer((FabricClientCommandSource)ctx.getSource(), null);
+                     return 1;
+                  })));
+                  builder.then(ClientCommands.literal("stats").then(ClientCommands.literal("mf").then(ClientCommands.argument("target", StringArgumentType.greedyString()).executes((ctx) -> {
+                     String target = StringArgumentType.getString(ctx, "target");
+                     if (target.equalsIgnoreCase("diana")) {
+                        openMagicFindOptimizer((FabricClientCommandSource)ctx.getSource(), null, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA);
+                     } else {
+                        openMagicFindOptimizer((FabricClientCommandSource)ctx.getSource(), target);
+                     }
+                     return 1;
+                  })).executes((ctx) -> {
+                     openMagicFindOptimizer((FabricClientCommandSource)ctx.getSource(), null);
+                     return 1;
                   })));
                   builder.then(ClientCommands.literal("help").executes((context) -> {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8----------------- §b[BomboAddons Help] §8-----------------"));
@@ -1505,13 +1640,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §cGarden Movement Reset! §7(States cleared)"));
                      return 1;
                   }));
-                  builder.then(ClientCommands.literal("sc").executes((context) -> {
-                     BomboConfig.Settings s = BomboConfig.get();
-                     s.gardenSugarCane = !s.gardenSugarCane;
-                     BomboConfig.save();
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Sugar Cane Mode: " + (s.gardenSugarCane ? "§aON" : "§cOFF")));
-                     return 1;
-                  }));
                   builder.then(ClientCommands.literal("sugarcane").executes((context) -> {
                      BomboConfig.Settings s = BomboConfig.get();
                      s.gardenSugarCane = !s.gardenSugarCane;
@@ -1519,6 +1647,20 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Sugar Cane Mode: " + (s.gardenSugarCane ? "§aON" : "§cOFF")));
                      return 1;
                   }));
+                  builder.then(ClientCommands.literal("stat").then(ClientCommands.literal("mf").executes((context) -> {
+                     openMagicFindOptimizer((FabricClientCommandSource)context.getSource(), null);
+                     return 1;
+                  })).then(ClientCommands.literal("magicfind").executes((context) -> {
+                     openMagicFindOptimizer((FabricClientCommandSource)context.getSource(), null);
+                     return 1;
+                  })));
+                  builder.then(ClientCommands.literal("stats").then(ClientCommands.literal("mf").executes((context) -> {
+                     openMagicFindOptimizer((FabricClientCommandSource)context.getSource(), null);
+                     return 1;
+                  })).then(ClientCommands.literal("magicfind").executes((context) -> {
+                     openMagicFindOptimizer((FabricClientCommandSource)context.getSource(), null);
+                     return 1;
+                  })));
                   builder.then(ClientCommands.literal("test").executes((context) -> {
                      String version = ((ModContainer)FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCurrent Version: §e" + version));
@@ -2179,13 +2321,20 @@ public class BomboaddonsClient implements ClientModInitializer {
                      }
                   }));
                   builder.then(ClientCommands.literal("accept").executes((context) -> {
-                     String acceptCmd = ChatMessageTracker.findBestAcceptCommand();
-                     if (acceptCmd != null && !acceptCmd.trim().isEmpty()) {
-                        String clean = acceptCmd.trim();
+                     ChatMessageTracker.AcceptInfo info = ChatMessageTracker.findBestAcceptInfo();
+                     if (info != null && info.command != null && !info.command.trim().isEmpty()) {
+                        String clean = info.command.trim();
                         FabricClientCommandSource var10000 = (FabricClientCommandSource)context.getSource();
                         String var10001 = clean.startsWith("/") ? clean : "/" + clean;
                         var10000.sendFeedback(Component.literal("§8[§3Bombo§8]§r §aExecuting accept command: §e" + var10001));
                         executeTracked(clean);
+
+                        String desc = info.ticketDescription;
+                        if (desc != null && !desc.trim().isEmpty()) {
+                           if (IRCClient.isConnected()) {
+                              IRCClient.sendMessage("Accepted ticket: " + desc.trim());
+                           }
+                        }
                      } else {
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §cNo recent accept link/command found in chat!"));
                      }
@@ -3151,7 +3300,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                      return 1;
                   }))).then(ClientCommands.argument("alias_or_id", StringArgumentType.word()).executes((context) -> {
-                     String alias = StringArgumentType.getString(context, "alias_or_id").toLowerCase();
+                     String alias = StringArgumentType.getString(context, "alias_or_id").toLowerCase().trim();
                      BomboConfig.GetTarget target = (BomboConfig.GetTarget)BomboConfig.get().getTargets.get(alias);
                      if (target == null) {
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §cNo get target found for alias §e" + alias));
@@ -4386,6 +4535,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             DungeonSecretsTracker.onChatMessage(clean);
             AFKManager.onChatMessage(clean);
             ClearInfoHUD.onChatMessage(clean);
+            me.bombo.bomboaddons.features.diana.DianaLootshare.onChatMessage(clean);
             if (!overlay && BomboConfig.get().customTimers != null) {
                for(BomboConfig.CustomTimerDef def : BomboConfig.get().customTimers) {
                   if (def.enabled && def.triggerText != null && !def.triggerText.isEmpty() && clean.contains(def.triggerText)) {
@@ -4581,13 +4731,13 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
          }
 
-         if (s.frozenBlazeWarning || s.debugMode || s.debugArmor) {
+         if (s.frozenBlazeWarning) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: FrozenBlazeAFK")) {
                me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.onTick(client);
             } catch (Throwable ignored) {}
          }
 
-         if (s.dojoUtilities && s.dojoMasteryWool) {
+         if (s.dojoUtilities && s.dojoMasteryWool && me.bombo.bomboaddons.features.DojoUtilities.isInDojo()) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: DojoMasteryWool")) {
                me.bombo.bomboaddons.features.DojoUtilities.onClientTick(client);
             } catch (Throwable ignored) {}
@@ -4597,7 +4747,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             me.bombo.bomboaddons.features.AutoAhSell.onClientTick();
          } catch (Throwable ignored) {}
 
-         if (s.replaceGrayCarpetDwarven) {
+         if (s.replaceGrayCarpetDwarven && SkyblockUtils.getLocation() != null && SkyblockUtils.getLocation().contains("Dwarven")) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: DwarvenCarpet")) {
                DwarvenCarpetReplacer.tick(client);
             } catch (Throwable ignored) {}
@@ -4641,10 +4791,13 @@ public class BomboaddonsClient implements ClientModInitializer {
          if (client.player != null) {
             if (client.player.tickCount % 20 == 0) {
                String prevArea = currentArea;
+               String prevSubArea = currentSubArea;
                currentArea = SkyblockUtils.getLocation();
                currentSubArea = SkyblockUtils.getSubArea();
-               if (currentArea != null && !currentArea.equals("None") && !currentArea.equals("Unknown") && !currentArea.equals(prevArea)) {
-                  IRCClient.broadcastArea(currentArea);
+               if (currentArea != null && !currentArea.equals("None") && !currentArea.equals("Unknown")) {
+                  if (!currentArea.equals(prevArea) || (currentSubArea != null && !currentSubArea.equals(prevSubArea))) {
+                     IRCClient.broadcastArea(currentArea, currentSubArea);
+                  }
                }
             }
 
@@ -5711,9 +5864,23 @@ public class BomboaddonsClient implements ClientModInitializer {
       }, "Rank-Fetch-Command-" + username)).start();
    }
 
-      public static int showCommandHistory(FabricClientCommandSource src, int limit, String filter) {
+   public static int showCommandHistory(FabricClientCommandSource src, int limit, String filter) {
+      java.util.function.Consumer<Component> sendMsg = (msg) -> {
+         if (src != null) {
+            src.sendFeedback(msg);
+         } else {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(msg);
+            }
+         }
+      };
+
       if (commandHistory.isEmpty()) {
-         src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo command history recorded yet."));
+         loadCommandHistory();
+      }
+      if (commandHistory.isEmpty()) {
+         sendMsg.accept(Component.literal("§8[§bBomboAddons§8] §cNo command history recorded yet in this session or log file."));
          return 0;
       }
       java.util.List<String> list = new java.util.ArrayList<>(commandHistory);
@@ -5722,22 +5889,37 @@ public class BomboaddonsClient implements ClientModInitializer {
          list.removeIf(cmd -> !cmd.toLowerCase(Locale.ROOT).contains(f));
       }
       if (list.isEmpty()) {
-         src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo commands matched filter: §e" + filter));
+         sendMsg.accept(Component.literal("§8[§bBomboAddons§8] §cNo commands matched filter: §e" + filter));
          return 0;
       }
       int total = list.size();
       int start = Math.max(0, total - limit);
-      src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== Command History (" + (total - start) + "/" + total + ") ==="));
+      int shown = total - start;
+      sendMsg.accept(Component.literal("§8[§bBomboAddons§8] §e=== Command History §7(Showing §b" + shown + "§7/§e" + total + "§7) ==="));
       for (int i = start; i < total; i++) {
          String cmd = list.get(i);
-         ClickEvent runClick = LF.createClickEventRobust("RUN_COMMAND", cmd);
-         ClickEvent sugClick = LF.createClickEventRobust("SUGGEST_COMMAND", cmd);
-         Component line = Component.literal(" §7" + (i + 1) + ". §f" + cmd + " ")
-            .append(Component.literal("§a[Run]").withStyle(st -> runClick != null ? st.withClickEvent(runClick) : st))
+         String runCmd = cmd.startsWith("/") ? cmd.substring(1) : cmd;
+         ClickEvent runClick = LF.createClickEventRobust("RUN_COMMAND", "/" + runCmd);
+         ClickEvent sugClick = LF.createClickEventRobust("SUGGEST_COMMAND", "/" + runCmd);
+         
+         HoverEvent runHover = new HoverEvent.ShowText(Component.literal("§aClick to execute: §f/" + runCmd));
+         HoverEvent sugHover = new HoverEvent.ShowText(Component.literal("§bClick to paste into chat: §f/" + runCmd));
+         
+         Component line = Component.literal(" §8[§e" + (i + 1) + "§8] §f" + cmd + " ")
+            .append(Component.literal("§a[Run]").withStyle(st -> {
+               Style s = st;
+               if (runClick != null) s = s.withClickEvent(runClick);
+               return s.withHoverEvent(runHover);
+            }))
             .append(Component.literal(" "))
-            .append(Component.literal("§b[Suggest]").withStyle(st -> sugClick != null ? st.withClickEvent(sugClick) : st));
-         src.sendFeedback(line);
+            .append(Component.literal("§b[Suggest]").withStyle(st -> {
+               Style s = st;
+               if (sugClick != null) s = s.withClickEvent(sugClick);
+               return s.withHoverEvent(sugHover);
+            }));
+         sendMsg.accept(line);
       }
+      sendMsg.accept(Component.literal("§8[§bBomboAddons§8] §7Tip: Use §e/b history <count>§7, §e/b history <filter>§7, or §e/b history all§7."));
       return 1;
    }
 

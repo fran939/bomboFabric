@@ -419,7 +419,7 @@ public class ClickLogic {
                boolean matched = false;
 
                for(ClickTarget t : targets) {
-                  if (t != null && t.auto && t.item != null && !t.item.trim().isEmpty()) {
+                  if (t != null && t.item != null && !t.item.trim().isEmpty()) {
                      if (t.keyCode == key || CustomBindsProcessor.matchesKey(t.keyName, key)) {
                         String guiTarget = t.gui != null ? t.gui.trim() : "";
                         if (guiTarget.isEmpty() || guiTarget.equalsIgnoreCase("all") || title.contains(guiTarget.toLowerCase())) {

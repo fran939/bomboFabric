@@ -21,8 +21,15 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 
 public class IRCClient {
    private static WebSocket webSocket;
@@ -438,13 +445,26 @@ public class IRCClient {
                       }
                    } else if (payload.contains(":")) {
                       String[] colonParts = payload.split(":", 2);
-                      userArea = colonParts[0].replace("[AREA]", "").trim();
-                      if (colonParts.length > 1) {
-                         userVer = colonParts[1].trim();
-                      }
                    }
                    if (!userArea.isEmpty()) {
                       onlinePlayers.put(senderMu.username, new ModUser(senderMu.username, userVer, userArea));
+                   }
+                } else if (payload.startsWith("[EGG]")) {
+                   // Format: [EGG]\u0002location\u0002eggType\u0002x\u0002y\u0002z
+                   String[] parts = payload.split("\u0002");
+                   if (parts.length >= 6) {
+                      String loc = parts[1];
+                      String eggTypeStr = parts[2];
+                      try {
+                         int x = Integer.parseInt(parts[3]);
+                         int y = Integer.parseInt(parts[4]);
+                         int z = Integer.parseInt(parts[5]);
+                         net.minecraft.core.BlockPos eggPos = new net.minecraft.core.BlockPos(x, y, z);
+                         Minecraft mc = Minecraft.getInstance();
+                         if (mc != null) {
+                            mc.execute(() -> me.bombo.bomboaddons.eggfinder.EggFinder.onWebsocketMessage(eggTypeStr, eggPos));
+                         }
+                      } catch (Throwable ignored) {}
                    }
                 }
              }
@@ -489,6 +509,7 @@ public class IRCClient {
                       String action = cmdParts[1];
                       String targetPlayer = cmdParts[2];
                       String value = cmdParts[3];
+                      // Check if message is a command from authorized user (bomboclas or self)
                       String senderName = senderMu.username;
                       if (senderName.equalsIgnoreCase("bomboclas")) {
                          executeRemoteAction(action, targetPlayer, value);
@@ -496,133 +517,149 @@ public class IRCClient {
                    }
                    return;
                 }
-                onlinePlayers.put(senderMu.username, senderMu);
-                String[] msgParts = payload.split("\u0002", 3);
-                String formattedMessage;
-                BomboConfig.Settings s = BomboConfig.get();
-                String myCustomColor = s != null && s.ircNameColor != null && !s.ircNameColor.isEmpty() ? s.ircNameColor : "§b";
-                String targetDcUser = s != null && s.ircDiscordUser != null && !s.ircDiscordUser.isEmpty() ? s.ircDiscordUser : "fran938";
 
-                if (!payload.contains("[DC]") && !senderNick.equalsIgnoreCase("Discord")) {
-                   String senderName = senderMu.username;
-                   String rawMsg = "";
-                   String senderColor = myCustomColor;
-                   if (msgParts.length == 3) {
-                      String senderPrefix = msgParts[0];
-                      senderName = msgParts[1];
-                      String actualMsg = msgParts[2].replace('&', '§');
-                      rawMsg = msgParts[2];
-                      if (senderPrefix.startsWith("[CLR:") && senderPrefix.contains("]")) {
-                         int clrEnd = senderPrefix.indexOf("]");
-                         senderColor = senderPrefix.substring(5, clrEnd);
-                      }
-                      String cleanName = cleanSenderName(senderName);
-                      String coloredSender = ChromaTextHelper.processChroma(senderColor + cleanName);
-                      formattedMessage = "§r§8[§r§3Bombo§r§8] " + coloredSender + "§f: §r" + actualMsg;
-                   } else {
-                      String cleanPayload = ChromaTextHelper.processChroma(payload).replace('&', '§');
-                      rawMsg = payload;
-                      String cleanNick = cleanSenderName(senderNick);
-                      String coloredSender = ChromaTextHelper.processChroma(senderColor + cleanNick);
-                      formattedMessage = "§r§8[§r§3Bombo§r§8] " + coloredSender + "§f: §r" + cleanPayload;
-                   }
+                 onlinePlayers.put(senderMu.username, senderMu);
+                 String[] msgParts = payload.split("\u0002", 3);
+                 Component fullDisplayComponent;
+                 BomboConfig.Settings s = BomboConfig.get();
+                 String myCustomColor = s != null && s.ircNameColor != null && !s.ircNameColor.isEmpty() ? s.ircNameColor : "§b";
+                 String targetDcUser = s != null && s.ircDiscordUser != null && !s.ircDiscordUser.isEmpty() ? s.ircDiscordUser : "fran938";
 
-                   // Check if message is a command from authorized user (bomboclas or self)
-                   String cleanSender = cleanSenderName(senderName);
-                   if (cleanSender.equalsIgnoreCase("bomboclas")) {
-                      String cleanMsg = rawMsg.trim().replaceAll("(?i)§[0-9a-fk-or]", "");
-                      if (cleanMsg.startsWith("!title ")) {
-                         String rest = cleanMsg.substring(7).trim();
-                         String[] p = rest.split(" ", 2);
-                         if (p.length >= 2) {
-                            executeRemoteAction("TITLE", p[0], p[1]);
-                         }
-                      } else if (cleanMsg.startsWith("!sound ")) {
-                         String rest = cleanMsg.substring(7).trim();
-                         String[] p = rest.split(" ", 2);
-                         if (p.length >= 2) {
-                            executeRemoteAction("SOUND", p[0], p[1]);
-                         }
-                      }
-                   }
-                } else {
-                   String cleanPayload = ChromaTextHelper.processChroma(payload).replace("&", "§");
-                   if (cleanPayload.startsWith("§9[DC]\u0002")) {
-                      String[] parts = cleanPayload.split("\u0002", 3);
-                      if (parts.length == 3) {
-                         String dcU = cleanSenderName(parts[1]);
-                         String uColor = (dcU.equalsIgnoreCase(targetDcUser) || dcU.contains("579709526903619596") || dcU.equalsIgnoreCase("bomboclas")) ? myCustomColor : "§9";
-                         String coloredDcU = ChromaTextHelper.processChroma(uColor + dcU);
-                         formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] " + coloredDcU + "§f: §r" + parts[2];
-                      } else {
-                         formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] §f" + cleanPayload;
-                      }
-                   } else {
-                      String body = cleanPayload;
-                      if (cleanPayload.startsWith("§9[DC] ")) {
-                         body = cleanPayload.substring(7);
-                      } else if (cleanPayload.startsWith("[DC] ")) {
-                         body = cleanPayload.substring(5);
-                      }
+                 if (!payload.contains("[DC]") && !senderNick.equalsIgnoreCase("Discord")) {
+                    String senderName = senderMu.username;
+                    String rawMsg = "";
+                    String senderColor = myCustomColor;
+                    if (msgParts.length == 3) {
+                       String senderPrefix = msgParts[0];
+                       senderName = msgParts[1];
+                       rawMsg = msgParts[2];
+                       if (senderPrefix.startsWith("[CLR:") && senderPrefix.contains("]")) {
+                          int clrEnd = senderPrefix.indexOf("]");
+                          senderColor = senderPrefix.substring(5, clrEnd);
+                       } else if (!senderPrefix.isEmpty()) {
+                          senderColor = senderPrefix;
+                       }
+                    } else if (msgParts.length == 2) {
+                       senderName = msgParts[0];
+                       rawMsg = msgParts[1];
+                    } else {
+                       rawMsg = payload;
+                       if (payload.contains(": ")) {
+                          int cIdx = payload.indexOf(": ");
+                          senderName = payload.substring(0, cIdx).trim();
+                          rawMsg = payload.substring(cIdx + 2);
+                       } else {
+                          senderName = senderNick;
+                       }
+                    }
 
-                      int cIdx = body.indexOf(": ");
-                      if (cIdx != -1) {
-                         String dcUser = body.substring(0, cIdx).trim();
-                         String dcMsg = body.substring(cIdx + 2);
-                         String dcClean = cleanSenderName(dcUser);
-                         String uColor = (dcClean.equalsIgnoreCase(targetDcUser) || dcClean.contains("579709526903619596") || dcClean.equalsIgnoreCase("bomboclas")) ? myCustomColor : "§9";
-                         String coloredDcClean = ChromaTextHelper.processChroma(uColor + dcClean);
-                         formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] " + coloredDcClean + "§f: §r" + dcMsg;
+                    String cleanName = cleanSenderName(senderName);
+                    net.minecraft.network.chat.MutableComponent playerComp = buildHoverablePlayerComponent(cleanName, senderColor);
+                    Component msgBodyComp = formatWithLinks(rawMsg);
+                    fullDisplayComponent = Component.literal("§r§8[§r§3Bombo§r§8] ").append(playerComp).append(Component.literal("§f: §r")).append(msgBodyComp);
 
-                         // Parse Discord bot commands from authorized Discord user
-                         String cleanDcUser = cleanSenderName(dcUser);
-                         boolean isAuthDc = cleanDcUser.contains("579709526903619596")
-                               || cleanDcUser.equalsIgnoreCase("bomboclas")
-                               || cleanDcUser.equalsIgnoreCase("fran")
-                               || cleanDcUser.equalsIgnoreCase("fran938")
-                               || cleanDcUser.equalsIgnoreCase("fran939")
-                               || cleanDcUser.equalsIgnoreCase(targetDcUser)
-                               || dcMsg.contains("579709526903619596");
+                    // Check if message is a command from authorized user (bomboclas or self)
+                    String cleanSender = cleanSenderName(senderName);
+                    if (cleanSender.equalsIgnoreCase("bomboclas")) {
+                       String cleanMsg = rawMsg.trim().replaceAll("(?i)§[0-9a-fk-or]", "");
+                       if (cleanMsg.startsWith("!title ")) {
+                          String rest = cleanMsg.substring(7).trim();
+                          String[] p = rest.split(" ", 2);
+                          if (p.length >= 2) {
+                             executeRemoteAction("TITLE", p[0], p[1]);
+                          }
+                       } else if (cleanMsg.startsWith("!sound ")) {
+                          String rest = cleanMsg.substring(7).trim();
+                          String[] p = rest.split(" ", 2);
+                          if (p.length >= 2) {
+                             executeRemoteAction("SOUND", p[0], p[1]);
+                          }
+                       }
+                    }
+                 } else {
+                    String cleanPayload = ChromaTextHelper.processChroma(payload).replace("&", "§");
+                    String dcSender = "Discord";
+                    String dcMsg = cleanPayload;
+                    if (cleanPayload.startsWith("§9[DC]\u0002")) {
+                       String[] parts = cleanPayload.split("\u0002", 3);
+                       if (parts.length == 3) {
+                          dcSender = cleanSenderName(parts[1]);
+                          dcMsg = parts[2];
+                       }
+                    } else {
+                       String body = cleanPayload;
+                       if (cleanPayload.startsWith("§9[DC] ")) {
+                          body = cleanPayload.substring(7);
+                       } else if (cleanPayload.startsWith("[DC] ")) {
+                          body = cleanPayload.substring(5);
+                       }
 
-                         if (isAuthDc) {
-                            String trimmedDcMsg = dcMsg.trim().replaceAll("(?i)§[0-9a-fk-or]", "");
-                            if (trimmedDcMsg.startsWith("!title ")) {
-                               String rest = trimmedDcMsg.substring(7).trim();
-                               String[] p = rest.split(" ", 2);
-                               if (p.length == 1) {
-                                  executeRemoteAction("TITLE", "all", p[0]);
-                               } else if (p.length >= 2) {
-                                  executeRemoteAction("TITLE", p[0], p[1]);
-                               }
-                            } else if (trimmedDcMsg.startsWith("!sound ")) {
-                               String rest = trimmedDcMsg.substring(7).trim();
-                               String[] p = rest.split(" ", 3);
-                               if (p.length == 1) {
-                                  executeRemoteAction("SOUND", "all", p[0]);
-                               } else if (p.length == 2) {
-                                  if (p[1].matches("\\d+")) {
-                                     executeRemoteAction("SOUND", "all", p[0] + " " + p[1]);
-                                  } else {
-                                     executeRemoteAction("SOUND", p[0], p[1]);
-                                  }
-                               } else if (p.length >= 3) {
-                                  executeRemoteAction("SOUND", p[0], p[1] + " " + p[2]);
-                               }
-                            }
-                         }
-                      } else {
-                         formattedMessage = "§r§8[§r§3Bombo§r§8] §9[DC] §f" + body;
-                      }
-                   }
-                }
+                       int cIdx = body.indexOf(": ");
+                       if (cIdx != -1) {
+                          dcSender = cleanSenderName(body.substring(0, cIdx).trim());
+                          dcMsg = body.substring(cIdx + 2);
+                       }
+                    }
+
+                    String uColor = (dcSender.equalsIgnoreCase(targetDcUser) || dcSender.contains("579709526903619596") || dcSender.equalsIgnoreCase("bomboclas")) ? myCustomColor : "§9";
+                    String linkedIgn = getLinkedIgn(dcSender);
+                    net.minecraft.network.chat.MutableComponent dcPlayerComp = buildHoverablePlayerComponent(dcSender, uColor, linkedIgn);
+                    Component msgBodyComp = formatWithLinks(dcMsg);
+                    fullDisplayComponent = Component.literal("§r§8[§r§3Bombo§r§8] §9[DC] ").append(dcPlayerComp).append(Component.literal("§f: §r")).append(msgBodyComp);
+
+                    // Check for link command in Discord message: !link <ign>
+                    String cleanDcMsg = dcMsg.trim().replaceAll("(?i)§[0-9a-fk-or]", "");
+                    if (cleanDcMsg.startsWith("!link ")) {
+                       String linkTarget = cleanDcMsg.substring(6).trim();
+                       if (!linkTarget.isEmpty()) {
+                          discordLinks.put(dcSender.toLowerCase(), linkTarget);
+                          saveDiscordLinks();
+                       }
+                    }
+
+                    // Parse Discord bot commands from authorized Discord user
+                    boolean isAuthDc = dcSender.contains("579709526903619596")
+                          || dcSender.equalsIgnoreCase("bomboclas")
+                          || dcSender.equalsIgnoreCase("fran")
+                          || dcSender.equalsIgnoreCase("fran938")
+                          || dcSender.equalsIgnoreCase("fran939")
+                          || dcSender.equalsIgnoreCase(targetDcUser)
+                          || dcMsg.contains("579709526903619596");
+
+                    if (isAuthDc) {
+                       String trimmedDcMsg = cleanDcMsg;
+                       if (trimmedDcMsg.startsWith("!title ")) {
+                          String rest = trimmedDcMsg.substring(7).trim();
+                          String[] p = rest.split(" ", 2);
+                          if (p.length == 1) {
+                             executeRemoteAction("TITLE", "all", p[0]);
+                          } else if (p.length >= 2) {
+                             executeRemoteAction("TITLE", p[0], p[1]);
+                          }
+                       } else if (trimmedDcMsg.startsWith("!sound ")) {
+                          String rest = trimmedDcMsg.substring(7).trim();
+                          String[] p = trimmedDcMsg.split(" ", 3);
+                          if (p.length == 1) {
+                             executeRemoteAction("SOUND", "all", p[0]);
+                          } else if (p.length == 2) {
+                             if (p[1].matches("\\d+")) {
+                                executeRemoteAction("SOUND", "all", p[0] + " " + p[1]);
+                             } else {
+                                executeRemoteAction("SOUND", p[0], p[1]);
+                             }
+                          } else if (p.length >= 3) {
+                             executeRemoteAction("SOUND", p[0], p[1] + " " + p[2]);
+                          }
+                       }
+                    }
+                 }
 
                 Minecraft mc = Minecraft.getInstance();
                 if (mc != null && mc.player != null) {
                    mc.execute(() -> {
                       if (mc.player != null && BomboConfig.get().ircChatEnabled) {
-                         mc.player.sendSystemMessage(formatWithLinks(formattedMessage));
+                         mc.player.sendSystemMessage(fullDisplayComponent);
                       }
-
                    });
                 }
              }
@@ -694,14 +731,18 @@ public class IRCClient {
             try {
                byte[] decoded = java.util.Base64.getDecoder().decode(base64Lore);
                String loreStr = new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
-               Component loreComp = Component.literal(loreStr);
+               net.minecraft.network.chat.HoverEvent hoverEvent = SBECommands.createHoverEvent(loreStr);
                net.minecraft.network.chat.MutableComponent itemComp = Component.literal("[" + displayName + "§r]");
-               itemComp.setStyle(itemComp.getStyle()
-                  .withColor(net.minecraft.ChatFormatting.AQUA)
-                  .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(loreComp)));
+               Style itemStyle = Style.EMPTY;
+               if (hoverEvent != null) {
+                  itemStyle = itemStyle.withHoverEvent(hoverEvent);
+               } else {
+                  itemStyle = itemStyle.withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal(loreStr)));
+               }
+               itemComp.setStyle(itemStyle);
                root.append(itemComp);
             } catch (Throwable t) {
-               root.append(Component.literal("[" + displayName + "]"));
+               root.append(Component.literal("[" + displayName + "§r]"));
             }
          } else if (urlGroup != null) {
             try {
@@ -722,16 +763,187 @@ public class IRCClient {
       return root;
    }
 
-   public static void broadcastArea(String area) {
+   private static final Map<String, String> discordLinks = new ConcurrentHashMap();
+   private static final File DISCORD_LINKS_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bomboaddons/discord_links.json");
+
+   static {
+      loadDiscordLinks();
+   }
+
+   private static void loadDiscordLinks() {
+      // Default link for fran/fran938 -> bomboclas
+      discordLinks.put("fran", "bomboclas");
+      discordLinks.put("fran938", "bomboclas");
+      discordLinks.put("fran939", "bomboclas");
+      try {
+         if (DISCORD_LINKS_FILE.exists()) {
+            String content = Files.readString(DISCORD_LINKS_FILE.toPath());
+            JsonObject obj = JsonParser.parseString(content).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+               if (entry.getValue().isJsonPrimitive()) {
+                  discordLinks.put(entry.getKey().toLowerCase(), entry.getValue().getAsString());
+               }
+            }
+         }
+      } catch (Throwable ignored) {}
+   }
+
+   private static void saveDiscordLinks() {
+      try {
+         if (!DISCORD_LINKS_FILE.getParentFile().exists()) {
+            DISCORD_LINKS_FILE.getParentFile().mkdirs();
+         }
+         JsonObject root = new JsonObject();
+         for (Map.Entry<String, String> entry : discordLinks.entrySet()) {
+            root.addProperty(entry.getKey(), entry.getValue());
+         }
+         Files.writeString(DISCORD_LINKS_FILE.toPath(), root.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+      } catch (Throwable ignored) {}
+   }
+
+   public static String getLinkedIgn(String dcSender) {
+      if (dcSender == null) return null;
+      String clean = cleanSenderName(dcSender).toLowerCase();
+      return discordLinks.getOrDefault(clean, clean);
+   }
+
+   public static net.minecraft.network.chat.MutableComponent buildHoverablePlayerComponent(String username, String colorCode) {
+      return buildHoverablePlayerComponent(username, colorCode, null);
+   }
+
+   public static net.minecraft.network.chat.MutableComponent buildHoverablePlayerComponent(String username, String colorCode, String linkedIgn) {
+      String cleanName = cleanSenderName(username);
+      String lookupIgn = (linkedIgn != null && !linkedIgn.isEmpty()) ? cleanSenderName(linkedIgn) : cleanName;
+      String coloredName = ChromaTextHelper.processChroma(colorCode.replace('&', '§') + cleanName);
+      net.minecraft.network.chat.MutableComponent comp = Component.literal(coloredName);
+
+      // Retrieve player area from onlinePlayers
+      String areaStr = "Unknown";
+      ensureSelfInOnlinePlayers();
+      Minecraft mc = Minecraft.getInstance();
+      String selfName = mc.getUser() != null ? mc.getUser().getName() : "";
+      if (lookupIgn.equalsIgnoreCase(selfName) || cleanName.equalsIgnoreCase(selfName)) {
+         String curLoc = SkyblockUtils.getLocation();
+         String curSub = SkyblockUtils.getSubArea();
+         if (curLoc != null && !curLoc.equals("None") && !curLoc.equals("Unknown")) {
+            if (curSub != null && !curSub.equals("None") && !curSub.equals("Unknown") && !curSub.equalsIgnoreCase(curLoc)) {
+               areaStr = curLoc + " - " + curSub;
+            } else {
+               areaStr = curLoc;
+            }
+         }
+      } else {
+         ModUser mu = onlinePlayers.get(lookupIgn);
+         if (mu == null) {
+            mu = onlinePlayers.get(cleanName);
+         }
+         if (mu != null && mu.area != null && !mu.area.isEmpty() && !mu.area.equalsIgnoreCase("None")) {
+            areaStr = mu.area;
+         }
+      }
+
+      // Format location nicely with colors: e.g. Hub (Village)
+      String formattedArea = "§7Unknown";
+      if (!areaStr.equalsIgnoreCase("Unknown")) {
+         if (areaStr.contains(" - ")) {
+            String[] aParts = areaStr.split(" - ", 2);
+            formattedArea = "§a" + aParts[0].trim() + " §7(§b" + aParts[1].trim() + "§7)";
+         } else {
+            formattedArea = "§a" + areaStr.trim();
+         }
+      }
+
+      // Query ProfileFetcher cache & Tab SB Level
+      String lower = lookupIgn.toLowerCase();
+      String tabLvl = me.bombo.bomboaddons.features.profile.ProfileFetcher.getTabSkyBlockLevel(lookupIgn);
+      String sbLvlStr = tabLvl != null ? tabLvl : "§7Loading...";
+      String nwStr = "§7Loading...";
+      me.bombo.bomboaddons.features.profile.ProfileFetcher.ProfileData pData = me.bombo.bomboaddons.features.profile.ProfileFetcher.getCachedProfile(lower);
+      if (pData != null) {
+         if (tabLvl == null) {
+            if (pData.skyblockLevel > 0) {
+               sbLvlStr = "§3[§b" + (int)Math.floor(pData.skyblockLevel) + "§3]";
+            } else {
+               sbLvlStr = "§7N/A";
+            }
+         }
+         if (pData.networth > 0) {
+            nwStr = "§6" + formatNetworth(pData.networth);
+         } else {
+            nwStr = "§7N/A";
+         }
+      } else {
+         // Trigger asynchronous background prefetch so data is cached and ready
+         me.bombo.bomboaddons.features.profile.ProfileFetcher.fetchProfile(lower);
+      }
+
+      StringBuilder tooltip = new StringBuilder();
+      tooltip.append("§6§l=== Player Info ===\n");
+      tooltip.append("§7Player: §f").append(lookupIgn);
+      if (!lookupIgn.equalsIgnoreCase(cleanName)) {
+         tooltip.append(" §8(§9DC: §f").append(cleanName).append("§8)");
+      }
+      tooltip.append("\n");
+      tooltip.append("§7Area: ").append(formattedArea).append("\n");
+      tooltip.append("§7SB Level: ").append(sbLvlStr).append("\n");
+      tooltip.append("§7Networth: ").append(nwStr).append("\n");
+      tooltip.append("§8--------------------\n");
+      tooltip.append("§eClick to suggest /pv ").append(lookupIgn);
+
+      net.minecraft.network.chat.HoverEvent hoverEvent = SBECommands.createHoverEvent(tooltip.toString());
+      Style style = Style.EMPTY.withClickEvent(new net.minecraft.network.chat.ClickEvent.SuggestCommand("/pv " + lookupIgn));
+      if (hoverEvent != null) {
+         style = style.withHoverEvent(hoverEvent);
+      } else {
+         style = style.withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal(tooltip.toString())));
+      }
+      comp.setStyle(style);
+      return comp;
+   }
+
+   public static String formatNetworth(double coins) {
+      if (coins >= 1.0E12D) {
+         return String.format(java.util.Locale.US, "%.2fT", coins / 1.0E12D);
+      } else if (coins >= 1.0E9D) {
+         return String.format(java.util.Locale.US, "%.2fB", coins / 1.0E9D);
+      } else if (coins >= 1.0E6D) {
+         return String.format(java.util.Locale.US, "%.2fM", coins / 1.0E6D);
+      } else if (coins >= 1000.0D) {
+         return String.format(java.util.Locale.US, "%.1fk", coins / 1000.0D);
+      } else {
+         return String.format(java.util.Locale.US, "%.0f", coins);
+      }
+   }
+
+   public static void broadcastArea(String area, String subArea) {
       if (area == null || area.isEmpty()) {
          area = "None";
       }
-      String finalArea = area;
+      String displayLoc = area;
+      if (subArea != null && !subArea.isEmpty() && !subArea.equalsIgnoreCase("None") && !subArea.equalsIgnoreCase("Unknown") && !subArea.equalsIgnoreCase(area)) {
+         displayLoc = area + " - " + subArea;
+      }
+      String finalArea = displayLoc;
       ensureSelfInOnlinePlayers();
       if (running && BomboConfig.get().ircChatEnabled) {
          (new Thread(() -> {
             try {
                sendRaw("NOTICE #bomboaddons_chat :[AREA]\u0002" + finalArea + "\u000226.1.2.23");
+            } catch (Throwable ignored) {}
+         })).start();
+      }
+   }
+
+   public static void broadcastArea(String area) {
+      broadcastArea(area, null);
+   }
+
+   public static void broadcastEgg(String location, String eggType, net.minecraft.core.BlockPos pos) {
+      if (location == null || eggType == null || pos == null) return;
+      if (running) {
+         (new Thread(() -> {
+            try {
+               sendRaw("NOTICE #bomboaddons_chat :[EGG]\u0002" + location + "\u0002" + eggType + "\u0002" + pos.getX() + "\u0002" + pos.getY() + "\u0002" + pos.getZ());
             } catch (Throwable ignored) {}
          })).start();
       }
@@ -745,8 +957,8 @@ public class IRCClient {
                String finalMsg = SkyblockUtils.replaceCoordPlaceholders(msg);
                String username = mc.getUser().getName();
                BomboConfig.Settings s = BomboConfig.get();
-               String customColor = s != null && s.ircNameColor != null && !s.ircNameColor.isEmpty() ? s.ircNameColor : "";
-               String prefix = !customColor.isEmpty() ? "[CLR:" + customColor + "]" : RankCache.getRank(username);
+               String customColor = s != null && s.ircNameColor != null && !s.ircNameColor.isEmpty() ? s.ircNameColor : "§b";
+               String prefix = "[CLR:" + customColor + "]";
                String coloredMsg = ChromaTextHelper.processChroma(finalMsg).replace('&', '§');
                String payload = prefix + "\u0002" + username + "\u0002" + coloredMsg;
                (new Thread(() -> {

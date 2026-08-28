@@ -34,12 +34,16 @@ public abstract class ItemStackMixin {
       cancellable = true
    )
    private void onGetTooltipLines(Item.TooltipContext context, Player player, TooltipFlag tooltipFlag, CallbackInfoReturnable<List<Component>> cir) {
+      ItemStack currentStack = (ItemStack)(Object)this;
+      if (BomboConfig.get().storagePreview && me.bombo.bomboaddons.StoragePreviewManager.isPreviewActive(currentStack)) {
+         cir.setReturnValue(java.util.Collections.emptyList());
+         return;
+      }
       List<Component> originalLines = (List)cir.getReturnValue();
       if (originalLines == null) return;
       List<Component> lines = new java.util.ArrayList<>(originalLines);
       cir.setReturnValue(lines);
 
-      ItemStack currentStack = (ItemStack)(Object)this;
       try {
          me.bombo.bomboaddons.features.SupercraftHelper.appendTooltip(currentStack, lines);
       } catch (Throwable ignored) {}

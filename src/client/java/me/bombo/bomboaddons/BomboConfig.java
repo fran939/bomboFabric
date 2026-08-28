@@ -344,6 +344,7 @@ public class BomboConfig {
       public float dojoShootHudScale = 1.0F;
       public boolean storagePreview = true;
       public boolean storagePreviewDebug = false;
+      public boolean storageOverlay = false;
       public boolean preventSlotSwapOnGuiKeybind = true;
       public boolean autoKismet = false;
       public long kismetThreshold = 3000000L;
@@ -351,12 +352,26 @@ public class BomboConfig {
       public boolean debugReconnect = false;
       public boolean performanceDebug = false;
       public boolean debugKeys = false;
-      public boolean signCalculator = false;
-      public boolean chestClicker = false;
-      public boolean autoClicker = false;
       public boolean clickableChatCommands = true;
       public boolean sbeCommands = false;
       public boolean leftClickEtherwarp = false;
+      public boolean etherwarpBlockOnly = false;
+      public boolean etherwarpFallbackRightClick = false;
+      public int etherwarpMaxDistance = 61;
+
+      public boolean dianaLootshareEnabled = false;
+      public boolean dianaLsInquisitor = true;
+      public boolean dianaLsChampion = true;
+      public boolean dianaLsGaia = true;
+      public boolean dianaLsMinotaur = true;
+      public boolean dianaLsSiamese = true;
+      public boolean dianaLsUserMessage = true;
+      public String dianaLsUserMessageText = "&8[&eDiana&8] &aLootshare ready on &6{mob}&a!";
+      public boolean dianaLsCommand = false;
+      public String dianaLsCommandText = "pc Lootshare Ready on {mob}!";
+      public boolean dianaLsTitle = true;
+      public String dianaLsTitleText = "&e&lLOOTSHARE READY &7({mob})";
+      public boolean dianaLsSound = true;
       public int signCalcX = -1;
       public int signCalcY = -1;
       public int storageGuiCols = 9;
@@ -419,6 +434,8 @@ public class BomboConfig {
       public boolean showLeatherColor = true;
       public boolean showMuseumDonated = true;
       public boolean showSkyblockId = true;
+       public boolean signCalculator = false;
+       public boolean chestClicker = false;
       public Map<String, String> lorePosition = new HashMap<>();
       public Map<String, Integer> loreOrder = new HashMap<>();
 
@@ -465,6 +482,9 @@ public class BomboConfig {
       public int autoFishingMaxDelay = 90;
       public boolean autoFishingSlugMode = false;
       public boolean showBobberTime = false;
+      public int bobberTimeHudX = -1;
+      public int bobberTimeHudY = -1;
+      public float bobberTimeHudScale = 1.0F;
       public float autoFishingSlugDelay = 10.0F;
       public boolean autoFishingSwapEnabled = false;
       public String autoFishingWeaponName = "Hyperion";
@@ -608,7 +628,7 @@ public class BomboConfig {
       public int chatSearchY = -1;
       public float chatSearchScale = 1.0F;
       public int signCalculatorX = -1;
-      public int signCalculatorY = 55;
+      public int signCalculatorY = 40;
       public float signCalculatorScale = 1.0F;
       public boolean corpseEspStyleTracer = false;
       public String customSlotPrefillKey = "";

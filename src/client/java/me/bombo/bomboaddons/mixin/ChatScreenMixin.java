@@ -393,15 +393,26 @@ public abstract class ChatScreenMixin extends Screen {
    )
    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
       // Intercept UP/DOWN arrow on input box to directly move in chat history without Screen focus navigation!
-      if (this.input != null && this.input.isFocused()) {
-         if (event.key() == 265) {
-            this.moveInHistory(-1);
-            cir.setReturnValue(true);
-            return;
-         } else if (event.key() == 264) {
-            this.moveInHistory(1);
-            cir.setReturnValue(true);
-            return;
+      if (this.input != null) {
+         boolean isCtrl = event.hasControlDown() || Minecraft.getInstance().hasControlDown() || InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), 341) || InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), 345);
+         if (event.key() == 86 && isCtrl) { // 86 is GLFW_KEY_V
+            if (me.bombo.bomboaddons.util.ClipboardImageUploader.hasClipboardImage()) {
+               if (me.bombo.bomboaddons.util.ClipboardImageUploader.tryUploadClipboardImage(this.input)) {
+                  cir.setReturnValue(true);
+                  return;
+               }
+            }
+         }
+         if (this.input.isFocused()) {
+            if (event.key() == 265) {
+               this.moveInHistory(-1);
+               cir.setReturnValue(true);
+               return;
+            } else if (event.key() == 264) {
+               this.moveInHistory(1);
+               cir.setReturnValue(true);
+               return;
+            }
          }
       }
       if (this.searchBox != null && this.searchBox.isFocused()) {
@@ -419,5 +430,9 @@ public abstract class ChatScreenMixin extends Screen {
             return;
          }
       }
+   }
+
+   public EditBox bombo$getInput() {
+      return this.input;
    }
 }

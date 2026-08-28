@@ -85,10 +85,13 @@ public class EggFinder {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null) {
          if (mc.player.tickCount % 20 != 0) return;
-         String rawLoc = BomboaddonsClient.currentArea;
+         String rawLoc = SkyblockUtils.getLocation();
+         if (rawLoc == null || rawLoc.isEmpty()) {
+            rawLoc = BomboaddonsClient.currentArea;
+         }
          String currentLoc = getSkyblockerLocationName(rawLoc);
-         if (!Objects.equals(lastLoc, currentLoc)) {
-            LOGGER.info("[EggFinder] Location changed from " + lastLoc + " to " + currentLoc);
+         if (!Objects.equals(lastLoc, currentLoc) || (currentLoc != null && EggWebSocket.getActiveSubscription() == null)) {
+            LOGGER.info("[EggFinder] Location updated to " + currentLoc + " (was " + lastLoc + ", sub: " + EggWebSocket.getActiveSubscription() + ")");
             lastLoc = currentLoc;
             clearWaypoints();
             if (currentLoc != null && VALID_LOCATIONS.contains(currentLoc)) {
@@ -139,9 +142,12 @@ public class EggFinder {
                               added = true;
                            }
                         }
-                        if (added && EggWebSocket.isConnected()) {
-                           EggWebSocket.sendPublish(currentLoc, type.name, eggPos);
-                        }
+                         if (added) {
+                            if (EggWebSocket.isConnected()) {
+                               EggWebSocket.sendPublish(currentLoc, type.name, eggPos);
+                            }
+                            me.bombo.bomboaddons.IRCClient.broadcastEgg(currentLoc, type.name, eggPos);
+                         }
                         break;
                      }
                   }
@@ -206,7 +212,10 @@ public class EggFinder {
 
                   BlockPos eggPos = ((ArmorStand)entities.get(0)).blockPosition().above(2);
                   if (VALID_LOCATIONS.contains(lastLoc)) {
-                     EggWebSocket.sendPublish(lastLoc, eggType.name, eggPos);
+                     if (EggWebSocket.isConnected()) {
+                        EggWebSocket.sendPublish(lastLoc, eggType.name, eggPos);
+                     }
+                     me.bombo.bomboaddons.IRCClient.broadcastEgg(lastLoc, eggType.name, eggPos);
                   }
 
                   if (BomboConfig.get().eggFinderChat) {

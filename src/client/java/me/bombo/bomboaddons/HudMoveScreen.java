@@ -165,6 +165,15 @@ public class HudMoveScreen extends Screen {
          me.bombo.bomboaddons.features.DojoUtilities.drawShootHud(g, dsX, dsY, s.dojoShootHudScale, true);
       }
 
+      if (!s.showOnlyActiveHuds || s.showBobberTime) {
+         int bobberW = (int)(95.0F * s.bobberTimeHudScale);
+         int bobberH = (int)(12.0F * s.bobberTimeHudScale);
+         int bobberX = s.bobberTimeHudX >= 0 ? s.bobberTimeHudX : (this.width / 2 - bobberW / 2);
+         int bobberY = s.bobberTimeHudY >= 0 ? s.bobberTimeHudY : (this.height / 2 + 15);
+         this.renderTarget(g, mouseX, mouseY, bobberX, bobberY, bobberW, bobberH, HudMoveScreen.HudTarget.BOBBER_TIME);
+         AutoFishing.drawBobberHud(g, this.minecraft, "§bBobber Time: 5.0s", bobberX, bobberY, s.bobberTimeHudScale);
+      }
+
       if (!s.showOnlyActiveHuds || s.autoCroesusHud) {
          int croesusW = (int)(220.0F * s.autoCroesusHudScale);
          int croesusH = (int)(110.0F * s.autoCroesusHudScale);
@@ -306,6 +315,8 @@ public class HudMoveScreen extends Screen {
             s.fbWarnTimerScale = newScale;
          } else if (this.resizingTarget == HudMoveScreen.HudTarget.DOJO_SHOOT) {
             s.dojoShootHudScale = newScale;
+         } else if (this.resizingTarget == HudMoveScreen.HudTarget.BOBBER_TIME) {
+            s.bobberTimeHudScale = newScale;
          }
 
          return true;
@@ -376,6 +387,9 @@ public class HudMoveScreen extends Screen {
          } else if (target == HudMoveScreen.HudTarget.DOJO_SHOOT) {
             s.dojoShootHudX = mouseX - this.dragOffsetX;
             s.dojoShootHudY = mouseY - this.dragOffsetY;
+         } else if (target == HudMoveScreen.HudTarget.BOBBER_TIME) {
+            s.bobberTimeHudX = mouseX - this.dragOffsetX;
+            s.bobberTimeHudY = mouseY - this.dragOffsetY;
          }
       }
 
@@ -405,6 +419,7 @@ public class HudMoveScreen extends Screen {
             case SIGN_CALCULATOR -> var10000 = "Sign Calculator";
             case CHAT_SEARCH -> var10000 = "In-Chat Search Bar";
             case FROZEN_BLAZE -> var10000 = "Frozen Blaze AFK Timer";
+            case BOBBER_TIME -> var10000 = "Bobber Time HUD";
             default -> var10000 = target.name();
          }
 
@@ -429,6 +444,18 @@ public class HudMoveScreen extends Screen {
             int signY = s.signCalculatorY;
             if (this.checkHit(mouseX, mouseY, signX, signY, signW, signH)) {
                this.startDragging(HudMoveScreen.HudTarget.SIGN_CALCULATOR, (int)mouseX - signX, (int)mouseY - signY);
+               return true;
+            }
+         }
+         if (!s.showOnlyActiveHuds || s.showBobberTime) {
+            int bobberW = (int)(95.0F * s.bobberTimeHudScale);
+            int bobberH = (int)(12.0F * s.bobberTimeHudScale);
+            int bobberX = s.bobberTimeHudX >= 0 ? s.bobberTimeHudX : (this.width / 2 - bobberW / 2);
+            int bobberY = s.bobberTimeHudY >= 0 ? s.bobberTimeHudY : (this.height / 2 + 15);
+            if (this.startCornerResize(mouseX, mouseY, bobberX, bobberY, bobberW, bobberH, HudMoveScreen.HudTarget.BOBBER_TIME, (double)s.bobberTimeHudScale)) {
+               return true;
+            } else if (this.checkHit(mouseX, mouseY, bobberX, bobberY, bobberW, bobberH)) {
+               this.startDragging(HudMoveScreen.HudTarget.BOBBER_TIME, (int)mouseX - bobberX, (int)mouseY - bobberY);
                return true;
             }
          }
@@ -684,6 +711,11 @@ public class HudMoveScreen extends Screen {
          BomboConfig.save();
          return true;
       }
+      if (this.checkHit(mouseX, mouseY, s.bobberTimeHudX >= 0 ? s.bobberTimeHudX : (this.width / 2 - (int)(95.0F * s.bobberTimeHudScale) / 2), s.bobberTimeHudY >= 0 ? s.bobberTimeHudY : (this.height / 2 + 15), (int)(95.0F * s.bobberTimeHudScale), (int)(12.0F * s.bobberTimeHudScale))) {
+         s.bobberTimeHudScale = (float)Math.max(0.5, Math.min(3.0, (double)s.bobberTimeHudScale + vertical * 0.1));
+         BomboConfig.save();
+         return true;
+      }
       if (this.checkHit(mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, (int)(220.0F * s.autoCroesusHudScale), (int)(110.0F * s.autoCroesusHudScale))) {
                         s.autoCroesusHudScale = (float)Math.max((double)0.5F, Math.min((double)3.0F, (double)s.autoCroesusHudScale + vertical * 0.1));
                         BomboConfig.save();
@@ -812,11 +844,12 @@ public class HudMoveScreen extends Screen {
       SIGN_CALCULATOR,
       CHAT_SEARCH,
       FROZEN_BLAZE,
-      DOJO_SHOOT;
+      DOJO_SHOOT,
+      BOBBER_TIME;
 
       // $FF: synthetic method
       private static HudTarget[] $values() {
-         return new HudTarget[]{DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS, COMPOSTER, COMPOSTER_TIMER, TAB_WIDGET, ITEM_LIST, ITEM_LIST_SEARCH, HOPPITY, ALPHA_TRACKER, AUTO_CROESUS};
+         return new HudTarget[]{DICE, BAKERY, RNG, KUUDRA, PAD_TIMERS, TIMERS, COMPOSTER, COMPOSTER_TIMER, TAB_WIDGET, ITEM_LIST, ITEM_LIST_SEARCH, HOPPITY, ALPHA_TRACKER, AUTO_CROESUS, SIGN_CALCULATOR, CHAT_SEARCH, FROZEN_BLAZE, DOJO_SHOOT, BOBBER_TIME};
       }
    }
 }

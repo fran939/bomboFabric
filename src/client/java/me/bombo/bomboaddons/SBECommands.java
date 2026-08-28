@@ -141,59 +141,42 @@ public class SBECommands {
    }
 
    public static HoverEvent createHoverEventFromComponent(Component content) {
+      if (content == null) return null;
       try {
-         for(Class<?> inner : HoverEvent.class.getDeclaredClasses()) {
-            for(Constructor<?> c : inner.getDeclaredConstructors()) {
-               c.setAccessible(true);
-               if (c.getParameterCount() == 1 && c.getParameterTypes()[0].isAssignableFrom(Component.class)) {
-                  Object showTextInstance = c.newInstance(content);
-                  if (showTextInstance instanceof HoverEvent) {
-                     return (HoverEvent)showTextInstance;
-                  }
-               }
-            }
-         }
-
-         if (!HoverEvent.class.isInterface()) {
-            Class<?> actionClass = null;
-
-            for(Class<?> inner : HoverEvent.class.getDeclaredClasses()) {
-               if (inner.isEnum() || inner.getSimpleName().contains("Action")) {
-                  actionClass = inner;
-                  break;
-               }
-            }
-
-            if (actionClass != null) {
-               Object showTextAction = null;
-
-               for(Field f : actionClass.getDeclaredFields()) {
-                  if (f.getName().contains("SHOW_TEXT") || f.getName().contains("TEXT")) {
-                     f.setAccessible(true);
-                     showTextAction = f.get((Object)null);
-                     break;
-                  }
-               }
-
-               if (showTextAction != null) {
-                  for(Constructor<?> c : HoverEvent.class.getDeclaredConstructors()) {
-                     c.setAccessible(true);
-                     if (c.getParameterCount() == 2) {
-                        return (HoverEvent)c.newInstance(showTextAction, content);
+         return new HoverEvent.ShowText(content);
+      } catch (Throwable t) {
+         try {
+            for (Class<?> inner : HoverEvent.class.getDeclaredClasses()) {
+               for (Constructor<?> c : inner.getDeclaredConstructors()) {
+                  c.setAccessible(true);
+                  if (c.getParameterCount() == 1 && c.getParameterTypes()[0].isAssignableFrom(Component.class)) {
+                     Object showTextInstance = c.newInstance(content);
+                     if (showTextInstance instanceof HoverEvent) {
+                        return (HoverEvent)showTextInstance;
                      }
                   }
                }
             }
-         }
-      } catch (Exception var20) {
-         var20.printStackTrace();
+         } catch (Throwable ignored) {}
       }
-
       return null;
    }
 
    public static HoverEvent createHoverEvent(String text) {
-      return createHoverEventFromComponent(Component.literal(text.replace("&", "§")));
+      if (text == null || text.isEmpty()) return null;
+      String formatted = text.replace("&", "§");
+      if (formatted.contains("\n")) {
+         String[] lines = formatted.split("\n");
+         MutableComponent comp = Component.empty();
+         for (int i = 0; i < lines.length; i++) {
+            comp.append(Component.literal(lines[i]));
+            if (i < lines.length - 1) {
+               comp.append(Component.literal("\n"));
+            }
+         }
+         return createHoverEventFromComponent(comp);
+      }
+      return createHoverEventFromComponent(Component.literal(formatted));
    }
 
    private static void renderNetworth(JsonObject data) {

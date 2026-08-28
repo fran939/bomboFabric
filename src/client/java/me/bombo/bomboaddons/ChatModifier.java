@@ -72,6 +72,13 @@ public class ChatModifier {
    public static boolean shouldHide(String rawText) {
       if (rawText == null || rawText.isEmpty()) return false;
       String cleanText = rawText.replaceAll("§[0-9a-fk-orxX]", "");
+
+      // Auto-filter unwanted spam debug messages from other mods
+      if (cleanText.toLowerCase().contains("not tracking item with creation older than") 
+            || cleanText.toLowerCase().contains("secondspassedsincecreation")) {
+         return true;
+      }
+
       for (ChatRule rule : rules) {
          if (!rule.enabled || !rule.hideMessage || rule.pattern == null || rule.pattern.isEmpty()) continue;
          try {

@@ -104,6 +104,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          ItemListOverlay.searchBox = null;
       }
 
+      if (BomboConfig.get().storageOverlay) {
+         me.bombo.bomboaddons.gui.StorageOverlayManager.onContainerInit((AbstractContainerScreen)(Object)this, this.width, this.height, this.leftPos, this.topPos, this.imageWidth, this.imageHeight);
+      }
+
       if (StopwatchManager.isActive()) {
          int swX = 10;
          int swY = 215;
@@ -237,6 +241,11 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       cancellable = true
    )
    private void onMouseClicked(MouseButtonEvent event, boolean handled, CallbackInfoReturnable<Boolean> cir) {
+      if (me.bombo.bomboaddons.gui.StorageOverlayManager.mouseClicked(event, this.width, this.height)) {
+         cir.setReturnValue(true);
+         return;
+      }
+
       if (ItemListOverlay.searchBox != null) {
          float scale = BomboConfig.get().itemListSearchScale;
          double unscaledX = event.x();
@@ -286,7 +295,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 
          if (BomboConfig.get().hoppityWarp && this.hoveredSlot != null && this.hoveredSlot.hasItem() && event.button() == 0) {
             String screenTitle = net.minecraft.ChatFormatting.stripFormatting(this.getTitle().getString());
-            if (screenTitle != null && screenTitle.toLowerCase(java.util.Locale.ROOT).contains("hoppity")) {
+            if (screenTitle != null && (screenTitle.toLowerCase(java.util.Locale.ROOT).contains("hoppity") || screenTitle.toLowerCase(java.util.Locale.ROOT).contains("rabbit") || screenTitle.toLowerCase(java.util.Locale.ROOT).contains("chocolate"))) {
                ItemStack stack = this.hoveredSlot.getItem();
                String targetWarp = null;
                for (Component c : stack.getTooltipLines(TooltipContext.of(Minecraft.getInstance().level), Minecraft.getInstance().player, Default.NORMAL)) {
@@ -297,19 +306,22 @@ public abstract class AbstractContainerScreenMixin extends Screen {
                   } else if (line.contains("moonglade")) {
                      targetWarp = "moonglade";
                      break;
-                  } else if (line.contains("oasis") || line.contains("mushroom gorge") || line.contains("gorge resident") || line.contains("desert settlement") || line.contains("desert resident")) {
-                     targetWarp = "desert";
+                  } else if (line.contains("lotus") || line.contains("atoll") || line.contains("croak")) {
+                     targetWarp = "lotus";
+                     break;
+                  } else if (line.contains("the park") || line.contains("park resident") || line.contains("birch") || line.contains("spruce") || line.contains("dark thicket") || line.contains("savanna woodland") || line.contains("jungle") || line.contains("howling cave") || line.contains("melancholy")) {
+                     targetWarp = "park";
+                     break;
+                  } else if (line.contains("farming island") || line.contains("the barn") || line.contains("barn resident") || line.contains("windmill") || line.contains("mushroom gorge") || line.contains("gorge resident") || line.contains("desert settlement") || line.contains("desert resident") || line.contains("oasis") || line.contains("trapper's den") || line.contains("trappers den")) {
+                     targetWarp = "farming";
                      break;
                   } else if (line.contains("spider")) {
                      targetWarp = "spider";
                      break;
-                  } else if (line.contains("the barn") || line.contains("barn resident") || line.contains("windmill")) {
-                     targetWarp = "barn";
-                     break;
-                  } else if (line.contains("end resident") || line.contains("dragon's nest") || line.contains("void sepulture") || line.contains("zealot")) {
+                  } else if (line.contains("the end") || line.contains("end resident") || line.contains("dragon's nest") || line.contains("void sepulture") || line.contains("zealot") || line.contains("starborn") || line.contains("dragons nest")) {
                      targetWarp = "end";
                      break;
-                  } else if (line.contains("garden resident")) {
+                  } else if (line.contains("garden resident") || line.contains("garden")) {
                      targetWarp = "garden";
                      break;
                   } else if (line.contains("gold mine")) {
@@ -324,9 +336,6 @@ public abstract class AbstractContainerScreenMixin extends Screen {
                   } else if (line.contains("dwarven") || line.contains("royal mines") || line.contains("cliffside") || line.contains("rampart") || line.contains("the mist") || line.contains("lava springs") || line.contains("mithril deposits")) {
                      targetWarp = "mines";
                      break;
-                  } else if (line.contains("birch") || line.contains("spruce") || line.contains("dark thicket") || line.contains("savanna woodland") || line.contains("jungle") || line.contains("howling cave") || line.contains("park resident")) {
-                     targetWarp = "park";
-                     break;
                   } else if (line.contains("rift") || line.contains("wyld woods") || line.contains("dreadfarm") || line.contains("black lagoon") || line.contains("west village") || line.contains("plaza")) {
                      targetWarp = "wizard";
                      break;
@@ -336,7 +345,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
                   } else if (line.contains("jerry") || line.contains("winter island")) {
                      targetWarp = "jerry";
                      break;
-                  } else if (line.contains("hub resident") || line.contains("village resident") || line.contains("farm resident") || line.contains("forest resident") || line.contains("mountain resident") || line.contains("ruins resident") || line.contains("graveyard resident") || line.contains("coal mine") || line.contains("wilderness") || line.contains("colosseum") || line.contains("highland") || line.contains("castle") || line.contains("canvas")) {
+                  } else if (line.contains("hub resident") || line.contains("village resident") || line.contains("farm resident") || line.contains("forest resident") || line.contains("mountain resident") || line.contains("ruins resident") || line.contains("graveyard resident") || line.contains("coal mine") || line.contains("wilderness") || line.contains("colosseum") || line.contains("highland") || line.contains("castle") || line.contains("canvas") || line.contains("the hub")) {
                      targetWarp = "hub";
                      break;
                   }
@@ -367,6 +376,11 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       cancellable = true
    )
    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+      if (me.bombo.bomboaddons.gui.StorageOverlayManager.keyPressed(event)) {
+         cir.setReturnValue(true);
+         return;
+      }
+
       int focusKey = ClickLogic.getKeyCode(BomboConfig.get().itemListFocusKey);
       if (focusKey != -1 && event.key() == focusKey) {
          if (ItemListOverlay.searchBox != null) {
@@ -448,22 +462,53 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 
    }
 
+   @org.spongepowered.asm.mixin.Unique
+   private Slot lastStoragePreviewSlot = null;
+
+   @Inject(
+      method = {"extractRenderState"},
+      at = {@At("HEAD")}
+   )
+   private void onExtractRenderStateHead(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+      if (BomboConfig.get().storagePreview && me.bombo.bomboaddons.StoragePreviewManager.isPreviewActive(this.hoveredSlot)) {
+         this.lastStoragePreviewSlot = this.hoveredSlot;
+         this.hoveredSlot = null;
+      } else {
+         this.lastStoragePreviewSlot = null;
+      }
+   }
+
    @Inject(
       method = {"extractRenderState"},
       at = {@At("TAIL")}
    )
    private void onExtractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-      if (!(((Object)this) instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen)) {
-         ItemListOverlay.render(graphics, Minecraft.getInstance().font, mouseX, mouseY);
-      }
+      if (BomboConfig.get().storageOverlay && me.bombo.bomboaddons.gui.StorageOverlayManager.isOverlayOpen) {
+         // Draw a solid dark backdrop covering the entire screen / container area behind the overlay
+         graphics.fill(0, 0, this.width, this.height, 0xD0101218);
+      } else {
+         if (!(((Object)this) instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen)) {
+            ItemListOverlay.render(graphics, Minecraft.getInstance().font, mouseX, mouseY);
+         }
 
-      if (StopwatchManager.isActive()) {
-         StopwatchManager.drawStopwatch(graphics, 10, 200);
+         if (StopwatchManager.isActive()) {
+            StopwatchManager.drawStopwatch(graphics, 10, 200);
+         }
       }
 
       AutoCroesus.onContainerTick((AbstractContainerScreen)(Object)this);
       AutoCroesus.onCheckGuiTick((AbstractContainerScreen)(Object)this);
       AutoCroesusHud.renderInContainer(graphics);
+
+      if (BomboConfig.get().storageOverlay) {
+         me.bombo.bomboaddons.gui.StorageOverlayManager.renderOverlay(graphics, Minecraft.getInstance().font, mouseX, mouseY, this.width, this.height);
+      }
+
+      if (BomboConfig.get().storagePreview) {
+         me.bombo.bomboaddons.StoragePreviewManager.onContainerTick((AbstractContainerScreen)(Object)this);
+         Slot previewSlot = this.lastStoragePreviewSlot != null ? this.lastStoragePreviewSlot : this.hoveredSlot;
+         me.bombo.bomboaddons.StoragePreviewManager.renderHoverPreview(graphics, previewSlot, mouseX, mouseY);
+      }
    }
 
    @Inject(

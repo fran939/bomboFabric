@@ -28,6 +28,10 @@ public class AutoFishing {
       if (!BomboConfig.get().autoFishingEnabled) {
          state = AutoFishing.State.IDLE;
       } else if (client.player != null && client.level != null) {
+         if (state == AutoFishing.State.IDLE && (!(client.player.getMainHandItem().getItem() instanceof FishingRodItem) || client.player.fishing == null)) {
+            return;
+         }
+
          if (client.player.fishing != null && client.player.fishing.getId() != lastBobberId) {
             lastBobberId = client.player.fishing.getId();
             debuggedSlugSkip = false;
@@ -37,7 +41,7 @@ public class AutoFishing {
          switch (state.ordinal()) {
             case 0:
             default:
-               if (!(client.player.getMainHandItem().getItem() instanceof FishingRodItem)) {
+               if (!(client.player.getMainHandItem().getItem() instanceof FishingRodItem) || client.player.fishing == null) {
                   return;
                } else {
                   if (now - lastReelTime < 2000L) {
@@ -286,12 +290,25 @@ public class AutoFishing {
             int tickCount = client.player.fishing.tickCount;
             float seconds = (float)tickCount / 20.0F;
             String text = String.format("§bBobber Time: %.1fs", seconds);
-            int screenWidth = client.getWindow().getGuiScaledWidth();
-            int screenHeight = client.getWindow().getGuiScaledHeight();
-            int width = client.font.width(text);
-            graphics.text(client.font, text, screenWidth / 2 - width / 2, screenHeight / 2 + 15, -1, true);
+            drawBobberHud(graphics, client, text, s.bobberTimeHudX, s.bobberTimeHudY, s.bobberTimeHudScale);
          }
+      }
+   }
 
+   public static void drawBobberHud(GuiGraphicsExtractor graphics, Minecraft client, String text, int customX, int customY, float scale) {
+      int screenWidth = client.getWindow().getGuiScaledWidth();
+      int screenHeight = client.getWindow().getGuiScaledHeight();
+      int textW = client.font.width(text);
+      int x = customX >= 0 ? customX : (screenWidth / 2 - textW / 2);
+      int y = customY >= 0 ? customY : (screenHeight / 2 + 15);
+      if (scale != 1.0F && scale > 0.0F) {
+         graphics.pose().pushMatrix();
+         graphics.pose().translate((float)x, (float)y);
+         graphics.pose().scale(scale, scale);
+         graphics.text(client.font, text, 0, 0, -1, true);
+         graphics.pose().popMatrix();
+      } else {
+         graphics.text(client.font, text, x, y, -1, true);
       }
    }
 

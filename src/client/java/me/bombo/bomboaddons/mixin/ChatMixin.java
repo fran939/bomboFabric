@@ -98,6 +98,20 @@ public abstract class ChatMixin implements IChatComponent {
                return;
             }
 
+            if (raw.contains("[SHOW:")) {
+               Component formatted = me.bombo.bomboaddons.IRCClient.formatWithLinks(raw);
+               if (formatted != null && !formatted.getString().equals(raw)) {
+                  ci.cancel();
+                  isFormattingMessage.set(true);
+                  try {
+                     this.addMessage(formatted, signature, source, tag);
+                  } finally {
+                     isFormattingMessage.set(false);
+                  }
+                  return;
+               }
+            }
+
             me.bombo.bomboaddons.BomboaddonsClient.trackCommandFromChat(raw);
 
             String modifiedChat = me.bombo.bomboaddons.ChatModifier.modifyText(raw);
@@ -114,7 +128,14 @@ public abstract class ChatMixin implements IChatComponent {
 
             String chromaProcessed = ChromaTextHelper.processChroma(raw);
             if (!chromaProcessed.equals(raw)) {
-               raw = chromaProcessed;
+               ci.cancel();
+               isFormattingMessage.set(true);
+               try {
+                  this.addMessage(Component.literal(chromaProcessed), signature, source, tag);
+               } finally {
+                  isFormattingMessage.set(false);
+               }
+               return;
             }
 
             if (BomboConfig.get().clickableChatCommands) {

@@ -75,11 +75,11 @@ public abstract class SignEditMixin {
          if (isExpr) {
             String preview = "§a" + SignCalculator.getPreviewText(currentLineText);
             int w = mc.font.width(preview);
-            guiGraphics.text(mc.font, preview, baseX - w / 2, baseY, -1, true);
+            guiGraphics.text(mc.font, preview, baseX - w / 2, baseY + 16, -1, true);
          } else if (numberLines > 1 && !Double.isNaN(currentVal)) {
             String preview = "§b" + SignCalculator.formatResultOnly(currentVal);
             int w = mc.font.width(preview);
-            guiGraphics.text(mc.font, preview, baseX - w / 2, baseY, -1, true);
+            guiGraphics.text(mc.font, preview, baseX - w / 2, baseY + 16, -1, true);
          }
       }
    }

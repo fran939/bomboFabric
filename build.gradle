@@ -74,6 +74,8 @@ java {
 
 jar {
 	inputs.property "archivesName", project.base.archivesName
+	from sourceSets.main.output
+	from sourceSets.client.output
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 

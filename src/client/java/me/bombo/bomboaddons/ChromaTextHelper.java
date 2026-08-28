@@ -7,16 +7,10 @@ public class ChromaTextHelper {
    private static final char[] RAINBOW = new char[]{'c', '6', 'e', 'a', 'b', '9', 'd', '5'};
    public static int tickCounter = 0;
    public static int chromaGlyphIndex = 0;
-   private static int lastTickForReset = 0;
-
    public static int getAnimatedColor(int glyphIndex) {
-      if (tickCounter != lastTickForReset) {
-         chromaGlyphIndex = 0;
-         lastTickForReset = tickCounter;
-      }
-
-      int offset = tickCounter + glyphIndex;
-      return hsvToArgb((float)(offset % 360) / 360.0F);
+      long time = System.currentTimeMillis();
+      float hue = ((time / 10L) + (glyphIndex * 15L)) % 360L / 360.0F;
+      return hsvToArgb(hue);
    }
 
    static int hsvToArgb(float hue) {
@@ -66,12 +60,59 @@ public class ChromaTextHelper {
 
    public static String processChroma(String message) {
       if (message != null && !message.isEmpty()) {
+         message = processHexColors(message);
+         // Support &w(message) and &q(message) parenthetical syntax
+         message = processParenthesesBlocks(message, "&w", true);
+         message = processParenthesesBlocks(message, "&q", false);
          message = processBlocks(message, "&w", true);
          message = processBlocks(message, "&q", false);
          return message;
       } else {
          return message;
       }
+   }
+
+   public static String processHexColors(String text) {
+      if (text == null || !text.contains("#")) return text;
+      java.util.regex.Matcher m = java.util.regex.Pattern.compile("#([0-9a-fA-F]{6})").matcher(text);
+      StringBuilder sb = new StringBuilder();
+      int last = 0;
+      while (m.find()) {
+         sb.append(text, last, m.start());
+         String hex = m.group(1);
+         sb.append("§x");
+         for (int i = 0; i < 6; i++) {
+            sb.append('§').append(Character.toLowerCase(hex.charAt(i)));
+         }
+         sb.append(m.group(0)); // Append the text itself (e.g. #3E05AF) colored with the hex code!
+         last = m.end();
+      }
+      sb.append(text.substring(last));
+      return sb.toString();
+   }
+
+   private static String processParenthesesBlocks(String msg, String code, boolean wave) {
+      String target = code + "(";
+      StringBuilder result = new StringBuilder();
+      int end;
+      for (int i = 0; i < msg.length(); i = end) {
+         int idx = msg.indexOf(target, i);
+         if (idx == -1) {
+            result.append(msg.substring(i));
+            break;
+         }
+         result.append(msg, i, idx);
+         int start = idx + target.length();
+         int closeParen = msg.indexOf(")", start);
+         if (closeParen == -1) {
+            result.append(msg.substring(idx));
+            break;
+         }
+         String inner = msg.substring(start, closeParen);
+         result.append(wave ? applyMarker(inner) : applyStaticRainbow(inner)).append("§r");
+         end = closeParen + 1;
+      }
+      return result.toString();
    }
 
    private static String processBlocks(String msg, String code, boolean wave) {
@@ -99,12 +140,12 @@ public class ChromaTextHelper {
       if (text != null && !text.isEmpty()) {
          StringBuilder sb = new StringBuilder();
 
-         for(int i = 0; i < text.length(); ++i) {
+         for (int i = 0; i < text.length(); ++i) {
             char c = text.charAt(i);
             if (c == ' ') {
                sb.append(c);
             } else {
-               sb.append("§x§f§f§0§0§f§e").append(c);
+               sb.append(MARKER_HEX).append(c);
             }
          }
 

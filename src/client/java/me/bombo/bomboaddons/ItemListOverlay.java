@@ -69,12 +69,9 @@ public class ItemListOverlay {
          String mathQ = q.replaceAll("(?<=\\d)\\s*[xX]\\s*(?=\\d)", "*");
          SkyblockCalculator.EvaluationResult res = SkyblockCalculator.evaluate(mathQ);
          if (res.error == null) {
-            String resStr = String.valueOf(res.value);
-            if (resStr.endsWith(".0")) {
-               resStr = resStr.substring(0, resStr.length() - 2);
-            }
-
-            calcPreview = q + " = " + resStr;
+            String formattedNumber = res.value == (double)((long)res.value) ? String.format("%,d", (long)res.value) : String.format("%,.2f", res.value);
+            String shortPrice = LowestBinManager.formatPrice(res.value).toLowerCase();
+            calcPreview = q + " = " + formattedNumber + " (" + shortPrice + ")";
          } else {
             calcPreview = null;
          }
@@ -144,7 +141,20 @@ public class ItemListOverlay {
          boolean hideVanilla = BomboConfig.get().itemListHideVanilla;
 
          for(SkyblockItemManager.SkyblockItemInfo info : allItems.values()) {
-            if ((!hideVanilla || !info.vanilla) && (info.id == null || (!hideSkins || !info.id.contains("_SKIN") && !info.id.contains("DYE") && !info.id.endsWith("_SHIMMER") && !info.id.endsWith("_PERSONALITY") && (info.name == null || !info.name.toLowerCase().contains(" skin") && !info.name.toLowerCase().contains(" dye"))) && (!hideNPCs || !info.id.contains("_NPC")) && (!hideMobs || !info.id.endsWith("_MONSTER") && !info.id.endsWith("_BOSS") && !info.id.endsWith("_MINIBOSS") && (info.name == null || !info.name.toLowerCase().contains("sea creature")))) && (lowerQuery.isEmpty() || info.name != null && info.name.toLowerCase().contains(lowerQuery) || info.id != null && info.id.toLowerCase().contains(lowerQuery))) {
+            boolean matchesQuery = lowerQuery.isEmpty() || (info.name != null && info.name.toLowerCase().contains(lowerQuery)) || (info.id != null && info.id.toLowerCase().contains(lowerQuery));
+            if (!matchesQuery && info.lore != null && !lowerQuery.isEmpty()) {
+               for (Component lineComp : info.lore) {
+                  if (lineComp != null) {
+                     String lineStr = lineComp.getString().toLowerCase();
+                     if (lineStr.contains(lowerQuery)) {
+                        matchesQuery = true;
+                        break;
+                     }
+                  }
+               }
+            }
+
+            if ((!hideVanilla || !info.vanilla) && (info.id == null || (!hideSkins || !info.id.contains("_SKIN") && !info.id.contains("DYE") && !info.id.endsWith("_SHIMMER") && !info.id.endsWith("_PERSONALITY") && (info.name == null || !info.name.toLowerCase().contains(" skin") && !info.name.toLowerCase().contains(" dye"))) && (!hideNPCs || !info.id.contains("_NPC")) && (!hideMobs || !info.id.endsWith("_MONSTER") && !info.id.endsWith("_BOSS") && !info.id.endsWith("_MINIBOSS") && (info.name == null || !info.name.toLowerCase().contains("sea creature")))) && matchesQuery) {
                String baseId = info.id;
                if (baseId != null) {
                   if (baseId.contains(";")) {

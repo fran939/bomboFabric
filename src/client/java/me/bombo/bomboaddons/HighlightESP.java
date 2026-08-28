@@ -287,7 +287,7 @@ public class HighlightESP {
             EntityHighlightInfo info = getHighlightInfo(entity);
             if (info == null || !info.isTracer)
                continue;
-            if (s.hideCheats && !info.showInvisible && !HighlightESP.isEntityVisibleCached(mc, entity)) {
+            if (s.hideCheats && (entity.isInvisible() || !HighlightESP.isEntityVisibleCached(mc, entity))) {
                continue;
             }
 

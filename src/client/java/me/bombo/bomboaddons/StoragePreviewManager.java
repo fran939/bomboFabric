@@ -348,19 +348,24 @@ public class StoragePreviewManager {
       }
    }
 
+   public static boolean isPreviewActive(ItemStack stack) {
+      if (!BomboConfig.get().storagePreview || stack == null || stack.isEmpty()) {
+         return false;
+      }
+      String hoverName = stack.getHoverName().getString().replaceAll("§.", "").trim();
+      String storageKey = identifyStorageKeyFromItem(hoverName, stack);
+      if (storageKey == null) {
+         return false;
+      }
+      InventorySnapshot snapshot = findMatchingSnapshot(storageKey);
+      return snapshot != null && !snapshot.itemData.isEmpty();
+   }
+
    public static boolean isPreviewActive(Slot hoveredSlot) {
       if (!BomboConfig.get().storagePreview) {
          return false;
       } else if (hoveredSlot != null && hoveredSlot.hasItem()) {
-         ItemStack stack = hoveredSlot.getItem();
-         String hoverName = stack.getHoverName().getString().replaceAll("§.", "").trim();
-         String storageKey = identifyStorageKeyFromItem(hoverName, stack);
-         if (storageKey == null) {
-            return false;
-         } else {
-            InventorySnapshot snapshot = findMatchingSnapshot(storageKey);
-            return snapshot != null && !snapshot.itemData.isEmpty();
-         }
+         return isPreviewActive(hoveredSlot.getItem());
       } else {
          return false;
       }
@@ -394,7 +399,7 @@ public class StoragePreviewManager {
       if (lower.contains("ender chest")) {
          int pageNum = extractPageNumber(hoverName);
          return pageNum != -1 ? "enderchest" + pageNum : "enderchest1";
-      } else if (lower.contains("backpack")) {
+      } else if (lower.contains("backpack") || lower.contains("greater backpack") || lower.contains("jumbo backpack") || lower.contains("small backpack") || lower.contains("medium backpack") || lower.contains("large backpack")) {
          int slotNum = extractSlotNumber(hoverName);
          return slotNum != -1 ? "backpackslot" + slotNum : hoverName;
       } else {
@@ -403,11 +408,18 @@ public class StoragePreviewManager {
    }
 
    private static int extractSlotNumber(String text) {
-      Matcher m = Pattern.compile("(?:slot\\s*#?\\s*|backpack\\s+)(\\d+)", 2).matcher(text);
+      Matcher m = Pattern.compile("(?:slot\\s*#?\\s*|backpack\\s+(?:slot\\s*#?\\s*)?)(\\d+)", 2).matcher(text);
       if (m.find()) {
          try {
             return Integer.parseInt(m.group(1));
          } catch (NumberFormatException var3) {
+         }
+      }
+      Matcher m2 = Pattern.compile("#(\\d+)").matcher(text);
+      if (m2.find()) {
+         try {
+            return Integer.parseInt(m2.group(1));
+         } catch (NumberFormatException var4) {
          }
       }
 
