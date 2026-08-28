@@ -348,8 +348,21 @@ public class StoragePreviewManager {
       }
    }
 
+   public static boolean isStorageScreen() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.screen instanceof AbstractContainerScreen<?> containerScreen) {
+         String title = containerScreen.getTitle().getString().replaceAll("§.", "").trim().toLowerCase();
+         // Check if it's the Storage / Ender Chest / Backpack / Vault menu
+         return title.contains("storage") || title.contains("ender chest") || title.contains("backpack") || title.contains("vault");
+      }
+      return false;
+   }
+
    public static boolean isPreviewActive(ItemStack stack) {
       if (!BomboConfig.get().storagePreview || stack == null || stack.isEmpty()) {
+         return false;
+      }
+      if (!isStorageScreen()) {
          return false;
       }
       String hoverName = stack.getHoverName().getString().replaceAll("§.", "").trim();
