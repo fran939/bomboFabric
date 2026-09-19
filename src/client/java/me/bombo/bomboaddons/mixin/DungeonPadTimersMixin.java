@@ -8,14 +8,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ClientCommonPacketListenerImpl.class)
+@Mixin({ClientCommonPacketListenerImpl.class})
 public class DungeonPadTimersMixin {
-    @Inject(method = "handlePing", at = @At("HEAD"))
-    private void onHandlePing(ClientboundPingPacket packet, CallbackInfo ci) {
-        try {
-            DungeonPadTimers.onPingPacket(packet.getId());
-        } catch (Throwable t) {
-            // Prevent crash
-        }
-    }
+   @Inject(
+      method = {"handlePing"},
+      at = {@At("HEAD")}
+   )
+   private void onHandlePing(ClientboundPingPacket packet, CallbackInfo ci) {
+      try {
+         DungeonPadTimers.onPingPacket(packet.getId());
+      } catch (Throwable var4) {
+      }
+
+   }
 }

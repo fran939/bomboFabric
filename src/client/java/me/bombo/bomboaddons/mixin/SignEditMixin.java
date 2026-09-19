@@ -1,7 +1,6 @@
 package me.bombo.bomboaddons.mixin;
 
 import me.bombo.bomboaddons.BomboConfig;
-import me.bombo.bomboaddons.Bomboaddons;
 import me.bombo.bomboaddons.SignCalculator;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -24,20 +23,20 @@ public abstract class SignEditMixin {
    @Shadow
    private int line;
 
-
    @Inject(
-      method = {"onClose"},
-      at = {@At("HEAD")}
+      method = {"onDone", "onClose"},
+      at = {@At("HEAD")},
+      require = 0
    )
-   private void onClose(CallbackInfo ci) {
+   private void onDoneOrClose(CallbackInfo ci) {
       if (BomboConfig.get().signCalculator) {
          for(int i = 0; i < this.messages.length; ++i) {
             if (this.messages[i] != null && !this.messages[i].isEmpty()) {
                this.messages[i] = SignCalculator.calculate(this.messages[i]);
             }
          }
-
       }
+
    }
 
    @Inject(
@@ -48,43 +47,56 @@ public abstract class SignEditMixin {
       if (BomboConfig.get().signCalculator) {
          Minecraft mc = Minecraft.getInstance();
          int screenWidth = mc.getWindow().getGuiScaledWidth();
-         int baseX = screenWidth / 2;
-         int baseY = 55;
+         BomboConfig.Settings s = BomboConfig.get();
+         float scale = s.signCalculatorScale > 0.0F ? s.signCalculatorScale : 1.0F;
+         int baseX = (s.signCalculatorX >= 0) ? s.signCalculatorX : (screenWidth / 2 - 75);
+         int baseY = (s.signCalculatorY >= 0) ? s.signCalculatorY : 80;
+
          String currentLineText = this.messages[this.line];
-         String totalText;
-         int totalWidth;
-         if (currentLineText != null && !currentLineText.isEmpty() && SignCalculator.isPotentialExpression(currentLineText)) {
-            String preview = SignCalculator.getPreviewText(currentLineText);
-            boolean isValid = SignCalculator.isValidExpression(currentLineText);
-            String color = isValid ? "§a" : "§c";
-            if (!isValid) {
-               preview = currentLineText + " = ?";
-            }
+         double currentVal = (currentLineText != null && !currentLineText.trim().isEmpty()) ? SignCalculator.parseNumberOrExpr(currentLineText) : Double.NaN;
+         boolean isExpr = currentLineText != null && SignCalculator.isValidExpression(currentLineText);
 
-            totalText = color + preview;
-            totalWidth = mc.font.width(totalText);
-            guiGraphics.text(mc.font, totalText, baseX - totalWidth / 2, baseY, -1, true);
-         }
+         double total = 0.0;
+         int numberLines = 0;
 
-         double total = 0.0D;
-         boolean hasAnyExpression = false;
-         String[] var20 = this.messages;
-         totalWidth = var20.length;
-
-         for(int var16 = 0; var16 < totalWidth; ++var16) {
-            String msg = var20[var16];
-            if (SignCalculator.isValidExpression(msg)) {
-               total += SignCalculator.getResult(msg);
-               hasAnyExpression = true;
+         for (String msg : this.messages) {
+            double val = SignCalculator.parseNumberOrExpr(msg);
+            if (!Double.isNaN(val)) {
+               total += val;
+               numberLines++;
             }
          }
 
-         if (hasAnyExpression) {
-            totalText = "§6Total: §e" + SignCalculator.formatResultOnly(total);
-            totalWidth = mc.font.width(totalText);
-            guiGraphics.text(mc.font, totalText, baseX - totalWidth / 2, baseY - 30, -1, true);
+         guiGraphics.pose().pushMatrix();
+         if (scale != 1.0F && scale > 0.0F) {
+            guiGraphics.pose().scale(scale, scale);
+            int drawX = (int) ((float) baseX / scale);
+            int drawY = (int) ((float) baseY / scale);
+            if (numberLines > 0) {
+               String totalText = "§6Total: §e" + SignCalculator.formatResultOnly(total);
+               guiGraphics.text(mc.font, totalText, drawX, drawY, -1, true);
+            }
+            if (isExpr) {
+               String preview = "§a" + SignCalculator.getPreviewText(currentLineText);
+               guiGraphics.text(mc.font, preview, drawX, drawY + 12, -1, true);
+            } else if (numberLines > 1 && !Double.isNaN(currentVal)) {
+               String preview = "§b" + SignCalculator.formatResultOnly(currentVal);
+               guiGraphics.text(mc.font, preview, drawX, drawY + 12, -1, true);
+            }
+         } else {
+            if (numberLines > 0) {
+               String totalText = "§6Total: §e" + SignCalculator.formatResultOnly(total);
+               guiGraphics.text(mc.font, totalText, baseX, baseY, -1, true);
+            }
+            if (isExpr) {
+               String preview = "§a" + SignCalculator.getPreviewText(currentLineText);
+               guiGraphics.text(mc.font, preview, baseX, baseY + 12, -1, true);
+            } else if (numberLines > 1 && !Double.isNaN(currentVal)) {
+               String preview = "§b" + SignCalculator.formatResultOnly(currentVal);
+               guiGraphics.text(mc.font, preview, baseX, baseY + 12, -1, true);
+            }
          }
-
+         guiGraphics.pose().popMatrix();
       }
    }
 }

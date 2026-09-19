@@ -1,74 +1,147 @@
 package me.bombo.bomboaddons.mixin;
 
+import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.ItemListOverlay;
+import me.bombo.bomboaddons.LF;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.input.CharacterEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
-@Mixin(EditBox.class)
+@Mixin({EditBox.class})
 public abstract class EditBoxMixin {
-    @Shadow public abstract String getValue();
-    @Shadow public abstract void setValue(String string);
-    @Shadow public abstract int getCursorPosition();
-    @Shadow public abstract void setCursorPosition(int i);
+   private boolean insertingCopied = false;
 
-    @Inject(method = "charTyped", at = @At("RETURN"))
-    private void onCharTyped(CharacterEvent characterEvent, CallbackInfoReturnable<Boolean> cir) {
-        // If the character wasn't consumed (not active, not focused, or not allowed), return
-        if (!cir.getReturnValue()) return;
-        
-        String text = this.getValue();
-        if (text != null && me.bombo.bomboaddons.BomboConfig.get().ignoreCapsLock) {
+   @Shadow
+   public abstract String getValue();
+
+   @Shadow
+   public abstract void setValue(String var1);
+
+   @Shadow
+   public abstract int getCursorPosition();
+
+   @Shadow
+   public abstract void setCursorPosition(int var1);
+
+   @Shadow
+   public abstract void insertText(String var1);
+
+   @Inject(
+      method = {"extractWidgetRenderState"},
+      at = {@At("HEAD")}
+   )
+   private void onRenderWidgetHead(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+      if ((Object)this == ItemListOverlay.searchBox) {
+         float scale = BomboConfig.get().itemListSearchScale;
+         if (scale != 1.0F) {
+            graphics.pose().pushMatrix();
+            int tx = ((AbstractWidget)(Object)this).getX();
+            int ty = ((AbstractWidget)(Object)this).getY();
+            graphics.pose().translate((float)tx, (float)ty);
+            graphics.pose().scale(scale, scale);
+            graphics.pose().translate((float)(-tx), (float)(-ty));
+         }
+      }
+
+   }
+
+   @Inject(
+      method = {"extractWidgetRenderState"},
+      at = {@At("RETURN")}
+   )
+   private void onRenderWidgetReturn(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+      if ((Object)this == ItemListOverlay.searchBox) {
+         float scale = BomboConfig.get().itemListSearchScale;
+         if (scale != 1.0F) {
+            graphics.pose().popMatrix();
+         }
+      }
+
+   }
+
+   @Inject(
+      method = {"insertText"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onInsertText(String text, CallbackInfo ci) {
+      if (!this.insertingCopied) {
+         // If user is pasting into chat box or an edit box and an image is present in clipboard
+         if ((text == null || text.isEmpty()) && (Minecraft.getInstance().gui.screen() instanceof ChatScreen) && me.bombo.bomboaddons.util.ClipboardImageUploader.hasClipboardImage()) {
+            if (me.bombo.bomboaddons.util.ClipboardImageUploader.tryUploadClipboardImage((EditBox)(Object)this)) {
+               ci.cancel();
+               return;
+            }
+         }
+
+         if (text != null && BomboConfig.get().ignoreCapsLock && text.length() == 1) {
             boolean shift = Minecraft.getInstance().hasShiftDown();
-            
-            // If shift is NOT down, we ensure the text is lowercase.
-            if (!shift) {
-                if (!text.equals(text.toLowerCase())) {
-                    int cursor = this.getCursorPosition();
-                    this.setValue(text.toLowerCase());
-                    this.setCursorPosition(cursor);
-                }
+            if (!shift && !text.equals(text.toLowerCase())) {
+               ci.cancel();
+               this.insertingCopied = true;
+
+               try {
+                  this.insertText(text.toLowerCase().replace('§', '&'));
+               } finally {
+                  this.insertingCopied = false;
+               }
+
+               return;
             }
-        }
-    }
+         }
 
-    @Shadow public abstract void insertText(String string);
-
-    private boolean insertingCopied = false;
-
-    @Inject(method = "insertText", at = @At("HEAD"), cancellable = true)
-    private void onInsertText(String text, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
-        if (insertingCopied) return;
-        if (text != null && text.contains("§")) {
+         if (text != null && text.contains("§")) {
             ci.cancel();
-            insertingCopied = true;
+            this.insertingCopied = true;
+
             try {
-                this.insertText(text.replace('§', '&'));
+               this.insertText(text.replace('§', '&'));
             } finally {
-                insertingCopied = false;
+               this.insertingCopied = false;
             }
-        }
-    }
+         }
 
+      }
+   }
 
-
-    @Inject(method = "setValue", at = @At("HEAD"))
-    private void onSetValue(String value, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
-        if (value != null) {
-            String lower = value.toLowerCase();
-            if (lower.startsWith("/lb") || lower.startsWith("/lfc")) {
-                if (Minecraft.getInstance().screen instanceof ChatScreen) {
-                    me.bombo.bomboaddons.LF.preFetchSelf();
-                }
+   @Inject(
+      method = {"keyPressed"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onKeyPressed(net.minecraft.client.input.KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+      if (event.key() == 86 && (event.hasControlDown() || Minecraft.getInstance().hasControlDown())) { // GLFW_KEY_V
+         if (me.bombo.bomboaddons.util.ClipboardImageUploader.hasClipboardImage()) {
+            if (me.bombo.bomboaddons.util.ClipboardImageUploader.tryUploadClipboardImage((EditBox)(Object)this)) {
+               cir.setReturnValue(true);
+               return;
             }
-        }
-    }
+         }
+      }
+   }
+
+   @Inject(
+      method = {"setValue"},
+      at = {@At("HEAD")}
+   )
+   private void onSetValue(String value, CallbackInfo ci) {
+      if (value != null) {
+         String lower = value.toLowerCase();
+         if ((lower.startsWith("/lb") || lower.startsWith("/lfc")) && Minecraft.getInstance().gui.screen() instanceof ChatScreen) {
+            LF.preFetchSelf();
+         }
+      }
+
+   }
 }

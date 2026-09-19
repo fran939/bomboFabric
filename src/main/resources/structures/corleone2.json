@@ -1,0 +1,5227 @@
+{
+  "name": "corleone2",
+  "sizeX": 22,
+  "sizeY": 11,
+  "sizeZ": 31,
+  "anchorBlockId": "light_gray_terracotta",
+  "anchorRelX": -2,
+  "anchorRelY": 0,
+  "anchorRelZ": -2,
+  "blocks": [
+    {
+      "relX": -10,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 2,
+      "relZ": 3,
+      "blockId": "lime_stained_glass_pane",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": 4,
+      "blockId": "lime_stained_glass_pane",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -10,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 0,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 1,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 2,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -9,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 0,
+      "relZ": 3,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 0,
+      "relZ": 5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 1,
+      "relZ": 3,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 2,
+      "relZ": 3,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 4,
+      "relZ": 4,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 5,
+      "relZ": 4,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -8,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 2,
+      "relZ": 4,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -7,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -6,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -5,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 0,
+      "relZ": -9,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 0,
+      "relZ": -8,
+      "blockId": "ladder",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 0,
+      "relZ": -7,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 1,
+      "relZ": -9,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 1,
+      "relZ": -8,
+      "blockId": "ladder",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 1,
+      "relZ": -7,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 2,
+      "relZ": -9,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 2,
+      "relZ": -8,
+      "blockId": "ladder",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 2,
+      "relZ": -7,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -9,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -8,
+      "blockId": "ladder",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": -7,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 4,
+      "relZ": -9,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 4,
+      "relZ": -8,
+      "blockId": "ladder",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 4,
+      "relZ": -7,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 5,
+      "relZ": -9,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 5,
+      "relZ": -8,
+      "blockId": "ladder",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 5,
+      "relZ": -7,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "ladder",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "spruce_log",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -4,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -15,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -14,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 0,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 1,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 2,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 3,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -3,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -12,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -11,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -4,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -3,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 3,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 4,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 5,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -15,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 0,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 3,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -2,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": 3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": 3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": 3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -12,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -4,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": 3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": 4,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -15,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 0,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 3,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 7,
+      "relZ": -13,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": -1,
+      "relY": 8,
+      "relZ": -13,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": 4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": 4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": 4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -15,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 0,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": -14,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": -13,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 7,
+      "relZ": -12,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": -14,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": 0,
+      "relY": 8,
+      "relZ": -12,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": 3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": 3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": 3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -13,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -12,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -11,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -4,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -3,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": 5,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -15,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 0,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 7,
+      "relZ": -13,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": 1,
+      "relY": 8,
+      "relZ": -13,
+      "blockId": "stone_brick_stairs",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -14,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -13,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -12,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -11,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -10,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -9,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -8,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -5,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -4,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -3,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": -1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": 0,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": 1,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": 2,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": 6,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -15,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 0,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 1,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 3,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 2,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -15,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -14,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -13,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -12,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -11,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -10,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -9,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -8,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -7,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -4,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -3,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -2,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": -1,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 0,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 1,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 2,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 3,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 4,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 5,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 3,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 4,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 0,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 1,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 5,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 1,
+      "relZ": -6,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 1,
+      "relZ": -4,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 2,
+      "relZ": -6,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 4,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 4,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 5,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 6,
+      "relY": 7,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 0,
+      "relZ": -7,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 0,
+      "relZ": -3,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 1,
+      "relZ": -7,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 1,
+      "relZ": -3,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 2,
+      "relZ": -3,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 3,
+      "relZ": -3,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 4,
+      "relZ": -6,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 4,
+      "relZ": -3,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 5,
+      "relZ": -6,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": -6,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 8,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 9,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 7,
+      "relY": 10,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 0,
+      "relZ": -6,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 0,
+      "relZ": -4,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 1,
+      "relZ": -6,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 1,
+      "relZ": -4,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 3,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 4,
+      "relZ": -5,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 8,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 3,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 9,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 0,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 1,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 2,
+      "relZ": 8,
+      "blockId": "polished_granite",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 10,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 0,
+      "relZ": -14,
+      "blockId": "oak_fence",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 0,
+      "relZ": -13,
+      "blockId": "oak_fence",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 0,
+      "relZ": -12,
+      "blockId": "oak_fence",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 0,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 1,
+      "relZ": -14,
+      "blockId": "torch",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 1,
+      "relZ": -13,
+      "blockId": "oak_fence",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 1,
+      "relZ": -12,
+      "blockId": "oak_fence",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 1,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 2,
+      "relZ": -13,
+      "blockId": "torch",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 2,
+      "relZ": -12,
+      "blockId": "oak_fence",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 2,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 3,
+      "relZ": -12,
+      "blockId": "torch",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 3,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 4,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 5,
+      "relZ": 7,
+      "blockId": "light_gray_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 6,
+      "blockId": "stone_bricks",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 7,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 8,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 9,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 10,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 11,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 12,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 13,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 14,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 6,
+      "relZ": 15,
+      "blockId": "cyan_terracotta",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 7,
+      "relZ": 8,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 7,
+      "relZ": 14,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 8,
+      "relZ": 8,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 8,
+      "relZ": 14,
+      "blockId": "cobblestone_wall",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 9,
+      "relZ": 8,
+      "blockId": "torch",
+      "matched": true
+    },
+    {
+      "relX": 11,
+      "relY": 9,
+      "relZ": 14,
+      "blockId": "torch",
+      "matched": true
+    }
+  ]
+}

@@ -1,439 +1,287 @@
 package me.bombo.bomboaddons;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class ParticleESP {
+   public static String typeFilter = null;
 
-    /** Optional type filter — only show particles whose name contains this string (case-insensitive). Null = show all. */
-    public static String typeFilter = null;
-
-    // -----------------------------------------------------------------------
-    // LevelRenderEvents.AFTER_ENTITIES render hook
-    // -----------------------------------------------------------------------
-    public static void render(LevelRenderContext context) {
-        BomboConfig.Settings settings = BomboConfig.get();
-        if (!ParticleTracker.espEnabled && !settings.debugParticles && !settings.particleHighlightsEnabled) return;
-
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) return;
-
-        // If either debug or custom highlights is enabled, collect all tracked particles (null filter).
-        // Otherwise, use command typeFilter.
-        String filter = (settings.debugParticles || settings.particleHighlightsEnabled) ? null : typeFilter;
-        List<ParticleTracker.ParticleEntry> points = ParticleTracker.getEspPoints(filter);
-        if (points.isEmpty()) return;
-
-        Vec3 camPos = mc.gameRenderer.getMainCamera().position();
-        PoseStack poseStack = context.poseStack();
-        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
-        net.minecraft.client.renderer.rendertype.RenderType renderType = settings.hideCheats ? net.minecraft.client.renderer.rendertype.RenderTypes.lines() : net.minecraft.client.renderer.rendertype.RenderTypes.linesTranslucent();
-
-        // Colors lookup map
-        Map<String, Integer> typeColors = new HashMap<>();
-
-        // -----------------------------------------------------------------------
-        // Path 1: Custom Particle Highlights (Combined nearby particles into bounding boxes)
-        // -----------------------------------------------------------------------
-        if (settings.particleHighlightsEnabled) {
-            // Group the points by type
-            Map<String, List<ParticleTracker.ParticleEntry>> highlightedByType = new HashMap<>();
-            for (ParticleTracker.ParticleEntry p : points) {
-                BomboConfig.HighlightInfo highlight = settings.particleHighlights.get(p.type.toLowerCase());
-                if (highlight != null && highlight.enabled) {
-                    highlightedByType.computeIfAbsent(p.type, k -> new java.util.ArrayList<>()).add(p);
-                }
+   public static void render(LevelRenderContext context) {
+      BomboConfig.Settings settings = BomboConfig.get();
+      boolean particleHighlightsActive = false;
+      if (settings.particleHighlightsEnabled) {
+         if (settings.particleHighlightsIsland == null || settings.particleHighlightsIsland.trim().isEmpty() || HighlightESP.matchesIsland(settings.particleHighlightsIsland.trim())) {
+            if (settings.particleHighlights != null) {
+               for (BomboConfig.HighlightInfo info : settings.particleHighlights.values()) {
+                  if (info != null && info.enabled) {
+                     particleHighlightsActive = true;
+                     break;
+                  }
+               }
             }
+         }
+      }
 
-            for (Map.Entry<String, List<ParticleTracker.ParticleEntry>> entry : highlightedByType.entrySet()) {
-                String typeName = entry.getKey();
-                List<ParticleTracker.ParticleEntry> typePoints = entry.getValue();
+      if (ParticleTracker.espEnabled || settings.debugParticles || particleHighlightsActive) {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.level != null && mc.player != null) {
+            String filter = !settings.debugParticles && !particleHighlightsActive ? typeFilter : null;
+            List<ParticleTracker.ParticleEntry> points = ParticleTracker.getEspPoints(filter);
+            if (!points.isEmpty()) {
+               Vec3 camPos = mc.gameRenderer.mainCamera().position();
+               PoseStack poseStack = context.poseStack();
+               OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
+               boolean throughWalls = !settings.hideCheats;
+               RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
+               Map<String, Integer> typeColors = new HashMap<>();
 
-                // Get highlight config
-                BomboConfig.HighlightInfo highlight = settings.particleHighlights.get(typeName.toLowerCase());
-                int colorInt = BomboRenderUtils.colorNameToHex(highlight.color);
-                float r = ((colorInt >> 16) & 0xFF) / 255.0f;
-                float g = ((colorInt >> 8) & 0xFF) / 255.0f;
-                float b = (colorInt & 0xFF) / 255.0f;
+               // 1. Particle Highlights
+               if (particleHighlightsActive) {
+                  Map<String, List<ParticleTracker.ParticleEntry>> highlightedByType = new HashMap<>();
+                  for (ParticleTracker.ParticleEntry p : points) {
+                     BomboConfig.HighlightInfo highlight = settings.particleHighlights.get(p.type.toLowerCase());
+                     if (highlight != null && highlight.enabled) {
+                        highlightedByType.computeIfAbsent(p.type, k -> new ArrayList<>()).add(p);
+                     }
+                  }
 
-                // Cluster these points (6.0 block distance threshold)
-                List<List<ParticleTracker.ParticleEntry>> clusters = new java.util.ArrayList<>();
-                for (ParticleTracker.ParticleEntry p : typePoints) {
-                    List<ParticleTracker.ParticleEntry> foundCluster = null;
-                    for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
-                        for (ParticleTracker.ParticleEntry member : cluster) {
-                            double dx = p.x - member.x;
-                            double dy = p.y - member.y;
-                            double dz = p.z - member.z;
-                            if (dx * dx + dy * dy + dz * dz < 6.0 * 6.0) {
-                                foundCluster = cluster;
-                                break;
-                            }
+                  for (Map.Entry<String, List<ParticleTracker.ParticleEntry>> entry : highlightedByType.entrySet()) {
+                     String typeName = entry.getKey();
+                     List<ParticleTracker.ParticleEntry> typePoints = entry.getValue();
+                     BomboConfig.HighlightInfo highlight = settings.particleHighlights.get(typeName.toLowerCase());
+                     int colorInt = BomboRenderUtils.colorNameToHex(highlight.color);
+                     float r = (float)(colorInt >> 16 & 255) / 255.0F;
+                     float g = (float)(colorInt >> 8 & 255) / 255.0F;
+                     float b = (float)(colorInt & 255) / 255.0F;
+
+                     List<List<ParticleTracker.ParticleEntry>> clusters = clusterPoints(typePoints, 0.75);
+                     for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
+                        if (cluster.size() >= 3) {
+                           double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
+                           double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+                           double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+                           for (ParticleTracker.ParticleEntry p : cluster) {
+                              if (p.x < minX) minX = p.x;
+                              if (p.x > maxX) maxX = p.x;
+                              if (p.y < minY) minY = p.y;
+                              if (p.y > maxY) maxY = p.y;
+                              if (p.z < minZ) minZ = p.z;
+                              if (p.z > maxZ) maxZ = p.z;
+                           }
+                           double centerX = (minX + maxX) / 2.0;
+                           double centerZ = (minZ + maxZ) / 2.0;
+                           boolean isFlat = (maxY - minY) < 1.2;
+                           double centerY = isFlat ? minY : (minY + maxY) / 2.0;
+
+                           double maxDist = 0.0;
+                           for (ParticleTracker.ParticleEntry p : cluster) {
+                              double dx = p.x - centerX;
+                              double dy = isFlat ? 0.0 : p.y - centerY;
+                              double dz = p.z - centerZ;
+                              double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                              if (dist > maxDist) maxDist = dist;
+                           }
+                           float radius = Math.max(0.35F, (float)maxDist + 0.15F);
+
+                           double dx = centerX - camPos.x;
+                           double dy = centerY - camPos.y;
+                           double dz = centerZ - camPos.z;
+                           double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                           float scale = (throughWalls && dist > 0.2) ? (float)(0.2 / dist) : 1.0F;
+
+                           final float finalRadius = radius * scale;
+                           double relX = dx * scale;
+                           double relY = dy * scale;
+                           double relZ = dz * scale;
+
+                           if (isFlat) {
+                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, finalRadius, r, g, b, 0.85F, 2.0F));
+                           } else {
+                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawSphere(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, finalRadius, r, g, b, 0.85F, 2.0F));
+                           }
+                        } else {
+                           for (ParticleTracker.ParticleEntry p : cluster) {
+                              double dx = p.x - camPos.x;
+                              double dy = p.y - camPos.y;
+                              double dz = p.z - camPos.z;
+                              double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                              float scale = (throughWalls && dist > 0.2) ? (float)(0.2 / dist) : 1.0F;
+
+                              double hs = 0.15 * scale;
+                              double relX = dx * scale;
+                              double relY = dy * scale;
+                              double relZ = dz * scale;
+                              AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
+                              collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85F, 1.5F));
+                           }
                         }
-                        if (foundCluster != null) break;
-                    }
-                    if (foundCluster != null) {
-                        foundCluster.add(p);
-                    } else {
-                        List<ParticleTracker.ParticleEntry> newCluster = new java.util.ArrayList<>();
-                        newCluster.add(p);
-                        clusters.add(newCluster);
-                    }
-                }
+                     }
+                  }
+               }
 
-                for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
-                    if (cluster.isEmpty()) continue;
+               // 2. Debug Particles
+               if (settings.debugParticles) {
+                  Map<String, List<ParticleTracker.ParticleEntry>> particlesByType = new HashMap<>();
+                  for (ParticleTracker.ParticleEntry p : points) {
+                     particlesByType.computeIfAbsent(p.type, k -> new ArrayList<>()).add(p);
+                  }
 
-                    // Find bounds of the cluster
-                    double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
-                    double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
-                    double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
-                    for (ParticleTracker.ParticleEntry p : cluster) {
-                        if (p.x < minX) minX = p.x;
-                        if (p.x > maxX) maxX = p.x;
-                        if (p.z < minZ) minZ = p.z;
-                        if (p.z > maxZ) maxZ = p.z;
-                        if (p.y < minY) minY = p.y;
-                        if (p.y > maxY) maxY = p.y;
-                    }
+                  for (Map.Entry<String, List<ParticleTracker.ParticleEntry>> entry : particlesByType.entrySet()) {
+                     String typeName = entry.getKey();
+                     List<ParticleTracker.ParticleEntry> typePoints = entry.getValue();
+                     BomboConfig.HighlightInfo highlight = settings.particleHighlights.get(typeName.toLowerCase());
+                     int colorInt = (settings.particleHighlightsEnabled && highlight != null && highlight.enabled)
+                        ? BomboRenderUtils.colorNameToHex(highlight.color)
+                        : typeColors.computeIfAbsent(typeName, ParticleTracker::colorForType);
+                     float r = (float)(colorInt >> 16 & 255) / 255.0F;
+                     float g = (float)(colorInt >> 8 & 255) / 255.0F;
+                     float b = (float)(colorInt & 255) / 255.0F;
 
-                    // Pad the bounds slightly so the box is clearly visible
-                    double pad = 0.15;
-                    minX -= pad; maxX += pad;
-                    minY -= pad; maxY += pad;
-                    minZ -= pad; maxZ += pad;
-
-                    // Relative coordinates to the camera
-                    double relMinX = minX - camPos.x;
-                    double relMaxX = maxX - camPos.x;
-                    double relMinY = minY - camPos.y;
-                    double relMaxY = maxY - camPos.y;
-                    double relMinZ = minZ - camPos.z;
-                    double relMaxZ = maxZ - camPos.z;
-
-                    double centerX = (relMinX + relMaxX) / 2.0;
-                    double centerY = (relMinY + relMaxY) / 2.0;
-                    double centerZ = (relMinZ + relMaxZ) / 2.0;
-
-                    // Perspective scaling trick to see through walls
-                    float dist = (float) Math.sqrt(centerX * centerX + centerY * centerY + centerZ * centerZ);
-                    float scale = 1.0f;
-                    if (dist > 0.2f) {
-                        scale = 0.2f / dist;
-                    }
-
-                    double scaledMinX = relMinX * scale;
-                    double scaledMaxX = relMaxX * scale;
-                    double scaledMinY = relMinY * scale;
-                    double scaledMaxY = relMaxY * scale;
-                    double scaledMinZ = relMinZ * scale;
-                    double scaledMaxZ = relMaxZ * scale;
-
-                    AABB box = new AABB(scaledMinX, scaledMinY, scaledMinZ, scaledMaxX, scaledMaxY, scaledMaxZ);
-
-                    collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
-                        BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85f, 1.5f);
-                    });
-                }
-            }
-        }
-
-        // -----------------------------------------------------------------------
-        // Path 2: Debug Particles Mode (Clusters, circles/spheres, and name labels)
-        // -----------------------------------------------------------------------
-        if (settings.debugParticles) {
-            // Group all points by type
-            Map<String, List<ParticleTracker.ParticleEntry>> particlesByType = new HashMap<>();
-            for (ParticleTracker.ParticleEntry p : points) {
-                particlesByType.computeIfAbsent(p.type, k -> new java.util.ArrayList<>()).add(p);
-            }
-
-            for (Map.Entry<String, List<ParticleTracker.ParticleEntry>> entry : particlesByType.entrySet()) {
-                String typeName = entry.getKey();
-                List<ParticleTracker.ParticleEntry> typePoints = entry.getValue();
-
-                // Check if this type has a custom highlight to inherit color, otherwise default
-                BomboConfig.HighlightInfo highlight = settings.particleHighlights.get(typeName.toLowerCase());
-                int colorInt;
-                if (settings.particleHighlightsEnabled && highlight != null && highlight.enabled) {
-                    colorInt = BomboRenderUtils.colorNameToHex(highlight.color);
-                } else {
-                    colorInt = typeColors.computeIfAbsent(typeName, ParticleTracker::colorForType);
-                }
-
-                // Cluster these points (6.0 block distance threshold)
-                List<List<ParticleTracker.ParticleEntry>> clusters = new java.util.ArrayList<>();
-                for (ParticleTracker.ParticleEntry p : typePoints) {
-                    List<ParticleTracker.ParticleEntry> foundCluster = null;
-                    for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
-                        for (ParticleTracker.ParticleEntry member : cluster) {
-                            double dx = p.x - member.x;
-                            double dy = p.y - member.y;
-                            double dz = p.z - member.z;
-                            if (dx * dx + dy * dy + dz * dz < 6.0 * 6.0) {
-                                foundCluster = cluster;
-                                break;
-                            }
-                        }
-                        if (foundCluster != null) break;
-                    }
-                    if (foundCluster != null) {
-                        foundCluster.add(p);
-                    } else {
-                        List<ParticleTracker.ParticleEntry> newCluster = new java.util.ArrayList<>();
-                        newCluster.add(p);
-                        clusters.add(newCluster);
-                    }
-                }
-
-                for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
-                    if (cluster.isEmpty()) continue;
-
-                    double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
-                    double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
-                    double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
-                    for (ParticleTracker.ParticleEntry p : cluster) {
-                        if (p.x < minX) minX = p.x;
-                        if (p.x > maxX) maxX = p.x;
-                        if (p.z < minZ) minZ = p.z;
-                        if (p.z > maxZ) maxZ = p.z;
-                        if (p.y < minY) minY = p.y;
-                        if (p.y > maxY) maxY = p.y;
-                    }
-
-                    double centerX = (minX + maxX) / 2.0;
-                    double centerZ = (minZ + maxZ) / 2.0;
-                    double heightDiff = maxY - minY;
-                    boolean isFlat = heightDiff < 1.5;
-
-                    double centerY;
-                    float radius;
-
-                    if (isFlat) {
-                        centerY = (minY + maxY) / 2.0;
-                        double maxDist = 0;
+                     List<List<ParticleTracker.ParticleEntry>> clusters = clusterPoints(typePoints, 6.0);
+                     for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
+                        if (cluster.isEmpty()) continue;
+                        double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
+                        double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+                        double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
                         for (ParticleTracker.ParticleEntry p : cluster) {
-                            double dx = p.x - centerX;
-                            double dz = p.z - centerZ;
-                            double dist = Math.sqrt(dx * dx + dz * dz);
-                            if (dist > maxDist) {
-                                maxDist = dist;
-                            }
+                           if (p.x < minX) minX = p.x;
+                           if (p.x > maxX) maxX = p.x;
+                           if (p.y < minY) minY = p.y;
+                           if (p.y > maxY) maxY = p.y;
+                           if (p.z < minZ) minZ = p.z;
+                           if (p.z > maxZ) maxZ = p.z;
                         }
-                        radius = (float) maxDist;
-                    } else {
-                        centerY = (minY + maxY) / 2.0;
-                        double maxDist = 0;
+                        double centerX = (minX + maxX) / 2.0;
+                        double centerZ = (minZ + maxZ) / 2.0;
+                        boolean isFlat = (maxY - minY) < 1.5;
+                        double centerY = isFlat ? minY : (minY + maxY) / 2.0;
+
+                        double maxDist = 0.0;
                         for (ParticleTracker.ParticleEntry p : cluster) {
-                            double dx = p.x - centerX;
-                            double dy = p.y - centerY;
-                            double dz = p.z - centerZ;
-                            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                            if (dist > maxDist) {
-                                maxDist = dist;
-                            }
+                           double dx = p.x - centerX;
+                           double dy = isFlat ? 0.0 : p.y - centerY;
+                           double dz = p.z - centerZ;
+                           double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                           if (dist > maxDist) maxDist = dist;
                         }
-                        radius = (float) maxDist;
-                    }
+                        float radius = Math.max(0.5F, Math.min((float)maxDist, 10.0F));
+                        final float finalRadius = radius;
+                        double relX = centerX - camPos.x;
+                        double relY = centerY - camPos.y;
+                        double relZ = centerZ - camPos.z;
 
-                    if (radius < 0.5f) radius = 0.5f;
-                    if (radius > 10.0f) radius = 10.0f;
+                        if (isFlat) {
+                           collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, finalRadius, r, g, b, 0.85F, 2.0F));
+                        } else {
+                           collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawSphere(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, finalRadius, r, g, b, 0.85F, 2.0F));
+                        }
 
-                    float r = ((colorInt >> 16) & 0xFF) / 255.0f;
-                    float g = ((colorInt >> 8) & 0xFF) / 255.0f;
-                    float b = (colorInt & 0xFF) / 255.0f;
+                        float nameOffset = isFlat ? 0.4F : (finalRadius + 0.4F);
+                        BomboRenderUtils.drawText(poseStack, collector, "§f" + typeName + " (" + cluster.size() + ")", (float)relX, (float)relY + nameOffset, (float)relZ, colorInt, 0.022F, true, true);
+                     }
+                  }
+               }
 
-                    double relX = centerX - camPos.x;
-                    double relY = centerY - camPos.y;
-                    double relZ = centerZ - camPos.z;
+               // 3. Particle Tracker ESP
+               if (ParticleTracker.espEnabled) {
+                  if (typeFilter != null) {
+                     List<List<ParticleTracker.ParticleEntry>> clusters = clusterPoints(points, 6.0);
+                     for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
+                        if (cluster.isEmpty()) continue;
+                        double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
+                        double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+                        double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+                        for (ParticleTracker.ParticleEntry p : cluster) {
+                           if (p.x < minX) minX = p.x;
+                           if (p.x > maxX) maxX = p.x;
+                           if (p.y < minY) minY = p.y;
+                           if (p.y > maxY) maxY = p.y;
+                           if (p.z < minZ) minZ = p.z;
+                           if (p.z > maxZ) maxZ = p.z;
+                        }
+                        double centerX = (minX + maxX) / 2.0;
+                        double centerZ = (minZ + maxZ) / 2.0;
+                        double maxDist = 0.0;
+                        for (ParticleTracker.ParticleEntry p : cluster) {
+                           double dx = p.x - centerX;
+                           double dz = p.z - centerZ;
+                           double dist = Math.sqrt(dx * dx + dz * dz);
+                           if (dist > maxDist) maxDist = dist;
+                        }
+                        float radius = Math.max(0.5F, Math.min((float)maxDist, 10.0F));
+                        final float finalRadius = radius;
 
-                    float dist = (float) Math.sqrt(relX * relX + relY * relY + relZ * relZ);
-                    float scale = 1.0f;
-                    if (dist > 0.2f) {
-                        scale = 0.2f / dist;
-                    }
-
-                    double scaledX = relX * scale;
-                    double scaledY = relY * scale;
-                    double scaledZ = relZ * scale;
-                    float scaledRadius = radius * scale;
-
-                    if (isFlat) {
-                        collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
-                            BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float) scaledX, (float) scaledY, (float) scaledZ, scaledRadius, r, g, b, 0.85f, 2.0f);
-                        });
-                    } else {
-                        collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
-                            BomboRenderUtils.drawSphere(pose.pose(), vertexConsumer, (float) scaledX, (float) scaledY, (float) scaledZ, scaledRadius, r, g, b, 0.85f, 2.0f);
-                        });
-                    }
-
-                    float nameOffset = radius + 0.4f;
-                    if (isFlat) nameOffset = 0.4f;
-
-                    BomboRenderUtils.drawText(
-                        poseStack, collector,
-                        "§f" + typeName + " (" + cluster.size() + ")",
-                        (float) relX, (float) relY + nameOffset, (float) relZ,
-                        colorInt, 0.022f, true, true
-                    );
-                }
+                        String firstType = cluster.get(0).type;
+                        int colorInt = typeColors.computeIfAbsent(firstType, ParticleTracker::colorForType);
+                        float r = (float)(colorInt >> 16 & 255) / 255.0F;
+                        float g = (float)(colorInt >> 8 & 255) / 255.0F;
+                        float b = (float)(colorInt & 255) / 255.0F;
+                        double relX = centerX - camPos.x;
+                        double relY = minY - camPos.y;
+                        double relZ = centerZ - camPos.z;
+                        float hs = 0.25F;
+                        collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float)relX, (float)relY, (float)relZ, finalRadius, r, g, b, 0.85F, 2.0F));
+                        AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
+                        collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85F, 1.5F));
+                        BomboRenderUtils.drawText(poseStack, collector, "§e[Hotspot] §f" + firstType + " (" + cluster.size() + ")", (float)relX, (float)relY + 0.4F, (float)relZ, colorInt, 0.022F, true, true);
+                     }
+                  } else {
+                     int count = 0;
+                     for (ParticleTracker.ParticleEntry entry : points) {
+                        if (count++ > 300) break;
+                        int colorInt = typeColors.computeIfAbsent(entry.type, ParticleTracker::colorForType);
+                        float r = (float)(colorInt >> 16 & 255) / 255.0F;
+                        float g = (float)(colorInt >> 8 & 255) / 255.0F;
+                        float b = (float)(colorInt & 255) / 255.0F;
+                        double relX = entry.x - camPos.x;
+                        double relY = entry.y - camPos.y;
+                        double relZ = entry.z - camPos.z;
+                        double hs = 0.12;
+                        AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
+                        collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85F, 1.5F));
+                        BomboRenderUtils.drawText(poseStack, collector, "§f" + entry.type, (float)relX, (float)relY + 0.25F, (float)relZ, colorInt, 0.018F, true, true);
+                     }
+                  }
+               }
             }
-        }
+         }
+      }
+   }
 
-        // -----------------------------------------------------------------------
-        // Path 3: Command / Manual ESP Mode (/b particle esp)
-        // -----------------------------------------------------------------------
-        if (ParticleTracker.espEnabled) {
-            if (typeFilter != null) {
-                // Group particles into clusters to find hotspots (within 6.0 blocks)
-                List<List<ParticleTracker.ParticleEntry>> clusters = new java.util.ArrayList<>();
-                for (ParticleTracker.ParticleEntry p : points) {
-                    List<ParticleTracker.ParticleEntry> foundCluster = null;
-                    for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
-                        for (ParticleTracker.ParticleEntry member : cluster) {
-                            double dx = p.x - member.x;
-                            double dy = p.y - member.y;
-                            double dz = p.z - member.z;
-                            if (dx * dx + dy * dy + dz * dz < 6.0 * 6.0) {
-                                foundCluster = cluster;
-                                break;
-                            }
-                        }
-                        if (foundCluster != null) break;
-                    }
-                    if (foundCluster != null) {
-                        foundCluster.add(p);
-                    } else {
-                        List<ParticleTracker.ParticleEntry> newCluster = new java.util.ArrayList<>();
-                        newCluster.add(p);
-                        clusters.add(newCluster);
-                    }
-                }
-
-                for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
-                    if (cluster.isEmpty()) continue;
-                    double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
-                    double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
-                    double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
-                    for (ParticleTracker.ParticleEntry p : cluster) {
-                        if (p.x < minX) minX = p.x;
-                        if (p.x > maxX) maxX = p.x;
-                        if (p.z < minZ) minZ = p.z;
-                        if (p.z > maxZ) maxZ = p.z;
-                        if (p.y < minY) minY = p.y;
-                        if (p.y > maxY) maxY = p.y;
-                    }
-                    double centerX = (minX + maxX) / 2.0;
-                    double centerZ = (minZ + maxZ) / 2.0;
-                    double centerY = minY; // Sit at the ground/lowest particle level
-
-                    double maxDist = 0;
-                    for (ParticleTracker.ParticleEntry p : cluster) {
-                        double dx = p.x - centerX;
-                        double dz = p.z - centerZ;
-                        double dist = Math.sqrt(dx * dx + dz * dz);
-                        if (dist > maxDist) {
-                            maxDist = dist;
-                        }
-                    }
-                    float radius = (float) maxDist;
-                    if (radius < 0.5f) radius = 2.0f;
-                    if (radius > 10.0f) radius = 10.0f;
-
-                    String firstType = cluster.get(0).type;
-                    int colorInt = typeColors.computeIfAbsent(firstType, ParticleTracker::colorForType);
-                    float r = ((colorInt >> 16) & 0xFF) / 255.0f;
-                    float g = ((colorInt >> 8) & 0xFF) / 255.0f;
-                    float b = (colorInt & 0xFF) / 255.0f;
-
-                    double relX = centerX - camPos.x;
-                    double relY = centerY - camPos.y;
-                    double relZ = centerZ - camPos.z;
-
-                    float dist = (float) Math.sqrt(relX * relX + relY * relY + relZ * relZ);
-                    float scale = 1.0f;
-                    if (dist > 0.2f) {
-                        scale = 0.2f / dist;
-                    }
-
-                    double scaledX = relX * scale;
-                    double scaledY = relY * scale;
-                    double scaledZ = relZ * scale;
-                    float scaledRadius = radius * scale;
-                    float scaledHs = 0.25f * scale;
-
-                    collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
-                        BomboRenderUtils.drawHorizontalCircle(pose.pose(), vertexConsumer, (float) scaledX, (float) scaledY, (float) scaledZ, scaledRadius, r, g, b, 0.85f, 2.0f);
-                    });
-
-                    AABB box = new AABB(
-                        scaledX - scaledHs, scaledY - scaledHs, scaledZ - scaledHs,
-                        scaledX + scaledHs, scaledY + scaledHs, scaledZ + scaledHs
-                    );
-                    collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
-                        BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85f, 1.5f);
-                    });
-
-                    BomboRenderUtils.drawText(
-                        poseStack, collector,
-                        "§e[Hotspot] §f" + firstType + " (" + cluster.size() + ")",
-                        (float) relX, (float) relY + 0.4f, (float) relZ,
-                        colorInt, 0.022f, true, true
-                    );
-                }
-            } else {
-                // Draw individual particles (limit to 150)
-                int count = 0;
-                for (ParticleTracker.ParticleEntry entry : points) {
-                    if (count++ > 150) break;
-                    int colorInt = typeColors.computeIfAbsent(entry.type, ParticleTracker::colorForType);
-
-                    float r = ((colorInt >> 16) & 0xFF) / 255.0f;
-                    float g = ((colorInt >> 8) & 0xFF) / 255.0f;
-                    float b = (colorInt & 0xFF) / 255.0f;
-
-                    double relX = entry.x - camPos.x;
-                    double relY = entry.y - camPos.y;
-                    double relZ = entry.z - camPos.z;
-
-                    float dist = (float) Math.sqrt(relX * relX + relY * relY + relZ * relZ);
-                    float scale = 1.0f;
-                    if (dist > 0.2f) {
-                        scale = 0.2f / dist;
-                    }
-
-                    double scaledX = relX * scale;
-                    double scaledY = relY * scale;
-                    double scaledZ = relZ * scale;
-                    float scaledHs = 0.15f * scale;
-
-                    AABB box = new AABB(
-                        scaledX - scaledHs, scaledY - scaledHs, scaledZ - scaledHs,
-                        scaledX + scaledHs, scaledY + scaledHs, scaledZ + scaledHs
-                    );
-
-                    collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
-                        BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, 0.85f, 1.5f);
-                    });
-
-                    BomboRenderUtils.drawText(
-                        poseStack, collector,
-                        "§f" + entry.type,
-                        (float) relX, (float) relY + 0.3f, (float) relZ,
-                        colorInt, 0.018f, true, true
-                    );
-                }
+   private static List<List<ParticleTracker.ParticleEntry>> clusterPoints(List<ParticleTracker.ParticleEntry> points, double maxDist) {
+      List<List<ParticleTracker.ParticleEntry>> clusters = new ArrayList<>();
+      double maxDistSq = maxDist * maxDist;
+      int maxProcess = Math.min(points.size(), 300);
+      for (int i = 0; i < maxProcess; i++) {
+         ParticleTracker.ParticleEntry p = points.get(i);
+         List<ParticleTracker.ParticleEntry> foundCluster = null;
+         for (List<ParticleTracker.ParticleEntry> cluster : clusters) {
+            ParticleTracker.ParticleEntry rep = cluster.get(0);
+            double dx = p.x - rep.x;
+            double dy = p.y - rep.y;
+            double dz = p.z - rep.z;
+            if (dx * dx + dy * dy + dz * dz < maxDistSq) {
+               foundCluster = cluster;
+               break;
             }
-        }
-    }
+         }
+         if (foundCluster != null) {
+            foundCluster.add(p);
+         } else {
+            List<ParticleTracker.ParticleEntry> newCluster = new ArrayList<>();
+            newCluster.add(p);
+            clusters.add(newCluster);
+         }
+      }
+      return clusters;
+   }
 }

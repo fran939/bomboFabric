@@ -16,11 +16,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin({SkullBlock.class, WallSkullBlock.class})
 public class SkullBlockMixin {
+   @Inject(
+      method = {"getShape"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onGetShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+      if (BomboConfig.get().dungeonBigHitbox) {
+         cir.setReturnValue(Shapes.block());
+      }
 
-    @Inject(method = "getShape", at = @At("HEAD"), cancellable = true)
-    private void onGetShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
-        if (BomboConfig.get().dungeonBigHitbox) {
-            cir.setReturnValue(Shapes.block());
-        }
-    }
+   }
 }

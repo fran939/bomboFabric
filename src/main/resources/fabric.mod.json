@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
 	"id": "bomboaddons",
-	"version": "26.1.2.7",
-	"name": "Bomboaddons",
+	"version": "${version}",
+	"name": "BomboAddons",
 	"description": "Hypixel skyblock mod",
 	"authors": [
 		"bomboclas"
@@ -13,11 +13,8 @@
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/bomboaddons/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
-		"main": [
-			"me.bombo.bomboaddons.Bomboaddons"
-		],
 		"client": [
 			"me.bombo.bomboaddons.BomboaddonsClient"
 		]
@@ -30,7 +27,8 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.19.3",
-		"minecraft": "~26.1.2",
-		"java": ">=25"
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
 	}
 }

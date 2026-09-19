@@ -1,217 +1,418 @@
 package me.bombo.bomboaddons;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
-
 public class BlockHighlight {
-    public static volatile Map<BlockPos, BomboConfig.BlockHighlightInfo> highlightedBlocks = new ConcurrentHashMap<>();
-    private static volatile boolean isScanning = false;
+   public static volatile Map<BlockPos, BomboConfig.BlockHighlightInfo> highlightedBlocks = new ConcurrentHashMap();
+   private static volatile boolean isScanning = false;
+   public static List<BlockPos> targetChestPosList = new ArrayList();
+   public static long targetChestTime = 0L;
 
-    public static void onTick() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) {
+   public static void onTick() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level != null && mc.player != null) {
+         BomboConfig.Settings s = BomboConfig.get();
+         boolean enabled = s.blockHighlightsEnabled;
+         if (!enabled) {
             highlightedBlocks.clear();
-            return;
-        }
+         } else if (mc.player.tickCount % 20 == 0) {
+            if (!isScanning) {
+               isScanning = true;
+               ClientLevel level = mc.level;
+               Vec3 playerPos = mc.player.position();
+               int scanRadius = Math.max(4, Math.min(s.blockScanRadius, 512));
+               Map<String, BomboConfig.BlockHighlightInfo> targets = new HashMap();
+               if (s.blockHighlights != null) {
+                  targets.putAll(s.blockHighlights);
+               }
 
-        BomboConfig.Settings s = BomboConfig.get();
-        if (!s.blockHighlightsEnabled || s.blockHighlights == null || s.blockHighlights.isEmpty()) {
-            highlightedBlocks.clear();
-            return;
-        }
+               if (targets.isEmpty()) {
+                  highlightedBlocks.clear();
+                  isScanning = false;
+               } else {
+                  ForkJoinPool.commonPool().execute(() -> {
+                     try {
+                        scanBlocks(level, playerPos, targets, scanRadius);
+                     } catch (Throwable var7) {
+                     } finally {
+                        isScanning = false;
+                     }
 
-        // Only scan once per 20 ticks (1 second)
-        if (mc.player.tickCount % 20 != 0) {
-            return;
-        }
-
-        if (isScanning) {
-            return;
-        }
-
-        isScanning = true;
-
-        net.minecraft.client.multiplayer.ClientLevel level = mc.level;
-        Vec3 playerPos = mc.player.position();
-        Map<String, BomboConfig.BlockHighlightInfo> highlightsCopy = new HashMap<>(s.blockHighlights);
-
-        ForkJoinPool.commonPool().execute(() -> {
-            try {
-                scanBlocks(level, playerPos, highlightsCopy);
-            } catch (Throwable t) {
-                // Ignore any async exceptions
-            } finally {
-                isScanning = false;
+                  });
+               }
             }
-        });
-    }
+         }
+      } else {
+         highlightedBlocks.clear();
+      }
+   }
 
-    private static void scanBlocks(net.minecraft.client.multiplayer.ClientLevel level, Vec3 playerPos, Map<String, BomboConfig.BlockHighlightInfo> targets) {
-        Map<BlockPos, BomboConfig.BlockHighlightInfo> newHighlights = new HashMap<>();
+   public static class ParsedBlockRule {
+      public final String blockId;
+      public final String requiredProps;
+      public final BomboConfig.BlockHighlightInfo info;
 
-        int px = (int) playerPos.x;
-        int py = (int) playerPos.y;
-        int pz = (int) playerPos.z;
+      public final boolean isSkullHash;
+      private static final Map<BlockPos, String> skullHashCache = new ConcurrentHashMap<>();
 
-        int minHeight = getMinBuildHeightReflect(level);
-        int maxHeight = getMaxBuildHeightReflect(level);
+      public ParsedBlockRule(String query, BomboConfig.BlockHighlightInfo info) {
+         this.info = info;
+         String q = query.toLowerCase().trim();
+         if (q.contains("[") && q.endsWith("]")) {
+            this.blockId = q.substring(0, q.indexOf('[')).trim();
+            this.requiredProps = q.substring(q.indexOf('[') + 1, q.length() - 1).trim();
+         } else if (q.contains(":") && !q.startsWith("minecraft:")) {
+            this.blockId = q.substring(0, q.indexOf(':')).trim();
+            this.requiredProps = q.substring(q.indexOf(':') + 1).trim();
+         } else {
+            this.blockId = q;
+            this.requiredProps = null;
+         }
+         this.isSkullHash = this.blockId.length() == 64 && this.blockId.matches("^[0-9a-fA-F]{64}$");
+      }
 
-        int startY = Math.max(minHeight, py - 24);
-        int endY = Math.min(maxHeight - 1, py + 24);
+      public boolean matches(BlockState state, BlockPos pos, ClientLevel level) {
+         if (state == null)
+            return false;
+         Identifier key = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+         String rawId = key.toString().toLowerCase();
+         String path = key.getPath().toLowerCase();
 
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
-
-        for (int x = px - 32; x <= px + 32; x++) {
-            for (int z = pz - 32; z <= pz + 32; z++) {
-                for (int y = startY; y <= endY; y++) {
-                    mutablePos.set(x, y, z);
-                    try {
-                        BlockState state = level.getBlockState(mutablePos);
-                        if (state.isAir()) {
-                            continue;
+         if (isSkullHash) {
+            if (!path.contains("head") && !path.contains("skull")) {
+               return false;
+            }
+            if (pos != null && level != null) {
+               String cachedHash = skullHashCache.get(pos);
+               if (cachedHash == null) {
+                  net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(pos);
+                  if (be instanceof net.minecraft.world.level.block.entity.SkullBlockEntity sbe) {
+                     net.minecraft.world.item.component.ResolvableProfile profile = sbe.getOwnerProfile();
+                     if (profile != null && profile.partialProfile() != null && profile.partialProfile().properties() != null) {
+                        for (com.mojang.authlib.properties.Property prop : profile.partialProfile().properties().get("textures")) {
+                           if (prop != null && prop.value() != null && !prop.value().isEmpty()) {
+                              String extracted = TargetPests.extractTextureHash(prop.value());
+                              if (extracted != null) {
+                                 cachedHash = extracted;
+                                 break;
+                              }
+                           }
                         }
+                     }
+                  }
+                  if (cachedHash == null) cachedHash = "";
+                  if (skullHashCache.size() > 5000) skullHashCache.clear();
+                  skullHashCache.put(pos, cachedHash);
+               }
+               return !cachedHash.isEmpty() && (cachedHash.equalsIgnoreCase(blockId) || cachedHash.contains(blockId));
+            }
+            return false;
+         }
 
-                        net.minecraft.resources.Identifier key = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
-                        String idLower = key.toString().toLowerCase();
-                        String pathLower = key.getPath().toLowerCase();
+         if (!rawId.contains(blockId) && !path.contains(blockId))
+            return false;
+         if (requiredProps != null && !requiredProps.isEmpty()) {
+            String stateStr = state.toString().toLowerCase();
+            String[] reqs = requiredProps.split("[,;]");
+            for (String req : reqs) {
+               String cleanReq = req.trim().toLowerCase();
+               if (!cleanReq.isEmpty() && !stateStr.contains(cleanReq)) {
+                  return false;
+               }
+            }
+         }
+         return true;
+      }
 
-                        for (Map.Entry<String, BomboConfig.BlockHighlightInfo> entry : targets.entrySet()) {
-                            String query = entry.getKey().toLowerCase();
-                            BomboConfig.BlockHighlightInfo info = entry.getValue();
-                            if (!info.enabled) continue;
+      public boolean matches(BlockState state) {
+         return matches(state, null, null);
+      }
+   }
 
-                            if (idLower.contains(query) || pathLower.contains(query)) {
-                                newHighlights.put(new BlockPos(x, y, z), info);
-                                break; // Match found, no need to check other queries for this block
+   private static void scanBlocks(ClientLevel level, Vec3 playerPos,
+         Map<String, BomboConfig.BlockHighlightInfo> targets, int radius) {
+      Map<BlockPos, BomboConfig.BlockHighlightInfo> newHighlights = new HashMap<>();
+      int px = (int) playerPos.x;
+      int py = (int) playerPos.y;
+      int pz = (int) playerPos.z;
+      int minHeight = level.getMinY();
+      int maxHeight = level.getMaxY();
+      int startY = Math.max(minHeight, py - radius);
+      int endY = Math.min(maxHeight - 1, py + radius);
+
+      List<ParsedBlockRule> activeRules = new ArrayList<>();
+      for (Map.Entry<String, BomboConfig.BlockHighlightInfo> entry : targets.entrySet()) {
+         if (entry.getValue() != null && entry.getValue().enabled) {
+            activeRules.add(new ParsedBlockRule(entry.getKey(), entry.getValue()));
+         }
+      }
+
+      if (activeRules.isEmpty()) {
+         highlightedBlocks = newHighlights;
+         return;
+      }
+
+      BomboConfig.Settings s = BomboConfig.get();
+      boolean lineMode = s != null && "LINE".equalsIgnoreCase(s.blockScanMode);
+      int maxOverall = s != null && s.blockHighlightOverallMax > 0 ? s.blockHighlightOverallMax : 500;
+      int perRuleLimit = s != null ? s.blockHighlightLimit : 100;
+      boolean unlimited = perRuleLimit <= 0;
+      Map<BomboConfig.BlockHighlightInfo, Integer> ruleCounts = new HashMap<>();
+
+      int minChunkX = (px - radius) >> 4;
+      int maxChunkX = (px + radius) >> 4;
+      int minChunkZ = (pz - radius) >> 4;
+      int maxChunkZ = (pz + radius) >> 4;
+
+      for (int cx = minChunkX; cx <= maxChunkX; ++cx) {
+         for (int cz = minChunkZ; cz <= maxChunkZ; ++cz) {
+            if (!unlimited && newHighlights.size() >= maxOverall) break;
+            if (lineMode) {
+               // In line mode, chunk must cross player's X or Z coord
+               int chunkMinX = cx << 4;
+               int chunkMaxX = chunkMinX + 15;
+               int chunkMinZ = cz << 4;
+               int chunkMaxZ = chunkMinZ + 15;
+               boolean onXLine = px >= chunkMinX && px <= chunkMaxX;
+               boolean onZLine = pz >= chunkMinZ && pz <= chunkMaxZ;
+               if (!onXLine && !onZLine) continue;
+            }
+
+            if (!level.hasChunk(cx, cz))
+               continue;
+            net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunk(cx, cz);
+            if (chunk == null)
+               continue;
+
+            net.minecraft.world.level.chunk.LevelChunkSection[] sections = chunk.getSections();
+            for (int sIdx = 0; sIdx < sections.length; ++sIdx) {
+               if (!unlimited && newHighlights.size() >= maxOverall) break;
+               net.minecraft.world.level.chunk.LevelChunkSection sec = sections[sIdx];
+               if (sec == null || sec.hasOnlyAir())
+                  continue;
+
+               int secMinY = chunk.getSectionYFromSectionIndex(sIdx) << 4;
+               if (secMinY + 15 < startY || secMinY > endY)
+                  continue;
+
+               int baseBlockX = cx << 4;
+               int baseBlockZ = cz << 4;
+
+               for (int lx = 0; lx < 16; ++lx) {
+                  if (!unlimited && newHighlights.size() >= maxOverall) break;
+                  int bx = baseBlockX + lx;
+                  if (bx < px - radius || bx > px + radius)
+                     continue;
+                  for (int lz = 0; lz < 16; ++lz) {
+                     if (!unlimited && newHighlights.size() >= maxOverall) break;
+                     int bz = baseBlockZ + lz;
+                     if (bz < pz - radius || bz > pz + radius)
+                        continue;
+
+                     if (lineMode) {
+                        if (bx != px && bz != pz) continue;
+                     }
+
+                     for (int ly = 0; ly < 16; ++ly) {
+                        if (!unlimited && newHighlights.size() >= maxOverall) break;
+                        int by = secMinY + ly;
+                        if (by < startY || by > endY)
+                           continue;
+                        BlockState state = sec.getBlockState(lx, ly, lz);
+                        if (!state.isAir()) {
+                           for (ParsedBlockRule rule : activeRules) {
+                              int curRuleCount = ruleCounts.getOrDefault(rule.info, 0);
+                              if (!unlimited && curRuleCount >= perRuleLimit) continue;
+                              BlockPos pos = new BlockPos(bx, by, bz);
+                              if (rule.matches(state, pos, level)) {
+                                 newHighlights.put(pos, rule.info);
+                                 ruleCounts.put(rule.info, curRuleCount + 1);
+                                 break;
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      highlightedBlocks = newHighlights;
+   }
+
+   public static boolean hasHighlights() {
+      return !highlightedBlocks.isEmpty() || !targetChestPosList.isEmpty();
+   }
+
+   public static void render(LevelRenderContext context) {
+      if (highlightedBlocks.isEmpty() && targetChestPosList.isEmpty()) {
+         return;
+      }
+      try {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.level == null || mc.player == null) {
+            return;
+         }
+
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s == null || !s.blockHighlightsEnabled) {
+            return;
+         }
+
+         Vec3 camPos = mc.gameRenderer.mainCamera().position();
+         PoseStack poseStack = context.poseStack();
+         OrderedSubmitNodeCollector collector = null;
+         Map<BlockPos, BomboConfig.BlockHighlightInfo> currentHighlights = highlightedBlocks;
+
+         double maxRenderDist = Math.max(64.0, (double) s.blockScanRadius);
+         double maxDistSq = maxRenderDist * maxRenderDist;
+
+         if (!currentHighlights.isEmpty()) {
+            for (Map.Entry<BlockPos, BomboConfig.BlockHighlightInfo> entry : currentHighlights.entrySet()) {
+               BlockPos pos = entry.getKey();
+               BomboConfig.BlockHighlightInfo info = entry.getValue();
+               if (info != null && info.enabled) {
+                  double x = (double) pos.getX() - camPos.x;
+                  double y = (double) pos.getY() - camPos.y;
+                  double z = (double) pos.getZ() - camPos.z;
+                  double distSq = x * x + y * y + z * z;
+                  if (distSq <= maxDistSq) {
+                     double dist = Math.sqrt(distSq);
+                     int colorHex = BomboRenderUtils.colorNameToHex(info.color);
+                     float r = (float) (colorHex >> 16 & 255) / 255.0F;
+                     float g = (float) (colorHex >> 8 & 255) / 255.0F;
+                     float b = (float) (colorHex & 255) / 255.0F;
+                     float a = 1.0F;
+                     boolean throughWalls = !s.hideCheats && (info.throughWalls || s.blockHighlightsEnabled);
+                     RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
+
+                      float scale = (throughWalls && dist > 0.2) ? (float) (0.2 / dist) : 1.0F;
+                      double bMinX = 0.0, bMinY = 0.0, bMinZ = 0.0;
+                      double bMaxX = 1.0, bMaxY = 1.0, bMaxZ = 1.0;
+                      try {
+                         BlockState bState = mc.level.getBlockState(pos);
+                         if (!bState.isAir()) {
+                            net.minecraft.world.phys.shapes.VoxelShape shape = bState.getShape(mc.level, pos);
+                            if (!shape.isEmpty()) {
+                               AABB bounds = shape.bounds();
+                               bMinX = bounds.minX;
+                               bMinY = bounds.minY;
+                               bMinZ = bounds.minZ;
+                               bMaxX = bounds.maxX;
+                               bMaxY = bounds.maxY;
+                               bMaxZ = bounds.maxZ;
                             }
+                         }
+                      } catch (Throwable ignored) {
+                      }
+                      double minX = (x + bMinX) * scale;
+                      double minY = (y + bMinY) * scale;
+                      double minZ = (z + bMinZ) * scale;
+                      double maxX = (x + bMaxX) * scale;
+                      double maxY = (y + bMaxY) * scale;
+                      double maxZ = (z + bMaxZ) * scale;
+                      AABB box = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+
+                      if (collector == null) {
+                         collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
+                      }
+
+                      collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils
+                            .drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, 2.0F));
+                  }
+               }
+            }
+         }
+
+         if (!targetChestPosList.isEmpty()) {
+            Set<BlockPos> rendered = new HashSet<>();
+
+            for (BlockPos targetChestPos : targetChestPosList) {
+               if (!rendered.contains(targetChestPos)) {
+                  BlockPos partnerPos = null;
+
+                  try {
+                     BlockState state = mc.level.getBlockState(targetChestPos);
+                     if (state.getBlock() instanceof ChestBlock) {
+                        ChestType type = (ChestType) state.getValue(BlockStateProperties.CHEST_TYPE);
+                        if (type != ChestType.SINGLE) {
+                           Direction connectedDir = ChestBlock.getConnectedDirection(state);
+                           partnerPos = targetChestPos.relative(connectedDir);
                         }
-                    } catch (Throwable t) {
-                        // Prevent thread failure if block lookup fails
-                    }
-                }
+                     }
+                  } catch (Exception ignored) {
+                  }
+
+                  rendered.add(targetChestPos);
+                  double minX = (double) targetChestPos.getX();
+                  double minY = (double) targetChestPos.getY();
+                  double minZ = (double) targetChestPos.getZ();
+                  double maxX = minX + 1.0;
+                  double maxY = minY + 1.0;
+                  double maxZ = minZ + 1.0;
+                  if (partnerPos != null) {
+                     rendered.add(partnerPos);
+                     minX = Math.min(minX, (double) partnerPos.getX());
+                     minY = Math.min(minY, (double) partnerPos.getY());
+                     minZ = Math.min(minZ, (double) partnerPos.getZ());
+                     maxX = Math.max(maxX, (double) (partnerPos.getX() + 1));
+                     maxY = Math.max(maxY, (double) (partnerPos.getY() + 1));
+                     maxZ = Math.max(maxZ, (double) (partnerPos.getZ() + 1));
+                  }
+
+                  double rx = minX - camPos.x;
+                  double ry = minY - camPos.y;
+                  double rz = minZ - camPos.z;
+                  double rMaxX = maxX - camPos.x;
+                  double rMaxY = maxY - camPos.y;
+                  double rMaxZ = maxZ - camPos.z;
+                  double midX = (minX + maxX) / 2.0 - camPos.x;
+                  double midY = (minY + maxY) / 2.0 - camPos.y;
+                  double midZ = (minZ + maxZ) / 2.0 - camPos.z;
+                  double distSq = midX * midX + midY * midY + midZ * midZ;
+                  if (distSq <= 256.0 * 256.0) {
+                     double dist = Math.sqrt(distSq);
+                     AABB box = new AABB(rx, ry, rz, rMaxX, rMaxY, rMaxZ);
+                     if (collector == null) {
+                        collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
+                     }
+                     collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
+                           (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, 0.0F,
+                                 1.0F, 0.0F, 0.85F, 2.0F));
+                     String text = "Target Chest §7(" + (int) dist + "m)";
+                     BomboRenderUtils.drawText(poseStack, collector, text, (float) midX,
+                           (float) (rMaxY + 0.5), (float) midZ, 65280, 0.03F, true, true);
+                  }
+               }
             }
-        }
-
-        highlightedBlocks = newHighlights;
-    }
-
-    public static void render(LevelRenderContext context) {
-        BomboConfig.Settings s = BomboConfig.get();
-        if (!s.blockHighlightsEnabled || highlightedBlocks.isEmpty()) {
-            return;
-        }
-
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return;
-
-        Vec3 camPos = mc.gameRenderer.getMainCamera().position();
-        PoseStack poseStack = context.poseStack();
-        me.bombo.bomboaddons.OrderedSubmitNodeCollector collector = new me.bombo.bomboaddons.OrderedSubmitNodeCollector(context.bufferSource());
-
-        // Take local reference of current highlighted blocks to avoid thread race conditions
-        Map<BlockPos, BomboConfig.BlockHighlightInfo> currentHighlights = highlightedBlocks;
-
-        for (Map.Entry<BlockPos, BomboConfig.BlockHighlightInfo> entry : currentHighlights.entrySet()) {
-            BlockPos pos = entry.getKey();
-            BomboConfig.BlockHighlightInfo info = entry.getValue();
-            if (!info.enabled) continue;
-
-            double x = pos.getX() - camPos.x;
-            double y = pos.getY() - camPos.y;
-            double z = pos.getZ() - camPos.z;
-
-            double dist = Math.sqrt(x * x + y * y + z * z);
-            if (dist > 64.0) continue; // Optimize by not rendering far away outlines
-
-            int colorHex = BomboRenderUtils.colorNameToHex(info.color);
-            float r = ((colorHex >> 16) & 0xFF) / 255.0f;
-            float g = ((colorHex >> 8) & 0xFF) / 255.0f;
-            float b = (colorHex & 0xFF) / 255.0f;
-            float a = 0.85f;
-
-            final AABB box;
-            boolean throughWalls = info.throughWalls && !s.hideCheats;
-            if (throughWalls) {
-                float scale = 1.0f;
-                if (dist > 0.2) {
-                    scale = 0.2f / (float) dist;
-                }
-                box = new AABB(
-                        x * scale, y * scale, z * scale,
-                        (x + 1.0) * scale, (y + 1.0) * scale, (z + 1.0) * scale
-                );
-            } else {
-                box = new AABB(x, y, z, x + 1.0, y + 1.0, z + 1.0);
-            }
-
-            net.minecraft.client.renderer.rendertype.RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
-            collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> {
-                BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, 2.0f);
-            });
-        }
-    }
-
-    private static int getMinBuildHeightReflect(net.minecraft.client.multiplayer.ClientLevel level) {
-        try {
-            try {
-                java.lang.reflect.Method m = level.getClass().getMethod("getBottomY");
-                return (Integer) m.invoke(level);
-            } catch (NoSuchMethodException e) {
-                try {
-                    java.lang.reflect.Method m = level.getClass().getMethod("getMinBuildHeight");
-                    return (Integer) m.invoke(level);
-                } catch (NoSuchMethodException e2) {
-                    try {
-                        java.lang.reflect.Method m = level.getClass().getMethod("getMinY");
-                        return (Integer) m.invoke(level);
-                    } catch (NoSuchMethodException e3) {
-                        return -64;
-                    }
-                }
-            }
-        } catch (Throwable t) {
-            return -64;
-        }
-    }
-
-    private static int getMaxBuildHeightReflect(net.minecraft.client.multiplayer.ClientLevel level) {
-        try {
-            try {
-                java.lang.reflect.Method m = level.getClass().getMethod("getTopY");
-                return (Integer) m.invoke(level);
-            } catch (NoSuchMethodException e) {
-                try {
-                    java.lang.reflect.Method m = level.getClass().getMethod("getMaxBuildHeight");
-                    return (Integer) m.invoke(level);
-                } catch (NoSuchMethodException e2) {
-                    try {
-                        java.lang.reflect.Method m = level.getClass().getMethod("getMaxY");
-                        return (Integer) m.invoke(level);
-                    } catch (NoSuchMethodException e3) {
-                        try {
-                            java.lang.reflect.Method m = level.getClass().getMethod("getHeight");
-                            int height = (Integer) m.invoke(level);
-                            return getMinBuildHeightReflect(level) + height;
-                        } catch (NoSuchMethodException e4) {
-                            return 320;
-                        }
-                    }
-                }
-            }
-        } catch (Throwable t) {
-            return 320;
-        }
-    }
+         }
+      } catch (Throwable ignored) {
+      }
+   }
 }

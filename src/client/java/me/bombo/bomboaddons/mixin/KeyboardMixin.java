@@ -1,79 +1,241 @@
 package me.bombo.bomboaddons.mixin;
 
-import me.bombo.bomboaddons.ClickLogic;
 import me.bombo.bomboaddons.BomboConfig;
-import net.minecraft.client.Minecraft;
+import me.bombo.bomboaddons.BomboConfigGUI;
+import me.bombo.bomboaddons.Bomboaddons;
+import me.bombo.bomboaddons.BomboaddonsClient;
+import me.bombo.bomboaddons.ClickLogic;
+import me.bombo.bomboaddons.CustomBindsProcessor;
+import me.bombo.bomboaddons.GardenMovement;
+import me.bombo.bomboaddons.InventoryManager;
+import me.bombo.bomboaddons.ItemListOverlay;
+import me.bombo.bomboaddons.util.FreelookManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.KeyboardHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
+import net.minecraft.client.input.KeyEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.ChatScreen;
-import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
-import net.minecraft.client.input.KeyEvent;
-import java.util.List;
 
 @Environment(EnvType.CLIENT)
-@Mixin({ KeyboardHandler.class })
+@Mixin({KeyboardHandler.class})
 public abstract class KeyboardMixin {
-    @Inject(at = { @At("HEAD") }, method = { "keyPress" }, cancellable = true)
-    private void onKey(long window, int action, KeyEvent event, CallbackInfo ci) {
-        Minecraft mc = Minecraft.getInstance();
-        String flKey = BomboConfig.get().freelookKey;
-        if (flKey != null && !flKey.isEmpty()) {
-            int targetCode = ClickLogic.getKeyCode(flKey);
-            if (targetCode != -1 && event.key() == targetCode) {
-                if (mc.screen == null) {
-                    if (action == 1) {
-                        me.bombo.bomboaddons.util.FreelookManager.toggleFreelook(true);
-                        ci.cancel();
-                        return;
-                    } else if (action == 0) {
-                        me.bombo.bomboaddons.util.FreelookManager.toggleFreelook(false);
-                        ci.cancel();
-                        return;
-                    }
-                }
+   @Inject(
+      at = {@At("HEAD")},
+      method = {"keyPress"},
+      cancellable = true
+   )
+   private void onKey(long window, int action, KeyEvent event, CallbackInfo ci) {
+      if (event == null || event.key() <= 0 || event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
+         return;
+      }
+      Minecraft mc = Minecraft.getInstance();
+      String flKey = BomboConfig.get().freelookKey;
+      if (flKey != null && !flKey.isEmpty()) {
+         int targetCode = ClickLogic.getKeyCode(flKey);
+         if (targetCode != -1 && event.key() == targetCode && mc.gui.screen() == null) {
+            if (BomboConfig.get().freelookToggle) {
+               if (action == 1) {
+                  FreelookManager.toggleFreelook(!FreelookManager.isFreelookActive());
+                  ci.cancel();
+                  return;
+               }
+            } else {
+               if (action == 1) {
+                  FreelookManager.toggleFreelook(true);
+                  ci.cancel();
+                  return;
+               }
+
+               if (action == 0) {
+                  FreelookManager.toggleFreelook(false);
+                  ci.cancel();
+                  return;
+               }
             }
-        }
+         }
+      }
 
-        if (action == 1) { // 1 = Press, 0 = Release, 2 = Repeat
+      String fcKey = BomboConfig.get().freecamKey;
+      if (fcKey != null && !fcKey.isEmpty()) {
+         int targetCode = ClickLogic.getKeyCode(fcKey);
+         if (targetCode != -1 && event.key() == targetCode && mc.gui.screen() == null) {
+            if (BomboConfig.get().freecamToggle) {
+               if (action == 1) {
+                  me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam();
+                  ci.cancel();
+                  return;
+               }
+            } else {
+               if (action == 1) {
+                  me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam(true);
+                  ci.cancel();
+                  return;
+               }
+               if (action == 0) {
+                  me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam(false);
+                  ci.cancel();
+                  return;
+               }
+            }
+         }
+      }
+
+      if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_F5 && action == 1 && mc.gui.screen() == null) {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s != null && s.cameraSettingsEnabled && s.disableFrontCamera) {
+            if (mc.options.getCameraType() == net.minecraft.client.CameraType.THIRD_PERSON_BACK) {
+               mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+               ci.cancel();
+               return;
+            }
+         }
+      }
+
+      if (me.bombo.bomboaddons.features.AutoAhSell.isRunning()) {
+         if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE || event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_GRAVE_ACCENT) {
+            me.bombo.bomboaddons.features.AutoAhSell.stop();
+         }
+      }
+
+      CustomBindsProcessor.onKeyInput(event.key(), action);
+
+      if (action == 1) {
          int key = event.key();
+         boolean isCtrl = event.hasControlDown() || Minecraft.getInstance().hasControlDown() || com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 341) || com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 345);
+         if (key == 86 && isCtrl && mc.gui.screen() instanceof ChatScreen chatScreen) {
+            if (me.bombo.bomboaddons.util.ClipboardImageUploader.hasClipboardImage()) {
+               net.minecraft.client.gui.components.EditBox input = null;
+               try {
+                  for (java.lang.reflect.Field f : ChatScreen.class.getDeclaredFields()) {
+                     if (net.minecraft.client.gui.components.EditBox.class.isAssignableFrom(f.getType())) {
+                        f.setAccessible(true);
+                        input = (net.minecraft.client.gui.components.EditBox) f.get(chatScreen);
+                        break;
+                     }
+                  }
+               } catch (Throwable ignored) {}
+               if (input != null && me.bombo.bomboaddons.util.ClipboardImageUploader.tryUploadClipboardImage(input)) {
+                  ci.cancel();
+                  return;
+               }
+            }
+         }
 
-         if (mc.screen instanceof ChatScreen || mc.screen instanceof AbstractSignEditScreen) {
+         if (BomboConfig.get().debugKeys) {
+            String keyStr = CustomBindsProcessor.getKeyNameForGlfwCode(key);
+            Bomboaddons.sendMessage("§b[KeyDebug] KeyPress: " + keyStr + " (code: " + key + ", screen: " + (mc.gui.screen() == null ? "None" : mc.gui.screen().getClass().getSimpleName()) + ", modifierHeld: " + CustomBindsProcessor.isAnyGuiModifierHeld() + ")");
+         }
+         if (mc.gui.screen() instanceof ChatScreen || mc.gui.screen() instanceof AbstractSignEditScreen) {
             return;
          }
 
-         if (me.bombo.bomboaddons.ItemListOverlay.searchBox != null && me.bombo.bomboaddons.ItemListOverlay.searchBox.isFocused()) {
+         if (ItemListOverlay.searchBox != null && ItemListOverlay.searchBox.isFocused()) {
             return;
          }
 
-         if (mc.screen instanceof me.bombo.bomboaddons.BomboConfigGUI && me.bombo.bomboaddons.BomboConfigGUI.isTypingOrListening()) {
+         if (mc.gui.screen() instanceof BomboConfigGUI && BomboConfigGUI.isTypingOrListening()) {
             return;
          }
 
-         // Clipboard run keybind execution
+         if (mc.gui.screen() != null && !(mc.gui.screen() instanceof BomboConfigGUI)) {
+            if (BomboConfig.get().preventSlotSwapOnGuiKeybind) {
+               if (CustomBindsProcessor.hasHandledGuiKeyRecently(key)) {
+                  if (BomboConfig.get().debugKeys) {
+                     Bomboaddons.sendMessage("§e[KeyDebug] KeyboardHandler canceled event for handled GUI key: " + key);
+                  }
+                  ci.cancel();
+                  return;
+               }
+            }
+         }
+
          String cbKey = BomboConfig.get().clipboardRunKey;
          if (cbKey != null && !cbKey.isEmpty()) {
             int targetCode = ClickLogic.getKeyCode(cbKey);
             if (targetCode != -1 && key == targetCode) {
                String clip = mc.keyboardHandler.getClipboard();
                if (clip != null && !clip.trim().isEmpty()) {
-                  me.bombo.bomboaddons.BomboaddonsClient.executeTracked(clip.trim());
+                  String trimmed = clip.trim();
+                  if (trimmed.length() > 256) {
+                     Bomboaddons.sendMessage("§c[Bombo] Clipboard text is too long to send! (" + trimmed.length() + " > 256)");
+                  } else {
+                     BomboaddonsClient.executeTracked(trimmed);
+                  }
+               }
+
+               ci.cancel();
+               return;
+            }
+         }
+
+         String lastCmdKey = BomboConfig.get().clipboardRunLastCommandKey;
+         if (lastCmdKey != null && !lastCmdKey.isEmpty()) {
+            int targetCode = ClickLogic.getKeyCode(lastCmdKey);
+            if (targetCode != -1 && key == targetCode) {
+               String cmd = me.bombo.bomboaddons.util.ClipboardCommandManager.getLastCopiedCommand();
+               if (cmd != null && !cmd.trim().isEmpty()) {
+                  BomboaddonsClient.executeTracked(cmd.trim());
+               } else {
+                  Bomboaddons.sendMessage("§8[§3Bombo§8] §cNo slash command found in clipboard history!");
                }
                ci.cancel();
                return;
             }
          }
 
-         if (mc.screen instanceof me.bombo.bomboaddons.BomboConfigGUI) {
-            if (key == 256 || mc.options.keyInventory.matches(event)) {
+         String crouchKey = BomboConfig.get().vanillaToggleCrouchKey;
+         if (crouchKey != null && !crouchKey.isEmpty()) {
+            int targetCode = ClickLogic.getKeyCode(crouchKey);
+            if (targetCode != -1 && key == targetCode) {
+               boolean curToggle = mc.options.toggleCrouch().get();
+               boolean newToggle = !curToggle;
+               mc.options.toggleCrouch().set(newToggle);
+               mc.options.save();
+               String modeStr = newToggle ? "§aTOGGLE" : "§eHOLD";
+               Bomboaddons.sendMessage("§8[§3Bombo§8] §7Vanilla Sneak/Crouch set to: " + modeStr);
+               ci.cancel();
                return;
             }
-            ci.cancel();
+         }
+
+         String attackKey = BomboConfig.get().vanillaToggleAttackKey;
+         if (attackKey != null && !attackKey.isEmpty()) {
+            int targetCode = ClickLogic.getKeyCode(attackKey);
+            if (targetCode != -1 && key == targetCode) {
+               boolean curToggle = mc.options.toggleAttack().get();
+               boolean newToggle = !curToggle;
+               mc.options.toggleAttack().set(newToggle);
+               mc.options.save();
+               String modeStr = newToggle ? "§aTOGGLE" : "§eHOLD";
+               Bomboaddons.sendMessage("§8[§3Bombo§8] §7Vanilla Attack/Break set to: " + modeStr);
+               ci.cancel();
+               return;
+            }
+         }
+
+         String useKey = BomboConfig.get().vanillaToggleUseKey;
+         if (useKey != null && !useKey.isEmpty()) {
+            int targetCode = ClickLogic.getKeyCode(useKey);
+            if (targetCode != -1 && key == targetCode) {
+               boolean curToggle = mc.options.toggleUse().get();
+               boolean newToggle = !curToggle;
+               mc.options.toggleUse().set(newToggle);
+               mc.options.save();
+               String modeStr = newToggle ? "§aTOGGLE" : "§eHOLD";
+               Bomboaddons.sendMessage("§8[§3Bombo§8] §7Vanilla Use/Place set to: " + modeStr);
+               ci.cancel();
+               return;
+            }
+         }
+
+         if (mc.gui.screen() instanceof BomboConfigGUI || mc.gui.screen() instanceof me.bombo.bomboaddons.gui.config.BomboOrderScreen || mc.gui.screen() instanceof me.bombo.bomboaddons.gui.config.BomboConfigScreen) {
             return;
          }
 
@@ -81,63 +243,12 @@ public abstract class KeyboardMixin {
             ci.cancel();
             return;
          }
-         
-         me.bombo.bomboaddons.GardenMovement.handleKey(key);
 
-         // Inventory Snapshot 'P' key
-         if (key == 80 && mc.screen instanceof AbstractContainerScreen) {
-            me.bombo.bomboaddons.InventoryManager.captureCurrentGUI();
+         GardenMovement.handleKey(key);
+         int saveInvKey = ClickLogic.getKeyCode(BomboConfig.get().saveInventoryKey);
+         if (saveInvKey != -1 && key == saveInvKey && mc.gui.screen() instanceof AbstractContainerScreen) {
+            InventoryManager.captureCurrentGUI();
          }
-
-         if (mc.player != null) {
-            String activeProfile = BomboConfig.get().activeProfile;
-            List<BomboConfig.CommandBind> binds = new java.util.ArrayList<>();
-            List<BomboConfig.CommandBind> activeBinds = null;
-            List<BomboConfig.CommandBind> generalBinds = null;
-
-            if (mc.screen != null) {
-               // Profile keybinds only trigger when a GUI is open
-               activeBinds = BomboConfig.get().profileBinds.get(activeProfile);
-               generalBinds = BomboConfig.get().profileBinds.get("General");
-            } else {
-               // Keybinds category keybinds only trigger when NO GUI is open
-               activeBinds = BomboConfig.get().keybindBinds.get(activeProfile);
-               generalBinds = BomboConfig.get().keybindBinds.get("General");
-            }
-            if (activeBinds != null) binds.addAll(activeBinds);
-            if (generalBinds != null && !activeProfile.equals("General")) binds.addAll(generalBinds);
-
-            if (binds != null) {
-               for (BomboConfig.CommandBind bind : binds) {
-                  if (!bind.enabled)
-                     continue;
-                  if (bind.keyCodes.isEmpty())
-                     continue;
-
-                  int lastKey = bind.keyCodes.get(bind.keyCodes.size() - 1);
-                  if (key == lastKey) {
-                     boolean allMatch = true;
-                     for (int i = 0; i < bind.keyCodes.size() - 1; i++) {
-                        if (!ClickLogic.isCodeDown(window, mc.getWindow(), bind.keyCodes.get(i))) {
-                           allMatch = false;
-                           break;
-                        }
-                     }
-
-                     if (allMatch) {
-                        if (me.bombo.bomboaddons.ClickLogic.shouldTriggerBind(bind)) {
-                           me.bombo.bomboaddons.BomboaddonsClient.executeTracked(bind.command);
-                           ci.cancel();
-                           return;
-                        }
-                     }
-                  }
-               }
-            }
-         }
-
-
       }
-
    }
 }

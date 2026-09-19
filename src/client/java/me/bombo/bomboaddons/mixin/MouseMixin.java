@@ -1,114 +1,128 @@
 package me.bombo.bomboaddons.mixin;
 
 import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.BomboConfigGUI;
 import me.bombo.bomboaddons.ClickLogic;
+import me.bombo.bomboaddons.CustomBindsProcessor;
+import me.bombo.bomboaddons.GardenMovement;
+import me.bombo.bomboaddons.KuudraPerkClicker;
+import me.bombo.bomboaddons.util.FreelookManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.Shadow;
-import java.util.List;
 
 @Environment(EnvType.CLIENT)
-@Mixin(MouseHandler.class)
+@Mixin({MouseHandler.class})
 public abstract class MouseMixin {
-    @Shadow private double accumulatedDX;
-    @Shadow private double accumulatedDY;
+   @Shadow
+   private double accumulatedDX;
+   @Shadow
+   private double accumulatedDY;
 
-    @Inject(method = "turnPlayer", at = @At("HEAD"))
-    private void onTurnPlayer(CallbackInfo ci) {
-        if (me.bombo.bomboaddons.util.FreelookManager.isFreelookActive()) {
-            me.bombo.bomboaddons.util.FreelookManager.onMouseTurn(this.accumulatedDX, this.accumulatedDY);
-            this.accumulatedDX = 0;
-            this.accumulatedDY = 0;
+   @Inject(
+      method = {"turnPlayer"},
+      at = {@At("HEAD")}
+   )
+   private void onTurnPlayer(CallbackInfo ci) {
+      Minecraft mc = Minecraft.getInstance();
+      if (me.bombo.bomboaddons.features.camera.FreecamManager.isFreecamActive()) {
+         me.bombo.bomboaddons.features.camera.FreecamManager.onMouseTurn(this.accumulatedDX, this.accumulatedDY);
+         if (BomboConfig.get().cameraDebug && mc.player != null && (Math.abs(this.accumulatedDX) > 0.01 || Math.abs(this.accumulatedDY) > 0.01)) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bCamDebug§8] §aFreecam §7(Yaw: §e" + String.format(java.util.Locale.ROOT, "%.1f", me.bombo.bomboaddons.features.camera.FreecamManager.getCamYaw()) + "§7, Pitch: §e" + String.format(java.util.Locale.ROOT, "%.1f", me.bombo.bomboaddons.features.camera.FreecamManager.getCamPitch()) + "§7)"));
+         }
+         this.accumulatedDX = 0.0;
+         this.accumulatedDY = 0.0;
+         return;
+      }
+      if (FreelookManager.isFreelookActive()) {
+         FreelookManager.onMouseTurn(this.accumulatedDX, this.accumulatedDY);
+         if (BomboConfig.get().cameraDebug && mc.player != null && (Math.abs(this.accumulatedDX) > 0.01 || Math.abs(this.accumulatedDY) > 0.01)) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bCamDebug§8] §aFreelook §7(Yaw: §e" + String.format(java.util.Locale.ROOT, "%.1f", FreelookManager.getFreelookYaw()) + "§7, Pitch: §e" + String.format(java.util.Locale.ROOT, "%.1f", FreelookManager.getFreelookPitch()) + "§7)"));
+         }
+         this.accumulatedDX = 0.0;
+         this.accumulatedDY = 0.0;
+         return;
+      }
+      if (mc.getCameraEntity() != null && mc.getCameraEntity() != mc.player) {
+         net.minecraft.world.entity.Entity camEnt = mc.getCameraEntity();
+         double sens = mc.options.sensitivity().get();
+         double f = sens * 0.6 + 0.2;
+         double factor = f * f * f * 8.0 * 0.15;
+         float dyaw = (float)(this.accumulatedDX * factor);
+         float dpitch = (float)(this.accumulatedDY * factor);
+         camEnt.setYRot(camEnt.getYRot() + dyaw);
+         camEnt.setXRot(Math.max(-90.0F, Math.min(90.0F, camEnt.getXRot() + dpitch)));
+         camEnt.yRotO = camEnt.getYRot();
+         camEnt.xRotO = camEnt.getXRot();
+         if (camEnt instanceof net.minecraft.world.entity.LivingEntity le) {
+            le.setYHeadRot(camEnt.getYRot());
+            le.setYBodyRot(camEnt.getYRot());
+            le.yHeadRotO = camEnt.getYRot();
+            le.yBodyRotO = camEnt.getYRot();
+         }
+         if (BomboConfig.get().cameraDebug && mc.player != null && (Math.abs(this.accumulatedDX) > 0.01 || Math.abs(this.accumulatedDY) > 0.01)) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bCamDebug§8] §7Spectating §e" + camEnt.getType().toShortString() + " §7(Yaw: §e" + String.format(java.util.Locale.ROOT, "%.1f", camEnt.getYRot()) + "§7, Pitch: §e" + String.format(java.util.Locale.ROOT, "%.1f", camEnt.getXRot()) + "§7) dx: " + String.format(java.util.Locale.ROOT, "%.2f", this.accumulatedDX) + " dy: " + String.format(java.util.Locale.ROOT, "%.2f", this.accumulatedDY)));
+         }
+         this.accumulatedDX = 0.0;
+         this.accumulatedDY = 0.0;
+         return;
+      }
+      if (GardenMovement.shouldLockMouse()) {
+         this.accumulatedDX = 0.0;
+         this.accumulatedDY = 0.0;
+         return;
+      }
+      if (BomboConfig.get().cameraDebug && mc.player != null && (Math.abs(this.accumulatedDX) > 0.01 || Math.abs(this.accumulatedDY) > 0.01)) {
+         mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bCamDebug§8] §7Player (Yaw: §e" + String.format(java.util.Locale.ROOT, "%.1f", mc.player.getYRot()) + "§7, Pitch: §e" + String.format(java.util.Locale.ROOT, "%.1f", mc.player.getXRot()) + "§7) dx: " + String.format(java.util.Locale.ROOT, "%.2f", this.accumulatedDX)));
+      }
+   }
+
+   @Inject(
+      at = {@At("HEAD")},
+      method = {"onButton"},
+      cancellable = true
+   )
+   private void onMouse(long window, MouseButtonInfo info, int action, CallbackInfo ci) {
+      int button = info.button();
+      Minecraft mc = Minecraft.getInstance();
+      CustomBindsProcessor.onMouseInput(button, action);
+      if (action == 1) {
+         if (mc.gui.screen() instanceof BomboConfigGUI) {
             return;
-        }
-        if (me.bombo.bomboaddons.GardenMovement.shouldLockMouse()) {
-            this.accumulatedDX = 0;
-            this.accumulatedDY = 0;
-        }
-    }
+         }
 
-    @Inject(at = @At("HEAD"), method = "onButton", cancellable = true)
-    private void onMouse(long window, MouseButtonInfo info, int action, CallbackInfo ci) {
-        if (action == 1) { // GLFW_PRESS
-            int button = info.button();
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.screen instanceof me.bombo.bomboaddons.BomboConfigGUI) {
-                return;
-            }
-             if (mc.screen != null && mc.player != null) {
-                try {
-                    if (mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen) {
-                        net.minecraft.world.inventory.Slot slot = ((me.bombo.bomboaddons.mixin.AbstractContainerScreenAccessor) containerScreen).getHoveredSlot();
-                        if (me.bombo.bomboaddons.KuudraPerkClicker.onMouseClicked(containerScreen, slot, button)) {
-                            ci.cancel();
-                            return;
-                        }
-                    }
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                }
-
-                if (!(mc.screen instanceof net.minecraft.client.gui.screens.ChatScreen || mc.screen instanceof net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen)) {
-                    if (ClickLogic.onKeyPressed(button)) {
-                        ci.cancel();
-                        return;
-                    }
-                }
+         if (mc.gui.screen() != null && mc.player != null) {
+            try {
+               Screen var9 = mc.gui.screen();
+               if (var9 instanceof AbstractContainerScreen) {
+                  AbstractContainerScreen<?> containerScreen = (AbstractContainerScreen)var9;
+                  Slot slot = me.bombo.bomboaddons.util.CustomSlotManager.getHoveredSlot(containerScreen);
+                  if (KuudraPerkClicker.onMouseClicked(containerScreen, slot, button)) {
+                     ci.cancel();
+                     return;
+                  }
+               }
+            } catch (Throwable t) {
+               t.printStackTrace();
             }
 
-            if (mc.player != null) {
-                String activeProfile = BomboConfig.get().activeProfile;
-                List<BomboConfig.CommandBind> binds = new java.util.ArrayList<>();
-                List<BomboConfig.CommandBind> activeBinds = null;
-                List<BomboConfig.CommandBind> generalBinds = null;
-
-                if (mc.screen != null) {
-                    // Profile keybinds only trigger when a GUI is open
-                    activeBinds = BomboConfig.get().profileBinds.get(activeProfile);
-                    generalBinds = BomboConfig.get().profileBinds.get("General");
-                } else {
-                    // Keybinds category keybinds only trigger when NO GUI is open
-                    activeBinds = BomboConfig.get().keybindBinds.get(activeProfile);
-                    generalBinds = BomboConfig.get().keybindBinds.get("General");
-                }
-                if (activeBinds != null) binds.addAll(activeBinds);
-                if (generalBinds != null && !activeProfile.equals("General")) binds.addAll(generalBinds);
-
-                if (binds != null) {
-                    for (BomboConfig.CommandBind bind : binds) {
-                        if (!bind.enabled)
-                            continue;
-                        if (bind.keyCodes.isEmpty())
-                            continue;
-
-                        int lastKey = bind.keyCodes.get(bind.keyCodes.size() - 1);
-                        if (button == lastKey) {
-                            boolean allMatch = true;
-                            for (int i = 0; i < bind.keyCodes.size() - 1; i++) {
-                                if (!ClickLogic.isCodeDown(window, mc.getWindow(), bind.keyCodes.get(i))) {
-                                    allMatch = false;
-                                    break;
-                                }
-                            }
-
-                             if (allMatch) {
-                                 if (me.bombo.bomboaddons.ClickLogic.shouldTriggerBind(bind)) {
-                                     me.bombo.bomboaddons.BomboaddonsClient.executeTracked(bind.command);
-                                     ci.cancel();
-                                     return;
-                                 }
-                             }
-                        }
-                    }
-                }
+            if (!(mc.gui.screen() instanceof ChatScreen) && !(mc.gui.screen() instanceof AbstractSignEditScreen) && ClickLogic.onKeyPressed(button)) {
+               ci.cancel();
+               return;
             }
-        }
-    }
+         }
+      }
+   }
 }
