@@ -267,13 +267,14 @@ public abstract class ItemHotkeysMixin {
 
             // Check if inside Hoppity's Collection / Chocolate Factory GUI, or if item is a rabbit/faction item
             boolean isHoppityGui = cleanTitle.contains("hoppity") || cleanTitle.contains("chocolate factory") || cleanTitle.contains("rabbit shop");
-            boolean isRabbitItem = skyblockId.contains("RABBIT") || skyblockId.startsWith("FACTION_");
-            if (!isRabbitItem) {
+            boolean isFish = skyblockId.equals("RABBIT_THE_FISH") || skyblockId.endsWith("_THE_FISH");
+            boolean isRabbitItem = !isFish && (skyblockId.startsWith("FACTION_RABBIT") || skyblockId.startsWith("HOPPITY_"));
+            if (!isFish && !isRabbitItem && !skyblockId.equals("RAW_RABBIT") && !skyblockId.equals("COOKED_RABBIT") && !skyblockId.equals("RABBIT_FOOT") && !skyblockId.equals("RABBIT_HIDE")) {
                ItemLore itemLore = (ItemLore)itemStack.get(DataComponents.LORE);
                if (itemLore != null) {
                   for(Component line : itemLore.lines()) {
                      String lineStr = net.minecraft.ChatFormatting.stripFormatting(line.getString()).toLowerCase(java.util.Locale.ROOT);
-                     if (lineStr.contains("rabbit") || lineStr.contains("chocolate factory") || lineStr.contains("hotspot") || lineStr.contains("faction rabbit")) {
+                     if (lineStr.contains("chocolate factory") || lineStr.contains("chocolate per second") || lineStr.contains("hotspot") || lineStr.contains("faction rabbit") || lineStr.contains("right click to add to your factory")) {
                         isRabbitItem = true;
                         break;
                      }
@@ -281,7 +282,7 @@ public abstract class ItemHotkeysMixin {
                }
             }
 
-            if (isHoppityGui || isRabbitItem) {
+            if (!isFish && (isHoppityGui || isRabbitItem)) {
                String bzTarget = cleanName.replaceAll("(?i)\\s+rabbit$", "").trim();
                if (bzTarget.isEmpty()) bzTarget = cleanName;
                Minecraft.getInstance().player.connection.sendCommand("bz " + bzTarget.toLowerCase(java.util.Locale.ROOT));

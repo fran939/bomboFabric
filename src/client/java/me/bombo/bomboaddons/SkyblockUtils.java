@@ -307,13 +307,19 @@ public class SkyblockUtils {
          if (customData != null) {
             net.minecraft.nbt.CompoundTag tag = customData.copyTag();
             String id = tag.getString("id").orElse("");
+            net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (id.isEmpty() && ea != null) {
+               id = ea.getString("id").orElse("");
+            }
+            if (id.equals("FACTION_RABBIT") || tag.contains("faction_rabbit_id") || (ea != null && ea.contains("faction_rabbit_id"))) {
+               String sub = tag.getString("faction_rabbit_id").orElse("");
+               if (sub.isEmpty() && ea != null) sub = ea.getString("faction_rabbit_id").orElse("");
+               if (!sub.isEmpty()) {
+                  return "FACTION_RABBIT_" + sub.toUpperCase(java.util.Locale.ROOT);
+               }
+            }
             if (!id.isEmpty()) {
                return id;
-            }
-
-            net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
-            if (ea != null) {
-               return ea.getString("id").orElse("");
             }
          }
       } catch (Throwable ignored) {}
@@ -330,13 +336,19 @@ public class SkyblockUtils {
          if (customData != null) {
             net.minecraft.nbt.CompoundTag tag = customData.copyTag();
             String id = tag.getString("id").orElse("");
+            net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (id.isEmpty() && ea != null) {
+               id = ea.getString("id").orElse("");
+            }
+            if (id.equals("FACTION_RABBIT") || tag.contains("faction_rabbit_id") || (ea != null && ea.contains("faction_rabbit_id"))) {
+               String sub = tag.getString("faction_rabbit_id").orElse("");
+               if (sub.isEmpty() && ea != null) sub = ea.getString("faction_rabbit_id").orElse("");
+               if (!sub.isEmpty()) {
+                  return "FACTION_RABBIT_" + sub.toUpperCase(java.util.Locale.ROOT);
+               }
+            }
             if (!id.isEmpty()) {
                return id;
-            }
-
-            net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
-            if (ea != null) {
-               return ea.getString("id").orElse("");
             }
          }
       } catch (Throwable ignored) {}
@@ -1221,6 +1233,14 @@ public class SkyblockUtils {
                }
             }
 
+            if (id.equals("FACTION_RABBIT") || searchTag.contains("faction_rabbit_id") || tag.contains("faction_rabbit_id")) {
+               String sub = searchTag.getString("faction_rabbit_id").orElse("");
+               if (sub.isEmpty()) sub = tag.getString("faction_rabbit_id").orElse("");
+               if (!sub.isEmpty()) {
+                  return "FACTION_RABBIT_" + sub.toUpperCase(java.util.Locale.ROOT);
+               }
+            }
+
             return !id.isEmpty() ? id : tag.getString("id").orElse("");
          } else {
             return "";
@@ -1238,7 +1258,15 @@ public class SkyblockUtils {
          if (customData != null) {
             CompoundTag tag = customData.copyTag();
             CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
-            return ea != null ? ea.getString("id").orElse("") : tag.getString("id").orElse("");
+            String id = ea != null ? ea.getString("id").orElse("") : tag.getString("id").orElse("");
+            if (id.equals("FACTION_RABBIT") || (ea != null && ea.contains("faction_rabbit_id")) || tag.contains("faction_rabbit_id")) {
+               String sub = ea != null ? ea.getString("faction_rabbit_id").orElse("") : "";
+               if (sub.isEmpty()) sub = tag.getString("faction_rabbit_id").orElse("");
+               if (!sub.isEmpty()) {
+                  return "FACTION_RABBIT_" + sub.toUpperCase(java.util.Locale.ROOT);
+               }
+            }
+            return id;
          } else {
             return "";
          }
@@ -1253,7 +1281,15 @@ public class SkyblockUtils {
          if (customData != null) {
             CompoundTag tag = customData.copyTag();
             CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
-            return ea != null ? ea.getString("id").orElse("") : tag.getString("id").orElse("");
+            String id = ea != null ? ea.getString("id").orElse("") : tag.getString("id").orElse("");
+            if (id.equals("FACTION_RABBIT") || (ea != null && ea.contains("faction_rabbit_id")) || tag.contains("faction_rabbit_id")) {
+               String sub = ea != null ? ea.getString("faction_rabbit_id").orElse("") : "";
+               if (sub.isEmpty()) sub = tag.getString("faction_rabbit_id").orElse("");
+               if (!sub.isEmpty()) {
+                  return "FACTION_RABBIT_" + sub.toUpperCase(java.util.Locale.ROOT);
+               }
+            }
+            return id;
          } else {
             return "";
          }

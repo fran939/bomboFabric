@@ -144,33 +144,45 @@ public abstract class ItemStackMixin {
             }
          }
 
-         // Faction Rabbits resolution (e.g. Avalanche -> FACTION_RABBIT_AVALANCHE)
-         if (skyblockId == null || skyblockId.isEmpty()) {
-            String hoverName = stack.getHoverName().getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
-            ItemLore lore = (ItemLore)stack.get(DataComponents.LORE);
-            boolean isRabbit = false;
-            if (lore != null && !lore.lines().isEmpty()) {
-               for (Component l : lore.lines()) {
-                  String lStr = l.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim().toLowerCase(java.util.Locale.ROOT);
-                  if (lStr.contains("rabbit") || lStr.contains("chocolate factory") || lStr.contains("chocolate per second") || lStr.contains("found this rabbit")) {
-                     isRabbit = true;
-                     break;
-                  }
+         // Faction Rabbits resolution (e.g. Avalanche -> FACTION_RABBIT_AVALANCHE, Nectar -> FACTION_RABBIT_NECTAR)
+         if (skyblockId == null || skyblockId.isEmpty() || skyblockId.equals("FACTION_RABBIT")) {
+            net.minecraft.world.item.component.CustomData customData = (net.minecraft.world.item.component.CustomData)stack.get(DataComponents.CUSTOM_DATA);
+            if (customData != null) {
+               net.minecraft.nbt.CompoundTag tag = customData.copyTag();
+               net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+               String rId = ea != null ? ea.getString("faction_rabbit_id").orElse("") : "";
+               if (rId.isEmpty()) rId = tag.getString("faction_rabbit_id").orElse("");
+               if (!rId.isEmpty()) {
+                  skyblockId = "FACTION_RABBIT_" + rId.toUpperCase(java.util.Locale.ROOT);
                }
             }
-            if (!isRabbit) {
-               Minecraft mc = Minecraft.getInstance();
-               if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen) {
-                  String title = screen.getTitle().getString().toLowerCase(java.util.Locale.ROOT);
-                  if (title.contains("hoppity") || title.contains("chocolate factory")) {
-                     isRabbit = true;
+            if (skyblockId == null || skyblockId.isEmpty() || skyblockId.equals("FACTION_RABBIT")) {
+               String hoverName = stack.getHoverName().getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+               ItemLore lore = (ItemLore)stack.get(DataComponents.LORE);
+               boolean isRabbit = false;
+               if (lore != null && !lore.lines().isEmpty()) {
+                  for (Component l : lore.lines()) {
+                     String lStr = l.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim().toLowerCase(java.util.Locale.ROOT);
+                     if (lStr.contains("rabbit") || lStr.contains("chocolate factory") || lStr.contains("chocolate per second") || lStr.contains("found this rabbit") || lStr.contains("faction rabbit")) {
+                        isRabbit = true;
+                        break;
+                     }
                   }
                }
-            }
-            if (isRabbit && !hoverName.isEmpty() && !hoverName.equalsIgnoreCase("Barrier") && !hoverName.contains("Glass Pane")) {
-               String rabbitId = "FACTION_RABBIT_" + hoverName.toUpperCase().replace(" ", "_");
-               if (LowestBinManager.getCachedPrice(rabbitId) > 0L || LowestBinManager.isBazaar(rabbitId)) {
-                  skyblockId = rabbitId;
+               if (!isRabbit) {
+                  Minecraft mc = Minecraft.getInstance();
+                  if (mc.gui.screen() instanceof AbstractContainerScreen<?> screen) {
+                     String title = screen.getTitle().getString().toLowerCase(java.util.Locale.ROOT);
+                     if (title.contains("hoppity") || title.contains("chocolate factory")) {
+                        isRabbit = true;
+                     }
+                  }
+               }
+               if (isRabbit && !hoverName.isEmpty() && !hoverName.equalsIgnoreCase("Barrier") && !hoverName.contains("Glass Pane")) {
+                  String rabbitId = "FACTION_RABBIT_" + hoverName.toUpperCase(java.util.Locale.ROOT).replace(" ", "_");
+                  if (LowestBinManager.getCachedPrice(rabbitId) > 0L || LowestBinManager.isBazaar(rabbitId)) {
+                     skyblockId = rabbitId;
+                  }
                }
             }
          }
