@@ -225,6 +225,7 @@ public class IRCClient {
                   activeEndpoint = "wss://bombo.dpdns.org/bombochat (WebSocket)";
                   lastError = "None (Connected via WebSocket WSS)";
                   System.out.println("[BomboAddons-IRC] Connected via WebSocket WSS!");
+                  onConnected();
 
                   while(running && BomboConfig.get().ircChatEnabled && webSocket != null) {
                      Thread.sleep(2000L);
@@ -264,6 +265,7 @@ public class IRCClient {
                      activeEndpoint = "ws://chat.bombo.dpdns.org:6668 (WebSocket)";
                      lastError = "None (Connected via WebSocket WS 6668)";
                      System.out.println("[BomboAddons-IRC] Connected via WebSocket WS 6668!");
+                     onConnected();
 
                      while(running && BomboConfig.get().ircChatEnabled && webSocket != null) {
                         Thread.sleep(2000L);
@@ -300,6 +302,7 @@ public class IRCClient {
                         activeEndpoint = "chat.bombo.dpdns.org:6667 (TCP)";
                         lastError = "None (Connected via TCP)";
                         System.out.println("[BomboAddons-IRC] Connected via TCP!");
+                        onConnected();
 
                         while(running && BomboConfig.get().ircChatEnabled && tcpSocket != null && !tcpSocket.isClosed()) {
                            String line = reader.readLine();
@@ -333,6 +336,7 @@ public class IRCClient {
                            activeEndpoint = "51.170.56.117:6667 (Direct TCP)";
                            lastError = "None (Connected via Direct IP TCP)";
                            System.out.println("[BomboAddons-IRC] Connected via Direct IP TCP!");
+                           onConnected();
 
                            while(running && BomboConfig.get().ircChatEnabled && tcpSocket != null && !tcpSocket.isClosed()) {
                               String line = reader.readLine();
@@ -930,6 +934,10 @@ public class IRCClient {
       } catch (Throwable ignored) {}
    }
 
+   public static Map<String, String> getDiscordLinks() {
+      return discordLinks;
+   }
+
    public static void linkDiscordUser(String customName, String mcName) {
       if (customName == null || mcName == null) return;
       discordLinks.put(customName.toLowerCase().trim(), mcName.trim());
@@ -1266,9 +1274,18 @@ public class IRCClient {
             try {
                String metaPrefix = buildSelfMetadataPrefix(safeArea, safeSubArea);
                sendRaw("NOTICE #bomboaddons_chat :" + metaPrefix + "\u0002[AREA]\u0002" + finalArea + "\u0002" + BomboaddonsClient.MOD_VERSION);
+               sendRaw("PRIVMSG #bomboaddons_chat :[AREA]\u0002" + finalArea + "\u0002" + BomboaddonsClient.MOD_VERSION);
             } catch (Throwable ignored) {}
          })).start();
       }
+   }
+
+   private static void onConnected() {
+      try {
+         String loc = SkyblockUtils.getLocation();
+         String sub = SkyblockUtils.getSubArea();
+         broadcastArea(loc, sub);
+      } catch (Throwable ignored) {}
    }
 
    public static void broadcastArea(String area) {

@@ -37,7 +37,7 @@ public class AFKManager {
             state = 0;
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aAFK mode updated: §e" + targetIsland + "§7 (disabled on move)."));
+               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aAFK mode updated: §e" + targetIsland + "§7."));
             }
             return;
          }
@@ -57,15 +57,11 @@ public class AFKManager {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null) {
          if (isAfk) {
-            String msg = "§8[§3Bombo§8] §aYou are now AFK §7(disabled on move).";
+            String msg = "§8[§3Bombo§8] §aYou are now AFK.";
             if (targetIsland != null) {
                msg += " §7Recovery mode: §e" + targetIsland;
             }
             mc.player.sendSystemMessage(Component.literal(msg));
-
-            lastYaw = mc.player.getYRot();
-            lastPitch = mc.player.getXRot();
-            hasLastRot = true;
          } else {
             mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §cYou are no longer AFK."));
          }
@@ -141,38 +137,13 @@ public class AFKManager {
       if (!isAfk) return;
 
       Minecraft mc = Minecraft.getInstance();
-      if (mc.player != null) {
-         // 1. Movement Check (Disabled on move)
-         if (mc.options != null) {
-            if (mc.options.keyUp.isDown() || mc.options.keyDown.isDown()
-                  || mc.options.keyLeft.isDown() || mc.options.keyRight.isDown()
-                  || mc.options.keyJump.isDown() || mc.options.keyShift.isDown()) {
-               disableAfk("movement detected");
-               return;
-            }
-         }
-
-         float yaw = mc.player.getYRot();
-         float pitch = mc.player.getXRot();
-         if (hasLastRot) {
-            float dYaw = Math.abs(yaw - lastYaw);
-            float dPitch = Math.abs(pitch - lastPitch);
-            if (dYaw > 1.5f || dPitch > 1.5f) {
-               disableAfk("mouse movement");
-               return;
-            }
-         }
-         lastYaw = yaw;
-         lastPitch = pitch;
-         hasLastRot = true;
-      }
 
       if (actionCooldownTicks > 0) {
          actionCooldownTicks--;
          return;
       }
 
-      // 2. Target Island / Private Recovery Sequence
+      // Target Island / Private Recovery Sequence
       if (targetIsland != null && targetIsland.contains("privat")) {
          runPrivateIslandRecovery(mc);
       }

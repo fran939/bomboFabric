@@ -1314,10 +1314,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("area").executes((context) -> {
-                     if (SkyblockUtils.isInLimbo() || "limbo".equalsIgnoreCase(locrawServer) || "Limbo".equalsIgnoreCase(currentArea)) {
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a{\"server\":\"limbo\"}"));
+                     String loc = SkyblockUtils.getLocation();
+                     if (SkyblockUtils.isInLimbo() || "limbo".equalsIgnoreCase(locrawServer) || "Limbo".equalsIgnoreCase(currentArea) || (loc != null && (loc.toLowerCase().contains("limbo") || loc.contains("\"server\"")))) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §aLimbo"));
                      } else {
-                        String loc = SkyblockUtils.getLocation();
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + loc));
                      }
                      return 1;
@@ -3874,6 +3874,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                    builder.then(ClientCommands.literal("online").executes((context) -> {
                       FabricClientCommandSource source = (FabricClientCommandSource) context.getSource();
                       source.sendFeedback(Component.literal("§8[§3Bombo§8] §7Fetching online bridge users from server..."));
+                      try {
+                         IRCClient.broadcastArea(SkyblockUtils.getLocation(), SkyblockUtils.getSubArea());
+                      } catch (Throwable ignored) {}
                       (new Thread(() -> {
                          try {
                             java.net.URI uri = java.net.URI.create("https://bombo.dpdns.org/api/v1/bridge/online");
@@ -3907,17 +3910,52 @@ public class BomboaddonsClient implements ClientModInitializer {
                                             version = u.get("modVersion").getAsString();
                                          }
 
-                                         if (version.equalsIgnoreCase("Unknown") || version.isEmpty()) {
-                                            String selfName = mc.player != null ? mc.player.getGameProfile().name() : "";
-                                            String selfUuid = (mc.getUser() != null && mc.getUser().getProfileId() != null) ? mc.getUser().getProfileId().toString() : "";
-                                            String uUuid = u.has("uuid") && u.get("uuid").isJsonPrimitive() ? u.get("uuid").getAsString() : "";
-                                            if ((!selfName.isEmpty() && (selfName.equalsIgnoreCase(ign) || selfName.equalsIgnoreCase(name))) ||
-                                                (!selfUuid.isEmpty() && selfUuid.equalsIgnoreCase(uUuid))) {
-                                               version = BomboaddonsClient.MOD_VERSION;
-                                            } else {
+                                         String selfName = mc.player != null ? mc.player.getGameProfile().name() : "";
+                                         String selfUuid = (mc.getUser() != null && mc.getUser().getProfileId() != null) ? mc.getUser().getProfileId().toString() : "";
+                                         String uUuid = u.has("uuid") && u.get("uuid").isJsonPrimitive() ? u.get("uuid").getAsString() : "";
+                                         boolean isMe = (!selfName.isEmpty() && (selfName.equalsIgnoreCase(ign) || selfName.equalsIgnoreCase(name))) ||
+                                                        (!selfUuid.isEmpty() && selfUuid.equalsIgnoreCase(uUuid));
+
+                                         if (isMe) {
+                                            version = BomboaddonsClient.MOD_VERSION;
+                                            BomboConfig.Settings cfg = BomboConfig.get();
+                                            String keyOwner = cfg != null && cfg.keyOwnerName != null && !cfg.keyOwnerName.isEmpty() ? cfg.keyOwnerName : "";
+                                            String myCustomName = !keyOwner.isEmpty() ? keyOwner : (cfg != null && cfg.ircDiscordUser != null && !cfg.ircDiscordUser.isEmpty() && !cfg.ircDiscordUser.equals("fran938") ? cfg.ircDiscordUser : selfName);
+                                            if (!myCustomName.isEmpty() && !myCustomName.equalsIgnoreCase(selfName)) {
+                                               name = myCustomName;
+                                            }
+                                            if (area.equalsIgnoreCase("Unknown") || area.equalsIgnoreCase("None") || area.isEmpty()) {
+                                               area = SkyblockUtils.getLocation();
+                                               subarea = SkyblockUtils.getSubArea();
+                                            }
+                                            if (sbLevel <= 0 || networth <= 0) {
+                                               try {
+                                                  var pData = me.bombo.bomboaddons.features.profile.ProfileFetcher.getCachedProfile(selfName.toLowerCase());
+                                                  if (pData != null) {
+                                                     if (sbLevel <= 0) sbLevel = pData.skyblockLevel;
+                                                     if (networth <= 0) networth = pData.networth;
+                                                  }
+                                               } catch (Throwable ignored) {}
+                                            }
+                                         } else {
+                                            if (version.equalsIgnoreCase("Unknown") || version.isEmpty()) {
                                                var ircUser = me.bombo.bomboaddons.IRCClient.getOnlinePlayers().get(ign.replaceAll("[^a-zA-Z0-9_]", ""));
                                                if (ircUser != null && ircUser.version != null && !ircUser.version.equalsIgnoreCase("Unknown")) {
                                                   version = ircUser.version;
+                                               }
+                                            }
+                                            if (area.equalsIgnoreCase("Unknown") || area.equalsIgnoreCase("None") || area.isEmpty()) {
+                                               var ircUser = me.bombo.bomboaddons.IRCClient.getOnlinePlayers().get(ign.replaceAll("[^a-zA-Z0-9_]", ""));
+                                               if (ircUser != null && ircUser.area != null && !ircUser.area.equalsIgnoreCase("Unknown") && !ircUser.area.equalsIgnoreCase("None")) {
+                                                  area = ircUser.area;
+                                               }
+                                            }
+                                            if (name.equalsIgnoreCase(ign) || name.equalsIgnoreCase("Unknown")) {
+                                               for (Map.Entry<String, String> entry : me.bombo.bomboaddons.IRCClient.getDiscordLinks().entrySet()) {
+                                                  if (entry.getValue().equalsIgnoreCase(ign)) {
+                                                     name = entry.getKey();
+                                                     break;
+                                                  }
                                                }
                                             }
                                          }
@@ -5218,6 +5256,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                }
             }
 
+            pendingAreaSyncDelay = 30;
+            pendingAreaSyncRetries = 3;
+
          });
          ClientPlayConnectionEvents.DISCONNECT.register((ClientPlayConnectionEvents.Disconnect)(handler, client) -> {
             try {
@@ -5447,6 +5488,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                            } else if (srv.contains("lobby")) {
                               currentArea = "Lobby";
                            }
+                        }
+                        if (currentArea != null && !currentArea.equals("Unknown") && !currentArea.equals(lastBroadcastedArea)) {
+                           lastBroadcastedArea = currentArea;
+                           IRCClient.broadcastArea(currentArea, currentSubArea);
                         }
                      } catch (Exception e) {
                         e.printStackTrace();
