@@ -358,17 +358,21 @@ public abstract class ItemStackMixin {
             }
 
             if (s.showAvgLowestBin7d || s.showAvgLowestBin30d) {
-               me.bombo.bomboaddons.features.PriceHistoryManager.ItemHistoryData hist = me.bombo.bomboaddons.features.PriceHistoryManager.getCachedHistory(skyblockId);
-               if (hist == null) {
-                  me.bombo.bomboaddons.features.PriceHistoryManager.fetchHistory(skyblockId, "30d");
-               } else {
-                  if (s.showAvgLowestBin7d && hist.avg7d > 0) {
-                     String avg7Text = "§6Avg 7d BIN: §b" + LowestBinManager.formatPrice(Math.round(hist.avg7d));
-                     priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("avgLowestBin7d", Component.literal(avg7Text), s.getLorePos("avgLowestBin7d", "BOTTOM"), s.getLoreOrder("avgLowestBin7d", 14)));
-                  }
-                  if (s.showAvgLowestBin30d && hist.avg30d > 0) {
-                     String avg30Text = "§6Avg 30d BIN: §b" + LowestBinManager.formatPrice(Math.round(hist.avg30d));
-                     priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("avgLowestBin30d", Component.literal(avg30Text), s.getLorePos("avgLowestBin30d", "BOTTOM"), s.getLoreOrder("avgLowestBin30d", 15)));
+               if (!me.bombo.bomboaddons.features.PriceHistoryManager.isNonMarketItem(skyblockId)) {
+                  if (LowestBinManager.getCachedPrice(skyblockId) > 0 || LowestBinManager.isBazaar(skyblockId)) {
+                     me.bombo.bomboaddons.features.PriceHistoryManager.ItemHistoryData hist = me.bombo.bomboaddons.features.PriceHistoryManager.getCachedHistory(skyblockId);
+                     if (hist == null) {
+                        me.bombo.bomboaddons.features.PriceHistoryManager.fetchHistory(skyblockId, "30d");
+                     } else {
+                        if (s.showAvgLowestBin7d && hist.avg7d > 0) {
+                           String avg7Text = "§6Avg 7d BIN: §b" + LowestBinManager.formatPrice(Math.round(hist.avg7d));
+                           priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("avgLowestBin7d", Component.literal(avg7Text), s.getLorePos("avgLowestBin7d", "BOTTOM"), s.getLoreOrder("avgLowestBin7d", 14)));
+                        }
+                        if (s.showAvgLowestBin30d && hist.avg30d > 0) {
+                           String avg30Text = "§6Avg 30d BIN: §b" + LowestBinManager.formatPrice(Math.round(hist.avg30d));
+                           priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("avgLowestBin30d", Component.literal(avg30Text), s.getLorePos("avgLowestBin30d", "BOTTOM"), s.getLoreOrder("avgLowestBin30d", 15)));
+                        }
+                     }
                   }
                }
             }
