@@ -3891,12 +3891,19 @@ public class BomboaddonsClient implements ClientModInitializer {
                                   mc.execute(() -> {
                                      source.sendFeedback(Component.literal("§8[§3Bombo§8] §6Online Bridge Users:"));
                                      int count = 0;
+                                     boolean foundSelf = false;
                                      for (com.google.gson.JsonElement el : arr) {
                                         if (!el.isJsonObject()) continue;
                                         com.google.gson.JsonObject u = el.getAsJsonObject();
                                         String name = u.has("name") && u.get("name").isJsonPrimitive() ? u.get("name").getAsString() : "Unknown";
                                         String ign = u.has("ign") && u.get("ign").isJsonPrimitive() ? u.get("ign").getAsString() : name;
                                         if (ign == null || ign.isEmpty()) ign = name;
+                                        if (ign.equalsIgnoreCase("Private") || ign.equalsIgnoreCase("Private Island") || ign.equalsIgnoreCase("Lobby") || ign.equalsIgnoreCase("Limbo") || ign.equalsIgnoreCase("Hub") || ign.equalsIgnoreCase("Menu") || ign.equalsIgnoreCase("None")) {
+                                           continue;
+                                        }
+                                        if (name.equalsIgnoreCase("Private") || name.equalsIgnoreCase("Private Island") || name.equalsIgnoreCase("Lobby") || name.equalsIgnoreCase("Limbo") || name.equalsIgnoreCase("Hub") || name.equalsIgnoreCase("Menu")) {
+                                           continue;
+                                        }
                                         double sbLevel = u.has("sbLevel") && u.get("sbLevel").isJsonPrimitive() ? u.get("sbLevel").getAsDouble() : 0.0;
                                         double networth = u.has("networth") && u.get("networth").isJsonPrimitive() ? u.get("networth").getAsDouble() : 0.0;
                                         String area = u.has("area") && u.get("area").isJsonPrimitive() ? u.get("area").getAsString() : "Unknown";
@@ -3917,6 +3924,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                         (!selfUuid.isEmpty() && selfUuid.equalsIgnoreCase(uUuid));
 
                                          if (isMe) {
+                                            foundSelf = true;
                                             version = BomboaddonsClient.MOD_VERSION;
                                             BomboConfig.Settings cfg = BomboConfig.get();
                                             String keyOwner = cfg != null && cfg.keyOwnerName != null && !cfg.keyOwnerName.isEmpty() ? cfg.keyOwnerName : "";
@@ -3982,6 +3990,25 @@ public class BomboaddonsClient implements ClientModInitializer {
                                         style = style.withClickEvent(click);
                                         line.setStyle(style);
 
+                                        source.sendFeedback(line);
+                                        count++;
+                                     }
+                                     if (!foundSelf && mc.player != null) {
+                                        String selfName = mc.player.getGameProfile().name();
+                                        BomboConfig.Settings cfg = BomboConfig.get();
+                                        String keyOwner = cfg != null && cfg.keyOwnerName != null && !cfg.keyOwnerName.isEmpty() ? cfg.keyOwnerName : "";
+                                        String myCustomName = !keyOwner.isEmpty() ? keyOwner : (cfg != null && cfg.ircDiscordUser != null && !cfg.ircDiscordUser.isEmpty() && !cfg.ircDiscordUser.equals("fran938") ? cfg.ircDiscordUser : selfName);
+                                        String myArea = SkyblockUtils.getLocation();
+                                        String mySub = SkyblockUtils.getSubArea();
+                                        MutableComponent line = Component.literal("  §7» §a" + myCustomName);
+                                        if (!myCustomName.equalsIgnoreCase(selfName)) {
+                                           line.append(Component.literal(" §8(§7" + selfName + "§8)"));
+                                        }
+                                        line.append(Component.literal(" §7— Version: §e" + BomboaddonsClient.MOD_VERSION));
+                                        if (!myArea.equalsIgnoreCase("Unknown") && !myArea.equalsIgnoreCase("None") && !myArea.isEmpty()) {
+                                           String areaText = myArea + (mySub != null && !mySub.isEmpty() && !mySub.equalsIgnoreCase(myArea) ? " - " + mySub : "");
+                                           line.append(Component.literal(" §7[§b" + areaText + "§7]"));
+                                        }
                                         source.sendFeedback(line);
                                         count++;
                                      }

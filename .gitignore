@@ -34,3 +34,4 @@ crash_exception.log
 *.launch
 libs/
 update_bestiary.py
+.env*

@@ -542,8 +542,9 @@ public class IRCClient {
                String senderNick = senderPart.split("!")[0];
                ModUser senderMu = parseNick(senderNick);
 
-               if (payload.startsWith("[AREA]")) {
-                  String[] parts = payload.split("\u0002", 3);
+               if (payload.contains("[AREA]")) {
+                  String afterArea = payload.substring(payload.indexOf("[AREA]"));
+                  String[] parts = afterArea.split("\u0002", 3);
                   String userArea = "Unknown";
                   String userVer = senderMu.version;
                   if (parts.length >= 2) {
@@ -672,6 +673,11 @@ public class IRCClient {
                     String cleanName = cleanSenderName(senderName);
                     String cleanIgn = cleanSenderName(realIgn);
                     if (cleanIgn.isEmpty()) cleanIgn = cleanName;
+                    if (cleanName.equalsIgnoreCase("Private") || cleanName.equalsIgnoreCase("Private Island") || cleanName.equalsIgnoreCase("Lobby") || cleanName.equalsIgnoreCase("Limbo") || cleanName.equalsIgnoreCase("Hub") || cleanName.equalsIgnoreCase("Menu")) {
+                       if (rawMsg.contains("26.2.") || rawMsg.matches(".*\\d+\\.\\d+.*")) {
+                          return;
+                       }
+                    }
                     if (!cleanName.equalsIgnoreCase(cleanIgn)) {
                        linkDiscordUser(cleanName, cleanIgn);
                     }
@@ -730,6 +736,10 @@ public class IRCClient {
                           dcSender = cleanSenderName(body.substring(0, cIdx).trim());
                           dcMsg = body.substring(cIdx + 2);
                        }
+                    }
+
+                    if ((dcSender.equalsIgnoreCase("Private") || dcSender.equalsIgnoreCase("Private Island") || dcSender.equalsIgnoreCase("Lobby") || dcSender.equalsIgnoreCase("Limbo") || dcSender.equalsIgnoreCase("Hub") || dcSender.equalsIgnoreCase("Menu")) && (dcMsg.contains("26.2.") || dcMsg.matches(".*\\d+\\.\\d+.*"))) {
+                       return;
                     }
 
                     String uColor = (dcSender.equalsIgnoreCase(targetDcUser) || dcSender.contains("579709526903619596") || dcSender.equalsIgnoreCase("bomboclas")) ? myCustomColor : "§9";
@@ -1248,13 +1258,13 @@ public class IRCClient {
             obj.addProperty("mod_version", BomboaddonsClient.MOD_VERSION);
             obj.addProperty("modVersion", BomboaddonsClient.MOD_VERSION);
 
-            java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+            java.net.http.HttpRequest.Builder reqBuilder = java.net.http.HttpRequest.newBuilder()
                   .uri(java.net.URI.create("https://bombo.dpdns.org/api/v1/bridge/online"))
                   .header("Content-Type", "application/json")
                   .timeout(java.time.Duration.ofSeconds(4))
-                  .POST(java.net.http.HttpRequest.BodyPublishers.ofString(obj.toString()))
-                  .build();
-            createInsecureHttpClient().sendAsync(req, java.net.http.HttpResponse.BodyHandlers.discarding());
+                  .POST(java.net.http.HttpRequest.BodyPublishers.ofString(obj.toString()));
+            me.bombo.bomboaddons.util.BomboApiUrl.attachApiKey(reqBuilder);
+            createInsecureHttpClient().sendAsync(reqBuilder.build(), java.net.http.HttpResponse.BodyHandlers.discarding());
          } catch (Throwable ignored) {}
       });
    }
@@ -1274,7 +1284,6 @@ public class IRCClient {
             try {
                String metaPrefix = buildSelfMetadataPrefix(safeArea, safeSubArea);
                sendRaw("NOTICE #bomboaddons_chat :" + metaPrefix + "\u0002[AREA]\u0002" + finalArea + "\u0002" + BomboaddonsClient.MOD_VERSION);
-               sendRaw("PRIVMSG #bomboaddons_chat :[AREA]\u0002" + finalArea + "\u0002" + BomboaddonsClient.MOD_VERSION);
             } catch (Throwable ignored) {}
          })).start();
       }
