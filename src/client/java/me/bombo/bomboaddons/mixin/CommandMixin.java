@@ -25,6 +25,30 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("b buttons move") || trimmed.equalsIgnoreCase("bombo buttons move") || trimmed.equalsIgnoreCase("bomboaddons buttons move")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonMoveScreen(null)));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b buttons") || trimmed.equalsIgnoreCase("bombo buttons") || trimmed.equalsIgnoreCase("bomboaddons buttons")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonsScreen(null)));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b item") || trimmed.equalsIgnoreCase("bombo item") || trimmed.equalsIgnoreCase("bomboaddons item")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> me.bombo.bomboaddons.features.ItemInfoCommand.execute());
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b swap") || trimmed.equalsIgnoreCase("bombo swap") || trimmed.equalsIgnoreCase("bomboaddons swap")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b pv") || trimmed.equalsIgnoreCase("bombo pv")
             || trimmed.toLowerCase().startsWith("b pv ") || trimmed.toLowerCase().startsWith("bombo pv ")) {
          String arg = "";

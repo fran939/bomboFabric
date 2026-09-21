@@ -1326,7 +1326,7 @@ public class IRCClient {
                postOnlineStatus(curLoc, curSub);
 
                String prefix = buildSelfMetadataPrefix(curLoc, curSub);
-               String coloredMsg = ChromaTextHelper.processChroma(finalMsg).replace('&', '§');
+               String coloredMsg = ChromaTextHelper.processChroma(finalMsg);
                String payload = prefix + "\u0002" + username + "\u0002" + coloredMsg;
                (new Thread(() -> {
                   try {

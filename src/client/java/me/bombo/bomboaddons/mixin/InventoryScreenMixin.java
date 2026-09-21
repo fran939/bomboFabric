@@ -34,7 +34,16 @@ public class InventoryScreenMixin {
       method = {"extractRenderState"},
       at = {@At("TAIL")}
    )
-   private void onExtractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+   private void onExtractRenderStateTail(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+      InventoryScreen self = (InventoryScreen)(Object)this;
+      AbstractContainerScreenAccessor accessor = (AbstractContainerScreenAccessor)self;
+      int leftPos = accessor.getLeftPos();
+      int topPos = accessor.getTopPos();
+      int imageWidth = accessor.getImageWidth();
+      int imageHeight = accessor.getImageHeight();
+
+      me.bombo.bomboaddons.features.swapper.InventorySlotSwapManager.renderSlotOverlays(graphics, self, leftPos, topPos, Minecraft.getInstance().font, mouseX, mouseY);
+      me.bombo.bomboaddons.features.buttons.InventoryButtonManager.renderButtons(graphics, self, mouseX, mouseY, leftPos, topPos, imageWidth, imageHeight);
       ItemListOverlay.render(graphics, Minecraft.getInstance().font, mouseX, mouseY);
    }
 }

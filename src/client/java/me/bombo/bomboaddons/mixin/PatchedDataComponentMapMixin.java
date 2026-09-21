@@ -23,6 +23,18 @@ public class PatchedDataComponentMapMixin {
    private <T> void onGet(DataComponentType<? extends T> type, CallbackInfoReturnable<T> cir) {
       if (type == DataComponents.PROFILE) {
          DataComponentMap map = (DataComponentMap)this;
+         try {
+            net.minecraft.world.item.component.CustomData cd = (net.minecraft.world.item.component.CustomData)map.get(DataComponents.CUSTOM_DATA);
+            if (cd != null) {
+               net.minecraft.nbt.CompoundTag tag = cd.copyTag();
+               if (tag != null && tag.contains("ExtraAttributes")) {
+                  net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+                  if (ea != null && (ea.contains("skin") || ea.contains("SKIN") || ea.contains("skin_id"))) {
+                     return; // Preserve custom player skin!
+                  }
+               }
+            }
+         } catch (Throwable ignored) {}
          String id = SkyblockUtils.getInternalIdRaw(map);
          if (id != null && !id.isEmpty()) {
             SkyblockItemManager.SkyblockItemInfo info = SkyblockItemManager.getInfo(id);

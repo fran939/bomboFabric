@@ -159,6 +159,20 @@ public class BomboaddonsClient implements ClientModInitializer {
    }
 
    public static final String MOD_VERSION = getModVersion();
+
+   public static void cleanOldVersions() {
+      try {
+         File modsDir = new File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "mods");
+         if (!modsDir.exists() || !modsDir.isDirectory()) return;
+         File[] jars = modsDir.listFiles((dir, name) -> name.startsWith("bomboaddons-") && name.endsWith(".jar") && !name.contains(MOD_VERSION));
+         if (jars != null) {
+            for (File f : jars) {
+               try { f.delete(); } catch (Throwable ignored) {}
+            }
+         }
+      } catch (Throwable ignored) {}
+   }
+
    public static final java.util.List<String> commandHistory = new java.util.concurrent.CopyOnWriteArrayList<>();
    private static final java.io.File COMMAND_HISTORY_FILE = new java.io.File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "config/bomboaddons/command_history.txt");
 
@@ -434,6 +448,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.hud.ArmorHud.init();
       me.bombo.bomboaddons.features.hud.EquipmentHud.init();
       me.bombo.bomboaddons.features.hud.InventoryHud.init();
+      me.bombo.bomboaddons.features.auto.AutoSequenceManager.init();
       try {
          new dev.vy.betterpv.client.BetterPVClient().onInitializeClient();
       } catch (Throwable t) {
@@ -5534,6 +5549,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                }
             } else {
                return true;
+            }
+         });
+         ClientReceiveMessageEvents.GAME_CANCELED.register((ClientReceiveMessageEvents.GameCanceled)(message, overlay) -> {
+            if (!overlay && message != null) {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, null);
+            }
+         });
+         ClientReceiveMessageEvents.CHAT_CANCELED.register((ClientReceiveMessageEvents.ChatCanceled)(message, signedMessage, sender, params, receptionTimestamp) -> {
+            if (message != null) {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, null);
             }
          });
          ClientReceiveMessageEvents.GAME.register((ClientReceiveMessageEvents.Game)(message, overlay) -> {

@@ -16,4 +16,9 @@ public interface ScreenAccessor {
 
    @Invoker("addRenderableWidget")
    <T extends GuiEventListener & Renderable & NarratableEntry> T invokeAddRenderableWidget(T var1);
+
+   @Invoker("defaultHandleGameClickEvent")
+   static void invokeDefaultHandleGameClickEvent(net.minecraft.network.chat.ClickEvent event, net.minecraft.client.Minecraft minecraft, Screen screen) {
+      throw new AssertionError();
+   }
 }

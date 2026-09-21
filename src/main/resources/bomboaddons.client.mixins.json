@@ -4,6 +4,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],
 	"client": [
+		"AbstractContainerScreenAccessor",
 		"AbstractContainerScreenMixin",
 		"AbstractSoundInstanceMixin",
 		"AbstractWidgetMixin",
@@ -20,6 +21,7 @@
 		"ChromaGlyphMixin",
 		"ClientClockManagerMixin",
 		"ClientCommonPacketListenerMixin",
+		"ClientItemInfoLoaderMixin",
 		"ClientLevelMixin",
 		"ClientPacketListenerMixin",
 		"CommandMixin",

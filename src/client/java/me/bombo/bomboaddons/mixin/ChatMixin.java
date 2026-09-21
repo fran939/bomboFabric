@@ -141,12 +141,14 @@ public abstract class ChatMixin implements IChatComponent {
             me.bombo.bomboaddons.features.party.PartyManager.onChatMessage(raw);
 
             if (me.bombo.bomboaddons.features.ring.RingManager.shouldSuppressMessage(raw)) {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, "RING_SUPPRESS");
                ci.cancel();
                return;
             }
 
             Component ringComp = me.bombo.bomboaddons.features.ring.RingManager.processIncomingChat(raw);
             if (ringComp != null) {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, false, "RING");
                ci.cancel();
                isFormattingMessage.set(true);
                try {
@@ -158,9 +160,12 @@ public abstract class ChatMixin implements IChatComponent {
             }
 
             if (me.bombo.bomboaddons.ChatModifier.shouldHide(raw)) {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, me.bombo.bomboaddons.features.chat.ChatHistoryTracker.detectCategory(raw));
                ci.cancel();
                return;
             }
+
+            me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, false, me.bombo.bomboaddons.features.chat.ChatHistoryTracker.detectCategory(raw));
 
             if (raw.contains("[SHOW:")) {
                Component formatted = me.bombo.bomboaddons.IRCClient.formatWithLinks(raw);

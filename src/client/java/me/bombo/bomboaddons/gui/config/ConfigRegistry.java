@@ -11,6 +11,7 @@ import java.util.*;
 public class ConfigRegistry {
     // Hidden cheat categories when "hideCheats" is enabled
     public static final Set<String> CHEAT_CATEGORIES = Set.of(
+            "Auto",
             "Clicker",
             "Experiments"
     );
@@ -19,6 +20,7 @@ public class ConfigRegistry {
     public static final List<String> BASE_CATEGORIES = List.of(
             "Aliases",
             "Anvil",
+            "Auto",
             "Bedwars",
             "Block Highlights",
             "Blocked Slots",
@@ -117,6 +119,14 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Require Keybind to Combine", "Only runs auto anvil when the designated keybind is held.", category, () -> s.anvilAutoCombineRequireKey, v -> s.anvilAutoCombineRequireKey = v));
             }
 
+            case "Auto" -> {
+                items.add(ConfigItem.header("Custom Automation Sequences", category));
+                items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", category,
+                        ConfigCustomWidgets::getAutoSequencesCardHeight,
+                        ConfigCustomWidgets::renderAutoSequencesCard,
+                        ConfigCustomWidgets::handleAutoSequencesCardClick));
+            }
+
             case "Bedwars" -> {
                 items.add(ConfigItem.header("Bedwars Overlays & Helpers", category));
                 items.add(ConfigItem.toggle("Bedwars Player ESP", "Outlines enemy Bedwars players in 3D world.", category, () -> s.bedwarsEsp, v -> s.bedwarsEsp = v));
@@ -141,6 +151,9 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Inventory Slot Protection", category));
                 items.add(ConfigItem.keybind("Bypass Keybind", "Keybind held to temporarily bypass slot protection.", category, () -> s.blockedSlotsBypassKey != null ? s.blockedSlotsBypassKey : "LSHIFT", v -> s.blockedSlotsBypassKey = v));
                 items.add(ConfigItem.toggle("Prevent Slot Swap on Gui Keybind", "Blocks hotbar number swapping into protected slots.", category, () -> s.preventSlotSwapOnGuiKeybind, v -> s.preventSlotSwapOnGuiKeybind = v));
+                items.add(ConfigItem.header("Inventory Slot Swapping", category));
+                items.add(ConfigItem.toggle("Inventory Slot Swapper", "Enables holding hotkey to link inventory slots to hotbar slots, and Shift-clicking to swap.", category, () -> s.inventorySlotSwapEnabled, v -> s.inventorySlotSwapEnabled = v));
+                items.add(ConfigItem.keybind("Slot Swapper Hotkey", "Keybind held inside containers to bind/unbind inventory slots.", category, () -> s.inventorySlotSwapKey != null ? s.inventorySlotSwapKey : "X", v -> s.inventorySlotSwapKey = v));
             }
 
             case "Chat Modifier" -> {
@@ -501,6 +514,12 @@ public class ConfigRegistry {
                 items.add(ConfigItem.keybind("Trade Hotkey", "Quick trade with the player you're looking at or hovering over, or lookup on AH/BZ.", category, () -> s.tradeKey, v -> s.tradeKey = v));
                 items.add(ConfigItem.keybind("Trade Max Pet Hotkey", "Quick AH search for max level pets (100] or 200] for GDrag/Rose/Jade).", category, () -> s.tradeMaxKey, v -> s.tradeMaxKey = v));
                 items.add(ConfigItem.keybind("Recipe Viewer", "Open the SkyBlock recipe viewer screen for the hovered item.", category, () -> s.recipeKey, v -> s.recipeKey = v));
+                items.add(ConfigItem.keybind("Recipe Command (/recipe)", "Execute /recipe <item> command for the hovered item.", category, () -> s.recipeCmdKey, v -> s.recipeCmdKey = v));
+                items.add(ConfigItem.keybind("View Recipe (/viewrecipe)", "Execute /viewrecipe <id> command for the hovered item.", category, () -> s.viewRecipeKey, v -> s.viewRecipeKey = v));
+                items.add(ConfigItem.cycle("Recipe Hotkey Action", "Default behavior when pressing the main Recipe Viewer hotkey.", category,
+                        java.util.List.of("GUI", "/recipe", "/viewrecipe"),
+                        () -> s.recipeHotkeyAction != null ? s.recipeHotkeyAction : "GUI",
+                        v -> s.recipeHotkeyAction = v));
                 items.add(ConfigItem.keybind("Usage Viewer", "Open the craft usage viewer screen for the hovered item.", category, () -> s.usageKey, v -> s.usageKey = v));
                 items.add(ConfigItem.keybind("Texture Toggle", "Toggle custom/vanilla resourcepack texture for hovered item.", category, () -> s.textureToggleKey, v -> s.textureToggleKey = v));
                 items.add(ConfigItem.keybind("Show Item Info", "Display detailed item statistics and NBT summary overlay.", category, () -> s.showItemKey, v -> s.showItemKey = v));

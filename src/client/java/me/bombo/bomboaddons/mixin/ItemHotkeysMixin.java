@@ -77,6 +77,14 @@ public abstract class ItemHotkeysMixin {
                   if (this.handleKey(targetItem, "RECIPE")) {
                      cir.setReturnValue(true);
                   }
+               } else if (CustomBindsProcessor.matchesKey(s.viewRecipeKey, pressedKey)) {
+                  if (this.handleKey(targetItem, "VIEWRECIPE_CMD")) {
+                     cir.setReturnValue(true);
+                  }
+               } else if (CustomBindsProcessor.matchesKey(s.recipeCmdKey, pressedKey)) {
+                  if (this.handleKey(targetItem, "RECIPE_CMD")) {
+                     cir.setReturnValue(true);
+                  }
                } else if (CustomBindsProcessor.matchesKey(s.usageKey, pressedKey)) {
                   if (this.handleKey(targetItem, "USAGE")) {
                      cir.setReturnValue(true);
@@ -222,7 +230,34 @@ public abstract class ItemHotkeysMixin {
       }
 
       if (skyblockId != null) {
+         if (action.equalsIgnoreCase("VIEWRECIPE_CMD")) {
+            if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.connection != null) {
+               Minecraft.getInstance().player.connection.sendCommand("viewrecipe " + skyblockId);
+               return true;
+            }
+         }
+         if (action.equalsIgnoreCase("RECIPE_CMD")) {
+            if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.connection != null) {
+               String cleanName = this.cleanName(itemStack);
+               Minecraft.getInstance().player.connection.sendCommand("recipe " + cleanName);
+               return true;
+            }
+         }
+
          if (action.equalsIgnoreCase("RECIPE") || action.equalsIgnoreCase("USAGE")) {
+            String mode = BomboConfig.get().recipeHotkeyAction != null ? BomboConfig.get().recipeHotkeyAction.trim().toUpperCase(java.util.Locale.ROOT) : "GUI";
+            if (action.equalsIgnoreCase("RECIPE") && (mode.contains("VIEWRECIPE") || mode.contains("VIEW_RECIPE"))) {
+               if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.connection != null) {
+                  Minecraft.getInstance().player.connection.sendCommand("viewrecipe " + skyblockId);
+                  return true;
+               }
+            } else if (action.equalsIgnoreCase("RECIPE") && mode.contains("RECIPE") && !mode.equals("GUI")) {
+               if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.connection != null) {
+                  String cleanName = this.cleanName(itemStack);
+                  Minecraft.getInstance().player.connection.sendCommand("recipe " + cleanName);
+                  return true;
+               }
+            }
             RecipeViewerScreen rvs = new RecipeViewerScreen(skyblockId, Minecraft.getInstance().gui.screen());
             if (action.equalsIgnoreCase("USAGE")) {
                rvs.setUsageMode(true);

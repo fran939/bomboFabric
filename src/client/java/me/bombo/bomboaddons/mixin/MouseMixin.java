@@ -99,8 +99,15 @@ public abstract class MouseMixin {
       Minecraft mc = Minecraft.getInstance();
       CustomBindsProcessor.onMouseInput(button, action);
       if (action == 1) {
-         if (mc.gui.screen() instanceof BomboConfigGUI) {
+         if (mc.gui.screen() instanceof BomboConfigGUI || mc.gui.screen() instanceof me.bombo.bomboaddons.gui.config.BomboConfigScreen) {
             return;
+         }
+
+         if (mc.player != null && !(mc.gui.screen() instanceof ChatScreen) && !(mc.gui.screen() instanceof AbstractSignEditScreen)) {
+            if (me.bombo.bomboaddons.features.auto.AutoSequenceManager.onKeyPressed(button)) {
+               ci.cancel();
+               return;
+            }
          }
 
          if (mc.gui.screen() != null && mc.player != null) {

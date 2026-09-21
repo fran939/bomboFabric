@@ -239,6 +239,11 @@ public abstract class KeyboardMixin {
             return;
          }
 
+         if (me.bombo.bomboaddons.features.auto.AutoSequenceManager.onKeyPressed(key)) {
+            ci.cancel();
+            return;
+         }
+
          if (ClickLogic.onKeyPressed(key)) {
             ci.cancel();
             return;

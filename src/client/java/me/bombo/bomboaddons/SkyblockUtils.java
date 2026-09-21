@@ -300,6 +300,21 @@ public class SkyblockUtils {
       }
    }
 
+   public static net.minecraft.nbt.CompoundTag getExtraAttributes(net.minecraft.world.item.ItemStack itemStack) {
+      if (itemStack == null || itemStack.isEmpty()) return null;
+      try {
+         net.minecraft.world.item.component.CustomData customData = (net.minecraft.world.item.component.CustomData)itemStack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+         if (customData != null) {
+            net.minecraft.nbt.CompoundTag tag = customData.copyTag();
+            if (tag.contains("ExtraAttributes")) {
+               return tag.getCompound("ExtraAttributes").orElse(null);
+            }
+            return tag;
+         }
+      } catch (Throwable ignored) {}
+      return null;
+   }
+
    public static String getSkyblockId(net.minecraft.world.item.ItemStack itemStack) {
       if (itemStack == null || itemStack.isEmpty()) return "";
       try {
@@ -1308,6 +1323,10 @@ public class SkyblockUtils {
    public static boolean isOnSkyblock() {
       return isConnectedToHypixel() && 
          ("SKYBLOCK".equalsIgnoreCase(BomboaddonsClient.locrawGametype) || matchesIslandRequirement("skyblock"));
+   }
+
+   public static boolean isInSkyblock() {
+      return isOnSkyblock();
    }
 
    public static long getSkyblockDay() {

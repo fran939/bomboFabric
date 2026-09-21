@@ -67,8 +67,9 @@ public class BomboOrderScreen extends Screen {
     private FeatureOrganizerManager.FeatureMeta editingFeature = null;
     private String editFeatureNameInput = "";
     private String editFeatureDescInput = "";
+    private String editFeatureParentInput = "";
     private boolean editFeatureEnabledByDefault = false;
-    private int editFeatureFocusField = 0; // 0 = Name, 1 = Description
+    private int editFeatureFocusField = 0; // 0 = Name, 1 = Description, 2 = Parent Requirement
     private int editFeatureCursorPos = 0;
 
     // Category Creation/Renaming modal cursor
@@ -175,17 +176,66 @@ public class BomboOrderScreen extends Screen {
             renderFeatureEditModal(g, mouseX, mouseY);
         }
 
-        // 8. Render Dragged Feature Floating under cursor
+        // 8. Render Dragged Feature Floating under cursor (Full card width with gold border)
         if (draggingFeature != null) {
-            int cardW = 210;
-            int cardH = 34;
+            int cardW = contentW - 8;
+            int cardH = 40;
             int dx = mouseX - dragOffsetX;
             int dy = mouseY - dragOffsetY;
 
-            g.fill(dx, dy, dx + cardW, dy + cardH, 0xEE1E293B);
+            // Semi-transparent drop shadow + dark card background + gold outline
+            g.fill(dx + 3, dy + 3, dx + cardW + 3, dy + cardH + 3, 0x55000000);
+            g.fill(dx, dy, dx + cardW, dy + cardH, 0xF01E293B);
             g.outline(dx, dy, cardW, cardH, 0xFFFFAA00);
-            g.text(this.font, "§e" + draggingFeature.name, dx + 8, dy + 6, 0xFFFFFFFF, true);
-            g.text(this.font, "§7→ Drop to reorder or link", dx + 8, dy + 18, 0xFFAAAAAA, false);
+
+            g.text(this.font, "§e☰", dx + 8, dy + 14, 0xFFFFAA00, false);
+            String title = ConfigUITheme.formatFont(draggingFeature.name);
+            if (draggingFeature.parentDependency != null && !draggingFeature.parentDependency.trim().isEmpty()) {
+                title += " §6↳ Requires: " + draggingFeature.parentDependency.trim();
+            }
+            g.text(this.font, "§e" + title, dx + 24, dy + 7, 0xFFFFFFFF, true);
+
+            // Check what we're currently hovering to give active feedback
+            String hoverHint = "§7→ Drop top/bottom to reorder, center to link";
+            if (mouseX >= sideX && mouseX <= sideX + sidebarW && mouseY >= sideY && mouseY <= sideY + sideH) {
+                int curY = sideY + 6 - (int) this.sidebarScroll;
+                curY += 22; // skip ALL
+                List<String> categories = new ArrayList<>(FeatureOrganizerManager.customCategories);
+                for (String cat : categories) {
+                    if (mouseY >= curY && mouseY <= curY + 20) {
+                        hoverHint = "§b→ Move to category: " + cat;
+                        break;
+                    }
+                    curY += 22;
+                }
+            } else {
+                List<FeatureOrganizerManager.FeatureMeta> currentList = getFilteredFeatures();
+                boolean isAll = "ALL".equalsIgnoreCase(selectedCategory);
+                int targetCardW = isAll ? 210 : (contentW - 8);
+                int targetCardH = isAll ? 34 : 40;
+                int cols = isAll ? Math.max(1, contentW / (targetCardW + 10)) : 1;
+                int listStartY = contentY + 4 - (int) this.featureScroll;
+                for (int i = 0; i < currentList.size(); i++) {
+                    FeatureOrganizerManager.FeatureMeta target = currentList.get(i);
+                    if (target == draggingFeature) continue;
+                    int col = isAll ? (i % cols) : 0;
+                    int row = isAll ? (i / cols) : i;
+                    int tcx = contentX + col * (targetCardW + (isAll ? 10 : 0));
+                    int tcy = listStartY + row * (targetCardH + (isAll ? 8 : 6));
+                    if (mouseX >= tcx && mouseX <= tcx + targetCardW && mouseY >= tcy && mouseY <= tcy + targetCardH) {
+                        double relY = (mouseY - tcy) / (double) targetCardH;
+                        if (relY < 0.25) {
+                            hoverHint = "§b↑ Insert above " + target.name;
+                        } else if (relY > 0.75) {
+                            hoverHint = "§b↓ Insert below " + target.name;
+                        } else {
+                            hoverHint = "§6↳ Require parent: " + target.name;
+                        }
+                        break;
+                    }
+                }
+            }
+            g.text(this.font, hoverHint, dx + 24, dy + 22, 0xFFFCD34D, false);
         }
 
         // 8b. Render Dragged Category Floating under cursor
@@ -317,12 +367,23 @@ public class BomboOrderScreen extends Screen {
                 if (cy + cardH >= y && cy <= y + h) {
                     boolean hover = mouseX >= cx && mouseX <= cx + cardW && mouseY >= cy && mouseY <= cy + cardH;
                     boolean isDragged = (draggingFeature == fm);
+                    boolean isDragTarget = (draggingFeature != null && !isDragged && hover);
+                    double relY = isDragTarget ? ((mouseY - cy) / (double) cardH) : -1.0;
+                    boolean isLinkTarget = isDragTarget && (relY >= 0.25 && relY <= 0.75);
 
-                    int cardBg = isDragged ? 0x44334155 : (hover ? 0xEE1E293B : 0xAA111827);
-                    int borderCol = hover ? 0xFF38BDF8 : 0x33475569;
+                    int cardBg = isDragged ? 0x44334155 : (isLinkTarget ? 0x44FFAA00 : (hover ? 0xEE1E293B : 0xAA111827));
+                    int borderCol = isDragged ? 0xFFFFAA00 : (isLinkTarget ? 0xFFFFAA00 : (hover ? 0xFF38BDF8 : 0x33475569));
 
                     g.fill(cx, cy, cx + cardW, cy + cardH, cardBg);
                     g.outline(cx, cy, cardW, cardH, borderCol);
+
+                    if (isDragTarget) {
+                        if (relY < 0.25) {
+                            g.fill(cx, cy - 2, cx + cardW, cy + 1, 0xFF38BDF8);
+                        } else if (relY > 0.75) {
+                            g.fill(cx, cy + cardH - 1, cx + cardW, cy + cardH + 2, 0xFF38BDF8);
+                        }
+                    }
 
                     int badgeSize = 16;
                     int badgeX = cx + cardW - badgeSize - 6;
@@ -367,13 +428,24 @@ public class BomboOrderScreen extends Screen {
                 if (cy + cardH >= y && cy <= y + h) {
                     boolean hover = mouseX >= cx && mouseX <= cx + cardW && mouseY >= cy && mouseY <= cy + cardH;
                     boolean isDragged = (draggingFeature == fm);
+                    boolean isDragTarget = (draggingFeature != null && !isDragged && hover);
+                    double relY = isDragTarget ? ((mouseY - cy) / (double) cardH) : -1.0;
+                    boolean isLinkTarget = isDragTarget && (relY >= 0.25 && relY <= 0.75);
                     boolean handleHover = mouseX >= cx && mouseX <= cx + 22 && mouseY >= cy && mouseY <= cy + cardH;
 
-                    int cardBg = isDragged ? 0x44334155 : (hover ? 0xEE1E293B : 0xAA0F172A);
-                    int borderCol = isDragged ? 0xFFFFAA00 : (hover ? 0xFF38BDF8 : 0x33475569);
+                    int cardBg = isDragged ? 0x44334155 : (isLinkTarget ? 0x44FFAA00 : (hover ? 0xEE1E293B : 0xAA0F172A));
+                    int borderCol = isDragged ? 0xFFFFAA00 : (isLinkTarget ? 0xFFFFAA00 : (hover ? 0xFF38BDF8 : 0x33475569));
 
                     g.fill(cx, cy, cx + cardW, cy + cardH, cardBg);
                     g.outline(cx, cy, cardW, cardH, borderCol);
+
+                    if (isDragTarget) {
+                        if (relY < 0.25) {
+                            g.fill(cx, cy - 2, cx + cardW, cy + 1, 0xFF38BDF8);
+                        } else if (relY > 0.75) {
+                            g.fill(cx, cy + cardH - 1, cx + cardW, cy + cardH + 2, 0xFF38BDF8);
+                        }
+                    }
 
                     // Reorder Handle on left (highlighted on hover/drag)
                     g.text(this.font, "§8☰", cx + 8, cy + 14, handleHover ? 0xFF38BDF8 : (hover ? 0xFF94A3B8 : 0xFF64748B), false);
@@ -645,8 +717,8 @@ public class BomboOrderScreen extends Screen {
     private void renderFeatureEditModal(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         g.fill(0, 0, this.width, this.height, 0x88000000);
 
-        int mw = 320;
-        int mh = 210;
+        int mw = 340;
+        int mh = 245;
         int mx = (this.width - mw) / 2;
         int my = (this.height - mh) / 2;
 
@@ -655,71 +727,87 @@ public class BomboOrderScreen extends Screen {
 
         g.text(this.font, "§b§lEdit Feature Details", mx + 16, my + 12, 0xFFFFFFFF, false);
 
-        // Name input label + box
+        // Field 0: Name input label + box
         g.text(this.font, "§7Feature Name:", mx + 16, my + 28, 0xFF94A3B8, false);
         int nameInputX = mx + 16;
-        int nameInputY = my + 40;
+        int nameInputY = my + 39;
         int nameInputW = mw - 32;
-        g.fill(nameInputX, nameInputY, nameInputX + nameInputW, nameInputY + 20, 0xFF1E293B);
-        g.outline(nameInputX, nameInputY, nameInputW, 20, editFeatureFocusField == 0 ? 0xFF38BDF8 : 0x3364748B);
+        g.fill(nameInputX, nameInputY, nameInputX + nameInputW, nameInputY + 18, 0xFF1E293B);
+        g.outline(nameInputX, nameInputY, nameInputW, 18, editFeatureFocusField == 0 ? 0xFF38BDF8 : 0x3364748B);
 
         String nameText = editFeatureNameInput;
-        g.text(this.font, nameText, nameInputX + 6, nameInputY + 6, 0xFFFFFFFF, false);
+        g.text(this.font, nameText, nameInputX + 6, nameInputY + 5, 0xFFFFFFFF, false);
         if (editFeatureFocusField == 0 && (System.currentTimeMillis() / 500 % 2 == 0)) {
             editFeatureCursorPos = Math.max(0, Math.min(nameText.length(), editFeatureCursorPos));
             int cursorX = nameInputX + 6 + this.font.width(nameText.substring(0, editFeatureCursorPos));
-            g.fill(cursorX, nameInputY + 4, cursorX + 1, nameInputY + 16, 0xFF38BDF8);
+            g.fill(cursorX, nameInputY + 3, cursorX + 1, nameInputY + 15, 0xFF38BDF8);
         }
 
-        // Description input label + box
-        g.text(this.font, "§7Description:", mx + 16, my + 66, 0xFF94A3B8, false);
+        // Field 1: Description input label + box
+        g.text(this.font, "§7Description:", mx + 16, my + 63, 0xFF94A3B8, false);
         int descInputX = mx + 16;
-        int descInputY = my + 78;
+        int descInputY = my + 74;
         int descInputW = mw - 32;
-        g.fill(descInputX, descInputY, descInputX + descInputW, descInputY + 34, 0xFF1E293B);
-        g.outline(descInputX, descInputY, descInputW, 34, editFeatureFocusField == 1 ? 0xFF38BDF8 : 0x3364748B);
+        g.fill(descInputX, descInputY, descInputX + descInputW, descInputY + 28, 0xFF1E293B);
+        g.outline(descInputX, descInputY, descInputW, 28, editFeatureFocusField == 1 ? 0xFF38BDF8 : 0x3364748B);
 
         String descText = editFeatureDescInput;
         editFeatureCursorPos = Math.max(0, Math.min(descText.length(), editFeatureCursorPos));
 
-        if (descText.length() > 48) {
-            String line1 = descText.substring(0, 48);
-            String line2 = descText.substring(48);
-            g.text(this.font, line1, descInputX + 6, descInputY + 5, 0xFFFFFFFF, false);
-            g.text(this.font, line2, descInputX + 6, descInputY + 18, 0xFFFFFFFF, false);
+        if (descText.length() > 50) {
+            String line1 = descText.substring(0, 50);
+            String line2 = descText.substring(50);
+            g.text(this.font, line1, descInputX + 6, descInputY + 4, 0xFFFFFFFF, false);
+            g.text(this.font, line2, descInputX + 6, descInputY + 15, 0xFFFFFFFF, false);
 
             if (editFeatureFocusField == 1 && (System.currentTimeMillis() / 500 % 2 == 0)) {
-                if (editFeatureCursorPos <= 48) {
+                if (editFeatureCursorPos <= 50) {
                     int cursorX = descInputX + 6 + this.font.width(descText.substring(0, editFeatureCursorPos));
-                    g.fill(cursorX, descInputY + 4, cursorX + 1, descInputY + 15, 0xFF38BDF8);
+                    g.fill(cursorX, descInputY + 3, cursorX + 1, descInputY + 13, 0xFF38BDF8);
                 } else {
-                    int cursorX = descInputX + 6 + this.font.width(descText.substring(48, editFeatureCursorPos));
-                    g.fill(cursorX, descInputY + 17, cursorX + 1, descInputY + 28, 0xFF38BDF8);
+                    int cursorX = descInputX + 6 + this.font.width(descText.substring(50, editFeatureCursorPos));
+                    g.fill(cursorX, descInputY + 14, cursorX + 1, descInputY + 24, 0xFF38BDF8);
                 }
             }
         } else {
-            g.text(this.font, descText, descInputX + 6, descInputY + 6, 0xFFFFFFFF, false);
+            g.text(this.font, descText, descInputX + 6, descInputY + 5, 0xFFFFFFFF, false);
             if (editFeatureFocusField == 1 && (System.currentTimeMillis() / 500 % 2 == 0)) {
                 int cursorX = descInputX + 6 + this.font.width(descText.substring(0, editFeatureCursorPos));
-                g.fill(cursorX, descInputY + 4, cursorX + 1, descInputY + 16, 0xFF38BDF8);
+                g.fill(cursorX, descInputY + 3, cursorX + 1, descInputY + 15, 0xFF38BDF8);
             }
         }
 
-        // Parent Dependency row
-        int depY = my + 118;
-        String curDep = editingFeature != null && editingFeature.parentDependency != null ? editingFeature.parentDependency : "";
-        if (!curDep.isEmpty()) {
-            g.text(this.font, "§7Requires: §6" + curDep, mx + 16, depY + 4, 0xFFFFFFFF, false);
-            int clearW = 105;
-            int clearX = mx + mw - 16 - clearW;
-            boolean clearHover = mouseX >= clearX && mouseX <= clearX + clearW && mouseY >= depY && mouseY <= depY + 16;
-            ConfigUITheme.drawPillButton(g, this.font, "✕ Clear Req", clearX, depY, clearW, 16, clearHover, clearHover ? 0xFFFF6666 : 0xFFEF4444, 0x22EF4444, 0x44EF4444);
+        // Field 2: Requires Parent Feature (Dependency)
+        int depY = my + 108;
+        g.text(this.font, "§7Requires Parent Feature (Dependency):", mx + 16, depY, 0xFF94A3B8, false);
+        int depInputX = mx + 16;
+        int depInputY = depY + 11;
+        int clearW = editFeatureParentInput.isEmpty() ? 0 : 64;
+        int depInputW = mw - 32 - (clearW > 0 ? (clearW + 6) : 0);
+
+        g.fill(depInputX, depInputY, depInputX + depInputW, depInputY + 18, 0xFF1E293B);
+        g.outline(depInputX, depInputY, depInputW, 18, editFeatureFocusField == 2 ? 0xFFFFAA00 : 0x3364748B);
+
+        String depText = editFeatureParentInput;
+        if (depText.isEmpty()) {
+            g.text(this.font, "§8(None - runs independently)", depInputX + 6, depInputY + 5, 0xFF64748B, false);
         } else {
-            g.text(this.font, "§8No parent requirement", mx + 16, depY + 4, 0xFF64748B, false);
+            g.text(this.font, "§6" + depText, depInputX + 6, depInputY + 5, 0xFFFFFFFF, false);
+        }
+        if (editFeatureFocusField == 2 && (System.currentTimeMillis() / 500 % 2 == 0)) {
+            editFeatureCursorPos = Math.max(0, Math.min(depText.length(), editFeatureCursorPos));
+            int cursorX = depInputX + 6 + this.font.width(depText.substring(0, editFeatureCursorPos));
+            g.fill(cursorX, depInputY + 3, cursorX + 1, depInputY + 15, 0xFFFFAA00);
+        }
+
+        if (clearW > 0) {
+            int clearX = depInputX + depInputW + 6;
+            boolean clearHover = mouseX >= clearX && mouseX <= clearX + clearW && mouseY >= depInputY && mouseY <= depInputY + 18;
+            ConfigUITheme.drawPillButton(g, this.font, "✕ Clear", clearX, depInputY, clearW, 18, clearHover, clearHover ? 0xFFFF6666 : 0xFFEF4444, 0x22EF4444, 0x44EF4444);
         }
 
         // Enabled by Default checkbox row
-        int defY = my + 142;
+        int defY = my + 144;
         int togBoxX = mx + 16;
         int togBoxY = defY;
         boolean togHover = mouseX >= togBoxX && mouseX <= togBoxX + 180 && mouseY >= togBoxY && mouseY <= togBoxY + 16;
@@ -752,44 +840,53 @@ public class BomboOrderScreen extends Screen {
 
         // 1. Feature Edit Modal
         if (isEditingFeature && editingFeature != null) {
-            int mw = 320;
-            int mh = 210;
+            int mw = 340;
+            int mh = 245;
             int mx = (this.width - mw) / 2;
             int my = (this.height - mh) / 2;
 
             int nameInputX = mx + 16;
-            int nameInputY = my + 40;
+            int nameInputY = my + 39;
             int nameInputW = mw - 32;
-            if (mouseX >= nameInputX && mouseX <= nameInputX + nameInputW && mouseY >= nameInputY && mouseY <= nameInputY + 20) {
+            if (mouseX >= nameInputX && mouseX <= nameInputX + nameInputW && mouseY >= nameInputY && mouseY <= nameInputY + 18) {
                 editFeatureFocusField = 0;
                 editFeatureCursorPos = editFeatureNameInput.length();
                 return true;
             }
 
             int descInputX = mx + 16;
-            int descInputY = my + 78;
+            int descInputY = my + 74;
             int descInputW = mw - 32;
-            if (mouseX >= descInputX && mouseX <= descInputX + descInputW && mouseY >= descInputY && mouseY <= descInputY + 34) {
+            if (mouseX >= descInputX && mouseX <= descInputX + descInputW && mouseY >= descInputY && mouseY <= descInputY + 28) {
                 editFeatureFocusField = 1;
                 editFeatureCursorPos = editFeatureDescInput.length();
                 return true;
             }
 
-            // Clear requirement button
-            int depY = my + 118;
-            String curDep = editingFeature.parentDependency != null ? editingFeature.parentDependency : "";
-            if (!curDep.isEmpty()) {
-                int clearW = 105;
-                int clearX = mx + mw - 16 - clearW;
-                if (mouseX >= clearX && mouseX <= clearX + clearW && mouseY >= depY && mouseY <= depY + 16) {
-                    editingFeature.parentDependency = "";
-                    FeatureOrganizerManager.save();
+            // Parent Dependency field and Clear button
+            int depY = my + 108;
+            int depInputY = depY + 11;
+            int clearW = editFeatureParentInput.isEmpty() ? 0 : 64;
+            int depInputW = mw - 32 - (clearW > 0 ? (clearW + 6) : 0);
+            int depInputX = mx + 16;
+
+            if (mouseX >= depInputX && mouseX <= depInputX + depInputW && mouseY >= depInputY && mouseY <= depInputY + 18) {
+                editFeatureFocusField = 2;
+                editFeatureCursorPos = editFeatureParentInput.length();
+                return true;
+            }
+
+            if (clearW > 0) {
+                int clearX = depInputX + depInputW + 6;
+                if (mouseX >= clearX && mouseX <= clearX + clearW && mouseY >= depInputY && mouseY <= depInputY + 18) {
+                    editFeatureParentInput = "";
+                    editFeatureCursorPos = 0;
                     return true;
                 }
             }
 
             // Enabled by default checkbox toggle
-            int defY = my + 142;
+            int defY = my + 144;
             int togBoxX = mx + 16;
             int togBoxY = defY;
             if (mouseX >= togBoxX && mouseX <= togBoxX + 180 && mouseY >= togBoxY && mouseY <= togBoxY + 16) {
@@ -1040,6 +1137,7 @@ public class BomboOrderScreen extends Screen {
                         editingFeature = fm;
                         editFeatureNameInput = fm.name != null ? fm.name : "";
                         editFeatureEnabledByDefault = fm.enabledByDefault;
+                        editFeatureParentInput = fm.parentDependency != null ? fm.parentDependency : "";
                         String desc = fm.description;
                         if (desc == null || desc.trim().isEmpty()) {
                             ConfigItem ci = ConfigRegistry.getMasterItemsMap().get(fm.name);
@@ -1077,6 +1175,7 @@ public class BomboOrderScreen extends Screen {
                             editingFeature = fm;
                             editFeatureNameInput = fm.name != null ? fm.name : "";
                             editFeatureEnabledByDefault = fm.enabledByDefault;
+                            editFeatureParentInput = fm.parentDependency != null ? fm.parentDependency : "";
                             String desc = fm.description;
                             if (desc == null || desc.trim().isEmpty()) {
                                 if (item != null && item.description != null && !item.description.trim().isEmpty()) {
@@ -1223,35 +1322,7 @@ public class BomboOrderScreen extends Screen {
                 draggingFeature = pendingDragFeature;
             }
         }
-        if (isFeatureDragging && draggingFeature != null) {
-            boolean isAll = "ALL".equalsIgnoreCase(selectedCategory);
-            if (!isAll) {
-                // In category view: live reordering as mouse moves over other cards!
-                int sideX = winX;
-                int sideY = winY + headerH + 1;
-                int sideH = winH - headerH - 1;
-                int contentX = sideX + sidebarW + 12;
-                int contentY = sideY + 8;
-                int contentW = winW - sidebarW - 24;
-                int contentH = sideH - 16;
-
-                if (mouseX >= contentX && mouseX <= contentX + contentW && mouseY >= contentY && mouseY <= contentY + contentH) {
-                    List<FeatureOrganizerManager.FeatureMeta> list = getFilteredFeatures();
-                    int cardH = 40;
-                    int startY = contentY + 4 - (int) this.featureScroll;
-
-                    for (int i = 0; i < list.size(); i++) {
-                        FeatureOrganizerManager.FeatureMeta target = list.get(i);
-                        if (target == draggingFeature) continue;
-                        int cy = startY + i * (cardH + 6);
-                        if (mouseY >= cy && mouseY <= cy + cardH + 6) {
-                            FeatureOrganizerManager.reorderFeatureInMemory(draggingFeature.name, target.name);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        // Do not reorder in-memory while dragging to prevent list shifting/flickering
         return super.mouseDragged(event, dragX, dragY);
     }
 
@@ -1317,35 +1388,43 @@ public class BomboOrderScreen extends Screen {
                 int contentH = sideH - 16;
 
                 if (mouseX >= contentX && mouseX <= contentX + contentW && mouseY >= contentY && mouseY <= contentY + contentH) {
-                    long winHandle = Minecraft.getInstance().getWindow().handle();
-                    boolean ctrlDown = GLFW.glfwGetKey(winHandle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS || GLFW.glfwGetKey(winHandle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
+                    List<FeatureOrganizerManager.FeatureMeta> list = getFilteredFeatures();
+                    boolean isAll = "ALL".equalsIgnoreCase(selectedCategory);
+                    int cardW = isAll ? 210 : (contentW - 8);
+                    int cardH = isAll ? 34 : 40;
+                    int cols = isAll ? Math.max(1, contentW / (cardW + 10)) : 1;
+                    int startY = contentY + 4 - (int) this.featureScroll;
 
-                    if (ctrlDown) {
-                        List<FeatureOrganizerManager.FeatureMeta> list = getFilteredFeatures();
-                        boolean isAll = "ALL".equalsIgnoreCase(selectedCategory);
-                        int cardW = isAll ? 210 : (contentW - 8);
-                        int cardH = isAll ? 34 : 44;
-                        int cols = isAll ? Math.max(1, contentW / (cardW + 10)) : 1;
-                        int startY = contentY + 4 - (int) this.featureScroll;
+                    for (int i = 0; i < list.size(); i++) {
+                        FeatureOrganizerManager.FeatureMeta target = list.get(i);
+                        if (target == draggingFeature) continue;
+                        int col = isAll ? (i % cols) : 0;
+                        int row = isAll ? (i / cols) : i;
+                        int cx = contentX + col * (cardW + (isAll ? 10 : 0));
+                        int cy = startY + row * (cardH + (isAll ? 8 : 6));
 
-                        for (int i = 0; i < list.size(); i++) {
-                            FeatureOrganizerManager.FeatureMeta target = list.get(i);
-                            if (target == draggingFeature) continue;
-                            int col = isAll ? (i % cols) : 0;
-                            int row = isAll ? (i / cols) : i;
-                            int cx = contentX + col * (cardW + (isAll ? 10 : 0));
-                            int cy = startY + row * (cardH + (isAll ? 8 : 6));
-
-                            if (mouseX >= cx && mouseX <= cx + cardW && mouseY >= cy && mouseY <= cy + cardH) {
+                        if (mouseX >= cx && mouseX <= cx + cardW && mouseY >= cy && mouseY <= cy + cardH) {
+                            double relY = (mouseY - cy) / (double) cardH;
+                            if (relY < 0.25) {
+                                FeatureOrganizerManager.reorderFeatureRelative(draggingFeature.name, target.name, false);
+                                if (Minecraft.getInstance().player != null) {
+                                    Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aMoved '§e" + draggingFeature.name + "§a' above '§b" + target.name + "§a'"));
+                                }
+                            } else if (relY > 0.75) {
+                                FeatureOrganizerManager.reorderFeatureRelative(draggingFeature.name, target.name, true);
+                                if (Minecraft.getInstance().player != null) {
+                                    Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aMoved '§e" + draggingFeature.name + "§a' below '§b" + target.name + "§a'"));
+                                }
+                            } else {
                                 draggingFeature.parentDependency = target.name;
+                                FeatureOrganizerManager.save();
                                 if (Minecraft.getInstance().player != null) {
                                     Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aLinked '§e" + draggingFeature.name + "§a' as dependent on '§b" + target.name + "§a'"));
                                 }
-                                break;
                             }
+                            break;
                         }
                     }
-                    // Persist reordered state to disk
                     FeatureOrganizerManager.save();
                 }
             }
@@ -1383,6 +1462,11 @@ public class BomboOrderScreen extends Screen {
                 } else if (editFeatureFocusField == 1 && editFeatureDescInput.length() < 120) {
                     editFeatureCursorPos = Math.max(0, Math.min(editFeatureDescInput.length(), editFeatureCursorPos));
                     editFeatureDescInput = editFeatureDescInput.substring(0, editFeatureCursorPos) + c + editFeatureDescInput.substring(editFeatureCursorPos);
+                    editFeatureCursorPos++;
+                    return true;
+                } else if (editFeatureFocusField == 2 && editFeatureParentInput.length() < 40) {
+                    editFeatureCursorPos = Math.max(0, Math.min(editFeatureParentInput.length(), editFeatureCursorPos));
+                    editFeatureParentInput = editFeatureParentInput.substring(0, editFeatureCursorPos) + c + editFeatureParentInput.substring(editFeatureCursorPos);
                     editFeatureCursorPos++;
                     return true;
                 }
@@ -1438,15 +1522,21 @@ public class BomboOrderScreen extends Screen {
                 commitFeatureEditModal();
                 return true;
             } else if (code == GLFW.GLFW_KEY_TAB) {
-                editFeatureFocusField = (editFeatureFocusField == 0) ? 1 : 0;
-                editFeatureCursorPos = (editFeatureFocusField == 0) ? editFeatureNameInput.length() : editFeatureDescInput.length();
+                editFeatureFocusField = (editFeatureFocusField + 1) % 3;
+                if (editFeatureFocusField == 0) editFeatureCursorPos = editFeatureNameInput.length();
+                else if (editFeatureFocusField == 1) editFeatureCursorPos = editFeatureDescInput.length();
+                else editFeatureCursorPos = editFeatureParentInput.length();
                 return true;
             } else if (code == GLFW.GLFW_KEY_ESCAPE) {
                 isEditingFeature = false;
                 editingFeature = null;
                 return true;
             } else if (code == GLFW.GLFW_KEY_UP) {
-                if (editFeatureFocusField == 1) {
+                if (editFeatureFocusField == 2) {
+                    editFeatureFocusField = 1;
+                    editFeatureCursorPos = editFeatureDescInput.length();
+                    return true;
+                } else if (editFeatureFocusField == 1) {
                     if (editFeatureDescInput.length() > 48) {
                         if (editFeatureCursorPos > 48) {
                             editFeatureCursorPos = Math.min(48, editFeatureCursorPos - 48);
@@ -1473,20 +1563,21 @@ public class BomboOrderScreen extends Screen {
                         editFeatureCursorPos = Math.min(editFeatureDescInput.length(), editFeatureCursorPos + 48);
                         return true;
                     } else {
-                        editFeatureCursorPos = editFeatureDescInput.length();
+                        editFeatureFocusField = 2;
+                        editFeatureCursorPos = 0;
                         return true;
                     }
                 }
             } else if (code == GLFW.GLFW_KEY_LEFT) {
                 if (isCtrl) {
-                    String target = (editFeatureFocusField == 0) ? editFeatureNameInput : editFeatureDescInput;
+                    String target = (editFeatureFocusField == 0) ? editFeatureNameInput : (editFeatureFocusField == 1 ? editFeatureDescInput : editFeatureParentInput);
                     editFeatureCursorPos = getPrevWordIndex(target, editFeatureCursorPos);
                 } else {
                     if (editFeatureCursorPos > 0) editFeatureCursorPos--;
                 }
                 return true;
             } else if (code == GLFW.GLFW_KEY_RIGHT) {
-                String target = (editFeatureFocusField == 0) ? editFeatureNameInput : editFeatureDescInput;
+                String target = (editFeatureFocusField == 0) ? editFeatureNameInput : (editFeatureFocusField == 1 ? editFeatureDescInput : editFeatureParentInput);
                 if (isCtrl) {
                     editFeatureCursorPos = getNextWordIndex(target, editFeatureCursorPos);
                 } else {
@@ -1497,7 +1588,7 @@ public class BomboOrderScreen extends Screen {
                 editFeatureCursorPos = 0;
                 return true;
             } else if (code == GLFW.GLFW_KEY_END) {
-                editFeatureCursorPos = (editFeatureFocusField == 0) ? editFeatureNameInput.length() : editFeatureDescInput.length();
+                editFeatureCursorPos = (editFeatureFocusField == 0) ? editFeatureNameInput.length() : (editFeatureFocusField == 1 ? editFeatureDescInput.length() : editFeatureParentInput.length());
                 return true;
             } else if (code == GLFW.GLFW_KEY_BACKSPACE) {
                 if (editFeatureFocusField == 0) {
@@ -1509,13 +1600,22 @@ public class BomboOrderScreen extends Screen {
                         editFeatureNameInput = editFeatureNameInput.substring(0, editFeatureCursorPos - 1) + editFeatureNameInput.substring(editFeatureCursorPos);
                         editFeatureCursorPos--;
                     }
-                } else {
+                } else if (editFeatureFocusField == 1) {
                     if (isCtrl) {
                         int prev = getPrevWordIndex(editFeatureDescInput, editFeatureCursorPos);
                         editFeatureDescInput = editFeatureDescInput.substring(0, prev) + editFeatureDescInput.substring(editFeatureCursorPos);
                         editFeatureCursorPos = prev;
                     } else if (editFeatureCursorPos > 0 && !editFeatureDescInput.isEmpty()) {
                         editFeatureDescInput = editFeatureDescInput.substring(0, editFeatureCursorPos - 1) + editFeatureDescInput.substring(editFeatureCursorPos);
+                        editFeatureCursorPos--;
+                    }
+                } else if (editFeatureFocusField == 2) {
+                    if (isCtrl) {
+                        int prev = getPrevWordIndex(editFeatureParentInput, editFeatureCursorPos);
+                        editFeatureParentInput = editFeatureParentInput.substring(0, prev) + editFeatureParentInput.substring(editFeatureCursorPos);
+                        editFeatureCursorPos = prev;
+                    } else if (editFeatureCursorPos > 0 && !editFeatureParentInput.isEmpty()) {
+                        editFeatureParentInput = editFeatureParentInput.substring(0, editFeatureCursorPos - 1) + editFeatureParentInput.substring(editFeatureCursorPos);
                         editFeatureCursorPos--;
                     }
                 }
@@ -1528,12 +1628,19 @@ public class BomboOrderScreen extends Screen {
                     } else if (editFeatureCursorPos < editFeatureNameInput.length()) {
                         editFeatureNameInput = editFeatureNameInput.substring(0, editFeatureCursorPos) + editFeatureNameInput.substring(editFeatureCursorPos + 1);
                     }
-                } else {
+                } else if (editFeatureFocusField == 1) {
                     if (isCtrl) {
                         int next = getNextWordIndex(editFeatureDescInput, editFeatureCursorPos);
                         editFeatureDescInput = editFeatureDescInput.substring(0, editFeatureCursorPos) + editFeatureDescInput.substring(next);
                     } else if (editFeatureCursorPos < editFeatureDescInput.length()) {
                         editFeatureDescInput = editFeatureDescInput.substring(0, editFeatureCursorPos) + editFeatureDescInput.substring(editFeatureCursorPos + 1);
+                    }
+                } else if (editFeatureFocusField == 2) {
+                    if (isCtrl) {
+                        int next = getNextWordIndex(editFeatureParentInput, editFeatureCursorPos);
+                        editFeatureParentInput = editFeatureParentInput.substring(0, editFeatureCursorPos) + editFeatureParentInput.substring(next);
+                    } else if (editFeatureCursorPos < editFeatureParentInput.length()) {
+                        editFeatureParentInput = editFeatureParentInput.substring(0, editFeatureCursorPos) + editFeatureParentInput.substring(editFeatureCursorPos + 1);
                     }
                 }
                 return true;
@@ -1653,6 +1760,7 @@ public class BomboOrderScreen extends Screen {
                 editingFeature.name = newName;
                 editingFeature.description = newDesc;
                 editingFeature.enabledByDefault = editFeatureEnabledByDefault;
+                editingFeature.parentDependency = editFeatureParentInput.trim();
                 if (!oldName.equals(newName)) {
                     FeatureOrganizerManager.features.remove(oldName);
                     FeatureOrganizerManager.features.put(newName, editingFeature);

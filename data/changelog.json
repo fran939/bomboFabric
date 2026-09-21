@@ -1,0 +1,39 @@
+[
+  {
+    "version": "26.2.28.30",
+    "date": "2026-09-21",
+    "changes": [
+      "Guarded custom SkyBlock item creation with SkyblockItemManager check in TotemAnimationManager to prevent vanilla items (such as lead) from showing missing stone textures",
+      "Fixed Ctrl+A in InventorySlotColorScreen to select all text with highlight rather than erasing it, plus added full Ctrl+Z / Ctrl+Y undo/redo history",
+      "Enhanced InventoryButtonsScreen text inputs with word deletion (Ctrl+Delete, Ctrl+Backspace), cursor navigation, clipboard shortcuts, and localized undo/redo",
+      "Aspect of the Void Base Texture Override in ItemModelResolverMixin to bypass broken warped variant texture overrides",
+      "Compact Chat History screen layout (13px rows) matching SkyHanni /shchathistory",
+      "Accurate mod origin detection in ChatHistoryTracker skipping Mixin generated and Minecraft proxy methods (Devonian, BomboAddons, SkyHanni, BetterPV, NEU, Odin, Skytils)",
+      "Captured blocked/suppressed messages via Fabric ClientReceiveMessageEvents GAME_CANCELED and CHAT_CANCELED in ChatHistoryTracker",
+      "Added interactive [Press Key...] keybind capture button for Clicker Trigger Keybind in ConfigCustomWidgets",
+      "New 'Auto' Automation Category and Sequence Manager (slot/item clicking, close GUI, run command, click in world/NPC, wait pauses, loop toggles, and hotkey listeners)"
+    ]
+  },
+  {
+    "version": "26.2.28",
+    "date": "2026-09-15",
+    "changes": [
+      "Minecraft 26.2 Fabric loader and mapping updates",
+      "Container slot color customizer enhancements",
+      "Inventory quick macro buttons system",
+      "Hypixel SkyBlock dynamic texturepack synchronization",
+      "Advanced chat history search and filtering"
+    ]
+  },
+  {
+    "version": "26.1.2.25",
+    "date": "2026-09-04",
+    "changes": [
+      "Restrict storage preview hover to storage containers only",
+      "Unified versioning system across build files",
+      "Etherwarp lore range check",
+      "Highlight search bar and category refinements",
+      "Diana lootshare recursion safety fix"
+    ]
+  }
+]

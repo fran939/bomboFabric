@@ -292,6 +292,42 @@ public class FeatureOrganizerManager {
         }
     }
 
+    public static boolean reorderFeatureRelative(String featureName, String targetFeatureName, boolean insertAfter) {
+        initDefaults();
+        if (featureName == null || targetFeatureName == null || featureName.equals(targetFeatureName)) return false;
+        if (!features.containsKey(featureName) || !features.containsKey(targetFeatureName)) return false;
+
+        List<Map.Entry<String, FeatureMeta>> entryList = new ArrayList<>(features.entrySet());
+        Map.Entry<String, FeatureMeta> sourceEntry = null;
+        for (int i = 0; i < entryList.size(); i++) {
+            if (entryList.get(i).getKey().equals(featureName)) {
+                sourceEntry = entryList.remove(i);
+                break;
+            }
+        }
+        if (sourceEntry != null) {
+            int targetIdx = -1;
+            for (int i = 0; i < entryList.size(); i++) {
+                if (entryList.get(i).getKey().equals(targetFeatureName)) {
+                    targetIdx = i;
+                    break;
+                }
+            }
+            if (targetIdx != -1) {
+                int insertIdx = insertAfter ? targetIdx + 1 : targetIdx;
+                insertIdx = Math.max(0, Math.min(entryList.size(), insertIdx));
+                entryList.add(insertIdx, sourceEntry);
+                features.clear();
+                for (Map.Entry<String, FeatureMeta> e : entryList) {
+                    features.put(e.getKey(), e.getValue());
+                }
+                save();
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void reorderFeature(String featureName, int targetIndex) {
         initDefaults();
         if (featureName == null || !features.containsKey(featureName)) return;

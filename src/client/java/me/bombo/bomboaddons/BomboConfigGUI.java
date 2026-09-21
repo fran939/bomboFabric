@@ -1188,9 +1188,15 @@ public class BomboConfigGUI
                     y1 = this.addKeyBindButton("Trade", s.tradeKey, v -> {
                         s.tradeKey = v;
                     }, "trade", col1X, col1W, y1);
-                    y1 = this.addKeyBindButton("Recipe", s.recipeKey, v -> {
+                    y1 = this.addKeyBindButton("Recipe (GUI)", s.recipeKey, v -> {
                         s.recipeKey = v;
                     }, "recipe", col1X, col1W, y1);
+                    y1 = this.addKeyBindButton("View Recipe (/viewrecipe)", s.viewRecipeKey, v -> {
+                        s.viewRecipeKey = v;
+                    }, "viewRecipe", col1X, col1W, y1);
+                    y1 = this.addKeyBindButton("Recipe (/recipe)", s.recipeCmdKey, v -> {
+                        s.recipeCmdKey = v;
+                    }, "recipeCmd", col1X, col1W, y1);
                     y1 = this.addKeyBindButton("Texture Toggle", s.textureToggleKey, v -> {
                         s.textureToggleKey = v;
                     }, "textureToggle", col1X, col1W, y1);
@@ -6851,6 +6857,14 @@ public class BomboConfigGUI
             }
             case "recipe": {
                 s.recipeKey = keyName;
+                break;
+            }
+            case "viewRecipe": {
+                s.viewRecipeKey = keyName;
+                break;
+            }
+            case "recipeCmd": {
+                s.recipeCmdKey = keyName;
                 break;
             }
             case "textureToggle": {

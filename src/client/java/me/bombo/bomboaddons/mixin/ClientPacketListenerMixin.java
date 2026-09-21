@@ -30,6 +30,9 @@ public class ClientPacketListenerMixin {
    )
    private void onSendChat(String message, CallbackInfo ci) {
       if (IS_HANDLING_SEND_CHAT.get()) return;
+      if (message != null) {
+         me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordOutgoing(message, false);
+      }
       if (message != null && message.contains("$imgur")) {
          ci.cancel();
          ClientPacketListener listener = (ClientPacketListener)(Object)this;
@@ -71,6 +74,9 @@ public class ClientPacketListenerMixin {
    private void onSendCommand(String command, CallbackInfo ci) {
       if (IS_HANDLING_SEND_COMMAND.get()) {
          return;
+      }
+      if (command != null) {
+         me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordOutgoing("/" + command, true);
       }
       if (command != null && command.contains("$imgur")) {
          ci.cancel();

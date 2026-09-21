@@ -360,6 +360,14 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       cancellable = true
    )
    private void onMouseClicked(MouseButtonEvent event, boolean handled, CallbackInfoReturnable<Boolean> cir) {
+      if (me.bombo.bomboaddons.features.buttons.InventoryButtonManager.mouseClicked((AbstractContainerScreen<?>)(Object)this, event.x(), event.y(), event.button(), this.leftPos, this.topPos, this.imageWidth, this.imageHeight)) {
+         cir.setReturnValue(true);
+         return;
+      }
+      if (me.bombo.bomboaddons.features.swapper.InventorySlotSwapManager.handleSlotClick((AbstractContainerScreen<?>)(Object)this, this.hoveredSlot, event.button(), event.hasShiftDown() || (Minecraft.getInstance() != null && Minecraft.getInstance().hasShiftDown()))) {
+         cir.setReturnValue(true);
+         return;
+      }
       if (me.bombo.bomboaddons.gui.StorageOverlayManager.mouseClicked(event, this.width, this.height)) {
          cir.setReturnValue(true);
          return;
@@ -798,6 +806,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       me.bombo.bomboaddons.features.hud.EquipmentHud.renderHoverTooltipDirect(graphics);
       me.bombo.bomboaddons.features.hud.ArmorHud.renderHoverTooltipDirect(graphics);
       me.bombo.bomboaddons.features.hud.InventoryHud.renderHoverTooltipDirect(graphics);
+      if (!(((Object)this) instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen)) {
+         me.bombo.bomboaddons.features.swapper.InventorySlotSwapManager.renderSlotOverlays(graphics, (AbstractContainerScreen<?>)(Object)this, this.leftPos, this.topPos, Minecraft.getInstance().font, mouseX, mouseY);
+         me.bombo.bomboaddons.features.buttons.InventoryButtonManager.renderButtons(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY, this.leftPos, this.topPos, this.imageWidth, this.imageHeight);
+      }
    }
 
    @Inject(

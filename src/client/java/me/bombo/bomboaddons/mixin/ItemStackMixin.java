@@ -389,11 +389,13 @@ public abstract class ItemStackMixin {
                }
             }
 
-            if (s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
-               priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("gardenBlocked", Component.literal("§cBlocked by Garden Movement"), "BOTTOM", 999));
-            }
+            try {
+               if (s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
+                  priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("gardenBlocked", Component.literal("§cBlocked by Garden Movement"), "BOTTOM", 999));
+               }
 
-            me.bombo.bomboaddons.features.SupercraftHelper.applyAdditionsToLines(lines, priceAdditions);
+               me.bombo.bomboaddons.features.SupercraftHelper.applyAdditionsToLines(lines, priceAdditions);
+            } catch (Throwable ignored) {}
          }
       }
 

@@ -24,7 +24,7 @@ mojang.json
 snailify.json
 config/
 bomboaddons.json
-bombo/
+/bombo/
 *.local
 user_*.json
 crash_exception.log
