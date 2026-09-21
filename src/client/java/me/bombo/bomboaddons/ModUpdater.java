@@ -58,95 +58,178 @@ public class ModUpdater {
    }
 
    public static void checkAndUpdate(boolean silent) {
+      checkAndUpdate(silent, BomboConfig.get().isBetaUpdateChannel());
+   }
+
+   public static void checkAndUpdate(boolean silent, boolean includeBetas) {
       if (!silent || !hasCheckedForUpdates) {
          hasCheckedForUpdates = true;
          (new Thread(() -> {
             try {
+               String channelLabel = includeBetas ? "Betas & Full" : "Full Only";
                if (!silent) {
-                  sendMessage("§7Checking for updates...");
+                  sendMessage("§7Checking for updates §8[§e" + channelLabel + "§8]§7...");
                }
 
                String latestVersion = null;
                String downloadUrl = null;
+               String targetFilename = null;
+               boolean isBeta = false;
 
-               String updateApiUrl = "https://api.bombo.dpdns.org/downloads/latest/info";
+               // 1. Try server API /mod/version
                try {
+                  String updateApiUrl = "https://api.bombo.dpdns.org/mod/version";
                   Bomboaddons.logApiRequest(updateApiUrl);
-                  HttpURLConnection conn = (HttpURLConnection)(new URL(updateApiUrl)).openConnection();
-                  conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-                  conn.setConnectTimeout(3000);
-                  conn.setReadTimeout(3000);
+                  HttpURLConnection conn = (HttpURLConnection) (new URL(updateApiUrl)).openConnection();
+                  conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
+                  conn.setConnectTimeout(4000);
+                  conn.setReadTimeout(4000);
                   if (conn.getResponseCode() == 200) {
-                     BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                     BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
                      JsonObject infoObj = JsonParser.parseReader(reader).getAsJsonObject();
-                     if (infoObj.has("latestVersion")) latestVersion = infoObj.get("latestVersion").getAsString();
-                     if (infoObj.has("downloadUrl")) downloadUrl = infoObj.get("downloadUrl").getAsString();
+                     JsonObject latestFull = infoObj.has("latestFull") && !infoObj.get("latestFull").isJsonNull() ? infoObj.getAsJsonObject("latestFull") : null;
+                     JsonObject latestBeta = infoObj.has("latestBeta") && !infoObj.get("latestBeta").isJsonNull() ? infoObj.getAsJsonObject("latestBeta") : null;
+
+                     if (!includeBetas) {
+                        // Full versions only
+                        if (latestFull != null && latestFull.has("version")) {
+                           latestVersion = latestFull.get("version").getAsString();
+                           if (latestFull.has("downloadUrl")) downloadUrl = latestFull.get("downloadUrl").getAsString();
+                           if (latestFull.has("filename")) targetFilename = latestFull.get("filename").getAsString();
+                           isBeta = false;
+                        }
+                     } else {
+                        // Betas & Full releases: pick whichever is newer
+                        String fullVer = latestFull != null && latestFull.has("version") ? latestFull.get("version").getAsString() : null;
+                        String betaVer = latestBeta != null && latestBeta.has("version") ? latestBeta.get("version").getAsString() : null;
+
+                        if (betaVer != null && fullVer != null) {
+                           if (compareVersions(betaVer, fullVer) >= 0) {
+                              latestVersion = betaVer;
+                              if (latestBeta.has("downloadUrl")) downloadUrl = latestBeta.get("downloadUrl").getAsString();
+                              if (latestBeta.has("filename")) targetFilename = latestBeta.get("filename").getAsString();
+                              isBeta = true;
+                           } else {
+                              latestVersion = fullVer;
+                              if (latestFull.has("downloadUrl")) downloadUrl = latestFull.get("downloadUrl").getAsString();
+                              if (latestFull.has("filename")) targetFilename = latestFull.get("filename").getAsString();
+                              isBeta = false;
+                           }
+                        } else if (betaVer != null) {
+                           latestVersion = betaVer;
+                           if (latestBeta.has("downloadUrl")) downloadUrl = latestBeta.get("downloadUrl").getAsString();
+                           if (latestBeta.has("filename")) targetFilename = latestBeta.get("filename").getAsString();
+                           isBeta = true;
+                        } else if (fullVer != null) {
+                           latestVersion = fullVer;
+                           if (latestFull.has("downloadUrl")) downloadUrl = latestFull.get("downloadUrl").getAsString();
+                           if (latestFull.has("filename")) targetFilename = latestFull.get("filename").getAsString();
+                           isBeta = false;
+                        }
+                     }
                   }
                } catch (Throwable ignored) {}
 
+               // 2. Specific endpoint fallbacks if /mod/version didn't provide it
                if (latestVersion == null || downloadUrl == null) {
                   try {
-                     String ghUrl = "https://api.github.com/repos/fran939/bomboFabric/releases/latest";
-                     HttpURLConnection ghConn = (HttpURLConnection)(new URL(ghUrl)).openConnection();
-                     ghConn.setRequestProperty("User-Agent", "BomboAddons");
-                     ghConn.setConnectTimeout(5000);
-                     ghConn.setReadTimeout(5000);
-                     if (ghConn.getResponseCode() == 200) {
-                        BufferedReader ghReader = new BufferedReader(new InputStreamReader(ghConn.getInputStream()));
-                        JsonObject ghObj = JsonParser.parseReader(ghReader).getAsJsonObject();
-                        if (ghObj.has("tag_name")) {
-                           String tag = ghObj.get("tag_name").getAsString();
-                           latestVersion = tag.startsWith("v") ? tag.substring(1) : tag;
-                        }
-                        if (ghObj.has("assets")) {
-                           com.google.gson.JsonArray assets = ghObj.getAsJsonArray("assets");
-                           for (com.google.gson.JsonElement el : assets) {
-                              JsonObject a = el.getAsJsonObject();
-                              String name = a.get("name").getAsString();
-                              if (name.endsWith(".jar") && !name.contains("sources") && !name.contains("dev")) {
-                                 downloadUrl = a.get("browser_download_url").getAsString();
-                                 break;
-                              }
-                           }
+                     String endpoint = includeBetas ? "https://api.bombo.dpdns.org/mod/version/beta" : "https://api.bombo.dpdns.org/mod/version/full";
+                     HttpURLConnection conn = (HttpURLConnection) (new URL(endpoint)).openConnection();
+                     conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                     conn.setConnectTimeout(4000);
+                     conn.setReadTimeout(4000);
+                     if (conn.getResponseCode() == 200) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+                        JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
+                        if (obj.has("latest") && !obj.get("latest").isJsonNull()) {
+                           JsonObject l = obj.getAsJsonObject("latest");
+                           latestVersion = l.has("version") ? l.get("version").getAsString() : null;
+                           if (l.has("downloadUrl")) downloadUrl = l.get("downloadUrl").getAsString();
+                           if (l.has("filename")) targetFilename = l.get("filename").getAsString();
+                           isBeta = l.has("isBeta") && l.get("isBeta").getAsBoolean();
                         }
                      }
                   } catch (Throwable ignored) {}
                }
-               String mcVersion = ((ModContainer)FabricLoader.getInstance().getModContainer("minecraft").get()).getMetadata().getVersion().getFriendlyString();
-               String currentVersion = ((ModContainer)FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
+
+               // 3. Fallback to GitHub Releases API if server is down
+               if (latestVersion == null || downloadUrl == null) {
+                  try {
+                     String ghUrl = "https://api.github.com/repos/fran939/bomboFabric/releases";
+                     HttpURLConnection ghConn = (HttpURLConnection) (new URL(ghUrl)).openConnection();
+                     ghConn.setRequestProperty("User-Agent", "BomboAddons");
+                     ghConn.setConnectTimeout(5000);
+                     ghConn.setReadTimeout(5000);
+                     if (ghConn.getResponseCode() == 200) {
+                        BufferedReader ghReader = new BufferedReader(new InputStreamReader(ghConn.getInputStream(), StandardCharsets.UTF_8));
+                        com.google.gson.JsonArray releases = JsonParser.parseReader(ghReader).getAsJsonArray();
+                        for (com.google.gson.JsonElement el : releases) {
+                           JsonObject r = el.getAsJsonObject();
+                           String tag = (r.has("tag_name") ? r.get("tag_name").getAsString() : "").replaceFirst("^v", "");
+                           boolean isPre = r.has("prerelease") && r.get("prerelease").getAsBoolean();
+                           boolean isSubversion = tag.split("\\.").length >= 4;
+
+                           if (!includeBetas && (isPre || isSubversion)) {
+                              continue; // skip betas when Full Only is requested
+                           }
+
+                           if (r.has("assets")) {
+                              for (com.google.gson.JsonElement aEl : r.getAsJsonArray("assets")) {
+                                 JsonObject a = aEl.getAsJsonObject();
+                                 String name = a.get("name").getAsString();
+                                 if (name.endsWith(".jar") && !name.contains("sources") && !name.contains("dev")) {
+                                    latestVersion = tag;
+                                    downloadUrl = a.get("browser_download_url").getAsString();
+                                    targetFilename = name;
+                                    isBeta = isSubversion || isPre;
+                                    break;
+                                 }
+                              }
+                           }
+                           if (latestVersion != null) break;
+                        }
+                     }
+                  } catch (Throwable ignored) {}
+               }
+
+               String mcVersion = ((ModContainer) FabricLoader.getInstance().getModContainer("minecraft").get()).getMetadata().getVersion().getFriendlyString();
+               String currentVersion = ((ModContainer) FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
                if (currentVersion.equals("${version}")) {
                   if (!silent) {
-                     sendMessage("§cRunning in dev environment with unset version. Update skipped.");
+                     sendMessage("§cRunning in dev environment with unset version. Update check skipped.");
                   }
-
                   return;
                }
 
                if (latestVersion == null || downloadUrl == null) {
                   if (!silent) {
-                     sendMessage("§cNo releases or update jars found!");
+                     sendMessage("§cNo releases or update jars found for channel: §e" + channelLabel);
                   }
-
                   return;
                }
 
                int comparison = compareVersions(latestVersion, currentVersion);
-               if (comparison < 0 || comparison == 0 && silent) {
+               if (comparison <= 0) {
                   if (!silent) {
-                     sendMessage("§aMod is up to date! (v" + currentVersion + ")");
+                     if (comparison == 0) {
+                        sendMessage("§aMod is up to date! (v" + currentVersion + " §8- §b" + channelLabel + "§a)");
+                     } else {
+                        sendMessage("§aMod is up to date! (Current v" + currentVersion + " is newer than latest " + channelLabel + " release v" + latestVersion + ")");
+                     }
                   }
-
                   return;
                }
 
+               String releaseTag = isBeta ? "§d[Beta]" : "§a[Full Release]";
                if (silent) {
-                  sendMessage("§eUpdate found: §b" + latestVersion + " §7(Current: " + currentVersion + ")");
-                  sendMessage("§7Run §b/b update §7to download the new version.");
+                  sendMessage("§eUpdate found " + releaseTag + ": §b" + latestVersion + " §7(Current: " + currentVersion + ")");
+                  sendMessage("§7Run §b/b update §7to download and install the new version.");
                   return;
                }
 
-               sendMessage("§eUpdate found: §b" + latestVersion + " §7(Current: " + currentVersion + ")");
-               sendMessage("§7Downloading update...");
+               sendMessage("§eUpdate found " + releaseTag + ": §b" + latestVersion + " §7(Current: " + currentVersion + ")");
+               sendMessage("§7Downloading update §b" + latestVersion + "§7...");
+
                Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
                File currentJar = getCurrentJar();
                if (currentJar == null) {
@@ -154,63 +237,44 @@ public class ModUpdater {
                   return;
                }
 
-               File newJarFile = modsFolder.resolve("bomboaddons-" + mcVersion + "-" + latestVersion + ".jar").toFile();
+               String finalFilename = targetFilename != null && !targetFilename.isEmpty()
+                     ? targetFilename
+                     : (latestVersion.startsWith("26.") || latestVersion.startsWith("1.")
+                           ? "bomboaddons-" + latestVersion + ".jar"
+                           : "bomboaddons-" + mcVersion + "-" + latestVersion + ".jar");
+
+               File newJarFile = modsFolder.resolve(finalFilename).toFile();
                Bomboaddons.logApiRequest(downloadUrl);
-               InputStream in = (new URL(downloadUrl)).openStream();
 
-               try {
-                  Files.copy(in, newJarFile.toPath(), new CopyOption[]{StandardCopyOption.REPLACE_EXISTING});
-               } catch (Throwable var20) {
-                  if (in != null) {
-                     try {
-                        in.close();
-                     } catch (Throwable x2) {
-                        var20.addSuppressed(x2);
-                     }
-                  }
+               HttpURLConnection dlConn = (HttpURLConnection) (new URL(downloadUrl)).openConnection();
+               dlConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
+               dlConn.setInstanceFollowRedirects(true);
+               dlConn.setConnectTimeout(10000);
+               dlConn.setReadTimeout(60000);
 
-                  throw var20;
-               }
-
-               if (in != null) {
-                  in.close();
+               try (InputStream in = dlConn.getInputStream()) {
+                  Files.copy(in, newJarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                }
 
                updatedThisSession = true;
                StringBuilder pending = new StringBuilder();
                if (Files.exists(modsFolder, new LinkOption[0])) {
-                  Stream<Path> stream = Files.list(modsFolder);
-
-                  try {
-                     stream.filter((p) -> p.getFileName().toString().startsWith("bomboaddons-") && p.getFileName().toString().endsWith(".jar")).filter((p) -> !p.equals(newJarFile.toPath())).forEach((p) -> pending.append(p.toAbsolutePath().toString()).append("\n"));
-                  } catch (Throwable var19) {
-                     if (stream != null) {
-                        try {
-                           stream.close();
-                        } catch (Throwable x2) {
-                           var19.addSuppressed(x2);
-                        }
-                     }
-
-                     throw var19;
-                  }
-
-                  if (stream != null) {
-                     stream.close();
+                  try (Stream<Path> stream = Files.list(modsFolder)) {
+                     stream.filter((p) -> p.getFileName().toString().startsWith("bomboaddons") && p.getFileName().toString().endsWith(".jar"))
+                           .filter((p) -> !p.equals(newJarFile.toPath()))
+                           .forEach((p) -> pending.append(p.toAbsolutePath().toString()).append("\n"));
                   }
                }
 
                Files.writeString(PENDING_DELETE, pending.toString(), StandardCharsets.UTF_8);
-               sendMessage("§aUpdate downloaded: §b" + newJarFile.getName());
-               sendMessage("§eThe old versions will be removed on next restart.");
+               sendMessage("§aUpdate downloaded successfully: §b" + newJarFile.getName());
+               sendMessage("§eThe old version will be automatically removed on next restart.");
             } catch (Exception var21) {
                if (!silent) {
                   sendMessage("§cError while updating: " + var21.getMessage());
                }
-
                var21.printStackTrace();
             }
-
          })).start();
       }
    }
@@ -321,13 +385,19 @@ public class ModUpdater {
             sendMessage("§aFound version §b" + cleanTarget + "§a! Downloading...");
             Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
             String mcVersion = ((ModContainer)FabricLoader.getInstance().getModContainer("minecraft").get()).getMetadata().getVersion().getFriendlyString();
-            File newJarFile = modsFolder.resolve("bomboaddons-" + mcVersion + "-" + cleanTarget + ".jar").toFile();
+            String jarName = cleanTarget.startsWith("26.") || cleanTarget.startsWith("1.")
+                  ? "bomboaddons-" + cleanTarget + ".jar"
+                  : "bomboaddons-" + mcVersion + "-" + cleanTarget + ".jar";
+            File newJarFile = modsFolder.resolve(jarName).toFile();
 
-            InputStream in = (new URL(downloadUrl)).openStream();
-            try {
-               Files.copy(in, newJarFile.toPath(), new CopyOption[]{StandardCopyOption.REPLACE_EXISTING});
-            } finally {
-               if (in != null) in.close();
+            HttpURLConnection dlConn = (HttpURLConnection) (new URL(downloadUrl)).openConnection();
+            dlConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
+            dlConn.setInstanceFollowRedirects(true);
+            dlConn.setConnectTimeout(10000);
+            dlConn.setReadTimeout(60000);
+
+            try (InputStream in = dlConn.getInputStream()) {
+               Files.copy(in, newJarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
 
             updatedThisSession = true;

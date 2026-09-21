@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.32",
+    "date": "2026-09-21",
+    "changes": [
+      "Added mod update channel setting ('Full Only' vs 'Betas & Full') in BomboConfig",
+      "Integrated channel filtering into /b update and background update checks",
+      "Enhanced /b update with subcommands: /b update full, /b update beta, and /b update channel <full|beta>",
+      "Added Update Channel cycle selector and Check For Updates button in Config GUI (General category)",
+      "Automated update downloads from api.bombo.dpdns.org/mod/version directly with proper jar naming and pending cleanup"
+    ]
+  },
+  {
     "version": "26.2.28.30",
     "date": "2026-09-21",
     "changes": [

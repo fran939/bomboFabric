@@ -1018,7 +1018,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b highlight", "/b highlight", "Configures persistent entity highlights.").append(Component.literal(" §7- Persistent Highlights config")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b anvil", "/b anvil", "Configures persistent auto-combine goals.").append(Component.literal(" §7- Anvil Auto-Combine config")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b pt", "/b pt", "Opens Playtime statistics GUI.").append(Component.literal(" §7- Opens Playtime GUI")));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b update", "/b update", "Manually checks for mod updates.").append(Component.literal(" §7- Checks for mod updates")));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b update", "/b update", "Checks for mod updates (Channel: Full Only or Betas & Full).").append(Component.literal(" §7- Checks & downloads mod updates (/b update full|beta|channel)")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b hide", "/b hide", "Toggles visibility of cheats in the GUI.").append(Component.literal(" §7- Toggles GUI cheat visibility")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b area", "/b area", "Shows the current SkyBlock area.").append(Component.literal(" §7- Shows current Area")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b online", "/b online", "Shows who is online with the mod and their version.").append(Component.literal(" §7- Shows online mod users")));
@@ -2042,10 +2042,47 @@ public class BomboaddonsClient implements ClientModInitializer {
                       ModUpdater.showChangelog();
                       return 1;
                    }));
-                   builder.then(ClientCommands.literal("update").executes((context) -> {
-                      ModUpdater.checkAndUpdate(false);
-                      return 1;
-                   }));
+                   builder.then(ClientCommands.literal("update")
+                      .executes((context) -> {
+                         ModUpdater.checkAndUpdate(false);
+                         return 1;
+                      })
+                      .then(ClientCommands.literal("full").executes((context) -> {
+                         ModUpdater.checkAndUpdate(false, false);
+                         return 1;
+                      }))
+                      .then(ClientCommands.literal("beta").executes((context) -> {
+                         ModUpdater.checkAndUpdate(false, true);
+                         return 1;
+                      }))
+                      .then(ClientCommands.literal("betas").executes((context) -> {
+                         ModUpdater.checkAndUpdate(false, true);
+                         return 1;
+                      }))
+                      .then(ClientCommands.literal("channel")
+                         .executes((context) -> {
+                            String ch = BomboConfig.get().updateChannel;
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current update channel: §b" + ch + " §7(Options: §eFull Only§7, §eBetas & Full§7). Use §e/b update channel <full|beta> §7to switch."));
+                            return 1;
+                         })
+                         .then(ClientCommands.literal("full").executes((context) -> {
+                            BomboConfig.get().updateChannel = "Full Only";
+                            BomboConfig.save();
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aUpdate channel set to: §eFull Only§a. /b update will now only search for full releases."));
+                            return 1;
+                         }))
+                         .then(ClientCommands.literal("beta").executes((context) -> {
+                            BomboConfig.get().updateChannel = "Betas & Full";
+                            BomboConfig.save();
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aUpdate channel set to: §eBetas & Full§a. /b update will search for beta and full releases."));
+                            return 1;
+                         }))
+                         .then(ClientCommands.literal("betas").executes((context) -> {
+                            BomboConfig.get().updateChannel = "Betas & Full";
+                            BomboConfig.save();
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aUpdate channel set to: §eBetas & Full§a. /b update will search for beta and full releases."));
+                            return 1;
+                         }))));
                    builder.then(ClientCommands.literal("version")
                       .executes((context) -> {
                          String version = ((ModContainer)FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
@@ -2490,10 +2527,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                      })).start();
                      return 1;
                   })));
-                  builder.then(ClientCommands.literal("update").executes((context) -> {
-                     ModUpdater.checkAndUpdate(false);
-                     return 1;
-                  }));
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("coords").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
                      if (mc.player != null) {

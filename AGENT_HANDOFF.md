@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` v`26.2.28.31` |
+| **Mod ID & Current Version** | `bomboaddons` v`26.2.28.32` |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
 ---

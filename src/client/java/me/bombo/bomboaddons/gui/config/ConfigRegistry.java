@@ -401,6 +401,15 @@ public class ConfigRegistry {
             }
 
             case "General" -> {
+                items.add(ConfigItem.header("Mod Updates & Release Channel", category));
+                items.add(ConfigItem.cycle("Update Channel", "Choose whether /b update checks for only Full release versions or Betas & Full releases.", category,
+                        List.of("Betas & Full", "Full Only"),
+                        () -> s.updateChannel != null ? s.updateChannel : "Betas & Full",
+                        v -> s.updateChannel = v));
+                items.add(ConfigItem.button("Check For Updates", "Check Now", "Manually check and download mod updates based on the selected channel.", category, () -> {
+                    ModUpdater.checkAndUpdate(false);
+                }));
+
                 items.add(ConfigItem.header("Quality of Life & Vision", category));
                 items.add(ConfigItem.toggle("Clear Water & Lava Vision", "Enhance visibility when underwater or in lava.", category, () -> s.clearWaterAndLava, v -> s.clearWaterAndLava = v));
                 items.add(ConfigItem.sliderInt("Water Opacity", "Custom water opacity (10% = almost totally clear, 100% = default).", category, 0, 100, 5, "%", () -> s.waterOpacity >= 0 ? s.waterOpacity : 100, v -> s.waterOpacity = v));

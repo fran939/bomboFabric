@@ -756,6 +756,9 @@ public class BomboConfigGUI
                     y1 = this.addBoolOption("Camera Settings §b(Right-Click)", s.cameraSettingsEnabled,
                             v -> s.cameraSettingsEnabled = v, col1X, col1W, y1);
 
+                    y1 = this.addCycleOption("Update Channel", s.updateChannel != null ? s.updateChannel : "Betas & Full",
+                            List.of("Betas & Full", "Full Only"), v -> s.updateChannel = v, col1X, col1W, y1);
+
                     y1 = this.addBoolOption("Storage Preview (Hover)", s.storagePreview, v -> s.storagePreview = v,
                             col1X, col1W, y1);
                     y1 = this.addBoolOption("Storage Overlay (/storage & menus)", s.storageOverlay,

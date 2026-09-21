@@ -1,5 +1,20 @@
 # BomboAddons Changelog
 
+## [26.2.28.32] - 2026-09-21 (Beta)
+
+### Mod Update Channels & Automated Updating
+- **Update Channel Setting:** Added `updateChannel` setting ("Full Only" vs "Betas & Full") in `BomboConfig`.
+- **Channel-Aware Checks:** `/b update` and automated startup checks now filter updates according to the configured channel:
+  - *"Full Only"*: Only downloads stable, 3-component full releases (e.g. `26.2.28`, `26.2.29`).
+  - *"Betas & Full"*: Automatically detects and installs the newest release across both betas and full builds (e.g. `26.2.28.32`).
+- **Command Enhancements:** Expanded `/b update` to support:
+  - `/b update`: Checks and installs updates following current channel setting.
+  - `/b update full`: Explicitly checks and installs the latest full release.
+  - `/b update beta` / `betas`: Explicitly checks and installs the latest beta/full release.
+  - `/b update channel [full|beta]`: Shows or changes the active update channel on the fly.
+- **Config GUI Integration:** Added "Update Channel" cycle option and "Check For Updates" button to the "General" category in both the new and classic config screens.
+- **Download Reliability:** Direct downloads from `api.bombo.dpdns.org/mod/version` using proper headers and jar naming without version prefix duplication.
+
 ## [26.2.28.30] - 2026-09-21 (Beta)
 
 ### 1. Missing Vanilla Textures (lead etc.)

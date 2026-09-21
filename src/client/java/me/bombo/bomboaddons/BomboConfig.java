@@ -229,6 +229,9 @@ public class BomboConfig {
       if (instance.clipboardRunKey == null) {
          instance.clipboardRunKey = "";
       }
+      if (instance.updateChannel == null || instance.updateChannel.trim().isEmpty()) {
+         instance.updateChannel = "Betas & Full";
+      }
       if (instance.swapUnifiedLineColorValue == 0) {
          instance.swapUnifiedLineColorValue = 0xFF22C55E;
       }
@@ -406,6 +409,11 @@ public class BomboConfig {
       public boolean autoRejoinHud = true;
       public boolean autoHitman = false;
       public int autoHitmanIntervalMinutes = 5;
+      public String updateChannel = "Betas & Full"; // "Betas & Full" or "Full Only"
+
+      public boolean isBetaUpdateChannel() {
+         return !"Full Only".equalsIgnoreCase(this.updateChannel);
+      }
       public int autoRejoinHudX = 10;
       public int autoRejoinHudY = 150;
       public float autoRejoinHudScale = 1.0F;
