@@ -239,7 +239,19 @@ public abstract class KeyboardMixin {
             return;
          }
 
-         if (me.bombo.bomboaddons.features.auto.AutoSequenceManager.onKeyPressed(key)) {
+         String chatHistKey = BomboConfig.get().chatHistoryKey;
+         if (chatHistKey != null && !chatHistKey.isEmpty() && mc.gui.screen() == null) {
+            int histCode = ClickLogic.getKeyCode(chatHistKey);
+            if (histCode != -1 && key == histCode) {
+               BomboaddonsClient.openChatHistory(mc, me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL);
+               ci.cancel();
+               return;
+            }
+         }
+
+         // Sequence triggers are handled by the flavor runtime (cheat build only).
+         if (me.bombo.bomboaddons.flavor.Flavor.get().onInputTrigger(key, "Keybind",
+               me.bombo.bomboaddons.features.auto.AutoSequenceManager.describeKeyCode(key))) {
             ci.cancel();
             return;
          }

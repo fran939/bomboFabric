@@ -206,6 +206,8 @@ public class EggWebSocket {
    }
 
    public static synchronized void sendPublish(String location, String eggType, BlockPos pos) {
+      // Stealth: keep receiving egg data, but never publish this player's finds.
+      if (me.bombo.bomboaddons.util.Stealth.isEnabled()) return;
       if (webSocket != null && !webSocket.isOutputClosed()) {
          JsonObject messageObj = new JsonObject();
          messageObj.addProperty("eggType", eggType);

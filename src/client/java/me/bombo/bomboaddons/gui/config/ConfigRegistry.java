@@ -78,7 +78,10 @@ public class ConfigRegistry {
         List<String> list = new ArrayList<>();
         List<String> activeCats = FeatureOrganizerManager.getOrganizerCategories();
         for (String cat : activeCats) {
-            if (s.hideCheats && CHEAT_CATEGORIES.contains(cat)) {
+            // Cheat categories only exist in the bomboclient build, and even there they
+            // respect the /b hide toggle. In the legit build the whole category is absent.
+            if (CHEAT_CATEGORIES.contains(cat)
+                    && (!me.bombo.bomboaddons.flavor.Flavor.get().isCheat() || s.hideCheats)) {
                 continue;
             }
             list.add(cat);
@@ -120,11 +123,15 @@ public class ConfigRegistry {
             }
 
             case "Auto" -> {
-                items.add(ConfigItem.header("Custom Automation Sequences", category));
-                items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", category,
-                        ConfigCustomWidgets::getAutoSequencesCardHeight,
-                        ConfigCustomWidgets::renderAutoSequencesCard,
-                        ConfigCustomWidgets::handleAutoSequencesCardClick));
+                // Present only in the cheat build: the legit jar ships no sequence runtime,
+                // so offering the editor there would be misleading.
+                if (me.bombo.bomboaddons.flavor.Flavor.get().isCheat()) {
+                    items.add(ConfigItem.header("Custom Automation Sequences", category));
+                    items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", category,
+                            ConfigCustomWidgets::getAutoSequencesCardHeight,
+                            ConfigCustomWidgets::renderAutoSequencesCard,
+                            ConfigCustomWidgets::handleAutoSequencesCardClick));
+                }
             }
 
             case "Bedwars" -> {
@@ -408,6 +415,30 @@ public class ConfigRegistry {
                         v -> s.updateChannel = v));
                 items.add(ConfigItem.button("Check For Updates", "Check Now", "Manually check and download mod updates based on the selected channel.", category, () -> {
                     ModUpdater.checkAndUpdate(false);
+                }));
+                items.add(ConfigItem.button("Switch Flavor", "Install Other Flavor",
+                        "Downloads " + (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR ? "the legit bomboaddons" : "the cheat bomboclient")
+                                + " build and removes this one on the next restart.", category, () -> {
+                    ModUpdater.installOtherFlavor();
+                }));
+                items.add(ConfigItem.header("Running Flavor: " + me.bombo.bomboaddons.Constants.MOD_NAME
+                        + " (" + me.bombo.bomboaddons.Constants.FLAVOR + " \u2022 "
+                        + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "*.jar)", category));
+                if (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
+                    items.add(ConfigItem.toggle("Stealth Mode",
+                            "Stop advertising your presence: no bridge online status, no egg publishing, vanilla brand on join.",
+                            category, () -> s.stealthMode, v -> s.stealthMode = v));
+                }
+
+                items.add(ConfigItem.header("Chat History", category));
+                items.add(ConfigItem.keybind("Chat History Key", "Optional keybind that opens /b chathistory.", category,
+                        () -> s.chatHistoryKey != null ? s.chatHistoryKey : "", v -> s.chatHistoryKey = v));
+                items.add(ConfigItem.sliderInt("Chat History Limit", "How many chat and feature events to keep in memory.", category, 100, 5000, 100, "msgs",
+                        () -> s.chatHistoryMaxMessages > 0 ? s.chatHistoryMaxMessages : 500, v -> s.chatHistoryMaxMessages = v));
+                items.add(ConfigItem.button("Open Chat History", "Open", "Browse incoming, outgoing, blocked and feature events.", category, () -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    mc.setScreenAndShow(new me.bombo.bomboaddons.features.chat.ChatHistoryScreen(mc.gui.screen(),
+                            me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL));
                 }));
 
                 items.add(ConfigItem.header("Quality of Life & Vision", category));

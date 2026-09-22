@@ -192,6 +192,19 @@ public class ModUpdater {
                   } catch (Throwable ignored) {}
                }
 
+               // Flavor gate: only ever install the artifact belonging to the build that is
+               // running. This is what stops the cheat build from installing the legit jar
+               // (and vice versa) just because it happens to be the newest release.
+               if (!matchesFlavor(targetFilename, downloadUrl)) {
+                  if (targetFilename != null && !targetFilename.isEmpty()) {
+                     System.err.println("[Bombo] Ignoring " + targetFilename + " - flavor "
+                           + Constants.FLAVOR + " expects " + Constants.artifactFilePrefix() + "*.jar");
+                  }
+                  latestVersion = null;
+                  downloadUrl = null;
+                  targetFilename = null;
+               }
+
                String mcVersion = ((ModContainer) FabricLoader.getInstance().getModContainer("minecraft").get()).getMetadata().getVersion().getFriendlyString();
                String currentVersion = ((ModContainer) FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
                if (currentVersion.equals("${version}")) {
@@ -240,8 +253,8 @@ public class ModUpdater {
                String finalFilename = targetFilename != null && !targetFilename.isEmpty()
                      ? targetFilename
                      : (latestVersion.startsWith("26.") || latestVersion.startsWith("1.")
-                           ? "bomboaddons-" + latestVersion + ".jar"
-                           : "bomboaddons-" + mcVersion + "-" + latestVersion + ".jar");
+                           ? Constants.artifactFilePrefix() + latestVersion + ".jar"
+                           : Constants.artifactFilePrefix() + mcVersion + "-" + latestVersion + ".jar");
 
                File newJarFile = modsFolder.resolve(finalFilename).toFile();
                Bomboaddons.logApiRequest(downloadUrl);
@@ -260,7 +273,10 @@ public class ModUpdater {
                StringBuilder pending = new StringBuilder();
                if (Files.exists(modsFolder, new LinkOption[0])) {
                   try (Stream<Path> stream = Files.list(modsFolder)) {
-                     stream.filter((p) -> p.getFileName().toString().startsWith("bomboaddons") && p.getFileName().toString().endsWith(".jar"))
+                     // Scoped to this flavor's prefix so the pending delete list can never
+                     // remove the artifact of the other flavor.
+                     stream.filter((p) -> p.getFileName().toString().startsWith(Constants.artifactFilePrefix())
+                                 && p.getFileName().toString().endsWith(".jar"))
                            .filter((p) -> !p.equals(newJarFile.toPath()))
                            .forEach((p) -> pending.append(p.toAbsolutePath().toString()).append("\n"));
                   }
@@ -277,6 +293,102 @@ public class ModUpdater {
             }
          })).start();
       }
+   }
+
+   /**
+    * True when a catalog entry belongs to the flavor that is running.
+    * Filenames are the source of truth because the release catalog lists every artifact.
+    */
+   private static boolean matchesFlavor(String filename, String downloadUrl) {
+      String prefix = Constants.artifactFilePrefix();
+      if (filename != null && !filename.isEmpty()) {
+         return filename.startsWith(prefix);
+      }
+      if (downloadUrl != null && !downloadUrl.isEmpty()) {
+         String tail = downloadUrl.substring(downloadUrl.lastIndexOf('/') + 1);
+         return tail.startsWith(prefix);
+      }
+      return false;
+   }
+
+   /** Prefix of the jar this build would install if the user ran {@code /b update switch}. */
+   private static String otherFlavorPrefix() {
+      return Constants.CHEAT_FLAVOR ? "bomboaddons-" : "bomboclient-";
+   }
+
+   /**
+    * Downloads the other flavor's artifact and queues this one for removal on restart.
+    *
+    * <p>Deliberately explicit and two-step: nothing is replaced until Minecraft restarts.
+    */
+   public static void installOtherFlavor() {
+      final String targetPrefix = otherFlavorPrefix();
+      final String targetName = Constants.CHEAT_FLAVOR ? "BomboAddons (legit)" : "BomboClient (cheat)";
+
+      (new Thread(() -> {
+         try {
+            sendMessage("§7Looking for the §b" + targetName + " §7artifact (" + targetPrefix + "*.jar)...");
+
+            String downloadUrl = null;
+            String filename = null;
+
+            HttpURLConnection ghConn = (HttpURLConnection) (new URL(GITHUB_API_LIST)).openConnection();
+            ghConn.setRequestProperty("User-Agent", "BomboAddons");
+            ghConn.setConnectTimeout(5000);
+            ghConn.setReadTimeout(5000);
+            if (ghConn.getResponseCode() == 200) {
+               BufferedReader ghReader = new BufferedReader(new InputStreamReader(ghConn.getInputStream(), StandardCharsets.UTF_8));
+               com.google.gson.JsonArray releases = JsonParser.parseReader(ghReader).getAsJsonArray();
+               for (com.google.gson.JsonElement rEl : releases) {
+                  JsonObject rObj = rEl.getAsJsonObject();
+                  if (!rObj.has("assets")) continue;
+                  for (com.google.gson.JsonElement aEl : rObj.getAsJsonArray("assets")) {
+                     JsonObject a = aEl.getAsJsonObject();
+                     String name = a.has("name") ? a.get("name").getAsString() : "";
+                     if (name.startsWith(targetPrefix) && name.endsWith(".jar")
+                           && !name.contains("sources") && !name.contains("dev")) {
+                        filename = name;
+                        downloadUrl = a.get("browser_download_url").getAsString();
+                        break;
+                     }
+                  }
+                  if (downloadUrl != null) break;
+               }
+            }
+
+            if (downloadUrl == null || filename == null) {
+               sendMessage("§cNo §b" + targetName + " §cartifact found in the release catalog yet.");
+               return;
+            }
+
+            Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
+            File newJarFile = modsFolder.resolve(filename).toFile();
+
+            sendMessage("§7Downloading §b" + filename + "§7...");
+            HttpURLConnection dlConn = (HttpURLConnection) (new URL(downloadUrl)).openConnection();
+            dlConn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
+            dlConn.setInstanceFollowRedirects(true);
+            dlConn.setConnectTimeout(10000);
+            dlConn.setReadTimeout(60000);
+            try (InputStream in = dlConn.getInputStream()) {
+               Files.copy(in, newJarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            updatedThisSession = true;
+            StringBuilder pending = new StringBuilder();
+            pending.append(Files.exists(PENDING_DELETE) ? Files.readString(PENDING_DELETE, StandardCharsets.UTF_8) : "");
+            File currentJar = getCurrentJar();
+            if (currentJar != null) {
+               pending.append(currentJar.getAbsolutePath()).append("\n");
+            }
+            Files.writeString(PENDING_DELETE, pending.toString(), StandardCharsets.UTF_8);
+
+            sendMessage("§aDownloaded §b" + filename + "§a.");
+            sendMessage("§eRestart Minecraft to run the §b" + targetName + " §eflavor. The current jar is removed on restart.");
+         } catch (Exception e) {
+            sendMessage("§cError switching flavor: " + e.getMessage());
+         }
+      })).start();
    }
 
    private static int compareVersions(String v1, String v2) {
@@ -386,8 +498,8 @@ public class ModUpdater {
             Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
             String mcVersion = ((ModContainer)FabricLoader.getInstance().getModContainer("minecraft").get()).getMetadata().getVersion().getFriendlyString();
             String jarName = cleanTarget.startsWith("26.") || cleanTarget.startsWith("1.")
-                  ? "bomboaddons-" + cleanTarget + ".jar"
-                  : "bomboaddons-" + mcVersion + "-" + cleanTarget + ".jar";
+                  ? Constants.artifactFilePrefix() + cleanTarget + ".jar"
+                  : Constants.artifactFilePrefix() + mcVersion + "-" + cleanTarget + ".jar";
             File newJarFile = modsFolder.resolve(jarName).toFile();
 
             HttpURLConnection dlConn = (HttpURLConnection) (new URL(downloadUrl)).openConnection();
@@ -404,7 +516,8 @@ public class ModUpdater {
             StringBuilder pending = new StringBuilder();
             if (Files.exists(modsFolder, new LinkOption[0])) {
                try (Stream<Path> stream = Files.list(modsFolder)) {
-                  stream.filter((p) -> p.getFileName().toString().startsWith("bomboaddons-") && p.getFileName().toString().endsWith(".jar"))
+                  stream.filter((p) -> p.getFileName().toString().startsWith(Constants.artifactFilePrefix())
+                              && p.getFileName().toString().endsWith(".jar"))
                         .filter((p) -> !p.equals(newJarFile.toPath()))
                         .forEach((p) -> pending.append(p.toAbsolutePath().toString()).append("\n"));
                }

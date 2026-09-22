@@ -1,5 +1,26 @@
 [
   {
+    "version": "26.2.28.33",
+    "date": "2026-09-23",
+    "changes": [
+      "Fixed /b chathistory: ChatHistoryScreen was implemented but never instantiated and no command existed - added /b chathistory, /b chathistory auto|all, a chatHistoryKey keybind and a config GUI button",
+      "Fixed a 2px render/click geometry mismatch in ChatHistoryScreen that made the bottom row unclickable, and clamped the scroll offset",
+      "Added ChatHistoryTracker.recordEvent with a new EVENT status so feature messages are no longer dropped by the [BomboAddons] filter",
+      "Auto sequence starts, stops, completions and halts are now recorded in chat history with their real trigger (Keybind TAB, Mouse Button 5, Config GUI RUN button, Command /b auto run)",
+      "Chat history tooltips now show Origin, Feature, Trigger and Sequence lines, plus a new Auto Sequences filter tab",
+      "Added /b auto list, /b auto run <name> and /b auto stop commands",
+      "Auto sequences now retry a failed step 3x before halting, with the reason recorded (container closed, slot not found, player left the world, sequence deleted, no steps)",
+      "Dual flavor build: ./gradlew build produces the legit bomboaddons jar and ./gradlew build -Pflavor=cheat produces bomboclient",
+      "Cheat-only sources moved to src/cheat/java behind a reflective FlavorBridge SPI so the legit jar never links a cheat type, enforced by a new assertFlavorIntegrity build task",
+      "Moved to cheat-only: the sequence executor, /b hide, the Auto category registration and a cheat-only ClientBrandRetriever mixin",
+      "Flavor-aware updater: /b update only installs the artifact matching the running flavor and old-jar cleanup is scoped per flavor; added /b update flavor and /b update switch",
+      "Added FlavorMigration that detects legacy cheat state (hideCheats=false or automation configured) and migrates it safely; config schema version bumped to 2",
+      "Added stealth mode (/b stealth) stopping bridge presence posts, egg publishing and modded brand advertisement, documented as identity hygiene rather than undetectability",
+      "Fixed .gitignore: a bare config/ pattern kept 5 build-critical gui/config sources out of version control - anchored to /config/ and tracked them",
+      "Added docs/FEATURE_AUDIT.md with the feature reachability audit, measured coverage numbers and the no-deletion policy"
+    ]
+  },
+  {
     "version": "26.2.28.32",
     "date": "2026-09-21",
     "changes": [

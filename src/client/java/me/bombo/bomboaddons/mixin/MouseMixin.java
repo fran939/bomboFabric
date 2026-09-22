@@ -104,7 +104,8 @@ public abstract class MouseMixin {
          }
 
          if (mc.player != null && !(mc.gui.screen() instanceof ChatScreen) && !(mc.gui.screen() instanceof AbstractSignEditScreen)) {
-            if (me.bombo.bomboaddons.features.auto.AutoSequenceManager.onKeyPressed(button)) {
+            // Sequence triggers are handled by the flavor runtime (cheat build only).
+            if (me.bombo.bomboaddons.flavor.Flavor.get().onInputTrigger(button, "Mouse Button", "Mouse " + (button + 1))) {
                ci.cancel();
                return;
             }

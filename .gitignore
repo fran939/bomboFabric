@@ -22,8 +22,11 @@ skyhanni_tree.json
 data_contents.json
 mojang.json
 snailify.json
-config/
-bomboaddons.json
+# Anchored to the repository root: a bare "config/" also matched source
+# directories such as src/client/java/me/bombo/bomboaddons/gui/config/, which
+# silently kept build-critical sources out of version control.
+/config/
+/bomboaddons.json
 /bombo/
 *.local
 user_*.json

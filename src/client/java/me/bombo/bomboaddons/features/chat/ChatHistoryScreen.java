@@ -28,7 +28,8 @@ public class ChatHistoryScreen extends Screen {
         BOMBO("BomboAddons"),
         ALL_MODS("All Mods"),
         NORMAL("Normal Chat"),
-        BLOCKED("Blocked Only");
+        BLOCKED("Blocked Only"),
+        AUTO("Auto Sequences");
 
         public final String label;
         FilterTab(String label) {
@@ -37,6 +38,7 @@ public class ChatHistoryScreen extends Screen {
     }
 
     private FilterTab activeTab = FilterTab.ALL;
+    private final FilterTab initialTab;
     private String searchQuery = "";
     private boolean searchFocused = false;
 
@@ -51,8 +53,18 @@ public class ChatHistoryScreen extends Screen {
     private long toastExpiry = 0;
 
     public ChatHistoryScreen(Screen parent) {
+        this(parent, FilterTab.ALL);
+    }
+
+    /**
+     * @param initialTab tab to open on, so {@code /b chathistory auto} can jump straight
+     *                   to the sequence event log.
+     */
+    public ChatHistoryScreen(Screen parent, FilterTab initialTab) {
         super(Component.literal("Chat History"));
         this.parent = parent;
+        this.initialTab = initialTab != null ? initialTab : FilterTab.ALL;
+        this.activeTab = this.initialTab;
     }
 
     @Override
@@ -63,6 +75,27 @@ public class ChatHistoryScreen extends Screen {
         this.winH = Math.min(this.height - 20, targetH);
         this.winX = (this.width - this.winW) / 2;
         this.winY = (this.height - this.winH) / 2;
+        this.activeTab = this.initialTab;
+    }
+
+    /**
+     * Single source of truth for the list geometry. Render and click handling used to
+     * disagree by two pixels, which made the bottom row unclickable.
+     */
+    private int controlsTop() {
+        return winY + headerH + 6;
+    }
+
+    private int listTop() {
+        return controlsTop() + controlsH + 4;
+    }
+
+    private int listRowsTop() {
+        return listTop() + 16;
+    }
+
+    private int listVisibleRows() {
+        return Math.max(0, (winY + winH - 24 - listRowsTop()) / rowH);
     }
 
     private List<ChatHistoryTracker.Entry> getFilteredEntries() {
@@ -73,6 +106,7 @@ public class ChatHistoryScreen extends Screen {
 
         for (ChatHistoryTracker.Entry e : all) {
             // Tab filtering
+            if (activeTab == FilterTab.AUTO && !e.isEvent) continue;
             if (activeTab == FilterTab.BOMBO && !e.isBombo) continue;
             if (activeTab == FilterTab.ALL_MODS && !e.isMod) continue;
             if (activeTab == FilterTab.NORMAL && (e.isMod || e.status == ChatHistoryTracker.Status.OUTGOING)) continue;
@@ -87,6 +121,8 @@ public class ChatHistoryScreen extends Screen {
                 if (!match && e.callerModId != null && e.callerModId.toLowerCase(Locale.ROOT).contains(q)) match = true;
                 if (!match && e.callerFrame != null && e.callerFrame.toLowerCase(Locale.ROOT).contains(q)) match = true;
                 if (!match && e.featureName != null && e.featureName.toLowerCase(Locale.ROOT).contains(q)) match = true;
+                if (!match && e.originFeature != null && e.originFeature.toLowerCase(Locale.ROOT).contains(q)) match = true;
+                if (!match && e.triggerDesc != null && e.triggerDesc.toLowerCase(Locale.ROOT).contains(q)) match = true;
                 if (!match && e.clickAction != null && e.clickAction.toLowerCase(Locale.ROOT).contains(q)) match = true;
                 if (!match) continue;
             }
@@ -144,7 +180,7 @@ public class ChatHistoryScreen extends Screen {
                 0xFFFFFFFF, closeHover ? 0x440284C7 : 0x220284C7, 0xFF0284C7);
 
         // Controls bar (Tabs & Search)
-        int ctrlY = winY + headerH + 6;
+        int ctrlY = controlsTop();
         g.fill(winX, ctrlY + controlsH, winX + winW, ctrlY + controlsH + 1, divCol);
 
         int tabX = winX + 14;
@@ -177,7 +213,7 @@ public class ChatHistoryScreen extends Screen {
         }
 
         // Table List Area
-        int listTop = ctrlY + controlsH + 4;
+        int listTop = listTop();
         int listBottom = winY + winH - 24;
         int listH = listBottom - listTop;
 
@@ -190,8 +226,8 @@ public class ChatHistoryScreen extends Screen {
         g.text(font, "§7MESSAGE / COMMAND CONTENT", winX + 176, listTop + 3, 0xFF94A3B8, false);
         g.text(font, "§7TIME", winX + winW - 68, listTop + 3, 0xFF94A3B8, false);
 
-        int rowsTop = listTop + 16;
-        int visibleRows = (listBottom - rowsTop) / rowH;
+        int rowsTop = listRowsTop();
+        int visibleRows = listVisibleRows();
         int maxScroll = Math.max(0, list.size() - visibleRows);
         if (scrollOffset > maxScroll) scrollOffset = maxScroll;
         if (scrollOffset < 0) scrollOffset = 0;
@@ -275,6 +311,12 @@ public class ChatHistoryScreen extends Screen {
     private void renderEntryTooltip(GuiGraphicsExtractor g, Font font, ChatHistoryTracker.Entry entry, int mouseX, int mouseY) {
         List<String> lines = new ArrayList<>();
 
+        if (entry.originFeature != null) {
+            lines.add("§7Origin: §d" + entry.originFeature);
+        }
+        if (entry.triggerDesc != null && !entry.triggerDesc.trim().isEmpty()) {
+            lines.add("§7Trigger: §6" + entry.triggerDesc);
+        }
         if (entry.callerFrame != null) {
             lines.add("§fMessage created by §a" + entry.callerFrame);
         }
@@ -363,7 +405,7 @@ public class ChatHistoryScreen extends Screen {
         }
 
         // Controls bar tabs
-        int ctrlY = winY + headerH + 6;
+        int ctrlY = controlsTop();
         int tabX = winX + 14;
         for (FilterTab tab : FilterTab.values()) {
             int tabW = font.width(tab.label) + 16;
@@ -390,10 +432,8 @@ public class ChatHistoryScreen extends Screen {
         }
 
         // Table Rows click
-        int listTop = ctrlY + controlsH + 4;
-        int rowsTop = listTop + 18;
-        int listBottom = winY + winH - 24;
-        int visibleRows = (listBottom - rowsTop) / rowH;
+        int rowsTop = listRowsTop();
+        int visibleRows = listVisibleRows();
 
         List<ChatHistoryTracker.Entry> list = getFilteredEntries();
         for (int i = 0; i < visibleRows && (i + scrollOffset) < list.size(); i++) {
