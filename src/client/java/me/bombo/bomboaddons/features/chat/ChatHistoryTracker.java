@@ -1,6 +1,7 @@
 package me.bombo.bomboaddons.features.chat;
 
 import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.Constants;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.ChatFormatting;
@@ -17,7 +18,9 @@ public class ChatHistoryTracker {
     public enum Status {
         ALLOWED("ALLOWED", 0xFF22C55E),
         BLOCKED("BLOCKED", 0xFFEF4444),
-        OUTGOING("OUTGOING", 0xFF38BDF8);
+        OUTGOING("OUTGOING", 0xFF38BDF8),
+        /** Raised by a mod feature itself (e.g. an auto sequence starting), not by chat. */
+        EVENT("EVENT", 0xFFA855F7);
 
         public final String label;
         public final int color;
@@ -44,7 +47,18 @@ public class ChatHistoryTracker {
         public String hoverText = null;
         public boolean isBombo = false;
         public boolean isMod = false;
+
+        // --- Feature event metadata (only populated for Status.EVENT rows) ---
+        /** Which part of the mod raised the event, e.g. "Auto Sequences Manager". */
+        public String originFeature = null;
+        /** What triggered it, e.g. "Keybind TAB" or "Mouse Button 5". */
+        public String triggerDesc = null;
+        /** True when this row came from a mod feature rather than chat. */
+        public boolean isEvent = false;
     }
+
+    /** Minimum gap between two identical feature events, in milliseconds. */
+    private static final long EVENT_DEDUP_MS = 250L;
 
     private static final List<Entry> entries = new ArrayList<>();
     private static final SimpleDateFormat TIME_FMT = new SimpleDateFormat("HH:mm:ss");
@@ -90,6 +104,45 @@ public class ChatHistoryTracker {
         addEntry(entry);
     }
 
+    /**
+     * Records an event raised by one of the mod's own features (auto sequences, safety
+     * guards, migrations...).
+     *
+     * <p>This deliberately bypasses the {@code [BomboAddons]} filter used by
+     * {@link #recordIncoming}, because feature events are exactly the messages that filter
+     * would otherwise throw away. Identical events inside {@link #EVENT_DEDUP_MS} are
+     * collapsed so looping sequences cannot flood the buffer.
+     */
+    public static synchronized void recordEvent(String category, String message,
+                                                String featureName, String originFeature, String triggerDesc) {
+        if (message == null || message.trim().isEmpty()) return;
+
+        String dedupKey = "E:" + category + ":" + message + ":" + triggerDesc;
+        long now = System.currentTimeMillis();
+        Long lastSeen = recentMessageTimes.get(dedupKey);
+        if (lastSeen != null && (now - lastSeen) < EVENT_DEDUP_MS) {
+            return;
+        }
+        recentMessageTimes.put(dedupKey, now);
+
+        Entry entry = new Entry();
+        entry.timeFormatted = TIME_FMT.format(new Date());
+        entry.status = Status.EVENT;
+        entry.category = (category != null && !category.isEmpty()) ? category : "EVENT";
+        entry.rawText = message;
+        entry.component = Component.literal(message);
+        entry.isEvent = true;
+        entry.isBombo = true;
+        entry.isMod = true;
+        entry.callerModId = Constants.MOD_ID;
+        entry.callerModName = Constants.MOD_NAME;
+        entry.featureName = featureName != null ? featureName : entry.category;
+        entry.originFeature = originFeature;
+        entry.triggerDesc = triggerDesc;
+        entry.callerFrame = "knot//" + Constants.MOD_ID + "." + entry.featureName;
+        addEntry(entry);
+    }
+
     public static synchronized void recordOutgoing(String commandOrMessage, boolean isCommand) {
         if (commandOrMessage == null) return;
 
@@ -114,7 +167,8 @@ public class ChatHistoryTracker {
     }
 
     private static void addEntry(Entry entry) {
-        int max = BomboConfig.get().chatHistoryMaxMessages;
+        BomboConfig.Settings cfg = BomboConfig.get();
+        int max = cfg != null ? cfg.chatHistoryMaxMessages : 500;
         if (max <= 0) max = 500;
         entries.add(entry);
         while (entries.size() > max) {
@@ -226,8 +280,8 @@ public class ChatHistoryTracker {
             if (cls.startsWith("me.bombo.bomboaddons")) {
                 entry.isBombo = true;
                 entry.isMod = true;
-                entry.callerModId = "bomboaddons";
-                entry.callerModName = "BomboAddons";
+                entry.callerModId = Constants.MOD_ID;
+                entry.callerModName = Constants.MOD_NAME;
                 entry.featureName = resolveFeatureName(cls, caller.getMethodName());
             } else if (cls.startsWith("com.github.synnerz.devonian") || cls.contains("devonian")) {
                 entry.isMod = true;

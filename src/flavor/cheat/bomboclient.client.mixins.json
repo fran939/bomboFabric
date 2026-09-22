@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "me.bombo.bomboaddons.mixin.cheat",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [],
+	"client": [
+		"ClientBrandRetrieverMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

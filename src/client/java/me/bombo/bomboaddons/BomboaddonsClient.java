@@ -164,7 +164,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       try {
          File modsDir = new File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "mods");
          if (!modsDir.exists() || !modsDir.isDirectory()) return;
-         File[] jars = modsDir.listFiles((dir, name) -> name.startsWith("bomboaddons-") && name.endsWith(".jar") && !name.contains(MOD_VERSION));
+         File[] jars = modsDir.listFiles((dir, name) -> name.startsWith(Constants.artifactFilePrefix()) && name.endsWith(".jar") && !name.contains(MOD_VERSION));
          if (jars != null) {
             for (File f : jars) {
                try { f.delete(); } catch (Throwable ignored) {}
@@ -448,7 +448,9 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.hud.ArmorHud.init();
       me.bombo.bomboaddons.features.hud.EquipmentHud.init();
       me.bombo.bomboaddons.features.hud.InventoryHud.init();
-      me.bombo.bomboaddons.features.auto.AutoSequenceManager.init();
+      me.bombo.bomboaddons.features.auto.AutoSequenceManager.load();
+      me.bombo.bomboaddons.flavor.Flavor.get().init();
+      me.bombo.bomboaddons.flavor.FlavorMigration.run();
       try {
          new dev.vy.betterpv.client.BetterPVClient().onInitializeClient();
       } catch (Throwable t) {
@@ -949,6 +951,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                         return showCommandHistory((FabricClientCommandSource)context.getSource(), 20, q);
                      }
                   })));
+                  builder.then(ClientCommands.literal("chathistory")
+                          .executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL))
+                          .then(ClientCommands.literal("auto").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.AUTO)))
+                          .then(ClientCommands.literal("all").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL))));
+                  // Flavor specific subcommands (/b hide, /b auto ...). The legit build
+                  // contributes nothing here.
+                  me.bombo.bomboaddons.flavor.Flavor.get().registerCommands(builder);
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("behighlight").then(ClientCommands.literal("add").then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
                      String mob = StringArgumentType.getString(context, "mob").trim();
                      return handleBestiaryAddCommand((FabricClientCommandSource)context.getSource(), mob, null);
@@ -1689,18 +1698,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                      WardrobeHelper.equipLoadout(slot);
                      return 1;
                   })));
-                  builder.then(ClientCommands.literal("hide").executes((context) -> {
-                     BomboConfig.Settings s = BomboConfig.get();
-                     s.hideCheats = !s.hideCheats;
-                     if (s.hideCheats) {
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCheats are now §chidden §afrom the GUI!"));
-                     } else {
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCheats are now §avisible §ain the GUI!"));
-                     }
-
-                     BomboConfig.save();
-                     return 1;
-                  }));
+                  // NOTE: /b hide is flavor specific and is registered by the flavor bridge
+                  // below, so it does not exist at all in the legit bomboaddons build.
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("look").executes((context) -> LookCommand.execute((String)null, false))).then(ClientCommands.argument("subcmd", StringArgumentType.greedyString()).executes((context) -> LookCommand.execute(StringArgumentType.getString(context, "subcmd"), false))));
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("looks").executes((context) -> LookCommand.execute((String)null, true))).then(ClientCommands.argument("subcmd", StringArgumentType.greedyString()).executes((context) -> LookCommand.execute(StringArgumentType.getString(context, "subcmd"), true))));
                   String[] sbeSubs = new String[]{"nw", "nwc", "cata", "skills", "slayer", "trophyfish", "crimson"};
@@ -2063,6 +2062,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                          .executes((context) -> {
                             String ch = BomboConfig.get().updateChannel;
                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current update channel: §b" + ch + " §7(Options: §eFull Only§7, §eBetas & Full§7). Use §e/b update channel <full|beta> §7to switch."));
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Currently running flavor: §b" + me.bombo.bomboaddons.Constants.FLAVOR + " §8(artifact: " + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "<version>.jar)"));
                             return 1;
                          })
                          .then(ClientCommands.literal("full").executes((context) -> {
@@ -2082,7 +2082,20 @@ public class BomboaddonsClient implements ClientModInitializer {
                             BomboConfig.save();
                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aUpdate channel set to: §eBetas & Full§a. /b update will search for beta and full releases."));
                             return 1;
-                         }))));
+                         })))
+                      .then(ClientCommands.literal("flavor").executes((context) -> {
+                         String flavor = me.bombo.bomboaddons.Constants.FLAVOR;
+                         String prefix = me.bombo.bomboaddons.Constants.artifactFilePrefix();
+                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Flavor: §b" + flavor
+                               + " §7(" + me.bombo.bomboaddons.Constants.MOD_NAME + "§7)"));
+                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Updates are resolved from artifacts matching §e" + prefix
+                               + "<version>.jar§7. Switch with §e/b update switch§7."));
+                         return 1;
+                      }))
+                      .then(ClientCommands.literal("switch").executes((context) -> {
+                         ModUpdater.installOtherFlavor();
+                         return 1;
+                      })));
                    builder.then(ClientCommands.literal("version")
                       .executes((context) -> {
                          String version = ((ModContainer)FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
@@ -6980,6 +6993,15 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
 
       }, "Rank-Fetch-Command-" + username)).start();
+   }
+
+   /**
+    * Opens the chat history screen. Kept as a helper so every {@code /b chathistory} entry
+    * point shares one code path.
+    */
+   public static int openChatHistory(Minecraft mc, me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab tab) {
+      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.chat.ChatHistoryScreen(mc.gui.screen(), tab)));
+      return 1;
    }
 
    public static int showCommandHistory(FabricClientCommandSource src, int limit, String filter) {

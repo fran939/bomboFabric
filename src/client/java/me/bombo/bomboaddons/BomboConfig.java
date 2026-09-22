@@ -634,6 +634,17 @@ public class BomboConfig {
       public String lastServerIp = "";
       public String lastServerName = "";
       public boolean hideCheats = true;
+      // --- Flavor / build identity (additive; see FlavorMigration) ---
+      /** Marks which migration steps have already run on this config. */
+      public int configSchemaVersion = 0;
+      /** "legit" or "cheat"; empty when the flavor was never recorded. */
+      public String flavor = "";
+      /** Value of hideCheats before the flavor migration touched it. */
+      public boolean legacyHideCheats = true;
+      /** Cheat flavor only: stop advertising presence to third parties. */
+      public boolean stealthMode = false;
+      /** Optional keybind that opens the chat history screen. */
+      public String chatHistoryKey = "";
       public boolean diceTracker = false;
       public boolean showCommandOnHover = false;
       public boolean autoHoppityCalls = false;

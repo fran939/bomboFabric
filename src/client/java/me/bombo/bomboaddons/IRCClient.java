@@ -53,6 +53,7 @@ public class IRCClient {
    }
 
    public static void ensureSelfInOnlinePlayers() {
+      if (me.bombo.bomboaddons.util.Stealth.isEnabled()) return;
       try {
          Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.getUser() != null) {
@@ -1225,6 +1226,8 @@ public class IRCClient {
    }
 
    public static void postOnlineStatus(String area, String subArea) {
+      // Stealth: never advertise this player to the bridge.
+      if (me.bombo.bomboaddons.util.Stealth.isEnabled()) return;
       final String safeArea = (area == null || area.isEmpty()) ? "None" : area;
       final String safeSubArea = (subArea == null) ? "" : subArea;
       java.util.concurrent.CompletableFuture.runAsync(() -> {
@@ -1270,6 +1273,8 @@ public class IRCClient {
    }
 
    public static void broadcastArea(String area, String subArea) {
+      // Stealth: no presence, no area broadcast.
+      if (me.bombo.bomboaddons.util.Stealth.isEnabled()) return;
       final String safeArea = (area == null || area.isEmpty()) ? "None" : area;
       final String safeSubArea = subArea;
       postOnlineStatus(safeArea, safeSubArea);
@@ -1303,6 +1308,7 @@ public class IRCClient {
 
    public static void broadcastEgg(String location, String eggType, net.minecraft.core.BlockPos pos) {
       if (location == null || eggType == null || pos == null) return;
+      if (me.bombo.bomboaddons.util.Stealth.isEnabled()) return;
       if (running) {
          (new Thread(() -> {
             try {
