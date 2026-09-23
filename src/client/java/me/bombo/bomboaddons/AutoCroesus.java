@@ -85,6 +85,42 @@ public class AutoCroesus {
    private static long lastBlacklistFetch;
    private static final String PROFIT_FILE = "bombo_croesus_profit.json";
 
+   // --- RandomStuff/AutoCroesus price-classification sets (logic port) -------------------
+   // always_buy: items bought immediately regardless of computed profit, because the
+   // lowest-BIN snapshot systematically under-prices them (handles, scrolls, dyes...).
+   // worthless: items whose API price is manipulated or meaningless; forced to 0 so an
+   // unopened run with only junk never trips the safety "0 price" abort.
+   public static final Set<String> ALWAYS_BUY_ITEMS = Set.of(
+           "NECRON_HANDLE", "DARK_CLAYMORE",
+           "FIRST_MASTER_STAR", "SECOND_MASTER_STAR", "THIRD_MASTER_STAR", "FOURTH_MASTER_STAR", "FIFTH_MASTER_STAR",
+           "SHADOW_FURY", "SHADOW_WARP_SCROLL", "IMPLOSION_SCROLL", "WITHER_SHIELD_SCROLL", "DYE_LIVID");
+   public static final Set<String> WORTHLESS_ITEMS = Set.of(
+           "DUNGEON_DISC_5", "DUNGEON_DISC_4", "DUNGEON_DISC_3", "DUNGEON_DISC_2", "DUNGEON_DISC_1",
+           "MAXOR_THE_FISH", "STORM_THE_FISH", "GOLDOR_THE_FISH",
+           "ENCHANTMENT_ULTIMATE_NO_PAIN_NO_GAIN_1", "ENCHANTMENT_ULTIMATE_NO_PAIN_NO_GAIN_2",
+           "ENCHANTMENT_ULTIMATE_NO_PAIN_NO_GAIN_3", "ENCHANTMENT_ULTIMATE_NO_PAIN_NO_GAIN_4",
+           "ENCHANTMENT_ULTIMATE_NO_PAIN_NO_GAIN_5",
+           "ENCHANTMENT_ULTIMATE_COMBO_1", "ENCHANTMENT_ULTIMATE_COMBO_2", "ENCHANTMENT_ULTIMATE_COMBO_3",
+           "ENCHANTMENT_ULTIMATE_COMBO_4", "ENCHANTMENT_ULTIMATE_COMBO_5",
+           "ENCHANTMENT_ULTIMATE_BANK_1", "ENCHANTMENT_ULTIMATE_BANK_2", "ENCHANTMENT_ULTIMATE_BANK_3",
+           "ENCHANTMENT_ULTIMATE_BANK_4", "ENCHANTMENT_ULTIMATE_BANK_5",
+           "ENCHANTMENT_ULTIMATE_JERRY_1", "ENCHANTMENT_ULTIMATE_JERRY_2", "ENCHANTMENT_ULTIMATE_JERRY_3",
+           "ENCHANTMENT_ULTIMATE_JERRY_4", "ENCHANTMENT_ULTIMATE_JERRY_5",
+           "ENCHANTMENT_FEATHER_FALLING_6", "ENCHANTMENT_FEATHER_FALLING_7", "ENCHANTMENT_FEATHER_FALLING_8",
+           "ENCHANTMENT_FEATHER_FALLING_9", "ENCHANTMENT_FEATHER_FALLING_10",
+           "ENCHANTMENT_INFINITE_QUIVER_6", "ENCHANTMENT_INFINITE_QUIVER_7", "ENCHANTMENT_INFINITE_QUIVER_8",
+           "ENCHANTMENT_INFINITE_QUIVER_9", "ENCHANTMENT_INFINITE_QUIVER_10");
+
+   /** true when this id must be bought even if the computed profit is negative. */
+   public static boolean isAlwaysBuy(String itemId) {
+      return itemId != null && ALWAYS_BUY_ITEMS.contains(sanitizeId(itemId));
+   }
+
+   /** true when this id's price must be treated as 0 regardless of what the API says. */
+   public static boolean isWorthlessItem(String itemId) {
+      return itemId != null && WORTHLESS_ITEMS.contains(sanitizeId(itemId));
+   }
+
    public static int getArmorSalvageBase(int stars) {
       if (stars <= 0) {
          return 100;
@@ -549,7 +585,18 @@ public class AutoCroesus {
             return;
          }
 
-         if (!boughtCurrentChest && (bestChest.profit >= s.autoCroesusDungeonProfitThreshold || bestChest.isFree)) {
+         // RandomStuff always-buy: a chest containing one of these ids is claimed even at a
+         // computed loss - the BIN snapshot under-prices them beyond what profit math sees.
+         boolean bestHasAlwaysBuy = false;
+         for (ItemDetail d : bestChest.parsedItems) {
+            if (isAlwaysBuy(d.itemId)) { bestHasAlwaysBuy = true; break; }
+         }
+
+         if (!boughtCurrentChest && (bestHasAlwaysBuy || bestChest.profit >= s.autoCroesusDungeonProfitThreshold || bestChest.isFree)) {
+            if (bestHasAlwaysBuy && bestChest.profit < s.autoCroesusDungeonProfitThreshold && !debugHighlightMode) {
+               mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §dAlways-buy item in §e" + bestChest.chestName
+                     + "§d - claiming despite computed profit (§e" + LowestBinManager.formatPrice(bestChest.profit) + "§d)."));
+            }
             boughtCurrentChest = true;
             hudActionStatus = debugHighlightMode ? "§e[SIMULATION: Buy " + bestChest.chestName + "]" : "§a[Buying " + bestChest.chestName + "...]";
             clickOrHighlightSlot(screen.getMenu().containerId, bestChest.slotIndex, "Claim " + bestChest.chestName);
@@ -595,6 +642,30 @@ public class AutoCroesus {
    public static void parseDungeonItemLine(Component line, String clean, List<ItemDetail> outList) {
       if (clean == null || clean.isEmpty()) return;
 
+      // RandomStuff pet parsing: chest loot can contain a [Lvl 1] pet whose color codes map to
+      // rarity (gold = Legendary, anything else = Epic). Prices live under "NAME;tier" ids.
+      Matcher petM = Pattern.compile("(?i)^\\[Lvl 1\\]\\s*(\\S+)").matcher(clean);
+      if (petM.find()) {
+         String petName = petM.group(1).replaceAll("[^A-Za-z]", "").toUpperCase();
+         String color = clean.contains("§6") || clean.toUpperCase().contains("§6") ? ";4" : ";3";
+         String petId = petName + color;
+         long unitPrice = LowestBinManager.getCachedPrice(petId);
+         if (unitPrice <= 0) {
+            unitPrice = LowestBinManager.getCachedPrice(petName);
+         }
+         ItemDetail detail = new ItemDetail();
+         detail.name = petName + (color.endsWith("4") ? " (Legendary)" : " (Epic)");
+         detail.originalLore = clean;
+         detail.itemId = petId;
+         detail.baseQuantity = 1;
+         detail.adjustedQuantity = 1;
+         detail.unitPrice = unitPrice;
+         detail.totalValue = unitPrice;
+         detail.priceSource = unitPrice > 0 ? "Lowest BIN" : "N/A";
+         outList.add(detail);
+         return;
+      }
+
       Matcher essM = Pattern.compile("(?i)^(Wither|Undead|Dragon|Spider|Ice|Diamond|Gold|Crimson)\\s+Essence\\s+x(\\d+)").matcher(clean);
       if (essM.find()) {
          String type = essM.group(1).toUpperCase();
@@ -637,6 +708,10 @@ public class AutoCroesus {
             // Tier based fallback estimation
             unitPrice = getFallbackBookPrice(enchantName, lvl);
          }
+         // RandomStuff worthless-set: junk ultimates have manipulated/meaningless prices.
+         if (isWorthlessItem(enchantId)) {
+            unitPrice = 0L;
+         }
          ItemDetail detail = new ItemDetail();
          detail.name = "Enchanted Book (" + enchantName + " " + lvlStr + ")";
          detail.originalLore = clean;
@@ -645,7 +720,8 @@ public class AutoCroesus {
          detail.adjustedQuantity = 1;
          detail.unitPrice = unitPrice;
          detail.totalValue = unitPrice;
-         detail.priceSource = unitPrice > 0 ? (LowestBinManager.isBazaar(enchantId) ? "BZ" : "Lowest BIN") : "N/A";
+         detail.priceSource = unitPrice > 0 ? (LowestBinManager.isBazaar(enchantId) ? "BZ" : "Lowest BIN")
+                 : (isWorthlessItem(enchantId) ? "WORTHLESS" : "N/A");
          outList.add(detail);
          return;
       }
@@ -662,6 +738,12 @@ public class AutoCroesus {
       if (unitPrice <= 0) {
          unitPrice = getFallbackDungeonItemPrice(sanitized);
       }
+      // RandomStuff price classification: known-manipulated ids are forced to 0 so they can
+      // never inflate a chest value, and always-buy ids keep their price for the claim check.
+      boolean worthless = isWorthlessItem(itemId) || isWorthlessItem(sanitized.toUpperCase().replace(" ", "_"));
+      if (worthless) {
+         unitPrice = 0L;
+      }
       ItemDetail detail = new ItemDetail();
       detail.name = sanitized;
       detail.originalLore = clean;
@@ -670,7 +752,8 @@ public class AutoCroesus {
       detail.adjustedQuantity = qty;
       detail.unitPrice = unitPrice;
       detail.totalValue = unitPrice * qty;
-      detail.priceSource = unitPrice > 0 ? (LowestBinManager.isBazaar(itemId) ? "BZ" : "Lowest BIN") : "N/A";
+      detail.priceSource = unitPrice > 0 ? (LowestBinManager.isBazaar(itemId) ? "BZ" : "Lowest BIN")
+              : (worthless ? "WORTHLESS" : "N/A");
       outList.add(detail);
    }
 
@@ -1174,7 +1257,10 @@ public class AutoCroesus {
                for(ItemDetail detail : parsedItems) {
                   String lowerName = detail.name.toLowerCase();
                   boolean isShardOrBook = detail.itemId.startsWith("SHARD_") || detail.itemId.startsWith("ENCHANTMENT_") || lowerName.contains("shard") || lowerName.contains("book");
-                  if (detail.totalValue <= 0L && !detail.isCrimsonEssence && !detail.itemId.equals("KUUDRA_TEETH") && !isShardOrBook) {
+                  // RandomStuff classification: a WORTHLESS-tagged item legitimately prices at 0
+                  // and must not trigger the missing-data safety abort.
+                  boolean knownWorthless = isWorthlessItem(detail.itemId) || "WORTHLESS".equals(detail.priceSource);
+                  if (detail.totalValue <= 0L && !detail.isCrimsonEssence && !detail.itemId.equals("KUUDRA_TEETH") && !isShardOrBook && !knownWorthless) {
                      hasZeroPriceItem = true;
                      zeroPriceItemName = detail.name;
                   }

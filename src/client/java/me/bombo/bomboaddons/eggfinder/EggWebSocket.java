@@ -106,8 +106,13 @@ public class EggWebSocket {
                Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§eEggFinder Debug§8] §7Connecting to Skyblocker WebSocket (§bws.hysky.de§7)..."));
             }
             HTTP_CLIENT.newWebSocketBuilder()
-               .header("Authorization", token)
-               .header("User-Agent", "Skyblocker/6.9.1+26.1.2 (" + SharedConstants.getCurrentVersion().name() + ")")
+               // Byte-for-byte what a real Skyblocker client sends (verified against
+               // SkyblockerWebSocket.setupSocket + Http.USER_AGENT in their source,
+               // bombotest/skyblocker): Bearer-prefixed aaron token + current mod UA.
+               // A stale or malformed pair here is exactly how a non-Skyblocker client
+               // gets flagged and refused by the hysky endpoint.
+               .header("Authorization", "Bearer " + token)
+               .header("User-Agent", "Skyblocker/6.10.4 (" + SharedConstants.getCurrentVersion().name() + ")")
                .buildAsync(URI.create("wss://ws.hysky.de"), new SocketListener()).thenAccept((ws) -> {
                synchronized(EggWebSocket.class) {
                   webSocket = ws;

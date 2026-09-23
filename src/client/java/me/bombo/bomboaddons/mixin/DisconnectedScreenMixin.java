@@ -149,6 +149,9 @@ public abstract class DisconnectedScreenMixin extends Screen {
             BomboaddonsClient.activeReconnectBtn.active = false;
          }
          final Account targetAcc = acc;
+         // Pre-join: flip to the cached session synchronously so reconnect cannot beat the
+         // swap; the refreshed token then re-applies before BomboaddonsClient.reconnect fires.
+         AccountManager.selectAccount(targetAcc);
          AccountManager.refreshAccount(targetAcc).thenAccept((refreshed) -> {
             if (refreshed != null) {
                if (this.minecraft != null) {

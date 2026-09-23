@@ -219,6 +219,18 @@ public class ModUpdater {
                   return;
                }
 
+               // Never cross Minecraft versions: a 26.1.x install must not "update" itself to a
+               // 26.2.x jar (different loader build - it would not even load). Versions are
+               // mc.mod.sub, so the first two segments identify the Minecraft line.
+               if (!sameMinecraftLine(currentVersion, latestVersion)) {
+                  if (!silent) {
+                     sendMessage("§eUpdate §b" + latestVersion + "§e is for a different Minecraft version.");
+                     sendMessage("§7This install is §b" + currentVersion + "§7 (MC " + mcVersion
+                           + "). Get the matching build for MC §b" + mcVersion + "§7 from §b/b update versions§7.");
+                  }
+                  return;
+               }
+
                int comparison = compareVersions(latestVersion, currentVersion);
                if (comparison <= 0) {
                   if (!silent) {
@@ -406,6 +418,18 @@ public class ModUpdater {
             sendMessage("§cError switching flavor: " + e.getMessage());
          }
       })).start();
+   }
+
+   /**
+     * True when both versions belong to the same Minecraft line (same first two segments:
+     * {@code 26.2.28.35} and {@code 26.2.29} share {@code 26.2}; {@code 26.1.4.2} does not).
+     */
+   private static boolean sameMinecraftLine(String a, String b) {
+      if (a == null || b == null) return true; // unknown - do not block on our own parse gaps
+      String[] pa = a.trim().split("\\.");
+      String[] pb = b.trim().split("\\.");
+      if (pa.length < 2 || pb.length < 2) return true;
+      return pa[0].equals(pb[0]) && pa[1].equals(pb[1]);
    }
 
    private static int compareVersions(String v1, String v2) {

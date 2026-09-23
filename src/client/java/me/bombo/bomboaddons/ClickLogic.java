@@ -162,6 +162,25 @@ public class ClickLogic {
                                                       if (keyName.toLowerCase().startsWith("key_")) {
                                                          try {
                                                             int code = Integer.parseInt(keyName.substring(4));
+                                                            // Special keys GLFW has no name for - shown verbatim otherwise.
+                                                            switch (code) {
+                                                               case 256: return "Escape";
+                                                               case 257: return "Enter";
+                                                               case 258: return "Tab";
+                                                               case 259: return "Backspace";
+                                                               case 260: return "Insert";
+                                                               case 261: return "Delete";
+                                                               case 262: return "Right Arrow";
+                                                               case 263: return "Left Arrow";
+                                                               case 264: return "Down Arrow";
+                                                               case 265: return "Up Arrow";
+                                                               case 266: return "Page Up";
+                                                               case 267: return "Page Down";
+                                                               case 268: return "Home";
+                                                               case 269: return "End";
+                                                               case 280: return "Caps Lock";
+                                                               default: break;
+                                                            }
                                                             if (code >= 320 && code <= 329) {
                                                                return "KP " + (code - 320);
                                                             }

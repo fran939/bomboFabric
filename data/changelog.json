@@ -1,5 +1,22 @@
 [
   {
+    "version": "26.2.28.35",
+    "date": "2026-09-23",
+    "changes": [
+      "Chat history: outgoing rows never show created-by null - keybind-fired commands show Source: BomboAddons with Trigger: Keybind <name>; typed ones show Player Input",
+      "Readable key names everywhere: key 258 is now Tab, plus arrows/PageUp/PageDown/Home/End/Insert/Delete/CapsLock in triggers, tooltips and capture buttons",
+      "Sequences category fixed on installs with a custom /b order: the organizer file is merged, not applied wholesale, so categories added in newer builds appear; Auto is now displayed as Sequences",
+      "/b cmd fixed: a duplicate registration made bare /b cmd run the legacy execute-last-command path; it now opens the terminal, whose session (scrollback, history, running command) survives closing - Ctrl+L clears",
+      "Mod ID hiding is always on now (both builds answer the brand query with the vanilla name); the toggle was removed",
+      "Updater refuses cross-Minecraft-line updates: a 26.1.x install can no longer update to a 26.2.x jar",
+      "Keybind capture supports modifier combos: Ctrl/Alt/Shift open a combo ([CTRL + ...] shown live) and a letter commits Ctrl+A etc.; releasing the modifier alone keeps a single-key bind - fixes Trade Max Pet Hotkey",
+      "Performance: Pest ESP only renders in the Garden; Critter Capsule trajectory only runs in the Safari (render and tick) - both rows vanish from /b perf elsewhere",
+      "AutoCroesus: new /b ac debug simulation mode (highlights instead of clicking), always-buy and worthless classification sets ported from RandomStuff, pet loot parsing, kismet blacklist respected",
+      "EggFinder websocket handshake now byte-matches Skyblocker: Bearer-prefixed aaron token and current Skyblocker/6.10.4 User-Agent (payload envelope already matched)",
+      "Account swapper: selection applies the session synchronously from the cached token, so a fast join can no longer connect as the previous account; partial swaps now warn in chat instead of failing silently"
+    ]
+  },
+  {
     "version": "26.2.28.34",
     "date": "2026-09-23",
     "changes": [

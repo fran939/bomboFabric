@@ -1,5 +1,47 @@
 # BomboAddons Changelog
 
+## [26.2.28.35] - 2026-09-23 (Beta)
+
+### 1. Chat history attribution
+- **Outgoing rows no longer say "created by null".** A command fired by a keybind now carries its real provenance: the bind handler stamps a `Keybind <name>` trigger before executing, so the row shows `Source: BomboAddons` with `Trigger: Keybind Tab` (readable name) in the tooltip - and never leaves a null author.
+- **Outgoing distinguishes you from your binds.** A message or command you typed in the chat screen shows `Source: Player Input`; the same command fired by a bind shows the bind. Column and tooltip both reflect it.
+- **Readable key names everywhere.** Tab, arrows, Page Up/Down, Home/End, Insert/Delete, Caps Lock, Backspace, Escape and Enter resolve to names (`key 258` is now `Tab`), in triggers, capture buttons and tooltips.
+
+### 2. Sequences category
+- **The category is back on installs with a custom `/b order`.** The organizer file is now merged, not applied wholesale: your saved order is kept, and categories that did not exist when you last saved are appended instead of vanishing. Features whose saved category no longer exists fall back to `Uncategorized` rather than disappearing.
+- **Auto is now displayed as Sequences** (internal id, `/b auto` commands and config schema unchanged), so the tab reads like what it does.
+
+### 3. /b cmd
+- **Fixed:** a second `cmd` subcommand registered later on the same tree was winning Brigadier's conflict resolution, so `/b cmd` ran the legacy "run last detected command" path instead of opening the terminal. The duplicate is gone - bare `/b cmd` opens the terminal again.
+- **The session survives closing.** Scrollback, history, the typed input line and any running command are held outside the screen: close with Esc, reopen with `/b cmd`, and everything is still there streaming. `Ctrl+L` or `clear` wipes the buffer on demand.
+
+### 4. Mod ID hiding always on
+- The toggle is gone; both builds now always answer the server's brand query with the vanilla name (the Odin countermeasure). The config field stays for schema compatibility but is ignored.
+
+### 5. Updater version-line guard
+- A `26.1.x` install can no longer "update" to a `26.2.x` jar (different Minecraft line - it would not even load). The updater now compares the first two version segments and refuses cross-line candidates with an explicit message.
+
+### 6. Keybind capture: modifier combos
+- Pressing Ctrl/Alt/Shift/Win/F-keys in a `[Press Key...]` capture no longer commits instantly. A modifier opens a combo: the button shows `[CTRL + ...]` while held, pressing a letter commits `Ctrl + A`, and releasing the modifier alone keeps it as a single-key bind. Fixes Trade Max Pet Hotkey and every other config keybind.
+
+### 7. Performance
+- **Pest ESP renders only in the Garden** (it can never see pests anywhere else).
+- **Critter Capsule trajectory only runs in the Safari**, render and tick both - it previously walked tracked projectiles every tick on every island.
+- Expect both rows to disappear from `/b perf` outside those islands.
+
+### 8. AutoCroesus
+- **`/b ac debug`** now exists: simulation mode highlights the slot it *would* click (buy, kismet reroll, RNG claim) instead of clicking, and reports each simulated action in chat. ESC stops.
+- Ported the classification sets from RandomStuff's AutoCroesus: an **always-buy list** (Necron Handle, Dark Claymore, master stars, Shadow Fury, scrolls, Livid Dye) that claims a chest even at computed loss, and a **worthless list** (junk ultimates, dungeon discs, fish) priced at 0 so manipulated prices cannot inflate chest values or trip the 0-price safety abort.
+- **Pet loot parsing** added (`[Lvl 1] <Pet>` with rarity from color code).
+- Kismet logic now also refuses to reroll chests containing blacklisted RNG items exactly like the reference (already the case) and records `WORTHLESS` price sources in the item detail for debugging.
+
+### 9. EggFinder handshake aligned with Skyblocker
+- Studied Skyblocker's actual websocket client (source in `bombotest/skyblocker`): our payload envelope already matched byte-for-byte, but the **`Authorization` header was missing the `Bearer ` prefix** and the User-Agent was pinned to an old release. Both now match current Skyblocker (`Bearer <aaron token>`, `Skyblocker/6.10.4 (<mc>)`), so the hysky endpoint sees a well-formed Skyblocker handshake.
+
+### 10. Account swapper race fix
+- **Selecting an account now switches the session synchronously** from the cached token; the refresh still runs and re-applies when done. Joining a server immediately after swapping can no longer connect as the previous account.
+- A failed internal session-services update is no longer silent - the mod tells you the swap was partial and a relog is needed.
+
 ## [26.2.28.34] - 2026-09-23 (Beta)
 
 ### 1. Chat history fixes

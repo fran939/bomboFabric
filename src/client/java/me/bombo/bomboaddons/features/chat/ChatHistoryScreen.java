@@ -303,7 +303,9 @@ public class ChatHistoryScreen extends Screen {
             g.text(font, "§7" + cat, winX + 76, ry + 2, 0xFFCBD5E1, false);
 
             // Source: who actually produced the row (mod name, server, player input).
-            String source = e.callerModName != null ? e.callerModName : "Unknown";
+            // featureName is the closest thing to an author for our own keybind/feature sends.
+            String source = e.callerModName != null ? e.callerModName
+                    : (e.featureName != null ? e.featureName : "Unknown");
             int sourceCol = e.isBombo ? 0xFFA855F7 : (e.isMod ? 0xFF38BDF8 : 0xFF94A3B8);
             g.text(font, font.plainSubstrByWidth(source, 105), winX + 146, ry + 2, sourceCol, false);
 
@@ -380,7 +382,10 @@ public class ChatHistoryScreen extends Screen {
         }
 
         if (entry.isMod) {
-            lines.add("§7Created by: §a" + (entry.callerModName != null ? entry.callerModName : entry.callerModId));
+            // Never render a bare null: id is a real value even when the display name is missing.
+            String who = entry.callerModName != null ? entry.callerModName
+                    : (entry.callerModId != null ? entry.callerModId : "Unknown");
+            lines.add("§7Created by: §a" + who);
             lines.add("§7Mod id: §b" + (entry.callerModId != null ? entry.callerModId : "unknown"));
         } else {
             lines.add("§7Source: §f" + (entry.callerModName != null ? entry.callerModName : "Unknown"));
