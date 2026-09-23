@@ -1,5 +1,33 @@
 # BomboAddons Changelog
 
+## [26.2.28.38] - 2026-09-24 (Beta)
+
+### 1. Sequence editor: steps are editable
+- Every step row has a **pencil** button that loads that step back into the action builder (`[✔ Save Step]`), so an existing `Run Chat / Command` step can be changed from `ah` to `/ah` instead of being deleted and recreated. Type pills switch the step's action without losing the edit.
+
+### 2. Croesus profit tracker (like `/gp`)
+- New HUD: **total profit, runs, average, kismet count**, then a **per-floor breakdown** (`F7`, `M7`, `M4`, `T1`...), read from `bombo_croesus_profit.json` (cached, not re-read every frame). The floor tag comes from the sidebar sub-area.
+- `/b ac stats` prints the same per-floor breakdown in chat.
+
+### 3. Auto Croesus settings in the config GUI
+- New **Auto Croesus** category, visible only in the `bomboclient` (cheat) build: master switch, paid-chest buying, action/kismet delays, kismet threshold, reroll value, dungeon chest profit threshold, dungeon key value, the three Croesus HUD toggles and the **Debug Highlight Mode** switch.
+
+### 4. Chest value panel is movable
+- The dungeon chest value panel now uses configurable position/scale (`/b gui`), with a sample panel to position against. Until you move it, it stays docked right of the container as before.
+
+### 5. Debug no longer spams chat
+- The simulation line (`[SIMULATION] Highlighted slot #N`) is printed **once per slot/action per container**. The highlight still follows the decision every tick; only the chat line is deduplicated.
+
+### 6. `/b cmd`
+- Command history is persisted to `config/bomboaddons/cmd_history.txt` (500 entries) and survives restarts.
+- Every Bombo keybind is suppressed while the terminal is open - typing `ls` can no longer fire a sequence. `Esc` behaves normally.
+
+### 7. EggFinder
+- **`/b egg debug` / `auth` / `reconnect` now exist** (they were missing, hence `Incorrect argument for command`).
+- They **bypass the Hoppity-season gate**, so the handshake runs whenever you ask for it.
+- The websocket now connects **as soon as the token arrives** after a manual request, instead of reporting `Disconnected` forever.
+- **`RuntimeException` fixed**: the profile key pair is read through Minecraft's public `getProfileKeyPairManager()`; the broken accessor mixin was removed. Failures now report the real cause (offline account, expired key pair, HTTP status).
+
 ## [26.2.28.37] - 2026-09-24 (Beta)
 
 ### 1. Bombo authentication server (the "endpoint like hysky but ours")

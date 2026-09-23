@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.38",
+    "date": "2026-09-24",
+    "changes": [
+      "Sequences: every step can now be edited in place - the pencil button loads the step back into the builder (including Run Chat / Command), so changing 'ah' into '/ah' no longer means deleting and recreating the step",
+      "Croesus profit tracker HUD (like /gp): total profit, runs, kismet count and a per-floor breakdown (F7 / M7 / M4 / T1...), movable and scalable in /b gui",
+      "Auto Croesus settings are now in the config GUI (Auto Croesus category, bomboclient build): thresholds, delays, kismet, dungeon keys, HUD toggles and the debug highlight switch",
+      "The chest value panel is movable/scalable in /b gui, with a sample panel to position it against",
+      "AutoCroesus simulation debug no longer repeats the same 'highlighted slot' line every tick - each slot/action is announced once per container (the outline still follows the real decision)",
+      "/b cmd history is saved to config/bomboaddons/cmd_history.txt and survives restarts (up arrow recalls it); every Bombo keybind is blocked while the terminal is open, so typing never fires a sequence",
+      "/b egg debug|auth|reconnect now exist and always run the handshake - they bypass the Hoppity-season gate, and the websocket connects as soon as the token arrives instead of staying 'Disconnected'",
+      "EggAuth no longer crashes with RuntimeException: the profile key pair is read through Minecraft's public getProfileKeyPairManager() instead of a broken accessor mixin, and failures print the real reason (offline account, expired key pair)"
+    ]
+  },
+  {
     "version": "26.2.28.37",
     "date": "2026-09-24",
     "changes": [

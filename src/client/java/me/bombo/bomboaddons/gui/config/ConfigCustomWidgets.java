@@ -5014,6 +5014,13 @@ public class ConfigCustomWidgets {
     public static String autoSeqJitterInput = "30";
     public static int editingAutoSeqIndex = -1;
     public static int expandedSeqActionIndex = -1;
+    /**
+     * Step currently loaded into the builder for editing: {@code editingActionSeq} is the
+     * sequence index, {@code editingActionIdx} the step within it (-1 = the builder is in
+     * "add new step" mode). Saving replaces the step instead of appending a new one.
+     */
+    public static int editingActionSeq = -1;
+    public static int editingActionIdx = -1;
 
     // Action builder inputs
     public static me.bombo.bomboaddons.features.auto.AutoSequenceManager.ActionType newActionType = me.bombo.bomboaddons.features.auto.AutoSequenceManager.ActionType.CLICK_SLOT;
@@ -5169,6 +5176,12 @@ public class ConfigCustomWidgets {
                     int aDownX = aDelX - 22;
                     int aUpX = aDownX - 22;
 
+                    // [✎] edit this step in the builder below
+                    int aEditX = aUpX - 20;
+                    boolean aEditHover = mouseX >= aEditX && mouseX <= aEditX + 18 && mouseY >= aRowY + 1 && mouseY <= aRowY + 17;
+                    boolean aIsEditing = editingActionSeq == i && editingActionIdx == a;
+                    ConfigUITheme.drawPillButton(g, font, aIsEditing ? "§a✎" : "§e✎", aEditX, aRowY + 1, 18, 16, aEditHover, -1, aIsEditing ? 0x3310B981 : 0x22FFAA00, 0x44FFAA00);
+
                     // [▲]
                     if (a > 0) {
                         boolean upHover = mouseX >= aUpX && mouseX <= aUpX + 18 && mouseY >= aRowY + 1 && mouseY <= aRowY + 17;
@@ -5254,15 +5267,43 @@ public class ConfigCustomWidgets {
                 renderCleanInputField(g, font, "Delay ms", actionDelayInput, "actDelay", pX, pY, 60, mouseX, mouseY);
                 pX += 65;
 
-                // [+ Add Step]
-                boolean addStepHover = mouseX >= pX && mouseX <= pX + 65 && mouseY >= pY && mouseY <= pY + 18;
-                ConfigUITheme.drawPillButton(g, font, "§a+ Add Step", pX, pY, 65, 18, addStepHover, -1, 0x3310B981, 0x6610B981);
+                // [+ Add Step] / [✔ Save Step] when a step is loaded for editing
+                boolean editingThisStep = editingActionSeq == i && editingActionIdx >= 0;
+                String stepBtnText = editingThisStep ? "§e✔ Save Step" : "§a+ Add Step";
+                boolean addStepHover = mouseX >= pX && mouseX <= pX + 85 && mouseY >= pY && mouseY <= pY + 18;
+                ConfigUITheme.drawPillButton(g, font, stepBtnText, pX, pY, 80, 18, addStepHover, -1, editingThisStep ? 0x33FFAA00 : 0x3310B981, editingThisStep ? 0x66FFAA00 : 0x6610B981);
 
                 curY += boxH + 4;
             }
 
             curY += 4;
         }
+    }
+
+    /**
+     * Loads an existing step into the action builder so it can be modified and saved back
+     * (instead of deleting it and creating a new one just to change one field).
+     */
+    private static void loadActionIntoBuilder(int seqIndex, int actionIndex, me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction action) {
+        if (action == null) return;
+        editingActionSeq = seqIndex;
+        editingActionIdx = actionIndex;
+        expandedSeqActionIndex = seqIndex;
+        newActionType = action.type != null ? action.type : me.bombo.bomboaddons.features.auto.AutoSequenceManager.ActionType.CLICK_SLOT;
+
+        actionItemInput = action.itemMatcher != null && !action.itemMatcher.isEmpty()
+                ? action.itemMatcher
+                : (action.slotIndex >= 0 ? String.valueOf(action.slotIndex) : "");
+        actionGuiInput = action.guiMatcher != null ? action.guiMatcher : "";
+        actionClickType = action.clickType != null ? action.clickType : "LEFT";
+        actionCmdInput = action.command != null ? action.command : "";
+        actionRightClick = action.rightClick;
+        actionEntityInput = action.entityMatcher != null ? action.entityMatcher : "";
+        actionRadiusInput = String.valueOf((int) Math.max(1.0D, action.searchRadius));
+        actionRepeatInput = String.valueOf(Math.max(1, action.repeatCount));
+        actionDelayInput = String.valueOf(Math.max(0, action.delayMs));
+        actionSlotInput = "";
+        activeFocusedField = null;
     }
 
     public static boolean handleAutoSequencesCardClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
@@ -5393,10 +5434,13 @@ public class ConfigCustomWidgets {
             int rx = x + w - 18;
             int delX = rx - 24;
             int editX = delX - 36;
-            int actX = editX - 60;
-
-            if (mouseX >= actX && mouseX <= actX + 56 && mouseY >= rowY + 2 && mouseY <= rowY + 20) {
+            int actX = editX - 60;                if (mouseX >= actX && mouseX <= actX + 56 && mouseY >= rowY + 2 && mouseY <= rowY + 20) {
                 expandedSeqActionIndex = (expandedSeqActionIndex == i ? -1 : i);
+                if (expandedSeqActionIndex != i || editingActionSeq != i) {
+                    // Leaving/opening the builder drops any half-finished step edit.
+                    editingActionSeq = -1;
+                    editingActionIdx = -1;
+                }
                 return true;
             }
 
@@ -5428,6 +5472,18 @@ public class ConfigCustomWidgets {
                     int aDelX = aRx - 20;
                     int aDownX = aDelX - 22;
                     int aUpX = aDownX - 22;
+                    int aEditX = aUpX - 20;
+
+                    // [✎] Load this step into the builder for editing
+                    if (mouseX >= aEditX && mouseX <= aEditX + 18 && mouseY >= aRowY + 1 && mouseY <= aRowY + 17) {
+                        if (editingActionSeq == i && editingActionIdx == a) {
+                            editingActionSeq = -1;
+                            editingActionIdx = -1;
+                        } else {
+                            loadActionIntoBuilder(i, a, seq.actions.get(a));
+                        }
+                        return true;
+                    }
 
                     // [▲]
                     if (a > 0 && mouseX >= aUpX && mouseX <= aUpX + 18 && mouseY >= aRowY + 1 && mouseY <= aRowY + 17) {
@@ -5524,8 +5580,8 @@ public class ConfigCustomWidgets {
                 if (checkFieldClick(pX, pY, 60, 18, "actDelay", mouseX, mouseY)) return true;
                 pX += 65;
 
-                // [+ Add Step]
-                if (mouseX >= pX && mouseX <= pX + 65 && mouseY >= pY && mouseY <= pY + 18) {
+                // [+ Add Step] / [✔ Save Step]
+                if (mouseX >= pX && mouseX <= pX + 85 && mouseY >= pY && mouseY <= pY + 18) {
                     int delay = 200;
                     try {
                         delay = Integer.parseInt(actionDelayInput.trim());
@@ -5561,6 +5617,22 @@ public class ConfigCustomWidgets {
 
                     if (action != null) {
                         action.repeatCount = repeat;
+                        // Edit mode: replace the step that was loaded into the builder.
+                        if (editingActionSeq == i && editingActionIdx >= 0 && editingActionIdx < seq.actions.size()) {
+                            seq.actions.set(editingActionIdx, action);
+                            editingActionSeq = -1;
+                            editingActionIdx = -1;
+                            me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
+                            actionItemInput = "";
+                            actionGuiInput = "";
+                            actionCmdInput = "";
+                            actionEntityInput = "";
+                            actionRadiusInput = "5";
+                            actionRepeatInput = "1";
+                            actionDelayInput = "200";
+                            activeFocusedField = null;
+                            return true;
+                        }
                         if (action.type == me.bombo.bomboaddons.features.auto.AutoSequenceManager.ActionType.CLICK_SLOT) {
                             // One target field: plain number or "slot N" goes to slotIndex,
                             // anything else is an item-name matcher. The GUI field is shared by all step types.

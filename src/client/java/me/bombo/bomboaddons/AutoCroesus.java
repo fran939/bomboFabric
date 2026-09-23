@@ -204,9 +204,21 @@ public class AutoCroesus {
       }
    }
 
+   /**
+    * (slot, action) pairs already announced for the currently open container. The highlight
+    * itself is refreshed every tick (so the outline follows the real decision), but chat only
+    * hears about a pair once - previously the decision flipped between two slots each tick and
+    * flooded chat with the same lines.
+    */
+   private static final Set<String> announcedSimulation = new HashSet<>();
+
    private static void clickOrHighlightSlot(int syncId, int slotIndex, String actionName) {
       if (debugHighlightMode) {
          SlotHighlight.setTargetSlot(slotIndex, 0x8800FF00);
+         String key = slotIndex + "|" + actionName;
+         if (!announcedSimulation.add(key)) {
+            return;
+         }
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null) {
             mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus Debug§8] §e[SIMULATION] Highlighted slot #" + slotIndex + " for: §a" + actionName));
@@ -214,6 +226,11 @@ public class AutoCroesus {
       } else {
          clickSlot(syncId, slotIndex);
       }
+   }
+
+   /** Called when a new container opens so the next simulation line is always printed. */
+   private static void resetSimulationAnnounce() {
+      announcedSimulation.clear();
    }
 
    public static void onScreenClosed() {
@@ -382,6 +399,7 @@ public class AutoCroesus {
                checkGuiReported = false;
                hasReportedSimulationClose = false;
                lastActionTime = 0L;
+               resetSimulationAnnounce();
             }
 
             if (isDungeonRunGui(screen)) {
@@ -1803,6 +1821,19 @@ public class AutoCroesus {
                }
             }
 
+            if (json.has("floors") && json.get("floors").isJsonObject()) {
+               JsonObject floorsObj = json.getAsJsonObject("floors");
+
+               for(String key : floorsObj.keySet()) {
+                  JsonObject fo = floorsObj.getAsJsonObject(key);
+                  FloorStat fs = new FloorStat();
+                  fs.runs = fo.has("runs") ? fo.get("runs").getAsInt() : 0;
+                  fs.kismetsUsed = fo.has("kismetsUsed") ? fo.get("kismetsUsed").getAsInt() : 0;
+                  fs.profit = fo.has("profit") ? fo.get("profit").getAsLong() : 0L;
+                  rec.floors.put(key, fs);
+               }
+            }
+
             return rec;
          }
       } catch (Exception var9) {
@@ -1828,6 +1859,17 @@ public class AutoCroesus {
          }
 
          json.add("items", itemsObj);
+         JsonObject floorsObj = new JsonObject();
+
+         for(Map.Entry<String, FloorStat> entry : rec.floors.entrySet()) {
+            JsonObject fo = new JsonObject();
+            fo.addProperty("runs", ((FloorStat)entry.getValue()).runs);
+            fo.addProperty("kismetsUsed", ((FloorStat)entry.getValue()).kismetsUsed);
+            fo.addProperty("profit", ((FloorStat)entry.getValue()).profit);
+            floorsObj.add((String)entry.getKey(), fo);
+         }
+
+         json.add("floors", floorsObj);
          FileWriter writer = new FileWriter("bombo_croesus_profit.json");
          writer.write((new GsonBuilder()).setPrettyPrinting().create().toJson(json));
          writer.close();
@@ -1836,7 +1878,48 @@ public class AutoCroesus {
 
    }
 
+   /**
+    * Current dungeon floor / Kuudra tier as reported by the sidebar ("F7", "M4", "T5"), so
+    * the profit tracker can break earnings down per floor. Falls back to "Unknown".
+    */
+   public static String getCurrentFloorTag() {
+      try {
+         String sub = SkyblockUtils.getSubArea();
+         if (sub == null) return "Unknown";
+         String clean = sub.replaceAll("§[0-9a-fk-or]", "").trim();
+         Matcher m = Pattern.compile("(?i)\\b([FMT][1-7])\\b").matcher(clean);
+         if (m.find()) {
+            return m.group(1).toUpperCase();
+         }
+         if (clean.isEmpty() || clean.equalsIgnoreCase("unknown")) return "Unknown";
+         return clean.length() > 6 ? clean.substring(0, 6) : clean;
+      } catch (Throwable t) {
+         return "Unknown";
+      }
+   }
+
+   /** Ordering rank so F1..F7, M1..M7, T1..T5 render in a stable, readable order. */
+   public static int floorSortKey(String floor) {
+      if (floor == null) return 99;
+      char c = floor.isEmpty() ? ' ' : Character.toUpperCase(floor.charAt(0));
+      int n = 0;
+      try {
+         n = Integer.parseInt(floor.replaceAll("[^0-9]", ""));
+      } catch (Exception ignored) {
+      }
+      return switch (c) {
+         case 'F' -> n;
+         case 'M' -> 10 + n;
+         case 'T' -> 20 + n;
+         default -> 99;
+      };
+   }
+
    public static void recordChestPurchase(long profit, boolean usedKismet, List<ItemDetail> items) {
+      recordChestPurchase(profit, usedKismet, items, getCurrentFloorTag());
+   }
+
+   public static void recordChestPurchase(long profit, boolean usedKismet, List<ItemDetail> items, String floor) {
       ProfitRecord rec = loadProfitRecord();
       ++rec.totalRuns;
       if (usedKismet) {
@@ -1844,6 +1927,14 @@ public class AutoCroesus {
       }
 
       rec.totalProfit += profit;
+
+      String tag = (floor == null || floor.isBlank()) ? "Unknown" : floor;
+      FloorStat fs = rec.floors.computeIfAbsent(tag, k -> new FloorStat());
+      ++fs.runs;
+      fs.profit += profit;
+      if (usedKismet) {
+         ++fs.kismetsUsed;
+      }
 
       for(ItemDetail item : items) {
          ProfitItemData data = (ProfitItemData)rec.items.computeIfAbsent(item.itemId, (k) -> {
@@ -1857,6 +1948,7 @@ public class AutoCroesus {
       }
 
       saveProfitRecord(rec);
+      me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.markDirty();
    }
 
    public static void resetProfitTracker() {
@@ -1947,6 +2039,19 @@ public class AutoCroesus {
       source.sendFeedback(Component.literal("§7Kismet Feathers Used: §d" + rec.kismetsUsed));
       source.sendFeedback(Component.literal("§7Total Net Profit: " + profitColor + String.format("%,d", rec.totalProfit) + " coins"));
       source.sendFeedback(Component.literal("§7Average Profit / Run: " + avgColor + String.format("%,d", avgProfit) + " coins/run"));
+      if (!rec.floors.isEmpty()) {
+         source.sendFeedback(Component.literal("§8--- §6Per-Floor Breakdown §8---"));
+         List<Map.Entry<String, FloorStat>> floors = new ArrayList<>(rec.floors.entrySet());
+         floors.sort((a, b) -> Integer.compare(floorSortKey(a.getKey()), floorSortKey(b.getKey())));
+         for (Map.Entry<String, FloorStat> e : floors) {
+            FloorStat fs = e.getValue();
+            long avg = fs.runs > 0 ? fs.profit / fs.runs : 0L;
+            source.sendFeedback(Component.literal("§7" + e.getKey() + " §8| "
+                  + (fs.profit >= 0 ? "§a+" : "§c-") + String.format("%,d", Math.abs(fs.profit))
+                  + " §7in §e" + fs.runs + " run" + (fs.runs == 1 ? "" : "s")
+                  + " §8(§7avg " + (avg >= 0 ? "§a+" : "§c-") + String.format("%,d", Math.abs(avg)) + "§8)"));
+         }
+      }
       if (rec.items.isEmpty()) {
          source.sendFeedback(Component.literal("§8[§eItem Profit Breakdown: §7No items logged yet.§8]"));
       } else {
@@ -2192,5 +2297,14 @@ public class AutoCroesus {
       public int kismetsUsed = 0;
       public long totalProfit = 0L;
       public Map<String, ProfitItemData> items = new HashMap();
+      /** Per-floor (F1..F7 / M1..M7 / T1..T5) breakdown, keyed by the sidebar floor tag. */
+      public Map<String, FloorStat> floors = new java.util.LinkedHashMap();
+   }
+
+   /** Claimed runs and coins earned on one dungeon floor / Kuudra tier. */
+   public static class FloorStat {
+      public int runs = 0;
+      public int kismetsUsed = 0;
+      public long profit = 0L;
    }
 }

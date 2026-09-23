@@ -36,6 +36,14 @@ public abstract class KeyboardMixin {
          return;
       }
       Minecraft mc = Minecraft.getInstance();
+
+      // While the in-game terminal is open, every Bombo keybind is suppressed (ESC is
+      // handled by the screen itself): typing `ls` in the terminal must never trigger a
+      // sequence, a toggle or a command bind.
+      if (mc.gui.screen() instanceof me.bombo.bomboaddons.gui.CmdScreen) {
+         return;
+      }
+
       String flKey = BomboConfig.get().freelookKey;
       if (flKey != null && !flKey.isEmpty()) {
          int targetCode = ClickLogic.getKeyCode(flKey);

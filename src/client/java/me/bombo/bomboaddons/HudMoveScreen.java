@@ -74,6 +74,12 @@ public class HudMoveScreen extends Screen {
         }
 
         BomboConfig.Settings s = BomboConfig.get();
+        // The chest value panel ships "auto" (docked right of the container). Give it a concrete
+        // spot while the move screen is open so it can actually be grabbed and dragged.
+        if (s.croesusProfitHudX < 0 || s.croesusProfitHudY < 0) {
+            s.croesusProfitHudX = this.width / 2 + 120;
+            s.croesusProfitHudY = Math.max(4, this.height / 2 - 100);
+        }
         String toggleModeText = s.showOnlyActiveHuds ? "§eMode: Active HUDs" : "§aMode: All HUDs";
         this.addRenderableWidget(Button.builder(Component.literal(toggleModeText), btn -> {
             s.showOnlyActiveHuds = !s.showOnlyActiveHuds;
@@ -369,6 +375,18 @@ public class HudMoveScreen extends Screen {
         }
 
         // 17. AUTO_CROESUS
+        // Chest value panel (contents + profit per chest) - movable like every other HUD.
+        {
+            int w = (int) (280.0F * s.croesusProfitHudScale);
+            int h = (int) (200.0F * s.croesusProfitHudScale);
+            this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.CROESUS_PROFIT, (nx, ny) -> {
+                s.croesusProfitHudX = nx;
+                s.croesusProfitHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.croesusProfitHudX, s.croesusProfitHudY, w, h, HudTarget.CROESUS_PROFIT, s.croesusProfitHudScale);
+            me.bombo.bomboaddons.features.dungeons.DungeonChestProfitHud.renderDummy(g, s.croesusProfitHudX, s.croesusProfitHudY, s.croesusProfitHudScale);
+        }
+
         if (!s.showOnlyActiveHuds || s.autoCroesusHud) {
             int w = (int) (220.0F * s.autoCroesusHudScale);
             int h = (int) (110.0F * s.autoCroesusHudScale);
@@ -378,6 +396,18 @@ public class HudMoveScreen extends Screen {
             });
             this.renderTargetBox(g, mouseX, mouseY, s.autoCroesusHudX, s.autoCroesusHudY, w, h, HudTarget.AUTO_CROESUS, s.autoCroesusHudScale);
             AutoCroesusHud.drawCroesusInfo(g, s.autoCroesusHudX, s.autoCroesusHudY, s.autoCroesusHudScale, true);
+        }
+
+        // 17b. CROESUS_TRACKER (cumulative profit + per-floor)
+        {
+            int w = (int) (me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
+            int h = (int) (60.0F * s.croesusTrackerHudScale);
+            this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.CROESUS_TRACKER, (nx, ny) -> {
+                s.croesusTrackerHudX = nx;
+                s.croesusTrackerHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, w, h, HudTarget.CROESUS_TRACKER, s.croesusTrackerHudScale);
+            me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.renderDummy(g, s.croesusTrackerHudX, s.croesusTrackerHudY, s.croesusTrackerHudScale);
         }
 
         // AUTO_REJOIN
@@ -797,6 +827,8 @@ public class HudMoveScreen extends Screen {
             case HOPPITY -> "Hoppity Egg HUD";
             case ALPHA_TRACKER -> "Alpha Tracker HUD";
             case AUTO_CROESUS -> "Auto Croesus HUD";
+            case CROESUS_PROFIT -> "Croesus Chest Values";
+            case CROESUS_TRACKER -> "Croesus Profit Tracker";
             case SIGN_CALCULATOR -> "Sign Calculator";
             case CHAT_SEARCH -> "In-Chat Search Bar";
             case FROZEN_BLAZE -> "Frozen Blaze AFK Timer";
@@ -989,6 +1021,24 @@ public class HudMoveScreen extends Screen {
         int hopH = HoppityHud.getHudHeight();
         if (this.checkHit(mouseX, mouseY, s.hoppityHudX, s.hoppityHudY, hopW, hopH)) {
             this.selectAndDrag(HudTarget.HOPPITY, (int) mouseX - s.hoppityHudX, (int) mouseY - s.hoppityHudY);
+            return true;
+        }
+
+        // 15b. CROESUS_PROFIT (chest value panel)
+        int cpW = (int) (280.0F * s.croesusProfitHudScale);
+        int cpH = (int) (200.0F * s.croesusProfitHudScale);
+        if (this.startCornerResize(mouseX, mouseY, s.croesusProfitHudX, s.croesusProfitHudY, cpW, cpH, HudTarget.CROESUS_PROFIT, s.croesusProfitHudScale)) return true;
+        if (this.checkHit(mouseX, mouseY, s.croesusProfitHudX, s.croesusProfitHudY, cpW, cpH)) {
+            this.selectAndDrag(HudTarget.CROESUS_PROFIT, (int) mouseX - s.croesusProfitHudX, (int) mouseY - s.croesusProfitHudY);
+            return true;
+        }
+
+        // 15c. CROESUS_TRACKER (cumulative profit + per-floor)
+        int ctW = (int) (me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
+        int ctH = (int) (60.0F * s.croesusTrackerHudScale);
+        if (this.startCornerResize(mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, ctW, ctH, HudTarget.CROESUS_TRACKER, s.croesusTrackerHudScale)) return true;
+        if (this.checkHit(mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, ctW, ctH)) {
+            this.selectAndDrag(HudTarget.CROESUS_TRACKER, (int) mouseX - s.croesusTrackerHudX, (int) mouseY - s.croesusTrackerHudY);
             return true;
         }
 
@@ -1303,6 +1353,10 @@ public class HudMoveScreen extends Screen {
                 }
             } else if (this.resizingTarget == HudTarget.ALPHA_TRACKER) {
                 s.alphaTrackerHudScale = newScale;
+            } else if (this.resizingTarget == HudTarget.CROESUS_PROFIT) {
+                s.croesusProfitHudScale = newScale;
+            } else if (this.resizingTarget == HudTarget.CROESUS_TRACKER) {
+                s.croesusTrackerHudScale = newScale;
             } else if (this.resizingTarget == HudTarget.AUTO_CROESUS) {
                 s.autoCroesusHudScale = newScale;
             } else if (this.resizingTarget == HudTarget.FROZEN_BLAZE) {
@@ -1789,6 +1843,7 @@ public class HudMoveScreen extends Screen {
 
     private void openSettingsForTarget(HudTarget target) {
         String category = switch (target) {
+            case CROESUS_PROFIT, CROESUS_TRACKER -> "Auto Croesus";
             case DICE, BAKERY, RNG, PAD_TIMERS, HOPPITY, ALPHA_TRACKER, AUTO_CROESUS, SIGN_CALCULATOR, DOJO_SHOOT, ITEM_LIST, ITEM_LIST_SEARCH, AUTO_REJOIN, ITEM_VALUE_BREAKDOWN, ARMOR_HUD, EQUIPMENT_HUD, INVENTORY_HUD -> "HUDs";
             case KUUDRA -> "Kuudra";
             case TIMERS -> "Timers";
@@ -1840,6 +1895,8 @@ public class HudMoveScreen extends Screen {
                     case HOPPITY -> { s.hoppityHudX = centerX - 45; s.hoppityHudY = centerY - 22; }
                     case ALPHA_TRACKER -> { s.alphaTrackerHudX = centerX - (int) (AlphaTrackerHud.getHudWidth() * s.alphaTrackerHudScale / 2); s.alphaTrackerHudY = centerY + 60; s.alphaTrackerHudScale = 1.0f; }
                     case AUTO_CROESUS -> { s.autoCroesusHudX = centerX - 110; s.autoCroesusHudY = centerY - 55; s.autoCroesusHudScale = 1.0f; }
+                    case CROESUS_PROFIT -> { s.croesusProfitHudX = centerX + 120; s.croesusProfitHudY = centerY - 100; s.croesusProfitHudScale = 1.0f; }
+                    case CROESUS_TRACKER -> { s.croesusTrackerHudX = centerX - 75; s.croesusTrackerHudY = centerY + 60; s.croesusTrackerHudScale = 1.0f; }
                     case SIGN_CALCULATOR -> { s.signCalculatorX = centerX - 75; s.signCalculatorY = centerY + 30; s.signCalculatorScale = 1.0f; }
                     case CHAT_SEARCH -> { s.chatSearchX = 4; s.chatSearchY = this.height - 28; s.chatSearchScale = 1.0f; }
                     case FROZEN_BLAZE -> { s.fbWarnTimerX = centerX - 32; s.fbWarnTimerY = centerY - 50; s.fbWarnTimerScale = 1.0f; }
@@ -1906,6 +1963,8 @@ public class HudMoveScreen extends Screen {
         INVENTORY_HUD,
         CRITTER_HUD,
         CRITTER_MAP,
-        CHAT_TABS;
+        CHAT_TABS,
+        CROESUS_PROFIT,
+        CROESUS_TRACKER;
     }
 }

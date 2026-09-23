@@ -538,6 +538,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       TextureToggleManager.INSTANCE.init();
       StopwatchManager.init();
       AlphaTrackerHud.init();
+      me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.init();
       me.bombo.bomboaddons.features.AutoRejoinHud.init();
       me.bombo.bomboaddons.features.ItemValueBreakdownHud.init();
       Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -3886,29 +3887,41 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aAdded get target: §e" + itemId + " §7(Target: " + number + ") under alias §b" + alias));
                      return 1;
                    })))));
-                   builder.then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("egg").then(ClientCommands.literal("status").executes((context) -> {
-                      boolean connected = EggWebSocket.isConnected();
-                      boolean connecting = EggWebSocket.isConnecting();
-                      String sub = EggWebSocket.getActiveSubscription();
-                      String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
-                      return 1;
-                   }))).then(ClientCommands.literal("reconnect").executes((context) -> {
-                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
-                      EggAuth.forceUpdateToken();
-                      EggWebSocket.forceReconnect();
-                      return 1;
-                   }))).executes((context) -> {
-                      boolean connected = EggWebSocket.isConnected();
-                      boolean connecting = EggWebSocket.isConnecting();
-                      String sub = EggWebSocket.getActiveSubscription();
-                      String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
-                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
-                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
-                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Usage: §e/b egg status §7or §e/b egg reconnect"));
-                      return 1;
-                   }));
+                  // /b egg - status / debug (chat diagnostics) / auth (token state + re-handshake) / reconnect
+                  builder.then(ClientCommands.literal("egg")
+                     .executes((context) -> {
+                        printEggStatus((FabricClientCommandSource) context.getSource());
+                        return 1;
+                     })
+                     .then(ClientCommands.literal("status").executes((context) -> {
+                        printEggStatus((FabricClientCommandSource) context.getSource());
+                        return 1;
+                     }))
+                     .then(ClientCommands.literal("debug").executes((context) -> {
+                        BomboConfig.Settings s = BomboConfig.get();
+                        s.eggFinderDebug = !s.eggFinderDebug;
+                        BomboConfig.save();
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7EggFinder debug chat: " + (s.eggFinderDebug ? "§aON" : "§cOFF")));
+                        if (s.eggFinderDebug) {
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Re-running the auth handshake and reconnecting..."));
+                           EggAuth.forceUpdateToken();
+                           EggWebSocket.forceReconnect();
+                        }
+                        return 1;
+                     }))
+                     .then(ClientCommands.literal("auth").executes((context) -> {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg auth: §e" + EggAuth.describeState()));
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Token: " + EggAuth.describeToken()));
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-running the handshake - watch chat for the result."));
+                        EggAuth.forceUpdateToken();
+                        return 1;
+                     }))
+                     .then(ClientCommands.literal("reconnect").executes((context) -> {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §eRe-authenticating and reconnecting to Egg Finder WebSocket..."));
+                        EggAuth.forceUpdateToken();
+                        EggWebSocket.forceReconnect();
+                        return 1;
+                     })));
                   builder.then(ClientCommands.literal("command").executes((context) -> {
                       if (lastDetectedCommand != null && !lastDetectedCommand.isEmpty()) {
                          Minecraft mc = Minecraft.getInstance();
@@ -6194,6 +6207,19 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
 
       });
+   }
+
+   /** Shared body of /b egg and /b egg status: connection, subscription and auth source. */
+   private static void printEggStatus(net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource source) {
+      if (source == null) return;
+      boolean connected = EggWebSocket.isConnected();
+      boolean connecting = EggWebSocket.isConnecting();
+      String sub = EggWebSocket.getActiveSubscription();
+      String statusColor = connected ? "§aConnected" : (connecting ? "§eConnecting..." : "§cDisconnected");
+      source.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Egg Finder WebSocket Status: " + statusColor));
+      source.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Active Subscription Area: §e" + (sub != null ? sub : "None")));
+      source.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Auth: §e" + EggAuth.describeState() + " §7| Token: " + EggAuth.describeToken()));
+      source.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Usage: §e/b egg status §7| §e/b egg debug §7| §e/b egg auth §7| §e/b egg reconnect"));
    }
 
    public static void executeTracked(String cmd) {
