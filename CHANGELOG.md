@@ -1,5 +1,21 @@
 # BomboAddons Changelog
 
+## [26.2.28.37] - 2026-09-24 (Beta)
+
+### 1. Bombo authentication server (the "endpoint like hysky but ours")
+- `bomboapi` now has **`POST /mod/auth`** - an aaron-compatible endpoint: the client sends the exact same payload Skyblocker sends to hysky (Mojang profile key pair + `SHA256withRSA`-signed random data), the server verifies the key-pair signature against **Mojang's own public keys** (fetched live, cached 1h) and the signed-data proof against the client's public key, then issues a Bombo token (HMAC-signed, 6h TTL, refresh 5 min before expiry).
+- **`GET /mod/auth/status`** shows whether the Mojang keys pipeline is healthy.
+- **`/mod/hoppity` writes now require a token** (`Authorization: Bearer`) - reads stay open. Any random client can no longer pollute the egg waypoint database.
+
+### 2. Mod fallback chain
+- EggFinder auth now goes: Skyblocker token (if Skyblocker installed) → **hysky aaron** → **Bombo auth** (our server). If hysky refuses or errors, the same payload is retried against `api.bombo.dpdns.org/mod/auth` and its token is used for everything, including the websocket handshake.
+- Hoppity publishes to bomboapi now attach `Authorization: Bearer <token>` (they would 401 otherwise) and identify as `BomboAddons/<version>`.
+
+### Verification (server-side, done during this release)
+- `/mod/auth/status` → `{status: ok, mojangKeysLoaded: 2}`.
+- Forged key pair → `401 publicKeySignature is not a valid Mojang signature` (the crypto check is real).
+- Token-less hoppity POST → 401; authenticated flow issues tokens (visible in `auth_tokens.json`).
+
 ## [26.2.28.36] - 2026-09-23 (Beta)
 
 ### 1. Sequences actually run now

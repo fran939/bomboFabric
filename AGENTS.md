@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.36` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.37` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,8 +103,15 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.36`**.
+The mod is currently on version **`26.2.28.37`**.
 
+> [!NOTE]
+> ### ✅ SHIPPED in v26.2.28.37 (server + mod, untested in-game)
+>
+> 1. **Bombo auth endpoint.** `POST https://api.bombo.dpdns.org/mod/auth` (aaron-compatible): verifies the client's Mojang profile-key-pair signature against Mojang's live public keys (`api.minecraftservices.com/publickeys`, 1h cache) + signed-data proof, issues an HMAC-signed 6h token. Implementation: `/home/ubuntu/bomboapi/src/auth_service.js`, wired into `src/index.js` (backup: `index.js.bak-auth-*`, `mod.js.bak-auth-*`). Token store: `data/auth_tokens.json` (regenerating its `secret` invalidates all tokens).
+> 2. **Hoppity writes gated.** `POST/PUT /mod/hoppity` require `Authorization: Bearer <Bombo token>`; GET stays open. ⚠️ Older mod versions (≤26.2.28.36) will now fail their hoppity publishes - acceptable, they're days old.
+> 3. **Mod fallback chain.** `EggAuth`: Skyblocker token → hysky aaron → `authenticateWithBombo` (same payload to our endpoint); Bombo token exposed via `EggAuth.getBomboToken()` and attached to hoppity publishes.
+>
 > [!NOTE]
 > ### ✅ SHIPPED in v26.2.28.36 (all untested in-game)
 >
@@ -239,7 +246,7 @@ The mod is currently on version **`26.2.28.36`**.
 
 ## 6. Next Direct Actions
 
-0. **Test v26.2.28.36 in-game (highest priority):** (a) sequence trigger key (e.g. N on "ah") actually runs the steps now; (b) `Click Slot / Item` with an item name and a GUI Title fires only inside that GUI; (c) `/b cmd` → `ssh host` → `ls` goes to ssh's stdin; Ctrl+C interrupts; output auto-follows; (d) `/b ac debug` prints one all-chests summary per GUI and the value panel renders; (e) EggFinder `/b egg debug` shows aaron auth OK (or explains why not); (f) pressing B for `/bz` shows `Trigger: Keybind B` not `Server`; (g) Ctrl+X and long-text scroll behave in sequence editor fields; (h) playtime sync stops erroring. Then the v26.2.28.35 list: Trade Max Pet `Ctrl+A` capture, `/b perf` scoping, account swap race, Sequences tab with a custom `/b order`.
+0. **Test v26.2.28.37 in-game (highest priority):** (a) `/b egg debug` — expect `aaron auth OK` (hysky) or `Bombo auth OK` (fallback); (b) find an egg and confirm the hoppity publish doesn't 401 in the server log; (c) everything from the 28.36 list below is still untested too.
 1. **Live In-Game Verification:** test the untested list in Section 4 on Hypixel, starting with `/b chathistory` (pure client-side, zero risk) and a keybind-triggered sequence run.
 2. **Migrate cheat module group 2** into `src/cheat/java`: `features/hider/**`, `FreecamManager`, `CameraMixin`, `EntityMixin`. Mixins that only serve cheats go into `bomboclient.client.mixins.json` (currently empty, deliberately kept as the slot), and every migrated class must be added to `CHEAT_ONLY_CLASSES` in `build.gradle` or the positive-control assertion will fail the build.
 3. **Group 3 (ESP) and group 4 (automation)** per `docs/FEATURE_AUDIT.md`; ~55 files reference those modules, mostly single tick-hook call sites in `BomboaddonsClient`.

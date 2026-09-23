@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 public class EggAuth {
    private static final Logger LOGGER = LoggerFactory.getLogger("bomboaddons-eggauth");
    private static final String AUTH_URL = "https://hysky.de/api/aaron/authenticate";
+   private static final String BOMBO_AUTH_URL = "https://api.bombo.dpdns.org/mod/auth";
    private static final String ALGORITHM = "SHA256withRSA";
    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(10L)).build();
    private static final Gson GSON = new Gson();
@@ -42,7 +43,17 @@ public class EggAuth {
       return thread;
    });
    private static volatile String token = null;
+   /** Last token acquired from our own bomboapi (used for hoppity publish auth). */
+   private static volatile String bomboToken = null;
    private static volatile boolean authenticating = false;
+
+   /**
+    * Bombo-only token for authenticating writes to bomboapi (hoppity publish etc.).
+    * Sourced from the Skyblocker token if one is borrowed, else from our own auth.
+    */
+   public static String getBomboToken() {
+      return bomboToken != null ? bomboToken : token;
+   }
 
    public static String getToken() {
       if (FabricLoader.getInstance().isModLoaded("skyblocker")) {
@@ -129,68 +140,38 @@ public class EggAuth {
       authenticating = true;
       SCHEDULER.execute(() -> {
          try {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.getUser() == null) {
+            String payload = buildAuthPayload();
+            if (payload == null) {
+               // buildAuthPayload already logged the specific reason (offline account,
+               // expired key pair, signing failure).
                authenticating = false;
                return;
             }
-
-            ProfileKeyPairManager profileKeys = ((me.bombo.bomboaddons.mixin.MinecraftAccessor) mc).getProfileKeyPairManagerField();
-            java.util.concurrent.CompletableFuture<java.util.Optional<ProfileKeyPair>> future = profileKeys.prepareKeyPair();
-            java.util.Optional<ProfileKeyPair> opt = future != null ? future.join() : null;
-
-            if (opt == null || opt.isEmpty()) {
-               LOGGER.warn("[EggAuth] No profile key pair available (offline account or MC services down).");
-               debugChat("§cNo profile key pair - aaron auth impossible (offline account?).");
-               authenticating = false;
-               return;
+            authenticateWithHysky(payload);
+         } catch (Throwable t) {
+            LOGGER.error("[EggAuth] auth exception: " + t.getMessage(), t);
+            debugChat("§ehysky auth exception (" + t.getClass().getSimpleName() + ") - trying Bombo auth...");
+            try {
+               authenticateWithBombo(null);
+            } catch (Throwable ignored) {
             }
+         } finally {
+            authenticating = false;
+         }
+      });
+   }
 
-            ProfileKeyPair keyPair = opt.get();
-            if (keyPair.publicKey().data().hasExpired()) {
-               LOGGER.warn("[EggAuth] Profile key pair expired (game open >24h?). Restart the game.");
-               debugChat("§cProfile key pair expired - restart the game.");
-               authenticating = false;
-               return;
-            }
-
-            String publicKey = Base64.getMimeEncoder().encodeToString(keyPair.publicKey().data().key().getEncoded());
-            byte[] publicKeySignature = keyPair.publicKey().data().keySignature();
-            long expiresAt = keyPair.publicKey().data().expiresAt().toEpochMilli();
-            java.util.UUID uuid = mc.getUser().getProfileId();
-
-            SignedData signedData = getRandomSignedData(keyPair.privateKey());
-            if (signedData == null) {
-               authenticating = false;
-               return;
-            }
-
-            JsonObject keyPairInfo = new JsonObject();
-            keyPairInfo.addProperty("uuid", uuid.toString());
-            keyPairInfo.addProperty("publicKey", publicKey);
-            keyPairInfo.addProperty("publicKeySignature", Base64.getEncoder().encodeToString(publicKeySignature));
-            keyPairInfo.addProperty("expiresAt", expiresAt);
-
-            JsonObject signedDataJson = new JsonObject();
-            signedDataJson.addProperty("original", Base64.getEncoder().encodeToString(signedData.original));
-            signedDataJson.addProperty("signed", Base64.getEncoder().encodeToString(signedData.signed));
-
-            JsonObject request = new JsonObject();
-            request.add("keyPair", keyPairInfo);
-            request.add("signedData", signedDataJson);
-            // Their server records/validates the mod id + versions; sending "skyblocker"
-            // with the matching UA is what makes the token indistinguishable from a real one.
-            request.addProperty("mod", "skyblocker");
-            request.addProperty("minecraftVersion", SharedConstants.getCurrentVersion().name());
-            request.addProperty("modVersion", "6.10.4");
-
+   /** Sends an already-built aaron-style payload to hysky.de. */
+   private static void authenticateWithHysky(String payload) {
+      SCHEDULER.execute(() -> {
+         try {
             HttpRequest req = HttpRequest.newBuilder()
                   .uri(URI.create(AUTH_URL))
                   .timeout(Duration.ofSeconds(30L))
                   .header("Accept", "application/json")
                   .header("Content-Type", "application/json")
                   .header("User-Agent", "Skyblocker/6.10.4 (" + SharedConstants.getCurrentVersion().name() + ")")
-                  .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(request)))
+                  .POST(HttpRequest.BodyPublishers.ofString(payload))
                   .build();
 
             HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
@@ -214,18 +195,109 @@ public class EggAuth {
                }
             } else {
                LOGGER.error("[EggAuth] aaron auth failed: HTTP " + resp.statusCode() + " body: " + resp.body());
-               debugChat("§caaron auth failed: HTTP " + resp.statusCode() + ".");
-               // Retry in 15 minutes like Skyblocker.
-               SCHEDULER.schedule(EggAuth::forceUpdateToken, 900_000L, TimeUnit.MILLISECONDS);
+               debugChat("§ehysky aaron auth failed (HTTP " + resp.statusCode() + ") - trying Bombo auth...");
+               // Fallback: our own aaron-compatible endpoint (same payload, our server
+               // verifies the Mojang signature itself and issues its own token).
+               boolean bomboOk = authenticateWithBombo(payload);
+               if (!bomboOk) {
+                  // Retry in 15 minutes like Skyblocker.
+                  SCHEDULER.schedule(EggAuth::forceUpdateToken, 900_000L, TimeUnit.MILLISECONDS);
+               }
             }
          } catch (Throwable t) {
             LOGGER.error("[EggAuth] aaron auth exception: " + t.getMessage(), t);
-            debugChat("§caaron auth exception: " + t.getClass().getSimpleName());
-            SCHEDULER.schedule(EggAuth::forceUpdateToken, 300_000L, TimeUnit.MILLISECONDS);
-         } finally {
-            authenticating = false;
+            debugChat("§ehysky auth exception (" + t.getClass().getSimpleName() + ") - trying Bombo auth...");
+            try {
+               authenticateWithBombo(null);
+            } catch (Throwable ignored) {
+            }
          }
       });
+   }
+
+   /**
+    * Same aaron payload, sent to our own server. {@code bomboapi} verifies the Mojang
+    * key-pair signature itself and issues a Bombo token. Used when hysky's aaron refuses
+    * us; the resulting token is sent as {@code Authorization: Bearer} on hoppity sync.
+    *
+    * @param payload an already-built aaron-style payload, or null to rebuild
+    * @return true when a Bombo token was acquired
+    */
+   private static boolean authenticateWithBombo(String payload) {
+      try {
+         String body = payload != null ? payload : buildAuthPayload();
+         if (body == null) return false;
+
+         HttpRequest req = HttpRequest.newBuilder()
+               .uri(URI.create(BOMBO_AUTH_URL))
+               .timeout(Duration.ofSeconds(15L))
+               .header("Content-Type", "application/json")
+               .header("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.BomboaddonsClient.getModVersion())
+               .POST(HttpRequest.BodyPublishers.ofString(body))
+               .build();
+
+         HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+         if (resp.statusCode() == 200 && resp.body() != null) {
+            JsonObject json = GSON.fromJson(resp.body(), JsonObject.class);
+            if (json != null && json.has("token")) {
+               token = json.get("token").getAsString();
+               bomboToken = token;
+               long issuedAt = json.has("issuedAt") ? json.get("issuedAt").getAsLong() : System.currentTimeMillis();
+               long exp = json.has("expiresAt") ? json.get("expiresAt").getAsLong() : System.currentTimeMillis() + 3600_000L;
+               LOGGER.info("[EggAuth] Bombo auth succeeded; refresh scheduled.");
+               debugChat("§aBombo auth OK - EggFinder token acquired from bomboapi.");
+
+               long refreshInMs = Math.max(60_000L, (exp - issuedAt) - 300_000L);
+               SCHEDULER.schedule(EggAuth::forceUpdateToken, refreshInMs, TimeUnit.MILLISECONDS);
+               EggWebSocket.onTokenRefreshed();
+               return true;
+            }
+         }
+         LOGGER.error("[EggAuth] Bombo auth failed: HTTP " + resp.statusCode() + " body: " + resp.body());
+         debugChat("§cBombo auth failed: HTTP " + resp.statusCode() + ".");
+         return false;
+      } catch (Throwable t) {
+         LOGGER.error("[EggAuth] Bombo auth exception: " + t.getMessage(), t);
+         return false;
+      }
+   }
+
+   /** Rebuilds the aaron-style payload JSON (hysky and bomboapi use the same shape). */
+   private static String buildAuthPayload() {
+      try {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.getUser() == null) return null;
+
+         ProfileKeyPairManager profileKeys = ((me.bombo.bomboaddons.mixin.MinecraftAccessor) mc).getProfileKeyPairManagerField();
+         java.util.concurrent.CompletableFuture<java.util.Optional<ProfileKeyPair>> future = profileKeys.prepareKeyPair();
+         java.util.Optional<ProfileKeyPair> opt = future != null ? future.join() : null;
+         if (opt == null || opt.isEmpty() || opt.get().publicKey().data().hasExpired()) return null;
+
+         ProfileKeyPair keyPair = opt.get();
+         SignedData signedData = getRandomSignedData(keyPair.privateKey());
+         if (signedData == null) return null;
+
+         JsonObject keyPairInfo = new JsonObject();
+         keyPairInfo.addProperty("uuid", mc.getUser().getProfileId().toString());
+         keyPairInfo.addProperty("publicKey", Base64.getMimeEncoder().encodeToString(keyPair.publicKey().data().key().getEncoded()));
+         keyPairInfo.addProperty("publicKeySignature", Base64.getEncoder().encodeToString(keyPair.publicKey().data().keySignature()));
+         keyPairInfo.addProperty("expiresAt", keyPair.publicKey().data().expiresAt().toEpochMilli());
+
+         JsonObject signedDataJson = new JsonObject();
+         signedDataJson.addProperty("original", Base64.getEncoder().encodeToString(signedData.original));
+         signedDataJson.addProperty("signed", Base64.getEncoder().encodeToString(signedData.signed));
+
+         JsonObject request = new JsonObject();
+         request.add("keyPair", keyPairInfo);
+         request.add("signedData", signedDataJson);
+         request.addProperty("mod", "skyblocker");
+         request.addProperty("minecraftVersion", SharedConstants.getCurrentVersion().name());
+         request.addProperty("modVersion", "6.10.4");
+         return GSON.toJson(request);
+      } catch (Throwable t) {
+         LOGGER.error("[EggAuth] Failed to build auth payload: " + t.getMessage(), t);
+         return null;
+      }
    }
 
    private static void debugChat(String msg) {

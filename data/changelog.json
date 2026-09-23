@@ -1,5 +1,14 @@
 [
   {
+    "version": "26.2.28.37",
+    "date": "2026-09-24",
+    "changes": [
+      "New Bombo auth server: POST /mod/auth on bomboapi - aaron-compatible Mojang key-pair verification issuing 6h Bombo tokens; GET /mod/auth/status shows pipeline health",
+      "EggFinder auth fallback chain: Skyblocker token -> hysky aaron -> Bombo auth, so /b egg works even when hysky refuses us",
+      "Hoppity waypoint writes now require a Bearer token (reads stay open); the mod attaches its token to every publish"
+    ]
+  },
+  {
     "version": "26.2.28.36",
     "date": "2026-09-23",
     "changes": [
