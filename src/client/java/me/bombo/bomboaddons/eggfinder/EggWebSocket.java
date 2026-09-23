@@ -229,7 +229,7 @@ public class EggWebSocket {
          sendText(GSON.toJson(payload));
       }
 
-      // Also publish directly to Bombo API endpoint
+      // Also publish directly to Bombo API endpoint (writes require a Bombo token now)
       try {
          JsonObject postPayload = new JsonObject();
          postPayload.addProperty("area", location);
@@ -237,14 +237,17 @@ public class EggWebSocket {
          postPayload.addProperty("x", pos.getX());
          postPayload.addProperty("y", pos.getY());
          postPayload.addProperty("z", pos.getZ());
-         java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+         java.net.http.HttpRequest.Builder reqBuilder = java.net.http.HttpRequest.newBuilder()
             .uri(URI.create("https://api.bombo.dpdns.org/mod/hoppity"))
             .header("Content-Type", "application/json")
-            .header("User-Agent", "BomboAddons/1.0")
+            .header("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.BomboaddonsClient.getModVersion())
             .timeout(Duration.ofSeconds(5L))
-            .POST(java.net.http.HttpRequest.BodyPublishers.ofString(GSON.toJson(postPayload)))
-            .build();
-         HTTP_CLIENT.sendAsync(req, HttpResponse.BodyHandlers.discarding());
+            .POST(java.net.http.HttpRequest.BodyPublishers.ofString(GSON.toJson(postPayload)));
+         String auth = EggAuth.getBomboToken();
+         if (auth != null && !auth.isEmpty()) {
+            reqBuilder.header("Authorization", "Bearer " + auth);
+         }
+         HTTP_CLIENT.sendAsync(reqBuilder.build(), HttpResponse.BodyHandlers.discarding());
       } catch (Throwable ignored) {}
    }
 
