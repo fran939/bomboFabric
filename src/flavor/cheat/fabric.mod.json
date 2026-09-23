@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "bomboaddons",
+	"id": "bomboclient",
 	"version": "${version}",
 	"name": "BomboClient",
 	"description": "Hypixel skyblock mod (cheat build)",

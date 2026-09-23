@@ -148,14 +148,9 @@ import net.minecraft.world.scores.Scoreboard;
 @Environment(EnvType.CLIENT)
 public class BomboaddonsClient implements ClientModInitializer {
    public static String getModVersion() {
-      try {
-         return net.fabricmc.loader.api.FabricLoader.getInstance()
-                 .getModContainer("bomboaddons")
-                 .map(c -> c.getMetadata().getVersion().getFriendlyString())
-                 .orElse("26.2.27");
-      } catch (Throwable t) {
-         return "26.2.27";
-      }
+      // Resolved from the running jar's own mod id, which differs per flavor
+      // (bomboaddons vs bomboclient).
+      return Constants.myVersion();
    }
 
    public static final String MOD_VERSION = getModVersion();
@@ -951,12 +946,31 @@ public class BomboaddonsClient implements ClientModInitializer {
                         return showCommandHistory((FabricClientCommandSource)context.getSource(), 20, q);
                      }
                   })));
+                  builder.then(ClientCommands.literal("cmd")
+                          .executes((context) -> openCmd(Minecraft.getInstance(), null))
+                          .then(ClientCommands.literal("clear").executes((context) -> openCmd(Minecraft.getInstance(), null)))
+                          .then(ClientCommands.argument("command", StringArgumentType.greedyString())
+                                  .executes((context) -> openCmd(Minecraft.getInstance(),
+                                          StringArgumentType.getString(context, "command")))));
                   builder.then(ClientCommands.literal("chathistory")
                           .executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL))
-                          .then(ClientCommands.literal("auto").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.AUTO)))
-                          .then(ClientCommands.literal("all").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL))));
-                  // Flavor specific subcommands (/b hide, /b auto ...). The legit build
+                          .then(ClientCommands.literal("auto").executes((context) -> openChatHistoryEvents(Minecraft.getInstance())))
+                          .then(ClientCommands.literal("events").executes((context) -> openChatHistoryEvents(Minecraft.getInstance())))
+                          .then(ClientCommands.literal("all").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL)))
+                          .then(ClientCommands.literal("bombo").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.BOMBO)))
+                          .then(ClientCommands.literal("mods").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.MODS)))
+                          .then(ClientCommands.literal("normal").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.NORMAL)))
+                          .then(ClientCommands.literal("blocked").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.BLOCKED)))
+                          .then(ClientCommands.literal("outgoing").executes((context) -> openChatHistory(Minecraft.getInstance(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.OUTGOING)))
+                          .then(ClientCommands.literal("clear").executes((context) -> {
+                             me.bombo.bomboaddons.features.chat.ChatHistoryTracker.clear();
+                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Chat history cleared."));
+                             return 1;
+                          })));
+                  builder.then(registerAutoCommands())
+                  // Flavor specific subcommands (/b hide, /b stealth ...). The legit build
                   // contributes nothing here.
+                  .then(registerNoObfuscateCommands());
                   me.bombo.bomboaddons.flavor.Flavor.get().registerCommands(builder);
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("behighlight").then(ClientCommands.literal("add").then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
                      String mob = StringArgumentType.getString(context, "mob").trim();
@@ -2098,8 +2112,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                       })));
                    builder.then(ClientCommands.literal("version")
                       .executes((context) -> {
-                         String version = ((ModContainer)FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
-                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCurrent Version: §e" + version));
+                         String version = Constants.myVersion();
+                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCurrent Version: §e" + version
+                                 + " §7(§b" + Constants.identityLine() + "§7)"));
                          return 1;
                       })
                       .then(ClientCommands.literal("previous").executes((context) -> {
@@ -2137,8 +2152,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                      return 1;
                   })));
                   builder.then(ClientCommands.literal("test").executes((context) -> {
-                     String version = ((ModContainer)FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCurrent Version: §e" + version));
+                     String version = Constants.myVersion();
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCurrent Version: §e" + version
+                             + " §7(§b" + Constants.identityLine() + "§7)"));
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("custom").executes((context) -> {
@@ -6996,11 +7012,213 @@ public class BomboaddonsClient implements ClientModInitializer {
    }
 
    /**
+    * {@code /b auto ...} - sequence listing and editing.
+    *
+    * <p>Shared between flavors on purpose: creating a sequence, naming its keybind, reordering
+    * or deleting steps is pure data work. Only the actual execution needs the sequence runtime,
+    * and {@code run} says so plainly when it is missing instead of failing silently.
+    */
+   private static LiteralArgumentBuilder<FabricClientCommandSource> registerAutoCommands() {
+      var auto = ClientCommands.literal("auto");
+
+      auto.then(ClientCommands.literal("list").executes((context) -> {
+         FabricClientCommandSource src = context.getSource();
+         var list = me.bombo.bomboaddons.features.auto.AutoSequenceManager.getSequences();
+         src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== Auto Sequences (§b"
+                 + list.size() + "§e) === §7runtime: "
+                 + (me.bombo.bomboaddons.features.auto.AutoSequenceManager.hasRuntime() ? "§aavailable" : "§cnot in this build")));
+         for (int i = 0; i < list.size(); i++) {
+            var seq = list.get(i);
+            boolean running = me.bombo.bomboaddons.features.auto.AutoSequenceManager.isRunning(seq);
+            int steps = seq.actions == null ? 0 : seq.actions.size();
+            src.sendFeedback(Component.literal("§7#" + i + " §f" + seq.name
+                    + " §7[" + (seq.enabled ? "§aON" : "§cOFF") + "§7]"
+                    + (running ? " §b▶ RUNNING" : "")
+                    + " §8key: §e" + (seq.triggerKey == null || seq.triggerKey.isEmpty() ? "none" : seq.triggerKey)
+                    + " §8steps: §e" + steps
+                    + (seq.loop ? " §8loop: §e"
+                     + me.bombo.bomboaddons.features.auto.AutoSequenceManager.describeJitter(Math.max(50, seq.loopDelayMs), seq.jitterPercent) : "")));
+         }
+         if (list.isEmpty()) {
+            src.sendFeedback(Component.literal("§7No sequences yet. Create one in §e/b §7-> §eAuto§7."));
+         }
+         return 1;
+      }));
+
+      auto.then(ClientCommands.literal("stop").executes((context) -> {
+         me.bombo.bomboaddons.flavor.Flavor.get().stopAll();
+         context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Auto sequences stopped."));
+         return 1;
+      }));
+
+      auto.then(ClientCommands.literal("run")
+              .then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes((context) -> {
+                 String name = StringArgumentType.getString(context, "name").trim();
+                 FabricClientCommandSource src = context.getSource();
+                 var seq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(name);
+                 if (seq == null) {
+                    src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching §e" + name + "§c. Try §e/b auto list§c."));
+                    return 0;
+                 }
+                 if (!me.bombo.bomboaddons.features.auto.AutoSequenceManager.hasRuntime()) {
+                    src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cThis build (" + Constants.MOD_NAME
+                            + ") has no sequence runtime. Run §e" + Constants.artifactPrefix()
+                            + "§c's build to execute sequences."));
+                    return 0;
+                 }
+                 int index = me.bombo.bomboaddons.features.auto.AutoSequenceManager.getSequences().indexOf(seq);
+                 me.bombo.bomboaddons.flavor.Flavor.get().toggleSequenceByIndex(index, "Command", "/b auto run " + name);
+                 return 1;
+              })));
+
+      auto.then(ClientCommands.literal("add")
+              .then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes((context) -> {
+                 String name = StringArgumentType.getString(context, "name").trim();
+                 var seq = new me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoSequence(name, "");
+                 me.bombo.bomboaddons.features.auto.AutoSequenceManager.addSequence(seq);
+                 context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §aCreated sequence §e" + name
+                         + "§a. Bind a key with §e/b auto key " + name + " <key>§a."));
+                 return 1;
+              })));
+
+      auto.then(ClientCommands.literal("remove")
+              .then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes((context) -> {
+                 String name = StringArgumentType.getString(context, "name").trim();
+                 var list = me.bombo.bomboaddons.features.auto.AutoSequenceManager.getSequences();
+                 var seq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(name);
+                 if (seq == null) {
+                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching §e" + name + "§c."));
+                    return 0;
+                 }
+                 me.bombo.bomboaddons.features.auto.AutoSequenceManager.removeSequence(list.indexOf(seq));
+                 context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Removed sequence §e" + seq.name + "§7."));
+                 return 1;
+              })));
+
+      auto.then(ClientCommands.literal("key")
+              .then(ClientCommands.argument("args", StringArgumentType.greedyString()).executes((context) -> {
+                 String raw = StringArgumentType.getString(context, "args").trim();
+                 FabricClientCommandSource src = context.getSource();
+                 int split = raw.lastIndexOf(' ');
+                 if (split <= 0) {
+                    src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cUsage: /b auto key <name> <KEY|none>"));
+                    return 0;
+                 }
+                 String name = raw.substring(0, split).trim();
+                 String key = raw.substring(split + 1).trim();
+                 var seq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(name);
+                 if (seq == null) {
+                    src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching §e" + name + "§c."));
+                    return 0;
+                 }
+                 seq.triggerKey = key.equalsIgnoreCase("none") ? "" : key.toUpperCase(Locale.ROOT);
+                 me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
+                 src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Keybind for §e" + seq.name + "§7: §b"
+                         + (seq.triggerKey.isEmpty() ? "none" : seq.triggerKey)));
+                 return 1;
+              })));
+
+      auto.then(ClientCommands.literal("toggle")
+              .then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes((context) -> {
+                 String name = StringArgumentType.getString(context, "name").trim();
+                 var seq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(name);
+                 if (seq == null) {
+                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching §e" + name + "§c."));
+                    return 0;
+                 }
+                 seq.enabled = !seq.enabled;
+                 me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
+                 context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Sequence §e" + seq.name
+                         + "§7 is now " + (seq.enabled ? "§aENABLED" : "§cDISABLED")));
+                 return 1;
+              })));
+
+      auto.then(ClientCommands.literal("loop")
+              .then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes((context) -> {
+                 String name = StringArgumentType.getString(context, "name").trim();
+                 var seq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(name);
+                 if (seq == null) {
+                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching §e" + name + "§c."));
+                    return 0;
+                 }
+                 seq.loop = !seq.loop;
+                 me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
+                 context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Loop for §e" + seq.name + "§7: "
+                         + (seq.loop ? "§aON §7(cooldown "
+                         + me.bombo.bomboaddons.features.auto.AutoSequenceManager.describeJitter(Math.max(50, seq.loopDelayMs), seq.jitterPercent) + "§7)" : "§cOFF")));
+                 return 1;
+              })));
+
+      auto.then(ClientCommands.literal("jitter")
+              .then(ClientCommands.argument("args", StringArgumentType.greedyString()).executes((context) -> {
+                 String raw = StringArgumentType.getString(context, "args").trim();
+                 FabricClientCommandSource src = context.getSource();
+                 int split = raw.lastIndexOf(' ');
+                 if (split <= 0) {
+                    src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cUsage: /b auto jitter <name> <percent 0-90>"));
+                    return 0;
+                 }
+                 String name = raw.substring(0, split).trim();
+                 int pct;
+                 try {
+                    pct = Integer.parseInt(raw.substring(split + 1).trim());
+                 } catch (NumberFormatException e) {
+                    src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cJitter must be a number between 0 and 90."));
+                    return 0;
+                 }
+                 var seq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(name);
+                 if (seq == null) {
+                    src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching §e" + name + "§c."));
+                    return 0;
+                 }
+                 seq.jitterPercent = Math.max(0, Math.min(90, pct));
+                 me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
+                 src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Delays for §e" + seq.name + "§7 are now randomised by §b"
+                         + seq.jitterPercent + "%§7. A §e3000ms§7 wait fires ~"
+                         + (3000 - 3000 * seq.jitterPercent / 100) + "-"
+                         + (3000 + 3000 * seq.jitterPercent / 100) + "ms§7."));
+                 return 1;
+              })));
+
+      return auto;
+   }
+
+   /** {@code /b noobfuscate} - strips obfuscated (\u00a7k) text from chat and item tooltips. */
+   private static LiteralArgumentBuilder<FabricClientCommandSource> registerNoObfuscateCommands() {
+      return ClientCommands.literal("noobfuscate").executes((context) -> {
+         BomboConfig.Settings s = BomboConfig.get();
+         s.noObfuscate = !s.noObfuscate;
+         BomboConfig.save();
+         context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7No Obfuscate: "
+                 + (s.noObfuscate ? "§aON §7(hidden \u00a7k text becomes readable)" : "§cOFF")));
+         return 1;
+      });
+   }
+
+   /**
     * Opens the chat history screen. Kept as a helper so every {@code /b chathistory} entry
     * point shares one code path.
     */
    public static int openChatHistory(Minecraft mc, me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab tab) {
       mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.chat.ChatHistoryScreen(mc.gui.screen(), tab)));
+      return 1;
+   }
+
+   /**
+    * Opens the in-game terminal, optionally already running {@code command}.
+    *
+    * <p>{@code /b cmd ping 1.1.1.1} is the "instant command" path: the screen opens and the
+    * command starts immediately, with output streaming into the in-game buffer.
+    */
+   public static int openCmd(Minecraft mc, String command) {
+      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.CmdScreen(mc.gui.screen(), command)));
+      return 1;
+   }
+
+   /** Opens the history filtered to feature events (auto-sequence starts/stops/halts). */
+   public static int openChatHistoryEvents(Minecraft mc) {
+      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.chat.ChatHistoryScreen(
+              mc.gui.screen(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL, true)));
       return 1;
    }
 

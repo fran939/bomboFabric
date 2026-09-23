@@ -23,13 +23,17 @@ public class ChatHistoryScreen extends Screen {
     private final int headerH = 40;
     private final int controlsH = 34;
 
+    /**
+     * Filters the user asked for, in order: everything, this mod, any mod, plain server/player
+     * chat, blocked messages, and what the client sent.
+     */
     public enum FilterTab {
         ALL("All"),
         BOMBO("BomboAddons"),
-        ALL_MODS("All Mods"),
+        MODS("Mods Only"),
         NORMAL("Normal Chat"),
         BLOCKED("Blocked Only"),
-        AUTO("Auto Sequences");
+        OUTGOING("Outgoing");
 
         public final String label;
         FilterTab(String label) {
@@ -39,32 +43,38 @@ public class ChatHistoryScreen extends Screen {
 
     private FilterTab activeTab = FilterTab.ALL;
     private final FilterTab initialTab;
+    /** {@code /b chathistory auto}: restrict to feature events regardless of the active tab. */
+    private final boolean eventsOnly;
+    private boolean eventsChipOn;
+
     private String searchQuery = "";
     private boolean searchFocused = false;
 
     private int scrollOffset = 0;
+    /** When set, the next render snaps the view to the newest entry. */
+    private boolean snapToBottom = true;
     private final int rowH = 13;
 
     private ChatHistoryTracker.Entry hoveredEntry = null;
-    private int hoveredMouseX = 0;
-    private int hoveredMouseY = 0;
 
     private String toastMessage = null;
     private long toastExpiry = 0;
 
     public ChatHistoryScreen(Screen parent) {
-        this(parent, FilterTab.ALL);
+        this(parent, FilterTab.ALL, false);
     }
 
-    /**
-     * @param initialTab tab to open on, so {@code /b chathistory auto} can jump straight
-     *                   to the sequence event log.
-     */
     public ChatHistoryScreen(Screen parent, FilterTab initialTab) {
+        this(parent, initialTab, false);
+    }
+
+    public ChatHistoryScreen(Screen parent, FilterTab initialTab, boolean eventsOnly) {
         super(Component.literal("Chat History"));
         this.parent = parent;
         this.initialTab = initialTab != null ? initialTab : FilterTab.ALL;
         this.activeTab = this.initialTab;
+        this.eventsOnly = eventsOnly;
+        this.eventsChipOn = eventsOnly;
     }
 
     @Override
@@ -76,6 +86,7 @@ public class ChatHistoryScreen extends Screen {
         this.winX = (this.width - this.winW) / 2;
         this.winY = (this.height - this.winH) / 2;
         this.activeTab = this.initialTab;
+        this.snapToBottom = true;
     }
 
     /**
@@ -98,6 +109,20 @@ public class ChatHistoryScreen extends Screen {
         return Math.max(0, (winY + winH - 24 - listRowsTop()) / rowH);
     }
 
+    private boolean isOutgoing(ChatHistoryTracker.Entry e) {
+        return e.status == ChatHistoryTracker.Status.OUTGOING;
+    }
+
+    private boolean isEvent(ChatHistoryTracker.Entry e) {
+        return e.status == ChatHistoryTracker.Status.EVENT
+                || e.status == ChatHistoryTracker.Status.BLOCKED_EVENT;
+    }
+
+    private boolean isBlocked(ChatHistoryTracker.Entry e) {
+        return e.status == ChatHistoryTracker.Status.BLOCKED
+                || e.status == ChatHistoryTracker.Status.BLOCKED_EVENT;
+    }
+
     private List<ChatHistoryTracker.Entry> getFilteredEntries() {
         List<ChatHistoryTracker.Entry> all = ChatHistoryTracker.getEntries();
         List<ChatHistoryTracker.Entry> filtered = new ArrayList<>();
@@ -105,14 +130,31 @@ public class ChatHistoryScreen extends Screen {
         String q = searchQuery.toLowerCase(Locale.ROOT).trim();
 
         for (ChatHistoryTracker.Entry e : all) {
-            // Tab filtering
-            if (activeTab == FilterTab.AUTO && !e.isEvent) continue;
-            if (activeTab == FilterTab.BOMBO && !e.isBombo) continue;
-            if (activeTab == FilterTab.ALL_MODS && !e.isMod) continue;
-            if (activeTab == FilterTab.NORMAL && (e.isMod || e.status == ChatHistoryTracker.Status.OUTGOING)) continue;
-            if (activeTab == FilterTab.BLOCKED && e.status != ChatHistoryTracker.Status.BLOCKED) continue;
+            // Feature-event only mode (from /b chathistory auto or the Events chip).
+            if (eventsChipOn && !isEvent(e)) continue;
 
-            // Search query filtering
+            switch (activeTab) {
+                case BOMBO -> {
+                    // Anything this mod produced: its own feature events and its own chat lines.
+                    if (!e.isBombo && !isEvent(e)) continue;
+                }
+                case MODS -> {
+                    if (!e.isMod && !isEvent(e)) continue;
+                }
+                case NORMAL -> {
+                    // Plain player/server chat, including anything a mod blocked.
+                    if (e.isMod || isEvent(e) || isOutgoing(e)) continue;
+                }
+                case BLOCKED -> {
+                    if (!isBlocked(e)) continue;
+                }
+                case OUTGOING -> {
+                    if (!isOutgoing(e)) continue;
+                }
+                default -> {
+                }
+            }
+
             if (!q.isEmpty()) {
                 boolean match = false;
                 if (e.rawText != null && e.rawText.toLowerCase(Locale.ROOT).contains(q)) match = true;
@@ -136,8 +178,6 @@ public class ChatHistoryScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         hoveredEntry = null;
-        hoveredMouseX = mouseX;
-        hoveredMouseY = mouseY;
 
         // Dark backdrop
         g.fill(0, 0, this.width, this.height, 0xD0080A0E);
@@ -159,20 +199,16 @@ public class ChatHistoryScreen extends Screen {
 
         g.text(font, "§d§lBOMBOADDONS §8| §bChat History (/b chathistory)", winX + 16, winY + 14, 0xFFFFFFFF, false);
 
-        // Limit & settings info in header
         BomboConfig.Settings cfg = BomboConfig.get();
         int curLimit = cfg != null ? cfg.chatHistoryMaxMessages : 500;
-        String limitStr = "§7Max History: §e" + curLimit;
-        g.text(font, limitStr, winX + winW - 270, winY + 14, 0xFFCBD5E1, false);
+        g.text(font, "§7Max History: §e" + curLimit, winX + winW - 270, winY + 14, 0xFFCBD5E1, false);
 
-        // Clear history button
         int clrBtnX = winX + winW - 145;
         int clrBtnY = winY + 9;
         boolean clrHover = mouseX >= clrBtnX && mouseX <= clrBtnX + 75 && mouseY >= clrBtnY && mouseY <= clrBtnY + 22;
         ConfigUITheme.drawPillButton(g, font, "🗑 Clear", clrBtnX, clrBtnY, 75, 22, clrHover,
                 0xFFCBD5E1, clrHover ? 0x44EF4444 : 0x22EF4444, 0xFFEF4444);
 
-        // Close button
         int closeBtnX = winX + winW - 60;
         int closeBtnY = winY + 9;
         boolean closeHover = mouseX >= closeBtnX && mouseX <= closeBtnX + 50 && mouseY >= closeBtnY && mouseY <= closeBtnY + 22;
@@ -196,6 +232,13 @@ public class ChatHistoryScreen extends Screen {
             tabX += (tabW + 6);
         }
 
+        // "Events" chip: the Auto Sequences log without losing the requested tab set.
+        int chipW = font.width("Events") + 16;
+        boolean chipHover = mouseX >= tabX && mouseX <= tabX + chipW && mouseY >= ctrlY && mouseY <= ctrlY + 24;
+        g.fill(tabX, ctrlY, tabX + chipW, ctrlY + 24, eventsChipOn ? 0xFF7C3AED : (chipHover ? 0x441E293B : 0x221E293B));
+        g.outline(tabX, ctrlY, chipW, 24, eventsChipOn ? 0xFFA855F7 : (chipHover ? 0x8864748B : 0x44475569));
+        g.centeredText(font, "Events", tabX + chipW / 2, ctrlY + 8, eventsChipOn ? 0xFFFFFFFF : 0xFF94A3B8);
+
         // Search Bar on right side of controls
         int sBoxW = 220;
         int sBoxX = winX + winW - sBoxW - 14;
@@ -215,7 +258,6 @@ public class ChatHistoryScreen extends Screen {
         // Table List Area
         int listTop = listTop();
         int listBottom = winY + winH - 24;
-        int listH = listBottom - listTop;
 
         List<ChatHistoryTracker.Entry> list = getFilteredEntries();
 
@@ -223,19 +265,25 @@ public class ChatHistoryScreen extends Screen {
         g.fill(winX + 12, listTop, winX + winW - 12, listTop + 14, 0x660F172A);
         g.text(font, "§7STATUS", winX + 16, listTop + 3, 0xFF94A3B8, false);
         g.text(font, "§7CATEGORY", winX + 76, listTop + 3, 0xFF94A3B8, false);
-        g.text(font, "§7MESSAGE / COMMAND CONTENT", winX + 176, listTop + 3, 0xFF94A3B8, false);
+        g.text(font, "§7SOURCE", winX + 146, listTop + 3, 0xFF94A3B8, false);
+        g.text(font, "§7MESSAGE / COMMAND CONTENT", winX + 256, listTop + 3, 0xFF94A3B8, false);
         g.text(font, "§7TIME", winX + winW - 68, listTop + 3, 0xFF94A3B8, false);
 
         int rowsTop = listRowsTop();
         int visibleRows = listVisibleRows();
         int maxScroll = Math.max(0, list.size() - visibleRows);
+
+        // Open at (and return to) the newest entry - the bottom of the log.
+        if (snapToBottom) {
+            scrollOffset = maxScroll;
+            snapToBottom = false;
+        }
         if (scrollOffset > maxScroll) scrollOffset = maxScroll;
         if (scrollOffset < 0) scrollOffset = 0;
 
-        int rowStartY = rowsTop;
         for (int i = 0; i < visibleRows && (i + scrollOffset) < list.size(); i++) {
             ChatHistoryTracker.Entry e = list.get(i + scrollOffset);
-            int ry = rowStartY + i * rowH;
+            int ry = rowsTop + i * rowH;
 
             boolean rHover = mouseX >= winX + 12 && mouseX <= winX + winW - 24 && mouseY >= ry && mouseY < ry + rowH;
             if (rHover) {
@@ -254,9 +302,14 @@ public class ChatHistoryScreen extends Screen {
             String cat = e.category != null ? e.category : "CHAT";
             g.text(font, "§7" + cat, winX + 76, ry + 2, 0xFFCBD5E1, false);
 
+            // Source: who actually produced the row (mod name, server, player input).
+            String source = e.callerModName != null ? e.callerModName : "Unknown";
+            int sourceCol = e.isBombo ? 0xFFA855F7 : (e.isMod ? 0xFF38BDF8 : 0xFF94A3B8);
+            g.text(font, font.plainSubstrByWidth(source, 105), winX + 146, ry + 2, sourceCol, false);
+
             // Content Component (truncated if too long to prevent screen overflow)
-            int msgX = winX + 176;
-            int maxMsgW = winW - 256;
+            int msgX = winX + 256;
+            int maxMsgW = winW - 336;
             if (e.component != null) {
                 String full = e.rawText != null ? e.rawText : e.component.getString();
                 if (font.width(full) > maxMsgW) {
@@ -283,13 +336,15 @@ public class ChatHistoryScreen extends Screen {
 
             float ratio = (float) visibleRows / list.size();
             int thumbH = Math.max(16, (int) (sbH * ratio));
-            int thumbY = sbY + (int) ((float) scrollOffset / maxScroll * (sbH - thumbH));
+            int thumbY = maxScroll == 0 ? sbY : sbY + (int) ((float) scrollOffset / maxScroll * (sbH - thumbH));
             g.fill(sbX, thumbY, sbX + 4, thumbY + thumbH, 0xFF38BDF8);
         }
 
         // Bottom status & count
         int botY = winY + winH - 18;
-        String countInfo = "§8Showing " + list.size() + " messages | Left-click row to copy | Right-click to execute command";
+        String countInfo = "§8Showing " + list.size() + " of "
+                + ChatHistoryTracker.getEntries().size()
+                + " entries | Left-click copy | Right-click run command | End = newest";
         g.text(font, countInfo, winX + 16, botY, 0xFF94A3B8, false);
 
         // Render Toast message if active
@@ -311,21 +366,29 @@ public class ChatHistoryScreen extends Screen {
     private void renderEntryTooltip(GuiGraphicsExtractor g, Font font, ChatHistoryTracker.Entry entry, int mouseX, int mouseY) {
         List<String> lines = new ArrayList<>();
 
+        if (entry.isEvent || entry.status == ChatHistoryTracker.Status.BLOCKED_EVENT) {
+            lines.add("§8── §dFeature Event §8──");
+        }
         if (entry.originFeature != null) {
             lines.add("§7Origin: §d" + entry.originFeature);
         }
         if (entry.triggerDesc != null && !entry.triggerDesc.trim().isEmpty()) {
             lines.add("§7Trigger: §6" + entry.triggerDesc);
         }
-        if (entry.callerFrame != null) {
-            lines.add("§fMessage created by §a" + entry.callerFrame);
-        }
-        lines.add("§7Mod id: §b" + (entry.callerModId != null ? entry.callerModId : "null"));
-        lines.add("§7Mod name: §e" + (entry.callerModName != null ? entry.callerModName : "null"));
-
         if (entry.featureName != null) {
             lines.add("§7Feature: §d" + entry.featureName);
         }
+
+        if (entry.isMod) {
+            lines.add("§7Created by: §a" + (entry.callerModName != null ? entry.callerModName : entry.callerModId));
+            lines.add("§7Mod id: §b" + (entry.callerModId != null ? entry.callerModId : "unknown"));
+        } else {
+            lines.add("§7Source: §f" + (entry.callerModName != null ? entry.callerModName : "Unknown"));
+        }
+        if (entry.callerFrame != null) {
+            lines.add("§8" + entry.callerFrame);
+        }
+
         if (entry.clickAction != null) {
             lines.add("§7Click Action: §6" + entry.clickAction);
         }
@@ -333,7 +396,7 @@ public class ChatHistoryScreen extends Screen {
             lines.add("§7Hover Data: §f" + entry.hoverText.trim());
         }
         if (entry.status == ChatHistoryTracker.Status.OUTGOING) {
-            lines.add("§7Outgoing Command: §c" + entry.rawText);
+            lines.add("§7Outgoing: §c" + entry.rawText);
         }
         lines.add("§8Time: " + (entry.timeFormatted != null ? entry.timeFormatted : ""));
 
@@ -359,7 +422,6 @@ public class ChatHistoryScreen extends Screen {
         if (tipX < 4) tipX = 4;
         if (tipY < 4) tipY = 4;
 
-        // Outer backdrop
         g.fill(tipX, tipY, tipX + tipW, tipY + tipH, 0xF80A0F1D);
         g.outline(tipX, tipY, tipW, tipH, 0xFF8B5CF6);
 
@@ -373,10 +435,15 @@ public class ChatHistoryScreen extends Screen {
         this.toastExpiry = System.currentTimeMillis() + 2000;
     }
 
+    private void scrollBy(int rows) {
+        scrollOffset += rows;
+        snapToBottom = false;
+    }
+
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (verticalAmount != 0) {
-            scrollOffset -= (int) (verticalAmount * 2);
+            scrollBy(-(int) (verticalAmount * 2));
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
@@ -404,17 +471,23 @@ public class ChatHistoryScreen extends Screen {
             return true;
         }
 
-        // Controls bar tabs
+        // Controls bar tabs + events chip
         int ctrlY = controlsTop();
         int tabX = winX + 14;
         for (FilterTab tab : FilterTab.values()) {
             int tabW = font.width(tab.label) + 16;
             if (mouseX >= tabX && mouseX <= tabX + tabW && mouseY >= ctrlY && mouseY <= ctrlY + 24) {
                 activeTab = tab;
-                scrollOffset = 0;
+                snapToBottom = true;
                 return true;
             }
             tabX += (tabW + 6);
+        }
+        int chipW = font.width("Events") + 16;
+        if (mouseX >= tabX && mouseX <= tabX + chipW && mouseY >= ctrlY && mouseY <= ctrlY + 24) {
+            eventsChipOn = !eventsChipOn;
+            snapToBottom = true;
+            return true;
         }
 
         // Search Bar click
@@ -441,19 +514,17 @@ public class ChatHistoryScreen extends Screen {
             if (mouseX >= winX + 12 && mouseX <= winX + winW - 24 && mouseY >= ry && mouseY < ry + rowH) {
                 ChatHistoryTracker.Entry e = list.get(i + scrollOffset);
                 if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                    // Left-click: Copy text
                     String toCopy = e.rawText != null ? e.rawText : (e.component != null ? e.component.getString() : "");
                     Minecraft.getInstance().keyboardHandler.setClipboard(toCopy);
                     showToast("Copied to clipboard!");
                     return true;
                 } else if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                    // Right-click: If it has command or click event, execute it
                     Minecraft mc = Minecraft.getInstance();
                     if (mc.player != null && mc.player.connection != null) {
                         String cmd = null;
                         if (e.clickAction != null && e.clickAction.startsWith("RUN_COMMAND: ")) {
                             cmd = e.clickAction.substring("RUN_COMMAND: ".length()).trim();
-                        } else if (e.rawText != null && e.rawText.startsWith("/")) {
+                        } else if (e.rawText != null && e.rawText.trim().startsWith("/")) {
                             cmd = e.rawText.trim();
                         }
                         if (cmd != null) {
@@ -475,7 +546,7 @@ public class ChatHistoryScreen extends Screen {
         char c = (char) event.codepoint();
         if (searchFocused) {
             searchQuery += c;
-            scrollOffset = 0;
+            snapToBottom = true;
             return true;
         }
         return super.charTyped(event);
@@ -487,7 +558,7 @@ public class ChatHistoryScreen extends Screen {
             if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
                 if (!searchQuery.isEmpty()) {
                     searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
-                    scrollOffset = 0;
+                    snapToBottom = true;
                 }
                 return true;
             } else if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_ESCAPE) {
@@ -496,9 +567,30 @@ public class ChatHistoryScreen extends Screen {
             }
         }
 
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
-            Minecraft.getInstance().setScreenAndShow(this.parent);
-            return true;
+        switch (event.key()) {
+            case GLFW.GLFW_KEY_END -> {
+                snapToBottom = true;
+                return true;
+            }
+            case GLFW.GLFW_KEY_HOME -> {
+                scrollOffset = 0;
+                snapToBottom = false;
+                return true;
+            }
+            case GLFW.GLFW_KEY_PAGE_UP -> {
+                scrollBy(-listVisibleRows());
+                return true;
+            }
+            case GLFW.GLFW_KEY_PAGE_DOWN -> {
+                scrollBy(listVisibleRows());
+                return true;
+            }
+            case GLFW.GLFW_KEY_ESCAPE -> {
+                Minecraft.getInstance().setScreenAndShow(this.parent);
+                return true;
+            }
+            default -> {
+            }
         }
         return super.keyPressed(event);
     }

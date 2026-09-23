@@ -59,45 +59,8 @@ public final class CheatFlavor implements FlavorBridge {
             return 1;
         }));
 
-        builder.then(ClientCommands.literal("auto")
-                .then(ClientCommands.literal("list").executes(context -> {
-                    FabricClientCommandSource src = context.getSource();
-                    var list = AutoSequenceManager.getSequences();
-                    src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §e=== Auto Sequences (§b"
-                            + list.size() + "§e) ==="));
-                    if (list.isEmpty()) {
-                        src.sendFeedback(Component.literal("§7No sequences configured. Add one in §e/b §7-> §eAuto§7."));
-                        return 1;
-                    }
-                    for (int i = 0; i < list.size(); i++) {
-                        AutoSequence seq = list.get(i);
-                        boolean running = AutoSequenceManager.isRunning(seq);
-                        src.sendFeedback(Component.literal("§7#" + i + " §f" + seq.name
-                                + " §7[" + (seq.enabled ? "§aON" : "§cOFF") + "§7]"
-                                + (running ? " §b▶ RUNNING" : "")
-                                + " §8trigger: §e" + (seq.triggerKey == null || seq.triggerKey.isEmpty() ? "none" : seq.triggerKey)
-                                + " §8steps: §e" + (seq.actions == null ? 0 : seq.actions.size())));
-                    }
-                    return 1;
-                }))
-                .then(ClientCommands.literal("stop").executes(context -> {
-                    CheatAutoExecutor.stopAll("Command");
-                    context.getSource().sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Auto sequences stopped."));
-                    return 1;
-                }))
-                .then(ClientCommands.literal("run")
-                        .then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes(context -> {
-                            String name = StringArgumentType.getString(context, "name").trim();
-                            FabricClientCommandSource src = context.getSource();
-                            AutoSequence seq = AutoSequenceManager.findByName(name);
-                            if (seq == null) {
-                                src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching §e" + name
-                                        + "§c. Try §e/b auto list§c."));
-                                return 0;
-                            }
-                            CheatAutoExecutor.toggle(seq, "Command /b auto run " + name);
-                            return 1;
-                        }))));
+        // NB: /b auto, /b chathistory and /b noobfuscate are registered by shared code
+        // (BomboaddonsClient), so this build only contributes what genuinely needs cheat code.
     }
 
     @Override

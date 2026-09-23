@@ -120,6 +120,28 @@ public abstract class ChatMixin implements IChatComponent {
       }
    }
 
+   /**
+    * No Obfuscate: rewrites the message argument before anything else looks at it.
+    *
+    * <p>Deliberately an argument rewrite rather than a cancel-and-re-add like the other
+    * transforms below. Those short-circuit the rest of the pipeline for the message they handle;
+    * stripping \u00a7k must not silently disable chat triggers, tab filtering or message history.
+    */
+   @org.spongepowered.asm.mixin.injection.ModifyVariable(
+      method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V"},
+      at = @At("HEAD"),
+      argsOnly = true
+   )
+   private Component bombo$noObfuscate(Component message) {
+      if (message == null) return null;
+      if (!me.bombo.bomboaddons.util.NoObfuscate.isEnabled()) return message;
+      try {
+         return me.bombo.bomboaddons.util.NoObfuscate.strip(message);
+      } catch (Throwable ignored) {
+         return message;
+      }
+   }
+
    @Inject(
       method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V"},
       at = {@At("HEAD")},

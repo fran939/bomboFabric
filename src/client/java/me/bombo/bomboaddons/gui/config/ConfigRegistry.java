@@ -9,9 +9,10 @@ import net.minecraft.world.item.ItemStack;
 import java.util.*;
 
 public class ConfigRegistry {
-    // Hidden cheat categories when "hideCheats" is enabled
+    // Hidden cheat categories when "hideCheats" is enabled. "Auto" is deliberately NOT in
+    // this set: the sequence editor is shared (only the executor is cheat-only), and hiding it
+    // in the legit build made the whole section look like it had vanished.
     public static final Set<String> CHEAT_CATEGORIES = Set.of(
-            "Auto",
             "Clicker",
             "Experiments"
     );
@@ -123,15 +124,20 @@ public class ConfigRegistry {
             }
 
             case "Auto" -> {
-                // Present only in the cheat build: the legit jar ships no sequence runtime,
-                // so offering the editor there would be misleading.
-                if (me.bombo.bomboaddons.flavor.Flavor.get().isCheat()) {
-                    items.add(ConfigItem.header("Custom Automation Sequences", category));
-                    items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", category,
-                            ConfigCustomWidgets::getAutoSequencesCardHeight,
-                            ConfigCustomWidgets::renderAutoSequencesCard,
-                            ConfigCustomWidgets::handleAutoSequencesCardClick));
+                // Available in both flavors: creating, editing and keybinding sequences is
+                // shared data. Running one needs the sequence runtime, which only the cheat
+                // build ships - the card says so instead of pretending otherwise.
+                boolean canRun = me.bombo.bomboaddons.features.auto.AutoSequenceManager.hasRuntime();
+                items.add(ConfigItem.header("Custom Automation Sequences", category));
+                if (!canRun) {
+                    items.add(ConfigItem.header("Read-only on this build: \"/b auto run\" and the RUN "
+                            + "button need " + me.bombo.bomboaddons.Constants.artifactPrefix() + "'s sequence "
+                            + "runtime.", category));
                 }
+                items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", category,
+                        ConfigCustomWidgets::getAutoSequencesCardHeight,
+                        ConfigCustomWidgets::renderAutoSequencesCard,
+                        ConfigCustomWidgets::handleAutoSequencesCardClick));
             }
 
             case "Bedwars" -> {
@@ -424,6 +430,12 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Running Flavor: " + me.bombo.bomboaddons.Constants.MOD_NAME
                         + " (" + me.bombo.bomboaddons.Constants.FLAVOR + " \u2022 "
                         + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "*.jar)", category));
+                items.add(ConfigItem.toggle("Hide Mod ID On Join",
+                        "Answer the server's brand query with the vanilla name, so a mod-id blacklist cannot flag this client. Applies to both builds; on by default.",
+                        category, () -> s.modIdHider, v -> s.modIdHider = v));
+                items.add(ConfigItem.toggle("No Obfuscate (strip \u00a7k)",
+                        "Removes the scrambling style from chat messages and item lore, making the text behind it readable.",
+                        category, () -> s.noObfuscate, v -> s.noObfuscate = v));
                 if (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
                     items.add(ConfigItem.toggle("Stealth Mode",
                             "Stop advertising your presence: no bridge online status, no egg publishing, vanilla brand on join.",

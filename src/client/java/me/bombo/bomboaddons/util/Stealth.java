@@ -26,6 +26,19 @@ public final class Stealth {
         return s != null && s.stealthMode;
     }
 
+    /**
+     * Whether the client should lie about its mod identity during the join handshake.
+     *
+     * <p>Available in <b>both</b> flavors via {@code modIdHider}, because a mod-id blacklist does
+     * not care which jar you installed - the legit build is exactly the one it targets. The cheat
+     * build's stealth mode turns it on too.
+     */
+    public static boolean isBrandHidden() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s == null) return false;
+        return s.modIdHider || isEnabled();
+    }
+
     private Stealth() {
     }
 }

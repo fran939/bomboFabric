@@ -3323,9 +3323,13 @@ public class ConfigCustomWidgets {
             case "autoRuleChat" -> autoRuleChatInput;
             case "autoSeqName" -> autoSeqNameInput;
             case "autoSeqDelay" -> autoSeqLoopDelay;
+            case "autoSeqJitter" -> autoSeqJitterInput;
             case "actSlot" -> actionSlotInput;
             case "actItem" -> actionItemInput;
             case "actCmd" -> actionCmdInput;
+            case "actEntity" -> actionEntityInput;
+            case "actRadius" -> actionRadiusInput;
+            case "actRepeat" -> actionRepeatInput;
             case "actDelay" -> actionDelayInput;
             default -> "";
         };
@@ -3392,9 +3396,13 @@ public class ConfigCustomWidgets {
             case "autoRuleChat" -> autoRuleChatInput = nonNull;
             case "autoSeqName" -> autoSeqNameInput = nonNull;
             case "autoSeqDelay" -> autoSeqLoopDelay = nonNull;
+            case "autoSeqJitter" -> autoSeqJitterInput = nonNull;
             case "actSlot" -> actionSlotInput = nonNull;
             case "actItem" -> actionItemInput = nonNull;
             case "actCmd" -> actionCmdInput = nonNull;
+            case "actEntity" -> actionEntityInput = nonNull;
+            case "actRadius" -> actionRadiusInput = nonNull;
+            case "actRepeat" -> actionRepeatInput = nonNull;
             case "actDelay" -> actionDelayInput = nonNull;
         }
     }
@@ -4934,6 +4942,8 @@ public class ConfigCustomWidgets {
     public static boolean autoSeqKeyIsListening = false;
     public static boolean autoSeqLoop = false;
     public static String autoSeqLoopDelay = "400";
+    /** Randomisation percentage applied to every wait in the sequence. */
+    public static String autoSeqJitterInput = "30";
     public static int editingAutoSeqIndex = -1;
     public static int expandedSeqActionIndex = -1;
 
@@ -4944,6 +4954,9 @@ public class ConfigCustomWidgets {
     public static String actionClickType = "LEFT"; // LEFT, RIGHT, SHIFT_LEFT, DROP
     public static String actionCmdInput = "";
     public static boolean actionRightClick = true;
+    public static String actionEntityInput = "";
+    public static String actionRadiusInput = "5";
+    public static String actionRepeatInput = "1";
     public static String actionDelayInput = "200";
 
     public static int getAutoSequencesCardHeight() {
@@ -4991,7 +5004,10 @@ public class ConfigCustomWidgets {
 
         int delayX = loopX + loopW + 6;
         int delayW = Math.max(50, (x + w - 12) - delayX);
-        renderCleanInputField(g, font, "Loop ms", autoSeqLoopDelay, "autoSeqDelay", delayX, curY, delayW, mouseX, mouseY);
+        int halfDelay = Math.max(45, delayW / 2 - 3);
+        renderCleanInputField(g, font, "Loop ms", autoSeqLoopDelay, "autoSeqDelay", delayX, curY, halfDelay, mouseX, mouseY);
+        renderCleanInputField(g, font, "Jitter %", autoSeqJitterInput, "autoSeqJitter",
+                delayX + halfDelay + 6, curY, Math.max(40, delayW - halfDelay - 6), mouseX, mouseY);
 
         curY += 24;
 
@@ -5045,7 +5061,9 @@ public class ConfigCustomWidgets {
 
             if (seq.loop) {
                 int loopTagX = textX + font.width("§f§l" + seq.name) + 6;
-                g.text(font, "§e[LOOP " + seq.loopDelayMs + "ms]", loopTagX, rowY + 7, 0xFFFFAA00, false);
+                g.text(font, "§e[LOOP " + me.bombo.bomboaddons.features.auto.AutoSequenceManager
+                        .describeJitter(Math.max(50, seq.loopDelayMs), seq.jitterPercent) + "]",
+                        loopTagX, rowY + 7, 0xFFFFAA00, false);
             }
 
             int rx = x + w - 18;
@@ -5123,40 +5141,53 @@ public class ConfigCustomWidgets {
 
                 switch (newActionType) {
                     case CLICK_SLOT -> {
-                        renderCleanInputField(g, font, "Slot # (-1=name)", actionSlotInput, "actSlot", pX, pY, 95, mouseX, mouseY);
-                        pX += 100;
-                        renderCleanInputField(g, font, "Item Name Matcher", actionItemInput, "actItem", pX, pY, 130, mouseX, mouseY);
-                        pX += 135;
-                        boolean ctHover = mouseX >= pX && mouseX <= pX + 75 && mouseY >= pY && mouseY <= pY + 18;
-                        ConfigUITheme.drawPillButton(g, font, "§e" + actionClickType, pX, pY, 75, 18, ctHover, -1, 0x22FFFFFF, 0x44FFFFFF);
-                        pX += 80;
+                        renderCleanInputField(g, font, "Slot # (-1=name)", actionSlotInput, "actSlot", pX, pY, 85, mouseX, mouseY);
+                        pX += 90;
+                        renderCleanInputField(g, font, "Item Name", actionItemInput, "actItem", pX, pY, 105, mouseX, mouseY);
+                        pX += 110;
+                        boolean ctHover = mouseX >= pX && mouseX <= pX + 70 && mouseY >= pY && mouseY <= pY + 18;
+                        ConfigUITheme.drawPillButton(g, font, "§e" + actionClickType, pX, pY, 70, 18, ctHover, -1, 0x22FFFFFF, 0x44FFFFFF);
+                        pX += 75;
                     }
                     case CLOSE_GUI -> {
-                        g.text(font, "§7Closes current container / menu", pX, pY + 5, 0xFF94A3B8, false);
-                        pX += 190;
+                        g.text(font, "§7Closes the open container", pX, pY + 5, 0xFF94A3B8, false);
+                        pX += 120;
                     }
                     case RUN_COMMAND -> {
-                        renderCleanInputField(g, font, "Command / Chat (e.g. /warp hub)", actionCmdInput, "actCmd", pX, pY, 240, mouseX, mouseY);
-                        pX += 245;
+                        renderCleanInputField(g, font, "Command / Chat", actionCmdInput, "actCmd", pX, pY, 200, mouseX, mouseY);
+                        pX += 205;
                     }
                     case CLICK_WORLD -> {
-                        boolean cwHover = mouseX >= pX && mouseX <= pX + 110 && mouseY >= pY && mouseY <= pY + 18;
-                        ConfigUITheme.drawPillButton(g, font, actionRightClick ? "§bRight-Click World" : "§bLeft-Click World", pX, pY, 110, 18, cwHover, -1, 0x2200E5FF, 0x4400E5FF);
-                        pX += 115;
+                        boolean cwHover = mouseX >= pX && mouseX <= pX + 105 && mouseY >= pY && mouseY <= pY + 18;
+                        ConfigUITheme.drawPillButton(g, font, actionRightClick ? "§bRight-Click" : "§bLeft-Click", pX, pY, 105, 18, cwHover, -1, 0x2200E5FF, 0x4400E5FF);
+                        pX += 110;
+                    }
+                    case INTERACT_ENTITY -> {
+                        renderCleanInputField(g, font, "NPC Name", actionEntityInput, "actEntity", pX, pY, 115, mouseX, mouseY);
+                        pX += 120;
+                        renderCleanInputField(g, font, "Radius", actionRadiusInput, "actRadius", pX, pY, 50, mouseX, mouseY);
+                        pX += 55;
+                        boolean npcHover = mouseX >= pX && mouseX <= pX + 70 && mouseY >= pY && mouseY <= pY + 18;
+                        ConfigUITheme.drawPillButton(g, font, actionRightClick ? "§bRight-Clk" : "§bLeft-Clk", pX, pY, 70, 18, npcHover, -1, 0x2200E5FF, 0x4400E5FF);
+                        pX += 75;
                     }
                     case WAIT -> {
-                        g.text(font, "§7Pause execution delay", pX, pY + 5, 0xFF94A3B8, false);
-                        pX += 140;
+                        g.text(font, "§7Stand still", pX, pY + 5, 0xFF94A3B8, false);
+                        pX += 75;
                     }
                 }
 
+                // Repeat count
+                renderCleanInputField(g, font, "Repeat", actionRepeatInput, "actRepeat", pX, pY, 45, mouseX, mouseY);
+                pX += 50;
+
                 // Delay ms input
-                renderCleanInputField(g, font, "Delay ms", actionDelayInput, "actDelay", pX, pY, 65, mouseX, mouseY);
-                pX += 70;
+                renderCleanInputField(g, font, "Delay ms", actionDelayInput, "actDelay", pX, pY, 60, mouseX, mouseY);
+                pX += 65;
 
                 // [+ Add Step]
-                boolean addStepHover = mouseX >= pX && mouseX <= pX + 70 && mouseY >= pY && mouseY <= pY + 18;
-                ConfigUITheme.drawPillButton(g, font, "§a+ Add Step", pX, pY, 70, 18, addStepHover, -1, 0x3310B981, 0x6610B981);
+                boolean addStepHover = mouseX >= pX && mouseX <= pX + 65 && mouseY >= pY && mouseY <= pY + 18;
+                ConfigUITheme.drawPillButton(g, font, "§a+ Add Step", pX, pY, 65, 18, addStepHover, -1, 0x3310B981, 0x6610B981);
 
                 curY += boxH + 4;
             }
@@ -5193,7 +5224,14 @@ public class ConfigCustomWidgets {
 
         int delayX = loopX + loopW + 6;
         int delayW = Math.max(50, (x + w - 12) - delayX);
-        if (checkFieldClick(delayX, curY, delayW, 18, "autoSeqDelay", mouseX, mouseY)) {
+        int halfDelay = Math.max(45, delayW / 2 - 3);
+        if (checkFieldClick(delayX, curY, halfDelay, 18, "autoSeqDelay", mouseX, mouseY)) {
+            autoSeqKeyIsListening = false;
+            return true;
+        }
+        int jitterX = delayX + halfDelay + 6;
+        int jitterW = Math.max(40, delayW - halfDelay - 6);
+        if (checkFieldClick(jitterX, curY, jitterW, 18, "autoSeqJitter", mouseX, mouseY)) {
             autoSeqKeyIsListening = false;
             return true;
         }
@@ -5209,6 +5247,11 @@ public class ConfigCustomWidgets {
                 try {
                     loopDelay = Integer.parseInt(autoSeqLoopDelay.trim());
                 } catch (Throwable ignored) {}
+                int jitter = 30;
+                try {
+                    jitter = Integer.parseInt(autoSeqJitterInput.trim());
+                } catch (Throwable ignored) {}
+                jitter = Math.max(0, Math.min(90, jitter));
 
                 if (editingAutoSeqIndex >= 0) {
                     List<me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoSequence> list = me.bombo.bomboaddons.features.auto.AutoSequenceManager.getSequences();
@@ -5218,6 +5261,7 @@ public class ConfigCustomWidgets {
                         existing.triggerKey = autoSeqKeyInput.trim();
                         existing.loop = autoSeqLoop;
                         existing.loopDelayMs = Math.max(50, loopDelay);
+                        existing.jitterPercent = jitter;
                         me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
                     }
                     editingAutoSeqIndex = -1;
@@ -5225,6 +5269,7 @@ public class ConfigCustomWidgets {
                     me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoSequence seq = new me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoSequence(name, autoSeqKeyInput.trim());
                     seq.loop = autoSeqLoop;
                     seq.loopDelayMs = Math.max(50, loopDelay);
+                    seq.jitterPercent = jitter;
                     me.bombo.bomboaddons.features.auto.AutoSequenceManager.addSequence(seq);
                 }
 
@@ -5232,6 +5277,7 @@ public class ConfigCustomWidgets {
                 autoSeqKeyInput = "";
                 autoSeqLoop = false;
                 autoSeqLoopDelay = "400";
+                autoSeqJitterInput = "30";
                 activeFocusedField = null;
                 return true;
             }
@@ -5244,6 +5290,7 @@ public class ConfigCustomWidgets {
             autoSeqKeyInput = "";
             autoSeqLoop = false;
             autoSeqLoopDelay = "400";
+            autoSeqJitterInput = "30";
             autoSeqKeyIsListening = false;
             return true;
         }
@@ -5290,6 +5337,7 @@ public class ConfigCustomWidgets {
                 autoSeqKeyInput = seq.triggerKey != null ? seq.triggerKey : "";
                 autoSeqLoop = seq.loop;
                 autoSeqLoopDelay = String.valueOf(seq.loopDelayMs > 0 ? seq.loopDelayMs : 400);
+                autoSeqJitterInput = String.valueOf(seq.jitterPercent >= 0 ? seq.jitterPercent : 30);
                 autoSeqKeyIsListening = false;
                 return true;
             }
@@ -5356,11 +5404,11 @@ public class ConfigCustomWidgets {
 
                 switch (newActionType) {
                     case CLICK_SLOT -> {
-                        if (checkFieldClick(pX, pY, 95, 18, "actSlot", mouseX, mouseY)) return true;
-                        pX += 100;
-                        if (checkFieldClick(pX, pY, 130, 18, "actItem", mouseX, mouseY)) return true;
-                        pX += 135;
-                        if (mouseX >= pX && mouseX <= pX + 75 && mouseY >= pY && mouseY <= pY + 18) {
+                        if (checkFieldClick(pX, pY, 85, 18, "actSlot", mouseX, mouseY)) return true;
+                        pX += 90;
+                        if (checkFieldClick(pX, pY, 105, 18, "actItem", mouseX, mouseY)) return true;
+                        pX += 110;
+                        if (mouseX >= pX && mouseX <= pX + 70 && mouseY >= pY && mouseY <= pY + 18) {
                             actionClickType = switch (actionClickType) {
                                 case "LEFT" -> "RIGHT";
                                 case "RIGHT" -> "SHIFT_LEFT";
@@ -5369,36 +5417,55 @@ public class ConfigCustomWidgets {
                             };
                             return true;
                         }
-                        pX += 80;
+                        pX += 75;
                     }
                     case CLOSE_GUI -> {
-                        pX += 190;
+                        pX += 120;
                     }
                     case RUN_COMMAND -> {
-                        if (checkFieldClick(pX, pY, 240, 18, "actCmd", mouseX, mouseY)) return true;
-                        pX += 245;
+                        if (checkFieldClick(pX, pY, 200, 18, "actCmd", mouseX, mouseY)) return true;
+                        pX += 205;
                     }
                     case CLICK_WORLD -> {
-                        if (mouseX >= pX && mouseX <= pX + 110 && mouseY >= pY && mouseY <= pY + 18) {
+                        if (mouseX >= pX && mouseX <= pX + 105 && mouseY >= pY && mouseY <= pY + 18) {
                             actionRightClick = !actionRightClick;
                             return true;
                         }
-                        pX += 115;
+                        pX += 110;
+                    }
+                    case INTERACT_ENTITY -> {
+                        if (checkFieldClick(pX, pY, 115, 18, "actEntity", mouseX, mouseY)) return true;
+                        pX += 120;
+                        if (checkFieldClick(pX, pY, 50, 18, "actRadius", mouseX, mouseY)) return true;
+                        pX += 55;
+                        if (mouseX >= pX && mouseX <= pX + 70 && mouseY >= pY && mouseY <= pY + 18) {
+                            actionRightClick = !actionRightClick;
+                            return true;
+                        }
+                        pX += 75;
                     }
                     case WAIT -> {
-                        pX += 140;
+                        pX += 75;
                     }
                 }
 
-                if (checkFieldClick(pX, pY, 65, 18, "actDelay", mouseX, mouseY)) return true;
-                pX += 70;
+                if (checkFieldClick(pX, pY, 45, 18, "actRepeat", mouseX, mouseY)) return true;
+                pX += 50;
+
+                if (checkFieldClick(pX, pY, 60, 18, "actDelay", mouseX, mouseY)) return true;
+                pX += 65;
 
                 // [+ Add Step]
-                if (mouseX >= pX && mouseX <= pX + 70 && mouseY >= pY && mouseY <= pY + 18) {
+                if (mouseX >= pX && mouseX <= pX + 65 && mouseY >= pY && mouseY <= pY + 18) {
                     int delay = 200;
                     try {
                         delay = Integer.parseInt(actionDelayInput.trim());
                     } catch (Throwable ignored) {}
+                    int repeat = 1;
+                    try {
+                        repeat = Integer.parseInt(actionRepeatInput.trim());
+                    } catch (Throwable ignored) {}
+                    repeat = Math.max(1, Math.min(1000, repeat));
 
                     me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction action = null;
                     switch (newActionType) {
@@ -5412,15 +5479,27 @@ public class ConfigCustomWidgets {
                         case CLOSE_GUI -> action = me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction.closeGui(delay);
                         case RUN_COMMAND -> action = me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction.runCommand(actionCmdInput.trim(), delay);
                         case CLICK_WORLD -> action = me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction.clickWorld(actionRightClick, delay);
+                        case INTERACT_ENTITY -> {
+                            double radius = 5.0D;
+                            try {
+                                radius = Double.parseDouble(actionRadiusInput.trim());
+                            } catch (Throwable ignored) {}
+                            action = me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction.interactEntity(
+                                    actionEntityInput.trim(), Math.max(1.0D, Math.min(32.0D, radius)), actionRightClick, delay);
+                        }
                         case WAIT -> action = me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction.waitDelay(delay);
                     }
 
                     if (action != null) {
+                        action.repeatCount = repeat;
                         seq.actions.add(action);
                         me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
                         actionSlotInput = "";
                         actionItemInput = "";
                         actionCmdInput = "";
+                        actionEntityInput = "";
+                        actionRadiusInput = "5";
+                        actionRepeatInput = "1";
                         actionDelayInput = "200";
                         activeFocusedField = null;
                         return true;

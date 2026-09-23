@@ -1,5 +1,48 @@
 # BomboAddons Changelog
 
+## [26.2.28.34] - 2026-09-23 (Beta)
+
+### 1. Chat history fixes
+- **Fixed wrong attribution.** Every server message was labelled "created by BomboAddons" because our own mixin and message-routing frames sat in the call path and were picked as the caller. The inspector now skips infrastructure frames, and detects a network delivery (`handleSystemChat` etc.) first: messages that arrived from the server are shown as `Hypixel / Server`, player-sent ones as `Player Input`, and only real mod frames claim authorship.
+- **One row per feature event, with its trigger.** The `[BomboAddons]` chat line that reports an event ("Started auto sequence: Plushie Transfer Macro") is now merged into the event row instead of being dropped, so the row carries `Origin:`, `Feature:` and `Trigger:` (e.g. `Keybind TAB`, `Mouse Button 5`, `Command /b auto run X`, `Config GUI RUN button`) and the tooltip shows it on hover.
+- **Opens at the bottom** (most recent message) with `End` to jump back to newest, `Home`, PageUp/PageDown, and the scroll position no longer resets when switching tabs.
+- **Requested tabs:** `All`, `BomboAddons`, `Mods Only`, `Normal Chat` (includes blocked), `Blocked Only`, `Outgoing`, plus an `Events` chip for the auto-sequence log. New subcommands: `/b chathistory bombo|mods|normal|blocked|outgoing|events|clear`.
+- Added a `Source` column so who produced a row is visible without hovering.
+
+### 2. Auto sequences are editable again
+- The `Auto` category is no longer hidden behind `hideCheats`, and it is no longer cheat-only: the editor, the data model and `/b auto ...` ship in **both** builds. Only the executor is cheat-only, and running a sequence on the legit build now says so instead of doing nothing.
+- New step type **Right/Left Click NPC** with a name matcher, search radius and click button - so "right-click the NPC, then click slot X, then shift-click, then close the GUI" is expressible.
+- **Repeat** count per step, **loop** with a randomised cooldown, and a per-sequence **jitter %** (default 30). A `3000ms` delay with 30% jitter fires between ~2100ms and ~3900ms, so runs are never a metronome. The UI shows the computed range, e.g. `[LOOP ~280-520ms (±30%)]`.
+- Editing from chat: `/b auto add|remove|run|stop|list|toggle|loop|jitter|key <name> <KEY>`.
+- Sequence persistence gained `jitterPercent`, `repeatCount`, `entityMatcher` and `searchRadius`; the JSON remains backward compatible.
+
+### 3. Build: one command, two jars
+- `./gradlew build` now produces **both** artifacts: `bomboaddons-<ver>.jar` (legit) and `bomboclient-<ver>.jar` (cheat). Cheat sources are compiled every build and separated at packaging time, so there is no flavor flag to forget.
+- Added `assertNoCheatReferences`: fails the build if shared code references a cheat package (comments and string literals are ignored, so the reflective SPI stays legal).
+- Added `assertFlavorIntegrity` positive control: the cheat jar must contain the cheat classes and its marker, otherwise the build fails - two identical legit jars can no longer ship silently.
+- Removed sources jars entirely (a sources jar would have published cheat sources) and added `sweepStaleArtifacts`, which deletes leftover `*-sources.jar` / `*-dev.jar` from `build/libs`.
+
+### 4. Each build has its own mod id
+- Legit ships as `bomboaddons`, cheat as `bomboclient`. A mod-id blacklist on one can no longer take the other down with it, and the two builds are individually identifiable in logs and crash reports. The asset namespace stays `bomboaddons`, so every texture, model and lang entry keeps resolving.
+- Added a startup warning (chat + log) when both jars are installed at once, replacing the duplicate-jar protection that a shared mod id used to provide implicitly.
+
+### 5. Hide Mod ID On Join (both builds)
+- New `modIdHider` setting (**on by default**), applied in both flavors: the client answers the server's brand query with the vanilla name, so the one mod-related field a vanilla server receives carries no mod marker. This is the countermeasure to what took Odin's users down after a mod-id blacklist.
+- Stated honestly: this hides identity, not behaviour - it does not defeat behavioural detection or staff review.
+
+### 6. No Obfuscate (§k)
+- New `noObfuscate` setting (and `/b noobfuscate`, or `nb on|off` in the terminal) strips the obfuscated style from chat messages and item tooltips, revealing the text behind it while preserving colours, bold/italic, click and hover events.
+- Implemented as a `ModifyVariable` argument rewrite on chat (not a cancel-and-re-add), so enabling it cannot silently disable chat triggers, tab filtering or message history.
+
+### 7. `/b cmd` - in-game terminal
+- `/b cmd` opens a real terminal inside Minecraft; `/b cmd ping 1.1.1.1` opens it and runs the command immediately.
+- Runs actual shell commands on the machine (streamed output, scrollback, `↑`/`↓` history, Ctrl+V paste, PageUp/PageDown, click a line to copy it). Built-ins: `help`, `clear`, `close`, `ver`, `flavor`, `echo`, `nb on|off`.
+- Not sandboxed and it is not a pseudo-terminal: interactive full-screen programs (`ssh` password prompts, `vim`, `top`) will not behave interactively.
+
+### 8. Updater
+- Fixed "No releases or update jars found" being reported for a build that was simply up to date: the flavor gate blanked the version before the comparison, so any flavor without a published artifact dead-ended.
+- Now: the channel's latest version is resolved and compared first; "up to date" is reported as such. Only a genuine update that has no artifact for **this** build reports the actionable message (which artifact exists, and `/b update switch`).
+
 ## [26.2.28.33] - 2026-09-23 (Beta)
 
 ### 1. `/b chathistory` fixed (it never existed)

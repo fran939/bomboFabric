@@ -11,9 +11,13 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Locale;
@@ -41,6 +45,8 @@ public final class CheatAutoExecutor {
     private static int actionIndex = 0;
     private static long nextActionTime = 0L;
     private static int consecutiveFailures = 0;
+    /** Completed runs of the current step, for {@code repeatCount}. */
+    private static int repeatsDone = 0;
 
     private CheatAutoExecutor() {
     }
@@ -103,12 +109,14 @@ public final class CheatAutoExecutor {
 
         actionIndex = 0;
         consecutiveFailures = 0;
+        repeatsDone = 0;
         nextActionTime = 0L;
         AutoSequenceManager.setRunningSequenceId(seq.id);
 
         String details = "Started auto sequence: " + seq.name
-                + (seq.loop ? " (loop ON, " + Math.max(50, seq.loopDelayMs) + "ms)" : " ("
-                + seq.actions.size() + " step" + (seq.actions.size() == 1 ? "" : "s") + ")");
+                + (seq.loop
+                ? " (loop ON, cooldown " + AutoSequenceManager.describeJitter(Math.max(50, seq.loopDelayMs), seq.jitterPercent) + ")"
+                : " (" + seq.actions.size() + " step" + (seq.actions.size() == 1 ? "" : "s") + ")");
         record(details, trigger);
         AutoSequenceManager.sendMessage("§aStarted auto sequence: §e" + seq.name);
     }
@@ -119,6 +127,7 @@ public final class CheatAutoExecutor {
         AutoSequenceManager.setRunningSequenceId(null);
         actionIndex = 0;
         consecutiveFailures = 0;
+        repeatsDone = 0;
         nextActionTime = 0L;
 
         String name = seq != null ? seq.name : "sequence";
@@ -168,7 +177,9 @@ public final class CheatAutoExecutor {
         if (actionIndex >= actions.size()) {
             if (seq.loop) {
                 actionIndex = 0;
-                nextActionTime = now + Math.max(50, seq.loopDelayMs);
+                repeatsDone = 0;
+                // Loop cooldown is randomised too, so a repeating macro is not a metronome.
+                nextActionTime = now + Math.max(50, AutoSequenceManager.jitter(seq.loopDelayMs, seq.jitterPercent));
                 return;
             }
             AutoSequenceManager.setRunningSequenceId(null);
@@ -189,19 +200,35 @@ public final class CheatAutoExecutor {
                 return;
             }
             // Retry the same step rather than silently skipping it.
-            nextActionTime = now + Math.max(50, action.delayMs);
+            nextActionTime = now + Math.max(50, AutoSequenceManager.jitter(action.delayMs, seq.jitterPercent));
             return;
         }
 
         consecutiveFailures = 0;
+        long wait = Math.max(20, AutoSequenceManager.jitter(action.delayMs, seq.jitterPercent));
+
+        // repeatCount: run the same step again before advancing.
+        int repeat = Math.max(1, action.repeatCount);
+        if (repeatsDone + 1 < repeat) {
+            repeatsDone++;
+            nextActionTime = System.currentTimeMillis() + wait;
+            return;
+        }
+
+        repeatsDone = 0;
         actionIndex++;
-        nextActionTime = System.currentTimeMillis() + Math.max(20, action.delayMs);
+        nextActionTime = System.currentTimeMillis() + wait;
     }
 
     private static String describeFailure(Minecraft mc, AutoAction action) {
         if (action.type == AutoSequenceManager.ActionType.CLICK_SLOT
                 && !(mc.gui.screen() instanceof AbstractContainerScreen<?>)) {
             return "container closed";
+        }
+        if (action.type == AutoSequenceManager.ActionType.INTERACT_ENTITY) {
+            return action.entityMatcher == null || action.entityMatcher.isBlank()
+                    ? "no NPC in range"
+                    : "no NPC matching \"" + action.entityMatcher + "\" in range";
         }
         return action.type == AutoSequenceManager.ActionType.CLICK_SLOT ? "slot not found" : "step failed";
     }
@@ -273,6 +300,20 @@ public final class CheatAutoExecutor {
                     return true;
                 }
 
+                case INTERACT_ENTITY -> {
+                    if (mc.player == null || mc.gameMode == null) return false;
+                    Entity target = findEntity(mc, action);
+                    if (target == null) return false;
+
+                    Vec3 hit = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
+                    if (action.rightClick) {
+                        mc.gameMode.interact(mc.player, target, new EntityHitResult(target, hit), InteractionHand.MAIN_HAND);
+                    } else {
+                        mc.gameMode.attack(mc.player, target);
+                    }
+                    return true;
+                }
+
                 case WAIT -> {
                     // Delay only - handled by delayMs.
                     return true;
@@ -300,6 +341,39 @@ public final class CheatAutoExecutor {
                 }
             });
         }).start();
+    }
+
+    /**
+     * Nearest living entity whose name matches the step's matcher, inside its radius.
+     * An empty matcher simply means "the closest entity".
+     */
+    private static Entity findEntity(Minecraft mc, AutoAction action) {
+        if (mc.level == null || mc.player == null) return null;
+
+        double radius = action.searchRadius > 0 ? action.searchRadius : 5.0D;
+        String query = action.entityMatcher == null ? "" : action.entityMatcher.trim().toLowerCase(Locale.ROOT);
+        net.minecraft.world.phys.AABB area = mc.player.getBoundingBox().inflate(radius, Math.max(2.0D, radius / 2.0D), radius);
+
+        Entity best = null;
+        double bestDist = Double.MAX_VALUE;
+
+        for (Entity entity : mc.level.getEntities(mc.player, area)) {
+            if (entity == mc.player) continue;
+            if (!entity.isAlive()) continue;
+
+            if (!query.isEmpty()) {
+                String name = ChatFormatting.stripFormatting(entity.getName().getString()).toLowerCase(Locale.ROOT);
+                String type = entity.getType().toString().toLowerCase(Locale.ROOT);
+                if (!name.contains(query) && !type.contains(query)) continue;
+            }
+
+            double dist = mc.player.distanceToSqr(entity);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = entity;
+            }
+        }
+        return best;
     }
 
     private static int findSlotMatching(AbstractContainerScreen<?> screen, String matcher) {

@@ -17,8 +17,8 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` v`26.2.28.33` |
-| **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat) — see Section 2.B |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.34` |
+| **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
 ---
@@ -37,14 +37,19 @@ Every time an AI agent finishes a task or prompt, the agent **MUST** complete al
 - Run:
   ```powershell
   ./gradlew compileClientJava
-  ./gradlew build -x test                      # legit  -> build/libs/bomboaddons-<version>.jar
-  ./gradlew compileClientJava -Pflavor=cheat
-  ./gradlew build -x test -Pflavor=cheat       # cheat  -> build/libs/bomboclient-<version>.jar
+  ./gradlew compileClientJava          # compiles src/client/java AND src/cheat/java
+  ./gradlew build -x test              # BOTH jars:
+                                       #   build/libs/bomboaddons-<version>.jar (legit)
+                                       #   build/libs/bomboclient-<version>.jar (cheat)
   ```
-- Make sure there are `0 errors` in **both** flavors. A plain `./gradlew build` does not compile `src/cheat/java`, so the cheat compile is a required step.
-- `assertFlavorIntegrity` runs as part of `check` and **fails the build** if a cheat-only class leaks into the legit jar. Never remove or weaken it.
-- Known environment quirk: switching flavors can hit `Failed to clean up stale outputs (AccessDeniedException ... build/resources/main/vypv)`. Re-running the command clears it; it is a Windows file lock on a pre-existing resource, not a code problem. Do not "fix" it by changing the resource pipeline.
-- After a cheat build, re-run the legit build before deploying so `build/libs/bomboaddons-<version>.jar` is the current artifact.
+- One build, both flavors. `-Pflavor=cheat` is a no-op kept for old scripts.
+- Both guards run as part of `check` / `build` and must never be removed or weakened:
+  - `assertFlavorIntegrity` — the legit jar must contain **no** cheat class, and the cheat jar **must** contain its classes + `bomboaddons.flavor` marker (positive control).
+  - `assertNoCheatReferences` — shared code must not reference a cheat package; only the reflective string lookup in `Flavor.java` is allowed.
+- `sweepStaleArtifacts` deletes stale `*-sources.jar` / `*-dev.jar` from `build/libs`. There are no sources jars any more (a sources jar would publish cheat sources).
+- Known environment quirks (both are file locks, not code problems):
+  - `Failed to clean up stale outputs` on `processResources` / `processClientResources` — re-run the command.
+  - `Unable to delete directory build/classes/java/client` — the Antigravity IDE's Java language server (or a running dev client) holds it. Deleting that one directory from Git Bash, or stopping the JVM holding it, clears it. **Do not** work around it by changing the source/output layout.
 
 ### C. Maintain Full Changelog
 - **Local Files:** Update [`CHANGELOG.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/CHANGELOG.md) and [`data/changelog.json`](file:///e:/Users/frand/Documents/bomboaddons-26.2/data/changelog.json).
@@ -98,7 +103,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.33`**.
+The mod is currently on version **`26.2.28.34`**.
+
+> [!NOTE]
+> ### ✅ SHIPPED in v26.2.28.34
+>
+> 1. **Chat history corrected.** Real attribution (server / player / mod, no more everything-credited-to-us), `[BomboAddons]` chat lines merged into their event row so `Trigger:` is on hover, opens at the newest message, and the requested tabs (`All`, `BomboAddons`, `Mods Only`, `Normal Chat`, `Blocked Only`, `Outgoing`) plus an `Events` chip and a `Source` column.
+> 2. **Auto sequencer rebuilt as a real feature.** Shared editor in *both* builds (only the executor is cheat-only), new **Click NPC** step (matcher + radius + button), per-step **Repeat**, per-sequence **jitter %** applied to every delay and the loop cooldown, and full chat editing via `/b auto add|remove|run|stop|list|toggle|loop|jitter|key`.
+> 3. **One build command, two jars.** `./gradlew build` emits `bomboaddons-<ver>.jar` and `bomboclient-<ver>.jar`; no sources jars; stale artifacts swept; `assertNoCheatReferences` added next to `assertFlavorIntegrity`.
+> 4. **Separate mod ids per build** (`bomboaddons` / `bomboclient`) plus a both-installed-at-once warning.
+> 5. **Hide Mod ID On Join** (`modIdHider`, both builds, default **on**) - the anti-blacklist countermeasure; the old cheat-only brand mixin was folded into it.
+> 6. **No Obfuscate** (`noObfuscate`, `/b noobfuscate`): strips `§k` from chat and item lore.
+> 7. **`/b cmd`**: in-game terminal, `/b cmd ping 1.1.1.1` runs immediately.
+> 8. **Updater fixed** for the "No releases or update jars found" dead-end.
 
 > [!NOTE]
 > ### ✅ SHIPPED in v26.2.28.33
@@ -114,12 +131,14 @@ The mod is currently on version **`26.2.28.33`**.
 > [!WARNING]
 > ### ⚠️ UNTESTED FEATURES (all of the above are unverified in-game)
 >
-> - `/b chathistory` and its tabs/keybind/GUI button.
-> - Auto sequence events + trigger tooltips; `/b auto ...` commands.
+> - `/b chathistory` (now the v26.2.28.34 version): attribution, tabs, boots-at-bottom, event merging, `Trigger:` on hover.
+> - Auto sequencer: the Auto category being visible in **both** builds, the new Click NPC step, Repeat, jitter ranges, and every `/b auto ...` subcommand.
 > - The safety halts (close a container mid-sequence to trigger one).
-> - The `bomboclient` jar loading at all, and `/b hide` / `/b stealth` only existing there.
+> - The `bomboclient` jar loading at all with its own mod id (`/b hide` / `/b stealth` only exist there), and the both-flavors-installed warning.
 > - `FlavorMigration` against a real legacy config (back up `config/bomboaddons/` before testing).
-> - The cheat-only brand mixin applying (a failed mixin apply shows up in the log, not the build).
+> - **Hide Mod ID On Join**: the `ClientBrandRetriever` mixin now ships in *both* jars, so a failed mixin apply would affect every user - check the log after first launch.
+> - **No Obfuscate** (`§k` chat + lore) and **`/b cmd`** (real shell execution, the `nb on|off` built-ins).
+> - The updater's new "update exists but no artifact for this build" message.
 
 > [!NOTE]
 > ### Previously untested features from v26.2.28.30 (still unverified)
@@ -186,14 +205,15 @@ The mod is currently on version **`26.2.28.33`**.
 | [`AbstractContainerScreenMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/AbstractContainerScreenMixin.java) | `AbstractContainerScreen` | Slot coloring, custom inventory buttons, slot hovering, and container click interception. |
 | [`GuiMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/GuiMixin.java) | `Gui` | In-game HUD element overlays (pads, mining timers, defense/ehp widgets). |
 | [`ClientPacketListenerMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientPacketListenerMixin.java) | `ClientPacketListener` | S2C packet interception (titles, action bars, scoreboard changes, chat messages). |
-| [`ChatMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java) & [`ChatScreenMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatScreenMixin.java) | `ChatComponent`, `ChatScreen` | Chat peeking, compact message history rendering, and stack trace inspection for mod attribution. |
+| [`ChatMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java) & [`ChatScreenMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatScreenMixin.java) | `ChatComponent`, `ChatScreen` | Chat peeking, compact message history rendering, stack trace inspection for mod attribution, and the No Obfuscate `ModifyVariable` rewrite. |
+| [`ClientBrandRetrieverMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientBrandRetrieverMixin.java) | `ClientBrandRetriever` | **Both builds**: hides the mod brand on join (`modIdHider`, on by default). |
 
 ---
 
 ## 6. Next Direct Actions
 
 1. **Live In-Game Verification:** test the untested list in Section 4 on Hypixel, starting with `/b chathistory` (pure client-side, zero risk) and a keybind-triggered sequence run.
-2. **Migrate cheat module group 2** into `src/cheat/java`: `features/hider/**`, `FreecamManager`, `CameraMixin`, `EntityMixin`. Mixins that only serve cheats go into `bomboclient.client.mixins.json`, which excludes them from the legit jar entirely. Add each migrated class to `CHEAT_ONLY_CLASSES` in `build.gradle` as you go.
+2. **Migrate cheat module group 2** into `src/cheat/java`: `features/hider/**`, `FreecamManager`, `CameraMixin`, `EntityMixin`. Mixins that only serve cheats go into `bomboclient.client.mixins.json` (currently empty, deliberately kept as the slot), and every migrated class must be added to `CHEAT_ONLY_CLASSES` in `build.gradle` or the positive-control assertion will fail the build.
 3. **Group 3 (ESP) and group 4 (automation)** per `docs/FEATURE_AUDIT.md`; ~55 files reference those modules, mostly single tick-hook call sites in `BomboaddonsClient`.
 4. **Deployment caution:** `bomboapi` scans `/home/ubuntu/bomboapi/releases/` by filename. Do **not** upload `bomboclient-*.jar` into that directory until the catalog is confirmed to ignore it, or `/mod/latest` may resolve to a cheat artifact for every user. Verify with `curl https://api.bombo.dpdns.org/mod/version` immediately after any upload.
 5. **Flavor-aware server catalog:** the updater currently rejects catalog entries whose filename does not match the running flavor's prefix. To actually *serve* `bomboclient` updates, `bomboapi` needs a flavor field / endpoint; until then `/b update switch` uses the GitHub release assets, so a cheat release must be published as a GitHub release asset to be reachable.
@@ -201,7 +221,15 @@ The mod is currently on version **`26.2.28.33`**.
 
 ---
 
-## 7. Key new files (v26.2.28.33)
+## 7. Key new files (v26.2.28.34)
+
+| File | Purpose |
+| :--- | :--- |
+| `gui/CmdScreen.java` | `/b cmd` in-game terminal: real shell execution, streamed output, scrollback, history. |
+| `util/NoObfuscate.java` | Strips the `§k` style from chat messages and tooltips without disturbing formatting or events. |
+| `mixin/ClientBrandRetrieverMixin.java` | Shared brand hider (was cheat-only; now both builds). |
+
+### Still current from v26.2.28.33
 
 | File | Purpose |
 | :--- | :--- |

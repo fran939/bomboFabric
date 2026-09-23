@@ -20,7 +20,9 @@ public class ChatHistoryTracker {
         BLOCKED("BLOCKED", 0xFFEF4444),
         OUTGOING("OUTGOING", 0xFF38BDF8),
         /** Raised by a mod feature itself (e.g. an auto sequence starting), not by chat. */
-        EVENT("EVENT", 0xFFA855F7);
+        EVENT("EVENT", 0xFFA855F7),
+        /** A feature event whose own chat line was suppressed by another mod. */
+        BLOCKED_EVENT("EVENT", 0xFFA855F7);
 
         public final String label;
         public final int color;
@@ -60,6 +62,35 @@ public class ChatHistoryTracker {
     /** Minimum gap between two identical feature events, in milliseconds. */
     private static final long EVENT_DEDUP_MS = 250L;
 
+    /**
+     * How long a recorded feature event stays eligible to "adopt" the chat line that
+     * reports the same thing. Without this, every feature event showed up twice: once as the
+     * event row (with origin/trigger) and once as the raw {@code [BomboAddons]} chat line
+     * (with none of that context).
+     */
+    private static final long EVENT_CHAT_ADOPT_MS = 2000L;
+
+    /**
+     * Frames that belong to the chat plumbing rather than to the code that produced a
+     * message. Walking past these is what stops every server message being attributed to
+     * BomboAddons just because our own mixin/hook sits in the call path.
+     */
+    private static boolean isInfrastructure(String cls, String method) {
+        if (cls.contains("ChatHistoryTracker")) return true;
+        if (cls.contains("ChatHistoryScreen")) return true;
+        if (cls.contains("bomboaddons.mixin")) return true;
+        if (cls.contains("ChatMessageTracker")) return true;
+        if (cls.equals("me.bombo.bomboaddons.BomboaddonsClient")) return true;
+        if (method.equals("recordIncoming") || method.equals("recordOutgoing") || method.equals("recordEvent")) return true;
+        if (method.startsWith("onChatMessage") || method.startsWith("routeChat") || method.startsWith("handleChat")) return true;
+        return false;
+    }
+
+    /** Methods that prove a message was delivered over the network rather than fabricated. */
+    private static final List<String> NETWORK_HANDLERS = List.of(
+            "handleSystemChat", "handleDisguisedChat", "handlePlayerChat", "handleChatMessage",
+            "handleCustomPayload", "handlePlayerInfoUpdate", "handleTabList");
+
     private static final List<Entry> entries = new ArrayList<>();
     private static final SimpleDateFormat TIME_FMT = new SimpleDateFormat("HH:mm:ss");
     private static final Map<String, Long> recentMessageTimes = new LinkedHashMap<>() {
@@ -81,7 +112,24 @@ public class ChatHistoryTracker {
     public static synchronized void recordIncoming(Component comp, boolean blocked, String category) {
         if (comp == null) return;
         String raw = comp.getString();
-        if (raw.contains("DailyRewardDebug") || raw.contains("[BomboAddons]")) return;
+        if (raw.contains("DailyRewardDebug")) return;
+
+        // A message the mod itself printed ("[BomboAddons] Started auto sequence: X"). Rather
+        // than dropping it, attach it to the event that caused it so the row carries the real
+        // origin and trigger ("Keybind TAB", "Config GUI RUN button", ...).
+        //
+        // The check runs on the *unformatted* text: our own prefix is written as
+        // "§8[§bBomboAddons§8]", so a plain substring test would never match it.
+        boolean fromBombo = ChatFormatting.stripFormatting(raw).contains("[BomboAddons]");
+        if (fromBombo) {
+            Entry owner = findEventForChatLine(raw, blocked);
+            if (owner != null) {
+                if (blocked && owner.status == Status.EVENT) {
+                    owner.status = Status.BLOCKED_EVENT;
+                }
+                return;
+            }
+        }
 
         long now = System.currentTimeMillis();
         String dedupKey = (blocked ? "B:" : "A:") + raw;
@@ -97,11 +145,53 @@ public class ChatHistoryTracker {
         entry.category = (category != null && !category.isEmpty()) ? category : detectCategory(raw);
         entry.component = comp;
         entry.rawText = raw;
+        entry.isBombo = fromBombo;
 
         inspectCaller(entry, Thread.currentThread().getStackTrace());
+        if (fromBombo) {
+            // Our own feature message: attribute it to us regardless of what the stack says.
+            entry.isMod = true;
+            entry.isBombo = true;
+            entry.callerModId = Constants.MOD_ID;
+            entry.callerModName = Constants.MOD_NAME;
+            entry.callerFrame = "knot//" + Constants.MOD_ID + ".feature";
+            if (entry.featureName == null) entry.featureName = "Core Client";
+        }
         inspectComponentEvents(entry, comp);
 
         addEntry(entry);
+    }
+
+    /**
+     * Finds the feature event that a {@code [BomboAddons]} chat line is reporting, so the same
+     * thing never occupies two rows. Matching is prefix based because the printed line is
+     * usually a trimmed version of the recorded event ("Started auto sequence: X" vs
+     * "Started auto sequence: X (loop ON, 500ms)").
+     */
+    private static Entry findEventForChatLine(String raw, boolean blocked) {
+        String incoming = normalizeForMatch(raw);
+        if (incoming.isEmpty()) return null;
+
+        long now = System.currentTimeMillis();
+        for (Entry e : entries) {
+            if (e.status != Status.EVENT && e.status != Status.BLOCKED_EVENT) continue;
+            if (e.rawText == null) continue;
+            if (now - e.timestamp > EVENT_CHAT_ADOPT_MS) continue;
+            String eventText = normalizeForMatch(e.rawText);
+            if (eventText.isEmpty()) continue;
+            if (eventText.startsWith(incoming) || incoming.startsWith(eventText)) {
+                return e;
+            }
+        }
+        return null;
+    }
+
+    /** Strips formatting and the mod prefix so two renderings of the same line compare equal. */
+    private static String normalizeForMatch(String text) {
+        if (text == null) return "";
+        String clean = ChatFormatting.stripFormatting(text).trim();
+        clean = clean.replaceFirst("^\\[?BomboAddons\\]?\\s*", "");
+        return clean.trim();
     }
 
     /**
@@ -225,14 +315,29 @@ public class ChatHistoryTracker {
     private static void inspectCaller(Entry entry, StackTraceElement[] stack) {
         if (stack == null) return;
 
+        // Was this message actually delivered by the server? If a packet handler is anywhere in
+        // the path the message came over the network, and only a mod frame *above* it can claim
+        // authorship. Checking this first is what fixes server chat being credited to us.
+        boolean fromServer = false;
+        String serverMethod = null;
+        for (StackTraceElement elem : stack) {
+            if (NETWORK_HANDLERS.contains(elem.getMethodName())) {
+                fromServer = true;
+                serverMethod = elem.getMethodName();
+                break;
+            }
+        }
+
         StackTraceElement caller = null;
         for (StackTraceElement elem : stack) {
             String cls = elem.getClassName();
             String mth = elem.getMethodName();
 
-            // 1. Skip java/jvm/reflection/mixin dispatchers and our own tracker
+            // 1. Skip java/jvm/reflection/mixin dispatchers, Fabric's event plumbing, and our
+            //    own chat routing/history code - none of those "created" the message.
             if (cls.startsWith("java.") || cls.startsWith("jdk.") || cls.startsWith("sun.") || cls.startsWith("org.spongepowered.") || cls.startsWith("com.llamalad7.")) continue;
-            if (cls.contains("ChatHistoryTracker") || cls.contains("bomboaddons.mixin") || cls.contains("bomboaddons.features.chat")) continue;
+            if (cls.startsWith("net.fabricmc.")) continue;
+            if (isInfrastructure(cls, mth)) continue;
 
             // 2. Skip any Mixin-injected handler method in any class (crucial: avoids knot//...ChatComponent.handler$...)
             if (mth.startsWith("handler$") || mth.startsWith("wrapOperation$") || mth.startsWith("invoke$")
@@ -277,6 +382,21 @@ public class ChatHistoryTracker {
             entry.callerFrame = "knot//" + caller.getClassName() + "." + caller.getMethodName() + "(" + caller.getFileName() + ":" + caller.getLineNumber() + ")";
 
             String cls = caller.getClassName();
+            boolean modFrame = !cls.startsWith("net.minecraft.") && !cls.startsWith("com.mojang.")
+                    && !cls.startsWith("net.fabricmc.");
+
+            if (fromServer && !modFrame) {
+                // Plain server chat (or a Fabric event with no mod in the path): nothing in
+                // this mod produced it, so do not claim it.
+                entry.isMod = false;
+                entry.isBombo = false;
+                entry.callerModId = null;
+                entry.callerModName = "Hypixel / Server";
+                entry.featureName = "Server Chat";
+                entry.callerFrame = "net.minecraft // " + (serverMethod != null ? serverMethod : "system chat");
+                return;
+            }
+
             if (cls.startsWith("me.bombo.bomboaddons")) {
                 entry.isBombo = true;
                 entry.isMod = true;
@@ -320,6 +440,7 @@ public class ChatHistoryTracker {
                 entry.featureName = caller.getMethodName();
             } else if (cls.startsWith("net.minecraft.")) {
                 entry.isMod = false;
+                entry.isBombo = false;
                 entry.callerModId = null;
                 if (cls.contains("ChatScreen") || cls.contains("CommandSuggestions") || cls.contains("KeyboardHandler")) {
                     entry.callerModName = "Player Input";
