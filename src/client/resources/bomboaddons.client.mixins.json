@@ -50,6 +50,7 @@
 		"KeyboardMixin",
 		"LevelMixin",
 		"LeverBlockMixin",
+		"MinecraftAccessor",
 		"MinecraftMixin",
 		"MouseMixin",
 		"PackConfirmScreenMixin",

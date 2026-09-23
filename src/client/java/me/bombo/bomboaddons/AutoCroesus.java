@@ -537,24 +537,34 @@ public class AutoCroesus {
       }
       lastRunTimestamp = now;
 
-      if (!checkGuiReported && mc.player != null) {
+      // Debug summary: exactly one message per GUI visit listing EVERY chest with its
+      // contents and values (item-by-item on hover). Detail lives in the on-screen panel
+      // (DungeonChestProfitHud) so chat stays quiet.
+      if (!checkGuiReported && mc.player != null && debugHighlightMode) {
          checkGuiReported = true;
-         String profitColor = bestChest.profit >= 0 ? "§a" : "§c";
-         MutableComponent prefix = Component.literal("§8[§3Bombo§8] §6" + cleanTitle + " §7(§e" + bestChest.chestName + "§7) | ");
-         MutableComponent costComp = Component.literal("§7Cost: " + (bestChest.isFree ? "§aFREE" : "§c-" + LowestBinManager.formatPrice(bestChest.cost)));
-         
-         StringBuilder contentsTooltip = new StringBuilder("§6--- Contents Breakdown ---\n");
-         for (ItemDetail item : bestChest.parsedItems) {
-            contentsTooltip.append("§e").append(item.name)
-               .append(item.adjustedQuantity > 1 ? " §7x §a" + String.format("%,d", item.adjustedQuantity) : "")
-               .append(" §7= §6").append(LowestBinManager.formatPrice(item.totalValue))
-               .append(" §7(").append(String.format("%,d", item.totalValue)).append(" coins)\n");
-         }
-         MutableComponent valComp = Component.literal("§7Contents: §6" + LowestBinManager.formatPrice(bestChest.totalContentsValue))
-            .withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(Component.literal(contentsTooltip.toString().trim()))));
+         mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus Debug§8] §6" + cleanTitle
+               + " §7- §e" + chests.size() + " chest" + (chests.size() == 1 ? "" : "s")
+               + " §7(value panel shown on the right; hover the chat line below for item breakdown)"));
 
-         MutableComponent profComp = Component.literal("§7Profit: " + profitColor + (bestChest.profit >= 0 ? "+" : "") + LowestBinManager.formatPrice(bestChest.profit) + " coins");
-         mc.player.sendSystemMessage(Component.empty().append(prefix).append(costComp).append(Component.literal(" §7| ")).append(valComp).append(Component.literal(" §7| ")).append(profComp));
+         MutableComponent summary = Component.literal("§8[§bAutoCroesus Debug§8] ");
+         boolean first = true;
+         StringBuilder allContents = new StringBuilder("§6--- All Chests Breakdown ---\n");
+         for (DungeonChestData c : chests) {
+            String pc = c.profit >= 0 ? "§a+" : "§c-";
+            if (!first) summary.append(Component.literal("§8 | "));
+            first = false;
+            summary.append(Component.literal("§e" + c.chestName + " §7(" + pc + LowestBinManager.formatPrice(c.profit) + "§7)"));
+            allContents.append("§6§l").append(c.chestName).append("§7 ").append(c.alreadyOpened ? "§8[claimed] " : "")
+                  .append("§7cost §f").append(c.isFree ? "FREE" : LowestBinManager.formatPrice(c.cost))
+                  .append(" §7profit §e").append(LowestBinManager.formatPrice(c.profit)).append("\n");
+            for (ItemDetail item : c.parsedItems) {
+               allContents.append("  §e").append(item.name)
+                     .append(item.adjustedQuantity > 1 ? " §7x§a" + String.format("%,d", item.adjustedQuantity) : "")
+                     .append(" §7= §6").append(LowestBinManager.formatPrice(item.totalValue)).append("\n");
+            }
+         }
+         summary.withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(Component.literal(allContents.toString().trim()))));
+         mc.player.sendSystemMessage(summary);
       }
 
       if (s.autoCroesus && active && now - lastActionTime > s.autoCroesusDelay) {

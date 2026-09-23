@@ -1,5 +1,36 @@
 # BomboAddons Changelog
 
+## [26.2.28.36] - 2026-09-23 (Beta)
+
+### 1. Sequences actually run now
+- **The runtime was the missing piece.** The editor, `/b auto` commands and the ON/RUN buttons shipped in both builds, but the code that *executes* steps was still cheat-source-only, so pressing N did nothing. The executor (`AutoSequenceExecutor`) now ships in **both** jars: triggers fire, steps run, the loop repeats with jittered cooldowns, and safety halts (container closed, 3x step failure, leaving the world) work everywhere.
+- **Click Slot / Item is one field now**: type an item name (`auction`) or a slot number (`5` or `slot 5`) - whichever is natural. A second, optional **GUI Title** field guards the step, so a "click auction" step only fires inside the auction house GUI.
+
+### 2. Sequence editor polish
+- **Ctrl+X cuts** the selection in every text field (copy + delete).
+- **Long text no longer overflows the box.** Focused fields now scroll horizontally: the text stays inside its box and the caret follows, instead of spilling over the background.
+- The action builder box got the extra row of height it needed; no more cramped layout.
+
+### 3. /b cmd: ssh works
+- **Typing while a command runs goes to its stdin.** `ssh host` then `ls` (or any interactive prompt) is delivered to the running process - the old "a command is still running" dead end is gone for input-taking programs.
+- **Ctrl+C interrupts** the running process (real terminal semantics).
+- **The view auto-follows new output** until you scroll up; scrolling back to the bottom (or pressing End) re-arms following. No more manual scrolling to read a tail.
+
+### 4. AutoCroesus debug
+- **Once per GUI visit, not spam.** Opening a dungeon chest GUI in simulation prints exactly one summary line per visit + one hoverable line with every chest's breakdown (item x qty = value).
+- **The all-chests value panel actually renders.** `DungeonChestProfitHud` existed but nothing called its render hook - the panel was orphaned. It now shows every chest with contents and profit on the right side of the GUI (in debug mode and whenever the HUD is enabled).
+- The debug summary lists **all chests**, not just the best one.
+
+### 5. EggFinder: real aaron authentication
+- The status-disconnected dead end is fixed at the root: when Skyblocker is not installed, we now run the **full Skyblocker handshake** - fetch the player's Mojang profile key pair, sign random data with its private key (`SHA256withRSA`), and POST the proof to `hysky.de/api/aaron/authenticate` with Skyblocker's mod envelope. The server validates it against Mojang's key signature and issues a real token; the token auto-refreshes 5 minutes before expiry, exactly like Skyblocker's own flow.
+- Added the `MinecraftAccessor` mixin for the profile key pair manager (parity with Skyblocker's accessor).
+
+### 6. Playtime sync hardening
+- The sync now identifies as the mod (Java's default `Java/x` User-Agent is intermittently refused by the edge) and sets explicit connect/read timeouts. Verified the `/playtime` endpoint itself answers 200.
+
+### 7. Chat attribution: the deferred-execution race
+- Keybind-fired commands (e.g. pressing B for `/bz`) were labelled `Server` because `executeTracked` defers the send through `mc.execute(...)`, which can run *after* the bind handler's `finally` had already cleared the trigger. The trigger is now snapshot before deferral and re-applied inside the lambda: keybind sends keep `Trigger: Keybind B`, typed sends stay `Player Input`.
+
 ## [26.2.28.35] - 2026-09-23 (Beta)
 
 ### 1. Chat history attribution

@@ -28,7 +28,9 @@ public final class CheatFlavor implements FlavorBridge {
 
     @Override
     public void init() {
-        CheatAutoExecutor.init();
+        // Shared runtime; registering it here too keeps exactly-one registration even if
+        // the legit init path ever stops calling it in this build's classloader layout.
+        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.init();
     }
 
     @Override
@@ -65,17 +67,17 @@ public final class CheatFlavor implements FlavorBridge {
 
     @Override
     public boolean onInputTrigger(int code, String kind, String label) {
-        return CheatAutoExecutor.onInputTrigger(code, kind, label);
+        return me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.onInputTrigger(code, kind, label);
     }
 
     @Override
     public void toggleSequenceByIndex(int index, String kind, String label) {
-        CheatAutoExecutor.toggleByIndex(index, kind, label);
+        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.toggleByIndex(index, kind, label);
     }
 
     @Override
     public void stopAll() {
-        CheatAutoExecutor.stopAll("Command");
+        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.stopAll("Command");
     }
 
     @Override

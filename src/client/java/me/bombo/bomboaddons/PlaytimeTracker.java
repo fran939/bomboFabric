@@ -513,6 +513,11 @@ public class PlaytimeTracker {
                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                conn.setRequestMethod("POST");
                conn.setRequestProperty("Content-Type", "application/json");
+               // Java's default UA ("Java/xx.x") is intermittently blocked by edge/CDN
+               // rules; identify as the mod instead.
+               conn.setRequestProperty("User-Agent", "BomboAddons/" + BomboaddonsClient.getModVersion());
+               conn.setConnectTimeout(10000);
+               conn.setReadTimeout(15000);
                conn.setDoOutput(true);
                OutputStream os = conn.getOutputStream();
 
