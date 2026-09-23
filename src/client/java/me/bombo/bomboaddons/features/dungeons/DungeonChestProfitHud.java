@@ -23,7 +23,8 @@ public class DungeonChestProfitHud {
             currentChests = null;
             return;
         }
-        if (!BomboConfig.get().croesusHelper && !BomboConfig.get().autoCroesusHud && !AutoCroesus.active && !BomboConfig.get().dungeonDebug) {
+        if (!BomboConfig.get().croesusHelper && !BomboConfig.get().autoCroesusHud && !AutoCroesus.active && !BomboConfig.get().dungeonDebug
+                && !AutoCroesus.debugHighlightMode) {
             return;
         }
 

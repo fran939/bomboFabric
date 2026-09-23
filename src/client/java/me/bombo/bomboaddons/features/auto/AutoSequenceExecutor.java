@@ -1,9 +1,8 @@
-package me.bombo.bomboaddons.flavor.cheat;
+package me.bombo.bomboaddons.features.auto;
 
 import me.bombo.bomboaddons.ClickLogic;
 import me.bombo.bomboaddons.CustomBindsProcessor;
 import me.bombo.bomboaddons.SkyblockUtils;
-import me.bombo.bomboaddons.features.auto.AutoSequenceManager;
 import me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction;
 import me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoSequence;
 import me.bombo.bomboaddons.features.chat.ChatHistoryTracker;
@@ -25,15 +24,16 @@ import java.util.Locale;
 /**
  * Runs user defined {@link AutoSequence}s.
  *
- * <p><b>Cheat-only.</b> This class lives in {@code src/cheat/java} and is therefore absent
- * from the {@code bomboaddons} jar - the legit build ships the sequence editor and its data
- * model, but none of the code that can click a slot, press a key or send a command.
+ * <p><b>Shared between flavors.</b> The user authors a sequence in their own config GUI and
+ * runs it on their own client; both the legit and the cheat jar ship this executor so the
+ * Sequences category actually does what its editor promises. Only flavor-specific extras
+ * (the {@code /b hide} family) remain flavor-only.
  *
  * <p>Every start, stop, retry and safety halt is recorded through
  * {@link ChatHistoryTracker#recordEvent}, so {@code /b chathistory} can explain after the
  * fact exactly what the client did and what triggered it.
  */
-public final class CheatAutoExecutor {
+public final class AutoSequenceExecutor {
 
     public static final String FEATURE = "Auto Sequence";
     public static final String ORIGIN = "Auto Sequences Manager";
@@ -48,11 +48,11 @@ public final class CheatAutoExecutor {
     /** Completed runs of the current step, for {@code repeatCount}. */
     private static int repeatsDone = 0;
 
-    private CheatAutoExecutor() {
+    private AutoSequenceExecutor() {
     }
 
     public static void init() {
-        ClientTickEvents.END_CLIENT_TICK.register(CheatAutoExecutor::tick);
+        ClientTickEvents.END_CLIENT_TICK.register(AutoSequenceExecutor::tick);
     }
 
     // ------------------------------------------------------------------
@@ -241,6 +241,16 @@ public final class CheatAutoExecutor {
                     if (!(mc.gui.screen() instanceof AbstractContainerScreen<?> containerScreen)) {
                         return false;
                     }
+                    // Optional GUI title guard: a step that names a GUI only clicks inside it,
+                    // so a "Click auction house" step never fires inside an unrelated chest.
+                    if (action.guiMatcher != null && !action.guiMatcher.isBlank()) {
+                        String title = ChatFormatting.stripFormatting(
+                                containerScreen.getTitle().getString()).trim().toLowerCase(Locale.ROOT);
+                        String want = action.guiMatcher.trim().toLowerCase(Locale.ROOT);
+                        if (!title.contains(want)) {
+                            return false;
+                        }
+                    }
                     int targetSlot = -1;
                     if (action.slotIndex >= 0 && action.slotIndex < containerScreen.getMenu().slots.size()) {
                         targetSlot = action.slotIndex;
@@ -377,7 +387,21 @@ public final class CheatAutoExecutor {
     }
 
     private static int findSlotMatching(AbstractContainerScreen<?> screen, String matcher) {
-        String query = matcher.toLowerCase(Locale.ROOT).trim();
+        // The single target field accepts a slot number ("5"), a "slot 5" prefix, or an
+        // item-name matcher - whichever the user finds natural for this step.
+        String trimmed = matcher.trim();
+        String loweredAll = trimmed.toLowerCase(Locale.ROOT);
+        if (loweredAll.matches("^slot\\s*#?\\s*\\d+$")) {
+            String digits = loweredAll.replaceAll("[^\\d]", "");
+            try {
+                int idx = Integer.parseInt(digits);
+                if (idx >= 0 && idx < screen.getMenu().slots.size()) return idx;
+            } catch (Throwable ignored) {
+            }
+            return -1;
+        }
+
+        String query = loweredAll;
         List<Slot> slots = screen.getMenu().slots;
 
         for (int i = 0; i < slots.size(); i++) {

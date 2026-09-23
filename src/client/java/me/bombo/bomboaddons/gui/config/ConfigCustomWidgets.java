@@ -1784,25 +1784,52 @@ public class ConfigCustomWidgets {
             cursorPosition = curVal.length();
         }
 
+        // Keep the text inside the box: scroll the visible window if the caret or the
+        // selection runs past the right edge instead of spilling over the background.
+        int maxTextW = bw - 12;
+        int caretAbsX = font.width(curVal.substring(0, Math.min(curVal.length(), Math.max(0, cursorPosition))));
+        int scroll = fieldScrollOffset;
+        if (fieldScrollOwner != null && !fieldScrollOwner.equals(fieldId)) {
+            fieldScrollOffset = 0;
+            scroll = 0;
+        }
+        if (caretAbsX - scroll > maxTextW) {
+            scroll = caretAbsX - maxTextW;
+        }
+        if (scroll > 0 && caretAbsX - scroll < 0) {
+            scroll = Math.max(0, caretAbsX);
+        }
+        fieldScrollOffset = scroll;
+        fieldScrollOwner = fieldId;
+
         if (isFieldSelected && selectionAnchor >= 0 && selectionAnchor != cursorPosition) {
             int selStart = Math.min(selectionAnchor, cursorPosition);
             int selEnd = Math.max(selectionAnchor, cursorPosition);
             selStart = Math.max(0, Math.min(curVal.length(), selStart));
             selEnd = Math.max(0, Math.min(curVal.length(), selEnd));
 
-            int x1 = bx + 6 + font.width(curVal.substring(0, selStart));
-            int x2 = bx + 6 + font.width(curVal.substring(0, selEnd));
-            g.fill(x1, by + 3, x2, by + inputH - 3, 0x6600AAFF);
+            int x1 = Math.max(bx + 2, bx + 6 - fieldScrollOffset + font.width(curVal.substring(0, selStart)));
+            int x2 = Math.min(bx + bw - 2, bx + 6 - fieldScrollOffset + font.width(curVal.substring(0, selEnd)));
+            if (x2 > x1) {
+                g.fill(x1, by + 3, x2, by + inputH - 3, 0x6600AAFF);
+            }
         }
 
-        g.text(font, curVal, bx + 6, by + 5, 0xFFFFFFFF, false);
+        g.text(font, curVal, bx + 6 - fieldScrollOffset, by + 5, 0xFFFFFFFF, false);
 
         // Blinking Cursor
         if (System.currentTimeMillis() % 1000 > 500) {
-            int curX = bx + 6 + font.width(curVal.substring(0, Math.min(curVal.length(), Math.max(0, cursorPosition))));
-            g.fill(curX, by + 3, curX + 1, by + inputH - 3, 0xFFFFFFFF);
+            int curX = bx + 6 - fieldScrollOffset + font.width(curVal.substring(0, Math.min(curVal.length(), Math.max(0, cursorPosition))));
+            if (curX >= bx + 2 && curX <= bx + bw - 2) {
+                g.fill(curX, by + 3, curX + 1, by + inputH - 3, 0xFFFFFFFF);
+            }
         }
     }
+
+    /** Horizontal scroll (px) of the currently focused single-line field, so long text stays inside its box. */
+    public static int fieldScrollOffset = 0;
+    /** Which field owns {@link #fieldScrollOffset}; switching focus resets it. */
+    public static String fieldScrollOwner = null;
 
     private static void renderInlineToggle(GuiGraphicsExtractor g, Font font, String label, boolean val, int bx, int by, int bw, int mouseX, int mouseY) {
         boolean hover = mouseX >= bx && mouseX <= bx + bw && mouseY >= by && mouseY <= by + 18;
@@ -3326,6 +3353,7 @@ public class ConfigCustomWidgets {
             case "autoSeqJitter" -> autoSeqJitterInput;
             case "actSlot" -> actionSlotInput;
             case "actItem" -> actionItemInput;
+            case "actGui" -> actionGuiInput;
             case "actCmd" -> actionCmdInput;
             case "actEntity" -> actionEntityInput;
             case "actRadius" -> actionRadiusInput;
@@ -3399,6 +3427,7 @@ public class ConfigCustomWidgets {
             case "autoSeqJitter" -> autoSeqJitterInput = nonNull;
             case "actSlot" -> actionSlotInput = nonNull;
             case "actItem" -> actionItemInput = nonNull;
+            case "actGui" -> actionGuiInput = nonNull;
             case "actCmd" -> actionCmdInput = nonNull;
             case "actEntity" -> actionEntityInput = nonNull;
             case "actRadius" -> actionRadiusInput = nonNull;
@@ -3672,6 +3701,26 @@ public class ConfigCustomWidgets {
                 } else {
                     Minecraft.getInstance().keyboardHandler.setClipboard(cur);
                 }
+            } catch (Exception ignored) {}
+            return true;
+        }
+
+        // Ctrl + X: Cut to Clipboard (copy the selection, then remove it)
+        if (isCtrl && keyCode == GLFW.GLFW_KEY_X) {
+            try {
+                if (isFieldSelected && selectionAnchor >= 0 && selectionAnchor != cursorPosition) {
+                    int selStart = Math.max(0, Math.min(selectionAnchor, cursorPosition));
+                    int selEnd = Math.min(cur.length(), Math.max(selectionAnchor, cursorPosition));
+                    Minecraft.getInstance().keyboardHandler.setClipboard(cur.substring(selStart, selEnd));
+                    setActiveFieldValue(cur.substring(0, selStart) + cur.substring(selEnd));
+                    cursorPosition = selStart;
+                } else if (!cur.isEmpty()) {
+                    Minecraft.getInstance().keyboardHandler.setClipboard(cur);
+                    setActiveFieldValue("");
+                    cursorPosition = 0;
+                }
+                selectionAnchor = -1;
+                isFieldSelected = false;
             } catch (Exception ignored) {}
             return true;
         }
@@ -4970,6 +5019,7 @@ public class ConfigCustomWidgets {
     public static me.bombo.bomboaddons.features.auto.AutoSequenceManager.ActionType newActionType = me.bombo.bomboaddons.features.auto.AutoSequenceManager.ActionType.CLICK_SLOT;
     public static String actionSlotInput = "";
     public static String actionItemInput = "";
+    public static String actionGuiInput = "";
     public static String actionClickType = "LEFT"; // LEFT, RIGHT, SHIFT_LEFT, DROP
     public static String actionCmdInput = "";
     public static boolean actionRightClick = true;
@@ -4991,7 +5041,7 @@ public class ConfigCustomWidgets {
                 h += seq.actions.size() * 20 + 4;
             }
             if (expandedSeqActionIndex == i) {
-                h += 56; // Action builder sub-card
+                h += 60; // Action builder sub-card
             }
             h += 4;
         }
@@ -5140,7 +5190,7 @@ public class ConfigCustomWidgets {
             // Render action builder panel if expanded
             if (isExpanded) {
                 int boxY = curY;
-                int boxH = 52;
+                int boxH = 56;
                 g.fill(x + 24, boxY, x + w - 12, boxY + boxH, 0x331E293B);
 
                 // Row 1: Action Type pills
@@ -5160,10 +5210,10 @@ public class ConfigCustomWidgets {
 
                 switch (newActionType) {
                     case CLICK_SLOT -> {
-                        renderCleanInputField(g, font, "Slot # (-1=name)", actionSlotInput, "actSlot", pX, pY, 85, mouseX, mouseY);
-                        pX += 90;
-                        renderCleanInputField(g, font, "Item Name", actionItemInput, "actItem", pX, pY, 105, mouseX, mouseY);
-                        pX += 110;
+                        renderCleanInputField(g, font, "Item Name or Slot #", actionItemInput, "actItem", pX, pY, 130, mouseX, mouseY);
+                        pX += 135;
+                        renderCleanInputField(g, font, "GUI Title (blank=any)", actionGuiInput, "actGui", pX, pY, 110, mouseX, mouseY);
+                        pX += 115;
                         boolean ctHover = mouseX >= pX && mouseX <= pX + 70 && mouseY >= pY && mouseY <= pY + 18;
                         ConfigUITheme.drawPillButton(g, font, "§e" + actionClickType, pX, pY, 70, 18, ctHover, -1, 0x22FFFFFF, 0x44FFFFFF);
                         pX += 75;
@@ -5423,10 +5473,10 @@ public class ConfigCustomWidgets {
 
                 switch (newActionType) {
                     case CLICK_SLOT -> {
-                        if (checkFieldClick(pX, pY, 85, 18, "actSlot", mouseX, mouseY)) return true;
-                        pX += 90;
-                        if (checkFieldClick(pX, pY, 105, 18, "actItem", mouseX, mouseY)) return true;
-                        pX += 110;
+                        if (checkFieldClick(pX, pY, 130, 18, "actItem", mouseX, mouseY)) return true;
+                        pX += 135;
+                        if (checkFieldClick(pX, pY, 110, 18, "actGui", mouseX, mouseY)) return true;
+                        pX += 115;
                         if (mouseX >= pX && mouseX <= pX + 70 && mouseY >= pY && mouseY <= pY + 18) {
                             actionClickType = switch (actionClickType) {
                                 case "LEFT" -> "RIGHT";
@@ -5511,10 +5561,26 @@ public class ConfigCustomWidgets {
 
                     if (action != null) {
                         action.repeatCount = repeat;
+                        if (action.type == me.bombo.bomboaddons.features.auto.AutoSequenceManager.ActionType.CLICK_SLOT) {
+                            // One target field: plain number or "slot N" goes to slotIndex,
+                            // anything else is an item-name matcher. The GUI field is shared by all step types.
+                            String target = actionItemInput.trim();
+                            if (target.toLowerCase(Locale.ROOT).matches("^slot\\s*#?\\s*\\d+$")) {
+                                try {
+                                    action.slotIndex = Integer.parseInt(target.replaceAll("[^\\d]", ""));
+                                    action.itemMatcher = "";
+                                } catch (Throwable ignored) {
+                                }
+                            } else {
+                                action.itemMatcher = target;
+                            }
+                            action.guiMatcher = actionGuiInput.trim();
+                        }
                         seq.actions.add(action);
                         me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
                         actionSlotInput = "";
                         actionItemInput = "";
+                        actionGuiInput = "";
                         actionCmdInput = "";
                         actionEntityInput = "";
                         actionRadiusInput = "5";
@@ -5525,7 +5591,7 @@ public class ConfigCustomWidgets {
                     }
                 }
 
-                curY += 56;
+                curY += 60;
             }
 
             curY += 4;

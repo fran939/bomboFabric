@@ -19,7 +19,9 @@ public final class LegitFlavor implements FlavorBridge {
 
     @Override
     public void init() {
-        // Intentionally empty - the legit build ships no automation runtime.
+        // Both builds ship the sequence runtime - the user authors and runs sequences on
+        // their own client, so there is nothing cheat-specific to gate away.
+        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.init();
     }
 
     @Override
@@ -29,21 +31,21 @@ public final class LegitFlavor implements FlavorBridge {
 
     @Override
     public boolean onInputTrigger(int code, String kind, String label) {
-        return false;
+        return me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.onInputTrigger(code, kind, label);
     }
 
     @Override
     public void toggleSequenceByIndex(int index, String kind, String label) {
-        // Nothing to toggle in the legit build.
+        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.toggleByIndex(index, kind, label);
     }
 
     @Override
     public void stopAll() {
-        // Nothing is ever running in the legit build.
+        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.stopAll("Command");
     }
 
     @Override
     public boolean hasSequences() {
-        return false;
+        return !me.bombo.bomboaddons.features.auto.AutoSequenceManager.getSequences().isEmpty();
     }
 }

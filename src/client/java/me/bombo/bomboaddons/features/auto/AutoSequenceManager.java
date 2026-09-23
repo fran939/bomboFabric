@@ -23,8 +23,9 @@ import java.util.UUID;
  * runtime: it only stores the user's sequences and exposes the running state so the config
  * GUI can render its ON/OFF indicator. The code that actually clicks slots, closes
  * containers, sends commands or presses keys lives in the cheat source set
- * ({@code src/cheat/java}, see {@code CheatAutoExecutor}) and is therefore absent from the
- * {@code bomboaddons} jar.
+ * ({@code src/cheat/java}) and was therefore absent from the
+ * {@code bomboaddons} jar; it is now shared ({@code AutoSequenceExecutor}) so sequences run
+ * in both builds.
  *
  * <p>The JSON layout is unchanged from earlier versions, so existing
  * {@code bomboaddons_auto_sequences.json} files keep loading.
@@ -54,6 +55,8 @@ public class AutoSequenceManager {
         public ActionType type = ActionType.CLICK_SLOT;
         public int slotIndex = -1; // -1 means use itemMatcher
         public String itemMatcher = ""; // Match item display name or skyblock ID
+        /** Container title matcher for CLICK_SLOT; blank means any open GUI. */
+        public String guiMatcher = "";
         public String clickType = "LEFT"; // LEFT, RIGHT, SHIFT_LEFT, DROP
         public String command = ""; // for RUN_COMMAND
         public boolean rightClick = true; // for CLICK_WORLD / INTERACT_ENTITY
@@ -124,8 +127,10 @@ public class AutoSequenceManager {
             String repeat = repeatCount > 1 ? (" x" + repeatCount) : "";
             return switch (type) {
                 case CLICK_SLOT -> {
-                    String target = slotIndex >= 0 ? ("Slot #" + slotIndex) : ("\"" + itemMatcher + "\"");
-                    yield "Click " + target + " (" + clickType + ", " + delayMs + "ms)" + repeat;
+                    String target = slotIndex >= 0 ? ("Slot #" + slotIndex)
+                            : (itemMatcher == null || itemMatcher.isBlank() ? "anything" : "\"" + itemMatcher + "\"");
+                    String gui = guiMatcher != null && !guiMatcher.isBlank() ? " in \"" + guiMatcher + "\"" : "";
+                    yield "Click " + target + gui + " (" + clickType + ", " + delayMs + "ms)" + repeat;
                 }
                 case CLOSE_GUI -> "Close GUI (" + delayMs + "ms)" + repeat;
                 case RUN_COMMAND -> "Run \"" + command + "\" (" + delayMs + "ms)" + repeat;
@@ -280,7 +285,7 @@ public class AutoSequenceManager {
 
     /** True when this build ships a sequence runtime that can actually execute. */
     public static boolean hasRuntime() {
-        return me.bombo.bomboaddons.flavor.Flavor.get().isCheat();
+        return true;
     }
 
     public static void sendMessage(String msg) {

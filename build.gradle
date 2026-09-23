@@ -199,8 +199,7 @@ publishing {
 // Add every cheat-only class here as modules move into src/cheat/java.
 // ---------------------------------------------------------------------------
 def CHEAT_ONLY_CLASSES = [
-	'me/bombo/bomboaddons/flavor/cheat/CheatFlavor.class',
-	'me/bombo/bomboaddons/flavor/cheat/CheatAutoExecutor.class'
+	'me/bombo/bomboaddons/flavor/cheat/CheatFlavor.class'
 ]
 
 // ---------------------------------------------------------------------------

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.35` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.36` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,7 +103,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.35`**.
+The mod is currently on version **`26.2.28.36`**.
+
+> [!NOTE]
+> ### ✅ SHIPPED in v26.2.28.36 (all untested in-game)
+>
+> 1. **Sequence runtime shared.** The executor moved from `src/cheat/.../CheatAutoExecutor` to shared `features/auto/AutoSequenceExecutor` (both jars). This was why sequences did nothing when triggered. `CHEAT_ONLY_CLASSES` reduced to `CheatFlavor.class`; `hasRuntime()` returns true unconditionally.
+> 2. **Click Slot one-field targeting.** Item name or slot number (`5`, `slot 5`) in one box; new optional `AutoAction.guiMatcher` gates the step by container title (parser in `AutoSequenceExecutor.findSlotMatching`).
+> 3. **Sequence editor UX.** Ctrl+X cut in all fields; focused single-line fields scroll horizontally (`fieldScrollOffset` in `ConfigCustomWidgets`) so long text stays inside the box; action builder one row taller.
+> 4. **`/b cmd` stdin.** Input while a process runs goes to its stdin (`runningProcessStdin` + `WORKERS` list); Ctrl+C interrupts; auto-follow scroll (disengages on scroll-up, End re-arms).
+> 5. **AutoCroesus debug summary** once per GUI, all chests with hover breakdown; `DungeonChestProfitHud.onScreenRender` was orphaned — now called from `AbstractContainerScreenMixin` render tail; debug mode forces the panel on.
+> 6. **EggAuth real aaron handshake.** When Skyblocker is absent: new `MinecraftAccessor` mixin exposes `profileKeyPairManager`; `EggAuth.authenticateWithAaron` does prepareKeyPair → sign random 16 bytes → POST to `hysky.de/api/aaron/authenticate` with `mod=skyblocker`, `modVersion=6.10.4`; token refresh 5 min before expiry; failures retry 15 min.
+> 7. **Playtime sync UA.** `PlaytimeTracker.sendPlaytimeDataToCloud` sends `User-Agent: BomboAddons/<ver>` + explicit timeouts (endpoint verified 200).
+> 8. **Attribution race fixed.** `executeTracked` snapshots `OUTGOING_TRIGGER` before `mc.execute` and re-applies it inside the lambda (`executeTrackedInner`), so keybind-fired sends keep their trigger even when the send is deferred past the handler's `finally`.
 
 > [!NOTE]
 > ### ✅ SHIPPED in v26.2.28.35 (all untested in-game)
@@ -227,7 +239,7 @@ The mod is currently on version **`26.2.28.35`**.
 
 ## 6. Next Direct Actions
 
-0. **Test v26.2.28.35 in-game (highest priority):** (a) run a keybind command → Outgoing row shows `Player Keybind` source + `Trigger: Keybind <name>`, typed ones show `Player Input`; (b) with a saved `/b order`, the Sequences tab appears; (c) `/b cmd` opens the terminal, survives Esc/reopen, `Ctrl+L` clears; (d) Trade Max Pet Hotkey accepts `Ctrl+A`/`Alt+A`; (e) `/b perf` shows no PestESP outside the Garden and no CritterCapsuleArc outside the Safari; (f) `/b ac debug` highlights instead of clicking; (g) swap account then join fast → you always join as the selected account; (h) EggFinder connects (check the log for the handshake).
+0. **Test v26.2.28.36 in-game (highest priority):** (a) sequence trigger key (e.g. N on "ah") actually runs the steps now; (b) `Click Slot / Item` with an item name and a GUI Title fires only inside that GUI; (c) `/b cmd` → `ssh host` → `ls` goes to ssh's stdin; Ctrl+C interrupts; output auto-follows; (d) `/b ac debug` prints one all-chests summary per GUI and the value panel renders; (e) EggFinder `/b egg debug` shows aaron auth OK (or explains why not); (f) pressing B for `/bz` shows `Trigger: Keybind B` not `Server`; (g) Ctrl+X and long-text scroll behave in sequence editor fields; (h) playtime sync stops erroring. Then the v26.2.28.35 list: Trade Max Pet `Ctrl+A` capture, `/b perf` scoping, account swap race, Sequences tab with a custom `/b order`.
 1. **Live In-Game Verification:** test the untested list in Section 4 on Hypixel, starting with `/b chathistory` (pure client-side, zero risk) and a keybind-triggered sequence run.
 2. **Migrate cheat module group 2** into `src/cheat/java`: `features/hider/**`, `FreecamManager`, `CameraMixin`, `EntityMixin`. Mixins that only serve cheats go into `bomboclient.client.mixins.json` (currently empty, deliberately kept as the slot), and every migrated class must be added to `CHEAT_ONLY_CLASSES` in `build.gradle` or the positive-control assertion will fail the build.
 3. **Group 3 (ESP) and group 4 (automation)** per `docs/FEATURE_AUDIT.md`; ~55 files reference those modules, mostly single tick-hook call sites in `BomboaddonsClient`.

@@ -6199,7 +6199,31 @@ public class BomboaddonsClient implements ClientModInitializer {
    public static void executeTracked(String cmd) {
       if (cmd != null && !cmd.isEmpty()) {
          Minecraft mc = Minecraft.getInstance();
+         // The keybind handlers stamp a trigger ThreadLocal, then clear it in a finally.
+         // mc.execute can defer this lambda to the next task drain - after that finally
+         // already ran - so snapshot the trigger here and re-apply it inside the lambda
+         // (only if it is no longer set, i.e. we really were deferred), clearing it after
+         // the send so an unrelated later message can never inherit the label.
+         final String deferredTrigger = me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.get();
          mc.execute(() -> {
+            boolean ownsDeferredTrigger = false;
+            if (deferredTrigger != null && me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.get() == null) {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.set(deferredTrigger);
+               ownsDeferredTrigger = true;
+            }
+            try {
+               executeTrackedInner(mc, cmd);
+            } finally {
+               if (ownsDeferredTrigger) {
+                  me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.remove();
+               }
+            }
+         });
+      }
+   }
+
+   private static void executeTrackedInner(Minecraft mc, String cmd) {
+      {
             if (mc.player != null) {
                String cleanCmd;
                for(cleanCmd = cmd.trim(); cleanCmd.startsWith("/"); cleanCmd = cleanCmd.substring(1).trim()) {
@@ -6221,7 +6245,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                }
             }
 
-         });
       }
    }
 

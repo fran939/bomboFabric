@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.36",
+    "date": "2026-09-23",
+    "changes": [
+      "Sequences actually run now: the executor ships in both builds (it was cheat-only, so pressing the trigger key did nothing); loop, jitter, repeats and safety halts all work",
+      "Click Slot / Item is one field: item name or slot number (5 / slot 5), plus an optional GUI Title guard so the step only fires inside the named GUI",
+      "Sequence editor: Ctrl+X cuts, long text scrolls inside its box instead of overflowing, taller action builder",
+      "/b cmd: typing while a command runs goes to its stdin (ssh ls works), Ctrl+C interrupts, and the view auto-follows output until you scroll up (End re-arms)",
+      "AutoCroesus debug: one summary per GUI visit (no spam) with a hoverable all-chests breakdown; the all-chests value panel now actually renders (its hook was orphaned)",
+      "EggFinder: full Skyblocker aaron authentication ported - profile key pair + SHA256withRSA signed data POST to hysky.de with a real token response, auto-refresh 5 min before expiry; fixes status: disconnected",
+      "Playtime sync: identifies as the mod (Java default UA was intermittently refused) with explicit timeouts",
+      "Chat history: keybind-fired commands keep their Keybind trigger through the deferred execution (pressing B for /bz no longer shows as Server)"
+    ]
+  },
+  {
     "version": "26.2.28.35",
     "date": "2026-09-23",
     "changes": [

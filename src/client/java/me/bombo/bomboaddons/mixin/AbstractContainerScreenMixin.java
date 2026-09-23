@@ -788,6 +788,9 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          AutoCroesus.onCheckGuiTick((AbstractContainerScreen)(Object)this);
       }
       AutoCroesusHud.renderInContainer(graphics);
+      // All-chests value overlay (contents + profit per chest). Render hook was previously
+      // orphaned - nothing called it - so the panel never appeared.
+      me.bombo.bomboaddons.features.dungeons.DungeonChestProfitHud.onScreenRender(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY);
 
       if (BomboConfig.get().storageOverlay) {
          me.bombo.bomboaddons.gui.StorageOverlayManager.renderOverlay(graphics, Minecraft.getInstance().font, mouseX, mouseY, this.width, this.height);

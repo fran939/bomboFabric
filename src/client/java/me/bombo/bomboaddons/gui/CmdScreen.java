@@ -14,6 +14,8 @@ import org.lwjgl.glfw.GLFW;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +56,12 @@ public class CmdScreen extends Screen {
     private static final List<String> SESSION_HISTORY = new ArrayList<>();
     private static volatile int sessionVersion = 0;
     private static volatile boolean sessionRunning = false;
+    /** Stdin of the currently running process; null when nothing is running. */
+    private static volatile Writer runningProcessStdin = null;
+    /** Sentinel printed when a keybind/screen input is delivered to a running process. */
+    private static final String STDIN_PROMPT = "§8[input] ";
+    /** Live handles for Ctrl+C; only accessed while {@code sessionRunning} is true. */
+    private static final List<Process> WORKERS = Collections.synchronizedList(new ArrayList<>());
     private static String sessionInput = "";
     private static int sessionCursor = 0;
     private static int sessionHistoryIndex = -1;
@@ -64,6 +72,8 @@ public class CmdScreen extends Screen {
     private int renderedVersion = -1;
     private List<String> snapshot = List.of();
     private boolean snapToBottom = true;
+    /** True while the view rides the bottom of the scrollback; disabled by scrolling up. */
+    private boolean following = true;
     private int scrollOffset = 0;
 
     // Live input line (mirrored to the session on close via removed())
@@ -122,6 +132,15 @@ public class CmdScreen extends Screen {
         sessionVersion++;
     }
 
+    /** Static-context variant used by interruptRunning(). */
+    private static void appendSession(String line) {
+        SESSION_LINES.add(line == null ? "" : line);
+        while (SESSION_LINES.size() > MAX_LINES) {
+            SESSION_LINES.remove(0);
+        }
+        sessionVersion++;
+    }
+
     private void printRaw(String line) {
         print(stripAnsi(line));
     }
@@ -170,7 +189,20 @@ public class CmdScreen extends Screen {
         }
 
         if (sessionRunning) {
-            print("§cA command is still running. Wait for it to finish.");
+            // A process is live: the line goes to its stdin instead of starting a second
+            // command - so `ssh host` followed by `ls` (or a password prompt) works.
+            Writer stdin = runningProcessStdin;
+            if (stdin != null) {
+                try {
+                    print(STDIN_PROMPT + cmd);
+                    stdin.write(cmd + "\n");
+                    stdin.flush();
+                } catch (Throwable t) {
+                    print("§c[stdin closed] " + t.getClass().getSimpleName());
+                }
+            } else {
+                print("§cA command is still running. Wait for it to finish or press Ctrl+C.");
+            }
             return;
         }
 
@@ -181,12 +213,15 @@ public class CmdScreen extends Screen {
 
         sessionRunning = true;
         Thread worker = new Thread(() -> {
+            Process process = null;
             try {
                 ProcessBuilder pb = new ProcessBuilder(argv);
                 pb.redirectErrorStream(true);
                 pb.directory(new File(Minecraft.getInstance().gameDirectory.getAbsolutePath()));
 
-                Process process = pb.start();
+                process = pb.start();
+                runningProcessStdin = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8);
+                WORKERS.add(process);
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                     String line;
@@ -201,6 +236,11 @@ public class CmdScreen extends Screen {
             } catch (Throwable t) {
                 print("§c[failed] " + t.getClass().getSimpleName() + ": " + t.getMessage());
             } finally {
+                WORKERS.remove(process);
+                runningProcessStdin = null;
+                if (process != null) {
+                    process.destroy();
+                }
                 sessionRunning = false;
                 // Adding to the list off-thread is safe; nudging the view is not.
                 Minecraft.getInstance().execute(() -> snapToBottom = true);
@@ -208,6 +248,31 @@ public class CmdScreen extends Screen {
         }, "bombo-cmd");
         worker.setDaemon(true);
         worker.start();
+    }
+
+    /** Ctrl+C: kill the running process tree. Next line typed goes to a fresh shell again. */
+    private static void interruptRunning() {
+        Writer stdin = runningProcessStdin;
+        if (stdin == null) {
+            appendSession("§7No command is running.");
+            return;
+        }
+        appendSession("§e^C");
+        // Closing stdin first (unblocks ssh-style readers), then destroying the process.
+        try {
+            stdin.close();
+        } catch (Throwable ignored) {
+        }
+        runningProcessStdin = null;
+        synchronized (WORKERS) {
+            for (Process p : WORKERS) {
+                try {
+                    p.destroy();
+                } catch (Throwable ignored) {
+                }
+            }
+            WORKERS.clear();
+        }
     }
 
     /** @return true when the command was fully handled and must not reach the shell. */
@@ -295,7 +360,12 @@ public class CmdScreen extends Screen {
 
         List<String> view = visibleLines();
         int maxScroll = Math.max(0, view.size() - rows);
-        if (snapToBottom) {
+        // Auto-follow: new output snaps the view to the bottom only while the user has not
+        // scrolled up; scrolling back to (or past) the bottom re-arms following.
+        if (scrollOffset >= maxScroll) {
+            following = true;
+        }
+        if (snapToBottom || following) {
             scrollOffset = maxScroll;
             snapToBottom = false;
         }
@@ -406,25 +476,36 @@ public class CmdScreen extends Screen {
                 cursor = 0;
                 return true;
             }
-            case GLFW.GLFW_KEY_END -> {
-                cursor = input.length();
-                return true;
-            }
             case GLFW.GLFW_KEY_UP -> {
                 recallHistory(-1);
+                following = true;
+                snapToBottom = true;
                 return true;
             }
             case GLFW.GLFW_KEY_DOWN -> {
                 recallHistory(1);
+                following = true;
+                snapToBottom = true;
                 return true;
             }
             case GLFW.GLFW_KEY_PAGE_UP -> {
+                following = false;
                 snapToBottom = false;
                 scrollOffset -= Math.max(1, (winH - 60) / rowH);
                 return true;
             }
             case GLFW.GLFW_KEY_PAGE_DOWN -> {
                 scrollOffset += Math.max(1, (winH - 60) / rowH);
+                return true;
+            }
+            case GLFW.GLFW_KEY_END -> {
+                if (input.length() != cursor) {
+                    cursor = input.length();
+                    return true;
+                }
+                // End with the caret already at EOL re-arms bottom-following.
+                following = true;
+                snapToBottom = true;
                 return true;
             }
             case GLFW.GLFW_KEY_A -> {
@@ -447,8 +528,13 @@ public class CmdScreen extends Screen {
             }
             case GLFW.GLFW_KEY_C -> {
                 if (ctrl) {
-                    Minecraft.getInstance().keyboardHandler.setClipboard(input);
-                    print("§8[copied input line]");
+                    if (sessionRunning) {
+                        // Real-terminal semantics: Ctrl+C interrupts the running process.
+                        interruptRunning();
+                    } else {
+                        Minecraft.getInstance().keyboardHandler.setClipboard(input);
+                        print("§8[copied input line]");
+                    }
                     return true;
                 }
                 return super.keyPressed(event);
@@ -503,6 +589,9 @@ public class CmdScreen extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (verticalAmount != 0) {
             snapToBottom = false;
+            // Only scrolling up detaches from the bottom; scrolling down re-arms following
+            // once the view reaches it again (checked during render).
+            if (verticalAmount > 0) following = false;
             scrollOffset -= (int) (verticalAmount * 3);
             return true;
         }
