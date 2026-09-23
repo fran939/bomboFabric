@@ -11,21 +11,34 @@ import java.io.InputStream;
  *   <li>{@code bomboclient-<version>.jar} - cheat flavor</li>
  * </ul>
  *
- * <p><b>Both keep the same Fabric mod id</b> ({@link #MOD_ID}). That is deliberate: mod
- * ids do not leak to servers, every asset/lang/texture lookup keeps working unchanged, and
- * because the two jars cannot be installed side by side Fabric refuses the duplicate,
- * which removes a whole class of "which jar am I running" bugs.
+ * <p><b>The two jars use different Fabric mod ids</b> ({@link #MOD_ID}):
+ * {@code bomboaddons} for the legit build and {@code bomboclient} for the cheat build. That is
+ * deliberate and mirrors what Odin had to scramble to do after a mod-id blacklist ban wave -
+ * a block on one id cannot take the other flavor down with it, and a client can still move
+ * between them.
  *
- * <p>The flavor is therefore signalled by a small marker resource that only the cheat build
- * bundles, and the two artifacts are distinguished by {@link #artifactPrefix()}.
+ * <p>The asset namespace stays {@link #ASSET_NAMESPACE} ({@code bomboaddons}) in both jars, so
+ * every texture/model/lang lookup keeps working unchanged regardless of the mod id.
+ *
+ * <p>The flavor is signalled by a small marker resource that only the cheat build bundles,
+ * and the two artifacts are distinguished by {@link #artifactPrefix()}.
  *
  * <p>The config directory is shared between flavors on purpose so switching jars never
  * loses a user's settings.
  */
 public final class Constants {
 
-    /** Fabric mod id - identical in both jars. */
-    public static final String MOD_ID = "bomboaddons";
+    /** Resource namespace for every asset this mod ships. Same in both jars. */
+    public static final String ASSET_NAMESPACE = "bomboaddons";
+
+    /** Fabric mod id of the legit build. */
+    public static final String LEGIT_MOD_ID = "bomboaddons";
+
+    /** Fabric mod id of the cheat build. */
+    public static final String CHEAT_MOD_ID = "bomboclient";
+
+    /** Fabric mod id of the running jar. */
+    public static final String MOD_ID;
 
     /** Config directory name. Shared across flavors on purpose. */
     public static final String CONFIG_DIR = "bomboaddons";
@@ -48,8 +61,50 @@ public final class Constants {
     static {
         FLAVOR = detectFlavor();
         CHEAT_FLAVOR = FLAVOR_CHEAT.equals(FLAVOR);
+        MOD_ID = CHEAT_FLAVOR ? CHEAT_MOD_ID : LEGIT_MOD_ID;
         MOD_NAME = CHEAT_FLAVOR ? "BomboClient" : "BomboAddons";
     }
+
+    /**
+     * The mod id of the <i>other</i> flavor. Used to detect both jars being installed at once,
+     * which would load every class twice and produce impossible bugs.
+     */
+    public static String otherModId() {
+        return CHEAT_FLAVOR ? LEGIT_MOD_ID : CHEAT_MOD_ID;
+    }
+
+    /**
+     * Version of the running jar, resolved from its own mod container.
+     *
+     * <p>Always use this instead of hardcoding a mod id: the two flavors have different ids,
+     * so a literal {@code getModContainer("bomboaddons")} returns empty on the cheat build and
+     * the old {@code .get()} call would throw.
+     */
+    public static String myVersion() {
+        try {
+            return net.fabricmc.loader.api.FabricLoader.getInstance()
+                    .getModContainer(MOD_ID)
+                    .map(c -> c.getMetadata().getVersion().getFriendlyString())
+                    .orElse("unknown");
+        } catch (Throwable t) {
+            return "unknown";
+        }
+    }
+
+    /** True when the opposite flavor is also loaded (both jars installed). */
+    public static boolean otherFlavorLoaded() {
+        try {
+            return net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded(otherModId());
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Short human label for the running jar, e.g. {@code BomboClient (bomboclient)}. */
+    public static String identityLine() {
+        return MOD_NAME + " (" + MOD_ID + ")";
+    }
+
 
     private static String detectFlavor() {
         try (InputStream in = Constants.class.getResourceAsStream(FLAVOR_MARKER)) {

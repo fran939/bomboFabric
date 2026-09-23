@@ -192,21 +192,18 @@ public class ModUpdater {
                   } catch (Throwable ignored) {}
                }
 
-               // Flavor gate: only ever install the artifact belonging to the build that is
-               // running. This is what stops the cheat build from installing the legit jar
-               // (and vice versa) just because it happens to be the newest release.
-               if (!matchesFlavor(targetFilename, downloadUrl)) {
-                  if (targetFilename != null && !targetFilename.isEmpty()) {
-                     System.err.println("[Bombo] Ignoring " + targetFilename + " - flavor "
-                           + Constants.FLAVOR + " expects " + Constants.artifactFilePrefix() + "*.jar");
-                  }
-                  latestVersion = null;
-                  downloadUrl = null;
-                  targetFilename = null;
-               }
+               // Flavor gate: an update may only install the artifact belonging to the build
+               // that is running. This is what stops the cheat build from replacing itself with
+               // the legit jar (and vice versa) just because it happens to be the newest release.
+               //
+               // Note the order: this is evaluated *after* the version comparison below. The old
+               // code blanked the version first, so a build whose flavor had no published artifact
+               // reported "no releases found" even when it was simply up to date on a channel the
+               // catalog clearly had entries for.
+               boolean flavorMatch = matchesFlavor(targetFilename, downloadUrl);
 
                String mcVersion = ((ModContainer) FabricLoader.getInstance().getModContainer("minecraft").get()).getMetadata().getVersion().getFriendlyString();
-               String currentVersion = ((ModContainer) FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
+               String currentVersion = Constants.myVersion();
                if (currentVersion.equals("${version}")) {
                   if (!silent) {
                      sendMessage("§cRunning in dev environment with unset version. Update check skipped.");
@@ -214,9 +211,10 @@ public class ModUpdater {
                   return;
                }
 
-               if (latestVersion == null || downloadUrl == null) {
+               if (latestVersion == null) {
                   if (!silent) {
-                     sendMessage("§cNo releases or update jars found for channel: §e" + channelLabel);
+                     sendMessage("§cNo releases found for channel: §e" + channelLabel);
+                     sendMessage("§7Checked §bapi.bombo.dpdns.org/mod/version§7 and the GitHub releases.");
                   }
                   return;
                }
@@ -229,6 +227,25 @@ public class ModUpdater {
                      } else {
                         sendMessage("§aMod is up to date! (Current v" + currentVersion + " is newer than latest " + channelLabel + " release v" + latestVersion + ")");
                      }
+                  }
+                  return;
+               }
+
+               // There really is a newer version; now we need our own artifact for it.
+               if (!flavorMatch || downloadUrl == null) {
+                  if (targetFilename != null && !targetFilename.isEmpty()) {
+                     System.err.println("[Bombo] Ignoring " + targetFilename + " - flavor "
+                           + Constants.FLAVOR + " expects " + Constants.artifactFilePrefix() + "*.jar");
+                  }
+                  if (!silent) {
+                     sendMessage("§eUpdate §b" + latestVersion + "§e exists, but no §b"
+                           + Constants.artifactPrefix() + "-*.jar§e artifact is published for it.");
+                     if (targetFilename != null && !targetFilename.isEmpty()) {
+                        sendMessage("§7Only published artifact: §f" + targetFilename);
+                     }
+                     sendMessage("§7This build is §b" + Constants.identityLine()
+                           + "§7. Use §b/b update switch§7 to move to the other build, "
+                           + "or publish a §b" + Constants.artifactPrefix() + "§7 release.");
                   }
                   return;
                }
@@ -535,7 +552,7 @@ public class ModUpdater {
       (new Thread(() -> {
          try {
             sendMessage("§7Finding previous version to downgrade...");
-            String currentVersion = ((ModContainer)FabricLoader.getInstance().getModContainer("bomboaddons").get()).getMetadata().getVersion().getFriendlyString();
+            String currentVersion = Constants.myVersion();
 
             // Fetch GitHub releases
             String ghUrl = "https://api.github.com/repos/fran939/bomboFabric/releases";

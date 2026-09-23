@@ -399,6 +399,16 @@ public abstract class ItemStackMixin {
          }
       }
 
+      // No Obfuscate: scrub the obfuscated (§k) style from every tooltip line, including the
+      // item name. Applied after our own additions so lines we inserted are covered too, and
+      // before the search highlight so matched text stays visible.
+      if (me.bombo.bomboaddons.util.NoObfuscate.isEnabled()) {
+         try {
+            me.bombo.bomboaddons.util.NoObfuscate.stripAll(lines);
+         } catch (Throwable ignored) {
+         }
+      }
+
       // Highlight matching query text in lore only during focus mode (double click / inventorySearchMode) and only for player/container items
       try {
          if (me.bombo.bomboaddons.ItemListOverlay.inventorySearchMode && (Object)this != me.bombo.bomboaddons.ItemListOverlay.hoveredStack) {

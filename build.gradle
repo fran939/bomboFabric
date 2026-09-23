@@ -9,21 +9,24 @@ group = project.maven_group
 // ---------------------------------------------------------------------------
 // Build flavors
 //
-//   ./gradlew build                 -> bomboaddons-<version>.jar  (legit)
-//   ./gradlew build -Pflavor=cheat   -> bomboclient-<version>.jar  (cheat)
+// A single `./gradlew build` produces BOTH artifacts:
 //
-// The cheat flavor adds src/cheat/java to the client source set, so those classes are
-// compiled and packaged ONLY in the cheat artifact. The legit artifact cannot contain
-// them, and assertFlavorIntegrity below proves it on every build.
+//   build/libs/bomboaddons-<version>.jar  (legit)
+//   build/libs/bomboclient-<version>.jar  (cheat)
+//
+// src/cheat/java is compiled as part of the client source set so one invocation can emit
+// both jars. Separation happens at PACKAGING time: the legit jar excludes every cheat
+// package, and assertFlavorIntegrity (see the bottom of this file) proves it on every
+// build - both that the legit jar has no cheat classes and that the cheat jar does.
+//
+// A compile-time guard (assertNoCheatReferences) additionally fails the build if shared
+// code references a cheat package, keeping the reflective SPI the only bridge.
 //
 // Both jars keep the same Fabric mod id on purpose: assets/textures/lang keep resolving
 // unchanged and Fabric refuses to load the two artifacts side by side.
 // ---------------------------------------------------------------------------
-def buildFlavor = (project.findProperty('flavor') ?: 'legit').toString()
-def cheatBuild = buildFlavor.equalsIgnoreCase('cheat')
-
 base {
-	archivesName = cheatBuild ? 'bomboclient' : project.archives_base_name
+	archivesName = project.archives_base_name
 }
 
 repositories {
@@ -61,10 +64,9 @@ loom {
 }
 
 // The "client" source set only exists once loom's splitEnvironmentSourceSets() has run,
-// so the cheat sources are attached here rather than at the top of the script.
-if (cheatBuild) {
-	sourceSets.client.java.srcDir 'src/cheat/java'
-}
+// so the cheat sources are attached here rather than at the top of the script. They are
+// always compiled; only the cheat artifact packages them.
+sourceSets.client.java.srcDir 'src/cheat/java'
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -104,36 +106,81 @@ tasks.named('test', Test) {
 
 
 java {
-	withSourcesJar()
+	// No sources jars: the client source set now includes src/cheat/java, so a sources jar
+	// would package cheat sources into a public artifact.
 
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(25)
 	}
 }
 
+// The default jar task is the LEGIT artifact: it strips every cheat package.
 jar {
 	inputs.property "archivesName", project.base.archivesName
 
-	// Cheat build: flavor metadata is layered in *before* the compiled resources so that,
-	// with DuplicatesStrategy.EXCLUDE, its fabric.mod.json wins over the default one.
-	//
-	// This deliberately lives in the jar task rather than processResources: changing the
-	// resource processing output set makes Gradle attempt a stale-output cleanup that can
-	// fail on this workspace (AccessDeniedException under build/resources/main/vypv).
-	if (cheatBuild) {
-		from('src/flavor/cheat') {
-			include '*.mixins.json'
-			include 'bomboaddons.flavor'
-		}
-	}
+	exclude 'me/bombo/bomboaddons/flavor/cheat/**'
+	exclude 'me/bombo/bomboaddons/mixin/cheat/**'
 
 	from sourceSets.main.output
 	from sourceSets.client.output
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-tasks.named('sourcesJar', Jar) {
+// ---------------------------------------------------------------------------
+// Cheat artifact
+// ---------------------------------------------------------------------------
+tasks.register('cheatJar', Jar) {
+	group = 'build'
+	description = 'Assembles the bomboclient (cheat) artifact.'
+	archiveBaseName = 'bomboclient'
+
+	from sourceSets.main.output
+	from sourceSets.client.output
+	from('src/flavor/cheat') {
+		include '*.mixins.json'
+		include 'bomboaddons.flavor'
+	}
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	// Loom/Java register the compiled resources before this script runs, so a same-named
+	// fabric.mod.json added here loses the DuplicatesStrategy race no matter where it is
+	// declared. Rewriting the entry after the jar is built is deterministic.
+	doLast {
+		def target = archiveFile.get().asFile
+		def newJson = file('src/flavor/cheat/fabric.mod.json').getText('UTF-8')
+				.replace('${version}', project.version.toString())
+		def tmp = new File(target.parentFile, target.name + '.tmp')
+
+		def zin = new java.util.zip.ZipInputStream(new FileInputStream(target))
+		def zout = new java.util.zip.ZipOutputStream(new FileOutputStream(tmp))
+		try {
+			def entry
+			while ((entry = zin.nextEntry) != null) {
+				zout.putNextEntry(new java.util.zip.ZipEntry(entry.name))
+				if (entry.name == 'fabric.mod.json') {
+					zout.write(newJson.getBytes('UTF-8'))
+				} else {
+					zin.transferTo(zout)
+				}
+				zout.closeEntry()
+			}
+		} finally {
+			zin.close()
+			zout.close()
+		}
+
+		if (!target.delete()) {
+			throw new GradleException("Could not replace ${target}")
+		}
+		if (!tmp.renameTo(target)) {
+			throw new GradleException("Could not move ${tmp} over ${target}")
+		}
+		logger.lifecycle("[flavor] ${target.name}: cheat metadata applied")
+	}
+}
+
+tasks.named('assemble') {
+	dependsOn 'cheatJar'
 }
 
 publishing {
@@ -146,51 +193,6 @@ publishing {
 }
 
 // ---------------------------------------------------------------------------
-// Cheat build: swap the mod metadata
-//
-// Loom registers the compiled resources on this task before the script body runs, so a
-// same-named fabric.mod.json added here loses the DuplicatesStrategy.EXCLUDE race no matter
-// the order it is declared in. The entry is therefore rewritten after the jar is built,
-// which is deterministic and keeps the task's output file set unchanged.
-// ---------------------------------------------------------------------------
-if (cheatBuild) {
-	tasks.named('jar').configure {
-		doLast {
-			def target = archiveFile.get().asFile
-			def newJson = file('src/flavor/cheat/fabric.mod.json').getText('UTF-8')
-					.replace('${version}', project.version.toString())
-			def tmp = new File(target.parentFile, target.name + '.tmp')
-
-			def zin = new java.util.zip.ZipInputStream(new FileInputStream(target))
-			def zout = new java.util.zip.ZipOutputStream(new FileOutputStream(tmp))
-			try {
-				def entry
-				while ((entry = zin.nextEntry) != null) {
-					zout.putNextEntry(new java.util.zip.ZipEntry(entry.name))
-					if (entry.name == 'fabric.mod.json') {
-						zout.write(newJson.getBytes('UTF-8'))
-					} else {
-						zin.transferTo(zout)
-					}
-					zout.closeEntry()
-				}
-			} finally {
-				zin.close()
-				zout.close()
-			}
-
-			if (!target.delete()) {
-				throw new GradleException("Could not replace ${target}")
-			}
-			if (!tmp.renameTo(target)) {
-				throw new GradleException("Could not move ${tmp} over ${target}")
-			}
-			logger.lifecycle("[flavor] rewrote fabric.mod.json in ${target.name}")
-		}
-	}
-}
-
-// ---------------------------------------------------------------------------
 // Flavor integrity check
 //
 // Guarantees - rather than assumes - that the legit artifact ships no cheat code.
@@ -198,9 +200,74 @@ if (cheatBuild) {
 // ---------------------------------------------------------------------------
 def CHEAT_ONLY_CLASSES = [
 	'me/bombo/bomboaddons/flavor/cheat/CheatFlavor.class',
-	'me/bombo/bomboaddons/flavor/cheat/CheatAutoExecutor.class',
-	'me/bombo/bomboaddons/mixin/cheat/ClientBrandRetrieverMixin.class'
+	'me/bombo/bomboaddons/flavor/cheat/CheatAutoExecutor.class'
 ]
+
+// ---------------------------------------------------------------------------
+// Compile-time separation guard
+//
+// Shared code must reach cheat behaviour only through the reflective Flavor SPI. Since the
+// cheat sources are compiled in every build, a direct reference would now compile silently -
+// this scan keeps that impossible instead of relying on convention.
+// ---------------------------------------------------------------------------
+tasks.register('assertNoCheatReferences') {
+	group = 'verification'
+	description = 'Fails if shared code references a cheat-only package directly.'
+	inputs.files(fileTree('src/client/java'), fileTree('src/main/java')).optional
+	outputs.upToDateWhen { false }
+
+	doLast {
+		// Comments and string/char literals are blanked before the scan, so the reflective
+		// locator in Flavor.java (which names the class as a *string*) stays legal while any real
+		// import or type reference is rejected.
+		def offenders = []
+		fileTree('src/client/java') {
+			include '**/*.java'
+		}.each { f ->
+			if (stripLiteralsAndComments(f.getText('UTF-8')).contains('flavor.cheat')) {
+				offenders.add(f.path)
+			}
+		}
+		if (!offenders.isEmpty()) {
+			throw new GradleException("Shared code must not reference cheat packages directly: ${offenders}")
+		}
+		logger.lifecycle('[flavor] no direct cheat references in shared code.')
+	}
+}
+
+/**
+ * Returns Java source with string/char literals and comments removed, so a scan only sees code.
+ * Not a full lexer - it handles escaped quotes and the common cases, which is all this guard needs.
+ */
+def stripLiteralsAndComments(String src) {
+	def out = new StringBuilder(src.length())
+	int i = 0
+	int n = src.length()
+	while (i < n) {
+		char c = src.charAt(i)
+		char next = (i + 1 < n) ? src.charAt(i + 1) : (char) 0
+		if (c == '/' && next == '/') {
+			while (i < n && src.charAt(i) != '\n') i++
+		} else if (c == '/' && next == '*') {
+			i += 2
+			while (i + 1 < n && !(src.charAt(i) == '*' && src.charAt(i + 1) == '/')) i++
+			i = Math.min(n, i + 2)
+		} else if (c == '"' || c == '\'') {
+			char quote = c
+			i++
+			while (i < n && src.charAt(i) != quote) {
+				if (src.charAt(i) == '\\') i++
+				i++
+			}
+			i++
+			out.append(' ')
+		} else {
+			out.append(c)
+			i++
+		}
+	}
+	return out.toString()
+}
 
 tasks.register('assertFlavorIntegrity') {
 	group = 'verification'
@@ -214,12 +281,12 @@ tasks.register('assertFlavorIntegrity') {
 		throw new GradleException('assertFlavorIntegrity could not locate the jar task to inspect.')
 	}
 	dependsOn artifactTask
+	dependsOn 'cheatJar'
 	inputs.file(artifactTask.archiveFile)
 	// Always inspect: a replayed "up to date" result would make this guard meaningless.
 	outputs.upToDateWhen { false }
 
 	doLast {
-		if (cheatBuild) return
 		def jarFile = artifactTask.archiveFile.get().asFile
 		if (!jarFile.exists()) {
 			throw new GradleException("assertFlavorIntegrity expected ${jarFile} to exist.")
@@ -235,9 +302,62 @@ tasks.register('assertFlavorIntegrity') {
 			throw new GradleException("Legit jar ${jarFile.name} contains cheat-only classes: ${leaked}")
 		}
 		logger.lifecycle("[flavor] ${jarFile.name} verified: no cheat-only classes present.")
+
+		// Positive control: the cheat artifact must actually contain them, otherwise a broken
+		// packaging step could silently ship two identical legit jars.
+		def cheatJarTask = tasks.findByName('cheatJar')
+		if (cheatJarTask == null) {
+			throw new GradleException('assertFlavorIntegrity could not locate the cheatJar task.')
+		}
+		def cheatFile = cheatJarTask.archiveFile.get().asFile
+		if (!cheatFile.exists()) {
+			throw new GradleException("assertFlavorIntegrity expected ${cheatFile} to exist.")
+		}
+		def missing = []
+		new java.util.zip.ZipFile(cheatFile).withCloseable { zip ->
+			CHEAT_ONLY_CLASSES.each { path ->
+				if (zip.getEntry(path) == null) missing.add(path)
+			}
+			if (zip.getEntry('bomboaddons.flavor') == null) missing.add('bomboaddons.flavor')
+		}
+		if (!missing.isEmpty()) {
+			throw new GradleException("Cheat jar ${cheatFile.name} is missing: ${missing}")
+		}
+		logger.lifecycle("[flavor] ${cheatFile.name} verified: cheat classes + marker present.")
 	}
 }
 
 tasks.named('check') {
+	dependsOn 'assertNoCheatReferences'
 	dependsOn 'assertFlavorIntegrity'
+}
+
+// ---------------------------------------------------------------------------
+// Stale artifact sweep
+//
+// Earlier flavor builds emitted bomboclient-<version>-sources.jar (and can leave -dev jars
+// behind). Neither is wanted, and a stale one in build/libs is easy to upload by mistake.
+// ---------------------------------------------------------------------------
+tasks.register('sweepStaleArtifacts') {
+	group = 'build'
+	description = 'Deletes stale -sources / -dev jars from build/libs.'
+	outputs.upToDateWhen { false }
+
+	doLast {
+		def libs = layout.buildDirectory.dir('libs').get().asFile
+		if (!libs.isDirectory()) return
+		libs.listFiles()
+				?.findAll { it.name.endsWith('-sources.jar') || it.name.endsWith('-dev.jar') }
+				?.each { f ->
+					if (f.delete()) logger.lifecycle("[flavor] removed stale artifact ${f.name}")
+				}
+	}
+}
+
+// Keep `build` honest: both artifacts and both guards run on every build.
+tasks.named('build') {
+	dependsOn 'cheatJar'
+	dependsOn 'assertNoCheatReferences'
+	dependsOn 'assertFlavorIntegrity'
+	dependsOn 'sweepStaleArtifacts'
 }

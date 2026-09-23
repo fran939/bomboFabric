@@ -3,9 +3,7 @@
 	"package": "me.bombo.bomboaddons.mixin.cheat",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],
-	"client": [
-		"ClientBrandRetrieverMixin"
-	],
+	"client": [],
 	"injectors": {
 		"defaultRequire": 1
 	}

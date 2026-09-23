@@ -56,11 +56,11 @@ public final class FlavorMigration {
 
             if (Constants.CHEAT_FLAVOR) {
                 s.flavor = Constants.FLAVOR_CHEAT;
-                if (legacyCheatUsage && s.hideCheats) {
-                    // Cheat build but the legacy profile was hiding cheats - respect the
-                    // recorded intent rather than the default.
-                    s.hideCheats = false;
-                }
+                // The cheat build ships cheat features, so the default there is to show them.
+                // Previously this only flipped when legacy cheat usage was detected, which left
+                // a fresh cheat install (or one migrated from a legit profile) hiding the very
+                // categories that build exists for - the cheats looked like they had vanished.
+                s.hideCheats = false;
             } else {
                 s.flavor = Constants.FLAVOR_LEGIT;
                 if (!s.hideCheats) {
@@ -91,7 +91,34 @@ public final class FlavorMigration {
             BomboConfig.save();
         }
 
+        warnIfBothFlavorsInstalled();
         writeMarker();
+    }
+
+    /**
+     * Both jars at once would load every shared class twice and make behaviour impossible to
+     * reason about. They now use different Fabric mod ids, so Fabric itself no longer blocks it -
+     * this check replaces that implicit guard with an explicit, loud one.
+     */
+    private static void warnIfBothFlavorsInstalled() {
+        if (!Constants.otherFlavorLoaded()) return;
+
+        String message = "Both flavors are installed (" + Constants.MOD_ID + " and "
+                + Constants.otherModId() + "). Remove one from the mods folder - running both "
+                + "loads this code twice and produces unpredictable behaviour.";
+        System.err.println("[Bombo] WARNING: " + message);
+        ChatHistoryTracker.recordEvent("FLAVOR", "Two flavors installed at once: " + message,
+                "Flavor Check", "Startup", "Duplicate jars");
+
+        try {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+                mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§8[§c!§8] §c" + message));
+            }
+        } catch (Throwable ignored) {
+            // Startup must never break because of a warning.
+        }
     }
 
     /**

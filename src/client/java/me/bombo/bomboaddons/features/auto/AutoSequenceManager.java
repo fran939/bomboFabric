@@ -39,7 +39,8 @@ public class AutoSequenceManager {
         CLICK_SLOT("Click Slot / Item"),
         CLOSE_GUI("Close Current GUI"),
         RUN_COMMAND("Run Chat / Command"),
-        CLICK_WORLD("Click in World (NPC)"),
+        CLICK_WORLD("Swing in World"),
+        INTERACT_ENTITY("Right/Left Click NPC"),
         WAIT("Wait Delay");
 
         public final String displayName;
@@ -55,7 +56,13 @@ public class AutoSequenceManager {
         public String itemMatcher = ""; // Match item display name or skyblock ID
         public String clickType = "LEFT"; // LEFT, RIGHT, SHIFT_LEFT, DROP
         public String command = ""; // for RUN_COMMAND
-        public boolean rightClick = true; // for CLICK_WORLD
+        public boolean rightClick = true; // for CLICK_WORLD / INTERACT_ENTITY
+        /** Entity name matcher for INTERACT_ENTITY (e.g. "Plushie", "Jerry"). */
+        public String entityMatcher = "";
+        /** Search radius in blocks for INTERACT_ENTITY. */
+        public double searchRadius = 5.0D;
+        /** How many times this step runs before moving on. */
+        public int repeatCount = 1;
         public int delayMs = 200; // delay after this action before next
 
         public AutoAction() {
@@ -96,6 +103,16 @@ public class AutoSequenceManager {
             return a;
         }
 
+        public static AutoAction interactEntity(String matcher, double radius, boolean rightClick, int delayMs) {
+            AutoAction a = new AutoAction();
+            a.type = ActionType.INTERACT_ENTITY;
+            a.entityMatcher = matcher;
+            a.searchRadius = radius;
+            a.rightClick = rightClick;
+            a.delayMs = delayMs;
+            return a;
+        }
+
         public static AutoAction waitDelay(int delayMs) {
             AutoAction a = new AutoAction();
             a.type = ActionType.WAIT;
@@ -104,15 +121,19 @@ public class AutoSequenceManager {
         }
 
         public String getSummary() {
+            String repeat = repeatCount > 1 ? (" x" + repeatCount) : "";
             return switch (type) {
                 case CLICK_SLOT -> {
                     String target = slotIndex >= 0 ? ("Slot #" + slotIndex) : ("\"" + itemMatcher + "\"");
-                    yield "Click " + target + " (" + clickType + ", " + delayMs + "ms)";
+                    yield "Click " + target + " (" + clickType + ", " + delayMs + "ms)" + repeat;
                 }
-                case CLOSE_GUI -> "Close GUI (" + delayMs + "ms)";
-                case RUN_COMMAND -> "Run \"" + command + "\" (" + delayMs + "ms)";
-                case CLICK_WORLD -> (rightClick ? "Right-Click World" : "Left-Click World") + " (" + delayMs + "ms)";
-                case WAIT -> "Wait " + delayMs + "ms";
+                case CLOSE_GUI -> "Close GUI (" + delayMs + "ms)" + repeat;
+                case RUN_COMMAND -> "Run \"" + command + "\" (" + delayMs + "ms)" + repeat;
+                case CLICK_WORLD -> (rightClick ? "Right-Click World" : "Left-Click World") + " (" + delayMs + "ms)" + repeat;
+                case INTERACT_ENTITY -> (rightClick ? "Right-Click" : "Left-Click")
+                        + (entityMatcher == null || entityMatcher.isBlank() ? " NPC" : " \"" + entityMatcher + "\"")
+                        + " /" + (int) searchRadius + "m (" + delayMs + "ms)" + repeat;
+                case WAIT -> "Wait " + delayMs + "ms" + repeat;
             };
         }
     }
@@ -125,6 +146,12 @@ public class AutoSequenceManager {
         public String triggerGui = ""; // Optional GUI title matcher
         public boolean loop = false;
         public int loopDelayMs = 400;
+        /**
+         * Randomisation applied to every wait in this sequence, as a percentage.
+         * 30 means a 3000ms delay fires somewhere in 2100-3900ms, so runs are never
+         * perfectly periodic.
+         */
+        public int jitterPercent = 30;
         public List<AutoAction> actions = new ArrayList<>();
 
         public AutoSequence() {
@@ -261,6 +288,35 @@ public class AutoSequenceManager {
         if (mc.player != null) {
             mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] " + msg));
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Randomised timing
+    // ------------------------------------------------------------------
+
+    private static final java.util.Random JITTER_RANDOM = new java.util.Random();
+
+    /**
+     * Applies a sequence's jitter to a delay.
+     *
+     * <p>{@code jitter(base, 0)} is exact; {@code jitter(base, 30)} spreads the result evenly
+     * across {@code base +/- 30%} (2100-3900ms for a 3000ms base).
+     */
+    public static long jitter(long baseMs, int jitterPercent) {
+        long base = Math.max(0L, baseMs);
+        int pct = Math.max(0, Math.min(90, jitterPercent));
+        if (pct == 0 || base == 0L) return base;
+        long spread = Math.max(1L, base * pct / 100L);
+        long offset = (long) (JITTER_RANDOM.nextDouble() * (spread * 2L + 1L)) - spread;
+        return Math.max(1L, base + offset);
+    }
+
+    /** Human readable jitter range, e.g. {@code 3000ms -> 2100-3900ms}. */
+    public static String describeJitter(long baseMs, int jitterPercent) {
+        int pct = Math.max(0, Math.min(90, jitterPercent));
+        if (pct == 0) return baseMs + "ms (fixed)";
+        long spread = Math.max(1L, baseMs * pct / 100L);
+        return "~" + Math.max(1L, baseMs - spread) + "-" + (baseMs + spread) + "ms (\u00b1" + pct + "%)";
     }
 
     /**

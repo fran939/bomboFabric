@@ -1,5 +1,27 @@
 [
   {
+    "version": "26.2.28.34",
+    "date": "2026-09-23",
+    "changes": [
+      "Fixed chat history attribution: server messages were labelled 'created by bomboaddons' because our own mixin/routing frames were picked as the caller - infrastructure frames are now skipped and network delivery is detected first",
+      "Chat history now merges the [BomboAddons] chat line into the feature event row, so 'Started auto sequence: X' shows Origin, Feature and Trigger (Keybind TAB, Mouse Button 5, Command /b auto run X, Config GUI RUN button) on hover",
+      "Chat history opens at the newest message with End/Home/PageUp/PageDown scrolling and no longer resets its scroll on tab change",
+      "Chat history tabs are now All, BomboAddons, Mods Only, Normal Chat (includes blocked), Blocked Only and Outgoing, plus an Events chip and a Source column; added /b chathistory bombo|mods|normal|blocked|outgoing|events|clear",
+      "Auto sequences are visible and editable in both builds again: the Auto category is no longer gated behind hideCheats and no longer cheat-only (only the executor is), so /b auto and the config card always exist",
+      "New auto step type: Right/Left Click NPC with name matcher, search radius and click button, for sequences like right-click NPC -> click slot -> shift-click -> close GUI",
+      "Auto sequences gained per-step Repeat counts, a randomised loop cooldown and a per-sequence jitter percentage (default 30) - a 3000ms delay fires between ~2100ms and ~3900ms",
+      "Auto sequence commands: /b auto add|remove|run|stop|list|toggle|loop|jitter|key <name> <KEY> - keybind and loop can be edited from chat",
+      "BUILD: ./gradlew build now produces BOTH artifacts at once - bomboaddons-<ver>.jar (legit) and bomboclient-<ver>.jar (cheat)",
+      "Added assertNoCheatReferences: the build fails if shared code references a cheat package (string literals/comments ignored so the reflective SPI stays legal)",
+      "assertFlavorIntegrity now also requires the cheat jar to contain its classes and marker, and stale -sources/-dev jars are deleted from build/libs automatically",
+      "Each build now uses its own Fabric mod id (bomboaddons / bomboclient) so a mod-id blacklist on one cannot affect the other; asset namespace is unchanged and a warning is shown if both jars are installed at once",
+      "New Hide Mod ID On Join setting (both builds, ON by default): the client answers the server brand query with the vanilla name so the join handshake carries no mod marker",
+      "New No Obfuscate setting (/b noobfuscate): strips the section-k scrambling style from chat messages and item lore so the hidden text is readable, keeping colours, formatting and click/hover events",
+      "New /b cmd in-game terminal: /b cmd ping 1.1.1.1 opens a real terminal screen and runs the command instantly, with streaming output, scrollback, up/down history, Ctrl+V paste and click-to-copy",
+      "Fixed updater reporting 'No releases or update jars found' when a build was simply up to date: the channel version is compared first and the flavor message is only shown for a real update that lacks an artifact for this build"
+    ]
+  },
+  {
     "version": "26.2.28.33",
     "date": "2026-09-23",
     "changes": [
