@@ -49,7 +49,17 @@ public class EggWebSocket {
       return activeSubscription;
    }
 
+   /**
+    * Set when a manual (/b egg debug|auth|reconnect) connect was requested. The handshake is
+    * asynchronous, so the first {@link #connect()} usually runs before a token exists and
+    * falls back to polling; when the token finally arrives this flag makes
+    * {@link #onTokenRefreshed()} open the real WebSocket even with no area subscription yet.
+    */
+   private static volatile boolean pendingManualConnect = false;
+
    public static synchronized void forceReconnect() {
+      pendingManualConnect = true;
+      connecting = false;
       if (webSocket != null) {
          try {
             webSocket.sendClose(1000, "Manual Reconnect").join();
@@ -88,7 +98,10 @@ public class EggWebSocket {
    }
 
    public static synchronized void onTokenRefreshed() {
-      if (BomboConfig.get().eggFinder && activeSubscription != null && (webSocket == null || webSocket.isInputClosed() || webSocket.isOutputClosed())) {
+      boolean manual = pendingManualConnect && (webSocket == null || webSocket.isInputClosed() || webSocket.isOutputClosed());
+      if (manual) pendingManualConnect = false;
+      if (BomboConfig.get().eggFinder && (activeSubscription != null || manual)
+            && (webSocket == null || webSocket.isInputClosed() || webSocket.isOutputClosed())) {
          connect();
       }
 

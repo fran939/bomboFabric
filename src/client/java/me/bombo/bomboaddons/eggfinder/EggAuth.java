@@ -45,6 +45,8 @@ public class EggAuth {
    private static volatile String token = null;
    /** Last token acquired from our own bomboapi (used for hoppity publish auth). */
    private static volatile String bomboToken = null;
+   /** Human-readable source of {@link #token}: "skyblocker", "hysky aaron" or "bombo". */
+   private static volatile String tokenSource = null;
    private static volatile boolean authenticating = false;
 
    /**
@@ -53,6 +55,23 @@ public class EggAuth {
     */
    public static String getBomboToken() {
       return bomboToken != null ? bomboToken : token;
+   }
+
+   /** Which auth path the last successful handshake used, for /b egg status. */
+   public static String describeState() {
+      if (!FabricLoader.getInstance().isModLoaded("skyblocker") && tokenSource == null) {
+         return authenticating ? "authenticating (no Skyblocker installed)" : "not authenticated (no Skyblocker installed)";
+      }
+      if (tokenSource != null) return tokenSource + (authenticating ? " (refreshing)" : "");
+      return authenticating ? "authenticating" : "unknown";
+   }
+
+   /** Short, non-secret description of the current token (or why there is none). */
+   public static String describeToken() {
+      String t = getBomboToken();
+      if (t == null || t.isEmpty()) return "§cnone";
+      String kind = tokenSource != null ? tokenSource : "borrowed";
+      return "§a" + kind + " §7(" + t.length() + " chars, …" + t.substring(Math.max(0, t.length() - 6)) + ")";
    }
 
    public static String getToken() {
@@ -69,6 +88,7 @@ public class EggAuth {
                long expiresAt = (Long) expiresMethod.invoke(tokenInfoObj);
                if (tok != null && !tok.isEmpty() && expiresAt > System.currentTimeMillis()) {
                   token = tok;
+                  tokenSource = "skyblocker";
                   return token;
                }
             }
@@ -85,11 +105,21 @@ public class EggAuth {
    public static void forceUpdateToken() {
       authenticating = false;
       token = null;
-      updateToken();
+      updateToken(true);
    }
 
    public static void updateToken() {
-      if (!AlphaTrackerHud.isHoppityActive()) {
+      updateToken(false);
+   }
+
+   /**
+    * @param force when true the Hoppity-season gate is skipped. Explicit requests
+    *              ({@code /b egg debug|auth|reconnect}) must always be able to run the
+    *              handshake, otherwise debugging looks like "auth is broken" whenever the
+    *              SkyBlock calendar is out of season.
+    */
+   public static void updateToken(boolean force) {
+      if (!force && !AlphaTrackerHud.isHoppityActive()) {
          authenticating = false;
          return;
       }
@@ -108,6 +138,7 @@ public class EggAuth {
                long expiresAt = (Long) expiresMethod.invoke(tokenInfoObj);
                if (tok != null && !tok.isEmpty() && expiresAt > System.currentTimeMillis()) {
                   token = tok;
+                  tokenSource = "skyblocker";
                   LOGGER.info("Using active Skyblocker API token directly.");
                   if (BomboConfig.get().eggFinderDebug && Minecraft.getInstance().player != null) {
                      Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§eEggFinder Debug§8] §aUsing active Skyblocker API token directly."));
@@ -179,6 +210,7 @@ public class EggAuth {
                JsonObject json = GSON.fromJson(resp.body(), JsonObject.class);
                if (json != null && json.has("token")) {
                   token = json.get("token").getAsString();
+                  tokenSource = "hysky aaron";
                   long issuedAt = json.has("issuedAt") ? json.get("issuedAt").getAsLong() : System.currentTimeMillis();
                   long exp = json.has("expiresAt") ? json.get("expiresAt").getAsLong() : System.currentTimeMillis() + 3600_000L;
                   LOGGER.info("[EggAuth] aaron auth succeeded; token refresh scheduled.");
@@ -241,6 +273,7 @@ public class EggAuth {
             JsonObject json = GSON.fromJson(resp.body(), JsonObject.class);
             if (json != null && json.has("token")) {
                token = json.get("token").getAsString();
+               tokenSource = "bombo";
                bomboToken = token;
                long issuedAt = json.has("issuedAt") ? json.get("issuedAt").getAsLong() : System.currentTimeMillis();
                long exp = json.has("expiresAt") ? json.get("expiresAt").getAsLong() : System.currentTimeMillis() + 3600_000L;
@@ -268,10 +301,28 @@ public class EggAuth {
          Minecraft mc = Minecraft.getInstance();
          if (mc.getUser() == null) return null;
 
-         ProfileKeyPairManager profileKeys = ((me.bombo.bomboaddons.mixin.MinecraftAccessor) mc).getProfileKeyPairManagerField();
+         // Minecraft exposes this as a public getter, so no accessor mixin is required.
+         ProfileKeyPairManager profileKeys = mc.getProfileKeyPairManager();
          java.util.concurrent.CompletableFuture<java.util.Optional<ProfileKeyPair>> future = profileKeys.prepareKeyPair();
-         java.util.Optional<ProfileKeyPair> opt = future != null ? future.join() : null;
-         if (opt == null || opt.isEmpty() || opt.get().publicKey().data().hasExpired()) return null;
+         java.util.Optional<ProfileKeyPair> opt;
+         try {
+            opt = future != null ? future.join() : null;
+         } catch (java.util.concurrent.CompletionException ce) {
+            Throwable cause = ce.getCause() != null ? ce.getCause() : ce;
+            LOGGER.error("[EggAuth] prepareKeyPair failed: " + cause, cause);
+            debugChat("§cKey pair fetch failed: " + cause.getClass().getSimpleName()
+                  + (cause.getMessage() != null ? " (" + cause.getMessage() + ")" : "")
+                  + " §7- aaron auth needs a premium account on online mode.");
+            return null;
+         }
+         if (opt == null || opt.isEmpty()) {
+            debugChat("§cNo profile key pair - offline/cracked account, or MC services unreachable.");
+            return null;
+         }
+         if (opt.get().publicKey().data().hasExpired()) {
+            debugChat("§cProfile key pair expired - restart the game.");
+            return null;
+         }
 
          ProfileKeyPair keyPair = opt.get();
          SignedData signedData = getRandomSignedData(keyPair.privateKey());

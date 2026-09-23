@@ -919,6 +919,16 @@ public class BomboConfig {
       public int autoCroesusHudX = 10;
       public int autoCroesusHudY = 200;
       public float autoCroesusHudScale = 1.0F;
+      // Dungeon chest value panel (contents + profit per chest). x < 0 means "auto": the
+      // panel docks to the right of the container GUI until the user drags it in /b gui.
+      public int croesusProfitHudX = -1;
+      public int croesusProfitHudY = -1;
+      public float croesusProfitHudScale = 1.0F;
+      // Cumulative profit tracker (like /gp): total profit + a per-floor breakdown.
+      public boolean croesusProfitTracker = false;
+      public int croesusTrackerHudX = 4;
+      public int croesusTrackerHudY = 140;
+      public float croesusTrackerHudScale = 1.0F;
       public boolean kuudraDebug = false;
       public boolean kuudraChestDebug = false;
       public boolean dungeonDebug = false;

@@ -54,6 +54,11 @@ public class CmdScreen extends Screen {
     // ------------------------------------------------------------------
     private static final List<String> SESSION_LINES = Collections.synchronizedList(new ArrayList<>());
     private static final List<String> SESSION_HISTORY = new ArrayList<>();
+    /** Command history persists across game restarts (config/bomboaddons/cmd_history.txt). */
+    private static final int MAX_HISTORY = 500;
+    private static final java.io.File HISTORY_FILE = net.fabricmc.loader.api.FabricLoader.getInstance()
+            .getConfigDir().resolve("bomboaddons/cmd_history.txt").toFile();
+    private static boolean historyLoaded = false;
     private static volatile int sessionVersion = 0;
     private static volatile boolean sessionRunning = false;
     /** Stdin of the currently running process; null when nothing is running. */
@@ -159,6 +164,42 @@ public class CmdScreen extends Screen {
         return snapshot;
     }
 
+    /** Loads the on-disk history the first time it is needed. */
+    private static void loadHistoryOnce() {
+        if (historyLoaded) return;
+        historyLoaded = true;
+        try {
+            if (HISTORY_FILE.exists()) {
+                for (String line : java.nio.file.Files.readAllLines(HISTORY_FILE.toPath(), StandardCharsets.UTF_8)) {
+                    String trimmed = line.trim();
+                    if (!trimmed.isEmpty()) SESSION_HISTORY.add(trimmed);
+                }
+                while (SESSION_HISTORY.size() > MAX_HISTORY) {
+                    SESSION_HISTORY.remove(0);
+                }
+            }
+        } catch (Throwable t) {
+            // A bad history file must never break the terminal.
+        }
+    }
+
+    /** Writes the whole history back; small file, so a full rewrite is fine. */
+    private static void saveHistory() {
+        try {
+            java.io.File dir = HISTORY_FILE.getParentFile();
+            if (dir != null && !dir.exists()) dir.mkdirs();
+            StringBuilder sb = new StringBuilder();
+            synchronized (SESSION_HISTORY) {
+                for (String line : SESSION_HISTORY) {
+                    sb.append(line.replace("\n", " ")).append('\n');
+                }
+            }
+            java.nio.file.Files.write(HISTORY_FILE.toPath(), sb.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (Throwable t) {
+            // read-only config dir etc. - history just stays in memory.
+        }
+    }
+
     private static void clearSessionLines() {
         synchronized (SESSION_LINES) {
             SESSION_LINES.clear();
@@ -175,8 +216,13 @@ public class CmdScreen extends Screen {
         if (cmd.isEmpty()) return;
 
         synchronized (SESSION_HISTORY) {
+            loadHistoryOnce();
             if (SESSION_HISTORY.isEmpty() || !SESSION_HISTORY.get(SESSION_HISTORY.size() - 1).equals(cmd)) {
                 SESSION_HISTORY.add(cmd);
+                while (SESSION_HISTORY.size() > MAX_HISTORY) {
+                    SESSION_HISTORY.remove(0);
+                }
+                saveHistory();
             }
             sessionHistoryIndex = -1;
         }
@@ -561,6 +607,7 @@ public class CmdScreen extends Screen {
 
     private void recallHistory(int direction) {
         synchronized (SESSION_HISTORY) {
+            loadHistoryOnce();
             if (SESSION_HISTORY.isEmpty()) return;
             if (sessionHistoryIndex == -1) {
                 sessionHistoryIndex = SESSION_HISTORY.size();

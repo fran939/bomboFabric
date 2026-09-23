@@ -103,7 +103,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.37`**.
+The mod is currently on version **`26.2.28.38`**.
+
+> [!NOTE]
+> ### ✅ SHIPPED in v26.2.28.38 (untested in-game)
+>
+> 1. **Sequence steps are editable.** The pencil button on a step loads it back into the builder (`[✔ Save Step]`), so `Run Chat / Command` can be changed from `ah` to `/ah` without deleting the step. Type pills switch the action without dropping the edit index.
+> 2. **Croesus profit tracker HUD** (`CroesusProfitTrackerHud`, shared): total profit / runs / average / kismets + **per-floor breakdown** (F1..F7, M1..M7, T1..T5) from the sidebar sub-area. New `floors` map in `ProfitRecord` (`bombo_croesus_profit.json`); `AutoCroesus.getCurrentFloorTag()` + `floorSortKey()`. Movable via `HudTarget.CROESUS_TRACKER`.
+> 3. **Auto Croesus config category** (`ConfigRegistry` case `"Auto Croesus"`), added to `CHEAT_CATEGORIES` so it only exists in the `bomboclient` build: master switch, paid-cart buying, delays, kismet threshold/delay, reroll value, dungeon chest threshold, dungeon key value, three HUD toggles + Debug Highlight Mode.
+> 4. **Chest value panel is movable/scalable** (`croesusProfitHudX/Y/Scale`, `HudTarget.CROESUS_PROFIT`); `x < 0` means "auto" (docked right of the container) and `HudMoveScreen.init` normalizes it so it can be dragged. `DungeonChestProfitHud.renderDummy` shows a sample panel.
+> 5. **Simulation debug deduped**: `announcedSimulation` (slot|action set, cleared per container) replaces the last-pair check, so alternating decisions no longer spam chat every tick.
+> 6. **`/b cmd` history persisted** to `config/bomboaddons/cmd_history.txt` (500 entries), and every Bombo keybind is suppressed while `CmdScreen` is open (`KeyboardMixin` early return).
+> 7. **EggFinder**: `/b egg debug|auth|reconnect` implemented; `EggAuth.updateToken(boolean force)` bypasses the Hoppity-season gate for explicit requests; `EggWebSocket.pendingManualConnect` connects as soon as the async token arrives. The `MinecraftAccessor` mixin was **deleted** (ClassCastException source) — the key pair now comes from the public `Minecraft.getProfileKeyPairManager()`.
 
 > [!NOTE]
 > ### ✅ SHIPPED in v26.2.28.37 (server + mod, untested in-game)
@@ -246,7 +257,8 @@ The mod is currently on version **`26.2.28.37`**.
 
 ## 6. Next Direct Actions
 
-0. **Test v26.2.28.37 in-game (highest priority):** (a) `/b egg debug` — expect `aaron auth OK` (hysky) or `Bombo auth OK` (fallback); (b) find an egg and confirm the hoppity publish doesn't 401 in the server log; (c) everything from the 28.36 list below is still untested too.
+0. **Test v26.2.28.38 in-game (highest priority):** edit an existing sequence step; run `/b ac stats` and check the tracker HUD per floor; `/b egg debug` (expect a real handshake result instead of `Incorrect argument`); `/b cmd` → run something, restart, press ↑.
+0b. **Test v26.2.28.37 in-game:** (a) `/b egg debug` — expect `aaron auth OK` (hysky) or `Bombo auth OK` (fallback); (b) find an egg and confirm the hoppity publish doesn't 401 in the server log; (c) everything from the 28.36 list below is still untested too.
 1. **Live In-Game Verification:** test the untested list in Section 4 on Hypixel, starting with `/b chathistory` (pure client-side, zero risk) and a keybind-triggered sequence run.
 2. **Migrate cheat module group 2** into `src/cheat/java`: `features/hider/**`, `FreecamManager`, `CameraMixin`, `EntityMixin`. Mixins that only serve cheats go into `bomboclient.client.mixins.json` (currently empty, deliberately kept as the slot), and every migrated class must be added to `CHEAT_ONLY_CLASSES` in `build.gradle` or the positive-control assertion will fail the build.
 3. **Group 3 (ESP) and group 4 (automation)** per `docs/FEATURE_AUDIT.md`; ~55 files reference those modules, mostly single tick-hook call sites in `BomboaddonsClient`.

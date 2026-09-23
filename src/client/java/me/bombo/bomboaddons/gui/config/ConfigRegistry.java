@@ -14,7 +14,9 @@ public class ConfigRegistry {
     // in the legit build made the whole section look like it had vanished.
     public static final Set<String> CHEAT_CATEGORIES = Set.of(
             "Clicker",
-            "Experiments"
+            "Experiments",
+            // Automation that plays the game for you: only the bomboclient build shows it.
+            "Auto Croesus"
     );
 
     // List of standard categories ordered alphabetically (excluding GUI Settings and Debug which sit at the bottom)
@@ -22,6 +24,7 @@ public class ConfigRegistry {
             "Aliases",
             "Anvil",
             "Auto",
+            "Auto Croesus",
             // Display alias so the category reads "Sequences" in the GUI. The internal id,
             // /b auto commands and config schema all keep using "Auto".
             // (see CATEGORY_DISPLAY_NAMES)
@@ -304,6 +307,60 @@ public class ConfigRegistry {
                         allProfiles,
                         () -> s.activeProfile != null ? s.activeProfile : "default",
                         v -> s.activeProfile = v));
+            }
+
+            case "Auto Croesus" -> {
+                items.add(ConfigItem.header("Auto Croesus (Automation)", category));
+                items.add(ConfigItem.toggle("Auto Croesus", "Master switch: claims/rerolls Croesus chests automatically.", category,
+                        () -> s.autoCroesus, v -> s.autoCroesus = v));
+                items.add(ConfigItem.toggle("Buy Paid Chests", "Claims paid chests (Kismet/keys) when profitable.", category,
+                        () -> s.autoCroesusBuyPaid, v -> s.autoCroesusBuyPaid = v));
+                items.add(ConfigItem.sliderInt("Action Delay", "Milliseconds between automated container actions.", category,
+                        50, 2000, 25, "ms", () -> (int) s.autoCroesusDelay, v -> s.autoCroesusDelay = v));
+
+                items.add(ConfigItem.header("Kismet Feather", category));
+                items.add(ConfigItem.toggle("Auto Reroll With Kismet", "Rerolls a chest with a Kismet Feather when its value is below the threshold.", category,
+                        () -> s.autoKismet, v -> s.autoKismet = v));
+                if (s.autoKismet) {
+                    items.add(ConfigItem.sliderInt("Kismet Threshold", "Reroll when chest value is below this many coins (millions).", category,
+                            1, 500, 1, "m",
+                            () -> (int) (s.kismetThreshold / 1000000L), v -> s.kismetThreshold = (long) v * 1000000L));
+                    items.add(ConfigItem.sliderInt("Kismet Delay", "Milliseconds to wait after a Kismet reroll.", category,
+                            50, 2000, 25, "ms", () -> (int) s.autoCroesusKismetDelay, v -> s.autoCroesusKismetDelay = v));
+                }
+                items.add(ConfigItem.toggle("Reroll Below Value", "Rerolls when chest value is under the value below.", category,
+                        () -> s.autoCroesusReroll, v -> s.autoCroesusReroll = v));
+                if (s.autoCroesusReroll) {
+                    items.add(ConfigItem.sliderInt("Reroll Value", "Reroll when chest value is below this many coins (millions).", category,
+                            1, 500, 1, "m",
+                            () -> (int) (s.autoCroesusRerollValue / 1000000L), v -> s.autoCroesusRerollValue = (long) v * 1000000L));
+                }
+
+                items.add(ConfigItem.header("Dungeon Chests", category));
+                items.add(ConfigItem.toggle("Auto Croesus Dungeons", "Automatically claims profitable dungeon chests with /b ac.", category,
+                        () -> s.autoCroesusDungeons, v -> s.autoCroesusDungeons = v));
+                items.add(ConfigItem.sliderInt("Chest Profit Threshold", "Only claim dungeon chests above this profit (millions).", category,
+                        0, 500, 1, "m",
+                        () -> (int) (s.autoCroesusDungeonProfitThreshold / 1000000L), v -> s.autoCroesusDungeonProfitThreshold = (long) v * 1000000L));
+                items.add(ConfigItem.toggle("Use Dungeon Key", "Buys the bedrock chest key for the floors above.", category,
+                        () -> s.autoCroesusUseDungeonKey, v -> s.autoCroesusUseDungeonKey = v));
+                items.add(ConfigItem.sliderInt("Dungeon Key Value", "Extra profit required to justify buying a dungeon key (millions).", category,
+                        0, 50, 1, "m",
+                        () -> (int) (s.autoCroesusDungeonKeyProfit / 1000000L), v -> s.autoCroesusDungeonKeyProfit = (long) v * 1000000L));
+
+                items.add(ConfigItem.header("Displays", category));
+                items.add(ConfigItem.hudToggle("Auto Croesus HUD", "Live analysis of the current chest run.", category,
+                        () -> s.autoCroesusHud, v -> s.autoCroesusHud = v, HudTarget.AUTO_CROESUS));
+                items.add(ConfigItem.hudToggle("Croesus Chest Values", "Every chest in the open overview with contents and profit.", category,
+                        () -> s.croesusHelper, v -> s.croesusHelper = v, HudTarget.CROESUS_PROFIT));
+                items.add(ConfigItem.hudToggle("Croesus Profit Tracker", "Cumulative profit, runs and a per-floor breakdown.", category,
+                        () -> s.croesusProfitTracker, v -> s.croesusProfitTracker = v, HudTarget.CROESUS_TRACKER));
+                items.add(ConfigItem.toggle("Debug Highlight Mode", "Simulation: highlights the slot it would click instead of clicking it.", category,
+                        () -> me.bombo.bomboaddons.AutoCroesus.debugHighlightMode,
+                        v -> {
+                            me.bombo.bomboaddons.AutoCroesus.debugHighlightMode = v;
+                            me.bombo.bomboaddons.AutoCroesus.active = v;
+                        }));
             }
 
             case "Dungeons" -> {
