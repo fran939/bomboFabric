@@ -285,6 +285,39 @@ public class AccountManager {
       }
    }
 
+   /**
+     * Applies the given account as the active session <b>synchronously</b>, using whatever
+     * token is currently cached (still-valid or last refreshed). This is what kills the
+     * fast-join race: selection now flips the session immediately, and any token refresh
+     * continues in the background and re-applies itself when it lands.
+     *
+     * @return true when the account is now the active session with a non-empty token.
+     */
+   public static synchronized boolean selectAccount(Account acc) {
+      if (acc == null) return false;
+      currentAccount = acc;
+      if (acc.accessToken == null || acc.accessToken.isEmpty()) {
+         System.out.println("[BOMBO-AUTH] Selected " + acc.username + " but no cached token - refresh required before joining.");
+         return false;
+      }
+      setSession(acc);
+      System.out.println("[BOMBO-AUTH] Session switched to " + acc.username + " (cached token, synchronous).");
+      return true;
+   }
+
+   /**
+     * True when the running Minecraft session belongs to the given account. Used as a
+     * pre-join guard: if a connection is about to be established while the session does not
+     * match the selected account, the swap did not finish (or half-failed).
+     */
+   public static boolean isSessionFor(Account acc) {
+      if (acc == null || acc.uuid == null) return true; // nothing selected - nothing to guard
+      User user = Minecraft.getInstance().getUser();
+      if (user == null) return true;
+      String sessionUuid = user.getProfileId().toString().replace("-", "");
+      return sessionUuid.equalsIgnoreCase(acc.uuid.replace("-", ""));
+   }
+
    public static CompletableFuture<Account> refreshAccount(Account acc) {
       return CompletableFuture.supplyAsync(() -> {
          if (acc == null) {
@@ -292,8 +325,7 @@ public class AccountManager {
          } else if (checkToken(acc.accessToken)) {
             System.out.println("[BOMBO-AUTH] Token for " + acc.username + " is still valid! Reusing active session.");
             return acc;
-         } else {
-            int retries = 3;
+         } else {            int retries = 3;
 
             for(int attempt = 1; attempt <= retries; ++attempt) {
                try {
@@ -580,7 +612,17 @@ public class AccountManager {
                }
             }
          } catch (Exception accessorEx) {
+            // A silent half-swap here is what makes a fast join use the OLD account: the User
+            // field was replaced but the session services were not. Make it visible in chat.
             System.out.println("[BOMBO-AUTH] Failed to update internal session services via reflection: " + accessorEx.getMessage());
+            try {
+               Minecraft mc = Minecraft.getInstance();
+               if (mc.player != null) {
+                  mc.execute(() -> mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§8[§bBomboAddons§8] §eAccount swap partially applied to §b" + (currentAccount != null ? currentAccount.username : "?")
+                              + "§e - relog if the server still sees the old account.")));
+               }
+            } catch (Throwable ignored) {}
          }
       } catch (Exception e) {
          e.printStackTrace();

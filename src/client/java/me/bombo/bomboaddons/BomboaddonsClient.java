@@ -2694,7 +2694,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }))).then(ClientCommands.literal("sync").executes((context) -> {
                      AutoCroesus.syncProfitData((FabricClientCommandSource)context.getSource());
                      return 1;
-                  }))).then(((LiteralArgumentBuilder)ClientCommands.literal("kismet").executes((context) -> {
+                  }))).then(ClientCommands.literal("debug").executes((context) -> {
+                     AutoCroesus.startDebugSimulation((FabricClientCommandSource)context.getSource());
+                     return 1;
+                  })).then(((LiteralArgumentBuilder)ClientCommands.literal("kismet").executes((context) -> {
                      BomboConfig.Settings settings = BomboConfig.get();
                      String statusStr = settings.autoKismet ? "§aENABLED" : "§cDISABLED";
                      String var10000 = LowestBinManager.formatPrice(settings.kismetThreshold);
@@ -3907,19 +3910,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                       return 1;
                    }));
                   builder.then(ClientCommands.literal("command").executes((context) -> {
-                      if (lastDetectedCommand != null && !lastDetectedCommand.isEmpty()) {
-                         Minecraft mc = Minecraft.getInstance();
-                         if (mc.player != null && mc.player.connection != null) {
-                            String toRun = lastDetectedCommand.startsWith("/") ? lastDetectedCommand.substring(1) : lastDetectedCommand;
-                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aExecuting: §e/" + toRun));
-                            mc.player.connection.sendCommand(toRun);
-                         }
-                      } else {
-                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cNo command detected in recent chat messages."));
-                      }
-                      return 1;
-                   }));
-                   builder.then(ClientCommands.literal("cmd").executes((context) -> {
                       if (lastDetectedCommand != null && !lastDetectedCommand.isEmpty()) {
                          Minecraft mc = Minecraft.getInstance();
                          if (mc.player != null && mc.player.connection != null) {
@@ -5240,7 +5230,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                 } catch (Throwable ignored) {}
              }
 
-             if (s.pestEsp || s.pestEspTracer) {
+             if ((s.pestEsp || s.pestEspTracer) && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
                 try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: PestESP")) {
                    PestESP.render(context);
                 } catch (Throwable ignored) {}
@@ -5252,7 +5242,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                 } catch (Throwable ignored) {}
              }
 
-             if (s.critterCapsuleTrajectory) {
+             if (s.critterCapsuleTrajectory && me.bombo.bomboaddons.features.critters.SafariLocation.inSafari()) {
                 try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: CritterCapsuleArc")) {
                    me.bombo.bomboaddons.features.critters.CritterCapsuleArc.render(context);
                 } catch (Throwable ignored) {}
@@ -5767,7 +5757,11 @@ public class BomboaddonsClient implements ClientModInitializer {
          PerformanceProfiler.onTick();
          me.bombo.bomboaddons.features.critters.SafariLocation.tick();
          me.bombo.bomboaddons.features.critters.CritterSessionManager.tick();
-         me.bombo.bomboaddons.features.critters.CritterCapsuleArc.onClientTick();
+         // Safari-only: the capsule trajectory tracker walks tracked projectiles every tick and
+         // showed up on /b perf outside the Safari where it can never record anything.
+         if (me.bombo.bomboaddons.features.critters.SafariLocation.inSafari()) {
+            me.bombo.bomboaddons.features.critters.CritterCapsuleArc.onClientTick();
+         }
          me.bombo.bomboaddons.features.ring.RingManager.tick();
          me.bombo.bomboaddons.features.AutoRejoinManager.tick();
          me.bombo.bomboaddons.features.camera.FreecamManager.onClientTick();

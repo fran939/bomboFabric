@@ -298,7 +298,7 @@ public class BomboConfigScreen extends Screen {
             }
 
             int textColor = active ? accent : (hover ? ConfigUITheme.getTextTitle() : ConfigUITheme.getTextMuted());
-            String displayLabel = cat.equals("GUI Settings") ? "🎨 " + cat : (cat.equals("Debug") ? "⚙ " + cat : cat);
+            String displayLabel = cat.equals("GUI Settings") ? "🎨 " + cat : (cat.equals("Debug") ? "⚙ " + cat : ConfigRegistry.displayCategoryName(cat));
             g.text(this.font, ConfigUITheme.formatFont(displayLabel), x + 16, curY + 6, textColor, false);
 
             curY += 22;
@@ -1618,15 +1618,24 @@ public class BomboConfigScreen extends Screen {
                     BomboConfig.save();
                 }
                 activeKeybindItem = null;
+                ConfigCustomWidgets.capturePrefixOpen = false;
                 return true;
             }
 
-            String comboStr = ConfigCustomWidgets.buildFullComboString(keyCode);
-            if (activeKeybindItem.stringSetter != null) {
-                activeKeybindItem.stringSetter.accept(comboStr);
-                BomboConfig.save();
+            // Shared capture state machine: a modifier opens a combo (Ctrl+A, Alt+A) instead of
+            // committing itself the instant it is pressed.
+            String captured = ConfigCustomWidgets.captureKeyStep(keyCode, "");
+            if (ConfigCustomWidgets.captureStillListening) {
+                return true; // combo open, waiting for the main key
             }
-            activeKeybindItem = null;
+            if (captured != null) {
+                if (activeKeybindItem.stringSetter != null && !captured.isEmpty()) {
+                    activeKeybindItem.stringSetter.accept(captured);
+                    BomboConfig.save();
+                }
+                activeKeybindItem = null;
+                return true;
+            }
             return true;
         }
 

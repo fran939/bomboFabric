@@ -326,6 +326,12 @@ public class AutoSequenceManager {
     public static String describeKeyCode(int code) {
         if (code < 0) return "None";
         try {
+            // Mouse codes (GLFW_MOUSE_BUTTON_BASE + n) and special keys have no GLFW name but
+            // do have friendly names in ClickLogic (Tab, arrows, modifiers, Mouse 4...).
+            String display = me.bombo.bomboaddons.ClickLogic.getKeyDisplayName(code >= 1000 ? "mouse" + (code - 999) : "key_" + code);
+            if (display != null && !display.isBlank() && !display.startsWith("key_") && !display.equals("None")) {
+                return display;
+            }
             String name = org.lwjgl.glfw.GLFW.glfwGetKeyName(code, 0);
             if (name != null && !name.isBlank()) {
                 return name.toUpperCase(java.util.Locale.ROOT);

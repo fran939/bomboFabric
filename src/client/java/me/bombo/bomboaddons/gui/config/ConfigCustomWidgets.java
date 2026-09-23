@@ -3433,94 +3433,42 @@ public class ConfigCustomWidgets {
     }
 
     public static boolean handleKeyPressed(int keyCode) {
+        // --- Keybind capture -------------------------------------------------------
+        // One shared state machine for all four capture widgets. A modifier (Ctrl/Alt/Shift/
+        // Win/F-key/keypad) OPENS a combo instead of committing: the button shows the held
+        // prefix ([CTRL + ...]) so Ctrl+A or Alt+A is expressible. Pressing a normal key
+        // commits the full combo; releasing the modifier alone commits it as a single key.
         if (clickKeyIsListening) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                clickKeyInput = "";
-                clickKeyIsListening = false;
+            String captured = captureKeyStep(keyCode, clickKeyInput);
+            if (captured != null) {
+                clickKeyInput = captured;
+                if (!captureStillListening) clickKeyIsListening = false;
                 return true;
             }
-            String prefix = getCurrentlyHeldComboPrefix(keyCode);
-            boolean isStarterKey = (keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT
-                    || keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL
-                    || keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT
-                    || keyCode == GLFW.GLFW_KEY_LEFT_SUPER || keyCode == GLFW.GLFW_KEY_RIGHT_SUPER
-                    || (keyCode >= GLFW.GLFW_KEY_F1 && keyCode <= GLFW.GLFW_KEY_F25)
-                    || (keyCode >= GLFW.GLFW_KEY_KP_0 && keyCode <= GLFW.GLFW_KEY_KP_EQUAL));
-            if (isStarterKey && prefix.isEmpty()) {
-                clickKeyInput = me.bombo.bomboaddons.CustomBindsProcessor.getKeyNameForGlfwCode(keyCode);
-                clickKeyIsListening = false;
-                return true;
-            }
-            clickKeyInput = buildFullComboString(keyCode);
-            clickKeyIsListening = false;
-            return true;
         }
-
         if (autoSeqKeyIsListening) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                autoSeqKeyInput = "";
-                autoSeqKeyIsListening = false;
+            String captured = captureKeyStep(keyCode, autoSeqKeyInput);
+            if (captured != null) {
+                autoSeqKeyInput = captured;
+                if (!captureStillListening) autoSeqKeyIsListening = false;
                 return true;
             }
-            String prefix = getCurrentlyHeldComboPrefix(keyCode);
-            boolean isStarterKey = (keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT
-                    || keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL
-                    || keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT
-                    || keyCode == GLFW.GLFW_KEY_LEFT_SUPER || keyCode == GLFW.GLFW_KEY_RIGHT_SUPER
-                    || (keyCode >= GLFW.GLFW_KEY_F1 && keyCode <= GLFW.GLFW_KEY_F25)
-                    || (keyCode >= GLFW.GLFW_KEY_KP_0 && keyCode <= GLFW.GLFW_KEY_KP_EQUAL));
-            if (isStarterKey && prefix.isEmpty()) {
-                autoSeqKeyInput = me.bombo.bomboaddons.CustomBindsProcessor.getKeyNameForGlfwCode(keyCode);
-                autoSeqKeyIsListening = false;
-                return true;
-            }
-            autoSeqKeyInput = buildFullComboString(keyCode);
-            autoSeqKeyIsListening = false;
-            return true;
         }
-
         if (kbIsListening) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                kbKeyInput = "";
-                kbIsListening = false;
+            String captured = captureKeyStep(keyCode, kbKeyInput);
+            if (captured != null) {
+                kbKeyInput = captured;
+                if (!captureStillListening) kbIsListening = false;
                 return true;
             }
-            String prefix = getCurrentlyHeldComboPrefix(keyCode);
-            boolean isStarterKey = (keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT
-                    || keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL
-                    || keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT
-                    || keyCode == GLFW.GLFW_KEY_LEFT_SUPER || keyCode == GLFW.GLFW_KEY_RIGHT_SUPER
-                    || (keyCode >= GLFW.GLFW_KEY_F1 && keyCode <= GLFW.GLFW_KEY_F25)
-                    || (keyCode >= GLFW.GLFW_KEY_KP_0 && keyCode <= GLFW.GLFW_KEY_KP_EQUAL));
-            if (isStarterKey && prefix.isEmpty()) {
-                kbKeyInput = me.bombo.bomboaddons.CustomBindsProcessor.getKeyNameForGlfwCode(keyCode);
-                return true;
-            }
-            kbKeyInput = buildFullComboString(keyCode);
-            kbIsListening = false;
-            return true;
         }
-
         if (guiKbIsListening) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                guiKbKeyInput = "";
-                guiKbIsListening = false;
+            String captured = captureKeyStep(keyCode, guiKbKeyInput);
+            if (captured != null) {
+                guiKbKeyInput = captured;
+                if (!captureStillListening) guiKbIsListening = false;
                 return true;
             }
-            String prefix = getCurrentlyHeldComboPrefix(keyCode);
-            boolean isStarterKey = (keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT
-                    || keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL
-                    || keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT
-                    || keyCode == GLFW.GLFW_KEY_LEFT_SUPER || keyCode == GLFW.GLFW_KEY_RIGHT_SUPER
-                    || (keyCode >= GLFW.GLFW_KEY_F1 && keyCode <= GLFW.GLFW_KEY_F25)
-                    || (keyCode >= GLFW.GLFW_KEY_KP_0 && keyCode <= GLFW.GLFW_KEY_KP_EQUAL));
-            if (isStarterKey && prefix.isEmpty()) {
-                guiKbKeyInput = me.bombo.bomboaddons.CustomBindsProcessor.getKeyNameForGlfwCode(keyCode);
-                return true;
-            }
-            guiKbKeyInput = buildFullComboString(keyCode);
-            guiKbIsListening = false;
-            return true;
         }
 
         long handle = Minecraft.getInstance().getWindow().handle();
@@ -3833,6 +3781,77 @@ public class ConfigCustomWidgets {
         }
 
         return false;
+    }
+
+    // --- Shared keybind-capture state machine ----------------------------------
+    /**
+     * Result of {@link #captureKeyStep}: null means "this key is not for the capture widget"
+     * (let normal GUI handling run); otherwise it is the new binding string to store, and
+     * {@link #captureStillListening} says whether the capture stays open (a modifier was
+     * pressed and we await the combo's main key).
+     */
+    public static boolean captureStillListening = false;
+    /** True while a modifier has opened a combo but no main key has been pressed yet. */
+    public static boolean capturePrefixOpen = false;
+
+    /** Is this key a modifier/starter that should open a combo rather than commit alone? */
+    private static boolean isStarterKey(int keyCode) {
+        return keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT
+                || keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL
+                || keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT
+                || keyCode == GLFW.GLFW_KEY_LEFT_SUPER || keyCode == GLFW.GLFW_KEY_RIGHT_SUPER
+                || (keyCode >= GLFW.GLFW_KEY_F1 && keyCode <= GLFW.GLFW_KEY_F25)
+                || (keyCode >= GLFW.GLFW_KEY_KP_0 && keyCode <= GLFW.GLFW_KEY_KP_EQUAL);
+    }
+
+    /**
+     * One key press against an open capture. Public because the config screen's generic
+     * keybind-item capture uses the same state machine.
+     *
+     * <ul>
+     *   <li>Esc cancels (returns {@code ""} with capture closed).</li>
+     *   <li>A modifier with no combo open starts the prefix and keeps listening, so the
+     *       button label can show {@code [CTRL + ...]} while Ctrl is held.</li>
+     *   <li>A normal key commits {@code prefix + key} and closes the capture.</li>
+     *   <li>A modifier pressed while a prefix is already open extends the prefix
+     *       (Ctrl then Alt = {@code lctrl+lalt+...}).</li>
+     * </ul>
+     */
+    public static String captureKeyStep(int keyCode, String currentInput) {
+        captureStillListening = false;
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            capturePrefixOpen = false;
+            return "";
+        }
+        String prefix = getCurrentlyHeldComboPrefix(keyCode);
+        if (prefix.isEmpty() && isStarterKey(keyCode)) {
+            // Open (or extend) a combo and keep listening. Show the live prefix in the button.
+            capturePrefixOpen = true;
+            captureStillListening = true;
+            return me.bombo.bomboaddons.CustomBindsProcessor.getKeyNameForGlfwCode(keyCode);
+        }
+        capturePrefixOpen = false;
+        return buildFullComboString(keyCode);
+    }
+
+    /** Label for a capture button, including the live combo prefix while one is open. */
+    public static String captureButtonLabel(boolean listening, String currentValue, String idleText) {
+        if (listening && capturePrefixOpen) {
+            String held = getCurrentlyHeldComboPrefix(-1);
+            if (held.endsWith("+")) held = held.substring(0, held.length() - 1);
+            if (!held.isEmpty()) {
+                String[] parts = held.split("\\+");
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < parts.length; i++) {
+                    if (i > 0) sb.append(" + ");
+                    sb.append(me.bombo.bomboaddons.ClickLogic.getKeyDisplayName(parts[i]));
+                }
+                return "§e[" + sb + " + ...]";
+            }
+        }
+        if (listening) return "§e[Press Key...]";
+        if (currentValue == null || currentValue.isEmpty()) return idleText;
+        return "§b" + me.bombo.bomboaddons.ClickLogic.getKeyDisplayName(currentValue);
     }
 
     public static String getCurrentlyHeldComboPrefix(int currentCode) {

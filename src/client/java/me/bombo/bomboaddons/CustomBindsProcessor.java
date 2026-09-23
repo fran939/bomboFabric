@@ -114,7 +114,15 @@ public class CustomBindsProcessor {
             if (BomboConfig.get().debugKeys) {
                Bomboaddons.sendMessage("§a[KeyDebug] Matched In-Game Keybind: " + cb.keyName + " -> " + cb.command);
             }
-            executeCommandOrChat(cb.command);
+            me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.set(
+                  "Keybind " + me.bombo.bomboaddons.ClickLogic.getKeyDisplayName(cb.keyName));
+            try {
+               executeCommandOrChat(cb.command);
+            } finally {
+               // Consumed by the outgoing tracker if a send happened now; cleared otherwise so
+               // it can never mislabel an unrelated later send.
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.remove();
+            }
          }
       }
    }
@@ -156,7 +164,13 @@ public class CustomBindsProcessor {
                      if (BomboConfig.get().debugKeys) {
                         Bomboaddons.sendMessage("§a[KeyDebug] Matched GUI Keybind: " + cb.keyName + " -> " + cb.command);
                      }
-                     executeCommandOrChat(cb.command);
+                     me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.set(
+                           "Keybind " + me.bombo.bomboaddons.ClickLogic.getKeyDisplayName(cb.keyName));
+                     try {
+                        executeCommandOrChat(cb.command);
+                     } finally {
+                        me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.remove();
+                     }
                      matchedAny = true;
                   }
                }
@@ -287,6 +301,24 @@ public class CustomBindsProcessor {
          return "right_control";
       } else if (code == 342) {
          return "left_alt";
+      } else if (code == 258) {
+         return "key_258";
+      } else if (code == 259) {
+         return "key_259";
+      } else if (code == 260) {
+         return "key_260";
+      } else if (code == 261) {
+         return "key_261";
+      } else if (code >= 262 && code <= 265) {
+         return "key_" + code;
+      } else if (code >= 266 && code <= 269) {
+         return "key_" + code;
+      } else if (code == 280) {
+         return "key_280";
+      } else if (code == 256) {
+         return "key_256";
+      } else if (code == 257) {
+         return "key_257";
       } else if (code == 346) {
          return "right_alt";
       } else if (code == 32) {

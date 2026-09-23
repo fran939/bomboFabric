@@ -114,6 +114,9 @@ public class AccountSwitcherScreen extends Screen {
          this.addRenderableWidget(Button.builder(label, (button) -> {
             button.active = false;
             button.setMessage(Component.literal("Checking..."));
+            // Switch the session synchronously from the cached token first, so a join in the
+            // next seconds already runs as this account; the refresh then re-applies when done.
+            AccountManager.selectAccount(acc);
             AccountManager.refreshAccount(acc).thenAccept((refreshed) -> Minecraft.getInstance().execute(() -> {
                   if (refreshed != null) {
                      AccountManager.setSession(refreshed);
@@ -121,6 +124,9 @@ public class AccountSwitcherScreen extends Screen {
                   } else {
                      button.active = true;
                      button.setMessage(Component.literal("§c" + acc.username + " §7(Refresh failed!)"));
+                     Minecraft.getInstance().player.sendSystemMessage(Component.literal(
+                           "§8[§bBomboAddons§8] §cAccount swap to §e" + acc.username
+                                 + "§c failed - the session may still be the previous account."));
                   }
 
                }));

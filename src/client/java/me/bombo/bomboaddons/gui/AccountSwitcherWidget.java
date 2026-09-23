@@ -110,6 +110,8 @@ public class AccountSwitcherWidget extends AbstractWidget {
             for(AccountManager.Account acc : accounts) {
                if (mouseX >= (double)this.getX() && mouseY >= (double)curY && mouseX < (double)(this.getX() + this.width) && mouseY < (double)(curY + 22)) {
                   this.expanded = false;
+                  // Synchronous switch first: no window where a join uses the old session.
+                  AccountManager.selectAccount(acc);
                   AccountManager.refreshAccount(acc).thenAccept((refreshed) -> Minecraft.getInstance().execute(() -> {
                         if (refreshed != null) {
                            AccountManager.setSession(refreshed);

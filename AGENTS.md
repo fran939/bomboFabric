@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.34` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.35` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,7 +103,22 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.34`**.
+The mod is currently on version **`26.2.28.35`**.
+
+> [!NOTE]
+> ### ✅ SHIPPED in v26.2.28.35 (all untested in-game)
+>
+> 1. **Outgoing attribution.** Keybind-fired commands carry a `Keybind <name>` trigger stamped via `ChatHistoryTracker.OUTGOING_TRIGGER` (ThreadLocal) before execution; typed messages are flagged `OUTGOING_PLAYER_INPUT` in `ClientPacketListenerMixin` when a ChatScreen is open. No more "created by null".
+> 2. **Readable key names.** `AutoSequenceManager.describeKeyCode` routes through `ClickLogic.getKeyDisplayName`; `ClickLogic` gained a special-keys switch (Tab, arrows, PgUp/PgDn, Home/End, Insert/Delete, CapsLock); `CustomBindsProcessor.getKeyNameForGlfwCode` maps GLFW 256-269/280 to `key_NNN` names.
+> 3. **Sequences category visible.** `FeatureOrganizerManager.initDefaults` merges `BASE_CATEGORIES` into the saved organizer file (user order preserved, new categories appended) and re-homes orphaned features to `Uncategorized`. Display name: `CATEGORY_DISPLAY_NAMES` in `ConfigRegistry` maps `Auto` → `Sequences`.
+> 4. **`/b cmd` fixed.** A duplicate `literal("cmd")` registered later on the tree was winning Brigadier conflict resolution (bare `/b cmd` ran the legacy last-command path). Removed; `CmdScreen` session state (buffer/history/input/running process) is static and survives close/reopen; `Ctrl+L` clears.
+> 5. **Mod-ID hiding always on.** `Stealth.isBrandHidden()` returns `true`; the config toggle was replaced by a header line. `modIdHider` field kept for schema compat only.
+> 6. **Updater cross-line guard.** `ModUpdater.sameMinecraftLine` compares the first two version segments; a 26.1.x install refuses 26.2.x candidates with an explicit message.
+> 7. **Modifier-combo keybind capture.** `ConfigCustomWidgets.captureKeyStep` (shared by all four capture widgets and the config screen's `activeKeybindItem` path): a modifier opens a live `[CTRL + ...]` prefix instead of committing; a normal key commits the combo; ESC cancels.
+> 8. **Perf scoping.** PestESP render gated on `SkyblockUtils.isInGarden()`; CritterCapsuleArc render AND tick gated on `SafariLocation.inSafari()`.
+> 9. **AutoCroesus.** `/b ac debug` → `startDebugSimulation` (highlight-only). RandomStuff ports: `ALWAYS_BUY_ITEMS` / `WORTHLESS_ITEMS` sets, `isAlwaysBuy` claim priority, worthless=0 price classification (exempt from the 0-price safety abort), `[Lvl 1] <Pet>` parsing with rarity from color code. Reference source in `bombotest/autocroesus`.
+> 10. **EggFinder handshake.** `Authorization: Bearer <token>` (prefix was missing) and `User-Agent: Skyblocker/6.10.4 (<mc>)` (was stale 6.9.1+26.1.2). Payload envelope already matched Skyblocker's. Reference source in `bombotest/skyblocker`.
+> 11. **Account swap race.** `AccountManager.selectAccount(acc)` applies the cached session synchronously at selection (all three call sites: switcher screen, switcher widget, DisconnectedScreenMixin reconnect); `isSessionFor` guard helper exists; partial reflection failures now warn in chat.
 
 > [!NOTE]
 > ### ✅ SHIPPED in v26.2.28.34
@@ -131,7 +146,7 @@ The mod is currently on version **`26.2.28.34`**.
 > [!WARNING]
 > ### ⚠️ UNTESTED FEATURES (all of the above are unverified in-game)
 >
-> - `/b chathistory` (now the v26.2.28.34 version): attribution, tabs, boots-at-bottom, event merging, `Trigger:` on hover.
+> - `/b chathistory` (now the v26.2.28.34 version): attribution, tabs, boots-at-bottom, event merging, `Trigger:` on hover. **v26.2.28.35 adds:** outgoing rows distinguish Player Input vs keybind-fired (with `Trigger: Keybind <name>`), and key names are readable (`Tab`, not `key 258`).
 > - Auto sequencer: the Auto category being visible in **both** builds, the new Click NPC step, Repeat, jitter ranges, and every `/b auto ...` subcommand.
 > - The safety halts (close a container mid-sequence to trigger one).
 > - The `bomboclient` jar loading at all with its own mod id (`/b hide` / `/b stealth` only exist there), and the both-flavors-installed warning.
@@ -206,12 +221,13 @@ The mod is currently on version **`26.2.28.34`**.
 | [`GuiMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/GuiMixin.java) | `Gui` | In-game HUD element overlays (pads, mining timers, defense/ehp widgets). |
 | [`ClientPacketListenerMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientPacketListenerMixin.java) | `ClientPacketListener` | S2C packet interception (titles, action bars, scoreboard changes, chat messages). |
 | [`ChatMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java) & [`ChatScreenMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatScreenMixin.java) | `ChatComponent`, `ChatScreen` | Chat peeking, compact message history rendering, stack trace inspection for mod attribution, and the No Obfuscate `ModifyVariable` rewrite. |
-| [`ClientBrandRetrieverMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientBrandRetrieverMixin.java) | `ClientBrandRetriever` | **Both builds**: hides the mod brand on join (`modIdHider`, on by default). |
+| [`ClientBrandRetrieverMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientBrandRetrieverMixin.java) | `ClientBrandRetriever` | **Both builds**: hides the mod brand on join (always on since v26.2.28.35). |
 
 ---
 
 ## 6. Next Direct Actions
 
+0. **Test v26.2.28.35 in-game (highest priority):** (a) run a keybind command → Outgoing row shows `Player Keybind` source + `Trigger: Keybind <name>`, typed ones show `Player Input`; (b) with a saved `/b order`, the Sequences tab appears; (c) `/b cmd` opens the terminal, survives Esc/reopen, `Ctrl+L` clears; (d) Trade Max Pet Hotkey accepts `Ctrl+A`/`Alt+A`; (e) `/b perf` shows no PestESP outside the Garden and no CritterCapsuleArc outside the Safari; (f) `/b ac debug` highlights instead of clicking; (g) swap account then join fast → you always join as the selected account; (h) EggFinder connects (check the log for the handshake).
 1. **Live In-Game Verification:** test the untested list in Section 4 on Hypixel, starting with `/b chathistory` (pure client-side, zero risk) and a keybind-triggered sequence run.
 2. **Migrate cheat module group 2** into `src/cheat/java`: `features/hider/**`, `FreecamManager`, `CameraMixin`, `EntityMixin`. Mixins that only serve cheats go into `bomboclient.client.mixins.json` (currently empty, deliberately kept as the slot), and every migrated class must be added to `CHEAT_ONLY_CLASSES` in `build.gradle` or the positive-control assertion will fail the build.
 3. **Group 3 (ESP) and group 4 (automation)** per `docs/FEATURE_AUDIT.md`; ~55 files reference those modules, mostly single tick-hook call sites in `BomboaddonsClient`.

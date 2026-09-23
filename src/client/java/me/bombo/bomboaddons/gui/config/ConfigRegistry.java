@@ -22,6 +22,9 @@ public class ConfigRegistry {
             "Aliases",
             "Anvil",
             "Auto",
+            // Display alias so the category reads "Sequences" in the GUI. The internal id,
+            // /b auto commands and config schema all keep using "Auto".
+            // (see CATEGORY_DISPLAY_NAMES)
             "Bedwars",
             "Block Highlights",
             "Blocked Slots",
@@ -59,6 +62,28 @@ public class ConfigRegistry {
             "Waypoints",
             "Widgets"
     );
+
+    /**
+     * GUI display names for internal category ids. The organizer file, /b order and the
+     * config schema keep using the internal id; only what the user reads changes.
+     */
+    public static final Map<String, String> CATEGORY_DISPLAY_NAMES = Map.of(
+            "Auto", "Sequences"
+    );
+
+    /** Inverse of {@link #CATEGORY_DISPLAY_NAMES}: display name to internal id. */
+    public static String internalCategoryName(String displayOrInternal) {
+        if (displayOrInternal == null) return null;
+        for (Map.Entry<String, String> e : CATEGORY_DISPLAY_NAMES.entrySet()) {
+            if (e.getValue().equalsIgnoreCase(displayOrInternal.trim())) return e.getKey();
+        }
+        return displayOrInternal.trim();
+    }
+
+    public static String displayCategoryName(String internal) {
+        if (internal == null) return null;
+        return CATEGORY_DISPLAY_NAMES.getOrDefault(internal, internal);
+    }
 
     public static List<String> getAllProfileNames() {
         BomboConfig.Settings s = BomboConfig.get();
@@ -129,6 +154,9 @@ public class ConfigRegistry {
                 // build ships - the card says so instead of pretending otherwise.
                 boolean canRun = me.bombo.bomboaddons.features.auto.AutoSequenceManager.hasRuntime();
                 items.add(ConfigItem.header("Custom Automation Sequences", category));
+                if (canRun) {
+                    items.add(ConfigItem.header("Tip: type /b auto in chat to toggle a sequence by keybind or command.", category));
+                }
                 if (!canRun) {
                     items.add(ConfigItem.header("Read-only on this build: \"/b auto run\" and the RUN "
                             + "button need " + me.bombo.bomboaddons.Constants.artifactPrefix() + "'s sequence "
@@ -430,9 +458,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Running Flavor: " + me.bombo.bomboaddons.Constants.MOD_NAME
                         + " (" + me.bombo.bomboaddons.Constants.FLAVOR + " \u2022 "
                         + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "*.jar)", category));
-                items.add(ConfigItem.toggle("Hide Mod ID On Join",
-                        "Answer the server's brand query with the vanilla name, so a mod-id blacklist cannot flag this client. Applies to both builds; on by default.",
-                        category, () -> s.modIdHider, v -> s.modIdHider = v));
+                items.add(ConfigItem.header("Mod ID hidden on join: always on (vanilla brand sent to servers).", category));
                 items.add(ConfigItem.toggle("No Obfuscate (strip \u00a7k)",
                         "Removes the scrambling style from chat messages and item lore, making the text behind it readable.",
                         category, () -> s.noObfuscate, v -> s.noObfuscate = v));

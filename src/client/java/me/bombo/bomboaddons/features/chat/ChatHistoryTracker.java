@@ -63,6 +63,19 @@ public class ChatHistoryTracker {
     private static final long EVENT_DEDUP_MS = 250L;
 
     /**
+     * Trigger context for an outgoing message, set by whatever feature is about to send one
+     * (a keybind handler, the clicker, a sequence executor...) and consumed by the next
+     * {@link #recordOutgoing} call on the same thread.
+     *
+     * <p>Without this, an outgoing command fired by a keybind stack-walks through our own
+     * dispatch plumbing and gets mis-attributed ("created by null") because no frame in the
+     * stack can honestly claim authorship - the real origin was a key press, not a frame.
+     */
+    public static final ThreadLocal<String> OUTGOING_TRIGGER = new ThreadLocal<>();
+    /** Set when the outgoing send was initiated by the player typing in a chat screen. */
+    public static final ThreadLocal<Boolean> OUTGOING_PLAYER_INPUT = ThreadLocal.withInitial(() -> false);
+
+    /**
      * How long a recorded feature event stays eligible to "adopt" the chat line that
      * reports the same thing. Without this, every feature event showed up twice: once as the
      * event row (with origin/trigger) and once as the raw {@code [BomboAddons]} chat line
@@ -251,7 +264,32 @@ public class ChatHistoryTracker {
         entry.rawText = commandOrMessage;
         entry.component = Component.literal(commandOrMessage);
 
-        inspectCaller(entry, Thread.currentThread().getStackTrace());
+        // Trigger provenance set by the feature that initiated the send beats stack-walking:
+        // the stack below us is our own dispatch plumbing and cannot "create" the message.
+        String trigger = OUTGOING_TRIGGER.get();
+        boolean playerTyped = OUTGOING_PLAYER_INPUT.get();
+        if (trigger != null && !trigger.trim().isEmpty()) {
+            entry.isBombo = true;
+            entry.isMod = true;
+            entry.callerModId = Constants.MOD_ID;
+            entry.callerModName = Constants.MOD_NAME;
+            entry.featureName = "Custom Keybind";
+            entry.originFeature = "Custom Keybinds";
+            entry.triggerDesc = trigger;
+            entry.callerFrame = "knot//" + Constants.MOD_ID + ".keybind-exec";
+        } else {
+            inspectCaller(entry, Thread.currentThread().getStackTrace());
+            if (playerTyped) {
+                // Typed in a chat screen: the player created it, no matter what the stack says.
+                entry.isBombo = false;
+                entry.isMod = false;
+                entry.callerModId = null;
+                entry.callerModName = "Player Input";
+                if (entry.featureName == null || "Server Packet".equals(entry.featureName)) entry.featureName = "Chat Screen";
+            }
+        }
+        OUTGOING_TRIGGER.remove();
+        OUTGOING_PLAYER_INPUT.remove();
 
         addEntry(entry);
     }

@@ -31,6 +31,9 @@ public class ClientPacketListenerMixin {
    private void onSendChat(String message, CallbackInfo ci) {
       if (IS_HANDLING_SEND_CHAT.get()) return;
       if (message != null) {
+         if (Minecraft.getInstance().gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
+            me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_PLAYER_INPUT.set(true);
+         }
          me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordOutgoing(message, false);
       }
       if (message != null && message.contains("$imgur")) {
@@ -76,6 +79,9 @@ public class ClientPacketListenerMixin {
          return;
       }
       if (command != null) {
+         if (Minecraft.getInstance().gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
+            me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_PLAYER_INPUT.set(true);
+         }
          me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordOutgoing("/" + command, true);
       }
       if (command != null && command.contains("$imgur")) {

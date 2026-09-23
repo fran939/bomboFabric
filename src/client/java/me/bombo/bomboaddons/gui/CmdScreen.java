@@ -28,6 +28,11 @@ import java.util.regex.Pattern;
  * Minecraft instead of an OS window. Commands run one per line, stream their output live, and
  * the buffer keeps scrollback plus a command history (arrow keys).
  *
+ * <p><b>The session outlives the screen.</b> Buffer, history and any running command are held in
+ * static state: closing the terminal ({@code Esc}) does not kill a running command or wipe the
+ * scrollback - reopening with {@code /b cmd} shows everything exactly as it was, streaming
+ * included. {@code Ctrl+L} or the {@code clear} built-in wipes the buffer on demand.
+ *
  * <p>Built-ins ({@code help}, {@code clear}, {@code close}, {@code ver}, {@code flavor}, {@code echo})
  * are handled locally; <b>everything else is handed to the platform shell</b> - {@code ping},
  * {@code ipconfig}, {@code curl}, {@code ssh}, {@code java -version} and so on all work exactly as
@@ -42,22 +47,28 @@ public class CmdScreen extends Screen {
     private static final Pattern ANSI = Pattern.compile("\u001B\\[[;\\d]*[ -/]*[@-~]");
     private static final int MAX_LINES = 2000;
 
+    // ------------------------------------------------------------------
+    // Session state (static: survives closing the screen)
+    // ------------------------------------------------------------------
+    private static final List<String> SESSION_LINES = Collections.synchronizedList(new ArrayList<>());
+    private static final List<String> SESSION_HISTORY = new ArrayList<>();
+    private static volatile int sessionVersion = 0;
+    private static volatile boolean sessionRunning = false;
+    private static String sessionInput = "";
+    private static int sessionCursor = 0;
+    private static int sessionHistoryIndex = -1;
+
     private final Screen parent;
 
-    private final List<String> lines = Collections.synchronizedList(new ArrayList<>());
-    private volatile int version = 0;
+    // Per-instance view state
     private int renderedVersion = -1;
     private List<String> snapshot = List.of();
-
-    private final List<String> history = new ArrayList<>();
-    private int historyIndex = -1;
-
-    private String input = "";
-    private int cursor = 0;
     private boolean snapToBottom = true;
     private int scrollOffset = 0;
 
-    private volatile boolean running = false;
+    // Live input line (mirrored to the session on close via removed())
+    private String input = "";
+    private int cursor = 0;
 
     private int winX, winY, winW, winH;
     private final int rowH = 10;
@@ -66,12 +77,21 @@ public class CmdScreen extends Screen {
     public CmdScreen(Screen parent, String initialCommand) {
         super(Component.literal("Bombo Terminal"));
         this.parent = parent;
-        print("§7BomboAddons terminal §8- §f" + me.bombo.bomboaddons.Constants.identityLine()
-                + " §8| §7type §fhelp§7 for built-ins");
-        print("§8Runs real shell commands on this machine. Esc closes, ↑/↓ recall history.");
+        boolean firstOpen = SESSION_LINES.isEmpty();
+        if (firstOpen) {
+            print("§7BomboAddons terminal §8- §f" + me.bombo.bomboaddons.Constants.identityLine()
+                    + " §8| §7type §fhelp§7 for built-ins");
+            print("§8Runs real shell commands on this machine. Esc closes (session keeps running), ↑/↓ recall history.");
+        } else {
+            print("§8[session resumed - " + SESSION_LINES.size() + " lines"
+                    + (sessionRunning ? ", §ecommand still running§8" : "") + "]");
+        }
         if (initialCommand != null && !initialCommand.trim().isEmpty()) {
             run(initialCommand.trim());
         }
+        // Adopt the persisted input line so reopening continues mid-typed command.
+        input = sessionInput;
+        cursor = Math.min(sessionCursor, input.length());
     }
 
     @Override
@@ -82,16 +102,24 @@ public class CmdScreen extends Screen {
         this.winY = (this.height - this.winH) / 2;
     }
 
+    /** Persist the live input line back to the session so it survives closing the screen. */
+    @Override
+    public void removed() {
+        sessionInput = input;
+        sessionCursor = cursor;
+        super.removed();
+    }
+
     // ------------------------------------------------------------------
     // Output plumbing
     // ------------------------------------------------------------------
 
     private void print(String line) {
-        lines.add(line == null ? "" : line);
-        while (lines.size() > MAX_LINES) {
-            lines.remove(0);
+        SESSION_LINES.add(line == null ? "" : line);
+        while (SESSION_LINES.size() > MAX_LINES) {
+            SESSION_LINES.remove(0);
         }
-        version++;
+        sessionVersion++;
     }
 
     private void printRaw(String line) {
@@ -103,13 +131,20 @@ public class CmdScreen extends Screen {
     }
 
     private List<String> visibleLines() {
-        if (renderedVersion != version) {
-            synchronized (lines) {
-                snapshot = List.copyOf(lines);
+        if (renderedVersion != sessionVersion) {
+            synchronized (SESSION_LINES) {
+                snapshot = List.copyOf(SESSION_LINES);
             }
-            renderedVersion = version;
+            renderedVersion = sessionVersion;
         }
         return snapshot;
+    }
+
+    private static void clearSessionLines() {
+        synchronized (SESSION_LINES) {
+            SESSION_LINES.clear();
+        }
+        sessionVersion++;
     }
 
     // ------------------------------------------------------------------
@@ -120,10 +155,12 @@ public class CmdScreen extends Screen {
         String cmd = raw.trim();
         if (cmd.isEmpty()) return;
 
-        if (history.isEmpty() || !history.get(history.size() - 1).equals(cmd)) {
-            history.add(cmd);
+        synchronized (SESSION_HISTORY) {
+            if (SESSION_HISTORY.isEmpty() || !SESSION_HISTORY.get(SESSION_HISTORY.size() - 1).equals(cmd)) {
+                SESSION_HISTORY.add(cmd);
+            }
+            sessionHistoryIndex = -1;
         }
-        historyIndex = -1;
         print("§a> §f" + cmd);
 
         String lower = cmd.toLowerCase(Locale.ROOT);
@@ -132,7 +169,7 @@ public class CmdScreen extends Screen {
             return;
         }
 
-        if (running) {
+        if (sessionRunning) {
             print("§cA command is still running. Wait for it to finish.");
             return;
         }
@@ -142,7 +179,7 @@ public class CmdScreen extends Screen {
                 ? List.of("cmd.exe", "/c", cmd)
                 : List.of("/bin/sh", "-c", cmd);
 
-        running = true;
+        sessionRunning = true;
         Thread worker = new Thread(() -> {
             try {
                 ProcessBuilder pb = new ProcessBuilder(argv);
@@ -164,7 +201,7 @@ public class CmdScreen extends Screen {
             } catch (Throwable t) {
                 print("§c[failed] " + t.getClass().getSimpleName() + ": " + t.getMessage());
             } finally {
-                running = false;
+                sessionRunning = false;
                 // Adding to the list off-thread is safe; nudging the view is not.
                 Minecraft.getInstance().execute(() -> snapToBottom = true);
             }
@@ -179,14 +216,11 @@ public class CmdScreen extends Screen {
             case "help", "?" -> {
                 print("§7Built-ins: §fhelp§7, §fclear§7, §fclose§7, §fver§7, §fflavor§7, §fecho <text>§7, §fnb on|off");
                 print("§7Everything else runs in your shell: e.g. §fping 1.1.1.1§7, §fipconfig§7, §fcurl ifconfig.me§7, §ftasklist§7.");
-                print("§7Up/Down recall history. Ctrl+V paste. PageUp/PageDown scroll.");
+                print("§7Up/Down recall history. Ctrl+V paste. Ctrl+L clears the session. PageUp/PageDown scroll.");
                 return true;
             }
             case "clear", "cls" -> {
-                synchronized (lines) {
-                    lines.clear();
-                }
-                version++;
+                clearSessionLines();
                 return true;
             }
             case "close", "exit", "quit" -> {
@@ -252,7 +286,7 @@ public class CmdScreen extends Screen {
         int headerH = 20;
         g.fill(winX, winY, winX + winW, winY + headerH, headerBg);
         g.text(font, "§a§l>_ §fBOMBO TERMINAL §8| §7/b cmd", winX + padX + 4, winY + 6, 0xFFFFFFFF, false);
-        g.text(font, running ? "§e● running" : "§a● idle", winX + winW - 70, winY + 6, 0xFFFFFFFF, false);
+        g.text(font, runningStatus(), winX + winW - 70, winY + 6, 0xFFFFFFFF, false);
 
         int inputH = 20;
         int listTop = winY + headerH + 2;
@@ -303,8 +337,12 @@ public class CmdScreen extends Screen {
             g.fill(caretX, inputY + 5, caretX + 1, inputY + 15, 0xFF38BDF8);
         }
 
-        g.text(font, "§8" + lines.size() + " lines | " + (running ? "running..." : "ready"),
+        g.text(font, "§8" + SESSION_LINES.size() + " lines | " + runningStatus(),
                 winX + winW - 150, winY + winH - inputH + 6, 0xFF64748B, false);
+    }
+
+    private static String runningStatus() {
+        return sessionRunning ? "§e● running" : "§a● idle";
     }
 
     // ------------------------------------------------------------------
@@ -417,16 +455,15 @@ public class CmdScreen extends Screen {
             }
             case GLFW.GLFW_KEY_L -> {
                 if (ctrl) {
+                    // Ctrl+L clears the session buffer, exactly like a real terminal.
                     print("§8[cleared]");
-                    synchronized (lines) {
-                        lines.clear();
-                    }
-                    version++;
+                    clearSessionLines();
                     return true;
                 }
                 return super.keyPressed(event);
             }
             case GLFW.GLFW_KEY_ESCAPE -> {
+                // Session state is static: the scrollback and any running command survive.
                 Minecraft.getInstance().setScreenAndShow(parent);
                 return true;
             }
@@ -437,13 +474,15 @@ public class CmdScreen extends Screen {
     }
 
     private void recallHistory(int direction) {
-        if (history.isEmpty()) return;
-        if (historyIndex == -1) {
-            historyIndex = history.size();
+        synchronized (SESSION_HISTORY) {
+            if (SESSION_HISTORY.isEmpty()) return;
+            if (sessionHistoryIndex == -1) {
+                sessionHistoryIndex = SESSION_HISTORY.size();
+            }
+            sessionHistoryIndex = Math.max(0, Math.min(SESSION_HISTORY.size(), sessionHistoryIndex + direction));
+            input = sessionHistoryIndex >= SESSION_HISTORY.size() ? "" : SESSION_HISTORY.get(sessionHistoryIndex);
+            cursor = input.length();
         }
-        historyIndex = Math.max(0, Math.min(history.size(), historyIndex + direction));
-        input = historyIndex >= history.size() ? "" : history.get(historyIndex);
-        cursor = input.length();
     }
 
     private static int wordStart(String text, int from) {
