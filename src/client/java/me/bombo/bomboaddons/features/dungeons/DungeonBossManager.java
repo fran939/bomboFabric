@@ -178,6 +178,10 @@ public class DungeonBossManager {
     private static final Pattern CLASS_SELECTED_PATTERN = Pattern.compile("^(?:\\[[^\\]]+\\]\\s*)?([A-Za-z0-9_]+)\\s+selected the\\s+([A-Za-z]+)\\s+Class!", Pattern.CASE_INSENSITIVE);
     private static final Pattern YOUR_CLASS_STATS_PATTERN = Pattern.compile("^Your\\s+([A-Za-z]+)\\s+stats are doubled", Pattern.CASE_INSENSITIVE);
     private static final Pattern CLASS_STAT_BRACKET_PATTERN = Pattern.compile("^\\[([A-Za-z]+)\\]\\s+(?:Intelligence|Ability Damage|Cooldown Reduction|Health|Defense|Speed|Damage|Crit|Bow Damage)", Pattern.CASE_INSENSITIVE);
+    /** Any {@code [BOSS] <Name>: ...} line. Used for the generic clear -> boss transition. */
+    private static final Pattern GENERIC_BOSS_PATTERN = Pattern.compile("\\[BOSS\\]\\s*([^:]+):");
+    /** The Watcher guards the blood room - it must not count as a floor boss. */
+    private static final String WATCHER = "The Watcher";
 
     private static boolean bloodDoorOpened = false;
     private static boolean leftCrystalPickedUp = false;
@@ -252,6 +256,7 @@ public class DungeonBossManager {
         leftCrystalPlaced = false;
         rightCrystalPlaced = false;
         breakBlocksBroken = false;
+        SkyblockUtils.setDungeonBossActive(false);
         teamClasses.clear();
         resetTermWaypoints();
     }
@@ -367,6 +372,21 @@ public class DungeonBossManager {
         }
 
         // 2. Boss Phase Detection
+        // Generic transition: a "[BOSS] <Name>:" line (excluding the Watcher, who lives in the
+        // blood room) means the floor boss is up, which is what /b area reports as "(boss)".
+        java.util.regex.Matcher genericBoss = GENERIC_BOSS_PATTERN.matcher(cleanMessage);
+        if (genericBoss.find()) {
+            String bossName = genericBoss.group(1).trim();
+            if (!WATCHER.equalsIgnoreCase(bossName)) {
+                SkyblockUtils.setDungeonBossActive(true);
+                // Start the profit-ledger run clock so chest entries carry a real duration.
+                String floorTag = SkyblockUtils.getDungeonFloorTag();
+                if (floorTag != null) {
+                    DungeonProfitLog.noteRunStart(floorTag);
+                }
+            }
+        }
+
         if (cleanMessage.contains("[BOSS] Maxor:") || cleanMessage.contains("WELL! WELL! WELL! LOOK WHO'S HERE!")) {
             setPhase(BossPhase.MAXOR);
         } else if (cleanMessage.contains("[BOSS] Storm:") || cleanMessage.contains("Pathetic Maxor, just like expected.")) {
@@ -648,6 +668,38 @@ public class DungeonBossManager {
         if (s.dungeonBreakWaypoints && !breakBlocksBroken && (currentPhase == BossPhase.GOLDOR || currentPhase == BossPhase.NECRON || s.dungeonDebug)) {
             renderBreakWaypoints(poseStack, collector, camPos, mc, s);
         }
+
+        // 4. M4/F4 etherwarp helper - only during the floor boss, on the exact floor.
+        if (s.m4EtherwarpHelper) {
+            String floorTag = SkyblockUtils.getDungeonFloorTag();
+            boolean onF4 = "F4".equals(floorTag) || "M4".equals(floorTag);
+            if (onF4 && "boss".equals(SkyblockUtils.getDungeonPhase())) {
+                renderEtherwarpTarget(poseStack, collector, camPos, s);
+            }
+        }
+    }
+
+    /** Fixed etherwarp landing block used to escape the F4/M4 boss arena. */
+    private static final BlockPos M4_ETHERWARP_TARGET = new BlockPos(27, 81, 18);
+
+    private static void renderEtherwarpTarget(PoseStack poseStack, OrderedSubmitNodeCollector collector, Vec3 camPos, BomboConfig.Settings s) {
+        double x = M4_ETHERWARP_TARGET.getX() + 0.5 - camPos.x;
+        double y = M4_ETHERWARP_TARGET.getY() - camPos.y;
+        double z = M4_ETHERWARP_TARGET.getZ() + 0.5 - camPos.z;
+        float r = 0.55F;
+        float g = 0.27F;
+        float b = 1.0F;
+        float width = s.tracerWidth > 0 ? s.tracerWidth : 2.0F;
+
+        AABB box = new AABB(x - 0.5, y, z - 0.5, x + 0.5, y + 1.0, z + 0.5);
+        collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) -> BomboRenderUtils.drawBox(pose.pose(), vc, box, r, g, b, 1.0F, width));
+
+        if (s.dungeonTracers) {
+            Vector3fc look = Minecraft.getInstance().gameRenderer.mainCamera().forwardVector();
+            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) -> BomboRenderUtils.drawLine(pose.pose(), vc, look.x(), look.y(), look.z(), (float) x, (float) y + 0.5F, (float) z, r, g, b, 0.9F, width));
+        }
+
+        BomboRenderUtils.drawText(poseStack, collector, "§5§lEtherwarp", (float) x, (float) y + 1.5F, (float) z, 0x8B45FF, 0.035F, true, true);
     }
 
     private static boolean hasEndCrystalNear(Minecraft mc, BlockPos pos) {

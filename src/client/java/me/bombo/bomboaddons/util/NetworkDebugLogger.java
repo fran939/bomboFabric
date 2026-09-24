@@ -12,6 +12,15 @@ public class NetworkDebugLogger {
     private static final File LOG_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/debug_network.log").toFile();
 
     public static synchronized void log(String type, String url, int statusCode, String details) {
+        // Mirror into the /b apihistory ring buffer so the request log and the debug log agree.
+        try {
+            if (type != null && type.startsWith("WS-")) {
+                ApiHistory.ws(type.substring(3), url, statusCode, details);
+            } else if (type != null && type.startsWith("HTTP-")) {
+                ApiHistory.http(type.substring(5), url, statusCode, 0L);
+            }
+        } catch (Throwable ignored) {
+        }
         try {
             if (!LOG_FILE.getParentFile().exists()) {
                 LOG_FILE.getParentFile().mkdirs();

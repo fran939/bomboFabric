@@ -9,6 +9,25 @@ import net.minecraft.world.item.ItemStack;
 import java.util.*;
 
 public class ConfigRegistry {
+    /** Estimated-value price source labels (see {@link #applyValueSource}). */
+    public static final String VALUE_SOURCE_BUY = "Instant Buy (Lowest BIN)";
+    public static final String VALUE_SOURCE_SELL = "Instant Sell (Bazaar Sell Offer / Average BIN)";
+
+    /** True when estimated values should use sell-side prices. */
+    public static boolean sellsAtValueSource(BomboConfig.Settings s) {
+        if (s == null) return false;
+        if (s.estimatedValueBazaarMode) return true;
+        return "INSTANT_SELL".equalsIgnoreCase(s.priceSourceMode);
+    }
+
+    /** Writes both the new mode string and the legacy boolean so they can never disagree. */
+    public static void applyValueSource(BomboConfig.Settings s, String label) {
+        if (s == null) return;
+        boolean sell = label != null && label.equalsIgnoreCase(VALUE_SOURCE_SELL);
+        s.priceSourceMode = sell ? "INSTANT_SELL" : "INSTANT_BUY";
+        s.estimatedValueBazaarMode = sell;
+    }
+
     // Hidden cheat categories when "hideCheats" is enabled. "Auto" is deliberately NOT in
     // this set: the sequence editor is shared (only the executor is cheat-only), and hiding it
     // in the legit build made the whole section look like it had vanished.
@@ -322,18 +341,18 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Auto Reroll With Kismet", "Rerolls a chest with a Kismet Feather when its value is below the threshold.", category,
                         () -> s.autoKismet, v -> s.autoKismet = v));
                 if (s.autoKismet) {
-                    items.add(ConfigItem.sliderInt("Kismet Threshold", "Reroll when chest value is below this many coins (millions).", category,
-                            1, 500, 1, "m",
-                            () -> (int) (s.kismetThreshold / 1000000L), v -> s.kismetThreshold = (long) v * 1000000L));
+                    items.add(ConfigItem.sliderCoins("Kismet Threshold", "Reroll when chest value is below this amount (100K - 3M).", category,
+                            100000L, 3000000L, 50000L,
+                            () -> s.kismetThreshold, v -> s.kismetThreshold = v));
                     items.add(ConfigItem.sliderInt("Kismet Delay", "Milliseconds to wait after a Kismet reroll.", category,
                             50, 2000, 25, "ms", () -> (int) s.autoCroesusKismetDelay, v -> s.autoCroesusKismetDelay = v));
                 }
                 items.add(ConfigItem.toggle("Reroll Below Value", "Rerolls when chest value is under the value below.", category,
                         () -> s.autoCroesusReroll, v -> s.autoCroesusReroll = v));
                 if (s.autoCroesusReroll) {
-                    items.add(ConfigItem.sliderInt("Reroll Value", "Reroll when chest value is below this many coins (millions).", category,
-                            1, 500, 1, "m",
-                            () -> (int) (s.autoCroesusRerollValue / 1000000L), v -> s.autoCroesusRerollValue = (long) v * 1000000L));
+                    items.add(ConfigItem.sliderCoins("Reroll Value", "Reroll when chest value is below this amount (100K - 3M).", category,
+                            100000L, 3000000L, 50000L,
+                            () -> s.autoCroesusRerollValue, v -> s.autoCroesusRerollValue = v));
                 }
 
                 items.add(ConfigItem.header("Dungeon Chests", category));
@@ -342,11 +361,25 @@ public class ConfigRegistry {
                 items.add(ConfigItem.sliderInt("Chest Profit Threshold", "Only claim dungeon chests above this profit (millions).", category,
                         0, 500, 1, "m",
                         () -> (int) (s.autoCroesusDungeonProfitThreshold / 1000000L), v -> s.autoCroesusDungeonProfitThreshold = (long) v * 1000000L));
+                items.add(ConfigItem.cycle("Chest Panel Mode", "NET_ONLY shows just the profit per chest; ITEMIZED lists every parsed item.", category,
+                        List.of("ITEMIZED", "NET_ONLY"),
+                        () -> s.croesusProfitHudMode != null ? s.croesusProfitHudMode : "ITEMIZED",
+                        v -> s.croesusProfitHudMode = v));
                 items.add(ConfigItem.toggle("Use Dungeon Key", "Buys the bedrock chest key for the floors above.", category,
                         () -> s.autoCroesusUseDungeonKey, v -> s.autoCroesusUseDungeonKey = v));
-                items.add(ConfigItem.sliderInt("Dungeon Key Value", "Extra profit required to justify buying a dungeon key (millions).", category,
-                        0, 50, 1, "m",
-                        () -> (int) (s.autoCroesusDungeonKeyProfit / 1000000L), v -> s.autoCroesusDungeonKeyProfit = (long) v * 1000000L));
+                items.add(ConfigItem.cycle("Dungeon Key Mode", "MANUAL uses your threshold; AUTO prices the key from the live Bazaar (DUNGEON_CHEST_KEY) and adds the safety margin.", category,
+                        List.of("MANUAL", "AUTO"),
+                        () -> s.autoCroesusDungeonKeyMode != null ? s.autoCroesusDungeonKeyMode : "MANUAL",
+                        v -> s.autoCroesusDungeonKeyMode = v));
+                if ("AUTO".equalsIgnoreCase(s.autoCroesusDungeonKeyMode)) {
+                    items.add(ConfigItem.sliderCoins("Key Safety Margin", "Extra profit a second chest must clear on top of the live key price.", category,
+                            0L, 1000000L, 50000L,
+                            () -> s.autoCroesusDungeonKeySafetyMargin, v -> s.autoCroesusDungeonKeySafetyMargin = v));
+                } else {
+                    items.add(ConfigItem.sliderCoins("Dungeon Key Value", "Profit a second chest must beat to justify buying a dungeon key (100K - 3M).", category,
+                            100000L, 3000000L, 50000L,
+                            () -> s.autoCroesusDungeonKeyProfit, v -> s.autoCroesusDungeonKeyProfit = v));
+                }
 
                 items.add(ConfigItem.header("Displays", category));
                 items.add(ConfigItem.hudToggle("Auto Croesus HUD", "Live analysis of the current chest run.", category,
@@ -388,6 +421,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Dungeon Crystal Waypoints", "3D markers for energy crystals.", category, () -> s.dungeonCrystalWaypoints, v -> s.dungeonCrystalWaypoints = v));
                 items.add(ConfigItem.toggle("Dungeon Terminal Waypoints", "3D markers for F7 terminals and levers.", category, () -> s.dungeonTerminalWaypoints, v -> s.dungeonTerminalWaypoints = v));
                 items.add(ConfigItem.toggle("Dungeon Key Highlight", "Outlines dropped Wither & Blood Keys.", category, () -> s.dungeonKeyHighlight, v -> s.dungeonKeyHighlight = v));
+                items.add(ConfigItem.toggle("M4/F4 Etherwarp Helper", "Highlights the etherwarp target block (27, 81, 18) during F4/M4 boss.", category, () -> s.m4EtherwarpHelper, v -> s.m4EtherwarpHelper = v));
                 items.add(ConfigItem.color("Dungeon Key Color", "Color for key outline.", category, () -> s.dungeonKeyColor != null ? s.dungeonKeyColor : "GOLD", v -> s.dungeonKeyColor = v));
                 items.add(ConfigItem.toggle("Starred Mob Highlight", "Outlines starred dungeon mobs in rooms.", category, () -> s.dungeonStarredMobHighlight, v -> s.dungeonStarredMobHighlight = v));
                 items.add(ConfigItem.color("Starred Mob Color", "Highlight color for starred mobs.", category, () -> s.dungeonStarredMobColor != null ? s.dungeonStarredMobColor : "GOLD", v -> s.dungeonStarredMobColor = v));
@@ -528,8 +562,16 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Chat History", category));
                 items.add(ConfigItem.keybind("Chat History Key", "Optional keybind that opens /b chathistory.", category,
                         () -> s.chatHistoryKey != null ? s.chatHistoryKey : "", v -> s.chatHistoryKey = v));
-                items.add(ConfigItem.sliderInt("Chat History Limit", "How many chat and feature events to keep in memory.", category, 100, 5000, 100, "msgs",
-                        () -> s.chatHistoryMaxMessages > 0 ? s.chatHistoryMaxMessages : 500, v -> s.chatHistoryMaxMessages = v));
+                items.add(ConfigItem.toggle("Unlimited Chat History",
+                        "Keep every message for the whole session instead of trimming to the limit below (hard cap 50,000 entries).",
+                        category, () -> s.unlimitedChatHistory, v -> s.unlimitedChatHistory = v));
+                if (!s.unlimitedChatHistory) {
+                    items.add(ConfigItem.sliderInt("Chat History Limit", "How many chat and feature events to keep in memory.", category, 100, 5000, 100, "msgs",
+                            () -> s.chatHistoryMaxMessages > 0 ? s.chatHistoryMaxMessages : 500, v -> s.chatHistoryMaxMessages = v));
+                }
+                items.add(ConfigItem.toggle("Persist History Across Servers",
+                        "Never wipe the history when switching worlds, changing servers or disconnecting - a session boundary row is logged instead.",
+                        category, () -> s.persistHistoryAcrossServers, v -> s.persistHistoryAcrossServers = v));
                 items.add(ConfigItem.button("Open Chat History", "Open", "Browse incoming, outgoing, blocked and feature events.", category, () -> {
                     Minecraft mc = Minecraft.getInstance();
                     mc.setScreenAndShow(new me.bombo.bomboaddons.features.chat.ChatHistoryScreen(mc.gui.screen(),
@@ -704,6 +746,11 @@ public class ConfigRegistry {
                 }
                 items.add(ConfigItem.hudToggle("Auto Rejoin HUD", "On-screen countdown display for auto rejoin.", category, () -> s.autoRejoinHud, v -> s.autoRejoinHud = v, HudTarget.AUTO_REJOIN));
                 items.add(ConfigItem.hudToggle("Item Value Breakdown HUD", "Displays item estimated value breakdown when hovering over items.", category, () -> s.itemValueBreakdownHud, v -> s.itemValueBreakdownHud = v, HudTarget.ITEM_VALUE_BREAKDOWN));
+                items.add(ConfigItem.cycle("Value Price Source",
+                        "Instant Buy (Lowest BIN) values items at what you would pay. Instant Sell (Bazaar Sell Offer / Average BIN) values them at what you would actually receive.",
+                        category, List.of(VALUE_SOURCE_BUY, VALUE_SOURCE_SELL),
+                        () -> sellsAtValueSource(s) ? VALUE_SOURCE_SELL : VALUE_SOURCE_BUY,
+                        v -> applyValueSource(s, v)));
                 items.add(ConfigItem.hudToggle("Armor HUD", "On-screen player armor display with tooltips and click shortcuts.", category, () -> s.armorHud, v -> s.armorHud = v, HudTarget.ARMOR_HUD));
                 if (s.armorHud) {
                     items.add(ConfigItem.cycle("  Armor Click Action", "Action to perform when clicking Armor HUD while chat is open.", category, List.of("Wardrobe", "Loadout", "Inventory", "None"), () -> s.armorHudClickAction != null ? s.armorHudClickAction : "Wardrobe", v -> s.armorHudClickAction = v));
@@ -788,10 +835,13 @@ public class ConfigRegistry {
 
                 items.add(ConfigItem.header("Estimated Value Calculations", category));
                 items.add(ConfigItem.toggle("Show Estimated Value", "Displays calculated total coin value on item tooltips.", category, () -> s.showEstimatedValue, v -> s.showEstimatedValue = v));
-                items.add(ConfigItem.cycle("Estimated Value Mode", "Select whether Bazaar prices use instant-buy or instant-sell rates.", category,
-                        List.of("Instant Buy", "Instant Sell"),
-                        () -> s.estimatedValueBazaarMode ? "Instant Sell" : "Instant Buy",
-                        v -> s.estimatedValueBazaarMode = "Instant Sell".equalsIgnoreCase(v)));
+                // Same switch as "Value Price Source" in the HUD category, kept here because this
+                // is where anyone auditing estimated values looks first. Both write both fields so
+                // the legacy boolean and the new mode string can never disagree.
+                items.add(ConfigItem.cycle("Estimated Value Price Source", "Instant Buy (Lowest BIN) vs Instant Sell (Bazaar Sell Offer / Average BIN).", category,
+                        List.of(VALUE_SOURCE_BUY, VALUE_SOURCE_SELL),
+                        () -> sellsAtValueSource(s) ? VALUE_SOURCE_SELL : VALUE_SOURCE_BUY,
+                        v -> applyValueSource(s, v)));
                 items.add(ConfigItem.toggle("Prefer Cheapest (AH vs Craft)", "Chooses the cheaper option between lowest BIN and raw craft cost.", category, () -> s.estimatedValuePreferCheapest, v -> s.estimatedValuePreferCheapest = v));
                 items.add(ConfigItem.toggle("Show Full Value Breakdown", "Shows detailed line-by-line coin breakdown (Base, Enchants, Stars, Reforge, Gems) on item hover.", category, () -> s.estimatedValueFullBreakdown, v -> s.estimatedValueFullBreakdown = v));
 
@@ -989,6 +1039,15 @@ public class ConfigRegistry {
             }
 
             case "GUI Settings" -> {
+                items.add(ConfigItem.header("Profile Viewer (/b pv)", category));
+                items.add(ConfigItem.sliderFloat("Window Scale", "Size multiplier for the /b pv window (1.0 - 1.8).", category,
+                        1.0f, 1.8f, 0.05f, "x",
+                        () -> s.pvScale > 0.0F ? s.pvScale : 1.15F, v -> s.pvScale = v));
+                items.add(ConfigItem.sliderInt("Backdrop Dim", "How dark the world gets behind the /b pv window. Lower is more transparent.", category,
+                        0, 100, 5, "%",
+                        () -> (int) Math.round((s.pvBackgroundAlpha > 0.0F ? s.pvBackgroundAlpha : 0.45F) * 100.0F),
+                        v -> s.pvBackgroundAlpha = v / 100.0F));
+
                 items.add(ConfigItem.header("Theme & Color Scheme", category));
                 items.add(ConfigItem.cycle("Theme Mode", "Select overall GUI aesthetic (Dark Mode, Light Mode, Transparent, Zamasu).", category,
                         List.of("Dark Mode", "Light Mode", "Transparent", "Zamasu"),
@@ -1043,6 +1102,16 @@ public class ConfigRegistry {
             }
 
             case "Debug" -> {
+                items.add(ConfigItem.header("Outbound API History (/b apihistory)", category));
+                items.add(ConfigItem.toggle("Track API Requests",
+                        "Record every outbound HTTP/WebSocket request (Hypixel, Athen, EliteSkyblock, Bombo API) with status and response time.",
+                        category, () -> s.apiHistoryEnabled, v -> s.apiHistoryEnabled = v));
+                items.add(ConfigItem.sliderInt("API History Entries", "How many requests to keep in the in-memory history.", category,
+                        50, 5000, 50, "req",
+                        () -> s.apiHistoryMaxEntries > 0 ? s.apiHistoryMaxEntries : 500, v -> s.apiHistoryMaxEntries = v));
+                items.add(ConfigItem.button("Open API History", "Open /b apihistory", "Opens the outbound request log viewer.", category, () -> {
+                    Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.gui.ApiHistoryScreen()));
+                }));
                 items.add(ConfigItem.header("Master Diagnostics Controls", category));
                 items.add(ConfigItem.button("Enable All Debug Logs", "Turn On All Logs", "Enables verbose diagnostic logging across all systems.", category, () -> {
                     s.debugMaster = true;

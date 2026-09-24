@@ -16,6 +16,8 @@ public class ConfigItem {
         TOGGLE,
         SLIDER_INT,
         SLIDER_FLOAT,
+        /** Coin amounts that do not fit an int and should read as 100K / 1.5M / 3M. */
+        SLIDER_COINS,
         CYCLE,
         COLOR,
         KEYBIND,
@@ -56,6 +58,12 @@ public class ConfigItem {
     public float minFloat, maxFloat, stepFloat;
     public float defaultFloat = 0f;
     public String floatSuffix = "";
+
+    /** Long-valued coin slider ({@link Type#SLIDER_COINS}). */
+    public Supplier<Long> longGetter;
+    public Consumer<Long> longSetter;
+    public long minLong, maxLong, stepLong;
+    public long defaultLong = 0L;
 
     public Supplier<String> stringGetter;
     public Consumer<String> stringSetter;
@@ -137,6 +145,62 @@ public class ConfigItem {
         item.floatGetter = getter;
         item.floatSetter = setter;
         return item;
+    }
+
+    /**
+     * Coin slider backed by a {@code long}, displayed as {@code 100K / 1.5M / 3M} and directly
+     * editable as text ({@code 250000}, {@code 250k}, {@code 1.5m}).
+     */
+    public static ConfigItem sliderCoins(String name, String description, String category, long min, long max, long step, Supplier<Long> getter, Consumer<Long> setter) {
+        ConfigItem item = new ConfigItem(Type.SLIDER_COINS, name, description, category);
+        item.minLong = min;
+        item.maxLong = max;
+        item.stepLong = step > 0L ? step : 1L;
+        item.defaultLong = min;
+        item.longGetter = getter;
+        item.longSetter = setter;
+        return item;
+    }
+
+    /** Formats a coin amount the way the slider labels do ("100K", "1.5M", "2M"). */
+    public static String formatCoins(long value) {
+        if (value >= 1_000_000L) {
+            double millions = value / 1_000_000.0D;
+            String text = millions == Math.floor(millions)
+                    ? String.valueOf((long) millions)
+                    : String.format(java.util.Locale.US, "%.2f", millions).replaceAll("0+$", "").replaceAll("\\.$", "");
+            return text + "M";
+        }
+        if (value >= 1_000L) {
+            double thousands = value / 1_000.0D;
+            String text = thousands == Math.floor(thousands)
+                    ? String.valueOf((long) thousands)
+                    : String.format(java.util.Locale.US, "%.1f", thousands).replaceAll("0+$", "").replaceAll("\\.$", "");
+            return text + "K";
+        }
+        return String.valueOf(value);
+    }
+
+    /**
+     * Parses a directly-typed coin amount. Accepts plain numbers and the K/M/B shorthands the
+     * label prints, so a user can read "1.5M" off the slider and type exactly that back.
+     */
+    public static long parseCoins(String raw) {
+        if (raw == null) return Long.MIN_VALUE;
+        String text = raw.trim().toLowerCase(java.util.Locale.ROOT).replaceAll("[,_ ]", "");
+        if (text.isEmpty()) return Long.MIN_VALUE;
+        double mult = 1.0D;
+        char last = text.charAt(text.length() - 1);
+        if (last == 'k' || last == 'm' || last == 'b') {
+            mult = last == 'k' ? 1_000.0D : (last == 'm' ? 1_000_000.0D : 1_000_000_000.0D);
+            text = text.substring(0, text.length() - 1).trim();
+        }
+        if (text.isEmpty()) return Long.MIN_VALUE;
+        try {
+            return Math.round(Double.parseDouble(text) * mult);
+        } catch (NumberFormatException e) {
+            return Long.MIN_VALUE;
+        }
     }
 
     public static ConfigItem cycle(String name, String description, String category, List<String> options, Supplier<String> getter, Consumer<String> setter) {

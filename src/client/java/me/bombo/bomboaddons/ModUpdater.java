@@ -80,11 +80,14 @@ public class ModUpdater {
                try {
                   String updateApiUrl = "https://api.bombo.dpdns.org/mod/version";
                   Bomboaddons.logApiRequest(updateApiUrl);
+                  long updateStartedAt = System.currentTimeMillis();
                   HttpURLConnection conn = (HttpURLConnection) (new URL(updateApiUrl)).openConnection();
                   conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
                   conn.setConnectTimeout(4000);
                   conn.setReadTimeout(4000);
-                  if (conn.getResponseCode() == 200) {
+                  int updateCode = conn.getResponseCode();
+                  me.bombo.bomboaddons.util.ApiHistory.http("GET", updateApiUrl, updateCode, System.currentTimeMillis() - updateStartedAt);
+                  if (updateCode == 200) {
                      BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
                      JsonObject infoObj = JsonParser.parseReader(reader).getAsJsonObject();
                      JsonObject latestFull = infoObj.has("latestFull") && !infoObj.get("latestFull").isJsonNull() ? infoObj.getAsJsonObject("latestFull") : null;

@@ -67,6 +67,12 @@ public class AutoSequenceManager {
         /** How many times this step runs before moving on. */
         public int repeatCount = 1;
         public int delayMs = 200; // delay after this action before next
+        /**
+         * Per-step switch. A disabled step stays in the sequence (so it can be re-enabled later)
+         * but the runtime skips it without consuming its delay. Existing saved sequences have no
+         * such field, so GSON leaves it at the default {@code true}.
+         */
+        public boolean enabled = true;
 
         public AutoAction() {
         }
@@ -125,7 +131,8 @@ public class AutoSequenceManager {
 
         public String getSummary() {
             String repeat = repeatCount > 1 ? (" x" + repeatCount) : "";
-            return switch (type) {
+            String prefix = enabled ? "" : "§8[OFF] ";
+            return prefix + switch (type) {
                 case CLICK_SLOT -> {
                     String target = slotIndex >= 0 ? ("Slot #" + slotIndex)
                             : (itemMatcher == null || itemMatcher.isBlank() ? "anything" : "\"" + itemMatcher + "\"");

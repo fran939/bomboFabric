@@ -99,6 +99,18 @@ public final class AutoSequenceExecutor {
             record("Could not start auto sequence: " + seq.name + " (no steps)", trigger);
             return;
         }
+        boolean anyEnabled = false;
+        for (AutoAction step : seq.actions) {
+            if (step != null && step.enabled) {
+                anyEnabled = true;
+                break;
+            }
+        }
+        if (!anyEnabled) {
+            AutoSequenceManager.sendMessage("§cSequence §e" + seq.name + " §chas every step switched OFF.");
+            record("Could not start auto sequence: " + seq.name + " (all steps disabled)", trigger);
+            return;
+        }
         if (AutoSequenceManager.isAnyRunning()) {
             AutoSequence current = AutoSequenceManager.getRunningSequence();
             halt("replaced by another sequence", trigger);
@@ -190,6 +202,14 @@ public final class AutoSequenceExecutor {
         }
 
         AutoAction action = actions.get(actionIndex);
+        // A step the user switched off is skipped entirely - it must not consume its delay, or a
+        // toggled-off step would silently slow the whole sequence down.
+        if (action != null && !action.enabled) {
+            actionIndex++;
+            repeatsDone = 0;
+            consecutiveFailures = 0;
+            return;
+        }
         boolean ok = executeAction(mc, action);
 
         if (!ok) {

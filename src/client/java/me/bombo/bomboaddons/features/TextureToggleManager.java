@@ -229,10 +229,10 @@ public class TextureToggleManager {
          }
       }
       if (sbId == null) {
-         return modelId != null ? modelId : BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+         return modelId != null ? modelId : vanillaItemModelId(itemStack);
       }
       if (!this.shouldBypass(itemStack)) {
-         return modelId != null ? modelId : BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+         return modelId != null ? modelId : vanillaItemModelId(itemStack);
       }
       if (this.itemIds != null && this.itemIds.containsKey(sbId)) {
          String id = this.modelId(itemStack);
@@ -250,7 +250,37 @@ public class TextureToggleManager {
             return Identifier.parse(id);
          }
       }
-      return BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+      return vanillaItemModelId(itemStack);
+   }
+
+   /**
+    * Model id for the stack's vanilla item, preferring {@code <ns>:item/<path>}.
+    *
+    * <p>The bare registry key ({@code minecraft:diamond_shovel}) is not the model id in the item
+    * model system - looking it up yields {@code MissingItemModel}, which renders as the purple /
+    * black checkerboard. That is what broke the no-resource-pack fallback (and Aspect of the
+    * Void in particular), so probe both ids and fall back to whatever actually resolves.
+    */
+   private static Identifier vanillaItemModelId(ItemStack itemStack) {
+      if (itemStack == null || itemStack.isEmpty()) {
+         return null;
+      }
+      Identifier itemId = BuiltInRegistries.ITEM.getKey(itemStack.getItem());
+      if (itemId == null) {
+         return null;
+      }
+      try {
+         var models = Minecraft.getInstance().getModelManager();
+         Identifier prefixed = Identifier.fromNamespaceAndPath(itemId.getNamespace(), "item/" + itemId.getPath());
+         if (!(models.getItemModel(prefixed) instanceof net.minecraft.client.renderer.item.MissingItemModel)) {
+            return prefixed;
+         }
+         if (!(models.getItemModel(itemId) instanceof net.minecraft.client.renderer.item.MissingItemModel)) {
+            return itemId;
+         }
+      } catch (Throwable ignored) {
+      }
+      return itemId;
    }
 
    private Path getConfigPath() {

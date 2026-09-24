@@ -103,7 +103,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.38`**.
+The mod is currently on version **`26.2.28.39`**.
+
+> [!NOTE]
+> ### ✅ SHIPPED in v26.2.28.39 (untested in-game) — "Comprehensive Systems Overhaul & Bugfix Pass"
+>
+> **Config / sequences:** per-step `[ON]`/`[OFF]` (`AutoStep.enabled`, skipped by `AutoSequenceExecutor`); `TAB` from a step field to the GUI-title field; clicking a slider's numeric label turns it into a text field (`editingSliderValueItem`); new `ConfigItem.sliderCoins` renders 100K–3M. Chat history: `unlimitedChatHistory` (default false) + `persistHistoryAcrossServers` (default true) - every implicit clear is routed through `ChatHistoryTracker`'s session-divider path instead of wiping the buffer.
+> **Dungeons:** `SkyblockUtils`/`DungeonBossManager` parse `The Catacombs (F4/M7)` and `[BOSS] <name>:` (Watcher excluded) → `/b area` prints `F4 (clear)` / `M7 (boss)`; `m4EtherwarpHelper` highlights `(27, 81, 18)` during the F4/M4 boss.
+> **Auto Croesus:** strict chest-slot classification + click verification before `boughtCurrentChest` (this was the misclick *and* the false "no profitable chests"; a misclick used to fall straight into the close path); Redstone-Torch chest modifiers read greyed/strikethrough styles as "already spent"; `Auto` key mode prices `DUNGEON_CHEST_KEY` live; kismet EV via `features/dungeons/KismetEv` (matches bomboapi's `commands/kismet.js`, `GET /mod/kismet/<user>` with a local fallback).
+> **Profit pipeline:** `features/dungeons/DungeonProfitLog` records itemised runs (items/counts/floor tag parsed from the container title/duration/net profit) and syncs `POST /api/v1/profits`; `DungeonChestProfitHud` gained NET_ONLY vs ITEMIZED; `/b profit [user]` reads local or remote (`/profit/:user[/:type]`).
+> **Server:** new `bomboapi/src/profits.js` + `data/profits.json` (backup `src/index.js.bak-profits-*`), routes `POST /api/v1/profits` (Bearer token required), `GET /profits` (JSON/HTML), `GET /profit/:user[/:type]`. Verified live: 401 without a token, 400 on a bad ign, 404 for an unknown user, empty index OK.
+> **Storage / eggs:** `StoragePreviewManager` refreshes backpacks on container open; `features/StorageChestWaypoints` backs `/b storage <query>` (double-chest merge, count refresh, purge of non-container positions). `EggFinder` keeps a working subscription when the island reading is unmappable (that was the `Active Subscription Area: None`), remembers collected spawn positions, and no longer depends on an allowlist of egg flavours.
+> **API history:** `util/ApiHistory` (ring buffer + `config/bomboaddons/api_history.log`, rotation at 2 MB) fed by `LowestBinManager`, `PlaytimeTracker`, `ModUpdater`, `DungeonProfitLog`, `KismetEv`, `Bomboaddons.logApiRequest`; `/b apihistory` + `/b apihistory chat` + `gui/ApiHistoryScreen`.
+> **Textures / PV / values:** `NoObfuscate` is line-aware (rarity-header padding kept, dummy markers revealed); `ItemModelResolverMixin` + `TextureToggleManager.vanillaItemModelId` give Aspect of the Void a valid vanilla fallback and make the no-resource-pack toggle short-circuit *before* a pack model is chosen; `ProfileViewerScreen` shows load failures with `R` to retry and no fake-ban finale (`LoadingEggFinale.abort()`), bigger window + configurable backdrop (`pvScale`/`pvBackgroundAlpha` in GUI Settings); `TabCompletionManager.suggestPlayerNames` replaces the raw loop (Hypixel's `!A-a` placeholders filtered) in `/b pv`, `/b profit`, `/b kuudra`, `/b ring`; EIV honours `priceSourceMode` and adds stars/master stars/attributes.
 
 > [!NOTE]
 > ### ✅ SHIPPED in v26.2.28.38 (untested in-game)
@@ -257,8 +269,9 @@ The mod is currently on version **`26.2.28.38`**.
 
 ## 6. Next Direct Actions
 
-0. **Test v26.2.28.38 in-game (highest priority):** edit an existing sequence step; run `/b ac stats` and check the tracker HUD per floor; `/b egg debug` (expect a real handshake result instead of `Incorrect argument`); `/b cmd` → run something, restart, press ↑.
-0b. **Test v26.2.28.37 in-game:** (a) `/b egg debug` — expect `aaron auth OK` (hysky) or `Bombo auth OK` (fallback); (b) find an egg and confirm the hoppity publish doesn't 401 in the server log; (c) everything from the 28.36 list below is still untested too.
+0. **Test v26.2.28.39 in-game (highest priority):** open a Croesus chest run (misclicks, the +515.6K Emerald claim, the Redstone-Torch "already spent" modifiers, `/b profit` after a run); `/b area` inside F4/M4; `/b storage <query>`; `/b apihistory`; `/b pv` on a name that does not exist (expect the failure text, not the loading egg).
+0b. **Test v26.2.28.38 in-game:** edit an existing sequence step; run `/b ac stats` and check the tracker HUD per floor; `/b egg debug` (expect a real handshake result instead of `Incorrect argument`); `/b cmd` → run something, restart, press ↑.
+0c. **Test v26.2.28.37 in-game:** (a) `/b egg debug` — expect `aaron auth OK` (hysky) or `Bombo auth OK` (fallback); (b) find an egg and confirm the hoppity publish doesn't 401 in the server log; (c) everything from the 28.36 list below is still untested too.
 1. **Live In-Game Verification:** test the untested list in Section 4 on Hypixel, starting with `/b chathistory` (pure client-side, zero risk) and a keybind-triggered sequence run.
 2. **Migrate cheat module group 2** into `src/cheat/java`: `features/hider/**`, `FreecamManager`, `CameraMixin`, `EntityMixin`. Mixins that only serve cheats go into `bomboclient.client.mixins.json` (currently empty, deliberately kept as the slot), and every migrated class must be added to `CHEAT_ONLY_CLASSES` in `build.gradle` or the positive-control assertion will fail the build.
 3. **Group 3 (ESP) and group 4 (automation)** per `docs/FEATURE_AUDIT.md`; ~55 files reference those modules, mostly single tick-hook call sites in `BomboaddonsClient`.

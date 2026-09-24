@@ -166,6 +166,9 @@ public final class ProfileViewerScreen extends Screen {
 	private String playerSearchError = "";
 	private long playerSearchErrorUntilMs;
 	private boolean playerRankFetchStarted;
+	/** Human-readable reason the profile could not load; non-blank replaces the loading egg. */
+	private String loadFailure = "";
+	private long loadFailureAtMs;
 
 	public ProfileViewerScreen(String playerName) {
 		this(playerName, PvTab.HOME);
@@ -270,8 +273,12 @@ public final class ProfileViewerScreen extends Screen {
 				if (!displayed.ok()) {
 					BetterPV.LOGGER.warn("Profile fetch failed for {}: {}", this.requestedName, displayed.error());
 					BetterPvSessionAuth.notifyPlayerIfNeeded();
-					// Stay on the loading face (easter egg) instead of an empty template.
-					// Intentionally do NOT set dataReady — Loading... + eventual kick remain.
+					// Show *why* it failed instead of sitting on the loading egg: that egg ends in /limbo
+					// plus a fake ban, which is the last thing someone typing /b pv wants to see.
+					String reason = displayed.error();
+					this.loadFailure = reason == null || reason.isBlank() ? "Profile fetch failed" : reason;
+					this.loadFailureAtMs = System.currentTimeMillis();
+					LoadingEggFinale.abort();
 					return;
 				}
 				applyLoadedProfile(displayed);
@@ -406,13 +413,23 @@ public final class ProfileViewerScreen extends Screen {
 		int topRoom = IconButtonBar.TAB + 4;
 		int leftRoom = IconButtonBar.TAB + 4;
 
-		int panelW = Math.min(520, Math.max(420, this.width - 80 - leftRoom));
+		// /b pv is a dense data screen; a 420px column squeezed the tables. Give it more room,
+		// scaled by the config value and clamped to the window so it can never overflow.
+		float uiScale = 1.0F;
+		try {
+			float configured = me.bombo.bomboaddons.BomboConfig.get().pvScale;
+			if (configured > 0.0F) {
+				uiScale = Math.max(1.0F, Math.min(1.8F, configured));
+			}
+		} catch (Throwable ignored) {
+		}
+		int panelW = Math.min(this.width - 24, Math.round(Math.min(620, Math.max(480, this.width - 40 - leftRoom)) * uiScale));
 		int contentH = this.homePage.preferredHeight(this.font, panelW - PAD * 2);
 		if (this.tab == PvTab.HOME && activeSub(PvSubTab.HOME_OVERVIEW) == PvSubTab.HOME_MISC) {
 			contentH = Math.max(contentH, 220);
 		}
 		int maxPanelH = Math.max(200, this.height - topRoom - 24);
-		int panelH = Math.min(maxPanelH, Math.max(200, contentH + PAD * 2));
+		int panelH = (int) Math.min(maxPanelH, Math.max(200.0F, (contentH + PAD * 2) * uiScale));
 
 		int panelX = (this.width - panelW) / 2 + leftRoom / 2;
 		int panelY = (this.height - panelH - topRoom) / 2 + topRoom;
@@ -421,7 +438,17 @@ public final class ProfileViewerScreen extends Screen {
 		this.panelWCache = panelW;
 		this.panelHCache = panelH;
 
-		PvDraw.fill(graphics, 0, 0, this.width, this.height, 0x99000000);
+		// Configurable backdrop dim: the default is deliberately light so the world stays visible
+		// behind the window (0x99 was opaque enough to hide the game).
+		int backdropAlpha = 0x99;
+		try {
+			float configuredAlpha = me.bombo.bomboaddons.BomboConfig.get().pvBackgroundAlpha;
+			if (configuredAlpha > 0.0F && configuredAlpha <= 1.0F) {
+				backdropAlpha = Math.round(configuredAlpha * 255.0F);
+			}
+		} catch (Throwable ignored) {
+		}
+		PvDraw.fill(graphics, 0, 0, this.width, this.height, backdropAlpha << 24);
 
 		float scale = openScale();
 		this.openPivotX = panelX + panelW / 2.0F;
@@ -556,6 +583,10 @@ public final class ProfileViewerScreen extends Screen {
 	}
 
 	private void drawLoadingFace(GuiGraphicsExtractor g, int panelX, int panelY, int panelW, int panelH) {
+		if (!this.loadFailure.isEmpty()) {
+			drawLoadFailure(g, panelX, panelY, panelW, panelH);
+			return;
+		}
 		long elapsedMs = System.currentTimeMillis() - this.openAnimStartMs;
 		List<LoadingEgg.Stage> stages = LoadingEgg.stagesUnlocked(elapsedMs);
 		int cx = panelX + panelW / 2;
@@ -590,6 +621,38 @@ public final class ProfileViewerScreen extends Screen {
 		}
 	}
 
+	/** Visible failure state: what went wrong, and how to retry without the fake-ban egg. */
+	private void drawLoadFailure(GuiGraphicsExtractor g, int panelX, int panelY, int panelW, int panelH) {
+		int cx = panelX + panelW / 2;
+		int lineH = this.font.lineHeight + 4;
+		String title = "§c§lCould not load §f" + this.requestedName;
+		String reason = "§7" + this.loadFailure;
+		String hint = "§ePress R §7to retry  §8|  §eESC §7to close";
+		int topY = panelY + Math.max(12, (panelH - lineH * 3) / 2);
+		int maxW = panelW - 24;
+		PvDraw.textCentered(g, this.font, trimTo(this.font, title, maxW), cx, topY, 0xFFFFFFFF);
+		PvDraw.textCentered(g, this.font, trimTo(this.font, reason, maxW), cx, topY + lineH, 0xFFFFFFFF);
+		PvDraw.textCentered(g, this.font, trimTo(this.font, hint, maxW), cx, topY + lineH * 2, 0xFFFFFFFF);
+	}
+
+	/** Keeps a line inside {@code maxW} pixels by eliding the tail. */
+	private String trimTo(net.minecraft.client.gui.Font font, String value, int maxW) {
+		if (value == null || maxW <= 0) {
+			return value == null ? "" : value;
+		}
+		if (font.width(value) <= maxW) {
+			return value;
+		}
+		String ellipsis = "...";
+		for (int end = value.length() - 1; end > 0; end--) {
+			String candidate = value.substring(0, end) + ellipsis;
+			if (font.width(candidate) <= maxW) {
+				return candidate;
+			}
+		}
+		return ellipsis;
+	}
+
 	private void drawEggLine(GuiGraphicsExtractor g, Component line, int cx, int y, int maxW) {
 		int tw = this.font.width(line);
 		if (tw <= maxW || tw <= 0) {
@@ -606,6 +669,10 @@ public final class ProfileViewerScreen extends Screen {
 
 	private void scheduleBreakFinale() {
 		if (this.breakScheduled) {
+			return;
+		}
+		if (!this.loadFailure.isEmpty()) {
+			// A real failure is not an easter egg: never queue the limbo + fake ban sequence.
 			return;
 		}
 		this.breakScheduled = true;
@@ -2290,8 +2357,22 @@ public final class ProfileViewerScreen extends Screen {
 		});
 	}
 
+	/** Re-opens a fresh viewer for the same target, clearing the failed state. */
+	private void retryLoad() {
+		Minecraft client = Minecraft.getInstance();
+		if (client == null) {
+			return;
+		}
+		client.setScreenAndShow(new ProfileViewerScreen(this.requestedName, this.tab));
+	}
+
 	@Override
 	public boolean keyPressed(KeyEvent event) {
+		// 82 = GLFW_KEY_R: retry a failed profile fetch without the fake-ban egg.
+		if (event != null && event.key() == 82 && !this.loadFailure.isEmpty()) {
+			retryLoad();
+			return true;
+		}
 		if (event != null) {
 			boolean typingInvSearch = this.inventorySearch != null
 				&& this.inventorySearch.isVisible()

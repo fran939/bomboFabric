@@ -42,6 +42,12 @@ public class Bomboaddons implements ModInitializer {
 
     public static void logApiRequest(String url) {
         LOGGER.info("[API Request] " + url);
+        // Funnel every logged outbound request into /b apihistory. Sites that can see the response
+        // additionally record the real status code and duration through ApiHistory.http(...).
+        try {
+            me.bombo.bomboaddons.util.ApiHistory.issued("GET", url);
+        } catch (Throwable ignored) {
+        }
     }
 
     @Override

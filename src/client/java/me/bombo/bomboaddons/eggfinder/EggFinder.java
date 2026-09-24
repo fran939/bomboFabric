@@ -4,7 +4,9 @@ import com.mojang.authlib.properties.Property;
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -38,7 +40,10 @@ import org.slf4j.LoggerFactory;
 
 public class EggFinder {
    private static final Logger LOGGER = LoggerFactory.getLogger("bomboaddons-eggfinder");
-   private static final Pattern EGG_FOUND_PATTERN = Pattern.compile("(?:HOPPITY'S HUNT You found a Chocolate|You have already collected this Chocolate) (Breakfast|Lunch|Dinner|Brunch|D[eé]jeuner|Supper) Egg", 2);
+   // The flavour is captured generically instead of from an allowlist: Hypixel keeps adding egg
+   // types (and renames existing ones), and a name that missed the list meant the pickup was never
+   // registered - so a collected egg stayed highlighted for the rest of the lobby.
+   private static final Pattern EGG_FOUND_PATTERN = Pattern.compile("(?:HOPPITY'S HUNT You found a Chocolate|You have already collected this Chocolate) (.+?) Egg", 2);
    private static final Pattern NO_EGGS_PATTERN = Pattern.compile("There are no hidden Chocolate Rabbit Eggs nearby! Try again later!", 2);
    private static final Pattern RABBIT_FOUND_PATTERN = Pattern.compile("HOPPITY'S HUNT You found (.+) \\(([A-Z]+)\\)!", 2);
    private static final Set<String> VALID_LOCATIONS = Set.of(
@@ -48,6 +53,14 @@ public class EggFinder {
       "Torrhus Canyon", "The Rift", "Jerry's Workshop", "Garden"
    );
    private static final List<EggWaypoint> activeWaypoints = new ArrayList();
+   /**
+    * Egg spawn positions already collected this cycle, keyed {@code TYPE@x,y,z}.
+    *
+    * <p>Hoppity egg spawns are fixed per island, so remembering the *position* (not just the egg
+    * type) is what stops a collected "Brunch Egg" from being highlighted again after a lobby hop
+    * wipes {@link #activeWaypoints}.
+    */
+   private static final Set<String> collectedPositions = new HashSet<>();
    private static SkyblockTimeInfo lastTime = null;
    private static String lastLoc = null;
 
@@ -63,6 +76,38 @@ public class EggFinder {
          type.collected = false;
       }
 
+      synchronized(collectedPositions) {
+         collectedPositions.clear();
+      }
+
+   }
+
+   private static String positionKey(EggType type, BlockPos pos) {
+      return type == null || pos == null ? "" : type.name() + "@" + pos.getX() + "," + pos.getY() + "," + pos.getZ();
+   }
+
+   /** Records that the egg at this spawn position was already picked up this cycle. */
+   public static void markPositionCollected(EggType type, BlockPos pos) {
+      if (type == null || pos == null) return;
+      synchronized(collectedPositions) {
+         collectedPositions.add(positionKey(type, pos));
+      }
+   }
+
+   /** True when this exact spawn position was already collected, so it must not be highlighted. */
+   public static boolean isPositionCollected(EggType type, BlockPos pos) {
+      if (type == null || pos == null) return false;
+      synchronized(collectedPositions) {
+         return collectedPositions.contains(positionKey(type, pos));
+      }
+   }
+
+   /** Drops the collected memory for one egg type when its hunt cycle resets. */
+   private static void forgetCollectedPositions(EggType type) {
+      if (type == null) return;
+      synchronized(collectedPositions) {
+         collectedPositions.removeIf(key -> key.startsWith(type.name() + "@"));
+      }
    }
 
    public static boolean hasWaypoints() {
@@ -93,13 +138,15 @@ public class EggFinder {
          }
          String currentLoc = getSkyblockerLocationName(rawLoc);
          if (!Objects.equals(lastLoc, currentLoc)) {
-            LOGGER.info("[EggFinder] Location updated to " + currentLoc + " (was " + lastLoc + ")");
-            lastLoc = currentLoc;
-            clearWaypoints();
-            if (currentLoc != null && VALID_LOCATIONS.contains(currentLoc)) {
+            if (currentLoc != null) {
+               LOGGER.info("[EggFinder] Location updated to " + currentLoc + " (was " + lastLoc + ")");
+               lastLoc = currentLoc;
+               clearWaypoints();
                EggWebSocket.updateSubscription(currentLoc);
             } else {
-               EggWebSocket.updateSubscription((String)null);
+               // A reading we cannot map must not tear down a working subscription: that is what
+               // made /b egg report "Active Subscription Area: None" on islands we do support.
+               LOGGER.info("[EggFinder] Unmapped location '" + rawLoc + "' - keeping subscription " + lastLoc);
             }
          }
 
@@ -115,6 +162,8 @@ public class EggFinder {
             for(EggType type : EggFinder.EggType.values()) {
                if (time.hour == type.resetHour && isOdd == type.oddDay) {
                   type.collected = false;
+                  // A new hunt cycle: the old collected positions are valid again.
+                  forgetCollectedPositions(type);
                   synchronized(activeWaypoints) {
                      activeWaypoints.removeIf((wp) -> wp.type == type);
                   }
@@ -142,7 +191,7 @@ public class EggFinder {
                            if (eggObj != null && !collected) {
                               Field coordsField = eggObj.getClass().getField("coordinates");
                               BlockPos pos = (BlockPos) coordsField.get(eggObj);
-                              if (pos != null) {
+                              if (pos != null && !isPositionCollected(type, pos)) {
                                  synchronized(activeWaypoints) {
                                     activeWaypoints.removeIf((wp) -> wp.type == type);
                                     activeWaypoints.add(new EggWaypoint(pos, type));
@@ -159,7 +208,7 @@ public class EggFinder {
                List<ArmorStand> nearbyStands = mc.level.getEntitiesOfClass(ArmorStand.class, mc.player.getBoundingBox().inflate(64.0));
                for (ArmorStand stand : nearbyStands) {
                   for (EggType type : EggFinder.EggType.values()) {
-                     if (!type.collected && checkIfEgg(stand, type)) {
+                     if (!type.collected && !isPositionCollected(type, stand.blockPosition().above(2)) && checkIfEgg(stand, type)) {
                         BlockPos eggPos = stand.blockPosition().above(2);
                         boolean added = false;
                         synchronized(activeWaypoints) {
@@ -224,12 +273,37 @@ public class EggFinder {
                   String typeName = matcher.group(1);
                   EggType eggType = EggFinder.EggType.getTypeByName(typeName);
                   if (eggType == null) {
+                     // Unknown flavour: something *was* just picked up right here, so retire the
+                     // closest waypoint rather than leaving a ghost highlight behind.
+                     retireNearestWaypoint(typeName);
                      return true;
                   }
 
                   eggType.collected = true;
                   synchronized(activeWaypoints) {
+                     // Remember the positions being retired so a re-discovery after a lobby hop does
+                     // not bring the already-collected egg back as a waypoint.
+                     for (EggWaypoint wp : activeWaypoints) {
+                        if (wp.type == eggType) {
+                           markPositionCollected(eggType, wp.pos);
+                        }
+                     }
                      activeWaypoints.removeIf((wpx) -> wpx.type == eggType);
+                  }
+
+                  // Also remember where the egg actually was, even if we never highlighted it.
+                  BlockPos foundAt = null;
+                  try {
+                     Minecraft foundClient = Minecraft.getInstance();
+                     if (foundClient.player != null && foundClient.level != null) {
+                        List<ArmorStand> near = foundClient.level.getEntitiesOfClass(ArmorStand.class,
+                                AABB.ofSize(foundClient.player.position(), 8.0D, 8.0D, 8.0D), (entity) -> checkIfEgg(entity, eggType));
+                        if (!near.isEmpty()) {
+                           foundAt = near.get(0).blockPosition().above(2);
+                           markPositionCollected(eggType, foundAt);
+                        }
+                     }
+                  } catch (Throwable ignored) {
                   }
 
                   LOGGER.info("Collected or found a Chocolate " + typeName + " Egg!");
@@ -282,14 +356,47 @@ public class EggFinder {
                            }
                         }
 
-                        if (closestWp != null && closestDist < (double)225.0F) {
-                           EggType eggType = closestWp.type;
+                        // "You found a Chocolate Rabbit" carries no coordinates, so the piggyback
+                        // pickup has to be matched by distance. Only act when the match is
+                        // unambiguous: retiring the wrong egg is worse than retiring none, because
+                        // a wrongly-cleared egg simply never comes back this hunt cycle.
+                        List<EggWaypoint> touching = new ArrayList<>();
+                        List<EggWaypoint> nearby = new ArrayList<>();
+                        synchronized(activeWaypoints) {
+                           for (EggWaypoint wp : activeWaypoints) {
+                              double dist = wp.pos.distToCenterSqr(playerPos.x, playerPos.y, playerPos.z);
+                              if (dist <= 15.0D * 15.0D) {
+                                 touching.add(wp);
+                              }
+                              if (dist <= 40.0D * 40.0D) {
+                                 nearby.add(wp);
+                              }
+                           }
+                        }
+
+                        EggWaypoint target = null;
+                        if (touching.size() == 1) {
+                           target = touching.get(0);
+                        } else if (touching.isEmpty() && nearby.size() == 1) {
+                           target = nearby.get(0);
+                        }
+
+                        if (target != null) {
+                           EggType eggType = target.type;
                            eggType.collected = true;
                            synchronized(activeWaypoints) {
+                              for (EggWaypoint wp : activeWaypoints) {
+                                 if (wp.type == eggType) {
+                                    markPositionCollected(eggType, wp.pos);
+                                 }
+                              }
                               activeWaypoints.removeIf((wpx) -> wpx.type == eggType);
                            }
 
                            LOGGER.info("Collected rabbit egg via proximity to " + eggType.name + " Egg!");
+                        } else if (!touching.isEmpty() || !nearby.isEmpty()) {
+                           LOGGER.info("Rabbit found with " + Math.max(touching.size(), nearby.size())
+                                   + " egg(s) in range - leaving every waypoint highlighted.");
                         } else {
                            LOGGER.info("Found a rabbit but no egg waypoint was nearby.");
                         }
@@ -307,12 +414,48 @@ public class EggFinder {
       }
    }
 
+   /**
+    * Retires the waypoint nearest the player when the server reports an egg flavour we do not
+    * know. Only used for pickups the player is standing on, so a 64 block cap keeps a mistyped or
+    * unknown message from clearing an egg on the other side of the island.
+    */
+   private static void retireNearestWaypoint(String typeName) {
+      Minecraft client = Minecraft.getInstance();
+      if (client.player == null || client.level == null) return;
+      Vec3 playerPos = client.player.position();
+      EggWaypoint closest = null;
+      double closestDist = Double.MAX_VALUE;
+      synchronized(activeWaypoints) {
+         for (EggWaypoint wp : activeWaypoints) {
+            double dist = wp.pos.distToCenterSqr(playerPos.x, playerPos.y, playerPos.z);
+            if (dist < closestDist) {
+               closestDist = dist;
+               closest = wp;
+            }
+         }
+      }
+      if (closest == null || closestDist > 64.0D * 64.0D) {
+         LOGGER.info("Collected egg flavour '" + typeName + "' is unknown and no waypoint was close enough to retire.");
+         return;
+      }
+      EggType type = closest.type;
+      if (type != null) {
+         type.collected = true;
+         markPositionCollected(type, closest.pos);
+      }
+      synchronized(activeWaypoints) {
+         activeWaypoints.remove(closest);
+      }
+      LOGGER.info("Collected unknown egg flavour '" + typeName + "' - retired the nearest waypoint ("
+              + (type != null ? type.name() : "?") + ").");
+   }
+
    public static void onWebsocketMessage(String eggTypeStr, BlockPos pos) {
       EggType eggType = EggFinder.EggType.getTypeByName(eggTypeStr);
       if (eggType != null) {
          synchronized(activeWaypoints) {
             activeWaypoints.removeIf((wp) -> wp.type == eggType);
-            if (!eggType.collected) {
+            if (!eggType.collected && !isPositionCollected(eggType, pos)) {
                activeWaypoints.add(new EggWaypoint(pos, eggType));
             }
          }
@@ -420,66 +563,109 @@ public class EggFinder {
       }
    }
 
+   /**
+    * Maps whatever {@code SkyblockUtils.getLocation()} reported onto the island names the hoppity
+    * service uses.
+    *
+    * <p>This used to fall through and return the raw reading, so any sub-area it did not know
+    * ("Bazaar Alley", "Wilderness", "Coal Mine", "Graveyard", ...) produced a value that is not a
+    * valid island - the subscription was then cleared and {@code /b egg} reported
+    * "Active Subscription Area: None" on an island the mod fully supports. Every SkyBlock sub-area
+    * is now listed, and the parent area is consulted as a second opinion.
+    */
    public static String getSkyblockerLocationName(String bomboLocation) {
       if (bomboLocation == null) {
          return null;
       }
-      String lower = bomboLocation.toLowerCase().trim();
-      if (lower.contains("torrhus") || lower.contains("canyon")) {
-         return "Torrhus Canyon";
+      String lower = bomboLocation.toLowerCase(Locale.ROOT).trim();
+      if (lower.isEmpty()) {
+         return null;
       }
-      if (lower.contains("bayou") || lower.contains("backwater")) {
-         return "Backwater Bayou";
-      }
-      if (lower.contains("crimson") || lower.contains("isle")) {
-         return "Crimson Isle";
-      }
-      if (lower.contains("crystal") || lower.contains("hollows")) {
-         return "Crystal Hollows";
-      }
-      if (lower.contains("deep") || lower.contains("cavern")) {
+
+      // --- Private island / lobby / limbo: not hoppity locations at all ---------------------
+      if (lower.contains("private island") || lower.equals("private")) return null;
+      if (lower.contains("limbo")) return null;
+
+      // --- Dedicated hunts ------------------------------------------------------------------
+      if (lower.contains("torrhus") || lower.contains("canyon")) return "Torrhus Canyon";
+      if (lower.contains("bayou") || lower.contains("backwater")) return "Backwater Bayou";
+      if (lower.contains("galatea")) return "Galatea";
+      if (lower.contains("lotus") || lower.contains("atoll")) return "Lotus Atoll";
+      if (lower.contains("jerry")) return "Jerry's Workshop";
+      if (lower.contains("rift") || lower.contains("wizard tower")) return "The Rift";
+
+      // --- Deep Caverns (checked before Dwarven: its sub-areas contain "mines") --------------
+      if (lower.contains("coal mine") || lower.contains("gunpowder mines") || lower.contains("obsidian sanctuary")
+              || lower.contains("lapis quarry") || lower.contains("pigmen") || lower.contains("slimehill")
+              || lower.contains("diamond reserve") || lower.contains("deep cavern") || lower.equals("deep")) {
          return "Deep Caverns";
       }
-      if (lower.contains("dungeon hub")) {
-         return "Dungeon Hub";
+
+      // --- Dwarven Mines --------------------------------------------------------------------
+      if (lower.contains("dwarven")) return "Dwarven Mines";
+
+      // --- Crystal Hollows ------------------------------------------------------------------
+      if (lower.contains("crystal") || lower.contains("hollows") || lower.contains("nucleus")
+              || lower.contains("jungle") || lower.contains("precursor") || lower.contains("goblin")
+              || lower.contains("mithril") || lower.contains("fairy grotto") || lower.contains("magma field")
+              || lower.contains("khazad")) {
+         return "Crystal Hollows";
       }
-      if (lower.contains("dwarven") || (lower.contains("mines") && !lower.contains("gold") && !lower.contains("coal"))) {
-         return "Dwarven Mines";
+
+      // --- Remaining Dwarven sub-areas -------------------------------------------------------
+      if (lower.contains("mines") && !lower.contains("gold")) return "Dwarven Mines";
+
+      // --- Crimson Isle ---------------------------------------------------------------------
+      if (lower.contains("crimson") || lower.contains("isle") || lower.contains("hot spring")
+              || lower.contains("burning desert") || lower.contains("dragontail") || lower.contains("the wastes")
+              || lower.contains("blazing volcano") || lower.contains("mystic marsh") || lower.contains("dojo")) {
+         return "Crimson Isle";
       }
-      if (lower.contains("galatea")) {
-         return "Galatea";
-      }
-      if (lower.contains("gold mine") || lower.equals("gold")) {
-         return "Gold Mine";
-      }
-      if (lower.contains("lotus") || lower.contains("atoll")) {
-         return "Lotus Atoll";
-      }
-      if (lower.contains("spider")) {
-         return "Spider's Den";
-      }
-      if (lower.contains("the end") || lower.equals("end") || lower.contains("dragons nest")) {
+
+      // --- Gold Mine ------------------------------------------------------------------------
+      if (lower.contains("gold mine") || lower.equals("gold")) return "Gold Mine";
+
+      // --- Spider's Den ---------------------------------------------------------------------
+      if (lower.contains("spider")) return "Spider's Den";
+
+      // --- The End --------------------------------------------------------------------------
+      if (lower.contains("the end") || lower.equals("end") || lower.contains("dragons nest") || lower.contains("dragon's nest")
+              || lower.contains("void sepulture") || lower.contains("zealot")) {
          return "The End";
       }
-      if (lower.contains("farming") || lower.contains("barn") || lower.contains("desert") || lower.contains("mushroom") || lower.contains("oasis") || lower.contains("windmill")) {
+
+      // --- The Farming Islands --------------------------------------------------------------
+      if (lower.contains("farming") || lower.contains("barn") || lower.contains("desert") || lower.contains("mushroom")
+              || lower.contains("oasis") || lower.contains("windmill") || lower.contains("farm") || lower.contains("tragic hill")
+              || lower.contains("shepherd")) {
          return "The Farming Islands";
       }
-      if (lower.contains("park") || lower.contains("spruce") || lower.contains("birch") || lower.contains("savanna") || lower.contains("howling") || lower.contains("melancholy") || lower.contains("thicket")) {
+
+      // --- The Park -------------------------------------------------------------------------
+      if (lower.contains("park") || lower.contains("spruce") || lower.contains("birch") || lower.contains("savanna")
+              || lower.contains("howling") || lower.contains("melancholy") || lower.contains("thicket")
+              || lower.contains("woods")) {
          return "The Park";
       }
-      if (lower.contains("rift")) {
-         return "The Rift";
-      }
-      if (lower.contains("jerry")) {
-         return "Jerry's Workshop";
-      }
-      if (lower.contains("garden")) {
-         return "Garden";
-      }
-      if (lower.equals("hub") || lower.contains("the hub") || lower.equals("village") || lower.equals("ruins") || lower.equals("bazaar")) {
+
+      // --- Dungeon Hub ----------------------------------------------------------------------
+      if (lower.contains("dungeon hub") || lower.contains("catacomb")) return "Dungeon Hub";
+
+      // --- Garden ---------------------------------------------------------------------------
+      if (lower.contains("garden") || lower.contains("greenhouse")) return "Garden";
+
+      // --- Hub (all of its sub-areas) -------------------------------------------------------
+      if (lower.equals("hub") || lower.contains("the hub") || lower.equals("village") || lower.equals("ruins")
+              || lower.contains("bazaar") || lower.contains("auction") || lower.contains("community center")
+              || lower.contains("museum") || lower.contains("bank") || lower.contains("fashion")
+              || lower.contains("carnival") || lower.contains("colosseum") || lower.contains("graveyard")
+              || lower.contains("wilderness") || lower.contains("forest") || lower.contains("mountain")
+              || lower.contains("tavern") || lower.contains("library") || lower.contains("pet care")
+              || lower.contains("hub island") || lower.equals("lobby")) {
          return "Hub";
       }
-      return bomboLocation;
+
+      return null;
    }
 
    public static List<EggWaypoint> getActiveWaypoints() {
