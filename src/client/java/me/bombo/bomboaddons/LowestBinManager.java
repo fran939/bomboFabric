@@ -304,9 +304,23 @@ public class LowestBinManager {
       }
    }
 
-   private static long getRawPrice(String id) {
+   /**
+    * Whether estimated values should use sell-side prices.
+    *
+    * <p>{@code priceSourceMode} is the user-facing switch (Instant Buy (Lowest BIN) vs Instant
+    * Sell (Bazaar Sell Offer / Average BIN)); {@code estimatedValueBazaarMode} is the older
+    * boolean for the same choice. Either one asking for sell prices wins, so configs written
+    * before the switch existed keep the behaviour they were set to.
+    */
+   public static boolean prefersInstantSell() {
       BomboConfig.Settings s = BomboConfig.get();
-      boolean preferSell = s != null && s.estimatedValueBazaarMode;
+      if (s == null) return false;
+      if (s.estimatedValueBazaarMode) return true;
+      return "INSTANT_SELL".equalsIgnoreCase(s.priceSourceMode);
+   }
+
+   private static long getRawPrice(String id) {
+      boolean preferSell = prefersInstantSell();
 
       if (bazaarCache.containsKey(id) || bazaarSellCache.containsKey(id)) {
          double price = 0.0;
@@ -528,8 +542,11 @@ public class LowestBinManager {
 
    private static CompletableFuture<Boolean> fetchFromUrl(String url) {
       Bomboaddons.logApiRequest(url);
+      long startedAt = System.currentTimeMillis();
       HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "Mozilla/5.0 (Bomboaddons)").timeout(Duration.ofSeconds(10L)).GET().build();
-      return client.sendAsync(request, BodyHandlers.ofString()).thenApply((response) -> {
+      CompletableFuture<Boolean> future = client.sendAsync(request, BodyHandlers.ofString()).thenApply((response) -> {
+         // Feeds /b apihistory: status + wall time for every price/bazaar/npc fetch.
+         me.bombo.bomboaddons.util.ApiHistory.http("GET", url, response.statusCode(), System.currentTimeMillis() - startedAt);
          if (response.statusCode() == 200) {
             try {
                JsonElement root = JsonParser.parseString((String)response.body());
@@ -624,6 +641,12 @@ public class LowestBinManager {
          ex.printStackTrace();
          return false;
       });
+      future.whenComplete((ok, error) -> {
+         if (error != null) {
+            me.bombo.bomboaddons.util.ApiHistory.http("GET", url, 0, System.currentTimeMillis() - startedAt);
+         }
+      });
+      return future;
    }
 
    public static long getCraftCostCached(String skyblockId) {
@@ -890,6 +913,23 @@ public class LowestBinManager {
       public List<ValueEntry> gemstones = new java.util.ArrayList<>();
    }
 
+   /**
+    * Coins the Dungeon Hub anvil charges for each successive star (doubling from 100k).
+    *
+    * <p>Only the first five stars are bought with coins; stars six to ten need a Master Star
+    * item, which {@link #MASTER_STAR_ITEMS} prices from the market instead.
+    */
+   private static final long[] DUNGEON_STAR_COINS = {0L, 100_000L, 200_000L, 400_000L, 800_000L, 1_600_000L};
+
+   /** Master Star items, in application order, used for the 6th..10th dungeon stars. */
+   private static final String[] MASTER_STAR_ITEMS = {
+      "FIRST_MASTER_STAR",
+      "SECOND_MASTER_STAR",
+      "THIRD_MASTER_STAR",
+      "FOURTH_MASTER_STAR",
+      "FIFTH_MASTER_STAR"
+   };
+
    private static final Map<String, String> REFORGE_STONES = Map.ofEntries(
       Map.entry("fabled", "DRAGON_CLAW"),
       Map.entry("withered", "WITHER_BLOOD"),
@@ -1048,6 +1088,53 @@ public class LowestBinManager {
                   }
                }
 
+               // Dungeon stars applied at the Dungeon Hub (coins, so they have no BIN price).
+               int stars = extra.getInt("dungeon_item_level").orElse(0);
+               if (stars > 0) {
+                  int baseStars = Math.min(stars, DUNGEON_STAR_COINS.length - 1);
+                  long starCoins = 0L;
+                  for (int i = 1; i <= baseStars; i++) {
+                     starCoins += DUNGEON_STAR_COINS[i];
+                  }
+                  if (starCoins > 0L) {
+                     breakdown.upgrades.add(new ValueEntry(baseStars + "x Dungeon Star", starCoins, "Stars"));
+                     breakdown.totalPrice += starCoins;
+                  }
+               }
+
+               // Master stars are real items (FIRST_MASTER_STAR ...), so price them from the market.
+               // Upgrade_level is the explicit master-star counter; otherwise they are the stars
+               // beyond the fifth.
+               int masterStars = extra.getInt("upgrade_level").orElse(0);
+               if (masterStars <= 0) {
+                  masterStars = Math.max(0, stars - 5);
+               }
+               for (int i = 0; i < Math.min(masterStars, MASTER_STAR_ITEMS.length); i++) {
+                  long msPrice = getCachedPrice(MASTER_STAR_ITEMS[i]);
+                  if (msPrice > 0L) {
+                     breakdown.upgrades.add(new ValueEntry("Master Star " + (i + 1), msPrice, "Upgrade"));
+                     breakdown.totalPrice += msPrice;
+                  }
+               }
+
+               // Attributes (shard-based): priced per level when a shard id resolves.
+               net.minecraft.nbt.CompoundTag attrs = extra.getCompound("attributes").orElse(null);
+               if (attrs != null) {
+                  for (String attrKey : attrs.keySet()) {
+                     int lvl = attrs.getInt(attrKey).orElse(0);
+                     if (lvl <= 0) continue;
+                     String key = attrKey.toUpperCase().replace(" ", "_");
+                     long unit = getCachedPrice("ATTRIBUTE_SHARD_" + key);
+                     if (unit <= 0L) unit = getCachedPrice(key + "_ATTRIBUTE_SHARD");
+                     if (unit <= 0L) unit = getCachedPrice("SHARD_" + key);
+                     if (unit > 0L) {
+                        long totalAttr = unit * lvl;
+                        breakdown.upgrades.add(new ValueEntry(attributeLabel(attrKey) + " " + lvl, totalAttr, "Attribute"));
+                        breakdown.totalPrice += totalAttr;
+                     }
+                  }
+               }
+
                // Gemstones
                net.minecraft.nbt.CompoundTag gems = extra.getCompound("gems").orElse(null);
                if (gems != null) {
@@ -1073,6 +1160,13 @@ public class LowestBinManager {
       } catch (Throwable ignored) {}
 
       return breakdown;
+   }
+
+   /** {@code mana_pool} -> {@code Mana pool}. */
+   private static String attributeLabel(String raw) {
+      if (raw == null || raw.isEmpty()) return "Attribute";
+      String clean = raw.toLowerCase().replace('_', ' ');
+      return Character.toUpperCase(clean.charAt(0)) + clean.substring(1);
    }
 
    public static long calculateEstimatedValue(net.minecraft.world.item.ItemStack stack, String skyblockId) {

@@ -510,6 +510,7 @@ public class PlaytimeTracker {
                String apiUrl = BomboApiUrl.getApiUrl("/playtime");
                URL url = (new URI(apiUrl)).toURL();
                Bomboaddons.logApiRequest(apiUrl);
+               long apiStartedAt = System.currentTimeMillis();
                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                conn.setRequestMethod("POST");
                conn.setRequestProperty("Content-Type", "application/json");
@@ -541,6 +542,7 @@ public class PlaytimeTracker {
                }
 
                int responseCode = conn.getResponseCode();
+               me.bombo.bomboaddons.util.ApiHistory.http("POST", apiUrl, responseCode, System.currentTimeMillis() - apiStartedAt);
                DebugUtils.debug("playtime", "Cloud sync response: " + responseCode);
                if (responseCode == 200) {
                   lastCloudSyncTime = System.currentTimeMillis();

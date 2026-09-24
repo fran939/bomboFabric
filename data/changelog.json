@@ -1,5 +1,28 @@
 [
   {
+    "version": "26.2.28.39",
+    "date": "2026-09-24",
+    "changes": [
+      "Sequences: every step row has an [ON]/[OFF] switch - a disabled step stays in the list but is skipped during playback; TAB moves focus from a step field to the GUI/Container name field",
+      "Sliders can be typed into: clicking a slider's numeric label turns it into a text field; coin sliders (100K - 3M) are used by the Auto Croesus key/kismet thresholds",
+      "Chat history no longer disappears: new persistHistoryAcrossServers (on) keeps the buffer across world switches, disconnects and server changes, marking a session divider instead of clearing; new unlimitedChatHistory removes the entry cap",
+      "/b area now shows the floor and phase - 'F4 (clear)' / 'M7 (boss)' - from the scoreboard line plus [BOSS] chat, with the Watcher correctly excluded; new M4/F4 Etherwarp Helper highlights (27, 81, 18) during the F4/M4 boss fight",
+      "Auto Croesus no longer misclicks: chest slots are classified strictly by chest-interaction items, so it cannot click a loot item instead of 'Open Reward Chest', and a purchase is only counted once the click is verified",
+      "Auto Croesus no longer claims 'no profitable chests' while an Emerald chest is +515.6K - every non-bedrock chest is evaluated on real net profit",
+      "Chest modifiers are read from the Redstone Torch tooltip: a greyed/struck-through Kismet Feather or Dungeon Chest Key means that modifier was already spent on the chest",
+      "Auto dungeon key mode prices DUNGEON_CHEST_KEY from the live Bazaar and re-enters for a second chest when its profit beats key price + safety margin; kismet EV matches the Discord bot's !kismet maths",
+      "Itemised profit log: every chest opened (manual or automatic) records items + counts, floor/tier, run duration and net profit, synced to POST /api/v1/profits and browsable at /profits, /profit/:user and /profit/:user/:type; /b profit [user] shows it in game",
+      "Chest value panel gains a NET_ONLY / ITEMIZED display mode",
+      "Backpacks refresh when a container is opened (no more phantom 'Chimera in backpack 15'); /b storage <query> places chest waypoints in world, merges double chests, updates or removes them as items run out and purges verified-broken positions",
+      "/b egg no longer shows 'Active Subscription Area: None' on supported islands, collected eggs are remembered per spawn position across lobby hops, and pickup detection no longer depends on a fixed list of egg flavours",
+      "New /b apihistory (and /b apihistory chat): timestamp, service, method, endpoint, status and response time for every outbound HTTP/WebSocket request, with a log file",
+      "No Obfuscate is now line-aware: recombobulated rarity headers keep their obfuscation padding, while dummy markers like 'Obfuscated-3' are still revealed",
+      "Aspect of the Void always falls back to a valid vanilla model (no more purple/black missing texture), and the no-resource-pack toggle now actually bypasses pack models so vanilla overrides apply",
+      "/b pv shows load failures instead of the endless loading egg (no fake-ban limbo) and supports R to retry; tab completion covers lobby, friends, guild and party and rejects Hypixel's '!A-a' placeholder names; bigger window with a more transparent backdrop (configurable in GUI Settings)",
+      "Estimated Item Value can use Instant Buy (Lowest BIN) or Instant Sell (Bazaar Sell Offer / Average BIN), and now accounts for base item, stars, master stars, enchants, recombobulator, potato books, reforge, gemstones and attributes"
+    ]
+  },
+  {
     "version": "26.2.28.38",
     "date": "2026-09-24",
     "changes": [

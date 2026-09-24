@@ -4434,8 +4434,46 @@ public class ConfigCustomWidgets {
         List.of("highMob", "highIsland", "advItemDisplay", "advEntityType", "advHeadHash", "advMobSize", "advArmorPiece", "advPlayerName")
     );
 
+    /**
+     * TAB order for the sequence step builder, in the same left-to-right order the fields are
+     * drawn. Only fields belonging to the selected action type are listed, so TAB can never land
+     * on an input that is not on screen.
+     *
+     * <p>This is what makes "type a slot name, hit TAB, type the GUI title" work.
+     */
+    private static List<String> sequenceFieldCycle() {
+        if (newActionType == null) return null;
+        List<String> order = new java.util.ArrayList<>();
+        switch (newActionType) {
+            case CLICK_SLOT -> {
+                order.add("actItem");
+                order.add("actGui");
+            }
+            case RUN_COMMAND -> order.add("actCmd");
+            case INTERACT_ENTITY -> {
+                order.add("actEntity");
+                order.add("actRadius");
+            }
+            default -> {
+            }
+        }
+        order.add("actRepeat");
+        order.add("actDelay");
+        return order;
+    }
+
     public static void cycleTabField(boolean reverse) {
         if (activeFocusedField == null) return;
+        List<String> stepCycle = sequenceFieldCycle();
+        int stepIdx = stepCycle != null ? stepCycle.indexOf(activeFocusedField) : -1;
+        if (stepIdx != -1) {
+            int nextIdx = reverse ? (stepIdx - 1 + stepCycle.size()) % stepCycle.size() : (stepIdx + 1) % stepCycle.size();
+            activeFocusedField = stepCycle.get(nextIdx);
+            isFieldSelected = false;
+            selectionAnchor = -1;
+            cursorPosition = getActiveFieldValue().length();
+            return;
+        }
         for (List<String> cycle : TAB_CYCLES) {
             int idx = cycle.indexOf(activeFocusedField);
             if (idx != -1) {
@@ -5169,15 +5207,22 @@ public class ConfigCustomWidgets {
                     int aRowY = curY;
                     g.fill(x + 28, aRowY, x + w - 12, aRowY + 18, 0x150F172A);
 
-                    g.text(font, "§8#" + (a + 1) + " §f" + action.getSummary(), x + 34, aRowY + 5, 0xFFCBD5E1, false);
+                    g.text(font, "§8#" + (a + 1) + " §f" + action.getSummary(), x + 34, aRowY + 5, action.enabled ? 0xFFCBD5E1 : 0xFF64748B, false);
 
                     int aRx = x + w - 18;
                     int aDelX = aRx - 20;
                     int aDownX = aDelX - 22;
                     int aUpX = aDownX - 22;
 
+                    // [ON]/[OFF] per step: a disabled step is skipped by the runtime but kept in
+                    // the list, so it sits between [✎] and the reorder/delete controls.
+                    int aOnX = aUpX - 38;
+                    boolean aOnHover = mouseX >= aOnX && mouseX <= aOnX + 34 && mouseY >= aRowY + 1 && mouseY <= aRowY + 17;
+                    ConfigUITheme.drawPillButton(g, font, action.enabled ? "§aON" : "§cOFF", aOnX, aRowY + 1, 34, 16, aOnHover,
+                            -1, action.enabled ? 0x2210B981 : 0x22EF4444, action.enabled ? 0x4410B981 : 0x44EF4444);
+
                     // [✎] edit this step in the builder below
-                    int aEditX = aUpX - 20;
+                    int aEditX = aOnX - 20;
                     boolean aEditHover = mouseX >= aEditX && mouseX <= aEditX + 18 && mouseY >= aRowY + 1 && mouseY <= aRowY + 17;
                     boolean aIsEditing = editingActionSeq == i && editingActionIdx == a;
                     ConfigUITheme.drawPillButton(g, font, aIsEditing ? "§a✎" : "§e✎", aEditX, aRowY + 1, 18, 16, aEditHover, -1, aIsEditing ? 0x3310B981 : 0x22FFAA00, 0x44FFAA00);
@@ -5472,7 +5517,16 @@ public class ConfigCustomWidgets {
                     int aDelX = aRx - 20;
                     int aDownX = aDelX - 22;
                     int aUpX = aDownX - 22;
-                    int aEditX = aUpX - 20;
+                    int aOnX = aUpX - 38;
+                    int aEditX = aOnX - 20;
+
+                    // [ON]/[OFF] toggle for this step
+                    if (mouseX >= aOnX && mouseX <= aOnX + 34 && mouseY >= aRowY + 1 && mouseY <= aRowY + 17) {
+                        me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoAction step = seq.actions.get(a);
+                        step.enabled = !step.enabled;
+                        me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
+                        return true;
+                    }
 
                     // [✎] Load this step into the builder for editing
                     if (mouseX >= aEditX && mouseX <= aEditX + 18 && mouseY >= aRowY + 1 && mouseY <= aRowY + 17) {

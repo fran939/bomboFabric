@@ -436,6 +436,14 @@ public class BomboaddonsClient implements ClientModInitializer {
       ChatModifier.load();
       loadCommandHistory();
       WaypointManager.init();
+      // Storage chest waypoints also need a steady tick: it is what notices that a chest was
+      // emptied (waypoint removed) or is no longer a chest at all (cache entry purged).
+      ClientTickEvents.END_CLIENT_TICK.register(client -> {
+         try {
+            me.bombo.bomboaddons.features.StorageChestWaypoints.onClientTick(client);
+         } catch (Throwable ignored) {
+         }
+      });
       StructureScanner.loadPatterns();
       ComposterHud.init();
       TabWidgetHud.init();
@@ -968,6 +976,42 @@ public class BomboaddonsClient implements ClientModInitializer {
                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Chat history cleared."));
                              return 1;
                           })));
+                  builder.then(ClientCommands.literal("apihistory")
+                          .executes((context) -> openApiHistory(Minecraft.getInstance()))
+                          .then(ClientCommands.literal("gui").executes((context) -> openApiHistory(Minecraft.getInstance())))
+                          .then(ClientCommands.literal("chat").executes((context) -> printApiHistory((FabricClientCommandSource)context.getSource())))
+                          .then(ClientCommands.literal("clear").executes((context) -> {
+                             me.bombo.bomboaddons.util.ApiHistory.clear();
+                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7API request history cleared."));
+                             return 1;
+                          })));
+                  builder.then(ClientCommands.literal("profit")
+                          .executes((context) -> {
+                             AutoCroesus.printProfitSummary((FabricClientCommandSource)context.getSource());
+                             AutoCroesus.printLedgerSummary((FabricClientCommandSource)context.getSource());
+                             return 1;
+                          })
+                          .then(ClientCommands.literal("sync").executes((context) -> {
+                             me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.syncPending(null);
+                             AutoCroesus.syncProfitData((FabricClientCommandSource)context.getSource());
+                             return 1;
+                          }))
+                          .then(ClientCommands.argument("user", StringArgumentType.word()).suggests((context, b) ->
+                             TabCompletionManager.suggestPlayerNames(b)
+                          ).executes((context) -> {
+                             printRemoteProfit((FabricClientCommandSource)context.getSource(),
+                                     StringArgumentType.getString(context, "user"), null);
+                             return 1;
+                          }).then(ClientCommands.argument("type", StringArgumentType.word()).suggests((context, b) -> {
+                             b.suggest("dungeons");
+                             b.suggest("kuudra");
+                             return b.buildFuture();
+                          }).executes((context) -> {
+                             printRemoteProfit((FabricClientCommandSource)context.getSource(),
+                                     StringArgumentType.getString(context, "user"),
+                                     StringArgumentType.getString(context, "type"));
+                             return 1;
+                          }))));
                   builder.then(registerAutoCommands())
                   // Flavor specific subcommands (/b hide, /b stealth ...). The legit build
                   // contributes nothing here.
@@ -1354,10 +1398,19 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }));
                   builder.then(ClientCommands.literal("area").executes((context) -> {
                      String loc = SkyblockUtils.getLocation();
+                     FabricClientCommandSource areaSource = (FabricClientCommandSource)context.getSource();
                      if (SkyblockUtils.isInLimbo() || "limbo".equalsIgnoreCase(locrawServer) || "Limbo".equalsIgnoreCase(currentArea) || (loc != null && (loc.toLowerCase().contains("limbo") || loc.contains("\"server\"")))) {
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §aLimbo"));
+                        areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §aLimbo"));
                      } else {
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + loc));
+                        // Inside the Catacombs the interesting answer is the floor, not "Dungeons".
+                        String floor = SkyblockUtils.getDungeonFloorTag();
+                        if (floor != null) {
+                           String phase = SkyblockUtils.getDungeonPhase();
+                           String phaseColor = "boss".equals(phase) ? "§c" : "§a";
+                           areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §b" + floor + " §7(" + phaseColor + (phase != null ? phase : "clear") + "§7)"));
+                        } else {
+                           areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + loc));
+                        }
                      }
                      return 1;
                   }));
@@ -2292,6 +2345,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   })));
                    builder.then(ClientCommands.literal("ring")
                       .then(ClientCommands.argument("player", StringArgumentType.word())
+                         .suggests((context, b) -> TabCompletionManager.suggestPlayerNames(b))
                          .executes((context) -> {
                             String player = StringArgumentType.getString(context, "player").trim();
                             me.bombo.bomboaddons.features.ring.RingManager.initiateCall(player);
@@ -2475,10 +2529,23 @@ public class BomboaddonsClient implements ClientModInitializer {
                         return 0;
                      }
                   }))));
-                  builder.then(ClientCommands.literal("storage").executes((context) -> {
+                  builder.then(((LiteralArgumentBuilder)ClientCommands.literal("storage").executes((context) -> {
                      Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreenAndShow(new GlobalStorageScreen()));
                      return 1;
-                  }));
+                  })).then(ClientCommands.argument("query", StringArgumentType.greedyString()).executes((context) -> {
+                     String query = StringArgumentType.getString(context, "query");
+                     FabricClientCommandSource storageSource = (FabricClientCommandSource)context.getSource();
+                     int found = me.bombo.bomboaddons.features.StorageChestWaypoints.search(query);
+                     storageSource.sendFeedback(me.bombo.bomboaddons.features.StorageChestWaypoints.describeComponent());
+                     if (found == 0) {
+                        storageSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Tip: open your island chests once so their contents are tracked, then search again."));
+                     }
+                     return 1;
+                  }).then(ClientCommands.literal("clear").executes((context) -> {
+                     me.bombo.bomboaddons.features.StorageChestWaypoints.clear();
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Storage waypoints cleared."));
+                     return 1;
+                  }))));
                   builder.then(((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal("pt").executes((context) -> {
                      long now = System.currentTimeMillis();
                      long secsSinceSync = (now - PlaytimeTracker.lastCloudSyncTime) / 1000L;
@@ -2698,6 +2765,26 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }))).then(ClientCommands.literal("debug").executes((context) -> {
                      AutoCroesus.startDebugSimulation((FabricClientCommandSource)context.getSource());
                      return 1;
+                  })).then(ClientCommands.literal("ev").executes((context) -> {
+                     FabricClientCommandSource evSource = (FabricClientCommandSource)context.getSource();
+                     evSource.sendFeedback(Component.literal("§8[§bAutoCroesus§8] §7Fetching Kismet EV (same formula as the Discord !kismet command)..."));
+                     evSource.sendFeedback(Component.literal(me.bombo.bomboaddons.features.dungeons.KismetEv.describe()));
+                     new Thread(() -> {
+                        Minecraft mc = Minecraft.getInstance();
+                        String ign = mc.getUser() != null ? mc.getUser().getName() : null;
+                        me.bombo.bomboaddons.features.dungeons.KismetEv.Snapshot snap = ign != null
+                                ? me.bombo.bomboaddons.features.dungeons.KismetEv.fetchFromServer(ign) : null;
+                        if (snap == null) {
+                           evSource.sendFeedback(Component.literal("§8[§bAutoCroesus§8] §cCould not reach the EV service: §7"
+                                   + (me.bombo.bomboaddons.features.dungeons.KismetEv.getLastError() != null ? me.bombo.bomboaddons.features.dungeons.KismetEv.getLastError() : "unknown")
+                                   + " §8(local fallback is still used)"));
+                        } else {
+                           evSource.sendFeedback(Component.literal(me.bombo.bomboaddons.features.dungeons.KismetEv.describe()));
+                           evSource.sendFeedback(Component.literal("§7Expected: §a" + LowestBinManager.formatPrice(snap.coinsPerRunNoReroll)
+                                   + "§7/run without rerolls, §a" + LowestBinManager.formatPrice(snap.coinsPerRunWithReroll) + "§7/run with"));
+                        }
+                     }, "Bombo-KismetEv").start();
+                     return 1;
                   })).then(((LiteralArgumentBuilder)ClientCommands.literal("kismet").executes((context) -> {
                      BomboConfig.Settings settings = BomboConfig.get();
                      String statusStr = settings.autoKismet ? "§aENABLED" : "§cDISABLED";
@@ -2757,21 +2844,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                      String localUser = mc.getUser() != null ? mc.getUser().getName() : "user";
                      KuudraSummaryOverlay.fetchAndPrintPlayerKuudraData((FabricClientCommandSource)context.getSource(), localUser);
                      return 1;
-                  })).then(ClientCommands.argument("player", StringArgumentType.string()).suggests((context, sugBuilder) -> {
-                     Minecraft mc = Minecraft.getInstance();
-                     if (mc.getConnection() != null) {
-                        String remaining = sugBuilder.getRemaining().toLowerCase();
-
-                        for(PlayerInfo info : mc.getConnection().getOnlinePlayers()) {
-                           String pName = info.getProfile().name();
-                           if (pName != null && !pName.startsWith("!") && pName.matches("^[a-zA-Z0-9_]{2,16}$") && pName.toLowerCase().startsWith(remaining)) {
-                              sugBuilder.suggest(pName);
-                           }
-                        }
-                     }
-
-                     return sugBuilder.buildFuture();
-                  }).executes((context) -> {
+                  })).then(ClientCommands.argument("player", StringArgumentType.string()).suggests((context, sugBuilder) ->
+                     TabCompletionManager.suggestPlayerNames(sugBuilder)
+                  ).executes((context) -> {
                      String target = StringArgumentType.getString(context, "player");
                      KuudraSummaryOverlay.fetchAndPrintPlayerKuudraData((FabricClientCommandSource)context.getSource(), target);
                      return 1;
@@ -3939,13 +4014,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                       dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(null);
                       return 1;
                    }).then(ClientCommands.argument("player", StringArgumentType.word()).suggests((context, b) -> {
-                      Minecraft mc = Minecraft.getInstance();
-                      if (mc.getConnection() != null) {
-                         for (net.minecraft.client.multiplayer.PlayerInfo playerInfo : mc.getConnection().getOnlinePlayers()) {
-                            b.suggest(playerInfo.getProfile().name());
-                         }
-                      }
-                      return b.buildFuture();
+                      // Lobby (tab list) + friends/guild/party, filtered so the Hypixel scoreboard
+                      // placeholders (!A-a, !A-b) never show up as completion tokens.
+                      return TabCompletionManager.suggestPlayerNames(b);
                    }).executes((context) -> {
                       String target = StringArgumentType.getString(context, "player");
                       dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(target);
@@ -5183,6 +5254,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                } catch (Throwable ignored) {}
             }
 
+            if (me.bombo.bomboaddons.features.StorageChestWaypoints.hasMatches()) {
+               try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: StorageChestWaypoints")) {
+                  me.bombo.bomboaddons.features.StorageChestWaypoints.render(context);
+               } catch (Throwable ignored) {}
+            }
+
             if (!OrderedWaypoints.getWaypoints().isEmpty()) {
                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: OrderedWaypoints")) {
                   OrderedWaypoints.render(context);
@@ -5339,6 +5416,10 @@ public class BomboaddonsClient implements ClientModInitializer {
          ClientPlayConnectionEvents.JOIN.register((ClientPlayConnectionEvents.Join)(handler, sender, client) -> {
             StructureFinder.clear();
             me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.reset();
+            // History survives lobby/server changes: log a boundary row instead of wiping it.
+            try {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.markSessionBoundary("joined world");
+            } catch (Throwable ignored) {}
             currentHypixelChannel = "a";
             if (client.getCurrentServer() != null) {
                lastServerData = client.getCurrentServer();
@@ -5389,6 +5470,10 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             me.bombo.bomboaddons.features.critters.SafariLocation.onWorldChange();
             me.bombo.bomboaddons.features.critters.CritterSessionManager.onWorldChange();
+            // Never destroy the buffer on disconnect - just mark where the session ended.
+            try {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.markSessionBoundary("disconnected");
+            } catch (Throwable ignored) {}
          });
          ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((ClientLevelEvents.AfterClientLevelChange)(client, world) -> {
             StructureFinder.clear();
@@ -7259,6 +7344,45 @@ public class BomboaddonsClient implements ClientModInitializer {
    }
 
    /** Opens the history filtered to feature events (auto-sequence starts/stops/halts). */
+   /** {@code /b profit <user> [type]} - pull another player's totals from the profit service. */
+   private static void printRemoteProfit(FabricClientCommandSource src, String user, String type) {
+      src.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Fetching profit for §e" + user
+              + (type != null ? " §7(" + type + ")" : "") + "§7..."));
+      me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.fetchUserProfit(user, type, message -> {
+         for (String line : message.split("\n")) {
+            src.sendFeedback(Component.literal(line));
+         }
+      });
+   }
+
+   /** {@code /b apihistory} - the outbound request log GUI. */
+   public static int openApiHistory(Minecraft mc) {
+      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.ApiHistoryScreen(mc.gui.screen())));
+      return 1;
+   }
+
+   /** {@code /b apihistory chat} - last 20 requests printed into chat instead of a screen. */
+   public static int printApiHistory(FabricClientCommandSource src) {
+      if (src == null) return 0;
+      java.util.List<me.bombo.bomboaddons.util.ApiHistory.Entry> entries = me.bombo.bomboaddons.util.ApiHistory.getEntries();
+      src.sendFeedback(Component.literal("§8--- §b[BomboAddons API History] §8--- " + me.bombo.bomboaddons.util.ApiHistory.summarize(entries)));
+      if (entries.isEmpty()) {
+         src.sendFeedback(Component.literal("§7No requests recorded yet."));
+         return 1;
+      }
+      int from = Math.max(0, entries.size() - 20);
+      for (int i = from; i < entries.size(); i++) {
+         me.bombo.bomboaddons.util.ApiHistory.Entry entry = entries.get(i);
+         String statusColor = entry.status >= 200 && entry.status < 400 ? "§a" : (entry.status <= 0 ? "§8" : "§c");
+         src.sendFeedback(Component.literal("§8" + me.bombo.bomboaddons.util.ApiHistory.formatTime(entry.timestamp)
+                 + " §b" + entry.kind.label + " §7" + entry.method + " " + statusColor
+                 + me.bombo.bomboaddons.util.ApiHistory.statusText(entry.status)
+                 + " §8| §e" + (entry.durationMs > 0L ? entry.durationMs + "ms" : "-")
+                 + " §8| §7" + me.bombo.bomboaddons.util.ApiHistory.shorten(entry.url)));
+      }
+      return 1;
+   }
+
    public static int openChatHistoryEvents(Minecraft mc) {
       mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.chat.ChatHistoryScreen(
               mc.gui.screen(), me.bombo.bomboaddons.features.chat.ChatHistoryScreen.FilterTab.ALL, true)));

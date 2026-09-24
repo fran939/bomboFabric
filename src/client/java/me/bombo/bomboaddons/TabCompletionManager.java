@@ -193,6 +193,70 @@ public class TabCompletionManager {
       }
    }
 
+   /** A real username: Hypixel's tab-list placeholders such as {@code !A-a} are rejected here. */
+   public static boolean isValidPlayerName(String name) {
+      return name != null && name.matches("^[a-zA-Z0-9_]{3,16}$");
+   }
+
+   /**
+    * Every username worth completing: the tab list (which on Hypixel *is* your lobby roster),
+    * yourself, and the friends / guild / party lists collected from chat.
+    *
+    * <p>Hypixel keeps fake entries in the tab list to render the scoreboard — {@code !A-a},
+    * {@code !A-b} and friends. Suggesting those verbatim is what produced the broken completion
+    * tokens, so nothing reaches a command tree without passing {@link #isValidPlayerName}.
+    */
+   public static Set<String> collectPlayerNames() {
+      Set<String> names = new TreeSet(String.CASE_INSENSITIVE_ORDER);
+      try {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.getConnection() != null) {
+            for(PlayerInfo info : mc.getConnection().getOnlinePlayers()) {
+               if (info.getProfile() != null && isValidPlayerName(info.getProfile().name())) {
+                  names.add(info.getProfile().name());
+               }
+            }
+         }
+
+         if (mc.player != null && isValidPlayerName(mc.player.getGameProfile().name())) {
+            names.add(mc.player.getGameProfile().name());
+         }
+      } catch (Throwable ignored) {
+      }
+
+      for(String name : friends) {
+         if (isValidPlayerName(name)) names.add(name);
+      }
+      for(String name : guild) {
+         if (isValidPlayerName(name)) names.add(name);
+      }
+      for(String name : party) {
+         if (isValidPlayerName(name)) names.add(name);
+      }
+      return names;
+   }
+
+   /**
+    * Player-name completion for a single argument node ({@code /b pv <player>}, {@code /b ring},
+    * {@code /b profit <user>}, {@code /b kuudra <player>}...).
+    */
+   public static CompletableFuture<Suggestions> suggestPlayerNames(SuggestionsBuilder builder) {
+      String remaining = builder.getRemaining() == null ? "" : builder.getRemaining().toLowerCase();
+      int lastSpace = remaining.lastIndexOf(32);
+      SuggestionsBuilder actual = builder;
+      if (lastSpace != -1) {
+         remaining = remaining.substring(lastSpace + 1);
+         actual = builder.createOffset(builder.getStart() + lastSpace + 1);
+      }
+
+      for(String name : collectPlayerNames()) {
+         if (name.toLowerCase().startsWith(remaining)) {
+            actual.suggest(name);
+         }
+      }
+      return actual.buildFuture();
+   }
+
    public static CompletableFuture<Suggestions> getUsernameSuggestions(CommandContext<?> context, SuggestionsBuilder builder) {
       String fullRemaining = builder.getRemaining();
       int lastSpaceIndex = fullRemaining.lastIndexOf(32);
@@ -206,31 +270,7 @@ public class TabCompletionManager {
          actualBuilder = builder;
       }
 
-      Set<String> suggestions = new TreeSet(String.CASE_INSENSITIVE_ORDER);
-
-      try {
-         Minecraft mc = Minecraft.getInstance();
-         if (mc.getConnection() != null) {
-            for(PlayerInfo info : mc.getConnection().getOnlinePlayers()) {
-               String name = info.getProfile().name();
-               if (name != null && name.matches("^[a-zA-Z0-9_]{3,16}$")) {
-                  suggestions.add(name);
-               }
-            }
-         }
-
-         if (mc.player != null) {
-            String selfName = mc.player.getGameProfile().name();
-            if (selfName != null && selfName.matches("^[a-zA-Z0-9_]{3,16}$")) {
-               suggestions.add(selfName);
-            }
-         }
-      } catch (Throwable var11) {
-      }
-
-      suggestions.addAll(friends);
-      suggestions.addAll(guild);
-      suggestions.addAll(party);
+      Set<String> suggestions = collectPlayerNames();
 
       if (lastSpaceIndex == -1) {
          String input = builder.getInput().trim().toLowerCase();

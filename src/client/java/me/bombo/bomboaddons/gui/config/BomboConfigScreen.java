@@ -57,6 +57,11 @@ public class BomboConfigScreen extends Screen {
     private static HudMoveScreen.HudTarget activeHudStyleTarget = null;
     private static int activeHudStyleTab = 0; // 0=Background, 1=Border, 2=Title, 3=Text
 
+    // Direct numeric entry for sliders: clicking the value label turns it into a text field.
+    private static ConfigItem editingSliderValueItem = null;
+    private static String sliderValueBuffer = "";
+    private static int sliderValueCursor = 0;
+
     // Deployable Dropdown List
     private static ConfigItem activeDropdownItem = null;
     private static int dropdownX = 0;
@@ -430,9 +435,35 @@ public class BomboConfigScreen extends Screen {
                 g.fill(thumbX - 4, trackY - 3, thumbX + 4, trackY + trackH + 3, 0xFFFFFFFF);
                 g.outline(thumbX - 4, trackY - 3, 8, trackH + 6, accent);
 
-                // Value String
-                String valStr = "§e" + val + item.intSuffix;
-                g.text(this.font, valStr, ctrlRightX - 58, ctrlY + 5, -1, false);
+                // Value label - click it to type an exact number instead of dragging.
+                renderSliderValue(g, item, val + item.intSuffix, ctrlRightX, ctrlY, mouseX, mouseY);
+            }
+
+            case SLIDER_COINS -> {
+                if (hovered) this.hoveredSliderItem = item;
+                long val = item.longGetter != null ? item.longGetter.get() : 0L;
+                long min = item.minLong;
+                long max = item.maxLong;
+                float pct = max > min ? Math.max(0.0F, Math.min(1.0F, (float) (val - min) / (float) (max - min))) : 0.0F;
+
+                int trackW = 100;
+                int trackH = 6;
+                int trackX = ctrlRightX - 165;
+                int trackY = ctrlY + 6;
+
+                g.fill(trackX, trackY, trackX + trackW, trackY + trackH, 0x33FFFFFF);
+                g.outline(trackX, trackY, trackW, trackH, 0x22FFFFFF);
+
+                int filledW = (int) (pct * trackW);
+                if (filledW > 0) {
+                    g.fill(trackX, trackY, trackX + filledW, trackY + trackH, accent);
+                }
+
+                int thumbX = trackX + filledW;
+                g.fill(thumbX - 4, trackY - 3, thumbX + 4, trackY + trackH + 3, 0xFFFFFFFF);
+                g.outline(thumbX - 4, trackY - 3, 8, trackH + 6, accent);
+
+                renderSliderValue(g, item, ConfigItem.formatCoins(val) + " coins", ctrlRightX, ctrlY, mouseX, mouseY);
             }
 
             case SLIDER_FLOAT -> {
@@ -461,9 +492,8 @@ public class BomboConfigScreen extends Screen {
                 g.fill(thumbX - 4, trackY - 3, thumbX + 4, trackY + trackH + 3, 0xFFFFFFFF);
                 g.outline(thumbX - 4, trackY - 3, 8, trackH + 6, accent);
 
-                // Value String
-                String valStr = "§e" + String.format(java.util.Locale.US, "%.2f", val) + item.floatSuffix;
-                g.text(this.font, valStr, ctrlRightX - 58, ctrlY + 5, -1, false);
+                // Value label - click it to type an exact number instead of dragging.
+                renderSliderValue(g, item, String.format(java.util.Locale.US, "%.2f", val) + item.floatSuffix, ctrlRightX, ctrlY, mouseX, mouseY);
             }
 
             case CYCLE -> {
@@ -571,6 +601,143 @@ public class BomboConfigScreen extends Screen {
 
             default -> {}
         }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Slider direct numeric input
+    // ---------------------------------------------------------------------------------------------
+
+    /** Hit rect of a slider's value label (where "§e500K coins" is drawn). */
+    private boolean sliderLabelHit(int ctrlRightX, int ctrlY, int mouseX, int mouseY) {
+        int boxX = ctrlRightX - 62;
+        return mouseX >= boxX && mouseX <= boxX + 60 && mouseY >= ctrlY && mouseY <= ctrlY + 18;
+    }
+
+    private void beginSliderValueEdit(ConfigItem item, String initial) {
+        editingSliderValueItem = item;
+        sliderValueBuffer = initial != null ? initial : "";
+        sliderValueCursor = sliderValueBuffer.length();
+        // Keep the other editors from fighting over the same keystrokes.
+        activeTextItem = null;
+        activeColorItem = null;
+    }
+
+    private void cancelSliderValueEdit() {
+        editingSliderValueItem = null;
+        sliderValueBuffer = "";
+        sliderValueCursor = 0;
+    }
+
+    /** Applies the typed value, clamped to the slider's range and snapped to its step. */
+    private void commitSliderValueEdit() {
+        ConfigItem item = editingSliderValueItem;
+        if (item == null) return;
+        String typed = sliderValueBuffer.trim();
+        switch (item.type) {
+            case SLIDER_INT -> {
+                String normalized = typed.replaceAll("(?i)coins?", "").trim();
+                long parsedInt = ConfigItem.parseCoins(normalized);
+                if (parsedInt != Long.MIN_VALUE && item.intSetter != null) {
+                    int step = item.stepInt > 0 ? item.stepInt : 1;
+                    long min = item.minInt;
+                    long max = item.maxInt;
+                    long snapped = min + Math.round((double) (parsedInt - min) / step) * step;
+                    item.intSetter.accept((int) Math.max(min, Math.min(max, snapped)));
+                    BomboConfig.save();
+                }
+            }
+            case SLIDER_FLOAT -> {
+                try {
+                    float parsed = Float.parseFloat(typed.replace(",", ""));
+                    if (item.floatSetter != null) {
+                        float step = item.stepFloat > 0F ? item.stepFloat : 0.01F;
+                        float snapped = item.minFloat + Math.round((parsed - item.minFloat) / step) * step;
+                        item.floatSetter.accept(Math.max(item.minFloat, Math.min(item.maxFloat, snapped)));
+                        BomboConfig.save();
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            case SLIDER_COINS -> {
+                long parsed = ConfigItem.parseCoins(typed);
+                if (parsed != Long.MIN_VALUE && item.longSetter != null) {
+                    long step = item.stepLong > 0L ? item.stepLong : 1L;
+                    long min = item.minLong;
+                    long max = item.maxLong;
+                    long snapped = min + Math.round((double) (parsed - min) / step) * step;
+                    item.longSetter.accept(Math.max(min, Math.min(max, snapped)));
+                    BomboConfig.save();
+                }
+            }
+            default -> {
+            }
+        }
+        cancelSliderValueEdit();
+    }
+
+    /** True when the keystroke was consumed by the slider's numeric editor. */
+    private boolean handleSliderValueChar(char c) {
+        if (editingSliderValueItem == null) return false;
+        boolean isDigit = c >= '0' && c <= '9';
+        boolean isSuffix = c == 'k' || c == 'K' || c == 'm' || c == 'M' || c == 'b' || c == 'B';
+        boolean isDecimal = c == '.' && !sliderValueBuffer.contains(".");
+        boolean isSeparator = c == ',' || c == '_';
+        if ((isDigit || isSuffix || isDecimal || isSeparator) && sliderValueBuffer.length() < 24) {
+            sliderValueCursor = Math.max(0, Math.min(sliderValueCursor, sliderValueBuffer.length()));
+            sliderValueBuffer = sliderValueBuffer.substring(0, sliderValueCursor) + c + sliderValueBuffer.substring(sliderValueCursor);
+            sliderValueCursor++;
+        }
+        return true;
+    }
+
+    private boolean handleSliderValueKey(KeyEvent event) {
+        if (editingSliderValueItem == null) return false;
+        int keyCode = event.key();
+        switch (keyCode) {
+            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_TAB -> commitSliderValueEdit();
+            case GLFW.GLFW_KEY_ESCAPE -> cancelSliderValueEdit();
+            case GLFW.GLFW_KEY_BACKSPACE -> {
+                if (sliderValueCursor > 0 && !sliderValueBuffer.isEmpty()) {
+                    sliderValueBuffer = sliderValueBuffer.substring(0, sliderValueCursor - 1) + sliderValueBuffer.substring(sliderValueCursor);
+                    sliderValueCursor--;
+                }
+            }
+            case GLFW.GLFW_KEY_LEFT -> sliderValueCursor = Math.max(0, sliderValueCursor - 1);
+            case GLFW.GLFW_KEY_RIGHT -> sliderValueCursor = Math.min(sliderValueBuffer.length(), sliderValueCursor + 1);
+            default -> {
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Slider value label: a direct-input box while editing, otherwise a clickable label that
+     * advertises itself on hover (the request was "click the number to type it").
+     */
+    private void renderSliderValue(GuiGraphicsExtractor g, ConfigItem item, String display, int ctrlRightX, int ctrlY, int mouseX, int mouseY) {
+        int boxX = ctrlRightX - 62;
+        int boxW = 60;
+        boolean editing = editingSliderValueItem == item;
+        boolean hoveredLabel = !editing && mouseX >= boxX && mouseX <= boxX + boxW && mouseY >= ctrlY && mouseY <= ctrlY + 18;
+
+        if (editing) {
+            g.fill(boxX, ctrlY, boxX + boxW, ctrlY + 18, 0x4400E5FF);
+            g.outline(boxX, ctrlY, boxW, 18, ConfigUITheme.getAccentColor());
+            g.enableScissor(boxX + 2, ctrlY, boxX + boxW - 2, ctrlY + 18);
+            g.text(this.font, "§f" + sliderValueBuffer, boxX + 4, ctrlY + 5, -1, false);
+            if ((System.currentTimeMillis() / 500) % 2 == 0) {
+                int clamped = Math.max(0, Math.min(sliderValueCursor, sliderValueBuffer.length()));
+                int caret = this.font.width(sliderValueBuffer.substring(0, clamped));
+                g.fill(boxX + 4 + caret, ctrlY + 4, boxX + 5 + caret, ctrlY + 14, 0xFF00E5FF);
+            }
+            g.disableScissor();
+            return;
+        }
+
+        if (hoveredLabel) {
+            g.fill(boxX, ctrlY, boxX + boxW, ctrlY + 18, 0x22FFFFFF);
+        }
+        g.text(this.font, "§e" + display, boxX + 2, ctrlY + 5, -1, false);
     }
 
     private void renderDropdownMenu(GuiGraphicsExtractor g, int mouseX, int mouseY) {
@@ -1354,6 +1521,11 @@ public class BomboConfigScreen extends Screen {
                     }
                     return;
                 }
+                // Numeric label -> direct text entry.
+                if (sliderLabelHit(ctrlRightX, ctrlY, mouseX, mouseY)) {
+                    beginSliderValueEdit(item, String.valueOf(item.intGetter != null ? item.intGetter.get() : 0));
+                    return;
+                }
                 int trackW = 100;
                 int trackX = ctrlRightX - 165;
                 this.selectedSliderItem = item;
@@ -1377,12 +1549,51 @@ public class BomboConfigScreen extends Screen {
                 }
             }
 
+            case SLIDER_COINS -> {
+                if (button == 1) { // Right click -> reset to default
+                    if (item.longSetter != null) {
+                        item.longSetter.accept(item.defaultLong);
+                        BomboConfig.save();
+                    }
+                    return;
+                }
+                if (sliderLabelHit(ctrlRightX, ctrlY, mouseX, mouseY)) {
+                    beginSliderValueEdit(item, String.valueOf(item.longGetter != null ? item.longGetter.get() : 0L));
+                    return;
+                }
+                int trackW = 100;
+                int trackX = ctrlRightX - 165;
+                this.selectedSliderItem = item;
+
+                if (mouseX >= trackX && mouseX <= trackX + trackW && mouseY >= ctrlY - 2 && mouseY <= ctrlY + 20) {
+                    float pct = Math.max(0.0f, Math.min(1.0f, (float) (mouseX - trackX) / trackW));
+                    long min = item.minLong;
+                    long max = item.maxLong;
+                    long step = item.stepLong > 0L ? item.stepLong : 1L;
+                    long rawVal = Math.round(min + (double) pct * (max - min));
+                    long steppedVal = min + Math.round((double) (rawVal - min) / step) * step;
+                    steppedVal = Math.max(min, Math.min(max, steppedVal));
+                    if (item.longSetter != null) {
+                        item.longSetter.accept(steppedVal);
+                        BomboConfig.save();
+                    }
+                    this.draggingSliderItem = item;
+                    this.dragTrackX = trackX;
+                    this.dragTrackW = trackW;
+                }
+            }
+
             case SLIDER_FLOAT -> {
                 if (button == 1) { // Right click -> reset to default
                     if (item.floatSetter != null) {
                         item.floatSetter.accept(item.defaultFloat);
                         BomboConfig.save();
                     }
+                    return;
+                }
+                // Numeric label -> direct text entry.
+                if (sliderLabelHit(ctrlRightX, ctrlY, mouseX, mouseY)) {
+                    beginSliderValueEdit(item, String.format(java.util.Locale.US, "%.2f", item.floatGetter != null ? item.floatGetter.get() : 0.0F));
                     return;
                 }
                 int trackW = 100;
@@ -1561,6 +1772,9 @@ public class BomboConfigScreen extends Screen {
 
     @Override
     public boolean charTyped(CharacterEvent event) {
+        if (handleSliderValueChar((char) event.codepoint())) {
+            return true;
+        }
         if (activeColorItem != null && colorPickerHexFocused) {
             char c = (char) event.codepoint();
             if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
@@ -1610,6 +1824,9 @@ public class BomboConfigScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (handleSliderValueKey(event)) {
+            return true;
+        }
         if (activeKeybindItem != null) {
             int keyCode = event.key();
             if (keyCode == GLFW.GLFW_KEY_ESCAPE) {

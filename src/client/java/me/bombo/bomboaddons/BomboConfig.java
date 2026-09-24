@@ -33,6 +33,14 @@ public class BomboConfig {
    private static Settings instance = new Settings();
    public static String controlsInitialSearchQuery = null;
 
+   /** Keeps a stored coin value inside a slider's new range, falling back to the default. */
+   private static long clampCoin(long value, long min, long max, long fallback) {
+      if (value <= 0L) {
+         return fallback;
+      }
+      return Math.max(min, Math.min(max, value));
+   }
+
    public static void load() {
       // 1. If old loose config file exists in config/bomboaddons.json
       if (Files.exists(OLD_CONFIG_PATH, new LinkOption[0])) {
@@ -140,6 +148,29 @@ public class BomboConfig {
          instance.commandBinds.clear();
          instance.commandBinds = null;
          save();
+      }
+
+      // v26.2.28.39: the chest-key / kismet coin sliders moved from a 5M-500M range to
+      // 100K-3M. Values a user had dialled in under the old range are clamped (and the string
+      // enums are null-filled) so every new setting renders something real after upgrade.
+      instance.kismetThreshold = clampCoin(instance.kismetThreshold, 100000L, 3000000L, 3000000L);
+      instance.autoCroesusRerollValue = clampCoin(instance.autoCroesusRerollValue, 100000L, 3000000L, 3000000L);
+      instance.autoCroesusDungeonKeyProfit = clampCoin(instance.autoCroesusDungeonKeyProfit, 100000L, 3000000L, 200000L);
+      instance.autoCroesusDungeonKeySafetyMargin = clampCoin(instance.autoCroesusDungeonKeySafetyMargin, 0L, 1000000L, 100000L);
+      if (instance.autoCroesusDungeonKeyMode == null) {
+         instance.autoCroesusDungeonKeyMode = "MANUAL";
+      }
+      if (instance.croesusProfitHudMode == null) {
+         instance.croesusProfitHudMode = "ITEMIZED";
+      }
+      if (instance.priceSourceMode == null) {
+         instance.priceSourceMode = "INSTANT_BUY";
+      }
+      if (instance.pvScale <= 0.0F) {
+         instance.pvScale = 1.15F;
+      }
+      if (instance.pvBackgroundAlpha <= 0.0F || instance.pvBackgroundAlpha > 1.0F) {
+         instance.pvBackgroundAlpha = 0.45F;
       }
 
       if (instance.customWaypoints == null) {
@@ -908,13 +939,22 @@ public class BomboConfig {
       public long autoCroesusDelay = 200L;
       public long autoCroesusKismetDelay = 300L;
       public String valueCalculationMode = "Lowest BIN";
+      // INSTANT_BUY = lowest BIN (what you would pay now);
+      // INSTANT_SELL = Bazaar sell offer / average BIN (what you would actually receive).
+      public String priceSourceMode = "INSTANT_BUY";
       public boolean autoCroesusBuyPaid = true;
       public boolean autoCroesusReroll = false;
-      public long autoCroesusRerollValue = 5000000L;
+      public long autoCroesusRerollValue = 3000000L;
       public boolean autoCroesusDungeons = true;
       public boolean autoCroesusUseDungeonKey = true;
       public long autoCroesusDungeonKeyProfit = 200000L;
       public long autoCroesusDungeonProfitThreshold = 0L;
+      // MANUAL uses autoCroesusDungeonKeyProfit; AUTO prices a Dungeon Chest Key from the live
+      // Bazaar and only re-enters when the extra chest beats key price + safety margin.
+      public String autoCroesusDungeonKeyMode = "MANUAL";
+      public long autoCroesusDungeonKeySafetyMargin = 100000L;
+      // NET_ONLY shows just the profit per chest; ITEMIZED lists every parsed item.
+      public String croesusProfitHudMode = "ITEMIZED";
       public boolean autoCroesusHud = false;
       public int autoCroesusHudX = 10;
       public int autoCroesusHudY = 200;
@@ -943,6 +983,7 @@ public class BomboConfig {
       public boolean dungeonTracers = true;
       public boolean dungeonShowAllClassWaypoints = false;
       public boolean dungeonKeyHighlight = true;
+      public boolean m4EtherwarpHelper = false;
       public String dungeonKeyColor = "GOLD";
       public boolean dungeonKeyTracers = true;
       public boolean dungeonStarredMobHighlight = true;
@@ -1029,6 +1070,8 @@ public class BomboConfig {
       public float swapLineWidth = 2.0f;
       public String warpedAotvCustomModelOverride = "";
       public int chatHistoryMaxMessages = 500;
+      public boolean unlimitedChatHistory = false;
+      public boolean persistHistoryAcrossServers = true;
       public String vanillaToggleCrouchKey = "";
       public String vanillaToggleAttackKey = "";
       public String vanillaToggleUseKey = "";
@@ -1047,6 +1090,12 @@ public class BomboConfig {
       public float backpackPreviewCircleSize = 5.0F; // 2.0 - 8.0 radius
       public boolean backpackPreviewItemBorder = false; // 1px rarity outline
       public float backpackPreviewRarityAlpha = 0.35F;
+      // Outbound API/WebSocket history (/b apihistory).
+      public boolean apiHistoryEnabled = true;
+      public int apiHistoryMaxEntries = 500;
+      // BetterPV profile viewer window.
+      public float pvScale = 1.15F; // /b pv window size multiplier (1.0 - 1.8)
+      public float pvBackgroundAlpha = 0.45F; // backdrop dim behind /b pv
       public String backpackPreviewTrigger = "ALWAYS"; // ALWAYS, ON_KEY
       public String backpackPreviewKey = "LEFT_SHIFT";
       public boolean inventoryItemRarityBg = false; // Rarity colors on normal inventory slots & HUDs

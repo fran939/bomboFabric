@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -32,6 +33,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
@@ -81,6 +83,25 @@ public class AutoCroesus {
    private static boolean hasReportedSimulationClose = false;
    private static long lastActionTime;
    public static String hudActionStatus;
+   // --- Claim verification (v26.2.28.39) -------------------------------------------------------
+   /**
+    * A click is only believed once the chest actually reports as opened. Without this, the old flow
+    * set {@code boughtCurrentChest} immediately, so a misclick made the next tick see "nothing
+    * claimable" and close the GUI - the reported "clicks a shard and then says there are no
+    * profitable chests" symptom.
+    */
+   private static int pendingClaimSlot = -1;
+   private static int pendingClaimSyncId = -1;
+   private static String pendingClaimName = null;
+   private static boolean pendingClaimKismet = false;
+   private static long pendingClaimAt = 0L;
+   private static int pendingClaimAttempts = 0;
+   /** Chests already written to the itemized ledger for the currently open container. */
+   private static final Set<String> recordedChestNames = new HashSet<>();
+   /** True while the Redstone Torch modifier list marks that consumable as already spent. */
+   private static boolean kismetSpent = false;
+   private static boolean dungeonKeySpent = false;
+
    private static Set<String> neverKismetBlacklist;
    private static long lastBlacklistFetch;
    private static final String PROFIT_FILE = "bombo_croesus_profit.json";
@@ -400,6 +421,13 @@ public class AutoCroesus {
                hasReportedSimulationClose = false;
                lastActionTime = 0L;
                resetSimulationAnnounce();
+               pendingClaimSlot = -1;
+               pendingClaimSyncId = -1;
+               pendingClaimName = null;
+               pendingClaimAttempts = 0;
+               recordedChestNames.clear();
+               kismetSpent = false;
+               dungeonKeySpent = false;
             }
 
             if (isDungeonRunGui(screen)) {
@@ -440,13 +468,25 @@ public class AutoCroesus {
 
          if (lowerName.contains("reroll") || lowerName.contains("modifier") || stack.getItem() == net.minecraft.world.item.Items.REDSTONE_TORCH) {
             rerollSlot = slot;
+            kismetSpent = false;
+            dungeonKeySpent = false;
+            // "Chest Modifiers" lists what can still be used; spent entries are greyed and struck
+            // through, so they must be read per style run rather than as plain text.
             for (Component line : stack.getTooltipLines(TooltipContext.of(mc.level), mc.player, Default.NORMAL)) {
                String clean = line.getString().replaceAll("§[0-9a-fk-or]", "");
-               String cl = clean.toLowerCase();
+               String cl = clean.toLowerCase(Locale.ROOT);
+               if (isSpentModifier(line)) {
+                  if (cl.contains("kismet")) kismetSpent = true;
+                  if (cl.contains("chest key")) dungeonKeySpent = true;
+                  continue;
+               }
                if (cl.contains("kismet") || cl.contains("reroll") || cl.contains("modifiers") || cl.contains("consumable")) {
                   rerollAvailable = true;
-                  break;
                }
+            }
+            if (kismetSpent) {
+               // Rerolling would consume a feather that is not actually available for this chest.
+               rerollAvailable = false;
             }
          } else if (isDungeonRewardChest(rawName, lowerName)) {
             DungeonChestData chest = new DungeonChestData();
@@ -456,6 +496,8 @@ public class AutoCroesus {
 
             boolean readingContents = false;
             boolean readingCost = false;
+            boolean sawCostSection = false;
+            boolean sawContentsSection = false;
             for (Component line : tooltip) {
                String raw = line.getString();
                String clean = raw.replaceAll("§[0-9a-fk-or]", "").trim();
@@ -465,11 +507,13 @@ public class AutoCroesus {
                if (clean.equalsIgnoreCase("Free") || clean.startsWith("Free") || clean.equalsIgnoreCase("0 Coins")) {
                   chest.isFree = true;
                   chest.cost = 0L;
+                  sawCostSection = true;
                }
 
                if (clean.equalsIgnoreCase("Cost")) {
                   readingCost = true;
                   readingContents = false;
+                  sawCostSection = true;
                   continue;
                }
                if (readingCost) {
@@ -477,6 +521,7 @@ public class AutoCroesus {
                      chest.isFree = true;
                      chest.cost = 0L;
                      readingCost = false;
+                     sawCostSection = true;
                   } else if (clean.matches("(?i).*[0-9,]+.*coins?.*")) {
                      String digits = clean.replaceAll("(?i)[^0-9]", "");
                      if (!digits.isEmpty()) {
@@ -485,12 +530,14 @@ public class AutoCroesus {
                         } catch (Exception ignored) {}
                      }
                      readingCost = false;
+                     sawCostSection = true;
                   }
                }
 
                if (clean.equalsIgnoreCase("Contents")) {
                   readingContents = true;
                   readingCost = false;
+                  sawContentsSection = true;
                   continue;
                } else if (clean.startsWith("Click to") || clean.contains("Already opened") || clean.contains("Already claimed") || clean.contains("Purchased") || clean.contains("NOTE:")) {
                   readingContents = false;
@@ -500,6 +547,13 @@ public class AutoCroesus {
                if (readingContents && !clean.isEmpty()) {
                   parseDungeonItemLine(line, clean, chest.parsedItems);
                }
+            }
+
+            // A real reward chest always shows a Cost (or Free) and/or a Contents section.
+            // Anything that merely matched a colour word - loot previews such as "Power Dragon
+            // Shard" - has neither and must never become a click target.
+            if (!sawCostSection && !sawContentsSection && chest.parsedItems.isEmpty()) {
+               continue;
             }
 
             for (ItemDetail item : chest.parsedItems) {
@@ -513,6 +567,16 @@ public class AutoCroesus {
       me.bombo.bomboaddons.features.dungeons.DungeonChestProfitHud.currentChests = chests;
 
       if (chests.isEmpty()) return;
+
+      // Resolve any in-flight click before deciding anything: a claim that worked must never be
+      // re-evaluated as "nothing profitable here".
+      resolvePendingClaim(chests, mc, now);
+      // Chests the player opened by hand still belong in the itemized ledger.
+      for (DungeonChestData c : chests) {
+         if (c.alreadyOpened) {
+            recordOpenedChest(c, false, "MANUAL");
+         }
+      }
 
       boolean allOpened = true;
       for (DungeonChestData c : chests) {
@@ -596,11 +660,21 @@ public class AutoCroesus {
          }
          long rerollChestProfit = (bedrockChest != null) ? bedrockChest.profit : bestChest.profit;
          String targetChestName = (bedrockChest != null) ? bedrockChest.chestName : bestChest.chestName;
-         long activeThreshold = s.autoKismet ? s.kismetThreshold : s.autoCroesusRerollValue;
+
+         // Kismet rerolls are judged with the same expected value the Discord !kismet command
+         // computes (fetched live from /mod/kismet/<ign>, with a faithful local port as fallback),
+         // rather than a hardcoded number that drifts away from the market.
+         String playerIgn = mc.getUser() != null ? mc.getUser().getName() : null;
+         me.bombo.bomboaddons.features.dungeons.KismetEv.refreshIfStale(playerIgn);
+         boolean haveEv = me.bombo.bomboaddons.features.dungeons.KismetEv.peek() != null;
+         long kismetThreshold = haveEv
+                 ? me.bombo.bomboaddons.features.dungeons.KismetEv.getRerollSpotThreshold(playerIgn, 0)
+                 : s.kismetThreshold;
+         long activeThreshold = s.autoKismet ? kismetThreshold : s.autoCroesusRerollValue;
 
          boolean shouldReroll = !hasRerolledCurrentChest && rerollAvailable && (
             (s.autoCroesusReroll && rerollChestProfit < s.autoCroesusRerollValue) ||
-            (s.autoKismet && rerollChestProfit < s.kismetThreshold)
+            (s.autoKismet && rerollChestProfit < kismetThreshold)
          );
 
          if (shouldReroll && rerollSlot != null) {
@@ -609,7 +683,7 @@ public class AutoCroesus {
             hasRerolledCurrentChest = true;
             checkGuiReported = false;
             lastActionTime = now;
-            mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §e" + targetChestName + " chest profit (§c" + LowestBinManager.formatPrice(rerollChestProfit) + "§e) is below Kismet threshold (§b" + LowestBinManager.formatPrice(activeThreshold) + "§e). §dRerolling with Kismet Feather!"));
+            mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §e" + targetChestName + " chest profit (§c" + LowestBinManager.formatPrice(rerollChestProfit) + "§e) is below the Kismet EV threshold (§b" + LowestBinManager.formatPrice(activeThreshold) + "§e" + (haveEv ? ", live EV" : ", slider") + "). §dRerolling with Kismet Feather!"));
             return;
          }
 
@@ -620,51 +694,262 @@ public class AutoCroesus {
             if (isAlwaysBuy(d.itemId)) { bestHasAlwaysBuy = true; break; }
          }
 
-         if (!boughtCurrentChest && (bestHasAlwaysBuy || bestChest.profit >= s.autoCroesusDungeonProfitThreshold || bestChest.isFree)) {
+         if (!boughtCurrentChest && pendingClaimSlot < 0 && (bestHasAlwaysBuy || bestChest.profit >= s.autoCroesusDungeonProfitThreshold || bestChest.isFree)) {
             if (bestHasAlwaysBuy && bestChest.profit < s.autoCroesusDungeonProfitThreshold && !debugHighlightMode) {
                mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §dAlways-buy item in §e" + bestChest.chestName
                      + "§d - claiming despite computed profit (§e" + LowestBinManager.formatPrice(bestChest.profit) + "§d)."));
             }
-            boughtCurrentChest = true;
             hudActionStatus = debugHighlightMode ? "§e[SIMULATION: Buy " + bestChest.chestName + "]" : "§a[Buying " + bestChest.chestName + "...]";
             clickOrHighlightSlot(screen.getMenu().containerId, bestChest.slotIndex, "Claim " + bestChest.chestName);
             lastActionTime = now;
-            if (!debugHighlightMode) {
+            if (debugHighlightMode) {
+               // Simulation never really clicks, so there is nothing to confirm.
+               boughtCurrentChest = true;
+            } else {
+               // Believe the click only once the chest actually reports as opened.
+               pendingClaimSlot = bestChest.slotIndex;
+               pendingClaimSyncId = screen.getMenu().containerId;
+               pendingClaimName = bestChest.chestName;
+               pendingClaimKismet = hasRerolledCurrentChest;
+               pendingClaimAt = now;
+               pendingClaimAttempts = 0;
                mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §aClaiming §e" + bestChest.chestName + " §a(§6" + LowestBinManager.formatPrice(bestChest.totalContentsValue) + " value, " + (bestChest.profit >= 0 ? "§a+" : "§c") + LowestBinManager.formatPrice(bestChest.profit) + " profit§a)!"));
                recordChestPurchase(bestChest.profit, hasRerolledCurrentChest, bestChest.parsedItems);
             }
 
             if (s.autoCroesusUseDungeonKey && unopened.size() > 1) {
                DungeonChestData secondBest = unopened.get(1);
-               if (secondBest.profit >= s.autoCroesusDungeonKeyProfit) {
+               long keyRequirement = s.autoCroesusDungeonKeyProfit;
+               String keyMode = "MANUAL";
+               long liveKeyPrice = -1L;
+               if ("AUTO".equalsIgnoreCase(s.autoCroesusDungeonKeyMode)) {
+                  keyMode = "AUTO";
+                  // Price the key from the live Bazaar so the re-entry decision tracks the market.
+                  liveKeyPrice = getLiveDungeonKeyPrice();
+                  if (liveKeyPrice > 0L) {
+                     keyRequirement = liveKeyPrice + Math.max(0L, s.autoCroesusDungeonKeySafetyMargin);
+                  }
+               }
+               if (dungeonKeySpent) {
+                  if (debugHighlightMode && !hasReportedSimulationClose) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus Debug§8] §7Modifier list says the Dungeon Chest Key for this chest is already spent."));
+                  }
+               } else if (secondBest.profit >= keyRequirement) {
                   clickOrHighlightSlot(screen.getMenu().containerId, secondBest.slotIndex, "Claim " + secondBest.chestName + " (Dungeon Key)");
                   if (!debugHighlightMode) {
-                     mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §aClaiming 2nd profitable chest §e" + secondBest.chestName + " §ausing Dungeon Key (§a+" + LowestBinManager.formatPrice(secondBest.profit) + " profit)!"));
+                     // The second click supersedes the first pending claim; the first chest will be
+                     // picked up as an opened chest on a later tick.
+                     pendingClaimSlot = secondBest.slotIndex;
+                     pendingClaimSyncId = screen.getMenu().containerId;
+                     pendingClaimName = secondBest.chestName;
+                     pendingClaimKismet = false;
+                     pendingClaimAt = now;
+                     pendingClaimAttempts = 0;
+                     String priceNote = keyMode.equals("AUTO")
+                             ? (liveKeyPrice > 0L ? "live key §e" + LowestBinManager.formatPrice(liveKeyPrice) + "§a + margin §e" + LowestBinManager.formatPrice(s.autoCroesusDungeonKeySafetyMargin) : "§cno live key price, using your threshold")
+                             : "threshold §e" + LowestBinManager.formatPrice(s.autoCroesusDungeonKeyProfit);
+                     mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §aClaiming 2nd profitable chest §e" + secondBest.chestName
+                             + " §ausing Dungeon Key (§a+" + LowestBinManager.formatPrice(secondBest.profit) + " profit vs " + priceNote + "§a)!"));
                      recordChestPurchase(secondBest.profit, false, secondBest.parsedItems);
                   }
+               } else if (debugHighlightMode) {
+                  mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus Debug§8] §7Skipping 2nd chest §e" + secondBest.chestName
+                          + "§7: §e" + LowestBinManager.formatPrice(secondBest.profit) + " §7< required §e" + LowestBinManager.formatPrice(keyRequirement)));
                }
             }
             return;
          }
 
-         hudActionStatus = debugHighlightMode ? "§e[SIMULATION: No Profitable Chests]" : "§7[No Profitable Chests]";
+         // Reached only when nothing can be claimed. Say exactly which chest was rejected and why,
+         // instead of the blanket "No Profitable Chests" that hid a +515.6K Emerald chest.
+         hudActionStatus = debugHighlightMode ? "§e[SIMULATION: Nothing to claim]" : "§7[Nothing to claim]";
          lastActionTime = now;
          if (!debugHighlightMode) {
+            if (mc.player != null && !hasReportedSimulationClose) {
+               hasReportedSimulationClose = true;
+               MutableComponent reason = Component.literal("§8[§bAutoCroesus§8] §7Leaving with nothing claimed:");
+               for (DungeonChestData c : chests) {
+                  reason.append(Component.literal("\n§8- §e" + c.chestName + "§7: " + describeRejection(c, s)));
+               }
+               mc.player.sendSystemMessage(reason);
+            }
             mc.player.closeContainer();
          } else if (!hasReportedSimulationClose && !boughtCurrentChest) {
             hasReportedSimulationClose = true;
-            mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus Debug§8] §e[SIMULATION] Would close container (no profitable chests)."));
+            StringBuilder why = new StringBuilder();
+            for (DungeonChestData c : chests) {
+               why.append("\n§8- §e").append(c.chestName).append("§7: ").append(describeRejection(c, s));
+            }
+            mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus Debug§8] §e[SIMULATION] Would close container (nothing to claim)." + why));
          }
       }
    }
 
+   /** Human readable reason a chest was not claimed, used by the exit summary. */
+   private static String describeRejection(DungeonChestData chest, BomboConfig.Settings s) {
+      if (chest.alreadyOpened) return "already opened";
+      if (chest.parsedItems.isEmpty()) return "no readable contents (value " + LowestBinManager.formatPrice(chest.totalContentsValue) + ")";
+      if (chest.cost > 0L && chest.profit >= 0L && chest.profit < s.autoCroesusDungeonProfitThreshold) {
+         return "profit §a+" + LowestBinManager.formatPrice(chest.profit) + "§7 is under your threshold §e" + LowestBinManager.formatPrice(s.autoCroesusDungeonProfitThreshold);
+      }
+      if (chest.profit < 0L) return "computed loss §c" + LowestBinManager.formatPrice(chest.profit);
+      return "profit §a+" + LowestBinManager.formatPrice(chest.profit) + "§7 (below threshold or already booked)";
+   }
+
+   /**
+    * Confirms (or retries) a click that was sent for a chest.
+    *
+    * <p>The click packet is asynchronous, so the automation cannot know the click landed until the
+    * container reflects it. This is what stops a misclick from turning into "no profitable chests".
+    */
+   private static void resolvePendingClaim(List<DungeonChestData> chests, Minecraft mc, long now) {
+      if (pendingClaimSlot < 0) return;
+
+      DungeonChestData target = null;
+      if (pendingClaimName != null) {
+         for (DungeonChestData c : chests) {
+            if (c.chestName != null && c.chestName.equalsIgnoreCase(pendingClaimName)) {
+               target = c;
+               break;
+            }
+         }
+      }
+
+      if (target != null && target.alreadyOpened) {
+         boughtCurrentChest = true;
+         recordOpenedChest(target, pendingClaimKismet, "AUTO");
+         if (!debugHighlightMode && mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §aOpened §e" + pendingClaimName
+                    + " §a(§6" + LowestBinManager.formatPrice(target.profit) + " profit§a)."));
+         }
+         pendingClaimSlot = -1;
+         pendingClaimName = null;
+         pendingClaimAttempts = 0;
+         return;
+      }
+
+      if (now - pendingClaimAt < 1200L) return;
+
+      if (pendingClaimAttempts < 1) {
+         pendingClaimAttempts++;
+         pendingClaimAt = now;
+         clickOrHighlightSlot(pendingClaimSyncId >= 0 ? pendingClaimSyncId : 0, pendingClaimSlot,
+                 "Retry claim " + pendingClaimName);
+         return;
+      }
+
+      if (!debugHighlightMode && mc.player != null) {
+         mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §cClicking §e" + pendingClaimName
+                 + " §cdid not open the chest (retried once). Stopping so nothing wrong is clicked - try Debug Highlight Mode."));
+      }
+      hudActionStatus = "§c[Click failed: " + pendingClaimName + "]";
+      pendingClaimSlot = -1;
+      pendingClaimName = null;
+      pendingClaimAttempts = 0;
+   }
+
+   /** Writes an opened chest into the itemized ledger exactly once per container. */
+   private static void recordOpenedChest(DungeonChestData chest, boolean usedKismet, String source) {
+      if (chest == null || chest.chestName == null) return;
+      String key = chest.chestName + "|" + chest.cost;
+      if (!recordedChestNames.add(key)) return;
+
+      List<me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.ItemLine> lines = new ArrayList<>();
+      for (ItemDetail item : chest.parsedItems) {
+         lines.add(new me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.ItemLine(
+                 item.name, item.itemId, item.adjustedQuantity, item.unitPrice, item.totalValue));
+      }
+      me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.record(
+              getCurrentFloorTag(), chest.chestName, chest.cost, chest.totalContentsValue, chest.profit,
+              usedKismet, lines, source);
+   }
+
+   /**
+    * Interactive reward-chest slots only.
+    *
+    * <p>The old version accepted anything containing "chest"/"free"/a colour word, which included
+    * loot preview items such as "Power Dragon Shard" - that is exactly how the autoclicker ended up
+    * clicking loot instead of "Open Reward Chest". Real chest slots are matched by their exact
+    * colour name (plus the free chest), and the caller additionally requires the tooltip to look
+    * like a chest (a Cost / Contents section), so a loot item can never qualify twice over.
+    */
+   private static final Set<String> DUNGEON_CHEST_NAMES = Set.of(
+           "wood", "gold", "diamond", "emerald", "obsidian", "bedrock"
+   );
+
    public static boolean isDungeonRewardChest(String rawName, String cleanName) {
-      if (rawName == null) return false;
-      String lower = cleanName.toLowerCase().trim();
-      if (lower.contains("close") || lower.contains("reroll") || lower.contains("croesus") || lower.contains("modifier") || lower.contains("feather") || lower.contains("dungeon chest key") || lower.contains("back") || lower.contains("barrier") || lower.contains("menu")) {
+      if (rawName == null || cleanName == null) return false;
+      String lower = cleanName.toLowerCase(Locale.ROOT).trim();
+      if (lower.isEmpty()) return false;
+      if (lower.contains("close") || lower.contains("reroll") || lower.contains("croesus") || lower.contains("modifier")
+              || lower.contains("feather") || lower.contains("dungeon chest key") || lower.contains("back")
+              || lower.contains("barrier") || lower.contains("menu") || lower.contains("already")) {
          return false;
       }
-      return lower.contains("wood") || lower.contains("gold") || lower.contains("diamond") || lower.contains("emerald") || lower.contains("obsidian") || lower.contains("bedrock") || lower.contains("free") || lower.contains("chest");
+      // "Free Chest" / "Free" is a legitimate (free) reward chest.
+      if (lower.equals("free") || lower.startsWith("free chest")) {
+         return true;
+      }
+      // Exact colour-name match, optionally suffixed with " Chest".
+      String namePart = lower.endsWith(" chest") ? lower.substring(0, lower.length() - " chest".length()).trim() : lower;
+      return DUNGEON_CHEST_NAMES.contains(namePart);
+   }
+
+   /**
+    * True when a tooltip line names a chest modifier that is already spent.
+    *
+    * <p>Hypixel greys out and strikes through the modifiers already used on a chest, so the
+    * "Available Modifiers" list must be read per style run rather than as plain text: a struck or
+    * grey "Kismet Feather" means the feather for this chest is gone and must not be rerolled with.
+    */
+   public static boolean isSpentModifier(Component line) {
+      if (line == null) return false;
+      String raw = line.getString();
+      if (raw == null) return false;
+      String lower = raw.toLowerCase(Locale.ROOT);
+      if (!lower.contains("kismet") && !lower.contains("chest key")) return false;
+
+      final boolean[] sawText = {false};
+      final boolean[] allSpent = {true};
+      line.visit((style, text) -> {
+         if (text == null || text.trim().isEmpty() || style == null) {
+            return java.util.Optional.empty();
+         }
+         sawText[0] = true;
+         boolean struck = style.isStrikethrough();
+         boolean grey = isGreyish(style.getColor() != null ? style.getColor().getValue() : -1);
+         if (!struck && !grey) {
+            allSpent[0] = false;
+         }
+         return java.util.Optional.empty();
+      }, Style.EMPTY);
+      return sawText[0] && allSpent[0];
+   }
+
+   /** Grey-ish chat colours Hypixel uses for spent entries (0x55 / 0x80 / 0xAA / 0x7F shades). */
+   private static boolean isGreyish(int rgb) {
+      if (rgb < 0) return false;
+      int r = (rgb >> 16) & 0xFF;
+      int g = (rgb >> 8) & 0xFF;
+      int b = rgb & 0xFF;
+      if (Math.abs(r - g) > 12 || Math.abs(g - b) > 12) return false;
+      return r >= 0x50 && r <= 0xB0;
+   }
+
+   /**
+    * Live Bazaar value of a Dungeon Chest Key ({@code DUNGEON_CHEST_KEY}), or {@code -1} when no
+    * price is known yet. Used by the AUTO dungeon-key mode so the decision tracks the real market
+    * instead of a hardcoded threshold.
+    */
+   public static long getLiveDungeonKeyPrice() {
+      try {
+         long sell = LowestBinManager.getSellPrice("DUNGEON_CHEST_KEY");
+         if (sell > 0L) return sell;
+         long cached = LowestBinManager.getCachedPrice("DUNGEON_CHEST_KEY");
+         return cached > 0L ? cached : -1L;
+      } catch (Throwable t) {
+         return -1L;
+      }
    }
 
    public static void parseDungeonItemLine(Component line, String clean, List<ItemDetail> outList) {
@@ -1949,6 +2234,25 @@ public class AutoCroesus {
 
       saveProfitRecord(rec);
       me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.markDirty();
+   }
+
+   /** Local itemized ledger summary: totals plus how much still needs syncing. */
+   public static void printLedgerSummary(FabricClientCommandSource source) {
+      if (source == null) return;
+      long[] totals = me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.localTotals();
+      long profit = totals[0];
+      long runs = totals[1];
+      long kuudraRuns = totals[2];
+      long dungeonRuns = Math.max(0L, runs - kuudraRuns);
+      long avg = runs > 0L ? profit / runs : 0L;
+      source.sendFeedback(Component.literal("§8--- §b[Itemized Profit Ledger] §8---"));
+      source.sendFeedback(Component.literal("§7Chests opened: §e" + runs + " §8(§7dungeons §e" + dungeonRuns + "§8, §7kuudra §e" + kuudraRuns + "§8)"));
+      source.sendFeedback(Component.literal("§7Total Profit: " + (profit >= 0L ? "§a+" : "§c") + LowestBinManager.formatPrice(profit)));
+      source.sendFeedback(Component.literal("§7Average: " + (avg >= 0L ? "§a+" : "§c") + LowestBinManager.formatPrice(avg)));
+      int pendingSync = me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.getUnsyncedCount();
+      source.sendFeedback(Component.literal("§7Web sync: §a" + me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.getSyncedCount()
+              + " synced§7, §e" + pendingSync + " pending§7" + (pendingSync > 0 ? " - run §e/b profit sync" : "")));
+      source.sendFeedback(Component.literal("§8Use §e/b profit <user> §8to view another player's web profile."));
    }
 
    public static void resetProfitTracker() {

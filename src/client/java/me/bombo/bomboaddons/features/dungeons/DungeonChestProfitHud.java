@@ -101,10 +101,17 @@ public class DungeonChestProfitHud {
         return scale > 0.0F ? scale : 1.0F;
     }
 
+    /** NET_ONLY hides the per-item lines and keeps only the chest name, cost and profit. */
+    private static boolean netOnly() {
+        BomboConfig.Settings s = BomboConfig.get();
+        return s != null && "NET_ONLY".equalsIgnoreCase(s.croesusProfitHudMode);
+    }
+
     private static int contentHeight(List<AutoCroesus.DungeonChestData> chests) {
+        boolean netOnly = netOnly();
         int h = 0;
         for (AutoCroesus.DungeonChestData c : chests) {
-            h += 22 + Math.min(4, c.parsedItems.size()) * 12 + 6;
+            h += 22 + (netOnly ? 0 : Math.min(4, c.parsedItems.size()) * 12) + 6;
         }
         return h;
     }
@@ -125,13 +132,16 @@ public class DungeonChestProfitHud {
         g.fill(0, 0, winW, winH, 0xEE0F172A);
         g.outline(0, 0, winW, winH, ConfigUITheme.getAccentColor());
 
+        boolean netOnly = netOnly();
+
         g.fill(0, 0, winW, headerH, 0xEE1E293B);
         g.fill(0, headerH - 1, winW, headerH, ConfigUITheme.getDividerColor());
         g.text(font, ConfigUITheme.formatFont("§6§lDUNGEON CHESTS REWARDS"), 10, 8, ConfigUITheme.ACCENT_GOLD, false);
+        g.text(font, netOnly ? "§8net only" : "§8itemized", winW - 70, 8, 0xFF94A3B8, false);
 
         int curY = headerH + 6;
         for (AutoCroesus.DungeonChestData c : chests) {
-            int itemsCount = Math.min(4, c.parsedItems.size());
+            int itemsCount = netOnly ? 0 : Math.min(4, c.parsedItems.size());
             int thisCardH = 20 + itemsCount * 12 + 4;
 
             boolean isProfitable = c.profit > 0 || c.isFree;

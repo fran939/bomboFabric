@@ -41,6 +41,20 @@ public final class LoadingEggFinale {
 		nextAtMs = 0L;
 	}
 
+	/**
+	 * Cancels a queued (or in-flight) finale.
+	 *
+	 * <p>Used when the load genuinely failed: replying with {@code /limbo} and a fake Hypixel ban
+	 * would be a lie, and it also kicks the player out of the world over a network hiccup.
+	 */
+	public static void abort() {
+		if (step != Step.IDLE && step != Step.DONE) {
+			BetterPV.LOGGER.warn("Loading egg finale aborted");
+		}
+		step = Step.DONE;
+		nextAtMs = 0L;
+	}
+
 	public static void tick(Minecraft client) {
 		if (step == Step.IDLE || step == Step.DONE) {
 			return;

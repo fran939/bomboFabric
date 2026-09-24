@@ -63,6 +63,24 @@ public class ItemModelResolverMixin {
       return Identifier.tryParse(namespace + ":" + sanitized);
    }
 
+   /**
+    * The vanilla item model backing this stack (e.g. {@code minecraft:item/diamond_shovel}).
+    *
+    * <p>Used as the last-resort fallback so a SkyBlock item can never be left pointing at a model
+    * that does not exist - that lookup returns {@code MissingItemModel}, which renders as the
+    * purple/black checkerboard users reported on Aspect of the Void.
+    */
+   @org.spongepowered.asm.mixin.Unique
+   private Identifier vanillaItemModel(ItemStack stack) {
+      if (stack == null || stack.isEmpty()) return null;
+      Identifier itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
+      if (itemId == null) return null;
+      Identifier prefixed = safeId(itemId.getNamespace(), "item/" + itemId.getPath());
+      Identifier valid = resolveValidId(prefixed);
+      if (valid != null) return valid;
+      return resolveValidId(itemId);
+   }
+
    @WrapOperation(
       method = {"appendItemLayers", "shouldPlaySwapAnimation", "swapAnimationScale"},
       at = {@At(
@@ -89,6 +107,17 @@ public class ItemModelResolverMixin {
       // Never override Player Heads or Pets with missing/cuboid models — let vanilla skull renderer draw player profile skin!
       if (instance.is(net.minecraft.world.item.Items.PLAYER_HEAD) || "PET".equalsIgnoreCase(sbId)) {
          return original.call(new Object[]{instance, dataComponentType});
+      }
+
+      // The "No Resource Pack" toggle has to short-circuit *here*, before any pack model is
+      // resolved below. Stripping the model component further down the pipeline cannot undo a
+      // model that was already picked up, which is why the toggle appeared to do nothing: throw
+      // the vanilla base item instead and the pack's own vanilla overrides show through.
+      if (TextureToggleManager.INSTANCE.shouldBypass(instance)) {
+         Identifier vanillaBypass = vanillaItemModel(instance);
+         if (vanillaBypass != null) {
+            return vanillaBypass;
+         }
       }
 
       if (sbId != null && !sbId.isEmpty()) {
@@ -133,6 +162,14 @@ public class ItemModelResolverMixin {
 
             Identifier citAotv2 = resolveValidId(safeId("cittofirmgenerated", "aspect_of_the_void"));
             if (citAotv2 != null) return citAotv2;
+
+            // Nothing from a pack resolved: fall back to the vanilla base so the item always
+            // draws *something*. Aspect of the Void is a diamond shovel underneath, which is
+            // exactly the model the server-side item component leaves missing.
+            Identifier vanillaAotv = vanillaItemModel(instance);
+            if (vanillaAotv != null) return vanillaAotv;
+            Identifier shovelAotv = resolveValidId(safeId("minecraft", "item/diamond_shovel"));
+            if (shovelAotv != null) return shovelAotv;
          }
 
          // 1. Check if reforge / modifier model exists (e.g. warped_aspect_of_the_void)

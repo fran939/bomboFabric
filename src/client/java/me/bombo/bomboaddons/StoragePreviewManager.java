@@ -361,8 +361,29 @@ public class StoragePreviewManager {
          String prefix = getProfilePrefix();
          InventorySnapshot snapshot = new InventorySnapshot(formattedTitle, "Live", itemData);
          storageCache.put(prefix + cleanK, snapshot);
+
+         // A container the player just opened is ground truth. Every sibling key for the same
+         // backpack slot (the API-sync spellings "backpack15" / "backpackslot15") is dropped so a
+         // stale API snapshot can never serve an item that is no longer in there - that mismatch is
+         // what showed a "Chimera" in an empty backpack 15.
+         int openedSlot = extractSlotNumber(title);
+         if (openedSlot != -1) {
+            storageCache.put(prefix + "backpack" + openedSlot, snapshot);
+            storageCache.put(prefix + "backpackslot" + openedSlot, snapshot);
+         }
+         if (isEnderChest) {
+            int page = extractPageNumber(title);
+            if (page != -1) {
+               storageCache.put(prefix + "enderchest" + page, snapshot);
+            }
+         }
+
          parsedItemCache.remove(prefix + cleanK);
          parsedItemCache.remove(cleanK);
+         if (openedSlot != -1) {
+            parsedItemCache.remove(prefix + "backpack" + openedSlot);
+            parsedItemCache.remove(prefix + "backpackslot" + openedSlot);
+         }
          saveCacheToDisk();
       }
    }
@@ -486,6 +507,10 @@ public class StoragePreviewManager {
       String userUuid = mc.player != null ? mc.player.getUUID().toString().replace("-", "").toLowerCase() : "unknown";
       String profileId = SkyblockUtils.currentProfileId;
       return profileId != null && !profileId.isEmpty() ? userUuid + "_" + profileId.replace("-", "").toLowerCase() + "_" : userUuid + "_";
+   }
+
+   private static boolean isLiveSnapshot(InventorySnapshot snapshot) {
+      return snapshot != null && "Live".equalsIgnoreCase(snapshot.timestamp);
    }
 
    private static InventorySnapshot findMatchingSnapshot(String searchKey) {

@@ -117,9 +117,43 @@ public class ChatHistoryTracker {
         return new ArrayList<>(entries);
     }
 
+    /**
+     * Messages dropped from the front of the buffer by the ring-buffer trim. Shown in the
+     * history header so "why is the oldest message different now" has a visible answer.
+     */
+    private static int trimmedCount = 0;
+
+    public static synchronized int getTrimmedCount() {
+        return trimmedCount;
+    }
+
     public static synchronized void clear() {
         entries.clear();
         recentMessageTimes.clear();
+        trimmedCount = 0;
+    }
+
+    /**
+     * Records a session boundary (world switch, server change, disconnect) as a visible row
+     * instead of wiping the buffer.
+     *
+     * <p>History is <b>never</b> cleared implicitly: switching lobbies or servers used to make the
+     * user lose everything they were reading. When {@code persistHistoryAcrossServers} is on
+     * (the default) a boundary row is the only trace; when it is off the same row is written but
+     * the buffer is still kept, so nothing is destroyed behind the user's back.
+     */
+    public static synchronized void markSessionBoundary(String reason) {
+        Entry entry = new Entry();
+        entry.timeFormatted = TIME_FMT.format(new Date());
+        entry.status = Status.EVENT;
+        entry.category = "SESSION";
+        entry.isEvent = true;
+        entry.featureName = "Session";
+        entry.originFeature = "Chat History";
+        entry.triggerDesc = reason;
+        entry.rawText = "--- session boundary: " + reason + " ---";
+        entry.component = Component.literal("§8--- session boundary: §7" + reason + " §8---");
+        addEntry(entry);
     }
 
     public static synchronized void recordIncoming(Component comp, boolean blocked, String category) {
@@ -294,13 +328,19 @@ public class ChatHistoryTracker {
         addEntry(entry);
     }
 
+    /** Hard ceiling for unlimited history so one very long session cannot exhaust the heap. */
+    private static final int UNLIMITED_HARD_CAP = 50000;
+
     private static void addEntry(Entry entry) {
         BomboConfig.Settings cfg = BomboConfig.get();
+        boolean unlimited = cfg != null && cfg.unlimitedChatHistory;
         int max = cfg != null ? cfg.chatHistoryMaxMessages : 500;
         if (max <= 0) max = 500;
+        int limit = unlimited ? UNLIMITED_HARD_CAP : max;
         entries.add(entry);
-        while (entries.size() > max) {
+        while (entries.size() > limit) {
             entries.remove(0);
+            trimmedCount++;
         }
     }
 

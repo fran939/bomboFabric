@@ -1,5 +1,51 @@
 # BomboAddons Changelog
 
+## [26.2.28.39] - 2026-09-24 (Beta)
+
+### 1. Sequences & config GUI
+- Every step row now has an **`[ON]`/`[OFF]`** switch between Edit and Delete. A disabled step stays in the list (greyed, `[OFF]`) but is **skipped during playback**.
+- **`TAB`** in a step field moves focus to the GUI/Container name field instead of jumping out of the builder.
+- Clicking a slider's **numeric label** turns it into a text field, so exact values can be typed.
+- New sliders are coin-aware (`100K`, `1.5M`), used by the Auto Croesus key/kismet thresholds, which now run **100K - 3M** instead of 5M - 500M.
+
+### 2. Chat history survives everything
+- New `unlimitedChatHistory` (off by default; when off the existing limit slider applies) and `persistHistoryAcrossServers` (on by default).
+- Switching worlds, disconnecting or changing servers **no longer wipes** the buffer: a session divider is recorded instead of a clear, so previous-server chat stays readable.
+
+### 3. Dungeons
+- `/b area` now prints the real floor and phase: `F4 (clear)` / `M7 (boss)`, parsed from the `The Catacombs (F4)` scoreboard line and the `[BOSS] <name>:` chat lines. `[BOSS] The Watcher:` is excluded (blood room is not a floor boss).
+- New **M4/F4 Etherwarp Helper** toggle (Dungeons category): highlights `(27, 81, 18)` while the F4/M4 boss fight is active.
+
+### 4. Auto Croesus fixes
+- **Misclicks fixed.** Chest slots are classified strictly by chest-interaction items, so the bot can no longer click a loot item ("power dragon shard") instead of *Open Reward Chest*, and `boughtCurrentChest` is only set after the click is verified.
+- **No more false "no profitable chests"** - a chest is only skipped when its profit is genuinely non-positive (Emerald at +515.6K is claimed).
+- **Chest modifiers parsed** from the Redstone Torch tooltip: a greyed/struck-through `Kismet Feather` or `Dungeon Chest Key` marks that modifier as **already spent** for that chest.
+- **Auto dungeon key**: reads the live Bazaar `DUNGEON_CHEST_KEY` price and re-enters for a second chest when its profit clears key price + safety margin.
+- **Kismet EV** uses the same maths as the Discord bot's `!kismet` (dungeon tier, box level, pity counter, drop rate, reroll cost threshold) via `GET /mod/kismet/<user>`, with a local port as fallback.
+
+### 5. Profit tracking & web sync
+- Every chest opened (manual or automatic) is recorded itemised: items + counts, floor/tier (`M7`, `F7`, `T1`...), run duration, net profit, kismet use.
+- Runs sync to the new backend: `POST /api/v1/profits`, browsable at **`/profits`**, **`/profit/:user`** and **`/profit/:user/:type`** (`dungeons`, `kuudra`).
+- `/b profit` prints your own summary; `/b profit <user>` fetches someone else's.
+- The chest panel has a **NET_ONLY / ITEMIZED** display mode ("Chest Panel Mode").
+
+### 6. Storage
+- Backpack contents refresh when a container is opened, killing phantom items ("Chimera in backpack 15" on an empty backpack).
+- `/b storage <query>` places **in-world chest waypoints** over every island chest holding the item, merging double chests into one box. Waypoints update (partial) or disappear when the items run out, and positions verified as air/not-a-container are purged from the cache.
+
+### 7. Egg Finder & API history
+- Island mapping fixed: `/b egg` no longer reports `Active Subscription Area: None` on supported islands - an unmappable reading keeps the working subscription instead of tearing it down.
+- Collected eggs are remembered **per spawn position**, so a Brunch Egg picked up before a lobby hop is not highlighted again after it.
+- Egg pickup detection no longer depends on an allowlist of egg flavours, so new/renamed Hoppity eggs still register (and an unknown flavour retires the nearest waypoint instead of leaving a ghost highlight).
+- New **`/b apihistory`** (`/b apihistory chat`): timestamp, service, method, endpoint, status code and response time for every outbound HTTP/WebSocket call (Hypixel, Athen, EliteSkyblock, Bombo API...), with an on-disk log.
+
+### 8. Textures, obfuscation & values
+- Obfuscation stripping is now per line: recombobulated rarity headers keep their `§k` padding (e.g. `MYTHIC DUNGEON SWORD`), while dummy markers such as `§9§kObfuscated-3` are still revealed.
+- **Aspect of the Void** can no longer render as the purple/black missing-texture checkerboard - model resolution always falls back to the vanilla base item, and the pack lookup honours the texture toggle.
+- The **no-resource-pack** bypass now actually applies: it short-circuits before a pack model is chosen, so vanilla overrides show properly.
+- `/b pv`: failures are shown instead of the endless loading egg (no more fake-ban limbo), tab completion uses the lobby/friends/guild/party roster and rejects Hypixel's `!A-a` placeholder entries, the window is bigger with a more transparent backdrop (both configurable in GUI Settings).
+- Estimated Item Value: price source is now selectable (**Instant Buy (Lowest BIN)** vs **Instant Sell (Bazaar Sell Offer / Average BIN)**), and the breakdown covers base item, stars, master stars, enchants, recombobulator, potato books, reforge, gemstones and attributes.
+
 ## [26.2.28.38] - 2026-09-24 (Beta)
 
 ### 1. Sequence editor: steps are editable

@@ -9,7 +9,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import me.bombo.bomboaddons.mixin.PlayerTabOverlayAccessor;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.core.Holder;
@@ -628,6 +632,136 @@ public class SkyblockUtils {
       }
       refreshLocationCacheIfNeeded();
       return cachedLocation;
+   }
+
+   // -------------------------------------------------------------------------------------------
+   // Dungeon floor + boss phase (v26.2.28.39)
+   //
+   // getLocation() intentionally buckets everything in the Catacombs into "Dungeons", which is
+   // useless for a feature that needs to know it is in F4 vs M7. These helpers read the sidebar /
+   // tab line "The Catacombs (F4)" or "Master Mode The Catacombs (M7)" instead.
+   // -------------------------------------------------------------------------------------------
+
+   /** Matches {@code The Catacombs (F4)} and {@code Master Mode The Catacombs (M7)} / {@code Floor VII}. */
+   private static final Pattern DUNGEON_FLOOR_TAG = Pattern.compile(
+           "(?i)catacombs\\s*(?:\\(\\s*([fm])?\\s*([0-9ivxlcdm]+)\\s*\\)|floor\\s*([0-9ivxlcdm]+))");
+
+   /** The floor at the time boss mode was entered, so a new run starts back in clear phase. */
+   private static volatile String dungeonBossFloor = null;
+   private static volatile boolean dungeonBossActive = false;
+
+   /**
+    * "F4" / "M7" while the player is inside a Catacombs floor, otherwise {@code null}.
+    * Returns the master-mode tag when the map is master mode.
+    */
+   public static String getDungeonFloorTag() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level == null) {
+         return null;
+      }
+      List<String> candidates = new ArrayList<>();
+      try {
+         Scoreboard scoreboard = mc.level.getScoreboard();
+         Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
+         if (sidebar != null) {
+            candidates.addAll(getSidebarLines(scoreboard, sidebar));
+         }
+      } catch (Throwable ignored) {
+      }
+      try {
+         for (Component line : getTabListLines()) {
+            candidates.add(line.getString());
+         }
+      } catch (Throwable ignored) {
+      }
+      for (String raw : candidates) {
+         String tag = parseDungeonFloorTag(raw);
+         if (tag != null) {
+            return tag;
+         }
+      }
+      return null;
+   }
+
+   /** Parses a single sidebar/tab line into a floor tag ("F4", "M7") or {@code null}. */
+   public static String parseDungeonFloorTag(String raw) {
+      if (raw == null) return null;
+      String clean = ChatFormatting.stripFormatting(raw);
+      if (clean == null) return null;
+      clean = clean.trim();
+      if (clean.isEmpty()) return null;
+      String lower = clean.toLowerCase(Locale.ROOT);
+      if (!lower.contains("catacombs")) return null;
+
+      Matcher matcher = DUNGEON_FLOOR_TAG.matcher(clean);
+      if (!matcher.find()) return null;
+      String letter = matcher.group(1);
+      String number = matcher.group(2) != null ? matcher.group(2) : matcher.group(3);
+      int floor = romanToFloor(number);
+      if (floor <= 0) return null;
+      boolean master = letter != null ? letter.equalsIgnoreCase("m") : lower.contains("master");
+      return (master ? "M" : "F") + floor;
+   }
+
+   private static int romanToFloor(String raw) {
+      if (raw == null || raw.isEmpty()) return -1;
+      if (raw.matches("[0-9]+")) {
+         try {
+            return Integer.parseInt(raw);
+         } catch (NumberFormatException e) {
+            return -1;
+         }
+      }
+      String upper = raw.toUpperCase(Locale.ROOT);
+      java.util.Map<Character, Integer> values = java.util.Map.of(
+              'I', 1, 'V', 5, 'X', 10, 'L', 50, 'C', 100, 'D', 500, 'M', 1000);
+      int total = 0;
+      for (int i = 0; i < upper.length(); i++) {
+         Integer value = values.get(upper.charAt(i));
+         if (value == null) return -1;
+         if (i + 1 < upper.length()) {
+            Integer next = values.get(upper.charAt(i + 1));
+            if (next != null && next > value) {
+               total -= value;
+               continue;
+            }
+         }
+         total += value;
+      }
+      return total > 0 && total <= 7 ? total : -1;
+   }
+
+   /** {@code "clear"} or {@code "boss"} inside a Catacombs floor, otherwise {@code null}. */
+   public static String getDungeonPhase() {
+      String floor = getDungeonFloorTag();
+      if (floor == null) return null;
+      if (dungeonBossFloor != null && !dungeonBossFloor.equals(floor)) {
+         // Different floor than the run boss mode was entered on: treat it as a fresh run.
+         dungeonBossActive = false;
+         dungeonBossFloor = null;
+      }
+      return dungeonBossActive ? "boss" : "clear";
+   }
+
+   /**
+    * Called by {@code DungeonBossManager} when a real floor boss announces itself. The Watcher
+    * (and the blood room it lives in) deliberately does not count as a boss.
+    */
+   public static void setDungeonBossActive(boolean active) {
+      dungeonBossActive = active;
+      dungeonBossFloor = active ? getDungeonFloorTag() : null;
+   }
+
+   public static boolean isDungeonBossActive() {
+      return dungeonBossActive;
+   }
+
+   /** True while the player is inside a Catacombs floor (clear or boss room). */
+   public static boolean isInCatacombs() {
+      String floor = getDungeonFloorTag();
+      if (floor != null) return true;
+      String area = getLocation();
+      return area != null && (area.equalsIgnoreCase("Dungeons") || area.toLowerCase(Locale.ROOT).contains("catacombs"));
    }
 
    public static boolean isInLimbo() {
