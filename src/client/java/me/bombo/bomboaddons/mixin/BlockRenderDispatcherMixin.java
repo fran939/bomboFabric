@@ -26,7 +26,7 @@ public class BlockRenderDispatcherMixin {
       if (FuckDiorite.inDungeonsOrPrivateIsland) {
          return FuckDiorite.checkAndReplace(pos, state);
       }
-      BlockState hiderState = me.bombo.bomboaddons.features.hider.EntityBlockHider.getReplacedBlockState(pos, state);
+      BlockState hiderState = me.bombo.bomboaddons.cheat.hider.EntityBlockHider.getReplacedBlockState(pos, state);
       if (hiderState != state) {
          return hiderState;
       }

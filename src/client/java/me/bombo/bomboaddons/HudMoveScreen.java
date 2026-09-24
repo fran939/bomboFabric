@@ -2,6 +2,8 @@ package me.bombo.bomboaddons;
 
 import java.util.ArrayList;
 import java.util.List;
+import me.bombo.bomboaddons.cheat.automation.AutoCroesusHud;
+import me.bombo.bomboaddons.cheat.automation.AutoFishing;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -384,7 +386,7 @@ public class HudMoveScreen extends Screen {
                 s.croesusProfitHudY = ny;
             });
             this.renderTargetBox(g, mouseX, mouseY, s.croesusProfitHudX, s.croesusProfitHudY, w, h, HudTarget.CROESUS_PROFIT, s.croesusProfitHudScale);
-            me.bombo.bomboaddons.features.dungeons.DungeonChestProfitHud.renderDummy(g, s.croesusProfitHudX, s.croesusProfitHudY, s.croesusProfitHudScale);
+            me.bombo.bomboaddons.cheat.dungeons.DungeonChestProfitHud.renderDummy(g, s.croesusProfitHudX, s.croesusProfitHudY, s.croesusProfitHudScale);
         }
 
         if (!s.showOnlyActiveHuds || s.autoCroesusHud) {
@@ -400,14 +402,14 @@ public class HudMoveScreen extends Screen {
 
         // 17b. CROESUS_TRACKER (cumulative profit + per-floor)
         {
-            int w = (int) (me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
+            int w = (int) (me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
             int h = (int) (60.0F * s.croesusTrackerHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.CROESUS_TRACKER, (nx, ny) -> {
                 s.croesusTrackerHudX = nx;
                 s.croesusTrackerHudY = ny;
             });
             this.renderTargetBox(g, mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, w, h, HudTarget.CROESUS_TRACKER, s.croesusTrackerHudScale);
-            me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.renderDummy(g, s.croesusTrackerHudX, s.croesusTrackerHudY, s.croesusTrackerHudScale);
+            me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.renderDummy(g, s.croesusTrackerHudX, s.croesusTrackerHudY, s.croesusTrackerHudScale);
         }
 
         // AUTO_REJOIN
@@ -1034,7 +1036,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 15c. CROESUS_TRACKER (cumulative profit + per-floor)
-        int ctW = (int) (me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
+        int ctW = (int) (me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
         int ctH = (int) (60.0F * s.croesusTrackerHudScale);
         if (this.startCornerResize(mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, ctW, ctH, HudTarget.CROESUS_TRACKER, s.croesusTrackerHudScale)) return true;
         if (this.checkHit(mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, ctW, ctH)) {

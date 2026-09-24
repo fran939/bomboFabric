@@ -76,18 +76,18 @@ public abstract class KeyboardMixin {
          if (targetCode != -1 && event.key() == targetCode && mc.gui.screen() == null) {
             if (BomboConfig.get().freecamToggle) {
                if (action == 1) {
-                  me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam();
+                  me.bombo.bomboaddons.flavor.Flavor.get().freecamToggle();
                   ci.cancel();
                   return;
                }
             } else {
                if (action == 1) {
-                  me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam(true);
+                  me.bombo.bomboaddons.flavor.Flavor.get().freecamToggle(true);
                   ci.cancel();
                   return;
                }
                if (action == 0) {
-                  me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam(false);
+                  me.bombo.bomboaddons.flavor.Flavor.get().freecamToggle(false);
                   ci.cancel();
                   return;
                }

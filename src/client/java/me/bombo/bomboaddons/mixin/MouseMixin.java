@@ -5,7 +5,7 @@ import me.bombo.bomboaddons.BomboConfigGUI;
 import me.bombo.bomboaddons.ClickLogic;
 import me.bombo.bomboaddons.CustomBindsProcessor;
 import me.bombo.bomboaddons.GardenMovement;
-import me.bombo.bomboaddons.KuudraPerkClicker;
+import me.bombo.bomboaddons.cheat.automation.KuudraPerkClicker;
 import me.bombo.bomboaddons.util.FreelookManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -37,10 +37,10 @@ public abstract class MouseMixin {
    )
    private void onTurnPlayer(CallbackInfo ci) {
       Minecraft mc = Minecraft.getInstance();
-      if (me.bombo.bomboaddons.features.camera.FreecamManager.isFreecamActive()) {
-         me.bombo.bomboaddons.features.camera.FreecamManager.onMouseTurn(this.accumulatedDX, this.accumulatedDY);
+      if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) {
+         me.bombo.bomboaddons.flavor.Flavor.get().freecamRotate(this.accumulatedDX, this.accumulatedDY);
          if (BomboConfig.get().cameraDebug && mc.player != null && (Math.abs(this.accumulatedDX) > 0.01 || Math.abs(this.accumulatedDY) > 0.01)) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bCamDebug§8] §aFreecam §7(Yaw: §e" + String.format(java.util.Locale.ROOT, "%.1f", me.bombo.bomboaddons.features.camera.FreecamManager.getCamYaw()) + "§7, Pitch: §e" + String.format(java.util.Locale.ROOT, "%.1f", me.bombo.bomboaddons.features.camera.FreecamManager.getCamPitch()) + "§7)"));
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bCamDebug§8] §aFreecam §7(Yaw: §e" + String.format(java.util.Locale.ROOT, "%.1f", me.bombo.bomboaddons.flavor.Flavor.get().freecamYaw()) + "§7, Pitch: §e" + String.format(java.util.Locale.ROOT, "%.1f", me.bombo.bomboaddons.flavor.Flavor.get().freecamPitch()) + "§7)"));
          }
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;

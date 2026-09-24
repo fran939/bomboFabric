@@ -1,5 +1,7 @@
 package me.bombo.bomboaddons;
 
+import me.bombo.bomboaddons.cheat.esp.TargetPests;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 import java.lang.reflect.Method;
 import java.util.ArrayList;

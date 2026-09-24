@@ -1,6 +1,6 @@
 package me.bombo.bomboaddons.mixin;
 
-import me.bombo.bomboaddons.ParticleTracker;
+import me.bombo.bomboaddons.cheat.esp.ParticleTracker;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;

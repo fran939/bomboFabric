@@ -260,7 +260,7 @@ public class DungeonPricesScreen extends Screen {
                 else if (item.id.equals("ESSENCE_UNDEAD")) p = 1200L;
                 else if (item.id.equals("ESSENCE_DRAGON")) p = 3500L;
                 else if (item.id.equals("ESSENCE_CRIMSON")) p = 962L;
-                else p = me.bombo.bomboaddons.AutoCroesus.getFallbackDungeonItemPrice(item.id);
+                else p = me.bombo.bomboaddons.cheat.automation.AutoCroesus.getFallbackDungeonItemPrice(item.id);
             }
             item.price = p;
             item.isBazaar = LowestBinManager.isBazaar(item.id);

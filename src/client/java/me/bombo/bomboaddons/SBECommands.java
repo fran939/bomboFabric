@@ -16,6 +16,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
+import me.bombo.bomboaddons.cheat.automation.AutoCroesus;
 import me.bombo.bomboaddons.util.BomboApiUrl;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

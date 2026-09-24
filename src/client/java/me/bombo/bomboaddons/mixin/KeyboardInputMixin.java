@@ -2,7 +2,6 @@ package me.bombo.bomboaddons.mixin;
 
 import me.bombo.bomboaddons.GardenMovement;
 import me.bombo.bomboaddons.SkyblockUtils;
-import me.bombo.bomboaddons.features.camera.FreecamManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.KeyboardInput;
@@ -15,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class KeyboardInputMixin extends ClientInput {
     @Inject(method = "tick", at = @At("TAIL"))
     private void onTickTail(CallbackInfo ci) {
-        if (FreecamManager.isFreecamActive()) {
+        if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) {
             this.keyPresses = net.minecraft.world.entity.player.Input.EMPTY;
             this.moveVector = net.minecraft.world.phys.Vec2.ZERO;
             return;

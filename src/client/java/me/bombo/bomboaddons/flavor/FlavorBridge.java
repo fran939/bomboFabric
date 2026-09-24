@@ -45,4 +45,43 @@ public interface FlavorBridge {
 
     /** True when the flavor registered any sequences (cheat flavor only). */
     boolean hasSequences();
+
+    // -----------------------------------------------------------------------
+    // Freecam
+    //
+    // The camera hooks live in shared mixins so the routing (which camera, which
+    // rotation) is identical in both builds; only the freecam state itself is
+    // flavor owned. The legit implementation reports "inactive", so every hook
+    // becomes a no-op there and no cheat class is needed.
+    // -----------------------------------------------------------------------
+
+    /** True while the freecam camera is detached from the player. */
+    boolean isFreecamActive();
+
+    /** Camera yaw while freecam is active (degrees). */
+    float freecamYaw();
+
+    /** Camera pitch while freecam is active (degrees). */
+    float freecamPitch();
+
+    /** Camera X position while freecam is active. */
+    double freecamX();
+
+    /** Camera Y position while freecam is active. */
+    double freecamY();
+
+    /** Camera Z position while freecam is active. */
+    double freecamZ();
+
+    /** Applies a mouse movement delta to the freecam rotation. */
+    void freecamRotate(double deltaX, double deltaY);
+
+    /** Toggles freecam on or off. */
+    void freecamToggle();
+
+    /** Enables or disables freecam explicitly (used on join/leave and death). */
+    void freecamToggle(boolean state);
+
+    /** Per-tick freecam movement update. */
+    void freecamTick();
 }

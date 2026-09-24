@@ -30,7 +30,7 @@ public final class CheatFlavor implements FlavorBridge {
     public void init() {
         // Shared runtime; registering it here too keeps exactly-one registration even if
         // the legit init path ever stops calling it in this build's classloader layout.
-        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.init();
+        me.bombo.bomboaddons.cheat.sequences.AutoSequenceExecutor.init();
     }
 
     @Override
@@ -67,22 +67,74 @@ public final class CheatFlavor implements FlavorBridge {
 
     @Override
     public boolean onInputTrigger(int code, String kind, String label) {
-        return me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.onInputTrigger(code, kind, label);
+        return me.bombo.bomboaddons.cheat.sequences.AutoSequenceExecutor.onInputTrigger(code, kind, label);
     }
 
     @Override
     public void toggleSequenceByIndex(int index, String kind, String label) {
-        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.toggleByIndex(index, kind, label);
+        me.bombo.bomboaddons.cheat.sequences.AutoSequenceExecutor.toggleByIndex(index, kind, label);
     }
 
     @Override
     public void stopAll() {
-        me.bombo.bomboaddons.features.auto.AutoSequenceExecutor.stopAll("Command");
+        me.bombo.bomboaddons.cheat.sequences.AutoSequenceExecutor.stopAll("Command");
     }
 
     @Override
     public boolean hasSequences() {
         return !AutoSequenceManager.getSequences().isEmpty();
+    }
+
+    // ---- Freecam ----
+
+    @Override
+    public boolean isFreecamActive() {
+        return me.bombo.bomboaddons.cheat.camera.FreecamManager.isFreecamActive();
+    }
+
+    @Override
+    public float freecamYaw() {
+        return me.bombo.bomboaddons.cheat.camera.FreecamManager.getCamYaw();
+    }
+
+    @Override
+    public float freecamPitch() {
+        return me.bombo.bomboaddons.cheat.camera.FreecamManager.getCamPitch();
+    }
+
+    @Override
+    public double freecamX() {
+        return me.bombo.bomboaddons.cheat.camera.FreecamManager.getCamX();
+    }
+
+    @Override
+    public double freecamY() {
+        return me.bombo.bomboaddons.cheat.camera.FreecamManager.getCamY();
+    }
+
+    @Override
+    public double freecamZ() {
+        return me.bombo.bomboaddons.cheat.camera.FreecamManager.getCamZ();
+    }
+
+    @Override
+    public void freecamRotate(double deltaX, double deltaY) {
+        me.bombo.bomboaddons.cheat.camera.FreecamManager.onMouseTurn(deltaX, deltaY);
+    }
+
+    @Override
+    public void freecamToggle() {
+        me.bombo.bomboaddons.cheat.camera.FreecamManager.toggleFreecam();
+    }
+
+    @Override
+    public void freecamToggle(boolean state) {
+        me.bombo.bomboaddons.cheat.camera.FreecamManager.toggleFreecam(state);
+    }
+
+    @Override
+    public void freecamTick() {
+        me.bombo.bomboaddons.cheat.camera.FreecamManager.onClientTick();
     }
 
     /** Unused placeholder kept so the flavor name is visible in stack traces/logs. */

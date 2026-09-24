@@ -2,14 +2,14 @@ package me.bombo.bomboaddons.mixin;
 
 import java.util.ArrayList;
 import java.util.List;
-import me.bombo.bomboaddons.AutoCroesus;
-import me.bombo.bomboaddons.AutoCroesusHud;
+import me.bombo.bomboaddons.cheat.automation.AutoCroesus;
+import me.bombo.bomboaddons.cheat.automation.AutoCroesusHud;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.BomboConfigGUI;
 import me.bombo.bomboaddons.Bomboaddons;
 import me.bombo.bomboaddons.ClickLogic;
 import me.bombo.bomboaddons.ComposterHelper;
-import me.bombo.bomboaddons.CroesusHelper;
+import me.bombo.bomboaddons.cheat.automation.CroesusHelper;
 import me.bombo.bomboaddons.CustomBindsProcessor;
 import me.bombo.bomboaddons.ItemListOverlay;
 import me.bombo.bomboaddons.SkyblockCalculator;
@@ -790,7 +790,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       AutoCroesusHud.renderInContainer(graphics);
       // All-chests value overlay (contents + profit per chest). Render hook was previously
       // orphaned - nothing called it - so the panel never appeared.
-      me.bombo.bomboaddons.features.dungeons.DungeonChestProfitHud.onScreenRender(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY);
+      me.bombo.bomboaddons.cheat.dungeons.DungeonChestProfitHud.onScreenRender(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY);
 
       if (BomboConfig.get().storageOverlay) {
          me.bombo.bomboaddons.gui.StorageOverlayManager.renderOverlay(graphics, Minecraft.getInstance().font, mouseX, mouseY, this.width, this.height);

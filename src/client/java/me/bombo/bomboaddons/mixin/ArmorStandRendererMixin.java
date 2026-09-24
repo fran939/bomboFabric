@@ -1,6 +1,6 @@
 package me.bombo.bomboaddons.mixin;
 
-import me.bombo.bomboaddons.HighlightESP;
+import me.bombo.bomboaddons.cheat.esp.HighlightESP;
 import net.minecraft.client.renderer.entity.ArmorStandRenderer;
 import net.minecraft.client.renderer.entity.state.ArmorStandRenderState;
 import net.minecraft.world.entity.decoration.ArmorStand;
