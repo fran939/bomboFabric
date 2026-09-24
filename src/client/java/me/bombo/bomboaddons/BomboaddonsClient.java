@@ -1,5 +1,30 @@
 package me.bombo.bomboaddons;
 
+import me.bombo.bomboaddons.cheat.esp.TargetPests;
+
+import me.bombo.bomboaddons.cheat.esp.StructureScanner;
+
+import me.bombo.bomboaddons.cheat.esp.StructureFinder;
+
+import me.bombo.bomboaddons.cheat.esp.PestESP;
+
+import me.bombo.bomboaddons.cheat.esp.ParticleTracker;
+
+import me.bombo.bomboaddons.cheat.esp.ParticleESP;
+
+import me.bombo.bomboaddons.cheat.esp.HighlightESP;
+
+import me.bombo.bomboaddons.cheat.esp.GoldenDragonNestFinder;
+
+import me.bombo.bomboaddons.cheat.esp.CorpseHighlight;
+
+import me.bombo.bomboaddons.cheat.automation.AutoCombine;
+import me.bombo.bomboaddons.cheat.automation.AutoCroesus;
+import me.bombo.bomboaddons.cheat.automation.AutoCroesusHud;
+import me.bombo.bomboaddons.cheat.automation.AutoExperiments;
+import me.bombo.bomboaddons.cheat.automation.AutoFishing;
+import me.bombo.bomboaddons.cheat.esp.BedwarsESP;
+
 import java.util.Locale;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -546,7 +571,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       TextureToggleManager.INSTANCE.init();
       StopwatchManager.init();
       AlphaTrackerHud.init();
-      me.bombo.bomboaddons.features.dungeons.CroesusProfitTrackerHud.init();
+      me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.init();
       me.bombo.bomboaddons.features.AutoRejoinHud.init();
       me.bombo.bomboaddons.features.ItemValueBreakdownHud.init();
       Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -2157,10 +2182,19 @@ public class BomboaddonsClient implements ClientModInitializer {
                          ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Flavor: §b" + flavor
                                + " §7(" + me.bombo.bomboaddons.Constants.MOD_NAME + "§7)"));
                          ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Updates are resolved from artifacts matching §e" + prefix
-                               + "<version>.jar§7. Switch with §e/b update switch§7."));
+                               + "<version>.jar§7."));
+                         if (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Switch to the legit build with §e/b update switch§7."));
+                         }
                          return 1;
                       }))
+                      // Legit builds keep this node but it only reports that switching is not
+                      // offered there; the cheat build still installs its own legit sibling.
                       .then(ClientCommands.literal("switch").executes((context) -> {
+                         if (!me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
+                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7This build always stays on the legit artifact - use §e/b update§7 to update it."));
+                            return 1;
+                         }
                          ModUpdater.installOtherFlavor();
                          return 1;
                       })));
@@ -2768,18 +2802,18 @@ public class BomboaddonsClient implements ClientModInitializer {
                   })).then(ClientCommands.literal("ev").executes((context) -> {
                      FabricClientCommandSource evSource = (FabricClientCommandSource)context.getSource();
                      evSource.sendFeedback(Component.literal("§8[§bAutoCroesus§8] §7Fetching Kismet EV (same formula as the Discord !kismet command)..."));
-                     evSource.sendFeedback(Component.literal(me.bombo.bomboaddons.features.dungeons.KismetEv.describe()));
+                     evSource.sendFeedback(Component.literal(me.bombo.bomboaddons.cheat.dungeons.KismetEv.describe()));
                      new Thread(() -> {
                         Minecraft mc = Minecraft.getInstance();
                         String ign = mc.getUser() != null ? mc.getUser().getName() : null;
-                        me.bombo.bomboaddons.features.dungeons.KismetEv.Snapshot snap = ign != null
-                                ? me.bombo.bomboaddons.features.dungeons.KismetEv.fetchFromServer(ign) : null;
+                        me.bombo.bomboaddons.cheat.dungeons.KismetEv.Snapshot snap = ign != null
+                                ? me.bombo.bomboaddons.cheat.dungeons.KismetEv.fetchFromServer(ign) : null;
                         if (snap == null) {
                            evSource.sendFeedback(Component.literal("§8[§bAutoCroesus§8] §cCould not reach the EV service: §7"
-                                   + (me.bombo.bomboaddons.features.dungeons.KismetEv.getLastError() != null ? me.bombo.bomboaddons.features.dungeons.KismetEv.getLastError() : "unknown")
+                                   + (me.bombo.bomboaddons.cheat.dungeons.KismetEv.getLastError() != null ? me.bombo.bomboaddons.cheat.dungeons.KismetEv.getLastError() : "unknown")
                                    + " §8(local fallback is still used)"));
                         } else {
-                           evSource.sendFeedback(Component.literal(me.bombo.bomboaddons.features.dungeons.KismetEv.describe()));
+                           evSource.sendFeedback(Component.literal(me.bombo.bomboaddons.cheat.dungeons.KismetEv.describe()));
                            evSource.sendFeedback(Component.literal("§7Expected: §a" + LowestBinManager.formatPrice(snap.coinsPerRunNoReroll)
                                    + "§7/run without rerolls, §a" + LowestBinManager.formatPrice(snap.coinsPerRunWithReroll) + "§7/run with"));
                         }
@@ -5862,7 +5896,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
          me.bombo.bomboaddons.features.ring.RingManager.tick();
          me.bombo.bomboaddons.features.AutoRejoinManager.tick();
-         me.bombo.bomboaddons.features.camera.FreecamManager.onClientTick();
+         me.bombo.bomboaddons.flavor.Flavor.get().freecamTick();
          AFKManager.tick();
          me.bombo.bomboaddons.features.hitman.AutoHitman.tick(client);
          BomboConfig.Settings s = BomboConfig.get();
@@ -7948,7 +7982,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             return 1;
          }));
          dispatcher.register(ClientCommands.literal("freecam").executes((context) -> {
-            me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam();
+            me.bombo.bomboaddons.flavor.Flavor.get().freecamToggle();
             return 1;
          }));
 

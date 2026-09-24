@@ -1,5 +1,7 @@
 package me.bombo.bomboaddons;
 
+import me.bombo.bomboaddons.cheat.esp.HighlightESP;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;

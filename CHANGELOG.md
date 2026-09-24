@@ -1,5 +1,19 @@
 # BomboAddons Changelog
 
+## [26.2.28.40] - 2026-09-24 (Beta)
+
+### 1. Freecam actually usable
+- **Your body stays visible.** Freecam detaches the render camera from the player, which silently made the player's own model disappear (`LevelExtractor#isEntityVisible` culls it through the entity render-distance check and the chunk-visibility check). While freecam is active the camera entity is now exempt, so you can see where you left your character.
+- **F3 was lying about your position.** The position block (`XYZ`, `Block`, `Chunk`, `Facing`) is built from `Minecraft.getCameraEntity()`, so it kept printing the *player's* coordinates while you looked somewhere else entirely. It now reports the camera you are actually flying - tagged `§7(freecam camera)` so it is obvious which frame of reference you are reading.
+
+### 2. The legit build can no longer install the cheat build
+- **"Switch Flavor" button removed from General** in the `bomboaddons` build - the legit artifact must not be able to pull `bomboclient` onto a user's disk. The cheat build keeps the button (that direction is fine).
+- **`/b update switch`** on the legit build now answers that this build always stays on the legit artifact instead of starting a download.
+
+### 3. Modularisation groundwork (no user-visible change)
+- Every cheat module now lives in its own source tree (`src/cheat/java`) rather than being mixed into the shared `me.bombo.bomboaddons.*` packages, and the per-build packaging guards are being moved on top of that split.
+- Freecam is the first subsystem routed through the flavor SPI: the shared camera / mouse / keyboard mixins no longer name a cheat class at all, they ask `FlavorBridge` for the camera state. In the legit build every freecam hook is inert instead of absent.
+
 ## [26.2.28.39] - 2026-09-24 (Beta)
 
 ### 1. Sequences & config GUI

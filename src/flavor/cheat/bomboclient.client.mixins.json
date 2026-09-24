@@ -3,7 +3,10 @@
 	"package": "me.bombo.bomboaddons.mixin.cheat",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],
-	"client": [],
+	"client": [
+		"FreecamDebugPositionMixin",
+		"FreecamEntityVisibilityMixin"
+	],
 	"injectors": {
 		"defaultRequire": 1
 	}

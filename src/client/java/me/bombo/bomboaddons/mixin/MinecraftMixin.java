@@ -1,6 +1,6 @@
 package me.bombo.bomboaddons.mixin;
 
-import me.bombo.bomboaddons.KuudraPerkClicker;
+import me.bombo.bomboaddons.cheat.automation.KuudraPerkClicker;
 import me.bombo.bomboaddons.LeftClickEtherwarp;
 import me.bombo.bomboaddons.PlaytimeTracker;
 import net.minecraft.client.Minecraft;

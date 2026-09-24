@@ -71,7 +71,7 @@ public class ClientLevelMixin {
       if (options != null) {
          try {
             String typeName = net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.getKey(options.getType()).toString();
-            me.bombo.bomboaddons.ParticleTracker.onParticle(typeName, x, y, z);
+            me.bombo.bomboaddons.cheat.esp.ParticleTracker.onParticle(typeName, x, y, z);
          } catch (Throwable ignored) {}
       }
    }
@@ -85,7 +85,7 @@ public class ClientLevelMixin {
       if (options != null) {
          try {
             String typeName = net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.getKey(options.getType()).toString();
-            me.bombo.bomboaddons.ParticleTracker.onParticle(typeName, x, y, z);
+            me.bombo.bomboaddons.cheat.esp.ParticleTracker.onParticle(typeName, x, y, z);
          } catch (Throwable ignored) {}
       }
    }

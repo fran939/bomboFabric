@@ -6,7 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import me.bombo.bomboaddons.AutoCroesus;
+import me.bombo.bomboaddons.cheat.automation.AutoCroesus;
 import me.bombo.bomboaddons.LowestBinManager;
 import me.bombo.bomboaddons.util.ApiHistory;
 import me.bombo.bomboaddons.util.BomboApiUrl;

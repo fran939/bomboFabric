@@ -1,6 +1,6 @@
 package me.bombo.bomboaddons.mixin;
 
-import me.bombo.bomboaddons.AutoCroesusHud;
+import me.bombo.bomboaddons.cheat.automation.AutoCroesusHud;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.DiceHud;
 import me.bombo.bomboaddons.DiceTracker;

@@ -57,7 +57,7 @@ public class BlockModelShaperMixin {
       }
 
       if (state != null) {
-         BlockState hiderState = me.bombo.bomboaddons.features.hider.EntityBlockHider.getReplacedBlockState(null, state);
+         BlockState hiderState = me.bombo.bomboaddons.cheat.hider.EntityBlockHider.getReplacedBlockState(null, state);
          if (hiderState != null && hiderState != state) {
             BlockStateModel hiderModel = this.modelByState.get(hiderState);
             if (hiderModel != null) {

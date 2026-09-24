@@ -1,7 +1,7 @@
 package me.bombo.bomboaddons.mixin;
 
 import me.bombo.bomboaddons.BomboConfig;
-import me.bombo.bomboaddons.ParticleTracker;
+import me.bombo.bomboaddons.cheat.esp.ParticleTracker;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.particles.ParticleOptions;

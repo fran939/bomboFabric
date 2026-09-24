@@ -389,10 +389,10 @@ public class ConfigRegistry {
                 items.add(ConfigItem.hudToggle("Croesus Profit Tracker", "Cumulative profit, runs and a per-floor breakdown.", category,
                         () -> s.croesusProfitTracker, v -> s.croesusProfitTracker = v, HudTarget.CROESUS_TRACKER));
                 items.add(ConfigItem.toggle("Debug Highlight Mode", "Simulation: highlights the slot it would click instead of clicking it.", category,
-                        () -> me.bombo.bomboaddons.AutoCroesus.debugHighlightMode,
+                        () -> me.bombo.bomboaddons.cheat.automation.AutoCroesus.debugHighlightMode,
                         v -> {
-                            me.bombo.bomboaddons.AutoCroesus.debugHighlightMode = v;
-                            me.bombo.bomboaddons.AutoCroesus.active = v;
+                            me.bombo.bomboaddons.cheat.automation.AutoCroesus.debugHighlightMode = v;
+                            me.bombo.bomboaddons.cheat.automation.AutoCroesus.active = v;
                         }));
             }
 
@@ -541,11 +541,14 @@ public class ConfigRegistry {
                 items.add(ConfigItem.button("Check For Updates", "Check Now", "Manually check and download mod updates based on the selected channel.", category, () -> {
                     ModUpdater.checkAndUpdate(false);
                 }));
-                items.add(ConfigItem.button("Switch Flavor", "Install Other Flavor",
-                        "Downloads " + (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR ? "the legit bomboaddons" : "the cheat bomboclient")
-                                + " build and removes this one on the next restart.", category, () -> {
-                    ModUpdater.installOtherFlavor();
-                }));
+                // The flavor switcher lives in the cheat build only: the legit artifact
+                // must not be able to pull the cheat jar onto a user's machine.
+                if (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
+                    items.add(ConfigItem.button("Switch Flavor", "Install Other Flavor",
+                            "Downloads the legit bomboaddons build and removes this one on the next restart.", category, () -> {
+                        ModUpdater.installOtherFlavor();
+                    }));
+                }
                 items.add(ConfigItem.header("Running Flavor: " + me.bombo.bomboaddons.Constants.MOD_NAME
                         + " (" + me.bombo.bomboaddons.Constants.FLAVOR + " \u2022 "
                         + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "*.jar)", category));

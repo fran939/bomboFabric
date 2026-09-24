@@ -7,7 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.BomboRenderUtils;
 import me.bombo.bomboaddons.OrderedSubmitNodeCollector;
-import me.bombo.bomboaddons.TargetPests;
+import me.bombo.bomboaddons.cheat.esp.TargetPests;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderTypes;

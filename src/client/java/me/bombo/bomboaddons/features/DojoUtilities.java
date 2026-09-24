@@ -1,6 +1,6 @@
 package me.bombo.bomboaddons.features;
 
-import me.bombo.bomboaddons.AutoFishing;
+import me.bombo.bomboaddons.cheat.automation.AutoFishing;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.SkyblockUtils;
 import net.minecraft.client.Minecraft;

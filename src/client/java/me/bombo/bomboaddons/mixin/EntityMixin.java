@@ -1,11 +1,11 @@
 package me.bombo.bomboaddons.mixin;
 
 import java.util.Map;
-import me.bombo.bomboaddons.BedwarsESP;
+import me.bombo.bomboaddons.cheat.esp.BedwarsESP;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.BomboRenderUtils;
-import me.bombo.bomboaddons.HighlightESP;
-import me.bombo.bomboaddons.TargetPests;
+import me.bombo.bomboaddons.cheat.esp.HighlightESP;
+import me.bombo.bomboaddons.cheat.esp.TargetPests;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.ChatFormatting;
@@ -30,7 +30,7 @@ public abstract class EntityMixin {
       cancellable = true
    )
    private void onIsInvisibleTo(Player player, CallbackInfoReturnable<Boolean> cir) {
-      if (me.bombo.bomboaddons.features.hider.EntityBlockHider.shouldHideEntity((Entity)(Object)this)) {
+      if (me.bombo.bomboaddons.cheat.hider.EntityBlockHider.shouldHideEntity((Entity)(Object)this)) {
          cir.setReturnValue(true);
          return;
       }
@@ -45,7 +45,7 @@ public abstract class EntityMixin {
       cancellable = true
    )
    private void onIsInvisible(CallbackInfoReturnable<Boolean> cir) {
-      if (me.bombo.bomboaddons.features.hider.EntityBlockHider.shouldHideEntity((Entity)(Object)this)) {
+      if (me.bombo.bomboaddons.cheat.hider.EntityBlockHider.shouldHideEntity((Entity)(Object)this)) {
          cir.setReturnValue(true);
          return;
       }

@@ -1,7 +1,6 @@
 package me.bombo.bomboaddons.mixin;
 
 import me.bombo.bomboaddons.BomboConfig;
-import me.bombo.bomboaddons.features.camera.FreecamManager;
 import me.bombo.bomboaddons.util.FreelookManager;
 import net.minecraft.client.Camera;
 import net.minecraft.world.entity.Entity;
@@ -27,7 +26,7 @@ public abstract class CameraMixin {
       argsOnly = true
    )
    private float modifyYaw(float yRot) {
-      if (FreecamManager.isFreecamActive()) return FreecamManager.getCamYaw();
+      if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) return me.bombo.bomboaddons.flavor.Flavor.get().freecamYaw();
       return FreelookManager.isFreelookActive() ? FreelookManager.getFreelookYaw() : yRot;
    }
 
@@ -38,23 +37,23 @@ public abstract class CameraMixin {
       argsOnly = true
    )
    private float modifyPitch(float xRot) {
-      if (FreecamManager.isFreecamActive()) return FreecamManager.getCamPitch();
+      if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) return me.bombo.bomboaddons.flavor.Flavor.get().freecamPitch();
       return FreelookManager.isFreelookActive() ? FreelookManager.getFreelookPitch() : xRot;
    }
 
    @Inject(method = "alignWithEntity", at = @At("TAIL"))
    private void onAlignWithEntityTail(float partialTicks, CallbackInfo ci) {
-      if (FreecamManager.isFreecamActive()) {
-         this.setPosition(FreecamManager.getCamX(), FreecamManager.getCamY(), FreecamManager.getCamZ());
-         this.setRotation(FreecamManager.getCamYaw(), FreecamManager.getCamPitch());
+      if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) {
+         this.setPosition(me.bombo.bomboaddons.flavor.Flavor.get().freecamX(), me.bombo.bomboaddons.flavor.Flavor.get().freecamY(), me.bombo.bomboaddons.flavor.Flavor.get().freecamZ());
+         this.setRotation(me.bombo.bomboaddons.flavor.Flavor.get().freecamYaw(), me.bombo.bomboaddons.flavor.Flavor.get().freecamPitch());
       }
    }
 
    @Inject(method = "update", at = @At("TAIL"))
    private void onUpdateTail(net.minecraft.client.DeltaTracker deltaTracker, CallbackInfo ci) {
-      if (FreecamManager.isFreecamActive()) {
-         this.setPosition(FreecamManager.getCamX(), FreecamManager.getCamY(), FreecamManager.getCamZ());
-         this.setRotation(FreecamManager.getCamYaw(), FreecamManager.getCamPitch());
+      if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) {
+         this.setPosition(me.bombo.bomboaddons.flavor.Flavor.get().freecamX(), me.bombo.bomboaddons.flavor.Flavor.get().freecamY(), me.bombo.bomboaddons.flavor.Flavor.get().freecamZ());
+         this.setRotation(me.bombo.bomboaddons.flavor.Flavor.get().freecamYaw(), me.bombo.bomboaddons.flavor.Flavor.get().freecamPitch());
       }
    }
 
@@ -65,7 +64,7 @@ public abstract class CameraMixin {
       require = 0
    )
    private void onGetMaxZoom(float originalDist, CallbackInfoReturnable<Float> cir) {
-      if (FreecamManager.isFreecamActive()) {
+      if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) {
          cir.setReturnValue(originalDist);
          return;
       }
@@ -104,7 +103,7 @@ public abstract class CameraMixin {
       require = 0
    )
    private void onClipToDistance(float f, CallbackInfoReturnable<Float> cir) {
-      if (FreecamManager.isFreecamActive()) {
+      if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) {
          cir.setReturnValue(f);
          return;
       }

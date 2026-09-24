@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
-import me.bombo.bomboaddons.AutoExperiments;
+import me.bombo.bomboaddons.cheat.automation.AutoExperiments;
 import me.bombo.bomboaddons.BlockHighlight;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.BomboRenderUtils;

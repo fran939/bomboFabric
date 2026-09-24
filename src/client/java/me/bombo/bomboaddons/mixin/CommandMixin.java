@@ -96,7 +96,7 @@ public class CommandMixin {
          return;
       }
       if (trimmed.equalsIgnoreCase("freecam") || trimmed.equalsIgnoreCase("b freecam") || trimmed.equalsIgnoreCase("bombo freecam")) {
-         me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam();
+         me.bombo.bomboaddons.flavor.Flavor.get().freecamToggle();
          ci.cancel();
          return;
       }
@@ -287,7 +287,7 @@ public class CommandMixin {
          return;
       }
       if (trimmed.equalsIgnoreCase("/freecam") || trimmed.equalsIgnoreCase("/b freecam") || trimmed.equalsIgnoreCase("/bombo freecam")) {
-         me.bombo.bomboaddons.features.camera.FreecamManager.toggleFreecam();
+         me.bombo.bomboaddons.flavor.Flavor.get().freecamToggle();
          ci.cancel();
          return;
       }
