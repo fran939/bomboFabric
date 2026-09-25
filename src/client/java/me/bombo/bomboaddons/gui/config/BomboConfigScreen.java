@@ -90,8 +90,15 @@ public class BomboConfigScreen extends Screen {
     }
 
     public BomboConfigScreen(Screen parent) {
+        this(parent, null);
+    }
+
+    public BomboConfigScreen(Screen parent, String initialCategory) {
         super(Component.literal("BomboAddons Config"));
         this.parent = parent;
+        if (initialCategory != null && !initialCategory.isBlank()) {
+            activeCategory = initialCategory;
+        }
     }
 
     @Override
@@ -353,6 +360,9 @@ public class BomboConfigScreen extends Screen {
 
     private boolean isItemParentDisabled(ConfigItem item) {
         if (item == null || item.name == null) return false;
+        if (item.visibleCondition != null && !Boolean.TRUE.equals(item.visibleCondition.get())) {
+            return true;
+        }
         FeatureOrganizerManager.FeatureMeta fm = FeatureOrganizerManager.features.get(item.name);
         if (fm != null && fm.parentDependency != null && !fm.parentDependency.trim().isEmpty()) {
             String parentName = fm.parentDependency.trim();
@@ -635,8 +645,13 @@ public class BomboConfigScreen extends Screen {
         String typed = sliderValueBuffer.trim();
         switch (item.type) {
             case SLIDER_INT -> {
-                String normalized = typed.replaceAll("(?i)coins?", "").trim();
+                String normalized = typed.replaceAll("(?i)(coins?|ms|s|%|px|m|x)", "").trim();
                 long parsedInt = ConfigItem.parseCoins(normalized);
+                if (parsedInt == Long.MIN_VALUE) {
+                    try {
+                        parsedInt = Long.parseLong(normalized.replaceAll("[^0-9-]", ""));
+                    } catch (NumberFormatException ignored) {}
+                }
                 if (parsedInt != Long.MIN_VALUE && item.intSetter != null) {
                     int step = item.stepInt > 0 ? item.stepInt : 1;
                     long min = item.minInt;
@@ -1099,7 +1114,9 @@ public class BomboConfigScreen extends Screen {
             if (event.button() >= 2 && prefix.isEmpty()) {
                 if (activeKeybindItem.stringSetter != null) {
                     activeKeybindItem.stringSetter.accept("mouse" + (event.button() + 1));
+                    BomboConfig.save();
                 }
+                activeKeybindItem = null;
                 return true;
             }
             String comboStr = ConfigCustomWidgets.buildFullComboString(mouseCode);
@@ -1139,6 +1156,7 @@ public class BomboConfigScreen extends Screen {
             String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
             if (event.button() >= 2 && prefix.isEmpty()) {
                 ConfigCustomWidgets.kbKeyInput = "mouse" + (event.button() + 1);
+                ConfigCustomWidgets.kbIsListening = false;
                 return true;
             }
             ConfigCustomWidgets.kbKeyInput = ConfigCustomWidgets.buildFullComboString(mouseCode);
@@ -1150,6 +1168,7 @@ public class BomboConfigScreen extends Screen {
             String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
             if (event.button() >= 2 && prefix.isEmpty()) {
                 ConfigCustomWidgets.guiKbKeyInput = "mouse" + (event.button() + 1);
+                ConfigCustomWidgets.guiKbIsListening = false;
                 return true;
             }
             ConfigCustomWidgets.guiKbKeyInput = ConfigCustomWidgets.buildFullComboString(mouseCode);

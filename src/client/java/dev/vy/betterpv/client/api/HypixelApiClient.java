@@ -140,15 +140,19 @@ public final class HypixelApiClient {
 	}
 
 	private static Optional<JsonObject> fetchBomboProfiles(String undashedUuid, String username) {
-		// 1. Try https://bombo.dpdns.org/data/user/<username>
+		// 1. Try https://api.bombo.dpdns.org/data/<username or uuid>
 		String target = (username != null && !username.isBlank()) ? username.trim() : undashedUuid;
 		if (target != null && !target.isBlank()) {
+			String url = "https://api.bombo.dpdns.org/data/" + URLEncoder.encode(target, StandardCharsets.UTF_8);
+			long started = System.currentTimeMillis();
 			try {
-				HttpRequest.Builder b = HttpRequest.newBuilder(URI.create("https://bombo.dpdns.org/data/user/" + URLEncoder.encode(target, StandardCharsets.UTF_8)))
+				HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(url))
+					.header("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.Constants.myVersion())
 					.timeout(TIMEOUT)
 					.GET();
 				me.bombo.bomboaddons.util.BomboApiUrl.attachApiKey(b);
 				HttpResponse<String> resp = HTTP.send(b.build(), HttpResponse.BodyHandlers.ofString());
+				me.bombo.bomboaddons.util.ApiHistory.http("GET", url, resp.statusCode(), System.currentTimeMillis() - started);
 				if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isBlank()) {
 					JsonElement el = JsonParser.parseString(resp.body());
 					if (el.isJsonObject()) {
@@ -156,17 +160,23 @@ public final class HypixelApiClient {
 						if (normalized.isPresent()) return normalized;
 					}
 				}
-			} catch (Throwable ignored) {}
+			} catch (Throwable t) {
+				me.bombo.bomboaddons.util.ApiHistory.http("GET", url, 0, System.currentTimeMillis() - started);
+			}
 		}
 
-		// 2. Try https://api.bombo.dpdns.org/data/<uuid>
-		if (undashedUuid != null && !undashedUuid.isBlank()) {
+		// 2. Try https://api.bombo.dpdns.org/data/<undashedUuid> if target was username
+		if (undashedUuid != null && !undashedUuid.isBlank() && !undashedUuid.equalsIgnoreCase(target)) {
+			String url = "https://api.bombo.dpdns.org/data/" + undashedUuid;
+			long started = System.currentTimeMillis();
 			try {
-				HttpRequest.Builder b = HttpRequest.newBuilder(URI.create("https://api.bombo.dpdns.org/data/" + undashedUuid))
+				HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(url))
+					.header("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.Constants.myVersion())
 					.timeout(TIMEOUT)
 					.GET();
 				me.bombo.bomboaddons.util.BomboApiUrl.attachApiKey(b);
 				HttpResponse<String> resp = HTTP.send(b.build(), HttpResponse.BodyHandlers.ofString());
+				me.bombo.bomboaddons.util.ApiHistory.http("GET", url, resp.statusCode(), System.currentTimeMillis() - started);
 				if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isBlank()) {
 					JsonElement el = JsonParser.parseString(resp.body());
 					if (el.isJsonObject()) {
@@ -174,26 +184,34 @@ public final class HypixelApiClient {
 						if (normalized.isPresent()) return normalized;
 					}
 				}
-			} catch (Throwable ignored) {}
+			} catch (Throwable t) {
+				me.bombo.bomboaddons.util.ApiHistory.http("GET", url, 0, System.currentTimeMillis() - started);
+			}
 		}
 
 		// 3. Fallback: official Hypixel /v2/skyblock/profiles if API key is configured
 		String hypixelKey = me.bombo.bomboaddons.features.auth.BomboApiKeyManager.getApiKey();
 		if (!hypixelKey.isEmpty() && undashedUuid != null && !undashedUuid.isBlank()) {
+			String url = "https://api.hypixel.net/v2/skyblock/profiles?uuid=" + undashedUuid;
+			long started = System.currentTimeMillis();
 			try {
-				HttpRequest req = HttpRequest.newBuilder(URI.create("https://api.hypixel.net/v2/skyblock/profiles?uuid=" + undashedUuid))
+				HttpRequest req = HttpRequest.newBuilder(URI.create(url))
 					.header("API-Key", hypixelKey)
+					.header("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.Constants.myVersion())
 					.timeout(TIMEOUT)
 					.GET()
 					.build();
 				HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
+				me.bombo.bomboaddons.util.ApiHistory.http("GET", url, resp.statusCode(), System.currentTimeMillis() - started);
 				if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isBlank()) {
 					JsonElement el = JsonParser.parseString(resp.body());
 					if (el.isJsonObject()) {
 						return Optional.of(el.getAsJsonObject());
 					}
 				}
-			} catch (Throwable ignored) {}
+			} catch (Throwable t) {
+				me.bombo.bomboaddons.util.ApiHistory.http("GET", url, 0, System.currentTimeMillis() - started);
+			}
 		}
 
 		return Optional.empty();
@@ -359,8 +377,12 @@ public final class HypixelApiClient {
 	}
 
 	private static Optional<JsonObject> getJson(String url, boolean allowReauth) {
+		long started = System.currentTimeMillis();
 		try {
-			HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url)).timeout(TIMEOUT).GET();
+			HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url))
+				.header("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.Constants.myVersion())
+				.timeout(TIMEOUT)
+				.GET();
 			boolean needsProxyAuth = url != null && url.startsWith(WORKER_BASE) && url.contains("/hypixel/");
 			if (needsProxyAuth && !BetterPvSessionAuth.applyAuthHeaders(builder)) {
 				BetterPV.LOGGER.warn(
@@ -372,6 +394,7 @@ public final class HypixelApiClient {
 				return Optional.empty();
 			}
 			HttpResponse<String> response = HTTP.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+			me.bombo.bomboaddons.util.ApiHistory.http("GET", url, response.statusCode(), System.currentTimeMillis() - started);
 			if (response.statusCode() == 401 && needsProxyAuth) {
 				BetterPvSessionAuth.invalidate();
 				if (allowReauth) {
@@ -398,6 +421,7 @@ public final class HypixelApiClient {
 			}
 			return Optional.of(root);
 		} catch (IOException | InterruptedException exception) {
+			me.bombo.bomboaddons.util.ApiHistory.http("GET", url, 0, System.currentTimeMillis() - started);
 			BetterPV.LOGGER.warn("Hypixel GET {} failed", url, exception);
 			if (exception instanceof InterruptedException) {
 				Thread.currentThread().interrupt();

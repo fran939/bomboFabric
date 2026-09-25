@@ -14,6 +14,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -255,7 +256,7 @@ public class StorageTracker {
          String title = screen.getTitle().getString().replaceAll("§.", "").trim();
          if (isTrackableContainer(title)) {
             boolean changed = false;
-            if (SkyblockUtils.getLocation().equals("Private Island") && lastClickedBlockPos != null && (title.startsWith("Chest") || title.startsWith("Large Chest") || title.startsWith("Small Chest"))) {
+            if (("Private Island".equals(SkyblockUtils.getLocation()) || "Garden".equals(SkyblockUtils.getLocation())) && lastClickedBlockPos != null && isChestContainerTitle(title)) {
                int var10000 = lastClickedBlockPos.getX();
                title = "Island Chest @ " + var10000 + ", " + lastClickedBlockPos.getY() + ", " + lastClickedBlockPos.getZ();
 
@@ -310,12 +311,19 @@ public class StorageTracker {
                      }
                   }
 
-                  String existingUncompressed = (String)uncompressedSlots.get(slot.index);
-                  if ((existingUncompressed != null || !uncompressedNbtStr.isEmpty()) && (existingUncompressed == null || !existingUncompressed.equals(uncompressedNbtStr))) {
-                     if (uncompressedNbtStr.isEmpty()) {
+                  boolean hasStored = slots.containsKey(slot.index) || uncompressedSlots.containsKey(slot.index);
+                  if (uncompressedNbtStr.isEmpty()) {
+                     if (hasStored) {
                         uncompressedSlots.remove(slot.index);
                         slots.remove(slot.index);
-                     } else {
+                        if (!changed) {
+                           Bomboaddons.LOGGER.info("[BomboAddons] Storage removed empty item in GUI at slot " + slot.index + " in " + title);
+                        }
+                        changed = true;
+                     }
+                  } else {
+                     String existingUncompressed = (String)uncompressedSlots.get(slot.index);
+                     if (existingUncompressed == null || !existingUncompressed.equals(uncompressedNbtStr)) {
                         uncompressedSlots.put(slot.index, uncompressedNbtStr);
 
                         try {
@@ -337,13 +345,12 @@ public class StorageTracker {
                         } catch (Exception var16) {
                            slots.put(slot.index, uncompressedNbtStr);
                         }
-                     }
 
-                     if (!changed) {
-                        Bomboaddons.LOGGER.info("[BomboAddons] Storage changed in GUI at slot " + slot.index + " in " + title);
+                        if (!changed) {
+                           Bomboaddons.LOGGER.info("[BomboAddons] Storage changed in GUI at slot " + slot.index + " in " + title);
+                        }
+                        changed = true;
                      }
-
-                     changed = true;
                   }
                }
             }
@@ -354,6 +361,22 @@ public class StorageTracker {
          }
       }
 
+   }
+
+   public static boolean isChestContainerTitle(String title) {
+      if (title == null) return false;
+      String t = title.toLowerCase(Locale.ROOT).trim();
+      if (t.startsWith("chest") || t.startsWith("large chest") || t.startsWith("small chest")
+            || t.startsWith("cofre") || t.startsWith("cofre grande") || t.startsWith("cofre pequeño")
+            || t.startsWith("island chest")) {
+         return true;
+      }
+      try {
+         String transChest = net.minecraft.network.chat.Component.translatable("container.chest").getString().toLowerCase(Locale.ROOT);
+         String transDouble = net.minecraft.network.chat.Component.translatable("container.chestDouble").getString().toLowerCase(Locale.ROOT);
+         if (t.startsWith(transChest) || t.startsWith(transDouble)) return true;
+      } catch (Throwable ignored) {}
+      return false;
    }
 
    private static boolean isTrackableContainer(String title) {
@@ -383,7 +406,7 @@ public class StorageTracker {
          } else if (title.startsWith("Museum ➜")) {
             return true;
          } else {
-            return title.equals("Chest") || title.equals("Large Chest") || title.equals("Small Chest");
+            return isChestContainerTitle(title);
          }
       } else {
          return true;

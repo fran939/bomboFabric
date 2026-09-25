@@ -813,99 +813,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                      return 1;
                   })));
-               dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("item").executes((context) -> {
-                  Minecraft mc = Minecraft.getInstance();
-                  if (mc.player == null) {
-                     return 1;
-                  } else {
-                     ItemStack stack = mc.player.getMainHandItem();
-                     if (stack.isEmpty()) {
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§c[Bombo] You must hold an item."));
-                        return 1;
-                     } else {
-                        Item originalItem = stack.getItem();
-                        String skyblockId = SkyblockUtils.getInternalIdRaw(stack);
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§6=== Item Debug ==="));
-                        FabricClientCommandSource var10000 = (FabricClientCommandSource)context.getSource();
-                        String var10001 = stack.getHoverName().getString();
-                        var10000.sendFeedback(Component.literal("§7Name: §f" + var10001));
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7SkyBlock ID: §e" + (skyblockId.isEmpty() ? "None" : skyblockId)));
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Vanilla Item: §c" + BuiltInRegistries.ITEM.getKey(originalItem).toString()));
-                        String currentSkinValue = null;
-                        String currentSkinSignature = null;
-                        ResolvableProfile profile = (ResolvableProfile)stack.get(DataComponents.PROFILE);
-                        if (profile != null && profile.partialProfile() != null && profile.partialProfile().properties() != null) {
-                           for(Property prop : profile.partialProfile().properties().get("textures")) {
-                              if (prop != null) {
-                                 currentSkinValue = prop.value();
-                                 currentSkinSignature = prop.signature();
-                                 break;
-                              }
-                           }
-                        }
-
-                        if (currentSkinValue != null) {
-                           var10000 = (FabricClientCommandSource)context.getSource();
-                           var10001 = currentSkinValue.length() > 30 ? currentSkinValue.substring(0, 30) + "..." : currentSkinValue;
-                           var10000.sendFeedback(Component.literal("§7Current Skin Value: §d" + var10001));
-                        }
-
-                        if (currentSkinSignature != null) {
-                           String var18 = currentSkinSignature.length() > 30 ? currentSkinSignature.substring(0, 30) + "..." : currentSkinSignature;
-                           MutableComponent sigComp = Component.literal("§7Current Head Signature: §d" + var18);
-                           sigComp.setStyle(sigComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(currentSkinSignature)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full signature"))));
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(sigComp);
-                        } else if (stack.is(Items.PLAYER_HEAD)) {
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Current Head Signature: §cNone"));
-                        }
-
-                        if (!skyblockId.isEmpty()) {
-                           String nrpModel = TextureToggleManager.INSTANCE.getRawModel(skyblockId);
-                           String nrpValue = TextureToggleManager.INSTANCE.getRawValue(skyblockId);
-                           if (nrpModel != null) {
-                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Custom Pack Model: §e" + nrpModel));
-                           }
-
-                           if (nrpValue != null) {
-                              MutableComponent nrpValComp = Component.literal("§7Custom Pack Skin Value: §d" + nrpValue);
-                              nrpValComp.setStyle(nrpValComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(nrpValue)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full skin value"))));
-                              ((FabricClientCommandSource)context.getSource()).sendFeedback(nrpValComp);
-                           }
-
-                           SkyblockItemManager.SkyblockItemInfo info = SkyblockItemManager.getInfo(skyblockId);
-                           if (info != null) {
-                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Expected Material (API): §a" + info.material));
-                              Item overrideItem = SkyblockItemManager.getOverrideItem(info.material);
-                              if (overrideItem != null) {
-                                 ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Overridden Item: §b" + BuiltInRegistries.ITEM.getKey(overrideItem).toString()));
-                              } else {
-                                 ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Overridden Item: §cNone (Failed to resolve)"));
-                              }
-
-                              if (info.skinValue != null) {
-                                 var10000 = (FabricClientCommandSource)context.getSource();
-                                 var10001 = info.skinValue.length() > 30 ? info.skinValue.substring(0, 30) + "..." : info.skinValue;
-                                 var10000.sendFeedback(Component.literal("§7Expected Skin Value: §a" + var10001));
-                              }
-
-                              if (info.skinSignature != null) {
-                                 String var20 = info.skinSignature.length() > 30 ? info.skinSignature.substring(0, 30) + "..." : info.skinSignature;
-                                 MutableComponent expSigComp = Component.literal("§7Expected Head Signature: §a" + var20);
-                                 expSigComp.setStyle(expSigComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(info.skinSignature)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full signature"))));
-                                 ((FabricClientCommandSource)context.getSource()).sendFeedback(expSigComp);
-                              } else if ("SKULL_ITEM".equalsIgnoreCase(info.material)) {
-                                 ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Expected Head Signature: §cNone (API)"));
-                              }
-                           } else {
-                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Expected Material (API): §cNot found in database"));
-                           }
-                        }
-
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§6=================="));
-                        return 1;
-                     }
-                  }
-               }));
+                dispatcher.register(buildItemCommand());
             } catch (Throwable t) {
                System.err.println("[Bombo] FAILED to register core search commands!");
                t.printStackTrace();
@@ -1012,12 +920,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                           })));
                   builder.then(ClientCommands.literal("profit")
                           .executes((context) -> {
-                             AutoCroesus.printProfitSummary((FabricClientCommandSource)context.getSource());
-                             AutoCroesus.printLedgerSummary((FabricClientCommandSource)context.getSource());
+                             Minecraft mc = Minecraft.getInstance();
+                             mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.dungeons.DungeonProfitScreen(mc.gui.screen())));
                              return 1;
                           })
                           .then(ClientCommands.literal("sync").executes((context) -> {
-                             me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.syncPending(null);
                              AutoCroesus.syncProfitData((FabricClientCommandSource)context.getSource());
                              return 1;
                           }))
@@ -1037,6 +944,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                      StringArgumentType.getString(context, "type"));
                              return 1;
                           }))));
+                  builder.then(buildItemCommand());
                   builder.then(registerAutoCommands())
                   // Flavor specific subcommands (/b hide, /b stealth ...). The legit build
                   // contributes nothing here.
@@ -1427,15 +1335,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      if (SkyblockUtils.isInLimbo() || "limbo".equalsIgnoreCase(locrawServer) || "Limbo".equalsIgnoreCase(currentArea) || (loc != null && (loc.toLowerCase().contains("limbo") || loc.contains("\"server\"")))) {
                         areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §aLimbo"));
                      } else {
-                        // Inside the Catacombs the interesting answer is the floor, not "Dungeons".
-                        String floor = SkyblockUtils.getDungeonFloorTag();
-                        if (floor != null) {
-                           String phase = SkyblockUtils.getDungeonPhase();
-                           String phaseColor = "boss".equals(phase) ? "§c" : "§a";
-                           areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §b" + floor + " §7(" + phaseColor + (phase != null ? phase : "clear") + "§7)"));
-                        } else {
-                           areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + loc));
-                        }
+                        areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + (loc != null ? loc : "Unknown")));
                      }
                      return 1;
                   }));
@@ -1726,7 +1626,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      return 1;
                   })));
                   builder.then(ClientCommands.literal("subarea").executes((context) -> {
-                     String sub = SkyblockUtils.getLocation();
+                     String sub = SkyblockUtils.getSubArea();
                      if (currentArea != null && currentArea.contains("Safari") && Minecraft.getInstance().player != null) {
                         me.bombo.bomboaddons.features.critters.SafariBiome b = me.bombo.bomboaddons.features.critters.SafariBiome.fromCoordinates(Minecraft.getInstance().player.getBlockX(), Minecraft.getInstance().player.getBlockZ());
                         if (b != null) sub = b.displayName() + " Biome";
@@ -2183,19 +2083,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                + " §7(" + me.bombo.bomboaddons.Constants.MOD_NAME + "§7)"));
                          ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Updates are resolved from artifacts matching §e" + prefix
                                + "<version>.jar§7."));
-                         if (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
-                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Switch to the legit build with §e/b update switch§7."));
-                         }
-                         return 1;
-                      }))
-                      // Legit builds keep this node but it only reports that switching is not
-                      // offered there; the cheat build still installs its own legit sibling.
-                      .then(ClientCommands.literal("switch").executes((context) -> {
-                         if (!me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
-                            ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7This build always stays on the legit artifact - use §e/b update§7 to update it."));
-                            return 1;
-                         }
-                         ModUpdater.installOtherFlavor();
                          return 1;
                       })));
                    builder.then(ClientCommands.literal("version")
@@ -4056,6 +3943,31 @@ public class BomboaddonsClient implements ClientModInitializer {
                       dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(target);
                       return 1;
                    })));
+                   builder.then(ClientCommands.literal("pv1").executes((context) -> {
+                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(null);
+                      return 1;
+                   }).then(ClientCommands.argument("player", StringArgumentType.word()).suggests((context, b) -> {
+                      return TabCompletionManager.suggestPlayerNames(b);
+                   }).executes((context) -> {
+                      String target = StringArgumentType.getString(context, "player");
+                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(target);
+                      return 1;
+                   })));
+                   builder.then(ClientCommands.literal("pv2").executes((context) -> {
+                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(null);
+                      return 1;
+                   }).then(ClientCommands.argument("player", StringArgumentType.word()).suggests((context, b) -> {
+                      return TabCompletionManager.suggestPlayerNames(b);
+                   }).executes((context) -> {
+                      String target = StringArgumentType.getString(context, "player");
+                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(target);
+                      return 1;
+                   })));
+                   builder.then(ClientCommands.literal("pvconfig").executes((context) -> {
+                      Minecraft mc = Minecraft.getInstance();
+                      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboConfigScreen(mc.gui.screen(), "Profile Viewer")));
+                      return 1;
+                   }));
                    builder.then(ClientCommands.literal("online").executes((context) -> {
                       FabricClientCommandSource source = (FabricClientCommandSource) context.getSource();
                       source.sendFeedback(Component.literal("§8[§3Bombo§8] §7Fetching online bridge users from server..."));
@@ -7076,9 +6988,12 @@ public class BomboaddonsClient implements ClientModInitializer {
          lastLocrawTime = System.currentTimeMillis();
 
          try {
+            me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.set("Locraw Tracker");
             mc.player.connection.sendCommand("locraw");
          } catch (Exception var2) {
             expectingLocrawCount = Math.max(0, expectingLocrawCount - 1);
+         } finally {
+            me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.remove();
          }
       }
 
@@ -8692,6 +8607,173 @@ public class BomboaddonsClient implements ClientModInitializer {
             mc.gameMode.handleContainerInput(mc.player.inventoryMenu.containerId, containerSlot, selectedHotbar, net.minecraft.world.inventory.ContainerInput.SWAP, mc.player);
          }
       }
+      return 1;
+   }
+
+   private static LiteralArgumentBuilder<FabricClientCommandSource> buildItemCommand() {
+      return ClientCommands.literal("item")
+         .executes((context) -> handleItemDebugHeld((FabricClientCommandSource) context.getSource()))
+         .then(ClientCommands.argument("itemId", StringArgumentType.word())
+            .suggests((context, builder) -> {
+               String remaining = builder.getRemaining().toUpperCase(java.util.Locale.ROOT);
+               SkyblockItemManager.ensureLoaded();
+               int count = 0;
+               for (String id : SkyblockItemManager.getItemCache().keySet()) {
+                  if (id.startsWith(remaining) || id.contains(remaining)) {
+                     builder.suggest(id);
+                     if (++count >= 100) break;
+                  }
+               }
+               return builder.buildFuture();
+            })
+            .executes((context) -> handleItemDebugById((FabricClientCommandSource) context.getSource(),
+               StringArgumentType.getString(context, "itemId").toUpperCase(java.util.Locale.ROOT))));
+   }
+
+   private static int handleItemDebugHeld(FabricClientCommandSource src) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player == null) {
+         return 1;
+      }
+      ItemStack stack = mc.player.getMainHandItem();
+      if (stack.isEmpty()) {
+         src.sendFeedback(Component.literal("§c[Bombo] You must hold an item or specify an item ID."));
+         return 1;
+      }
+      Item originalItem = stack.getItem();
+      String skyblockId = SkyblockUtils.getInternalIdRaw(stack);
+      src.sendFeedback(Component.literal("§6=== Item Debug ==="));
+      src.sendFeedback(Component.literal("§7Name: §f" + stack.getHoverName().getString()));
+      src.sendFeedback(Component.literal("§7SkyBlock ID: §e" + (skyblockId == null || skyblockId.isEmpty() ? "None" : skyblockId)));
+      src.sendFeedback(Component.literal("§7Vanilla Item: §c" + BuiltInRegistries.ITEM.getKey(originalItem).toString()));
+      String currentSkinValue = null;
+      String currentSkinSignature = null;
+      ResolvableProfile profile = (ResolvableProfile)stack.get(DataComponents.PROFILE);
+      if (profile != null && profile.partialProfile() != null && profile.partialProfile().properties() != null) {
+         for (Property prop : profile.partialProfile().properties().get("textures")) {
+            if (prop != null) {
+               currentSkinValue = prop.value();
+               currentSkinSignature = prop.signature();
+               break;
+            }
+         }
+      }
+
+      if (currentSkinValue != null) {
+         String var10001 = currentSkinValue.length() > 30 ? currentSkinValue.substring(0, 30) + "..." : currentSkinValue;
+         src.sendFeedback(Component.literal("§7Current Skin Value: §d" + var10001));
+      }
+
+      if (currentSkinSignature != null) {
+         String var18 = currentSkinSignature.length() > 30 ? currentSkinSignature.substring(0, 30) + "..." : currentSkinSignature;
+         MutableComponent sigComp = Component.literal("§7Current Head Signature: §d" + var18);
+         sigComp.setStyle(sigComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(currentSkinSignature)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full signature"))));
+         src.sendFeedback(sigComp);
+      } else if (stack.is(Items.PLAYER_HEAD)) {
+         src.sendFeedback(Component.literal("§7Current Head Signature: §cNone"));
+      }
+
+      if (skyblockId != null && !skyblockId.isEmpty()) {
+         String nrpModel = TextureToggleManager.INSTANCE.getRawModel(skyblockId);
+         String nrpValue = TextureToggleManager.INSTANCE.getRawValue(skyblockId);
+         if (nrpModel != null) {
+            src.sendFeedback(Component.literal("§7Custom Pack Model: §e" + nrpModel));
+         }
+
+         if (nrpValue != null) {
+            MutableComponent nrpValComp = Component.literal("§7Custom Pack Skin Value: §d" + nrpValue);
+            nrpValComp.setStyle(nrpValComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(nrpValue)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full skin value"))));
+            src.sendFeedback(nrpValComp);
+         }
+
+         SkyblockItemManager.SkyblockItemInfo info = SkyblockItemManager.getInfo(skyblockId);
+         if (info != null) {
+            src.sendFeedback(Component.literal("§7Expected Material (API): §a" + info.material));
+            Item overrideItem = SkyblockItemManager.getOverrideItem(info.material);
+            if (overrideItem != null) {
+               src.sendFeedback(Component.literal("§7Overridden Item: §b" + BuiltInRegistries.ITEM.getKey(overrideItem).toString()));
+            } else {
+               src.sendFeedback(Component.literal("§7Overridden Item: §cNone (Failed to resolve)"));
+            }
+
+            if (info.skinValue != null) {
+               String var10001 = info.skinValue.length() > 30 ? info.skinValue.substring(0, 30) + "..." : info.skinValue;
+               src.sendFeedback(Component.literal("§7Expected Skin Value: §a" + var10001));
+            }
+
+            if (info.skinSignature != null) {
+               String var20 = info.skinSignature.length() > 30 ? info.skinSignature.substring(0, 30) + "..." : info.skinSignature;
+               MutableComponent expSigComp = Component.literal("§7Expected Head Signature: §a" + var20);
+               expSigComp.setStyle(expSigComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(info.skinSignature)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full signature"))));
+               src.sendFeedback(expSigComp);
+            } else if ("SKULL_ITEM".equalsIgnoreCase(info.material)) {
+               src.sendFeedback(Component.literal("§7Expected Head Signature: §cNone (API)"));
+            }
+         } else {
+            src.sendFeedback(Component.literal("§7Expected Material (API): §cNot found in database"));
+         }
+      }
+
+      src.sendFeedback(Component.literal("§6=================="));
+      return 1;
+   }
+
+   private static int handleItemDebugById(FabricClientCommandSource src, String skyblockId) {
+      SkyblockItemManager.ensureLoaded();
+      src.sendFeedback(Component.literal("§6=== Item Debug (" + skyblockId + ") ==="));
+      SkyblockItemManager.SkyblockItemInfo info = SkyblockItemManager.getInfo(skyblockId);
+      if (info != null) {
+         if (info.name != null) {
+            src.sendFeedback(Component.literal("§7Name: §f" + info.name));
+         }
+         src.sendFeedback(Component.literal("§7SkyBlock ID: §e" + skyblockId));
+         src.sendFeedback(Component.literal("§7Expected Material (API): §a" + info.material));
+         Item overrideItem = SkyblockItemManager.getOverrideItem(info.material);
+         if (overrideItem != null) {
+            src.sendFeedback(Component.literal("§7Overridden Item: §b" + BuiltInRegistries.ITEM.getKey(overrideItem).toString()));
+         } else {
+            src.sendFeedback(Component.literal("§7Overridden Item: §cNone (Failed to resolve)"));
+         }
+         if (info.skinValue != null) {
+            String val = info.skinValue.length() > 30 ? info.skinValue.substring(0, 30) + "..." : info.skinValue;
+            MutableComponent valComp = Component.literal("§7Expected Skin Value: §a" + val);
+            valComp.setStyle(valComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(info.skinValue)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full skin value"))));
+            src.sendFeedback(valComp);
+         }
+         if (info.skinSignature != null) {
+            String sig = info.skinSignature.length() > 30 ? info.skinSignature.substring(0, 30) + "..." : info.skinSignature;
+            MutableComponent expSigComp = Component.literal("§7Expected Head Signature: §a" + sig);
+            expSigComp.setStyle(expSigComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(info.skinSignature)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full signature"))));
+            src.sendFeedback(expSigComp);
+         } else if ("SKULL_ITEM".equalsIgnoreCase(info.material)) {
+            src.sendFeedback(Component.literal("§7Expected Head Signature: §cNone (API)"));
+         }
+      } else {
+         src.sendFeedback(Component.literal("§7SkyBlock ID: §e" + skyblockId));
+         src.sendFeedback(Component.literal("§7Expected Material (API): §cNot found in database"));
+      }
+
+      String nrpModel = TextureToggleManager.INSTANCE.getRawModel(skyblockId);
+      String nrpValue = TextureToggleManager.INSTANCE.getRawValue(skyblockId);
+      if (nrpModel != null) {
+         src.sendFeedback(Component.literal("§7Custom Pack Model: §e" + nrpModel));
+      }
+      if (nrpValue != null) {
+         MutableComponent nrpValComp = Component.literal("§7Custom Pack Skin Value: §d" + (nrpValue.length() > 30 ? nrpValue.substring(0, 30) + "..." : nrpValue));
+         nrpValComp.setStyle(nrpValComp.getStyle().withClickEvent(new ClickEvent.CopyToClipboard(nrpValue)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to copy full skin value"))));
+         src.sendFeedback(nrpValComp);
+      }
+
+      long lbin = LowestBinManager.getCachedPrice(skyblockId);
+      if (lbin > 0) {
+         src.sendFeedback(Component.literal("§7Lowest BIN: §e" + LowestBinManager.formatPrice(lbin)));
+      } else if (LowestBinManager.isBazaar(skyblockId)) {
+         long buy = LowestBinManager.getBuyPrice(skyblockId);
+         long sell = LowestBinManager.getSellPrice(skyblockId);
+         src.sendFeedback(Component.literal("§7Bazaar: §a" + LowestBinManager.formatPrice(buy) + " §7/ §c" + LowestBinManager.formatPrice(sell)));
+      }
+
+      src.sendFeedback(Component.literal("§6=================="));
       return 1;
    }
 

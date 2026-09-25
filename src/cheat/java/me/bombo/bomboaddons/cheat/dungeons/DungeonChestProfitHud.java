@@ -115,7 +115,7 @@ public class DungeonChestProfitHud {
         boolean netOnly = netOnly();
         int h = 0;
         for (AutoCroesus.DungeonChestData c : chests) {
-            h += 22 + (netOnly ? 0 : Math.min(4, c.parsedItems.size()) * 12) + 6;
+            h += 14 + (netOnly ? 0 : Math.min(4, c.parsedItems.size()) * 10) + 4;
         }
         return h;
     }
@@ -133,38 +133,34 @@ public class DungeonChestProfitHud {
         g.pose().translate((float) baseX, (float) baseY);
         g.pose().scale(sc, sc);
 
-        g.fill(0, 0, winW, winH, 0xEE0F172A);
-        g.outline(0, 0, winW, winH, ConfigUITheme.getAccentColor());
-
         boolean netOnly = netOnly();
 
-        g.fill(0, 0, winW, headerH, 0xEE1E293B);
-        g.fill(0, headerH - 1, winW, headerH, ConfigUITheme.getDividerColor());
-        g.text(font, ConfigUITheme.formatFont("§6§lDUNGEON CHESTS REWARDS"), 10, 8, ConfigUITheme.ACCENT_GOLD, false);
-        g.text(font, netOnly ? "§8net only" : "§8itemized", winW - 70, 8, 0xFF94A3B8, false);
+        g.text(font, "§6§lDUNGEON CHEST REWARDS", 0, 0, 0xFFFFAA00, true);
+        g.text(font, netOnly ? "§8(net only)" : "§8(itemized)", winW - 65, 0, 0xFFAAAAAA, true);
 
-        int curY = headerH + 6;
+        int curY = 16;
         for (AutoCroesus.DungeonChestData c : chests) {
             int itemsCount = netOnly ? 0 : Math.min(4, c.parsedItems.size());
-            int thisCardH = 20 + itemsCount * 12 + 4;
-
-            boolean isProfitable = c.profit > 0 || c.isFree;
-            int cardBg = c.alreadyOpened ? 0x22374151 : (isProfitable ? 0x2E10B981 : 0x2EEF4444);
-            int cardBorder = c.alreadyOpened ? 0x446B7280 : (isProfitable ? 0x8810B981 : 0x88EF4444);
-
-            g.fill(6, curY, winW - 6, curY + thisCardH, cardBg);
-            g.outline(6, curY, winW - 12, thisCardH, cardBorder);
 
             String chestName = c.chestName;
-            String status = c.alreadyOpened ? "§7[CLAIMED]" : (c.profit >= 0 ? "§a+" + LowestBinManager.formatPrice(c.profit) : "§c-" + LowestBinManager.formatPrice(Math.abs(c.profit)));
-            String costStr = c.isFree ? "§aFREE" : "§6" + LowestBinManager.formatPrice(c.cost);
+            String status = c.alreadyOpened ? "§8[CLAIMED]" : (c.profit >= 0 ? "§a+" + LowestBinManager.formatPrice(c.profit) : "§c-" + LowestBinManager.formatPrice(Math.abs(c.profit)));
+            String costStr;
+            if (c.isFree && c.keyCost <= 0) {
+                costStr = "§aFREE";
+            } else if (c.keyCost > 0 && c.coinCost > 0) {
+                costStr = "§6" + LowestBinManager.formatPrice(c.coinCost) + " §7+ §bKey (" + LowestBinManager.formatPrice(c.keyCost) + ")";
+            } else if (c.keyCost > 0) {
+                costStr = "§bKey (" + LowestBinManager.formatPrice(c.keyCost) + ")";
+            } else {
+                costStr = "§6" + LowestBinManager.formatPrice(c.cost);
+            }
 
-            g.text(font, "§e" + chestName + " §8(" + costStr + "§8)", 12, curY + 4, -1, false);
+            g.text(font, "§e§l" + chestName + " §8(§7cost: " + costStr + "§8)", 0, curY, 0xFFFFFFFF, true);
 
             int statusW = font.width(status);
-            g.text(font, status, winW - 14 - statusW, curY + 4, -1, false);
+            g.text(font, status, winW - statusW, curY, -1, true);
 
-            int itemY = curY + 17;
+            int itemY = curY + 12;
             for (int i = 0; i < itemsCount; i++) {
                 AutoCroesus.ItemDetail item = c.parsedItems.get(i);
                 String itemName = item.name.replaceFirst("(?i)^Enchanted Book\\s*\\((.*?)\\)$", "$1");
@@ -172,13 +168,13 @@ public class DungeonChestProfitHud {
                 if (item.adjustedQuantity > 1) itemName += " x" + item.adjustedQuantity;
 
                 String valStr = (item.totalValue > 0 ? "§a+" : "§7") + LowestBinManager.formatPrice(item.totalValue);
-                g.text(font, " §7• " + itemName, 12, itemY, 0xFFCBD5E1, false);
+                g.text(font, "  §7▫ §f" + itemName, 0, itemY, 0xFFE2E8F0, true);
                 int valW = font.width(valStr);
-                g.text(font, valStr, winW - 14 - valW, itemY, 0xFF86EFAC, false);
-                itemY += 12;
+                g.text(font, valStr, winW - valW, itemY, 0xFF86EFAC, true);
+                itemY += 10;
             }
 
-            curY += thisCardH + 4;
+            curY = itemY + 4;
         }
 
         g.pose().popMatrix();

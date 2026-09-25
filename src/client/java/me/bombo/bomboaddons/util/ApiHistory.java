@@ -48,18 +48,53 @@ public final class ApiHistory {
         public final int status;
         public final long durationMs;
         public final String note;
+        public final String headers;
         public final String service;
 
-        Entry(Kind kind, String method, String url, int status, long durationMs, String note) {
+        Entry(Kind kind, String method, String url, int status, long durationMs, String note, String headers) {
             this.timestamp = System.currentTimeMillis();
             this.kind = kind;
             this.method = method != null ? method : "GET";
-            this.url = url != null ? url : "";
+            this.url = maskSensitive(url != null ? url : "");
             this.status = status;
             this.durationMs = durationMs;
             this.note = note;
+            this.headers = maskHeaders(headers);
             this.service = classify(this.url);
         }
+    }
+
+    public static String maskSensitive(String str) {
+        if (str == null) return null;
+        return str.replaceAll("(?i)(key|token|auth)=([a-zA-Z0-9_-]{4})[a-zA-Z0-9_-]+([a-zA-Z0-9_-]{4})", "$1=$2****$3");
+    }
+
+    public static String maskHeaders(String headers) {
+        if (headers == null || headers.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (String line : headers.split("[\\r\\n]+")) {
+            if (line.trim().isEmpty()) continue;
+            if (sb.length() > 0) sb.append(", ");
+            int colon = line.indexOf(':');
+            if (colon > 0) {
+                String name = line.substring(0, colon).trim();
+                String val = line.substring(colon + 1).trim();
+                if (name.equalsIgnoreCase("API-Key") || name.equalsIgnoreCase("Authorization") || name.toLowerCase(Locale.ROOT).contains("key") || name.toLowerCase(Locale.ROOT).contains("token")) {
+                    if (val.startsWith("Bearer ") && val.length() > 15) {
+                        String token = val.substring(7);
+                        val = "Bearer " + token.substring(0, 4) + "****" + token.substring(token.length() - 4);
+                    } else if (val.length() > 8) {
+                        val = val.substring(0, 4) + "****" + val.substring(val.length() - 4);
+                    } else {
+                        val = "****";
+                    }
+                }
+                sb.append(name).append(": ").append(val);
+            } else {
+                sb.append(line.trim());
+            }
+        }
+        return sb.toString();
     }
 
     /** Services the tracker labels explicitly; anything else shows as "Other". */
@@ -86,7 +121,11 @@ public final class ApiHistory {
     private ApiHistory() {
     }
 
-    public static synchronized void record(Kind kind, String method, String url, int status, long durationMs, String note) {
+    public static void record(Kind kind, String method, String url, int status, long durationMs, String note) {
+        record(kind, method, url, status, durationMs, note, null);
+    }
+
+    public static synchronized void record(Kind kind, String method, String url, int status, long durationMs, String note, String headers) {
         if (kind == null) kind = Kind.HTTP;
         BomboConfig.Settings cfg = BomboConfig.get();
         if (cfg != null && !cfg.apiHistoryEnabled) {
@@ -94,7 +133,7 @@ public final class ApiHistory {
         }
         int max = cfg != null && cfg.apiHistoryMaxEntries > 0 ? cfg.apiHistoryMaxEntries : 500;
 
-        Entry entry = new Entry(kind, method, url, status, durationMs, note);
+        Entry entry = new Entry(kind, method, url, status, durationMs, note, headers);
         ENTRIES.addLast(entry);
         totalRecorded++;
         while (ENTRIES.size() > max) {
@@ -107,7 +146,11 @@ public final class ApiHistory {
 
     /** Convenience for HTTP calls whose response we have seen. */
     public static void http(String method, String url, int status, long durationMs) {
-        record(Kind.HTTP, method, url, status, durationMs, null);
+        record(Kind.HTTP, method, url, status, durationMs, null, null);
+    }
+
+    public static void http(String method, String url, int status, long durationMs, String headers) {
+        record(Kind.HTTP, method, url, status, durationMs, null, headers);
     }
 
     /**

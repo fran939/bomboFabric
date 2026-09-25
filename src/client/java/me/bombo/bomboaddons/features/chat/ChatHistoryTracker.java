@@ -306,11 +306,15 @@ public class ChatHistoryTracker {
             entry.isBombo = true;
             entry.isMod = true;
             entry.callerModId = Constants.MOD_ID;
-            entry.callerModName = Constants.MOD_NAME;
-            entry.featureName = "Custom Keybind";
-            entry.originFeature = "Custom Keybinds";
+            if (trigger.startsWith("Keybind")) {
+                entry.featureName = "Custom Keybind";
+                entry.originFeature = "Custom Keybinds";
+            } else {
+                entry.featureName = trigger;
+                entry.originFeature = trigger;
+            }
             entry.triggerDesc = trigger;
-            entry.callerFrame = "knot//" + Constants.MOD_ID + ".keybind-exec";
+            entry.callerFrame = "knot//" + Constants.MOD_ID + "." + entry.featureName;
         } else {
             inspectCaller(entry, Thread.currentThread().getStackTrace());
             if (playerTyped) {

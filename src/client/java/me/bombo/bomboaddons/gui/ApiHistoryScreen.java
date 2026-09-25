@@ -21,7 +21,7 @@ public class ApiHistoryScreen extends Screen {
     private static final String[] SERVICE_FILTERS = {"All", "Hypixel", "Athen", "EliteSkyblock", "Bombo API", "Other"};
 
     private final Screen parent;
-    private double scrollAmount = 0.0D;
+    private double scrollAmount = Double.MAX_VALUE;
     private double maxScroll = 0.0D;
     private ApiHistory.Entry hoveredEntry = null;
     private int hoveredRowY = -1;
@@ -37,6 +37,12 @@ public class ApiHistoryScreen extends Screen {
     public ApiHistoryScreen(Screen parent) {
         super(Component.literal("BomboAddons API History"));
         this.parent = parent;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        this.scrollAmount = Double.MAX_VALUE;
     }
 
     private List<ApiHistory.Entry> filteredEntries() {
@@ -167,6 +173,9 @@ public class ApiHistoryScreen extends Screen {
                     : (hoveredEntry.status == 0 ? "§cno response" : "§f" + hoveredEntry.status))
                     + (hoveredEntry.durationMs > 0L ? " §8| §7took §e" + hoveredEntry.durationMs + "ms" : "")));
             tooltip.add(Component.literal("§7" + hoveredEntry.url));
+            if (hoveredEntry.headers != null && !hoveredEntry.headers.isEmpty()) {
+                tooltip.add(Component.literal("§7Headers: §f" + hoveredEntry.headers));
+            }
             if (hoveredEntry.note != null && !hoveredEntry.note.isEmpty()) {
                 tooltip.add(Component.literal("§8" + hoveredEntry.note));
             }

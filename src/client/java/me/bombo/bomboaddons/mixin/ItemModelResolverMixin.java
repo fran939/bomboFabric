@@ -114,6 +114,16 @@ public class ItemModelResolverMixin {
       // model that was already picked up, which is why the toggle appeared to do nothing: throw
       // the vanilla base item instead and the pack's own vanilla overrides show through.
       if (TextureToggleManager.INSTANCE.shouldBypass(instance)) {
+         Identifier bypassId = TextureToggleManager.INSTANCE.fromModelId(instance, null);
+         if (bypassId != null) {
+            Identifier validBypass = resolveValidId(bypassId);
+            if (validBypass != null) return validBypass;
+            if (!bypassId.getPath().startsWith("item/")) {
+               Identifier prefixed = resolveValidId(safeId(bypassId.getNamespace(), "item/" + bypassId.getPath()));
+               if (prefixed != null) return prefixed;
+            }
+            return bypassId;
+         }
          Identifier vanillaBypass = vanillaItemModel(instance);
          if (vanillaBypass != null) {
             return vanillaBypass;
@@ -167,9 +177,11 @@ public class ItemModelResolverMixin {
             // draws *something*. Aspect of the Void is a diamond shovel underneath, which is
             // exactly the model the server-side item component leaves missing.
             Identifier vanillaAotv = vanillaItemModel(instance);
-            if (vanillaAotv != null) return vanillaAotv;
             Identifier shovelAotv = resolveValidId(safeId("minecraft", "item/diamond_shovel"));
             if (shovelAotv != null) return shovelAotv;
+            shovelAotv = resolveValidId(safeId("minecraft", "diamond_shovel"));
+            if (shovelAotv != null) return shovelAotv;
+            return safeId("minecraft", "item/diamond_shovel");
          }
 
          // 1. Check if reforge / modifier model exists (e.g. warped_aspect_of_the_void)

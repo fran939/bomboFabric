@@ -1,5 +1,71 @@
 # BomboAddons Changelog
 
+## [26.2.28.43] - 2026-09-24 (Beta)
+
+### Camera & Spectator
+- **Camera & Spectator FOV Clamping:** Clamped camera FOV to options FOV (110) during `/b cam` and freecam via `GameRendererMixin`, eliminating speed FOV distortion and dynamic lerp lag.
+
+### Auto Croesus & Profit Tracking
+- **Insta Buy & Insta Sell Pricing:** Uses instabuy for keys/kismets and instasell for items; resolves live Bazaar prices for Bank, No Pain No Gain, and Jerry books without hardcoded fallbacks.
+- **Removed Profit Threshold Gate:** Claims all profitable and free chests unconditionally.
+- **Clean Profit HUD:** Redesigned chest profit HUD to clean text with shadows and no background box.
+- **Run Deduplication & Itemized Tooltip:** Deduplicates runs on disk/load and renders detailed itemized hover tooltips with values and duration in `/b profit`.
+- **Decoupled Profit Sync Auth:** Profit syncing authenticates via `X-Player-UUID` and Bombo API key, completely decoupled from egg auth.
+
+### Commands & Profile Viewer
+- **Command Separation:** `/b area` displays area and `/b subarea` displays subarea.
+- **Profile Viewer Shortcuts & Settings:** Added `/b pv1`, `/b pv2`, and `/b pvconfig` commands; added `⚙` settings button directly to the Profile Viewer header.
+- **Multi-Profile Support:** HypixelApiClient fetches all profiles via `all_profiles` and accepts `?profile=` query param.
+
+### Storage & Eggs
+- **Storage Empty Slot Purging:** Automatically purges empty slots from `storageData` on container open, fixing phantom items (e.g. Divan's Drill in Backpack 10).
+- **Island Chests Tab & Localization:** Added dedicated "Island Chests" tab to `/b storage`; added Spanish and translatable container title recognition.
+- **Egg Finder Area Gating & Waypoints:** Explicitly unsubscribes from egg WebSocket on Private Island, Garden, Limbo, and Dungeons; removes only the closest waypoint on collection.
+
+### Estimated Item Value & UI
+- **Discrepancy Fixes:** Added reforge stone prices, blacksmith apply cost (5M for warped, 10k–1M by rarity), etherwarp conduit + merger (15M), power scroll (3M), and transmission tuners.
+- **Bazaar Mode Toggle & Clean Breakdown:** Added toggle for Insta Buy / Insta Sell / Both; reordered breakdown sections cleanly; suppressed HUD on InventoryScreen.
+- **Outbound Token Masking:** `/b apihistory` masks sensitive tokens (first 4 and last 4 chars shown, middle masked) in outbound headers and displays them in tooltips.
+- **Slider Numeric Entry & Brand:** Config sliders parse numeric values cleanly (e.g. typing into `300ms`); client brand cleanly reports `bomboaddons`/`bomboclient`.
+
+## [26.2.28.42] - 2026-09-24 (Beta)
+
+### Freecam & Camera
+- **Per-frame camera interpolation:** Camera movement is now interpolated using render delta partial ticks, eliminating 20Hz tick jitter.
+- **Normal FOV override:** FOV modifier is clamped to 1.0 while in freecam / `/b cam`, preventing dynamic FOV and sprint distortion.
+
+### Flavors & Security
+- **Flavor switching completely removed:** Removed "Switch Flavor" button from Config GUI, `/b update switch` command, and internal updater switching routines.
+- **Brand spoofing & stealth mode removed:** Removed `ClientBrandRetrieverMixin`, `modIdHider`, `Stealth.java`, and `/b stealth`. Real brand and mod ID are now cleanly reported.
+
+### Automation & Dungeons
+- **Auto Croesus dungeon key accounting:** Chest evaluation accounts for dungeon chest keys (live Bazaar pricing or manual threshold, spent state check).
+- **Dungeon Chest Profit HUD:** Displays breakdown of coin cost + key cost (`coinCost + Key (keyCost)`).
+- **Dedicated Profit GUI (`/b profit`):** Added responsive screen showing overall run statistics, profit per run, kismets used, floor breakdown, and itemized recent runs.
+- **Profit sync fixes:** Removed deprecated `/kuudra/profit/sync` call; `DungeonProfitLog` only posts when authenticated with Bombo token.
+- **Ultimate enchantment valuation:** `/b ac stats` and AutoCroesus correctly resolve `ENCHANTMENT_ULTIMATE_*` prices.
+
+### Auth & APIs
+- **Separated Aaron and Bombo auth:** Skyblocker/Aaron token is strictly used for `hysky.de` WebSocket; Bombo token is used for `api.bombo.dpdns.org`.
+- **Profile Viewer Bomboclas API:** HypixelApiClient includes `User-Agent: BomboAddons/<version>` and logs queries to `ApiHistory`.
+- **API History initial scroll:** Opens scrolled to the latest entries.
+
+### Quality of Life & Fixes
+- **Chat history locraw tracking:** Automated `/locraw` queries are stamped with `"Locraw Tracker"`, preserving player-input attribution.
+- **Area & subarea parsing:** Scoreboard lines strip PUA unicode characters (`\uE000`–`\uF8FF`); `/b area` displays clean `Area / Subarea`.
+- **Storage chest waypoints:** Waypoints render through walls and refresh on container close.
+- **Egg finder island mapping:** Removed invalid `lobby -> Hub` mapping; mapped Moonglade Marsh correctly.
+- **Terminal improvements (`/b cmd`):** Forcibly terminates process tree on interrupt; added drag-to-select, right-click copy, and right-click paste.
+- **Model & texture fixes:** Aspect of the Void model fallback points to vanilla shovel model; ported `PlayerHeadSpecialRendererMixin` so player heads retain skins when resource packs override base models.
+- **Tooltip values decoupled:** Value additions render based on their specific config toggles rather than requiring `lowestBin`.
+- **Slider & keybind entry:** Sliders accept manual text entry with coin suffixes; keybind capture listener properly resets on mouse button clicks.
+- **Command auto-completion:** `/b item` provides Brigadier tab suggestions from the cached SkyBlock items list.
+
+## [26.2.28.41] - 2026-09-24 (Beta)
+
+### Fixed
+- **Tooltip rendering no longer crashes on immutable tooltip lists.** SupercraftHelper now copies tooltip lines into a mutable `ArrayList` before adding configured lore, price, and other tooltip additions. The ItemStack tooltip mixin receives and returns that mutable list safely.
+
 ## [26.2.28.40] - 2026-09-24 (Beta)
 
 ### 1. Freecam actually usable

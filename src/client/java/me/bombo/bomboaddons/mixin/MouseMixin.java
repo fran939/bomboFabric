@@ -57,23 +57,14 @@ public abstract class MouseMixin {
       }
       if (mc.getCameraEntity() != null && mc.getCameraEntity() != mc.player) {
          net.minecraft.world.entity.Entity camEnt = mc.getCameraEntity();
-         double sens = mc.options.sensitivity().get();
-         double f = sens * 0.6 + 0.2;
-         double factor = f * f * f * 8.0 * 0.15;
-         float dyaw = (float)(this.accumulatedDX * factor);
-         float dpitch = (float)(this.accumulatedDY * factor);
-         camEnt.setYRot(camEnt.getYRot() + dyaw);
-         camEnt.setXRot(Math.max(-90.0F, Math.min(90.0F, camEnt.getXRot() + dpitch)));
-         camEnt.yRotO = camEnt.getYRot();
-         camEnt.xRotO = camEnt.getXRot();
-         if (camEnt instanceof net.minecraft.world.entity.LivingEntity le) {
-            le.setYHeadRot(camEnt.getYRot());
-            le.setYBodyRot(camEnt.getYRot());
-            le.yHeadRotO = camEnt.getYRot();
-            le.yBodyRotO = camEnt.getYRot();
-         }
-         if (BomboConfig.get().cameraDebug && mc.player != null && (Math.abs(this.accumulatedDX) > 0.01 || Math.abs(this.accumulatedDY) > 0.01)) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bCamDebug§8] §7Spectating §e" + camEnt.getType().toShortString() + " §7(Yaw: §e" + String.format(java.util.Locale.ROOT, "%.1f", camEnt.getYRot()) + "§7, Pitch: §e" + String.format(java.util.Locale.ROOT, "%.1f", camEnt.getXRot()) + "§7) dx: " + String.format(java.util.Locale.ROOT, "%.2f", this.accumulatedDX) + " dy: " + String.format(java.util.Locale.ROOT, "%.2f", this.accumulatedDY)));
+         if (!(camEnt instanceof net.minecraft.client.player.RemotePlayer)) {
+            double sens = mc.options.sensitivity().get();
+            double f = sens * 0.6 + 0.2;
+            double factor = f * f * f * 8.0 * 0.15;
+            float dyaw = (float)(this.accumulatedDX * factor);
+            float dpitch = (float)(this.accumulatedDY * factor);
+            camEnt.setYRot(camEnt.getYRot() + dyaw);
+            camEnt.setXRot(Math.max(-90.0F, Math.min(90.0F, camEnt.getXRot() + dpitch)));
          }
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;

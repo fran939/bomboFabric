@@ -13,6 +13,9 @@ public class FreecamManager {
    private static double camX = 0.0;
    private static double camY = 0.0;
    private static double camZ = 0.0;
+   private static double prevCamX = 0.0;
+   private static double prevCamY = 0.0;
+   private static double prevCamZ = 0.0;
    private static float camYaw = 0.0f;
    private static float camPitch = 0.0f;
    private static float speed = 1.0f;
@@ -28,9 +31,33 @@ public class FreecamManager {
       return freecamActive;
    }
 
-   public static double getCamX() { return camX; }
-   public static double getCamY() { return camY; }
-   public static double getCamZ() { return camZ; }
+   public static double getCamX() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc != null && mc.getDeltaTracker() != null) {
+         float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+         return prevCamX + (camX - prevCamX) * pt;
+      }
+      return camX;
+   }
+
+   public static double getCamY() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc != null && mc.getDeltaTracker() != null) {
+         float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+         return prevCamY + (camY - prevCamY) * pt;
+      }
+      return camY;
+   }
+
+   public static double getCamZ() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc != null && mc.getDeltaTracker() != null) {
+         float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+         return prevCamZ + (camZ - prevCamZ) * pt;
+      }
+      return camZ;
+   }
+
    public static float getCamYaw() { return camYaw; }
    public static float getCamPitch() { return camPitch; }
 
@@ -39,9 +66,9 @@ public class FreecamManager {
       if (state) {
          if (mc.player != null) {
             Vec3 eyePos = mc.player.getEyePosition();
-            camX = eyePos.x;
-            camY = eyePos.y;
-            camZ = eyePos.z;
+            prevCamX = camX = eyePos.x;
+            prevCamY = camY = eyePos.y;
+            prevCamZ = camZ = eyePos.z;
             camYaw = mc.player.getYRot();
             camPitch = mc.player.getXRot();
             freecamActive = true;
@@ -82,6 +109,10 @@ public class FreecamManager {
       if (!isFreecamActive()) return;
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) return;
+
+      prevCamX = camX;
+      prevCamY = camY;
+      prevCamZ = camZ;
 
       // Calculate camera movement direction vector based on input keys
       double forward = 0;

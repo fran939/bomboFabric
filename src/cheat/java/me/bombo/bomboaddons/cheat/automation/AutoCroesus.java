@@ -445,6 +445,9 @@ public class AutoCroesus {
       public int slotIndex;
       public String chestName;
       public long cost;
+      public long coinCost = 0L;
+      public long keyCost = 0L;
+      public boolean requiresKey = false;
       public boolean isFree;
       public boolean alreadyOpened;
       public List<ItemDetail> parsedItems = new ArrayList<>();
@@ -521,17 +524,26 @@ public class AutoCroesus {
                if (readingCost) {
                   if (clean.equalsIgnoreCase("Free") || clean.startsWith("Free")) {
                      chest.isFree = true;
-                     chest.cost = 0L;
-                     readingCost = false;
+                     chest.coinCost = 0L;
                      sawCostSection = true;
                   } else if (clean.matches("(?i).*[0-9,]+.*coins?.*")) {
                      String digits = clean.replaceAll("(?i)[^0-9]", "");
                      if (!digits.isEmpty()) {
                         try {
-                           chest.cost = Long.parseLong(digits);
+                           chest.coinCost = Long.parseLong(digits);
                         } catch (Exception ignored) {}
                      }
-                     readingCost = false;
+                     sawCostSection = true;
+                  } else if (clean.toLowerCase().contains("dungeon chest key")) {
+                     if (!isSpentModifier(line)) {
+                        long liveKeyPrice = getLiveDungeonKeyPrice();
+                        if (liveKeyPrice > 0L) {
+                           chest.keyCost = liveKeyPrice;
+                        } else {
+                           chest.keyCost = s.autoCroesusDungeonKeyProfit > 0L ? s.autoCroesusDungeonKeyProfit : 800_000L;
+                        }
+                        chest.requiresKey = true;
+                     }
                      sawCostSection = true;
                   }
                }
@@ -561,6 +573,12 @@ public class AutoCroesus {
             for (ItemDetail item : chest.parsedItems) {
                chest.totalContentsValue += item.totalValue;
             }
+            chest.cost = chest.coinCost + chest.keyCost;
+            if (chest.isFree && chest.keyCost <= 0L) {
+               chest.cost = 0L;
+            } else if (chest.cost > 0L) {
+               chest.isFree = false;
+            }
             chest.profit = chest.totalContentsValue - chest.cost;
             chests.add(chest);
          }
@@ -573,12 +591,6 @@ public class AutoCroesus {
       // Resolve any in-flight click before deciding anything: a claim that worked must never be
       // re-evaluated as "nothing profitable here".
       resolvePendingClaim(chests, mc, now);
-      // Chests the player opened by hand still belong in the itemized ledger.
-      for (DungeonChestData c : chests) {
-         if (c.alreadyOpened) {
-            recordOpenedChest(c, false, "MANUAL");
-         }
-      }
 
       boolean allOpened = true;
       for (DungeonChestData c : chests) {
@@ -696,8 +708,8 @@ public class AutoCroesus {
             if (isAlwaysBuy(d.itemId)) { bestHasAlwaysBuy = true; break; }
          }
 
-         if (!boughtCurrentChest && pendingClaimSlot < 0 && (bestHasAlwaysBuy || bestChest.profit >= s.autoCroesusDungeonProfitThreshold || bestChest.isFree)) {
-            if (bestHasAlwaysBuy && bestChest.profit < s.autoCroesusDungeonProfitThreshold && !debugHighlightMode) {
+         if (!boughtCurrentChest && pendingClaimSlot < 0 && (bestHasAlwaysBuy || bestChest.profit >= 0L || bestChest.isFree)) {
+            if (bestHasAlwaysBuy && bestChest.profit < 0L && !debugHighlightMode) {
                mc.player.sendSystemMessage(Component.literal("§8[§bAutoCroesus§8] §dAlways-buy item in §e" + bestChest.chestName
                      + "§d - claiming despite computed profit (§e" + LowestBinManager.formatPrice(bestChest.profit) + "§d)."));
             }
@@ -791,11 +803,8 @@ public class AutoCroesus {
    private static String describeRejection(DungeonChestData chest, BomboConfig.Settings s) {
       if (chest.alreadyOpened) return "already opened";
       if (chest.parsedItems.isEmpty()) return "no readable contents (value " + LowestBinManager.formatPrice(chest.totalContentsValue) + ")";
-      if (chest.cost > 0L && chest.profit >= 0L && chest.profit < s.autoCroesusDungeonProfitThreshold) {
-         return "profit §a+" + LowestBinManager.formatPrice(chest.profit) + "§7 is under your threshold §e" + LowestBinManager.formatPrice(s.autoCroesusDungeonProfitThreshold);
-      }
       if (chest.profit < 0L) return "computed loss §c" + LowestBinManager.formatPrice(chest.profit);
-      return "profit §a+" + LowestBinManager.formatPrice(chest.profit) + "§7 (below threshold or already booked)";
+      return "profit §a+" + LowestBinManager.formatPrice(chest.profit) + "§7 (already booked or skipped)";
    }
 
    /**
@@ -945,6 +954,8 @@ public class AutoCroesus {
     */
    public static long getLiveDungeonKeyPrice() {
       try {
+         long buy = LowestBinManager.getBuyPrice("DUNGEON_CHEST_KEY");
+         if (buy > 0L) return buy;
          long sell = LowestBinManager.getSellPrice("DUNGEON_CHEST_KEY");
          if (sell > 0L) return sell;
          long cached = LowestBinManager.getCachedPrice("DUNGEON_CHEST_KEY");
@@ -1014,10 +1025,28 @@ public class AutoCroesus {
          String enchantName = bookM.group(1).trim();
          String lvlStr = bookM.group(2).trim();
          int lvl = romanToInt(lvlStr);
-         String enchantId = "ENCHANTMENT_" + enchantName.toUpperCase().replace(" ", "_") + "_" + lvl;
-         long unitPrice = LowestBinManager.getCachedPrice(enchantId);
+         String cleanEnchant = enchantName.toUpperCase().replace(" ", "_");
+         String enchantId = "ENCHANTMENT_" + cleanEnchant + "_" + lvl;
+         long unitPrice = LowestBinManager.getSellPrice(enchantId);
          if (unitPrice <= 0) {
-            unitPrice = LowestBinManager.getCachedPrice(enchantName.toUpperCase().replace(" ", "_"));
+            unitPrice = LowestBinManager.getCachedPrice(enchantId);
+         }
+         if (unitPrice <= 0) {
+            String ultId = "ENCHANTMENT_ULTIMATE_" + cleanEnchant + "_" + lvl;
+            long ultPrice = LowestBinManager.getSellPrice(ultId);
+            if (ultPrice <= 0) {
+               ultPrice = LowestBinManager.getCachedPrice(ultId);
+            }
+            if (ultPrice > 0 || isWorthlessItem(ultId)) {
+               unitPrice = ultPrice;
+               enchantId = ultId;
+            }
+         }
+         if (unitPrice <= 0) {
+            unitPrice = LowestBinManager.getSellPrice(cleanEnchant);
+            if (unitPrice <= 0) {
+               unitPrice = LowestBinManager.getCachedPrice(cleanEnchant);
+            }
          }
          if (unitPrice <= 0) {
             // Tier based fallback estimation
@@ -1093,9 +1122,9 @@ public class AutoCroesus {
          case "LAST STAND" -> 20000L;
          case "REND" -> 15000L;
          case "REJUVENATE" -> 12000L;
-         case "BANK" -> 10000L;
-         case "COMBO", "NO PAIN NO GAIN" -> 5000L;
-         case "ULTIMATE JERRY" -> 1000L;
+         case "BANK" -> 0L;
+         case "COMBO", "NO PAIN NO GAIN" -> 0L;
+         case "ULTIMATE JERRY" -> 0L;
          case "ONE FOR ALL" -> 1200000L;
          default -> 5000L;
       };
@@ -2269,69 +2298,10 @@ public class AutoCroesus {
    }
 
    public static void syncProfitData(FabricClientCommandSource source) {
-      Minecraft mc = Minecraft.getInstance();
-      String ign = mc.getUser() != null ? mc.getUser().getName() : "user";
-      ProfitRecord rec = loadProfitRecord();
-      CompletableFuture.runAsync(() -> {
-         try {
-            JsonObject payload = new JsonObject();
-            payload.addProperty("ign", ign);
-            payload.addProperty("totalRuns", rec.totalRuns);
-            payload.addProperty("kismetsUsed", rec.kismetsUsed);
-            payload.addProperty("totalProfit", rec.totalProfit);
-            JsonObject itemsObj = new JsonObject();
-
-            for(Map.Entry<String, ProfitItemData> entry : rec.items.entrySet()) {
-               JsonObject itemObj = new JsonObject();
-               itemObj.addProperty("name", ((ProfitItemData)entry.getValue()).name);
-               itemObj.addProperty("quantity", ((ProfitItemData)entry.getValue()).quantity);
-               itemObj.addProperty("totalValue", ((ProfitItemData)entry.getValue()).totalValue);
-               itemsObj.add((String)entry.getKey(), itemObj);
-            }
-
-            payload.add("items", itemsObj);
-            URL url = new URL("https://api.bombo.dpdns.org/kuudra/profit/sync");
-            HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(5000);
-            OutputStream os = conn.getOutputStream();
-
-            try {
-               byte[] input = payload.toString().getBytes(StandardCharsets.UTF_8);
-               os.write(input, 0, input.length);
-            } catch (Throwable var11) {
-               if (os != null) {
-                  try {
-                     os.close();
-                  } catch (Throwable x2) {
-                     var11.addSuppressed(x2);
-                  }
-               }
-
-               throw var11;
-            }
-
-            if (os != null) {
-               os.close();
-            }
-
-            int code = conn.getResponseCode();
-            if (code == 200) {
-               if (source != null) {
-                  source.sendFeedback(Component.literal("§8[§bAutoCroesus§8] §aProfit statistics synced to server successfully!"));
-               }
-            } else if (source != null) {
-               source.sendFeedback(Component.literal("§8[§bAutoCroesus§8] §cFailed to sync profit statistics (HTTP " + code + ")"));
-            }
-         } catch (Exception e) {
-            if (source != null) {
-               source.sendFeedback(Component.literal("§8[§bAutoCroesus§8] §cSync error: " + e.getMessage()));
-            }
-         }
-
-      });
+      me.bombo.bomboaddons.features.dungeons.DungeonProfitLog.syncPending(null);
+      if (source != null) {
+         source.sendFeedback(Component.literal("§8[§bAutoCroesus§8] §aProfit records syncing via DungeonProfitLog..."));
+      }
    }
 
    public static void printProfitSummary(FabricClientCommandSource source) {

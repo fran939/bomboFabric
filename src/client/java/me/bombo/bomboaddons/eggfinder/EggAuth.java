@@ -43,35 +43,47 @@ public class EggAuth {
       return thread;
    });
    private static volatile String token = null;
-   /** Last token acquired from our own bomboapi (used for hoppity publish auth). */
+   /** Last token acquired from our own bomboapi (used for hoppity publish & profit auth). */
    private static volatile String bomboToken = null;
-   /** Human-readable source of {@link #token}: "skyblocker", "hysky aaron" or "bombo". */
+   /** Human-readable source of {@link #token}: "skyblocker" or "hysky aaron". */
    private static volatile String tokenSource = null;
    private static volatile boolean authenticating = false;
+   private static volatile boolean authenticatingBombo = false;
 
    /**
-    * Bombo-only token for authenticating writes to bomboapi (hoppity publish etc.).
-    * Sourced from the Skyblocker token if one is borrowed, else from our own auth.
+    * Bombo-only token for authenticating writes to bomboapi (hoppity publish, profit sync, etc.).
+    * Sourced exclusively from bomboapi auth.
     */
    public static String getBomboToken() {
-      return bomboToken != null ? bomboToken : token;
+      if (bomboToken == null && !authenticatingBombo) {
+         authenticateWithBomboAsync();
+      }
+      return bomboToken;
    }
 
    /** Which auth path the last successful handshake used, for /b egg status. */
    public static String describeState() {
+      String wsState;
       if (!FabricLoader.getInstance().isModLoaded("skyblocker") && tokenSource == null) {
-         return authenticating ? "authenticating (no Skyblocker installed)" : "not authenticated (no Skyblocker installed)";
+         wsState = authenticating ? "authenticating (no Skyblocker installed)" : "not authenticated";
+      } else if (tokenSource != null) {
+         wsState = tokenSource + (authenticating ? " (refreshing)" : "");
+      } else {
+         wsState = authenticating ? "authenticating" : "unknown";
       }
-      if (tokenSource != null) return tokenSource + (authenticating ? " (refreshing)" : "");
-      return authenticating ? "authenticating" : "unknown";
+      String apiState = bomboToken != null ? "authenticated" : (authenticatingBombo ? "authenticating" : "not authenticated");
+      return wsState + " §7| Bombo API: §e" + apiState;
    }
 
    /** Short, non-secret description of the current token (or why there is none). */
    public static String describeToken() {
-      String t = getBomboToken();
-      if (t == null || t.isEmpty()) return "§cnone";
-      String kind = tokenSource != null ? tokenSource : "borrowed";
-      return "§a" + kind + " §7(" + t.length() + " chars, …" + t.substring(Math.max(0, t.length() - 6)) + ")";
+      String aaronDesc = (token != null && !token.isEmpty())
+            ? ("§a" + (tokenSource != null ? tokenSource : "aaron") + " §7(…" + token.substring(Math.max(0, token.length() - 6)) + ")")
+            : "§cnone";
+      String bomboDesc = (bomboToken != null && !bomboToken.isEmpty())
+            ? ("§abombo §7(…" + bomboToken.substring(Math.max(0, bomboToken.length() - 6)) + ")")
+            : "§cnone";
+      return "WebSocket: " + aaronDesc + " §8| §7Bombo API: " + bomboDesc;
    }
 
    public static String getToken() {
@@ -104,8 +116,11 @@ public class EggAuth {
 
    public static void forceUpdateToken() {
       authenticating = false;
+      authenticatingBombo = false;
       token = null;
+      bomboToken = null;
       updateToken(true);
+      authenticateWithBomboAsync();
    }
 
    public static void updateToken() {
@@ -157,6 +172,9 @@ public class EggAuth {
       // the signed proof to hysky.de. The server validates it against Mojang's key
       // signature, so nothing short of the real flow produces a working token.
       authenticateWithAaron();
+      if (bomboToken == null) {
+         authenticateWithBomboAsync();
+      }
       authenticating = false;
    }
 
@@ -227,34 +245,28 @@ public class EggAuth {
                }
             } else {
                LOGGER.error("[EggAuth] aaron auth failed: HTTP " + resp.statusCode() + " body: " + resp.body());
-               debugChat("§ehysky aaron auth failed (HTTP " + resp.statusCode() + ") - trying Bombo auth...");
-               // Fallback: our own aaron-compatible endpoint (same payload, our server
-               // verifies the Mojang signature itself and issues its own token).
-               boolean bomboOk = authenticateWithBombo(payload);
-               if (!bomboOk) {
-                  // Retry in 15 minutes like Skyblocker.
-                  SCHEDULER.schedule(EggAuth::forceUpdateToken, 900_000L, TimeUnit.MILLISECONDS);
-               }
+               debugChat("§ehysky aaron auth failed (HTTP " + resp.statusCode() + ").");
+               SCHEDULER.schedule(EggAuth::forceUpdateToken, 900_000L, TimeUnit.MILLISECONDS);
             }
          } catch (Throwable t) {
             LOGGER.error("[EggAuth] aaron auth exception: " + t.getMessage(), t);
-            debugChat("§ehysky auth exception (" + t.getClass().getSimpleName() + ") - trying Bombo auth...");
-            try {
-               authenticateWithBombo(null);
-            } catch (Throwable ignored) {
-            }
+            debugChat("§ehysky auth exception (" + t.getClass().getSimpleName() + ")");
          }
       });
    }
 
-   /**
-    * Same aaron payload, sent to our own server. {@code bomboapi} verifies the Mojang
-    * key-pair signature itself and issues a Bombo token. Used when hysky's aaron refuses
-    * us; the resulting token is sent as {@code Authorization: Bearer} on hoppity sync.
-    *
-    * @param payload an already-built aaron-style payload, or null to rebuild
-    * @return true when a Bombo token was acquired
-    */
+   public static void authenticateWithBomboAsync() {
+      if (authenticatingBombo) return;
+      authenticatingBombo = true;
+      SCHEDULER.execute(() -> {
+         try {
+            authenticateWithBombo(null);
+         } finally {
+            authenticatingBombo = false;
+         }
+      });
+   }
+
    private static boolean authenticateWithBombo(String payload) {
       try {
          String body = payload != null ? payload : buildAuthPayload();
@@ -272,17 +284,14 @@ public class EggAuth {
          if (resp.statusCode() == 200 && resp.body() != null) {
             JsonObject json = GSON.fromJson(resp.body(), JsonObject.class);
             if (json != null && json.has("token")) {
-               token = json.get("token").getAsString();
-               tokenSource = "bombo";
-               bomboToken = token;
+               bomboToken = json.get("token").getAsString();
                long issuedAt = json.has("issuedAt") ? json.get("issuedAt").getAsLong() : System.currentTimeMillis();
                long exp = json.has("expiresAt") ? json.get("expiresAt").getAsLong() : System.currentTimeMillis() + 3600_000L;
                LOGGER.info("[EggAuth] Bombo auth succeeded; refresh scheduled.");
-               debugChat("§aBombo auth OK - EggFinder token acquired from bomboapi.");
+               debugChat("§aBombo auth OK - Token acquired from bomboapi.");
 
                long refreshInMs = Math.max(60_000L, (exp - issuedAt) - 300_000L);
-               SCHEDULER.schedule(EggAuth::forceUpdateToken, refreshInMs, TimeUnit.MILLISECONDS);
-               EggWebSocket.onTokenRefreshed();
+               SCHEDULER.schedule(EggAuth::authenticateWithBomboAsync, refreshInMs, TimeUnit.MILLISECONDS);
                return true;
             }
          }

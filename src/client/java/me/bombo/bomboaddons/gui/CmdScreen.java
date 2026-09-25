@@ -80,6 +80,9 @@ public class CmdScreen extends Screen {
     /** True while the view rides the bottom of the scrollback; disabled by scrolling up. */
     private boolean following = true;
     private int scrollOffset = 0;
+    private int selectStartLine = -1;
+    private int selectEndLine = -1;
+    private boolean isDraggingSelection = false;
 
     // Live input line (mirrored to the session on close via removed())
     private String input = "";
@@ -313,7 +316,8 @@ public class CmdScreen extends Screen {
         synchronized (WORKERS) {
             for (Process p : WORKERS) {
                 try {
-                    p.destroy();
+                    p.toHandle().descendants().forEach(ProcessHandle::destroyForcibly);
+                    p.destroyForcibly();
                 } catch (Throwable ignored) {
                 }
             }
@@ -418,11 +422,19 @@ public class CmdScreen extends Screen {
         if (scrollOffset > maxScroll) scrollOffset = maxScroll;
         if (scrollOffset < 0) scrollOffset = 0;
 
+        int selMin = Math.min(selectStartLine, selectEndLine);
+        int selMax = Math.max(selectStartLine, selectEndLine);
+        boolean hasSelection = selectStartLine >= 0 && selectEndLine >= 0;
+
         for (int i = 0; i < rows; i++) {
             int index = scrollOffset + i;
             if (index >= view.size()) break;
+            int rowY = listTop + i * rowH;
+            if (hasSelection && index >= selMin && index <= selMax) {
+                g.fill(winX + padX - 2, rowY, winX + winW - padX, rowY + rowH, 0x4438BDF8);
+            }
             g.text(font, font.plainSubstrByWidth(view.get(index), winW - padX * 2 - 8),
-                    winX + padX, listTop + i * rowH, 0xFFE2E8F0, false);
+                    winX + padX, rowY, 0xFFE2E8F0, false);
         }
 
         // Scrollbar
@@ -647,16 +659,65 @@ public class CmdScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
-        // Clicking inside the buffer copies the line under the cursor - handy for long output.
         int listTop = winY + 22;
-        int index = scrollOffset + (int) ((event.y() - listTop) / rowH);
+        int inputY = winY + winH - 22;
         List<String> view = visibleLines();
-        if (event.y() >= listTop && index >= 0 && index < view.size()
-                && event.x() >= winX && event.x() <= winX + winW - 8) {
-            Minecraft.getInstance().keyboardHandler.setClipboard(stripAnsi(view.get(index)));
-            print("§8[copied line to clipboard]");
-            return true;
+
+        if (event.button() == 0) { // Left click: start drag selection
+            if (event.y() >= listTop && event.y() < inputY && event.x() >= winX && event.x() <= winX + winW - 8) {
+                int index = scrollOffset + (int) ((event.y() - listTop) / rowH);
+                if (index >= 0 && index < view.size()) {
+                    selectStartLine = index;
+                    selectEndLine = index;
+                    isDraggingSelection = true;
+                    return true;
+                }
+            }
+            selectStartLine = -1;
+            selectEndLine = -1;
+            isDraggingSelection = false;
+        } else if (event.button() == 1) { // Right click: copy selection or paste
+            if (selectStartLine >= 0 && selectEndLine >= 0) {
+                int selMin = Math.max(0, Math.min(selectStartLine, selectEndLine));
+                int selMax = Math.min(view.size() - 1, Math.max(selectStartLine, selectEndLine));
+                StringBuilder sb = new StringBuilder();
+                for (int i = selMin; i <= selMax; i++) {
+                    if (sb.length() > 0) sb.append("\n");
+                    sb.append(stripAnsi(view.get(i)));
+                }
+                Minecraft.getInstance().keyboardHandler.setClipboard(sb.toString());
+                print("§8[copied " + (selMax - selMin + 1) + " line(s) to clipboard]");
+                selectStartLine = -1;
+                selectEndLine = -1;
+                return true;
+            } else {
+                String clip = Minecraft.getInstance().keyboardHandler.getClipboard();
+                if (clip != null && !clip.isEmpty()) {
+                    insert(clip.replace("\r\n", " ").replace("\n", " ").replace("\r", " "));
+                    return true;
+                }
+            }
         }
         return super.mouseClicked(event, handled);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        if (isDraggingSelection) {
+            int listTop = winY + 22;
+            List<String> view = visibleLines();
+            int index = scrollOffset + (int) ((event.y() - listTop) / rowH);
+            selectEndLine = Math.max(0, Math.min(view.size() - 1, index));
+            return true;
+        }
+        return super.mouseDragged(event, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0) {
+            isDraggingSelection = false;
+        }
+        return super.mouseReleased(event);
     }
 }

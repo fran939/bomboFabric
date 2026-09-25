@@ -672,16 +672,7 @@ public class BomboConfig {
       public String flavor = "";
       /** Value of hideCheats before the flavor migration touched it. */
       public boolean legacyHideCheats = true;
-      /** Cheat flavor only: stop advertising presence to third parties. */
-      public boolean stealthMode = false;
-      /**
-       * Hide the mod identity sent during the server join handshake (both flavors).
-       *
-       * <p>On by default: the Fabric client brand is the one mod-related value a vanilla server
-       * receives, and a blacklist keyed on it is exactly what took Odin's userbase down. With
-       * this on the client answers with the vanilla brand instead.
-       */
-      public boolean modIdHider = true;
+
       /** Strip obfuscated (\u00a7k) text from chat and item tooltips. */
       public boolean noObfuscate = false;
       /** Optional keybind that opens the chat history screen. */
@@ -1253,6 +1244,7 @@ public class BomboConfig {
       public boolean estimatedValueBazaarMode = false;
       public boolean estimatedValuePreferCheapest = true;
       public boolean estimatedValueFullBreakdown = true;
+      public String estimatedValuePriceMode = "INSTA_BUY"; // INSTA_BUY, INSTA_SELL, BOTH
       public boolean hiderEnabled = true;
       public List<EntityHideRule> hiddenEntities = new ArrayList<>();
       public List<BlockReplaceRule> blockReplacements = new ArrayList<>();

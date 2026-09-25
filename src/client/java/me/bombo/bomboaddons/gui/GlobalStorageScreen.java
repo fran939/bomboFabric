@@ -93,6 +93,7 @@ public class GlobalStorageScreen extends Screen {
       this.tabs.add(new TabInfo("All", new ItemStack(Items.COMPASS)));
       this.tabs.add(new TabInfo("Inventory", new ItemStack(Items.PLAYER_HEAD)));
       this.tabs.add(new TabInfo("Chest", new ItemStack(Items.CHEST)));
+      this.tabs.add(new TabInfo("Island Chests", new ItemStack(Items.CHEST)));
       this.tabs.add(new TabInfo("Ender Chest", new ItemStack(Items.ENDER_CHEST)));
       ItemStack bp = SkyblockItemManager.createSkyblockItem("GREATER_BACKPACK");
       this.tabs.add(new TabInfo("Backpack", bp != null ? bp : new ItemStack(Items.LEATHER)));
@@ -231,7 +232,16 @@ public class GlobalStorageScreen extends Screen {
       String lowerQuery = query.toLowerCase();
       this.sortAllItems();
       this.filteredItems = (List)this.allItems.stream().filter((agg) -> {
-         boolean categoryMatch = this.currentCategory.equals("All") || agg.locations.keySet().stream().anyMatch((loc) -> loc.toLowerCase().contains(this.currentCategory.toLowerCase()));
+         boolean categoryMatch;
+         if (this.currentCategory.equals("All")) {
+            categoryMatch = true;
+         } else if (this.currentCategory.equals("Island Chests")) {
+            categoryMatch = agg.locations.keySet().stream().anyMatch((loc) -> loc.toLowerCase().contains("island chest"));
+         } else if (this.currentCategory.equals("Chest")) {
+            categoryMatch = agg.locations.keySet().stream().anyMatch((loc) -> loc.toLowerCase().contains("chest") && !loc.toLowerCase().contains("ender chest"));
+         } else {
+            categoryMatch = agg.locations.keySet().stream().anyMatch((loc) -> loc.toLowerCase().contains(this.currentCategory.toLowerCase()));
+         }
          boolean textMatch = lowerQuery.isEmpty() || agg.stack.getHoverName().getString().toLowerCase().contains(lowerQuery);
          if (!textMatch && !lowerQuery.isEmpty()) {
             ItemLore lore = (ItemLore)agg.stack.get(DataComponents.LORE);

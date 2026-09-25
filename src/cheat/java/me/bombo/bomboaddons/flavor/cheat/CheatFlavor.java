@@ -48,18 +48,6 @@ public final class CheatFlavor implements FlavorBridge {
             return 1;
         }));
 
-        builder.then(ClientCommands.literal("stealth").executes(context -> {
-            BomboConfig.Settings s = BomboConfig.get();
-            s.stealthMode = !s.stealthMode;
-            BomboConfig.save();
-            context.getSource().sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Stealth (presence hygiene): "
-                    + (s.stealthMode ? "§aON" : "§cOFF")));
-            if (s.stealthMode) {
-                context.getSource().sendFeedback(Component.literal("§7- No more bridge presence, no egg publishing, vanilla brand on join."));
-                context.getSource().sendFeedback(Component.literal("§8This is client-side identity hygiene only; it does not defeat behavioural detection."));
-            }
-            return 1;
-        }));
 
         // NB: /b auto, /b chathistory and /b noobfuscate are registered by shared code
         // (BomboaddonsClient), so this build only contributes what genuinely needs cheat code.
