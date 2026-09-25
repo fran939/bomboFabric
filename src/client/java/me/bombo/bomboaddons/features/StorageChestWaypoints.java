@@ -293,9 +293,9 @@ public final class StorageChestWaypoints {
             float g = 0.85F;
             float b = 1.0F;
             AABB box = new AABB(x, y, z, x + width, y + 1.0D, z + depth);
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+            collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
                     BomboRenderUtils.drawBox(pose.pose(), vc, box, r, g, b, 1.0F, 2.5F));
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+            collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
                     BomboRenderUtils.drawBox(pose.pose(), vc, box.inflate(0.03D), r, g, b, 0.35F, 2.0F));
 
             String label = "§b" + (match.totalQuantity > 1

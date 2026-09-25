@@ -53,6 +53,12 @@ public class ConfigItem {
     public int defaultInt = 0;
     public String intSuffix = "";
 
+    public Supplier<Boolean> visibleCondition;
+    public ConfigItem when(Supplier<Boolean> condition) {
+        this.visibleCondition = condition;
+        return this;
+    }
+
     public Supplier<Float> floatGetter;
     public Consumer<Float> floatSetter;
     public float minFloat, maxFloat, stepFloat;
@@ -274,6 +280,7 @@ public class ConfigItem {
         ConfigItem copy = new ConfigItem(this.type, this.name, this.description, newCategory);
         copy.boolGetter = this.boolGetter;
         copy.boolSetter = this.boolSetter;
+        copy.visibleCondition = this.visibleCondition;
         copy.hudTarget = this.hudTarget;
         copy.intGetter = this.intGetter;
         copy.intSetter = this.intSetter;

@@ -624,6 +624,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
    )
    private void onGuiClose(CallbackInfo ci) {
       AutoCroesus.onScreenClosed();
+      me.bombo.bomboaddons.features.StorageChestWaypoints.onContainerChanged();
       if (System.currentTimeMillis() - SlotHighlight.highlightStartTime > 500L) {
          SlotHighlight.clearTargetSlot();
       }

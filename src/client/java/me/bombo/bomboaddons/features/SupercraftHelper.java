@@ -154,8 +154,10 @@ public class SupercraftHelper {
       return comp;
    }
 
-   public static void appendTooltip(ItemStack stack, List<Component> lines) {
-      if (!BomboConfig.get().loreAdditionsEnabled || stack == null || stack.isEmpty() || lines == null) return;
+   public static List<Component> appendTooltip(ItemStack stack, List<Component> lines) {
+      if (!BomboConfig.get().loreAdditionsEnabled || stack == null || stack.isEmpty() || lines == null) {
+         return mutableCopy(lines);
+      }
       try {
          BomboConfig.Settings s = BomboConfig.get();
          String name = stack.getHoverName().getString().replaceAll("(?i)§[0-9a-fk-or]", "");
@@ -312,12 +314,15 @@ public class SupercraftHelper {
             }
          }
 
-         applyAdditionsToLines(lines, additions);
-      } catch (Throwable ignored) {}
+         return applyAdditionsToLines(lines, additions);
+      } catch (Throwable ignored) {
+         return mutableCopy(lines);
+      }
    }
 
-   public static void applyAdditionsToLines(List<Component> lines, List<LoreAddition> additions) {
-      if (lines == null || additions == null || additions.isEmpty()) return;
+   public static List<Component> applyAdditionsToLines(List<Component> lines, List<LoreAddition> additions) {
+      List<Component> mutableLines = mutableCopy(lines);
+      if (additions == null || additions.isEmpty()) return mutableLines;
       try {
          List<LoreAddition> top = new ArrayList<>();
          List<LoreAddition> bottom = new ArrayList<>();
@@ -333,15 +338,20 @@ public class SupercraftHelper {
          top.sort(Comparator.comparingInt(a -> a.order));
          bottom.sort(Comparator.comparingInt(a -> a.order));
 
-         int insertIndex = Math.min(1, lines.size());
+         int insertIndex = Math.min(1, mutableLines.size());
          for (LoreAddition a : top) {
-            lines.add(insertIndex++, a.line);
+            mutableLines.add(insertIndex++, a.line);
          }
 
          for (LoreAddition a : bottom) {
-            lines.add(a.line);
+            mutableLines.add(a.line);
          }
       } catch (Throwable ignored) {}
+      return mutableLines;
+   }
+
+   private static List<Component> mutableCopy(List<Component> lines) {
+      return lines == null ? new ArrayList<>() : new ArrayList<>(lines);
    }
 
    public static boolean handleCtrlClick(AbstractContainerScreen<?> screen, Slot slot) {

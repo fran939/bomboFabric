@@ -208,6 +208,40 @@ public class SkyblockUtils {
       }
    }
 
+   public static String getRarity(net.minecraft.world.item.ItemStack itemStack) {
+      if (itemStack == null || itemStack.isEmpty()) return "COMMON";
+      try {
+         net.minecraft.world.item.component.CustomData customData = (net.minecraft.world.item.component.CustomData)itemStack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+         if (customData != null) {
+            net.minecraft.nbt.CompoundTag tag = customData.copyTag();
+            net.minecraft.nbt.CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+            if (ea != null) {
+               String tier = ea.getString("tier").orElse("");
+               if (!tier.isEmpty()) return tier.toUpperCase(java.util.Locale.ROOT);
+            }
+         }
+         net.minecraft.world.item.component.ItemLore itemLore = (net.minecraft.world.item.component.ItemLore)itemStack.get(net.minecraft.core.component.DataComponents.LORE);
+         if (itemLore != null && !itemLore.lines().isEmpty()) {
+            List<Component> lines = itemLore.lines();
+            for (int i = lines.size() - 1; i >= 0; --i) {
+               String str = lines.get(i).getString();
+               String clean = str.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+               if (clean.contains("VERY SPECIAL")) return "VERY SPECIAL";
+               if (clean.contains("SPECIAL")) return "SPECIAL";
+               if (clean.contains("SUPREME")) return "SUPREME";
+               if (clean.contains("DIVINE")) return "DIVINE";
+               if (clean.contains("MYTHIC")) return "MYTHIC";
+               if (clean.contains("LEGENDARY")) return "LEGENDARY";
+               if (clean.contains("EPIC")) return "EPIC";
+               if (clean.contains("RARE")) return "RARE";
+               if (clean.contains("UNCOMMON")) return "UNCOMMON";
+               if (clean.contains("COMMON")) return "COMMON";
+            }
+         }
+      } catch (Throwable ignored) {}
+      return "COMMON";
+   }
+
    public static String getItemRarityColor(net.minecraft.world.item.ItemStack itemStack) {
       if (itemStack == null || itemStack.isEmpty()) return "§f";
       try {
@@ -949,7 +983,9 @@ public class SkyblockUtils {
       }
 
       for(String line : lines) {
-         String clean = line.replaceAll("(?i)§.", "").trim();
+         String clean = line.replaceAll("(?i)§.", "")
+                            .replaceAll("[\uE000-\uF8FF]", "")
+                            .trim();
          if (clean.contains("The Catacombs (")) {
             int start = clean.indexOf("(") + 1;
             int end = clean.indexOf(")");
@@ -959,8 +995,8 @@ public class SkyblockUtils {
          }
 
          // Scoreboard zone line e.g. "⏣ Village", "Village", "⏣ Farm", "⏣ Wilderness"
-         if (clean.startsWith("⏏") || clean.startsWith("⏣") || clean.startsWith("ф") || clean.startsWith("📍") || clean.startsWith("\uD83D\uDCCD") || clean.startsWith("\uE067") || clean.startsWith("\uE000") || (clean.length() > 2 && clean.charAt(0) > 127 && !Character.isLetterOrDigit(clean.charAt(0)))) {
-            String sub = clean.replaceFirst("^[⏏⏣ф📍\\uD83D\\uDCCD\\uE067\\uE000-\\uF8FF\\s]+", "").trim();
+         if (clean.startsWith("⏏") || clean.startsWith("⏣") || clean.startsWith("ф") || clean.startsWith("📍") || clean.startsWith("\uD83D\uDCCD") || (clean.length() > 2 && clean.charAt(0) > 127 && !Character.isLetterOrDigit(clean.charAt(0)))) {
+            String sub = clean.replaceFirst("^[⏏⏣ф📍\\uD83D\\uDCCD\\s]+", "").trim();
             // Ignore pest count lines like "x8" or "8x" or "Pests: 8"
             if (sub.matches("^[xX]?\\s*\\d+\\s*[xX]?$") || sub.toLowerCase().startsWith("pest")) {
                continue;
@@ -985,6 +1021,7 @@ public class SkyblockUtils {
 
          if (clean.startsWith("Area:") || clean.startsWith("Zone:")) {
             String sub = clean.substring(clean.indexOf(":") + 1).trim();
+            sub = sub.replaceFirst("^[⏏⏣ф📍\\s]+", "").trim();
             if (!sub.isEmpty()) {
                return sub;
             }

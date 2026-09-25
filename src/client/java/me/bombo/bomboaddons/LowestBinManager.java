@@ -908,9 +908,33 @@ public class LowestBinManager {
    public static class ItemValueBreakdown {
       public long totalPrice = 0L;
       public ValueEntry baseItem = null;
+      public ValueEntry reforge = null;
+      public ValueEntry reforgeStone = null;
+      public ValueEntry applyCost = null;
+      public ValueEntry recombobulator = null;
+      public ValueEntry etherwarp = null;
+      public ValueEntry powerScroll = null;
+      public ValueEntry hpb = null;
+      public ValueEntry fuming = null;
+      public ValueEntry tuners = null;
+      public List<ValueEntry> otherUpgrades = new java.util.ArrayList<>();
+      public List<ValueEntry> gemstones = new java.util.ArrayList<>();
       public List<ValueEntry> enchants = new java.util.ArrayList<>();
       public List<ValueEntry> upgrades = new java.util.ArrayList<>();
-      public List<ValueEntry> gemstones = new java.util.ArrayList<>();
+   }
+
+   public static long getPriceByMode(String id) {
+      if (id == null || id.isEmpty()) return 0L;
+      BomboConfig.Settings s = BomboConfig.get();
+      String mode = s != null && s.estimatedValuePriceMode != null ? s.estimatedValuePriceMode : "INSTA_BUY";
+      if ("INSTA_SELL".equalsIgnoreCase(mode)) {
+         long sell = getSellPrice(id);
+         if (sell > 0L) return sell;
+      } else if ("INSTA_BUY".equalsIgnoreCase(mode)) {
+         long buy = getBuyPrice(id);
+         if (buy > 0L) return buy;
+      }
+      return getCachedPrice(id);
    }
 
    /**
@@ -947,6 +971,25 @@ public class LowestBinManager {
       Map.entry("bountiful", "GOLDEN_BALL"),
       Map.entry("blessed", "BLESSED_FRUIT"),
       Map.entry("candied", "CANDY_CORN"),
+      Map.entry("warped", "WARPED_STONE"),
+      Map.entry("heated", "HOT_STUFF"),
+      Map.entry("ambered", "AMBERED_MATERIAL"),
+      Map.entry("auspicious", "ROCK_GEM"),
+      Map.entry("fleet", "DIAMONITE"),
+      Map.entry("stellar", "PETRIFIED_STARFALL"),
+      Map.entry("fruitful", "ONYX"),
+      Map.entry("magnetic", "SKYBLOCK_EXP_BOTTLE"),
+      Map.entry("dirty", "DIRT_BOTTLE"),
+      Map.entry("refined", "REFINED_MINERAL"),
+      Map.entry("silky", "LUXURIOUS_SPOOL"),
+      Map.entry("bloody", "BEATING_HEART"),
+      Map.entry("sweet", "ROCK_CANDY"),
+      Map.entry("salty", "SALT_CUBE"),
+      Map.entry("treacherous", "RUSTY_ANCHOR"),
+      Map.entry("lucky", "LUCKY_DICE"),
+      Map.entry("stiff", "HARDENED_WOOD"),
+      Map.entry("shaded", "DARK_ORB"),
+      Map.entry("strengthened", "SEARING_STONE"),
       Map.entry("spicy", ""),
       Map.entry("fierce", "")
    );
@@ -959,7 +1002,7 @@ public class LowestBinManager {
       boolean preferCheapest = s != null && s.estimatedValuePreferCheapest;
 
       // 1. Base Item Price
-      long ahPrice = getCachedPrice(skyblockId);
+      long ahPrice = getPriceByMode(skyblockId);
       long craftCost = getCraftCostCached(skyblockId);
       long basePrice = 0L;
       String baseSource = "BIN";
@@ -987,32 +1030,74 @@ public class LowestBinManager {
             net.minecraft.nbt.CompoundTag tag = customData.copyTag();
             net.minecraft.nbt.CompoundTag extra = tag.getCompound("ExtraAttributes").orElse(tag);
             if (extra != null) {
-               // Enchants
-               net.minecraft.nbt.CompoundTag enchs = extra.getCompound("enchantments").orElse(null);
-               if (enchs != null) {
-                  for (String encKey : enchs.keySet()) {
-                     int lvl = enchs.getInt(encKey).orElse(0);
-                     String mappedEncId = mapEnchantedBookId("ENCHANTMENT_" + encKey.toUpperCase() + "_" + lvl);
-                     long encPrice = getCachedPrice(mappedEncId);
-                     if (encPrice <= 0L) {
-                        encPrice = getCachedPrice("ENCHANTED_BOOK-" + encKey.toUpperCase() + "-" + lvl);
-                     }
-                     if (encPrice > 0L) {
-                        String cleanName = encKey.replace('_', ' ').toLowerCase();
-                        cleanName = Character.toUpperCase(cleanName.charAt(0)) + cleanName.substring(1);
-                        breakdown.enchants.add(new ValueEntry(cleanName + " " + lvl, encPrice, "Book"));
-                        breakdown.totalPrice += encPrice;
+               // Reforge Stone & Apply Cost
+               String modifier = extra.getString("modifier").orElse("").toLowerCase();
+               if (!modifier.isEmpty()) {
+                  String cleanMod = Character.toUpperCase(modifier.charAt(0)) + modifier.substring(1);
+                  breakdown.reforge = new ValueEntry("Reforge (" + cleanMod + ")", 0L, "Reforge");
+                  if (REFORGE_STONES.containsKey(modifier)) {
+                     String stoneId = REFORGE_STONES.get(modifier);
+                     if (!stoneId.isEmpty()) {
+                        long stonePrice = getPriceByMode(stoneId);
+                        if (stonePrice > 0L) {
+                           breakdown.reforgeStone = new ValueEntry("Reforge Stone (" + stoneId.replace('_', ' ') + ")", stonePrice, "Stone");
+                           breakdown.totalPrice += stonePrice;
+                           breakdown.upgrades.add(breakdown.reforgeStone);
+                        }
+                        long applyCost = 250_000L;
+                        if (modifier.equals("warped")) {
+                           applyCost = 5_000_000L;
+                        } else {
+                           String rarity = SkyblockUtils.getRarity(stack);
+                           if (rarity != null) {
+                              applyCost = switch (rarity.toUpperCase()) {
+                                 case "COMMON" -> 10_000L;
+                                 case "UNCOMMON" -> 25_000L;
+                                 case "RARE" -> 50_000L;
+                                 case "EPIC" -> 100_000L;
+                                 case "LEGENDARY" -> 250_000L;
+                                 case "MYTHIC" -> 500_000L;
+                                 case "DIVINE", "SPECIAL", "VERY_SPECIAL" -> 1_000_000L;
+                                 default -> 250_000L;
+                              };
+                           }
+                        }
+                        breakdown.applyCost = new ValueEntry("Reforge Apply Cost", applyCost, "Cost");
+                        breakdown.totalPrice += applyCost;
+                        breakdown.upgrades.add(breakdown.applyCost);
                      }
                   }
                }
 
                // Recombobulator
                if (extra.getInt("rarity_upgrades").orElse(0) > 0) {
-                  long recPrice = getCachedPrice("RECOMBOBULATOR_3000");
+                  long recPrice = getPriceByMode("RECOMBOBULATOR_3000");
                   if (recPrice > 0L) {
-                     breakdown.upgrades.add(new ValueEntry("Recombobulator 3000", recPrice, "Upgrade"));
+                     breakdown.recombobulator = new ValueEntry("Recombobulator 3000", recPrice, "Upgrade");
                      breakdown.totalPrice += recPrice;
+                     breakdown.upgrades.add(breakdown.recombobulator);
                   }
+               }
+
+               // Etherwarp Conduit
+               if (extra.getInt("ethermerge").orElse(0) > 0 || extra.contains("ethermerge")
+                     || extra.getString("ability_scroll").orElse("").toUpperCase().contains("ETHERWARP")) {
+                  long etherPrice = getPriceByMode("ETHERWARP_CONDUIT");
+                  if (etherPrice <= 0L) etherPrice = getPriceByMode("ETHERWARP_MERGER");
+                  if (etherPrice <= 0L) etherPrice = 15_000_000L;
+                  breakdown.etherwarp = new ValueEntry("Etherwarp Conduit", etherPrice, "Upgrade");
+                  breakdown.totalPrice += etherPrice;
+                  breakdown.upgrades.add(breakdown.etherwarp);
+               }
+
+               // Power Scroll
+               String powerScroll = extra.getString("power_ability_scroll").orElse("");
+               if (!powerScroll.isEmpty()) {
+                  long pScrollPrice = getPriceByMode(powerScroll);
+                  if (pScrollPrice <= 0L) pScrollPrice = 3_000_000L;
+                  breakdown.powerScroll = new ValueEntry("Power Scroll (" + powerScroll.replace('_', ' ') + ")", pScrollPrice, "Scroll");
+                  breakdown.totalPrice += pScrollPrice;
+                  breakdown.upgrades.add(breakdown.powerScroll);
                }
 
                // Hot / Fuming Potato Books
@@ -1021,70 +1106,77 @@ public class LowestBinManager {
                   int standardHpb = Math.min(hpbCount, 10);
                   int fumingHpb = Math.max(0, hpbCount - 10);
                   if (standardHpb > 0) {
-                     long hpbPrice = getCachedPrice("HOT_POTATO_BOOK");
+                     long hpbPrice = getPriceByMode("HOT_POTATO_BOOK");
                      if (hpbPrice > 0L) {
                         long totalHpb = hpbPrice * standardHpb;
-                        breakdown.upgrades.add(new ValueEntry(standardHpb + "x Hot Potato Book", totalHpb, "Upgrade"));
+                        breakdown.hpb = new ValueEntry(standardHpb + "x Hot Potato Book", totalHpb, "Upgrade");
                         breakdown.totalPrice += totalHpb;
+                        breakdown.upgrades.add(breakdown.hpb);
                      }
                   }
                   if (fumingHpb > 0) {
-                     long fpbPrice = getCachedPrice("FUMING_POTATO_BOOK");
+                     long fpbPrice = getPriceByMode("FUMING_POTATO_BOOK");
                      if (fpbPrice > 0L) {
                         long totalFpb = fpbPrice * fumingHpb;
-                        breakdown.upgrades.add(new ValueEntry(fumingHpb + "x Fuming Potato Book", totalFpb, "Upgrade"));
+                        breakdown.fuming = new ValueEntry(fumingHpb + "x Fuming Potato Book", totalFpb, "Upgrade");
                         breakdown.totalPrice += totalFpb;
+                        breakdown.upgrades.add(breakdown.fuming);
                      }
                   }
+               }
+
+               // Transmission Tuners
+               int tuners = extra.getInt("transmission_tuner").orElse(0);
+               if (tuners > 0) {
+                  long tunerPrice = getPriceByMode("TRANSMISSION_TUNER");
+                  if (tunerPrice <= 0L) tunerPrice = 700_000L;
+                  long totalTuners = tunerPrice * tuners;
+                  breakdown.tuners = new ValueEntry(tuners + "x Transmission Tuner", totalTuners, "Upgrade");
+                  breakdown.totalPrice += totalTuners;
+                  breakdown.upgrades.add(breakdown.tuners);
                }
 
                // Farming for Dummies
                int ffd = extra.getInt("farming_for_dummies_count").orElse(0);
                if (ffd > 0) {
-                  long ffdPrice = getCachedPrice("FARMING_FOR_DUMMIES");
+                  long ffdPrice = getPriceByMode("FARMING_FOR_DUMMIES");
                   if (ffdPrice > 0L) {
                      long totalFfd = ffdPrice * ffd;
-                     breakdown.upgrades.add(new ValueEntry(ffd + "x Farming for Dummies", totalFfd, "Upgrade"));
+                     ValueEntry v = new ValueEntry(ffd + "x Farming for Dummies", totalFfd, "Upgrade");
+                     breakdown.otherUpgrades.add(v);
+                     breakdown.upgrades.add(v);
                      breakdown.totalPrice += totalFfd;
                   }
                }
 
                // Art of War / Peace
                if (extra.getInt("art_of_war_count").orElse(0) > 0 || extra.contains("art_of_war")) {
-                  long aowPrice = getCachedPrice("THE_ART_OF_WAR");
+                  long aowPrice = getPriceByMode("THE_ART_OF_WAR");
                   if (aowPrice > 0L) {
-                     breakdown.upgrades.add(new ValueEntry("The Art of War", aowPrice, "Upgrade"));
+                     ValueEntry v = new ValueEntry("The Art of War", aowPrice, "Upgrade");
+                     breakdown.otherUpgrades.add(v);
+                     breakdown.upgrades.add(v);
                      breakdown.totalPrice += aowPrice;
                   }
                }
                if (extra.getInt("art_of_peace_count").orElse(0) > 0 || extra.contains("art_of_peace")) {
-                  long aopPrice = getCachedPrice("THE_ART_OF_PEACE");
+                  long aopPrice = getPriceByMode("THE_ART_OF_PEACE");
                   if (aopPrice > 0L) {
-                     breakdown.upgrades.add(new ValueEntry("The Art of Peace", aopPrice, "Upgrade"));
+                     ValueEntry v = new ValueEntry("The Art of Peace", aopPrice, "Upgrade");
+                     breakdown.otherUpgrades.add(v);
+                     breakdown.upgrades.add(v);
                      breakdown.totalPrice += aopPrice;
                   }
                }
 
                // Wood Singularity
                if (extra.getInt("wood_singularity_count").orElse(0) > 0) {
-                  long wsPrice = getCachedPrice("WOOD_SINGULARITY");
+                  long wsPrice = getPriceByMode("WOOD_SINGULARITY");
                   if (wsPrice > 0L) {
-                     breakdown.upgrades.add(new ValueEntry("Wood Singularity", wsPrice, "Upgrade"));
+                     ValueEntry v = new ValueEntry("Wood Singularity", wsPrice, "Upgrade");
+                     breakdown.otherUpgrades.add(v);
+                     breakdown.upgrades.add(v);
                      breakdown.totalPrice += wsPrice;
-                  }
-               }
-
-               // Reforge Stone
-               String modifier = extra.getString("modifier").orElse("").toLowerCase();
-               if (!modifier.isEmpty() && REFORGE_STONES.containsKey(modifier)) {
-                  String stoneId = REFORGE_STONES.get(modifier);
-                  if (!stoneId.isEmpty()) {
-                     long stonePrice = getCachedPrice(stoneId);
-                     if (stonePrice > 0L) {
-                        String cleanMod = Character.toUpperCase(modifier.charAt(0)) + modifier.substring(1);
-                        breakdown.upgrades.add(new ValueEntry("Reforge (" + cleanMod + ")", stonePrice, "Reforge"));
-                        breakdown.totalPrice += stonePrice;
-                     }
                   }
                }
 
@@ -1097,39 +1189,43 @@ public class LowestBinManager {
                      starCoins += DUNGEON_STAR_COINS[i];
                   }
                   if (starCoins > 0L) {
-                     breakdown.upgrades.add(new ValueEntry(baseStars + "x Dungeon Star", starCoins, "Stars"));
+                     ValueEntry v = new ValueEntry(baseStars + "x Dungeon Star", starCoins, "Stars");
+                     breakdown.otherUpgrades.add(v);
+                     breakdown.upgrades.add(v);
                      breakdown.totalPrice += starCoins;
                   }
                }
 
                // Master stars are real items (FIRST_MASTER_STAR ...), so price them from the market.
-               // Upgrade_level is the explicit master-star counter; otherwise they are the stars
-               // beyond the fifth.
                int masterStars = extra.getInt("upgrade_level").orElse(0);
                if (masterStars <= 0) {
                   masterStars = Math.max(0, stars - 5);
                }
                for (int i = 0; i < Math.min(masterStars, MASTER_STAR_ITEMS.length); i++) {
-                  long msPrice = getCachedPrice(MASTER_STAR_ITEMS[i]);
+                  long msPrice = getPriceByMode(MASTER_STAR_ITEMS[i]);
                   if (msPrice > 0L) {
-                     breakdown.upgrades.add(new ValueEntry("Master Star " + (i + 1), msPrice, "Upgrade"));
+                     ValueEntry v = new ValueEntry("Master Star " + (i + 1), msPrice, "Upgrade");
+                     breakdown.otherUpgrades.add(v);
+                     breakdown.upgrades.add(v);
                      breakdown.totalPrice += msPrice;
                   }
                }
 
-               // Attributes (shard-based): priced per level when a shard id resolves.
+               // Attributes (shard-based)
                net.minecraft.nbt.CompoundTag attrs = extra.getCompound("attributes").orElse(null);
                if (attrs != null) {
                   for (String attrKey : attrs.keySet()) {
                      int lvl = attrs.getInt(attrKey).orElse(0);
                      if (lvl <= 0) continue;
                      String key = attrKey.toUpperCase().replace(" ", "_");
-                     long unit = getCachedPrice("ATTRIBUTE_SHARD_" + key);
-                     if (unit <= 0L) unit = getCachedPrice(key + "_ATTRIBUTE_SHARD");
-                     if (unit <= 0L) unit = getCachedPrice("SHARD_" + key);
+                     long unit = getPriceByMode("ATTRIBUTE_SHARD_" + key);
+                     if (unit <= 0L) unit = getPriceByMode(key + "_ATTRIBUTE_SHARD");
+                     if (unit <= 0L) unit = getPriceByMode("SHARD_" + key);
                      if (unit > 0L) {
                         long totalAttr = unit * lvl;
-                        breakdown.upgrades.add(new ValueEntry(attributeLabel(attrKey) + " " + lvl, totalAttr, "Attribute"));
+                        ValueEntry v = new ValueEntry(attributeLabel(attrKey) + " " + lvl, totalAttr, "Attribute");
+                        breakdown.otherUpgrades.add(v);
+                        breakdown.upgrades.add(v);
                         breakdown.totalPrice += totalAttr;
                      }
                   }
@@ -1142,16 +1238,34 @@ public class LowestBinManager {
                      if (gemKey.endsWith("_gem") || gemKey.contains("_")) {
                         String gemVal = gems.getString(gemKey).orElse("");
                         if (!gemVal.isEmpty()) {
-                           // e.g. gemKey = "JASPER_0", gemVal = "FLAWLESS" -> "FLAWLESS_JASPER_GEM"
                            String gemType = gemKey.split("_")[0];
                            String gemId = gemVal.toUpperCase() + "_" + gemType.toUpperCase() + "_GEM";
-                           long gemPrice = getCachedPrice(gemId);
+                           long gemPrice = getPriceByMode(gemId);
                            if (gemPrice > 0L) {
                               String label = gemVal.toLowerCase() + " " + gemType.toLowerCase();
                               breakdown.gemstones.add(new ValueEntry(label, gemPrice, "Gemstone"));
                               breakdown.totalPrice += gemPrice;
                            }
                         }
+                     }
+                  }
+               }
+
+               // Enchants
+               net.minecraft.nbt.CompoundTag enchs = extra.getCompound("enchantments").orElse(null);
+               if (enchs != null) {
+                  for (String encKey : enchs.keySet()) {
+                     int lvl = enchs.getInt(encKey).orElse(0);
+                     String mappedEncId = mapEnchantedBookId("ENCHANTMENT_" + encKey.toUpperCase() + "_" + lvl);
+                     long encPrice = getPriceByMode(mappedEncId);
+                     if (encPrice <= 0L) {
+                        encPrice = getPriceByMode("ENCHANTED_BOOK-" + encKey.toUpperCase() + "-" + lvl);
+                     }
+                     if (encPrice > 0L) {
+                        String cleanName = encKey.replace('_', ' ').toLowerCase();
+                        cleanName = Character.toUpperCase(cleanName.charAt(0)) + cleanName.substring(1);
+                        breakdown.enchants.add(new ValueEntry(cleanName + " " + lvl, encPrice, "Book"));
+                        breakdown.totalPrice += encPrice;
                      }
                   }
                }

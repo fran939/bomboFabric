@@ -340,27 +340,21 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Kismet Feather", category));
                 items.add(ConfigItem.toggle("Auto Reroll With Kismet", "Rerolls a chest with a Kismet Feather when its value is below the threshold.", category,
                         () -> s.autoKismet, v -> s.autoKismet = v));
-                if (s.autoKismet) {
-                    items.add(ConfigItem.sliderCoins("Kismet Threshold", "Reroll when chest value is below this amount (100K - 3M).", category,
-                            100000L, 3000000L, 50000L,
-                            () -> s.kismetThreshold, v -> s.kismetThreshold = v));
-                    items.add(ConfigItem.sliderInt("Kismet Delay", "Milliseconds to wait after a Kismet reroll.", category,
-                            50, 2000, 25, "ms", () -> (int) s.autoCroesusKismetDelay, v -> s.autoCroesusKismetDelay = v));
-                }
+                items.add(ConfigItem.sliderCoins("Kismet Threshold", "Reroll when chest value is below this amount (100K - 3M).", category,
+                        100000L, 3000000L, 50000L,
+                        () -> s.kismetThreshold, v -> s.kismetThreshold = v).when(() -> s.autoKismet));
+                items.add(ConfigItem.sliderInt("Kismet Delay", "Milliseconds to wait after a Kismet reroll.", category,
+                        50, 2000, 25, "ms", () -> (int) s.autoCroesusKismetDelay, v -> s.autoCroesusKismetDelay = v).when(() -> s.autoKismet));
+
                 items.add(ConfigItem.toggle("Reroll Below Value", "Rerolls when chest value is under the value below.", category,
                         () -> s.autoCroesusReroll, v -> s.autoCroesusReroll = v));
-                if (s.autoCroesusReroll) {
-                    items.add(ConfigItem.sliderCoins("Reroll Value", "Reroll when chest value is below this amount (100K - 3M).", category,
-                            100000L, 3000000L, 50000L,
-                            () -> s.autoCroesusRerollValue, v -> s.autoCroesusRerollValue = v));
-                }
+                items.add(ConfigItem.sliderCoins("Reroll Value", "Reroll when chest value is below this amount (100K - 3M).", category,
+                        100000L, 3000000L, 50000L,
+                        () -> s.autoCroesusRerollValue, v -> s.autoCroesusRerollValue = v).when(() -> s.autoCroesusReroll));
 
                 items.add(ConfigItem.header("Dungeon Chests", category));
                 items.add(ConfigItem.toggle("Auto Croesus Dungeons", "Automatically claims profitable dungeon chests with /b ac.", category,
                         () -> s.autoCroesusDungeons, v -> s.autoCroesusDungeons = v));
-                items.add(ConfigItem.sliderInt("Chest Profit Threshold", "Only claim dungeon chests above this profit (millions).", category,
-                        0, 500, 1, "m",
-                        () -> (int) (s.autoCroesusDungeonProfitThreshold / 1000000L), v -> s.autoCroesusDungeonProfitThreshold = (long) v * 1000000L));
                 items.add(ConfigItem.cycle("Chest Panel Mode", "NET_ONLY shows just the profit per chest; ITEMIZED lists every parsed item.", category,
                         List.of("ITEMIZED", "NET_ONLY"),
                         () -> s.croesusProfitHudMode != null ? s.croesusProfitHudMode : "ITEMIZED",
@@ -370,16 +364,15 @@ public class ConfigRegistry {
                 items.add(ConfigItem.cycle("Dungeon Key Mode", "MANUAL uses your threshold; AUTO prices the key from the live Bazaar (DUNGEON_CHEST_KEY) and adds the safety margin.", category,
                         List.of("MANUAL", "AUTO"),
                         () -> s.autoCroesusDungeonKeyMode != null ? s.autoCroesusDungeonKeyMode : "MANUAL",
-                        v -> s.autoCroesusDungeonKeyMode = v));
-                if ("AUTO".equalsIgnoreCase(s.autoCroesusDungeonKeyMode)) {
-                    items.add(ConfigItem.sliderCoins("Key Safety Margin", "Extra profit a second chest must clear on top of the live key price.", category,
-                            0L, 1000000L, 50000L,
-                            () -> s.autoCroesusDungeonKeySafetyMargin, v -> s.autoCroesusDungeonKeySafetyMargin = v));
-                } else {
-                    items.add(ConfigItem.sliderCoins("Dungeon Key Value", "Profit a second chest must beat to justify buying a dungeon key (100K - 3M).", category,
-                            100000L, 3000000L, 50000L,
-                            () -> s.autoCroesusDungeonKeyProfit, v -> s.autoCroesusDungeonKeyProfit = v));
-                }
+                        v -> s.autoCroesusDungeonKeyMode = v).when(() -> s.autoCroesusUseDungeonKey));
+                items.add(ConfigItem.sliderCoins("Key Safety Margin", "Extra profit a second chest must clear on top of the live key price.", category,
+                        0L, 1000000L, 50000L,
+                        () -> s.autoCroesusDungeonKeySafetyMargin, v -> s.autoCroesusDungeonKeySafetyMargin = v)
+                        .when(() -> s.autoCroesusUseDungeonKey && "AUTO".equalsIgnoreCase(s.autoCroesusDungeonKeyMode)));
+                items.add(ConfigItem.sliderCoins("Dungeon Key Value", "Profit a second chest must beat to justify buying a dungeon key (100K - 3M).", category,
+                        100000L, 3000000L, 50000L,
+                        () -> s.autoCroesusDungeonKeyProfit, v -> s.autoCroesusDungeonKeyProfit = v)
+                        .when(() -> s.autoCroesusUseDungeonKey && !"AUTO".equalsIgnoreCase(s.autoCroesusDungeonKeyMode)));
 
                 items.add(ConfigItem.header("Displays", category));
                 items.add(ConfigItem.hudToggle("Auto Croesus HUD", "Live analysis of the current chest run.", category,
@@ -541,26 +534,12 @@ public class ConfigRegistry {
                 items.add(ConfigItem.button("Check For Updates", "Check Now", "Manually check and download mod updates based on the selected channel.", category, () -> {
                     ModUpdater.checkAndUpdate(false);
                 }));
-                // The flavor switcher lives in the cheat build only: the legit artifact
-                // must not be able to pull the cheat jar onto a user's machine.
-                if (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
-                    items.add(ConfigItem.button("Switch Flavor", "Install Other Flavor",
-                            "Downloads the legit bomboaddons build and removes this one on the next restart.", category, () -> {
-                        ModUpdater.installOtherFlavor();
-                    }));
-                }
                 items.add(ConfigItem.header("Running Flavor: " + me.bombo.bomboaddons.Constants.MOD_NAME
                         + " (" + me.bombo.bomboaddons.Constants.FLAVOR + " \u2022 "
                         + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "*.jar)", category));
-                items.add(ConfigItem.header("Mod ID hidden on join: always on (vanilla brand sent to servers).", category));
                 items.add(ConfigItem.toggle("No Obfuscate (strip \u00a7k)",
                         "Removes the scrambling style from chat messages and item lore, making the text behind it readable.",
                         category, () -> s.noObfuscate, v -> s.noObfuscate = v));
-                if (me.bombo.bomboaddons.Constants.CHEAT_FLAVOR) {
-                    items.add(ConfigItem.toggle("Stealth Mode",
-                            "Stop advertising your presence: no bridge online status, no egg publishing, vanilla brand on join.",
-                            category, () -> s.stealthMode, v -> s.stealthMode = v));
-                }
 
                 items.add(ConfigItem.header("Chat History", category));
                 items.add(ConfigItem.keybind("Chat History Key", "Optional keybind that opens /b chathistory.", category,

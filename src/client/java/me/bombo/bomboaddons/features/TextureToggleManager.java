@@ -219,13 +219,15 @@ public class TextureToggleManager {
          BomboConfig.CustomItemOverride cov = BomboConfig.get().customItemOverrides.get(sbId);
          if (cov != null && cov.material != null && !cov.material.trim().isEmpty()) {
             String matName = cov.material.trim().toLowerCase(java.util.Locale.ROOT).replace("minecraft:", "");
-            return Identifier.fromNamespaceAndPath("minecraft", matName);
+            String path = matName.startsWith("item/") ? matName : "item/" + matName;
+            return Identifier.fromNamespaceAndPath("minecraft", path);
          }
       } else if (regId != null && BomboConfig.get().customItemOverrides.containsKey(regId)) {
          BomboConfig.CustomItemOverride cov = BomboConfig.get().customItemOverrides.get(regId);
          if (cov != null && cov.material != null && !cov.material.trim().isEmpty()) {
             String matName = cov.material.trim().toLowerCase(java.util.Locale.ROOT).replace("minecraft:", "");
-            return Identifier.fromNamespaceAndPath("minecraft", matName);
+            String path = matName.startsWith("item/") ? matName : "item/" + matName;
+            return Identifier.fromNamespaceAndPath("minecraft", path);
          }
       }
       if (sbId == null) {
@@ -245,6 +247,14 @@ public class TextureToggleManager {
                      PropertyMap map = new PropertyMap(ImmutableMultimap.of("textures", new Property("textures", value)));
                      this.cachedItems.put(sbId, new GameProfile(UUID.randomUUID(), "bombo$fakeItem", map));
                   }
+               }
+            }
+            if (!id.contains("/")) {
+               int colon = id.indexOf(':');
+               if (colon > 0) {
+                  id = id.substring(0, colon) + ":item/" + id.substring(colon + 1);
+               } else {
+                  id = "minecraft:item/" + id;
                }
             }
             return Identifier.parse(id);

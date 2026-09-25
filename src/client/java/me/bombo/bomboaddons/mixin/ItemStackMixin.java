@@ -100,10 +100,12 @@ public abstract class ItemStackMixin {
       } catch (Throwable ignored) {}
 
       try {
-         me.bombo.bomboaddons.features.SupercraftHelper.appendTooltip(currentStack, lines);
+         lines = me.bombo.bomboaddons.features.SupercraftHelper.appendTooltip(currentStack, lines);
+         cir.setReturnValue(lines);
       } catch (Throwable ignored) {}
 
-      if (BomboConfig.get().lowestBin) {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s.lowestBin || s.showEstimatedValue || s.craftCostTooltip || s.npcPrice || s.showBazaarBuySell || s.showAvgLowestBin7d || s.showAvgLowestBin30d) {
          ItemStack stack = (ItemStack)(Object)this;
          String skyblockId = null;
          String rawId = SkyblockUtils.getInternalId(stack);
@@ -264,7 +266,6 @@ public abstract class ItemStackMixin {
                }
             }
 
-            BomboConfig.Settings s = BomboConfig.get();
             List<me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition> priceAdditions = new java.util.ArrayList<>();
             boolean shouldShowLowestBin = s.lowestBin;
             boolean isPet = skyblockId.startsWith("PET-") || skyblockId.contains(";");
@@ -394,7 +395,8 @@ public abstract class ItemStackMixin {
                   priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("gardenBlocked", Component.literal("§cBlocked by Garden Movement"), "BOTTOM", 999));
                }
 
-               me.bombo.bomboaddons.features.SupercraftHelper.applyAdditionsToLines(lines, priceAdditions);
+               lines = me.bombo.bomboaddons.features.SupercraftHelper.applyAdditionsToLines(lines, priceAdditions);
+               cir.setReturnValue(lines);
             } catch (Throwable ignored) {}
          }
       }

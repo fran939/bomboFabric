@@ -136,17 +136,24 @@ public class EggFinder {
          if (rawLoc == null || rawLoc.isEmpty()) {
             rawLoc = BomboaddonsClient.currentArea;
          }
-         String currentLoc = getSkyblockerLocationName(rawLoc);
-         if (!Objects.equals(lastLoc, currentLoc)) {
-            if (currentLoc != null) {
-               LOGGER.info("[EggFinder] Location updated to " + currentLoc + " (was " + lastLoc + ")");
-               lastLoc = currentLoc;
+         if (isNonEggArea(rawLoc)) {
+            if (lastLoc != null) {
+               LOGGER.info("[EggFinder] In non-egg area '" + rawLoc + "' - unsubscribing (was " + lastLoc + ")");
+               lastLoc = null;
                clearWaypoints();
-               EggWebSocket.updateSubscription(currentLoc);
-            } else {
-               // A reading we cannot map must not tear down a working subscription: that is what
-               // made /b egg report "Active Subscription Area: None" on islands we do support.
-               LOGGER.info("[EggFinder] Unmapped location '" + rawLoc + "' - keeping subscription " + lastLoc);
+               EggWebSocket.updateSubscription(null);
+            }
+         } else {
+            String currentLoc = getSkyblockerLocationName(rawLoc);
+            if (!Objects.equals(lastLoc, currentLoc)) {
+               if (currentLoc != null) {
+                  LOGGER.info("[EggFinder] Location updated to " + currentLoc + " (was " + lastLoc + ")");
+                  lastLoc = currentLoc;
+                  clearWaypoints();
+                  EggWebSocket.updateSubscription(currentLoc);
+               } else {
+                  LOGGER.info("[EggFinder] Unmapped location '" + rawLoc + "' - keeping subscription " + lastLoc);
+               }
             }
          }
 
@@ -171,7 +178,7 @@ public class EggFinder {
             }
          }
 
-         if (currentLoc != null && VALID_LOCATIONS.contains(currentLoc) && BomboConfig.get().eggFinder) {
+         if (lastLoc != null && VALID_LOCATIONS.contains(lastLoc) && BomboConfig.get().eggFinder) {
             // If Skyblocker is loaded, also sync directly with its EggFinder instance
             if (FabricLoader.getInstance().isModLoaded("skyblocker")) {
                try {
@@ -227,9 +234,9 @@ public class EggFinder {
                         }
                          if (added) {
                             if (EggWebSocket.isConnected()) {
-                               EggWebSocket.sendPublish(currentLoc, type.name, eggPos);
+                               EggWebSocket.sendPublish(lastLoc, type.name, eggPos);
                             }
-                            me.bombo.bomboaddons.IRCClient.broadcastEgg(currentLoc, type.name, eggPos);
+                            me.bombo.bomboaddons.IRCClient.broadcastEgg(lastLoc, type.name, eggPos);
                          }
                         break;
                      }
@@ -281,14 +288,28 @@ public class EggFinder {
 
                   eggType.collected = true;
                   synchronized(activeWaypoints) {
-                     // Remember the positions being retired so a re-discovery after a lobby hop does
-                     // not bring the already-collected egg back as a waypoint.
+                     EggWaypoint closest = null;
+                     double bestDistSq = Double.MAX_VALUE;
+                     Minecraft mc = Minecraft.getInstance();
+                     net.minecraft.world.phys.Vec3 playerPos = mc.player != null ? mc.player.position() : null;
                      for (EggWaypoint wp : activeWaypoints) {
                         if (wp.type == eggType) {
-                           markPositionCollected(eggType, wp.pos);
+                           if (playerPos != null) {
+                              double dSq = playerPos.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(wp.pos));
+                              if (dSq < bestDistSq) {
+                                 bestDistSq = dSq;
+                                 closest = wp;
+                              }
+                           } else {
+                              closest = wp;
+                              break;
+                           }
                         }
                      }
-                     activeWaypoints.removeIf((wpx) -> wpx.type == eggType);
+                     if (closest != null) {
+                        markPositionCollected(eggType, closest.pos);
+                        activeWaypoints.remove(closest);
+                     }
                   }
 
                   // Also remember where the egg actually was, even if we never highlighted it.
@@ -385,12 +406,8 @@ public class EggFinder {
                            EggType eggType = target.type;
                            eggType.collected = true;
                            synchronized(activeWaypoints) {
-                              for (EggWaypoint wp : activeWaypoints) {
-                                 if (wp.type == eggType) {
-                                    markPositionCollected(eggType, wp.pos);
-                                 }
-                              }
-                              activeWaypoints.removeIf((wpx) -> wpx.type == eggType);
+                              markPositionCollected(eggType, target.pos);
+                              activeWaypoints.remove(target);
                            }
 
                            LOGGER.info("Collected rabbit egg via proximity to " + eggType.name + " Egg!");
@@ -563,6 +580,14 @@ public class EggFinder {
       }
    }
 
+   public static boolean isNonEggArea(String rawLoc) {
+      if (rawLoc == null) return false;
+      String lower = rawLoc.toLowerCase(Locale.ROOT);
+      return lower.contains("private island") || lower.contains("garden") || lower.contains("limbo")
+            || lower.contains("lobby") || lower.contains("catacombs") || lower.contains("dungeon")
+            || lower.contains("kuudra");
+   }
+
    /**
     * Maps whatever {@code SkyblockUtils.getLocation()} reported onto the island names the hoppity
     * service uses.
@@ -584,13 +609,14 @@ public class EggFinder {
 
       // --- Private island / lobby / limbo: not hoppity locations at all ---------------------
       if (lower.contains("private island") || lower.equals("private")) return null;
-      if (lower.contains("limbo")) return null;
+      if (lower.contains("limbo") || lower.equals("lobby")) return null;
 
       // --- Dedicated hunts ------------------------------------------------------------------
       if (lower.contains("torrhus") || lower.contains("canyon")) return "Torrhus Canyon";
       if (lower.contains("bayou") || lower.contains("backwater")) return "Backwater Bayou";
       if (lower.contains("galatea")) return "Galatea";
       if (lower.contains("lotus") || lower.contains("atoll")) return "Lotus Atoll";
+      if (lower.contains("moonglade") || (lower.contains("marsh") && !lower.contains("mystic"))) return "Moonglade Marsh";
       if (lower.contains("jerry")) return "Jerry's Workshop";
       if (lower.contains("rift") || lower.contains("wizard tower")) return "The Rift";
 
@@ -661,7 +687,7 @@ public class EggFinder {
               || lower.contains("carnival") || lower.contains("colosseum") || lower.contains("graveyard")
               || lower.contains("wilderness") || lower.contains("forest") || lower.contains("mountain")
               || lower.contains("tavern") || lower.contains("library") || lower.contains("pet care")
-              || lower.contains("hub island") || lower.equals("lobby")) {
+              || lower.contains("hub island")) {
          return "Hub";
       }
 

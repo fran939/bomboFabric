@@ -1,5 +1,35 @@
 [
   {
+    "version": "26.2.28.43",
+    "date": "2026-09-24",
+    "changes": [
+      "Camera & Spectator: clamped camera FOV to options FOV (110) during /b cam and freecam via GameRendererMixin, eliminating sprint distortion and lerp lag",
+      "Auto Croesus: uses instabuy for keys/kismets and instasell for items; resolves live Bazaar prices for Bank/NPNG/Jerry books without hardcoded fallbacks; removed profit threshold gate; redesigned profit HUD to clean text with shadows and no background box",
+      "Dungeon Profit Tracking: deduplicates runs on disk/load; full itemized hover tooltip in /b profit; decoupled profit sync authentication completely from Hoppity egg auth (using UUID + Bombo API key)",
+      "Commands & Profile Viewer: separated /b area and /b subarea; added /b pv1, /b pv2, and /b pvconfig shortcuts; added gear settings button in Profile Viewer header; multi-profile support via all_profiles and ?profile= param",
+      "Storage & Eggs: purged empty slots from storageData on container open (eliminating phantom items like Backpack 10 Divan's Drill); added Island Chests tab to /b storage; added Spanish/localized chest titles; egg finder unsubscribes on private islands/garden/limbo/dungeons and removes only single closest waypoint on collection",
+      "Values & UI: EIV discrepancy fixes (reforge stones, blacksmith apply costs, etherwarp, power scrolls, tuners); added Insta Buy / Insta Sell / Both toggle; suppressed HUD on InventoryScreen; /b apihistory masks sensitive tokens; config sliders accept direct numeric entry; client brand cleanly reports mod ID"
+    ]
+  },
+  {
+    "version": "26.2.28.42",
+    "date": "2026-09-24",
+    "changes": [
+      "Freecam: interpolated per-frame movement using render delta partial ticks eliminates 20Hz jitter; FOV modifier clamped to 1.0 during freecam to avoid distortion",
+      "Flavors & Security: removed flavor switching entirely ('Switch Flavor' button and /b update switch); completely removed brand spoofing and stealth mode",
+      "Automation & Dungeons: AutoCroesus accounts for dungeon chest keys (live pricing/threshold, spent check); DungeonChestProfitHud displays coin + key breakdown; new dedicated /b profit GUI with run statistics, breakdown, and itemized runs; removed obsolete profit sync 404 endpoint and resolved 401s; ultimate enchantment prices resolved accurately",
+      "Auth & APIs: separated Aaron token (hysky.de WebSocket) and Bombo token (api.bombo.dpdns.org); Profile Viewer sends BomboAddons User-Agent and logs queries to ApiHistory; ApiHistoryScreen scrolls to latest entries initially",
+      "Fixes & QoL: chat history locraw tracking stamped correctly; /b area strips PUA unicode glyphs and prints Area / Subarea; storage chest waypoints render through walls and refresh on container close; EggFinder island mapping corrected; /b cmd terminates process tree on interrupt and supports text drag selection/copy/paste; AOTV model fallback fixed to diamond shovel; ported player head skin rendering fix; decoupled tooltip value additions; sliders support typed text with coin abbreviations; /b item suggests SkyBlock item IDs"
+    ]
+  },
+  {
+    "version": "26.2.28.41",
+    "date": "2026-09-24",
+    "changes": [
+      "Fixed tooltip rendering crashes caused by modifying immutable ItemStack tooltip lists: SupercraftHelper now copies lines into a mutable ArrayList before applying configured additions, and the ItemStack mixin returns the updated list safely"
+    ]
+  },
+  {
     "version": "26.2.28.40",
     "date": "2026-09-24",
     "changes": [

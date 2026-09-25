@@ -472,6 +472,11 @@ public final class ProfileViewerScreen extends Screen {
 				graphics, this.font, panelX, panelY, mouseX, mouseY, topTabEntries(), this.tab
 			);
 
+			int gearX = panelX + panelW - 14;
+			int gearY = panelY - 14;
+			boolean gearHover = mouseX >= gearX && mouseX <= gearX + 12 && mouseY >= gearY && mouseY <= gearY + 12;
+			PvDraw.text(graphics, this.font, "⚙", gearX, gearY, gearHover ? PvDraw.COLOR_ACCENT : PvDraw.COLOR_MUTED);
+
 			Object[] left = this.tab.leftTabs();
 			if (left.length > 0) {
 				List<IconButtonBar.Entry> side = sideTabEntries();
@@ -1179,6 +1184,11 @@ public final class ProfileViewerScreen extends Screen {
 		if (profileTip != null && !this.profileMenuOpen) {
 			PvTooltip.drawStyled(g, this.font, profileTip, mouseX, mouseY, this.width, this.height);
 		}
+		int gearX = panelX + panelW - 14;
+		int gearY = panelY - 14;
+		if (mouseX >= gearX && mouseX <= gearX + 12 && mouseY >= gearY && mouseY <= gearY + 12) {
+			PvTooltip.drawStyled(g, this.font, List.of(PvTooltip.Line.title("Profile Viewer Settings (/b pvconfig)", 0xFFFFD700)), mouseX, mouseY, this.width, this.height);
+		}
 		if (this.profileMenuOpen && profileMenuCombinedHover(mouseX, mouseY)) {
 			return;
 		}
@@ -1802,6 +1812,13 @@ public final class ProfileViewerScreen extends Screen {
 		}
 		double mx = click.x();
 		double my = click.y();
+		int gearX = this.panelXCache + this.panelWCache - 14;
+		int gearY = this.panelYCache - 14;
+		if (mx >= gearX && mx <= gearX + 12 && my >= gearY && my <= gearY + 12) {
+			Minecraft mc = Minecraft.getInstance();
+			mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboConfigScreen(this, "Profile Viewer")));
+			return true;
+		}
 		if (clickProfileFooter(mx, my)) {
 			return true;
 		}

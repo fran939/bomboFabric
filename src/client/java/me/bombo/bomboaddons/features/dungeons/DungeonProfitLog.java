@@ -6,7 +6,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
-import me.bombo.bomboaddons.cheat.automation.AutoCroesus;
 import me.bombo.bomboaddons.LowestBinManager;
 import me.bombo.bomboaddons.util.ApiHistory;
 import me.bombo.bomboaddons.util.BomboApiUrl;
@@ -149,6 +148,17 @@ public final class DungeonProfitLog {
             rec.items.addAll(items);
         }
 
+        for (int i = runs.size() - 1; i >= Math.max(0, runs.size() - 20); i--) {
+            RunRecord prev = runs.get(i);
+            if (prev != null && Math.abs(rec.timestamp - prev.timestamp) < 300_000L
+                    && prev.floor.equalsIgnoreCase(rec.floor)
+                    && prev.chest.equalsIgnoreCase(rec.chest)
+                    && prev.cost == rec.cost
+                    && prev.netProfit == rec.netProfit) {
+                return;
+            }
+        }
+
         runs.add(rec);
         while (runs.size() > MAX_RUNS) {
             RunRecord removed = runs.remove(0);
@@ -169,6 +179,21 @@ public final class DungeonProfitLog {
     public static synchronized int getSyncedCount() {
         ensureLoaded();
         return syncedCount;
+    }
+
+    public static int floorSortKey(String floor) {
+        if (floor == null) return 999;
+        String f = floor.trim().toUpperCase(java.util.Locale.ROOT);
+        if (f.startsWith("F") && f.length() > 1) {
+            try { return 100 + Integer.parseInt(f.substring(1)); } catch (NumberFormatException ignored) {}
+        }
+        if (f.startsWith("M") && f.length() > 1) {
+            try { return 200 + Integer.parseInt(f.substring(1)); } catch (NumberFormatException ignored) {}
+        }
+        if (f.startsWith("T") && f.length() > 1) {
+            try { return 300 + Integer.parseInt(f.substring(1)); } catch (NumberFormatException ignored) {}
+        }
+        return 999;
     }
 
     public static synchronized int getUnsyncedCount() {
@@ -209,10 +234,29 @@ public final class DungeonProfitLog {
                     List<RunRecord> loadedRuns = GSON.fromJson(reader, type);
                     if (loadedRuns != null) {
                         runs.clear();
-                        runs.addAll(loadedRuns);
+                        for (RunRecord r : loadedRuns) {
+                            if (r == null) continue;
+                            boolean isDup = false;
+                            for (RunRecord existing : runs) {
+                                if (r.floor.equalsIgnoreCase(existing.floor)
+                                        && r.chest.equalsIgnoreCase(existing.chest)
+                                        && r.cost == existing.cost
+                                        && r.netProfit == existing.netProfit
+                                        && Math.abs(r.timestamp - existing.timestamp) < 300_000L) {
+                                    isDup = true;
+                                    break;
+                                }
+                            }
+                            if (!isDup) {
+                                runs.add(r);
+                            }
+                        }
                         syncedCount = 0;
                         for (RunRecord run : runs) {
                             if (run.synced) syncedCount++;
+                        }
+                        if (runs.size() < loadedRuns.size()) {
+                            save();
                         }
                     }
                 }
@@ -254,6 +298,9 @@ public final class DungeonProfitLog {
                 JsonObject payload = new JsonObject();
                 Minecraft mc = Minecraft.getInstance();
                 payload.addProperty("ign", mc.getUser() != null ? mc.getUser().getName() : "unknown");
+                if (mc.getUser() != null && mc.getUser().getProfileId() != null) {
+                    payload.addProperty("uuid", mc.getUser().getProfileId().toString());
+                }
                 payload.addProperty("modVersion", me.bombo.bomboaddons.BomboaddonsClient.MOD_VERSION);
                 JsonArray array = new JsonArray();
                 for (RunRecord run : pending) {
@@ -266,13 +313,16 @@ public final class DungeonProfitLog {
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.BomboaddonsClient.MOD_VERSION);
+                if (mc.getUser() != null && mc.getUser().getProfileId() != null) {
+                    conn.setRequestProperty("X-Player-UUID", mc.getUser().getProfileId().toString());
+                }
+                String apiKey = me.bombo.bomboaddons.features.auth.BomboApiKeyManager.getApiKey();
+                if (apiKey != null && !apiKey.isEmpty()) {
+                    conn.setRequestProperty("X-Api-Key", apiKey);
+                }
                 String token = me.bombo.bomboaddons.eggfinder.EggAuth.getBomboToken();
                 if (token != null && !token.isEmpty()) {
                     conn.setRequestProperty("Authorization", "Bearer " + token);
-                } else {
-                    // The upload endpoint is token-gated, so a missing token is the one failure that
-                    // looks like "nothing happened". Record it so /b apihistory explains why.
-                    ApiHistory.note("POST", url, 401, "no Bombo token - run /b egg auth to authenticate");
                 }
                 conn.setConnectTimeout(8000);
                 conn.setReadTimeout(10000);
@@ -377,7 +427,7 @@ public final class DungeonProfitLog {
         if (json.has("floors") && json.get("floors").isJsonObject()) {
             JsonObject floors = json.getAsJsonObject("floors");
             List<String> keys = new ArrayList<>(floors.keySet());
-            keys.sort((a, b) -> Integer.compare(AutoCroesus.floorSortKey(a), AutoCroesus.floorSortKey(b)));
+            keys.sort((a, b) -> Integer.compare(floorSortKey(a), floorSortKey(b)));
             for (String key : keys) {
                 JsonObject floor = floors.getAsJsonObject(key);
                 long profit = floor.has("profit") ? floor.get("profit").getAsLong() : 0L;
