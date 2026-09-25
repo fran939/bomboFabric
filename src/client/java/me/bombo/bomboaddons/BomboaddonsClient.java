@@ -466,6 +466,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       ClientTickEvents.END_CLIENT_TICK.register(client -> {
          try {
             me.bombo.bomboaddons.features.StorageChestWaypoints.onClientTick(client);
+            me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.tick();
          } catch (Throwable ignored) {
          }
       });

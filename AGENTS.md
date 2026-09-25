@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.43` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.44` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,10 +103,17 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.43`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.44`** (ready for in-game testing).
 
 > [!NOTE]
-> ### ✅ COMPLETED & COMPILED IN v26.2.28.43 (Ready for In-Game Testing)
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.44 (Ready for In-Game Testing)
+>
+> 1. **Skyblocker Storage Overlay Port:** Complete port of Skyblocker's multi-grid storage overlay, replacing `/storage`, ender chest, and backpack menus with a compact, searchable multi-grid interface (`StorageOverlayScreen`, `BackpackGridWidget`, `StorageOverlayScreenHandler`, `BackpackPreview`).
+> 2. **Multi-Grid Item Search:** Live item search with instant filtering across all ender chests and backpacks simultaneously.
+> 3. **Configurable Layout & Settings:** Configurable storages per row, backpack columns, remember search query, remember last opened storage, and mouse cursor position preservation across switches (`dontResetMouseInStorageOverlay`).
+> 4. **Live Inventory Synchronization:** Dynamic slot updates and real-time container item caching with full NBT, base64, and custom player head texture support.
+>
+> ### ✅ COMPLETED IN v26.2.28.43
 >
 > 1. **Camera & Spectator FOV Clamping:** Clamped camera FOV to options FOV (110) during `/b cam (user)` and freecam via `GameRendererMixin`, eliminating speed FOV distortion and dynamic lerp lag.
 > 2. **Auto Croesus Instabuy/Instasell & Pricing:** Uses instabuy for keys/kismets and instasell for items; resolves live Bazaar prices for Bank, No Pain No Gain, and Jerry books without hardcoded fallbacks.

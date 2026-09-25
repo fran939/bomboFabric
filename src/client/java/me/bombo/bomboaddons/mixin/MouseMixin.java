@@ -30,6 +30,23 @@ public abstract class MouseMixin {
    private double accumulatedDX;
    @Shadow
    private double accumulatedDY;
+   @Shadow
+   private double xpos;
+   @Shadow
+   private double ypos;
+
+   @Inject(method = "releaseMouse", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/InputConstants;grabOrReleaseMouse(Lcom/mojang/blaze3d/platform/Window;IDD)V", shift = At.Shift.AFTER))
+   private void dontResetMouseInStorageOverlay(CallbackInfo ci) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.gui.screen() instanceof me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen) {
+         org.joml.Vector2dc position = me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getPreviousMousePosition();
+         if (position != null) {
+            this.xpos = position.x();
+            this.ypos = position.y();
+         }
+         org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().handle(), this.xpos, this.ypos);
+      }
+   }
 
    @Inject(
       method = {"turnPlayer"},

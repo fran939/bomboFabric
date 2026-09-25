@@ -426,6 +426,11 @@ public class BomboConfig {
       public boolean storagePreview = true;
       public boolean storagePreviewDebug = false;
       public boolean storageOverlay = false;
+      public int storageOverlayStoragesPerRow = 3;
+      public int storageOverlayBackpackWidth = 9;
+      public boolean storageOverlayRememberSearch = false;
+      public boolean storageOverlayRememberOpened = false;
+      public boolean storageOverlayDoNotResetCursor = true;
       public boolean preventSlotSwapOnGuiKeybind = true;
       public boolean inventorySlotSwapEnabled = true;
       public String inventorySlotSwapKey = "X";

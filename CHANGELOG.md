@@ -1,5 +1,13 @@
 # BomboAddons Changelog
 
+## [26.2.28.44] - 2026-09-25 (Beta)
+
+### Storage Overlay
+- **Skyblocker Storage Overlay Port:** Complete port of Skyblocker's multi-grid storage overlay, replacing `/storage`, ender chest, and backpack menus with a searchable, compact multi-grid interface.
+- **Multi-Grid Item Search:** Live item search with instant filtering across all ender chests and backpacks simultaneously.
+- **Configurable Layout & Settings:** Configurable storages per row, backpack columns, remember search query, remember last opened storage, and mouse cursor position preservation.
+- **Live Inventory Synchronization:** Dynamic slot updates and real-time container item caching with full NBT, base64, and custom player head texture support.
+
 ## [26.2.28.43] - 2026-09-24 (Beta)
 
 ### Camera & Spectator

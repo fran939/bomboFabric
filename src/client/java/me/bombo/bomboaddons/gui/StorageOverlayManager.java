@@ -173,7 +173,7 @@ public class StorageOverlayManager {
       return def;
    }
 
-   private static ItemStack parseItemStack(String nbtStr, RegistryOps<Tag> ops) {
+   public static ItemStack parseItemStack(String nbtStr, RegistryOps<Tag> ops) {
       ItemStack cached = nbtStackCache.get(nbtStr);
       if (cached != null) return cached;
       try {
