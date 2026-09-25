@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.44",
+    "date": "2026-09-25",
+    "changes": [
+      "Storage Overlay: full port of Skyblocker multi-grid storage overlay, replacing /storage, ender chest, and backpack menus with a compact searchable multi-grid interface",
+      "Multi-Grid Search: live item query filtering across all ender chests and backpacks simultaneously",
+      "Configurable Settings: customizable storages per row, backpack columns, remember search, remember last opened backpack, and mouse cursor position preservation",
+      "Live Inventory Synchronization: dynamic slot updates, container item caching with NBT, base64, and custom player head texture support"
+    ]
+  },
+  {
     "version": "26.2.28.43",
     "date": "2026-09-24",
     "changes": [

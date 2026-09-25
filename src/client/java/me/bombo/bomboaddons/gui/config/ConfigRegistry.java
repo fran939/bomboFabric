@@ -888,6 +888,16 @@ public class ConfigRegistry {
                     items.add(ConfigItem.sliderFloat("  Rarity Opacity", "Opacity alpha of the rarity highlight color.", category, 0.05f, 1.0f, 0.05f, "", () -> s.backpackPreviewRarityAlpha > 0 ? s.backpackPreviewRarityAlpha : 0.35f, v -> s.backpackPreviewRarityAlpha = v));
                 }
                 items.add(ConfigItem.toggle("Inventory / HUD Rarity Background", "Displays rarity color tint in normal inventory container slots and on Armor / Equipment / Inventory HUDs.", category, () -> s.inventoryItemRarityBg, v -> s.inventoryItemRarityBg = v));
+
+                items.add(ConfigItem.header("Storage Overlay", category));
+                items.add(ConfigItem.toggle("Storage Overlay", "Replaces /storage, ender chest, and backpack menus with a compact, searchable multi-grid overlay.", category, () -> s.storageOverlay, v -> s.storageOverlay = v));
+                if (s.storageOverlay) {
+                    items.add(ConfigItem.sliderInt("  Storages Per Row", "Number of storage containers to show per row in the overlay grid.", category, 1, 6, 1, "", () -> s.storageOverlayStoragesPerRow > 0 ? s.storageOverlayStoragesPerRow : 3, v -> s.storageOverlayStoragesPerRow = v));
+                    items.add(ConfigItem.sliderInt("  Backpack Columns", "Number of item columns per storage preview.", category, 1, 9, 1, "", () -> s.storageOverlayBackpackWidth > 0 ? s.storageOverlayBackpackWidth : 9, v -> s.storageOverlayBackpackWidth = v));
+                    items.add(ConfigItem.toggle("  Remember Search", "Remembers your search query across opening the storage overlay.", category, () -> s.storageOverlayRememberSearch, v -> s.storageOverlayRememberSearch = v));
+                    items.add(ConfigItem.toggle("  Remember Opened", "Re-opens your previously selected backpack when using /storage.", category, () -> s.storageOverlayRememberOpened, v -> s.storageOverlayRememberOpened = v));
+                    items.add(ConfigItem.toggle("  Preserve Cursor Position", "Prevents the mouse cursor from resetting to screen center when switching between storages.", category, () -> s.storageOverlayDoNotResetCursor, v -> s.storageOverlayDoNotResetCursor = v));
+                }
             }
 
             case "Ordered Waypoints" -> {

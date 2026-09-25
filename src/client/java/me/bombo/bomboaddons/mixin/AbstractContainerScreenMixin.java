@@ -145,9 +145,6 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          }
       }
 
-      if (BomboConfig.get().storageOverlay) {
-         me.bombo.bomboaddons.gui.StorageOverlayManager.onContainerInit((AbstractContainerScreen)(Object)this, this.width, this.height, this.leftPos, this.topPos, this.imageWidth, this.imageHeight);
-      }
 
       if (StopwatchManager.isActive()) {
          int swX = 10;
@@ -368,10 +365,6 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          cir.setReturnValue(true);
          return;
       }
-      if (me.bombo.bomboaddons.gui.StorageOverlayManager.mouseClicked(event, this.width, this.height)) {
-         cir.setReturnValue(true);
-         return;
-      }
 
       if (me.bombo.bomboaddons.features.hud.EquipmentHud.onMouseClick(event.x(), event.y(), event.button())) {
          cir.setReturnValue(true);
@@ -528,10 +521,6 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       cancellable = true
    )
    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-      if (me.bombo.bomboaddons.gui.StorageOverlayManager.keyPressed(event)) {
-         cir.setReturnValue(true);
-         return;
-      }
 
       int focusKey = ClickLogic.getKeyCode(BomboConfig.get().itemListFocusKey);
       if (focusKey != -1 && event.key() == focusKey) {
@@ -770,16 +759,12 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             }
          } catch (Throwable ignored) {}
       }
-      if (BomboConfig.get().storageOverlay && me.bombo.bomboaddons.gui.StorageOverlayManager.isOverlayOpen) {
-         graphics.fill(0, 0, this.width, this.height, 0xD0101218);
-      } else {
-         if (!(((Object)this) instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen)) {
-            ItemListOverlay.render(graphics, Minecraft.getInstance().font, mouseX, mouseY);
-         }
+      if (!(((Object)this) instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen)) {
+         ItemListOverlay.render(graphics, Minecraft.getInstance().font, mouseX, mouseY);
+      }
 
-         if (StopwatchManager.isActive()) {
-            StopwatchManager.drawStopwatch(graphics, 10, 200);
-         }
+      if (StopwatchManager.isActive()) {
+         StopwatchManager.drawStopwatch(graphics, 10, 200);
       }
 
       now = System.currentTimeMillis();
@@ -789,13 +774,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          AutoCroesus.onCheckGuiTick((AbstractContainerScreen)(Object)this);
       }
       AutoCroesusHud.renderInContainer(graphics);
-      // All-chests value overlay (contents + profit per chest). Render hook was previously
-      // orphaned - nothing called it - so the panel never appeared.
       me.bombo.bomboaddons.cheat.dungeons.DungeonChestProfitHud.onScreenRender(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY);
-
-      if (BomboConfig.get().storageOverlay) {
-         me.bombo.bomboaddons.gui.StorageOverlayManager.renderOverlay(graphics, Minecraft.getInstance().font, mouseX, mouseY, this.width, this.height);
-      }
 
       if (BomboConfig.get().storagePreview) {
          if (now - lastStoragePreviewTickTime >= 100L) {
@@ -893,5 +872,18 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          return "hub";
       }
       return null;
+   }
+
+   @Inject(
+      method = {"isHovering(Lnet/minecraft/world/inventory/Slot;DD)Z"},
+      at = {@At("RETURN")},
+      cancellable = true
+   )
+   private void onIsHoveringSlot(Slot slot, double mouseX, double mouseY, CallbackInfoReturnable<Boolean> cir) {
+      if (cir.getReturnValueZ() && (Object) this instanceof me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen screen) {
+         if (!screen.isSlotHoverAllowed(slot, mouseX, mouseY)) {
+            cir.setReturnValue(false);
+         }
+      }
    }
 }
