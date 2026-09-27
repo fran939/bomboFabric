@@ -19,7 +19,9 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,7 +104,8 @@ public final class RtcaChatFormatter {
       int runsToMax,
       long xpForNextLevel,
       double boostTotal,
-      String boostLabel
+      String boostLabel,
+      List<String> assumed
    ) {
    }
 
@@ -264,17 +267,28 @@ public final class RtcaChatFormatter {
 
       tip.append(Component.literal("\n§7• Boost Breakdown: ").withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
       if (info.boostLabel() == null || info.boostLabel().isEmpty()) {
-         tip.append(Component.literal("§8no active boosts").withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY)));
+         tip.append(Component.literal("§8none from your profile").withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY)));
       } else {
          tip.append(Component.literal("§d+" + Math.round(info.boostTotal() * 100) + "% total")
             .withStyle(Style.EMPTY.withColor(ChatFormatting.LIGHT_PURPLE)));
          for (String part : info.boostLabel().split("\\|")) {
             String trimmed = part.trim();
             if (trimmed.isEmpty()) continue;
-            tip.append(Component.literal("\n   §8- §7" + trimmed + "§8: §d+"
-               + Math.round(info.boostTotal() * 100) + "%")
+            tip.append(Component.literal("\n   §8- §7" + trimmed)
                .withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
          }
+      }
+
+      // Boosts the API cannot see. They are deliberately counted as zero rather than guessed, so
+      // say so instead of letting the tooltip look complete when it is not.
+      if (info.assumed() != null && !info.assumed().isEmpty()) {
+         StringBuilder names = new StringBuilder();
+         for (String key : info.assumed()) {
+            if (names.length() > 0) names.append(", ");
+            names.append(friendlyAssumed(key));
+         }
+         tip.append(Component.literal("\n§8• Not counted: " + names + "\n   §8(unknown from the API - not assumed)")
+            .withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_GRAY)));
       }
 
       return tip;
@@ -363,14 +377,20 @@ public final class RtcaChatFormatter {
             if (xpForNext <= 0) xpForNext = (long) readDouble(node, "xpForNextLevel");
             double boostTotal = 0;
             String boostLabel = "";
+            List<String> assumed = new ArrayList<>();
             if (node.has("boost") && node.get("boost").isJsonObject()) {
                JsonObject boost = node.getAsJsonObject("boost");
                boostTotal = readDouble(boost, "total");
                if (boost.has("label") && !boost.get("label").isJsonNull()) {
                   boostLabel = boost.get("label").getAsString();
                }
+               if (boost.has("assumed") && boost.get("assumed").isJsonArray()) {
+                  for (JsonElement element : boost.getAsJsonArray("assumed")) {
+                     assumed.add(element.getAsString());
+                  }
+               }
             }
-            classes.put(id, new ClassInfo(label, exactLevel, maxed, xpPerRun, runsToMax, xpForNext, boostTotal, boostLabel));
+            classes.put(id, new ClassInfo(label, exactLevel, maxed, xpPerRun, runsToMax, xpForNext, boostTotal, boostLabel, assumed));
          }
       }
 
@@ -401,6 +421,24 @@ public final class RtcaChatFormatter {
    // --------------------------------------------------------------------------
    // Small helpers
    // --------------------------------------------------------------------------
+
+   private static String friendlyAssumed(String key) {
+      if (key == null) return "";
+      switch (key.toLowerCase(Locale.ROOT)) {
+         case "hecatomb":
+            return "Hecatomb";
+         case "scarf":
+            return "Scarf accessory";
+         case "graduate":
+            return "Catacombs Graduate";
+         case "mayor":
+            return "Mayor";
+         case "global":
+            return "Global multiplier";
+         default:
+            return key;
+      }
+   }
 
    private static String stripped(String raw) {
       return raw.replaceAll("(?i)§[0-9a-fk-or]", "").replaceAll("[\\u200B-\\u200D\\uFEFF]", "").trim();

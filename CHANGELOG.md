@@ -1,5 +1,14 @@
 # BomboAddons Changelog
 
+## [26.2.28.46] - 2026-09-27 (Beta)
+
+### RTCA Boost Honesty Fix
+- **No More Invented Boosts:** RTCA previously defaulted three boosts it cannot actually see to their *maximum* — Hecatomb X (+4%), Grimoire scarf (+6%) and Catacombs Graduate (+20%) — inflating every class to a flat +40%. Real player lookups now count those as **0** and list them as "not counted".
+- **Verified perks only:** The only boost reported for a player is what Hypixel actually exposes (the five class essence perks, read from `player_data.perks`). For bomboclas that is +10% per class, not +40%.
+- **Impact:** M7 XP/run dropped 420,000 -> 330,000 and the CA50 estimate rose 1,070 -> 1,361 runs, which is the honest figure without unverifiable gear.
+- **Tooltip Honesty:** Hover tooltips now end with a "Not counted: Hecatomb, Scarf accessory, Catacombs Graduate, Mayor" line explaining those are unknown rather than assumed.
+- **Calculator Unchanged:** `/dungeons` is an explicit "what if" tool and still opens with best-case defaults (Hecatomb X, Grimoire, Graduate 20%); it now opts in via `assumeBestCase` rather than being the silent default everywhere.
+
 ## [26.2.28.45] - 2026-09-27 (Beta)
 
 ### RTCA Interactive Chat

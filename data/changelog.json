@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.46",
+    "date": "2026-09-27",
+    "changes": [
+      "RTCA Boost Honesty: stopped defaulting unverifiable boosts to their maximum - Hecatomb X (+4%), Grimoire scarf (+6%) and Catacombs Graduate (+20%) were being invented on every real player lookup, inflating each class to a flat +40%",
+      "Verified Boosts Only: RTCA now reports only what Hypixel actually exposes (the five class essence perks from player_data.perks); unverifiable gear is counted as 0 and listed as not counted",
+      "Impact: M7 XP/run corrected 420,000 to 330,000 and the Class Average 50 estimate for bomboclas corrected 1,070 to 1,361 runs",
+      "Tooltip Honesty: class hover tooltips now end with a 'Not counted' line naming Hecatomb, Scarf, Catacombs Graduate and Mayor as unknown rather than assumed",
+      "Calculator Preserved: /dungeons still opens with best-case defaults via an explicit assumeBestCase opt-in instead of being the silent default on every endpoint"
+    ]
+  },
+  {
     "version": "26.2.28.45",
     "date": "2026-09-27",
     "changes": [
