@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.45",
+    "date": "2026-09-27",
+    "changes": [
+      "RTCA Hover Chat: BomboBot's flat [RTCA50] line is intercepted in ChatMixin and rebuilt as interactive MutableComponents; each class is a hoverable chip showing runs to max, XP to next level, XP per run, and the full boost breakdown (perk tier, Hecatomb, scarf, Graduate, Global, Mayor)",
+      "RTCA Exact Class Average: class levels and the class average now show exact fractional values (e.g. Archer 48.92, CA 48.47) instead of truncating to integers",
+      "RTCA Formatting: removed the trailing flat '|  | Boost: ...' block from the in-game chat line; the header is now compact and all boost detail lives in the hover tooltips",
+      "Server: /command/rtca and /command/dungeons expose exactLevel, xpToNextLevel, xpPerRun, runsToMax and a per-class boost breakdown; API responses are cached 60s per player in the client"
+    ]
+  },
+  {
     "version": "26.2.28.44",
     "date": "2026-09-25",
     "changes": [

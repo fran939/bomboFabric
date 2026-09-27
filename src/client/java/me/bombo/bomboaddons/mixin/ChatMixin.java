@@ -181,6 +181,20 @@ public abstract class ChatMixin implements IChatComponent {
                return;
             }
 
+            // Replace BomboBot's flat "[RTCA50]" line with hoverable per-class components.
+            Component rtcaComp = me.bombo.bomboaddons.features.dungeons.RtcaChatFormatter.processIncomingChat(raw);
+            if (rtcaComp != null) {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, false, "RTCA");
+               ci.cancel();
+               isFormattingMessage.set(true);
+               try {
+                  this.addMessage(rtcaComp, signature, source, tag);
+               } finally {
+                  isFormattingMessage.set(false);
+               }
+               return;
+            }
+
             if (me.bombo.bomboaddons.ChatModifier.shouldHide(raw)) {
                me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, me.bombo.bomboaddons.features.chat.ChatHistoryTracker.detectCategory(raw));
                ci.cancel();

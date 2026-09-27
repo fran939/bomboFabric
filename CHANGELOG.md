@@ -1,5 +1,18 @@
 # BomboAddons Changelog
 
+## [26.2.28.45] - 2026-09-27 (Beta)
+
+### RTCA Interactive Chat
+- **Hoverable Class Chips:** BomboBot's flat `[RTCA50]` chat line is intercepted in `ChatMixin` and rebuilt from `/command/rtca/<player>` as `MutableComponent` text. Each class becomes a coloured, hoverable chip (gold when maxed).
+- **Per-Class Tooltips:** Hovering a class shows its exact level, runs to max that class, XP remaining to the next level, XP per run, and the full boost breakdown (essence perk tier, Hecatomb, scarf accessory, Graduate, Global, Mayor multiplier).
+- **Exact Class Average:** Class levels and the class average now render as exact fractional values (`Archer 48.92`, `CA 48.47`) instead of truncating to integers.
+- **Clean Chat Line:** Dropped the trailing `|  | Boost: Archer: +40% | ...` block that made the line unreadable; all boost detail moved into the tooltips.
+- **Caching:** API responses are cached per player for 60s, so repeated `!rtca` prints cost one request.
+
+### Server (`bomboapi`)
+- `/command/rtca` and `/command/dungeons` now expose `exactLevel`, `xpToNextLevel` (remaining, not total), `xpPerRun`, `runsToMax` and a per-class `boost` object with a human-readable label.
+- Added `classAverageExact` so consumers can show the true fractional class average.
+
 ## [26.2.28.44] - 2026-09-25 (Beta)
 
 ### Storage Overlay
