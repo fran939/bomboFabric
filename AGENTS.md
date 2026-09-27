@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.44` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.46` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,10 +103,16 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.44`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.46`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.46 / v26.2.28.45 (Ready for In-Game Testing)
+>
+> 1. **Interactive RTCA Chat (v26.2.28.45):** BomboBot's flat `[RTCA50]` chat string is intercepted in [`ChatMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java) and rebuilt as hoverable `MutableComponent` chips by [`RtcaChatFormatter`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/dungeons/RtcaChatFormatter.java). Per-class tooltips show exact level, runs to max, XP to next level, XP/run and the boost breakdown. Async fetch on daemon thread `Bombo-RtcaFetch`, 60s per-player cache, `IN_FLIGHT` guard, records to `ChatHistoryTracker` with tag `"RTCA"`.
+> 2. **RTCA Boost Honesty Fix (v26.2.28.46):** The server was defaulting three boosts it cannot see (Hecatomb X, Grimoire scarf, Catacombs Graduate) to their **maximum**, inflating every class to a flat +40%. `computeClassAverage` now counts only what Hypixel actually exposes (the five essence perks from `player_data.perks`) and returns an `assumed[]` list for the rest. Only the `/dungeons` HTML calculator opts into best case via `{ assumeBestCase: true }`. Verified for `bomboclas`: total boost +40% -> **+10%**, M7 XP/run 420,000 -> **330,000**, CA50 runs 1,070 -> **1,361**.
+> 3. **⚠️ Neither the hover rendering nor the async fetch path has been seen in-game** — see the test queue below.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.44 (Ready for In-Game Testing)
 >
 > 1. **Skyblocker Storage Overlay Port:** Complete port of Skyblocker's multi-grid storage overlay, replacing `/storage`, ender chest, and backpack menus with a compact, searchable multi-grid interface ([`StorageOverlayScreen`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java), [`SearchableGridWidget`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/SearchableGridWidget.java), [`StorageOverlayScreenHandler`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreenHandler.java), [`BackpackPreview`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java)).
@@ -141,7 +147,15 @@ For detailed architecture, design decisions, and backend documentation, refer to
 >
 > Nothing below is verified in-game unless explicitly marked tested. Do not mark an item tested just because compilation passed.
 >
-> **Phase 1 — Storage Overlay (`v26.2.28.44`, highest priority)**
+> **Phase 0 — RTCA Chat Hover (`v26.2.28.46`, newest, least verified)**
+> 1. In game chat (or Discord->in-game bridge) trigger `!rtca` for a player with dungeon data. Confirm the flat `[RTCA50]` line is replaced by a chip line instead of appearing twice.
+> 2. Hover a class chip. Confirm the tooltip shows exact level (e.g. `Archer 48.92`), runs to max, **XP remaining** to next level, XP/run and a boost breakdown.
+> 3. Confirm the boost total is the honest one: only the five essence perks should be counted. The tooltip must end with a `Not counted: Hecatomb, Scarf accessory, Catacombs Graduate, Mayor` line.
+> 4. Confirm class average renders fractionally (`CA 48.47`), not `48`.
+> 5. On the very first hover the line may briefly show `loading class details...` while the daemon fetch runs — verify it fills in and that repeated `!rtca` calls within 60s do not re-request.
+> 6. If nothing ever loads, check the log for the fetch thread and confirm the API key header (`BomboApiKeyManager.getApiKey()`) is present on `/command/rtca/<player>`.
+>
+> **Phase 1 — Storage Overlay (`v26.2.28.44`)**
 > 1. In `/b` -> Storage, enable `Storage Overlay`.
 > 2. Run `/storage` (or open Ender Chest / Backpack); confirm the multi-grid screen opens with all unlocked containers.
 > 3. Type in the search box; confirm real-time highlight filtering across all containers simultaneously.
@@ -349,10 +363,11 @@ For detailed architecture, design decisions, and backend documentation, refer to
 
 ---
 
-## 7. Key Architecture & Ported Files (v26.2.28.44 & v26.2.28.43)
+## 7. Key Architecture & Ported Files (v26.2.28.46 -> v26.2.28.43)
 
 | File | Purpose |
 | :--- | :--- |
+| [`features/dungeons/RtcaChatFormatter.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/dungeons/RtcaChatFormatter.java) | Turns BomboBot's flat `[RTCA50]` chat line into hoverable class chips; owns the `/command/rtca` fetch, the 60s cache and the daemon thread. Shared code, ships in both jars. |
 | [`features/storageoverlay/StorageOverlayScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java) | Main storage multi-grid overlay GUI replacing `/storage`, ender chests, and backpacks. |
 | [`features/storageoverlay/SearchableGridWidget.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/SearchableGridWidget.java) | Search box and multi-grid item search filter logic. |
 | [`features/storageoverlay/StorageOverlayScreenHandler.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreenHandler.java) | Screen handler mapping container slots to the overlay grid. |

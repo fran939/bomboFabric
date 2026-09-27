@@ -1,5 +1,14 @@
 # BomboAddons Changelog
 
+## [26.2.28.47] - 2026-09-27 (Beta)
+
+### Documentation
+- **Handoff Docs Updated:** `AGENTS.md` and `docs/HANDOFF_KNOWLEDGE.md` now cover v26.2.28.45/46 and carry an explicit Tested vs. Untested split.
+- **New Priority 0 Test Queue:** in-game verification of the RTCA hover chips (replacement not duplication, exact levels, honest +10% boost with the "Not counted" line, fractional CA, the `loading class details...` first-hover placeholder and the 60s cache).
+- **Server Knowledge Captured:** the `exactLevel` = `level + into/need` fix (because `classProgress().into` is *remaining* XP), the self-referential `c.boost.label` crash that 502'd `/api/v1/dungeons`, the `xpForNextLevel`-is-a-total trap, the two false alarms not to "fix" (stale `cold_efficiency: 1` snapshot; the `assumeBestCase` code-path difference that looked like caching), and the MC 26.2 API notes (`Style.EMPTY`, no `ChatFormatting.getChar()`).
+- **Quirks Recorded:** the `bombofabric` -> `bomboFabric` remote rename, the fact that `docs/CODE_STYLE.md` does not exist, and the write-locally-then-`scp` rule for server patches.
+- **Known Outstanding:** top-level `classAverage` in `/api/v1/dungeons/class-average` still returns the integer `48` instead of the exact `48.47`.
+
 ## [26.2.28.46] - 2026-09-27 (Beta)
 
 ### RTCA Boost Honesty Fix

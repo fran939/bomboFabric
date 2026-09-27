@@ -1,5 +1,5 @@
 # COMPREHENSIVE REPOSITORY KNOWLEDGE & HANDOFF GUIDE
-**Mod Version:** `26.2.28.44` | **Target MC:** `26.2` | **Branch:** `26.2`
+**Mod Version:** `26.2.28.46` | **Target MC:** `26.2` | **Branch:** `26.2`
 
 This document serves as the complete knowledge reservoir for AI agents continuing work on BomboAddons / BomboClient. It captures architecture details, feature implementations, testing states, remote server setup, and operational quirks.
 
@@ -59,7 +59,36 @@ Base path: `/home/ubuntu/bomboapi/`.
 
 ---
 
-## 3. Features Implemented in v26.2.28.44 & v26.2.28.43
+## 3. Features Implemented in v26.2.28.46 -> v26.2.28.43
+
+### v26.2.28.46: RTCA Boost Honesty Fix
+Server-side (`/home/ubuntu/bomboapi/src/dungeons_service.js`) plus the mod tooltip renderer.
+- **Root cause:** `computeClassAverage` had three unknowable boosts defaulted to their *maximum*: `hecatombLevel` -> `HECATOMB.length - 1` (10, +4% x2), `resolveScarf` -> `"grimoire"` (+6%), `graduateBonus` -> `GRADUATE_MAX` (0.20). The source even carried the comment `// Catacombs Graduate attribute; API never exposes it` while using it as the default. 10+4+6+20 = a flat +40% for every class.
+- **Fix:** real lookups now count those boosts as 0 and return an `assumed[]` list naming them. Only the `/dungeons` HTML calculator opts in, explicitly, via `{ assumeBestCase: true }`.
+- **Verified against live (cache-busted) Hypixel data for `bomboclas`:** essence perks 0.10 (real, all five perks are tier 5), hecatomb 0.04 -> 0, scarf 0.06 -> 0, graduate 0.20 -> 0, total +40% -> **+10%**. M7 XP/run 420,000 -> **330,000**. CA50 runs 1,070 -> **1,361**. `/dungeons` still reports 1,070 by design.
+- **Mod side:** `RtcaChatFormatter.friendlyAssumed()` renders the trailing `Not counted: Hecatomb, Scarf accessory, Catacombs Graduate, Mayor` line so an honest `+10%` does not read as a bug.
+
+### v26.2.28.45: Interactive RTCA Chat
+- **No RTCA handler existed in the mod.** The line was a plain string BomboBot broadcast into game chat, e.g. `[Bombo] [DC] BomboBot: 🎯 [RTCA50] bomboclas on Cucumber (CA 48.00): 1,070 M7 runs to CA 50 | Archer 48 ...`.
+- **Hook:** `ChatMixin.onAddMessage`, on the `addMessage(Component, MessageSignature, GuiMessageSource, GuiMessageTag)` chain that `processIncomingChat` transforms already flow through — slotted in right after the `RingManager` transform. The existing transform shape is `processIncomingChat(raw) -> Component`, the same one `RingManager` uses.
+- **`RtcaChatFormatter.java` (new, shared code, both jars):** fetches `/command/rtca/<player>`, builds one `MutableComponent` per class. Records: `CacheEntry`, `ClassInfo(label, exactLevel, maxed, xpPerRun, runsToMax, xpForNextLevel, boostTotal, boostLabel, assumed)`, `RtcaData(player, profile, classAverage, totalRuns, floorLabel, targetLevel, classes)`. 60s per-player cache, daemon thread `Bombo-RtcaFetch`, `IN_FLIGHT` guard. Uses `BomboApiUrl.getApiUrl` + `HttpURLConnection` + `BomboApiKeyManager.getApiKey()` headers. Recorded to `ChatHistoryTracker` with tag `"RTCA"`.
+- **Server model changes:** `exactLevel`, `xpToNextLevel` (remaining XP — `xpForNextLevel` is the level *total*, e.g. 93,000,000, so it is useless for a "how much left" tooltip), `xpPerRun`, `runsToMax`, per-class `boost {total, label}`, `classAverageExact` / `classAverageFormatted`. `commands/dungeons.js` pins `classAverage: summary.classAverageExact` on both `/command/rtca` and `/command/dungeons`.
+
+#### Server bugs found and fixed while building this
+1. `exactLevel` printed `85467410` — `classProgress(xp).into` is **remaining** XP, not a fraction. Correct form is `progress.level + (progress.into / progress.need)`.
+2. Self-referential `c.boost.label` inside its own object literal -> `TypeError: Cannot read properties of undefined (reading 'label')` at `dungeons_service.js:542`, which took down `/api/v1/dungeons` (502). Fixed with a local `boostLabel` accumulator.
+3. `classAverage` was integer-averaged (`48.00`). Added `classAverageExact` (`48.47`). **Still outstanding:** the top-level `classAverage` in `/api/v1/dungeons/class-average` still returns the integer `48`; only `/command/*` and `catacombs.classAverage` were switched.
+
+#### Two false alarms — do not "fix" these
+- A stale profile snapshot showed `cold_efficiency: 1`, which looked like a broken perk read. The **live** Hypixel API says `5`; all five essence perks really are tier 5, so `+10% perk` was correct all along.
+- An apparent caching discrepancy resolved to the `assumeBestCase` code-path difference above, not a cache.
+
+#### MC 26.2 API notes (bit me twice)
+- `new Style()` has no no-arg constructor -> use `Style.EMPTY`.
+- `ChatFormatting.getChar()` does not exist -> paired a `CLASS_COLORS[]` array with a literal `CLASS_COLOR_CODES[] = {"a","c","d","b","2"}`.
+
+#### Editing method
+Heredocs over SSH mangle quotes. Always `write_file` the patch script locally, `scp` the `.py` to `/tmp`, and run it there. Local backups of the server files and every patch script live in `E:/Users/frand/Documents/bomboserver/` (not a git repo).
 
 ### v26.2.28.44: Skyblocker Storage Overlay Port
 1. **Multi-Grid Storage Interface (`StorageOverlayScreen.java`):**
@@ -123,13 +152,24 @@ Base path: `/home/ubuntu/bomboapi/`.
 ### ✅ TESTED & VERIFIED (Automated / Compile / Remote)
 1. **Clean Compilation (Java 25):** Both `compileClientJava` and `build -x test` compile with zero errors.
 2. **Build Guards:** Both `assertFlavorIntegrity` and `assertNoCheatReferences` pass cleanly.
-3. **Remote Releases:** `bomboaddons-26.2.28.44.jar` deployed to remote server and verified via `GET https://api.bombo.dpdns.org/mod/version/beta`.
-4. **Remote Changelog:** Deployed to `/home/ubuntu/bomboapi/data/changelog.json` and verified via `GET https://api.bombo.dpdns.org/mod/changelog`.
-5. **Profit API Endpoint:** `POST /api/v1/profits` verified accepting `X-Player-UUID` and API key; `GET /profit/:user` verified returning 200 with empty array on fresh query.
-6. **Hypixel Proxy API:** Verified `GET /data/:user` returning `all_profiles` and handling `?profile=` query param.
+3. **Remote Releases:** `bomboaddons-26.2.28.46.jar` deployed to remote server and verified via `GET https://api.bombo.dpdns.org/mod/version/beta`.
+4. **Server RTCA model (v26.2.28.46):** `/command/rtca` and `/command/dungeons` verified live and cache-busted — `exactLevel`, fractional `classAverage`, `xpToNextLevel`, `xpPerRun`, `runsToMax`, per-class `boost`, and the `assumed[]` honesty list all confirmed correct for `bomboclas` (+10% real, 330,000 XP/run, 1,361 runs).
+5. **Remote Changelog:** Deployed to `/home/ubuntu/bomboapi/data/changelog.json` and verified via `GET https://api.bombo.dpdns.org/mod/changelog`.
+6. **Profit API Endpoint:** `POST /api/v1/profits` verified accepting `X-Player-UUID` and API key; `GET /profit/:user` verified returning 200 with empty array on fresh query.
+7. **Hypixel Proxy API:** Verified `GET /data/:user` returning `all_profiles` and handling `?profile=` query param.
+
+**Important distinction:** everything on this list is compile-time or HTTP-level verification. Not one line of it proves a line of Java behaves correctly at runtime, because no one has launched the game with these jars.
 
 ### ⚠️ UNTESTED IN-GAME (Requires Minecraft Client Testing)
-The following features are newly compiled or modified and require manual in-game testing:
+**Nothing in this document has ever been confirmed by a human running the game.** Every feature below compiles and passes the build guards, and that is the entire extent of the verification. The user has not yet reported a pass or fail on any of it.
+
+#### Priority 0: RTCA Chat Hover (`v26.2.28.46` / `v26.2.28.45`) — newest and least verified
+- [ ] Trigger `!rtca` in game. Confirm the flat `[RTCA50]` line is *replaced* by the chip line, not duplicated.
+- [ ] Hover a class chip: exact level (`Archer 48.92`), runs to max, XP remaining to next level, XP/run, boost breakdown.
+- [ ] Confirm the boost total is the honest `+10%` (essence perks only) and the tooltip ends with `Not counted: Hecatomb, Scarf accessory, Catacombs Graduate, Mayor`.
+- [ ] Confirm the class average renders fractionally (`CA 48.47`), not `48`.
+- [ ] First hover may briefly show `loading class details...` while the daemon fetch runs — verify it fills in, and that repeat `!rtca` within 60s does not re-request.
+- [ ] If nothing loads: check the log for thread `Bombo-RtcaFetch` and confirm the `BomboApiKeyManager.getApiKey()` header is on the `/command/rtca/<player>` request. The async fetch -> `sendSystemMessage` path and the first-load placeholder are the most likely things to need adjustment.
 
 #### Priority 1: Storage Overlay (`v26.2.28.44`)
 - [ ] Enable `Storage Overlay` in `/b` -> Storage settings.
@@ -177,3 +217,7 @@ The following features are newly compiled or modified and require manual in-game
    - **NEVER** upload `bomboclient-*.jar` to remote server releases. Only upload `bomboaddons-*.jar`.
 4. **Git Branch:**
    - Always commit and push directly to branch `26.2`.
+5. **Git remote was renamed:** `fran939/bombofabric.git` -> `fran939/bomboFabric.git`. Pushes still work because GitHub redirects; do not be alarmed by the case change.
+6. **`docs/CODE_STYLE.md` does not exist.** It has been asked for twice and is not in the repo — `docs/` holds only `FEATURE_AUDIT.md` and `HANDOFF_KNOWLEDGE.md`. Conventions are inferred from the code: **3-space indent**, `Component`/`MutableComponent` for chat, and the `processIncomingChat(raw) -> Component` transform shape already used by `RingManager`.
+7. **Server-side tooling:** `rg` became unavailable partway through (`ENOENT ... rg.exe`). Use `grep` from the terminal instead.
+8. **Server edits:** never heredoc a patch over SSH, it mangles quotes. `write_file` the `.py` locally, `scp` it to `/tmp`, run it there.
