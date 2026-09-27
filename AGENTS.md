@@ -104,24 +104,26 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 ## 4. Current Implementation State & Untested Features
 
 The mod is currently on version **`26.2.28.44`** (ready for in-game testing).
+For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.44 (Ready for In-Game Testing)
 >
-> 1. **Skyblocker Storage Overlay Port:** Complete port of Skyblocker's multi-grid storage overlay, replacing `/storage`, ender chest, and backpack menus with a compact, searchable multi-grid interface (`StorageOverlayScreen`, `BackpackGridWidget`, `StorageOverlayScreenHandler`, `BackpackPreview`).
+> 1. **Skyblocker Storage Overlay Port:** Complete port of Skyblocker's multi-grid storage overlay, replacing `/storage`, ender chest, and backpack menus with a compact, searchable multi-grid interface ([`StorageOverlayScreen`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java), [`SearchableGridWidget`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/SearchableGridWidget.java), [`StorageOverlayScreenHandler`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreenHandler.java), [`BackpackPreview`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java)).
 > 2. **Multi-Grid Item Search:** Live item search with instant filtering across all ender chests and backpacks simultaneously.
-> 3. **Configurable Layout & Settings:** Configurable storages per row, backpack columns, remember search query, remember last opened storage, and mouse cursor position preservation across switches (`dontResetMouseInStorageOverlay`).
+> 3. **Configurable Layout & Settings:** Configurable storages per row (1–6), backpack columns (1–9), remember search query, remember last opened storage, and mouse cursor position preservation across switches (`dontResetMouseInStorageOverlay` via [`MouseMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/MouseMixin.java)).
 > 4. **Live Inventory Synchronization:** Dynamic slot updates and real-time container item caching with full NBT, base64, and custom player head texture support.
+> 5. **Hover Slot Isolation:** Injected into `isHovering(Slot, double, double)` in [`AbstractContainerScreenMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/AbstractContainerScreenMixin.java) to restrict hover targeting strictly to visible grid slots and player inventory.
 >
 > ### ✅ COMPLETED IN v26.2.28.43
 >
-> 1. **Camera & Spectator FOV Clamping:** Clamped camera FOV to options FOV (110) during `/b cam (user)` and freecam via `GameRendererMixin`, eliminating speed FOV distortion and dynamic lerp lag.
+> 1. **Camera & Spectator FOV Clamping:** Clamped camera FOV to options FOV (110) during `/b cam (user)` and freecam via [`GameRendererMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/GameRendererMixin.java), eliminating speed FOV distortion and dynamic lerp lag.
 > 2. **Auto Croesus Instabuy/Instasell & Pricing:** Uses instabuy for keys/kismets and instasell for items; resolves live Bazaar prices for Bank, No Pain No Gain, and Jerry books without hardcoded fallbacks.
 > 3. **Auto Croesus Profit Threshold Removal:** Removed profit threshold gate to claim all profitable and free chests unconditionally.
 > 4. **Auto Croesus Profit HUD Redesign:** Redesigned chest profit HUD to clean text with shadows and no background box.
 > 5. **Dungeon Profit Run Deduplication & Hover Tooltip:** Deduplicates runs on disk/load and renders detailed itemized hover tooltips with values and duration in `/b profit`.
 > 6. **Decoupled Profit Sync Auth:** Profit syncing authenticates via `X-Player-UUID` and Bombo API key, completely decoupled from egg auth.
-> 7. **Command Separation (`/b area` vs `/b subarea`):** `/b area` displays area and `/b subarea` displays subarea.
+> 7. **Command Separation (`/b area` vs `/b subarea`):** `/b area` displays parent area and `/b subarea` displays subarea.
 > 8. **Profile Viewer Shortcuts & Settings:** Added `/b pv1`, `/b pv2`, and `/b pvconfig` commands; added `⚙` settings button directly to the Profile Viewer header.
 > 9. **Multi-Profile Support:** HypixelApiClient fetches all profiles via `all_profiles` and accepts `?profile=` query param.
 > 10. **Storage Empty Slot Purging:** Automatically purges empty slots from `storageData` on container open, fixing phantom items (e.g. Divan's Drill in Backpack 10).
@@ -131,90 +133,42 @@ The mod is currently on version **`26.2.28.44`** (ready for in-game testing).
 > 14. **Bazaar Mode Toggle & Clean Breakdown:** Added toggle for Insta Buy / Insta Sell / Both; reordered breakdown sections cleanly; suppressed HUD on InventoryScreen.
 > 15. **Outbound Token Masking:** `/b apihistory` masks sensitive tokens (first 4 and last 4 chars shown, middle masked) in outbound headers and displays them in tooltips.
 > 16. **Slider Numeric Entry & Brand:** Config sliders parse numeric values cleanly (e.g. typing into `300ms`); client brand cleanly reports mod ID (`Constants.MOD_ID`).
-> 2. **Remove Flavor Switching Entirely:** Removed "Switch Flavor" button from Config GUI, removed `/b update switch`, removed `installOtherFlavor()`. Users must only run the jar they downloaded.
-> 3. **Chat History `/locraw` Attribution:** Dispatched `/locraw` from `BomboaddonsClient.triggerLocraw()` is tagged `ChatHistoryTracker.OUTGOING_TRIGGER = "Locraw Tracker"`. In `ClientPacketListenerMixin`, not flagged as `OUTGOING_PLAYER_INPUT` if an internal trigger is set.
-> 4. **Dungeon Chest Key Cost in AutoCroesus & HUD:** In `AutoCroesus.java` tooltip parsing, parses "Dungeon Chest Key". Checks spent state via `isSpentModifier(line)`. Adds `dungeonKeyCost = getLiveDungeonKeyPrice()` or manual threshold to total cost. Displays coin cost + key cost in `DungeonChestProfitHud`.
-> 5. **Profit GUI on `/b profit`:** Rendered dedicated Profit GUI (`DungeonProfitScreen`) showing total profit, runs, average profit/run, kismets used, per-floor breakdown, and scrollable recent runs list.
-> 6. **AutoCroesus Sync 404 Fix:** Removed call to legacy dead endpoint `https://api.bombo.dpdns.org/kuudra/profit/sync` in `AutoCroesus.java`. Uses `DungeonProfitLog.syncPending` exclusively.
-> 7. **Profit Sync 401 Fix:** In `DungeonProfitLog.syncPending`, ensures Bombo token (`EggAuth.getBomboToken()`) is used when calling `POST /api/v1/profits`. Never sends Aaron token to Bombo API.
-> 8. **Separate Egg Auth from Bombo Auth:** Skyblocker/Aaron token is strictly for `hysky.de` WebSocket/API. Bombo token is strictly for `api.bombo.dpdns.org`.
-> 9. **`/b area` Floor & Subarea Detection:** Prints `Parent / Subarea` or `Catacombs / <Floor> (<phase>)`. Strips private use unicode characters (`\uE000`–`\uF8FF`) from scoreboard lines.
-> 10. **`/b ac stats` Price Accuracy (Enchanted Books):** Resolves prices for ultimate enchantments (`ENCHANTMENT_ULTIMATE_*`).
-> 11. **Storage Refresh & Chest Waypoints:** Waypoints refresh on container close. Box outlines render through walls (`RenderTypes.secondaryBlockOutline()`).
-> 12. **Egg Finder Island Mapping:** Removed "lobby" -> "Hub" mapping in `EggFinder.java`. Maps Moonglade Marsh correctly to `"Moonglade Marsh"`.
-> 13. **`/b cmd` Tree Kill, Selection & Copy/Paste:** In `CmdScreen.java`, kills process tree on Ctrl+C via `ProcessHandle.descendants().forEach(ProcessHandle::destroyForcibly)`. Mouse drag selection, copy on selection + right-click, paste on right-click without selection, suppressed mod keybinds while focused.
-> 14. **API History Initial Scroll:** Opens `ApiHistoryScreen` scrolled to the bottom (newest items).
-> 15. **Profile Viewer Bomboclas API:** Uses `User-Agent: BomboAddons/<version>` via `Constants.myVersion()`, logs to ApiHistory.
-> 16. **Aspect of the Void & Player Heads:** Model fallback points to vanilla shovel (`minecraft:item/diamond_shovel`). Ported `PlayerHeadSpecialRendererMixin` from Detexturify so player head items retain skins.
-> 17. **Item Value HUD & Tooltip Values:** Decoupled tooltip price additions from `lowestBin` toggle (`s.lowestBin || s.showEstimatedValue || s.bazaarBuySell || s.averageBin`).
-> 18. **Remove Mod ID Hiding:** Removed `modIdHider`, removed brand spoofing from `ClientBrandRetrieverMixin`.
-> 19. **Remove Stealth Mode:** Removed `Stealth.java`, `/b stealth`, stealth config options.
-> 20. **Slider Manual Entry & Keybind Capture:** Sliders support manual text input with coin suffixes (e.g. 100K, 1.5M). Keybind listener properly resets on mouse button clicks.
-> 21. **`/b item` Tab Completion:** Registered Brigadier suggestion provider using SkyBlock item catalog (`SkyblockItemManager.getItemCache().keySet()`).
+> 17. **Flavor Switching Completely Removed:** Removed "Switch Flavor" button from Config GUI, removed `/b update switch`, removed `installOtherFlavor()`. Users must only run the jar they downloaded.
+> 18. **Stealth Mode & Brand Spoofing Removed:** Removed `Stealth.java`, `/b stealth`, and brand spoofing. Real brand and mod ID are now cleanly reported.
 
 > [!WARNING]
 > ### ⚠️ ORDERED IN-GAME TEST QUEUE — next AI should follow this order
 >
-> Nothing below is verified in-game unless a later handoff explicitly says so. Do not mark an item tested just because compilation passed.
+> Nothing below is verified in-game unless explicitly marked tested. Do not mark an item tested just because compilation passed.
 >
-> **Phase 0 — .41 crash regression (highest priority; do this first)**
-> 1. Hover a vanilla item with no Bombo additions and confirm the tooltip renders normally.
-> 2. Hover an item that enables Supercraft/lore additions; confirm the additions appear and no `UnsupportedOperationException` is logged.
-> 3. Test custom name/lore, leather armor color, Starts In, dungeon quality, creation date, museum status, and SkyBlock ID additions.
-> 4. Test lowest-bin, Bazaar buy/sell, average-bin, and Garden Movement tooltip additions.
-> 5. Enable inventory search and confirm highlight replacement still works after the copy.
-> 6. Test with resource packs and the no-resource-pack toggle enabled/disabled.
+> **Phase 1 — Storage Overlay (`v26.2.28.44`, highest priority)**
+> 1. In `/b` -> Storage, enable `Storage Overlay`.
+> 2. Run `/storage` (or open Ender Chest / Backpack); confirm the multi-grid screen opens with all unlocked containers.
+> 3. Type in the search box; confirm real-time highlight filtering across all containers simultaneously.
+> 4. Test layout configuration: adjust "Storages Per Row" (1–6) and "Backpack Columns" (1–9); confirm screen adapts cleanly.
+> 5. Confirm "Preserve Cursor Position" works (mouse cursor does not jump to screen center when switching storages).
+> 6. Move items into and out of backpack slots; confirm slots update immediately and no ghost items occur.
 >
-> **Phase 1 — startup and dual-flavor safety**
-> 7. Launch `bomboaddons-26.2.28.41.jar`; confirm the main menu, world entry, `/b`, config screen, and tooltip mixin all work.
-> 8. Launch `bomboclient-26.2.28.41.jar`; confirm the separate mod ID, `/b hide`, `/b stealth`, and cheat mixins work.
-> 9. Confirm no startup Mixin apply/injection errors in either build.
-> 10. Confirm the legit build has no usable Switch Flavor button and `/b update switch` refuses to install the cheat artifact.
-> 11. Confirm the cheat build can still use its intended flavor-switch path without installing the wrong artifact.
-> 12. Confirm the both-flavors-installed warning appears when both jars are present.
+> **Phase 2 — Camera & Spectator FOV (`v26.2.28.43`)**
+> 7. Run `/b cam <player>` or activate freecam. Move at high speed or sprint.
+> 8. Confirm FOV is clamped to 110 (options FOV) without dynamic zoom distortion or lerp lag.
 >
-> **Phase 2 — .40 freecam fixes**
-> 13. Activate freecam, move far from the character, and confirm the player model remains rendered.
-> 14. Move across several distances/chunks and rotate; confirm the body does not flicker or disappear unexpectedly.
-> 15. Press F3; confirm XYZ, Block, Chunk, Facing, and Dimension describe the camera and include `(freecam camera)`.
-> 16. Change freecam position/rotation; confirm F3 updates, then disable freecam and confirm normal player coordinates return without duplicated lines.
-> 17. Test freecam movement, screen open/close, disconnect/reconnect, and toggling near terrain/entities.
+> **Phase 3 — AutoCroesus & Dungeon Profits (`v26.2.28.43`)**
+> 9. Open Croesus GUI in Catacombs. Confirm chest profit HUD renders clean text with shadows and NO background box.
+> 10. Verify keys/kismets use instabuy prices and chest items use instasell prices.
+> 11. Run `/b profit`; confirm runs are deduplicated and hovering a recent run shows the itemized tooltip with coin values and duration.
+> 12. Complete a run and confirm profit sync succeeds without 401 or 404 errors.
 >
-> **Phase 3 — .39 highest-risk gameplay systems**
-> 18. Run `/b chathistory`; verify tabs, attribution, blocked messages, outgoing input, readable key names, event rows, and row clicking.
-> 19. Create/edit/run a sequence; test per-step ON/OFF, GUI-title matching, item/slot targeting, loop, jitter, wait, close GUI, command, and Click NPC steps.
-> 20. Trigger every sequence safety halt: closed container, missing slot, leaving world, deleted sequence, no enabled steps, and three failed attempts.
-> 21. Run `/b ac debug`; verify one summary per GUI, no alternating spam, strict chest-slot selection, click verification, worthless/always-buy classification, spent Redstone Torch modifiers, Kismet EV, and dungeon-key pricing.
-> 22. Complete a Croesus run; verify `/b ac stats`, `/b profit`, itemized records, floor tags, net profit, Kismet count, and server sync.
-> 23. Test F4/M4 and M7 area detection, `/b area`, and the M4 Etherwarp highlight.
-> 24. Test `/b storage <query>`, backpack refresh, double-chest merge, count refresh, stale-position purge, and non-container filtering.
-> 25. Test `/b apihistory`, `/b apihistory chat`, request failures, persistence, and log rotation.
-> 26. Run `/b pv <invalid-name>`; confirm a real failure message and R retry, not the loading egg or fake-ban finale.
+> **Phase 4 — Commands, Profile Viewer & UI (`v26.2.28.43`)**
+> 13. Run `/b area` and `/b subarea`; confirm correct parent area and subarea are printed.
+> 14. Test `/b pv1`, `/b pv2`, and `/b pvconfig`; test the `⚙` button in Profile Viewer header.
+> 15. Run `/b apihistory`; confirm outbound authorization tokens are masked in headers.
+> 16. In `/b` config, click a slider value label (e.g. `300ms`), type a number, and press Enter to confirm value updates.
 >
-> **Phase 4 — .38/.37/.36 automation and authentication**
-> 27. Test the Croesus tracker HUD's per-floor breakdown, move/scale/auto-dock behavior, and persistence.
-> 28. Test `/b egg debug|auth|reconnect`; confirm `aaron auth OK` or `Bombo auth OK`, correct Bearer header/user-agent, reconnect, token refresh, and no `Incorrect argument`.
-> 29. Find an egg and verify Hoppity publishing does not return 401; check the server log.
-> 30. Test `/b cmd`: command execution, streamed output, stdin, Ctrl+C, Ctrl+L, history, restart persistence, scroll-up/End auto-follow, `nb on|off`, and keybind suppression.
-> 31. Test sequence runtime behavior in the currently built artifacts, then note that the locked target architecture makes the sequencer cheat-only in the P0 remainder.
-> 32. Test keybind capture with normal keys, modifiers, mouse buttons, special keys, and Escape cancellation.
->
-> **Phase 5 — shared GUI, texture, value, and client regressions**
-> 33. Test `/b noobfuscate` on chat and lore while preserving normal formatting and other mods' events.
-> 34. Test Hide Mod ID On Join in both jars and inspect the Mixin log.
-> 35. Test vanilla lead and Aspect of the Void item models, resource-pack toggles, and missing-texture fallbacks.
-> 36. Test EIV source modes, stars/master stars, attributes, unavailable prices, and cache refresh.
-> 37. Test config sliders, typed slider labels, Tab navigation, Ctrl+X, horizontal scrolling, modifier-combo capture, persistence, and sequence JSON preservation.
-> 38. Test shared entity, armor-stand, particle, screen, Minecraft, container, slot-color, and inventory-button mixins for regressions.
->
-> **Phase 6 — flavor-separation implementation after gameplay validation**
-> 39. Split the remaining mixed mixins and route tick/render/container hooks through `FlavorBridge`.
-> 40. Move cheat-only command subtrees into `CheatFlavor.registerCommands`; remove `LegitFlavor`'s direct `AutoSequenceExecutor` call.
-> 41. Extract genuinely shared helpers (`SkullTextures`, hotbar slot helpers, `AutoCombine.getEnchantments`, `AutoCroesus.floorSortKey`/`getFallbackDungeonItemPrice`) into shared code.
-> 42. Only after all shared-to-cheat references are removed: exclude `me/bombo/bomboaddons/cheat/**`, complete `CHEAT_ONLY_CLASSES`, and widen `assertNoCheatReferences` beyond the `flavor.cheat` literal.
-> 43. Rebuild both jars, rerun every build guard, and inspect both jar contents before any deployment.
->
-> **Do not deploy `bomboclient-*.jar` to `/home/ubuntu/bomboapi/releases/`.** The current `.41` artifacts are local only. Deployment, commit, and push remain pending user approval.
+> **Phase 5 — Storage & Egg Finder (`v26.2.28.43`)**
+> 17. Open `/b storage`; confirm "Island Chests" tab is present and empty slots are purged on open.
+> 18. Enter Private Island / Garden / Limbo / Dungeons; confirm egg WebSocket cleanly unsubscribes.
+> 19. Collect an egg; confirm only the closest waypoint is removed.
 >
 > [!NOTE]
 > ### ✅ SHIPPED in v26.2.28.40 (build/deploy verified earlier, untested in-game) — "Freecam Fixes + Cheat-Tree Groundwork"
@@ -374,40 +328,37 @@ The mod is currently on version **`26.2.28.44`** (ready for in-game testing).
 | [`GuiMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/GuiMixin.java) | `Gui` | In-game HUD element overlays (pads, mining timers, defense/ehp widgets). |
 | [`ClientPacketListenerMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientPacketListenerMixin.java) | `ClientPacketListener` | S2C packet interception (titles, action bars, scoreboard changes, chat messages). |
 | [`ChatMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java) & [`ChatScreenMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatScreenMixin.java) | `ChatComponent`, `ChatScreen` | Chat peeking, compact message history rendering, stack trace inspection for mod attribution, and the No Obfuscate `ModifyVariable` rewrite. |
-| [`ClientBrandRetrieverMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientBrandRetrieverMixin.java) | `ClientBrandRetriever` | **Both builds**: hides the mod brand on join (always on since v26.2.28.35). |
+| [`ClientBrandRetrieverMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientBrandRetrieverMixin.java) | `ClientBrandRetriever` | Cleanly returns `Constants.MOD_ID` (`bomboaddons` / `bomboclient`). |
+| [`GameRendererMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/GameRendererMixin.java) | `GameRenderer` | Clamps camera FOV to options FOV (110) during `/b cam` and freecam. |
+| [`MenuScreensConstructorMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/MenuScreensConstructorMixin.java) | `MenuScreens.ScreenConstructor` | Intercepts container screen creation to launch `StorageOverlayScreen` when storage overlay is enabled. |
+| [`AbstractContainerMenuMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/AbstractContainerMenuMixin.java) | `AbstractContainerMenu` | Synchronizes container item updates and triggers search re-filtering in storage overlay. |
 
 ---
 
 ## 6. Next Direct Actions
 
-Follow the ordered queue in Section 4 before making more code changes. The next agent should first test the `.41` tooltip fix, then proceed through the phases in order. After gameplay validation, finish the P0 flavor separation: route remaining shared→cheat references through `FlavorBridge`, split mixed mixins, move cheat-only command/tick/render behavior behind the flavor SPI, and only then tighten `jar {}` exclusions, `CHEAT_ONLY_CLASSES`, and `assertNoCheatReferences`.
-
-Deployment safety: **never upload `bomboclient-*.jar` to `/home/ubuntu/bomboapi/releases/`**. The `.41` artifacts are local only until explicitly approved for deployment.
+1. Follow the ordered in-game test queue in Section 4 (Phase 1 Storage Overlay, Phase 2 Camera FOV, Phase 3 AutoCroesus & Profit, Phase 4 Commands & UI, Phase 5 Storage & Eggs).
+2. For any new feature or bugfix, adhere strictly to the **Mandatory Release & Versioning Protocol** in Section 2:
+   - Bump `mod_version` in `gradle.properties`.
+   - Verify clean build (`./gradlew compileClientJava` and `./gradlew build -x test`).
+   - Update `CHANGELOG.md` and `data/changelog.json`.
+   - Deploy `data/changelog.json` to server via `scp`.
+   - Deploy `bomboaddons-<version>.jar` to `/home/ubuntu/bomboapi/releases/` via `scp`.
+   - Commit and push to branch `26.2`.
+3. Deployment safety: **NEVER upload `bomboclient-*.jar` to `/home/ubuntu/bomboapi/releases/`**. Cheat builds are strictly local.
 
 ---
 
-## 7. Key new files (v26.2.28.34)
+## 7. Key Architecture & Ported Files (v26.2.28.44 & v26.2.28.43)
 
 | File | Purpose |
 | :--- | :--- |
-| `gui/CmdScreen.java` | `/b cmd` in-game terminal: real shell execution, streamed output, scrollback, history. |
-| `util/NoObfuscate.java` | Strips the `§k` style from chat messages and tooltips without disturbing formatting or events. |
-| `mixin/ClientBrandRetrieverMixin.java` | Shared brand hider (was cheat-only; now both builds). |
+| [`features/storageoverlay/StorageOverlayScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java) | Main storage multi-grid overlay GUI replacing `/storage`, ender chests, and backpacks. |
+| [`features/storageoverlay/SearchableGridWidget.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/SearchableGridWidget.java) | Search box and multi-grid item search filter logic. |
+| [`features/storageoverlay/StorageOverlayScreenHandler.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreenHandler.java) | Screen handler mapping container slots to the overlay grid. |
+| [`features/storageoverlay/BackpackPreview.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java) | Storage item deserialization, caching, and custom player head texture resolver. |
+| [`mixin/GameRendererMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/GameRendererMixin.java) | FOV clamping during freecam and spectator camera. |
+| [`features/dungeons/DungeonProfitLog.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/dungeons/DungeonProfitLog.java) | Dungeon run recording, disk deduplication, and server synchronization via `X-Player-UUID`. |
+| [`gui/DungeonProfitScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/gui/DungeonProfitScreen.java) | Dedicated profit overview GUI (`/b profit`) with stats, floor cards, and itemized hover tooltips. |
+| [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md) | In-depth knowledge document detailing architecture, endpoints, testing status, and quirks. |
 
-### Still current from v26.2.28.33
-
-| File | Purpose |
-| :--- | :--- |
-| `Constants.java` | Mod identity + flavor detection (reads the bundled `bomboaddons.flavor` marker) and artifact prefix. |
-| `flavor/FlavorBridge.java` | The SPI shared code uses to reach flavor behaviour. |
-| `flavor/Flavor.java` | Reflective locator; falls back to `LegitFlavor` when the cheat class is absent. |
-| `flavor/LegitFlavor.java` | No-op legit implementation (present in both jars). |
-| `flavor/FlavorMigration.java` | Startup reconciliation + one-time legacy detection. Schema version 2. |
-| `util/Stealth.java` | Single gate used by all presence-publishing code. |
-| `features/chat/ChatHistoryScreen.java` | Now wired: `/b chathistory`. Tabs, tooltips, copy/execute rows. |
-| `features/auto/AutoSequenceManager.java` | Shared data model + persistence + running state. No automation runtime. |
-| `src/cheat/.../CheatAutoExecutor.java` | Cheat-only executor: ticks, clicks, guards, event recording. |
-| `src/cheat/.../CheatFlavor.java` | Cheat-only bridge impl: `init`, `/b hide`, `/b stealth`, `/b auto ...`. |
-| `src/cheat/.../mixin/cheat/ClientBrandRetrieverMixin.java` | Cheat-only vanilla brand spoof under stealth. |
-| `src/flavor/cheat/` | Cheat `fabric.mod.json`, `bomboclient.client.mixins.json`, marker. |
-| `docs/FEATURE_AUDIT.md` | Reachability audit, measured numbers, no-deletion policy. |
