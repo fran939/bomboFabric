@@ -51,38 +51,76 @@ public abstract class ItemInHandRendererMixin {
         }
     }
 
-    // Redirect submitArmWithItem calls to render the spectated player's skin, arm model, and held item
-    @Redirect(
-        method = "submitHandsWithItems",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V"
-        )
-    )
-    private void bombo$renderSpectatedArmWithItem(
-        ItemInHandRenderer instance,
-        AbstractClientPlayer player,
+    // Isolate hands and held items rendering to the spectated player
+    @Inject(method = "submitHandsWithItems", at = @At("HEAD"), cancellable = true)
+    private void bombo$submitSpectatedHandsWithItems(
         float partialTicks,
-        float pitch,
-        InteractionHand hand,
-        float swingProgress,
-        ItemStack stack,
-        float equippedProgress,
         PoseStack poseStack,
         SubmitNodeCollector buffer,
-        int light
+        net.minecraft.client.player.LocalPlayer player,
+        int light,
+        CallbackInfo ci
     ) {
         if (SpectatorCamManager.isActive()) {
             Minecraft mc = Minecraft.getInstance();
             if (mc != null && mc.getCameraEntity() instanceof AbstractClientPlayer other) {
-                // Use the spectated player's held item, arm swing progress, and pitch
-                ItemStack otherStack = (hand == InteractionHand.MAIN_HAND) ? other.getMainHandItem() : other.getOffhandItem();
+                ItemStack mainStack = other.getMainHandItem();
+                ItemStack offStack = other.getOffhandItem();
                 float otherSwing = other.getAttackAnim(partialTicks);
                 float otherPitch = other.getXRot(partialTicks);
-                this.submitArmWithItem(other, partialTicks, otherPitch, hand, otherSwing, otherStack, equippedProgress, poseStack, buffer, light);
-                return;
+                InteractionHand hand = other.swingingArm != null ? other.swingingArm : InteractionHand.MAIN_HAND;
+
+                this.submitArmWithItem(other, partialTicks, otherPitch, InteractionHand.MAIN_HAND, hand == InteractionHand.MAIN_HAND ? otherSwing : 0.0f, mainStack, 0.0f, poseStack, buffer, light);
+                if (!offStack.isEmpty()) {
+                    this.submitArmWithItem(other, partialTicks, otherPitch, InteractionHand.OFF_HAND, hand == InteractionHand.OFF_HAND ? otherSwing : 0.0f, offStack, 0.0f, poseStack, buffer, light);
+                }
+                ci.cancel();
             }
         }
-        this.submitArmWithItem(player, partialTicks, pitch, hand, swingProgress, stack, equippedProgress, poseStack, buffer, light);
+    }
+
+    @Inject(method = "renderPlayerArm", at = @At("HEAD"), cancellable = true)
+    private void bombo$renderSpectatedPlayerArm(
+        PoseStack poseStack,
+        SubmitNodeCollector buffer,
+        int light,
+        float equippedProgress,
+        float swingProgress,
+        net.minecraft.world.entity.HumanoidArm arm,
+        CallbackInfo ci
+    ) {
+        if (SpectatorCamManager.isActive()) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc != null && mc.getCameraEntity() instanceof AbstractClientPlayer other) {
+                boolean right = (arm != net.minecraft.world.entity.HumanoidArm.LEFT);
+                float sign = right ? 1.0F : -1.0F;
+                float sqrtSwing = net.minecraft.util.Mth.sqrt(swingProgress);
+                float sin1 = net.minecraft.util.Mth.sin((float)(sqrtSwing * Math.PI));
+                float sin2 = net.minecraft.util.Mth.sin((float)(sqrtSwing * Math.PI * 2.0));
+                float sin3 = net.minecraft.util.Mth.sin((float)(swingProgress * Math.PI));
+
+                poseStack.pushPose();
+                poseStack.translate(sign * (sin1 * 0.64F), sin2 * -0.6F + equippedProgress * -0.6F, sin3 * -0.72F);
+                poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(sign * 45.0F));
+                poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(sign * sin1 * 70.0F));
+                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(sign * -20.0F));
+                poseStack.translate(sign * -1.0F, 3.6F, 3.5F);
+                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(sign * 120.0F));
+                poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(200.0F));
+                poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(sign * -135.0F));
+                poseStack.translate(sign * 5.6F, 0.0F, 0.0F);
+
+                net.minecraft.client.renderer.entity.player.AvatarRenderer avatarRenderer = mc.getEntityRenderDispatcher().getPlayerRenderer(other);
+                net.minecraft.resources.Identifier skin = other.getSkin().body().texturePath();
+                boolean sleeve = other.isModelPartShown(right ? net.minecraft.world.entity.player.PlayerModelPart.RIGHT_SLEEVE : net.minecraft.world.entity.player.PlayerModelPart.LEFT_SLEEVE);
+                if (right) {
+                    avatarRenderer.renderRightHand(poseStack, buffer, light, skin, sleeve);
+                } else {
+                    avatarRenderer.renderLeftHand(poseStack, buffer, light, skin, sleeve);
+                }
+                poseStack.popPose();
+                ci.cancel();
+            }
+        }
     }
 }

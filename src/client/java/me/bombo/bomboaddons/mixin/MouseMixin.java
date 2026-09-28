@@ -73,7 +73,6 @@ public abstract class MouseMixin {
          return;
       }
       if (me.bombo.bomboaddons.util.SpectatorCamManager.isActive()) {
-         me.bombo.bomboaddons.util.SpectatorCamManager.update();
          me.bombo.bomboaddons.util.SpectatorCamManager.onMouseTurn(this.accumulatedDX, this.accumulatedDY);
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;

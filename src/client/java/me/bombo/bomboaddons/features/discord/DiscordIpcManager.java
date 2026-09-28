@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class DiscordIpcManager {
 
-    private static final String CLIENT_ID = "934607927837356052"; // Skyblocker / standard Discord RPC app
+    private static final String CLIENT_ID = "134500000000000000"; // BomboAddons Discord Client
     private static final AtomicBoolean RUNNING = new AtomicBoolean(false);
     private static Thread workerThread = null;
 
@@ -69,6 +69,9 @@ public class DiscordIpcManager {
     }
 
     public static void init() {
+        if (!BomboConfig.get().discordHudEnabled) {
+            return;
+        }
         if (RUNNING.compareAndSet(false, true)) {
             workerThread = new Thread(DiscordIpcManager::runLoop, "Bombo-DiscordIPC");
             workerThread.setDaemon(true);
@@ -334,6 +337,11 @@ public class DiscordIpcManager {
         BomboConfig.Settings s = BomboConfig.get();
         s.discordHudEnabled = !s.discordHudEnabled;
         BomboConfig.save();
+        if (s.discordHudEnabled) {
+            init();
+        } else {
+            stop();
+        }
         mc.player.sendSystemMessage(Component.literal("§9[Discord] §7Discord Voice HUD: " + (s.discordHudEnabled ? "§aEnabled" : "§cDisabled")));
     }
 }

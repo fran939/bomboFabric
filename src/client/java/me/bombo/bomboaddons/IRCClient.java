@@ -42,6 +42,7 @@ public class IRCClient {
    public static String lastError = "Not started yet";
    private static final Map<String, ModUser> onlinePlayers = new ConcurrentHashMap();
    public static final Map<String, String> playerPartyData = new ConcurrentHashMap<>();
+   public static volatile String activeScreenshareWith = null;
 
    public static Map<String, ModUser> getOnlinePlayers() {
       ensureSelfInOnlinePlayers();
@@ -528,10 +529,101 @@ public class IRCClient {
                            BomboConfig.get().customItemOverrides.put(k, cov);
                         }
                      }
+                  } else if (payload.startsWith("[SS_REQ]")) {
+                     // Format: [SS_REQ]\u0002target\u0002sender
+                     String[] parts = payload.split("\u0002");
+                     if (parts.length >= 3) {
+                        String target = parts[1].trim();
+                        String sender = parts[2].trim();
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc != null && mc.player != null) {
+                           String myIgn = mc.player.getScoreboardName();
+                           if (myIgn.equalsIgnoreCase(target)) {
+                              String whitelist = BomboConfig.get().autoAcceptScreenshareUsers != null ? BomboConfig.get().autoAcceptScreenshareUsers : "";
+                              boolean autoAccept = false;
+                              for (String allowed : whitelist.split(",")) {
+                                 if (!allowed.trim().isEmpty() && allowed.trim().equalsIgnoreCase(sender)) {
+                                    autoAccept = true;
+                                    break;
+                                 }
+                              }
+
+                              if (autoAccept) {
+                                 sendRaw("NOTICE #bomboaddons_chat :[SS_ACCEPT]\u0002" + sender.toLowerCase() + "\u0002" + myIgn);
+                                 mc.execute(() -> {
+                                    mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aAuto-accepted screenshare request from §e" + sender + " §a(whitelisted)."));
+                                 });
+                              } else {
+                                 mc.execute(() -> {
+                                    net.minecraft.network.chat.MutableComponent msg = Component.literal("§8[§3Bombo§8] §e" + sender + " §7has requested to watch your screen / spectate you!\n  ");
+                                    net.minecraft.network.chat.MutableComponent acceptBtn = Component.literal("§a§l[ACCEPT]")
+                                       .withStyle(style -> style
+                                          .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/ss accept " + sender))
+                                          .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§aClick to allow " + sender + " to spectate you"))));
+                                    net.minecraft.network.chat.MutableComponent denyBtn = Component.literal("§c§l[DENY]")
+                                       .withStyle(style -> style
+                                          .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/ss deny " + sender))
+                                          .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§cClick to deny " + sender + "'s request"))));
+                                    msg.append(acceptBtn).append(Component.literal("   ")).append(denyBtn);
+                                    mc.player.sendSystemMessage(msg);
+                                 });
+                              }
+                           }
+                        }
+                     }
+                  } else if (payload.startsWith("[SS_ACCEPT]")) {
+                     // Format: [SS_ACCEPT]\u0002target\u0002sender
+                     String[] parts = payload.split("\u0002");
+                     if (parts.length >= 3) {
+                        String target = parts[1].trim();
+                        String sender = parts[2].trim();
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc != null && mc.player != null) {
+                           String myIgn = mc.player.getScoreboardName();
+                           if (myIgn.equalsIgnoreCase(target)) {
+                              activeScreenshareWith = sender;
+                              mc.execute(() -> {
+                                 mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §a§lScreenshare accepted! §aNow spectating §e" + sender + "§a."));
+                                 BomboaddonsClient.executeCamCommand(null, sender);
+                              });
+                           }
+                        }
+                     }
+                  } else if (payload.startsWith("[SS_DENY]")) {
+                     String[] parts = payload.split("\u0002");
+                     if (parts.length >= 3) {
+                        String target = parts[1].trim();
+                        String sender = parts[2].trim();
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc != null && mc.player != null && mc.player.getScoreboardName().equalsIgnoreCase(target)) {
+                           mc.execute(() -> {
+                              mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §c" + sender + " denied your screenshare request."));
+                           });
+                        }
+                     }
+                  } else if (payload.startsWith("[SS_STOP]")) {
+                     String[] parts = payload.split("\u0002");
+                     if (parts.length >= 3) {
+                        String target = parts[1].trim();
+                        String sender = parts[2].trim();
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc != null && mc.player != null) {
+                           String myIgn = mc.player.getScoreboardName();
+                           if (myIgn.equalsIgnoreCase(target) || myIgn.equalsIgnoreCase(sender)) {
+                              activeScreenshareWith = null;
+                              mc.execute(() -> {
+                                 if (mc.getCameraEntity() != mc.player) {
+                                    mc.setCameraEntity(mc.player);
+                                 }
+                                 mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §7Screenshare session ended."));
+                              });
+                           }
+                        }
+                     }
                   }
-              }
-              return;
-           }
+               }
+               return;
+            }
 
           if (line.contains(" PRIVMSG ")) {
             int privmsgIdx = line.indexOf(" PRIVMSG ");

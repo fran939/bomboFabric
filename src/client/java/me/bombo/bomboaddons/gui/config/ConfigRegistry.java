@@ -79,6 +79,7 @@ public class ConfigRegistry {
             "Pets",
             "Profiles",
             "Sounds",
+            "Spotify",
             "Timers",
             "Uncategorized",
             "Wardrobe",
@@ -409,12 +410,45 @@ public class ConfigRegistry {
                         0.5f, 2.5f, 0.1f, "x",
                         () -> s.discordHudScale > 0 ? s.discordHudScale : 1.0f,
                         v -> s.discordHudScale = v));
+                items.add(ConfigItem.text("Screenshare Auto-Accept Whitelist",
+                        "Comma-separated list of Minecraft usernames to automatically accept screenshare/spectate requests from.",
+                        category,
+                        () -> s.autoAcceptScreenshareUsers != null ? s.autoAcceptScreenshareUsers : "",
+                        v -> s.autoAcceptScreenshareUsers = v));
                 items.add(ConfigItem.button("Open Move HUDs", "Move HUDs",
                         "Reposition and resize the Discord Voice HUD alongside other HUD elements.",
                         category,
                         () -> {
                             Minecraft mc = Minecraft.getInstance();
                             mc.execute(() -> mc.setScreenAndShow(new HudMoveScreen(HudTarget.DISCORD_HUD)));
+                        }));
+            }
+
+            case "Spotify" -> {
+                items.add(ConfigItem.header("Spotify Desktop Overlay", category));
+                items.add(ConfigItem.hudToggle("Enable Spotify HUD",
+                        "Displays song title, artist, playback time, and clickable controls (⏮ ⏯ ⏭).",
+                        category,
+                        () -> s.spotifyHudEnabled,
+                        v -> s.spotifyHudEnabled = v,
+                        HudTarget.SPOTIFY_HUD));
+                items.add(ConfigItem.toggle("Always Show",
+                        "Shows the Spotify card even when Spotify is not running or paused.",
+                        category,
+                        () -> s.spotifyHudAlwaysShow,
+                        v -> s.spotifyHudAlwaysShow = v));
+                items.add(ConfigItem.sliderFloat("HUD Scale",
+                        "Scale multiplier for Spotify HUD.",
+                        category,
+                        0.5f, 2.5f, 0.1f, "x",
+                        () -> s.spotifyHudScale > 0 ? s.spotifyHudScale : 1.0f,
+                        v -> s.spotifyHudScale = v));
+                items.add(ConfigItem.button("Open Move HUDs", "Move HUDs",
+                        "Reposition and resize the Spotify HUD alongside other HUD elements.",
+                        category,
+                        () -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            mc.execute(() -> mc.setScreenAndShow(new HudMoveScreen(HudTarget.SPOTIFY_HUD)));
                         }));
             }
 
@@ -566,7 +600,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Running Flavor: " + me.bombo.bomboaddons.Constants.MOD_NAME
                         + " (" + me.bombo.bomboaddons.Constants.FLAVOR + " \u2022 "
                         + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "*.jar)", category));
-                items.add(ConfigItem.toggle("No Obfuscate (strip &ka&r)",
+                items.add(ConfigItem.toggle("No Obfuscate (strip \u00a7ka\u00a7r)",
                         "Removes the scrambling style from chat messages and item lore, making the text behind it readable.",
                         category, () -> s.noObfuscate, v -> s.noObfuscate = v));
 

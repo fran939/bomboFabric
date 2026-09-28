@@ -482,6 +482,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.hud.InventoryHud.init();
       me.bombo.bomboaddons.features.discord.DiscordIpcManager.init();
       me.bombo.bomboaddons.features.discord.DiscordVoiceHud.init();
+      me.bombo.bomboaddons.features.spotify.SpotifyHud.init();
       me.bombo.bomboaddons.features.auto.AutoSequenceManager.load();
       me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.setup();
       me.bombo.bomboaddons.flavor.Flavor.get().init();
@@ -549,6 +550,8 @@ public class BomboaddonsClient implements ClientModInitializer {
             } else if (me.bombo.bomboaddons.features.hud.ArmorHud.onMouseClick(mouseX, mouseY, button)) {
                return false;
             } else if (me.bombo.bomboaddons.features.hud.EquipmentHud.onMouseClick(mouseX, mouseY, button)) {
+               return false;
+            } else if (s.spotifyHudEnabled && me.bombo.bomboaddons.features.spotify.SpotifyHud.onMouseClick(mouseX, mouseY, button)) {
                return false;
             } else {
                if (s.diceTracker && DiceTracker.shouldShowHud()) {
@@ -4623,11 +4626,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(bomboBuilder);
                dispatcher.register(createBlockHighlightCommand("bh"));
                dispatcher.register(createBlockHighlightCommand("blockhighlight"));
-               // /ss - Quick access to Discord voice call status and screenshares
-               dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("ss").executes((context) -> {
-                  me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
-                  return 1;
-               }));
+               // /ss and /screenshare - Mod-to-mod screenshare and Discord voice HUD
+               dispatcher.register(buildScreenshareCommand("ss"));
+               dispatcher.register(buildScreenshareCommand("screenshare"));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("bomboprof").executes((context) -> {
                   pendingConfigSearch = "Profile";
                   openGuiNextTick = true;
@@ -8010,13 +8011,165 @@ public class BomboaddonsClient implements ClientModInitializer {
 
    }
 
+   public static LiteralArgumentBuilder<FabricClientCommandSource> buildScreenshareCommand(String name) {
+      return (LiteralArgumentBuilder<FabricClientCommandSource>) (LiteralArgumentBuilder<?>) ClientCommands.literal(name)
+         .executes(context -> {
+            handleScreenshareCommand((FabricClientCommandSource) context.getSource(), new String[0]);
+            return 1;
+         })
+         .then(ClientCommands.argument("action", StringArgumentType.word())
+            .executes(context -> {
+               String action = StringArgumentType.getString(context, "action");
+               handleScreenshareCommand((FabricClientCommandSource) context.getSource(), new String[]{action});
+               return 1;
+            })
+            .then(ClientCommands.argument("player", StringArgumentType.word())
+               .executes(context -> {
+                  String action = StringArgumentType.getString(context, "action");
+                  String player = StringArgumentType.getString(context, "player");
+                  handleScreenshareCommand((FabricClientCommandSource) context.getSource(), new String[]{action, player});
+                  return 1;
+               })));
+   }
+
+   public static void handleScreenshareCommand(FabricClientCommandSource source, String[] args) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player == null) return;
+      String myIgn = mc.player.getScoreboardName();
+
+      java.util.function.Consumer<Component> feedback = (comp) -> {
+         if (source != null) {
+            source.sendFeedback(comp);
+         } else if (mc.player != null) {
+            mc.player.sendSystemMessage(comp);
+         }
+      };
+
+      if (args.length == 0) {
+         feedback.accept(Component.literal("§8§m--------------------------------------------------"));
+         feedback.accept(Component.literal("§3§lBomboAddons Screenshare & Spectate"));
+         feedback.accept(Component.literal("§7Active session: " + (IRCClient.activeScreenshareWith != null ? "§aSpectating " + IRCClient.activeScreenshareWith : "§8None")));
+         feedback.accept(Component.literal("§e/ss <player> §7- Send screenshare / spectate request to a player"));
+         feedback.accept(Component.literal("§e/ss accept <player> §7- Accept incoming request"));
+         feedback.accept(Component.literal("§e/ss deny <player> §7- Deny incoming request"));
+         feedback.accept(Component.literal("§e/ss stop §7- Stop active screenshare / spectating"));
+         feedback.accept(Component.literal("§e/ss whitelist <player> §7- Auto-accept requests from player"));
+         feedback.accept(Component.literal("§e/ss remove <player> §7- Remove player from auto-accept list"));
+         feedback.accept(Component.literal("§e/ss list §7- View auto-accept whitelist"));
+         feedback.accept(Component.literal("§e/ss discord §7- Toggle Discord Voice Call HUD"));
+         feedback.accept(Component.literal("§8§m--------------------------------------------------"));
+         return;
+      }
+
+      String sub = args[0].toLowerCase(java.util.Locale.ROOT);
+
+      if (sub.equals("accept")) {
+         if (args.length < 2) {
+            feedback.accept(Component.literal("§8[§3Bombo§8] §cUsage: /ss accept <player>"));
+            return;
+         }
+         String target = args[1].trim();
+         IRCClient.sendRaw("NOTICE #bomboaddons_chat :[SS_ACCEPT]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
+         IRCClient.activeScreenshareWith = target;
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aAccepted screenshare request from §e" + target + "§a. They are now viewing your screen!"));
+         return;
+      }
+
+      if (sub.equals("deny")) {
+         if (args.length < 2) {
+            feedback.accept(Component.literal("§8[§3Bombo§8] §cUsage: /ss deny <player>"));
+            return;
+         }
+         String target = args[1].trim();
+         IRCClient.sendRaw("NOTICE #bomboaddons_chat :[SS_DENY]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
+         feedback.accept(Component.literal("§8[§3Bombo§8] §cDenied screenshare request from §e" + target + "§c."));
+         return;
+      }
+
+      if (sub.equals("stop") || sub.equals("exit") || sub.equals("leave")) {
+         if (IRCClient.activeScreenshareWith != null) {
+            IRCClient.sendRaw("NOTICE #bomboaddons_chat :[SS_STOP]\u0002" + IRCClient.activeScreenshareWith.toLowerCase() + "\u0002" + myIgn);
+            IRCClient.activeScreenshareWith = null;
+         }
+         if (mc.getCameraEntity() != mc.player) {
+            mc.setCameraEntity(mc.player);
+         }
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aStopped screenshare session."));
+         return;
+      }
+
+      if (sub.equals("allow") || sub.equals("whitelist") || sub.equals("add")) {
+         if (args.length < 2) {
+            feedback.accept(Component.literal("§8[§3Bombo§8] §cUsage: /ss whitelist <player>"));
+            return;
+         }
+         String target = args[1].trim();
+         String cur = BomboConfig.get().autoAcceptScreenshareUsers != null ? BomboConfig.get().autoAcceptScreenshareUsers.trim() : "";
+         if (cur.isEmpty()) {
+            BomboConfig.get().autoAcceptScreenshareUsers = target;
+         } else {
+            BomboConfig.get().autoAcceptScreenshareUsers = cur + ", " + target;
+         }
+         BomboConfig.save();
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aAdded §e" + target + " §ato screenshare auto-accept whitelist."));
+         return;
+      }
+
+      if (sub.equals("remove")) {
+         if (args.length < 2) {
+            feedback.accept(Component.literal("§8[§3Bombo§8] §cUsage: /ss remove <player>"));
+            return;
+         }
+         String target = args[1].trim();
+         String cur = BomboConfig.get().autoAcceptScreenshareUsers != null ? BomboConfig.get().autoAcceptScreenshareUsers : "";
+         java.util.List<String> list = new java.util.ArrayList<>();
+         for (String p : cur.split(",")) {
+            if (!p.trim().isEmpty() && !p.trim().equalsIgnoreCase(target)) {
+               list.add(p.trim());
+            }
+         }
+         BomboConfig.get().autoAcceptScreenshareUsers = String.join(", ", list);
+         BomboConfig.save();
+         feedback.accept(Component.literal("§8[§3Bombo§8] §eRemoved §6" + target + " §efrom screenshare auto-accept whitelist."));
+         return;
+      }
+
+      if (sub.equals("list")) {
+         String cur = BomboConfig.get().autoAcceptScreenshareUsers != null ? BomboConfig.get().autoAcceptScreenshareUsers : "";
+         feedback.accept(Component.literal("§8[§3Bombo§8] §bScreenshare Whitelist: §f" + (cur.isEmpty() ? "(Empty)" : cur)));
+         return;
+      }
+
+      if (sub.equals("discord")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+         return;
+      }
+
+      // Default: /ss <target> -> send screenshare request!
+      String target = args[0].trim();
+      if (!IRCClient.isConnected()) {
+         feedback.accept(Component.literal("§8[§3Bombo§8] §cIRC is not connected yet. Connecting in background..."));
+         IRCClient.start();
+      }
+      IRCClient.sendRaw("NOTICE #bomboaddons_chat :[SS_REQ]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
+      feedback.accept(Component.literal("§8[§3Bombo§8] §aSent screenshare request to §e" + target + "§a. Waiting for them to accept..."));
+   }
+
    public static int executeCamCommand(FabricClientCommandSource source, String targetName) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null || mc.level == null) return 0;
 
+      java.util.function.Consumer<Component> feedback = (comp) -> {
+         if (source != null) {
+            source.sendFeedback(comp);
+         } else if (mc.player != null) {
+            mc.player.sendSystemMessage(comp);
+         }
+      };
+
       if (mc.getCameraEntity() != mc.player) {
          mc.setCameraEntity(mc.player);
-         source.sendFeedback(Component.literal("§8[§3Bombo§8] §aReturned camera to player view."));
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aReturned camera to player view."));
          return 1;
       }
 
@@ -8044,10 +8197,10 @@ public class BomboaddonsClient implements ClientModInitializer {
 
       if (target != null) {
          mc.setCameraEntity(target);
-         source.sendFeedback(Component.literal("§8[§3Bombo§8] §aSpectating §e" + target.getName().getString() + " §7(Press Shift to exit)"));
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aSpectating §e" + target.getName().getString() + " §7(Press Shift to exit)"));
          return 1;
       } else {
-         source.sendFeedback(Component.literal("§8[§3Bombo§8] §cNo valid entity found to spectate. Look at an entity or specify a name/type!"));
+         feedback.accept(Component.literal("§8[§3Bombo§8] §cNo valid entity found to spectate. Look at an entity or specify a name/type!"));
          return 0;
       }
    }

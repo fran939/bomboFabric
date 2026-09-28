@@ -116,9 +116,11 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		String title = net.minecraft.ChatFormatting.stripFormatting(rawTitle).trim().toLowerCase(Locale.ROOT);
 		openStorage = BackpackPreview.getStorageIndexFromTitle(title);
 		boolean isStorageMenu = title.contains("storage") || title.contains("almacenamiento") || title.contains("ender chest") || title.contains("cofre de ender") || title.contains("backpack") || title.contains("mochila");
-		boolean enabled = BomboConfig.get().storageOverlay && (isStorageMenu || openStorage != -1) && !disableOnNextLoad;
-		disableOnNextLoad = false;
-		return enabled;
+		if (disableOnNextLoad) {
+			disableOnNextLoad = false;
+			return false;
+		}
+		return BomboConfig.get().storageOverlay && (isStorageMenu || openStorage != -1);
 	}
 
 	protected void switchOpenStorage(int index) {

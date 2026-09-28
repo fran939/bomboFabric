@@ -683,11 +683,21 @@ public class BomboConfig {
       /** Optional keybind that opens the chat history screen. */
       public String chatHistoryKey = "";
       // Discord Desktop IPC Integration & Voice HUD
-      public boolean discordHudEnabled = true;
+      public boolean discordHudEnabled = false;
       public boolean discordHudOnlyInCall = true;
       public int discordHudX = 10;
       public int discordHudY = 120;
       public float discordHudScale = 1.0F;
+
+      // Spotify Desktop Integration & Overlay
+      public boolean spotifyHudEnabled = false;
+      public boolean spotifyHudAlwaysShow = false;
+      public int spotifyHudX = 10;
+      public int spotifyHudY = 80;
+      public float spotifyHudScale = 1.0F;
+
+      // Screenshare / Spectate Whitelist
+      public String autoAcceptScreenshareUsers = "";
       public boolean diceTracker = false;
       public boolean showCommandOnHover = false;
       public boolean autoHoppityCalls = false;

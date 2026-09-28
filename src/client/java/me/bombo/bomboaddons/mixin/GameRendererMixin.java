@@ -19,4 +19,15 @@ public class GameRendererMixin {
             cir.setReturnValue(fov);
         }
     }
+
+    @org.spongepowered.asm.mixin.injection.Redirect(
+        method = "renderItemInHand",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;getPlayerMode()Lnet/minecraft/world/level/GameType;")
+    )
+    private net.minecraft.world.level.GameType bombo$allowHandInSpectator(net.minecraft.client.multiplayer.MultiPlayerGameMode gameMode) {
+        if (me.bombo.bomboaddons.util.SpectatorCamManager.isActive()) {
+            return net.minecraft.world.level.GameType.SURVIVAL;
+        }
+        return gameMode.getPlayerMode();
+    }
 }

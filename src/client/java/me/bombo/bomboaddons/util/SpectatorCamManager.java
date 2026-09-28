@@ -4,9 +4,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 
 /**
- * Manages the camera orientation and look angles when spectating another player or entity.
+ * Manages camera orientation and look angles when spectating another player or entity.
  * Keeps the camera naturally synchronized to the spectated entity's head/body rotation
- * while allowing smooth mouse freelook offsets.
+ * with smooth mouse freelook offsets.
  */
 public class SpectatorCamManager {
     private static Entity lastCameraEntity = null;
@@ -30,8 +30,7 @@ public class SpectatorCamManager {
         if (camEnt != null && camEnt != mc.player) {
             if (camEnt != lastCameraEntity) {
                 lastCameraEntity = camEnt;
-                offsetYaw = 0.0f; // reset offsets on new spectated target
-                offsetPitch = 0.0f;
+                resetOffsets();
             }
         } else {
             reset();
@@ -42,8 +41,8 @@ public class SpectatorCamManager {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) return;
         double sens = mc.options.sensitivity().get();
-        double f = sens * 0.6 + 0.2;
-        double factor = f * f * f * 8.0 * 0.15;
+        double d = sens * 0.6 + 0.2;
+        double factor = d * d * d * 8.0 * 0.15;
         float dyaw = (float)(accumulatedDX * factor);
         float dpitch = (float)(accumulatedDY * factor);
 
@@ -51,32 +50,26 @@ public class SpectatorCamManager {
         offsetPitch = Math.max(-90.0F, Math.min(90.0F, offsetPitch + dpitch));
     }
 
-    public static float getYaw() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc != null) {
-            Entity camEnt = mc.getCameraEntity();
-            if (camEnt != null && camEnt != mc.player) {
-                // Dynamically follow the spectated entity's look direction + mouse offset
-                return camEnt.getYRot() + offsetYaw;
-            }
+    public static float getYaw(float baseYaw) {
+        if (isActive()) {
+            return baseYaw + offsetYaw;
         }
-        return offsetYaw;
+        return baseYaw;
     }
 
-    public static float getPitch() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc != null) {
-            Entity camEnt = mc.getCameraEntity();
-            if (camEnt != null && camEnt != mc.player) {
-                // Follow the entity's pitch and clamp within valid viewing angles
-                return Math.max(-90.0F, Math.min(90.0F, camEnt.getXRot() + offsetPitch));
-            }
+    public static float getPitch(float basePitch) {
+        if (isActive()) {
+            return Math.max(-90.0F, Math.min(90.0F, basePitch + offsetPitch));
         }
-        return offsetPitch;
+        return basePitch;
     }
 
     public static void reset() {
         lastCameraEntity = null;
+        resetOffsets();
+    }
+
+    public static void resetOffsets() {
         offsetYaw = 0.0f;
         offsetPitch = 0.0f;
     }

@@ -26,24 +26,20 @@ public class MenuScreensConstructorMixin {
 		LocalPlayer player = client.player;
 		if (player == null) return;
 		if (!BomboConfig.get().storageOverlay) return;
-		if (!SkyblockUtils.isOnSkyblock() && !SkyblockUtils.isConnectedToHypixel()) return;
 
 		String nameClean = net.minecraft.ChatFormatting.stripFormatting(name.getString()).trim().toLowerCase(Locale.ROOT);
 		if (!StorageOverlayScreen.enabled(nameClean)) return;
 
-		T screenHandler = type.create(id, player.getInventory());
-
-		if (screenHandler instanceof ChestMenu containerScreenHandler) {
-			// Calculate overlay height based on window dimensions
-			int height = client.getWindow().getGuiScaledHeight() - (client.getWindow().getGuiScaledHeight() / 5);
-			boolean isBackpack = BackpackPreview.getStorageIndexFromTitle(nameClean) != -1;
-			// Wrap the default chest menu handler with our custom multi-grid storage handler
-			StorageOverlayScreenHandler storageOverlayScreenHandler = new StorageOverlayScreenHandler(containerScreenHandler, isBackpack, height, player.getInventory());
-			client.player.containerMenu = storageOverlayScreenHandler;
-			// Open the custom StorageOverlayScreen via setScreenAndShow (gui.setScreen does not show the screen in 26.2)
-			client.setScreenAndShow(new StorageOverlayScreen(storageOverlayScreenHandler, containerScreenHandler, name, client.player.getInventory(), height));
-
-			ci.cancel(); // Cancel vanilla chest screen creation
-		}
+		try {
+			T screenHandler = type.create(id, player.getInventory());
+			if (screenHandler instanceof ChestMenu containerScreenHandler) {
+				int height = client.getWindow().getGuiScaledHeight() - (client.getWindow().getGuiScaledHeight() / 5);
+				boolean isBackpack = BackpackPreview.getStorageIndexFromTitle(nameClean) != -1;
+				StorageOverlayScreenHandler storageOverlayScreenHandler = new StorageOverlayScreenHandler(containerScreenHandler, isBackpack, height, player.getInventory());
+				client.player.containerMenu = storageOverlayScreenHandler;
+				client.gui.setScreen(new StorageOverlayScreen(storageOverlayScreenHandler, containerScreenHandler, name, client.player.getInventory(), height));
+				ci.cancel();
+			}
+		} catch (Throwable ignored) {}
 	}
 }

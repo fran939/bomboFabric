@@ -55,21 +55,36 @@ public final class MayorChatFormatter {
    public static Component processIncomingChat(String raw) {
       if (!isMayorMessage(raw)) return null;
 
+      String prefix = "";
+      int mayorIdx = raw.indexOf("[Mayor]");
+      if (mayorIdx > 0) {
+         prefix = raw.substring(0, mayorIdx);
+      } else {
+         int curIdx = raw.indexOf("Current:");
+         if (curIdx > 0) {
+            prefix = raw.substring(0, curIdx);
+         }
+      }
+
+      Component inner;
       long now = System.currentTimeMillis();
       if (cachedData != null && (now - lastFetchTime < CACHE_TTL_MS)) {
-         return buildInteractive(cachedData);
+         inner = buildInteractive(cachedData);
+      } else {
+         if (IN_FLIGHT.compareAndSet(false, true)) {
+            fetchAsync(false);
+         }
+         if (cachedData != null) {
+            inner = buildInteractive(cachedData);
+         } else {
+            inner = Component.literal("§8[§6Mayor§8] §7Loading active mayor & election details...");
+         }
       }
 
-      // If not in cache or expired, fetch asynchronously
-      if (IN_FLIGHT.compareAndSet(false, true)) {
-         fetchAsync(false);
+      if (!prefix.isEmpty()) {
+         return Component.literal(prefix).append(inner);
       }
-
-      if (cachedData != null) {
-         return buildInteractive(cachedData);
-      }
-
-      return Component.literal("§8[§6Mayor§8] §7Loading active mayor & election details...");
+      return inner;
    }
 
    public static void executeCommand() {

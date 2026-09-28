@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.51` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.52` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,10 +103,22 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.51`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.52`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.52 (Ready for In-Game Testing)
+>
+> 1. **Interactive Screensharing (`/ss <player>`):** Mod-to-mod in-game spectator/screenshare requests over IRC (`IRCClient.java`). Target gets interactive `§a§l[ACCEPT]` and `§c§l[DENY]` buttons. Added auto-accept whitelist (`autoAcceptScreenshareUsers` in config; commands `/ss whitelist <player>`, `/ss remove <player>`, `/ss list`). Once accepted, sender seamlessly executes spectator camera on target. Cleanly disconnect with `/ss stop`.
+> 2. **Interactive Spotify HUD Overlay:** Created `SpotifyManager.java` (background Windows process inspection via JNA `User32` / `ProcessHandle` parsing `Artist - Title`, duration, and controlling playback via virtual media keys) and `SpotifyHud.java` (clean card overlay with track, artist, elapsed timer, and clickable `⏮ ⏯ ⏭` controls). Registered in `HudMoveScreen` under `SPOTIFY_HUD` with custom positioning, dragging, scaling, and reset logic.
+> 3. **Storage Overlay Reliability Fix:** Changed screen launch in `ClientPacketListenerMixin.java` to `client.setScreenAndShow(...)`, ensuring `StorageOverlayScreen` reliably initializes and displays without sticking on vanilla containers.
+> 4. **Spectator First-Person Arm & Held Item:** In `ItemInHandRendererMixin.java`, bypassed vanilla `submitHandsWithItems` at `HEAD` with `equippedProgress = 0.0f` to render the spectated player's arm skin, held item, offhand, and attack animation cleanly in first-person spectator view.
+> 5. **100 Hearts Spectator Bug Fix:** In `HudMixin.java`, redirected `getCameraPlayer()` to `Minecraft.getInstance().player` during spectator camera, preventing vanilla HUD from drawing a massive wall of hearts for Hypixel players with high health.
+> 6. **Spectated Held Item Highlight:** In `HudMixin.java`, injected into `tick(boolean)` to update `lastToolHighlight` and `toolHighlightTimer = 40` from the spectated player's held item, displaying their active item name and rarity color above the hotbar.
+> 7. **Spectator Look Smoothing:** In `SpectatorCamManager.java`, cleaned mouse delta accumulation and reset offsets on player switch; removed redundant per-mouse-move updates in `MouseMixin.java`.
+> 8. **Discord IPC Permission Prompt Prevention:** Updated client ID in `DiscordIpcManager.java` and gated initialization on `discordHudEnabled` so Discord never pops up an authorization dialog on Minecraft startup when disabled.
+> 9. **No Obfuscate Label & Changelog Obfuscation Fix:** Fixed formatting of `No Obfuscate (strip §ka§r)` in `ConfigRegistry.java` so only the 'a' character scrambles, and added reset codes `§r` after `§k` in changelog entries.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.51 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Execution Method Fix:** Fixed screen launch in `MenuScreensConstructorMixin.java` and `StorageOverlayScreen.java` to invoke `client.setScreenAndShow(...)` instead of `client.gui.setScreen(...)`. Registered `StorageOverlayScreen.setup()` in `BomboaddonsClient.java`. Storage overlay now cleanly opens across `/storage`, ender chests, and backpacks.

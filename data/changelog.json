@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.52",
+    "date": "2026-09-28",
+    "changes": [
+      "Screensharing (/ss <player>): In-game mod-to-mod spectator request with interactive [ACCEPT] and [DENY] buttons, auto-accept whitelist (/ss whitelist <player>), and clean disconnects (/ss stop)",
+      "Spotify HUD Overlay: Interactive music HUD showing track name, artist, progress timer, and clickable controls (⏮, ⏯, ⏭) via background media keys",
+      "Storage Overlay Reliability: Fixed container screen launching using setScreenAndShow, reliably opening multi-grid storage overlay on /storage, backpacks, and ender chests",
+      "Spectator Hand & Item: Spectating in first-person cleanly renders the spectated player's arm skin and held item with full bobbing and animations",
+      "100 Hearts Spectator Fix: Eliminated the massive multi-row hearts bar bug when spectating players with high max HP on Hypixel",
+      "Spectated Held Item Name: Displays the spectated player's held item name and rarity color above the hotbar",
+      "Spectator Camera Smoothing: Eliminated look jitter and stutter during spectator camera by cleaning mouse delta handling",
+      "Discord IPC Permissions: Gated Discord IPC on discordHudEnabled so Discord never prompts for permissions on startup when disabled",
+      "No Obfuscate Label: Fixed scrambling formatting in config so §ka§r renders with scrambled 'a' and clean parenthesis"
+    ]
+  },
+  {
     "version": "26.2.28.51",
     "date": "2026-09-28",
     "changes": [
@@ -17,8 +32,8 @@
     "date": "2026-09-28",
     "changes": [
       "Storage Overlay: shifted injection to concrete static MenuScreens.create in MenuScreensConstructorMixin, reliably opening StorageOverlayScreen on /storage, ender chests, and backpacks",
-      "Stable Obfuscated Glyphs: FontMixin stabilizes §k character advance to target width, stopping rarity-upgraded item titles from jittering/shaking",
-      "No Obfuscate Config Label: fixed unclosed §k formatting code so the closing parenthesis is properly displayed in config GUI",
+      "Stable Obfuscated Glyphs: FontMixin stabilizes §k§r character advance to target width, stopping rarity-upgraded item titles from jittering/shaking",
+      "No Obfuscate Config Label: fixed unclosed §k§r formatting code so the closing parenthesis is properly displayed in config GUI",
       "Brigadier /b mayor: registered mayor subcommand in Brigadier tree, fixing 'Incorrect argument for command at position 2: b'",
       "Area & Subarea: /b area now displays parent area and subarea together (e.g. Hub (Village))",
       "Player Body in Spectator: LevelExtractorMixin and AvatarRendererMixin prevent culling and ensure full player body & layer rendering while spectating",

@@ -649,6 +649,18 @@ public class HudMoveScreen extends Screen {
             me.bombo.bomboaddons.features.discord.DiscordVoiceHud.drawHud(g, s.discordHudX, s.discordHudY, s.discordHudScale, true);
         }
 
+        // 29. SPOTIFY_HUD
+        if (!s.showOnlyActiveHuds || s.spotifyHudEnabled) {
+            int spW = (int) ((float) me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudWidth() * s.spotifyHudScale);
+            int spH = (int) ((float) me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudHeight() * s.spotifyHudScale);
+            this.updateDragPosition(mouseX, mouseY, spW, spH, HudTarget.SPOTIFY_HUD, (nx, ny) -> {
+                s.spotifyHudX = nx;
+                s.spotifyHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.spotifyHudX, s.spotifyHudY, spW, spH, HudTarget.SPOTIFY_HUD, s.spotifyHudScale);
+            me.bombo.bomboaddons.features.spotify.SpotifyHud.drawHud(g, s.spotifyHudX, s.spotifyHudY, s.spotifyHudScale, true);
+        }
+
         // Snap Guide Lines (Cyan/Teal)
         if (this.snapGuideX != null) {
             g.fill(this.snapGuideX - 1, 0, this.snapGuideX + 1, this.height, 0xDD00E5FF);
@@ -709,6 +721,8 @@ public class HudMoveScreen extends Screen {
             list.add(new HudRect(s.itemValueBreakdownHudX >= 0 ? s.itemValueBreakdownHudX : 10, s.itemValueBreakdownHudY >= 0 ? s.itemValueBreakdownHudY : (this.height / 2 - 40), (int)(me.bombo.bomboaddons.features.ItemValueBreakdownHud.getHudWidth() * s.itemValueBreakdownHudScale), (int)(me.bombo.bomboaddons.features.ItemValueBreakdownHud.getHudHeight(null) * s.itemValueBreakdownHudScale), HudTarget.ITEM_VALUE_BREAKDOWN));
         if (current != HudTarget.DISCORD_HUD && (!s.showOnlyActiveHuds || s.discordHudEnabled))
             list.add(new HudRect(s.discordHudX, s.discordHudY, (int)(me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudWidth() * s.discordHudScale), (int)(me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudHeight() * s.discordHudScale), HudTarget.DISCORD_HUD));
+        if (current != HudTarget.SPOTIFY_HUD && (!s.showOnlyActiveHuds || s.spotifyHudEnabled))
+            list.add(new HudRect(s.spotifyHudX, s.spotifyHudY, (int)(me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudWidth() * s.spotifyHudScale), (int)(me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudHeight() * s.spotifyHudScale), HudTarget.SPOTIFY_HUD));
 
         return list;
     }
@@ -1282,6 +1296,17 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // SPOTIFY_HUD
+        if (!s.showOnlyActiveHuds || s.spotifyHudEnabled) {
+            int spW = (int) ((float) me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudWidth() * s.spotifyHudScale);
+            int spH = (int) ((float) me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudHeight() * s.spotifyHudScale);
+            if (this.startCornerResize(mouseX, mouseY, s.spotifyHudX, s.spotifyHudY, spW, spH, HudTarget.SPOTIFY_HUD, s.spotifyHudScale)) return true;
+            if (this.checkHit(mouseX, mouseY, s.spotifyHudX, s.spotifyHudY, spW, spH)) {
+                this.selectAndDrag(HudTarget.SPOTIFY_HUD, (int) mouseX - s.spotifyHudX, (int) mouseY - s.spotifyHudY);
+                return true;
+            }
+        }
+
         return super.mouseClicked(event, handled);
     }
 
@@ -1818,6 +1843,18 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // SPOTIFY_HUD
+        if (!s.showOnlyActiveHuds || s.spotifyHudEnabled) {
+            int spW = (int) ((float) me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudWidth() * s.spotifyHudScale);
+            int spH = (int) ((float) me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudHeight() * s.spotifyHudScale);
+            if (this.checkHit(mouseX, mouseY, s.spotifyHudX, s.spotifyHudY, spW, spH)) {
+                s.spotifyHudScale = clampScale(s.spotifyHudScale + delta);
+                this.selectedTarget = HudTarget.SPOTIFY_HUD;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -1894,6 +1931,7 @@ public class HudMoveScreen extends Screen {
             case CRITTER_HUD, CRITTER_MAP -> "Critters";
             case CHAT_TABS -> "Chat";
             case DISCORD_HUD -> "Discord";
+            case SPOTIFY_HUD -> "Spotify";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -1955,6 +1993,8 @@ public class HudMoveScreen extends Screen {
                     case CRITTER_HUD -> { s.critterHudX = 10; s.critterHudY = 10; s.critterHudScale = 1.0f; }
                     case CRITTER_MAP -> { s.critterMapX = this.width - 130; s.critterMapY = 10; s.critterMapScale = 1.0f; }
                     case CHAT_TABS -> { s.chatTabsX = 4; s.chatTabsY = this.height - 28; s.chatTabsScale = 1.0f; }
+                    case DISCORD_HUD -> { s.discordHudX = 10; s.discordHudY = 120; s.discordHudScale = 1.0f; }
+                    case SPOTIFY_HUD -> { s.spotifyHudX = 10; s.spotifyHudY = 80; s.spotifyHudScale = 1.0f; }
                 }
                 BomboConfig.save();
                 return true;
@@ -2006,6 +2046,7 @@ public class HudMoveScreen extends Screen {
         CHAT_TABS,
         CROESUS_PROFIT,
         CROESUS_TRACKER,
-        DISCORD_HUD;
+        DISCORD_HUD,
+        SPOTIFY_HUD;
     }
 }

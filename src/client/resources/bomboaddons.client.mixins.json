@@ -44,6 +44,7 @@
 		"FontMixin",
 		"GameRendererMixin",
 		"GuiMixin",
+		"HudMixin",
 		"HollowWandMixin",
 		"InventoryScreenMixin",
 		"ItemHotkeysMixin",

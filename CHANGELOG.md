@@ -1,5 +1,28 @@
 # BomboAddons Changelog
 
+## [26.2.28.52] - 2026-09-28 (Beta)
+
+### Screensharing & Social
+- **In-Game Screensharing (`/ss <player>`):** Added mod-to-mod in-game spectator requests over IRC. The recipient receives clickable `[ACCEPT]` and `[DENY]` chat buttons. Includes an auto-accept whitelist (`/ss whitelist <player>`, `/ss remove <player>`, `/ss list`) to instantly accept requests from trusted players.
+- **Clean Disconnects (`/ss stop`):** Cleanly exits screenshare/spectator mode and informs both players.
+- **Discord IPC Permission Prevention:** Gated Discord IPC on `discordHudEnabled` and updated client ID so Discord never prompts for permissions on Minecraft startup when disabled.
+
+### Spotify HUD Overlay
+- **Interactive Music HUD:** Displays track title, artist, progress timer (`min:sec`), and clickable playback controls (`⏮`, `⏯`, `⏭`) driven by Windows media key emulation and background process monitoring.
+- **Config & HUD Movement:** Full toggles, scaling, and dragging support under `/b` Spotify category and `/b huds`.
+
+### Storage & Overlay
+- **Storage Overlay Launch Reliability:** Switched screen opening to `setScreenAndShow` in `ClientPacketListenerMixin.java`, ensuring the multi-grid storage overlay reliably opens on `/storage`, backpacks, and ender chests.
+
+### Spectator Camera & HUD
+- **Spectator First-Person Arm & Item:** First-person spectator cleanly renders the spectated player's arm skin and held item with full bobbing/attack animations instead of the client player's hand.
+- **100 Hearts Fix:** Eliminated the multi-row 100+ hearts health bar bug when spectating players with high max HP on Hypixel.
+- **Spectated Item Highlight:** Displays the spectated player's held item name and rarity color above the hotbar.
+- **Look Smoothing:** Eliminated camera jitter and stutter by cleaning mouse delta handling in `SpectatorCamManager.java`.
+
+### Polish
+- **No Obfuscate Label:** Formatted `No Obfuscate (strip §ka§r)` so the 'a' character scrambles and the closing parenthesis remains clean.
+
 ## [26.2.28.51] - 2026-09-28 (Beta)
 
 ### Storage & Overlay
