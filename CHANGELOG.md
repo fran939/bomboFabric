@@ -1,5 +1,36 @@
 # BomboAddons Changelog
 
+## [26.2.28.54] - 2026-09-28 (Beta)
+
+### Screensharing & Social
+- **Screensharing Protocol Delimiter Fix (`/ss <player>`):** Enhanced IRC command parser to split protocol messages on both delimiter (`\u0002`) and whitespace (`\\s+`), preventing request payloads from leaking into IRC chat and ensuring the recipient reliably receives `[ACCEPT]` and `[DENY]` buttons.
+
+### Synchronized Lyrics (`/b lyrics` & `/lyrics`)
+- **Word-for-Word Spacing & Font Metrics:** Fixed word merging (`Soloquierebailar`) and active highlight overlap by measuring exact bold font width and adding explicit inter-word spacing.
+- **Smooth Millisecond Timer Interpolation:** Replaced jumping seconds with smooth continuous millisecond interpolation based on playback state timestamp.
+- **Raw / Edit Lyrics Inspection Modal:** Added `[Raw / Edit Lyrics]` button displaying raw API/LRC responses with scrollable view and one-click clipboard copy.
+- **Multi-Provider Lyric Selector:** Added cycling between **LRCLIB**, **PAXSENIX**, **UNISON**, and **YOULYPLUS** with persistent configuration.
+- **Direct Spotify Desktop App Search:** Clicking song title or artist launches directly in the **Spotify Desktop App** (`spotify:search:...`) via Windows URI protocol.
+- **Official Spotify Branding:** Replaced custom icon with official, crisp 64x64 Spotify logo.
+
+### Spotify HUD Overlay
+- **Configurable Theme Colors:** Added customizable hex colors (Background, Border, Title, Artist, Accent/Controls, Progress Bar Background) to `/b` config under Spotify category.
+
+### Storage & Containers
+- **Storage Overlay Main Thread Launch:** Switched container interception to `setScreenAndShow` on the main client thread in `MenuScreensConstructorMixin`, resolving issues where the multi-grid overlay failed to initialize.
+
+### Spectator Camera
+- **FOV & Mouse Look Smoothing:** Excluded spectator camera from aggressive FOV clamping so FOV remains natural, and applied a 0.5x smooth sensitivity factor to mouse turning.
+
+### Performance Profiler & Engine (`/b perf`)
+- **Entity Scanner Cache Sentinels:** Optimized `HighlightESP` entity scan using an `EMPTY_INFO` cache sentinel, reducing scan overhead to <0.01 ms even with hundreds of entities in the area.
+- **JVM Heap & Thread Metrics:** Added real-time JVM Heap memory usage (`Used MB / Allocated MB / Max MB`) and active thread counts directly to the profiler header.
+- **Subsystem Profiling Scopes:** Added profiling scopes for Spotify HUD rendering, Lyrics screen rendering, and Storage Overlay rendering.
+
+### CI/CD & Documentation
+- **GitHub Actions Automated Builds:** Added `.github/workflows/build.yml` to automatically compile both mod flavors on push and publish downloadable `.jar` artifacts to Actions runs.
+- **Documentation:** Added comprehensive `README.md` for the `26.2` branch.
+
 ## [26.2.28.53] - 2026-09-28 (Beta)
 
 ### Screensharing & Social
@@ -18,7 +49,7 @@
 - **Storage Overlay Crash Fix:** Replaced `SlotAccessor` mixin with direct Unsafe memory offsets for slot positioning, completely preventing classloading crashes when opening storage menus.
 - **Spectator Camera & Hands:** Injected into `LevelExtractor` to prevent Minecraft from culling `LocalPlayer` from the world while spectating, and suppressed client hand rendering in first-person spectator.
 - **Hoppity Phone Auto-Pickup:** Gated auto-pickup strictly to callers matching "Hoppity", preventing accidental pickup of Vincent or other NPC calls.
-- **Changelog Colors:** Fixed changelog text color turning white after `§ka` by resetting to `§r§7`.
+- **Changelog Colors:** Fixed changelog text color turning white after obfuscation reset by resetting to `§r§7`.
 
 ## [26.2.28.52] - 2026-09-28 (Beta)
 

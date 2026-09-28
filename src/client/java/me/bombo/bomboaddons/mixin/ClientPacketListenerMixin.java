@@ -25,36 +25,6 @@ public class ClientPacketListenerMixin {
    private static final ThreadLocal<Boolean> IS_HANDLING_SEND_COMMAND = ThreadLocal.withInitial(() -> false);
 
    @Inject(
-      method = {"handleOpenScreen"},
-      at = {@At("HEAD")},
-      cancellable = true
-   )
-   private void onHandleOpenScreen(ClientboundOpenScreenPacket packet, CallbackInfo ci) {
-      if (!BomboConfig.get().storageOverlay) return;
-      Minecraft client = Minecraft.getInstance();
-      if (client.player == null) return;
-
-      String rawTitle = packet.getTitle().getString();
-      String nameClean = net.minecraft.ChatFormatting.stripFormatting(rawTitle).trim().toLowerCase(java.util.Locale.ROOT);
-      if (!me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.enabled(nameClean)) return;
-
-      try {
-         net.minecraft.world.inventory.AbstractContainerMenu menu = packet.getType().create(packet.getContainerId(), client.player.getInventory());
-         if (menu instanceof net.minecraft.world.inventory.ChestMenu containerScreenHandler) {
-            int height = client.getWindow().getGuiScaledHeight() - (client.getWindow().getGuiScaledHeight() / 5);
-            boolean isBackpack = me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.getStorageIndexFromTitle(nameClean) != -1;
-            me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler storageOverlayScreenHandler =
-               new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler(containerScreenHandler, isBackpack, height, client.player.getInventory());
-            client.player.containerMenu = storageOverlayScreenHandler;
-            client.setScreenAndShow(new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen(storageOverlayScreenHandler, containerScreenHandler, packet.getTitle(), client.player.getInventory(), height));
-            ci.cancel();
-         }
-      } catch (Throwable t) {
-         t.printStackTrace();
-      }
-   }
-
-   @Inject(
       method = {"sendChat"},
       at = {@At("HEAD")},
       cancellable = true

@@ -253,8 +253,10 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-		super.extractRenderState(graphics, mouseX, mouseY, a);
-		this.extractTooltip(graphics, mouseX, mouseY);
+		try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("Storage: Overlay Render")) {
+			super.extractRenderState(graphics, mouseX, mouseY, a);
+			this.extractTooltip(graphics, mouseX, mouseY);
+		}
 	}
 
 	@Override

@@ -170,6 +170,7 @@ public class HighlightESP {
       }
    }
 
+   public static final EntityHighlightInfo EMPTY_INFO = new EntityHighlightInfo(0L, false, null, false, 0, false, false);
    public static final Map<Integer, EntityHighlightInfo> HIGHLIGHT_CACHE = new ConcurrentHashMap<>();
    public static final java.util.Set<Integer> ALERTED_SPAWN_IDS = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
@@ -540,12 +541,12 @@ public class HighlightESP {
       long now = System.currentTimeMillis();
       EntityHighlightInfo cached = HIGHLIGHT_CACHE.get(id);
       if (cached != null && now - cached.timestamp < 1000L) {
-         return cached;
+         return cached == EMPTY_INFO ? null : cached;
       }
       EntityHighlightInfo computed = computeHighlightInfo(self, now);
       if (HIGHLIGHT_CACHE.size() > 3000)
          HIGHLIGHT_CACHE.clear();
-      HIGHLIGHT_CACHE.put(id, computed);
+      HIGHLIGHT_CACHE.put(id, computed != null ? computed : new EntityHighlightInfo(now, false, null, false, 0, false, false));
       return computed;
    }
 

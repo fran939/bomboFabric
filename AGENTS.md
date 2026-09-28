@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.53` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.54` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -64,7 +64,7 @@ Every time an AI agent finishes a task or prompt, the agent **MUST** complete al
 - **Destination:** `/home/ubuntu/bomboapi/releases/`
 - **Deploy Command:**
   ```powershell
-  scp -i "C:\Users\frand\.ssh\id_ed25519" build\libs\bomboaddons-<version>.jar ubuntu@ssh.bombo.dpdns.org:/home/ubuntu/bomboapi/releases/
+  scp -i "C:\Users\frand\.ssh\id_ed25519" build\libs\bomboaddons-<version>.jar build\libs\bomboclient-<version>.jar ubuntu@ssh.bombo.dpdns.org:/home/ubuntu/bomboapi/releases/
   ```
 
 ### E. Commit & Push to GitHub
@@ -103,10 +103,20 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.53`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.54`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.54 (Ready for In-Game Testing)
+>
+> 1. **Screensharing Protocol Delivery Delimiter Fix (`/ss <player>`):** Enhanced IRC command parser to split protocol messages on both `\u0002` and `\\s+`, preventing screenshare request commands from leaking into IRC chat and ensuring the recipient reliably receives interactive `[ACCEPT]` and `[DENY]` buttons.
+> 2. **Word-for-Word Synchronized Lyrics (`/b lyrics` & `/lyrics`):** Fixed merged words and overlapping highlights by measuring exact bold font widths and adding explicit inter-word spacing (`font.width(" ")`). Replaced jumping second timers with continuous millisecond interpolation. Added `[Raw / Edit Lyrics]` inspection modal with clipboard copy support. Added multi-provider cycling (LRCLIB, PAXSENIX, UNISON, YOULYPLUS). Track and artist links now launch directly in the **Spotify Desktop App** (`spotify:search:...`). Replaced icon with crisp 64x64 official Spotify branding.
+> 3. **Spotify HUD Theme Customization:** Added customizable hex colors (Background, Border, Title, Artist, Accent/Controls, Progress Bar Background) to `/b` config under Spotify category.
+> 4. **Storage Overlay Execution Method Fix:** Switched container interception to `setScreenAndShow` on the main render thread in `MenuScreensConstructorMixin`, resolving issues where the multi-grid overlay failed to initialize.
+> 5. **Spectator Camera FOV & Turn Sensitivity:** Excluded spectator camera from aggressive FOV clamping so FOV remains natural, and applied a 0.5x smooth sensitivity factor to mouse turning in `SpectatorCamManager`.
+> 6. **Performance Profiler (`/b perf`) & Entity Scan Optimization:** Added sentinel `EMPTY_INFO` negative caching to `HighlightESP` entity scan, dropping scan time to <0.01 ms. Added real-time JVM Heap memory usage and active thread counts to the profiler header. Added profiler scopes for Spotify, Lyrics, and Storage Overlay.
+> 7. **CI/CD & Documentation:** Added GitHub Actions build workflow (`.github/workflows/build.yml`) for automated builds and downloadable jar artifacts. Created comprehensive `README.md` for the `26.2` branch.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.53 (Ready for In-Game Testing)
 >
 > 1. **Screenshare Request Delivery (`/ss <player>`):** Switched IRC request transport to `PRIVMSG` over `#bomboaddons_chat` instead of channel `NOTICE`, fixing packet dropping by IRC channel mode. The target player reliably receives the in-game spectator invitation with clickable `[ACCEPT]` and `[DENY]` buttons. Un-hijacked `/ss` and `/b ss` from Discord IPC to screensharing; added `/b discord` for Discord HUD.

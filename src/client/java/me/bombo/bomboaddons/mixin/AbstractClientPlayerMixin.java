@@ -11,8 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class AbstractClientPlayerMixin {
     @Inject(method = "getFieldOfViewModifier", at = @At("HEAD"), cancellable = true)
     private void bombo$clampFreecamFov(boolean isScoping, float partialTicks, CallbackInfoReturnable<Float> cir) {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-        if (Flavor.get().isFreecamActive() || (mc.getCameraEntity() != null && mc.getCameraEntity() != mc.player)) {
+        if (Flavor.get().isFreecamActive()) {
             cir.setReturnValue(1.0F);
         }
     }

@@ -1,0 +1,39 @@
+name: Build BomboAddons
+
+on:
+  push:
+    branches:
+      - '26.2'
+      - 'main'
+      - 'master'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Package Mod Jars
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'oracle'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+
+      - name: Upload Mod Jars as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bomboaddons-jars
+          path: build/libs/*.jar
+          if-no-files-found: error

@@ -42,7 +42,7 @@ public class SpectatorCamManager {
         if (mc == null) return;
         double sens = mc.options.sensitivity().get();
         double d = sens * 0.6 + 0.2;
-        double factor = d * d * d * 8.0 * 0.15;
+        double factor = d * d * d * 8.0 * 0.15 * 0.5;
         float dyaw = (float)(accumulatedDX * factor);
         float dpitch = (float)(accumulatedDY * factor);
 

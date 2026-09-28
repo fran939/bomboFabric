@@ -41,7 +41,9 @@ public class SpotifyHud {
         if (s == null || !s.spotifyHudEnabled) return;
         if (!SpotifyManager.isSpotifyOpen() && !s.spotifyHudAlwaysShow) return;
 
-        drawHud(g, s.spotifyHudX, s.spotifyHudY, s.spotifyHudScale, false);
+        try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("Spotify: HUD Render")) {
+            drawHud(g, s.spotifyHudX, s.spotifyHudY, s.spotifyHudScale, false);
+        }
     }
 
     public static int getHudWidth() {
@@ -70,13 +72,21 @@ public class SpotifyHud {
         String track = isDummy ? "CALENTÓN" : (open ? (SpotifyManager.getCurrentTrack().isEmpty() ? "No Track" : SpotifyManager.getCurrentTrack()) : "Spotify Closed");
         String artist = isDummy ? "Mora" : (open ? (SpotifyManager.getCurrentArtist().isEmpty() ? "Paused" : SpotifyManager.getCurrentArtist()) : "Not Running");
 
-        // Background card: modern dark plum/slate
-        g.fill(0, 0, HUD_WIDTH, HUD_HEIGHT, 0xEE1E1324);
-        // Subtle container border
-        g.fill(0, 0, HUD_WIDTH, 1, 0x2AFFFFFF);
-        g.fill(0, HUD_HEIGHT - 1, HUD_WIDTH, HUD_HEIGHT, 0x2AFFFFFF);
-        g.fill(0, 0, 1, HUD_HEIGHT, 0x2AFFFFFF);
-        g.fill(HUD_WIDTH - 1, 0, HUD_WIDTH, HUD_HEIGHT, 0x2AFFFFFF);
+        BomboConfig.Settings s = BomboConfig.get();
+        int bgColor = parseHexColor(s != null ? s.spotifyBgColor : null, 0xEE1E1324);
+        int borderColor = parseHexColor(s != null ? s.spotifyBorderColor : null, 0x3300A4DC);
+        int titleColor = parseHexColor(s != null ? s.spotifyTitleColor : null, 0xFFFFFFFF);
+        int artistColor = parseHexColor(s != null ? s.spotifyArtistColor : null, 0xFFA098AA);
+        int accentColor = parseHexColor(s != null ? s.spotifyAccentColor : null, 0xFF00A4DC);
+        int progressBg = parseHexColor(s != null ? s.spotifyProgressBgColor : null, 0x33333344);
+
+        // Background card
+        g.fill(0, 0, HUD_WIDTH, HUD_HEIGHT, bgColor);
+        // Container border
+        g.fill(0, 0, HUD_WIDTH, 1, borderColor);
+        g.fill(0, HUD_HEIGHT - 1, HUD_WIDTH, HUD_HEIGHT, borderColor);
+        g.fill(0, 0, 1, HUD_HEIGHT, borderColor);
+        g.fill(HUD_WIDTH - 1, 0, HUD_WIDTH, HUD_HEIGHT, borderColor);
 
         // Spotify Logo on the left
         int iconSize = 20;
@@ -87,27 +97,27 @@ public class SpotifyHud {
         // Track and Artist text
         int textX = 29;
         String trackDisplay = font.plainSubstrByWidth(track, 96);
-        g.text(font, "§f§l" + trackDisplay, textX, 5, 0xFFFFFFFF, true);
+        g.text(font, "§l" + trackDisplay, textX, 5, titleColor, true);
 
         String artistDisplay = font.plainSubstrByWidth(artist, 96);
-        g.text(font, "§7" + artistDisplay, textX, 16, 0xFFA098AA, false);
+        g.text(font, artistDisplay, textX, 16, artistColor, false);
 
-        // Controls on the right (Neon Cyan #00A4DC): |◀  ⏸/▶  ▶|
+        // Controls on the right: |◀  ⏸/▶  ▶|
         int ctrlY = 9;
-        g.text(font, "§b|◀", 130, ctrlY, 0xFF00A4DC, true);
-        g.text(font, playing ? "§b⏸" : "§b▶", 147, ctrlY, 0xFF00A4DC, true);
-        g.text(font, "§b▶|", 163, ctrlY, 0xFF00A4DC, true);
+        g.text(font, "|◀", 130, ctrlY, accentColor, true);
+        g.text(font, playing ? "⏸" : "▶", 147, ctrlY, accentColor, true);
+        g.text(font, "▶|", 163, ctrlY, accentColor, true);
 
         // Progress bar at the bottom
         int barX = 5;
         int barY = 29;
         int barW = HUD_WIDTH - 10;
-        g.fill(barX, barY, barX + barW, barY + 2, 0x33FFFFFF);
+        g.fill(barX, barY, barX + barW, barY + 2, progressBg);
 
         float ratio = isDummy ? 0.65f : SpotifyManager.getProgressRatio();
         int fillW = Math.max(0, Math.min(barW, (int) (barW * ratio)));
         if (fillW > 0) {
-            g.fill(barX, barY, barX + fillW, barY + 2, 0xFF00A4DC);
+            g.fill(barX, barY, barX + fillW, barY + 2, accentColor);
         }
 
         g.pose().popMatrix();
@@ -134,15 +144,15 @@ public class SpotifyHud {
             return true;
         }
 
-        // Track title click -> open song search in Spotify
+        // Track title click -> open song in Spotify Desktop App
         if (relX >= 27 && relX <= 126 && relY >= 3 && relY <= 15) {
-            openWebUrl(SpotifyManager.getTrackUrl());
+            SpotifyManager.openTrackInSpotify();
             return true;
         }
 
-        // Artist click -> open artist search in Spotify
+        // Artist click -> open artist in Spotify Desktop App
         if (relX >= 27 && relX <= 126 && relY >= 16 && relY <= 28) {
-            openWebUrl(SpotifyManager.getArtistUrl());
+            SpotifyManager.openArtistInSpotify();
             return true;
         }
 
@@ -163,9 +173,16 @@ public class SpotifyHud {
         return false;
     }
 
-    private static void openWebUrl(String url) {
+    private static int parseHexColor(String hex, int def) {
+        if (hex == null || hex.isEmpty()) return def;
         try {
-            Util.getPlatform().openUri(new URI(url));
+            String clean = hex.trim().replace("#", "");
+            if (clean.length() == 6) {
+                return (int) (0xFF000000L | Long.parseLong(clean, 16));
+            } else if (clean.length() == 8) {
+                return (int) Long.parseLong(clean, 16);
+            }
         } catch (Throwable ignored) {}
+        return def;
     }
 }

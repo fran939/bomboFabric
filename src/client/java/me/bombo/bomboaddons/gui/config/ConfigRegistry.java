@@ -443,6 +443,52 @@ public class ConfigRegistry {
                         0.5f, 2.5f, 0.1f, "x",
                         () -> s.spotifyHudScale > 0 ? s.spotifyHudScale : 1.0f,
                         v -> s.spotifyHudScale = v));
+                items.add(ConfigItem.text("Background Color",
+                        "Hex color code for the HUD card background (e.g. #1E1324).",
+                        category,
+                        () -> s.spotifyBgColor != null ? s.spotifyBgColor : "#1E1324",
+                        v -> s.spotifyBgColor = v));
+                items.add(ConfigItem.text("Border Color",
+                        "Hex color code for the HUD card border (e.g. #00A4DC).",
+                        category,
+                        () -> s.spotifyBorderColor != null ? s.spotifyBorderColor : "#00A4DC",
+                        v -> s.spotifyBorderColor = v));
+                items.add(ConfigItem.text("Song Title Color",
+                        "Hex color code for the song name text (e.g. #FFFFFF).",
+                        category,
+                        () -> s.spotifyTitleColor != null ? s.spotifyTitleColor : "#FFFFFF",
+                        v -> s.spotifyTitleColor = v));
+                items.add(ConfigItem.text("Artist Color",
+                        "Hex color code for the artist name text (e.g. #B8B2C4).",
+                        category,
+                        () -> s.spotifyArtistColor != null ? s.spotifyArtistColor : "#B8B2C4",
+                        v -> s.spotifyArtistColor = v));
+                items.add(ConfigItem.text("Accent / Controls Color",
+                        "Hex color code for playback controls and active progress bar (e.g. #00A4DC).",
+                        category,
+                        () -> s.spotifyAccentColor != null ? s.spotifyAccentColor : "#00A4DC",
+                        v -> s.spotifyAccentColor = v));
+                items.add(ConfigItem.text("Progress Bar Background",
+                        "Hex color code for the inactive progress bar track (e.g. #333344).",
+                        category,
+                        () -> s.spotifyProgressBgColor != null ? s.spotifyProgressBgColor : "#333344",
+                        v -> s.spotifyProgressBgColor = v));
+                items.add(ConfigItem.cycle("Lyrics Provider",
+                        "Select lyrics provider API: LRCLIB (open database), PAXSENIX (Apple Music syllable sync), UNISON, or YOULYPLUS.",
+                        category,
+                        List.of("LRCLIB", "PAXSENIX", "UNISON", "YOULYPLUS"),
+                        () -> s.lyricsProvider != null ? s.lyricsProvider : "LRCLIB",
+                        v -> {
+                            s.lyricsProvider = v;
+                            me.bombo.bomboaddons.features.spotify.LyricsManager.setProvider(v);
+                        }));
+                items.add(ConfigItem.button("Open Synced Lyrics", "View Lyrics",
+                        "Open the synchronized lyrics GUI (/b lyrics).",
+                        category,
+                        () -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
+                        }));
                 items.add(ConfigItem.button("Open Move HUDs", "Move HUDs",
                         "Reposition and resize the Spotify HUD alongside other HUD elements.",
                         category,

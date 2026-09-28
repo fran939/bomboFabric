@@ -7,6 +7,7 @@ import com.sun.jna.ptr.IntByReference;
 import net.minecraft.client.Minecraft;
 
 import java.io.*;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -61,7 +62,25 @@ public class SpotifyManager {
     }
 
     public static int getProgressSeconds() {
-        return progressSeconds;
+        if (!isPlaying || lastStateUpdate <= 0) {
+            return progressSeconds;
+        }
+        int elapsed = progressSeconds + (int) ((System.currentTimeMillis() - lastStateUpdate) / 1000L);
+        if (durationSeconds > 0) {
+            elapsed = Math.min(elapsed, durationSeconds);
+        }
+        return Math.max(0, elapsed);
+    }
+
+    public static long getProgressMs() {
+        if (!isPlaying || lastStateUpdate <= 0) {
+            return progressSeconds * 1000L;
+        }
+        long elapsed = (progressSeconds * 1000L) + (System.currentTimeMillis() - lastStateUpdate);
+        if (durationSeconds > 0) {
+            elapsed = Math.min(elapsed, durationSeconds * 1000L);
+        }
+        return Math.max(0L, elapsed);
     }
 
     public static int getDurationSeconds() {
@@ -70,12 +89,13 @@ public class SpotifyManager {
 
     public static float getProgressRatio() {
         if (durationSeconds <= 0) return 0.0f;
-        return Math.min(1.0f, Math.max(0.0f, (float) progressSeconds / (float) durationSeconds));
+        return Math.min(1.0f, Math.max(0.0f, (float) getProgressSeconds() / (float) durationSeconds));
     }
 
     public static String getFormattedTime() {
-        int minutes = progressSeconds / 60;
-        int seconds = progressSeconds % 60;
+        int sec = getProgressSeconds();
+        int minutes = sec / 60;
+        int seconds = sec % 60;
         return String.format("%02d:%02d", minutes, seconds);
     }
 
@@ -83,6 +103,30 @@ public class SpotifyManager {
         int minutes = durationSeconds / 60;
         int seconds = durationSeconds % 60;
         return String.format("%02d:%02d", minutes, seconds);
+    }
+
+    public static void openTrackInSpotify() {
+        String query = (currentTrack + " " + currentArtist).trim();
+        openDesktopOrWeb(query);
+    }
+
+    public static void openArtistInSpotify() {
+        String query = currentArtist.trim();
+        openDesktopOrWeb(query);
+    }
+
+    private static void openDesktopOrWeb(String query) {
+        if (query.isEmpty()) return;
+        try {
+            // Open via Spotify Desktop App protocol: spotify:search:<query>
+            String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8).replace("+", "%20");
+            ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "start", "", "spotify:search:" + encoded);
+            pb.start();
+        } catch (Throwable t) {
+            try {
+                net.minecraft.util.Util.getPlatform().openUri(new URI("https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8)));
+            } catch (Throwable ignored) {}
+        }
     }
 
     public static String getTrackUrl() {

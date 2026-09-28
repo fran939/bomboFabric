@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.54",
+    "date": "2026-09-28",
+    "changes": [
+      "Screensharing (/ss <player>): Fixed IRC command parser to split on both delimiter and whitespace, preventing request text from leaking into chat and reliably showing [ACCEPT] and [DENY] buttons",
+      "Synchronized Lyrics (/b lyrics & /lyrics): Fixed word merging with proper bold font spacing, added smooth millisecond timer interpolation, added [Raw / Edit Lyrics] modal with clipboard copy, added multi-provider selector (LRCLIB, PAXSENIX, UNISON, YOULYPLUS), and direct Spotify Desktop App links",
+      "Spotify Theme & Controls: Added customizable HUD theme colors (background, border, title, artist, accent, progress bar) in /b config, and official 64x64 Spotify logo",
+      "Storage Overlay: Fixed container screen launching on main client thread via setScreenAndShow, reliably opening multi-grid storage overlay on /storage, backpacks, and ender chests",
+      "Spectator Camera: Decoupled FOV clamping from spectator camera so FOV remains natural, and smoothed mouse turn sensitivity (0.5x)",
+      "Performance Profiler (/b perf): Optimized entity scanner with negative cache sentinels (<0.01 ms overhead), added JVM Heap usage and thread count metrics, and added profiler scopes for Spotify, Lyrics, and Storage",
+      "CI/CD & Documentation: Added GitHub Actions automated build workflow with downloadable jar artifacts, and created comprehensive README.md for 26.2"
+    ]
+  },
+  {
     "version": "26.2.28.53",
     "date": "2026-09-28",
     "changes": [
@@ -10,7 +23,7 @@
       "Storage Overlay Crash Fix: Removed SlotAccessor mixin and switched to direct memory offsets for slot positioning, completely preventing classload crashes",
       "Spectator Hand & Body Rendering: Overrode camera entity in LevelExtractor to prevent Minecraft culling client player body from the world, and suppressed client hand in first-person spectator",
       "Hoppity Call Filter: Gated auto-pickup strictly to calls from Hoppity, preventing accidental pickup of Vincent or other NPC calls",
-      "Changelog Colors: Fixed changelog text turning white after §ka by using §r§7 to maintain proper readable gray formatting"
+      "Changelog Colors: Fixed changelog text turning white after obfuscation reset by using §r§7 to maintain proper readable gray formatting"
     ]
   },
   {

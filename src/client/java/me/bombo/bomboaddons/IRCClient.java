@@ -816,11 +816,19 @@ public class IRCClient {
 
    }
 
+   private static String[] splitProtocolParts(String payload) {
+      if (payload == null) return new String[0];
+      if (payload.contains("\u0002")) {
+         return payload.split("\u0002");
+      }
+      return payload.split("\\s+");
+   }
+
    private static boolean handleScreenshareProtocol(String payload) {
       if (payload == null) return false;
       if (payload.startsWith("[SS_REQ]")) {
-         // Format: [SS_REQ]targetsender
-         String[] parts = payload.split("");
+         // Format: [SS_REQ]\u0002target\u0002sender OR [SS_REQ] target sender
+         String[] parts = splitProtocolParts(payload);
          if (parts.length >= 3) {
             String target = parts[1].trim();
             String sender = parts[2].trim();
@@ -840,7 +848,7 @@ public class IRCClient {
                   }
 
                   if (autoAccept) {
-                     sendRaw("PRIVMSG #bomboaddons_chat :[SS_ACCEPT]" + sender.toLowerCase() + "" + responseIgn);
+                     sendRaw("PRIVMSG #bomboaddons_chat :[SS_ACCEPT]\u0002" + sender.toLowerCase() + "\u0002" + responseIgn);
                      mc.execute(() -> {
                         if (mc.player != null) {
                            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aAuto-accepted screenshare request from §e" + sender + " §a(whitelisted)."));
@@ -868,8 +876,8 @@ public class IRCClient {
          }
          return true;
       } else if (payload.startsWith("[SS_ACCEPT]")) {
-         // Format: [SS_ACCEPT]targetsender
-         String[] parts = payload.split("");
+         // Format: [SS_ACCEPT]\u0002target\u0002sender OR [SS_ACCEPT] target sender
+         String[] parts = splitProtocolParts(payload);
          if (parts.length >= 3) {
             String target = parts[1].trim();
             String sender = parts[2].trim();
@@ -890,7 +898,7 @@ public class IRCClient {
          }
          return true;
       } else if (payload.startsWith("[SS_DENY]")) {
-         String[] parts = payload.split("");
+         String[] parts = splitProtocolParts(payload);
          if (parts.length >= 3) {
             String target = parts[1].trim();
             String sender = parts[2].trim();
@@ -909,7 +917,7 @@ public class IRCClient {
          }
          return true;
       } else if (payload.startsWith("[SS_STOP]")) {
-         String[] parts = payload.split("");
+         String[] parts = splitProtocolParts(payload);
          if (parts.length >= 3) {
             String target = parts[1].trim();
             String sender = parts[2].trim();

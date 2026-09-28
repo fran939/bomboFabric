@@ -86,7 +86,7 @@ public class PerformanceScreen extends Screen {
         g.outline(winX, winY, winW, winH, ConfigUITheme.getBorderColor());
 
         // Header bar
-        int headerH = 46;
+        int headerH = 56;
         g.fill(winX, winY, winX + winW, winY + headerH, ConfigUITheme.getSidebarBg());
         g.fill(winX, winY + headerH - 1, winX + winW, winY + headerH, ConfigUITheme.getBorderColor());
 
@@ -94,11 +94,21 @@ public class PerformanceScreen extends Screen {
         String title = drillDownFilter != null
                 ? "§b§lBomboAddons §fProfiler §8> §e" + drillDownFilter
                 : "§b§lBomboAddons §fPerformance Visualizer";
-        g.text(font, title, winX + 16, winY + 12, 0xFFFFFFFF, true);
+        g.text(font, title, winX + 16, winY + 10, 0xFFFFFFFF, true);
 
         String statusSummary = String.format("§7Features: §f%d §8| §7Total Load: §e%.2f ms/s" + (drillDownFilter != null ? " §8(Drill-down Active)" : " §8(Click item to drill down)"),
                 cachedSnapshots.size(), totalMeasuredMsPerSec);
-        g.text(font, statusSummary, winX + 16, winY + 28, 0xFFAAAAAA, false);
+        g.text(font, statusSummary, winX + 16, winY + 25, 0xFFAAAAAA, false);
+
+        Runtime rt = Runtime.getRuntime();
+        long maxMem = rt.maxMemory() / (1024 * 1024);
+        long totalMem = rt.totalMemory() / (1024 * 1024);
+        long freeMem = rt.freeMemory() / (1024 * 1024);
+        long usedMem = totalMem - freeMem;
+        int activeThreads = Thread.activeCount();
+        String memSummary = String.format("§7JVM Heap: §a%dMB §8/ §7%dMB §8(Max: %dMB) | §7Threads: §b%d",
+                usedMem, totalMem, maxMem, activeThreads);
+        g.text(font, memSummary, winX + 16, winY + 38, 0xFF888888, false);
 
         // Right side header buttons (Back / Reset Stats / Close)
         int btnW = 80;
@@ -106,7 +116,7 @@ public class PerformanceScreen extends Screen {
 
         if (drillDownFilter != null) {
             int backBtnX = winX + winW - btnW * 3 - 30;
-            int backBtnY = winY + 12;
+            int backBtnY = winY + 16;
             boolean hoverBack = mouseX >= backBtnX && mouseX <= backBtnX + btnW && mouseY >= backBtnY && mouseY <= backBtnY + btnH;
             g.fill(backBtnX, backBtnY, backBtnX + btnW, backBtnY + btnH, hoverBack ? 0x4400E5FF : 0x22FFFFFF);
             g.outline(backBtnX, backBtnY, btnW, btnH, hoverBack ? 0xFF00E5FF : 0x44FFFFFF);
@@ -114,14 +124,14 @@ public class PerformanceScreen extends Screen {
         }
 
         int resetBtnX = winX + winW - btnW * 2 - 20;
-        int resetBtnY = winY + 12;
+        int resetBtnY = winY + 16;
         boolean hoverReset = mouseX >= resetBtnX && mouseX <= resetBtnX + btnW && mouseY >= resetBtnY && mouseY <= resetBtnY + btnH;
         g.fill(resetBtnX, resetBtnY, resetBtnX + btnW, resetBtnY + btnH, hoverReset ? 0x44FF9900 : 0x22FFFFFF);
         g.outline(resetBtnX, resetBtnY, btnW, btnH, hoverReset ? 0xFFFFAA00 : 0x44FFFFFF);
         g.text(font, "§6Reset Stats", resetBtnX + 10, resetBtnY + 7, 0xFFFFFFFF, false);
 
         int closeBtnX = winX + winW - btnW - 10;
-        int closeBtnY = winY + 12;
+        int closeBtnY = winY + 16;
         boolean hoverClose = mouseX >= closeBtnX && mouseX <= closeBtnX + btnW && mouseY >= closeBtnY && mouseY <= closeBtnY + btnH;
         g.fill(closeBtnX, closeBtnY, closeBtnX + btnW, closeBtnY + btnH, hoverClose ? 0x44FF3333 : 0x22FFFFFF);
         g.outline(closeBtnX, closeBtnY, btnW, btnH, hoverClose ? 0xFFFF4444 : 0x44FFFFFF);

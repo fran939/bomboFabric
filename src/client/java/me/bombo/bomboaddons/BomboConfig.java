@@ -695,6 +695,13 @@ public class BomboConfig {
       public int spotifyHudX = 10;
       public int spotifyHudY = 80;
       public float spotifyHudScale = 1.0F;
+      public String spotifyBgColor = "#1E1324";
+      public String spotifyBorderColor = "#00A4DC";
+      public String spotifyTitleColor = "#FFFFFF";
+      public String spotifyArtistColor = "#B8B2C4";
+      public String spotifyAccentColor = "#00A4DC";
+      public String spotifyProgressBgColor = "#333344";
+      public String lyricsProvider = "LRCLIB"; // "LRCLIB", "PAXSENIX", "UNISON", "YOULYPLUS"
 
       // Screenshare / Spectate Whitelist
       public String autoAcceptScreenshareUsers = "";
