@@ -45,5 +45,12 @@ public class InventoryScreenMixin {
       me.bombo.bomboaddons.features.swapper.InventorySlotSwapManager.renderSlotOverlays(graphics, self, leftPos, topPos, Minecraft.getInstance().font, mouseX, mouseY);
       me.bombo.bomboaddons.features.buttons.InventoryButtonManager.renderButtons(graphics, self, mouseX, mouseY, leftPos, topPos, imageWidth, imageHeight);
       ItemListOverlay.render(graphics, Minecraft.getInstance().font, mouseX, mouseY);
+
+      if (me.bombo.bomboaddons.BomboConfig.get().storagePreview) {
+         net.minecraft.world.inventory.Slot previewSlot = accessor.getHoveredSlot();
+         if (previewSlot != null && me.bombo.bomboaddons.StoragePreviewManager.isPreviewActive(previewSlot)) {
+            me.bombo.bomboaddons.StoragePreviewManager.renderHoverPreview(graphics, previewSlot, mouseX, mouseY);
+         }
+      }
    }
 }

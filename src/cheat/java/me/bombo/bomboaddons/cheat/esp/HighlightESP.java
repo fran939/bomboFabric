@@ -658,7 +658,7 @@ public class HighlightESP {
             }
          }
 
-         if (s.dungeonStarredMobHighlight && matchesIsland("Catacombs")) {
+         if (s.dungeonStarredMobHighlight && (matchesIsland("Catacombs") || me.bombo.bomboaddons.SkyblockUtils.isInDungeon())) {
             boolean isStarred = false;
             if (self.hasCustomName()) {
                String cn = self.getCustomName().getString();
@@ -672,7 +672,7 @@ public class HighlightESP {
                if (nametag != null && (nametag.contains("✯") || nametag.contains("★") || nametag.contains("✪") || nametag.contains("☆"))) {
                   isStarred = true;
                } else if (self.level() != null) {
-                  AABB box = self.getBoundingBox().inflate(0.5, 2.5, 0.5);
+                  AABB box = self.getBoundingBox().inflate(1.5, 3.2, 1.5);
                   for (Entity e2 : self.level().getEntities(self, box)) {
                      if (e2 instanceof ArmorStand as && as.hasCustomName()) {
                         String rawName = as.getCustomName().getString();

@@ -168,24 +168,48 @@ public final class RtcaChatFormatter {
          }
 
          if (data == null) {
-            sendOnMainThread(buildFallback(player, profileFromLine));
+            updateChatOnMainThread(player, buildFallback(player, profileFromLine));
             return;
          }
 
          CACHE.put(key, new CacheEntry(data, System.currentTimeMillis()));
-         sendOnMainThread(build(data, profileFromLine));
+         updateChatOnMainThread(player, build(data, profileFromLine));
       }, "Bombo-RtcaFetch");
       thread.setDaemon(true);
       thread.start();
    }
 
-   private static void sendOnMainThread(Component component) {
+   private static void updateChatOnMainThread(String player, Component component) {
       Minecraft mc = Minecraft.getInstance();
       if (mc == null) return;
       mc.execute(() -> {
-         Minecraft current = Minecraft.getInstance();
-         if (current != null && current.player != null) {
-            current.player.sendSystemMessage(component);
+         try {
+            if (mc.gui != null && mc.gui.hud != null && mc.gui.hud.getChat() != null) {
+               net.minecraft.client.gui.components.ChatComponent chat = mc.gui.hud.getChat();
+               if (chat instanceof me.bombo.bomboaddons.mixin.ChatComponentAccessor acc) {
+                  java.util.List<net.minecraft.client.multiplayer.chat.GuiMessage> messages = acc.getAllMessages();
+                  if (messages != null) {
+                     String lowerPlayer = player.toLowerCase(Locale.ROOT);
+                     for (int i = 0; i < messages.size(); i++) {
+                        net.minecraft.client.multiplayer.chat.GuiMessage msg = messages.get(i);
+                        if (msg != null && msg.content() != null) {
+                           String text = msg.content().getString();
+                           if (text.contains("[RTCA50]") && text.toLowerCase(Locale.ROOT).contains(lowerPlayer)) {
+                              messages.set(i, new net.minecraft.client.multiplayer.chat.GuiMessage(
+                                 msg.addedTime(), component, msg.signature(), msg.source(), msg.tag()));
+                              acc.invokeRefreshTrimmedMessages();
+                              return;
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         } catch (Exception ignored) {
+         }
+
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(component);
          }
       });
    }

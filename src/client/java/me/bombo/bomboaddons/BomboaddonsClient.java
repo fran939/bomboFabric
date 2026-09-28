@@ -457,6 +457,9 @@ public class BomboaddonsClient implements ClientModInitializer {
    }
 
    public void onInitializeClient() {
+      try {
+         System.setProperty("java.awt.headless", "false");
+      } catch (Throwable ignored) {}
       BomboConfig.load();
       ChatModifier.load();
       loadCommandHistory();
@@ -1338,6 +1341,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                      } else {
                         areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + (loc != null ? loc : "Unknown")));
                      }
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("subarea").executes((context) -> {
+                     String sub = SkyblockUtils.getSubArea();
+                     FabricClientCommandSource areaSource = (FabricClientCommandSource)context.getSource();
+                     areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Subarea: §a" + (sub != null ? sub : "None")));
                      return 1;
                   }));
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("afk").executes((ctx) -> {

@@ -65,6 +65,7 @@ public class BackpackPreview {
     public static int getStorageIndexFromTitle(String rawTitle) {
         if (rawTitle == null) return -1;
         String title = ChatFormatting.stripFormatting(rawTitle).trim();
+        String lower = title.toLowerCase(Locale.ROOT);
 
         Matcher echest = ECHEST_PATTERN.matcher(title);
         if (echest.find()) {
@@ -80,11 +81,15 @@ public class BackpackPreview {
             } catch (Exception ignored) {}
         }
 
-        Matcher backpack = BACKPACK_PATTERN.matcher(title);
+        Matcher backpack = Pattern.compile("(?:Backpack|Mochila).*\\((?:Slot|Ranura)\\s*#?(\\d+)\\)", Pattern.CASE_INSENSITIVE).matcher(title);
         if (backpack.find()) {
             try {
                 return Integer.parseInt(backpack.group(1)) + 8;
             } catch (Exception ignored) {}
+        }
+
+        if (lower.equals("ender chest") || lower.startsWith("ender chest") || lower.equals("cofre de ender") || lower.startsWith("cofre de ender")) {
+            return 0;
         }
 
         return -1;
@@ -96,6 +101,34 @@ public class BackpackPreview {
         } else {
             return "Backpack " + (index - 8);
         }
+    }
+
+    public static int extractSlotNumber(String text) {
+        if (text == null) return -1;
+        Matcher m = Pattern.compile("(?:slot\\s*#?\\s*|backpack\\s+(?:slot\\s*#?\\s*)?)(\\d+)", Pattern.CASE_INSENSITIVE).matcher(text);
+        if (m.find()) {
+            try {
+                return Integer.parseInt(m.group(1));
+            } catch (Exception ignored) {}
+        }
+        Matcher m2 = Pattern.compile("#(\\d+)").matcher(text);
+        if (m2.find()) {
+            try {
+                return Integer.parseInt(m2.group(1));
+            } catch (Exception ignored) {}
+        }
+        return -1;
+    }
+
+    public static int extractPageNumber(String text) {
+        if (text == null) return -1;
+        Matcher m = Pattern.compile("(?:\\(|page\\s*)(\\d+)(?:/|\\s*\\)|$)", Pattern.CASE_INSENSITIVE).matcher(text);
+        if (m.find()) {
+            try {
+                return Integer.parseInt(m.group(1));
+            } catch (Exception ignored) {}
+        }
+        return -1;
     }
 
     public static void tick() {
@@ -127,7 +160,7 @@ public class BackpackPreview {
         if (rawTitle == null || container == null) return;
         String clean = ChatFormatting.stripFormatting(rawTitle).trim().toLowerCase(Locale.ENGLISH);
 
-        if (clean.equals("storage") || clean.startsWith("storage ") || clean.equals("almacenamiento")) {
+        if (clean.equals("storage") || clean.startsWith("storage ") || clean.contains("storage") || clean.contains("almacenamiento")) {
             initializeStorage(container);
             return;
         }
@@ -287,17 +320,34 @@ public class BackpackPreview {
 
     private static void seedStorageFromStorageTracker(int index) {
         if (storages[index] != null) return;
-        String trackerKey;
-        if (index <= 8) {
-            trackerKey = "Ender Chest (Page " + (index + 1) + ")";
-            if (!StorageTracker.storageData.containsKey(trackerKey)) {
-                trackerKey = "Ender Chest (" + (index + 1) + "/9)";
+        Map<Integer, String> slots = null;
+        String resolvedName = getStorageName(index);
+
+        for (Map.Entry<String, Map<Integer, String>> entry : StorageTracker.storageData.entrySet()) {
+            String key = entry.getKey();
+            if (key == null) continue;
+            String lower = key.toLowerCase(Locale.ROOT);
+            if (index <= 8) {
+                if (lower.contains("ender chest") || lower.contains("cofre de ender")) {
+                    int p = extractPageNumber(key);
+                    if (p == index + 1) {
+                        slots = entry.getValue();
+                        resolvedName = key;
+                        break;
+                    }
+                }
+            } else {
+                if (lower.contains("backpack") || lower.contains("mochila")) {
+                    int s = extractSlotNumber(key);
+                    if (s == (index - 8)) {
+                        slots = entry.getValue();
+                        resolvedName = key;
+                        break;
+                    }
+                }
             }
-        } else {
-            trackerKey = "Backpack (Slot #" + (index - 8) + ")";
         }
 
-        Map<Integer, String> slots = StorageTracker.storageData.get(trackerKey);
         if (slots == null || slots.isEmpty()) return;
 
         int maxSlot = 53;

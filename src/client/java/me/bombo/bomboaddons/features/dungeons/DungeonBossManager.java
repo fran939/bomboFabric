@@ -400,6 +400,12 @@ public class DungeonBossManager {
             }
         } else if (cleanMessage.contains("[BOSS] Necron:") || cleanMessage.contains("You went further than any human before")) {
             setPhase(BossPhase.NECRON);
+        } else if (cleanMessage.contains("[BOSS] Thorn:") || cleanMessage.contains("I am Thorn") || cleanMessage.contains("Thorn:") || cleanMessage.toLowerCase().contains("spirit bear") || cleanMessage.toLowerCase().contains("spirit bow")) {
+            String floorTag = SkyblockUtils.getDungeonFloorTag();
+            if ("F4".equals(floorTag) || "M4".equals(floorTag)) {
+                SkyblockUtils.setDungeonBossActive(true);
+                DungeonProfitLog.noteRunStart(floorTag);
+            }
         }
 
         // 3. Goldor Progress & i4 Check (Also auto-detect Goldor phase if progress messages arrive)
@@ -673,7 +679,16 @@ public class DungeonBossManager {
         if (s.m4EtherwarpHelper) {
             String floorTag = SkyblockUtils.getDungeonFloorTag();
             boolean onF4 = "F4".equals(floorTag) || "M4".equals(floorTag);
-            if (onF4 && "boss".equals(SkyblockUtils.getDungeonPhase())) {
+            boolean inBoss = "boss".equals(SkyblockUtils.getDungeonPhase());
+            if (onF4 && !inBoss && mc.player != null) {
+                double px = mc.player.getX();
+                double pz = mc.player.getZ();
+                if (px >= -5 && px <= 65 && pz >= -15 && pz <= 55) {
+                    SkyblockUtils.setDungeonBossActive(true);
+                    inBoss = true;
+                }
+            }
+            if (onF4 && inBoss) {
                 renderEtherwarpTarget(poseStack, collector, camPos, s);
             }
         }

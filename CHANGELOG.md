@@ -1,5 +1,23 @@
 # BomboAddons Changelog
 
+## [26.2.28.48] - 2026-09-28 (Beta)
+
+### RTCA & Backend
+- **Live Boost Detection:** The server (`bomboapi`) now dynamically parses player inventory data to detect the highest Hecatomb helmet equipped or in wardrobe (`member.loadout.armor`, `inv_armor`, `wardrobe_contents`), Scarf accessory (`SCARF_GRIMOIRE` +6%, `SCARF_THESIS` +4%, `SCARF_STUDIES` +2%), and Catacombs Graduate shards (`catacombs_graduate` milestone levels 1..10 = 2%..20%).
+- **Interactive Chat In-Place Refresh:** `RtcaChatFormatter` updates the pending loading message in `mc.gui.hud.getChat()` in-place and calls `refreshTrimmedMessages()`, eliminating duplicate chat lines.
+- **Discord Bot RTCA Target:** Updated `bombot` to display the actual target level (e.g. `CA 50`) in status chips.
+
+### Storage & GUI
+- **Storage Overlay Activation & Discovery:** Fixed container title recognition by stripping formatting codes, supporting bare `Ender Chest`, Spanish `Cofre de Ender`, `storage (1/2)`, and backpacks without `#`. Fixed `player.containerMenu` assignment order so container packets sync cleanly without screen reset. Added dynamic re-discovery of backpacks on container open.
+- **Backpack Preview Over Inventory Buttons:** Ensured `StoragePreviewManager.renderHoverPreview` renders on top of custom `InventoryButtonManager` buttons and item lists in `InventoryScreen`.
+- **IDE Dev Client Clipboard Fix:** Added headless AWT prevention at mod initialization, GLFW modifier key checks in `EditBoxMixin`, and retry loops for Windows system clipboard locks in `ClipboardImageUploader`.
+
+### Dungeons, Camera & Commands
+- **Spectator / Camera Mouse Rotation & Visibility:** Enabled mouse rotation when camera entity is set to another player (`/b cam`) and ensured player body remains rendered.
+- **Dungeon Quick Join Commands:** Updated `/f1`-`/f7`, `/m1`-`/m7`, and `/e` to use `joininstance catacombs_floor_<name>` and `catacombs_entrance`.
+- **Starred Mob & F4/M4 Thorn ESP:** Expanded bounding box for starred mob ArmorStand tags, and added arena coordinate detection for F4/M4 Thorn etherwarp helper at `(27, 81, 18)`.
+- **Scoreboard Subarea Parsing:** Enhanced `SkyblockUtils.parseSubAreaFromLines` to recognize dash-prefixed scoreboard lines (`- Your Island`) for `/b subarea` and `/b area`.
+
 ## [26.2.28.47] - 2026-09-28 (Beta)
 
 ### Chat & Input

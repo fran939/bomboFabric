@@ -111,9 +111,12 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		setup();
 	}
 
-	public static boolean enabled(String title) {
+	public static boolean enabled(String rawTitle) {
+		if (rawTitle == null) return false;
+		String title = net.minecraft.ChatFormatting.stripFormatting(rawTitle).trim().toLowerCase(Locale.ROOT);
 		openStorage = BackpackPreview.getStorageIndexFromTitle(title);
-		boolean enabled = BomboConfig.get().storageOverlay && (title.equals("storage") || openStorage != -1) && !disableOnNextLoad;
+		boolean isStorageMenu = title.contains("storage") || title.contains("almacenamiento") || title.contains("ender chest") || title.contains("cofre de ender") || title.contains("backpack") || title.contains("mochila");
+		boolean enabled = BomboConfig.get().storageOverlay && (isStorageMenu || openStorage != -1) && !disableOnNextLoad;
 		disableOnNextLoad = false;
 		return enabled;
 	}
@@ -128,6 +131,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	public void refreshSearch() {
 		if (grid == null) return;
+		grid.rebuildBackpacks();
 		grid.refreshSearch();
 	}
 
@@ -325,7 +329,8 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		private final List<BackpackWidget> backpackWidgets = new ArrayList<>();
 		private StorageOverlayScreen.@Nullable BackpackWidget openBackpack = null;
 		@Nullable
-		private final Button reloadButton;
+		private Button reloadButton;
+		private final int internalCols;
 
 		private BackpackGridWidget(int x, int y, int width, int height, int maxStoragesPerRow, int internalCols, boolean packed) {
 			int expectedWidth = internalCols * SLOT_SIZE + EDGE_PADDING * 2;
@@ -334,7 +339,12 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			}
 
 			super(x, y, width, height, Component.literal("BackPack grid"), expectedWidth, maxStoragesPerRow, packed, true);
+			this.internalCols = internalCols;
+			rebuildBackpacks();
+		}
 
+		public void rebuildBackpacks() {
+			backpackWidgets.clear();
 			boolean storageLoaded = false;
 			BackpackPreview.Storage[] storages = BackpackPreview.getStorages();
 			for (int i = 0; i < storages.length; i++) {
@@ -352,7 +362,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 			if (!storageLoaded) {
 				reloadButton = Button.builder(Component.literal("Open /storage to discover backpacks"), this::reload)
-						.size(Math.min(300, width - 20), 30)
+						.size(Math.min(300, getWidth() - 20), 30)
 						.build();
 			} else {
 				reloadButton = null;
@@ -366,6 +376,9 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		@Override
 		protected Collection<? extends AbstractWidget> filterWidgets(String input) {
 			savedSearch = input;
+			if (backpackWidgets.isEmpty()) {
+				rebuildBackpacks();
+			}
 			if (reloadButton != null) {
 				return List.of(reloadButton);
 			}

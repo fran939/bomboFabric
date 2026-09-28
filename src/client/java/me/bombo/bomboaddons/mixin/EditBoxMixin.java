@@ -113,7 +113,9 @@ public abstract class EditBoxMixin {
       cancellable = true
    )
    private void onKeyPressed(net.minecraft.client.input.KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-      if (((EditBox)(Object)this).isFocused() && event.key() == 86 && (event.hasControlDown() || Minecraft.getInstance().hasControlDown())) { // GLFW_KEY_V
+      Minecraft mc = Minecraft.getInstance();
+      boolean isCtrl = event.hasControlDown() || mc.hasControlDown() || com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 341) || com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 345);
+      if (((EditBox)(Object)this).isFocused() && event.key() == 86 && isCtrl) { // GLFW_KEY_V
          if (me.bombo.bomboaddons.util.ClipboardImageUploader.hasClipboardImage()) {
             if (me.bombo.bomboaddons.util.ClipboardImageUploader.tryUploadClipboardImage((EditBox)(Object)this)) {
                cir.setReturnValue(true);

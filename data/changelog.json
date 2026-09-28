@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.48",
+    "date": "2026-09-28",
+    "changes": [
+      "RTCA Live Boosts: bomboapi server now scans player inventory sync data for highest Hecatomb helmet equipped or in wardrobe, Scarf accessory (Grimoire +6%, Thesis +4%, Studies +2%), and Catacombs Graduate shards (milestones 1..10 = 2%..20%)",
+      "Interactive RTCA Chat: in-place chat update via GuiMessage replacement in mc.gui.hud.getChat(), eliminating duplicate chat lines while resolving chips",
+      "Storage Overlay: fixed container title recognition (stripped color codes, bare Ender Chest, Spanish Cofre de Ender, storage (1/2), and backpacks without #), containerMenu assignment ordering, and dynamic backpack discovery on open",
+      "Backpack Preview Layering: StoragePreviewManager hover preview renders on top of custom inventory buttons and item lists in InventoryScreen",
+      "IDE Dev Client Clipboard: prevented headless AWT mode on initialization, added GLFW modifier key fallbacks in EditBoxMixin, and added retry loops for Windows system clipboard locks",
+      "Spectator / Camera: enabled full mouse rotation in /b cam spectator mode and ensured player body model remains rendered",
+      "Dungeons: /f1-f7, /m1-m7, and /e now use joininstance catacombs_floor_<name> and catacombs_entrance",
+      "ESP: expanded bounding box for starred mob detection in dungeons and added automatic coordinate detection for F4/M4 Thorn etherwarp helper at (27, 81, 18)",
+      "Scoreboard: enhanced subarea parsing for dash-prefixed lines (- Your Island) in /b subarea and /b area"
+    ]
+  },
+  {
     "version": "26.2.28.47",
     "date": "2026-09-28",
     "changes": [

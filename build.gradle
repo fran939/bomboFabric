@@ -57,6 +57,9 @@ loom {
 			source(sourceSets.client)
 			vmArg("-Xmx4G")
 			vmArg("-XX:+UseG1GC")
+			vmArg("-Djava.awt.headless=false")
+			property("bomboaddons.flavor", "cheat")
+			property("java.awt.headless", "false")
 			property("devauth.enabled", "true")
 			property("devauth.account", "main")
 		}

@@ -36,36 +36,42 @@ public class ClipboardImageUploader {
    private static volatile String latestImageHash = null;
 
    public static boolean hasClipboardImage() {
-      try {
-         java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-         Transferable transferable = clipboard.getContents(null);
-         if (transferable != null) {
-            if (transferable.isDataFlavorSupported(DataFlavor.imageFlavor)) {
-               return true;
-            }
-            if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-               try {
-                  Object data = transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                  if (data instanceof java.util.List<?> list && !list.isEmpty()) {
-                     for (Object obj : list) {
-                        if (obj instanceof java.io.File file) {
-                           String name = file.getName().toLowerCase();
-                           if (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".bmp") || name.endsWith(".gif")) {
-                              return true;
+      for (int attempt = 0; attempt < 3; attempt++) {
+         try {
+            java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Transferable transferable = clipboard.getContents(null);
+            if (transferable != null) {
+               if (transferable.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+                  return true;
+               }
+               if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                  try {
+                     Object data = transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                     if (data instanceof java.util.List<?> list && !list.isEmpty()) {
+                        for (Object obj : list) {
+                           if (obj instanceof java.io.File file) {
+                              String name = file.getName().toLowerCase();
+                              if (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".bmp") || name.endsWith(".gif")) {
+                                 return true;
+                              }
                            }
                         }
                      }
+                  } catch (Throwable ignored) {}
+               }
+               for (DataFlavor flavor : transferable.getTransferDataFlavors()) {
+                  if (flavor.isMimeTypeEqual("image/png") || flavor.isMimeTypeEqual("image/jpeg") || flavor.isMimeTypeEqual("image/x-java-image") || flavor.getMimeType().startsWith("image/")) {
+                     return true;
                   }
-               } catch (Throwable ignored) {}
-            }
-            for (DataFlavor flavor : transferable.getTransferDataFlavors()) {
-               if (flavor.isMimeTypeEqual("image/png") || flavor.isMimeTypeEqual("image/jpeg") || flavor.isMimeTypeEqual("image/x-java-image") || flavor.getMimeType().startsWith("image/")) {
-                  return true;
                }
             }
+            return false;
+         } catch (IllegalStateException e) {
+            try { Thread.sleep(20L); } catch (InterruptedException ignored) {}
+         } catch (Throwable t) {
+            DebugUtils.debug("chat", "§cClipboard check error: " + t.getMessage());
+            break;
          }
-      } catch (Throwable t) {
-         DebugUtils.debug("chat", "§cClipboard check error: " + t.getMessage());
       }
       return false;
    }
@@ -78,13 +84,24 @@ public class ClipboardImageUploader {
       }
       lastPasteTime = System.currentTimeMillis();
       Minecraft mc = Minecraft.getInstance();
-      try {
-         java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-         Transferable transferable = clipboard.getContents(null);
-         if (transferable == null) {
-            return false;
-         }
 
+      Transferable transferable = null;
+      for (int attempt = 0; attempt < 3; attempt++) {
+         try {
+            java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            transferable = clipboard.getContents(null);
+            if (transferable != null) break;
+         } catch (IllegalStateException e) {
+            try { Thread.sleep(20L); } catch (InterruptedException ignored) {}
+         } catch (Throwable t) {
+            break;
+         }
+      }
+      if (transferable == null) {
+         return false;
+      }
+
+      try {
          Image img = null;
          if (transferable.isDataFlavorSupported(DataFlavor.imageFlavor)) {
             try {

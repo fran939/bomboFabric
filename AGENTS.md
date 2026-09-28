@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.47` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.48` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,11 +103,23 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.47`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.48`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
-> ### ✅ COMPLETED & COMPILED IN v26.2.28.47 (Ready for In-Game Testing)
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.48 (Ready for In-Game Testing)
+>
+> 1. **RTCA Live Boost Detection (Server & Client):** The server (`bomboapi`) parses player inventory sync data dynamically to detect the highest Hecatomb helmet equipped or in wardrobe (`member.loadout.armor`, `inv_armor`, `wardrobe_contents`), Scarf accessory (`SCARF_GRIMOIRE` +6%, `SCARF_THESIS` +4%, `SCARF_STUDIES` +2%), and Catacombs Graduate shards (`catacombs_graduate` milestone levels 1..10 = 2%..20%). Verified live for fran938 (+28%/+24%) and bomboclas (+36%).
+> 2. **Interactive RTCA Chat In-Place Refresh:** `RtcaChatFormatter` updates the pending loading message in `mc.gui.hud.getChat()` in-place and calls `refreshTrimmedMessages()`, eliminating duplicate chat lines.
+> 3. **Storage Overlay Activation & Auto-Discovery:** Fixed container title recognition by stripping formatting codes, supporting bare `Ender Chest`, Spanish `Cofre de Ender`, `storage (1/2)`, and backpacks without `#`. Fixed `player.containerMenu` assignment order so container packets sync cleanly without screen reset. Added dynamic re-discovery of backpacks on container open.
+> 4. **Backpack Preview Over Inventory Buttons:** Ensured `StoragePreviewManager.renderHoverPreview` renders on top of custom `InventoryButtonManager` buttons and item lists in `InventoryScreen`.
+> 5. **IDE Dev Client Clipboard Paste Fix:** Added `System.setProperty("java.awt.headless", "false")` at client initialization, added GLFW modifier key checks in `EditBoxMixin`, and added retry loops for Windows system clipboard locks in `ClipboardImageUploader`.
+> 6. **Spectator / Camera Mouse Rotation & Body Visibility:** Allowed full mouse rotation while spectating another player (`mc.getCameraEntity()`) in `MouseMixin`, and ensured player body model remains visible during third-person camera.
+> 7. **Dungeon Quick Join Commands:** Updated `/f1`-`/f7`, `/m1`-`/m7`, and `/e` to use `joininstance catacombs_floor_<name>` and `catacombs_entrance`.
+> 8. **Starred Mob & F4/M4 Thorn ESP:** Expanded bounding box for starred mob ArmorStand tags, and added arena coordinate detection for F4/M4 Thorn etherwarp helper at `(27, 81, 18)`.
+> 9. **Scoreboard Subarea Parsing:** Enhanced `SkyblockUtils.parseSubAreaFromLines` to recognize dash-prefixed scoreboard lines (`- Your Island`) for `/b subarea` and `/b area`.
+>
+> ### ✅ COMPLETED IN v26.2.28.47
 >
 > 1. **Chat Imgur Delete / Supr Fix (v26.2.28.47):** Fixed an issue in [`EditBoxMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/EditBoxMixin.java) where selecting text in the chat input and pressing `Delete` (Supr) or `Backspace` would trigger an Imgur upload and paste `$imgur` if any image was present in the clipboard. Removed the phantom `insertText("")` check in `EditBoxMixin` and ensured clipboard image pasting requires an active `Ctrl + V` press in a focused edit box.
 > 2. **Interactive RTCA Chat (v26.2.28.45):** BomboBot's flat `[RTCA50]` chat string is intercepted in [`ChatMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java) and rebuilt as hoverable `MutableComponent` chips by [`RtcaChatFormatter`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/dungeons/RtcaChatFormatter.java). Per-class tooltips show exact level, runs to max, XP to next level, XP/run and the boost breakdown. Async fetch on daemon thread `Bombo-RtcaFetch`, 60s per-player cache, `IN_FLIGHT` guard, records to `ChatHistoryTracker` with tag `"RTCA"`.

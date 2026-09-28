@@ -10,6 +10,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin({ClientPacketListener.class})
 public class CommandMixin {
+   private static final String[] FLOOR_NAMES = {"one", "two", "three", "four", "five", "six", "seven"};
+
    @Inject(
       method = {"sendCommand"},
       at = {@At("HEAD")},
@@ -60,6 +62,24 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("b subarea") || trimmed.equalsIgnoreCase("bombo subarea") || trimmed.equalsIgnoreCase("bomboaddons subarea")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Subarea: §a" + (sub != null ? sub : "None")));
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b area") || trimmed.equalsIgnoreCase("bombo area") || trimmed.equalsIgnoreCase("bomboaddons area")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         String loc = me.bombo.bomboaddons.SkyblockUtils.getLocation();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + (loc != null ? loc : "Unknown")));
+         }
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b") || trimmed.equalsIgnoreCase("bombo") || trimmed.equalsIgnoreCase("bomboaddons")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create()));
@@ -104,7 +124,7 @@ public class CommandMixin {
          int floor = Integer.parseInt(trimmed.substring(1));
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joindungeon catacombs " + floor);
+            mc.player.connection.sendCommand("joininstance catacombs_floor_" + FLOOR_NAMES[floor - 1]);
          }
          ci.cancel();
          return;
@@ -113,7 +133,7 @@ public class CommandMixin {
          int floor = Integer.parseInt(trimmed.substring(1));
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joindungeon master_catacombs " + floor);
+            mc.player.connection.sendCommand("joininstance master_catacombs_floor_" + FLOOR_NAMES[floor - 1]);
          }
          ci.cancel();
          return;
@@ -121,7 +141,7 @@ public class CommandMixin {
       if (trimmed.equalsIgnoreCase("e") || trimmed.equalsIgnoreCase("fe") || trimmed.equalsIgnoreCase("f0")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joindungeon catacombs 0");
+            mc.player.connection.sendCommand("joininstance catacombs_entrance");
          }
          ci.cancel();
          return;
@@ -280,6 +300,24 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("/b subarea") || trimmed.equalsIgnoreCase("/bombo subarea") || trimmed.equalsIgnoreCase("/bomboaddons subarea")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Subarea: §a" + (sub != null ? sub : "None")));
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b area") || trimmed.equalsIgnoreCase("/bombo area") || trimmed.equalsIgnoreCase("/bomboaddons area")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         String loc = me.bombo.bomboaddons.SkyblockUtils.getLocation();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + (loc != null ? loc : "Unknown")));
+         }
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("/b") || trimmed.equalsIgnoreCase("/bombo") || trimmed.equalsIgnoreCase("/bomboaddons")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create()));
@@ -295,7 +333,7 @@ public class CommandMixin {
          int floor = Integer.parseInt(trimmed.substring(2));
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joindungeon catacombs " + floor);
+            mc.player.connection.sendCommand("joininstance catacombs_floor_" + FLOOR_NAMES[floor - 1]);
          }
          ci.cancel();
          return;
@@ -304,7 +342,7 @@ public class CommandMixin {
          int floor = Integer.parseInt(trimmed.substring(2));
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joindungeon master_catacombs " + floor);
+            mc.player.connection.sendCommand("joininstance master_catacombs_floor_" + FLOOR_NAMES[floor - 1]);
          }
          ci.cancel();
          return;
@@ -312,7 +350,7 @@ public class CommandMixin {
       if (trimmed.equalsIgnoreCase("/e") || trimmed.equalsIgnoreCase("/fe") || trimmed.equalsIgnoreCase("/f0")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joindungeon catacombs 0");
+            mc.player.connection.sendCommand("joininstance catacombs_entrance");
          }
          ci.cancel();
          return;

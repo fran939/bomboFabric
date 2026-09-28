@@ -74,14 +74,16 @@ public abstract class MouseMixin {
       }
       if (mc.getCameraEntity() != null && mc.getCameraEntity() != mc.player) {
          net.minecraft.world.entity.Entity camEnt = mc.getCameraEntity();
-         if (!(camEnt instanceof net.minecraft.client.player.RemotePlayer)) {
-            double sens = mc.options.sensitivity().get();
-            double f = sens * 0.6 + 0.2;
-            double factor = f * f * f * 8.0 * 0.15;
-            float dyaw = (float)(this.accumulatedDX * factor);
-            float dpitch = (float)(this.accumulatedDY * factor);
-            camEnt.setYRot(camEnt.getYRot() + dyaw);
-            camEnt.setXRot(Math.max(-90.0F, Math.min(90.0F, camEnt.getXRot() + dpitch)));
+         double sens = mc.options.sensitivity().get();
+         double f = sens * 0.6 + 0.2;
+         double factor = f * f * f * 8.0 * 0.15;
+         float dyaw = (float)(this.accumulatedDX * factor);
+         float dpitch = (float)(this.accumulatedDY * factor);
+         camEnt.setYRot(camEnt.getYRot() + dyaw);
+         camEnt.setXRot(Math.max(-90.0F, Math.min(90.0F, camEnt.getXRot() + dpitch)));
+         if (camEnt instanceof net.minecraft.world.entity.LivingEntity living) {
+            living.setYHeadRot(camEnt.getYRot());
+            living.yBodyRot = camEnt.getYRot();
          }
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;

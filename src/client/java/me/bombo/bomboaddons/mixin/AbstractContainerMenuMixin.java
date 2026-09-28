@@ -20,11 +20,11 @@ public abstract class AbstractContainerMenuMixin {
 	private void onSetStackInSlot(int slot, int revision, ItemStack stack, CallbackInfo ci) {
 		if ((Object) this instanceof ChestMenu chestMenu) {
 			Screen screen = Minecraft.getInstance().gui.screen();
-			if (screen instanceof StorageOverlayScreen storageOverlayScreen) {
-				storageOverlayScreen.refreshSearch();
-			}
 			if (screen != null) {
 				BackpackPreview.updateFromContainer(screen.getTitle().getString(), chestMenu.getContainer());
+			}
+			if (screen instanceof StorageOverlayScreen storageOverlayScreen) {
+				storageOverlayScreen.refreshSearch();
 			}
 		}
 	}
@@ -33,11 +33,11 @@ public abstract class AbstractContainerMenuMixin {
 	public void initializeContents(int stateId, List<ItemStack> items, ItemStack carried, CallbackInfo ci) {
 		if ((Object) this instanceof ChestMenu chestMenu) {
 			Screen screen = Minecraft.getInstance().gui.screen();
-			if (screen instanceof StorageOverlayScreen storageOverlayScreen) {
-				storageOverlayScreen.refreshSearch();
-			}
 			if (screen != null) {
 				BackpackPreview.updateFromContainer(screen.getTitle().getString(), chestMenu.getContainer());
+			}
+			if (screen instanceof StorageOverlayScreen storageOverlayScreen) {
+				storageOverlayScreen.refreshSearch();
 			}
 		}
 	}

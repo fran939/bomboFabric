@@ -776,15 +776,6 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       AutoCroesusHud.renderInContainer(graphics);
       me.bombo.bomboaddons.cheat.dungeons.DungeonChestProfitHud.onScreenRender(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY);
 
-      if (BomboConfig.get().storagePreview) {
-         if (now - lastStoragePreviewTickTime >= 100L) {
-            lastStoragePreviewTickTime = now;
-            me.bombo.bomboaddons.StoragePreviewManager.onContainerTick((AbstractContainerScreen)(Object)this);
-         }
-         Slot previewSlot = this.lastStoragePreviewSlot != null ? this.lastStoragePreviewSlot : this.hoveredSlot;
-         me.bombo.bomboaddons.StoragePreviewManager.renderHoverPreview(graphics, previewSlot, mouseX, mouseY);
-      }
-
       me.bombo.bomboaddons.features.ItemValueBreakdownHud.renderDirect(graphics);
       me.bombo.bomboaddons.features.hud.EquipmentHud.renderHoverTooltipDirect(graphics);
       me.bombo.bomboaddons.features.hud.ArmorHud.renderHoverTooltipDirect(graphics);
@@ -792,6 +783,15 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       if (!(((Object)this) instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen)) {
          me.bombo.bomboaddons.features.swapper.InventorySlotSwapManager.renderSlotOverlays(graphics, (AbstractContainerScreen<?>)(Object)this, this.leftPos, this.topPos, Minecraft.getInstance().font, mouseX, mouseY);
          me.bombo.bomboaddons.features.buttons.InventoryButtonManager.renderButtons(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY, this.leftPos, this.topPos, this.imageWidth, this.imageHeight);
+      }
+
+      if (BomboConfig.get().storagePreview) {
+         if (now - lastStoragePreviewTickTime >= 100L) {
+            lastStoragePreviewTickTime = now;
+            me.bombo.bomboaddons.StoragePreviewManager.onContainerTick((AbstractContainerScreen)(Object)this);
+         }
+         Slot previewSlot = this.lastStoragePreviewSlot != null ? this.lastStoragePreviewSlot : this.hoveredSlot;
+         me.bombo.bomboaddons.StoragePreviewManager.renderHoverPreview(graphics, previewSlot, mouseX, mouseY);
       }
    }
 

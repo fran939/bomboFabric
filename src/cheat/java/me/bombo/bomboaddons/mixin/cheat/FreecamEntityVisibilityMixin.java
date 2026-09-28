@@ -33,7 +33,7 @@ public abstract class FreecamEntityVisibilityMixin {
         if (entity == null || entity != mc.player) {
             return;
         }
-        if (FreecamManager.isFreecamActive()) {
+        if (FreecamManager.isFreecamActive() || (mc.getCameraEntity() != null && mc.getCameraEntity() != mc.player)) {
             cir.setReturnValue(Boolean.TRUE);
         }
     }

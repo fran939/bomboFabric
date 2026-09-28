@@ -1026,6 +1026,13 @@ public class SkyblockUtils {
                return sub;
             }
          }
+
+         if (clean.startsWith("- ") || clean.startsWith("– ") || clean.startsWith("— ") || clean.startsWith("• ")) {
+            String sub = clean.replaceFirst("^[-–—•\\s]+", "").trim();
+            if (!sub.isEmpty() && !sub.equalsIgnoreCase("None") && !sub.toLowerCase(Locale.ROOT).startsWith("server")) {
+               return sub;
+            }
+         }
       }
 
       return "None";
@@ -1492,8 +1499,17 @@ public class SkyblockUtils {
    }
 
    public static boolean isOnSkyblock() {
-      return isConnectedToHypixel() && 
-         ("SKYBLOCK".equalsIgnoreCase(BomboaddonsClient.locrawGametype) || matchesIslandRequirement("skyblock"));
+      if (!isConnectedToHypixel()) return false;
+      if ("SKYBLOCK".equalsIgnoreCase(BomboaddonsClient.locrawGametype)) return true;
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level != null && mc.level.getScoreboard() != null) {
+         Objective obj = mc.level.getScoreboard().getDisplayObjective(net.minecraft.world.scores.DisplaySlot.SIDEBAR);
+         if (obj != null) {
+            String title = obj.getDisplayName().getString().toLowerCase(Locale.ROOT);
+            if (title.contains("skyblock")) return true;
+         }
+      }
+      return matchesIslandRequirement("skyblock");
    }
 
    public static boolean isInSkyblock() {

@@ -169,16 +169,22 @@ public final class ProfileViewerScreen extends Screen {
 	/** Human-readable reason the profile could not load; non-blank replaces the loading egg. */
 	private String loadFailure = "";
 	private long loadFailureAtMs;
+	private int initialProfileIndex = -1;
 
 	public ProfileViewerScreen(String playerName) {
-		this(playerName, PvTab.HOME);
+		this(playerName, PvTab.HOME, -1);
 	}
 
 	public ProfileViewerScreen(String playerName, PvTab initialTab) {
+		this(playerName, initialTab, -1);
+	}
+
+	public ProfileViewerScreen(String playerName, PvTab initialTab, int initialProfileIndex) {
 		super(Component.translatable("betterpv.screen.title"));
 		this.requestedName = playerName == null || playerName.isBlank() ? "?" : playerName.trim();
 		this.homePage = new HomePage(ProfileSnapshot.loading(this.requestedName));
 		this.tab = initialTab == null ? PvTab.HOME : initialTab;
+		this.initialProfileIndex = initialProfileIndex;
 		for (PvTab t : PvTab.values()) {
 			PvSubTab[] subs = t.subTabs();
 			if (subs.length > 0) {
@@ -364,6 +370,14 @@ public final class ProfileViewerScreen extends Screen {
 		}
 		if (loaded.profiles() != null && !loaded.profiles().isEmpty()) {
 			this.profileChoices = loaded.profiles();
+			if (this.initialProfileIndex >= 0 && this.initialProfileIndex < this.profileChoices.size()) {
+				int targetIdx = this.initialProfileIndex;
+				this.initialProfileIndex = -1;
+				ProfileFetcher.ProfileChoice choice = this.profileChoices.get(targetIdx);
+				if (choice != null && !choice.selected() && !choice.profileId().equals(this.profileId)) {
+					switchProfile(choice.profileId());
+				}
+			}
 			String viewed = this.playerUuid == null ? "" : HypixelApiClient.undashed(this.playerUuid);
 			ProfileFetcher.warmCoopMemberNames(
 				this.profileChoices,

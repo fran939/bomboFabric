@@ -107,6 +107,13 @@ public final class Constants {
 
 
     private static String detectFlavor() {
+        String sys = System.getProperty("bomboaddons.flavor");
+        if ("cheat".equalsIgnoreCase(sys)) {
+            return FLAVOR_CHEAT;
+        }
+        if ("legit".equalsIgnoreCase(sys)) {
+            return FLAVOR_LEGIT;
+        }
         try (InputStream in = Constants.class.getResourceAsStream(FLAVOR_MARKER)) {
             if (in != null) {
                 return FLAVOR_CHEAT;
