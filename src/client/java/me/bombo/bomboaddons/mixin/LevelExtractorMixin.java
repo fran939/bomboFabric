@@ -30,4 +30,17 @@ public class LevelExtractorMixin {
             }
         }
     }
+
+    // Prevent extractVisibleEntities from dropping LocalPlayer when camera is attached to another entity or detached
+    @org.spongepowered.asm.mixin.injection.Redirect(
+        method = "extractVisibleEntities",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;entity()Lnet/minecraft/world/entity/Entity;", ordinal = 3)
+    )
+    private Entity bombo$redirectCameraEntityForLocalPlayer(net.minecraft.client.Camera camera) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc != null && mc.player != null && (SpectatorCamManager.isActive() || Flavor.get().isFreecamActive())) {
+            return mc.player;
+        }
+        return camera.entity();
+    }
 }

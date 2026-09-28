@@ -207,7 +207,8 @@ public class ChangelogScreen extends Screen {
                 var lines = font.getSplitter().splitLines(Component.literal("• " + change), contentW - 20, net.minecraft.network.chat.Style.EMPTY);
                 for (var l : lines) {
                     if (curY + 10 >= contentY && curY <= contentY + contentH) {
-                        g.text(font, "§7" + l.getString(), contentX + 8, curY, 0xFFE2E8F0, false);
+                        String lineStr = l.getString().replace("§r", "§r§7");
+                        g.text(font, "§7" + lineStr, contentX + 8, curY, 0xFFE2E8F0, false);
                     }
                     curY += 12;
                 }

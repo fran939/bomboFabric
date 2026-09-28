@@ -79,7 +79,6 @@
 		"ServerStatusPingerMixin",
 		"SignEditMixin",
 		"SkullBlockMixin",
-		"SlotAccessor",
 		"SlotMixin",
 		"SoundEngineMixin",
 		"SoundOptionsScreenMixin",

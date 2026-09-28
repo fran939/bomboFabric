@@ -3,17 +3,22 @@ package me.bombo.bomboaddons.features.spotify;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.User32;
-import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.ptr.IntByReference;
+import net.minecraft.client.Minecraft;
 
+import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Interfaces with Spotify Desktop on Windows without requiring Spotify Developer tokens.
- * - Extracts current song title and artist from the Spotify window title.
+ * Interfaces directly with Spotify Desktop on Windows without requiring Spotify Developer tokens.
+ * - Queries Windows System Media Transport Controls (GSMTC) via a background PowerShell process
+ *   for 100% exact playback position, total duration, track name, artist, and playing/paused status.
+ *   Pausing preserves exact position without drifting or resetting to 0:00.
+ * - Falls back to Win32 EnumWindows window-title inspection if GSMTC is unavailable.
  * - Controls playback (Play/Pause, Next, Previous) via Windows virtual media keys.
- * - Tracks playback duration in seconds.
  */
 public class SpotifyManager {
 
@@ -29,12 +34,15 @@ public class SpotifyManager {
 
     private static final AtomicBoolean running = new AtomicBoolean(false);
     private static Thread pollThread = null;
+    private static Process gsmtcProcess = null;
 
     private static volatile boolean isSpotifyOpen = false;
     private static volatile boolean isPlaying = false;
     private static volatile String currentTrack = "";
     private static volatile String currentArtist = "";
     private static volatile int progressSeconds = 0;
+    private static volatile int durationSeconds = 0;
+    private static volatile long lastStateUpdate = 0L;
 
     public static boolean isSpotifyOpen() {
         return isSpotifyOpen;
@@ -56,40 +64,193 @@ public class SpotifyManager {
         return progressSeconds;
     }
 
+    public static int getDurationSeconds() {
+        return durationSeconds;
+    }
+
+    public static float getProgressRatio() {
+        if (durationSeconds <= 0) return 0.0f;
+        return Math.min(1.0f, Math.max(0.0f, (float) progressSeconds / (float) durationSeconds));
+    }
+
     public static String getFormattedTime() {
         int minutes = progressSeconds / 60;
         int seconds = progressSeconds % 60;
         return String.format("%02d:%02d", minutes, seconds);
     }
 
+    public static String getFormattedDuration() {
+        int minutes = durationSeconds / 60;
+        int seconds = durationSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
+
+    public static String getTrackUrl() {
+        try {
+            String query = (currentTrack + " " + currentArtist).trim();
+            if (query.isEmpty()) query = "Spotify";
+            return "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8);
+        } catch (Throwable t) {
+            return "https://open.spotify.com";
+        }
+    }
+
+    public static String getArtistUrl() {
+        try {
+            String query = currentArtist.trim();
+            if (query.isEmpty()) query = "Spotify";
+            return "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8);
+        } catch (Throwable t) {
+            return "https://open.spotify.com";
+        }
+    }
+
     public static void init() {
         if (running.compareAndSet(false, true)) {
-            pollThread = new Thread(SpotifyManager::pollLoop, "BomboAddons-SpotifyPoller");
+            pollThread = new Thread(SpotifyManager::runLoop, "BomboAddons-SpotifyPoller");
             pollThread.setDaemon(true);
             pollThread.start();
         }
     }
 
-    private static void pollLoop() {
-        while (running.get()) {
+    public static void stop() {
+        running.set(false);
+        if (gsmtcProcess != null) {
             try {
-                updateSpotifyState();
-                if (isPlaying) {
-                    progressSeconds++;
-                }
-                Thread.sleep(1000L);
-            } catch (InterruptedException e) {
-                break;
-            } catch (Throwable ignored) {
-            }
+                gsmtcProcess.destroyForcibly();
+            } catch (Throwable ignored) {}
+            gsmtcProcess = null;
+        }
+        if (pollThread != null) {
+            pollThread.interrupt();
         }
     }
 
-    private static void updateSpotifyState() {
+    private static void runLoop() {
         if (!System.getProperty("os.name", "").toLowerCase().contains("win")) {
             return;
         }
 
+        File scriptFile = ensurePollerScript();
+
+        while (running.get()) {
+            if (scriptFile != null && scriptFile.exists()) {
+                try {
+                    ProcessBuilder pb = new ProcessBuilder(
+                            "powershell.exe",
+                            "-NoProfile",
+                            "-ExecutionPolicy", "Bypass",
+                            "-File", scriptFile.getAbsolutePath()
+                    );
+                    pb.redirectErrorStream(true);
+                    gsmtcProcess = pb.start();
+
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(gsmtcProcess.getInputStream(), StandardCharsets.UTF_8))) {
+                        String line;
+                        while (running.get() && (line = reader.readLine()) != null) {
+                            line = line.trim();
+                            if (line.startsWith("STATE|")) {
+                                String[] parts = line.split("\\|", 6);
+                                if (parts.length >= 6) {
+                                    String title = parts[1].trim();
+                                    String artist = parts[2].trim();
+                                    int pos = parseSafeInt(parts[3]);
+                                    int dur = parseSafeInt(parts[4]);
+                                    String stat = parts[5].trim();
+
+                                    currentTrack = title;
+                                    currentArtist = artist;
+                                    progressSeconds = pos;
+                                    durationSeconds = dur;
+                                    isPlaying = stat.equalsIgnoreCase("Playing");
+                                    isSpotifyOpen = true;
+                                    lastStateUpdate = System.currentTimeMillis();
+
+                                    // Notify LyricsManager of track update
+                                    LyricsManager.updateTrack(title, artist, pos);
+                                }
+                            } else if (line.equals("NONE")) {
+                                fallbackToWindowInspection();
+                            }
+                        }
+                    }
+
+                    if (gsmtcProcess != null) {
+                        gsmtcProcess.waitFor();
+                    }
+                } catch (InterruptedException e) {
+                    break;
+                } catch (Throwable t) {
+                    fallbackToWindowInspection();
+                }
+            } else {
+                fallbackToWindowInspection();
+            }
+
+            try {
+                Thread.sleep(1000L);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+
+    private static int parseSafeInt(String s) {
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (Throwable t) {
+            return 0;
+        }
+    }
+
+    private static File ensurePollerScript() {
+        try {
+            File dir = new File(System.getProperty("java.io.tmpdir"), "bomboaddons");
+            if (!dir.exists()) dir.mkdirs();
+            File script = new File(dir, "spotify_poller.ps1");
+
+            String content = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\r\n"
+                    + "Add-Type -AssemblyName System.Runtime.WindowsRuntime\r\n"
+                    + "$asTaskGeneric = ([System.WindowsRuntimeSystemExtensions].GetMethods() | ? { $_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1' })[0]\r\n"
+                    + "Function Await($WinRtTask, $ResultType) {\r\n"
+                    + "    $asTask = $asTaskGeneric.MakeGenericMethod($ResultType)\r\n"
+                    + "    $netTask = $asTask.Invoke($null, @($WinRtTask))\r\n"
+                    + "    $netTask.Wait(-1) | Out-Null\r\n"
+                    + "    $netTask.Result\r\n"
+                    + "}\r\n"
+                    + "[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType=WindowsRuntime] | Out-Null\r\n"
+                    + "$asyncOp = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()\r\n"
+                    + "$mgr = Await $asyncOp ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])\r\n\r\n"
+                    + "while ($true) {\r\n"
+                    + "    try {\r\n"
+                    + "        $session = $mgr.GetCurrentSession()\r\n"
+                    + "        if ($session) {\r\n"
+                    + "            $tl = $session.GetTimelineProperties()\r\n"
+                    + "            $propsOp = $session.TryGetMediaPropertiesAsync()\r\n"
+                    + "            $props = Await $propsOp ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])\r\n"
+                    + "            $pos = [math]::Floor($tl.Position.TotalSeconds)\r\n"
+                    + "            $dur = [math]::Floor($tl.EndTime.TotalSeconds)\r\n"
+                    + "            $stat = $session.GetPlaybackInfo().PlaybackStatus\r\n"
+                    + "            [Console]::WriteLine(\"STATE|\" + $props.Title + \"|\" + $props.Artist + \"|\" + $pos + \"|\" + $dur + \"|\" + $stat)\r\n"
+                    + "        } else {\r\n"
+                    + "            [Console]::WriteLine(\"NONE\")\r\n"
+                    + "        }\r\n"
+                    + "    } catch {\r\n"
+                    + "        [Console]::WriteLine(\"NONE\")\r\n"
+                    + "    }\r\n"
+                    + "    Start-Sleep -Milliseconds 500\r\n"
+                    + "}\r\n";
+
+            try (FileOutputStream fos = new FileOutputStream(script)) {
+                fos.write(content.getBytes(StandardCharsets.UTF_8));
+            }
+            return script;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    private static void fallbackToWindowInspection() {
         final boolean[] foundSpotify = {false};
         final String[] rawTitle = {""};
 
@@ -111,7 +272,7 @@ public class SpotifyManager {
                                 foundSpotify[0] = true;
                                 if (!title.equalsIgnoreCase("Spotify") && !title.equalsIgnoreCase("Spotify Free") && !title.equalsIgnoreCase("Spotify Premium")) {
                                     rawTitle[0] = title;
-                                    return false; // Found active song title window!
+                                    return false;
                                 } else if (rawTitle[0].isEmpty()) {
                                     rawTitle[0] = title;
                                 }
@@ -121,16 +282,11 @@ public class SpotifyManager {
                 }
                 return true;
             }, null);
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
 
         isSpotifyOpen = foundSpotify[0];
-
         if (!isSpotifyOpen) {
             isPlaying = false;
-            currentTrack = "";
-            currentArtist = "";
-            progressSeconds = 0;
             return;
         }
 
@@ -139,22 +295,15 @@ public class SpotifyManager {
             isPlaying = false;
         } else {
             isPlaying = true;
-            String newArtist;
-            String newTrack;
             int dashIndex = full.indexOf(" - ");
             if (dashIndex != -1) {
-                newArtist = full.substring(0, dashIndex).trim();
-                newTrack = full.substring(dashIndex + 3).trim();
+                currentArtist = full.substring(0, dashIndex).trim();
+                currentTrack = full.substring(dashIndex + 3).trim();
             } else {
-                newArtist = "Spotify";
-                newTrack = full;
+                currentArtist = "Spotify";
+                currentTrack = full;
             }
-
-            if (!newTrack.equals(currentTrack) || !newArtist.equals(currentArtist)) {
-                currentArtist = newArtist;
-                currentTrack = newTrack;
-                progressSeconds = 0;
-            }
+            LyricsManager.updateTrack(currentTrack, currentArtist, progressSeconds);
         }
     }
 
@@ -165,19 +314,16 @@ public class SpotifyManager {
 
     public static void nextTrack() {
         sendMediaKey(VK_MEDIA_NEXT_TRACK);
-        progressSeconds = 0;
     }
 
     public static void prevTrack() {
         sendMediaKey(VK_MEDIA_PREV_TRACK);
-        progressSeconds = 0;
     }
 
     private static void sendMediaKey(byte vkCode) {
         try {
             User32Extra.INSTANCE.keybd_event(vkCode, (byte) 0, 0, 0);
             User32Extra.INSTANCE.keybd_event(vkCode, (byte) 0, KEYEVENTF_KEYUP, 0);
-        } catch (Throwable ignored) {
-        }
+        } catch (Throwable ignored) {}
     }
 }

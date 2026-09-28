@@ -91,8 +91,27 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("b ss") || trimmed.equalsIgnoreCase("bombo ss") || trimmed.equalsIgnoreCase("bomboaddons ss") || trimmed.equalsIgnoreCase("ss")) {
+      String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+      if (lower.equals("ss") || lower.startsWith("ss ") || lower.equals("b ss") || lower.startsWith("b ss ")
+            || lower.equals("bombo ss") || lower.startsWith("bombo ss ") || lower.equals("bomboaddons ss") || lower.startsWith("bomboaddons ss ")) {
+         String sub = "";
+         if (lower.startsWith("bomboaddons ss")) sub = trimmed.substring(14).trim();
+         else if (lower.startsWith("bombo ss")) sub = trimmed.substring(8).trim();
+         else if (lower.startsWith("b ss")) sub = trimmed.substring(4).trim();
+         else if (lower.startsWith("ss")) sub = trimmed.substring(2).trim();
+         String[] ssArgs = sub.isEmpty() ? new String[0] : sub.split("\\s+");
+         me.bombo.bomboaddons.BomboaddonsClient.handleScreenshareCommand(null, ssArgs);
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("discord") || lower.equals("b discord") || lower.equals("bombo discord") || lower.equals("bomboaddons discord")) {
          me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("lyrics") || lower.equals("b lyrics") || lower.equals("bombo lyrics") || lower.equals("bomboaddons lyrics")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
          ci.cancel();
          return;
       }

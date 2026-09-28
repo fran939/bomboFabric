@@ -74,8 +74,8 @@ public abstract class ItemInHandRendererMixin {
                 if (!offStack.isEmpty()) {
                     this.submitArmWithItem(other, partialTicks, otherPitch, InteractionHand.OFF_HAND, hand == InteractionHand.OFF_HAND ? otherSwing : 0.0f, offStack, 0.0f, poseStack, buffer, light);
                 }
-                ci.cancel();
             }
+            ci.cancel();
         }
     }
 
@@ -119,8 +119,8 @@ public abstract class ItemInHandRendererMixin {
                     avatarRenderer.renderLeftHand(poseStack, buffer, light, skin, sleeve);
                 }
                 poseStack.popPose();
-                ci.cancel();
             }
+            ci.cancel();
         }
     }
 }

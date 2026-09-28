@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.53",
+    "date": "2026-09-28",
+    "changes": [
+      "Screensharing (/ss <player>): Switched IRC request transport to PRIVMSG, ensuring spectator requests reliably deliver to target player with [ACCEPT] and [DENY] buttons",
+      "Synchronized Lyrics (/b lyrics & /lyrics): Word-for-word and line-by-line synchronized lyrics GUI powered by LRCLIB, featuring smooth auto-scrolling and cyan glowing karaoke word highlights",
+      "Spotify HUD Redesign: Redesigned dark plum card (#1E1324) with official Spotify icon, neon cyan controls (|◀ ⏸ ▶|), and track progress bar",
+      "Spotify Accuracy & Fixes: Fixed playback timer desync and progress resetting to 0:00 on pause via Windows GSMTC media tracking; added clickable song & artist search links; kept HUD visible in inventory",
+      "Storage Overlay Crash Fix: Removed SlotAccessor mixin and switched to direct memory offsets for slot positioning, completely preventing classload crashes",
+      "Spectator Hand & Body Rendering: Overrode camera entity in LevelExtractor to prevent Minecraft culling client player body from the world, and suppressed client hand in first-person spectator",
+      "Hoppity Call Filter: Gated auto-pickup strictly to calls from Hoppity, preventing accidental pickup of Vincent or other NPC calls",
+      "Changelog Colors: Fixed changelog text turning white after §ka by using §r§7 to maintain proper readable gray formatting"
+    ]
+  },
+  {
     "version": "26.2.28.52",
     "date": "2026-09-28",
     "changes": [
@@ -11,7 +25,7 @@
       "Spectated Held Item Name: Displays the spectated player's held item name and rarity color above the hotbar",
       "Spectator Camera Smoothing: Eliminated look jitter and stutter during spectator camera by cleaning mouse delta handling",
       "Discord IPC Permissions: Gated Discord IPC on discordHudEnabled so Discord never prompts for permissions on startup when disabled",
-      "No Obfuscate Label: Fixed scrambling formatting in config so §ka§r renders with scrambled 'a' and clean parenthesis"
+      "No Obfuscate Label: Fixed scrambling formatting in config so §ka§7 renders with scrambled 'a' and clean parenthesis"
     ]
   },
   {

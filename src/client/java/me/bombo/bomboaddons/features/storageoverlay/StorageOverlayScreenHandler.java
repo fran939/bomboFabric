@@ -1,6 +1,5 @@
 package me.bombo.bomboaddons.features.storageoverlay;
 
-import me.bombo.bomboaddons.mixin.SlotAccessor;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ChestMenu;
@@ -8,6 +7,48 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 
 public class StorageOverlayScreenHandler extends ChestMenu {
+	private static final sun.misc.Unsafe UNSAFE;
+	private static final long X_OFFSET;
+	private static final long Y_OFFSET;
+
+	static {
+		sun.misc.Unsafe u = null;
+		long xOff = -1L;
+		long yOff = -1L;
+		try {
+			java.lang.reflect.Field f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+			f.setAccessible(true);
+			u = (sun.misc.Unsafe) f.get(null);
+			java.lang.reflect.Field fx = Slot.class.getDeclaredField("x");
+			java.lang.reflect.Field fy = Slot.class.getDeclaredField("y");
+			xOff = u.objectFieldOffset(fx);
+			yOff = u.objectFieldOffset(fy);
+		} catch (Throwable t) {
+			try {
+				if (u != null) {
+					for (java.lang.reflect.Field field : Slot.class.getDeclaredFields()) {
+						if (field.getType() == int.class && !java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+							if (field.getName().equals("x") || field.getName().endsWith("x")) {
+								xOff = u.objectFieldOffset(field);
+							} else if (field.getName().equals("y") || field.getName().endsWith("y")) {
+								yOff = u.objectFieldOffset(field);
+							}
+						}
+					}
+				}
+			} catch (Throwable ignored) {}
+		}
+		UNSAFE = u;
+		X_OFFSET = xOff;
+		Y_OFFSET = yOff;
+	}
+
+	public static void setSlotPosition(Slot slot, int x, int y) {
+		if (UNSAFE != null && X_OFFSET != -1L && Y_OFFSET != -1L) {
+			UNSAFE.putInt(slot, X_OFFSET, x);
+			UNSAFE.putInt(slot, Y_OFFSET, y);
+		}
+	}
 	private final int rows;
 
 	public StorageOverlayScreenHandler(MenuType<?> type, int syncId, Inventory playerInventory, Container inventory, int rows, boolean isBackpack, int height) {
@@ -80,9 +121,7 @@ public class StorageOverlayScreenHandler extends ChestMenu {
 			int itemX = x + (i - 9) % columns * 18;
 			int itemY = y + (i - 9) / columns * 18;
 			Slot slot = slots.get(i);
-			SlotAccessor slotAccessor = (SlotAccessor) slot;
-			slotAccessor.setX(itemX);
-			slotAccessor.setY(itemY);
+			setSlotPosition(slot, itemX, itemY);
 		}
 	}
 

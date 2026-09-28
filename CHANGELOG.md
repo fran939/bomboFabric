@@ -1,5 +1,25 @@
 # BomboAddons Changelog
 
+## [26.2.28.53] - 2026-09-28 (Beta)
+
+### Screensharing & Social
+- **Screensharing Protocol Delivery (`/ss <player>`):** Switched in-game spectator request transport to `PRIVMSG` over IRC, ensuring spectator invites reliably deliver to the target player with interactive `[ACCEPT]` and `[DENY]` buttons.
+- **Discord HUD Command Separation:** Un-hijacked `/ss` and `/b ss` from Discord IPC to screensharing; added `/b discord` for Discord Voice HUD.
+
+### Synchronized Lyrics (`/b lyrics` & `/lyrics`)
+- **Word-for-Word & Line Synced Lyrics:** Built a rich lyrics GUI powered by LRCLIB API (inspired by `vivi-music`). Features real-time karaoke tracking with glowing cyan active words, smooth auto-scrolling, manual scrolling with a "Jump to Playing" button, and web search links for song and artist.
+
+### Spotify HUD Overlay
+- **Visual Redesign:** Updated HUD card to a modern dark plum background (`#1E1324`), official Spotify icon, neon cyan `#00A4DC` controls (`|◀  ⏸/▶  ▶|`), and styled progress bar.
+- **Accurate Playback & Pause Persistence:** Resolved timer desync and progress resetting to 0:00 on pause using Windows GSMTC media transport tracking.
+- **Clickable Links & Inventory Visibility:** Click song title to open Spotify track search and artist to open artist search; HUD stays visible when opening inventory or containers (`AbstractContainerScreen`).
+
+### Bug Fixes & Improvements
+- **Storage Overlay Crash Fix:** Replaced `SlotAccessor` mixin with direct Unsafe memory offsets for slot positioning, completely preventing classloading crashes when opening storage menus.
+- **Spectator Camera & Hands:** Injected into `LevelExtractor` to prevent Minecraft from culling `LocalPlayer` from the world while spectating, and suppressed client hand rendering in first-person spectator.
+- **Hoppity Phone Auto-Pickup:** Gated auto-pickup strictly to callers matching "Hoppity", preventing accidental pickup of Vincent or other NPC calls.
+- **Changelog Colors:** Fixed changelog text color turning white after `§ka` by resetting to `§r§7`.
+
 ## [26.2.28.52] - 2026-09-28 (Beta)
 
 ### Screensharing & Social

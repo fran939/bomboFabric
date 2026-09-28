@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.52` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.53` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,10 +103,21 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.52`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.53`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.53 (Ready for In-Game Testing)
+>
+> 1. **Screenshare Request Delivery (`/ss <player>`):** Switched IRC request transport to `PRIVMSG` over `#bomboaddons_chat` instead of channel `NOTICE`, fixing packet dropping by IRC channel mode. The target player reliably receives the in-game spectator invitation with clickable `[ACCEPT]` and `[DENY]` buttons. Un-hijacked `/ss` and `/b ss` from Discord IPC to screensharing; added `/b discord` for Discord HUD.
+> 2. **Word-for-Word Synchronized Lyrics (`/b lyrics` & `/lyrics`):** Built a rich lyrics GUI powered by LRCLIB API client (inspired by `vivi-music`). Features real-time karaoke tracking with glowing cyan active words, smooth auto-scrolling to active lines, manual mouse wheel scrolling with a "Jump to Playing" button, and clickable web search links for song and artist.
+> 3. **Spotify HUD Redesign:** Redesigned dark plum card (`#1E1324`) with official Spotify icon, neon cyan `#00A4DC` controls (`|◀  ⏸/▶  ▶|`), and track progress bar.
+> 4. **Spotify Accuracy & Fixes:** Fixed playback timer desync and progress resetting to 0:00 on pause via Windows GSMTC media transport tracking; added clickable song & artist search links; kept HUD visible when opening inventory or containers (`AbstractContainerScreen`).
+> 5. **Storage Overlay Crash Fix:** Replaced `SlotAccessor` mixin with direct Unsafe memory offsets for slot positioning, completely preventing classloading linkage crashes when opening storage overlay menus.
+> 6. **Spectator Hand & Body Rendering:** Overrode camera entity in `LevelExtractor` to prevent Minecraft from culling the client player's body from the world while spectating, and suppressed client hand rendering in first-person spectator.
+> 7. **Hoppity Call Filter:** Gated auto-pickup strictly to calls from Hoppity, preventing accidental pickup of Vincent or other NPC calls.
+> 8. **Changelog Colors:** Fixed changelog text color turning white after `§ka` by resetting to `§r§7`, preserving readable gray text across all changelog entries.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.52 (Ready for In-Game Testing)
 >
 > 1. **Interactive Screensharing (`/ss <player>`):** Mod-to-mod in-game spectator/screenshare requests over IRC (`IRCClient.java`). Target gets interactive `§a§l[ACCEPT]` and `§c§l[DENY]` buttons. Added auto-accept whitelist (`autoAcceptScreenshareUsers` in config; commands `/ss whitelist <player>`, `/ss remove <player>`, `/ss list`). Once accepted, sender seamlessly executes spectator camera on target. Cleanly disconnect with `/ss stop`.

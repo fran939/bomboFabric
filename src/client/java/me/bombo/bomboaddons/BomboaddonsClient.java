@@ -258,6 +258,8 @@ public class BomboaddonsClient implements ClientModInitializer {
    public static final Set<String> clickedNpcTextOptions = new HashSet();
    public static String lastNpcSpeaker = "";
    public static long lastNpcSpeakerTime = 0L;
+   public static String lastPhoneCaller = "";
+   public static long lastPhoneCallerTime = 0L;
    public static boolean holdingRightClick = false;
    public static boolean holdingLeftClick = false;
    private static final String PREFIX = "§8[§3Bombo§8]§r ";
@@ -1364,9 +1366,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                      me.bombo.bomboaddons.features.misc.MayorChatFormatter.executeCommand();
                      return 1;
                   }));
-                  // /b ss - Discord Screenshares and Voice HUD summary
-                  builder.then(ClientCommands.literal("ss").executes((context) -> {
+                  // /b ss - Screensharing & spectate command
+                  builder.then(buildScreenshareCommand("ss"));
+                  builder.then(ClientCommands.literal("discord").executes((context) -> {
                      me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("lyrics").executes((context) -> {
+                     Minecraft mc = Minecraft.getInstance();
+                     mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
                      return 1;
                   }));
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("afk").executes((ctx) -> {
@@ -4629,6 +4637,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                // /ss and /screenshare - Mod-to-mod screenshare and Discord voice HUD
                dispatcher.register(buildScreenshareCommand("ss"));
                dispatcher.register(buildScreenshareCommand("screenshare"));
+                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("lyrics").executes((context) -> {
+                   Minecraft mc = Minecraft.getInstance();
+                   mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
+                   return 1;
+                }));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("bomboprof").executes((context) -> {
                   pendingConfigSearch = "Profile";
                   openGuiNextTick = true;
@@ -5518,9 +5531,18 @@ public class BomboaddonsClient implements ClientModInitializer {
                      }
                   }
 
+                  String strippedCall = net.minecraft.ChatFormatting.stripFormatting(plain).trim();
+                  if (strippedCall.contains("✆") && !strippedCall.contains("[PICK UP]")) {
+                     String c = strippedCall.replace("✆", "").trim().toLowerCase(java.util.Locale.ROOT);
+                     if (!c.isEmpty()) {
+                        lastPhoneCaller = c;
+                        lastPhoneCallerTime = System.currentTimeMillis();
+                     }
+                  }
+
                   if (BomboConfig.get().autoHoppityCalls) {
-                     String strippedCall = net.minecraft.ChatFormatting.stripFormatting(plain).trim();
-                     if ((strippedCall.contains("BUZZ...") || strippedCall.contains("RING...") || strippedCall.contains("✆")) && strippedCall.contains("[PICK UP]")) {
+                     boolean isHoppity = (System.currentTimeMillis() - lastPhoneCallerTime < 10000L) && lastPhoneCaller.contains("hoppity");
+                     if (isHoppity && (strippedCall.contains("BUZZ...") || strippedCall.contains("RING...") || strippedCall.contains("✆")) && strippedCall.contains("[PICK UP]")) {
                         String[] pickupCmd = new String[1];
                         message.visit((style, text) -> {
                            ClickEvent ce = style.getClickEvent();
@@ -8069,7 +8091,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             return;
          }
          String target = args[1].trim();
-         IRCClient.sendRaw("NOTICE #bomboaddons_chat :[SS_ACCEPT]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
+         IRCClient.sendRaw("PRIVMSG #bomboaddons_chat :[SS_ACCEPT]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
          IRCClient.activeScreenshareWith = target;
          feedback.accept(Component.literal("§8[§3Bombo§8] §aAccepted screenshare request from §e" + target + "§a. They are now viewing your screen!"));
          return;
@@ -8081,14 +8103,14 @@ public class BomboaddonsClient implements ClientModInitializer {
             return;
          }
          String target = args[1].trim();
-         IRCClient.sendRaw("NOTICE #bomboaddons_chat :[SS_DENY]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
+         IRCClient.sendRaw("PRIVMSG #bomboaddons_chat :[SS_DENY]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
          feedback.accept(Component.literal("§8[§3Bombo§8] §cDenied screenshare request from §e" + target + "§c."));
          return;
       }
 
       if (sub.equals("stop") || sub.equals("exit") || sub.equals("leave")) {
          if (IRCClient.activeScreenshareWith != null) {
-            IRCClient.sendRaw("NOTICE #bomboaddons_chat :[SS_STOP]\u0002" + IRCClient.activeScreenshareWith.toLowerCase() + "\u0002" + myIgn);
+            IRCClient.sendRaw("PRIVMSG #bomboaddons_chat :[SS_STOP]\u0002" + IRCClient.activeScreenshareWith.toLowerCase() + "\u0002" + myIgn);
             IRCClient.activeScreenshareWith = null;
          }
          if (mc.getCameraEntity() != mc.player) {
@@ -8151,7 +8173,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          feedback.accept(Component.literal("§8[§3Bombo§8] §cIRC is not connected yet. Connecting in background..."));
          IRCClient.start();
       }
-      IRCClient.sendRaw("NOTICE #bomboaddons_chat :[SS_REQ]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
+      IRCClient.sendRaw("PRIVMSG #bomboaddons_chat :[SS_REQ]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
       feedback.accept(Component.literal("§8[§3Bombo§8] §aSent screenshare request to §e" + target + "§a. Waiting for them to accept..."));
    }
 
@@ -8176,18 +8198,28 @@ public class BomboaddonsClient implements ClientModInitializer {
       Entity target = null;
       if (targetName != null && !targetName.trim().isEmpty()) {
          String clean = targetName.trim().toLowerCase(java.util.Locale.ROOT);
-         double closestDist = Double.MAX_VALUE;
-         // Check by entity type/name (e.g. sheep, guided sheep, zombie, player username)
-         for (Entity e : mc.level.entitiesForRendering()) {
-            if (e == mc.player) continue;
-            String typeName = e.getType().toShortString().toLowerCase(java.util.Locale.ROOT);
-            String entName = e.getName().getString().toLowerCase(java.util.Locale.ROOT);
-            String custom = e.getCustomName() != null ? e.getCustomName().getString().toLowerCase(java.util.Locale.ROOT) : "";
-            if (typeName.contains(clean) || entName.contains(clean) || custom.contains(clean)) {
-               double dist = mc.player.distanceToSqr(e);
-               if (dist < closestDist) {
-                  closestDist = dist;
-                  target = e;
+         // Prioritize player entities over armorstands/nametags
+         for (net.minecraft.client.player.AbstractClientPlayer p : mc.level.players()) {
+            if (p == mc.player) continue;
+            String pName = p.getName().getString().toLowerCase(java.util.Locale.ROOT);
+            if (pName.equalsIgnoreCase(clean) || pName.contains(clean)) {
+               target = p;
+               break;
+            }
+         }
+         if (target == null) {
+            double closestDist = Double.MAX_VALUE;
+            for (Entity e : mc.level.entitiesForRendering()) {
+               if (e == mc.player) continue;
+               String typeName = e.getType().toShortString().toLowerCase(java.util.Locale.ROOT);
+               String entName = e.getName().getString().toLowerCase(java.util.Locale.ROOT);
+               String custom = e.getCustomName() != null ? e.getCustomName().getString().toLowerCase(java.util.Locale.ROOT) : "";
+               if (typeName.contains(clean) || entName.contains(clean) || custom.contains(clean)) {
+                  double dist = mc.player.distanceToSqr(e);
+                  if (dist < closestDist) {
+                     closestDist = dist;
+                     target = e;
+                  }
                }
             }
          }
