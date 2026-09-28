@@ -537,7 +537,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Running Flavor: " + me.bombo.bomboaddons.Constants.MOD_NAME
                         + " (" + me.bombo.bomboaddons.Constants.FLAVOR + " \u2022 "
                         + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "*.jar)", category));
-                items.add(ConfigItem.toggle("No Obfuscate (strip \u00a7k)",
+                items.add(ConfigItem.toggle("No Obfuscate (strip \u00a7k\u00a7r)",
                         "Removes the scrambling style from chat messages and item lore, making the text behind it readable.",
                         category, () -> s.noObfuscate, v -> s.noObfuscate = v));
 

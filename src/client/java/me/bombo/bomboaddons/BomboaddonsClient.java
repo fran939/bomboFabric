@@ -1339,7 +1339,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                      if (SkyblockUtils.isInLimbo() || "limbo".equalsIgnoreCase(locrawServer) || "Limbo".equalsIgnoreCase(currentArea) || (loc != null && (loc.toLowerCase().contains("limbo") || loc.contains("\"server\"")))) {
                         areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §aLimbo"));
                      } else {
-                        areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + (loc != null ? loc : "Unknown")));
+                        String sub = SkyblockUtils.getSubArea();
+                        String displayArea = (loc != null ? loc : "Unknown");
+                        if (sub != null && !sub.isEmpty() && !sub.equalsIgnoreCase("None")) {
+                           displayArea += " (" + sub + ")";
+                        }
+                        areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + displayArea));
                      }
                      return 1;
                   }));
@@ -1347,6 +1352,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                      String sub = SkyblockUtils.getSubArea();
                      FabricClientCommandSource areaSource = (FabricClientCommandSource)context.getSource();
                      areaSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Subarea: §a" + (sub != null ? sub : "None")));
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("mayor").executes((context) -> {
+                     me.bombo.bomboaddons.features.misc.MayorChatFormatter.executeCommand();
                      return 1;
                   }));
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("afk").executes((ctx) -> {
@@ -5491,6 +5500,47 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }
                         if (isBlocked) {
                            return true;
+                        }
+                     }
+                  }
+
+                  if (BomboConfig.get().autoHoppityCalls) {
+                     String strippedCall = net.minecraft.ChatFormatting.stripFormatting(plain).trim();
+                     if ((strippedCall.contains("BUZZ...") || strippedCall.contains("RING...") || strippedCall.contains("✆")) && strippedCall.contains("[PICK UP]")) {
+                        String[] pickupCmd = new String[1];
+                        message.visit((style, text) -> {
+                           ClickEvent ce = style.getClickEvent();
+                           if (ce instanceof ClickEvent.RunCommand runCmd) {
+                              String t = text.trim();
+                              if (t.contains("PICK UP") || t.contains("PICK") || t.contains("UP")) {
+                                 pickupCmd[0] = runCmd.command();
+                              }
+                           }
+                           return pickupCmd[0] != null ? Optional.of(pickupCmd[0]) : Optional.empty();
+                        }, Style.EMPTY);
+
+                        if (pickupCmd[0] == null) {
+                           List<NpcOptionItem> opts = new ArrayList<>();
+                           findOptionClickEvents(message, opts);
+                           for (NpcOptionItem opt : opts) {
+                              if (opt.text.toUpperCase(java.util.Locale.ROOT).contains("PICK UP") || opt.command.toLowerCase(java.util.Locale.ROOT).contains("pickup") || opt.command.toLowerCase(java.util.Locale.ROOT).startsWith("/cb")) {
+                                 pickupCmd[0] = opt.command;
+                                 break;
+                              }
+                           }
+                        }
+
+                        if (pickupCmd[0] != null) {
+                           String cmd = pickupCmd[0].startsWith("/") ? pickupCmd[0].substring(1) : pickupCmd[0];
+                           Minecraft mc = Minecraft.getInstance();
+                           mc.execute(() -> {
+                              if (mc.getConnection() != null) {
+                                 mc.getConnection().sendCommand(cmd);
+                                 if (mc.player != null) {
+                                    mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto-picked up phone call! (§e/" + cmd + "§a)"));
+                                 }
+                              }
+                           });
                         }
                      }
                   }

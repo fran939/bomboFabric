@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.49` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.50` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,11 +103,21 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.49`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.50`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
-> ### ✅ COMPLETED & COMPILED IN v26.2.28.49 (Ready for In-Game Testing)
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.50 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Concrete Method Interception Fix:** Shifted screen creation interception from `ScreenConstructor.fromPacket` to concrete static method `MenuScreens.create` in `MenuScreensConstructorMixin.java`. Reliably intercepts container packets, syncs `player.containerMenu`, and launches `StorageOverlayScreen` across all storage menus, ender chests, and backpacks.
+> 2. **Stable Obfuscated Glyphs (§k Jitter Fix):** Added `FontMixin.java` to stabilize character advances for obfuscated (`§k`) styles, returning a stable fixed advance equal to the target width while preserving character scrambling animation. Completely stops rarity-upgraded (recombobulated) items from jittering or shaking.
+> 3. **Brigadier `/b mayor` Registration:** Registered the `mayor` literal subcommand directly into Brigadier's client command builder in `BomboaddonsClient.java` and `CommandMixin.java`, preventing the `Incorrect argument for command at position 2: b` syntax error.
+> 4. **Combined Area & Subarea Output:** Updated `/b area` in both `BomboaddonsClient.java` and `CommandMixin.java` to append the subarea in parentheses when available (e.g. `Current Area: Hub (Village)`).
+> 5. **Player Body & Armor/Skin Layer Visibility:** Injected into `LevelExtractor.isEntityVisible` and added `AvatarRendererMixin.java` so `LocalPlayer` is not culled by chunk/frustum checks and armor/skin layers always render cleanly during spectator camera and freecam.
+> 6. **Hoppity Call Auto-Pickup:** Implemented automatic answering of incoming Hoppity / Abiphone phone calls on the very first buzz (`BUZZ... [PICK UP]` or `RING... [PICK UP]`) when `autoHoppityCalls` is enabled.
+> 7. **No Obfuscate Config Label Fix:** Added `§r` reset formatting in `ConfigRegistry.java` to ensure the closing parenthesis in `No Obfuscate (strip §k§r)` renders properly and is not scrambled.
+>
+> ### ✅ COMPLETED IN v26.2.28.49 (Ready for In-Game Testing)
 >
 > 1. **Skyblocker Storage Overlay Interception Fix:** Ported Skyblocker's exact injection point into `MenuScreens.ScreenConstructor.fromPacket` in `MenuScreensConstructorMixin.java`. When enabled, it properly intercepts storage packets, sets `player.containerMenu`, and opens `StorageOverlayScreen` across all ender chests and backpacks.
 > 2. **Interactive Hypixel Calendar Mayor Tooltips:** Intercepts `[Mayor]` chat messages (and added `/b mayor`) via `MayorChatFormatter.java`. Hovering the mayor displays the exact Hypixel calendar GUI tooltip layout (yellow header, perks list, descriptions, bottom election disclaimer). Hovering any individual perk shows that perk's description. Hovering the minister displays their name and active minister perk.

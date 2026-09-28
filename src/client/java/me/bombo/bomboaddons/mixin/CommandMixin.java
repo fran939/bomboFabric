@@ -75,9 +75,19 @@ public class CommandMixin {
       if (trimmed.equalsIgnoreCase("b area") || trimmed.equalsIgnoreCase("bombo area") || trimmed.equalsIgnoreCase("bomboaddons area")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          String loc = me.bombo.bomboaddons.SkyblockUtils.getLocation();
-         if (mc.player != null) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + (loc != null ? loc : "Unknown")));
+         String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea();
+         String displayArea = (loc != null ? loc : "Unknown");
+         if (sub != null && !sub.isEmpty() && !sub.equalsIgnoreCase("None")) {
+            displayArea += " (" + sub + ")";
          }
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + displayArea));
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b mayor") || trimmed.equalsIgnoreCase("bombo mayor") || trimmed.equalsIgnoreCase("bomboaddons mayor") || trimmed.equalsIgnoreCase("mayor")) {
+         me.bombo.bomboaddons.features.misc.MayorChatFormatter.executeCommand();
          ci.cancel();
          return;
       }
@@ -316,9 +326,19 @@ public class CommandMixin {
       if (trimmed.equalsIgnoreCase("/b area") || trimmed.equalsIgnoreCase("/bombo area") || trimmed.equalsIgnoreCase("/bomboaddons area")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          String loc = me.bombo.bomboaddons.SkyblockUtils.getLocation();
-         if (mc.player != null) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + (loc != null ? loc : "Unknown")));
+         String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea();
+         String displayArea = (loc != null ? loc : "Unknown");
+         if (sub != null && !sub.isEmpty() && !sub.equalsIgnoreCase("None")) {
+            displayArea += " (" + sub + ")";
          }
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + displayArea));
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b mayor") || trimmed.equalsIgnoreCase("/bombo mayor") || trimmed.equalsIgnoreCase("/bomboaddons mayor") || trimmed.equalsIgnoreCase("/mayor")) {
+         me.bombo.bomboaddons.features.misc.MayorChatFormatter.executeCommand();
          ci.cancel();
          return;
       }

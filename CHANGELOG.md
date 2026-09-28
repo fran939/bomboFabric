@@ -1,5 +1,22 @@
 # BomboAddons Changelog
 
+## [26.2.28.50] - 2026-09-28 (Beta)
+
+### Storage & GUI
+- **Storage Overlay Interception Concrete Fix:** Shifted injection from `ScreenConstructor.fromPacket` interface to concrete static method `MenuScreens.create` in `MenuScreensConstructorMixin.java`, cleanly intercepting container opening packets and opening `StorageOverlayScreen` across all ender chests and backpacks.
+- **Stable Obfuscated Glyph Advance (§k Jitter Fix):** Added `FontMixin.java` to stabilize obfuscated character advances to a fixed width matching the base codepoint, completely eliminating text shaking/jittering on rarity-upgraded (recombobulated) items.
+- **No Obfuscate Config Label Fix:** Added `§r` reset code in `ConfigRegistry.java` to prevent the closing parenthesis in `No Obfuscate (strip §k§r)` from being scrambled.
+
+### Commands & Subareas
+- **Brigadier `/b mayor` Registration:** Registered `mayor` in Brigadier command tree in `BomboaddonsClient.java` and `CommandMixin.java`, resolving `Incorrect argument for command at position 2: b`.
+- **Combined Area & Subarea Display:** Updated `/b area` to include subarea alongside parent area (e.g. `Current Area: Hub (Village)`).
+
+### Spectator & Player Body Rendering
+- **Player Body & Layer Visibility:** Added `isEntityVisible` injection in `LevelExtractorMixin.java` and added `AvatarRendererMixin.java` to guarantee the player's body and all armor/skin layers render cleanly in the world while spectating.
+
+### Hoppity & Phone Calls
+- **Hoppity Call Auto-Pickup:** Implemented automatic answering of incoming Hoppity phone calls on the first buzz (`BUZZ... [PICK UP]`) when `autoHoppityCalls` is enabled.
+
 ## [26.2.28.49] - 2026-09-28 (Beta)
 
 ### Storage & GUI

@@ -19,10 +19,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Locale;
 
-@Mixin(MenuScreens.ScreenConstructor.class)
-public interface MenuScreensConstructorMixin<T extends AbstractContainerMenu> {
-	@Inject(method = "fromPacket", at = @At("HEAD"), cancellable = true)
-	private void bomboaddons$openStorageOverlay(Component name, MenuType<T> type, Minecraft client, int id, CallbackInfo ci) {
+@Mixin(MenuScreens.class)
+public class MenuScreensConstructorMixin {
+	@Inject(method = "create", at = @At("HEAD"), cancellable = true)
+	private static <T extends AbstractContainerMenu> void bomboaddons$openStorageOverlay(MenuType<T> type, Minecraft client, int id, Component name, CallbackInfo ci) {
 		LocalPlayer player = client.player;
 		if (player == null) return;
 		if (!BomboConfig.get().storageOverlay) return;
