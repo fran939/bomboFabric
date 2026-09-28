@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin({ClientPacketListener.class})
 public class CommandMixin {
    private static final String[] FLOOR_NAMES = {"one", "two", "three", "four", "five", "six", "seven"};
+   private static final String[] FLOOR_NAMES_UPPER = {"ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN"};
 
    @Inject(
       method = {"sendCommand"},
@@ -124,7 +125,8 @@ public class CommandMixin {
          int floor = Integer.parseInt(trimmed.substring(1));
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joininstance catacombs_floor_" + FLOOR_NAMES[floor - 1]);
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Catacombs Floor " + floor + "..."));
+            mc.player.connection.sendCommand("joininstance CATACOMBS_FLOOR_" + FLOOR_NAMES_UPPER[floor - 1]);
          }
          ci.cancel();
          return;
@@ -133,7 +135,8 @@ public class CommandMixin {
          int floor = Integer.parseInt(trimmed.substring(1));
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joininstance master_catacombs_floor_" + FLOOR_NAMES[floor - 1]);
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Master Mode Floor " + floor + "..."));
+            mc.player.connection.sendCommand("joininstance MASTER_CATACOMBS_FLOOR_" + FLOOR_NAMES_UPPER[floor - 1]);
          }
          ci.cancel();
          return;
@@ -141,7 +144,8 @@ public class CommandMixin {
       if (trimmed.equalsIgnoreCase("e") || trimmed.equalsIgnoreCase("fe") || trimmed.equalsIgnoreCase("f0")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joininstance catacombs_entrance");
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Catacombs Entrance..."));
+            mc.player.connection.sendCommand("joininstance CATACOMBS_ENTRANCE");
          }
          ci.cancel();
          return;
@@ -333,7 +337,8 @@ public class CommandMixin {
          int floor = Integer.parseInt(trimmed.substring(2));
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joininstance catacombs_floor_" + FLOOR_NAMES[floor - 1]);
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Catacombs Floor " + floor + "..."));
+            mc.player.connection.sendCommand("joininstance CATACOMBS_FLOOR_" + FLOOR_NAMES_UPPER[floor - 1]);
          }
          ci.cancel();
          return;
@@ -342,7 +347,8 @@ public class CommandMixin {
          int floor = Integer.parseInt(trimmed.substring(2));
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joininstance master_catacombs_floor_" + FLOOR_NAMES[floor - 1]);
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Master Mode Floor " + floor + "..."));
+            mc.player.connection.sendCommand("joininstance MASTER_CATACOMBS_FLOOR_" + FLOOR_NAMES_UPPER[floor - 1]);
          }
          ci.cancel();
          return;
@@ -350,7 +356,8 @@ public class CommandMixin {
       if (trimmed.equalsIgnoreCase("/e") || trimmed.equalsIgnoreCase("/fe") || trimmed.equalsIgnoreCase("/f0")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null && mc.player.connection != null) {
-            mc.player.connection.sendCommand("joininstance catacombs_entrance");
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Catacombs Entrance..."));
+            mc.player.connection.sendCommand("joininstance CATACOMBS_ENTRANCE");
          }
          ci.cancel();
          return;

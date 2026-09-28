@@ -27,6 +27,7 @@ public abstract class CameraMixin {
    )
    private float modifyYaw(float yRot) {
       if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) return me.bombo.bomboaddons.flavor.Flavor.get().freecamYaw();
+      if (me.bombo.bomboaddons.util.SpectatorCamManager.isActive()) return me.bombo.bomboaddons.util.SpectatorCamManager.getYaw();
       return FreelookManager.isFreelookActive() ? FreelookManager.getFreelookYaw() : yRot;
    }
 
@@ -38,6 +39,7 @@ public abstract class CameraMixin {
    )
    private float modifyPitch(float xRot) {
       if (me.bombo.bomboaddons.flavor.Flavor.get().isFreecamActive()) return me.bombo.bomboaddons.flavor.Flavor.get().freecamPitch();
+      if (me.bombo.bomboaddons.util.SpectatorCamManager.isActive()) return me.bombo.bomboaddons.util.SpectatorCamManager.getPitch();
       return FreelookManager.isFreelookActive() ? FreelookManager.getFreelookPitch() : xRot;
    }
 

@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.49",
+    "date": "2026-09-28",
+    "changes": [
+      "Storage Overlay: intercepted MenuScreens.ScreenConstructor.fromPacket matching Skyblocker architecture to reliably construct and open the searchable multi-grid overlay",
+      "Interactive Mayor Tooltips: hovering Mayor Diaz displays exact Hypixel calendar GUI tooltip layout with perks list; individual perks show full descriptions; minister shows active perk; added /b mayor",
+      "Live Mayor RTCA Integration: server and client incorporate live active mayor in RTCA boost calculations (e.g. Mayor: Diaz (+0%)) and remove mayor from uncounted list",
+      "Spectator Camera Decoupling: SpectatorCamManager decouples mouse rotation during /b cam from the spectated player's body and head pose",
+      "Player World Rendering in Spectator: LevelExtractorMixin allows LocalPlayer extraction so player body remains fully rendered in the world when spectating",
+      "Dungeon Quick Join: /f1-f7, /m1-m7, and /e now dispatch uppercase instance identifiers (CATACOMBS_FLOOR_SEVEN, etc.) with chat feedback",
+      "Scoreboard Subarea: enhanced detection of Private Use Area glyphs in scoreboard lines (-  Village) in /b subarea and /b area",
+      "Keypad Keybinds: removed keypad keys from modifier combo prefixes, allowing Keypad arrows and numbers to be bound directly",
+      "IRC Plaintext IP: replaced plaintext IP with chat.bombo.dpdns.org"
+    ]
+  },
+  {
     "version": "26.2.28.48",
     "date": "2026-09-28",
     "changes": [

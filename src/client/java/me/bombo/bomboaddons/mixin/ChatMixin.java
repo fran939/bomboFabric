@@ -195,6 +195,20 @@ public abstract class ChatMixin implements IChatComponent {
                return;
             }
 
+            // Replace flat "[Mayor]" line with interactive Hypixel-style hoverable components.
+            Component mayorComp = me.bombo.bomboaddons.features.misc.MayorChatFormatter.processIncomingChat(raw);
+            if (mayorComp != null) {
+               me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, false, "MAYOR");
+               ci.cancel();
+               isFormattingMessage.set(true);
+               try {
+                  this.addMessage(mayorComp, signature, source, tag);
+               } finally {
+                  isFormattingMessage.set(false);
+               }
+               return;
+            }
+
             if (me.bombo.bomboaddons.ChatModifier.shouldHide(raw)) {
                me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, me.bombo.bomboaddons.features.chat.ChatHistoryTracker.detectCategory(raw));
                ci.cancel();

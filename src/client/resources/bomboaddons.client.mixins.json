@@ -51,6 +51,7 @@
 		"KeyBindsScreenMixin",
 		"KeyboardInputMixin",
 		"KeyboardMixin",
+		"LevelExtractorMixin",
 		"LevelMixin",
 		"LeverBlockMixin",
 		"MenuScreensConstructorMixin",

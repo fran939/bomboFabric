@@ -309,22 +309,26 @@ public class CustomBindsProcessor {
          return "key_260";
       } else if (code == 261) {
          return "key_261";
-      } else if (code >= 262 && code <= 265) {
-         return "key_" + code;
+      } else if (code == 262) {
+         return "right_arrow";
+      } else if (code == 263) {
+         return "left_arrow";
+      } else if (code == 264) {
+         return "down_arrow";
+      } else if (code == 265) {
+         return "up_arrow";
       } else if (code >= 266 && code <= 269) {
          return "key_" + code;
       } else if (code == 280) {
          return "key_280";
       } else if (code == 256) {
-         return "key_256";
+         return "escape";
       } else if (code == 257) {
-         return "key_257";
+         return "enter";
       } else if (code == 346) {
          return "right_alt";
       } else if (code == 32) {
          return "space";
-      } else if (code == 257) {
-         return "enter";
       } else {
          String glfwName = GLFW.glfwGetKeyName(code, 0);
          return glfwName != null && !glfwName.trim().isEmpty() ? glfwName.trim().toLowerCase() : "key_" + code;
@@ -379,7 +383,11 @@ public class CustomBindsProcessor {
       if (clean.equals("backspace")) return 259;
       if (clean.equals("caps_lock") || clean.equals("capslock") || clean.equals("caps")) return 280;
 
-      // Numpad
+      // Numpad & Keypad arrows
+      if (clean.equals("kp_left") || clean.equals("keypad_left") || clean.equals("keypad_arrow_left")) return 324;
+      if (clean.equals("kp_right") || clean.equals("keypad_right") || clean.equals("keypad_arrow_right")) return 326;
+      if (clean.equals("kp_up") || clean.equals("keypad_up") || clean.equals("keypad_arrow_up")) return 328;
+      if (clean.equals("kp_down") || clean.equals("keypad_down") || clean.equals("keypad_arrow_down")) return 322;
       if (clean.matches("^kp_?[0-9]$|^keypad_?[0-9]$|^numpad_?[0-9]$")) {
          int num = Integer.parseInt(clean.replaceAll("[^0-9]", ""));
          return 320 + num;
@@ -389,7 +397,13 @@ public class CustomBindsProcessor {
       if (clean.equals("kp_subtract") || clean.equals("kpsubtract") || clean.equals("kp_minus")) return 333;
       if (clean.equals("kp_multiply") || clean.equals("kpmultiply") || clean.equals("kp_star")) return 332;
       if (clean.equals("kp_divide") || clean.equals("kpdivide") || clean.equals("kp_slash")) return 331;
-      if (clean.equals("kp_decimal") || clean.equals("kpdecimal") || clean.equals("kp_period")) return 330;
+      if (clean.equals("kp_decimal") || clean.equals("kpdecimal") || clean.equals("kp_period") || clean.equals("kp_del") || clean.equals("kp_delete")) return 330;
+
+      // Standard Arrow keys
+      if (clean.equals("right_arrow") || clean.equals("arrow_right") || clean.equals("right") || clean.equals("key_262")) return 262;
+      if (clean.equals("left_arrow") || clean.equals("arrow_left") || clean.equals("left") || clean.equals("key_263")) return 263;
+      if (clean.equals("down_arrow") || clean.equals("arrow_down") || clean.equals("down") || clean.equals("key_264")) return 264;
+      if (clean.equals("up_arrow") || clean.equals("arrow_up") || clean.equals("up") || clean.equals("key_265")) return 265;
 
       // F keys (f1 - f12)
       if (clean.matches("^f_?[1-9]$|^f_?1[0-2]$|^key_?f_?[1-9]$|^key_?f_?1[0-2]$")) {

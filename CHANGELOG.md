@@ -1,5 +1,24 @@
 # BomboAddons Changelog
 
+## [26.2.28.49] - 2026-09-28 (Beta)
+
+### Storage & GUI
+- **Storage Overlay Interception Port:** Updated `MenuScreensConstructorMixin` to target `MenuScreens.ScreenConstructor.fromPacket` matching Skyblocker's port architecture to reliably build and display the searchable multi-grid `StorageOverlayScreen`.
+- **Keypad Keybind Fix:** Removed keypad keys from modifier combo prefixes in `ConfigCustomWidgets.isStarterKey`, enabling direct binding of Keypad 0-9, Keypad arrows, and keypad operators in controls.
+
+### Mayor & RTCA Live Integration
+- **Interactive Mayor & Minister Tooltips:** Intercepts `[Mayor]` chat lines (and added `/b mayor`) with interactive chips. Hovering the Mayor displays the exact Hypixel calendar GUI tooltip layout with perks list and election notes; hovering individual perks shows their description; hovering the minister displays their name and active minister perk.
+- **Live Mayor RTCA Integration:** Server and client now integrate live election mayor data into RTCA calculations; displays `• Mayor: Diaz (+0%)` under Boost Breakdown and removes `mayor` from the uncounted list.
+
+### Spectator & Camera Fixes
+- **Spectator Camera Entity Decoupling:** Added `SpectatorCamManager` to decouple mouse rotation during `/b cam` spectator mode from the entity's physical body/head rotation; the spectated player's pose remains completely stable.
+- **Player World Rendering while Spectating:** Added `LevelExtractorMixin` redirecting `Camera.entity()` in `extractVisibleEntities` to ensure `LocalPlayer` is not discarded and renders properly in the world during spectator camera.
+
+### Commands, Scoreboard & Network
+- **Dungeon Quick Join Commands:** Updated `/f1`-`/f7`, `/m1`-`/m7`, and `/e` to dispatch uppercase Hypixel instance names (`CATACOMBS_FLOOR_ONE`..`SEVEN`, `MASTER_CATACOMBS_FLOOR_ONE`..`SEVEN`, `CATACOMBS_ENTRANCE`) with chat feedback.
+- **Scoreboard Font Icon Subarea Parsing:** Enhanced `SkyblockUtils.parseSubAreaFromLines` to detect Private Use Area glyphs (`\uE000-\uF8FF`) before stripping formatting, correctly parsing subareas like `-  Village`.
+- **IRC Plaintext IP Replaced:** Replaced plaintext server IP `51.170.56.117` in `IRCClient.java` with domain `chat.bombo.dpdns.org`.
+
 ## [26.2.28.48] - 2026-09-28 (Beta)
 
 ### RTCA & Backend

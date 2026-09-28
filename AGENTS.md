@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.48` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.49` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,11 +103,23 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.48`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.49`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
-> ### ✅ COMPLETED & COMPILED IN v26.2.28.48 (Ready for In-Game Testing)
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.49 (Ready for In-Game Testing)
+>
+> 1. **Skyblocker Storage Overlay Interception Fix:** Ported Skyblocker's exact injection point into `MenuScreens.ScreenConstructor.fromPacket` in `MenuScreensConstructorMixin.java`. When enabled, it properly intercepts storage packets, sets `player.containerMenu`, and opens `StorageOverlayScreen` across all ender chests and backpacks.
+> 2. **Interactive Hypixel Calendar Mayor Tooltips:** Intercepts `[Mayor]` chat messages (and added `/b mayor`) via `MayorChatFormatter.java`. Hovering the mayor displays the exact Hypixel calendar GUI tooltip layout (yellow header, perks list, descriptions, bottom election disclaimer). Hovering any individual perk shows that perk's description. Hovering the minister displays their name and active minister perk.
+> 3. **Live Mayor RTCA Integration:** Server and client now integrate active election data into RTCA calculations. Displays `• Mayor: Diaz (+0%)` under Boost Breakdown and removes `mayor` from the uncounted list.
+> 4. **Spectator Camera Entity Decoupling:** Added `SpectatorCamManager.java` to decouple mouse look from the physical entity rotation of the spectated player; the spectated player's body and head pose remain completely stable.
+> 5. **Player World Rendering while Spectating:** Added `LevelExtractorMixin.java` redirecting `Camera.entity()` in `LevelExtractor.extractVisibleEntities` so `LocalPlayer` is not discarded and renders properly in the world during spectator camera.
+> 6. **Dungeon Quick Join Commands:** Updated `/f1`-`/f7`, `/m1`-`/m7`, and `/e` to dispatch uppercase Hypixel instance names (`CATACOMBS_FLOOR_ONE`..`SEVEN`, `MASTER_CATACOMBS_FLOOR_ONE`..`SEVEN`, `CATACOMBS_ENTRANCE`) with chat feedback.
+> 7. **Scoreboard Glyph Subarea Parsing:** Enhanced `SkyblockUtils.parseSubAreaFromLines` to recognize font icon glyphs in Private Use Area (`\uE000-\uF8FF`) before stripping them, parsing subareas like `-  Village` cleanly.
+> 8. **Keypad Keybinds Fix:** Removed keypad keys from modifier combo prefixes (`isStarterKey`), enabling Keypad 0-9, Keypad arrows, and math keys to be bound directly in controls.
+> 9. **Plaintext IRC IP Removed:** Replaced plaintext server IP `51.170.56.117` in `IRCClient.java` with domain `chat.bombo.dpdns.org`.
+>
+> ### ✅ COMPLETED IN v26.2.28.48
 >
 > 1. **RTCA Live Boost Detection (Server & Client):** The server (`bomboapi`) parses player inventory sync data dynamically to detect the highest Hecatomb helmet equipped or in wardrobe (`member.loadout.armor`, `inv_armor`, `wardrobe_contents`), Scarf accessory (`SCARF_GRIMOIRE` +6%, `SCARF_THESIS` +4%, `SCARF_STUDIES` +2%), and Catacombs Graduate shards (`catacombs_graduate` milestone levels 1..10 = 2%..20%). Verified live for fran938 (+28%/+24%) and bomboclas (+36%).
 > 2. **Interactive RTCA Chat In-Place Refresh:** `RtcaChatFormatter` updates the pending loading message in `mc.gui.hud.getChat()` in-place and calls `refreshTrimmedMessages()`, eliminating duplicate chat lines.

@@ -320,11 +320,11 @@ public class IRCClient {
                         lastError = "TCP 6667 failed: " + tTcp1.getMessage();
                         System.err.println("[BomboAddons-IRC] TCP 6667 failed: " + tTcp1.getMessage());
 
-                        // Attempt 4: Direct IP TCP (51.170.56.117:6667)
+                        // Attempt 4: Fallback TCP (chat.bombo.dpdns.org:6667)
                         try {
-                           System.out.println("[BomboAddons-IRC] Trying direct IP TCP 51.170.56.117:6667 (Fallback Direct TCP)...");
+                           System.out.println("[BomboAddons-IRC] Trying fallback TCP chat.bombo.dpdns.org:6667 (Fallback TCP)...");
                            Socket sock = new Socket();
-                           sock.connect(new InetSocketAddress("51.170.56.117", 6667), 4000);
+                           sock.connect(new InetSocketAddress("chat.bombo.dpdns.org", 6667), 4000);
                            tcpSocket = sock;
                            tcpWriter = new PrintWriter(sock.getOutputStream(), true);
                            BufferedReader reader = new BufferedReader(new InputStreamReader(sock.getInputStream(), "UTF-8"));
@@ -333,9 +333,9 @@ public class IRCClient {
                            sendRaw("USER " + currentNick + " 0 * :BomboAddons User");
                            sendRaw("JOIN #bomboaddons_chat");
                            sendRaw("NAMES #bomboaddons_chat");
-                           activeEndpoint = "51.170.56.117:6667 (Direct TCP)";
-                           lastError = "None (Connected via Direct IP TCP)";
-                           System.out.println("[BomboAddons-IRC] Connected via Direct IP TCP!");
+                           activeEndpoint = "chat.bombo.dpdns.org:6667 (Fallback TCP)";
+                           lastError = "None (Connected via Fallback TCP)";
+                           System.out.println("[BomboAddons-IRC] Connected via Fallback TCP!");
                            onConnected();
 
                            while(running && BomboConfig.get().ircChatEnabled && tcpSocket != null && !tcpSocket.isClosed()) {

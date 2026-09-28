@@ -122,13 +122,13 @@ public class ClickLogic {
                                        return "Right Alt";
                                     } else if (keyName.equalsIgnoreCase("key_258")) {
                                        return "Tab";
-                                    } else if (keyName.equalsIgnoreCase("key_262")) {
+                                    } else if (keyName.equalsIgnoreCase("key_262") || keyName.equalsIgnoreCase("right_arrow") || keyName.equalsIgnoreCase("rightarrow")) {
                                        return "Right Arrow";
-                                    } else if (keyName.equalsIgnoreCase("key_263")) {
+                                    } else if (keyName.equalsIgnoreCase("key_263") || keyName.equalsIgnoreCase("left_arrow") || keyName.equalsIgnoreCase("leftarrow")) {
                                        return "Left Arrow";
-                                    } else if (keyName.equalsIgnoreCase("key_264")) {
+                                    } else if (keyName.equalsIgnoreCase("key_264") || keyName.equalsIgnoreCase("down_arrow") || keyName.equalsIgnoreCase("downarrow")) {
                                        return "Down Arrow";
-                                    } else if (keyName.equalsIgnoreCase("key_265")) {
+                                    } else if (keyName.equalsIgnoreCase("key_265") || keyName.equalsIgnoreCase("up_arrow") || keyName.equalsIgnoreCase("uparrow")) {
                                        return "Up Arrow";
                                     } else if (keyName.equalsIgnoreCase("key_261")) {
                                        return "Delete";
@@ -153,6 +153,8 @@ public class ClickLogic {
                                     } else if (keyName.toLowerCase().matches("^kp_?[0-9]$|^keypad_?[0-9]$|^numpad_?[0-9]$")) {
                                        int num = Integer.parseInt(keyName.replaceAll("[^0-9]", ""));
                                        return "KP " + num;
+                                    } else if (keyName.equalsIgnoreCase("kp_equal") || keyName.equalsIgnoreCase("kpequal")) {
+                                       return "KP =";
                                     } else if (!keyName.equalsIgnoreCase("kp_enter") && !keyName.equalsIgnoreCase("kpenter")) {
                                        if (!keyName.equalsIgnoreCase("kp_add") && !keyName.equalsIgnoreCase("kpadd")) {
                                           if (!keyName.equalsIgnoreCase("kp_subtract") && !keyName.equalsIgnoreCase("kpsubtract")) {

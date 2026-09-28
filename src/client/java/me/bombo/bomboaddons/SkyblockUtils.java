@@ -983,28 +983,46 @@ public class SkyblockUtils {
       }
 
       for(String line : lines) {
-         String clean = line.replaceAll("(?i)§.", "")
-                            .replaceAll("[\uE000-\uF8FF]", "")
-                            .trim();
-         if (clean.contains("The Catacombs (")) {
-            int start = clean.indexOf("(") + 1;
-            int end = clean.indexOf(")");
+         String rawClean = line.replaceAll("(?i)§.", "").trim();
+         if (rawClean.isEmpty()) continue;
+
+         if (rawClean.contains("The Catacombs (")) {
+            int start = rawClean.indexOf("(") + 1;
+            int end = rawClean.indexOf(")");
             if (start > 0 && end > start) {
-               return clean.substring(start, end);
+               return rawClean.substring(start, end);
             }
          }
 
-         // Scoreboard zone line e.g. "⏣ Village", "Village", "⏣ Farm", "⏣ Wilderness"
-         if (clean.startsWith("⏏") || clean.startsWith("⏣") || clean.startsWith("ф") || clean.startsWith("📍") || clean.startsWith("\uD83D\uDCCD") || (clean.length() > 2 && clean.charAt(0) > 127 && !Character.isLetterOrDigit(clean.charAt(0)))) {
-            String sub = clean.replaceFirst("^[⏏⏣ф📍\\uD83D\\uDCCD\\s]+", "").trim();
-            // Ignore pest count lines like "x8" or "8x" or "Pests: 8"
-            if (sub.matches("^[xX]?\\s*\\d+\\s*[xX]?$") || sub.toLowerCase().startsWith("pest")) {
+         // Check if this line contains a zone indicator:
+         // 1) Unicode Private Use Area icon (e.g. \uE067 used by Hypixel for zones on modern versions)
+         // 2) Classic symbols: ⏣, ⏏, ф, 📍
+         // 3) Dash or bullet: -, –, —, •
+         boolean hasZoneIndicator = rawClean.matches(".*[⏏⏣ф📍\\uE000-\\uF8FF].*")
+               || rawClean.startsWith("-") || rawClean.startsWith("–") || rawClean.startsWith("—") || rawClean.startsWith("•");
+
+         if (hasZoneIndicator) {
+            String sub = rawClean.replaceFirst("^[-–—•⏏⏣ф📍\\uD83D\\uDCCD\\uE000-\\uF8FF\\s]+", "")
+                                 .replaceAll("[\\uE000-\\uF8FF]", "")
+                                 .trim();
+
+            // Ignore scoreboard headers / stats lines
+            if (sub.isEmpty() || sub.matches("^[xX]?\\s*\\d+\\s*[xX]?$") || sub.toLowerCase(Locale.ROOT).startsWith("pest")) {
                continue;
             }
             if (sub.startsWith("Area:") || sub.startsWith("Zone:")) {
                sub = sub.substring(sub.indexOf(":") + 1).trim();
             }
-            if (sub.toLowerCase().contains("kuudra") && sub.contains("(T")) {
+            // Check for ignore lines
+            String lower = sub.toLowerCase(Locale.ROOT);
+            if (lower.startsWith("purse:") || lower.startsWith("bits:") || lower.startsWith("bank:")
+                  || lower.startsWith("server:") || lower.startsWith("objective") || lower.startsWith("profile:")
+                  || lower.contains("www.hypixel.net") || lower.contains("paint the") || lower.matches("^\\d{1,2}/\\d{1,2}/\\d{2,4}.*")
+                  || lower.matches("^\\d{1,2}:\\d{2}.*") || lower.equals("none")) {
+               continue;
+            }
+
+            if (sub.toLowerCase(Locale.ROOT).contains("kuudra") && sub.contains("(T")) {
                int idx = sub.indexOf("(T");
                if (idx + 2 < sub.length()) {
                   char c = sub.charAt(idx + 2);
@@ -1019,17 +1037,10 @@ public class SkyblockUtils {
             }
          }
 
-         if (clean.startsWith("Area:") || clean.startsWith("Zone:")) {
-            String sub = clean.substring(clean.indexOf(":") + 1).trim();
-            sub = sub.replaceFirst("^[⏏⏣ф📍\\s]+", "").trim();
+         if (rawClean.startsWith("Area:") || rawClean.startsWith("Zone:")) {
+            String sub = rawClean.substring(rawClean.indexOf(":") + 1).trim();
+            sub = sub.replaceFirst("^[⏏⏣ф📍\\s]+", "").replaceAll("[\\uE000-\\uF8FF]", "").trim();
             if (!sub.isEmpty()) {
-               return sub;
-            }
-         }
-
-         if (clean.startsWith("- ") || clean.startsWith("– ") || clean.startsWith("— ") || clean.startsWith("• ")) {
-            String sub = clean.replaceFirst("^[-–—•\\s]+", "").trim();
-            if (!sub.isEmpty() && !sub.equalsIgnoreCase("None") && !sub.toLowerCase(Locale.ROOT).startsWith("server")) {
                return sub;
             }
          }

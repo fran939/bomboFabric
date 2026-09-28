@@ -19,10 +19,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Locale;
 
-@Mixin(MenuScreens.class)
-public class MenuScreensConstructorMixin {
-	@Inject(method = "create", at = @At("HEAD"), cancellable = true)
-	private static <T extends AbstractContainerMenu> void bomboaddons$openStorageOverlay(MenuType<T> type, Minecraft client, int id, Component name, CallbackInfo ci) {
+@Mixin(MenuScreens.ScreenConstructor.class)
+public interface MenuScreensConstructorMixin<T extends AbstractContainerMenu> {
+	@Inject(method = "fromPacket", at = @At("HEAD"), cancellable = true)
+	private void bomboaddons$openStorageOverlay(Component name, MenuType<T> type, Minecraft client, int id, CallbackInfo ci) {
 		LocalPlayer player = client.player;
 		if (player == null) return;
 		if (!BomboConfig.get().storageOverlay) return;
@@ -37,9 +37,8 @@ public class MenuScreensConstructorMixin {
 			int height = client.getWindow().getGuiScaledHeight() - (client.getWindow().getGuiScaledHeight() / 5);
 			boolean isBackpack = BackpackPreview.getStorageIndexFromTitle(nameClean) != -1;
 			StorageOverlayScreenHandler storageOverlayScreenHandler = new StorageOverlayScreenHandler(containerScreenHandler, isBackpack, height, player.getInventory());
-			StorageOverlayScreen screen = new StorageOverlayScreen(storageOverlayScreenHandler, containerScreenHandler, name, client.player.getInventory(), height);
-			client.setScreenAndShow(screen);
 			client.player.containerMenu = storageOverlayScreenHandler;
+			client.gui.setScreen(new StorageOverlayScreen(storageOverlayScreenHandler, containerScreenHandler, name, client.player.getInventory(), height));
 
 			ci.cancel();
 		}

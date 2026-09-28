@@ -72,19 +72,9 @@ public abstract class MouseMixin {
          this.accumulatedDY = 0.0;
          return;
       }
-      if (mc.getCameraEntity() != null && mc.getCameraEntity() != mc.player) {
-         net.minecraft.world.entity.Entity camEnt = mc.getCameraEntity();
-         double sens = mc.options.sensitivity().get();
-         double f = sens * 0.6 + 0.2;
-         double factor = f * f * f * 8.0 * 0.15;
-         float dyaw = (float)(this.accumulatedDX * factor);
-         float dpitch = (float)(this.accumulatedDY * factor);
-         camEnt.setYRot(camEnt.getYRot() + dyaw);
-         camEnt.setXRot(Math.max(-90.0F, Math.min(90.0F, camEnt.getXRot() + dpitch)));
-         if (camEnt instanceof net.minecraft.world.entity.LivingEntity living) {
-            living.setYHeadRot(camEnt.getYRot());
-            living.yBodyRot = camEnt.getYRot();
-         }
+      if (me.bombo.bomboaddons.util.SpectatorCamManager.isActive()) {
+         me.bombo.bomboaddons.util.SpectatorCamManager.update();
+         me.bombo.bomboaddons.util.SpectatorCamManager.onMouseTurn(this.accumulatedDX, this.accumulatedDY);
          this.accumulatedDX = 0.0;
          this.accumulatedDY = 0.0;
          return;
