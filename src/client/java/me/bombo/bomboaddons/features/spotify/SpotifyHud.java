@@ -88,11 +88,13 @@ public class SpotifyHud {
         g.fill(0, 0, 1, HUD_HEIGHT, borderColor);
         g.fill(HUD_WIDTH - 1, 0, HUD_WIDTH, HUD_HEIGHT, borderColor);
 
-        // Spotify Logo on the left
+        // Spotify Logo or Album Artwork on the left
         int iconSize = 20;
         int iconX = 5;
         int iconY = 5;
-        g.blit(SPOTIFY_ICON, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+        Identifier albumArt = (s != null && s.spotifyHudShowAlbumArt) ? LyricsManager.getAlbumArtTexture() : null;
+        Identifier iconToDraw = (albumArt != null) ? albumArt : SPOTIFY_ICON;
+        g.blit(iconToDraw, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
 
         // Track and Artist text
         int textX = 29;

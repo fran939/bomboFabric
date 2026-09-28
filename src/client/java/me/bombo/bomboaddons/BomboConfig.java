@@ -702,6 +702,8 @@ public class BomboConfig {
       public String spotifyAccentColor = "#00A4DC";
       public String spotifyProgressBgColor = "#333344";
       public String lyricsProvider = "LRCLIB"; // "LRCLIB", "PAXSENIX", "UNISON", "YOULYPLUS"
+      public boolean spotifyHudShowAlbumArt = true;
+      public int lyricsOffsetMs = 0;
 
       // Screenshare / Spectate Whitelist
       public String autoAcceptScreenshareUsers = "";

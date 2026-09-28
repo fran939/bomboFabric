@@ -17,13 +17,21 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.54` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.55` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
 ---
 
 ## 2. Mandatory Release & Versioning Protocol (EVERY PROMPT FINISH)
+
+> [!CRITICAL]
+> **MANDATORY DUAL-DESTINATION UPLOAD (ACTIONS & REMOTE SERVER):**
+> Every time a version is bumped, the release **MUST** be uploaded to **BOTH**:
+> 1. **GitHub Actions (`origin/26.2`)**: Every commit pushed to branch `26.2` automatically builds and publishes artifacts on GitHub Actions.
+> 2. **Remote Server Releases Directory**: Both compiled jars (`bomboaddons-<version>.jar` and `bomboclient-<version>.jar`) must be transferred via SCP to `ubuntu@ssh.bombo.dpdns.org:/home/ubuntu/bomboapi/releases/`.
+>
+> **NO PROMPT OR TASK IS FINISHED WITHOUT BOTH OF THESE UPLOADS BEING COMPLETED.**
 
 Every time an AI agent finishes a task or prompt, the agent **MUST** complete all of the following steps:
 
@@ -103,11 +111,21 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.54`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.55`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
-> ### ✅ COMPLETED & COMPILED IN v26.2.28.54 (Ready for In-Game Testing)
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.55 (Ready for In-Game Testing)
+>
+> 1. **Screenshare Leak Elimination & Delivery Confirmation (`/ss <player>`):** Patched remote IRC bot (`bombot`) to prevent `[SS_` protocol messages from leaking into chat or Discord. Added live IRC online status checks and instant receipt acknowledgment (`[SS_RCVD]`) so senders receive immediate feedback when targets receive requests.
+> 2. **Discord Desktop IPC Diagnostics & Handshake:** Updated Discord Client ID to `383226320970055681` (standard desktop IPC), expanded named pipes probe across `\\.\pipe\discord-ipc-0`..`9`, and built `/b discord debug` / `/ss discord debug` diagnostic dumper.
+> 3. **Word-for-Word Synchronized Lyrics Engine Overhaul (`/b lyrics`):** Added iTunes Search metadata integration with Paxsenix Apple Music syllable sync API, parsing exact word-by-word timestamps and background vocals. Fixed lyrics line wobble by calculating static line widths. Prevented highlights jumping backwards with monotonic word progress. Added `[-100ms]` and `[+100ms]` delay adder buttons with config persistence. ESC now closes only the raw data modal rather than the entire screen.
+> 4. **Spotify Album Cover Artwork & Config Color Swatches:** Dynamically fetches and decodes album artwork textures via iTunes API, rendering high-resolution 256x256 album covers on `SpotifyHud` (toggleable via `spotifyHudShowAlbumArt`). Converted Spotify hex colors to `ConfigItem.color` with interactive colored swatch boxes in `/b` config.
+> 5. **Storage Overlay Slot Indexing & Linkage Fix:** Resolved slot indexing corruption in `StorageOverlayScreenHandler.InactiveSlot` by preserving slot indices (`this.index = index`), preventing crashes and enabling reliable display across `/storage`, ender chests, and backpacks.
+> 6. **Spectator Camera FOV Clamping:** Clamped camera FOV to base FOV (capped at 110.0) whenever `SpectatorCamManager.isActive()` or `mc.getCameraEntity() != mc.player` in `GameRendererMixin`, stopping disorienting fish-eye distortions.
+> 7. **Performance Profiler CPU % & Memory Metrics (`/b perf`):** Added CPU usage percentage and estimated memory footprint per feature to `PerformanceProfiler.Snapshot` and `PerformanceScreen`.
+>
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.54
 >
 > 1. **Screensharing Protocol Delivery Delimiter Fix (`/ss <player>`):** Enhanced IRC command parser to split protocol messages on both `\u0002` and `\\s+`, preventing screenshare request commands from leaking into IRC chat and ensuring the recipient reliably receives interactive `[ACCEPT]` and `[DENY]` buttons.
 > 2. **Word-for-Word Synchronized Lyrics (`/b lyrics` & `/lyrics`):** Fixed merged words and overlapping highlights by measuring exact bold font widths and adding explicit inter-word spacing (`font.width(" ")`). Replaced jumping second timers with continuous millisecond interpolation. Added `[Raw / Edit Lyrics]` inspection modal with clipboard copy support. Added multi-provider cycling (LRCLIB, PAXSENIX, UNISON, YOULYPLUS). Track and artist links now launch directly in the **Spotify Desktop App** (`spotify:search:...`). Replaced icon with crisp 64x64 official Spotify branding.

@@ -8163,7 +8163,11 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
 
       if (sub.equals("discord")) {
-         me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+         if (args.length > 1 && args[1].equalsIgnoreCase("debug")) {
+            me.bombo.bomboaddons.features.discord.DiscordIpcManager.dumpDebugInfo(feedback);
+         } else {
+            me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+         }
          return;
       }
 
@@ -8173,8 +8177,14 @@ public class BomboaddonsClient implements ClientModInitializer {
          feedback.accept(Component.literal("§8[§3Bombo§8] §cIRC is not connected yet. Connecting in background..."));
          IRCClient.start();
       }
+      boolean online = IRCClient.isUserOnline(target);
+      if (!online) {
+         feedback.accept(Component.literal("§8[§3Bombo§8] §e" + target + " §cdoes not appear to be online on Bombo IRC (or hasn't joined the channel yet). Sending request anyway..."));
+      } else {
+         feedback.accept(Component.literal("§8[§3Bombo§8] §a" + target + " §ais online! Sending screenshare request..."));
+      }
       IRCClient.sendRaw("PRIVMSG #bomboaddons_chat :[SS_REQ]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
-      feedback.accept(Component.literal("§8[§3Bombo§8] §aSent screenshare request to §e" + target + "§a. Waiting for them to accept..."));
+      feedback.accept(Component.literal("§8[§3Bombo§8] §aSent screenshare request to §e" + target + "§a. Waiting for them to receive and accept..."));
    }
 
    public static int executeCamCommand(FabricClientCommandSource source, String targetName) {

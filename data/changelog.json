@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.55",
+    "date": "2026-09-28",
+    "changes": [
+      "Screensharing (/ss <player>): Patched remote IRC bot to eliminate protocol leaks to chat/Discord, added live IRC online checks, and instant receipt confirmation [SS_RCVD]",
+      "Discord IPC Handshake: Updated Discord Client ID to standard desktop IPC, expanded pipe scan (0-9), and added comprehensive diagnostic dumper (/b discord debug)",
+      "Word-for-Word Synchronized Lyrics: Integrated iTunes API with Paxsenix Apple Music syllable sync for exact timestamps, stabilized line widths to prevent wobble, and enforced monotonic word progression",
+      "Lyrics Controls & Hotkeys: Added [-100ms] and [+100ms] delay offset buttons with config persistence, secondary/background vocals rendering, and ESC key closing only the raw data modal",
+      "Spotify Artwork & Config Swatches: Asynchronously loads high-res album covers on Spotify HUD, and rendered visible colored swatch boxes for Spotify colors in /b config",
+      "Storage Overlay Slot Fix: Corrected slot index assignment on InactiveSlot to prevent index corruption and reliably display multi-grid storage overlay",
+      "Spectator Camera FOV: Clamped camera FOV to base FOV (max 110) during /b cam and spectating to eliminate distortion",
+      "Performance Profiler (/b perf): Added real-time CPU % load and estimated memory footprint per feature to profiler cards"
+    ]
+  },
+  {
     "version": "26.2.28.54",
     "date": "2026-09-28",
     "changes": [

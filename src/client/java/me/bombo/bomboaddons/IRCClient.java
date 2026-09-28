@@ -94,6 +94,17 @@ public class IRCClient {
       }
    }
 
+   public static boolean isUserOnline(String ign) {
+      if (ign == null || ign.trim().isEmpty()) return false;
+      String clean = ign.trim().replaceAll("[^a-zA-Z0-9_]", "").toLowerCase(java.util.Locale.ROOT);
+      for (String user : onlinePlayers.keySet()) {
+         if (user.equalsIgnoreCase(clean) || user.toLowerCase(java.util.Locale.ROOT).equals(clean)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    public static boolean isConnected() {
       return running && (webSocket != null || tcpSocket != null && !tcpSocket.isClosed() && tcpSocket.isConnected());
    }
@@ -847,6 +858,9 @@ public class IRCClient {
                      }
                   }
 
+                  // Acknowledge receipt back to sender immediately
+                  sendRaw("PRIVMSG #bomboaddons_chat :[SS_RCVD]\u0002" + sender.toLowerCase() + "\u0002" + responseIgn);
+
                   if (autoAccept) {
                      sendRaw("PRIVMSG #bomboaddons_chat :[SS_ACCEPT]\u0002" + sender.toLowerCase() + "\u0002" + responseIgn);
                      mc.execute(() -> {
@@ -871,6 +885,25 @@ public class IRCClient {
                         }
                      });
                   }
+               }
+            }
+         }
+         return true;
+      } else if (payload.startsWith("[SS_RCVD]")) {
+         String[] parts = splitProtocolParts(payload);
+         if (parts.length >= 3) {
+            String target = parts[1].trim();
+            String sender = parts[2].trim();
+            Minecraft mc = Minecraft.getInstance();
+            if (mc != null) {
+               String myIgn = mc.player != null ? mc.player.getScoreboardName() : "";
+               String myUser = mc.getUser() != null ? mc.getUser().getName() : "";
+               if ((!myIgn.isEmpty() && myIgn.equalsIgnoreCase(target)) || (!myUser.isEmpty() && myUser.equalsIgnoreCase(target))) {
+                  mc.execute(() -> {
+                     if (mc.player != null) {
+                        mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §a§l" + sender + " §ahas received your screenshare request! Waiting for them to accept..."));
+                     }
+                  });
                }
             }
          }

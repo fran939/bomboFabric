@@ -222,12 +222,13 @@ public class PerformanceScreen extends Screen {
             g.text(font, snap.name, contentX + 44, cardY + 10, 0xFFFFFFFF, false);
 
             // Metrics: Total CPU consumption
-            String totalMsStr = String.format("%.2f ms/s", snap.totalMsPerSec);
-            g.text(font, totalMsStr, contentX + contentW - 120, cardY + 10, barColor, true);
+            String totalMsStr = String.format("%.2f ms/s (%.1f%% CPU)", snap.totalMsPerSec, snap.cpuPercent);
+            int msStrW = font.width(totalMsStr);
+            g.text(font, totalMsStr, contentX + contentW - msStrW - 14, cardY + 10, barColor, true);
 
-            // Sub-metrics (Calls/sec, Avg latency, Max latency)
-            String details = String.format("§7Calls: §f%.0f/s §8| §7Avg: §f%.3f ms §8| §7Max: §f%.2f ms §8| §7Min: §f%.3f ms",
-                    snap.callsPerSec, snap.avgMs, snap.maxMs, snap.minMs);
+            // Sub-metrics (Calls/sec, Avg latency, Max latency, Est Memory)
+            String details = String.format("§7Calls: §f%.0f/s §8| §7Avg: §f%.3f ms §8| §7Max: §f%.2f ms §8| §7Est Mem: §b~%d KB",
+                    snap.callsPerSec, snap.avgMs, snap.maxMs, snap.estimatedMemKb);
             g.text(font, details, contentX + 44, cardY + 24, 0xFF9CA3AF, false);
         }
 

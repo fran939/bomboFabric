@@ -14,9 +14,10 @@ public class GameRendererMixin {
     @Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
     private void bombo$clampFov(Camera camera, float partialTicks, boolean useFovSetting, CallbackInfoReturnable<Double> cir) {
         Minecraft mc = Minecraft.getInstance();
-        if (Flavor.get().isFreecamActive()) {
-            double fov = (double) (Integer) mc.options.fov().get();
-            cir.setReturnValue(fov);
+        if (Flavor.get().isFreecamActive() || me.bombo.bomboaddons.util.SpectatorCamManager.isActive() || (mc != null && mc.player != null && mc.getCameraEntity() != null && mc.getCameraEntity() != mc.player)) {
+            double baseFov = (double) (Integer) mc.options.fov().get();
+            double clamped = Math.min(110.0, Math.max(30.0, baseFov));
+            cir.setReturnValue(clamped);
         }
     }
 

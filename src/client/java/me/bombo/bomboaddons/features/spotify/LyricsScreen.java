@@ -1,13 +1,16 @@
 package me.bombo.bomboaddons.features.spotify;
 
+import me.bombo.bomboaddons.BomboConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
+import org.lwjgl.glfw.GLFW;
 
 import java.net.URI;
 import java.util.List;
@@ -15,7 +18,7 @@ import java.util.List;
 /**
  * Rich, synchronized karaoke lyrics screen.
  * Displays word-by-word highlighted singing lines, smooth auto-scroll,
- * multi-provider selector, raw/edit data viewer, and Desktop Spotify links.
+ * multi-provider selector, delay adder, raw/edit data viewer, and Desktop Spotify links.
  */
 public class LyricsScreen extends Screen {
 
@@ -28,7 +31,11 @@ public class LyricsScreen extends Screen {
 
     private boolean showRawModal = false;
     private double rawScrollY = 0.0;
-    private static final int LINE_HEIGHT = 36;
+    private static final int LINE_HEIGHT = 38;
+
+    private int lastActiveLineIdx = -1;
+    private int maxActiveWordIdx = -1;
+    private long lastSeenCurrentMs = 0L;
 
     public LyricsScreen() {
         super(Component.literal("Synced Lyrics"));
@@ -39,6 +46,8 @@ public class LyricsScreen extends Screen {
         super.init();
         userScrolled = false;
         showRawModal = false;
+        lastActiveLineIdx = -1;
+        maxActiveWordIdx = -1;
     }
 
     @Override
@@ -63,11 +72,13 @@ public class LyricsScreen extends Screen {
         g.fill(0, 0, this.width, topH, 0x881E1324);
         g.fill(0, topH - 1, this.width, topH, 0x3300A4DC);
 
-        // Official Spotify icon
+        // Spotify icon or Album Art
         int iconSize = 28;
         int iconX = 20;
         int iconY = 16;
-        g.blit(SPOTIFY_ICON, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+        Identifier albumArt = LyricsManager.getAlbumArtTexture();
+        Identifier iconToDraw = (albumArt != null) ? albumArt : SPOTIFY_ICON;
+        g.blit(iconToDraw, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
 
         // Track and Artist (Desktop links)
         String track = SpotifyManager.getCurrentTrack();
@@ -115,8 +126,15 @@ public class LyricsScreen extends Screen {
 
         // --- LYRICS CONTENT AREA ---
         List<LyricsManager.LyricsLine> lines = LyricsManager.getLines();
-        long currentMs = SpotifyManager.getProgressMs();
+        long currentMs = SpotifyManager.getProgressMs() + BomboConfig.get().lyricsOffsetMs;
         int activeIdx = LyricsManager.getCurrentLineIndex(currentMs);
+
+        // Monotonic active word highlight progression (prevents flickering/jumping backwards)
+        if (activeIdx != lastActiveLineIdx || Math.abs(currentMs - lastSeenCurrentMs) > 2500L) {
+            lastActiveLineIdx = activeIdx;
+            maxActiveWordIdx = -1;
+        }
+        lastSeenCurrentMs = currentMs;
 
         // Auto-center scroll on active line
         if (!userScrolled || (System.currentTimeMillis() - lastUserScrollTime > 3500L)) {
@@ -151,13 +169,13 @@ public class LyricsScreen extends Screen {
 
                 List<LyricsManager.WordTime> words = line.words();
                 if (isActive) {
-                    // Compute accurate line width with word spacing
+                    // Compute fixed line width using uniform bold format to eliminate wobbling
                     int totalLineW = 0;
+                    int spaceW = font.width(" ");
                     if (words != null && !words.isEmpty()) {
                         for (int w = 0; w < words.size(); w++) {
-                            if (w > 0) totalLineW += font.width(" ");
-                            boolean isWActive = (currentMs >= words.get(w).startMs());
-                            totalLineW += font.width((isWActive ? "§b§l" : "§f") + words.get(w).word());
+                            if (w > 0) totalLineW += spaceW;
+                            totalLineW += font.width("§b§l" + words.get(w).word());
                         }
                     } else {
                         totalLineW = font.width("§b§l" + line.text());
@@ -166,29 +184,49 @@ public class LyricsScreen extends Screen {
                     // Background pill highlight
                     int pillX = (this.width - totalLineW) / 2 - 14;
                     int pillW = totalLineW + 28;
-                    g.fill(pillX, lineIntY - 5, pillX + pillW, lineIntY + 16, 0x3300A4DC);
+                    int pillH = line.backgroundText() != null ? 30 : 22;
+                    g.fill(pillX, lineIntY - 5, pillX + pillW, lineIntY + pillH, 0x3300A4DC);
 
-                    // Word-by-word karaoke rendering
+                    // Word-by-word karaoke rendering with stable slot positions
                     if (words != null && !words.isEmpty()) {
                         int curX = (this.width - totalLineW) / 2;
-                        int spaceW = font.width(" ");
                         for (int w = 0; w < words.size(); w++) {
                             LyricsManager.WordTime wt = words.get(w);
-                            boolean isWordActive = (currentMs >= wt.startMs());
-                            String formatted = (isWordActive ? "§b§l" : "§f") + wt.word();
-                            int color = isWordActive ? 0xFF00E5FF : 0xFFFFFFFF;
-                            g.text(font, formatted, curX, lineIntY, color, true);
-                            curX += font.width(formatted) + spaceW;
+                            if (currentMs >= wt.startMs()) {
+                                maxActiveWordIdx = Math.max(maxActiveWordIdx, w);
+                            }
+                            boolean isWordActive = (w <= maxActiveWordIdx);
+                            int wordSlotW = font.width("§b§l" + wt.word());
+
+                            if (isWordActive) {
+                                g.text(font, "§b§l" + wt.word(), curX, lineIntY, 0xFF00E5FF, true);
+                            } else {
+                                g.text(font, "§f§l" + wt.word(), curX, lineIntY, 0xFFFFFFFF, true);
+                            }
+                            curX += wordSlotW + spaceW;
                         }
                     } else {
                         int startX = (this.width - totalLineW) / 2;
                         g.text(font, "§b§l" + line.text(), startX, lineIntY, 0xFF00E5FF, true);
+                    }
+
+                    // Secondary / Background vocals underneath
+                    if (line.backgroundText() != null && !line.backgroundText().isEmpty()) {
+                        String bg = line.backgroundText();
+                        int bgW = font.width("§7§o" + bg);
+                        g.text(font, "§7§o" + bg, (this.width - bgW) / 2, lineIntY + 14, 0xFFA098B0, false);
                     }
                 } else {
                     int textW = font.width(line.text());
                     int startX = (this.width - textW) / 2;
                     int color = (i < activeIdx) ? 0xFF706B7D : 0xFFB8B2C4;
                     g.text(font, line.text(), startX, lineIntY, color, false);
+
+                    if (line.backgroundText() != null && !line.backgroundText().isEmpty()) {
+                        String bg = line.backgroundText();
+                        int bgW = font.width("§8§o" + bg);
+                        g.text(font, "§8§o" + bg, (this.width - bgW) / 2, lineIntY + 12, 0xFF6B7280, false);
+                    }
                 }
             }
         }
@@ -207,8 +245,21 @@ public class LyricsScreen extends Screen {
 
         // Raw / Edit lyrics button
         String rawBtn = showRawModal ? "§a§n[Hide Raw Data]" : "§e§n[Raw / Edit Lyrics]";
-        int rawX = provX + font.width(provBtn) + 16;
+        int rawX = provX + font.width(provBtn) + 14;
         g.text(font, rawBtn, rawX, this.height - bottomH + 11, showRawModal ? 0xFF55FF55 : 0xFFE0BB40, true);
+
+        // Delay adder controls: [-100ms] [Offset: +Xms] [+100ms]
+        int offsetMs = BomboConfig.get().lyricsOffsetMs;
+        String minusBtn = "§c[-100ms]";
+        String offsetLabel = String.format("§e%s%dms", offsetMs >= 0 ? "+" : "", offsetMs);
+        String plusBtn = "§a[+100ms]";
+
+        int offsetGroupX = rawX + font.width(rawBtn) + 14;
+        g.text(font, minusBtn, offsetGroupX, this.height - bottomH + 11, 0xFFFF6666, true);
+        int labelX = offsetGroupX + font.width(minusBtn) + 4;
+        g.text(font, offsetLabel, labelX, this.height - bottomH + 11, 0xFFFFD700, false);
+        int plusX = labelX + font.width(offsetLabel) + 4;
+        g.text(font, plusBtn, plusX, this.height - bottomH + 11, 0xFF55FF55, true);
 
         if (userScrolled) {
             String syncBtn = "§b§n[Sync to Current Line]";
@@ -250,26 +301,43 @@ public class LyricsScreen extends Screen {
         g.text(font, copyBtn, copyX, modalY + 14, 0xFF55FF55, true);
 
         String closeBtn = "§c[✕]";
-        int closeX = modalX + modalW - 30;
-        g.text(font, closeBtn, closeX, modalY + 14, 0xFFFF5555, true);
+        int closeBtnX = modalX + modalW - 30;
+        g.text(font, closeBtn, closeBtnX, modalY + 14, 0xFFFF5555, true);
 
-        // Text display box
-        int boxX = modalX + 14;
-        int boxY = modalY + 36;
-        int boxW = modalW - 28;
-        int boxH = modalH - 48;
-        g.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xEE120A16);
+        // Content Area
+        int areaX = modalX + 16;
+        int areaY = modalY + 36;
+        int areaW = modalW - 32;
+        int areaH = modalH - 50;
+
+        g.fill(areaX, areaY, areaX + areaW, areaY + areaH, 0x88120B17);
+        g.outline(areaX, areaY, areaW, areaH, 0x3300A4DC);
+
+        g.enableScissor(areaX, areaY, areaW, areaH);
 
         String raw = LyricsManager.getRawLyrics();
         String[] rawLines = raw.split("\r?\n");
+        int lineHeight = 12;
+        int maxScroll = Math.max(0, rawLines.length * lineHeight - areaH);
+        rawScrollY = Math.max(0, Math.min(rawScrollY, maxScroll));
 
-        int lineY = boxY + 6 - (int) rawScrollY;
-        for (String rLine : rawLines) {
-            if (lineY >= boxY + 2 && lineY <= boxY + boxH - 12) {
-                String sub = font.plainSubstrByWidth(rLine, boxW - 16);
-                g.text(font, "§7" + sub, boxX + 8, lineY, 0xFFAAAAAA, false);
+        int drawY = areaY + 6 - (int) rawScrollY;
+        for (String line : rawLines) {
+            if (drawY >= areaY - 12 && drawY <= areaY + areaH + 12) {
+                g.text(font, "§7" + line, areaX + 8, drawY, 0xFFB8B2C4, false);
             }
-            lineY += 12;
+            drawY += lineHeight;
+        }
+
+        g.disableScissor();
+
+        // Modal Scrollbar
+        if (maxScroll > 0) {
+            int sbX = areaX + areaW - 4;
+            int thumbH = Math.max(16, (int) ((areaH / (float) (rawLines.length * lineHeight)) * areaH));
+            int thumbY = areaY + (int) ((rawScrollY / maxScroll) * (areaH - thumbH));
+            g.fill(sbX, areaY, sbX + 3, areaY + areaH, 0x22FFFFFF);
+            g.fill(sbX, thumbY, sbX + 3, thumbY + thumbH, 0x8800A4DC);
         }
     }
 
@@ -277,22 +345,20 @@ public class LyricsScreen extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         if (showRawModal) {
             rawScrollY -= verticalAmount * 24.0;
-            if (rawScrollY < 0) rawScrollY = 0;
             return true;
         }
 
         userScrolled = true;
         lastUserScrollTime = System.currentTimeMillis();
-        targetScrollY -= verticalAmount * 45.0;
-        int max = Math.max(0, LyricsManager.getLines().size() * LINE_HEIGHT);
-        if (targetScrollY < 0) targetScrollY = 0;
-        if (targetScrollY > max) targetScrollY = max;
+        targetScrollY -= verticalAmount * (LINE_HEIGHT * 1.5);
+        int maxScroll = Math.max(0, LyricsManager.getLines().size() * LINE_HEIGHT);
+        targetScrollY = Math.max(0, Math.min(targetScrollY, maxScroll));
         return true;
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
-        if (event.button() == 0) {
+        if (event.button() == 0 || event.button() == 1) {
             double mouseX = event.x();
             double mouseY = event.y();
 
@@ -302,49 +368,51 @@ public class LyricsScreen extends Screen {
                 int modalX = (this.width - modalW) / 2;
                 int modalY = (this.height - modalH) / 2;
 
-                // Close modal
-                if (mouseX >= modalX + modalW - 40 && mouseX <= modalX + modalW - 10 && mouseY >= modalY + 8 && mouseY <= modalY + 28) {
+                // Close button
+                if (mouseY >= modalY + 10 && mouseY <= modalY + 26 && mouseX >= modalX + modalW - 40 && mouseX <= modalX + modalW - 10) {
                     showRawModal = false;
                     return true;
                 }
 
-                // Copy to clipboard
-                int copyX = modalX + modalW - this.font.width("§a[Copy to Clipboard]") - 60;
-                if (mouseX >= copyX && mouseX <= copyX + 120 && mouseY >= modalY + 8 && mouseY <= modalY + 28) {
-                    Minecraft mc = Minecraft.getInstance();
-                    if (mc != null && mc.keyboardHandler != null) {
-                        mc.keyboardHandler.setClipboard(LyricsManager.getRawLyrics());
-                        if (mc.player != null) {
-                            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aCopied raw lyrics to clipboard!"));
-                        }
-                    }
+                // Copy to clipboard button
+                String copyBtn = "[Copy to Clipboard]";
+                int copyX = modalX + modalW - this.font.width(copyBtn) - 60;
+                if (mouseY >= modalY + 10 && mouseY <= modalY + 26 && mouseX >= copyX && mouseX <= copyX + this.font.width(copyBtn)) {
+                    Minecraft.getInstance().keyboardHandler.setClipboard(LyricsManager.getRawLyrics());
+                    return true;
+                }
+
+                // Click outside modal closes it
+                if (mouseX < modalX || mouseX > modalX + modalW || mouseY < modalY || mouseY > modalY + modalH) {
+                    showRawModal = false;
                     return true;
                 }
                 return true;
             }
 
-            // Close button
-            if (mouseX >= this.width - 30 && mouseX <= this.width - 10 && mouseY >= 6 && mouseY <= 26) {
+            // Close button (X)
+            if (mouseY >= 8 && mouseY <= 26 && mouseX >= this.width - 30 && mouseX <= this.width - 8) {
                 this.onClose();
                 return true;
             }
 
-            // Top Header: Track title click -> open song in Spotify Desktop
-            int textX = 20 + 28 + 12;
-            int trackW = this.font.width(SpotifyManager.getCurrentTrack());
-            if (mouseX >= textX && mouseX <= textX + trackW && mouseY >= 12 && mouseY <= 26) {
+            // Click song title -> open in Spotify Desktop
+            int iconSize = 28;
+            int textX = 20 + iconSize + 12;
+            String track = SpotifyManager.getCurrentTrack();
+            if (mouseY >= 14 && mouseY <= 26 && mouseX >= textX && mouseX <= textX + this.font.width(track)) {
                 SpotifyManager.openTrackInSpotify();
                 return true;
             }
 
-            // Artist click -> open artist in Spotify Desktop
-            int artistW = this.font.width(SpotifyManager.getCurrentArtist());
-            if (mouseX >= textX && mouseX <= textX + artistW && mouseY >= 27 && mouseY <= 42) {
+            // Click artist -> open in Spotify Desktop
+            String artist = SpotifyManager.getCurrentArtist();
+            if (mouseY >= 28 && mouseY <= 40 && mouseX >= textX && mouseX <= textX + this.font.width(artist)) {
                 SpotifyManager.openArtistInSpotify();
                 return true;
             }
 
-            // Top Controls: Prev, Play/Pause, Next
+            // Media controls in header
             int nextX = this.width - 50;
             int playX = nextX - 28;
             int prevX = playX - 28;
@@ -370,7 +438,7 @@ public class LyricsScreen extends Screen {
             }
 
             // Bottom bar: Raw / Edit lyrics button
-            int rawX = provX + provW + 16;
+            int rawX = provX + provW + 14;
             int rawW = this.font.width("[Raw / Edit Lyrics]");
             if (mouseY >= this.height - 32 && mouseX >= rawX && mouseX <= rawX + rawW + 10) {
                 showRawModal = !showRawModal;
@@ -378,10 +446,40 @@ public class LyricsScreen extends Screen {
                 return true;
             }
 
+            // Delay offset buttons: [-100ms] [Offset: +Xms] [+100ms]
+            int offsetMs = BomboConfig.get().lyricsOffsetMs;
+            String minusBtn = "[-100ms]";
+            String offsetLabel = String.format("%s%dms", offsetMs >= 0 ? "+" : "", offsetMs);
+            String plusBtn = "[+100ms]";
+
+            int offsetGroupX = rawX + rawW + 14;
+            int minusW = this.font.width(minusBtn);
+            int labelW = this.font.width(offsetLabel);
+            int plusW = this.font.width(plusBtn);
+
+            int labelX = offsetGroupX + minusW + 4;
+            int plusX = labelX + labelW + 4;
+
+            if (mouseY >= this.height - 32 && mouseY <= this.height - 6) {
+                if (mouseX >= offsetGroupX && mouseX <= offsetGroupX + minusW) {
+                    BomboConfig.get().lyricsOffsetMs -= 100;
+                    BomboConfig.save();
+                    return true;
+                } else if (mouseX >= labelX && mouseX <= labelX + labelW) {
+                    BomboConfig.get().lyricsOffsetMs = 0;
+                    BomboConfig.save();
+                    return true;
+                } else if (mouseX >= plusX && mouseX <= plusX + plusW) {
+                    BomboConfig.get().lyricsOffsetMs += 100;
+                    BomboConfig.save();
+                    return true;
+                }
+            }
+
             // Bottom bar sync button
             if (userScrolled && mouseY >= this.height - 32 && mouseX >= this.width - 160) {
                 userScrolled = false;
-                long currentMs = SpotifyManager.getProgressMs();
+                long currentMs = SpotifyManager.getProgressMs() + BomboConfig.get().lyricsOffsetMs;
                 int activeIdx = LyricsManager.getCurrentLineIndex(currentMs);
                 if (activeIdx >= 0) {
                     targetScrollY = activeIdx * LINE_HEIGHT;
@@ -390,6 +488,17 @@ public class LyricsScreen extends Screen {
             }
         }
         return super.mouseClicked(event, handled);
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+            if (showRawModal) {
+                showRawModal = false;
+                return true;
+            }
+        }
+        return super.keyPressed(event);
     }
 
     @Override

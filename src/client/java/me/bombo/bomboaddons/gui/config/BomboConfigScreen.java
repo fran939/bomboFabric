@@ -517,10 +517,22 @@ public class BomboConfigScreen extends Screen {
             case COLOR -> {
                 String rawCol = item.stringGetter != null ? item.stringGetter.get() : "WHITE";
                 String colorName = getColorDisplayName(rawCol);
-                int swatchW = 95;
-                int swatchX = ctrlRightX - swatchW;
-                boolean swatchHover = mouseX >= swatchX && mouseX <= swatchX + swatchW && mouseY >= ctrlY && mouseY <= ctrlY + 18;
-                ConfigUITheme.drawPillButton(g, this.font, "§f" + colorName + " ▾", swatchX, ctrlY, swatchW, 18, swatchHover, -1, 0x33FFFFFF, 0x55FFFFFF);
+                int parsedCol = 0xFF000000 | parseColorRgb(rawCol);
+                int swatchBoxW = 16;
+                int btnW = 85;
+                int totalW = swatchBoxW + 6 + btnW;
+                int startX = ctrlRightX - totalW;
+
+                // Color swatch box
+                int boxX = startX;
+                int boxY = ctrlY + 1;
+                g.fill(boxX, boxY, boxX + swatchBoxW, boxY + 16, parsedCol);
+                g.outline(boxX, boxY, swatchBoxW, 16, 0x88FFFFFF);
+
+                // Dropdown trigger button
+                int btnX = startX + swatchBoxW + 6;
+                boolean btnHover = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= ctrlY && mouseY <= ctrlY + 18;
+                ConfigUITheme.drawPillButton(g, this.font, "§f" + colorName + " ▾", btnX, ctrlY, btnW, 18, btnHover, -1, 0x33FFFFFF, 0x55FFFFFF);
             }
 
             case KEYBIND -> {

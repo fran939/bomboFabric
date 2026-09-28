@@ -4,8 +4,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.blaze3d.platform.NativeImage;
 import me.bombo.bomboaddons.BomboConfig;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.Identifier;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -20,6 +26,7 @@ import java.util.regex.Pattern;
 /**
  * Manages fetching, parsing, and real-time word-for-word synchronization of music lyrics.
  * Supports multiple providers inspired by vivi-music: LRCLIB, PAXSENIX, UNISON, YOULYPLUS.
+ * Also retrieves album artwork for display in Spotify HUD.
  */
 public class LyricsManager {
 
@@ -32,7 +39,11 @@ public class LyricsManager {
 
     public record WordTime(String word, long startMs, long endMs) {}
 
-    public record LyricsLine(long startMs, long endMs, String text, List<WordTime> words) {
+    public record LyricsLine(long startMs, long endMs, String text, List<WordTime> words, String backgroundText) {
+        public LyricsLine(long startMs, long endMs, String text, List<WordTime> words) {
+            this(startMs, endMs, text, words, null);
+        }
+
         public boolean isWordActive(int wordIdx, long currentMs) {
             if (words == null || wordIdx < 0 || wordIdx >= words.size()) return false;
             WordTime wt = words.get(wordIdx);
@@ -51,6 +62,13 @@ public class LyricsManager {
     private static final Map<String, List<LyricsLine>> CACHE = new HashMap<>();
 
     public static final String[] PROVIDERS = new String[]{"LRCLIB", "PAXSENIX", "UNISON", "YOULYPLUS"};
+
+    private static volatile Identifier albumArtTexture = null;
+    private static volatile String lastArtworkUrl = "";
+
+    public static Identifier getAlbumArtTexture() {
+        return albumArtTexture;
+    }
 
     public static synchronized List<LyricsLine> getLines() {
         return new ArrayList<>(currentLines);
@@ -134,6 +152,8 @@ public class LyricsManager {
             currentLines.clear();
             statusMessage = "No track playing";
             lastRawLyrics = "No track playing.";
+            albumArtTexture = null;
+            lastArtworkUrl = "";
             return;
         }
 
@@ -170,6 +190,9 @@ public class LyricsManager {
                 String cleanArtist = cleanTitle(artist);
                 String provider = getProvider();
 
+                // Always search iTunes for album artwork in background if needed
+                fetchArtworkFromItunes(cleanTrack, cleanArtist);
+
                 boolean success = false;
                 if ("PAXSENIX".equalsIgnoreCase(provider)) {
                     success = fetchPaxsenix(cleanTrack, cleanArtist, cacheKey);
@@ -195,73 +218,207 @@ public class LyricsManager {
         fetchThread.start();
     }
 
-    private static boolean fetchLrcLib(String cleanTrack, String cleanArtist, String cacheKey) {
+    private static void fetchArtworkFromItunes(String cleanTrack, String cleanArtist) {
         try {
-            String url = "https://lrclib.net/api/get?track_name="
-                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
-                    + "&artist_name=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
-
+            String query = (cleanTrack + " " + cleanArtist).trim();
+            String url = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
+                    + "&entity=song&limit=1";
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("User-Agent", "BomboAddons/1.0 (https://github.com/fran939/bombofabric)")
-                    .timeout(Duration.ofSeconds(5))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
-
-            if (resp.statusCode() == 200) {
-                parseAndApplyLyrics(resp.body(), cacheKey, "LRCLIB");
-                return true;
-            }
-
-            // Search fallback
-            String searchUrl = "https://lrclib.net/api/search?q="
-                    + URLEncoder.encode(cleanTrack + " " + cleanArtist, StandardCharsets.UTF_8);
-
-            HttpRequest searchReq = HttpRequest.newBuilder()
-                    .uri(URI.create(searchUrl))
-                    .header("User-Agent", "BomboAddons/1.0 (https://github.com/fran939/bombofabric)")
-                    .timeout(Duration.ofSeconds(5))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> searchResp = HTTP_CLIENT.send(searchReq, HttpResponse.BodyHandlers.ofString());
-            if (searchResp.statusCode() == 200) {
-                JsonElement elem = JsonParser.parseString(searchResp.body());
-                if (elem.isJsonArray() && elem.getAsJsonArray().size() > 0) {
-                    JsonObject best = elem.getAsJsonArray().get(0).getAsJsonObject();
-                    parseAndApplyLyrics(best.toString(), cacheKey, "LRCLIB");
-                    return true;
-                }
-            }
-
-            synchronized (LyricsManager.class) {
-                currentLines.clear();
-                loading = false;
-                synced = false;
-                statusMessage = "No lyrics found for " + cleanTrack;
-                lastRawLyrics = "No lyrics found on LRCLIB.";
-            }
-            return false;
-        } catch (Throwable t) {
-            return false;
-        }
-    }
-
-    private static boolean fetchPaxsenix(String cleanTrack, String cleanArtist, String cacheKey) {
-        try {
-            String url = "https://lyrics.paxsenix.org/apple-music/search?q="
-                    + URLEncoder.encode(cleanTrack + " " + cleanArtist, StandardCharsets.UTF_8);
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("User-Agent", "ViviMusic/1.0")
+                    .header("User-Agent", "Mozilla/5.0")
                     .timeout(Duration.ofSeconds(4))
                     .GET()
                     .build();
             HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
             if (resp.statusCode() == 200) {
-                parseAndApplyLyrics(resp.body(), cacheKey, "PAXSENIX");
+                JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
+                if (json.has("results") && json.getAsJsonArray("results").size() > 0) {
+                    JsonObject first = json.getAsJsonArray("results").get(0).getAsJsonObject();
+                    if (first.has("artworkUrl100")) {
+                        String artUrl = first.get("artworkUrl100").getAsString();
+                        // Request higher resolution 256x256
+                        artUrl = artUrl.replace("100x100bb", "256x256bb");
+                        downloadAndRegisterAlbumArt(artUrl);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private static void downloadAndRegisterAlbumArt(String artworkUrl) {
+        if (artworkUrl == null || artworkUrl.equals(lastArtworkUrl)) return;
+        lastArtworkUrl = artworkUrl;
+
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(artworkUrl))
+                    .header("User-Agent", "Mozilla/5.0")
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+            HttpResponse<byte[]> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofByteArray());
+            if (resp.statusCode() == 200 && resp.body() != null && resp.body().length > 0) {
+                byte[] bytes = resp.body();
+                Minecraft mc = Minecraft.getInstance();
+                if (mc != null) {
+                    mc.execute(() -> {
+                        try (InputStream in = new ByteArrayInputStream(bytes)) {
+                            NativeImage img = NativeImage.read(in);
+                            if (img != null) {
+                                DynamicTexture dynTex = new DynamicTexture(() -> "spotify_album_art", img);
+                                Identifier id = Identifier.fromNamespaceAndPath("bomboaddons", "spotify_album_art");
+                                mc.getTextureManager().register(id, dynTex);
+                                albumArtTexture = id;
+                            }
+                        } catch (Throwable t) {
+                            System.err.println("[BomboAddons] Failed to register album artwork: " + t.getMessage());
+                        }
+                    });
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private static boolean fetchPaxsenix(String cleanTrack, String cleanArtist, String cacheKey) {
+        try {
+            // First find Apple Music trackId using iTunes search
+            String query = (cleanTrack + " " + cleanArtist).trim();
+            String itunesUrl = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
+                    + "&entity=song&limit=1";
+            HttpRequest itunesReq = HttpRequest.newBuilder()
+                    .uri(URI.create(itunesUrl))
+                    .header("User-Agent", "Mozilla/5.0")
+                    .timeout(Duration.ofSeconds(4))
+                    .GET()
+                    .build();
+            HttpResponse<String> itunesResp = HTTP_CLIENT.send(itunesReq, HttpResponse.BodyHandlers.ofString());
+            if (itunesResp.statusCode() != 200) return false;
+
+            JsonObject itunesJson = JsonParser.parseString(itunesResp.body()).getAsJsonObject();
+            if (!itunesJson.has("results") || itunesJson.getAsJsonArray("results").size() == 0) {
+                return false;
+            }
+
+            JsonObject songObj = itunesJson.getAsJsonArray("results").get(0).getAsJsonObject();
+            long trackId = songObj.get("trackId").getAsLong();
+            if (songObj.has("artworkUrl100")) {
+                downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"));
+            }
+
+            // Query Paxsenix Apple Music API
+            String lyricsUrl = "https://lyrics.paxsenix.org/apple-music/lyrics?id=" + trackId;
+            HttpRequest lyricsReq = HttpRequest.newBuilder()
+                    .uri(URI.create(lyricsUrl))
+                    .header("User-Agent", "ViviMusic/1.0")
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+            HttpResponse<String> lyricsResp = HTTP_CLIENT.send(lyricsReq, HttpResponse.BodyHandlers.ofString());
+            if (lyricsResp.statusCode() != 200) return false;
+
+            lastRawLyrics = lyricsResp.body();
+            JsonObject root = JsonParser.parseString(lyricsResp.body()).getAsJsonObject();
+
+            if (root.has("content") && root.get("content").isJsonArray()) {
+                JsonArray contentArr = root.getAsJsonArray("content");
+                List<LyricsLine> lines = new ArrayList<>();
+
+                for (JsonElement el : contentArr) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject item = el.getAsJsonObject();
+
+                    long startMs = item.has("timestamp") ? item.get("timestamp").getAsLong() : 0L;
+                    long endMs = item.has("endtime") ? item.get("endtime").getAsLong() : startMs + 4000L;
+                    boolean isBg = item.has("background") && item.get("background").getAsBoolean();
+
+                    // Parse syllable words
+                    List<WordTime> words = new ArrayList<>();
+                    StringBuilder fullText = new StringBuilder();
+
+                    if (item.has("text") && item.get("text").isJsonArray()) {
+                        JsonArray textArr = item.getAsJsonArray("text");
+                        StringBuilder currentWord = new StringBuilder();
+                        Long currentWordStart = null;
+                        Long currentWordEnd = null;
+
+                        for (JsonElement tel : textArr) {
+                            if (!tel.isJsonObject()) continue;
+                            JsonObject tok = tel.getAsJsonObject();
+                            String syllable = tok.has("text") ? tok.get("text").getAsString() : "";
+                            long sylStart = tok.has("timestamp") ? tok.get("timestamp").getAsLong() : startMs;
+                            long sylEnd = tok.has("endtime") ? tok.get("endtime").getAsLong() : endMs;
+                            boolean part = tok.has("part") && tok.get("part").getAsBoolean();
+
+                            if (currentWordStart == null) currentWordStart = sylStart;
+                            currentWordEnd = sylEnd;
+                            currentWord.append(syllable);
+
+                            if (!part) {
+                                String wStr = currentWord.toString().trim();
+                                if (!wStr.isEmpty()) {
+                                    words.add(new WordTime(wStr, currentWordStart, currentWordEnd));
+                                    if (fullText.length() > 0) fullText.append(" ");
+                                    fullText.append(wStr);
+                                }
+                                currentWord.setLength(0);
+                                currentWordStart = null;
+                            }
+                        }
+
+                        // Flush trailing word if any
+                        if (currentWord.length() > 0) {
+                            String wStr = currentWord.toString().trim();
+                            if (!wStr.isEmpty()) {
+                                words.add(new WordTime(wStr, currentWordStart != null ? currentWordStart : startMs, currentWordEnd != null ? currentWordEnd : endMs));
+                                if (fullText.length() > 0) fullText.append(" ");
+                                fullText.append(wStr);
+                            }
+                        }
+                    }
+
+                    // Background text parsing
+                    String bgText = null;
+                    if (item.has("backgroundText") && item.get("backgroundText").isJsonArray()) {
+                        JsonArray bgArr = item.getAsJsonArray("backgroundText");
+                        StringBuilder bgSb = new StringBuilder();
+                        for (JsonElement bgEl : bgArr) {
+                            if (bgEl.isJsonObject() && bgEl.getAsJsonObject().has("text")) {
+                                if (bgSb.length() > 0) bgSb.append(" ");
+                                bgSb.append(bgEl.getAsJsonObject().get("text").getAsString().trim());
+                            }
+                        }
+                        if (bgSb.length() > 0) {
+                            bgText = "(" + bgSb.toString() + ")";
+                        }
+                    }
+
+                    String finalLineText = fullText.toString();
+                    if (finalLineText.isEmpty() && item.has("plain")) {
+                        finalLineText = item.get("plain").getAsString();
+                    }
+
+                    if (!finalLineText.isEmpty()) {
+                        lines.add(new LyricsLine(startMs, endMs, finalLineText, words.isEmpty() ? null : words, bgText));
+                    }
+                }
+
+                if (!lines.isEmpty()) {
+                    lines.sort(Comparator.comparingLong(LyricsLine::startMs));
+                    synchronized (LyricsManager.class) {
+                        currentLines.clear();
+                        currentLines.addAll(lines);
+                        loading = false;
+                        synced = true;
+                        CACHE.put(cacheKey, new ArrayList<>(lines));
+                        statusMessage = "Word-Synced Lyrics (PAXSENIX)";
+                    }
+                    return true;
+                }
+            }
+
+            // Fallback to LRC format in Paxsenix
+            if (root.has("lrc") && !root.get("lrc").isJsonNull()) {
+                parseAndApplyLyrics(root.toString(), cacheKey, "PAXSENIX");
                 return true;
             }
         } catch (Throwable ignored) {}
@@ -308,6 +465,91 @@ public class LyricsManager {
         return false;
     }
 
+    private static boolean fetchLrcLib(String cleanTrack, String cleanArtist, String cacheKey) {
+        try {
+            String searchUrl = "https://lrclib.net/api/search?q="
+                    + URLEncoder.encode(cleanTrack + " " + cleanArtist, StandardCharsets.UTF_8);
+
+            HttpRequest searchReq = HttpRequest.newBuilder()
+                    .uri(URI.create(searchUrl))
+                    .header("User-Agent", "BomboAddons/1.0 (https://github.com/fran939/bombofabric)")
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> searchResp = HTTP_CLIENT.send(searchReq, HttpResponse.BodyHandlers.ofString());
+            if (searchResp.statusCode() == 200) {
+                JsonElement elem = JsonParser.parseString(searchResp.body());
+                if (elem.isJsonArray() && elem.getAsJsonArray().size() > 0) {
+                    JsonArray arr = elem.getAsJsonArray();
+                    JsonObject bestCandidate = null;
+                    int bestScore = -1;
+
+                    // Prioritize candidates: Word-for-Word (<mm:ss.xx>) > Line-Synced (syncedLyrics) > Plain
+                    for (JsonElement itemEl : arr) {
+                        if (!itemEl.isJsonObject()) continue;
+                        JsonObject candidate = itemEl.getAsJsonObject();
+                        String syncedLrc = candidate.has("syncedLyrics") && !candidate.get("syncedLyrics").isJsonNull()
+                                ? candidate.get("syncedLyrics").getAsString() : "";
+                        String plain = candidate.has("plainLyrics") && !candidate.get("plainLyrics").isJsonNull()
+                                ? candidate.get("plainLyrics").getAsString() : "";
+
+                        int score = 0;
+                        if (!syncedLrc.isEmpty()) {
+                            if (WORD_PATTERN.matcher(syncedLrc).find()) {
+                                score = 3; // Word-level synchronized
+                            } else {
+                                score = 2; // Line-level synchronized
+                            }
+                        } else if (!plain.isEmpty()) {
+                            score = 1; // Plain text
+                        }
+
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestCandidate = candidate;
+                            if (score == 3) break; // Maximum priority found!
+                        }
+                    }
+
+                    if (bestCandidate != null) {
+                        parseAndApplyLyrics(bestCandidate.toString(), cacheKey, "LRCLIB");
+                        return true;
+                    }
+                }
+            }
+
+            // Fallback direct get
+            String url = "https://lrclib.net/api/get?track_name="
+                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
+                    + "&artist_name=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("User-Agent", "BomboAddons/1.0 (https://github.com/fran939/bombofabric)")
+                    .timeout(Duration.ofSeconds(5))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200) {
+                parseAndApplyLyrics(resp.body(), cacheKey, "LRCLIB");
+                return true;
+            }
+
+            synchronized (LyricsManager.class) {
+                currentLines.clear();
+                loading = false;
+                synced = false;
+                statusMessage = "No lyrics found for " + cleanTrack;
+                lastRawLyrics = "No lyrics found on LRCLIB.";
+            }
+            return false;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     private static void parseAndApplyLyrics(String jsonStr, String cacheKey, String providerName) {
         try {
             lastRawLyrics = jsonStr;
@@ -346,7 +588,7 @@ public class LyricsManager {
                 for (String l : lines) {
                     String clean = l.trim();
                     if (!clean.isEmpty()) {
-                        parsed.add(new LyricsLine(estimatedTime, estimatedTime + 3000L, clean, null));
+                        parsed.add(new LyricsLine(estimatedTime, estimatedTime + 3000L, clean, null, null));
                         estimatedTime += 3000L;
                     }
                 }
@@ -401,7 +643,7 @@ public class LyricsManager {
                 long startMs = (min * 60 + sec) * 1000 + ms;
 
                 String content = m.group(4).trim();
-                lines.add(new LyricsLine(startMs, startMs + 4000L, content, null));
+                lines.add(new LyricsLine(startMs, startMs + 4000L, content, null, null));
             }
         }
 
@@ -415,8 +657,7 @@ public class LyricsManager {
 
             List<WordTime> words = parseRichSyncWords(cur.text, cur.startMs, endMs);
             String cleanText = cur.text.replaceAll("<\\d{1,2}:\\d{2}\\.\\d{2,3}>", "").trim();
-            
-            // Reconstruct cleanText with consistent spaces if words are parsed
+
             if (words != null && !words.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
                 for (int w = 0; w < words.size(); w++) {
@@ -426,7 +667,7 @@ public class LyricsManager {
                 cleanText = sb.toString();
             }
 
-            result.add(new LyricsLine(cur.startMs, endMs, cleanText, words));
+            result.add(new LyricsLine(cur.startMs, endMs, cleanText, words, null));
         }
 
         return result;

@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class DiscordIpcManager {
 
-    private static final String CLIENT_ID = "134500000000000000"; // BomboAddons Discord Client
+    private static final String CLIENT_ID = "383226320970055681"; // BomboAddons Discord Client
     private static final AtomicBoolean RUNNING = new AtomicBoolean(false);
     private static Thread workerThread = null;
 
@@ -34,6 +34,10 @@ public class DiscordIpcManager {
     private static volatile String currentChannelName = "";
     private static volatile String currentGuildName = "";
     private static volatile String myDiscordUsername = "";
+    private static volatile String activePipeName = "None";
+    private static volatile String lastError = "None";
+    private static volatile String lastHandshakeStatus = "Not attempted";
+    private static volatile long lastPacketTime = 0L;
 
     // Track active voice users: userId -> DiscordVoiceUser
     private static final Map<String, DiscordVoiceUser> voiceUsers = new ConcurrentHashMap<>();
@@ -106,7 +110,8 @@ public class DiscordIpcManager {
                         handlePacket(pipe, packet);
                     }
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
             } finally {
                 connected = false;
                 inVoice = false;
@@ -125,12 +130,16 @@ public class DiscordIpcManager {
     }
 
     private static RandomAccessFile findAndOpenPipe() {
-        for (int i = 0; i < 4; i++) {
-            File file = new File("\\\\.\\pipe\\discord-ipc-" + i);
+        for (int i = 0; i < 10; i++) {
+            String path = "\\\\.\\pipe\\discord-ipc-" + i;
+            File file = new File(path);
             try {
-                return new RandomAccessFile(file, "rw");
+                RandomAccessFile raf = new RandomAccessFile(file, "rw");
+                activePipeName = path;
+                return raf;
             } catch (Exception ignored) {}
         }
+        activePipeName = "None (No pipe available 0-9)";
         return null;
     }
 
@@ -164,8 +173,10 @@ public class DiscordIpcManager {
             String cmd = obj.has("cmd") && !obj.get("cmd").isJsonNull() ? obj.get("cmd").getAsString() : "";
             String evt = obj.has("evt") && !obj.get("evt").isJsonNull() ? obj.get("evt").getAsString() : "";
 
+            lastPacketTime = System.currentTimeMillis();
             if ("DISPATCH".equals(cmd)) {
                 if ("READY".equals(evt)) {
+                    lastHandshakeStatus = "READY received";
                     if (obj.has("data") && obj.get("data").isJsonObject()) {
                         JsonObject data = obj.getAsJsonObject("data");
                         if (data.has("user") && data.get("user").isJsonObject()) {
@@ -300,12 +311,61 @@ public class DiscordIpcManager {
     /**
      * Handles /ss or /b ss command: outputs Discord Voice status, screenshares, and toggles HUD.
      */
+
+    public static void dumpDebugInfo(java.util.function.Consumer<Component> feedback) {
+        feedback.accept(Component.literal("§9========== §b[Discord IPC Debug Report] §9=========="));
+        feedback.accept(Component.literal("§7Enabled in Config: " + (BomboConfig.get().discordHudEnabled ? "§aYes" : "§cNo")));
+        feedback.accept(Component.literal("§7Worker Thread: " + (workerThread != null && workerThread.isAlive() ? "§aAlive" : "§cStopped")));
+        feedback.accept(Component.literal("§7Connected: " + (connected ? "§aYes (User: " + myDiscordUsername + ")" : "§cNo")));
+        feedback.accept(Component.literal("§7Active Pipe: §f" + activePipeName));
+        feedback.accept(Component.literal("§7Last Handshake: §e" + lastHandshakeStatus));
+        feedback.accept(Component.literal("§7Last Error: §c" + lastError));
+        if (lastPacketTime > 0) {
+            long agoSec = (System.currentTimeMillis() - lastPacketTime) / 1000L;
+            feedback.accept(Component.literal("§7Last Packet: §a" + agoSec + "s ago"));
+        }
+
+        // Process search
+        List<String> foundProcesses = new ArrayList<>();
+        try {
+            ProcessHandle.allProcesses().forEach(p -> {
+                String cmd = p.info().command().orElse("");
+                String lower = cmd.toLowerCase(java.util.Locale.ROOT);
+                if (lower.contains("discord") || lower.contains("discordcanary") || lower.contains("discordptb")) {
+                    String name = cmd.substring(Math.max(cmd.lastIndexOf('/'), cmd.lastIndexOf('\\')) + 1);
+                    foundProcesses.add(name + " (PID " + p.pid() + ")");
+                }
+            });
+        } catch (Throwable t) {
+            foundProcesses.add("Error listing processes: " + t.getMessage());
+        }
+        feedback.accept(Component.literal("§7Discord Processes: " + (foundProcesses.isEmpty() ? "§cNone running!" : "§a" + String.join(", ", foundProcesses))));
+
+        // Pipe probing 0..9
+        StringBuilder pipeStatus = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            File f = new File("\\\\.\\pipe\\discord-ipc-" + i);
+            try (RandomAccessFile test = new RandomAccessFile(f, "rw")) {
+                pipeStatus.append(" §a#").append(i).append("[Open]");
+            } catch (Throwable t) {
+                if (f.exists()) {
+                    pipeStatus.append(" §e#").append(i).append("[Locked]");
+                } else {
+                    pipeStatus.append(" §8#").append(i).append("[None]");
+                }
+            }
+        }
+        feedback.accept(Component.literal("§7Pipes (0-9):" + pipeStatus.toString()));
+        feedback.accept(Component.literal("§9============================================="));
+    }
+
     public static void handleSsCommand() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
         if (!connected) {
             mc.player.sendSystemMessage(Component.literal("§9[Discord] §cDiscord Desktop app is not connected. Make sure Discord is open on your PC!"));
+            dumpDebugInfo(mc.player::sendSystemMessage);
             return;
         }
 

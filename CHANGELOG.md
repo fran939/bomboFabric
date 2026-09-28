@@ -1,5 +1,31 @@
 # BomboAddons Changelog
 
+## [26.2.28.55] - 2026-09-28 (Beta)
+
+### Screensharing & Social
+- **Screenshare Leak Elimination & Delivery Confirmation (`/ss <player>`):** Patched remote IRC bot (`bombot`) to prevent `[SS_` protocol messages from leaking into chat or Discord. Added live IRC online status checks and instant receipt acknowledgment (`[SS_RCVD]`) so senders receive immediate feedback when targets receive requests.
+- **Discord Desktop IPC Diagnostics & Handshake:** Updated Discord Client ID to `383226320970055681` (standard desktop IPC), expanded named pipes probe across `\\.\pipe\discord-ipc-0`..`9`, and built `/b discord debug` / `/ss discord debug` diagnostic dumper.
+
+### Synchronized Lyrics (`/b lyrics`)
+- **Word-for-Word Paxsenix Integration:** Integrated iTunes Search metadata API with Paxsenix Apple Music syllable sync API, parsing exact word-by-word timestamps and background vocals.
+- **Line Wobble & Monotonic Highlights Fix:** Stabilized karaoke word slot widths to eliminate line shifting as words become active, and enforced monotonic forward progress so word highlights never jump backwards.
+- **Custom Delay Offset Adder:** Added `[-100ms]` and `[+100ms]` offset buttons on the lyrics GUI with config persistence (`lyricsOffsetMs`) and quick reset.
+- **Secondary Vocals Rendering:** Secondary / dual singer background vocals now render underneath the primary line in a subtle dimmer font.
+- **Modal ESC Key Handling:** Pressing ESC inside the raw lyrics viewer now closes only the modal without closing the lyrics screen.
+
+### Spotify HUD Overlay & Config
+- **Album Cover Artwork Display:** Asynchronously downloads and registers 256x256 album covers via iTunes API, rendering album art directly on `SpotifyHud` (toggleable via `spotifyHudShowAlbumArt`).
+- **Interactive Color Swatches in Config:** Converted Spotify hex color options to `ConfigItem.color` with visible color swatch preview boxes next to buttons in `/b` config.
+
+### Storage & Containers
+- **Storage Overlay Slot Indexing Fix:** Preserved slot indices in `StorageOverlayScreenHandler.InactiveSlot` (`this.index = index`), preventing slot index corruption and enabling reliable overlay display across `/storage`, ender chests, and backpacks.
+
+### Spectator Camera
+- **FOV Clamping:** Clamped camera FOV to base FOV (capped at 110.0) whenever `SpectatorCamManager.isActive()` or `mc.getCameraEntity() != mc.player` in `GameRendererMixin`, stopping disorienting fish-eye distortions.
+
+### Performance Profiler (`/b perf`)
+- **CPU % & Estimated Memory Metrics:** Added CPU usage percentage and estimated memory footprint per feature to `PerformanceProfiler.Snapshot` and `PerformanceScreen`.
+
 ## [26.2.28.54] - 2026-09-28 (Beta)
 
 ### Screensharing & Social

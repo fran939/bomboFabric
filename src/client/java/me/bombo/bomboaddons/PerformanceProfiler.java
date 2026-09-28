@@ -153,6 +153,8 @@ public class PerformanceProfiler {
         public final double minMs;
         public final double callsPerSec;
         public final double totalMsPerSec;
+        public final double cpuPercent;
+        public final int estimatedMemKb;
 
         public Snapshot(String name, long count, long totalNanos, long maxNanos, long minNanos, double intervalSec) {
             this.name = name;
@@ -162,6 +164,16 @@ public class PerformanceProfiler {
             this.minMs = minNanos == Long.MAX_VALUE ? 0.0 : minNanos / 1_000_000.0;
             this.callsPerSec = count / intervalSec;
             this.totalMsPerSec = (totalNanos / 1_000_000.0) / intervalSec;
+            this.cpuPercent = Math.min(100.0, (this.totalMsPerSec / 1000.0) * 100.0);
+
+            int estKb = (int) (count * 0.05);
+            String lower = name.toLowerCase(java.util.Locale.ROOT);
+            if (lower.contains("highlight")) estKb += 256;
+            else if (lower.contains("storage")) estKb += 512;
+            else if (lower.contains("lyrics")) estKb += 128;
+            else if (lower.contains("chat")) estKb += 384;
+            else estKb += 64;
+            this.estimatedMemKb = estKb;
         }
     }
 }

@@ -40,6 +40,9 @@ public class MenuScreensConstructorMixin {
 				client.setScreenAndShow(new StorageOverlayScreen(storageOverlayScreenHandler, containerScreenHandler, name, player.getInventory(), height));
 				ci.cancel();
 			}
-		} catch (Throwable ignored) {}
+		} catch (Throwable t) {
+			System.err.println("[BomboAddons] Storage Overlay open error: " + t.getMessage());
+			t.printStackTrace();
+		}
 	}
 }
