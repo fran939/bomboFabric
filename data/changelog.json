@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.51",
+    "date": "2026-09-28",
+    "changes": [
+      "Storage Overlay: Fixed custom storage overlay failing to open on storage menus, backpacks, and ender chests",
+      "Discord Voice HUD: Added in-game voice call overlay showing speaking indicators and active screenshares, accessible with /ss and /b ss",
+      "Spectator Camera: Camera now turns when the spectated player looks around, and displays their arm skin and held item in first-person",
+      "Player Body Visibility: Your own player model and armor layers remain visible in the world during spectator and freecam",
+      "Text Jitter Fix: Completely stopped recombobulated item titles from shaking horizontally when No Obfuscate is enabled",
+      "Clean Mayor Chat: Removed broken emoji and underlines from mayor announcements and perks while preserving hover tooltips",
+      "Version Fix: Resolved /b version showing 'unknown' in development environments"
+    ]
+  },
+  {
     "version": "26.2.28.50",
     "date": "2026-09-28",
     "changes": [
@@ -24,7 +37,7 @@
       "Dungeon Quick Join: /f1-f7, /m1-m7, and /e now dispatch uppercase instance identifiers (CATACOMBS_FLOOR_SEVEN, etc.) with chat feedback",
       "Scoreboard Subarea: enhanced detection of Private Use Area glyphs in scoreboard lines (-  Village) in /b subarea and /b area",
       "Keypad Keybinds: removed keypad keys from modifier combo prefixes, allowing Keypad arrows and numbers to be bound directly",
-      "IRC Plaintext IP: replaced plaintext IP with chat.bombo.dpdns.org"
+      "IRC Plaintext IP: Updated chat server connection endpoint"
     ]
   },
   {

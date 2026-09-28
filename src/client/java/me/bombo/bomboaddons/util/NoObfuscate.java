@@ -113,7 +113,8 @@ public final class NoObfuscate {
     private static Style clean(Style style, String text, boolean rarityHeader) {
         Style s = style != null ? style : Style.EMPTY;
         if (!s.isObfuscated()) return s;
-        return shouldKeepObfuscated(text, rarityHeader) ? s : s.withObfuscated(false);
+        // Unconditionally strip obfuscation so recombobulated characters and hidden text stop shaking
+        return s.withObfuscated(false);
     }
 
     /**

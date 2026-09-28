@@ -58,6 +58,7 @@ public class ConfigRegistry {
             "Custom Crosshair",
             "Custom Slots",
             "Custom Tracers",
+            "Discord",
             "Dungeons",
             "Entity & Block Hider",
             "Experiments",
@@ -389,6 +390,34 @@ public class ConfigRegistry {
                         }));
             }
 
+            case "Discord" -> {
+                items.add(ConfigItem.header("Discord Voice Call HUD (/ss or /b ss)", category));
+                items.add(ConfigItem.hudToggle("Enable Discord Voice HUD",
+                        "Displays active Discord voice call members, speaking indicators, and live screenshares.",
+                        category,
+                        () -> s.discordHudEnabled,
+                        v -> s.discordHudEnabled = v,
+                        HudTarget.DISCORD_HUD));
+                items.add(ConfigItem.toggle("Only In Voice Call",
+                        "Hides the Discord HUD when you are not currently in a voice channel or call.",
+                        category,
+                        () -> s.discordHudOnlyInCall,
+                        v -> s.discordHudOnlyInCall = v));
+                items.add(ConfigItem.sliderFloat("HUD Scale",
+                        "Scale multiplier for Discord Voice HUD.",
+                        category,
+                        0.5f, 2.5f, 0.1f, "x",
+                        () -> s.discordHudScale > 0 ? s.discordHudScale : 1.0f,
+                        v -> s.discordHudScale = v));
+                items.add(ConfigItem.button("Open Move HUDs", "Move HUDs",
+                        "Reposition and resize the Discord Voice HUD alongside other HUD elements.",
+                        category,
+                        () -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            mc.execute(() -> mc.setScreenAndShow(new HudMoveScreen(HudTarget.DISCORD_HUD)));
+                        }));
+            }
+
             case "Dungeons" -> {
                 items.add(ConfigItem.header("Dungeons Solvers & Features", category));
                 items.add(ConfigItem.hudToggle("Croesus Helper", "Displays unlooted chests and profit in Croesus GUI.", category, () -> s.croesusHelper, v -> s.croesusHelper = v, HudTarget.AUTO_CROESUS));
@@ -537,7 +566,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Running Flavor: " + me.bombo.bomboaddons.Constants.MOD_NAME
                         + " (" + me.bombo.bomboaddons.Constants.FLAVOR + " \u2022 "
                         + me.bombo.bomboaddons.Constants.artifactFilePrefix() + "*.jar)", category));
-                items.add(ConfigItem.toggle("No Obfuscate (strip \u00a7k\u00a7r)",
+                items.add(ConfigItem.toggle("No Obfuscate (strip &ka&r)",
                         "Removes the scrambling style from chat messages and item lore, making the text behind it readable.",
                         category, () -> s.noObfuscate, v -> s.noObfuscate = v));
 

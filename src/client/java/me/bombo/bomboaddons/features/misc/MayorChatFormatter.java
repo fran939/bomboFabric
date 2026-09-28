@@ -69,7 +69,7 @@ public final class MayorChatFormatter {
          return buildInteractive(cachedData);
       }
 
-      return Component.literal("§d🏛️ §8[§6Mayor§8] §7Loading active mayor & election details...");
+      return Component.literal("§8[§6Mayor§8] §7Loading active mayor & election details...");
    }
 
    public static void executeCommand() {
@@ -84,7 +84,7 @@ public final class MayorChatFormatter {
 
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null) {
-         mc.player.sendSystemMessage(Component.literal("§d🏛️ §8[§6Mayor§8] §7Fetching active election data..."));
+         mc.player.sendSystemMessage(Component.literal("§8[§6Mayor§8] §7Fetching active election data..."));
       }
 
       if (IN_FLIGHT.compareAndSet(false, true)) {
@@ -223,42 +223,39 @@ public final class MayorChatFormatter {
 
    public static Component buildInteractive(ElectionData data) {
       MutableComponent root = Component.empty();
-      root.append(Component.literal("§d🏛️ §8[§6Mayor§8] §7Current: "));
+      root.append(Component.literal("§8[§6Mayor§8] §7Current: "));
 
-      // Mayor Name with Full Hypixel Tooltip on Hover
+      // Mayor Name with Full Hypixel Tooltip on Hover (colored without underline)
       Component mayorTooltip = buildFullMayorTooltip(data);
-      MutableComponent mayorChip = Component.literal("§e§n" + data.mayorName() + "§r")
+      MutableComponent mayorChip = Component.literal("§e" + data.mayorName() + "§r")
          .withStyle(Style.EMPTY
             .withColor(ChatFormatting.YELLOW)
-            .withUnderlined(true)
             .withHoverEvent(new HoverEvent.ShowText(mayorTooltip)));
       root.append(mayorChip);
 
-      // Perks list (each individually hoverable)
+      // Perks list (each individually hoverable, colored without underline)
       if (data.perks() != null && !data.perks().isEmpty()) {
          root.append(Component.literal(" §7("));
          for (int i = 0; i < data.perks().size(); i++) {
             if (i > 0) root.append(Component.literal("§7, "));
             PerkInfo p = data.perks().get(i);
             Component perkTooltip = buildPerkTooltip(p);
-            MutableComponent perkChip = Component.literal("§b§n" + p.name() + "§r")
+            MutableComponent perkChip = Component.literal("§b" + p.name() + "§r")
                .withStyle(Style.EMPTY
                   .withColor(ChatFormatting.AQUA)
-                  .withUnderlined(true)
                   .withHoverEvent(new HoverEvent.ShowText(perkTooltip)));
             root.append(perkChip);
          }
          root.append(Component.literal("§7)"));
       }
 
-      // Minister
+      // Minister (colored without underline)
       if (data.minister() != null && data.minister().name() != null && !data.minister().name().isEmpty()) {
          root.append(Component.literal(" §7| Minister: "));
          Component minTooltip = buildMinisterTooltip(data.minister());
-         MutableComponent minChip = Component.literal("§6§n" + data.minister().name() + "§r")
+         MutableComponent minChip = Component.literal("§6" + data.minister().name() + "§r")
             .withStyle(Style.EMPTY
                .withColor(ChatFormatting.GOLD)
-               .withUnderlined(true)
                .withHoverEvent(new HoverEvent.ShowText(minTooltip)));
          root.append(minChip);
       }

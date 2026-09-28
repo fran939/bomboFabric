@@ -78,7 +78,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		return screenPosition;
 	}
 
-	public static void setup() {
+	public static void setup() { //already had init therefore called setup
 		if (registeredEvents) return;
 		registeredEvents = true;
 
@@ -102,7 +102,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	public StorageOverlayScreen(StorageOverlayScreenHandler handler, ChestMenu defaultHandler, Component name, Inventory inventory, int height) {
 		super(handler, inventory, name, 176, height);
-		this.titleLabelY = -1000;
+		this.titleLabelY = -1000; //let title exist for backpack previews caching to work.
 		this.inventoryLabelY += 2;
 		this.handler = handler;
 		this.defaultHandler = defaultHandler;
@@ -150,7 +150,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	private void hide(Button button) {
 		if (CLIENT.player == null) return;
 		CLIENT.player.containerMenu = defaultHandler;
-		CLIENT.gui.setScreen(new ContainerScreen(defaultHandler, CLIENT.player.getInventory(), name));
+		CLIENT.setScreenAndShow(new ContainerScreen(defaultHandler, CLIENT.player.getInventory(), name));
 	}
 
 	private void home(Button button) {

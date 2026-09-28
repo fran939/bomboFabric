@@ -80,15 +80,25 @@ public final class Constants {
      * so a literal {@code getModContainer("bomboaddons")} returns empty on the cheat build and
      * the old {@code .get()} call would throw.
      */
+    public static final String FALLBACK_VERSION = "26.2.28.51";
+
     public static String myVersion() {
         try {
-            return net.fabricmc.loader.api.FabricLoader.getInstance()
-                    .getModContainer(MOD_ID)
-                    .map(c -> c.getMetadata().getVersion().getFriendlyString())
-                    .orElse("unknown");
-        } catch (Throwable t) {
-            return "unknown";
+            net.fabricmc.loader.api.FabricLoader loader = net.fabricmc.loader.api.FabricLoader.getInstance();
+            if (loader != null) {
+                var container = loader.getModContainer(MOD_ID)
+                        .or(() -> loader.getModContainer(LEGIT_MOD_ID))
+                        .or(() -> loader.getModContainer(CHEAT_MOD_ID));
+                if (container.isPresent()) {
+                    String ver = container.get().getMetadata().getVersion().getFriendlyString();
+                    if (ver != null && !ver.isBlank() && !"unknown".equalsIgnoreCase(ver)) {
+                        return ver;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
         }
+        return FALLBACK_VERSION;
     }
 
     /** True when the opposite flavor is also loaded (both jars installed). */

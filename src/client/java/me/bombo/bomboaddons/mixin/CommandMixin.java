@@ -91,6 +91,11 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("b ss") || trimmed.equalsIgnoreCase("bombo ss") || trimmed.equalsIgnoreCase("bomboaddons ss") || trimmed.equalsIgnoreCase("ss")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b") || trimmed.equalsIgnoreCase("bombo") || trimmed.equalsIgnoreCase("bomboaddons")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create()));

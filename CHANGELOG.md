@@ -1,5 +1,24 @@
 # BomboAddons Changelog
 
+## [26.2.28.51] - 2026-09-28 (Beta)
+
+### Storage & Overlay
+- **Storage Overlay Opening Fix:** Fixed an issue where the custom storage overlay screen would not open upon accessing storage, ender chests, or backpacks.
+- **Anti-Jitter for Recombobulated Items:** Completely eliminated horizontal text shaking on recombobulated items when No Obfuscate is enabled.
+
+### Discord & Voice HUD
+- **Discord Voice Call HUD (/ss or /b ss):** Added a Discord Voice Call HUD showing current call members, speaking indicators, and live screenshares, with quick status via `/ss` and `/b ss`.
+- **Config & HUD Customization:** Added a dedicated Discord category in `/b` config and added HUD positioning/scaling support in `/b huds`.
+
+### Spectator Camera & Player Rendering
+- **Dynamic Camera Look:** The spectator camera now smoothly tracks the spectated player as they look around.
+- **First-Person Hands & Items:** Spectating in first-person now correctly displays the spectated player's arm skin and currently held item.
+- **World Body Visibility:** Your own player model and armor layers remain visible in the world during spectator camera and freecam.
+
+### Mayor & Polish
+- **Clean Mayor Formatting:** Cleaned up mayor chat messages by removing the broken temple icon and underlines from names and perks while keeping full hover tooltips.
+- **Version Reporting:** Fixed `/b version` sometimes reporting "unknown" in development or custom configurations.
+
 ## [26.2.28.50] - 2026-09-28 (Beta)
 
 ### Storage & GUI
@@ -34,7 +53,7 @@
 ### Commands, Scoreboard & Network
 - **Dungeon Quick Join Commands:** Updated `/f1`-`/f7`, `/m1`-`/m7`, and `/e` to dispatch uppercase Hypixel instance names (`CATACOMBS_FLOOR_ONE`..`SEVEN`, `MASTER_CATACOMBS_FLOOR_ONE`..`SEVEN`, `CATACOMBS_ENTRANCE`) with chat feedback.
 - **Scoreboard Font Icon Subarea Parsing:** Enhanced `SkyblockUtils.parseSubAreaFromLines` to detect Private Use Area glyphs (`\uE000-\uF8FF`) before stripping formatting, correctly parsing subareas like `-  Village`.
-- **IRC Plaintext IP Replaced:** Replaced plaintext server IP `51.170.56.117` in `IRCClient.java` with domain `chat.bombo.dpdns.org`.
+- **IRC Plaintext IP Replaced:** Replaced plaintext server IP `chat.bombo.dpdns.org` in `IRCClient.java` with domain `chat.bombo.dpdns.org`.
 
 ## [26.2.28.48] - 2026-09-28 (Beta)
 

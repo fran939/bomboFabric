@@ -34,13 +34,16 @@ public class MenuScreensConstructorMixin {
 		T screenHandler = type.create(id, player.getInventory());
 
 		if (screenHandler instanceof ChestMenu containerScreenHandler) {
+			// Calculate overlay height based on window dimensions
 			int height = client.getWindow().getGuiScaledHeight() - (client.getWindow().getGuiScaledHeight() / 5);
 			boolean isBackpack = BackpackPreview.getStorageIndexFromTitle(nameClean) != -1;
+			// Wrap the default chest menu handler with our custom multi-grid storage handler
 			StorageOverlayScreenHandler storageOverlayScreenHandler = new StorageOverlayScreenHandler(containerScreenHandler, isBackpack, height, player.getInventory());
 			client.player.containerMenu = storageOverlayScreenHandler;
-			client.gui.setScreen(new StorageOverlayScreen(storageOverlayScreenHandler, containerScreenHandler, name, client.player.getInventory(), height));
+			// Open the custom StorageOverlayScreen via setScreenAndShow (gui.setScreen does not show the screen in 26.2)
+			client.setScreenAndShow(new StorageOverlayScreen(storageOverlayScreenHandler, containerScreenHandler, name, client.player.getInventory(), height));
 
-			ci.cancel();
+			ci.cancel(); // Cancel vanilla chest screen creation
 		}
 	}
 }

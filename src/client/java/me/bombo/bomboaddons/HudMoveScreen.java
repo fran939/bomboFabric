@@ -637,6 +637,18 @@ public class HudMoveScreen extends Screen {
             me.bombo.bomboaddons.features.chat.ChatTabsOverlay.render(g, mouseX, mouseY);
         }
 
+        // 28. DISCORD_HUD
+        if (!s.showOnlyActiveHuds || s.discordHudEnabled) {
+            int dcW = (int) ((float) me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudWidth() * s.discordHudScale);
+            int dcH = (int) ((float) me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudHeight() * s.discordHudScale);
+            this.updateDragPosition(mouseX, mouseY, dcW, dcH, HudTarget.DISCORD_HUD, (nx, ny) -> {
+                s.discordHudX = nx;
+                s.discordHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.discordHudX, s.discordHudY, dcW, dcH, HudTarget.DISCORD_HUD, s.discordHudScale);
+            me.bombo.bomboaddons.features.discord.DiscordVoiceHud.drawHud(g, s.discordHudX, s.discordHudY, s.discordHudScale, true);
+        }
+
         // Snap Guide Lines (Cyan/Teal)
         if (this.snapGuideX != null) {
             g.fill(this.snapGuideX - 1, 0, this.snapGuideX + 1, this.height, 0xDD00E5FF);
@@ -695,6 +707,8 @@ public class HudMoveScreen extends Screen {
             list.add(new HudRect(s.autoRejoinHudX, s.autoRejoinHudY, (int)(me.bombo.bomboaddons.features.AutoRejoinHud.getHudWidth() * s.autoRejoinHudScale), (int)(me.bombo.bomboaddons.features.AutoRejoinHud.getHudHeight() * s.autoRejoinHudScale), HudTarget.AUTO_REJOIN));
         if (current != HudTarget.ITEM_VALUE_BREAKDOWN && (!s.showOnlyActiveHuds || s.itemValueBreakdownHud))
             list.add(new HudRect(s.itemValueBreakdownHudX >= 0 ? s.itemValueBreakdownHudX : 10, s.itemValueBreakdownHudY >= 0 ? s.itemValueBreakdownHudY : (this.height / 2 - 40), (int)(me.bombo.bomboaddons.features.ItemValueBreakdownHud.getHudWidth() * s.itemValueBreakdownHudScale), (int)(me.bombo.bomboaddons.features.ItemValueBreakdownHud.getHudHeight(null) * s.itemValueBreakdownHudScale), HudTarget.ITEM_VALUE_BREAKDOWN));
+        if (current != HudTarget.DISCORD_HUD && (!s.showOnlyActiveHuds || s.discordHudEnabled))
+            list.add(new HudRect(s.discordHudX, s.discordHudY, (int)(me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudWidth() * s.discordHudScale), (int)(me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudHeight() * s.discordHudScale), HudTarget.DISCORD_HUD));
 
         return list;
     }
@@ -1257,6 +1271,17 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // DISCORD_HUD
+        if (!s.showOnlyActiveHuds || s.discordHudEnabled) {
+            int dcW = (int) ((float) me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudWidth() * s.discordHudScale);
+            int dcH = (int) ((float) me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudHeight() * s.discordHudScale);
+            if (this.startCornerResize(mouseX, mouseY, s.discordHudX, s.discordHudY, dcW, dcH, HudTarget.DISCORD_HUD, s.discordHudScale)) return true;
+            if (this.checkHit(mouseX, mouseY, s.discordHudX, s.discordHudY, dcW, dcH)) {
+                this.selectAndDrag(HudTarget.DISCORD_HUD, (int) mouseX - s.discordHudX, (int) mouseY - s.discordHudY);
+                return true;
+            }
+        }
+
         return super.mouseClicked(event, handled);
     }
 
@@ -1781,6 +1806,18 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // DISCORD_HUD
+        if (!s.showOnlyActiveHuds || s.discordHudEnabled) {
+            int dcW = (int) ((float) me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudWidth() * s.discordHudScale);
+            int dcH = (int) ((float) me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudHeight() * s.discordHudScale);
+            if (this.checkHit(mouseX, mouseY, s.discordHudX, s.discordHudY, dcW, dcH)) {
+                s.discordHudScale = clampScale(s.discordHudScale + delta);
+                this.selectedTarget = HudTarget.DISCORD_HUD;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -1856,6 +1893,7 @@ public class HudMoveScreen extends Screen {
             case DUNGEON_MAP -> "Dungeons";
             case CRITTER_HUD, CRITTER_MAP -> "Critters";
             case CHAT_TABS -> "Chat";
+            case DISCORD_HUD -> "Discord";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -1967,6 +2005,7 @@ public class HudMoveScreen extends Screen {
         CRITTER_MAP,
         CHAT_TABS,
         CROESUS_PROFIT,
-        CROESUS_TRACKER;
+        CROESUS_TRACKER,
+        DISCORD_HUD;
     }
 }

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.50` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.51` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,10 +103,20 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.50`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.51`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.51 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Execution Method Fix:** Fixed screen launch in `MenuScreensConstructorMixin.java` and `StorageOverlayScreen.java` to invoke `client.setScreenAndShow(...)` instead of `client.gui.setScreen(...)`. Registered `StorageOverlayScreen.setup()` in `BomboaddonsClient.java`. Storage overlay now cleanly opens across `/storage`, ender chests, and backpacks.
+> 2. **Discord Voice Call HUD & /ss:** Created `DiscordIpcManager.java` (connecting to Discord Desktop IPC named pipe `\\.\pipe\discord-ipc-0`..`3`, querying active voice channel, member states, and speaking events) and `DiscordVoiceHud.java` (rendering active call participants with green/gray speaking dots, mute/deaf badges, and `[LIVE]` screenshare tag). Added `/ss` and `/b ss` commands and added Discord category to `/b` config.
+> 3. **Spectator Camera Dynamic Look & Arm/Item Rendering:** In `SpectatorCamManager.java`, coupled camera angles to the spectated player's rotation (`camEnt.getYRot() + offsetYaw`, etc.) so looking around turns the view. In `ItemInHandRendererMixin.java`, redirected first-person hands rendering so the spectated player's arm skin and held item are rendered in first-person spectator.
+> 4. **Player World Body Visibility:** Removed the `Camera.entity()` redirect in `LevelExtractorMixin.java` that caused Minecraft to cull the client player in first-person spectator mode. Kept `isEntityVisible` chunk/frustum bypass and `AvatarRendererMixin.java` so the player body and armor render properly.
+> 5. **Anti-Jitter for Recombobulated Items:** In `NoObfuscate.java`, removed `shouldKeepObfuscated` preserving `§ka` on rarity headers, unconditionally clearing obfuscation when `noObfuscate` is active to stop recombobulator text shaking.
+> 6. **Clean Mayor Chat Formatting:** In `MayorChatFormatter.java`, removed broken emoji and removed underlines from mayor, perks, and minister names in chat and bridge while preserving colors and interactive tooltips.
+> 7. **Version Reporting Fallback:** In `Constants.java`, expanded `myVersion()` fallback chain to try `MOD_ID` -> `LEGIT_MOD_ID` -> `CHEAT_MOD_ID` -> `FALLBACK_VERSION` (`26.2.28.51`), preventing `/b version` from ever reporting "unknown".
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.50 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Concrete Method Interception Fix:** Shifted screen creation interception from `ScreenConstructor.fromPacket` to concrete static method `MenuScreens.create` in `MenuScreensConstructorMixin.java`. Reliably intercepts container packets, syncs `player.containerMenu`, and launches `StorageOverlayScreen` across all storage menus, ender chests, and backpacks.

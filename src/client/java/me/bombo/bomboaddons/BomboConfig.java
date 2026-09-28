@@ -682,6 +682,12 @@ public class BomboConfig {
       public boolean noObfuscate = false;
       /** Optional keybind that opens the chat history screen. */
       public String chatHistoryKey = "";
+      // Discord Desktop IPC Integration & Voice HUD
+      public boolean discordHudEnabled = true;
+      public boolean discordHudOnlyInCall = true;
+      public int discordHudX = 10;
+      public int discordHudY = 120;
+      public float discordHudScale = 1.0F;
       public boolean diceTracker = false;
       public boolean showCommandOnHover = false;
       public boolean autoHoppityCalls = false;

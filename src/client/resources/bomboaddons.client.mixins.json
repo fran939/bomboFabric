@@ -47,6 +47,7 @@
 		"HollowWandMixin",
 		"InventoryScreenMixin",
 		"ItemHotkeysMixin",
+		"ItemInHandRendererMixin",
 		"ItemModelResolverMixin",
 		"ItemStackMixin",
 		"KeyBindsListMixin",

@@ -480,7 +480,10 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.hud.ArmorHud.init();
       me.bombo.bomboaddons.features.hud.EquipmentHud.init();
       me.bombo.bomboaddons.features.hud.InventoryHud.init();
+      me.bombo.bomboaddons.features.discord.DiscordIpcManager.init();
+      me.bombo.bomboaddons.features.discord.DiscordVoiceHud.init();
       me.bombo.bomboaddons.features.auto.AutoSequenceManager.load();
+      me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.setup();
       me.bombo.bomboaddons.flavor.Flavor.get().init();
       me.bombo.bomboaddons.flavor.FlavorMigration.run();
       try {
@@ -1356,6 +1359,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }));
                   builder.then(ClientCommands.literal("mayor").executes((context) -> {
                      me.bombo.bomboaddons.features.misc.MayorChatFormatter.executeCommand();
+                     return 1;
+                  }));
+                  // /b ss - Discord Screenshares and Voice HUD summary
+                  builder.then(ClientCommands.literal("ss").executes((context) -> {
+                     me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
                      return 1;
                   }));
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("afk").executes((ctx) -> {
@@ -4615,6 +4623,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(bomboBuilder);
                dispatcher.register(createBlockHighlightCommand("bh"));
                dispatcher.register(createBlockHighlightCommand("blockhighlight"));
+               // /ss - Quick access to Discord voice call status and screenshares
+               dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("ss").executes((context) -> {
+                  me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+                  return 1;
+               }));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("bomboprof").executes((context) -> {
                   pendingConfigSearch = "Profile";
                   openGuiNextTick = true;
