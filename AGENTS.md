@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.46` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.47` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -103,14 +103,15 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.46`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.47`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
-> ### ✅ COMPLETED & COMPILED IN v26.2.28.46 / v26.2.28.45 (Ready for In-Game Testing)
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.47 (Ready for In-Game Testing)
 >
-> 1. **Interactive RTCA Chat (v26.2.28.45):** BomboBot's flat `[RTCA50]` chat string is intercepted in [`ChatMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java) and rebuilt as hoverable `MutableComponent` chips by [`RtcaChatFormatter`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/dungeons/RtcaChatFormatter.java). Per-class tooltips show exact level, runs to max, XP to next level, XP/run and the boost breakdown. Async fetch on daemon thread `Bombo-RtcaFetch`, 60s per-player cache, `IN_FLIGHT` guard, records to `ChatHistoryTracker` with tag `"RTCA"`.
-> 2. **RTCA Boost Honesty Fix (v26.2.28.46):** The server was defaulting three boosts it cannot see (Hecatomb X, Grimoire scarf, Catacombs Graduate) to their **maximum**, inflating every class to a flat +40%. `computeClassAverage` now counts only what Hypixel actually exposes (the five essence perks from `player_data.perks`) and returns an `assumed[]` list for the rest. Only the `/dungeons` HTML calculator opts into best case via `{ assumeBestCase: true }`. Verified for `bomboclas`: total boost +40% -> **+10%**, M7 XP/run 420,000 -> **330,000**, CA50 runs 1,070 -> **1,361**.
+> 1. **Chat Imgur Delete / Supr Fix (v26.2.28.47):** Fixed an issue in [`EditBoxMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/EditBoxMixin.java) where selecting text in the chat input and pressing `Delete` (Supr) or `Backspace` would trigger an Imgur upload and paste `$imgur` if any image was present in the clipboard. Removed the phantom `insertText("")` check in `EditBoxMixin` and ensured clipboard image pasting requires an active `Ctrl + V` press in a focused edit box.
+> 2. **Interactive RTCA Chat (v26.2.28.45):** BomboBot's flat `[RTCA50]` chat string is intercepted in [`ChatMixin`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java) and rebuilt as hoverable `MutableComponent` chips by [`RtcaChatFormatter`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/dungeons/RtcaChatFormatter.java). Per-class tooltips show exact level, runs to max, XP to next level, XP/run and the boost breakdown. Async fetch on daemon thread `Bombo-RtcaFetch`, 60s per-player cache, `IN_FLIGHT` guard, records to `ChatHistoryTracker` with tag `"RTCA"`.
+> 3. **RTCA Boost Honesty Fix (v26.2.28.46):** The server was defaulting three boosts it cannot see (Hecatomb X, Grimoire scarf, Catacombs Graduate) to their **maximum**, inflating every class to a flat +40%. `computeClassAverage` now counts only what Hypixel actually exposes (the five essence perks from `player_data.perks`) and returns an `assumed[]` list for the rest. Only the `/dungeons` HTML calculator opts into best case via `{ assumeBestCase: true }`. Verified for `bomboclas`: total boost +40% -> **+10%**, M7 XP/run 420,000 -> **330,000**, CA50 runs 1,070 -> **1,361**.
 > 3. **⚠️ Neither the hover rendering nor the async fetch path has been seen in-game** — see the test queue below.
 >
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.44 (Ready for In-Game Testing)

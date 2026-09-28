@@ -1,6 +1,9 @@
 # BomboAddons Changelog
 
-## [26.2.28.47] - 2026-09-27 (Beta)
+## [26.2.28.47] - 2026-09-28 (Beta)
+
+### Chat & Input
+- **Chat Imgur Delete / Supr Fix:** Fixed an issue where selecting text in the chat input and pressing `Delete` (Supr) or `Backspace` would trigger an Imgur upload and paste `$imgur` if any image was present in the clipboard. Removed the phantom `insertText("")` check in `EditBoxMixin` and ensured clipboard image pasting requires an active `Ctrl + V` press in a focused edit box.
 
 ### Documentation
 - **Handoff Docs Updated:** `AGENTS.md` and `docs/HANDOFF_KNOWLEDGE.md` now cover v26.2.28.45/46 and carry an explicit Tested vs. Untested split.

@@ -1,8 +1,9 @@
 [
   {
     "version": "26.2.28.47",
-    "date": "2026-09-27",
+    "date": "2026-09-28",
     "changes": [
+      "Chat Imgur Delete / Supr Fix: fixed issue where selecting text in chat and pressing Delete (Supr) or Backspace would trigger an Imgur upload and paste $imgur if an image was in the clipboard; removed empty insertText check and ensured clipboard image paste only triggers on Ctrl+V in focused input",
       "Documentation: AGENTS.md and docs/HANDOFF_KNOWLEDGE.md now cover v26.2.28.45 and v26.2.28.46 with an explicit Tested vs. Untested split",
       "New Priority 0 test queue: in-game verification of the RTCA hover chips - replacement not duplication, exact levels, the honest +10% boost with its 'Not counted' line, fractional class average, the first-hover loading placeholder and the 60s cache",
       "Server knowledge captured: the exactLevel = level + into/need fix (classProgress().into is remaining XP, not a fraction), the self-referential boost.label crash that 502'd /api/v1/dungeons, and the xpForNextLevel-is-a-total trap",

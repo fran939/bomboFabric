@@ -1,5 +1,5 @@
 # COMPREHENSIVE REPOSITORY KNOWLEDGE & HANDOFF GUIDE
-**Mod Version:** `26.2.28.46` | **Target MC:** `26.2` | **Branch:** `26.2`
+**Mod Version:** `26.2.28.47` | **Target MC:** `26.2` | **Branch:** `26.2`
 
 This document serves as the complete knowledge reservoir for AI agents continuing work on BomboAddons / BomboClient. It captures architecture details, feature implementations, testing states, remote server setup, and operational quirks.
 
@@ -59,7 +59,11 @@ Base path: `/home/ubuntu/bomboapi/`.
 
 ---
 
-## 3. Features Implemented in v26.2.28.46 -> v26.2.28.43
+## 3. Features Implemented in v26.2.28.47 -> v26.2.28.43
+
+### v26.2.28.47: Chat Imgur Delete / Supr Fix
+- **Root cause:** `EditBoxMixin.onInsertText` checked `if ((text == null || text.isEmpty()) && (Minecraft.getInstance().gui.screen() instanceof ChatScreen) && ClipboardImageUploader.hasClipboardImage())` and triggered `tryUploadClipboardImage`. When selecting text in chat and pressing `Delete` (Supr) or `Backspace`, Minecraft replaces the selection by calling `insertText("")`. If an image was present in the OS clipboard (e.g. from a past screenshot), deleting text was mistaken for an image paste, uploading the screenshot and inserting `$imgur`.
+- **Fix:** Removed the empty `insertText` interception entirely. Real image pasting is strictly gated behind `Ctrl + V` key events on focused edit boxes (`EditBoxMixin.onKeyPressed` / `ChatScreenMixin.onKeyPressed`).
 
 ### v26.2.28.46: RTCA Boost Honesty Fix
 Server-side (`/home/ubuntu/bomboapi/src/dungeons_service.js`) plus the mod tooltip renderer.

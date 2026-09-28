@@ -77,14 +77,6 @@ public abstract class EditBoxMixin {
    )
    private void onInsertText(String text, CallbackInfo ci) {
       if (!this.insertingCopied) {
-         // If user is pasting into chat box or an edit box and an image is present in clipboard
-         if ((text == null || text.isEmpty()) && (Minecraft.getInstance().gui.screen() instanceof ChatScreen) && me.bombo.bomboaddons.util.ClipboardImageUploader.hasClipboardImage()) {
-            if (me.bombo.bomboaddons.util.ClipboardImageUploader.tryUploadClipboardImage((EditBox)(Object)this)) {
-               ci.cancel();
-               return;
-            }
-         }
-
          if (text != null && BomboConfig.get().ignoreCapsLock && text.length() == 1) {
             boolean shift = Minecraft.getInstance().hasShiftDown();
             if (!shift && !text.equals(text.toLowerCase())) {
@@ -121,7 +113,7 @@ public abstract class EditBoxMixin {
       cancellable = true
    )
    private void onKeyPressed(net.minecraft.client.input.KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
-      if (event.key() == 86 && (event.hasControlDown() || Minecraft.getInstance().hasControlDown())) { // GLFW_KEY_V
+      if (((EditBox)(Object)this).isFocused() && event.key() == 86 && (event.hasControlDown() || Minecraft.getInstance().hasControlDown())) { // GLFW_KEY_V
          if (me.bombo.bomboaddons.util.ClipboardImageUploader.hasClipboardImage()) {
             if (me.bombo.bomboaddons.util.ClipboardImageUploader.tryUploadClipboardImage((EditBox)(Object)this)) {
                cir.setReturnValue(true);
