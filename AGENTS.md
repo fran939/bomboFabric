@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.55` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.56` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -106,15 +106,30 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
    - Serves the compiled `.jar` file directly with `Content-Disposition: attachment`.
 6. **`https://api.bombo.dpdns.org/mod/changelog`:**
    - Serves the JSON changelog array for the in-game `/b changelog` command.
+7. **`https://bombo.dpdns.org/screenshare` & `https://api.bombo.dpdns.org/api/screenshare/...`:**
+   - Web dashboard displaying live streams from active Minecraft players, with real-time frame streaming from the client, live status badges, latency metrics, and HD viewer.
 
 ---
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.55`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.56`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.56 (Ready for In-Game Testing)
+>
+> 1. **Live Screenshare Streaming & Web Dashboard (`https://bombo.dpdns.org/screenshare`):** Built a high-performance web dashboard displaying all active in-game streamers with their Minecraft heads/skins, live FPS/latency statistics, stream resolution, and an HD stream viewer with fullscreen mode. Supports auto-selecting streamers via URL parameter (e.g. `?user=<ign>`).
+> 2. **In-Game Frame Streaming (`ScreenshareManager`):** In-game clients now stream compressed JPEG video frames (~8-10 FPS, 640x360) directly to the server API (`/api/screenshare/frame`) whenever screensharing is active or accepted, bypassing render-distance limitations.
+> 3. **Clickable Chat Stream Links:** When accepting or starting a screenshare (`/ss <player>`), chat outputs an interactive, clickable link to watch live on the web (`https://bombo.dpdns.org/screenshare?user=<target>`). If the spectated player is outside local chunk render distance, spectator camera cleanly redirects you to the web live stream. Added `/ss stream` / `/ss share` to start broadcasting anytime, and `/ss stop` to stop.
+> 4. **Lyrics Delay Slider & Exact Millisecond Input:** Replaced the step buttons with an interactive draggable delay slider (`-5000ms` to `+5000ms`) and a click-to-type number box where users can type any exact millisecond offset (e.g. `-250`, `1200`) and hit Enter to set. Includes a quick `[↺]` reset button.
+> 5. **Unformatted & Concatenated LRC Splitting:** Enhanced LRC parser with regex lookahead `(?=\\[\\d{1,2}:\\d{2})|\\r?\\n` to separate lines even when returned as a single unformatted line without newlines.
+> 6. **Word-for-Word Syllable Sync:** Supports both `<mm:ss.xxx>word` format and `<word:start:end>` (BetterLyrics / Musixmatch) formats with exact word boundaries.
+> 7. **Spotify-Style Full Line Highlights:** For songs without word-by-word timestamps, the active line is highlighted in bold bright white with a background pill (exactly like Spotify in Image 4), eliminating fake word-by-word jumping.
+> 8. **Custom Lyrics Editor:** In the `[Raw / Edit]` modal, users can switch to Edit Custom mode to type or paste custom lyrics from clipboard, and click `[Apply Lyrics]` to immediately activate them.
+> 9. **Vivi Music Candidate Selector Modal:** Added a multi-candidate selection modal displaying all lyric versions collected across **PAXSENIX**, **LRCLIB**, **BETTERLYRICS**, **KUGOU**, **UNISON**, and **YOULYPLUS**, showing preview snippets, provider badges, and sync tags (`[Word-Synced]`, `[Line-Synced]`, `[Plain]`).
+> 10. **Discord Desktop IPC Voice HUD:** Added automatic `AUTHORIZE` approval handling for Discord Desktop IPC voice scopes (`rpc.voice.read`), and added a 4-second background poll so joining Discord voice channels after launching Minecraft automatically syncs the HUD without reconnecting. Added `/b discord sync` / `/ss discord sync` to trigger an instant re-query of the active voice channel.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.55 (Ready for In-Game Testing)
 >
 > 1. **Screenshare Leak Elimination & Delivery Confirmation (`/ss <player>`):** Patched remote IRC bot (`bombot`) to prevent `[SS_` protocol messages from leaking into chat or Discord. Added live IRC online status checks and instant receipt acknowledgment (`[SS_RCVD]`) so senders receive immediate feedback when targets receive requests.

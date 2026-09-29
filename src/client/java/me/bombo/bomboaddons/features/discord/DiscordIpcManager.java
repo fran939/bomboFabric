@@ -38,6 +38,8 @@ public class DiscordIpcManager {
     private static volatile String lastError = "None";
     private static volatile String lastHandshakeStatus = "Not attempted";
     private static volatile long lastPacketTime = 0L;
+    private static volatile RandomAccessFile currentPipe = null;
+    private static Thread pollThread = null;
 
     // Track active voice users: userId -> DiscordVoiceUser
     private static final Map<String, DiscordVoiceUser> voiceUsers = new ConcurrentHashMap<>();
@@ -96,7 +98,9 @@ public class DiscordIpcManager {
             try {
                 pipe = findAndOpenPipe();
                 if (pipe != null) {
+                    currentPipe = pipe;
                     connected = true;
+                    startPollThread();
                     // Send Handshake
                     JsonObject handshake = new JsonObject();
                     handshake.addProperty("v", 1);
@@ -113,6 +117,7 @@ public class DiscordIpcManager {
             } catch (Exception e) {
                 lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
             } finally {
+                currentPipe = null;
                 connected = false;
                 inVoice = false;
                 voiceUsers.clear();
@@ -145,7 +150,40 @@ public class DiscordIpcManager {
 
     private record Packet(int opcode, String json) {}
 
-    private static void writePacket(RandomAccessFile pipe, int opcode, String json) throws Exception {
+    public static void forceSync() {
+        pollVoiceStatus();
+    }
+
+    private static void startPollThread() {
+        if (pollThread == null || !pollThread.isAlive()) {
+            pollThread = new Thread(() -> {
+                while (RUNNING.get() && connected) {
+                    try {
+                        Thread.sleep(4000L);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                    pollVoiceStatus();
+                }
+            }, "Bombo-DiscordVoicePoll");
+            pollThread.setDaemon(true);
+            pollThread.start();
+        }
+    }
+
+    private static void pollVoiceStatus() {
+        RandomAccessFile pipe = currentPipe;
+        if (pipe != null && connected) {
+            try {
+                JsonObject getVoice = new JsonObject();
+                getVoice.addProperty("cmd", "GET_SELECTED_VOICE_CHANNEL");
+                getVoice.addProperty("nonce", UUID.randomUUID().toString());
+                writePacket(pipe, 1, getVoice.toString());
+            } catch (Throwable ignored) {}
+        }
+    }
+
+    private static synchronized void writePacket(RandomAccessFile pipe, int opcode, String json) throws Exception {
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         ByteBuffer buf = ByteBuffer.allocate(8 + bytes.length).order(ByteOrder.LITTLE_ENDIAN);
         buf.putInt(opcode);
@@ -222,9 +260,14 @@ public class DiscordIpcManager {
                 } else if ("SPEAKING_STOP".equals(evt)) {
                     setSpeaking(obj.has("data") && obj.get("data").isJsonObject() ? obj.getAsJsonObject("data") : null, false);
                 }
+            } else if ("AUTHORIZE".equals(cmd)) {
+                lastHandshakeStatus = "Authorized (Approval received)";
+                pollVoiceStatus();
             } else if ("GET_SELECTED_VOICE_CHANNEL".equals(cmd)) {
                 if (obj.has("data") && obj.get("data").isJsonObject()) {
                     updateVoiceChannel(obj.getAsJsonObject("data"));
+                } else if (obj.has("data") && obj.get("data").isJsonNull()) {
+                    updateVoiceChannel(null);
                 }
             }
         } catch (Exception ignored) {

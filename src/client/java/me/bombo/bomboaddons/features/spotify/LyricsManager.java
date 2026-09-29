@@ -20,13 +20,16 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Manages fetching, parsing, and real-time word-for-word synchronization of music lyrics.
- * Supports multiple providers inspired by vivi-music: LRCLIB, PAXSENIX, UNISON, YOULYPLUS.
- * Also retrieves album artwork for display in Spotify HUD.
+ * Manages fetching, parsing, and real-time synchronization of music lyrics.
+ * Collects multi-provider candidates inspired by Vivi Music:
+ * PAXSENIX (Apple Music Syllables), BETTERLYRICS, LRCLIB, KUGOU, UNISON, YOULYPLUS.
+ * Supports word-by-word karaoke highlights, Spotify-style full line highlights,
+ * unformatted/concatenated LRC splitting, custom lyrics editing, and candidate switching.
  */
 public class LyricsManager {
 
@@ -34,8 +37,9 @@ public class LyricsManager {
             .connectTimeout(Duration.ofSeconds(5))
             .build();
 
-    private static final Pattern LINE_PATTERN = Pattern.compile("^\\[(\\d{1,2}):(\\d{2})\\.(\\d{2,3})\\](.*)$");
+    private static final Pattern LINE_PATTERN = Pattern.compile("^\\[(\\d{1,2}):(\\d{2})(?:\\.|:)(\\d{2,3})\\](.*)$");
     private static final Pattern WORD_PATTERN = Pattern.compile("<(\\d{1,2}):(\\d{2})\\.(\\d{2,3})>\\s*([^<]+)");
+    private static final Pattern BETTER_WORD_PATTERN = Pattern.compile("<([^:>|]+):(\\d+(?:\\.\\d+)?):(\\d+(?:\\.\\d+)?)>");
 
     public record WordTime(String word, long startMs, long endMs) {}
 
@@ -51,17 +55,28 @@ public class LyricsManager {
         }
     }
 
+    public record LyricCandidate(
+            String id,
+            String provider,
+            String syncType,
+            String preview,
+            String rawData,
+            List<LyricsLine> lines
+    ) {}
+
     private static volatile String activeTrack = "";
     private static volatile String activeArtist = "";
     private static volatile boolean loading = false;
     private static volatile boolean synced = false;
     private static volatile String statusMessage = "No track playing";
     private static volatile String lastRawLyrics = "No lyrics loaded yet.";
-    private static final List<LyricsLine> currentLines = new ArrayList<>();
+    private static final List<LyricsLine> currentLines = new CopyOnWriteArrayList<>();
+    public static final List<LyricCandidate> availableCandidates = new CopyOnWriteArrayList<>();
+    public static volatile int selectedCandidateIndex = -1;
 
-    private static final Map<String, List<LyricsLine>> CACHE = new HashMap<>();
+    private static final Map<String, List<LyricCandidate>> CACHE = new HashMap<>();
 
-    public static final String[] PROVIDERS = new String[]{"LRCLIB", "PAXSENIX", "UNISON", "YOULYPLUS"};
+    public static final String[] PROVIDERS = new String[]{"ALL (Vivi Music)", "PAXSENIX", "LRCLIB", "BETTERLYRICS", "KUGOU", "UNISON", "YOULYPLUS"};
 
     private static volatile Identifier albumArtTexture = null;
     private static volatile String lastArtworkUrl = "";
@@ -70,7 +85,7 @@ public class LyricsManager {
         return albumArtTexture;
     }
 
-    public static synchronized List<LyricsLine> getLines() {
+    public static List<LyricsLine> getLines() {
         return new ArrayList<>(currentLines);
     }
 
@@ -96,7 +111,7 @@ public class LyricsManager {
 
     public static String getProvider() {
         BomboConfig.Settings s = BomboConfig.get();
-        return (s != null && s.lyricsProvider != null && !s.lyricsProvider.isEmpty()) ? s.lyricsProvider : "LRCLIB";
+        return (s != null && s.lyricsProvider != null && !s.lyricsProvider.isEmpty()) ? s.lyricsProvider : "ALL (Vivi Music)";
     }
 
     public static void setProvider(String prov) {
@@ -131,7 +146,7 @@ public class LyricsManager {
         }
     }
 
-    public static synchronized int getCurrentLineIndex(long currentMs) {
+    public static int getCurrentLineIndex(long currentMs) {
         if (currentLines.isEmpty()) return -1;
         int activeIdx = -1;
         for (int i = 0; i < currentLines.size(); i++) {
@@ -150,6 +165,8 @@ public class LyricsManager {
             activeTrack = "";
             activeArtist = "";
             currentLines.clear();
+            availableCandidates.clear();
+            selectedCandidateIndex = -1;
             statusMessage = "No track playing";
             lastRawLyrics = "No track playing.";
             albumArtTexture = null;
@@ -157,22 +174,22 @@ public class LyricsManager {
             return;
         }
 
-        String cacheKey = (getProvider() + " - " + artist + " - " + track).toLowerCase(Locale.ROOT).trim();
-        String currentKey = (getProvider() + " - " + activeArtist + " - " + activeTrack).toLowerCase(Locale.ROOT).trim();
+        String cacheKey = (artist + " - " + track).toLowerCase(Locale.ROOT).trim();
+        String currentKey = (activeArtist + " - " + activeTrack).toLowerCase(Locale.ROOT).trim();
 
         if (cacheKey.equals(currentKey) && !currentLines.isEmpty()) {
-            return; // Already loaded
+            return;
         }
 
         activeTrack = track;
         activeArtist = artist;
 
         if (CACHE.containsKey(cacheKey)) {
-            synchronized (LyricsManager.class) {
-                currentLines.clear();
-                currentLines.addAll(CACHE.get(cacheKey));
-                synced = true;
-                statusMessage = "Lyrics loaded (" + getProvider() + ")";
+            List<LyricCandidate> cached = CACHE.get(cacheKey);
+            availableCandidates.clear();
+            availableCandidates.addAll(cached);
+            if (!availableCandidates.isEmpty()) {
+                applyCandidate(availableCandidates.get(0));
             }
             return;
         }
@@ -180,65 +197,144 @@ public class LyricsManager {
         fetchLyricsAsync(track, artist, cacheKey);
     }
 
-    private static void fetchLyricsAsync(String track, String artist, String cacheKey) {
-        loading = true;
-        statusMessage = "Searching lyrics on " + getProvider() + "...";
+    public static void applyCandidate(LyricCandidate cand) {
+        if (cand == null || cand.lines().isEmpty()) return;
+        currentLines.clear();
+        currentLines.addAll(cand.lines());
+        lastRawLyrics = cand.rawData();
+        synced = !"Plain".equalsIgnoreCase(cand.syncType());
+        statusMessage = cand.syncType() + " (" + cand.provider() + ")";
+        loading = false;
 
-        Thread fetchThread = new Thread(() -> {
-            try {
-                String cleanTrack = cleanTitle(track);
-                String cleanArtist = cleanTitle(artist);
-                String provider = getProvider();
-
-                // Always search iTunes for album artwork in background if needed
-                fetchArtworkFromItunes(cleanTrack, cleanArtist);
-
-                boolean success = false;
-                if ("PAXSENIX".equalsIgnoreCase(provider)) {
-                    success = fetchPaxsenix(cleanTrack, cleanArtist, cacheKey);
-                } else if ("UNISON".equalsIgnoreCase(provider)) {
-                    success = fetchUnison(cleanTrack, cleanArtist, cacheKey);
-                } else if ("YOULYPLUS".equalsIgnoreCase(provider)) {
-                    success = fetchYouLyPlus(cleanTrack, cleanArtist, cacheKey);
-                }
-
-                if (!success) {
-                    // Default / fallback to LRCLIB
-                    fetchLrcLib(cleanTrack, cleanArtist, cacheKey);
-                }
-            } catch (Throwable t) {
-                synchronized (LyricsManager.class) {
-                    loading = false;
-                    statusMessage = "Could not fetch lyrics: " + t.getMessage();
-                }
+        for (int i = 0; i < availableCandidates.size(); i++) {
+            if (availableCandidates.get(i).id().equals(cand.id())) {
+                selectedCandidateIndex = i;
+                break;
             }
-        }, "Bombo-LyricsFetcher");
-
-        fetchThread.setDaemon(true);
-        fetchThread.start();
+        }
     }
 
-    private static void fetchArtworkFromItunes(String cleanTrack, String cleanArtist) {
+    public static void applyCustomLyrics(String customRaw) {
+        if (customRaw == null || customRaw.trim().isEmpty()) return;
+        List<LyricsLine> parsed = parseLrc(customRaw);
+        boolean isSyn = true;
+        if (parsed.isEmpty()) {
+            String[] lines = customRaw.split("\r?\n");
+            long t = 0L;
+            for (String l : lines) {
+                String cl = l.trim();
+                if (!cl.isEmpty()) {
+                    parsed.add(new LyricsLine(t, t + 3000L, cl, null, null));
+                    t += 3000L;
+                }
+            }
+            isSyn = false;
+        }
+
+        String preview = parsed.size() > 0 ? parsed.get(0).text() : "Custom Lyrics";
+        LyricCandidate customCand = new LyricCandidate(
+                "custom-" + System.currentTimeMillis(),
+                "Custom",
+                isSyn ? "Synced" : "Plain",
+                preview,
+                customRaw,
+                parsed
+        );
+
+        availableCandidates.add(0, customCand);
+        applyCandidate(customCand);
+    }
+
+    private static void fetchLyricsAsync(String track, String artist, String cacheKey) {
+        loading = true;
+        statusMessage = "Searching lyrics across providers...";
+        availableCandidates.clear();
+        selectedCandidateIndex = -1;
+
+        new Thread(() -> {
+            String cleanTrack = cleanTitle(track);
+            String cleanArtist = cleanTitle(artist);
+
+            // Fetch Artwork via iTunes Search
+            fetchArtwork(cleanTrack, cleanArtist);
+
+            List<LyricCandidate> candidates = new ArrayList<>();
+
+            // 1. Paxsenix (Apple Music Syllable Sync)
+            try {
+                fetchPaxsenixCandidates(cleanTrack, cleanArtist, candidates);
+            } catch (Throwable ignored) {}
+
+            // 2. LRCLIB Search (Returns list of candidates)
+            try {
+                fetchLrcLibCandidates(cleanTrack, cleanArtist, candidates);
+            } catch (Throwable ignored) {}
+
+            // 3. Kugou Lyrics Search
+            try {
+                fetchKugouCandidates(cleanTrack, cleanArtist, candidates);
+            } catch (Throwable ignored) {}
+
+            // 4. Unison & YouLyPlus
+            try {
+                fetchUnisonCandidates(cleanTrack, cleanArtist, candidates);
+            } catch (Throwable ignored) {}
+            try {
+                fetchYouLyPlusCandidates(cleanTrack, cleanArtist, candidates);
+            } catch (Throwable ignored) {}
+
+            // Deduplicate and rank candidates
+            List<LyricCandidate> unique = new ArrayList<>();
+            Set<String> seenPreviews = new HashSet<>();
+            for (LyricCandidate c : candidates) {
+                String key = (c.provider() + ":" + c.preview().replaceAll("\\s+", "").toLowerCase(Locale.ROOT));
+                if (!seenPreviews.contains(key)) {
+                    seenPreviews.add(key);
+                    unique.add(c);
+                }
+            }
+
+            // Sort: Word-Synced first, then Line-Synced, then Plain
+            unique.sort((a, b) -> {
+                int scoreA = a.syncType().contains("Word") ? 3 : (a.syncType().contains("Line") ? 2 : 1);
+                int scoreB = b.syncType().contains("Word") ? 3 : (b.syncType().contains("Line") ? 2 : 1);
+                return Integer.compare(scoreB, scoreA);
+            });
+
+            availableCandidates.clear();
+            availableCandidates.addAll(unique);
+
+            if (!availableCandidates.isEmpty()) {
+                CACHE.put(cacheKey, new ArrayList<>(availableCandidates));
+                applyCandidate(availableCandidates.get(0));
+            } else {
+                currentLines.clear();
+                loading = false;
+                synced = false;
+                statusMessage = "No lyrics found for " + cleanTrack;
+                lastRawLyrics = "No lyrics found across providers.";
+            }
+        }, "Bombo-LyricsFetcher").start();
+    }
+
+    private static void fetchArtwork(String cleanTrack, String cleanArtist) {
         try {
             String query = (cleanTrack + " " + cleanArtist).trim();
-            String url = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
+            String itunesUrl = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
                     + "&entity=song&limit=1";
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(URI.create(itunesUrl))
                     .header("User-Agent", "Mozilla/5.0")
                     .timeout(Duration.ofSeconds(4))
                     .GET()
                     .build();
             HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
             if (resp.statusCode() == 200) {
-                JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
-                if (json.has("results") && json.getAsJsonArray("results").size() > 0) {
-                    JsonObject first = json.getAsJsonArray("results").get(0).getAsJsonObject();
-                    if (first.has("artworkUrl100")) {
-                        String artUrl = first.get("artworkUrl100").getAsString();
-                        // Request higher resolution 256x256
-                        artUrl = artUrl.replace("100x100bb", "256x256bb");
-                        downloadAndRegisterAlbumArt(artUrl);
+                JsonObject itunesJson = JsonParser.parseString(resp.body()).getAsJsonObject();
+                if (itunesJson.has("results") && itunesJson.getAsJsonArray("results").size() > 0) {
+                    JsonObject songObj = itunesJson.getAsJsonArray("results").get(0).getAsJsonObject();
+                    if (songObj.has("artworkUrl100")) {
+                        downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"));
                     }
                 }
             }
@@ -270,18 +366,15 @@ public class LyricsManager {
                                 mc.getTextureManager().register(id, dynTex);
                                 albumArtTexture = id;
                             }
-                        } catch (Throwable t) {
-                            System.err.println("[BomboAddons] Failed to register album artwork: " + t.getMessage());
-                        }
+                        } catch (Throwable ignored) {}
                     });
                 }
             }
         } catch (Throwable ignored) {}
     }
 
-    private static boolean fetchPaxsenix(String cleanTrack, String cleanArtist, String cacheKey) {
+    private static void fetchPaxsenixCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
         try {
-            // First find Apple Music trackId using iTunes search
             String query = (cleanTrack + " " + cleanArtist).trim();
             String itunesUrl = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
                     + "&entity=song&limit=1";
@@ -292,20 +385,14 @@ public class LyricsManager {
                     .GET()
                     .build();
             HttpResponse<String> itunesResp = HTTP_CLIENT.send(itunesReq, HttpResponse.BodyHandlers.ofString());
-            if (itunesResp.statusCode() != 200) return false;
+            if (itunesResp.statusCode() != 200) return;
 
             JsonObject itunesJson = JsonParser.parseString(itunesResp.body()).getAsJsonObject();
-            if (!itunesJson.has("results") || itunesJson.getAsJsonArray("results").size() == 0) {
-                return false;
-            }
+            if (!itunesJson.has("results") || itunesJson.getAsJsonArray("results").size() == 0) return;
 
             JsonObject songObj = itunesJson.getAsJsonArray("results").get(0).getAsJsonObject();
             long trackId = songObj.get("trackId").getAsLong();
-            if (songObj.has("artworkUrl100")) {
-                downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"));
-            }
 
-            // Query Paxsenix Apple Music API
             String lyricsUrl = "https://lyrics.paxsenix.org/apple-music/lyrics?id=" + trackId;
             HttpRequest lyricsReq = HttpRequest.newBuilder()
                     .uri(URI.create(lyricsUrl))
@@ -314,10 +401,10 @@ public class LyricsManager {
                     .GET()
                     .build();
             HttpResponse<String> lyricsResp = HTTP_CLIENT.send(lyricsReq, HttpResponse.BodyHandlers.ofString());
-            if (lyricsResp.statusCode() != 200) return false;
+            if (lyricsResp.statusCode() != 200) return;
 
-            lastRawLyrics = lyricsResp.body();
-            JsonObject root = JsonParser.parseString(lyricsResp.body()).getAsJsonObject();
+            String body = lyricsResp.body();
+            JsonObject root = JsonParser.parseString(body).getAsJsonObject();
 
             if (root.has("content") && root.get("content").isJsonArray()) {
                 JsonArray contentArr = root.getAsJsonArray("content");
@@ -329,17 +416,15 @@ public class LyricsManager {
 
                     long startMs = item.has("timestamp") ? item.get("timestamp").getAsLong() : 0L;
                     long endMs = item.has("endtime") ? item.get("endtime").getAsLong() : startMs + 4000L;
-                    boolean isBg = item.has("background") && item.get("background").getAsBoolean();
 
-                    // Parse syllable words
                     List<WordTime> words = new ArrayList<>();
                     StringBuilder fullText = new StringBuilder();
 
                     if (item.has("text") && item.get("text").isJsonArray()) {
                         JsonArray textArr = item.getAsJsonArray("text");
-                        StringBuilder currentWord = new StringBuilder();
-                        Long currentWordStart = null;
-                        Long currentWordEnd = null;
+                        StringBuilder curWord = new StringBuilder();
+                        Long wStart = null;
+                        Long wEnd = null;
 
                         for (JsonElement tel : textArr) {
                             if (!tel.isJsonObject()) continue;
@@ -349,47 +434,41 @@ public class LyricsManager {
                             long sylEnd = tok.has("endtime") ? tok.get("endtime").getAsLong() : endMs;
                             boolean part = tok.has("part") && tok.get("part").getAsBoolean();
 
-                            if (currentWordStart == null) currentWordStart = sylStart;
-                            currentWordEnd = sylEnd;
-                            currentWord.append(syllable);
+                            if (wStart == null) wStart = sylStart;
+                            wEnd = sylEnd;
+                            curWord.append(syllable);
 
                             if (!part) {
-                                String wStr = currentWord.toString().trim();
+                                String wStr = curWord.toString().trim();
                                 if (!wStr.isEmpty()) {
-                                    words.add(new WordTime(wStr, currentWordStart, currentWordEnd));
+                                    words.add(new WordTime(wStr, wStart, wEnd));
                                     if (fullText.length() > 0) fullText.append(" ");
                                     fullText.append(wStr);
                                 }
-                                currentWord.setLength(0);
-                                currentWordStart = null;
+                                curWord.setLength(0);
+                                wStart = null;
                             }
                         }
-
-                        // Flush trailing word if any
-                        if (currentWord.length() > 0) {
-                            String wStr = currentWord.toString().trim();
+                        if (curWord.length() > 0) {
+                            String wStr = curWord.toString().trim();
                             if (!wStr.isEmpty()) {
-                                words.add(new WordTime(wStr, currentWordStart != null ? currentWordStart : startMs, currentWordEnd != null ? currentWordEnd : endMs));
+                                words.add(new WordTime(wStr, wStart != null ? wStart : startMs, wEnd != null ? wEnd : endMs));
                                 if (fullText.length() > 0) fullText.append(" ");
                                 fullText.append(wStr);
                             }
                         }
                     }
 
-                    // Background text parsing
                     String bgText = null;
                     if (item.has("backgroundText") && item.get("backgroundText").isJsonArray()) {
-                        JsonArray bgArr = item.getAsJsonArray("backgroundText");
                         StringBuilder bgSb = new StringBuilder();
-                        for (JsonElement bgEl : bgArr) {
+                        for (JsonElement bgEl : item.getAsJsonArray("backgroundText")) {
                             if (bgEl.isJsonObject() && bgEl.getAsJsonObject().has("text")) {
                                 if (bgSb.length() > 0) bgSb.append(" ");
                                 bgSb.append(bgEl.getAsJsonObject().get("text").getAsString().trim());
                             }
                         }
-                        if (bgSb.length() > 0) {
-                            bgText = "(" + bgSb.toString() + ")";
-                        }
+                        if (bgSb.length() > 0) bgText = "(" + bgSb.toString() + ")";
                     }
 
                     String finalLineText = fullText.toString();
@@ -404,68 +483,38 @@ public class LyricsManager {
 
                 if (!lines.isEmpty()) {
                     lines.sort(Comparator.comparingLong(LyricsLine::startMs));
-                    synchronized (LyricsManager.class) {
-                        currentLines.clear();
-                        currentLines.addAll(lines);
-                        loading = false;
-                        synced = true;
-                        CACHE.put(cacheKey, new ArrayList<>(lines));
-                        statusMessage = "Word-Synced Lyrics (PAXSENIX)";
-                    }
-                    return true;
+                    String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                    out.add(new LyricCandidate(
+                            "paxsenix-" + trackId,
+                            "Paxsenix",
+                            "Word-Synced",
+                            preview,
+                            body,
+                            lines
+                    ));
                 }
             }
 
-            // Fallback to LRC format in Paxsenix
             if (root.has("lrc") && !root.get("lrc").isJsonNull()) {
-                parseAndApplyLyrics(root.toString(), cacheKey, "PAXSENIX");
-                return true;
+                String lrc = root.get("lrc").getAsString();
+                List<LyricsLine> lines = parseLrc(lrc);
+                if (!lines.isEmpty()) {
+                    boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                    String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                    out.add(new LyricCandidate(
+                            "paxsenix-lrc-" + trackId,
+                            "Paxsenix",
+                            hasWords ? "Word-Synced" : "Line-Synced",
+                            preview,
+                            lrc,
+                            lines
+                    ));
+                }
             }
         } catch (Throwable ignored) {}
-        return false;
     }
 
-    private static boolean fetchUnison(String cleanTrack, String cleanArtist, String cacheKey) {
-        try {
-            String url = "https://unison.boidu.dev/lyrics?song="
-                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
-                    + "&artist=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("User-Agent", "ViviMusic/1.0")
-                    .timeout(Duration.ofSeconds(4))
-                    .GET()
-                    .build();
-            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
-            if (resp.statusCode() == 200) {
-                parseAndApplyLyrics(resp.body(), cacheKey, "UNISON");
-                return true;
-            }
-        } catch (Throwable ignored) {}
-        return false;
-    }
-
-    private static boolean fetchYouLyPlus(String cleanTrack, String cleanArtist, String cacheKey) {
-        try {
-            String url = "https://lyricsplus.binimum.org/v2/lyrics/get?title="
-                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
-                    + "&artist=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("User-Agent", "ViviMusic/1.0")
-                    .timeout(Duration.ofSeconds(4))
-                    .GET()
-                    .build();
-            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
-            if (resp.statusCode() == 200) {
-                parseAndApplyLyrics(resp.body(), cacheKey, "YOULYPLUS");
-                return true;
-            }
-        } catch (Throwable ignored) {}
-        return false;
-    }
-
-    private static boolean fetchLrcLib(String cleanTrack, String cleanArtist, String cacheKey) {
+    private static void fetchLrcLibCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
         try {
             String searchUrl = "https://lrclib.net/api/search?q="
                     + URLEncoder.encode(cleanTrack + " " + cleanArtist, StandardCharsets.UTF_8);
@@ -480,156 +529,157 @@ public class LyricsManager {
             HttpResponse<String> searchResp = HTTP_CLIENT.send(searchReq, HttpResponse.BodyHandlers.ofString());
             if (searchResp.statusCode() == 200) {
                 JsonElement elem = JsonParser.parseString(searchResp.body());
-                if (elem.isJsonArray() && elem.getAsJsonArray().size() > 0) {
-                    JsonArray arr = elem.getAsJsonArray();
-                    JsonObject bestCandidate = null;
-                    int bestScore = -1;
-
-                    // Prioritize candidates: Word-for-Word (<mm:ss.xx>) > Line-Synced (syncedLyrics) > Plain
-                    for (JsonElement itemEl : arr) {
+                if (elem.isJsonArray()) {
+                    for (JsonElement itemEl : elem.getAsJsonArray()) {
                         if (!itemEl.isJsonObject()) continue;
-                        JsonObject candidate = itemEl.getAsJsonObject();
-                        String syncedLrc = candidate.has("syncedLyrics") && !candidate.get("syncedLyrics").isJsonNull()
-                                ? candidate.get("syncedLyrics").getAsString() : "";
-                        String plain = candidate.has("plainLyrics") && !candidate.get("plainLyrics").isJsonNull()
-                                ? candidate.get("plainLyrics").getAsString() : "";
+                        JsonObject obj = itemEl.getAsJsonObject();
+                        long id = obj.has("id") ? obj.get("id").getAsLong() : System.currentTimeMillis();
 
-                        int score = 0;
-                        if (!syncedLrc.isEmpty()) {
-                            if (WORD_PATTERN.matcher(syncedLrc).find()) {
-                                score = 3; // Word-level synchronized
-                            } else {
-                                score = 2; // Line-level synchronized
+                        String synced = obj.has("syncedLyrics") && !obj.get("syncedLyrics").isJsonNull()
+                                ? obj.get("syncedLyrics").getAsString() : "";
+                        String plain = obj.has("plainLyrics") && !obj.get("plainLyrics").isJsonNull()
+                                ? obj.get("plainLyrics").getAsString() : "";
+
+                        if (!synced.isEmpty()) {
+                            List<LyricsLine> lines = parseLrc(synced);
+                            if (!lines.isEmpty()) {
+                                boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                                String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                                out.add(new LyricCandidate(
+                                        "lrclib-" + id,
+                                        "LrcLib",
+                                        hasWords ? "Word-Synced" : "Line-Synced",
+                                        preview,
+                                        synced,
+                                        lines
+                                ));
                             }
                         } else if (!plain.isEmpty()) {
-                            score = 1; // Plain text
+                            List<LyricsLine> lines = new ArrayList<>();
+                            long t = 0L;
+                            for (String l : plain.split("\r?\n")) {
+                                String cl = l.trim();
+                                if (!cl.isEmpty()) {
+                                    lines.add(new LyricsLine(t, t + 3000L, cl, null, null));
+                                    t += 3000L;
+                                }
+                            }
+                            if (!lines.isEmpty()) {
+                                String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                                out.add(new LyricCandidate(
+                                        "lrclib-plain-" + id,
+                                        "LrcLib",
+                                        "Plain",
+                                        preview,
+                                        plain,
+                                        lines
+                                ));
+                            }
                         }
-
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestCandidate = candidate;
-                            if (score == 3) break; // Maximum priority found!
-                        }
-                    }
-
-                    if (bestCandidate != null) {
-                        parseAndApplyLyrics(bestCandidate.toString(), cacheKey, "LRCLIB");
-                        return true;
                     }
                 }
             }
+        } catch (Throwable ignored) {}
+    }
 
-            // Fallback direct get
-            String url = "https://lrclib.net/api/get?track_name="
-                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
-                    + "&artist_name=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
+    private static void fetchKugouCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
+        try {
+            String query = (cleanTrack + " " + cleanArtist).trim();
+            String searchUrl = "http://lyrics.kugou.com/search?ver=1&man=yes&client=pc&keyword="
+                    + URLEncoder.encode(query, StandardCharsets.UTF_8);
 
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("User-Agent", "BomboAddons/1.0 (https://github.com/fran939/bombofabric)")
-                    .timeout(Duration.ofSeconds(5))
+                    .uri(URI.create(searchUrl))
+                    .header("User-Agent", "Mozilla/5.0")
+                    .timeout(Duration.ofSeconds(4))
                     .GET()
                     .build();
 
             HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
             if (resp.statusCode() == 200) {
-                parseAndApplyLyrics(resp.body(), cacheKey, "LRCLIB");
-                return true;
-            }
+                JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
+                if (root.has("candidates") && root.get("candidates").isJsonArray()) {
+                    JsonArray arr = root.getAsJsonArray("candidates");
+                    for (int i = 0; i < Math.min(3, arr.size()); i++) {
+                        JsonObject cand = arr.get(i).getAsJsonObject();
+                        String id = cand.get("id").getAsString();
+                        String accesskey = cand.get("accesskey").getAsString();
 
-            synchronized (LyricsManager.class) {
-                currentLines.clear();
-                loading = false;
-                synced = false;
-                statusMessage = "No lyrics found for " + cleanTrack;
-                lastRawLyrics = "No lyrics found on LRCLIB.";
-            }
-            return false;
-        } catch (Throwable t) {
-            return false;
-        }
-    }
-
-    private static void parseAndApplyLyrics(String jsonStr, String cacheKey, String providerName) {
-        try {
-            lastRawLyrics = jsonStr;
-            JsonObject obj = JsonParser.parseString(jsonStr).getAsJsonObject();
-            boolean isInstrumental = obj.has("instrumental") && obj.get("instrumental").getAsBoolean();
-            if (isInstrumental) {
-                synchronized (LyricsManager.class) {
-                    currentLines.clear();
-                    loading = false;
-                    synced = false;
-                    statusMessage = "Instrumental Track (" + providerName + ")";
-                    lastRawLyrics = "Instrumental Track";
-                }
-                return;
-            }
-
-            String syncedLyrics = obj.has("syncedLyrics") && !obj.get("syncedLyrics").isJsonNull()
-                    ? obj.get("syncedLyrics").getAsString() : "";
-            String plainLyrics = obj.has("plainLyrics") && !obj.get("plainLyrics").isJsonNull()
-                    ? obj.get("plainLyrics").getAsString() : "";
-
-            if (syncedLyrics.isEmpty() && obj.has("lrc") && !obj.get("lrc").isJsonNull()) {
-                syncedLyrics = obj.get("lrc").getAsString();
-            }
-
-            List<LyricsLine> parsed = new ArrayList<>();
-
-            if (!syncedLyrics.isEmpty()) {
-                lastRawLyrics = syncedLyrics;
-                parsed = parseLrc(syncedLyrics);
-                synced = true;
-            } else if (!plainLyrics.isEmpty()) {
-                lastRawLyrics = plainLyrics;
-                String[] lines = plainLyrics.split("\r?\n");
-                long estimatedTime = 0L;
-                for (String l : lines) {
-                    String clean = l.trim();
-                    if (!clean.isEmpty()) {
-                        parsed.add(new LyricsLine(estimatedTime, estimatedTime + 3000L, clean, null, null));
-                        estimatedTime += 3000L;
+                        String dlUrl = "http://lyrics.kugou.com/download?ver=1&client=pc&id=" + id + "&accesskey=" + accesskey + "&fmt=lrc&charset=utf8";
+                        HttpRequest dlReq = HttpRequest.newBuilder().uri(URI.create(dlUrl)).timeout(Duration.ofSeconds(3)).GET().build();
+                        HttpResponse<String> dlResp = HTTP_CLIENT.send(dlReq, HttpResponse.BodyHandlers.ofString());
+                        if (dlResp.statusCode() == 200) {
+                            JsonObject dlObj = JsonParser.parseString(dlResp.body()).getAsJsonObject();
+                            if (dlObj.has("content")) {
+                                byte[] decoded = Base64.getDecoder().decode(dlObj.get("content").getAsString());
+                                String lrcText = new String(decoded, StandardCharsets.UTF_8);
+                                List<LyricsLine> lines = parseLrc(lrcText);
+                                if (!lines.isEmpty()) {
+                                    boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                                    String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                                    out.add(new LyricCandidate(
+                                            "kugou-" + id,
+                                            "Kugou",
+                                            hasWords ? "Word-Synced" : "Line-Synced",
+                                            preview,
+                                            lrcText,
+                                            lines
+                                    ));
+                                }
+                            }
+                        }
                     }
                 }
-                synced = false;
             }
+        } catch (Throwable ignored) {}
+    }
 
-            synchronized (LyricsManager.class) {
-                currentLines.clear();
-                currentLines.addAll(parsed);
-                loading = false;
-                if (!parsed.isEmpty()) {
-                    CACHE.put(cacheKey, new ArrayList<>(parsed));
-                    statusMessage = (synced ? "Synced Lyrics" : "Plain Lyrics") + " (" + providerName + ")";
-                } else {
-                    statusMessage = "No lyrics found (" + providerName + ")";
+    private static void fetchUnisonCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
+        try {
+            String url = "https://unison.boidu.dev/lyrics?song="
+                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
+                    + "&artist=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "ViviMusic/1.0").timeout(Duration.ofSeconds(4)).GET().build();
+            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200) {
+                List<LyricsLine> lines = parseLrc(resp.body());
+                if (!lines.isEmpty()) {
+                    boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                    String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                    out.add(new LyricCandidate("unison-" + System.currentTimeMillis(), "Unison", hasWords ? "Word-Synced" : "Line-Synced", preview, resp.body(), lines));
                 }
             }
-        } catch (Throwable t) {
-            synchronized (LyricsManager.class) {
-                loading = false;
-                statusMessage = "Parse error: " + t.getMessage();
+        } catch (Throwable ignored) {}
+    }
+
+    private static void fetchYouLyPlusCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
+        try {
+            String url = "https://lyricsplus.binimum.org/v2/lyrics/get?title="
+                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
+                    + "&artist=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "ViviMusic/1.0").timeout(Duration.ofSeconds(4)).GET().build();
+            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200) {
+                List<LyricsLine> lines = parseLrc(resp.body());
+                if (!lines.isEmpty()) {
+                    boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                    String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                    out.add(new LyricCandidate("youly-" + System.currentTimeMillis(), "YouLyPlus", hasWords ? "Word-Synced" : "Line-Synced", preview, resp.body(), lines));
+                }
             }
-        }
+        } catch (Throwable ignored) {}
     }
 
-    private static String cleanTitle(String s) {
-        if (s == null) return "";
-        return s.replaceAll("(?i)\\s*\\(feat\\..*?\\)", "")
-                .replaceAll("(?i)\\s*\\[official.*?\\]", "")
-                .replaceAll("(?i)\\s*- remastered.*", "")
-                .replaceAll("(?i)\\s*- remix.*", "")
-                .trim();
-    }
-
-    private static List<LyricsLine> parseLrc(String lrc) {
+    public static List<LyricsLine> parseLrc(String lrc) {
         List<LyricsLine> lines = new ArrayList<>();
-        String[] rawLines = lrc.split("\r?\n");
+        if (lrc == null || lrc.trim().isEmpty()) return lines;
+
+        // CRUCIAL: Split by lookahead for timestamps OR newlines to handle unformatted concatenated LRCs!
+        String[] rawLines = lrc.split("(?=\\[\\d{1,2}:\\d{2})|\\r?\\n");
 
         for (String raw : rawLines) {
             raw = raw.trim();
-            if (raw.isEmpty() || raw.startsWith("[offset:") || raw.startsWith("[ti:") || raw.startsWith("[ar:")) {
+            if (raw.isEmpty() || raw.startsWith("[offset:") || raw.startsWith("[ti:") || raw.startsWith("[ar:") || raw.startsWith("[al:")) {
                 continue;
             }
 
@@ -643,6 +693,8 @@ public class LyricsManager {
                 long startMs = (min * 60 + sec) * 1000 + ms;
 
                 String content = m.group(4).trim();
+                // Strip metadata tags like {agent:v1}
+                content = content.replaceAll("\\{[^}]+\\}", "").trim();
                 lines.add(new LyricsLine(startMs, startMs + 4000L, content, null, null));
             }
         }
@@ -656,7 +708,10 @@ public class LyricsManager {
             if (endMs <= cur.startMs) endMs = cur.startMs + 2000L;
 
             List<WordTime> words = parseRichSyncWords(cur.text, cur.startMs, endMs);
-            String cleanText = cur.text.replaceAll("<\\d{1,2}:\\d{2}\\.\\d{2,3}>", "").trim();
+            String cleanText = cur.text
+                    .replaceAll("<\\d{1,2}:\\d{2}\\.\\d{2,3}>", "")
+                    .replaceAll("<[^>]+>", "")
+                    .trim();
 
             if (words != null && !words.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
@@ -674,8 +729,10 @@ public class LyricsManager {
     }
 
     private static List<WordTime> parseRichSyncWords(String text, long lineStartMs, long lineEndMs) {
-        Matcher wm = WORD_PATTERN.matcher(text);
         List<WordTime> list = new ArrayList<>();
+
+        // Format 1: <00:11.586>Word
+        Matcher wm = WORD_PATTERN.matcher(text);
         while (wm.find()) {
             long min = Long.parseLong(wm.group(1));
             long sec = Long.parseLong(wm.group(2));
@@ -689,32 +746,43 @@ public class LyricsManager {
             }
         }
 
+        // Format 2: BetterLyrics / Musixmatch: <word:start:end|word:start:end>
         if (list.isEmpty()) {
-            return splitWordsEvenly(text, lineStartMs, lineEndMs);
+            Matcher bm = BETTER_WORD_PATTERN.matcher(text);
+            while (bm.find()) {
+                String word = bm.group(1).trim();
+                try {
+                    long wStart = (long) (Double.parseDouble(bm.group(2)) * 1000.0);
+                    long wEnd = (long) (Double.parseDouble(bm.group(3)) * 1000.0);
+                    if (!word.isEmpty()) {
+                        list.add(new WordTime(word, wStart, Math.max(wStart + 100L, wEnd)));
+                    }
+                } catch (Throwable ignored) {}
+            }
         }
 
+        // CRITICAL FIX: If there are NO real word-for-word tags, return NULL!
+        // Do NOT call splitWordsEvenly! This allows Spotify-style full line highlighting!
+        if (list.isEmpty()) {
+            return null;
+        }
+
+        // Calculate endMs for each word based on next word's startMs
         for (int i = 0; i < list.size(); i++) {
             WordTime wt = list.get(i);
             long nextStart = (i + 1 < list.size()) ? list.get(i + 1).startMs : lineEndMs;
-            list.set(i, new WordTime(wt.word, wt.startMs, Math.max(wt.startMs + 100L, nextStart)));
+            list.set(i, new WordTime(wt.word, wt.startMs, Math.max(wt.startMs + 50L, nextStart)));
         }
 
         return list;
     }
 
-    private static List<WordTime> splitWordsEvenly(String text, long startMs, long endMs) {
-        List<WordTime> words = new ArrayList<>();
-        String[] tokens = text.trim().split("\\s+");
-        if (tokens.length == 0 || tokens[0].isEmpty()) return words;
-
-        long duration = Math.max(100L, endMs - startMs);
-        long wordDuration = duration / tokens.length;
-
-        for (int i = 0; i < tokens.length; i++) {
-            long wStart = startMs + (i * wordDuration);
-            long wEnd = (i == tokens.length - 1) ? endMs : (wStart + wordDuration);
-            words.add(new WordTime(tokens[i], wStart, wEnd));
-        }
-        return words;
+    private static String cleanTitle(String s) {
+        if (s == null) return "";
+        return s.replaceAll("(?i)\\s*\\(feat\\..*?\\)", "")
+                .replaceAll("(?i)\\s*\\[official.*?\\]", "")
+                .replaceAll("(?i)\\s*- remastered.*", "")
+                .replaceAll("(?i)\\s*- remix.*", "")
+                .trim();
     }
 }

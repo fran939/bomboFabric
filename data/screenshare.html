@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bombo Screenshare - Live In-Game Streams</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0a0b0e;
+            --bg-surface: #12141a;
+            --bg-card: #181b24;
+            --border: #262b3a;
+            --border-hover: #3b4254;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #8b5cf6;
+            --cyan: #06b6d4;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, #06b6d4, #8b5cf6);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .live-count-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.825rem;
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            height: calc(100vh - 69px);
+            overflow: hidden;
+        }
+
+        /* Sidebar Streams List */
+        .sidebar {
+            width: 340px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem 0.85rem;
+            color: var(--text-main);
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            border-color: var(--cyan);
+        }
+
+        .streams-list {
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto;
+        }
+
+        .stream-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .stream-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+
+        .stream-card.active {
+            border-color: var(--cyan);
+            background: rgba(6, 182, 212, 0.08);
+            box-shadow: 0 0 16px rgba(6, 182, 212, 0.15);
+        }
+
+        .player-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: #2a2e3d;
+            image-rendering: pixelated;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stream-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .player-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stream-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .live-tag {
+            background: #ef4444;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 1px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        /* Stream Viewer Area */
+        .viewer-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #060709;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .viewer-header {
+            background: rgba(18, 20, 26, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .viewer-player-info {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+
+        .viewer-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-ctrl {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-ctrl:hover {
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        .viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #screenCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            text-align: center;
+            max-width: 460px;
+        }
+
+        .empty-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 16px rgba(139, 92, 246, 0.4));
+        }
+
+        .empty-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+
+        .code-pill {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.825rem;
+            color: var(--cyan);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="brand">
+            <span>⚡ Bombo</span>
+            <span class="brand-badge">SCREENSHARE</span>
+        </a>
+        <div class="live-count-badge" id="liveBadge">
+            <span class="pulse-dot"></span>
+            <span id="activeCountText">0 LIVE STREAMS</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Active Screenshares</div>
+                <input type="text" class="search-box" id="searchBox" placeholder="Filter players...">
+            </div>
+            <div class="streams-list" id="streamsList">
+                <!-- Dynamically populated -->
+            </div>
+        </aside>
+
+        <!-- Main Viewer -->
+        <main class="viewer-container">
+            <div class="viewer-header" id="viewerHeader" style="display: none;">
+                <div class="viewer-player-info">
+                    <img id="viewerAvatar" class="player-avatar" src="" alt="Avatar">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span id="viewerIgn" style="font-weight: 800; font-size: 1.1rem;">-</span>
+                            <span class="live-tag">● LIVE</span>
+                        </div>
+                        <div id="viewerStats" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                            FPS: -- • Latency: --
+                        </div>
+                    </div>
+                </div>
+                <div class="viewer-controls">
+                    <button class="btn-ctrl" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                    <button class="btn-ctrl" onclick="reloadStream()">↻ Refresh</button>
+                </div>
+            </div>
+
+            <div class="viewport" id="viewport">
+                <!-- Empty state placeholder -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">📺</div>
+                    <div class="empty-title">No Active Streams</div>
+                    <div class="empty-desc">
+                        Nobody is currently sharing their screen, or you haven't selected a stream.
+                        To screenshare in Minecraft, use <span class="code-pill">/ss &lt;player&gt;</span>.
+                    </div>
+                </div>
+
+                <img id="screenCanvas" src="" style="display: none;" alt="Screenshare Stream">
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentTarget = "";
+        let streamInterval = null;
+        let streams = [];
+        let lastFrameTimestamp = 0;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryUser = urlParams.get("user") || urlParams.get("ign");
+
+        async function fetchStreams() {
+            try {
+                const res = await fetch("/api/screenshare/list");
+                if (res.ok) {
+                    const data = await res.json();
+                    streams = data.streams || [];
+                    renderStreamsList();
+
+                    // If URL specified user and not active, auto select
+                    if (queryUser && !currentTarget) {
+                        const found = streams.find(s => s.user.toLowerCase() === queryUser.toLowerCase());
+                        if (found) {
+                            selectUser(found.user);
+                        } else {
+                            // Select anyway so it waits for their stream
+                            selectUser(queryUser);
+                        }
+                    } else if (streams.length > 0 && !currentTarget) {
+                        selectUser(streams[0].user);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch streams:", err);
+            }
+        }
+
+        function renderStreamsList() {
+            const listEl = document.getElementById("streamsList");
+            const countText = document.getElementById("activeCountText");
+            const filter = document.getElementById("searchBox").value.toLowerCase();
+
+            countText.textContent = `${streams.length} LIVE STREAM${streams.length === 1 ? '' : 'S'}`;
+
+            const filtered = streams.filter(s => s.user.toLowerCase().includes(filter));
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div style="text-align: center; padding: 2rem; color: #6b7280; font-size: 0.85rem;">No streamers found</div>`;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(s => {
+                const isActive = s.user.toLowerCase() === currentTarget.toLowerCase();
+                return `
+                    <div class="stream-card ${isActive ? 'active' : ''}" onclick="selectUser('${s.user}')">
+                        <img class="player-avatar" src="https://mc-heads.net/avatar/${encodeURIComponent(s.user)}/64" alt="${s.user}">
+                        <div class="stream-info">
+                            <div class="player-name">${s.user}</div>
+                            <div class="stream-meta">
+                                <span class="live-tag">LIVE</span>
+                                <span>${s.fps || 10} FPS</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function selectUser(user) {
+            currentTarget = user;
+            renderStreamsList();
+
+            const viewerHeader = document.getElementById("viewerHeader");
+            const emptyState = document.getElementById("emptyState");
+            const screenCanvas = document.getElementById("screenCanvas");
+            const viewerIgn = document.getElementById("viewerIgn");
+            const viewerAvatar = document.getElementById("viewerAvatar");
+
+            viewerHeader.style.display = "flex";
+            emptyState.style.display = "none";
+            screenCanvas.style.display = "block";
+
+            viewerIgn.textContent = user;
+            viewerAvatar.src = `https://mc-heads.net/avatar/${encodeURIComponent(user)}/64`;
+
+            // Start polling frames
+            if (streamInterval) clearInterval(streamInterval);
+            pollFrame();
+            streamInterval = setInterval(pollFrame, 100); // 10 FPS
+        }
+
+        function pollFrame() {
+            if (!currentTarget) return;
+            const screenCanvas = document.getElementById("screenCanvas");
+            const stats = document.getElementById("viewerStats");
+            const t0 = performance.now();
+
+            const img = new Image();
+            img.onload = () => {
+                screenCanvas.src = img.src;
+                const dt = Math.round(performance.now() - t0);
+                stats.textContent = `Live Stream • Latency: ${dt}ms`;
+            };
+            img.src = `/api/screenshare/frame/${encodeURIComponent(currentTarget)}?t=${Date.now()}`;
+        }
+
+        function reloadStream() {
+            pollFrame();
+        }
+
+        function toggleFullscreen() {
+            const el = document.getElementById("viewport");
+            if (!document.fullscreenElement) {
+                el.requestFullscreen().catch(err => alert(err.message));
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        document.getElementById("searchBox").addEventListener("input", renderStreamsList);
+
+        fetchStreams();
+        setInterval(fetchStreams, 3000);
+    </script>
+</body>
+</html>

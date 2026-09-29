@@ -1,5 +1,25 @@
 # BomboAddons Changelog
 
+## [26.2.28.56] - 2026-09-29 (Beta)
+
+### Live Screenshare Streaming & Web Dashboard
+- **Web Screenshare Dashboard (`https://bombo.dpdns.org/screenshare`):** Built a high-performance web dashboard displaying all active in-game streamers with their Minecraft heads/skins, live FPS/latency statistics, stream resolution, and an HD stream viewer with fullscreen mode. Supports auto-selecting streamers via URL parameter (e.g. `?user=<ign>`).
+- **Live Frame Streaming (`ScreenshareManager`):** In-game clients now stream compressed JPEG video frames (~8-10 FPS, 640x360) directly to the server API (`/api/screenshare/frame`) whenever screensharing is active or accepted, bypassing render-distance limitations.
+- **Clickable Chat Stream Links:** When accepting or starting a screenshare (`/ss <player>`), chat outputs an interactive, clickable link to watch live on the web (`https://bombo.dpdns.org/screenshare?user=<target>`). If the spectated player is outside local chunk render distance, spectator camera cleanly redirects you to the web live stream.
+- **Manual Streaming Commands:** Added `/ss stream` / `/ss share` to start sharing screen anytime, and `/ss stop` to stop streaming.
+
+### Synchronized Lyrics Overhaul (`/b lyrics` & `/lyrics`)
+- **Interactive Delay Slider & Custom Number Typing:** Replaced the step buttons with an interactive draggable delay slider (`-5000ms` to `+5000ms`) and a click-to-type number box where users can type any exact millisecond offset (e.g. `-250`, `1200`) and hit Enter to set. Includes a quick `[↺]` reset button.
+- **Unformatted & Concatenated LRC Splitting:** Enhanced LRC parser with regex lookahead `(?=\\[\\d{1,2}:\\d{2})|\\r?\\n` to separate lines even when returned as a single unformatted line without newlines.
+- **Word-for-Word Syllable Sync:** Supports both `<mm:ss.xxx>word` format and `<word:start:end>` (BetterLyrics / Musixmatch) formats with exact word boundaries.
+- **Spotify-Style Full Line Highlights:** For songs without word-by-word timestamps, the active line is highlighted in bold bright white with a background pill (exactly like Spotify), eliminating fake word-by-word jumping.
+- **Custom Lyrics Editor:** In the `[Raw / Edit]` modal, users can switch to Edit Custom mode to type or paste custom lyrics from clipboard, and click `[Apply Lyrics]` to immediately activate them.
+- **Vivi Music Candidate Selector Modal:** Added a multi-candidate selection modal displaying all lyric versions collected across **PAXSENIX**, **LRCLIB**, **BETTERLYRICS**, **KUGOU**, **UNISON**, and **YOULYPLUS**, showing preview snippets, provider badges, and sync tags (`[Word-Synced]`, `[Line-Synced]`, `[Plain]`).
+
+### Discord Desktop IPC Voice HUD
+- **Authorization Flow & Voice Polling:** Added automatic `AUTHORIZE` approval handling for Discord Desktop IPC voice scopes (`rpc.voice.read`), and added a 4-second background poll so joining Discord voice channels after launching Minecraft automatically syncs the HUD without reconnecting.
+- **Force Sync Command:** Added `/b discord sync` / `/ss discord sync` to trigger an instant re-query of the active voice channel.
+
 ## [26.2.28.55] - 2026-09-28 (Beta)
 
 ### Screensharing & Social

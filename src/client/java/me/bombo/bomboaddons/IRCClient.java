@@ -863,6 +863,8 @@ public class IRCClient {
 
                   if (autoAccept) {
                      sendRaw("PRIVMSG #bomboaddons_chat :[SS_ACCEPT]\u0002" + sender.toLowerCase() + "\u0002" + responseIgn);
+                     activeScreenshareWith = sender;
+                     me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming(sender);
                      mc.execute(() -> {
                         if (mc.player != null) {
                            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aAuto-accepted screenshare request from §e" + sender + " §a(whitelisted)."));
@@ -923,6 +925,15 @@ public class IRCClient {
                   mc.execute(() -> {
                      if (mc.player != null) {
                         mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §a§lScreenshare accepted! §aNow spectating §e" + sender + "§a."));
+                        net.minecraft.network.chat.MutableComponent linkMsg = Component.literal("§8[§3Bombo§8] §7Watch live on web: ");
+                        net.minecraft.network.chat.MutableComponent linkBtn = Component.literal("https://bombo.dpdns.org/screenshare?user=" + sender)
+                           .withStyle(style -> style
+                              .withColor(net.minecraft.ChatFormatting.AQUA)
+                              .withUnderlined(true)
+                              .withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(java.net.URI.create("https://bombo.dpdns.org/screenshare?user=" + sender)))
+                              .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§bClick to open screenshare in browser"))));
+                        linkMsg.append(linkBtn);
+                        mc.player.sendSystemMessage(linkMsg);
                      }
                      BomboaddonsClient.executeCamCommand(null, sender);
                   });
@@ -961,6 +972,7 @@ public class IRCClient {
                if ((!myIgn.isEmpty() && (myIgn.equalsIgnoreCase(target) || myIgn.equalsIgnoreCase(sender)))
                      || (!myUser.isEmpty() && (myUser.equalsIgnoreCase(target) || myUser.equalsIgnoreCase(sender)))) {
                   activeScreenshareWith = null;
+                  me.bombo.bomboaddons.features.screenshare.ScreenshareManager.stopStreaming();
                   mc.execute(() -> {
                      if (mc.getCameraEntity() != mc.player) {
                         mc.setCameraEntity(mc.player);

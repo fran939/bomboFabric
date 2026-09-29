@@ -1,5 +1,22 @@
 [
   {
+    "version": "26.2.28.56",
+    "date": "2026-09-29",
+    "changes": [
+      "Live Screenshare Web Dashboard (https://bombo.dpdns.org/screenshare): Live web dashboard showing active in-game streamers with Minecraft heads, resolution, FPS/latency, and HD video canvas",
+      "In-Game Frame Streaming (ScreenshareManager): Minecraft client streams compressed JPEG frames (~8-10 FPS) directly to the server API, enabling out-of-render-distance screensharing",
+      "Interactive Stream Links: Starting/accepting screenshare (/ss <player>) posts clickable web stream link in chat (https://bombo.dpdns.org/screenshare?user=<ign>), and spectator cam redirects to web if player is out of chunk distance",
+      "Manual Stream Commands: Added /ss stream and /ss share to broadcast live screen anytime, and /ss stop to end streaming",
+      "Interactive Delay Slider & Custom Typing: Replaced step buttons with interactive draggable slider (-5000ms to +5000ms) and click-to-type number box with [↺] reset",
+      "Unformatted & Concatenated LRC Splitting: Enhanced LRC parser with positive lookahead (?=\\[\\d{1,2}:\\d{2}) to cleanly separate packed lines without newlines",
+      "Word-for-Word Syllable Sync: Enhanced parser for both <mm:ss.xxx>word and <word:start:end> formats with exact word timestamps",
+      "Spotify-Style Full Line Highlights: Regular line-synced lyrics highlight the whole line in bold white (Spotify style) without fake word jumping",
+      "Custom Lyrics Editor: Edit Custom mode in [Raw / Edit] modal allows typing or pasting custom lyrics from clipboard with instant [Apply]",
+      "Vivi Music Multi-Candidate Modal: Candidate selector modal displaying all lyrics versions collected across Paxsenix, LrcLib, BetterLyrics, Kugou, Unison, and YouLyPlus with sync and provider badges",
+      "Discord IPC Voice Polling & Auth: Added automatic AUTHORIZE code acceptance and 4s background poll so joining voice channels syncs automatically without restarting"
+    ]
+  },
+  {
     "version": "26.2.28.55",
     "date": "2026-09-28",
     "changes": [

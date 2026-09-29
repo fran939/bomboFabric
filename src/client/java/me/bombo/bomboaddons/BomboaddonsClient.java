@@ -8093,7 +8093,13 @@ public class BomboaddonsClient implements ClientModInitializer {
          String target = args[1].trim();
          IRCClient.sendRaw("PRIVMSG #bomboaddons_chat :[SS_ACCEPT]\u0002" + target.toLowerCase() + "\u0002" + myIgn);
          IRCClient.activeScreenshareWith = target;
-         feedback.accept(Component.literal("§8[§3Bombo§8] §aAccepted screenshare request from §e" + target + "§a. They are now viewing your screen!"));
+         me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming(target);
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aAccepted screenshare request from §e" + target + "§a. Your screen is now live on §b§nhttps://bombo.dpdns.org/screenshare?user=" + myIgn));
+         return;
+      }
+
+      if (sub.equals("stream") || sub.equals("share") || sub.equals("start")) {
+         me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming("All");
          return;
       }
 
@@ -8109,6 +8115,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
 
       if (sub.equals("stop") || sub.equals("exit") || sub.equals("leave")) {
+         me.bombo.bomboaddons.features.screenshare.ScreenshareManager.stopStreaming();
          if (IRCClient.activeScreenshareWith != null) {
             IRCClient.sendRaw("PRIVMSG #bomboaddons_chat :[SS_STOP]\u0002" + IRCClient.activeScreenshareWith.toLowerCase() + "\u0002" + myIgn);
             IRCClient.activeScreenshareWith = null;
@@ -8242,6 +8249,18 @@ public class BomboaddonsClient implements ClientModInitializer {
          feedback.accept(Component.literal("§8[§3Bombo§8] §aSpectating §e" + target.getName().getString() + " §7(Press Shift to exit)"));
          return 1;
       } else {
+         if (targetName != null && !targetName.trim().isEmpty()) {
+            net.minecraft.network.chat.MutableComponent linkMsg = Component.literal("§8[§3Bombo§8] §e" + targetName + " §7is not in your chunk render distance.\n§7Watch their live screen here: ");
+            net.minecraft.network.chat.MutableComponent linkBtn = Component.literal("https://bombo.dpdns.org/screenshare?user=" + targetName)
+               .withStyle(style -> style
+                  .withColor(net.minecraft.ChatFormatting.AQUA)
+                  .withUnderlined(true)
+                  .withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(java.net.URI.create("https://bombo.dpdns.org/screenshare?user=" + targetName)))
+                  .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§bClick to open screenshare in browser"))));
+            linkMsg.append(linkBtn);
+            feedback.accept(linkMsg);
+            return 1;
+         }
          feedback.accept(Component.literal("§8[§3Bombo§8] §cNo valid entity found to spectate. Look at an entity or specify a name/type!"));
          return 0;
       }
