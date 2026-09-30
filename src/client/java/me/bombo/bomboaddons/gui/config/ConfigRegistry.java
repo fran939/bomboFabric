@@ -1012,6 +1012,72 @@ public class ConfigRegistry {
                     items.add(ConfigItem.toggle("  Remember Opened", "Re-opens your previously selected backpack when using /storage.", category, () -> s.storageOverlayRememberOpened, v -> s.storageOverlayRememberOpened = v));
                     items.add(ConfigItem.toggle("  Preserve Cursor Position", "Prevents the mouse cursor from resetting to screen center when switching between storages.", category, () -> s.storageOverlayDoNotResetCursor, v -> s.storageOverlayDoNotResetCursor = v));
                 }
+
+                items.add(ConfigItem.header("Diana Ritual & Lootshare Ready Alerts", category));
+                items.add(ConfigItem.toggle("Diana Lootshare Alerts", "Alerts when mythological ritual mobs have taken enough damage to qualify for lootshare.", category, () -> s.dianaLootshareEnabled, v -> s.dianaLootshareEnabled = v));
+                if (s.dianaLootshareEnabled) {
+                    items.add(ConfigItem.toggle("  Minos Inquisitor", "Track and alert for Minos Inquisitor.", category, () -> s.dianaLsInquisitor, v -> s.dianaLsInquisitor = v));
+                    items.add(ConfigItem.toggle("  Minos Champion", "Track and alert for Minos Champion.", category, () -> s.dianaLsChampion, v -> s.dianaLsChampion = v));
+                    items.add(ConfigItem.toggle("  Gaia Construct", "Track and alert for Gaia Construct.", category, () -> s.dianaLsGaia, v -> s.dianaLsGaia = v));
+                    items.add(ConfigItem.toggle("  Minotaur", "Track and alert for Minotaur.", category, () -> s.dianaLsMinotaur, v -> s.dianaLsMinotaur = v));
+                    items.add(ConfigItem.toggle("  Siamese Lynx", "Track and alert for Siamese Lynx.", category, () -> s.dianaLsSiamese, v -> s.dianaLsSiamese = v));
+                    items.add(ConfigItem.toggle("  Send Chat Message to Self", "Outputs a local confirmation message in chat when lootshare is ready.", category, () -> s.dianaLsUserMessage, v -> s.dianaLsUserMessage = v));
+                    if (s.dianaLsUserMessage) {
+                        items.add(ConfigItem.text("  User Message Format ({mob})", "Custom message text for lootshare ready alert.", category, () -> s.dianaLsUserMessageText != null ? s.dianaLsUserMessageText : "&8[&eDiana&8] &aLootshare ready on &6{mob}&a!", v -> s.dianaLsUserMessageText = v));
+                    }
+                    items.add(ConfigItem.toggle("  Execute Command on Ready", "Automatically runs a command (e.g. party chat) when lootshare is ready.", category, () -> s.dianaLsCommand, v -> s.dianaLsCommand = v));
+                    if (s.dianaLsCommand) {
+                        items.add(ConfigItem.text("  Command ({mob})", "Command to execute (e.g. pc Lootshare Ready on {mob}!).", category, () -> s.dianaLsCommandText != null ? s.dianaLsCommandText : "pc Lootshare Ready on {mob}!", v -> s.dianaLsCommandText = v));
+                    }
+                    items.add(ConfigItem.toggle("  Show Title Alert", "Displays large on-screen title text when lootshare is ready.", category, () -> s.dianaLsTitle, v -> s.dianaLsTitle = v));
+                    if (s.dianaLsTitle) {
+                        items.add(ConfigItem.text("  Title Text Format ({mob})", "Custom title text for lootshare ready alert.", category, () -> s.dianaLsTitleText != null ? s.dianaLsTitleText : "&e&lLOOTSHARE READY &7({mob})", v -> s.dianaLsTitleText = v));
+                    }
+                    items.add(ConfigItem.toggle("  Play Sound Alert", "Plays sound chime when Diana mob reaches lootshare ready threshold.", category, () -> s.dianaLsSound, v -> s.dianaLsSound = v));
+                }
+
+                items.add(ConfigItem.header("Item Tooltip Prices & Craft Costs", category));
+                items.add(ConfigItem.toggle("Lowest BIN Tooltip", "Shows real-time Lowest BIN price directly in item tooltips.", category, () -> s.lowestBin, v -> s.lowestBin = v));
+                items.add(ConfigItem.toggle("Raw Craft Cost Tooltip", "Calculates and displays raw bazaar/auction crafting cost in tooltips.", category, () -> s.craftCostTooltip, v -> s.craftCostTooltip = v));
+                items.add(ConfigItem.toggle("NPC Sell Price Tooltip", "Shows vanilla NPC shop sell value directly on item tooltips.", category, () -> s.npcPrice, v -> s.npcPrice = v));
+
+                items.add(ConfigItem.header("Dojo, Carnival & Quest Macros", category));
+                items.add(ConfigItem.toggle("Dojo Utilities", "Enables helper visual overlays and sound triggers for Dojo challenges.", category, () -> s.dojoUtilities, v -> s.dojoUtilities = v));
+                if (s.dojoUtilities) {
+                    items.add(ConfigItem.toggle("  Dojo Mastery Wool Helper", "Highlights mastery wool targets in Dojo challenges.", category, () -> s.dojoMasteryWool, v -> s.dojoMasteryWool = v));
+                    items.add(ConfigItem.toggle("  Dojo Next Wool Tracer", "Renders tracer lines to next wool targets in Dojo.", category, () -> s.dojoNextWoolTracer, v -> s.dojoNextWoolTracer = v));
+                    items.add(ConfigItem.toggle("  Dojo Shoot HUD", "Shows shooting challenge statistics overlay.", category, () -> s.dojoShootHud, v -> s.dojoShootHud = v));
+                    items.add(ConfigItem.toggle("  Dojo Shoot Sound", "Plays confirmation ding sound on shoot hits.", category, () -> s.dojoShootSound, v -> s.dojoShootSound = v));
+                }
+                items.add(ConfigItem.toggle("Sphinx Macro", "Automatically completes Grand Library Sphinx riddle questions.", category, () -> s.sphinxMacro, v -> s.sphinxMacro = v));
+                items.add(ConfigItem.toggle("Hollow Wand Fix", "Allows clicking through hollow wands to interact with blocks.", category, () -> s.hollowWandClickThrough, v -> s.hollowWandClickThrough = v));
+                items.add(ConfigItem.toggle("Hollow Wand Auto Combine", "Automatically combines hollow wands in inventory.", category, () -> s.hollowWandAutoCombine, v -> s.hollowWandAutoCombine = v));
+                items.add(ConfigItem.toggle("Lasso Fix", "Allows lasso clicking through bat hitboxes in Spooky Festival.", category, () -> s.lassoClickThroughBats, v -> s.lassoClickThroughBats = v));
+                items.add(ConfigItem.toggle("Auto Accept Carnival", "Automatically accepts Carnival mini-game prompts.", category, () -> s.autoAcceptCarnival, v -> s.autoAcceptCarnival = v));
+                items.add(ConfigItem.toggle("Auto Accept NPC Lore", "Automatically progresses past lore dialogue in NPC text menus.", category, () -> s.autoAcceptNpcLore, v -> s.autoAcceptNpcLore = v));
+                items.add(ConfigItem.toggle("Auto Accept Trevor", "Automatically starts next Trevor animal tracker hunting quest.", category, () -> s.autoTrevorQuest, v -> s.autoTrevorQuest = v));
+                items.add(ConfigItem.toggle("Daily Reward Helper", "Highlights or claims the daily reward token.", category, () -> s.dailyRewardHelper, v -> s.dailyRewardHelper = v));
+
+                items.add(ConfigItem.header("Camera & Visual Environment", category));
+                items.add(ConfigItem.toggle("Camera Settings Enabled", "Enables custom third-person camera controls.", category, () -> s.cameraSettingsEnabled, v -> s.cameraSettingsEnabled = v));
+                if (s.cameraSettingsEnabled) {
+                    items.add(ConfigItem.toggle("  Camera Pass Through Walls", "Allows third-person camera through solid blocks.", category, () -> s.cameraPassThroughWalls, v -> s.cameraPassThroughWalls = v));
+                    items.add(ConfigItem.toggle("  Disable Front Camera (F5)", "Disables front-facing third person camera perspective.", category, () -> s.disableFrontCamera, v -> s.disableFrontCamera = v));
+                }
+                items.add(ConfigItem.toggle("Custom Time Override", "Client-side sky and world time rendering override.", category, () -> s.customTimeEnabled, v -> s.customTimeEnabled = v));
+                if (s.customTimeEnabled) {
+                    items.add(ConfigItem.sliderInt("  Custom Time Hour", "Hour of day (0-23).", category, 0, 23, 1, "h", () -> s.customTimeHour, v -> s.customTimeHour = v));
+                }
+
+                items.add(ConfigItem.header("Frozen Blaze Armor AFK Warning", category));
+                items.add(ConfigItem.toggle("Frozen Blaze AFK Warning", "Warns when Blaze armor AFK aura timer is about to expire.", category, () -> s.frozenBlazeWarning, v -> s.frozenBlazeWarning = v));
+                if (s.frozenBlazeWarning) {
+                    items.add(ConfigItem.toggle("  Warning Sound Chime", "Plays chime sound alert.", category, () -> s.fbWarnSound, v -> s.fbWarnSound = v));
+                    items.add(ConfigItem.toggle("  Warning Title Alert", "Displays on-screen warning title.", category, () -> s.fbWarnTitle, v -> s.fbWarnTitle = v));
+                    items.add(ConfigItem.toggle("  Warning Chat Alert", "Sends alert message in chat.", category, () -> s.fbWarnChat, v -> s.fbWarnChat = v));
+                    items.add(ConfigItem.toggle("  AFK Timer On Screen", "Renders timer countdown on screen.", category, () -> s.fbWarnTimerOnScreen, v -> s.fbWarnTimerOnScreen = v));
+                    items.add(ConfigItem.toggle("  Require Fishing Rod", "Only alerts when holding a fishing rod.", category, () -> s.fbWarnRequireRod, v -> s.fbWarnRequireRod = v));
+                }
             }
 
             case "Ordered Waypoints" -> {

@@ -34,6 +34,8 @@ public class LyricsScreen extends Screen {
     private boolean showCandidatesModal = false;
     private boolean isEditingCustom = false;
     private String customLyricsBuffer = "";
+    private int customCursorPos = 0;
+    private boolean customSelectAll = false;
 
     private double rawScrollY = 0.0;
     private double candidatesScrollY = 0.0;
@@ -356,7 +358,7 @@ public class LyricsScreen extends Screen {
         int listW = modalW - 28;
         int listH = modalH - 48;
 
-        g.enableScissor(listX, listY, listW, listH);
+        g.enableScissor(listX, listY, listX + listW, listY + listH);
 
         List<LyricsManager.LyricCandidate> cands = LyricsManager.availableCandidates;
         int itemH = 50;
@@ -420,7 +422,7 @@ public class LyricsScreen extends Screen {
         g.outline(modalX, modalY, modalW, modalH, 0xFF00A4DC);
 
         // Header Title
-        String title = isEditingCustom ? "§e§lCustom Lyrics Editor" : "§b§lRaw Lyrics API Data (" + LyricsManager.getProvider() + ")";
+        String title = isEditingCustom ? "§e§lCustom Lyrics Editor §7(Ctrl+A/C/V/X supported)" : "§b§lRaw Lyrics API Data (" + LyricsManager.getProvider() + ")";
         g.text(font, title, modalX + 16, modalY + 14, 0xFF00E5FF, true);
 
         // Buttons in header: [Edit / View Mode] [Paste / Copy] [Apply] [✕]
@@ -457,21 +459,44 @@ public class LyricsScreen extends Screen {
         int areaH = modalH - 48;
 
         g.fill(areaX, areaY, areaX + areaW, areaY + areaH, 0x88120B17);
-        g.outline(areaX, areaY, areaW, areaH, 0x3300A4DC);
+        g.outline(areaX, areaY, areaW, areaH, isEditingCustom ? 0xFF00E5FF : 0x3300A4DC);
 
-        g.enableScissor(areaX, areaY, areaW, areaH);
+        g.enableScissor(areaX, areaY, areaX + areaW, areaY + areaH);
 
         String textToDraw = isEditingCustom ? customLyricsBuffer : LyricsManager.getRawLyrics();
-        String[] rawLines = textToDraw.split("(?=\\[\\d{1,2}:\\d{2})|\\r?\\n");
+        String[] rawLines = textToDraw.split("\r?\n", -1);
         int lineHeight = 13;
         int maxScroll = Math.max(0, rawLines.length * lineHeight - areaH);
         rawScrollY = Math.max(0, Math.min(rawScrollY, maxScroll));
 
         int drawY = areaY + 6 - (int) rawScrollY;
-        for (String line : rawLines) {
+        int currentBufferOffset = 0;
+        boolean blink = (System.currentTimeMillis() % 1000L) < 500L;
+
+        for (int lIdx = 0; lIdx < rawLines.length; lIdx++) {
+            String line = rawLines[lIdx];
+            int lineLen = line.length();
+
             if (drawY >= areaY - 14 && drawY <= areaY + areaH + 14) {
-                g.text(font, (isEditingCustom ? "§f" : "§7") + line, areaX + 8, drawY, 0xFFB8B2C4, false);
+                if (isEditingCustom && customSelectAll) {
+                    g.fill(areaX + 6, drawY - 1, areaX + 8 + font.width(line) + 2, drawY + lineHeight - 1, 0x5500A4DC);
+                }
+
+                g.text(font, (isEditingCustom ? "§f" : "§7") + line, areaX + 8, drawY, 0xFFFFFFFF, false);
+
+                // Draw blinking cursor if in this line
+                if (isEditingCustom && !customSelectAll) {
+                    int relPos = customCursorPos - currentBufferOffset;
+                    if (relPos >= 0 && relPos <= lineLen && (lIdx == rawLines.length - 1 || relPos < lineLen || customCursorPos == currentBufferOffset + lineLen)) {
+                        if (blink) {
+                            String sub = line.substring(0, Math.min(relPos, lineLen));
+                            int cursorX = areaX + 8 + font.width(sub);
+                            g.text(font, "§b|", cursorX - 1, drawY, 0xFF00E5FF, false);
+                        }
+                    }
+                }
             }
+            currentBufferOffset += lineLen + 1; // +1 for the newline
             drawY += lineHeight;
         }
 
@@ -597,8 +622,43 @@ public class LyricsScreen extends Screen {
                     if (mouseY >= modalY + 10 && mouseY <= modalY + 26 && mouseX >= editX && mouseX <= editX + this.font.width(editBtn)) {
                         isEditingCustom = true;
                         customLyricsBuffer = LyricsManager.getRawLyrics();
+                        customCursorPos = customLyricsBuffer.length();
+                        customSelectAll = false;
                         return true;
                     }
+                }
+
+                // Check click inside text editing area to position cursor
+                int areaX = modalX + 16;
+                int areaY = modalY + 36;
+                int areaW = modalW - 32;
+                int areaH = modalH - 48;
+                if (isEditingCustom && mouseX >= areaX && mouseX <= areaX + areaW && mouseY >= areaY && mouseY <= areaY + areaH) {
+                    customSelectAll = false;
+                    int clickLine = (int) ((mouseY - areaY - 6 + rawScrollY) / 13);
+                    String[] lines = customLyricsBuffer.split("\r?\n", -1);
+                    if (clickLine < 0) clickLine = 0;
+                    if (clickLine >= lines.length) clickLine = lines.length - 1;
+
+                    int newPos = 0;
+                    for (int i = 0; i < clickLine; i++) {
+                        newPos += lines[i].length() + 1;
+                    }
+
+                    String targetLine = lines[clickLine];
+                    int clickRelX = (int) (mouseX - areaX - 8);
+                    int col = 0;
+                    int bestDist = Math.abs(clickRelX);
+                    for (int c = 1; c <= targetLine.length(); c++) {
+                        int w = this.font.width(targetLine.substring(0, c));
+                        int dist = Math.abs(clickRelX - w);
+                        if (dist < bestDist) {
+                            bestDist = dist;
+                            col = c;
+                        }
+                    }
+                    customCursorPos = Math.min(customLyricsBuffer.length(), newPos + col);
+                    return true;
                 }
 
                 // Click outside modal
@@ -737,11 +797,29 @@ public class LyricsScreen extends Screen {
                 return true;
             }
         }
+
+        if (showRawModal && isEditingCustom) {
+            char c = (char) event.codepoint();
+            if (c >= 32 || c == '\t') {
+                if (customSelectAll) {
+                    customLyricsBuffer = String.valueOf(c);
+                    customCursorPos = 1;
+                    customSelectAll = false;
+                } else {
+                    customCursorPos = Math.max(0, Math.min(customCursorPos, customLyricsBuffer.length()));
+                    customLyricsBuffer = customLyricsBuffer.substring(0, customCursorPos) + c + customLyricsBuffer.substring(customCursorPos);
+                    customCursorPos++;
+                }
+                return true;
+            }
+        }
         return super.charTyped(event);
     }
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+
         if (isEditingOffsetBox) {
             if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
                 if (!offsetInputBuffer.isEmpty()) {
@@ -753,6 +831,92 @@ public class LyricsScreen extends Screen {
                 return true;
             } else if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
                 isEditingOffsetBox = false;
+                return true;
+            }
+        }
+
+        if (showRawModal && isEditingCustom) {
+            boolean isCtrl = event.hasControlDown() || (mc != null && mc.hasControlDown());
+
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_A) {
+                customSelectAll = true;
+                return true;
+            }
+
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_C) {
+                mc.keyboardHandler.setClipboard(customLyricsBuffer);
+                return true;
+            }
+
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_X) {
+                mc.keyboardHandler.setClipboard(customLyricsBuffer);
+                customLyricsBuffer = "";
+                customCursorPos = 0;
+                customSelectAll = false;
+                return true;
+            }
+
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_V) {
+                String cb = mc.keyboardHandler.getClipboard();
+                if (cb != null && !cb.isEmpty()) {
+                    if (customSelectAll) {
+                        customLyricsBuffer = cb;
+                        customCursorPos = cb.length();
+                        customSelectAll = false;
+                    } else {
+                        customCursorPos = Math.max(0, Math.min(customCursorPos, customLyricsBuffer.length()));
+                        customLyricsBuffer = customLyricsBuffer.substring(0, customCursorPos) + cb + customLyricsBuffer.substring(customCursorPos);
+                        customCursorPos += cb.length();
+                    }
+                }
+                return true;
+            }
+
+            if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
+                if (customSelectAll) {
+                    customLyricsBuffer = "";
+                    customCursorPos = 0;
+                    customSelectAll = false;
+                } else if (customCursorPos > 0 && !customLyricsBuffer.isEmpty()) {
+                    customLyricsBuffer = customLyricsBuffer.substring(0, customCursorPos - 1) + customLyricsBuffer.substring(customCursorPos);
+                    customCursorPos--;
+                }
+                return true;
+            }
+
+            if (event.key() == GLFW.GLFW_KEY_DELETE) {
+                if (customSelectAll) {
+                    customLyricsBuffer = "";
+                    customCursorPos = 0;
+                    customSelectAll = false;
+                } else if (customCursorPos < customLyricsBuffer.length()) {
+                    customLyricsBuffer = customLyricsBuffer.substring(0, customCursorPos) + customLyricsBuffer.substring(customCursorPos + 1);
+                }
+                return true;
+            }
+
+            if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
+                if (customSelectAll) {
+                    customLyricsBuffer = "\n";
+                    customCursorPos = 1;
+                    customSelectAll = false;
+                } else {
+                    customCursorPos = Math.max(0, Math.min(customCursorPos, customLyricsBuffer.length()));
+                    customLyricsBuffer = customLyricsBuffer.substring(0, customCursorPos) + "\n" + customLyricsBuffer.substring(customCursorPos);
+                    customCursorPos++;
+                }
+                return true;
+            }
+
+            if (event.key() == GLFW.GLFW_KEY_LEFT) {
+                customSelectAll = false;
+                if (customCursorPos > 0) customCursorPos--;
+                return true;
+            }
+
+            if (event.key() == GLFW.GLFW_KEY_RIGHT) {
+                customSelectAll = false;
+                if (customCursorPos < customLyricsBuffer.length()) customCursorPos++;
                 return true;
             }
         }

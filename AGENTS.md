@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.56` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.57` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.56`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.57`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.57 (Ready for In-Game Testing)
+>
+> 1. **High-Speed Screenshare Streaming (25-30 FPS MJPEG) & Telemetry (`https://bombo.dpdns.org/screenshare`):** Upgraded live capture loop to 25-30 FPS MJPEG streaming directly to `/api/screenshare/stream/:user` with ultra-low latency (<50ms). Added multi-monitor/virtual screen bounds clamping in `ScreenshareManager` preventing `IllegalArgumentException` and black screens. Added comprehensive `/ss debug` (and `/b ss debug`) reporting status, target, quality, rolling FPS, bitrate, and latency metrics. Silenced bridge mapping log spam on the server IRC bot.
+> 2. **Discord Desktop IPC Concurrency & Authorization Fixes:** Eliminated repeated "Visual Studio Code wants to access your Discord account" authorization modals with a single-session guard (`hasAuthorizedThisSession`). Added `PIPE_LOCK` synchronizing pipe reads and writes to eliminate pipe stalls. Registered full Brigadier command tree for `/b discord` with `debug`, `sync`, and `auth` subcommands. `/b discord debug` now dumps full diagnostics and the last 15 raw RPC packets.
+> 3. **Version Catalog GUI (`/b update versions`):** Built interactive `UpdateVersionsScreen` GUI listing all Minecraft 26.2 releases in descending order with `[CURRENT]`, `[FULL]`, and `[BETA]` badges. Features 1-click update/switch button with real-time download and installation feedback, and filter pills (All, Full Only, Betas Only). Added `Accept: application/json` headers and Minecraft version line filtering to prevent the updater from downloading releases for different Minecraft versions.
+> 4. **Lyrics Engine Polish & Custom Editor Hotkeys (`/b lyrics`):** Implemented full custom lyrics editor with cursor positioning, click-to-edit, text selection, and keyboard hotkeys (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Enter, Backspace, Delete). Fixed scissor clipping coordinate calculation bug `(x1, y1, x1+w, y1+h)` that was slicing provider badges in half in candidate modal and clipping text in raw modal. Enforced monotonic millisecond playback timer (`monotonicProgressMs`) querying `$tl.Position.TotalMilliseconds` at 250ms, resolving 4-second time jumps and stopping active line oscillation jitter. Fixed provider parsing so line-synced Paxsenix tracks are correctly badged as `[Line-Synced]`.
+> 5. **Restored Config Options & Error Tooltips:** Restored full Diana Lootshare alert suite (alerts, user chat, command, sound, title), Item Tooltip Prices (Lowest BIN, Craft Cost, NPC Price), Dojo utilities, Carnival, Sphinx macro, Hollow Wand, Lasso, Trevor, Daily Reward, Camera settings, and Frozen Blaze AFK warning to `/b` config. Added interactive hover tooltips explaining HTTP 429 rate limits, 401/403 auth errors, 500 server errors, and network diagnostics on playtime sync notifications.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.56 (Ready for In-Game Testing)
 >
 > 1. **Live Screenshare Streaming & Web Dashboard (`https://bombo.dpdns.org/screenshare`):** Built a high-performance web dashboard displaying all active in-game streamers with their Minecraft heads/skins, live FPS/latency statistics, stream resolution, and an HD stream viewer with fullscreen mode. Supports auto-selecting streamers via URL parameter (e.g. `?user=<ign>`).

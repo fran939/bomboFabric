@@ -1368,10 +1368,28 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }));
                   // /b ss - Screensharing & spectate command
                   builder.then(buildScreenshareCommand("ss"));
-                  builder.then(ClientCommands.literal("discord").executes((context) -> {
-                     me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
-                     return 1;
-                  }));
+                  builder.then(ClientCommands.literal("discord")
+                     .executes((context) -> {
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+                        return 1;
+                     })
+                     .then(ClientCommands.literal("debug").executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.dumpDebugInfo(src::sendFeedback);
+                        return 1;
+                     }))
+                     .then(ClientCommands.literal("sync").executes((context) -> {
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.forceSync();
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        src.sendFeedback(Component.literal("§8[§3Bombo§8] §aTriggered immediate Discord IPC voice channel sync."));
+                        return 1;
+                     }))
+                     .then(ClientCommands.literal("auth").executes((context) -> {
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.requestAuthorization();
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        src.sendFeedback(Component.literal("§8[§3Bombo§8] §aRequested Discord IPC authorization prompt."));
+                        return 1;
+                     })));
                   builder.then(ClientCommands.literal("lyrics").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
                      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
@@ -2072,11 +2090,26 @@ public class BomboaddonsClient implements ClientModInitializer {
                       ModUpdater.showChangelog();
                       return 1;
                    }));
+                   builder.then(ClientCommands.literal("versions").executes((context) -> {
+                      Minecraft mc = Minecraft.getInstance();
+                      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.UpdateVersionsScreen(mc.gui.screen())));
+                      return 1;
+                   }));
                    builder.then(ClientCommands.literal("update")
                       .executes((context) -> {
                          ModUpdater.checkAndUpdate(false);
                          return 1;
                       })
+                      .then(ClientCommands.literal("versions").executes((context) -> {
+                         Minecraft mc = Minecraft.getInstance();
+                         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.UpdateVersionsScreen(mc.gui.screen())));
+                         return 1;
+                      }))
+                      .then(ClientCommands.literal("version").executes((context) -> {
+                         Minecraft mc = Minecraft.getInstance();
+                         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.UpdateVersionsScreen(mc.gui.screen())));
+                         return 1;
+                      }))
                       .then(ClientCommands.literal("full").executes((context) -> {
                          ModUpdater.checkAndUpdate(false, false);
                          return 1;
@@ -2130,6 +2163,11 @@ public class BomboaddonsClient implements ClientModInitializer {
                                  + " §7(§b" + Constants.identityLine() + "§7)"));
                          return 1;
                       })
+                      .then(ClientCommands.literal("versions").executes((context) -> {
+                         Minecraft mc = Minecraft.getInstance();
+                         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.UpdateVersionsScreen(mc.gui.screen())));
+                         return 1;
+                      }))
                       .then(ClientCommands.literal("previous").executes((context) -> {
                          ModUpdater.installPreviousVersion();
                          return 1;
@@ -8039,6 +8077,10 @@ public class BomboaddonsClient implements ClientModInitializer {
             handleScreenshareCommand((FabricClientCommandSource) context.getSource(), new String[0]);
             return 1;
          })
+         .then(ClientCommands.literal("debug").executes(context -> {
+            handleScreenshareCommand((FabricClientCommandSource) context.getSource(), new String[]{"debug"});
+            return 1;
+         }))
          .then(ClientCommands.argument("action", StringArgumentType.word())
             .executes(context -> {
                String action = StringArgumentType.getString(context, "action");
@@ -8084,6 +8126,11 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
 
       String sub = args[0].toLowerCase(java.util.Locale.ROOT);
+
+      if (sub.equals("debug") || sub.equals("status") || sub.equals("info")) {
+         me.bombo.bomboaddons.features.screenshare.ScreenshareManager.dumpDebugInfo(feedback);
+         return;
+      }
 
       if (sub.equals("accept")) {
          if (args.length < 2) {

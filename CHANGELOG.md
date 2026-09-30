@@ -1,5 +1,35 @@
 # BomboAddons Changelog
 
+## [26.2.28.57] - 2026-09-30 (Beta)
+
+### High-Speed Screenshare Streaming (25-30 FPS MJPEG) & Diagnostics
+- **High-Speed MJPEG Stream:** Upgraded live capture loop to 25-30 FPS MJPEG streaming with ultra-low latency (<50ms) to `/api/screenshare/stream/:user` and updated web dashboard viewer.
+- **Multi-Monitor Display Clamping:** Added virtual screen bounds clamping in `ScreenshareManager` to prevent `IllegalArgumentException` and black screen captures on multi-monitor setups.
+- **Telemetry & `/ss debug` Command:** Added comprehensive `/ss debug` and `/b ss debug` diagnostic dumper reporting active streaming status, target, quality, rolling FPS, bitrate, latency, and frame counters.
+- **Bridge Chat Spam Eliminated:** Silenced bridge mapping log spam (`[Bridge Mapping] Registered: bomboclas -> IGN fran938`) on the IRC server bot.
+
+### Discord Desktop IPC Concurrency & Authorization Fixes
+- **Eliminated Repeated OAuth Authorization Prompt:** Added `hasAuthorizedThisSession` guard preventing repeated "Visual Studio Code wants to access your Discord account" permission popups.
+- **Named Pipe Concurrency (`PIPE_LOCK`):** Synchronized pipe read and write operations with `PIPE_LOCK`, eliminating pipe stalls and packet lockups.
+- **Brigadier Command Registration:** Registered `/b discord` along with `debug`, `sync`, and `auth` subcommands, resolving `Incorrect argument for command at position 10` errors.
+- **Diagnostic Dump:** `/b discord debug` now outputs full pipe state, handshake history, and the last 15 raw RPC packets.
+
+### Interactive Version Catalog GUI (`/b update versions`)
+- **Version Manager Screen (`UpdateVersionsScreen`):** Built interactive GUI accessible via `/b update versions`, `/b versions`, or `/b version versions`, listing all MC 26.2 releases in descending order with `[CURRENT]`, `[FULL]`, and `[BETA]` badges.
+- **1-Click Version Switcher:** Switch or downgrade to any released build with 1-click installation and automatic cleanup of previous jars on restart.
+- **Channel Filters & Strict MC 26.2 Scope:** Filter catalog by All, Full Only, or Betas Only. Strictly prevents downloading releases for different Minecraft versions (e.g. 26.1).
+- **API Content-Type Fix:** Added `Accept: application/json` headers to updater requests so the server returns the structured catalog rather than the HTML webpage.
+
+### Lyrics Engine Polish & Custom Editor Hotkeys (`/b lyrics`)
+- **Keyboard-Driven Custom Lyrics Editor:** Implemented full custom lyrics editor with cursor positioning, click-to-edit, text selection, and keyboard hotkeys (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Enter, Backspace, Delete).
+- **GUI Scissor Clipping Fix:** Corrected `GuiGraphicsExtractor.enableScissor` coordinate calculation `(x1, y1, x1+w, y1+h)`, resolving cut-off provider badges in candidate modal and half-hidden text in raw modal.
+- **Monotonic Millisecond Clock & Line Oscillation Fix:** Enforced monotonic millisecond progress tracking (`monotonicProgressMs`) and 250ms poller queries, ensuring smooth 1-second ticks (`0:35, 0:36, 0:37...`) and completely stopping active line oscillation jitter.
+- **Accurate Sync Badges:** Fixed provider parsing so line-synced Paxsenix tracks are correctly badged as `[Line-Synced]` rather than `[Word-Synced]`.
+
+### Restored Config Options & Error Tooltips
+- **Restored Old Config Suite:** Restored full Diana Lootshare alert suite (alerts, user chat, command, sound, title), Item Tooltip Prices (Lowest BIN, Craft Cost, NPC Price), Dojo utilities, Carnival, Sphinx macro, Hollow Wand, Lasso, Trevor, Daily Reward, Camera settings, and Frozen Blaze AFK warning to `/b` config.
+- **Playtime HTTP Status Hover Tooltips:** Added interactive hover tooltips explaining HTTP 429 rate limits, 401/403 auth errors, 500 server errors, and network connection diagnostics.
+
 ## [26.2.28.56] - 2026-09-29 (Beta)
 
 ### Live Screenshare Streaming & Web Dashboard

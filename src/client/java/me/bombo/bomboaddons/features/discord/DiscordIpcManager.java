@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.bombo.bomboaddons.BomboConfig;
-import me.bombo.bomboaddons.Bomboaddons;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
@@ -14,9 +13,13 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * Connects directly to the local Discord Desktop app via Windows Named Pipes (\\.\pipe\discord-ipc-0).
@@ -25,12 +28,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class DiscordIpcManager {
 
-    private static final String CLIENT_ID = "383226320970055681"; // BomboAddons Discord Client
+    private static final String CLIENT_ID = "383226320970055681"; // Discord Desktop IPC Client
     private static final AtomicBoolean RUNNING = new AtomicBoolean(false);
     private static Thread workerThread = null;
 
     private static volatile boolean connected = false;
     private static volatile boolean inVoice = false;
+    private static volatile String currentChannelId = "";
     private static volatile String currentChannelName = "";
     private static volatile String currentGuildName = "";
     private static volatile String myDiscordUsername = "";
@@ -39,7 +43,15 @@ public class DiscordIpcManager {
     private static volatile String lastHandshakeStatus = "Not attempted";
     private static volatile long lastPacketTime = 0L;
     private static volatile RandomAccessFile currentPipe = null;
+    private static final Object PIPE_LOCK = new Object();
     private static Thread pollThread = null;
+
+    // Prevent repeated popup authorizations
+    private static volatile boolean hasAuthorizedThisSession = false;
+
+    // Rolling log of the last 15 RPC packets for detailed diagnosis
+    private static final Deque<String> packetHistory = new ConcurrentLinkedDeque<>();
+    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     // Track active voice users: userId -> DiscordVoiceUser
     private static final Map<String, DiscordVoiceUser> voiceUsers = new ConcurrentHashMap<>();
@@ -92,15 +104,35 @@ public class DiscordIpcManager {
         }
     }
 
+    public static void requestAuth() {
+        hasAuthorizedThisSession = false;
+        forceSync();
+    }
+
+    private static void logPacket(boolean incoming, String json) {
+        String time = LocalTime.now().format(TIME_FORMAT);
+        String preview = json.replaceAll("\\s+", " ");
+        if (preview.length() > 160) {
+            preview = preview.substring(0, 160) + "...";
+        }
+        packetHistory.add("[" + time + "] " + (incoming ? "RX: " : "TX: ") + preview);
+        while (packetHistory.size() > 15) {
+            packetHistory.poll();
+        }
+    }
+
     private static void runLoop() {
         while (RUNNING.get()) {
             RandomAccessFile pipe = null;
             try {
                 pipe = findAndOpenPipe();
                 if (pipe != null) {
-                    currentPipe = pipe;
+                    synchronized (PIPE_LOCK) {
+                        currentPipe = pipe;
+                    }
                     connected = true;
                     startPollThread();
+
                     // Send Handshake
                     JsonObject handshake = new JsonObject();
                     handshake.addProperty("v", 1);
@@ -117,7 +149,9 @@ public class DiscordIpcManager {
             } catch (Exception e) {
                 lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
             } finally {
-                currentPipe = null;
+                synchronized (PIPE_LOCK) {
+                    currentPipe = null;
+                }
                 connected = false;
                 inVoice = false;
                 voiceUsers.clear();
@@ -154,75 +188,12 @@ public class DiscordIpcManager {
         pollVoiceStatus();
     }
 
-    private static void startPollThread() {
-        if (pollThread == null || !pollThread.isAlive()) {
-            pollThread = new Thread(() -> {
-                while (RUNNING.get() && connected) {
-                    try {
-                        Thread.sleep(4000L);
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                    pollVoiceStatus();
-                }
-            }, "Bombo-DiscordVoicePoll");
-            pollThread.setDaemon(true);
-            pollThread.start();
-        }
-    }
-
-    private static void pollVoiceStatus() {
-        RandomAccessFile pipe = currentPipe;
-        if (pipe != null && connected) {
-            try {
-                JsonObject getVoice = new JsonObject();
-                getVoice.addProperty("cmd", "GET_SELECTED_VOICE_CHANNEL");
-                getVoice.addProperty("nonce", UUID.randomUUID().toString());
-                writePacket(pipe, 1, getVoice.toString());
-            } catch (Throwable ignored) {}
-        }
-    }
-
-    private static synchronized void writePacket(RandomAccessFile pipe, int opcode, String json) throws Exception {
-        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
-        ByteBuffer buf = ByteBuffer.allocate(8 + bytes.length).order(ByteOrder.LITTLE_ENDIAN);
-        buf.putInt(opcode);
-        buf.putInt(bytes.length);
-        buf.put(bytes);
-        pipe.write(buf.array());
-    }
-
-    private static Packet readPacket(RandomAccessFile pipe) throws Exception {
-        byte[] header = new byte[8];
-        pipe.readFully(header);
-        ByteBuffer buf = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN);
-        int opcode = buf.getInt();
-        int len = buf.getInt();
-        if (len < 0 || len > 2_000_000) return null;
-
-        byte[] body = new byte[len];
-        pipe.readFully(body);
-        return new Packet(opcode, new String(body, StandardCharsets.UTF_8));
-    }
-
-    private static void handlePacket(RandomAccessFile pipe, Packet packet) {
-        try {
-            JsonObject obj = JsonParser.parseString(packet.json()).getAsJsonObject();
-            String cmd = obj.has("cmd") && !obj.get("cmd").isJsonNull() ? obj.get("cmd").getAsString() : "";
-            String evt = obj.has("evt") && !obj.get("evt").isJsonNull() ? obj.get("evt").getAsString() : "";
-
-            lastPacketTime = System.currentTimeMillis();
-            if ("DISPATCH".equals(cmd)) {
-                if ("READY".equals(evt)) {
-                    lastHandshakeStatus = "READY received";
-                    if (obj.has("data") && obj.get("data").isJsonObject()) {
-                        JsonObject data = obj.getAsJsonObject("data");
-                        if (data.has("user") && data.get("user").isJsonObject()) {
-                            JsonObject user = data.getAsJsonObject("user");
-                            myDiscordUsername = user.has("username") ? user.get("username").getAsString() : "User";
-                        }
-                    }
-                    // Authorize & Subscribe to voice channels
+    public static void requestAuthorization() {
+        hasAuthorizedThisSession = false;
+        synchronized (PIPE_LOCK) {
+            RandomAccessFile pipe = currentPipe;
+            if (pipe != null && connected) {
+                try {
                     JsonObject authArgs = new JsonObject();
                     authArgs.addProperty("client_id", CLIENT_ID);
                     JsonArray scopes = new JsonArray();
@@ -235,6 +206,113 @@ public class DiscordIpcManager {
                     authReq.add("args", authArgs);
                     authReq.addProperty("nonce", UUID.randomUUID().toString());
                     writePacket(pipe, 1, authReq.toString());
+                    hasAuthorizedThisSession = true;
+                } catch (Throwable t) {
+                    lastError = "Auth request: " + t.getMessage();
+                }
+            }
+        }
+    }
+
+    private static void startPollThread() {
+        if (pollThread == null || !pollThread.isAlive()) {
+            pollThread = new Thread(() -> {
+                while (RUNNING.get() && connected) {
+                    try {
+                        Thread.sleep(3000L);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                    pollVoiceStatus();
+                }
+            }, "Bombo-DiscordVoicePoll");
+            pollThread.setDaemon(true);
+            pollThread.start();
+        }
+    }
+
+    private static void pollVoiceStatus() {
+        synchronized (PIPE_LOCK) {
+            RandomAccessFile pipe = currentPipe;
+            if (pipe != null && connected) {
+                try {
+                    JsonObject getVoice = new JsonObject();
+                    getVoice.addProperty("cmd", "GET_SELECTED_VOICE_CHANNEL");
+                    getVoice.addProperty("nonce", UUID.randomUUID().toString());
+                    writePacket(pipe, 1, getVoice.toString());
+                } catch (Throwable t) {
+                    lastError = "Poll: " + t.getMessage();
+                }
+            }
+        }
+    }
+
+    private static void writePacket(RandomAccessFile pipe, int opcode, String json) throws Exception {
+        byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+        ByteBuffer buf = ByteBuffer.allocate(8 + bytes.length).order(ByteOrder.LITTLE_ENDIAN);
+        buf.putInt(opcode);
+        buf.putInt(bytes.length);
+        buf.put(bytes);
+        pipe.write(buf.array());
+        logPacket(false, json);
+    }
+
+    private static Packet readPacket(RandomAccessFile pipe) throws Exception {
+        byte[] header = new byte[8];
+        pipe.readFully(header);
+        ByteBuffer buf = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN);
+        int opcode = buf.getInt();
+        int len = buf.getInt();
+        if (len < 0 || len > 2_000_000) return null;
+
+        byte[] body = new byte[len];
+        pipe.readFully(body);
+        String json = new String(body, StandardCharsets.UTF_8);
+        logPacket(true, json);
+        return new Packet(opcode, json);
+    }
+
+    private static void handlePacket(RandomAccessFile pipe, Packet packet) {
+        try {
+            JsonObject obj = JsonParser.parseString(packet.json()).getAsJsonObject();
+            String cmd = obj.has("cmd") && !obj.get("cmd").isJsonNull() ? obj.get("cmd").getAsString() : "";
+            String evt = obj.has("evt") && !obj.get("evt").isJsonNull() ? obj.get("evt").getAsString() : "";
+
+            lastPacketTime = System.currentTimeMillis();
+
+            if ("ERROR".equals(evt) || (obj.has("data") && obj.getAsJsonObject("data").has("code") && obj.getAsJsonObject("data").has("message"))) {
+                JsonObject data = obj.getAsJsonObject("data");
+                lastError = "Discord Error (" + data.get("code").getAsInt() + "): " + data.get("message").getAsString();
+                return;
+            }
+
+            if ("DISPATCH".equals(cmd)) {
+                if ("READY".equals(evt)) {
+                    lastHandshakeStatus = "READY received";
+                    if (obj.has("data") && obj.get("data").isJsonObject()) {
+                        JsonObject data = obj.getAsJsonObject("data");
+                        if (data.has("user") && data.get("user").isJsonObject()) {
+                            JsonObject user = data.getAsJsonObject("user");
+                            myDiscordUsername = user.has("username") ? user.get("username").getAsString() : "User";
+                        }
+                    }
+
+                    // Only send AUTHORIZE once to avoid the repeated popup modal!
+                    if (!hasAuthorizedThisSession) {
+                        JsonObject authArgs = new JsonObject();
+                        authArgs.addProperty("client_id", CLIENT_ID);
+                        JsonArray scopes = new JsonArray();
+                        scopes.add("rpc");
+                        scopes.add("rpc.voice.read");
+                        authArgs.add("scopes", scopes);
+
+                        JsonObject authReq = new JsonObject();
+                        authReq.addProperty("cmd", "AUTHORIZE");
+                        authReq.add("args", authArgs);
+                        authReq.addProperty("nonce", UUID.randomUUID().toString());
+                        writePacket(pipe, 1, authReq.toString());
+                        hasAuthorizedThisSession = true;
+                    }
 
                     // Subscribe to voice channel select & speaking events
                     subscribe(pipe, "VOICE_CHANNEL_SELECT");
@@ -261,7 +339,7 @@ public class DiscordIpcManager {
                     setSpeaking(obj.has("data") && obj.get("data").isJsonObject() ? obj.getAsJsonObject("data") : null, false);
                 }
             } else if ("AUTHORIZE".equals(cmd)) {
-                lastHandshakeStatus = "Authorized (Approval received)";
+                lastHandshakeStatus = "Authorized (Approval confirmed)";
                 pollVoiceStatus();
             } else if ("GET_SELECTED_VOICE_CHANNEL".equals(cmd)) {
                 if (obj.has("data") && obj.get("data").isJsonObject()) {
@@ -270,7 +348,8 @@ public class DiscordIpcManager {
                     updateVoiceChannel(null);
                 }
             }
-        } catch (Exception ignored) {
+        } catch (Exception t) {
+            lastError = "Handle: " + t.getMessage();
         }
     }
 
@@ -285,6 +364,7 @@ public class DiscordIpcManager {
     private static void updateVoiceChannel(JsonObject data) {
         if (data == null || !data.has("id") || data.get("id").isJsonNull()) {
             inVoice = false;
+            currentChannelId = "";
             currentChannelName = "";
             currentGuildName = "";
             voiceUsers.clear();
@@ -292,7 +372,8 @@ public class DiscordIpcManager {
         }
 
         inVoice = true;
-        currentChannelName = data.has("name") ? data.get("name").getAsString() : "Voice Channel";
+        currentChannelId = data.get("id").getAsString();
+        currentChannelName = data.has("name") && !data.get("name").isJsonNull() ? data.get("name").getAsString() : "Voice Channel";
         voiceUsers.clear();
 
         if (data.has("voice_states") && data.get("voice_states").isJsonArray()) {
@@ -351,21 +432,42 @@ public class DiscordIpcManager {
         }
     }
 
-    /**
-     * Handles /ss or /b ss command: outputs Discord Voice status, screenshares, and toggles HUD.
-     */
-
-    public static void dumpDebugInfo(java.util.function.Consumer<Component> feedback) {
-        feedback.accept(Component.literal("§9========== §b[Discord IPC Debug Report] §9=========="));
+    public static void dumpDebugInfo(Consumer<Component> feedback) {
+        feedback.accept(Component.literal("§9========== §b[Discord IPC Detailed Diagnostics] §9=========="));
         feedback.accept(Component.literal("§7Enabled in Config: " + (BomboConfig.get().discordHudEnabled ? "§aYes" : "§cNo")));
         feedback.accept(Component.literal("§7Worker Thread: " + (workerThread != null && workerThread.isAlive() ? "§aAlive" : "§cStopped")));
         feedback.accept(Component.literal("§7Connected: " + (connected ? "§aYes (User: " + myDiscordUsername + ")" : "§cNo")));
         feedback.accept(Component.literal("§7Active Pipe: §f" + activePipeName));
         feedback.accept(Component.literal("§7Last Handshake: §e" + lastHandshakeStatus));
-        feedback.accept(Component.literal("§7Last Error: §c" + lastError));
+        feedback.accept(Component.literal("§7In Voice: " + (inVoice ? "§aYes (#" + currentChannelName + ", ID: " + currentChannelId + ")" : "§cNo")));
+        feedback.accept(Component.literal("§7Active Members: §b" + voiceUsers.size() + " in call"));
+        feedback.accept(Component.literal("§7Last Error: " + (lastError.equals("None") ? "§aNone" : "§c" + lastError)));
+
         if (lastPacketTime > 0) {
             long agoSec = (System.currentTimeMillis() - lastPacketTime) / 1000L;
             feedback.accept(Component.literal("§7Last Packet: §a" + agoSec + "s ago"));
+        }
+
+        // Voice users breakdown
+        if (!voiceUsers.isEmpty()) {
+            feedback.accept(Component.literal("§6-- Call Members --"));
+            for (DiscordVoiceUser u : voiceUsers.values()) {
+                feedback.accept(Component.literal("  §7• §f" + u.displayName() + " (§e" + u.username() + "§7) - "
+                        + (u.isSpeaking() ? "§aSpeaking " : "§7Silent ")
+                        + (u.isScreenSharing() ? "§c[LIVE] " : "")
+                        + (u.isMuted() ? "§8[Muted] " : "")
+                        + (u.isDeafened() ? "§8[Deafened]" : "")));
+            }
+        }
+
+        // Recent RPC Packets Log
+        feedback.accept(Component.literal("§6-- Recent RPC Packets (Last " + packetHistory.size() + ") --"));
+        if (packetHistory.isEmpty()) {
+            feedback.accept(Component.literal("  §8(No packets recorded yet)"));
+        } else {
+            for (String p : packetHistory) {
+                feedback.accept(Component.literal("  §8" + p));
+            }
         }
 
         // Process search
@@ -373,7 +475,7 @@ public class DiscordIpcManager {
         try {
             ProcessHandle.allProcesses().forEach(p -> {
                 String cmd = p.info().command().orElse("");
-                String lower = cmd.toLowerCase(java.util.Locale.ROOT);
+                String lower = cmd.toLowerCase(Locale.ROOT);
                 if (lower.contains("discord") || lower.contains("discordcanary") || lower.contains("discordptb")) {
                     String name = cmd.substring(Math.max(cmd.lastIndexOf('/'), cmd.lastIndexOf('\\')) + 1);
                     foundProcesses.add(name + " (PID " + p.pid() + ")");
@@ -399,7 +501,7 @@ public class DiscordIpcManager {
             }
         }
         feedback.accept(Component.literal("§7Pipes (0-9):" + pipeStatus.toString()));
-        feedback.accept(Component.literal("§9============================================="));
+        feedback.accept(Component.literal("§9========================================================"));
     }
 
     public static void handleSsCommand() {
@@ -414,6 +516,7 @@ public class DiscordIpcManager {
 
         if (!inVoice || voiceUsers.isEmpty()) {
             mc.player.sendSystemMessage(Component.literal("§9[Discord] §7Connected as §b" + myDiscordUsername + "§7, but you are not in an active Discord voice channel."));
+            mc.player.sendSystemMessage(Component.literal("§7Tip: Join a Discord voice channel, then use §e/b discord sync §7or §e/b discord debug§7."));
             return;
         }
 

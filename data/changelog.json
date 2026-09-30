@@ -1,5 +1,23 @@
 [
   {
+    "version": "26.2.28.57",
+    "date": "2026-09-30",
+    "changes": [
+      "High-Speed MJPEG Screenshare: Upgraded screenshare streaming to 25-30 FPS MJPEG with <50ms latency directly to the web dashboard (https://bombo.dpdns.org/screenshare)",
+      "Multi-Monitor Screen Clamping: Clamped screen bounds against virtual display metrics to eliminate black screen captures and IllegalArgumentException on multi-monitor setups",
+      "Screenshare Telemetry (/ss debug): Added comprehensive /ss debug and /b ss debug reporting active streaming state, target, quality, rolling FPS, bitrate, and latency metrics",
+      "Bridge Chat Spam Eliminated: Silenced bridge mapping log spam on the server bot when connecting or verifying players",
+      "Discord IPC Auth & Stability: Eliminated repeated VS Code OAuth authorization modals, added PIPE_LOCK to prevent pipe stalls, and registered Brigadier subcommands (/b discord debug, sync, auth)",
+      "Interactive Version Catalog (/b update versions): New GUI screen listing all MC 26.2 releases in descending order with [CURRENT], [FULL], and [BETA] badges and 1-click update/switch",
+      "Strict Minecraft Line Scope: Mod updater now filters strictly for current Minecraft line (26.2) and sends Accept: application/json to avoid downloading older version lines",
+      "Keyboard-Driven Custom Lyrics Editor: Added interactive text selection, cursor positioning, and full keyboard hotkeys (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Enter, Backspace, Delete) to custom lyrics mode",
+      "Lyrics Scissor Clipping Fix: Corrected GUI scissor coordinate calculation (x1, y1, x1+w, y1+h), resolving cut-off provider badges in candidate modal and half-hidden text in raw modal",
+      "Smooth Monotonic Millisecond Clock: Monotonic playback progress tracking at 250ms poller queries eliminates 4-second time jumps and active line oscillation jitter",
+      "Restored Config Suite: Restored full Diana Lootshare alert suite, item tooltip prices (BIN, Craft Cost, NPC), Dojo, Carnival, Sphinx, Hollow Wand, Lasso, Trevor, and Daily Reward to /b",
+      "Playtime Error Hover Tooltips: Added interactive hover tooltips explaining HTTP 429 rate limits, auth errors, server errors, and network diagnostics on sync messages"
+    ]
+  },
+  {
     "version": "26.2.28.56",
     "date": "2026-09-29",
     "changes": [

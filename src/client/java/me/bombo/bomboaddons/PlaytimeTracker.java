@@ -549,8 +549,17 @@ public class PlaytimeTracker {
                } else {
                   mc.execute(() -> {
                      if (mc.player != null) {
-                        mc.player.sendSystemMessage(Component.literal(
-                              "§8[§bBomboAddons§8] §cFailed to sync playtime data (HTTP " + responseCode + ")"));
+                        String reason = switch (responseCode) {
+                           case 429 -> "HTTP 429: Too Many Requests\n§7Server rate limit exceeded. Retrying automatically in background.";
+                           case 401, 403 -> "HTTP " + responseCode + ": Unauthorized\n§7Invalid or missing Bombo API key. Run §e/b api§7 to update.";
+                           case 404 -> "HTTP 404: Not Found\n§7Playtime sync endpoint does not exist on server.";
+                           case 500, 502, 503 -> "HTTP " + responseCode + ": Server Error\n§7BomboAPI is temporarily restarting or experiencing heavy load.";
+                           default -> "HTTP " + responseCode + ": Server rejected playtime sync request.";
+                        };
+                        net.minecraft.network.chat.MutableComponent comp = Component.literal(
+                              "§8[§bBomboAddons§8] §cFailed to sync playtime data (HTTP " + responseCode + ") §7[?]");
+                        comp.setStyle(comp.getStyle().withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§e" + reason))));
+                        mc.player.sendSystemMessage(comp);
                      }
 
                   });
@@ -559,8 +568,11 @@ public class PlaytimeTracker {
                DebugUtils.debug("playtime", "Cloud sync failed: " + e.getMessage());
                mc.execute(() -> {
                   if (mc.player != null) {
-                     mc.player.sendSystemMessage(
-                           Component.literal("§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getMessage()));
+                     net.minecraft.network.chat.MutableComponent comp = Component.literal(
+                           "§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getClass().getSimpleName() + " §7[?]");
+                     comp.setStyle(comp.getStyle().withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
+                           Component.literal("§c" + e.getMessage() + "\n§7Check server connection to api.bombo.dpdns.org"))));
+                     mc.player.sendSystemMessage(comp);
                   }
 
                });

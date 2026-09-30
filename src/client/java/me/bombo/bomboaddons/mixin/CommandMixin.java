@@ -104,8 +104,41 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (lower.equals("discord") || lower.equals("b discord") || lower.equals("bombo discord") || lower.equals("bomboaddons discord")) {
-         me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+      if (lower.equals("discord") || lower.startsWith("discord ")
+            || lower.equals("b discord") || lower.startsWith("b discord ")
+            || lower.equals("bombo discord") || lower.startsWith("bombo discord ")
+            || lower.equals("bomboaddons discord") || lower.startsWith("bomboaddons discord ")) {
+         String sub = "";
+         if (lower.startsWith("bomboaddons discord")) sub = trimmed.substring(19).trim();
+         else if (lower.startsWith("bombo discord")) sub = trimmed.substring(13).trim();
+         else if (lower.startsWith("b discord")) sub = trimmed.substring(9).trim();
+         else if (lower.startsWith("discord")) sub = trimmed.substring(7).trim();
+
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         java.util.function.Consumer<net.minecraft.network.chat.Component> feedback = (comp) -> {
+            if (mc.player != null) mc.player.sendSystemMessage(comp);
+         };
+
+         if (sub.equalsIgnoreCase("debug")) {
+            me.bombo.bomboaddons.features.discord.DiscordIpcManager.dumpDebugInfo(feedback);
+         } else if (sub.equalsIgnoreCase("sync")) {
+            me.bombo.bomboaddons.features.discord.DiscordIpcManager.forceSync();
+            feedback.accept(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aTriggered immediate Discord IPC voice channel sync."));
+         } else if (sub.equalsIgnoreCase("auth")) {
+            me.bombo.bomboaddons.features.discord.DiscordIpcManager.requestAuthorization();
+            feedback.accept(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aRequested Discord IPC authorization prompt."));
+         } else {
+            me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+         }
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("b update versions") || lower.equals("b update version")
+            || lower.equals("bombo update versions") || lower.equals("bombo update version")
+            || lower.equals("b versions") || lower.equals("bombo versions") || lower.equals("bomboaddons versions")
+            || lower.equals("update versions") || lower.equals("versions")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.UpdateVersionsScreen(mc.gui.screen())));
          ci.cancel();
          return;
       }

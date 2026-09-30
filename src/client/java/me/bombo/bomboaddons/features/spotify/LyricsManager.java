@@ -483,13 +483,14 @@ public class LyricsManager {
 
                 if (!lines.isEmpty()) {
                     lines.sort(Comparator.comparingLong(LyricsLine::startMs));
+                    boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
                     String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
                     out.add(new LyricCandidate(
                             "paxsenix-" + trackId,
                             "Paxsenix",
-                            "Word-Synced",
+                            hasWords ? "Word-Synced" : "Line-Synced",
                             preview,
-                            body,
+                            formatCleanLrc(lines),
                             lines
                     ));
                 }
@@ -506,12 +507,24 @@ public class LyricsManager {
                             "Paxsenix",
                             hasWords ? "Word-Synced" : "Line-Synced",
                             preview,
-                            lrc,
+                            formatCleanLrc(lines),
                             lines
                     ));
                 }
             }
         } catch (Throwable ignored) {}
+    }
+
+    public static String formatCleanLrc(List<LyricsLine> lines) {
+        if (lines == null || lines.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        for (LyricsLine l : lines) {
+            long min = (l.startMs() / 1000) / 60;
+            long sec = (l.startMs() / 1000) % 60;
+            long ms = l.startMs() % 1000;
+            sb.append(String.format("[%02d:%02d.%03d]%s\n", min, sec, ms, l.text()));
+        }
+        return sb.toString();
     }
 
     private static void fetchLrcLibCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {

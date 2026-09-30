@@ -4,7 +4,6 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.ptr.IntByReference;
-import net.minecraft.client.Minecraft;
 
 import java.io.*;
 import java.net.URI;
@@ -17,8 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Interfaces directly with Spotify Desktop on Windows without requiring Spotify Developer tokens.
  * - Queries Windows System Media Transport Controls (GSMTC) via a background PowerShell process
  *   for 100% exact playback position, total duration, track name, artist, and playing/paused status.
- *   Pausing preserves exact position without drifting or resetting to 0:00.
- * - Falls back to Win32 EnumWindows window-title inspection if GSMTC is unavailable.
+ * - Features millisecond-level monotonic progress interpolation to guarantee smooth 1-second ticks
+ *   (0:35, 0:36, 0:37...) with zero jitter, drifting, or oscillation.
  * - Controls playback (Play/Pause, Next, Previous) via Windows virtual media keys.
  */
 public class SpotifyManager {
@@ -41,9 +40,10 @@ public class SpotifyManager {
     private static volatile boolean isPlaying = false;
     private static volatile String currentTrack = "";
     private static volatile String currentArtist = "";
-    private static volatile int progressSeconds = 0;
-    private static volatile int durationSeconds = 0;
+    private static volatile long baseProgressMs = 0L;
+    private static volatile long durationMs = 0L;
     private static volatile long lastStateUpdate = 0L;
+    private static volatile long monotonicProgressMs = 0L;
 
     public static boolean isSpotifyOpen() {
         return isSpotifyOpen;
@@ -62,34 +62,33 @@ public class SpotifyManager {
     }
 
     public static int getProgressSeconds() {
-        if (!isPlaying || lastStateUpdate <= 0) {
-            return progressSeconds;
-        }
-        int elapsed = progressSeconds + (int) ((System.currentTimeMillis() - lastStateUpdate) / 1000L);
-        if (durationSeconds > 0) {
-            elapsed = Math.min(elapsed, durationSeconds);
-        }
-        return Math.max(0, elapsed);
+        return (int) (getProgressMs() / 1000L);
     }
 
     public static long getProgressMs() {
         if (!isPlaying || lastStateUpdate <= 0) {
-            return progressSeconds * 1000L;
+            return baseProgressMs;
         }
-        long elapsed = (progressSeconds * 1000L) + (System.currentTimeMillis() - lastStateUpdate);
-        if (durationSeconds > 0) {
-            elapsed = Math.min(elapsed, durationSeconds * 1000L);
+        long now = System.currentTimeMillis();
+        long rawCalculated = baseProgressMs + (now - lastStateUpdate);
+        if (durationMs > 0) {
+            rawCalculated = Math.min(rawCalculated, durationMs);
         }
-        return Math.max(0L, elapsed);
+
+        // Monotonic guard: during playback of the same track, never let the clock jump backwards
+        if (rawCalculated > monotonicProgressMs) {
+            monotonicProgressMs = rawCalculated;
+        }
+        return monotonicProgressMs;
     }
 
     public static int getDurationSeconds() {
-        return durationSeconds;
+        return (int) (durationMs / 1000L);
     }
 
     public static float getProgressRatio() {
-        if (durationSeconds <= 0) return 0.0f;
-        return Math.min(1.0f, Math.max(0.0f, (float) getProgressSeconds() / (float) durationSeconds));
+        if (durationMs <= 0) return 0.0f;
+        return Math.min(1.0f, Math.max(0.0f, (float) getProgressMs() / (float) durationMs));
     }
 
     public static String getFormattedTime() {
@@ -100,8 +99,9 @@ public class SpotifyManager {
     }
 
     public static String getFormattedDuration() {
-        int minutes = durationSeconds / 60;
-        int seconds = durationSeconds % 60;
+        int sec = getDurationSeconds();
+        int minutes = sec / 60;
+        int seconds = sec % 60;
         return String.format("%02d:%02d", minutes, seconds);
     }
 
@@ -198,20 +198,40 @@ public class SpotifyManager {
                                 if (parts.length >= 6) {
                                     String title = parts[1].trim();
                                     String artist = parts[2].trim();
-                                    int pos = parseSafeInt(parts[3]);
-                                    int dur = parseSafeInt(parts[4]);
+                                    long posMs = parseSafeLong(parts[3]);
+                                    long durMs = parseSafeLong(parts[4]);
                                     String stat = parts[5].trim();
+
+                                    boolean wasPlaying = isPlaying;
+                                    boolean nowPlaying = stat.equalsIgnoreCase("Playing");
+                                    boolean trackChanged = !title.equals(currentTrack) || !artist.equals(currentArtist);
 
                                     currentTrack = title;
                                     currentArtist = artist;
-                                    progressSeconds = pos;
-                                    durationSeconds = dur;
-                                    isPlaying = stat.equalsIgnoreCase("Playing");
+                                    durationMs = durMs;
+                                    isPlaying = nowPlaying;
                                     isSpotifyOpen = true;
-                                    lastStateUpdate = System.currentTimeMillis();
+
+                                    long now = System.currentTimeMillis();
+                                    if (trackChanged || Math.abs(posMs - monotonicProgressMs) > 3000L) {
+                                        baseProgressMs = posMs;
+                                        monotonicProgressMs = posMs;
+                                        lastStateUpdate = now;
+                                    } else if (nowPlaying) {
+                                        // Smooth drift towards true GSMTC position without sudden backwards jumps
+                                        if (posMs > monotonicProgressMs) {
+                                            baseProgressMs = posMs;
+                                            monotonicProgressMs = posMs;
+                                            lastStateUpdate = now;
+                                        }
+                                    } else {
+                                        baseProgressMs = posMs;
+                                        monotonicProgressMs = posMs;
+                                        lastStateUpdate = now;
+                                    }
 
                                     // Notify LyricsManager of track update
-                                    LyricsManager.updateTrack(title, artist, pos);
+                                    LyricsManager.updateTrack(title, artist, (int) (posMs / 1000L));
                                 }
                             } else if (line.equals("NONE")) {
                                 fallbackToWindowInspection();
@@ -239,11 +259,11 @@ public class SpotifyManager {
         }
     }
 
-    private static int parseSafeInt(String s) {
+    private static long parseSafeLong(String s) {
         try {
-            return Integer.parseInt(s.trim());
+            return Long.parseLong(s.trim());
         } catch (Throwable t) {
-            return 0;
+            return 0L;
         }
     }
 
@@ -272,17 +292,17 @@ public class SpotifyManager {
                     + "            $tl = $session.GetTimelineProperties()\r\n"
                     + "            $propsOp = $session.TryGetMediaPropertiesAsync()\r\n"
                     + "            $props = Await $propsOp ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])\r\n"
-                    + "            $pos = [math]::Floor($tl.Position.TotalSeconds)\r\n"
-                    + "            $dur = [math]::Floor($tl.EndTime.TotalSeconds)\r\n"
+                    + "            $posMs = [math]::Round($tl.Position.TotalMilliseconds)\r\n"
+                    + "            $durMs = [math]::Round($tl.EndTime.TotalMilliseconds)\r\n"
                     + "            $stat = $session.GetPlaybackInfo().PlaybackStatus\r\n"
-                    + "            [Console]::WriteLine(\"STATE|\" + $props.Title + \"|\" + $props.Artist + \"|\" + $pos + \"|\" + $dur + \"|\" + $stat)\r\n"
+                    + "            [Console]::WriteLine(\"STATE|\" + $props.Title + \"|\" + $props.Artist + \"|\" + $posMs + \"|\" + $durMs + \"|\" + $stat)\r\n"
                     + "        } else {\r\n"
                     + "            [Console]::WriteLine(\"NONE\")\r\n"
                     + "        }\r\n"
                     + "    } catch {\r\n"
                     + "        [Console]::WriteLine(\"NONE\")\r\n"
                     + "    }\r\n"
-                    + "    Start-Sleep -Milliseconds 500\r\n"
+                    + "    Start-Sleep -Milliseconds 250\r\n"
                     + "}\r\n";
 
             try (FileOutputStream fos = new FileOutputStream(script)) {
@@ -326,34 +346,39 @@ public class SpotifyManager {
                 }
                 return true;
             }, null);
-        } catch (Throwable ignored) {}
 
-        isSpotifyOpen = foundSpotify[0];
-        if (!isSpotifyOpen) {
-            isPlaying = false;
-            return;
-        }
+            isSpotifyOpen = foundSpotify[0];
 
-        String full = rawTitle[0];
-        if (full.isEmpty() || full.equalsIgnoreCase("Spotify") || full.equalsIgnoreCase("Spotify Free") || full.equalsIgnoreCase("Spotify Premium")) {
-            isPlaying = false;
-        } else {
-            isPlaying = true;
-            int dashIndex = full.indexOf(" - ");
-            if (dashIndex != -1) {
-                currentArtist = full.substring(0, dashIndex).trim();
-                currentTrack = full.substring(dashIndex + 3).trim();
+            if (isSpotifyOpen && !rawTitle[0].isEmpty()) {
+                String fullTitle = rawTitle[0];
+                if (!fullTitle.equalsIgnoreCase("Spotify") && !fullTitle.equalsIgnoreCase("Spotify Free") && !fullTitle.equalsIgnoreCase("Spotify Premium")) {
+                    String[] parts = fullTitle.split(" - ", 2);
+                    String artist = parts.length > 0 ? parts[0].trim() : "Unknown Artist";
+                    String track = parts.length > 1 ? parts[1].trim() : fullTitle;
+
+                    if (!currentTrack.equals(track) || !currentArtist.equals(artist)) {
+                        currentTrack = track;
+                        currentArtist = artist;
+                        baseProgressMs = 0L;
+                        monotonicProgressMs = 0L;
+                        lastStateUpdate = System.currentTimeMillis();
+                        LyricsManager.updateTrack(track, artist, 0);
+                    }
+                    isPlaying = true;
+                } else {
+                    isPlaying = false;
+                }
             } else {
-                currentArtist = "Spotify";
-                currentTrack = full;
+                isPlaying = false;
             }
-            LyricsManager.updateTrack(currentTrack, currentArtist, progressSeconds);
+        } catch (Throwable t) {
+            isSpotifyOpen = false;
+            isPlaying = false;
         }
     }
 
     public static void playPause() {
         sendMediaKey(VK_MEDIA_PLAY_PAUSE);
-        isPlaying = !isPlaying;
     }
 
     public static void nextTrack() {

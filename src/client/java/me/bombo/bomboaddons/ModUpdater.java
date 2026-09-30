@@ -83,6 +83,7 @@ public class ModUpdater {
                   long updateStartedAt = System.currentTimeMillis();
                   HttpURLConnection conn = (HttpURLConnection) (new URL(updateApiUrl)).openConnection();
                   conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
+                  conn.setRequestProperty("Accept", "application/json");
                   conn.setConnectTimeout(4000);
                   conn.setReadTimeout(4000);
                   int updateCode = conn.getResponseCode();
@@ -139,6 +140,7 @@ public class ModUpdater {
                      String endpoint = includeBetas ? "https://api.bombo.dpdns.org/mod/version/beta" : "https://api.bombo.dpdns.org/mod/version/full";
                      HttpURLConnection conn = (HttpURLConnection) (new URL(endpoint)).openConnection();
                      conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                     conn.setRequestProperty("Accept", "application/json");
                      conn.setConnectTimeout(4000);
                      conn.setReadTimeout(4000);
                      if (conn.getResponseCode() == 200) {
@@ -171,6 +173,11 @@ public class ModUpdater {
                            String tag = (r.has("tag_name") ? r.get("tag_name").getAsString() : "").replaceFirst("^v", "");
                            boolean isPre = r.has("prerelease") && r.get("prerelease").getAsBoolean();
                            boolean isSubversion = tag.split("\\.").length >= 4;
+
+                           // Strictly filter for the current Minecraft version line!
+                           if (!sameMinecraftLine(Constants.myVersion(), tag)) {
+                              continue;
+                           }
 
                            if (!includeBetas && (isPre || isSubversion)) {
                               continue; // skip betas when Full Only is requested
