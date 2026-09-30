@@ -100,13 +100,12 @@ public class DiscordIpcManager {
     public static void stop() {
         RUNNING.set(false);
         connected = false;
-        synchronized (PIPE_LOCK) {
-            if (currentPipe != null) {
-                try {
-                    currentPipe.close();
-                } catch (Exception ignored) {}
-                currentPipe = null;
-            }
+        RandomAccessFile pipe = currentPipe;
+        currentPipe = null;
+        if (pipe != null) {
+            try {
+                pipe.close();
+            } catch (Exception ignored) {}
         }
         if (pollThread != null) {
             pollThread.interrupt();
