@@ -541,7 +541,17 @@ public class BomboaddonsClient implements ClientModInitializer {
       ClientLifecycleEvents.CLIENT_STOPPING.register((ClientLifecycleEvents.ClientStopping)(client) -> {
          BomboConfig.save();
          StorageTracker.save();
+         try { me.bombo.bomboaddons.features.spotify.SpotifyManager.stop(); } catch (Throwable ignored) {}
+         try { me.bombo.bomboaddons.features.discord.DiscordIpcManager.stop(); } catch (Throwable ignored) {}
+         try { me.bombo.bomboaddons.features.screenshare.ScreenshareManager.stopStreaming(); } catch (Throwable ignored) {}
+         try { me.bombo.bomboaddons.IRCClient.stop(); } catch (Throwable ignored) {}
       });
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+         try { me.bombo.bomboaddons.features.spotify.SpotifyManager.stop(); } catch (Throwable ignored) {}
+         try { me.bombo.bomboaddons.features.discord.DiscordIpcManager.stop(); } catch (Throwable ignored) {}
+         try { me.bombo.bomboaddons.features.screenshare.ScreenshareManager.stopStreaming(); } catch (Throwable ignored) {}
+         try { me.bombo.bomboaddons.IRCClient.stop(); } catch (Throwable ignored) {}
+      }, "Bombo-ShutdownHook"));
       ScreenEvents.BEFORE_INIT.register((ScreenEvents.BeforeInit)(client, screen, scaledWidth, scaledHeight) -> ScreenMouseEvents.allowMouseClick(screen).register((ScreenMouseEvents.AllowMouseClick)(screen1, event) -> {
             double mouseX = event.x();
             double mouseY = event.y();

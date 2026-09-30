@@ -1,4 +1,15 @@
 # BomboAddons Changelog
+ 
+## [26.2.28.58] - 2026-09-30 (Beta)
+
+### Watchdog Shutdown Crash Elimination (`NTSTATUS 0xFFFFFFF8`)
+- **Clean Background Thread Shutdown:** Added `DiscordIpcManager.stop()` to close named pipes and unblock `readFully` calls, updated `SpotifyManager.stop()` to forcibly terminate any running PowerShell GSMTC process, and updated `ScreenshareManager.stopStreaming()` with daemon cleanup threads.
+- **Client Stopping & JVM Shutdown Hook:** Registered background manager shutdowns on both Fabric's `ClientLifecycleEvents.CLIENT_STOPPING` and `Runtime.getRuntime().addShutdownHook(...)`. Prevents lingering background threads from tripping Mojang's `ClientShutdownWatchdog` on game exit (`Client shutdown from post-main`).
+
+### Discord Image Link & Query Parameter Preservation
+- **Preserved `&` in URLs:** Fixed Discord bridge chat payload formatting (`IRCClient`) to format color codes and chroma strictly outside URLs (`formatColorsOutsideUrls`). URLs containing query parameters (e.g. `&ex=`, `&is=`, `&hm=`) are no longer corrupted into Minecraft color codes (`§e`, etc.).
+- **Clickable Discord CDN Links:** Fixed `IRCClient.formatWithLinks` to extract URLs and `[SHOW:...]` tokens before running chroma processors, and restored ampersands so `URI.create(...)` cleanly produces clickable `ClickEvent.OpenUrl` links in chat.
+- **Image Hover Preview Restoration:** Fixed `ChatImagePreview` (`cleanUrl` and `extractImageUrl`) to restore `§` to `&` before parsing, eliminating 403 Forbidden / 404 Not Found errors caused by stripped `§e` in signed Discord CDN links (`&ex=...`).
 
 ## [26.2.28.57] - 2026-09-30 (Beta)
 

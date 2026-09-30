@@ -117,7 +117,7 @@ public class ChatImagePreview {
 
    public static String cleanUrl(String url) {
       if (url == null) return null;
-      String cleaned = url.replaceAll("§[0-9a-fk-orxX]", "").replaceAll("§", "&");
+      String cleaned = url.replace('§', '&');
       cleaned = cleaned.replaceAll("\\s+", "");
       cleaned = cleaned.replaceAll("[.,!?;:)\\]]+$", "").trim();
       return cleaned;
@@ -125,7 +125,7 @@ public class ChatImagePreview {
 
    public static String extractImageUrl(String text) {
       if (text == null) return null;
-      String cleanText = text.replaceAll("§[0-9a-fk-orxX]", "").replaceAll("§", "&");
+      String cleanText = text.replace('§', '&');
       Matcher matcher = URL_PATTERN.matcher(cleanText);
       while (matcher.find()) {
          String url = cleanUrl(matcher.group());

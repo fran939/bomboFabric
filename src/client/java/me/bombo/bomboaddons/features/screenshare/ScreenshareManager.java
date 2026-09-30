@@ -110,19 +110,21 @@ public class ScreenshareManager {
             Minecraft mc = Minecraft.getInstance();
             String myIgn = (mc != null && mc.player != null) ? mc.player.getScoreboardName() : "";
             if (!myIgn.isEmpty()) {
-                new Thread(() -> {
+                Thread stopThread = new Thread(() -> {
                     try {
                         JsonObject obj = new JsonObject();
                         obj.addProperty("user", myIgn);
                         HttpRequest req = HttpRequest.newBuilder()
                                 .uri(URI.create("https://api.bombo.dpdns.org/api/screenshare/stop"))
                                 .header("Content-Type", "application/json")
-                                .timeout(Duration.ofSeconds(3))
+                                .timeout(Duration.ofSeconds(2))
                                 .POST(HttpRequest.BodyPublishers.ofString(obj.toString(), StandardCharsets.UTF_8))
                                 .build();
                         HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.discarding());
                     } catch (Throwable ignored) {}
-                }, "Bombo-ScreenshareStop").start();
+                }, "Bombo-ScreenshareStop");
+                stopThread.setDaemon(true);
+                stopThread.start();
             }
 
             if (mc != null && mc.player != null) {
@@ -175,6 +177,8 @@ public class ScreenshareManager {
                         }
                     }
                 }
+            } catch (InterruptedException e) {
+                break;
             } catch (Throwable t) {
                 lastError = t.getClass().getSimpleName() + ": " + t.getMessage();
             }

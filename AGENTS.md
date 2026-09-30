@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.57` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.58` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,17 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.57`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.58`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.58 (Ready for In-Game Testing)
+>
+> 1. **Watchdog Shutdown Crash Elimination (`NTSTATUS 0xFFFFFFF8`):** Fixed `Client shutdown from post-main` crash report caused by lingering background threads. Added clean pipe closing in `DiscordIpcManager.stop()`, process termination for PowerShell in `SpotifyManager.stop()`, and daemon cleanup in `ScreenshareManager.stopStreaming()`. Hooked these into both `ClientLifecycleEvents.CLIENT_STOPPING` and a JVM `Runtime.getRuntime().addShutdownHook`.
+> 2. **Discord Bridge URL & Query Parameter Preservation:** Fixed `IRCClient` incoming Discord message handling by replacing naive `payload.replace("&", "§")` with `formatColorsOutsideUrls(payload)`. `&` characters in URLs (such as `&ex=`, `&is=`, `&hm=`) are strictly preserved, preventing them from being converted into Minecraft color codes.
+> 3. **Clickable Web Links in Chat:** Enhanced `IRCClient.formatWithLinks` to tokenize URLs before applying chroma/color formatting. Restores clean ampersands so `URI.create(...)` no longer throws exceptions, restoring clickable `ClickEvent.OpenUrl` links in chat.
+> 4. **Chat Image Hover Preview Fix:** Updated `ChatImagePreview.cleanUrl` and `extractImageUrl` to restore `§` to `&` before parsing. Prevents regex stripping of `§e` that previously corrupted signed Discord CDN URLs (`&ex=...` -> `x=...`), eliminating HTTP 403 Forbidden / 404 Not Found errors on image hover preview.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.57 (Ready for In-Game Testing)
 >
 > 1. **High-Speed Screenshare Streaming (25-30 FPS MJPEG) & Telemetry (`https://bombo.dpdns.org/screenshare`):** Upgraded live capture loop to 25-30 FPS MJPEG streaming directly to `/api/screenshare/stream/:user` with ultra-low latency (<50ms). Added multi-monitor/virtual screen bounds clamping in `ScreenshareManager` preventing `IllegalArgumentException` and black screens. Added comprehensive `/ss debug` (and `/b ss debug`) reporting status, target, quality, rolling FPS, bitrate, and latency metrics. Silenced bridge mapping log spam on the server IRC bot.

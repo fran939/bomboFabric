@@ -99,8 +99,22 @@ public class DiscordIpcManager {
 
     public static void stop() {
         RUNNING.set(false);
+        connected = false;
+        synchronized (PIPE_LOCK) {
+            if (currentPipe != null) {
+                try {
+                    currentPipe.close();
+                } catch (Exception ignored) {}
+                currentPipe = null;
+            }
+        }
+        if (pollThread != null) {
+            pollThread.interrupt();
+            pollThread = null;
+        }
         if (workerThread != null) {
             workerThread.interrupt();
+            workerThread = null;
         }
     }
 

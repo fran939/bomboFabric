@@ -142,6 +142,15 @@ public class IRCClient {
       }
    }
 
+   public static void stop() {
+      running = false;
+      closeQuietly();
+      if (clientThread != null) {
+         clientThread.interrupt();
+         clientThread = null;
+      }
+   }
+
    private static synchronized void closeQuietly() {
       activeEndpoint = "None";
       if (webSocket != null) {
@@ -731,7 +740,7 @@ public class IRCClient {
                        }
                     }
                  } else {
-                    String cleanPayload = ChromaTextHelper.processChroma(payload).replace("&", "§");
+                    String cleanPayload = formatColorsOutsideUrls(payload);
                     String dcSender = "Discord";
                     String dcMsg = cleanPayload;
                     if (cleanPayload.startsWith("§9[DC]\u0002")) {
@@ -1027,21 +1036,45 @@ public class IRCClient {
       })).start();
    }
 
+   public static String formatColorsOutsideUrls(String text) {
+      if (text == null || text.isEmpty()) return text;
+      java.util.regex.Pattern urlPattern = java.util.regex.Pattern.compile("https?://[^\\s]+");
+      java.util.regex.Matcher matcher = urlPattern.matcher(text);
+      StringBuilder sb = new StringBuilder();
+      int lastIdx = 0;
+      while (matcher.find()) {
+         String nonUrl = text.substring(lastIdx, matcher.start());
+         String processed = ChromaTextHelper.processChroma(nonUrl);
+         processed = processed.replaceAll("&(?=[0-9a-fk-orA-FK-OR])", "§");
+         sb.append(processed);
+         sb.append(matcher.group());
+         lastIdx = matcher.end();
+      }
+      if (lastIdx < text.length()) {
+         String nonUrl = text.substring(lastIdx);
+         String processed = ChromaTextHelper.processChroma(nonUrl);
+         processed = processed.replaceAll("&(?=[0-9a-fk-orA-FK-OR])", "§");
+         sb.append(processed);
+      }
+      return sb.toString();
+   }
+
    public static Component formatWithLinks(String rawText) {
       if (rawText == null) return Component.empty();
       
       String emojiText = me.bombo.bomboaddons.util.EmojiShortcodeHelper.replaceEmojis(rawText);
-      String processedText = ChromaTextHelper.processChroma(emojiText);
       // Pattern to match either URLs or [SHOW:displayName:base64Lore]
+      // Tokenize before running chroma so URLs and base64 payloads aren't corrupted
       java.util.regex.Pattern tokenPattern = java.util.regex.Pattern.compile("(\\[SHOW:([^\\]:]+):([A-Za-z0-9+/=\\r\\n]+)\\])|(https?://[^\\s]+)");
-      java.util.regex.Matcher matcher = tokenPattern.matcher(processedText);
+      java.util.regex.Matcher matcher = tokenPattern.matcher(emojiText);
       net.minecraft.network.chat.MutableComponent root = Component.empty();
       int lastIdx = 0;
       while (matcher.find()) {
          int start = matcher.start();
          int end = matcher.end();
          if (start > lastIdx) {
-            root.append(ChromaTextHelper.parseFormattedText(processedText.substring(lastIdx, start)));
+            String nonToken = emojiText.substring(lastIdx, start);
+            root.append(ChromaTextHelper.parseFormattedText(ChromaTextHelper.processChroma(nonToken)));
          }
          
          String showGroup = matcher.group(1);
@@ -1067,20 +1100,22 @@ public class IRCClient {
                root.append(ChromaTextHelper.parseFormattedText("[" + displayName + "§r]"));
             }
          } else if (urlGroup != null) {
+            String cleanUrl = urlGroup.replace("§", "&");
             try {
-               java.net.URI uri = java.net.URI.create(urlGroup);
-               root.append(Component.literal(urlGroup).withStyle(style -> 
+               java.net.URI uri = java.net.URI.create(cleanUrl);
+               root.append(Component.literal(cleanUrl).withStyle(style -> 
                   style.withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(uri))
                        .withUnderlined(true)
                ));
             } catch (Throwable t) {
-               root.append(Component.literal(urlGroup));
+               root.append(Component.literal(cleanUrl));
             }
          }
          lastIdx = end;
       }
-      if (lastIdx < processedText.length()) {
-         root.append(ChromaTextHelper.parseFormattedText(processedText.substring(lastIdx)));
+      if (lastIdx < emojiText.length()) {
+         String nonToken = emojiText.substring(lastIdx);
+         root.append(ChromaTextHelper.parseFormattedText(ChromaTextHelper.processChroma(nonToken)));
       }
       return root;
    }
