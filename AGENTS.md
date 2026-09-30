@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.58` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.59` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.58`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.59`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.59 (Ready for In-Game Testing)
+>
+> 1. **Hypixel Alpha Server Alert Fix (`bombot`):** Fixed server watcher logic where public Alpha opening alerts were dropped if admins/testers were online before public cap was raised from 0 to 50 (`wasActuallyClosed` was failing due to `prevOnline <= 5`). Restored strict public capacity detection (`prevMax === 0` to `maxPlayers > 0`) and reduced repeat open cooldown from 60 minutes to 10 minutes.
+> 2. **In-Game Client Alerts (`AlphaTrackerHud`):** Added in-game chat alert with clickable `§8[§a§lJOIN§8]` (`/server alpha`) button, level-up chime, and on-screen title banner whenever Hypixel Alpha opens or increases public capacity.
+> 3. **Client Background Polling:** Added independent 30s background polling in `AlphaTrackerHud` via Fabric `ClientTickEvents.END_CLIENT_TICK`, ensuring players are alerted even when the HUD element is not rendered.
+> 4. **Configurable Alert Options:** Added `Alpha Open Alert`, `Alpha Open Sound`, and `Alpha Open Title` under `/b` configuration in HUD settings.
+> 5. **Alpha Status Commands:** Added `/b alpha` and standalone `/alpha` commands to inspect Alpha player count, cap, and open status directly from chat.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.58 (Ready for In-Game Testing)
 >
 > 1. **Watchdog Shutdown Crash Elimination (`NTSTATUS 0xFFFFFFF8`):** Fixed `Client shutdown from post-main` crash report caused by lingering background threads. Added clean pipe closing in `DiscordIpcManager.stop()`, process termination for PowerShell in `SpotifyManager.stop()`, and daemon cleanup in `ScreenshareManager.stopStreaming()`. Hooked these into both `ClientLifecycleEvents.CLIENT_STOPPING` and a JVM `Runtime.getRuntime().addShutdownHook`.

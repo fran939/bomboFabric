@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.59",
+    "date": "2026-10-01",
+    "changes": [
+      "Hypixel Alpha Alerts Fixed (Server): Resolved server logic where opening alerts were dropped if admins/testers were online before public cap was raised from 0 to 50. Replaced restrictive conditions with strict public capacity detection.",
+      "In-Game Client Alerts: Added chat alert with clickable [JOIN] (/server alpha) shortcut, on-screen title banner, and audible level-up sound when Alpha opens or increases capacity.",
+      "Background Alpha Polling: Polling now runs every 30s in the background independently of whether the Alpha HUD text is enabled.",
+      "Configurable Alert Options: Added Alpha Open Alert, Alpha Open Sound, and Alpha Open Title under /b HUDs settings.",
+      "Alpha Commands: Added /b alpha and standalone /alpha to view current Alpha server player count, cap, and join shortcut in chat."
+    ]
+  },
+  {
     "version": "26.2.28.58",
     "date": "2026-09-30",
     "changes": [

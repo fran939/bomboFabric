@@ -1060,6 +1060,9 @@ public class BomboConfig {
       public float alphaTrackerHudScale = 1.0F;
       public int alphaTrackerHudX = 10;
       public int alphaTrackerHudY = 120;
+      public boolean alphaOpenAlert = true;
+      public boolean alphaOpenAlertSound = true;
+      public boolean alphaOpenAlertTitle = true;
       public boolean dungeonBigHitbox = false;
       public Map<String, List<CoordBind>> coordBinds = new HashMap();
       public boolean corpseEsp = false;

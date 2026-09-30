@@ -966,6 +966,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                                      StringArgumentType.getString(context, "type"));
                              return 1;
                           }))));
+                  builder.then(ClientCommands.literal("alpha").executes((context) -> {
+                     AlphaTrackerHud.sendCurrentStatusToChat();
+                     return 1;
+                  }));
                   builder.then(buildItemCommand());
                   builder.then(registerAutoCommands())
                   // Flavor specific subcommands (/b hide, /b stealth ...). The legit build
@@ -4688,6 +4692,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                 dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("lyrics").executes((context) -> {
                    Minecraft mc = Minecraft.getInstance();
                    mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
+                   return 1;
+                }));
+                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("alpha").executes((context) -> {
+                   AlphaTrackerHud.sendCurrentStatusToChat();
                    return 1;
                 }));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("bomboprof").executes((context) -> {

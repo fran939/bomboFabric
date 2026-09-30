@@ -834,6 +834,11 @@ public class ConfigRegistry {
                 items.add(ConfigItem.hudToggle("Custom Timers HUD", "Displays user-configured custom cooldown timers.", category, () -> s.customTimerHudEnabled, v -> s.customTimerHudEnabled = v, HudTarget.TIMERS));
                 items.add(ConfigItem.hudToggle("Tab Widget HUD", "Compact tab-list player and server stats widget.", category, () -> s.tabWidgetHudEnabled, v -> s.tabWidgetHudEnabled = v, HudTarget.TAB_WIDGET));
                 items.add(ConfigItem.hudToggle("Alpha Tracker HUD", "Displays Alpha server player count and status.", category, () -> s.alphaTrackerHud, v -> s.alphaTrackerHud = v, HudTarget.ALPHA_TRACKER));
+                items.add(ConfigItem.toggle("Alpha Open Alert", "Sends a chat message and join shortcut when Alpha Hypixel opens.", category, () -> s.alphaOpenAlert, v -> s.alphaOpenAlert = v));
+                if (s.alphaOpenAlert) {
+                    items.add(ConfigItem.toggle("Alpha Open Sound", "Plays an audible sound alert when Alpha Hypixel opens or increases capacity.", category, () -> s.alphaOpenAlertSound, v -> s.alphaOpenAlertSound = v));
+                    items.add(ConfigItem.toggle("Alpha Open Title", "Shows a large on-screen title banner when Alpha Hypixel opens.", category, () -> s.alphaOpenAlertTitle, v -> s.alphaOpenAlertTitle = v));
+                }
                 items.add(ConfigItem.hudToggle("Item List HUD", "In-game searchable item and inventory list overlay.", category, () -> s.itemListEnabled, v -> s.itemListEnabled = v, HudTarget.ITEM_LIST));
                 items.add(ConfigItem.hudToggle("Speedometer HUD", "Real-time player velocity and movement speed HUD.", category, () -> s.speedometer, v -> s.speedometer = v, HudTarget.SPEEDOMETER));
                 if (s.speedometer) {

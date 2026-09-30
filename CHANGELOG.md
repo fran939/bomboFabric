@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.59] - 2026-10-01 (Beta)
+
+### Hypixel Alpha Open & Capacity Alert System (Client & Server)
+- **Server Alert Logic Fix (`bombot`):** Fixed server watcher logic where Alpha opening alerts were dropped if admins/testers were online before public cap was raised from 0 to 50. Replaced restrictive conditions with strict public capacity detection (`prevMax === 0` to `maxPlayers > 0`).
+- **Reduced Alert Cooldown:** Decreased repeat open alert cooldown from 60 minutes to 10 minutes so quick server restarts during testing cycles are properly announced.
+- **In-Game Client Alerts (`AlphaTrackerHud`):** Added in-game chat alert with clickable `§8[§a§lJOIN§8]` (`/server alpha`) button, audible level-up chime, and on-screen title banner whenever Hypixel Alpha opens or expands public capacity.
+- **Background Client Polling:** Polling now runs every 30 seconds in the background regardless of whether the HUD element is drawn or hidden.
+- **Configurable Alert Options:** Added `Alpha Open Alert`, `Alpha Open Sound`, and `Alpha Open Title` under `/b` configuration in HUD settings.
+- **Status Commands:** Added `/b alpha` and standalone `/alpha` commands to inspect Alpha player count, cap, and open status directly from chat.
+
 ## [26.2.28.58] - 2026-09-30 (Beta)
 
 ### Watchdog Shutdown Crash Elimination (`NTSTATUS 0xFFFFFFF8`)
