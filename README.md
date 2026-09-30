@@ -3,7 +3,7 @@
 ![Minecraft](https://img.shields.io/badge/Minecraft-26.2-brightgreen.svg)
 ![Fabric Loader](https://img.shields.io/badge/Fabric-0.19.3-blue.svg)
 ![Java](https://img.shields.io/badge/Java-25-orange.svg)
-![Latest Release](https://img.shields.io/badge/Status-Active%20Development-success.svg)
+![Latest Release](https://img.shields.io/badge/Release-v26.2.28.58-blue.svg)
 
 **BomboAddons** is an advanced, high-performance client mod built on the **Fabric Loader** for **Minecraft 26.2**. Designed with Hypixel SkyBlock quality-of-life enhancements, seamless media integrations, interactive screensharing, and zero-compromise performance profiling.
 
