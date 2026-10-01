@@ -38,7 +38,7 @@ public class LyricsManager {
             .build();
 
     private static final Pattern LINE_PATTERN = Pattern.compile("^\\[(\\d{1,2}):(\\d{2})(?:\\.|:)(\\d{2,3})\\](.*)$");
-    private static final Pattern WORD_PATTERN = Pattern.compile("<(\\d{1,2}):(\\d{2})\\.(\\d{2,3})>\\s*([^<]+)");
+    private static final Pattern WORD_PATTERN = Pattern.compile("[<\\(](\\d{1,2}):(\\d{2})(?:\\.|:)(\\d{2,3})[>\\)]\\s*([^<\\(\\r\\n]+)");
     private static final Pattern BETTER_WORD_PATTERN = Pattern.compile("<([^:>|]+):(\\d+(?:\\.\\d+)?):(\\d+(?:\\.\\d+)?)>");
 
     public record WordTime(String word, long startMs, long endMs) {}
@@ -283,19 +283,23 @@ public class LyricsManager {
                 fetchYouLyPlusCandidates(cleanTrack, cleanArtist, candidates);
             } catch (Throwable ignored) {}
 
-            // Deduplicate and rank candidates
+            // Deduplicate by ID but keep multiple candidates per provider
             List<LyricCandidate> unique = new ArrayList<>();
-            Set<String> seenPreviews = new HashSet<>();
+            Set<String> seenIds = new HashSet<>();
             for (LyricCandidate c : candidates) {
-                String key = (c.provider() + ":" + c.preview().replaceAll("\\s+", "").toLowerCase(Locale.ROOT));
-                if (!seenPreviews.contains(key)) {
-                    seenPreviews.add(key);
+                if (!seenIds.contains(c.id())) {
+                    seenIds.add(c.id());
                     unique.add(c);
                 }
             }
 
-            // Sort: Word-Synced first, then Line-Synced, then Plain
+            // Sort: Boost preferred provider, then Word-Synced first, then Line-Synced, then Plain
+            String pref = BomboConfig.get().lyricsPreferredProvider != null ? BomboConfig.get().lyricsPreferredProvider.trim().toLowerCase(Locale.ROOT) : "auto";
             unique.sort((a, b) -> {
+                boolean aPref = !pref.equals("auto") && a.provider().toLowerCase(Locale.ROOT).contains(pref);
+                boolean bPref = !pref.equals("auto") && b.provider().toLowerCase(Locale.ROOT).contains(pref);
+                if (aPref != bPref) return aPref ? -1 : 1;
+
                 int scoreA = a.syncType().contains("Word") ? 3 : (a.syncType().contains("Line") ? 2 : 1);
                 int scoreB = b.syncType().contains("Word") ? 3 : (b.syncType().contains("Line") ? 2 : 1);
                 return Integer.compare(scoreB, scoreA);
@@ -341,6 +345,8 @@ public class LyricsManager {
         } catch (Throwable ignored) {}
     }
 
+    private static final java.util.concurrent.atomic.AtomicInteger albumArtCounter = new java.util.concurrent.atomic.AtomicInteger(0);
+
     private static void downloadAndRegisterAlbumArt(String artworkUrl) {
         if (artworkUrl == null || artworkUrl.equals(lastArtworkUrl)) return;
         lastArtworkUrl = artworkUrl;
@@ -348,7 +354,7 @@ public class LyricsManager {
         try {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(artworkUrl))
-                    .header("User-Agent", "Mozilla/5.0")
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons")
                     .timeout(Duration.ofSeconds(5))
                     .GET()
                     .build();
@@ -358,19 +364,36 @@ public class LyricsManager {
                 Minecraft mc = Minecraft.getInstance();
                 if (mc != null) {
                     mc.execute(() -> {
+                        NativeImage img = null;
                         try (InputStream in = new ByteArrayInputStream(bytes)) {
-                            NativeImage img = NativeImage.read(in);
-                            if (img != null) {
-                                DynamicTexture dynTex = new DynamicTexture(() -> "spotify_album_art", img);
-                                Identifier id = Identifier.fromNamespaceAndPath("bomboaddons", "spotify_album_art");
-                                mc.getTextureManager().register(id, dynTex);
-                                albumArtTexture = id;
-                            }
-                        } catch (Throwable ignored) {}
+                            img = NativeImage.read(in);
+                        } catch (Throwable t) {
+                            try (InputStream in2 = new ByteArrayInputStream(bytes)) {
+                                java.awt.image.BufferedImage bimg = javax.imageio.ImageIO.read(in2);
+                                if (bimg != null) {
+                                    java.io.ByteArrayOutputStream pngOut = new java.io.ByteArrayOutputStream();
+                                    javax.imageio.ImageIO.write(bimg, "png", pngOut);
+                                    try (InputStream in3 = new ByteArrayInputStream(pngOut.toByteArray())) {
+                                        img = NativeImage.read(in3);
+                                    }
+                                }
+                            } catch (Throwable ignored) {}
+                        }
+
+                        if (img != null) {
+                            int artNum = albumArtCounter.incrementAndGet();
+                            DynamicTexture dynTex = new DynamicTexture(() -> "spotify_album_art_" + artNum, img);
+                            dynTex.upload();
+                            Identifier id = Identifier.fromNamespaceAndPath("bomboaddons", "spotify_album_art_" + artNum);
+                            mc.getTextureManager().register(id, dynTex);
+                            albumArtTexture = id;
+                        }
                     });
                 }
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable t) {
+            System.err.println("[BomboAddons] Failed to download/register album art: " + t.getMessage());
+        }
     }
 
     private static void fetchPaxsenixCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
@@ -528,6 +551,34 @@ public class LyricsManager {
     }
 
     private static void fetchLrcLibCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
+        // 1. Exact match attempt via /api/get
+        try {
+            String exactUrl = "https://lrclib.net/api/get?track_name="
+                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
+                    + "&artist_name=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
+            HttpRequest exactReq = HttpRequest.newBuilder()
+                    .uri(URI.create(exactUrl))
+                    .header("User-Agent", "BomboAddons/1.0 (https://github.com/fran939/bombofabric)")
+                    .timeout(Duration.ofSeconds(4))
+                    .GET()
+                    .build();
+            HttpResponse<String> exactResp = HTTP_CLIENT.send(exactReq, HttpResponse.BodyHandlers.ofString());
+            if (exactResp.statusCode() == 200) {
+                JsonObject obj = JsonParser.parseString(exactResp.body()).getAsJsonObject();
+                long id = obj.has("id") ? obj.get("id").getAsLong() : System.currentTimeMillis();
+                String synced = obj.has("syncedLyrics") && !obj.get("syncedLyrics").isJsonNull() ? obj.get("syncedLyrics").getAsString() : "";
+                if (!synced.isEmpty()) {
+                    List<LyricsLine> lines = parseLrc(synced);
+                    if (!lines.isEmpty()) {
+                        boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                        String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                        out.add(new LyricCandidate("lrclib-exact-" + id, "LrcLib", hasWords ? "Word-Synced" : "Line-Synced", preview, synced, lines));
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+
+        // 2. Search query attempt
         try {
             String searchUrl = "https://lrclib.net/api/search?q="
                     + URLEncoder.encode(cleanTrack + " " + cleanArtist, StandardCharsets.UTF_8);

@@ -1188,7 +1188,21 @@ public class BomboaddonsClient implements ClientModInitializer {
                      }
 
                      final String targetIp = rawIp;
+                     FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
                      Minecraft mc = Minecraft.getInstance();
+                     if (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null) {
+                        String cleanCurrent = mc.getCurrentServer().ip.toLowerCase(java.util.Locale.ROOT).trim();
+                        String cleanTarget = targetIp.toLowerCase(java.util.Locale.ROOT).trim();
+                        if (cleanCurrent.equals(cleanTarget)
+                              || cleanCurrent.endsWith("." + cleanTarget)
+                              || cleanTarget.endsWith("." + cleanCurrent)
+                              || (cleanCurrent.contains("hypixel.net") && !cleanCurrent.contains("alpha") && cleanTarget.equals("hypixel.net"))
+                              || (cleanCurrent.contains("alpha.hypixel.net") && cleanTarget.equals("alpha.hypixel.net"))) {
+                           src.sendFeedback(Component.literal("§8[§3Bombo§8] §cYou are already connected to §e" + targetIp + "§c! Reconnection aborted."));
+                           return 1;
+                        }
+                     }
+
                      mc.execute(() -> {
                         if (mc.getConnection() != null) {
                            mc.getConnection().getConnection().disconnect(Component.literal("Connecting to " + targetIp));
@@ -4677,6 +4691,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }
                         return 1;
                      })));
+
+                  // /b stream -> start screenshare streaming
+                  builder.then(((LiteralArgumentBuilder)ClientCommands.literal("stream"))
+                     .executes((context) -> {
+                        me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming("All");
+                        return 1;
+                     }));
+
+                  // /b ss -> screenshare command tree
+                  builder.then(buildScreenshareCommand("ss"));
                };
                setupCommands.accept(bBuilder);
                setupCommands.accept(baBuilder);
@@ -4686,9 +4710,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(bomboBuilder);
                dispatcher.register(createBlockHighlightCommand("bh"));
                dispatcher.register(createBlockHighlightCommand("blockhighlight"));
-               // /ss and /screenshare - Mod-to-mod screenshare and Discord voice HUD
+               // /ss, /screenshare, and /stream - Mod-to-mod screenshare and live streaming
                dispatcher.register(buildScreenshareCommand("ss"));
                dispatcher.register(buildScreenshareCommand("screenshare"));
+               dispatcher.register(buildScreenshareCommand("stream"));
                 dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("lyrics").executes((context) -> {
                    Minecraft mc = Minecraft.getInstance();
                    mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
@@ -5387,6 +5412,7 @@ public class BomboaddonsClient implements ClientModInitializer {
              }
          });
          HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "main_hud"), (graphics, deltaTracker) -> {
+            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("HUD: Main HUD")) {
             if (BomboConfig.get().tracerTestMode) {
                int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
                int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
@@ -5434,7 +5460,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             if (Minecraft.getInstance().gui.screen() == null) {
                GardenMovement.drawDirectionWarning(graphics);
             }
-
+            }
          });
          ScreenEvents.BEFORE_INIT.register((ScreenEvents.BeforeInit)(client, screen, scaledWidth, scaledHeight) -> ScreenEvents.afterExtract(screen).register((ScreenEvents.AfterExtract)(screen1, graphics, mouseX, mouseY, tickDelta) -> {
                FeastBakeryHud.onHudRender(graphics);
@@ -8092,7 +8118,11 @@ public class BomboaddonsClient implements ClientModInitializer {
    public static LiteralArgumentBuilder<FabricClientCommandSource> buildScreenshareCommand(String name) {
       return (LiteralArgumentBuilder<FabricClientCommandSource>) (LiteralArgumentBuilder<?>) ClientCommands.literal(name)
          .executes(context -> {
-            handleScreenshareCommand((FabricClientCommandSource) context.getSource(), new String[0]);
+            if ("stream".equalsIgnoreCase(name)) {
+               me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming("All");
+            } else {
+               handleScreenshareCommand((FabricClientCommandSource) context.getSource(), new String[0]);
+            }
             return 1;
          })
          .then(ClientCommands.literal("debug").executes(context -> {

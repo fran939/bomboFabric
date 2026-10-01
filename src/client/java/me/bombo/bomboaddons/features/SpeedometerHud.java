@@ -119,18 +119,20 @@ public class SpeedometerHud {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s == null || !s.speedometer) return;
+      try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Speedometer")) {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s == null || !s.speedometer) return;
 
-      Minecraft mc = Minecraft.getInstance();
-      if (mc.options.keyToggleGui.isDown()) return;
-      if (mc.gui.screen() != null && !(mc.gui.screen() instanceof HudMoveScreen)) return;
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.options.keyToggleGui.isDown()) return;
+         if (mc.gui.screen() != null && !(mc.gui.screen() instanceof HudMoveScreen)) return;
 
-      int x = s.speedometerX >= 0 ? s.speedometerX : 10;
-      int y = s.speedometerY >= 0 ? s.speedometerY : 120;
-      float scale = s.speedometerScale > 0 ? s.speedometerScale : 1.0F;
+         int x = s.speedometerX >= 0 ? s.speedometerX : 10;
+         int y = s.speedometerY >= 0 ? s.speedometerY : 120;
+         float scale = s.speedometerScale > 0 ? s.speedometerScale : 1.0F;
 
-      drawSpeedometer(g, mc, x, y, scale, false);
+         drawSpeedometer(g, mc, x, y, scale, false);
+      }
    }
 
    public static void drawSpeedometer(GuiGraphicsExtractor g, Minecraft mc, int x, int y, float scale, boolean preview) {

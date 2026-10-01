@@ -35,7 +35,9 @@ public class DiscordVoiceHud {
         if (s == null || !s.discordHudEnabled) return;
         if (s.discordHudOnlyInCall && (!DiscordIpcManager.isConnected() || !DiscordIpcManager.isInVoice())) return;
 
-        drawHud(g, s.discordHudX, s.discordHudY, s.discordHudScale, false);
+        try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Discord Voice")) {
+            drawHud(g, s.discordHudX, s.discordHudY, s.discordHudScale, false);
+        }
     }
 
     public static int getHudWidth() {

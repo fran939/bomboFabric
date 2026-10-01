@@ -42,14 +42,16 @@ public class HoppityHud {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s.hoppityHud) {
-         Minecraft mc = Minecraft.getInstance();
-         if (mc.gui.screen() instanceof HudMoveScreen) return;
-         if (!s.hoppityHideWhenInactive || AlphaTrackerHud.isHoppityActive()) {
-            if (!mc.options.keyToggleGui.isDown()) {
-               if (mc.gui.screen() == null || mc.gui.screen() instanceof ChatScreen || mc.gui.screen() instanceof AbstractContainerScreen) {
-                  drawHud(g, s.hoppityHudX, s.hoppityHudY, false);
+      try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("HUD: Hoppity Tracker")) {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s.hoppityHud) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.gui.screen() instanceof HudMoveScreen) return;
+            if (!s.hoppityHideWhenInactive || AlphaTrackerHud.isHoppityActive()) {
+               if (!mc.options.keyToggleGui.isDown()) {
+                  if (mc.gui.screen() == null || mc.gui.screen() instanceof ChatScreen || mc.gui.screen() instanceof AbstractContainerScreen) {
+                     drawHud(g, s.hoppityHudX, s.hoppityHudY, false);
+                  }
                }
             }
          }

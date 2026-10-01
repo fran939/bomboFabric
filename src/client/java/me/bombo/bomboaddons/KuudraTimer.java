@@ -18,38 +18,40 @@ public class KuudraTimer {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s.kuudraBlindnessTimer) {
-         Minecraft client = Minecraft.getInstance();
-         if (!client.options.keyToggleGui.isDown()) {
-            if (client.gui.screen() == null || client.gui.screen() instanceof HudMoveScreen) {
-               boolean isKuudraOrLocal = "Kuudra".equalsIgnoreCase(BomboaddonsClient.currentArea) || "Kuudra's Hollow".equalsIgnoreCase(BomboaddonsClient.currentArea) || client.isLocalServer();
-               if (!isKuudraOrLocal) {
-                  lastDurationTicks = 0;
-               } else {
-                  int durationTicks = 0;
-                  if (client.player != null) {
-                     MobEffectInstance inst = client.player.getEffect(MobEffects.BLINDNESS);
-                     if (inst != null) {
-                        durationTicks = inst.getDuration();
+      try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Kuudra Timer")) {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s.kuudraBlindnessTimer) {
+            Minecraft client = Minecraft.getInstance();
+            if (!client.options.keyToggleGui.isDown()) {
+               if (client.gui.screen() == null || client.gui.screen() instanceof HudMoveScreen) {
+                  boolean isKuudraOrLocal = "Kuudra".equalsIgnoreCase(BomboaddonsClient.currentArea) || "Kuudra's Hollow".equalsIgnoreCase(BomboaddonsClient.currentArea) || client.isLocalServer();
+                  if (!isKuudraOrLocal) {
+                     lastDurationTicks = 0;
+                  } else {
+                     int durationTicks = 0;
+                     if (client.player != null) {
+                        MobEffectInstance inst = client.player.getEffect(MobEffects.BLINDNESS);
+                        if (inst != null) {
+                           durationTicks = inst.getDuration();
+                        }
                      }
-                  }
 
-                  long now = System.currentTimeMillis();
-                  if (durationTicks > lastDurationTicks) {
-                     blindEndTime = now + 500L;
-                     nowEndTime = blindEndTime + 500L;
-                  }
+                     long now = System.currentTimeMillis();
+                     if (durationTicks > lastDurationTicks) {
+                        blindEndTime = now + 500L;
+                        nowEndTime = blindEndTime + 500L;
+                     }
 
-                  lastDurationTicks = durationTicks;
-                  long remaining = blindEndTime - now;
-                  long remainingNow = nowEndTime - now;
-                  if (remaining > 0L) {
-                     drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, false, remaining, false);
-                  } else if (remainingNow > 0L) {
-                     drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, false, 0L, true);
-                  }
+                     lastDurationTicks = durationTicks;
+                     long remaining = blindEndTime - now;
+                     long remainingNow = nowEndTime - now;
+                     if (remaining > 0L) {
+                        drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, false, remaining, false);
+                     } else if (remainingNow > 0L) {
+                        drawTimerInfo(g, s.kuudraBlindnessTimerX, s.kuudraBlindnessTimerY, false, 0L, true);
+                     }
 
+                  }
                }
             }
          }

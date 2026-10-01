@@ -47,24 +47,26 @@ public class ItemValueBreakdownHud {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
-      Minecraft mc = Minecraft.getInstance();
-      if (mc.player == null || mc.options.keyToggleGui.isDown()) return;
-      if (mc.gui.screen() instanceof HudMoveScreen) return;
-      if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) return;
+      try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Item Breakdown")) {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player == null || mc.options.keyToggleGui.isDown()) return;
+         if (mc.gui.screen() instanceof HudMoveScreen) return;
+         if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) return;
 
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s == null || !s.itemValueBreakdownHud) return;
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s == null || !s.itemValueBreakdownHud) return;
 
-      if (mc.gui.screen() instanceof AbstractContainerScreen<?>) {
-         Slot hovered = currentHoveredSlot;
-         if (hovered != null && hovered.hasItem()) {
-            ItemStack stack = hovered.getItem();
-            String sbId = SkyblockUtils.getInternalId(stack);
-            LowestBinManager.ItemValueBreakdown breakdown = LowestBinManager.calculateDetailedEstimatedValue(stack, sbId);
-            if (breakdown != null && breakdown.totalPrice > 0L) {
-               int posX = s.itemValueBreakdownHudX >= 0 ? s.itemValueBreakdownHudX : 10;
-               int posY = s.itemValueBreakdownHudY >= 0 ? s.itemValueBreakdownHudY : (mc.getWindow().getGuiScaledHeight() / 2 - 40);
-               drawBreakdown(g, posX, posY, s.itemValueBreakdownHudScale, breakdown, false);
+         if (mc.gui.screen() instanceof AbstractContainerScreen<?>) {
+            Slot hovered = currentHoveredSlot;
+            if (hovered != null && hovered.hasItem()) {
+               ItemStack stack = hovered.getItem();
+               String sbId = SkyblockUtils.getInternalId(stack);
+               LowestBinManager.ItemValueBreakdown breakdown = LowestBinManager.calculateDetailedEstimatedValue(stack, sbId);
+               if (breakdown != null && breakdown.totalPrice > 0L) {
+                  int posX = s.itemValueBreakdownHudX >= 0 ? s.itemValueBreakdownHudX : 10;
+                  int posY = s.itemValueBreakdownHudY >= 0 ? s.itemValueBreakdownHudY : (mc.getWindow().getGuiScaledHeight() / 2 - 40);
+                  drawBreakdown(g, posX, posY, s.itemValueBreakdownHudScale, breakdown, false);
+               }
             }
          }
       }

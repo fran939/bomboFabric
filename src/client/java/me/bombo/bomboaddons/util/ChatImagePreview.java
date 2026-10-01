@@ -422,18 +422,37 @@ public class ChatImagePreview {
    }
 
    public static void renderPreview(GuiGraphicsExtractor g, Minecraft mc, int mouseX, int mouseY) {
-      String url = getHoveredImageUrl(mc, (double) mouseX, (double) mouseY);
-      if (url == null) {
-         return;
-      }
+      try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("Chat: Image Hover Preview")) {
+         String url = getHoveredImageUrl(mc, (double) mouseX, (double) mouseY);
+         if (url == null) {
+            return;
+         }
+
+      int screenW = mc.getWindow().getGuiScaledWidth();
+      int screenH = mc.getWindow().getGuiScaledHeight();
+      me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
+      boolean isFixed = (s != null && s.chatImagePreviewFixed);
+      String anchor = (s != null && s.chatImagePreviewAnchor != null) ? s.chatImagePreviewAnchor : "Top Right";
 
       if (!TEXTURE_CACHE.containsKey(url)) {
          fetchImage(url);
-         // Show small loading tag next to cursor
+         // Show small loading tag next to cursor or at fixed anchor
          String loading = "§7[Loading image preview...]";
          int tw = mc.font.width(loading);
-         int renderX = Math.min(mouseX + 12, mc.getWindow().getGuiScaledWidth() - tw - 8);
-         int renderY = Math.max(mouseY - 14, 8);
+         int renderX;
+         int renderY;
+         if (isFixed) {
+            switch (anchor) {
+               case "Top Left" -> { renderX = 16; renderY = 16; }
+               case "Bottom Right" -> { renderX = screenW - tw - 16; renderY = screenH - 24; }
+               case "Bottom Left" -> { renderX = 16; renderY = screenH - 24; }
+               case "Center" -> { renderX = (screenW - tw) / 2; renderY = (screenH - 12) / 2; }
+               default -> { renderX = screenW - tw - 16; renderY = 16; } // Top Right
+            }
+         } else {
+            renderX = Math.min(mouseX + 12, screenW - tw - 8);
+            renderY = Math.max(mouseY - 14, 8);
+         }
          g.fill(renderX - 2, renderY - 2, renderX + tw + 2, renderY + 11, -1879048192);
          g.text(mc.font, loading, renderX, renderY, -1, true);
          return;
@@ -442,8 +461,6 @@ public class ChatImagePreview {
       LoadedImage img = TEXTURE_CACHE.get(url);
       if (img == null || img.id == null) return;
 
-      int screenW = mc.getWindow().getGuiScaledWidth();
-      int screenH = mc.getWindow().getGuiScaledHeight();
       boolean isShift = com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 340) || com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 344);
 
       int maxW = isShift ? Math.max(100, screenW - 40) : Math.min(480, screenW - 30);
@@ -464,6 +481,14 @@ public class ChatImagePreview {
          previewX = (screenW - w) / 2;
          previewY = (screenH - h) / 2;
          g.fill(0, 0, screenW, screenH, 0xB0000000);
+      } else if (isFixed) {
+         switch (anchor) {
+            case "Top Left" -> { previewX = 16; previewY = 16; }
+            case "Bottom Right" -> { previewX = screenW - w - 16; previewY = screenH - h - 16; }
+            case "Bottom Left" -> { previewX = 16; previewY = screenH - h - 16; }
+            case "Center" -> { previewX = (screenW - w) / 2; previewY = (screenH - h) / 2; }
+            default -> { previewX = screenW - w - 16; previewY = 16; } // Top Right
+         }
       } else {
          previewX = mouseX + 12;
          previewY = mouseY - h / 2;
@@ -490,5 +515,6 @@ public class ChatImagePreview {
       // Render image texture (animated if frames are present)
       Identifier textureToRender = img.getActiveTextureId();
       g.blit(textureToRender, previewX, previewY, previewX + w, previewY + h, 0.0F, 1.0F, 0.0F, 1.0F);
+      }
    }
 }

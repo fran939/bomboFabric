@@ -50,15 +50,17 @@ public class ArmorHud {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
-      Minecraft mc = Minecraft.getInstance();
-      if (mc.player == null || mc.options.keyToggleGui.isDown()) return;
-      if (mc.gui.screen() instanceof HudMoveScreen) return;
+      try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Armor")) {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player == null || mc.options.keyToggleGui.isDown()) return;
+         if (mc.gui.screen() instanceof HudMoveScreen) return;
 
-      BomboConfig.Settings s = BomboConfig.get();
-      if (!s.armorHud) return;
+         BomboConfig.Settings s = BomboConfig.get();
+         if (!s.armorHud) return;
 
-      if (shouldShow(mc)) {
-         drawHud(g, s.armorHudX, s.armorHudY, s.armorHudScale, false);
+         if (shouldShow(mc)) {
+            drawHud(g, s.armorHudX, s.armorHudY, s.armorHudScale, false);
+         }
       }
    }
 

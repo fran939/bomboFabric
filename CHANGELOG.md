@@ -1,5 +1,38 @@
 # BomboAddons Changelog
  
+## [26.2.28.60] - 2026-10-01 (Beta)
+
+### Screenshare Direct Framebuffer & Streaming Engine
+- **Minecraft Framebuffer Capture (`ScreenshareManager`):** Screenshare now captures exclusively Minecraft directly via GPU framebuffer (`mc.gameRenderer.mainRenderTarget()`), completely eliminating whole-desktop leakage and avoiding AWT Robot cursor flickering.
+- **Configurable Stream Quality & Framerate:** Added `screenshareQuality` (720p 30fps vs 1080p 60fps) and `screenshareOnlyMinecraft` in `/b ss config` and `/b` configuration.
+- **Broadcast Commands:** Added `/b stream` and `/stream` commands to immediately start broadcasting the client screen.
+- **Web Streaming Buffer Elimination:** Configured `X-Accel-Buffering: no` on remote server MJPEG endpoints (`/api/screenshare/stream/`), eliminating Nginx chunk buffering so live video streams render smoothly on `https://bombo.dpdns.org/screenshare`.
+- **IRC Protocol Privacy:** Trapped all `[SS_` protocol messages across IRC chat handlers to ensure spectator invitations and handshakes never leak into in-game public chat.
+
+### Fixed-Position Chat Image Hover Preview
+- **Anchor Options:** Added setting to lock the chat image hover preview to a fixed screen position (Top Right, Top Left, Bottom Right, Bottom Left, Center) via `chatImagePreviewFixed` and `chatImagePreviewAnchor` in `/b` configuration instead of following mouse cursor.
+
+### Auto-Reconnection & Server Play Guard
+- **/b play Reconnect Guard:** `/b play <server>` now verifies if the player is already connected to the target server (e.g. `hypixel.net`), preventing redundant reconnections.
+
+### Discord Desktop IPC Auth Guard
+- **Authorization Modal Suppression:** Disabled auto-prompting for Discord voice authorization on startup (`discordVoiceAutoAuth = false`), stopping repeated permission popups. Added graceful handling for OAuth error 5000 (`User cancelled authorization`).
+
+### Spotify HUD Rendering Optimization & Album Covers
+- **Render Allocation Caching:** Cached parsed hex colors and truncated track/artist font measurements in `SpotifyHud`, eliminating heavy garbage collection and string parsing during 60-70 FPS HUD render loops.
+- **Dynamic Album Artwork Upload:** Improved album cover fetching, decoding with ImageIO, and automatic texture uploading onto the HUD card.
+
+### Synchronized Lyrics Engine Polish
+- **Anti-Oscillation Monotonic Progression:** Locked active line index progression in `LyricsScreen` to prevent line oscillation (e.g. jumping between phrase 3 and 2 on micro-jitter).
+- **Expanded Syllable & Multi-Candidate Parsing:** Added exact `/api/get` lookups on LRCLIB, extended word timestamp regex for brackets and punctuation, and preserved all lyric candidate versions per provider.
+
+### Performance Profiler Expansion (`/b perf`)
+- **Comprehensive Feature Coverage:** Instrumented profiler scopes across all HUD elements (`AlphaTrackerHud`, `DiscordVoiceHud`, `HoppityHud`, `SpeedometerHud`, `EquipmentHud`, `InventoryHud`, `ArmorHud`, `FrozenBlazeAFKTracker`, `ComposterHud`, `StopwatchManager`, `KuudraTimer`, `ItemValueBreakdownHud`, `CustomTimerManager`, `ChatImagePreview`, and `main_hud`).
+- **Dynamic Profiler Activation:** `/b perf` automatically profiles active features while the GUI is open even if the config toggle was disabled.
+
+### Storage Overlay Diagnostics
+- **Comprehensive Debug Logging:** Added verbose tracing to `MenuScreensConstructorMixin` and `StorageOverlayScreen.enabled` detailing container menu types, titles, matching checks, and initialization states.
+
 ## [26.2.28.59] - 2026-10-01 (Beta)
 
 ### Hypixel Alpha Open & Capacity Alert System (Client & Server)

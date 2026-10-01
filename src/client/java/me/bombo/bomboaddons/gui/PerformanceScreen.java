@@ -33,7 +33,14 @@ public class PerformanceScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        PerformanceProfiler.activeScreenOpen = true;
         refreshSnapshots();
+    }
+
+    @Override
+    public void removed() {
+        super.removed();
+        PerformanceProfiler.activeScreenOpen = false;
     }
 
     private void refreshSnapshots() {

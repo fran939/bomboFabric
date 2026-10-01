@@ -688,6 +688,7 @@ public class BomboConfig {
       public int discordHudX = 10;
       public int discordHudY = 120;
       public float discordHudScale = 1.0F;
+      public boolean discordVoiceAutoAuth = false;
 
       // Spotify Desktop Integration & Overlay
       public boolean spotifyHudEnabled = false;
@@ -702,11 +703,18 @@ public class BomboConfig {
       public String spotifyAccentColor = "#00A4DC";
       public String spotifyProgressBgColor = "#333344";
       public String lyricsProvider = "LRCLIB"; // "LRCLIB", "PAXSENIX", "UNISON", "YOULYPLUS"
+      public String lyricsPreferredProvider = "Auto"; // "Auto", "LRCLIB", "Paxsenix", "Kugou", "Unison", "YouLyPlus"
       public boolean spotifyHudShowAlbumArt = true;
       public int lyricsOffsetMs = 0;
 
-      // Screenshare / Spectate Whitelist
+      // Screenshare / Spectate Whitelist & Settings
       public String autoAcceptScreenshareUsers = "";
+      public String screenshareQuality = "720p 30fps"; // "720p 30fps", "1080p 60fps"
+      public boolean screenshareOnlyMinecraft = true;
+
+      // Chat image hover preview fixed position
+      public boolean chatImagePreviewFixed = false;
+      public String chatImagePreviewAnchor = "Top Right"; // "Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center"
       public boolean diceTracker = false;
       public boolean showCommandOnHover = false;
       public boolean autoHoppityCalls = false;

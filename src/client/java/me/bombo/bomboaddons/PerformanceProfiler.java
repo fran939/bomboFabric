@@ -49,9 +49,11 @@ public class PerformanceProfiler {
 
     private static final Scope NOOP = () -> {};
 
+    public static volatile boolean activeScreenOpen = false;
+
     public static boolean isEnabled() {
         BomboConfig.Settings s = BomboConfig.get();
-        return s != null && s.performanceDebug;
+        return (s != null && s.performanceDebug) || activeScreenOpen;
     }
 
     public static Scope scope(String name) {

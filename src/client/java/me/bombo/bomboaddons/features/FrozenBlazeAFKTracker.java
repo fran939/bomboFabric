@@ -154,17 +154,19 @@ public class FrozenBlazeAFKTracker {
    }
 
    public static void render(GuiGraphicsExtractor g, DeltaTracker deltaTracker) {
-      Minecraft mc = Minecraft.getInstance();
-      if (mc.player == null || mc.level == null) return;
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s == null || !s.frozenBlazeWarning || !s.fbWarnTimerOnScreen) return;
-      if (!isWearingFrozenBlaze(mc)) return;
-      if (s.fbWarnRequireRod && !isHoldingRod(mc)) return;
+      try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Frozen Blaze AFK")) {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player == null || mc.level == null) return;
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s == null || !s.frozenBlazeWarning || !s.fbWarnTimerOnScreen) return;
+         if (!isWearingFrozenBlaze(mc)) return;
+         if (s.fbWarnRequireRod && !isHoldingRod(mc)) return;
 
-      int x = s.fbWarnTimerX > 0 ? s.fbWarnTimerX : 10;
-      int y = s.fbWarnTimerY > 0 ? s.fbWarnTimerY : 120;
-      float scale = s.fbWarnTimerScale > 0.0F ? s.fbWarnTimerScale : 1.0F;
-      drawTimerInfo(g, x, y, scale, false);
+         int x = s.fbWarnTimerX > 0 ? s.fbWarnTimerX : 10;
+         int y = s.fbWarnTimerY > 0 ? s.fbWarnTimerY : 120;
+         float scale = s.fbWarnTimerScale > 0.0F ? s.fbWarnTimerScale : 1.0F;
+         drawTimerInfo(g, x, y, scale, false);
+      }
    }
 
    private static String lastHeadDesc = "";

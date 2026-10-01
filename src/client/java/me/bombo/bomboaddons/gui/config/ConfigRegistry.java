@@ -228,6 +228,9 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Copy Chat to Clipboard", "Click or right-click any chat message to copy text directly to clipboard.", category, () -> s.copyChat, v -> s.copyChat = v));
                 items.add(ConfigItem.toggle("Clickable Chat Commands", "Clickable /warp, /trade, and party command links in chat.", category, () -> s.clickableChatCommands, v -> s.clickableChatCommands = v));
                 items.add(ConfigItem.keybind("Chat Peek Key", "Hold keybind to peek chat history while moving without opening chat box.", category, () -> s.chatPeekKey != null ? s.chatPeekKey : "y", v -> s.chatPeekKey = v));
+                items.add(ConfigItem.header("Chat Image Preview", category));
+                items.add(ConfigItem.toggle("Fixed Preview Position", "Fix image preview at a stationary position instead of following mouse cursor.", category, () -> s.chatImagePreviewFixed, v -> s.chatImagePreviewFixed = v));
+                items.add(ConfigItem.cycle("Preview Anchor Position", "Screen position where the preview will be anchored when fixed.", category, List.of("Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center"), () -> s.chatImagePreviewAnchor != null ? s.chatImagePreviewAnchor : "Top Right", v -> s.chatImagePreviewAnchor = v));
             }
 
             case "Chat Triggers" -> {
@@ -404,12 +407,29 @@ public class ConfigRegistry {
                         category,
                         () -> s.discordHudOnlyInCall,
                         v -> s.discordHudOnlyInCall = v));
+                items.add(ConfigItem.toggle("Auto Request Authorization",
+                        "Automatically prompt Discord Desktop authorization on startup (keep disabled to prevent permission popups).",
+                        category,
+                        () -> s.discordVoiceAutoAuth,
+                        v -> s.discordVoiceAutoAuth = v));
                 items.add(ConfigItem.sliderFloat("HUD Scale",
                         "Scale multiplier for Discord Voice HUD.",
                         category,
                         0.5f, 2.5f, 0.1f, "x",
                         () -> s.discordHudScale > 0 ? s.discordHudScale : 1.0f,
                         v -> s.discordHudScale = v));
+                items.add(ConfigItem.header("Screenshare & Streaming (/ss or /stream)", category));
+                items.add(ConfigItem.cycle("Screenshare Quality",
+                        "Streaming resolution and target framerate for live web screensharing.",
+                        category,
+                        List.of("720p 30fps", "1080p 60fps"),
+                        () -> s.screenshareQuality != null ? s.screenshareQuality : "720p 30fps",
+                        v -> s.screenshareQuality = v));
+                items.add(ConfigItem.toggle("Only Share Minecraft",
+                        "Strictly capture the Minecraft game window only, without desktop background or cursor flicker.",
+                        category,
+                        () -> s.screenshareOnlyMinecraft,
+                        v -> s.screenshareOnlyMinecraft = v));
                 items.add(ConfigItem.text("Screenshare Auto-Accept Whitelist",
                         "Comma-separated list of Minecraft usernames to automatically accept screenshare/spectate requests from.",
                         category,
@@ -478,6 +498,12 @@ public class ConfigRegistry {
                         category,
                         () -> s.spotifyProgressBgColor != null ? s.spotifyProgressBgColor : "#333344",
                         v -> s.spotifyProgressBgColor = v));
+                items.add(ConfigItem.cycle("Preferred Lyrics Provider",
+                        "Default provider prioritized for synchronized song lyrics.",
+                        category,
+                        List.of("Auto", "LRCLIB", "Paxsenix", "Kugou", "Unison", "YouLyPlus"),
+                        () -> s.lyricsPreferredProvider != null ? s.lyricsPreferredProvider : "Auto",
+                        v -> s.lyricsPreferredProvider = v));
                 items.add(ConfigItem.cycle("Lyrics Provider",
                         "Select lyrics provider API: LRCLIB (open database), PAXSENIX (Apple Music syllable sync), UNISON, or YOULYPLUS.",
                         category,

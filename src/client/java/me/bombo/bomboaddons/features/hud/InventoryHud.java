@@ -53,15 +53,17 @@ public class InventoryHud {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
-      Minecraft mc = Minecraft.getInstance();
-      if (mc.player == null || mc.options.keyToggleGui.isDown()) return;
-      if (mc.gui.screen() instanceof HudMoveScreen) return;
+      try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Inventory")) {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player == null || mc.options.keyToggleGui.isDown()) return;
+         if (mc.gui.screen() instanceof HudMoveScreen) return;
 
-      BomboConfig.Settings s = BomboConfig.get();
-      if (!s.inventoryHud) return;
+         BomboConfig.Settings s = BomboConfig.get();
+         if (!s.inventoryHud) return;
 
-      if (shouldShow(mc)) {
-         drawHud(g, s.inventoryHudX, s.inventoryHudY, s.inventoryHudScale, false);
+         if (shouldShow(mc)) {
+            drawHud(g, s.inventoryHudX, s.inventoryHudY, s.inventoryHudScale, false);
+         }
       }
    }
 

@@ -844,8 +844,12 @@ public class IRCClient {
       return payload.split("\\s+");
    }
 
-   private static boolean handleScreenshareProtocol(String payload) {
-      if (payload == null) return false;
+   private static boolean handleScreenshareProtocol(String rawPayload) {
+      if (rawPayload == null) return false;
+      int ssIdx = rawPayload.indexOf("[SS_");
+      if (ssIdx == -1) return false;
+      String payload = rawPayload.substring(ssIdx).trim();
+
       if (payload.startsWith("[SS_REQ]")) {
          // Format: [SS_REQ]\u0002target\u0002sender OR [SS_REQ] target sender
          String[] parts = splitProtocolParts(payload);
@@ -995,7 +999,7 @@ public class IRCClient {
          }
          return true;
       }
-      return false;
+      return true; // Any message containing [SS_ is consumed by screenshare protocol and NEVER leaks to chat
    }
 
    public static String cleanSenderName(String name) {

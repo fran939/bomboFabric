@@ -13,6 +13,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 
 import java.net.URI;
+import java.util.Objects;
 
 /**
  * Renders an interactive Spotify HUD card on screen.
@@ -54,6 +55,24 @@ public class SpotifyHud {
         return HUD_HEIGHT;
     }
 
+    private static String lastBgRaw = null;
+    private static int cachedBg = 0xEE1E1324;
+    private static String lastBorderRaw = null;
+    private static int cachedBorder = 0x3300A4DC;
+    private static String lastTitleRaw = null;
+    private static int cachedTitle = 0xFFFFFFFF;
+    private static String lastArtistRaw = null;
+    private static int cachedArtist = 0xFFA098AA;
+    private static String lastAccentRaw = null;
+    private static int cachedAccent = 0xFF00A4DC;
+    private static String lastProgRaw = null;
+    private static int cachedProg = 0x33333344;
+
+    private static String lastRawTrack = null;
+    private static String cachedTrackDisplay = "";
+    private static String lastRawArtist = null;
+    private static String cachedArtistDisplay = "";
+
     public static void drawHud(GuiGraphicsExtractor g, int baseX, int baseY, float scale, boolean isDummy) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) return;
@@ -73,12 +92,39 @@ public class SpotifyHud {
         String artist = isDummy ? "Mora" : (open ? (SpotifyManager.getCurrentArtist().isEmpty() ? "Paused" : SpotifyManager.getCurrentArtist()) : "Not Running");
 
         BomboConfig.Settings s = BomboConfig.get();
-        int bgColor = parseHexColor(s != null ? s.spotifyBgColor : null, 0xEE1E1324);
-        int borderColor = parseHexColor(s != null ? s.spotifyBorderColor : null, 0x3300A4DC);
-        int titleColor = parseHexColor(s != null ? s.spotifyTitleColor : null, 0xFFFFFFFF);
-        int artistColor = parseHexColor(s != null ? s.spotifyArtistColor : null, 0xFFA098AA);
-        int accentColor = parseHexColor(s != null ? s.spotifyAccentColor : null, 0xFF00A4DC);
-        int progressBg = parseHexColor(s != null ? s.spotifyProgressBgColor : null, 0x33333344);
+        if (s != null) {
+            if (!Objects.equals(s.spotifyBgColor, lastBgRaw)) {
+                lastBgRaw = s.spotifyBgColor;
+                cachedBg = parseHexColor(lastBgRaw, 0xEE1E1324);
+            }
+            if (!Objects.equals(s.spotifyBorderColor, lastBorderRaw)) {
+                lastBorderRaw = s.spotifyBorderColor;
+                cachedBorder = parseHexColor(lastBorderRaw, 0x3300A4DC);
+            }
+            if (!Objects.equals(s.spotifyTitleColor, lastTitleRaw)) {
+                lastTitleRaw = s.spotifyTitleColor;
+                cachedTitle = parseHexColor(lastTitleRaw, 0xFFFFFFFF);
+            }
+            if (!Objects.equals(s.spotifyArtistColor, lastArtistRaw)) {
+                lastArtistRaw = s.spotifyArtistColor;
+                cachedArtist = parseHexColor(lastArtistRaw, 0xFFA098AA);
+            }
+            if (!Objects.equals(s.spotifyAccentColor, lastAccentRaw)) {
+                lastAccentRaw = s.spotifyAccentColor;
+                cachedAccent = parseHexColor(lastAccentRaw, 0xFF00A4DC);
+            }
+            if (!Objects.equals(s.spotifyProgressBgColor, lastProgRaw)) {
+                lastProgRaw = s.spotifyProgressBgColor;
+                cachedProg = parseHexColor(lastProgRaw, 0x33333344);
+            }
+        }
+
+        int bgColor = cachedBg;
+        int borderColor = cachedBorder;
+        int titleColor = cachedTitle;
+        int artistColor = cachedArtist;
+        int accentColor = cachedAccent;
+        int progressBg = cachedProg;
 
         // Background card
         g.fill(0, 0, HUD_WIDTH, HUD_HEIGHT, bgColor);
@@ -96,13 +142,19 @@ public class SpotifyHud {
         Identifier iconToDraw = (albumArt != null) ? albumArt : SPOTIFY_ICON;
         g.blit(iconToDraw, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
 
-        // Track and Artist text
+        // Track and Artist text (cached width calculation)
         int textX = 29;
-        String trackDisplay = font.plainSubstrByWidth(track, 96);
-        g.text(font, "§l" + trackDisplay, textX, 5, titleColor, true);
+        if (!track.equals(lastRawTrack)) {
+            lastRawTrack = track;
+            cachedTrackDisplay = font.plainSubstrByWidth(track, 96);
+        }
+        g.text(font, "§l" + cachedTrackDisplay, textX, 5, titleColor, true);
 
-        String artistDisplay = font.plainSubstrByWidth(artist, 96);
-        g.text(font, artistDisplay, textX, 16, artistColor, false);
+        if (!artist.equals(lastRawArtist)) {
+            lastRawArtist = artist;
+            cachedArtistDisplay = font.plainSubstrByWidth(artist, 96);
+        }
+        g.text(font, cachedArtistDisplay, textX, 16, artistColor, false);
 
         // Controls on the right: |◀  ⏸/▶  ▶|
         int ctrlY = 9;

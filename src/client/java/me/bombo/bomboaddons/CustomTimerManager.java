@@ -121,12 +121,14 @@ public class CustomTimerManager {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s.customTimerHudEnabled) {
-         Minecraft client = Minecraft.getInstance();
-         if (!client.options.keyToggleGui.isDown()) {
-            if (client.gui.screen() == null || client.gui.screen() instanceof HudMoveScreen) {
-               drawTimers(g, s.customTimerHudX, s.customTimerHudY, false);
+      try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Custom Timers")) {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s.customTimerHudEnabled) {
+            Minecraft client = Minecraft.getInstance();
+            if (!client.options.keyToggleGui.isDown()) {
+               if (client.gui.screen() == null || client.gui.screen() instanceof HudMoveScreen) {
+                  drawTimers(g, s.customTimerHudX, s.customTimerHudY, false);
+               }
             }
          }
       }

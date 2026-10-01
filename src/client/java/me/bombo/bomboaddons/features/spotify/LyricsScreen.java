@@ -144,11 +144,15 @@ public class LyricsScreen extends Screen {
         // --- LYRICS CONTENT AREA ---
         List<LyricsManager.LyricsLine> lines = LyricsManager.getLines();
         long currentMs = SpotifyManager.getProgressMs() + BomboConfig.get().lyricsOffsetMs;
-        int activeIdx = LyricsManager.getCurrentLineIndex(currentMs);
+        int rawActiveIdx = LyricsManager.getCurrentLineIndex(currentMs);
+        int activeIdx = rawActiveIdx;
 
-        // Monotonic progression
-        if (activeIdx != lastActiveLineIdx || Math.abs(currentMs - lastSeenCurrentMs) > 2500L) {
-            lastActiveLineIdx = activeIdx;
+        // Monotonic progression: don't let activeIdx jump backwards on micro-jitter unless user jumped/seeked > 2.5s
+        if (rawActiveIdx < lastActiveLineIdx && (lastSeenCurrentMs - currentMs) < 2500L && lastActiveLineIdx < lines.size()) {
+            activeIdx = lastActiveLineIdx;
+        } else if (rawActiveIdx != lastActiveLineIdx || Math.abs(currentMs - lastSeenCurrentMs) > 2500L) {
+            lastActiveLineIdx = rawActiveIdx;
+            activeIdx = rawActiveIdx;
             maxActiveWordIdx = -1;
         }
         lastSeenCurrentMs = currentMs;

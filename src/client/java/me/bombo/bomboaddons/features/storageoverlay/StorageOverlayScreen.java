@@ -118,9 +118,13 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		boolean isStorageMenu = title.contains("storage") || title.contains("almacenamiento") || title.contains("ender chest") || title.contains("cofre de ender") || title.contains("backpack") || title.contains("mochila");
 		if (disableOnNextLoad) {
 			disableOnNextLoad = false;
+			me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] StorageOverlayScreen.enabled: disableOnNextLoad was true! Bypassing overlay once.");
 			return false;
 		}
-		return BomboConfig.get().storageOverlay && (isStorageMenu || openStorage != -1);
+		boolean result = BomboConfig.get().storageOverlay && (isStorageMenu || openStorage != -1);
+		me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] StorageOverlayScreen.enabled check: raw='{}', title='{}', isStorageMenu={}, openStorage={}, configOn={}, result={}", 
+				rawTitle, title, isStorageMenu, openStorage, BomboConfig.get().storageOverlay, result);
+		return result;
 	}
 
 	protected void switchOpenStorage(int index) {

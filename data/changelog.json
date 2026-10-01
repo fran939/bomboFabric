@@ -1,5 +1,22 @@
 [
   {
+    "version": "26.2.28.60",
+    "date": "2026-10-01",
+    "changes": [
+      "Minecraft Direct Screenshare: Screen streaming now captures only the Minecraft window directly from GPU framebuffer without cursor flickering or whole-desktop capture",
+      "Screenshare Quality & Commands: Added 720p 30fps and 1080p 60fps quality settings in /b ss config, /b stream to start broadcasting, and patched Nginx buffering on web dashboard",
+      "Screenshare Chat Leak Fix: Trapped [SS_ protocol messages across IRC chat handlers so requests and responses never leak into in-game chat",
+      "Chat Image Hover Preview Anchor: Added setting to fix preview position to screen anchors (Top Right, Top Left, Bottom Right, etc.) in /b config instead of mouse cursor",
+      "/b play Reconnect Guard: Prevented reconnecting if already connected to target server (e.g. hypixel.net)",
+      "Discord IPC Auth Guard: Added discordVoiceAutoAuth = false to stop repeated OAuth permission modals on game launch and handled User cancelled authorization gracefully",
+      "Spotify HUD Performance: Cached parsed hex colors and text truncation in SpotifyHud to eliminate per-frame allocations during 60-70 FPS HUD renders",
+      "Spotify Album Art: Restored dynamic texture decoding and uploading for album artwork on Spotify HUD",
+      "Lyrics Monotonic Progression: Prevented active phrase oscillation backwards on audio micro-jitter and expanded syllable/candidate matching across providers",
+      "Performance Profiler Coverage: Added profiler scopes to all HUD elements and mod features in /b perf, and auto-enabled profiling while PerformanceScreen is open",
+      "Storage Overlay Debugging: Added verbose tracing to MenuScreensConstructorMixin and StorageOverlayScreen to pinpoint why container overlays fail to initialize"
+    ]
+  },
+  {
     "version": "26.2.28.59",
     "date": "2026-10-01",
     "changes": [

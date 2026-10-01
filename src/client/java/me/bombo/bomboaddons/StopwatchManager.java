@@ -61,9 +61,11 @@ public class StopwatchManager {
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
       if (active) {
-         Minecraft mc = Minecraft.getInstance();
-         if (!mc.options.keyToggleGui.isDown()) {
-            drawStopwatch(g, 10, 200);
+         try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Stopwatch")) {
+            Minecraft mc = Minecraft.getInstance();
+            if (!mc.options.keyToggleGui.isDown()) {
+               drawStopwatch(g, 10, 200);
+            }
          }
       }
    }

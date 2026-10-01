@@ -207,26 +207,28 @@ public class AlphaTrackerHud {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s.alphaTrackerHud) {
-         Minecraft mc = Minecraft.getInstance();
-         if (!s.alphaTrackerHideWhenClosed && !s.alphaTrackerOnlyWhenOpen || isOpen || mc.gui.screen() instanceof HudMoveScreen) {
-            if (!mc.options.keyToggleGui.isDown()) {
-               if (mc.gui.screen() == null || mc.gui.screen() instanceof HudMoveScreen || mc.gui.screen() instanceof ChatScreen || mc.gui.screen() instanceof AbstractContainerScreen) {
-                  long now = System.currentTimeMillis();
-                  if (now - lastCheckTime > 60000L && !checking) {
-                     checkServerStatusAsync();
-                  }
+      try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("HUD: Alpha Tracker")) {
+         BomboConfig.Settings s = BomboConfig.get();
+         if (s.alphaTrackerHud) {
+            Minecraft mc = Minecraft.getInstance();
+            if (!s.alphaTrackerHideWhenClosed && !s.alphaTrackerOnlyWhenOpen || isOpen || mc.gui.screen() instanceof HudMoveScreen) {
+               if (!mc.options.keyToggleGui.isDown()) {
+                  if (mc.gui.screen() == null || mc.gui.screen() instanceof HudMoveScreen || mc.gui.screen() instanceof ChatScreen || mc.gui.screen() instanceof AbstractContainerScreen) {
+                     long now = System.currentTimeMillis();
+                     if (now - lastCheckTime > 60000L && !checking) {
+                        checkServerStatusAsync();
+                     }
 
-                  Font font = mc.font;
-                  float scale = s.alphaTrackerHudScale;
-                  int baseX = s.alphaTrackerHudX;
-                  int baseY = s.alphaTrackerHudY;
-                  g.pose().pushMatrix();
-                  g.pose().translate((float)baseX, (float)baseY);
-                  g.pose().scale(scale, scale);
-                  drawAlphaInfo(g, font, 0, 0);
-                  g.pose().popMatrix();
+                     Font font = mc.font;
+                     float scale = s.alphaTrackerHudScale;
+                     int baseX = s.alphaTrackerHudX;
+                     int baseY = s.alphaTrackerHudY;
+                     g.pose().pushMatrix();
+                     g.pose().translate((float)baseX, (float)baseY);
+                     g.pose().scale(scale, scale);
+                     drawAlphaInfo(g, font, 0, 0);
+                     g.pose().popMatrix();
+                  }
                }
             }
          }

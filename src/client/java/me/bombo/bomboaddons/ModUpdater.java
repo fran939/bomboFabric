@@ -414,21 +414,53 @@ public class ModUpdater {
 
             // 1. Try server API
             try {
-               String apiUrl = "https://api.bombo.dpdns.org/mod/version/" + cleanTarget;
+               String flavorParam = me.bombo.bomboaddons.flavor.Flavor.get().isCheat() ? "?flavor=cheat" : "";
+               String artifactTarget = Constants.artifactFilePrefix() + cleanTarget + ".jar";
+               String apiUrl = "https://api.bombo.dpdns.org/mod/version/" + artifactTarget + flavorParam;
                HttpURLConnection conn = (HttpURLConnection)(new URL(apiUrl)).openConnection();
-               conn.setRequestProperty("User-Agent", "Mozilla/5.0");
-               conn.setConnectTimeout(4000);
-               conn.setReadTimeout(4000);
-               if (conn.getResponseCode() == 200) {
-                  BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
-                  JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
-                  if (obj.has("downloadUrl")) {
-                     downloadUrl = obj.get("downloadUrl").getAsString();
-                  } else if (obj.has("download_url")) {
-                     downloadUrl = obj.get("download_url").getAsString();
+               conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
+               conn.setConnectTimeout(5000);
+               conn.setReadTimeout(10000);
+               int code = conn.getResponseCode();
+               if (code == 200) {
+                  String contentType = conn.getContentType();
+                  String disposition = conn.getHeaderField("Content-Disposition");
+                  if ((contentType != null && (contentType.contains("java-archive") || contentType.contains("octet-stream") || contentType.contains("application/jar")))
+                        || (disposition != null && disposition.contains(".jar"))) {
+                     downloadUrl = apiUrl;
+                  } else {
+                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                        JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
+                        if (obj.has("downloadUrl")) {
+                           downloadUrl = obj.get("downloadUrl").getAsString();
+                        } else if (obj.has("download_url")) {
+                           downloadUrl = obj.get("download_url").getAsString();
+                        }
+                     } catch (Throwable ignored) {}
                   }
                }
             } catch (Throwable ignored) {}
+
+            // 1b. Try version number without artifact name on server API
+            if (downloadUrl == null) {
+               try {
+                  String flavorParam = me.bombo.bomboaddons.flavor.Flavor.get().isCheat() ? "?flavor=cheat" : "";
+                  String apiUrl = "https://api.bombo.dpdns.org/mod/version/" + cleanTarget + flavorParam;
+                  HttpURLConnection conn = (HttpURLConnection)(new URL(apiUrl)).openConnection();
+                  conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
+                  conn.setConnectTimeout(5000);
+                  conn.setReadTimeout(10000);
+                  int code = conn.getResponseCode();
+                  if (code == 200) {
+                     String contentType = conn.getContentType();
+                     String disposition = conn.getHeaderField("Content-Disposition");
+                     if ((contentType != null && (contentType.contains("java-archive") || contentType.contains("octet-stream") || contentType.contains("application/jar")))
+                           || (disposition != null && disposition.contains(".jar"))) {
+                        downloadUrl = apiUrl;
+                     }
+                  }
+               } catch (Throwable ignored) {}
+            }
 
             // 2. Try direct github release fallback
             if (downloadUrl == null) {

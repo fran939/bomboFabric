@@ -48,6 +48,7 @@ public class DiscordIpcManager {
 
     // Prevent repeated popup authorizations
     private static volatile boolean hasAuthorizedThisSession = false;
+    private static volatile boolean authCancelled = false;
 
     // Rolling log of the last 15 RPC packets for detailed diagnosis
     private static final Deque<String> packetHistory = new ConcurrentLinkedDeque<>();
@@ -202,6 +203,7 @@ public class DiscordIpcManager {
     }
 
     public static void requestAuthorization() {
+        authCancelled = false;
         hasAuthorizedThisSession = false;
         synchronized (PIPE_LOCK) {
             RandomAccessFile pipe = currentPipe;
@@ -295,7 +297,12 @@ public class DiscordIpcManager {
 
             if ("ERROR".equals(evt) || (obj.has("data") && obj.getAsJsonObject("data").has("code") && obj.getAsJsonObject("data").has("message"))) {
                 JsonObject data = obj.getAsJsonObject("data");
-                lastError = "Discord Error (" + data.get("code").getAsInt() + "): " + data.get("message").getAsString();
+                int errCode = data.has("code") ? data.get("code").getAsInt() : 0;
+                if (errCode == 5000) {
+                    authCancelled = true;
+                    hasAuthorizedThisSession = true;
+                }
+                lastError = "Discord Error (" + errCode + "): " + data.get("message").getAsString();
                 return;
             }
 
@@ -310,8 +317,8 @@ public class DiscordIpcManager {
                         }
                     }
 
-                    // Only send AUTHORIZE once to avoid the repeated popup modal!
-                    if (!hasAuthorizedThisSession) {
+                    // Only send AUTHORIZE if enabled in config to avoid the repeated popup modal!
+                    if (BomboConfig.get().discordVoiceAutoAuth && !hasAuthorizedThisSession && !authCancelled) {
                         JsonObject authArgs = new JsonObject();
                         authArgs.addProperty("client_id", CLIENT_ID);
                         JsonArray scopes = new JsonArray();

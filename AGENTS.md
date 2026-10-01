@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.59` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.60` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,24 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.59`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.60`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.60 (Ready for In-Game Testing)
+>
+> 1. **Minecraft Direct Framebuffer Screenshare (`ScreenshareManager`):** Screen capture now reads exclusively from the Minecraft window framebuffer (`mc.gameRenderer.mainRenderTarget()`), completely eliminating desktop leakage and avoiding AWT Robot cursor flickering.
+> 2. **Screenshare Quality Settings & Commands:** Added `screenshareQuality` (720p 30fps vs 1080p 60fps) and `screenshareOnlyMinecraft` in `/b ss config` and `/b` configuration. Added `/b stream` and `/stream` commands to start broadcasting.
+> 3. **Screenshare Web Streaming Optimization:** Patched remote server MJPEG endpoint (`/api/screenshare/stream/`) with `X-Accel-Buffering: no` and `Pragma: no-cache`, eliminating Nginx chunk buffering so live video streams render smoothly on `https://bombo.dpdns.org/screenshare`.
+> 4. **Screenshare Chat Privacy:** Trapped all `[SS_` protocol messages across IRC chat handlers so spectator invitations and receipt acknowledgments never leak into in-game public chat.
+> 5. **Fixed-Position Chat Image Hover Preview:** Added setting to anchor preview at a fixed screen spot (Top Right, Top Left, Bottom Right, Bottom Left, Center) via `chatImagePreviewFixed` and `chatImagePreviewAnchor` in `/b` configuration.
+> 6. **/b play Reconnect Guard:** `/b play <server>` verifies if already connected to target server (e.g. `hypixel.net`), preventing redundant disconnect/reconnect loops.
+> 7. **Discord Desktop IPC Permission Modal Guard:** Set `discordVoiceAutoAuth = false` by default and added graceful handling for OAuth error 5000 (`User cancelled authorization`), preventing repeated VS Code authorization prompts on game startup.
+> 8. **Spotify HUD Rendering Optimization & Album Covers:** Cached parsed hex colors and truncated track/artist font calculations in `SpotifyHud`, eliminating per-frame allocations during 60-70 FPS HUD renders. Restored dynamic album art decoding via ImageIO and texture uploading.
+> 9. **Synchronized Lyrics Monotonic Progression & Syllable Support:** Locked active line index progression in `LyricsScreen` to prevent line oscillation (jumping between phrase 3 and 2 on micro-jitter). Added exact `/api/get` lookup on LRCLIB, extended word timestamp regex for brackets and punctuation, and preserved all candidate versions per provider.
+> 10. **Performance Profiler Coverage (`/b perf`):** Instrumented profiler scopes across all HUD elements (`AlphaTrackerHud`, `DiscordVoiceHud`, `HoppityHud`, `SpeedometerHud`, `EquipmentHud`, `InventoryHud`, `ArmorHud`, `FrozenBlazeAFKTracker`, `ComposterHud`, `StopwatchManager`, `KuudraTimer`, `ItemValueBreakdownHud`, `CustomTimerManager`, `ChatImagePreview`, and `main_hud`). Profiler dynamically gathers statistics while `PerformanceScreen` is open even if the config toggle was disabled.
+> 11. **Storage Overlay Diagnostic Logging:** Added verbose tracing to `MenuScreensConstructorMixin` and `StorageOverlayScreen.enabled` detailing container menu types, titles, matching checks, and initialization states to trace container overlay behavior.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.59 (Ready for In-Game Testing)
 >
 > 1. **Hypixel Alpha Server Alert Fix (`bombot`):** Fixed server watcher logic where public Alpha opening alerts were dropped if admins/testers were online before public cap was raised from 0 to 50 (`wasActuallyClosed` was failing due to `prevOnline <= 5`). Restored strict public capacity detection (`prevMax === 0` to `maxPlayers > 0`) and reduced repeat open cooldown from 60 minutes to 10 minutes.
