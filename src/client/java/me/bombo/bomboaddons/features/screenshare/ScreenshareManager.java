@@ -95,7 +95,14 @@ public class ScreenshareManager {
             Minecraft mc = Minecraft.getInstance();
             if (mc != null && mc.player != null) {
                 String myIgn = mc.player.getScoreboardName();
-                mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aLive screensharing started! View stream at: §b§nhttps://bombo.dpdns.org/screenshare?user=" + myIgn));
+                String streamUrl = "https://bombo.dpdns.org/screenshare?user=" + myIgn;
+                net.minecraft.network.chat.MutableComponent link = Component.literal(streamUrl)
+                        .withStyle(style -> style
+                                .withColor(net.minecraft.ChatFormatting.AQUA)
+                                .withUnderlined(true)
+                                .withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(URI.create(streamUrl)))
+                                .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick to view live stream on web"))));
+                mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aLive screensharing started! View stream at: ").append(link));
             }
         }
     }
@@ -143,13 +150,13 @@ public class ScreenshareManager {
         Minecraft mc = Minecraft.getInstance();
         while (STREAMING.get()) {
             long frameStart = System.currentTimeMillis();
-            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Screenshare: StreamLoop")) {
-                BomboConfig.Settings s = BomboConfig.get();
-                String q = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 30fps";
+            long targetDelayMs = 33L;
+            try {
                 int targetW = 1280;
                 int targetH = 720;
-                long targetDelayMs = 33L;
                 float quality = 0.70f;
+                BomboConfig.Settings s = BomboConfig.get();
+                String q = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 30fps";
 
                 if (q.contains("1440p") || q.contains("2K")) {
                     targetW = 2560;
@@ -171,81 +178,108 @@ public class ScreenshareManager {
                 currentTargetW = targetW;
                 currentTargetH = targetH;
 
-                if (mc != null) {
-                    long capStart = System.currentTimeMillis();
-                    byte[] jpegBytes;
-                    if (s == null || s.screenshareOnlyMinecraft) {
-                        jpegBytes = captureMinecraftFrame(mc, targetW, targetH, quality);
-                    } else {
-                        jpegBytes = captureRobotFrame(mc, targetW, targetH, quality);
-                    }
-                    lastCaptureDurationMs = System.currentTimeMillis() - capStart;
+                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Screenshare: StreamLoop")) {
+                    if (mc != null) {
+                        long capStart = System.currentTimeMillis();
+                        byte[] jpegBytes;
+                        if (s == null || s.screenshareOnlyMinecraft) {
+                            jpegBytes = captureMinecraftFrame(mc, targetW, targetH, quality);
+                        } else {
+                            jpegBytes = captureRobotFrame(mc, targetW, targetH, quality);
+                        }
+                        lastCaptureDurationMs = System.currentTimeMillis() - capStart;
 
-                    if (jpegBytes != null && jpegBytes.length > 0) {
-                        framesCaptured++;
-                        final int jpegLen = jpegBytes.length;
-                        String b64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(jpegBytes);
-                        String myIgn = mc.player != null ? mc.player.getScoreboardName() : "User";
+                        if (jpegBytes != null && jpegBytes.length > 0) {
+                            framesCaptured++;
+                            final int jpegLen = jpegBytes.length;
+                            String b64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(jpegBytes);
+                            String myIgn = mc.player != null ? mc.player.getScoreboardName() : "User";
 
-                        JsonObject payload = new JsonObject();
-                        payload.addProperty("user", myIgn);
-                        payload.addProperty("frame", b64);
-                        payload.addProperty("fps", (int) Math.max(15, currentFps));
-                        payload.addProperty("width", targetW);
-                        payload.addProperty("height", targetH);
+                            JsonObject payload = new JsonObject();
+                            payload.addProperty("user", myIgn);
+                            payload.addProperty("frame", b64);
+                            payload.addProperty("fps", (int) Math.max(15, currentFps));
+                            payload.addProperty("width", targetW);
+                            payload.addProperty("height", targetH);
 
-                        HttpRequest req = HttpRequest.newBuilder()
-                                .uri(URI.create("https://api.bombo.dpdns.org/api/screenshare/frame"))
-                                .header("Content-Type", "application/json")
-                                .timeout(Duration.ofMillis(1200))
-                                .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
-                                .build();
+                            HttpRequest req = HttpRequest.newBuilder()
+                                    .uri(URI.create("https://api.bombo.dpdns.org/api/screenshare/frame"))
+                                    .header("Content-Type", "application/json")
+                                    .timeout(Duration.ofMillis(1200))
+                                    .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
+                                    .build();
 
-                        // Non-blocking async pipeline (up to 2 concurrent HTTP requests) to prevent stream stutter
-                        if (inFlightPosts.get() < 2) {
-                            inFlightPosts.incrementAndGet();
-                            long postStart = System.currentTimeMillis();
-                            HTTP_CLIENT.sendAsync(req, HttpResponse.BodyHandlers.discarding())
-                                    .whenComplete((resp, err) -> {
-                                        inFlightPosts.decrementAndGet();
-                                        if (resp != null && resp.statusCode() == 200) {
-                                            framesSent++;
-                                            totalBytesSent += jpegLen;
-                                            windowFramesSent++;
-                                            windowBytesSent += jpegLen;
-                                            lastLatencyMs = System.currentTimeMillis() - postStart;
-                                            lastError = "";
-                                        } else if (resp != null) {
-                                            lastError = "Server HTTP " + resp.statusCode();
-                                        } else if (err != null) {
-                                            lastError = err.getMessage();
-                                        }
-                                    });
+                            // Non-blocking async pipeline (up to 3 concurrent HTTP requests) for 30-60 FPS
+                            if (inFlightPosts.get() < 3) {
+                                inFlightPosts.incrementAndGet();
+                                long postStart = System.currentTimeMillis();
+                                HTTP_CLIENT.sendAsync(req, HttpResponse.BodyHandlers.discarding())
+                                        .whenComplete((resp, err) -> {
+                                            inFlightPosts.decrementAndGet();
+                                            if (resp != null && resp.statusCode() == 200) {
+                                                framesSent++;
+                                                totalBytesSent += jpegLen;
+                                                windowFramesSent++;
+                                                windowBytesSent += jpegLen;
+                                                lastLatencyMs = System.currentTimeMillis() - postStart;
+                                                lastError = "";
+                                            } else if (resp != null) {
+                                                lastError = "Server HTTP " + resp.statusCode();
+                                            } else if (err != null) {
+                                                lastError = err.getMessage();
+                                            }
+                                        });
+                            }
                         }
                     }
-                }
 
-                // Calculate rolling FPS & Bitrate every second
-                long now = System.currentTimeMillis();
-                long dt = now - lastMetricCalcTime;
-                if (dt >= 1000L) {
-                    currentFps = (windowFramesSent * 1000.0f) / dt;
-                    currentBitrateKbps = ((windowBytesSent * 8.0f) / 1024.0f) / (dt / 1000.0f);
-                    windowFramesSent = 0L;
-                    windowBytesSent = 0L;
-                    lastMetricCalcTime = now;
+                    // Calculate rolling FPS & Bitrate every second
+                    long now = System.currentTimeMillis();
+                    long dt = now - lastMetricCalcTime;
+                    if (dt >= 1000L) {
+                        currentFps = (windowFramesSent * 1000.0f) / dt;
+                        currentBitrateKbps = ((windowBytesSent * 8.0f) / 1024.0f) / (dt / 1000.0f);
+                        windowFramesSent = 0L;
+                        windowBytesSent = 0L;
+                        lastMetricCalcTime = now;
+                    }
                 }
 
                 long elapsed = System.currentTimeMillis() - frameStart;
-                long sleepTime = Math.max(4L, targetDelayMs - elapsed);
+                long sleepTime = Math.max(2L, targetDelayMs - elapsed);
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 break;
             } catch (Throwable t) {
                 lastError = t.getClass().getSimpleName() + ": " + t.getMessage();
-                try { Thread.sleep(100L); } catch (InterruptedException ignored) { break; }
+                try { Thread.sleep(50L); } catch (InterruptedException ignored) { break; }
             }
         }
+    }
+
+    private static void drawCursorIfVisible(Minecraft mc, BufferedImage bi, int imgW, int imgH) {
+        try {
+            if (mc == null || mc.gui == null || mc.gui.screen() == null) return;
+            double mx = mc.mouseHandler.xpos();
+            double my = mc.mouseHandler.ypos();
+            int winW = mc.getWindow().getWidth();
+            int winH = mc.getWindow().getHeight();
+            if (winW <= 0 || winH <= 0) return;
+            int cx = (int) Math.round((mx / (double) winW) * imgW);
+            int cy = (int) Math.round((my / (double) winH) * imgH);
+            if (cx < 0 || cx >= imgW || cy < 0 || cy >= imgH) return;
+
+            Graphics2D g2 = bi.createGraphics();
+            int[] xPoints = {cx, cx, cx + 11, cx + 7, cx + 12, cx + 10, cx + 5, cx + 8};
+            int[] yPoints = {cy, cy + 15, cy + 11, cy + 9, cy + 15, cy + 16, cy + 10, cy + 8};
+
+            g2.setColor(Color.BLACK);
+            g2.setStroke(new BasicStroke(2.0f));
+            g2.drawPolygon(xPoints, yPoints, xPoints.length);
+            g2.setColor(Color.WHITE);
+            g2.fillPolygon(xPoints, yPoints, xPoints.length);
+            g2.dispose();
+        } catch (Throwable ignored) {}
     }
 
     private static byte[] captureMinecraftFrame(Minecraft mc, int targetW, int targetH, float quality) {
@@ -276,6 +310,7 @@ public class ScreenshareManager {
                             try {
                                 BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
                                 bi.setRGB(0, 0, w, h, pixels, 0, w);
+                                drawCursorIfVisible(mc, bi, w, h);
                                 byte[] jpeg = compressScaledJpeg(bi, targetW, targetH, quality);
                                 future.complete(jpeg);
                             } catch (Throwable t) {
@@ -293,7 +328,7 @@ public class ScreenshareManager {
         });
 
         try {
-            return future.get(150, TimeUnit.MILLISECONDS);
+            return future.get(100, TimeUnit.MILLISECONDS);
         } catch (Throwable t) {
             return null;
         }

@@ -43,6 +43,7 @@
 		"KeyboardMixin",
 		"LevelMixin",
 		"LeverBlockMixin",
+		"MenuScreensConstructorMixin",
 		"MinecraftMixin",
 		"MouseMixin",
 		"PackConfirmScreenMixin",

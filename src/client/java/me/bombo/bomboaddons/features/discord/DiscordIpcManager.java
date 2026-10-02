@@ -39,6 +39,8 @@ public class DiscordIpcManager {
     private static volatile String currentChannelName = "";
     private static volatile String currentGuildName = "";
     private static volatile String myDiscordUsername = "";
+    private static volatile String myUserId = "";
+    private static volatile String logReaderStatus = "None";
     private static volatile String activePipeName = "None";
     private static volatile String lastError = "None";
     private static volatile String lastHandshakeStatus = "Not attempted";
@@ -290,6 +292,84 @@ public class DiscordIpcManager {
                 }
             }
         }
+        // Fallback / complementary detection from Discord desktop logs
+        scanDiscordLogForVoice();
+    }
+
+    private static void scanDiscordLogForVoice() {
+        try {
+            String appData = System.getenv("APPDATA");
+            if (appData == null) return;
+            File logFile = new File(appData, "discord/logs/renderer_js.log");
+            if (!logFile.exists() || !logFile.canRead()) return;
+
+            long len = logFile.length();
+            if (len <= 0) return;
+
+            int toRead = (int) Math.min(65536L, len);
+            byte[] buffer = new byte[toRead];
+            try (RandomAccessFile raf = new RandomAccessFile(logFile, "r")) {
+                raf.seek(len - toRead);
+                raf.readFully(buffer);
+            }
+
+            String content = new String(buffer, StandardCharsets.UTF_8);
+            String[] lines = content.split("\r?\n");
+
+            boolean foundConnected = false;
+            boolean foundDisconnect = false;
+            boolean foundHeartbeat = false;
+            String foundChannel = null;
+
+            for (int i = lines.length - 1; i >= 0; i--) {
+                String line = lines[i];
+                if (!foundDisconnect && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("[VOICE_DISCONNECT]")) {
+                    foundDisconnect = true;
+                    break;
+                }
+                if (!foundConnected && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("RTC_CONNECTED")) {
+                    foundConnected = true;
+                }
+                if (!foundHeartbeat && line.contains("[RTCControlSocket(default)]") && line.contains("Heartbeat")) {
+                    foundHeartbeat = true;
+                }
+                if (foundChannel == null && line.contains("Updating channel:")) {
+                    int idx = line.indexOf("Updating channel:");
+                    if (idx != -1) {
+                        String rest = line.substring(idx + 17).trim();
+                        int paren = rest.indexOf('(');
+                        if (paren != -1) rest = rest.substring(0, paren).trim();
+                        if (!rest.isEmpty()) foundChannel = rest;
+                    }
+                }
+            }
+
+            if ((foundConnected || foundHeartbeat) && !foundDisconnect) {
+                inVoice = true;
+                logReaderStatus = "Active (Connected to voice)";
+                if (currentChannelName.isEmpty() || currentChannelName.startsWith("Voice Call") || currentChannelName.startsWith("Voice (")) {
+                    currentChannelName = foundChannel != null ? ("Voice (" + foundChannel.substring(Math.max(0, foundChannel.length() - 4)) + ")") : "Voice Call";
+                }
+                if (foundChannel != null && currentChannelId.isEmpty()) {
+                    currentChannelId = foundChannel;
+                }
+                if (voiceUsers.isEmpty()) {
+                    String name = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
+                    String id = !myUserId.isEmpty() ? myUserId : "self";
+                    voiceUsers.put(id, new DiscordVoiceUser(id, name, name, false, false, false, false));
+                }
+            } else if (foundDisconnect) {
+                logReaderStatus = "Disconnected (VOICE_DISCONNECT detected)";
+                if (lastError.contains("4006") || !connected) {
+                    inVoice = false;
+                    voiceUsers.clear();
+                }
+            } else {
+                logReaderStatus = "No active call found";
+            }
+        } catch (Throwable t) {
+            logReaderStatus = "Error: " + t.getMessage();
+        }
     }
 
     private static void writePacket(RandomAccessFile pipe, int opcode, String json) throws Exception {
@@ -344,6 +424,7 @@ public class DiscordIpcManager {
                         if (data.has("user") && data.get("user").isJsonObject()) {
                             JsonObject user = data.getAsJsonObject("user");
                             myDiscordUsername = user.has("username") ? user.get("username").getAsString() : "User";
+                            myUserId = user.has("id") ? user.get("id").getAsString() : "";
                         }
                     }
 
@@ -479,6 +560,9 @@ public class DiscordIpcManager {
                     speaking,
                     existing.isScreenSharing()
             ));
+        } else {
+            String name = (id.equals(myUserId) || id.isEmpty()) ? (!myDiscordUsername.isEmpty() ? myDiscordUsername : "You") : ("User (" + id.substring(Math.max(0, id.length() - 4)) + ")");
+            voiceUsers.put(id, new DiscordVoiceUser(id, name, name, false, false, speaking, false));
         }
     }
 
@@ -490,6 +574,7 @@ public class DiscordIpcManager {
         feedback.accept(Component.literal("§7Active Pipe: §f" + activePipeName));
         feedback.accept(Component.literal("§7Last Handshake: §e" + lastHandshakeStatus));
         feedback.accept(Component.literal("§7In Voice: " + (inVoice ? "§aYes (#" + currentChannelName + ", ID: " + currentChannelId + ")" : "§cNo")));
+        feedback.accept(Component.literal("§7Local Log Reader: §e" + logReaderStatus));
         feedback.accept(Component.literal("§7Active Members: §b" + voiceUsers.size() + " in call"));
         feedback.accept(Component.literal("§7Last Error: " + (lastError.equals("None") ? "§aNone" : "§c" + lastError)));
 

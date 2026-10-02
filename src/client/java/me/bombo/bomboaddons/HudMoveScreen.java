@@ -1435,6 +1435,10 @@ public class HudMoveScreen extends Screen {
                 s.inventoryHudScale = newScale;
             } else if (this.resizingTarget == HudTarget.DUNGEON_MAP) {
                 s.dungeonMapScale = newScale;
+            } else if (this.resizingTarget == HudTarget.SPOTIFY_HUD) {
+                s.spotifyHudScale = (float) newScale;
+            } else if (this.resizingTarget == HudTarget.DISCORD_HUD) {
+                s.discordHudScale = (float) newScale;
             }
             return true;
         }

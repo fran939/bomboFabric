@@ -80,7 +80,7 @@ public final class Constants {
      * so a literal {@code getModContainer("bomboaddons")} returns empty on the cheat build and
      * the old {@code .get()} call would throw.
      */
-    public static final String FALLBACK_VERSION = "26.2.28.58";
+    public static final String FALLBACK_VERSION = "26.2.28.64";
 
     public static String myVersion() {
         try {
@@ -91,7 +91,7 @@ public final class Constants {
                         .or(() -> loader.getModContainer(CHEAT_MOD_ID));
                 if (container.isPresent()) {
                     String ver = container.get().getMetadata().getVersion().getFriendlyString();
-                    if (ver != null && !ver.isBlank() && !"unknown".equalsIgnoreCase(ver)) {
+                    if (ver != null && !ver.isBlank() && !"unknown".equalsIgnoreCase(ver) && !ver.contains("${")) {
                         return ver;
                     }
                 }

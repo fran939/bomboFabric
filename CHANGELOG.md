@@ -1,5 +1,29 @@
 # BomboAddons Changelog
  
+## [26.2.28.64] - 2026-10-02 (Beta)
+
+### Screenshare Streaming Latency, Mouse Cursor & Profiler Optimization
+- **Clickable Chat Links:** Screen sharing notifications (`[Bombo] Live screensharing started! View stream at: ...`) now feature clickable `ClickEvent.OpenUrl` and hover tooltips for 1-click browser viewing.
+- **In-Game Mouse Cursor Rendering:** Framebuffer capture now cleanly draws the cursor pointer onto captured frames whenever any container or GUI menu is open (`mc.gui.screen() != null`).
+- **2K 120fps & 1440p Presets:** Added `1440p 60fps` and `2K 120fps` presets to `/b ss config` and `/b` configuration.
+- **Instant Web Stream Loading (<50ms):** Patched remote server and web dashboard (`https://bombo.dpdns.org/screenshare`) with `loadImmediateFrame()` and `Cache-Control: no-transform`, bypassing Cloudflare chunk buffering so streams load instantaneously instead of buffering for 1-3 minutes.
+- **Profiler Load Accurate Measurement:** Removed `Thread.sleep` from `PerformanceProfiler.scope("Screenshare: StreamLoop")`, dropping measured profiler load from `999.52 ms/s` to `<10 ms/s`.
+
+### Discord Voice Local Log Fallback Reader
+- **Zero-Scope Call Detection:** Implemented real-time tail scanner for `%APPDATA%\discord\logs\renderer_js.log`. When Discord Desktop IPC returns error 4006 (`Not authenticated or invalid scope`), the mod automatically parses RTC connection states (`RTC_CONNECTED`), channel updates, and control heartbeats, accurately detecting calls without OAuth prompts.
+- **Speaking State Sync:** Enhanced `setSpeaking()` to dynamically register voice users on speaking events so voice activity indicators light up in the HUD.
+
+### Spotify HUD GUI Resizing & Lyrics Engine Fixes
+- **Interactive Drag Resizing in /b gui:** Enabled corner drag resizing for `SPOTIFY_HUD` and `DISCORD_HUD` in `/b gui` (`HudMoveScreen`).
+- **Missing Texture Checkerboard Elimination:** Replaced missing PNG icon reference with a crisp procedural vector Spotify icon, completely eliminating the magenta/black checkerboard.
+- **Lyrics Infinite Loop Bug Fix:** Fixed track change guard in `LyricsManager.updateTrack()` that was incrementing `currentTrackEpoch` every tick, allowing multi-provider lyrics to load and display smoothly.
+
+### Storage Overlay Mixin Activation
+- **Mixin Registration:** Registered `MenuScreensConstructorMixin` in both `bomboaddons.client.mixins.json` and `bomboclient.base.mixins.json`, activating the container interceptor across `/storage`, Ender Chests, and Backpacks.
+
+### Version String Dev Cleanliness
+- **Template String Filtering:** Updated `Constants.myVersion()` to filter unexpanded `${version}` template strings and display the correct version in development environments.
+
 ## [26.2.28.63] - 2026-10-02 (Beta)
 
 ### Client Startup Mixin Target Fix

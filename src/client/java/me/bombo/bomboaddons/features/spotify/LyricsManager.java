@@ -218,14 +218,13 @@ public class LyricsManager {
         String cacheKey = (artist + " - " + track).toLowerCase(Locale.ROOT).trim();
         String currentKey = (activeArtist + " - " + activeTrack).toLowerCase(Locale.ROOT).trim();
 
-        if (cacheKey.equals(currentKey) && !currentLines.isEmpty()) {
+        if (cacheKey.equals(currentKey)) {
             return;
         }
 
         activeTrack = track;
         activeArtist = artist;
         long epoch = currentTrackEpoch.incrementAndGet();
-        albumArtTexture = null;
         lastArtworkUrl = "";
 
         if (CACHE.containsKey(cacheKey)) {

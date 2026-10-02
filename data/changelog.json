@@ -1,5 +1,23 @@
 [
   {
+    "version": "26.2.28.64",
+    "date": "2026-10-02",
+    "changes": [
+      "Screenshare Clickable Links: Screen sharing notifications in chat now include clickable web stream links with hover previews",
+      "Screenshare In-Game Mouse Pointer: Captured frames now render a crisp cursor arrow whenever any GUI or container is open",
+      "Screenshare 2K 120fps & 1440p Presets: Added high-framerate and resolution presets in /b ss config",
+      "Screenshare Web Streaming Latency: Patched web dashboard and API with instant frame loading (<50ms) and no-transform headers, bypassing Cloudflare buffering",
+      "Screenshare Profiler Fix: Decoupled thread sleep from profiler measurement, dropping reported load from 999.52 ms/s to <10 ms/s",
+      "Discord Voice Local Log Fallback: Added real-time tail reader for Discord desktop renderer logs to accurately detect calls without OAuth voice permissions",
+      "Discord Voice Speaking Activity: Enhanced voice user tracking so speaking state updates dynamically in the HUD",
+      "Spotify & Discord HUD GUI Resizing: Enabled interactive drag-resizing in /b gui (HudMoveScreen)",
+      "Spotify Missing Texture Fix: Replaced missing PNG icon with procedural vector Spotify icon, eliminating magenta/black checkerboard",
+      "Lyrics Infinite Loop Fix: Resolved track change condition in LyricsManager to allow lyrics to fetch and display reliably",
+      "Storage Overlay Mixin Registration: Registered MenuScreensConstructorMixin into both flavor configs to activate storage intercepting",
+      "Version String Dev Filtering: Filtered unexpanded template strings in Constants.myVersion()"
+    ]
+  },
+  {
     "version": "26.2.28.63",
     "date": "2026-10-02",
     "changes": [

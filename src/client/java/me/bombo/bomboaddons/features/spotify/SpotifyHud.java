@@ -139,8 +139,18 @@ public class SpotifyHud {
         int iconX = 5;
         int iconY = 5;
         Identifier albumArt = (s != null && s.spotifyHudShowAlbumArt) ? LyricsManager.getAlbumArtTexture() : null;
-        Identifier iconToDraw = (albumArt != null) ? albumArt : SPOTIFY_ICON;
-        g.blit(iconToDraw, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+        if (albumArt != null) {
+            g.blit(albumArt, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+        } else {
+            // Procedural Spotify green icon - completely prevents purple/black missing texture
+            int bgGreen = 0xFF1DB954;
+            int waveColor = 0xFF121212;
+            g.fill(iconX, iconY, iconX + iconSize, iconY + iconSize, bgGreen);
+            // 3 audio wave arcs
+            g.fill(iconX + 3, iconY + 5, iconX + 17, iconY + 7, waveColor);
+            g.fill(iconX + 4, iconY + 9, iconX + 16, iconY + 11, waveColor);
+            g.fill(iconX + 5, iconY + 13, iconX + 15, iconY + 15, waveColor);
+        }
 
         // Track and Artist text (cached width calculation)
         int textX = 29;
