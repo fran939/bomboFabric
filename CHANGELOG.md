@@ -1,5 +1,37 @@
 # BomboAddons Changelog
  
+## [26.2.28.66] - 2026-10-02 (Beta)
+
+### Storage Overlay Packet Interception
+- **Container Screen Interception:** Injected into `ClientPacketListener.handleOpenScreen(ClientboundOpenScreenPacket)` at `HEAD` in `ClientPacketListenerMixin.java`. If `storageOverlay` is enabled and `StorageOverlayScreen.enabled(...)`, the client directly wraps the container in `StorageOverlayScreenHandler`, sets `client.player.containerMenu`, launches `StorageOverlayScreen`, and cancels normal container screen opening.
+
+### Discord WebRTC Call Member Tracking
+- **Multi-Member Voice Call Detection:** Scans `%APPDATA%\discord\logs\discord-webrtc_0` and `discord-webrtc_1` for active inbound audio user IDs (`Inbound audio delay stats for user: <id>`).
+- **Profile Resolution API:** Fetches full Discord display names and usernames via `https://api.bombo.dpdns.org/api/bot/users?ids=...`, accurately populating all 6+ call members in `voiceUsers` without requiring Discord OAuth scopes.
+
+### Bridge Color Formatting & Clean IGN Decoupling
+- **Visual Colors & Clean API Queries:** Retained color formatting (`§4<name>` / `&4<name>`) for chat display and Discord webhook messages while strictly parsing clean IGNs for profile lookups (`/pv`, networth checks), eliminating broken Discord avatars and invalid `GET /&4...` API requests.
+
+### Spotify UTF-8 URI Support & Direct Artist Pages
+- **Special Character Preservation:** Replaced `cmd.exe /c start` with `Util.getPlatform().openUri(URI.create(...))` and URI percent-encoding, fixing dropped accented and special characters (e.g. `í` in `Dararí`).
+- **Direct Artist Resolution:** Clicking an artist now resolves directly to `https://open.spotify.com/artist/<id>` via `https://api.bombo.dpdns.org/api/spotify/resolve` and MusicBrainz lookup, opening the artist's discography directly.
+
+### Config Color Picker Alpha Slider & ARGB Support
+- **Transparency Slider & Checkerboard:** Added an opacity slider (0% to 100%) with a checkerboard preview grid and support for 8-digit ARGB hex (`#AARRGGBB`) across `/b` config color swatch boxes and text fields.
+
+### Screenshare 0 FPS Fix & Fallback
+- **Frame Timeout & Robot Fallback:** Increased framebuffer read timeout from 100ms to 800ms to accommodate 1440p/2K high-resolution displays, added automatic fallback to Robot screen capture on timeout, and enforced `BufferedImage.TYPE_INT_RGB` for JPEG encoding.
+
+### Clickable Versions Changelog
+- **Version Row Navigation:** Clicking anywhere on a version row (outside the Switch button) in `/b update versions` (`UpdateVersionsScreen.java`) now navigates directly to `ChangelogScreen` focused and highlighted on that specific version.
+
+### Multi-Provider Lyrics Expansion & Test Endpoint
+- **Musixmatch & Syllables:** Implemented Musixmatch provider with HMAC-SHA256 signing, fixed KuGou HTTPS endpoint, and parsed YouLyPlus Apple Music syllable sync JSON (`data.lyrics[].syllabus[]`) for word-by-word lyrics.
+- **Server Test Endpoint:** Added `/api/lyrics/test?title=...&artist=...` endpoint on `bomboapi` testing all 5 providers (LRCLIB, KuGou, YouLyPlus, Paxsenix, Musixmatch).
+
+### HUD High-Refresh 60 FPS Throttling
+- **CPU Render Optimization:** Throttled layout bounding box and text width recalculations in `SpotifyHud` and `DiscordVoiceHud` to 16ms (60 FPS) to prevent redundant CPU cycles on high-refresh-rate displays (up to 815 Hz).
+
 ## [26.2.28.65] - 2026-10-02 (Beta)
 
 ### Bridge Name Sanitization & Webhook Fixes

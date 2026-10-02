@@ -423,6 +423,9 @@ public class UpdateVersionsScreen extends Screen {
                             ModUpdater.installSpecificVersion(v.version);
                             return true;
                         }
+                    } else if (mx >= contentX && mx <= contentX + contentW && my >= curY && my <= curY + rowH) {
+                        Minecraft.getInstance().setScreenAndShow(new ChangelogScreen(this, v.version));
+                        return true;
                     }
                 }
                 curY += rowH + gap;

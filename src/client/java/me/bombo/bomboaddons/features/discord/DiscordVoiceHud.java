@@ -26,6 +26,10 @@ public class DiscordVoiceHud {
     }
 
     private static long lastBackgroundScan = 0L;
+    private static long lastHudUpdate = 0L;
+    private static List<String> cachedLines = new ArrayList<>();
+    private static int cachedMaxW = 100;
+    private static int cachedTotalH = 26;
 
     private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
         Minecraft mc = Minecraft.getInstance();
@@ -70,42 +74,48 @@ public class DiscordVoiceHud {
         g.pose().translate((float) baseX, (float) baseY);
         g.pose().scale(scale, scale);
 
-        String channel = isDummy ? "General (Voice)" : (DiscordIpcManager.isInVoice() ? DiscordIpcManager.getCurrentChannelName() : "Not in Call");
-        List<String> lines = new ArrayList<>();
-        lines.add("§9§lDiscord §8| §b#" + channel);
+        long now = System.currentTimeMillis();
+        if (now - lastHudUpdate >= 16L || isDummy || cachedLines.isEmpty()) {
+            lastHudUpdate = now;
+            String channel = isDummy ? "General (Voice)" : (DiscordIpcManager.isInVoice() ? DiscordIpcManager.getCurrentChannelName() : "Not in Call");
+            List<String> lines = new ArrayList<>();
+            lines.add("§9§lDiscord §8| §b#" + channel);
 
-        if (isDummy) {
-            lines.add(" §a● §fPlayer1 §c§l[LIVE]");
-            lines.add(" §7○ §fPlayer2 §8[M]");
-        } else if (!DiscordIpcManager.isConnected()) {
-            lines.add(" §8(Discord Disconnected)");
-        } else if (!DiscordIpcManager.isInVoice() || DiscordIpcManager.getVoiceUsers().isEmpty()) {
-            lines.add(" §8(Not in voice call)");
-        } else {
-            for (DiscordIpcManager.DiscordVoiceUser u : DiscordIpcManager.getVoiceUsers()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(u.isSpeaking() ? " §a● " : " §8○ ");
-                sb.append(u.isSpeaking() ? "§a" : "§f").append(u.displayName());
-                if (u.isScreenSharing()) {
-                    sb.append(" §c§l[LIVE]§r");
+            if (isDummy) {
+                lines.add(" §a● §fPlayer1 §c§l[LIVE]");
+                lines.add(" §7○ §fPlayer2 §8[M]");
+            } else if (!DiscordIpcManager.isConnected()) {
+                lines.add(" §8(Discord Disconnected)");
+            } else if (!DiscordIpcManager.isInVoice() || DiscordIpcManager.getVoiceUsers().isEmpty()) {
+                lines.add(" §8(Not in voice call)");
+            } else {
+                for (DiscordIpcManager.DiscordVoiceUser u : DiscordIpcManager.getVoiceUsers()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(u.isSpeaking() ? " §a● " : " §8○ ");
+                    sb.append(u.isSpeaking() ? "§a" : "§f").append(u.displayName());
+                    if (u.isScreenSharing()) {
+                        sb.append(" §c§l[LIVE]§r");
+                    }
+                    if (u.isMuted()) sb.append(" §c[M]");
+                    if (u.isDeafened()) sb.append(" §c[D]");
+                    lines.add(sb.toString());
                 }
-                if (u.isMuted()) sb.append(" §c[M]");
-                if (u.isDeafened()) sb.append(" §c[D]");
-                lines.add(sb.toString());
             }
-        }
 
-        int maxW = 100;
-        for (String line : lines) {
-            maxW = Math.max(maxW, font.width(line) + 8);
+            int maxW = 100;
+            for (String line : lines) {
+                maxW = Math.max(maxW, font.width(line) + 8);
+            }
+            cachedLines = lines;
+            cachedMaxW = maxW;
+            cachedTotalH = lines.size() * 11 + 4;
         }
-        int totalH = lines.size() * 11 + 4;
 
         // Render subtle translucent dark background
-        g.fill(0, 0, maxW, totalH, 0x88000000);
+        g.fill(0, 0, cachedMaxW, cachedTotalH, 0x88000000);
 
         int y = 3;
-        for (String line : lines) {
+        for (String line : cachedLines) {
             g.text(font, line, 4, y, 0xFFFFFFFF, true);
             y += 11;
         }

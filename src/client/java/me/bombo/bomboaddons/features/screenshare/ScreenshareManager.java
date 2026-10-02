@@ -181,10 +181,11 @@ public class ScreenshareManager {
                 try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Screenshare: StreamLoop")) {
                     if (mc != null) {
                         long capStart = System.currentTimeMillis();
-                        byte[] jpegBytes;
+                        byte[] jpegBytes = null;
                         if (s == null || s.screenshareOnlyMinecraft) {
                             jpegBytes = captureMinecraftFrame(mc, targetW, targetH, quality);
-                        } else {
+                        }
+                        if (jpegBytes == null || jpegBytes.length == 0) {
                             jpegBytes = captureRobotFrame(mc, targetW, targetH, quality);
                         }
                         lastCaptureDurationMs = System.currentTimeMillis() - capStart;
@@ -328,7 +329,7 @@ public class ScreenshareManager {
         });
 
         try {
-            return future.get(100, TimeUnit.MILLISECONDS);
+            return future.get(800, TimeUnit.MILLISECONDS);
         } catch (Throwable t) {
             return null;
         }
@@ -373,7 +374,7 @@ public class ScreenshareManager {
 
     private static byte[] compressScaledJpeg(BufferedImage src, int targetW, int targetH, float quality) throws Exception {
         BufferedImage scaled;
-        if (src.getWidth() == targetW && src.getHeight() == targetH) {
+        if (src.getType() == BufferedImage.TYPE_INT_RGB && src.getWidth() == targetW && src.getHeight() == targetH) {
             scaled = src;
         } else {
             scaled = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_RGB);

@@ -10,9 +10,11 @@ import net.minecraft.network.chat.Component;
 
 import java.io.File;
 import java.io.RandomAccessFile;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -21,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Connects directly to the local Discord Desktop app via Windows Named Pipes (\\.\pipe\discord-ipc-0).
@@ -297,81 +301,190 @@ public class DiscordIpcManager {
         scanDiscordLogForVoice();
     }
 
+    public static class DiscordBotUserInfo {
+        public final String id;
+        public final String username;
+        public final String displayName;
+        public final String avatar;
+
+        public DiscordBotUserInfo(String id, String username, String displayName, String avatar) {
+            this.id = id;
+            this.username = username;
+            this.displayName = displayName;
+            this.avatar = avatar;
+        }
+    }
+
+    private static final Map<String, DiscordBotUserInfo> BOT_USER_CACHE = new ConcurrentHashMap<>();
+    private static long lastBotFetchTime = 0L;
+    private static final Pattern INBOUND_USER_PATTERN = Pattern.compile("Inbound audio delay stats for user:\\s*(\\d{15,20})");
+
+    private static void fetchMissingBotUsersAsync(Set<String> missingIds) {
+        long now = System.currentTimeMillis();
+        if (now - lastBotFetchTime < 3000L || missingIds.isEmpty()) return;
+        lastBotFetchTime = now;
+        CompletableFuture.runAsync(() -> {
+            try {
+                String idsParam = String.join(",", missingIds);
+                String url = "https://api.bombo.dpdns.org/api/bot/users?ids=" + idsParam;
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofSeconds(3))
+                        .GET()
+                        .build();
+                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                        .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (resp.statusCode() == 200) {
+                    JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+                        if (entry.getValue().isJsonObject()) {
+                            JsonObject uObj = entry.getValue().getAsJsonObject();
+                            String uId = entry.getKey();
+                            String uName = uObj.has("username") ? uObj.get("username").getAsString() : "User";
+                            String dName = uObj.has("displayName") ? uObj.get("displayName").getAsString() : uName;
+                            String av = uObj.has("avatar") && !uObj.get("avatar").isJsonNull() ? uObj.get("avatar").getAsString() : null;
+                            BOT_USER_CACHE.put(uId, new DiscordBotUserInfo(uId, uName, dName, av));
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+        });
+    }
+
     public static void scanDiscordLogForVoice() {
         try {
             String appData = System.getenv("APPDATA");
             if (appData == null) return;
+
+            // 1. Scan renderer_js.log for connection / channel states
             File logFile = new File(appData, "discord/logs/renderer_js.log");
-            if (!logFile.exists() || !logFile.canRead()) return;
-
-            long len = logFile.length();
-            if (len <= 0) return;
-
-            int toRead = (int) Math.min(65536L, len);
-            byte[] buffer = new byte[toRead];
-            try (RandomAccessFile raf = new RandomAccessFile(logFile, "r")) {
-                raf.seek(len - toRead);
-                raf.readFully(buffer);
-            }
-
-            String content = new String(buffer, StandardCharsets.UTF_8);
-            String[] lines = content.split("\r?\n");
-
             boolean foundConnected = false;
             boolean foundDisconnect = false;
             boolean foundHeartbeat = false;
             String foundChannel = null;
             int memberCount = 1;
 
-            for (int i = lines.length - 1; i >= 0; i--) {
-                String line = lines[i];
-                if (!foundDisconnect && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("[VOICE_DISCONNECT]")) {
-                    foundDisconnect = true;
-                    break;
+            if (logFile.exists() && logFile.canRead() && logFile.length() > 0) {
+                long len = logFile.length();
+                int toRead = (int) Math.min(65536L, len);
+                byte[] buffer = new byte[toRead];
+                try (RandomAccessFile raf = new RandomAccessFile(logFile, "r")) {
+                    raf.seek(len - toRead);
+                    raf.readFully(buffer);
                 }
-                if (!foundConnected && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("RTC_CONNECTED")) {
-                    foundConnected = true;
-                }
-                if (!foundHeartbeat && line.contains("[RTCControlSocket(default)]") && line.contains("Heartbeat")) {
-                    foundHeartbeat = true;
-                }
-                if (foundChannel == null && line.contains("Updating channel:")) {
-                    int idx = line.indexOf("Updating channel:");
-                    if (idx != -1) {
-                        String rest = line.substring(idx + 17).trim();
-                        int paren = rest.indexOf('(');
-                        if (paren != -1) {
-                            String cStr = rest.substring(paren + 1);
-                            int closeP = cStr.indexOf(')');
-                            if (closeP != -1) {
-                                try {
-                                    memberCount = Math.max(1, Integer.parseInt(cStr.substring(0, closeP).trim()));
-                                } catch (Throwable ignored) {}
+
+                String content = new String(buffer, StandardCharsets.UTF_8);
+                String[] lines = content.split("\r?\n");
+
+                for (int i = lines.length - 1; i >= 0; i--) {
+                    String line = lines[i];
+                    if (!foundDisconnect && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("[VOICE_DISCONNECT]")) {
+                        foundDisconnect = true;
+                        break;
+                    }
+                    if (!foundConnected && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("RTC_CONNECTED")) {
+                        foundConnected = true;
+                    }
+                    if (!foundHeartbeat && line.contains("[RTCControlSocket(default)]") && line.contains("Heartbeat")) {
+                        foundHeartbeat = true;
+                    }
+                    if (foundChannel == null && line.contains("Updating channel:")) {
+                        int idx = line.indexOf("Updating channel:");
+                        if (idx != -1) {
+                            String rest = line.substring(idx + 17).trim();
+                            int paren = rest.indexOf('(');
+                            if (paren != -1) {
+                                String cStr = rest.substring(paren + 1);
+                                int closeP = cStr.indexOf(')');
+                                if (closeP != -1) {
+                                    try {
+                                        memberCount = Math.max(1, Integer.parseInt(cStr.substring(0, closeP).trim()));
+                                    } catch (Throwable ignored) {}
+                                }
+                                rest = rest.substring(0, paren).trim();
                             }
-                            rest = rest.substring(0, paren).trim();
+                            if (!rest.isEmpty()) foundChannel = rest;
                         }
-                        if (!rest.isEmpty()) foundChannel = rest;
                     }
                 }
             }
 
-            if ((foundConnected || foundHeartbeat) && !foundDisconnect) {
+            // 2. Scan WebRTC logs (discord-webrtc_0, discord-webrtc_1) for actual incoming user IDs in call
+            Set<String> webrtcUserIds = new LinkedHashSet<>();
+            File webrtc0 = new File(appData, "discord/logs/discord-webrtc_0");
+            File webrtc1 = new File(appData, "discord/logs/discord-webrtc_1");
+            File activeWebrtc = (webrtc0.exists() && webrtc0.length() > 0) ? webrtc0 : (webrtc1.exists() ? webrtc1 : null);
+
+            if (activeWebrtc != null && activeWebrtc.canRead() && activeWebrtc.length() > 0) {
+                long wlen = activeWebrtc.length();
+                int wToRead = (int) Math.min(65536L, wlen);
+                byte[] wbuf = new byte[wToRead];
+                try (RandomAccessFile wraf = new RandomAccessFile(activeWebrtc, "r")) {
+                    wraf.seek(wlen - wToRead);
+                    wraf.readFully(wbuf);
+                }
+                String wContent = new String(wbuf, StandardCharsets.UTF_8);
+                Matcher m = INBOUND_USER_PATTERN.matcher(wContent);
+                while (m.find()) {
+                    String uid = m.group(1);
+                    if (!uid.equals(myUserId)) {
+                        webrtcUserIds.add(uid);
+                    }
+                }
+            }
+
+            if (!webrtcUserIds.isEmpty()) {
+                memberCount = Math.max(memberCount, webrtcUserIds.size() + 1);
+                // Trigger async bot resolution for any un-cached IDs
+                Set<String> missing = new HashSet<>();
+                for (String uid : webrtcUserIds) {
+                    if (!BOT_USER_CACHE.containsKey(uid)) {
+                        missing.add(uid);
+                    }
+                }
+                if (!missing.isEmpty()) {
+                    fetchMissingBotUsersAsync(missing);
+                }
+            }
+
+            if ((foundConnected || foundHeartbeat || !webrtcUserIds.isEmpty()) && !foundDisconnect) {
                 inVoice = true;
-                logReaderStatus = "Active (" + memberCount + " in call)";
+                logReaderStatus = "Active (" + memberCount + " in call via " + (!webrtcUserIds.isEmpty() ? "WebRTC" : "Log") + ")";
                 if (currentChannelName.isEmpty() || currentChannelName.startsWith("Voice Call") || currentChannelName.startsWith("Voice (")) {
                     currentChannelName = foundChannel != null ? ("Voice (" + foundChannel.substring(Math.max(0, foundChannel.length() - 4)) + ")") : "Voice Call";
                 }
                 if (foundChannel != null && currentChannelId.isEmpty()) {
                     currentChannelId = foundChannel;
                 }
-                if (voiceUsers.isEmpty() || voiceUsers.size() < memberCount) {
+
+                if (!webrtcUserIds.isEmpty()) {
+                    // Populate voiceUsers using precise WebRTC IDs and resolved bot names
+                    String selfId = !myUserId.isEmpty() ? myUserId : "self";
+                    String selfName = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
+                    boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
+                    voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, false, false, selfSpeaking, false));
+
+                    for (String uid : webrtcUserIds) {
+                        DiscordBotUserInfo info = BOT_USER_CACHE.get(uid);
+                        String dName = info != null ? info.displayName : ("User (" + uid.substring(Math.max(0, uid.length() - 4)) + ")");
+                        String uName = info != null ? info.username : dName;
+                        boolean isSpeaking = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isSpeaking();
+                        boolean isMuted = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isMuted();
+                        boolean isDeaf = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isDeafened();
+                        boolean isLive = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isScreenSharing();
+                        voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive));
+                    }
+
+                    // Remove placeholder member_X entries
+                    voiceUsers.keySet().removeIf(k -> k.startsWith("member_"));
+                } else if (voiceUsers.isEmpty() || voiceUsers.size() < memberCount) {
                     voiceUsers.clear();
                     String name = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
                     String id = !myUserId.isEmpty() ? myUserId : "self";
                     voiceUsers.put(id, new DiscordVoiceUser(id, name, name, false, false, false, false));
-                    for (int m = 2; m <= memberCount; m++) {
-                        String mId = "member_" + m;
-                        voiceUsers.put(mId, new DiscordVoiceUser(mId, "Member " + m, "Member " + m, false, false, false, false));
+                    for (int m_idx = 2; m_idx <= memberCount; m_idx++) {
+                        String mId = "member_" + m_idx;
+                        voiceUsers.put(mId, new DiscordVoiceUser(mId, "Member " + m_idx, "Member " + m_idx, false, false, false, false));
                     }
                 }
             } else if (foundDisconnect) {

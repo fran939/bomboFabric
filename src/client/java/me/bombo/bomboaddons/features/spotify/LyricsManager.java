@@ -320,12 +320,15 @@ public class LyricsManager {
                 fetchKugouCandidates(cleanTrack, cleanArtist, candidates);
             } catch (Throwable ignored) {}
 
-            // 4. Unison & YouLyPlus
+            // 4. Unison, YouLyPlus & Musixmatch
             try {
                 fetchUnisonCandidates(cleanTrack, cleanArtist, candidates);
             } catch (Throwable ignored) {}
             try {
                 fetchYouLyPlusCandidates(cleanTrack, cleanArtist, candidates);
+            } catch (Throwable ignored) {}
+            try {
+                fetchMusixmatchCandidates(cleanTrack, cleanArtist, candidates);
             } catch (Throwable ignored) {}
 
             if (epoch != currentTrackEpoch.get()) return;
@@ -718,7 +721,7 @@ public class LyricsManager {
     private static void fetchKugouCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
         try {
             String query = (cleanTrack + " " + cleanArtist).trim();
-            String searchUrl = "http://lyrics.kugou.com/search?ver=1&man=yes&client=pc&keyword="
+            String searchUrl = "https://lyrics.kugou.com/search?ver=1&man=yes&client=pc&keyword="
                     + URLEncoder.encode(query, StandardCharsets.UTF_8);
 
             HttpRequest req = HttpRequest.newBuilder()
@@ -738,7 +741,7 @@ public class LyricsManager {
                         String id = cand.get("id").getAsString();
                         String accesskey = cand.get("accesskey").getAsString();
 
-                        String dlUrl = "http://lyrics.kugou.com/download?ver=1&client=pc&id=" + id + "&accesskey=" + accesskey + "&fmt=lrc&charset=utf8";
+                        String dlUrl = "https://lyrics.kugou.com/download?ver=1&client=pc&id=" + id + "&accesskey=" + accesskey + "&fmt=lrc&charset=utf8";
                         HttpRequest dlReq = HttpRequest.newBuilder().uri(URI.create(dlUrl)).timeout(Duration.ofSeconds(3)).GET().build();
                         HttpResponse<String> dlResp = HTTP_CLIENT.send(dlReq, HttpResponse.BodyHandlers.ofString());
                         if (dlResp.statusCode() == 200) {
@@ -793,11 +796,147 @@ public class LyricsManager {
             HttpRequest req = HttpRequest.newBuilder().uri(URI.create(url)).header("User-Agent", "ViviMusic/1.0").timeout(Duration.ofSeconds(4)).GET().build();
             HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
             if (resp.statusCode() == 200) {
-                List<LyricsLine> lines = parseLrc(resp.body());
+                String body = resp.body().trim();
+                if (body.startsWith("{")) {
+                    JsonObject root = JsonParser.parseString(body).getAsJsonObject();
+                    JsonArray lyricsArr = null;
+                    if (root.has("data") && root.get("data").isJsonObject() && root.getAsJsonObject("data").has("lyrics")) {
+                        lyricsArr = root.getAsJsonObject("data").getAsJsonArray("lyrics");
+                    } else if (root.has("lyrics") && root.get("lyrics").isJsonArray()) {
+                        lyricsArr = root.getAsJsonArray("lyrics");
+                    }
+
+                    if (lyricsArr != null && lyricsArr.size() > 0) {
+                        List<LyricsLine> lines = new ArrayList<>();
+                        for (JsonElement el : lyricsArr) {
+                            if (!el.isJsonObject()) continue;
+                            JsonObject lineObj = el.getAsJsonObject();
+                            long time = lineObj.has("time") ? lineObj.get("time").getAsLong() : 0L;
+                            long dur = lineObj.has("duration") ? lineObj.get("duration").getAsLong() : 3000L;
+                            long endTime = time + dur;
+                            String text = lineObj.has("text") ? lineObj.get("text").getAsString().trim() : "";
+                            List<WordTime> words = new ArrayList<>();
+                            if (lineObj.has("syllabus") && lineObj.get("syllabus").isJsonArray()) {
+                                for (JsonElement sel : lineObj.getAsJsonArray("syllabus")) {
+                                    if (!sel.isJsonObject()) continue;
+                                    JsonObject so = sel.getAsJsonObject();
+                                    String stext = so.has("text") ? so.get("text").getAsString() : "";
+                                    long stime = so.has("time") ? so.get("time").getAsLong() : time;
+                                    long sdur = so.has("duration") ? so.get("duration").getAsLong() : 200L;
+                                    if (!stext.isEmpty()) {
+                                        words.add(new WordTime(stext, stime, stime + sdur));
+                                    }
+                                }
+                            }
+                            if (!text.isEmpty()) {
+                                lines.add(new LyricsLine(time, endTime, text, words.isEmpty() ? null : words, null));
+                            }
+                        }
+                        if (!lines.isEmpty()) {
+                            lines.sort(Comparator.comparingLong(LyricsLine::startMs));
+                            boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                            String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                            out.add(new LyricCandidate("youly-" + System.currentTimeMillis(), "YouLyPlus", hasWords ? "Word-Synced" : "Line-Synced", preview, formatCleanLrc(lines), lines));
+                            return;
+                        }
+                    }
+                }
+
+                List<LyricsLine> lines = parseLrc(body);
                 if (!lines.isEmpty()) {
                     boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
                     String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
-                    out.add(new LyricCandidate("youly-" + System.currentTimeMillis(), "YouLyPlus", hasWords ? "Word-Synced" : "Line-Synced", preview, resp.body(), lines));
+                    out.add(new LyricCandidate("youly-" + System.currentTimeMillis(), "YouLyPlus", hasWords ? "Word-Synced" : "Line-Synced", preview, body, lines));
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private static String musixmatchToken = null;
+
+    private static String mxSign(String url) {
+        try {
+            String norm = url.replace("%20", "+").replace(" ", "+");
+            java.time.LocalDate now = java.time.LocalDate.now(java.time.ZoneOffset.UTC);
+            String dateStr = String.format("%04d%02d%02d", now.getYear(), now.getMonthValue(), now.getDayOfMonth());
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            char[] k1 = {'b','3','d','c','8','7','8','8'};
+            char[] k2 = {'2','9','9','f','5','8','0','6'};
+            char[] k3 = {'a','7','0','a','6','a','2','0'};
+            char[] k4 = {'a','0','c','b','0','f','f','c'};
+            byte[] keyBytes = (new String(k1) + new String(k2) + new String(k3) + new String(k4)).getBytes(StandardCharsets.UTF_8);
+            mac.init(new javax.crypto.spec.SecretKeySpec(keyBytes, "HmacSHA256"));
+            byte[] hmacBytes = mac.doFinal((norm + dateStr).getBytes(StandardCharsets.UTF_8));
+            String signature = Base64.getEncoder().encodeToString(hmacBytes);
+            return norm + "&signature=" + URLEncoder.encode(signature, StandardCharsets.UTF_8) + "&signature_protocol=sha256";
+        } catch (Throwable t) {
+            return url;
+        }
+    }
+
+    private static synchronized String getMusixmatchToken() {
+        if (musixmatchToken != null) return musixmatchToken;
+        try {
+            String tokenUrl = mxSign("https://apic.musixmatch.com/ws/1.1/token.get?app_id=mobile-app-v1.0&guid=" + UUID.randomUUID() + "&format=json");
+            HttpRequest req = HttpRequest.newBuilder().uri(URI.create(tokenUrl)).timeout(Duration.ofSeconds(3)).GET().build();
+            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200) {
+                JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
+                if (root.has("message") && root.getAsJsonObject("message").has("body")) {
+                    JsonObject body = root.getAsJsonObject("message").getAsJsonObject("body");
+                    if (body.has("user_token")) {
+                        musixmatchToken = body.get("user_token").getAsString();
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+        return musixmatchToken;
+    }
+
+    private static void fetchMusixmatchCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
+        try {
+            String token = getMusixmatchToken();
+            if (token == null || token.isEmpty()) return;
+
+            String searchUrl = mxSign("https://apic.musixmatch.com/ws/1.1/track.search?app_id=mobile-app-v1.0&format=json&q_track="
+                    + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
+                    + "&q_artist=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8)
+                    + "&f_has_lyrics=true&page_size=3&usertoken=" + token);
+
+            HttpRequest sReq = HttpRequest.newBuilder().uri(URI.create(searchUrl)).timeout(Duration.ofSeconds(3)).GET().build();
+            HttpResponse<String> sResp = HTTP_CLIENT.send(sReq, HttpResponse.BodyHandlers.ofString());
+            if (sResp.statusCode() != 200) return;
+
+            JsonObject sRoot = JsonParser.parseString(sResp.body()).getAsJsonObject();
+            if (!sRoot.has("message") || !sRoot.getAsJsonObject("message").has("body")) return;
+            JsonObject sBody = sRoot.getAsJsonObject("message").getAsJsonObject("body");
+            if (!sBody.has("track_list") || !sBody.get("track_list").isJsonArray()) return;
+
+            JsonArray trackList = sBody.getAsJsonArray("track_list");
+            for (JsonElement tel : trackList) {
+                if (!tel.isJsonObject() || !tel.getAsJsonObject().has("track")) continue;
+                JsonObject trackObj = tel.getAsJsonObject().getAsJsonObject("track");
+                long trackId = trackObj.get("track_id").getAsLong();
+                boolean hasSubtitles = trackObj.has("has_subtitles") && trackObj.get("has_subtitles").getAsInt() == 1;
+
+                if (hasSubtitles) {
+                    String subUrl = mxSign("https://apic.musixmatch.com/ws/1.1/track.subtitle.get?app_id=mobile-app-v1.0&format=json&track_id=" + trackId + "&usertoken=" + token);
+                    HttpRequest subReq = HttpRequest.newBuilder().uri(URI.create(subUrl)).timeout(Duration.ofSeconds(3)).GET().build();
+                    HttpResponse<String> subResp = HTTP_CLIENT.send(subReq, HttpResponse.BodyHandlers.ofString());
+                    if (subResp.statusCode() == 200) {
+                        JsonObject subRoot = JsonParser.parseString(subResp.body()).getAsJsonObject();
+                        JsonObject subBody = subRoot.getAsJsonObject("message").getAsJsonObject("body");
+                        if (subBody.has("subtitle") && subBody.getAsJsonObject("subtitle").has("subtitle_body")) {
+                            String lrc = subBody.getAsJsonObject("subtitle").get("subtitle_body").getAsString();
+                            List<LyricsLine> lines = parseLrc(lrc);
+                            if (!lines.isEmpty()) {
+                                boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                                String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                                out.add(new LyricCandidate("musixmatch-" + trackId, "Musixmatch", hasWords ? "Word-Synced" : "Line-Synced", preview, lrc, lines));
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         } catch (Throwable ignored) {}

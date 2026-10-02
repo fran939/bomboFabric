@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.63` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.66` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,22 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.63`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.66`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.66 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Packet Interception (`ClientPacketListenerMixin`):** Intercepted `ClientboundOpenScreenPacket` at `HEAD`. If `storageOverlay` is enabled and `StorageOverlayScreen.enabled(...)`, the client directly wraps the container in `StorageOverlayScreenHandler`, sets `client.player.containerMenu`, launches `StorageOverlayScreen`, and cancels normal container screen opening.
+> 2. **Discord WebRTC Call Member Tracking (`DiscordIpcManager`):** Scans `%APPDATA%\discord\logs\discord-webrtc_0` and `discord-webrtc_1` for active inbound stream user IDs (`Inbound audio delay stats for user: <id>`). Resolves Discord display names and usernames via `https://api.bombo.dpdns.org/api/bot/users?ids=...`, accurately populating all 6+ call members in `voiceUsers` without OAuth scopes.
+> 3. **Bridge Color Formatting & Clean IGN Decoupling (`IRCClient`, `bombot`):** Retained color formatting (`§4<name>` / `&4<name>`) for chat display and Discord webhook messages while strictly parsing clean IGNs for profile lookups (`/pv`, networth checks), eliminating broken Discord avatars and invalid `GET /&4...` API requests.
+> 4. **Spotify UTF-8 URI Support & Direct Artist Pages (`SpotifyManager`):** Replaced `cmd.exe /c start` with `Util.getPlatform().openUri(URI.create(...))` and URI percent-encoding, fixing dropped accented and special characters (e.g. `í` in `Dararí`). Clicking an artist now resolves directly to `https://open.spotify.com/artist/<id>` via `https://api.bombo.dpdns.org/api/spotify/resolve` and MusicBrainz lookup.
+> 5. **Config Color Picker Alpha Slider & ARGB Support (`BomboConfigScreen`):** Added an opacity slider (0% to 100%) with a checkerboard preview grid and support for 8-digit ARGB hex (`#AARRGGBB`) across `/b` config color swatch boxes and text fields.
+> 6. **Screenshare 0 FPS Fix & Fallback (`ScreenshareManager`):** Increased framebuffer read timeout from 100ms to 800ms for 1440p/2K displays, added automatic fallback to Robot screen capture on timeout, and enforced `BufferedImage.TYPE_INT_RGB` for JPEG encoding.
+> 7. **Clickable Versions Changelog (`UpdateVersionsScreen`):** Clicking anywhere on a version row (outside the Switch button) in `/b update versions` now navigates directly to `ChangelogScreen` focused and highlighted on that specific version.
+> 8. **Multi-Provider Lyrics Expansion & Test Endpoint (`LyricsManager`, `bomboapi`):** Implemented Musixmatch provider with HMAC-SHA256 signing, fixed KuGou HTTPS endpoint, and parsed YouLyPlus Apple Music syllable sync JSON (`data.lyrics[].syllabus[]`) for word-by-word lyrics. Added `/api/lyrics/test?title=...&artist=...` diagnostic endpoint on `bomboapi`.
+> 9. **HUD High-Refresh 60 FPS Throttling (`SpotifyHud`, `DiscordVoiceHud`):** Throttled layout bounding box and text width recalculations to 16ms (60 FPS) to eliminate CPU waste on high-refresh-rate displays (up to 815 Hz).
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.63 (Ready for In-Game Testing)
 >
 > 1. **Prism Launcher & Production Mixin Injection Target Fix:** Aligned `bomboclient.base.mixins.json` with the exact 70 production mixins declared in `bomboaddons.client.mixins.json`. Excluded draft/inactive mixin targets (`ConnectionMixin`, `GameRendererMixin`) that caused `InvalidInjectionException: Critical injection failure: @ModifyVariable on onConnect could not find targets matching connect` and `clampFov` on production clients.

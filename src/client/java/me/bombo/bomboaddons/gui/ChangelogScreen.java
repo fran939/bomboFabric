@@ -29,6 +29,8 @@ public class ChangelogScreen extends Screen {
     private boolean loading = true;
     private String errorMessage = null;
     private final List<ReleaseEntry> releases = new ArrayList<>();
+    private String targetVersion = null;
+    private boolean scrolledToTarget = false;
 
     public static class ReleaseEntry {
         public final String version;
@@ -45,6 +47,11 @@ public class ChangelogScreen extends Screen {
     public ChangelogScreen(Screen parent) {
         super(Component.literal("BomboAddons Changelog"));
         this.parent = parent;
+    }
+
+    public ChangelogScreen(Screen parent, String targetVersion) {
+        this(parent);
+        this.targetVersion = targetVersion;
     }
 
     public ChangelogScreen(Screen parent, JsonArray arr) {
@@ -182,6 +189,24 @@ public class ChangelogScreen extends Screen {
         }
 
         this.maxScroll = Math.max(0, totalHeight - contentH);
+        if (targetVersion != null && !scrolledToTarget && !releases.isEmpty()) {
+            int targetYOffset = 0;
+            for (ReleaseEntry r : releases) {
+                if (r.version.equalsIgnoreCase(targetVersion) || ("v" + r.version).equalsIgnoreCase(targetVersion)) {
+                    this.scrollAmount = Math.max(0, Math.min(targetYOffset, this.maxScroll));
+                    this.scrolledToTarget = true;
+                    break;
+                }
+                targetYOffset += 24;
+                for (String c : r.changes) {
+                    var wrapped = font.getSplitter().splitLines(Component.literal("• " + c), contentW - 20, net.minecraft.network.chat.Style.EMPTY);
+                    targetYOffset += Math.max(1, wrapped.size()) * 12;
+                }
+                targetYOffset += 12;
+            }
+            this.scrolledToTarget = true;
+        }
+
         if (this.scrollAmount > this.maxScroll) this.scrollAmount = this.maxScroll;
         if (this.scrollAmount < 0) this.scrollAmount = 0;
 
@@ -189,15 +214,19 @@ public class ChangelogScreen extends Screen {
         int curY = (int) (contentY - this.scrollAmount);
 
         for (ReleaseEntry r : releases) {
+            boolean isTarget = targetVersion != null && (r.version.equalsIgnoreCase(targetVersion) || ("v" + r.version).equalsIgnoreCase(targetVersion));
             // Release badge + version title
             if (curY + 20 >= contentY && curY <= contentY + contentH) {
                 int badgeW = font.width("v" + r.version) + 12;
-                g.fill(contentX, curY, contentX + badgeW, curY + 16, 0x3300E5FF);
-                g.outline(contentX, curY, badgeW, 16, accent);
-                g.text(font, "§bv" + r.version, contentX + 6, curY + 4, accent, true);
+                g.fill(contentX, curY, contentX + badgeW, curY + 16, isTarget ? 0x6600E5FF : 0x3300E5FF);
+                g.outline(contentX, curY, badgeW, 16, isTarget ? 0xFF00E5FF : accent);
+                g.text(font, (isTarget ? "§b§l" : "§b") + "v" + r.version, contentX + 6, curY + 4, accent, true);
 
                 if (!r.date.isEmpty()) {
                     g.text(font, "§8(" + r.date + ")", contentX + badgeW + 8, curY + 4, 0xFFA0AEC0, false);
+                }
+                if (isTarget) {
+                    g.text(font, "§e★ Selected Version", contentX + badgeW + 90, curY + 4, 0xFFFBBF24, false);
                 }
             }
             curY += 22;

@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.66",
+    "date": "2026-10-02",
+    "changes": [
+      "Storage Overlay Packet Interception: Injected into handleOpenScreen in ClientPacketListenerMixin, launching StorageOverlayScreen immediately on container open packet",
+      "Discord WebRTC Call Member Tracking: Scanned discord-webrtc logs for active inbound stream IDs, fetching full rosters and names via /api/bot/users so calls with 6+ members display completely",
+      "Bridge Color Formatting & Clean IGN Decoupling: Maintained color codes in chat and Discord webhooks while strictly parsing clean IGNs for profile lookups and networth checks",
+      "Spotify UTF-8 URI Support & Direct Artist Pages: Replaced cmd /c start with Util.getPlatform().openUri preserving special characters (e.g. í in Dararí), and added direct artist page resolution via MusicBrainz",
+      "Config Color Picker Alpha Slider: Added opacity slider (0% to 100%) with checkerboard transparency grid and 8-digit ARGB hex support in /b config",
+      "Screenshare 0 FPS Fix & Fallback: Increased framebuffer timeout to 800ms for 1440p/2K displays, added automatic Robot fallback, and enforced RGB JPEG encoding",
+      "Clickable Versions Changelog: Clicking anywhere on a version row in /b update versions opens ChangelogScreen focused and highlighted on that version",
+      "Multi-Provider Lyrics Expansion: Implemented Musixmatch provider with HMAC-SHA256 signing, fixed KuGou HTTPS, parsed YouLyPlus Apple Music syllable sync JSON, and added /api/lyrics/test",
+      "HUD 60 FPS Throttling: Throttled SpotifyHud and DiscordVoiceHud layout recalculations to 16ms (60 FPS) to optimize CPU on high-refresh monitors"
+    ]
+  },
+  {
     "version": "26.2.28.65",
     "date": "2026-10-02",
     "changes": [

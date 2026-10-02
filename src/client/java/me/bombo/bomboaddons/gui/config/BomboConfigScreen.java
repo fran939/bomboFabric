@@ -513,19 +513,19 @@ public class BomboConfigScreen extends Screen {
                 boolean cycleHover = mouseX >= cycleX && mouseX <= cycleX + cycleW && mouseY >= ctrlY && mouseY <= ctrlY + 18;
                 ConfigUITheme.drawPillButton(g, this.font, "§e" + curVal + " ▾", cycleX, ctrlY, cycleW, 18, cycleHover, -1, 0x22FFFFFF, 0x44FFFFFF);
             }
-
             case COLOR -> {
                 String rawCol = item.stringGetter != null ? item.stringGetter.get() : "WHITE";
                 String colorName = getColorDisplayName(rawCol);
-                int parsedCol = 0xFF000000 | parseColorRgb(rawCol);
+                int parsedCol = parseColorArgb(rawCol);
                 int swatchBoxW = 16;
                 int btnW = 85;
                 int totalW = swatchBoxW + 6 + btnW;
                 int startX = ctrlRightX - totalW;
 
-                // Color swatch box
+                // Color swatch box with checkerboard transparency preview
                 int boxX = startX;
                 int boxY = ctrlY + 1;
+                drawCheckerboard(g, boxX, boxY, swatchBoxW, 16, 4);
                 g.fill(boxX, boxY, boxX + swatchBoxW, boxY + 16, parsedCol);
                 g.outline(boxX, boxY, swatchBoxW, 16, 0x88FFFFFF);
 
@@ -853,7 +853,7 @@ public class BomboConfigScreen extends Screen {
         }
     }
 
-    private int getColorHexForName(String name) {
+    public static int getColorHexForName(String name) {
         if (name == null) return 0xFFFFFFFF;
         return switch (name.toLowerCase()) {
             case "cyan" -> 0xFF00E5FF;
@@ -874,8 +874,10 @@ public class BomboConfigScreen extends Screen {
     private static float colorPickerHue = 0.0f;
     private static float colorPickerSat = 1.0f;
     private static float colorPickerVal = 1.0f;
+    private static float colorPickerAlpha = 1.0f;
     private static boolean isDraggingWheel = false;
     private static boolean isDraggingVal = false;
+    private static boolean isDraggingAlpha = false;
 
     private void openColorPicker(ConfigItem item) {
         activeColorItem = item;
@@ -885,33 +887,57 @@ public class BomboConfigScreen extends Screen {
         colorPickerHexInput = cur.startsWith("#") ? cur.substring(1) : cur;
         colorPickerHexFocused = false;
         try {
-            int rgb = parseColorRgb(cur);
+            int argb = parseColorArgb(cur);
+            int a = (argb >>> 24) & 0xFF;
+            colorPickerAlpha = a / 255.0f;
             float[] hsv = new float[3];
-            java.awt.Color.RGBtoHSB((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, hsv);
+            java.awt.Color.RGBtoHSB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, hsv);
             colorPickerHue = hsv[0];
             colorPickerSat = hsv[1];
             colorPickerVal = hsv[2];
         } catch (Throwable t) {
+            colorPickerAlpha = 1.0f;
             colorPickerHue = 0.0f;
             colorPickerSat = 1.0f;
             colorPickerVal = 1.0f;
         }
     }
 
-    private int parseColorRgb(String text) {
-        if (text == null || text.isEmpty()) return 0xFFFFFF;
+    public static int parseColorArgb(String text) {
+        if (text == null || text.isEmpty()) return 0xFFFFFFFF;
         if (text.startsWith("#")) text = text.substring(1);
         try {
-            return Integer.parseInt(text, 16) & 0xFFFFFF;
+            if (text.length() == 8) {
+                return (int) (Long.parseLong(text, 16) & 0xFFFFFFFFL);
+            }
+            return 0xFF000000 | (Integer.parseInt(text, 16) & 0xFFFFFF);
         } catch (Exception e) {
-            return getColorHexForName(text) & 0xFFFFFF;
+            return getColorHexForName(text);
+        }
+    }
+
+    private int parseColorRgb(String text) {
+        return parseColorArgb(text) & 0xFFFFFF;
+    }
+
+    public static void drawCheckerboard(GuiGraphicsExtractor g, int x, int y, int w, int h, int size) {
+        if (size <= 0) size = 4;
+        for (int py = 0; py < h; py += size) {
+            int curH = Math.min(size, h - py);
+            int rowIdx = py / size;
+            for (int px = 0; px < w; px += size) {
+                int curW = Math.min(size, w - px);
+                int colIdx = px / size;
+                int col = ((rowIdx + colIdx) % 2 == 0) ? 0xFF404040 : 0xFF262626;
+                g.fill(x + px, y + py, x + px + curW, y + py + curH, col);
+            }
         }
     }
 
     private void renderColorPickerModal(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         g.fill(0, 0, this.width, this.height, 0x99000000);
         int modalW = 280;
-        int modalH = 260;
+        int modalH = 280;
         int modalX = (this.width - modalW) / 2;
         int modalY = (this.height - modalH) / 2;
 
@@ -927,7 +953,7 @@ public class BomboConfigScreen extends Screen {
         int wheelX = modalX + 16;
         int wheelY = modalY + 30;
         int wheelW = 120;
-        int wheelH = 100;
+        int wheelH = 88;
 
         // Continuous dragging update
         if (isDraggingWheel) {
@@ -937,9 +963,12 @@ public class BomboConfigScreen extends Screen {
             colorPickerSat = 1.0f - relY;
             updateColorPickerHexFromHsv();
         } else if (isDraggingVal) {
-            int sliderY = modalY + 138;
             float relX = Math.max(0f, Math.min(1f, (float)(mouseX - wheelX) / wheelW));
             colorPickerVal = relX;
+            updateColorPickerHexFromHsv();
+        } else if (isDraggingAlpha) {
+            float relX = Math.max(0f, Math.min(1f, (float)(mouseX - wheelX) / wheelW));
+            colorPickerAlpha = relX;
             updateColorPickerHexFromHsv();
         }
 
@@ -962,8 +991,8 @@ public class BomboConfigScreen extends Screen {
         g.outline(curX - 4, curY - 4, 8, 8, 0xFF000000);
 
         // 2. Brightness / Value Slider
-        int valSliderY = modalY + 138;
-        int valSliderH = 12;
+        int valSliderY = modalY + 124;
+        int valSliderH = 10;
         for (int px = 0; px < wheelW; px += 2) {
             float v = (float) px / wheelW;
             int rgb = java.awt.Color.HSBtoRGB(colorPickerHue, colorPickerSat, v);
@@ -974,12 +1003,35 @@ public class BomboConfigScreen extends Screen {
         g.fill(valThumbX - 2, valSliderY - 2, valThumbX + 2, valSliderY + valSliderH + 2, 0xFFFFFFFF);
         g.outline(valThumbX - 3, valSliderY - 3, 6, valSliderH + 6, 0xFF000000);
 
+        // 2b. Alpha / Opacity Slider (with Checkerboard background)
+        int alphaSliderY = modalY + 138;
+        int alphaSliderH = 10;
+        drawCheckerboard(g, wheelX, alphaSliderY, wheelW, alphaSliderH, 4);
+        int currentRgb = java.awt.Color.HSBtoRGB(colorPickerHue, colorPickerSat, colorPickerVal) & 0xFFFFFF;
+        for (int px = 0; px < wheelW; px += 2) {
+            float aRatio = (float) px / wheelW;
+            int a = Math.round(aRatio * 255f) & 0xFF;
+            g.fill(wheelX + px, alphaSliderY, wheelX + px + 2, alphaSliderY + alphaSliderH, (a << 24) | currentRgb);
+        }
+        g.outline(wheelX - 1, alphaSliderY - 1, wheelW + 2, alphaSliderH + 2, 0x55FFFFFF);
+        int alphaThumbX = wheelX + (int)(colorPickerAlpha * wheelW);
+        g.fill(alphaThumbX - 2, alphaSliderY - 2, alphaThumbX + 2, alphaSliderY + alphaSliderH + 2, 0xFFFFFFFF);
+        g.outline(alphaThumbX - 3, alphaSliderY - 3, 6, alphaSliderH + 6, 0xFF000000);
+
+        // Opacity label
+        g.text(this.font, "§7Alpha: §f" + Math.round(colorPickerAlpha * 100f) + "%", wheelX, alphaSliderY + alphaSliderH + 3, 0xFF94A3B8, false);
+
         // 3. Current Color Preview Box & Hex Text Input
         int rightColX = modalX + 148;
         int previewH = 26;
-        int currentRgb = java.awt.Color.HSBtoRGB(colorPickerHue, colorPickerSat, colorPickerVal) & 0xFFFFFF;
-        g.fill(rightColX, wheelY, modalX + modalW - 16, wheelY + previewH, 0xFF000000 | currentRgb);
-        g.outline(rightColX, wheelY, modalW - 164, previewH, 0x88FFFFFF);
+        int previewW = modalW - 164;
+        int currentAlphaInt = Math.round(colorPickerAlpha * 255f) & 0xFF;
+        int currentArgb = (currentAlphaInt << 24) | currentRgb;
+
+        // Preview box with checkerboard background
+        drawCheckerboard(g, rightColX, wheelY, previewW, previewH, 4);
+        g.fill(rightColX, wheelY, rightColX + previewW, wheelY + previewH, currentArgb);
+        g.outline(rightColX, wheelY, previewW, previewH, 0x88FFFFFF);
 
         // Hex Input Field
         int hexY = wheelY + previewH + 8;
@@ -995,7 +1047,7 @@ public class BomboConfigScreen extends Screen {
         ConfigUITheme.drawPillButton(g, this.font, "§a✔ Apply", rightColX, applyBtnY, hexW, 18, applyHover, -1, 0x3310B981, 0x6610B981);
 
         // 4. Skyblock Dyes & Swatches Grid
-        int swatchStartY = modalY + 162;
+        int swatchStartY = modalY + 168;
         g.text(this.font, "§7Preset Dyes & Colors:", modalX + 16, swatchStartY, 0xFF94A3B8, false);
 
         int swatchGridY = swatchStartY + 12;
@@ -1106,8 +1158,13 @@ public class BomboConfigScreen extends Screen {
     }
 
     private void updateColorPickerHexFromHsv() {
+        int a = Math.round(colorPickerAlpha * 255f) & 0xFF;
         int rgb = java.awt.Color.HSBtoRGB(colorPickerHue, colorPickerSat, colorPickerVal) & 0xFFFFFF;
-        colorPickerHexInput = String.format(java.util.Locale.US, "%06X", rgb);
+        if (a < 255) {
+            colorPickerHexInput = String.format(java.util.Locale.US, "%02X%06X", a, rgb);
+        } else {
+            colorPickerHexInput = String.format(java.util.Locale.US, "%06X", rgb);
+        }
         if (activeColorItem != null && activeColorItem.stringSetter != null) {
             activeColorItem.stringSetter.accept("#" + colorPickerHexInput);
             BomboConfig.save();
@@ -1235,7 +1292,7 @@ public class BomboConfigScreen extends Screen {
             int wheelX = modalX + 16;
             int wheelY = modalY + 30;
             int wheelW = 120;
-            int wheelH = 100;
+            int wheelH = 88;
             if (mouseX >= wheelX && mouseX <= wheelX + wheelW && mouseY >= wheelY && mouseY <= wheelY + wheelH) {
                 isDraggingWheel = true;
                 float relX = Math.max(0f, Math.min(1f, (float)(mouseX - wheelX) / wheelW));
@@ -1247,12 +1304,23 @@ public class BomboConfigScreen extends Screen {
             }
 
             // Brightness / Value Slider click
-            int valSliderY = modalY + 138;
-            int valSliderH = 12;
+            int valSliderY = modalY + 124;
+            int valSliderH = 10;
             if (mouseX >= wheelX && mouseX <= wheelX + wheelW && mouseY >= valSliderY - 2 && mouseY <= valSliderY + valSliderH + 2) {
                 isDraggingVal = true;
                 float relX = Math.max(0f, Math.min(1f, (float)(mouseX - wheelX) / wheelW));
                 colorPickerVal = relX;
+                updateColorPickerHexFromHsv();
+                return true;
+            }
+
+            // Alpha Slider click
+            int alphaSliderY = modalY + 138;
+            int alphaSliderH = 10;
+            if (mouseX >= wheelX && mouseX <= wheelX + wheelW && mouseY >= alphaSliderY - 2 && mouseY <= alphaSliderY + alphaSliderH + 2) {
+                isDraggingAlpha = true;
+                float relX = Math.max(0f, Math.min(1f, (float)(mouseX - wheelX) / wheelW));
+                colorPickerAlpha = relX;
                 updateColorPickerHexFromHsv();
                 return true;
             }
@@ -1273,14 +1341,18 @@ public class BomboConfigScreen extends Screen {
             int applyBtnY = hexY + 24;
             if (mouseX >= rightColX && mouseX <= rightColX + hexW && mouseY >= applyBtnY && mouseY <= applyBtnY + 18) {
                 try {
-                    int rgb = parseColorRgb(colorPickerHexInput);
+                    int argb = parseColorArgb(colorPickerHexInput);
+                    int a = (argb >>> 24) & 0xFF;
+                    if (colorPickerHexInput.length() == 8) {
+                        colorPickerAlpha = a / 255.0f;
+                    }
                     float[] hsv = new float[3];
-                    java.awt.Color.RGBtoHSB((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, hsv);
+                    java.awt.Color.RGBtoHSB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, hsv);
                     colorPickerHue = hsv[0];
                     colorPickerSat = hsv[1];
                     colorPickerVal = hsv[2];
                     if (activeColorItem.stringSetter != null) {
-                        activeColorItem.stringSetter.accept("#" + String.format(java.util.Locale.US, "%06X", rgb));
+                        activeColorItem.stringSetter.accept("#" + colorPickerHexInput);
                         BomboConfig.save();
                     }
                 } catch (Throwable ignored) {}
@@ -1288,7 +1360,7 @@ public class BomboConfigScreen extends Screen {
             }
 
             // Presets Click
-            int swatchStartY = modalY + 162;
+            int swatchStartY = modalY + 168;
             int swatchGridY = swatchStartY + 12;
             int sCols = 8;
             int sSize = 14;
@@ -1308,6 +1380,7 @@ public class BomboConfigScreen extends Screen {
                     colorPickerHue = hsv[0];
                     colorPickerSat = hsv[1];
                     colorPickerVal = hsv[2];
+                    colorPickerAlpha = 1.0f;
                     if (activeColorItem.stringSetter != null) {
                         activeColorItem.stringSetter.accept(hex);
                         BomboConfig.save();
@@ -1485,6 +1558,7 @@ public class BomboConfigScreen extends Screen {
         this.draggingSliderItem = null;
         isDraggingWheel = false;
         isDraggingVal = false;
+        isDraggingAlpha = false;
         ConfigCustomWidgets.isCrosshairMouseDown = false;
         if (ConfigCustomWidgets.isDraggingWaypoint) {
             ConfigCustomWidgets.isDraggingWaypoint = false;
@@ -1503,7 +1577,7 @@ public class BomboConfigScreen extends Screen {
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
         if (activeColorItem != null) {
-            if (isDraggingWheel || isDraggingVal) return true;
+            if (isDraggingWheel || isDraggingVal || isDraggingAlpha) return true;
         }
         if ("Custom Crosshair".equals(activeCategory)) {
             ConfigCustomWidgets.handleCrosshairClick(0, 0, this.width, this.height, (int) event.x(), (int) event.y(), event.button());
@@ -1809,12 +1883,16 @@ public class BomboConfigScreen extends Screen {
         if (activeColorItem != null && colorPickerHexFocused) {
             char c = (char) event.codepoint();
             if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-                if (colorPickerHexInput.length() < 6) {
+                if (colorPickerHexInput.length() < 8) {
                     colorPickerHexInput += Character.toUpperCase(c);
                     try {
-                        int rgb = parseColorRgb(colorPickerHexInput);
+                        int argb = parseColorArgb(colorPickerHexInput);
+                        int a = (argb >>> 24) & 0xFF;
+                        if (colorPickerHexInput.length() == 8) {
+                            colorPickerAlpha = a / 255.0f;
+                        }
                         float[] hsv = new float[3];
-                        java.awt.Color.RGBtoHSB((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, hsv);
+                        java.awt.Color.RGBtoHSB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, hsv);
                         colorPickerHue = hsv[0];
                         colorPickerSat = hsv[1];
                         colorPickerVal = hsv[2];
@@ -1916,11 +1994,15 @@ public class BomboConfigScreen extends Screen {
                     String clip = Minecraft.getInstance().keyboardHandler.getClipboard();
                     if (clip != null && !clip.trim().isEmpty()) {
                         String clean = clip.trim().replace("#", "").toUpperCase();
-                        if (clean.length() > 6) clean = clean.substring(0, 6);
+                        if (clean.length() > 8) clean = clean.substring(0, 8);
                         colorPickerHexInput = clean;
-                        int rgb = parseColorRgb(colorPickerHexInput);
+                        int argb = parseColorArgb(colorPickerHexInput);
+                        int a = (argb >>> 24) & 0xFF;
+                        if (colorPickerHexInput.length() == 8) {
+                            colorPickerAlpha = a / 255.0f;
+                        }
                         float[] hsv = new float[3];
-                        java.awt.Color.RGBtoHSB((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, hsv);
+                        java.awt.Color.RGBtoHSB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, hsv);
                         colorPickerHue = hsv[0];
                         colorPickerSat = hsv[1];
                         colorPickerVal = hsv[2];
@@ -1936,9 +2018,13 @@ public class BomboConfigScreen extends Screen {
                     colorPickerHexInput = colorPickerHexInput.substring(0, colorPickerHexInput.length() - 1);
                     if (!colorPickerHexInput.isEmpty()) {
                         try {
-                            int rgb = parseColorRgb(colorPickerHexInput);
+                            int argb = parseColorArgb(colorPickerHexInput);
+                            int a = (argb >>> 24) & 0xFF;
+                            if (colorPickerHexInput.length() == 8) {
+                                colorPickerAlpha = a / 255.0f;
+                            }
                             float[] hsv = new float[3];
-                            java.awt.Color.RGBtoHSB((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, hsv);
+                            java.awt.Color.RGBtoHSB((argb >> 16) & 0xFF, (argb >> 8) & 0xFF, argb & 0xFF, hsv);
                             colorPickerHue = hsv[0];
                             colorPickerSat = hsv[1];
                             colorPickerVal = hsv[2];

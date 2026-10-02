@@ -717,7 +717,7 @@ public class IRCClient {
                     // Trigger background networth update for the real Minecraft account
                     me.bombo.bomboaddons.features.profile.ProfileFetcher.silentFetchProfile(cleanIgn);
 
-                    net.minecraft.network.chat.MutableComponent playerComp = buildHoverablePlayerComponent(cleanName, senderColor, cleanIgn);
+                    net.minecraft.network.chat.MutableComponent playerComp = buildHoverablePlayerComponent(senderName, senderColor, cleanIgn);
                     Component msgBodyComp = formatWithLinks(rawMsg);
                     fullDisplayComponent = Component.literal("§r§8[§r§3Bombo§r§8] ").append(playerComp).append(Component.literal("§f: §r")).append(msgBodyComp);
 
@@ -746,7 +746,7 @@ public class IRCClient {
                     if (cleanPayload.startsWith("§9[DC]\u0002")) {
                        String[] parts = cleanPayload.split("\u0002", 3);
                        if (parts.length == 3) {
-                          dcSender = cleanSenderName(parts[1]);
+                          dcSender = parts[1];
                           dcMsg = parts[2];
                        }
                     } else {
@@ -759,17 +759,17 @@ public class IRCClient {
 
                        int cIdx = body.indexOf(": ");
                        if (cIdx != -1) {
-                          dcSender = cleanSenderName(body.substring(0, cIdx).trim());
+                          dcSender = body.substring(0, cIdx).trim();
                           dcMsg = body.substring(cIdx + 2);
                        }
                     }
 
-                    if ((dcSender.equalsIgnoreCase("Private") || dcSender.equalsIgnoreCase("Private Island") || dcSender.equalsIgnoreCase("Lobby") || dcSender.equalsIgnoreCase("Limbo") || dcSender.equalsIgnoreCase("Hub") || dcSender.equalsIgnoreCase("Menu")) && (dcMsg.contains("26.2.") || dcMsg.matches(".*\\d+\\.\\d+.*"))) {
+                    if ((cleanSenderName(dcSender).equalsIgnoreCase("Private") || cleanSenderName(dcSender).equalsIgnoreCase("Private Island") || cleanSenderName(dcSender).equalsIgnoreCase("Lobby") || cleanSenderName(dcSender).equalsIgnoreCase("Limbo") || cleanSenderName(dcSender).equalsIgnoreCase("Hub") || cleanSenderName(dcSender).equalsIgnoreCase("Menu")) && (dcMsg.contains("26.2.") || dcMsg.matches(".*\\d+\\.\\d+.*"))) {
                        return;
                     }
 
                     String uColor = (dcSender.equalsIgnoreCase(targetDcUser) || dcSender.contains("579709526903619596") || dcSender.equalsIgnoreCase("bomboclas")) ? myCustomColor : "§9";
-                    String linkedIgn = getLinkedIgn(dcSender);
+                    String linkedIgn = getLinkedIgn(cleanSenderName(dcSender));
                     net.minecraft.network.chat.MutableComponent dcPlayerComp = buildHoverablePlayerComponent(dcSender, uColor, linkedIgn);
                     Component msgBodyComp = formatWithLinks(dcMsg);
                     fullDisplayComponent = Component.literal("§r§8[§r§3Bombo§r§8] §9[DC] ").append(dcPlayerComp).append(Component.literal("§f: §r")).append(msgBodyComp);
@@ -1294,7 +1294,11 @@ public class IRCClient {
          String alt = getLinkedIgn(cleanName);
          if (alt != null && !alt.isEmpty()) lookupIgn = alt;
       }
-      String coloredName = ChromaTextHelper.processChroma(colorCode.replace('&', '§') + cleanName);
+      lookupIgn = cleanSenderName(lookupIgn);
+      String formattedName = (username.contains("§") || username.contains("&"))
+            ? username.replace('&', '§')
+            : colorCode.replace('&', '§') + cleanName;
+      String coloredName = ChromaTextHelper.processChroma(formattedName);
       net.minecraft.network.chat.MutableComponent comp = ChromaTextHelper.parseFormattedText(coloredName);
 
       String tooltip = buildPlayerTooltipText(cleanName, lookupIgn);
