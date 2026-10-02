@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.62] - 2026-10-02 (Beta)
+
+### Mixin Configuration Isolation & Collision Prevention
+- **Unique Cheat Mixin Config (`bomboclient.base.mixins.json`):** Created dedicated mixin configuration for the `bomboclient` flavor to eliminate Fabric Loader 0.16+ `RuntimeException: Non-unique Mixin config name bomboaddons.client.mixins.json used by the mods bomboaddons and bomboclient`.
+- **Flavor Mod Metadata Separation:** Updated `fabric.mod.json` for `bomboclient` to exclusively load `bomboclient.base.mixins.json` and `bomboclient.client.mixins.json`, preventing any shared mixin config naming collisions.
+- **Mutual Flavor Incompatibility (`breaks`):** Configured mutual exclusions in both flavor descriptors (`"breaks": { "bomboaddons": "*" }` in `bomboclient` and `"breaks": { "bomboclient": "*" }` in `bomboaddons`) to protect players and launchers from concurrently activating both jars.
+- **Automated Dev Clean & Integrity Verification:** Updated `build.gradle` `cheatJar` task to exclude `bomboaddons.client.mixins.json`, added mixin config validation to `assertFlavorIntegrity`, and enhanced `sweepStaleArtifacts` to automatically purge stale build jars from `run/mods/`.
+
 ## [26.2.28.61] - 2026-10-02 (Beta)
 
 ### Native Win32 JNA Spotify Controls & Keybindings

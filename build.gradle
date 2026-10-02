@@ -139,6 +139,7 @@ tasks.register('cheatJar', Jar) {
 
 	from sourceSets.main.output
 	from sourceSets.client.output
+	exclude 'bomboaddons.client.mixins.json'
 	from('src/flavor/cheat') {
 		include '*.mixins.json'
 		include 'bomboaddons.flavor'
@@ -321,6 +322,10 @@ tasks.register('assertFlavorIntegrity') {
 				if (zip.getEntry(path) == null) missing.add(path)
 			}
 			if (zip.getEntry('bomboaddons.flavor') == null) missing.add('bomboaddons.flavor')
+			if (zip.getEntry('bomboclient.base.mixins.json') == null) missing.add('bomboclient.base.mixins.json')
+			if (zip.getEntry('bomboaddons.client.mixins.json') != null) {
+				throw new GradleException("Cheat jar ${cheatFile.name} must not contain bomboaddons.client.mixins.json")
+			}
 		}
 		if (!missing.isEmpty()) {
 			throw new GradleException("Cheat jar ${cheatFile.name} is missing: ${missing}")
@@ -339,20 +344,31 @@ tasks.named('check') {
 //
 // Earlier flavor builds emitted bomboclient-<version>-sources.jar (and can leave -dev jars
 // behind). Neither is wanted, and a stale one in build/libs is easy to upload by mistake.
+// Also cleans stale built jars from run/mods so dev client runs without classpath collisions.
 // ---------------------------------------------------------------------------
 tasks.register('sweepStaleArtifacts') {
 	group = 'build'
-	description = 'Deletes stale -sources / -dev jars from build/libs.'
+	description = 'Deletes stale -sources / -dev jars from build/libs and old build jars from run/mods.'
 	outputs.upToDateWhen { false }
 
 	doLast {
 		def libs = layout.buildDirectory.dir('libs').get().asFile
-		if (!libs.isDirectory()) return
-		libs.listFiles()
-				?.findAll { it.name.endsWith('-sources.jar') || it.name.endsWith('-dev.jar') }
-				?.each { f ->
-					if (f.delete()) logger.lifecycle("[flavor] removed stale artifact ${f.name}")
-				}
+		if (libs.isDirectory()) {
+			libs.listFiles()
+					?.findAll { it.name.endsWith('-sources.jar') || it.name.endsWith('-dev.jar') }
+					?.each { f ->
+						if (f.delete()) logger.lifecycle("[flavor] removed stale artifact ${f.name}")
+					}
+		}
+
+		def runMods = file('run/mods')
+		if (runMods.isDirectory()) {
+			runMods.listFiles()
+					?.findAll { it.name.startsWith('bomboclient-') || it.name.startsWith('bomboaddons-') }
+					?.each { f ->
+						if (f.delete()) logger.lifecycle("[dev] removed stale jar from run/mods: ${f.name}")
+					}
+		}
 	}
 }
 
