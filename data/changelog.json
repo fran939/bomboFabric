@@ -1,5 +1,12 @@
 [
   {
+    "version": "26.2.28.63",
+    "date": "2026-10-02",
+    "changes": [
+      "Client Startup Mixin Fix: Fixed Prism Launcher crash by aligning bomboclient.base.mixins.json with exact 70 production mixins, removing inactive ConnectionMixin and GameRendererMixin injection targets"
+    ]
+  },
+  {
     "version": "26.2.28.62",
     "date": "2026-10-02",
     "changes": [

@@ -1,5 +1,10 @@
 # BomboAddons Changelog
  
+## [26.2.28.63] - 2026-10-02 (Beta)
+
+### Client Startup Mixin Target Fix
+- **Prism Launcher & Production Launch Crash Resolved:** Aligned `bomboclient.base.mixins.json` with the exact 70 production mixins from `bomboaddons.client.mixins.json`. Excluded draft/unmapped mixin targets (`ConnectionMixin`, `GameRendererMixin`) that caused `InvalidInjectionException: Critical injection failure: @ModifyVariable on onConnect could not find targets matching connect` and `clampFov` on production clients.
+
 ## [26.2.28.62] - 2026-10-02 (Beta)
 
 ### Mixin Configuration Isolation & Collision Prevention

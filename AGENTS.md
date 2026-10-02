@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.62` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.63` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,14 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.62`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.63`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.63 (Ready for In-Game Testing)
+>
+> 1. **Prism Launcher & Production Mixin Injection Target Fix:** Aligned `bomboclient.base.mixins.json` with the exact 70 production mixins declared in `bomboaddons.client.mixins.json`. Excluded draft/inactive mixin targets (`ConnectionMixin`, `GameRendererMixin`) that caused `InvalidInjectionException: Critical injection failure: @ModifyVariable on onConnect could not find targets matching connect` and `clampFov` on production clients.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.62 (Ready for In-Game Testing)
 >
 > 1. **Mixin Configuration Isolation (`bomboclient.base.mixins.json`):** Eliminated Fabric Loader 0.16+ `RuntimeException: Non-unique Mixin config name bomboaddons.client.mixins.json used by the mods bomboaddons and bomboclient` by isolating cheat flavor mixins into dedicated `bomboclient.base.mixins.json` and `bomboclient.client.mixins.json`.
