@@ -1,5 +1,27 @@
 # BomboAddons Changelog
  
+## [26.2.28.65] - 2026-10-02 (Beta)
+
+### Bridge Name Sanitization & Webhook Fixes
+- **Strip Color Codes on Bridge & Web:** Stripped `&[0-9a-fk-or]` and `§[0-9a-fk-or]` from player names and Discord webhooks on `bombot`, and sanitized outgoing profile lookups in `ProfileFetcher.java` preventing invalid requests like `GET /&4pavlor`.
+
+### Spotify HUD GUI Movement & Artist Direct Filter
+- **Click Guard in /b gui:** Restricted media click handlers to `ChatScreen` and `AbstractContainerScreen` (inventories/chests), allowing `HudMoveScreen` (`/b gui`) to move, drag, and resize the Spotify HUD without triggering media actions.
+- **Direct Artist & Track Search Filters:** Clicking artist now targets `spotify:search:artist:"<name>"` (desktop) and `/search/<name>/artists` (web fallback) directly filtering to the artist instead of generic text search.
+
+### Screenshare Streaming Reliability & Presets
+- **Continuous Frame Pump:** Implemented continuous image preloading loop on `https://bombo.dpdns.org/screenshare`, eliminating the 1-frame freeze and ensuring smooth real-time video playback.
+- **Preset Uniformity:** Standardized quality preset options in `/b ss config` and configuration to `1440p 60fps` and `1440p 120fps`.
+
+### Discord Voice Local Log Scanner Polish
+- **Active Channel & Member Tracking:** Enhanced local log parser for `%APPDATA%\discord\logs\renderer_js.log` and `discord-webrtc_1` to parse channel ID, active member count, and connection heartbeats, automatically populating voice users without OAuth permissions.
+- **Diagnostic & Sync Refresh:** Triggered log scanning on `/b discord sync`, `/b discord debug`, and during background HUD renders.
+
+### Version Display & Lyrics Deduplication
+- **Version Feedback Polish:** Formatted `/b version` and `/b test` as `§8[§3Bombo§8]§r §b<ModName> §aCurrent Version: §e<version>` (displaying `BomboClient` or `BomboAddons`).
+- **Lyrics Multi-Candidate Deduplication:** Deduplicated search candidates by provider, sync type, and preview text, and capped LRCLIB results to eliminate 21 duplicate rows in the candidate modal.
+- **Performance Profiler Frame Rate Clarity:** Labeled HUD and render calls as `Render (FPS)` to clarify that high call counts match display refresh rates (e.g. 499 FPS) rather than CPU logic.
+
 ## [26.2.28.64] - 2026-10-02 (Beta)
 
 ### Screenshare Streaming Latency, Mouse Cursor & Profiler Optimization

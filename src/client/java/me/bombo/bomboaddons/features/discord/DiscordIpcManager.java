@@ -204,6 +204,7 @@ public class DiscordIpcManager {
     private record Packet(int opcode, String json) {}
 
     public static void forceSync() {
+        scanDiscordLogForVoice();
         CompletableFuture.runAsync(() -> {
             try {
                 if (!connected || currentPipe == null) {
@@ -296,7 +297,7 @@ public class DiscordIpcManager {
         scanDiscordLogForVoice();
     }
 
-    private static void scanDiscordLogForVoice() {
+    public static void scanDiscordLogForVoice() {
         try {
             String appData = System.getenv("APPDATA");
             if (appData == null) return;
@@ -320,6 +321,7 @@ public class DiscordIpcManager {
             boolean foundDisconnect = false;
             boolean foundHeartbeat = false;
             String foundChannel = null;
+            int memberCount = 1;
 
             for (int i = lines.length - 1; i >= 0; i--) {
                 String line = lines[i];
@@ -338,7 +340,16 @@ public class DiscordIpcManager {
                     if (idx != -1) {
                         String rest = line.substring(idx + 17).trim();
                         int paren = rest.indexOf('(');
-                        if (paren != -1) rest = rest.substring(0, paren).trim();
+                        if (paren != -1) {
+                            String cStr = rest.substring(paren + 1);
+                            int closeP = cStr.indexOf(')');
+                            if (closeP != -1) {
+                                try {
+                                    memberCount = Math.max(1, Integer.parseInt(cStr.substring(0, closeP).trim()));
+                                } catch (Throwable ignored) {}
+                            }
+                            rest = rest.substring(0, paren).trim();
+                        }
                         if (!rest.isEmpty()) foundChannel = rest;
                     }
                 }
@@ -346,17 +357,22 @@ public class DiscordIpcManager {
 
             if ((foundConnected || foundHeartbeat) && !foundDisconnect) {
                 inVoice = true;
-                logReaderStatus = "Active (Connected to voice)";
+                logReaderStatus = "Active (" + memberCount + " in call)";
                 if (currentChannelName.isEmpty() || currentChannelName.startsWith("Voice Call") || currentChannelName.startsWith("Voice (")) {
                     currentChannelName = foundChannel != null ? ("Voice (" + foundChannel.substring(Math.max(0, foundChannel.length() - 4)) + ")") : "Voice Call";
                 }
                 if (foundChannel != null && currentChannelId.isEmpty()) {
                     currentChannelId = foundChannel;
                 }
-                if (voiceUsers.isEmpty()) {
+                if (voiceUsers.isEmpty() || voiceUsers.size() < memberCount) {
+                    voiceUsers.clear();
                     String name = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
                     String id = !myUserId.isEmpty() ? myUserId : "self";
                     voiceUsers.put(id, new DiscordVoiceUser(id, name, name, false, false, false, false));
+                    for (int m = 2; m <= memberCount; m++) {
+                        String mId = "member_" + m;
+                        voiceUsers.put(mId, new DiscordVoiceUser(mId, "Member " + m, "Member " + m, false, false, false, false));
+                    }
                 }
             } else if (foundDisconnect) {
                 logReaderStatus = "Disconnected (VOICE_DISCONNECT detected)";
@@ -567,6 +583,7 @@ public class DiscordIpcManager {
     }
 
     public static void dumpDebugInfo(Consumer<Component> feedback) {
+        scanDiscordLogForVoice();
         feedback.accept(Component.literal("§9========== §b[Discord IPC Detailed Diagnostics] §9=========="));
         feedback.accept(Component.literal("§7Enabled in Config: " + (BomboConfig.get().discordHudEnabled ? "§aYes" : "§cNo")));
         feedback.accept(Component.literal("§7Worker Thread: " + (workerThread != null && workerThread.isAlive() ? "§aAlive" : "§cStopped")));

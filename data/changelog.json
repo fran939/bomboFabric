@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.65",
+    "date": "2026-10-02",
+    "changes": [
+      "Bridge Name & Color Sanitization: Stripped color codes (& and §) from usernames and bridge webhooks, preventing corrupt GET /&4<user> requests and raw color code display on Discord",
+      "Screenshare Web Streaming Continuous Pump: Replaced static single-frame blob replacement with continuous image pump on https://bombo.dpdns.org/screenshare, fixing 1-frame freeze",
+      "Screenshare Quality Presets: Standardized quality options to 1440p 60fps and 1440p 120fps",
+      "Spotify HUD GUI Dragging & Click Guard: Mouse clicks on Spotify HUD only open Spotify in ChatScreen or Container screens, allowing full drag/move/resize in /b gui",
+      "Spotify Direct Artist & Track Filters: Clicking artist opens Spotify filtered directly to artist:\"<name>\" (desktop) and /search/<name>/artists (web)",
+      "Discord Voice Local Log Scanner: Enhanced background log parser to detect active voice channels, call members, and heartbeat states from renderer_js.log and discord-webrtc_1",
+      "Version Output Polish: Formatted /b version and /b test as [Bombo] BomboClient Current Version: <version> (or BomboAddons)",
+      "Lyrics Multi-Candidate Deduplication: Deduplicated search candidates by provider, sync type, and preview signature, eliminating 21 duplicate entries in candidate modal",
+      "Performance Profiler Display Clarification: Labeled HUD and render calls as 'Render (FPS)' to clarify display framerate vs logic calls"
+    ]
+  },
+  {
     "version": "26.2.28.64",
     "date": "2026-10-02",
     "changes": [

@@ -25,11 +25,19 @@ public class DiscordVoiceHud {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "discord_hud"), DiscordVoiceHud::render);
     }
 
+    private static long lastBackgroundScan = 0L;
+
     private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null) return;
         if (mc.gui.screen() instanceof HudMoveScreen) return;
         if (mc.gui.screen() != null && !(mc.gui.screen() instanceof ChatScreen)) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastBackgroundScan > 2000L) {
+            lastBackgroundScan = now;
+            DiscordIpcManager.scanDiscordLogForVoice();
+        }
 
         BomboConfig.Settings s = BomboConfig.get();
         if (s == null || !s.discordHudEnabled) return;

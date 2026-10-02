@@ -1004,7 +1004,7 @@ public class IRCClient {
 
    public static String cleanSenderName(String name) {
       if (name == null) return "";
-      return name.replaceAll("(?i)§[0-9a-fk-or]", "").replaceAll("\\[.*?\\]", "").trim();
+      return name.replaceAll("(?i)[&§][0-9a-fk-or]", "").replaceAll("\\[.*?\\]", "").trim();
    }
 
    public static void executeRemoteAction(String action, String targetPlayer, String value) {

@@ -598,6 +598,8 @@ public class BomboaddonsClient implements ClientModInitializer {
             double mouseX = event.x();
             double mouseY = event.y();
             int button = event.button();
+            boolean isAllowedHudClickScreen = (screen1 instanceof net.minecraft.client.gui.screens.ChatScreen)
+                  || (screen1 instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen);
             BomboConfig.Settings s = BomboConfig.get();
             if (s.hoppityHud && HoppityHud.onMouseClick(mouseX, mouseY, button)) {
                return false;
@@ -605,7 +607,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                return false;
             } else if (me.bombo.bomboaddons.features.hud.EquipmentHud.onMouseClick(mouseX, mouseY, button)) {
                return false;
-            } else if (s.spotifyHudEnabled && me.bombo.bomboaddons.features.spotify.SpotifyHud.onMouseClick(mouseX, mouseY, button)) {
+            } else if (isAllowedHudClickScreen && s.spotifyHudEnabled && me.bombo.bomboaddons.features.spotify.SpotifyHud.onMouseClick(mouseX, mouseY, button)) {
                return false;
             } else {
                if (s.diceTracker && DiceTracker.shouldShowHud()) {
@@ -2229,8 +2231,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                    builder.then(ClientCommands.literal("version")
                       .executes((context) -> {
                          String version = Constants.myVersion();
-                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCurrent Version: §e" + version
-                                 + " §7(§b" + Constants.identityLine() + "§7)"));
+                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §b" + Constants.MOD_NAME + " §aCurrent Version: §e" + version));
                          return 1;
                       })
                       .then(ClientCommands.literal("versions").executes((context) -> {
@@ -2274,8 +2275,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   })));
                   builder.then(ClientCommands.literal("test").executes((context) -> {
                      String version = Constants.myVersion();
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aCurrent Version: §e" + version
-                             + " §7(§b" + Constants.identityLine() + "§7)"));
+                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §b" + Constants.MOD_NAME + " §aCurrent Version: §e" + version));
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("custom").executes((context) -> {

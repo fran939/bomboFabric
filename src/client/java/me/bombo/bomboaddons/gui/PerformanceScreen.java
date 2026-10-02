@@ -246,9 +246,12 @@ public class PerformanceScreen extends Screen {
             int msStrW = font.width(totalMsStr);
             g.text(font, totalMsStr, contentX + contentW - msStrW - 14, cardY + 10, barColor, true);
 
-            // Sub-metrics (Calls/sec, Avg latency, Max latency, Est Memory)
-            String details = String.format("§7Calls: §f%.0f/s §8| §7Avg: §f%.3f ms §8| §7Max: §f%.2f ms §8| §7Est Mem: §b~%d KB",
-                    snap.callsPerSec, snap.avgMs, snap.maxMs, snap.estimatedMemKb);
+            // Sub-metrics (Calls/sec or FPS, Avg latency, Max latency, Est Memory)
+            boolean isRenderFeature = snap.name.toLowerCase(java.util.Locale.ROOT).contains("hud") || snap.name.toLowerCase(java.util.Locale.ROOT).contains("render");
+            String callLabel = isRenderFeature ? "Render" : "Calls";
+            String rateUnit = isRenderFeature ? " fps" : "/s";
+            String details = String.format("§7%s: §f%.0f%s §8| §7Avg: §f%.3f ms §8| §7Max: §f%.2f ms §8| §7Est Mem: §b~%d KB",
+                    callLabel, snap.callsPerSec, rateUnit, snap.avgMs, snap.maxMs, snap.estimatedMemKb);
             g.text(font, details, contentX + 44, cardY + 24, 0xFF9CA3AF, false);
         }
 

@@ -330,12 +330,14 @@ public class LyricsManager {
 
             if (epoch != currentTrackEpoch.get()) return;
 
-            // Deduplicate by ID but keep multiple candidates per provider
+            // Deduplicate by signature (provider + syncType + normalized preview) to eliminate identical duplicates
             List<LyricCandidate> unique = new ArrayList<>();
-            Set<String> seenIds = new HashSet<>();
+            Set<String> seenSigs = new HashSet<>();
             for (LyricCandidate c : candidates) {
-                if (!seenIds.contains(c.id())) {
-                    seenIds.add(c.id());
+                String norm = c.preview().replaceAll("[^a-zA-Z0-9]", "").toLowerCase(Locale.ROOT);
+                String sig = c.provider().toLowerCase(Locale.ROOT) + ":" + c.syncType() + ":" + norm;
+                if (!seenSigs.contains(sig)) {
+                    seenSigs.add(sig);
                     unique.add(c);
                 }
             }
@@ -648,6 +650,9 @@ public class LyricsManager {
             if (searchResp.statusCode() == 200) {
                 JsonElement elem = JsonParser.parseString(searchResp.body());
                 if (elem.isJsonArray()) {
+                    int syncedCount = 0;
+                    int plainCount = 0;
+                    Set<String> seenPreviews = new HashSet<>();
                     for (JsonElement itemEl : elem.getAsJsonArray()) {
                         if (!itemEl.isJsonObject()) continue;
                         JsonObject obj = itemEl.getAsJsonObject();
@@ -658,21 +663,26 @@ public class LyricsManager {
                         String plain = obj.has("plainLyrics") && !obj.get("plainLyrics").isJsonNull()
                                 ? obj.get("plainLyrics").getAsString() : "";
 
-                        if (!synced.isEmpty()) {
+                        if (!synced.isEmpty() && syncedCount < 3) {
                             List<LyricsLine> lines = parseLrc(synced);
                             if (!lines.isEmpty()) {
-                                boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
                                 String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
-                                out.add(new LyricCandidate(
-                                        "lrclib-" + id,
-                                        "LrcLib",
-                                        hasWords ? "Word-Synced" : "Line-Synced",
-                                        preview,
-                                        synced,
-                                        lines
-                                ));
+                                String norm = preview.replaceAll("[^a-zA-Z0-9]", "").toLowerCase(Locale.ROOT);
+                                if (!seenPreviews.contains(norm)) {
+                                    seenPreviews.add(norm);
+                                    boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                                    out.add(new LyricCandidate(
+                                            "lrclib-" + id,
+                                            "LrcLib",
+                                            hasWords ? "Word-Synced" : "Line-Synced",
+                                            preview,
+                                            synced,
+                                            lines
+                                    ));
+                                    syncedCount++;
+                                }
                             }
-                        } else if (!plain.isEmpty()) {
+                        } else if (!plain.isEmpty() && plainCount < 1) {
                             List<LyricsLine> lines = new ArrayList<>();
                             long t = 0L;
                             for (String l : plain.split("\r?\n")) {
@@ -684,14 +694,19 @@ public class LyricsManager {
                             }
                             if (!lines.isEmpty()) {
                                 String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
-                                out.add(new LyricCandidate(
-                                        "lrclib-plain-" + id,
-                                        "LrcLib",
-                                        "Plain",
-                                        preview,
-                                        plain,
-                                        lines
-                                ));
+                                String norm = preview.replaceAll("[^a-zA-Z0-9]", "").toLowerCase(Locale.ROOT);
+                                if (!seenPreviews.contains(norm)) {
+                                    seenPreviews.add(norm);
+                                    out.add(new LyricCandidate(
+                                            "lrclib-plain-" + id,
+                                            "LrcLib",
+                                            "Plain",
+                                            preview,
+                                            plain,
+                                            lines
+                                    ));
+                                    plainCount++;
+                                }
                             }
                         }
                     }

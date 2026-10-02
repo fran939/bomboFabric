@@ -106,25 +106,31 @@ public class SpotifyManager {
     }
 
     public static void openTrackInSpotify() {
-        String query = (currentTrack + " " + currentArtist).trim();
-        openDesktopOrWeb(query);
+        String track = currentTrack.trim();
+        String artist = currentArtist.trim();
+        if (track.isEmpty()) return;
+        String query = (track + " " + artist).trim();
+        String desktopSearch = "spotify:search:track:\"" + track + "\"" + (!artist.isEmpty() ? " artist:\"" + artist + "\"" : "");
+        String webUrl = "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "/tracks";
+        openDesktopOrWeb(desktopSearch, webUrl);
     }
 
     public static void openArtistInSpotify() {
-        String query = currentArtist.trim();
-        openDesktopOrWeb(query);
+        String artist = currentArtist.trim();
+        if (artist.isEmpty()) return;
+        String desktopSearch = "spotify:search:artist:\"" + artist + "\"";
+        String webUrl = "https://open.spotify.com/search/" + URLEncoder.encode(artist, StandardCharsets.UTF_8) + "/artists";
+        openDesktopOrWeb(desktopSearch, webUrl);
     }
 
-    private static void openDesktopOrWeb(String query) {
-        if (query.isEmpty()) return;
+    private static void openDesktopOrWeb(String desktopProtocol, String webFallbackUrl) {
         try {
             // Open via Spotify Desktop App protocol: spotify:search:<query>
-            String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8).replace("+", "%20");
-            ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "start", "", "spotify:search:" + encoded);
+            ProcessBuilder pb = new ProcessBuilder("cmd", "/c", "start", "", desktopProtocol);
             pb.start();
         } catch (Throwable t) {
             try {
-                net.minecraft.util.Util.getPlatform().openUri(new URI("https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8)));
+                net.minecraft.util.Util.getPlatform().openUri(new URI(webFallbackUrl));
             } catch (Throwable ignored) {}
         }
     }
@@ -133,7 +139,7 @@ public class SpotifyManager {
         try {
             String query = (currentTrack + " " + currentArtist).trim();
             if (query.isEmpty()) query = "Spotify";
-            return "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8);
+            return "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "/tracks";
         } catch (Throwable t) {
             return "https://open.spotify.com";
         }
@@ -143,7 +149,7 @@ public class SpotifyManager {
         try {
             String query = currentArtist.trim();
             if (query.isEmpty()) query = "Spotify";
-            return "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8);
+            return "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "/artists";
         } catch (Throwable t) {
             return "https://open.spotify.com";
         }

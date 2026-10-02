@@ -425,7 +425,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.cycle("Screenshare Quality",
                         "Streaming resolution and target framerate for live web screensharing.",
                         category,
-                        List.of("720p 30fps", "1080p 60fps", "1440p 60fps", "2K 120fps"),
+                        List.of("720p 30fps", "1080p 60fps", "1440p 60fps", "1440p 120fps"),
                         () -> s.screenshareQuality != null ? s.screenshareQuality : "720p 30fps",
                         v -> s.screenshareQuality = v));
                 items.add(ConfigItem.toggle("Only Share Minecraft",

@@ -160,7 +160,11 @@ public class ProfileFetcher {
       return null;
    }
 
-   public static CompletableFuture<ProfileData> fetchProfile(String username) {
+   public static CompletableFuture<ProfileData> fetchProfile(String rawUsername) {
+      if (rawUsername == null || rawUsername.trim().isEmpty()) {
+         return CompletableFuture.completedFuture(null);
+      }
+      final String username = rawUsername.replaceAll("(?i)[&§][0-9a-fk-or]", "").replaceAll("\\[.*?\\]", "").trim();
       String lowerName = username.toLowerCase();
       if (CACHE.containsKey(lowerName)) {
          CachedProfile cached = (CachedProfile)CACHE.get(lowerName);
