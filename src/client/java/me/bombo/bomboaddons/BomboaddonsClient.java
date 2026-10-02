@@ -180,6 +180,29 @@ public class BomboaddonsClient implements ClientModInitializer {
 
    public static final String MOD_VERSION = getModVersion();
 
+   public static final net.minecraft.client.KeyMapping.Category BOMBO_KEY_CATEGORY = net.minecraft.client.KeyMapping.Category.register(net.minecraft.resources.Identifier.fromNamespaceAndPath("bomboaddons", "main"));
+   public static net.minecraft.client.KeyMapping keySpotifyPlayPause;
+   public static net.minecraft.client.KeyMapping keySpotifyNext;
+   public static net.minecraft.client.KeyMapping keySpotifyPrev;
+
+   public static void registerSpotifyKeyBindings() {
+      keySpotifyPlayPause = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(new net.minecraft.client.KeyMapping(
+              "key.bomboaddons.spotify_play_pause",
+              com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue(),
+              BOMBO_KEY_CATEGORY
+      ));
+      keySpotifyNext = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(new net.minecraft.client.KeyMapping(
+              "key.bomboaddons.spotify_next",
+              com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue(),
+              BOMBO_KEY_CATEGORY
+      ));
+      keySpotifyPrev = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(new net.minecraft.client.KeyMapping(
+              "key.bomboaddons.spotify_prev",
+              com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue(),
+              BOMBO_KEY_CATEGORY
+      ));
+   }
+
    public static void cleanOldVersions() {
       try {
          File modsDir = new File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "mods");
@@ -192,6 +215,25 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
       } catch (Throwable ignored) {}
    }
+
+   public static void handleSpotifyKeybinds() {
+      if (keySpotifyPlayPause != null) {
+         while (keySpotifyPlayPause.consumeClick()) {
+            me.bombo.bomboaddons.features.spotify.SpotifyWin32Handler.playPause();
+         }
+      }
+      if (keySpotifyNext != null) {
+         while (keySpotifyNext.consumeClick()) {
+            me.bombo.bomboaddons.features.spotify.SpotifyWin32Handler.nextTrack();
+         }
+      }
+      if (keySpotifyPrev != null) {
+         while (keySpotifyPrev.consumeClick()) {
+            me.bombo.bomboaddons.features.spotify.SpotifyWin32Handler.prevTrack();
+         }
+      }
+   }
+
 
    public static final java.util.List<String> commandHistory = new java.util.concurrent.CopyOnWriteArrayList<>();
    private static final java.io.File COMMAND_HISTORY_FILE = new java.io.File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "config/bomboaddons/command_history.txt");
@@ -466,12 +508,12 @@ public class BomboaddonsClient implements ClientModInitializer {
       ChatModifier.load();
       loadCommandHistory();
       WaypointManager.init();
-      // Storage chest waypoints also need a steady tick: it is what notices that a chest was
-      // emptied (waypoint removed) or is no longer a chest at all (cache entry purged).
+      registerSpotifyKeyBindings();
       ClientTickEvents.END_CLIENT_TICK.register(client -> {
          try {
             me.bombo.bomboaddons.features.StorageChestWaypoints.onClientTick(client);
             me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.tick();
+            handleSpotifyKeybinds();
          } catch (Throwable ignored) {
          }
       });
@@ -8270,6 +8312,22 @@ public class BomboaddonsClient implements ClientModInitializer {
          } else {
             me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
          }
+         return;
+      }
+
+      if (sub.equals("config") || sub.equals("settings") || sub.equals("gui")) {
+         mc.execute(() -> {
+            mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboConfigScreen(null, "Discord"));
+         });
+         return;
+      }
+
+      if (sub.equals("stream") || sub.equals("share") || sub.equals("start") || sub.equals("broadcast")) {
+         me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming(myIgn);
+         String url = "https://bombo.dpdns.org/screenshare?user=" + myIgn;
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aLive screenshare broadcast started!"));
+         feedback.accept(Component.literal("§8[§3Bombo§8] §7Watch live on web: §b§n" + url)
+                 .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(java.net.URI.create(url)))));
          return;
       }
 

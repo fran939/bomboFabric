@@ -43,12 +43,14 @@ public class UpdateVersionsScreen extends Screen {
         public final boolean isBeta;
         public final String filename;
         public final String downloadUrl;
+        public final String releaseDate;
 
-        public VersionEntry(String version, boolean isBeta, String filename, String downloadUrl) {
+        public VersionEntry(String version, boolean isBeta, String filename, String downloadUrl, String releaseDate) {
             this.version = version;
             this.isBeta = isBeta;
             this.filename = filename;
             this.downloadUrl = downloadUrl;
+            this.releaseDate = (releaseDate != null && !releaseDate.isEmpty()) ? releaseDate : "2026-10-01";
         }
     }
 
@@ -70,6 +72,28 @@ public class UpdateVersionsScreen extends Screen {
         errorMessage = null;
         new Thread(() -> {
             try {
+                // First fetch changelog dates map
+                java.util.Map<String, String> dateMap = new java.util.HashMap<>();
+                try {
+                    HttpURLConnection clConn = (HttpURLConnection) (new URL("https://api.bombo.dpdns.org/mod/changelog")).openConnection();
+                    clConn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                    clConn.setRequestProperty("Accept", "application/json");
+                    clConn.setConnectTimeout(3000);
+                    clConn.setReadTimeout(3000);
+                    if (clConn.getResponseCode() == 200) {
+                        BufferedReader clReader = new BufferedReader(new InputStreamReader(clConn.getInputStream(), StandardCharsets.UTF_8));
+                        JsonArray clArr = JsonParser.parseReader(clReader).getAsJsonArray();
+                        for (JsonElement cle : clArr) {
+                            if (cle.isJsonObject()) {
+                                JsonObject co = cle.getAsJsonObject();
+                                if (co.has("version") && co.has("date")) {
+                                    dateMap.put(co.get("version").getAsString().trim(), co.get("date").getAsString().trim());
+                                }
+                            }
+                        }
+                    }
+                } catch (Throwable ignored) {}
+
                 String apiUrl = "https://api.bombo.dpdns.org/mod/version";
                 HttpURLConnection conn = (HttpURLConnection) (new URL(apiUrl)).openConnection();
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
@@ -92,10 +116,12 @@ public class UpdateVersionsScreen extends Screen {
                                 boolean isBeta = vObj.has("isBeta") && vObj.get("isBeta").getAsBoolean();
                                 String fn = vObj.has("filename") ? vObj.get("filename").getAsString() : "";
                                 String dl = vObj.has("downloadUrl") ? vObj.get("downloadUrl").getAsString() : "";
+                                String date = vObj.has("date") ? vObj.get("date").getAsString()
+                                        : (vObj.has("releasedAt") ? vObj.get("releasedAt").getAsString() : dateMap.getOrDefault(ver, "2026-10-01"));
 
                                 // Strictly filter for current Minecraft line (e.g. 26.2.*)
                                 if (sameMinecraftLine(myVer, ver)) {
-                                    loaded.add(new VersionEntry(ver, isBeta, fn, dl));
+                                    loaded.add(new VersionEntry(ver, isBeta, fn, dl, date));
                                 }
                             }
                         }
@@ -263,7 +289,7 @@ public class UpdateVersionsScreen extends Screen {
                 if (isCurrent) {
                     g.text(font, "§2[Currently Active]", textX + font.width("v" + v.version) + 10, curY + 8, 0xFF10B981, false);
                 }
-                g.text(font, "§8Artifact: " + (v.filename.isEmpty() ? "bomboaddons-" + v.version + ".jar" : v.filename), textX, curY + 20, 0xFF718096, false);
+                g.text(font, "§e📅 " + v.releaseDate + " §8| " + (v.filename.isEmpty() ? "bomboaddons-" + v.version + ".jar" : v.filename), textX, curY + 20, 0xFF94A3B8, false);
 
                 // Action Button on Right
                 int btnW = 86;

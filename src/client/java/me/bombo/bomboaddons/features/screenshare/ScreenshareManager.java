@@ -137,17 +137,36 @@ public class ScreenshareManager {
         }
     }
 
+    private static final java.util.concurrent.atomic.AtomicInteger inFlightPosts = new java.util.concurrent.atomic.AtomicInteger(0);
+
     private static void streamLoop() {
         Minecraft mc = Minecraft.getInstance();
         while (STREAMING.get()) {
             long frameStart = System.currentTimeMillis();
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Screenshare: StreamLoop")) {
                 BomboConfig.Settings s = BomboConfig.get();
-                boolean is1080p = s != null && "1080p 60fps".equalsIgnoreCase(s.screenshareQuality);
-                int targetW = is1080p ? 1920 : 1280;
-                int targetH = is1080p ? 1080 : 720;
-                float quality = is1080p ? 0.78f : 0.72f;
-                long targetDelayMs = is1080p ? 16L : 33L;
+                String q = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 30fps";
+                int targetW = 1280;
+                int targetH = 720;
+                long targetDelayMs = 33L;
+                float quality = 0.70f;
+
+                if (q.contains("1440p") || q.contains("2K")) {
+                    targetW = 2560;
+                    targetH = 1440;
+                    targetDelayMs = q.contains("120fps") ? 8L : 16L;
+                    quality = 0.72f;
+                } else if (q.contains("1080p")) {
+                    targetW = 1920;
+                    targetH = 1080;
+                    targetDelayMs = q.contains("60fps") ? 16L : 33L;
+                    quality = 0.75f;
+                } else {
+                    targetW = 1280;
+                    targetH = 720;
+                    targetDelayMs = q.contains("60fps") ? 16L : 33L;
+                    quality = 0.70f;
+                }
 
                 currentTargetW = targetW;
                 currentTargetH = targetH;
@@ -164,6 +183,7 @@ public class ScreenshareManager {
 
                     if (jpegBytes != null && jpegBytes.length > 0) {
                         framesCaptured++;
+                        final int jpegLen = jpegBytes.length;
                         String b64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(jpegBytes);
                         String myIgn = mc.player != null ? mc.player.getScoreboardName() : "User";
 
@@ -177,22 +197,30 @@ public class ScreenshareManager {
                         HttpRequest req = HttpRequest.newBuilder()
                                 .uri(URI.create("https://api.bombo.dpdns.org/api/screenshare/frame"))
                                 .header("Content-Type", "application/json")
-                                .timeout(Duration.ofMillis(800))
+                                .timeout(Duration.ofMillis(1200))
                                 .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
                                 .build();
 
-                        long postStart = System.currentTimeMillis();
-                        HttpResponse<Void> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.discarding());
-                        lastLatencyMs = System.currentTimeMillis() - postStart;
-
-                        if (resp.statusCode() == 200) {
-                            framesSent++;
-                            totalBytesSent += jpegBytes.length;
-                            windowFramesSent++;
-                            windowBytesSent += jpegBytes.length;
-                            lastError = "";
-                        } else {
-                            lastError = "Server returned HTTP " + resp.statusCode();
+                        // Non-blocking async pipeline (up to 2 concurrent HTTP requests) to prevent stream stutter
+                        if (inFlightPosts.get() < 2) {
+                            inFlightPosts.incrementAndGet();
+                            long postStart = System.currentTimeMillis();
+                            HTTP_CLIENT.sendAsync(req, HttpResponse.BodyHandlers.discarding())
+                                    .whenComplete((resp, err) -> {
+                                        inFlightPosts.decrementAndGet();
+                                        if (resp != null && resp.statusCode() == 200) {
+                                            framesSent++;
+                                            totalBytesSent += jpegLen;
+                                            windowFramesSent++;
+                                            windowBytesSent += jpegLen;
+                                            lastLatencyMs = System.currentTimeMillis() - postStart;
+                                            lastError = "";
+                                        } else if (resp != null) {
+                                            lastError = "Server HTTP " + resp.statusCode();
+                                        } else if (err != null) {
+                                            lastError = err.getMessage();
+                                        }
+                                    });
                         }
                     }
                 }

@@ -1,5 +1,24 @@
 [
   {
+    "version": "26.2.28.61",
+    "date": "2026-10-02",
+    "changes": [
+      "Native Win32 JNA Spotify Controls: Zero-focus, non-blocking media playback control (Play/Pause, Next, Previous) targeting Spotify Chrome_WidgetWin_0 without command prompts or stealing focus",
+      "Spotify Fabric Keybindings: Registered configurable keybindings under BomboAddons category consumed on client tick events",
+      "Discord Watchdog Crash Elimination: Fixed Client shutdown watchdog crash by closing named pipe asynchronously in daemon thread rather than blocking render thread",
+      "Async Discord Voice Sync: Made /b discord sync and /b discord auth run asynchronously to prevent render thread freezes",
+      "Lyrics Anti-Oscillation Monotonic Progression: Locked line index progression forward to prevent line jumping back and forth on micro-jitter",
+      "Lyrics Frame Debugger: Added /b lyrics debug to log per-frame rendering metrics to bombo_lyrics_debug.log",
+      "Album Art Epoch Guard: Prevented delayed album cover downloads from previous tracks from overwriting current track art",
+      "Screenshare Command Fix: Fixed /b ss config to open settings instead of sending IRC request to user config, and added /b stream command",
+      "Screenshare Latency Optimization: Pipelined async HTTP frame POST requests to eliminate streaming delay on web dashboard",
+      "Storage Overlay Regex & Debug: Supported all backpack sizes and 1-2 digit slots/echests, added in-game diagnostic chat tracing, and safely reused player containerMenu",
+      "HUD Performance / 240Hz Optimization: Throttled Composter HUD calculations to 1-2x/sec and cached text lines, reducing CPU load to <0.001 ms",
+      "Performance Profiler Log Dump: Added /b perf log and in-GUI Dump Log button to output detailed diagnostics to bombo_perf_debug.log",
+      "Version Catalog Release Date: Displayed release dates next to versions in /b update versions"
+    ]
+  },
+  {
     "version": "26.2.28.60",
     "date": "2026-10-01",
     "changes": [

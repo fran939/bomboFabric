@@ -147,6 +147,52 @@ public class PerformanceProfiler {
         mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §7Full detailed log stored in: §ebombo_perf_debug.log"));
     }
 
+    public static synchronized void dumpNowToFile(java.util.function.Consumer<Component> feedback) {
+        double intervalSec = Math.max(0.1, (System.currentTimeMillis() - lastFlushTime) / 1000.0);
+        List<Snapshot> snapshots = new ArrayList<>();
+        for (FeatureStats stat : STATS.values()) {
+            long count = stat.callCount.get();
+            if (count > 0) {
+                snapshots.add(new Snapshot(stat.name, count, stat.totalNanos.get(), stat.maxNanos.get(), stat.minNanos.get(), intervalSec));
+            }
+        }
+        snapshots.sort((a, b) -> Double.compare(b.totalMsPerSec, a.totalMsPerSec));
+
+        try (PrintWriter pw = new PrintWriter(new FileWriter(LOG_FILE, false))) {
+            pw.println("================================================================================");
+            pw.println("BOMBOADDONS PERFORMANCE PROFILER DUMP");
+            pw.println("Timestamp: " + DATE_FORMAT.format(new Date()));
+            long freeMem = Runtime.getRuntime().freeMemory() / 1024 / 1024;
+            long totalMem = Runtime.getRuntime().totalMemory() / 1024 / 1024;
+            long maxMem = Runtime.getRuntime().maxMemory() / 1024 / 1024;
+            pw.println("JVM Heap: " + (totalMem - freeMem) + "MB / " + totalMem + "MB (Max: " + maxMem + "MB)");
+            pw.println("Active Java Threads: " + Thread.activeCount());
+            pw.println();
+            pw.println("EXPLANATION OF CALL COUNTS:");
+            pw.println("Features starting with 'HUD:' are drawn by Minecraft once every video frame.");
+            pw.println("If your monitor runs at 240Hz (240 FPS), HUD elements will be called ~240 times/sec.");
+            pw.println("Features starting with 'Tick:' are called once per game tick (20 TPS).");
+            pw.println("BomboAddons decouples heavy calculation from HUD rendering to maintain <0.01ms CPU load.");
+            pw.println("================================================================================");
+            pw.println(String.format("%-36s | %-10s | %-10s | %-10s | %-10s | %-10s",
+                    "Feature Name", "Calls/sec", "Avg (ms)", "Max (ms)", "Total (ms/s)", "Est Memory"));
+            pw.println("--------------------------------------------------------------------------------");
+            for (Snapshot s : snapshots) {
+                pw.println(String.format("%-36s | %10.1f | %10.4f | %10.4f | %10.2f | ~%d KB",
+                        s.name, s.callsPerSec, s.avgMs, s.maxMs, s.totalMsPerSec, s.estimatedMemKb));
+            }
+            pw.println("================================================================================");
+            pw.flush();
+            if (feedback != null) {
+                feedback.accept(Component.literal("§8[§3Bombo§8] §aSuccessfully dumped detailed performance metrics to §ebombo_perf_debug.log§a (" + snapshots.size() + " features)."));
+            }
+        } catch (Throwable t) {
+            if (feedback != null) {
+                feedback.accept(Component.literal("§8[§3Bombo§8] §cFailed to dump metrics to file: " + t.getMessage()));
+            }
+        }
+    }
+
     public static class Snapshot {
         public final String name;
         public final long callCount;

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.60` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.61` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,22 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.60`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.61`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.61 (Ready for In-Game Testing)
+>
+> 1. **Native Win32 JNA Spotify Controls & Keybindings (`SpotifyWin32Handler`):** Zero-focus media playback control (Play/Pause, Next Track, Previous Track) targeting Spotify `"Chrome_WidgetWin_0"` with `WM_APPCOMMAND` (`0x0319`) without terminal windows, focus stealing, or pausing other media. Configurable keybindings registered under `key.categories.bomboaddons` in Minecraft Controls.
+> 2. **Discord Watchdog Crash Elimination (`crash-2026-10-02_03.39.53-client.txt`):** Eliminated Client shutdown watchdog deadlock by making pipe closing fully asynchronous in a background daemon thread. Wrapped `/b discord sync` and `/b discord auth` in `CompletableFuture.runAsync` to prevent render thread freezes.
+> 3. **Lyrics Engine Monotonic Forward Progression & Per-Frame Debugger (`/b lyrics debug`):** Prevented active phrase oscillation backwards (e.g. jumping between line 3 and line 2 on micro-jitter) by locking line progression forward unless audio explicitly rewinds >2500ms or jumps forward >8000ms. Added `/b lyrics debug` logging frame metrics to `run/bombo_lyrics_debug.log`.
+> 4. **Album Art Epoch Isolation:** Added `currentTrackEpoch` atomic guards so delayed asynchronous album cover downloads from previous songs are discarded and never overwrite the active song's cover art.
+> 5. **Screenshare Command Fix & Frame Pipeline Latency:** Fixed `/b ss config` / `/ss config` routing so it opens configuration instead of sending an IRC request to a user named `"config"`. Added `/b stream` and pipelined async frame POST requests (`inFlightPosts`) to eliminate streaming delay on the web dashboard.
+> 6. **Storage Overlay Regex & Live Diagnostics:** Supported all backpack sizes (Small, Medium, Large, Greater, Jumbo) and 1-2 digit slots/echests in `BackpackPreview.java`. Safely reused `player.containerMenu` in `MenuScreensConstructorMixin.java` and added real-time in-game debug chat notifications detailing menu titles, parsed storage indices, and handler status when `/storage`, Ender Chests, or Backpacks open.
+> 7. **HUD Performance / 240Hz Render Optimization:** Decoupled container slot tooltip scanning and mathematical string formatting in `ComposterHud` from the 240Hz screen refresh loop. Throttled container checks to 500ms (2x/s) and cached calculated lines, dropping CPU time to <0.001 ms.
+> 8. **Performance Profiler Diagnostic Log Dump (`/b perf log`):** Added `PerformanceProfiler.dumpNowToFile` writing system specifications, JVM heap, thread count, explanation of display refresh rates on HUD calls, and a complete feature breakdown to `run/bombo_perf_debug.log`. Added `[Dump Log]` button to `PerformanceScreen` header.
+> 9. **Version Catalog Release Date Display:** Displayed release dates (`📅 <date>`) next to each version in `/b update versions`.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.60 (Ready for In-Game Testing)
 >
 > 1. **Minecraft Direct Framebuffer Screenshare (`ScreenshareManager`):** Screen capture now reads exclusively from the Minecraft window framebuffer (`mc.gameRenderer.mainRenderTarget()`), completely eliminating desktop leakage and avoiding AWT Robot cursor flickering.

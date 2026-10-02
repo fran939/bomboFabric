@@ -468,10 +468,9 @@ public class ChatImagePreview {
       int w = img.width;
       int h = img.height;
 
-      if (w > maxW || h > maxH) {
-         double ratio = Math.min((double) maxW / (double) w, (double) maxH / (double) h);
-         w = Math.max(1, (int) Math.round(w * ratio));
-         h = Math.max(1, (int) Math.round(h * ratio));
+      if (s != null && s.chatImagePreviewScale > 0.1f && !isShift) {
+         w = Math.max(1, (int) Math.round(w * s.chatImagePreviewScale));
+         h = Math.max(1, (int) Math.round(h * s.chatImagePreviewScale));
       }
 
       int previewX;
@@ -487,6 +486,10 @@ public class ChatImagePreview {
             case "Bottom Right" -> { previewX = screenW - w - 16; previewY = screenH - h - 16; }
             case "Bottom Left" -> { previewX = 16; previewY = screenH - h - 16; }
             case "Center" -> { previewX = (screenW - w) / 2; previewY = (screenH - h) / 2; }
+            case "Custom" -> {
+               previewX = Math.min(screenW - w - 4, Math.max(4, s != null ? s.chatImagePreviewCustomX : 20));
+               previewY = Math.min(screenH - h - 4, Math.max(4, s != null ? s.chatImagePreviewCustomY : 20));
+            }
             default -> { previewX = screenW - w - 16; previewY = 16; } // Top Right
          }
       } else {

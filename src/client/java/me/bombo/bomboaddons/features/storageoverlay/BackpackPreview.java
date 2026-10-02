@@ -38,9 +38,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class BackpackPreview {
-    private static final Pattern ECHEST_PATTERN = Pattern.compile("(?:Ender Chest|Cofre de Ender).*\\((\\d+)/\\d+\\)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern ECHEST_PAGE_PATTERN = Pattern.compile("(?:Ender Chest|Cofre de Ender).*Page (\\d+)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern BACKPACK_PATTERN = Pattern.compile("(?:Backpack|Mochila).*\\((?:Slot|Ranura) #(\\d+)\\)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ECHEST_PATTERN = Pattern.compile(".*?(?:Ender Chest|Cofre de Ender).*?\\((\\d{1,2})/(\\d{1,2})\\)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ECHEST_PAGE_PATTERN = Pattern.compile(".*?(?:Ender Chest|Cofre de Ender).*?Page\\s*(\\d{1,2})", Pattern.CASE_INSENSITIVE);
+    private static final Pattern BACKPACK_PATTERN = Pattern.compile(".*?(?:Backpack|Mochila).*?\\((?:Slot|Ranura)\\s*#?\\(?(\\d{1,2})\\)?\\)", Pattern.CASE_INSENSITIVE);
     private static final Pattern BACKPACK_SIZE_PATTERN = Pattern.compile("(?:has|tiene)\\s+(\\d+)\\s+(?:slots|ranuras)", Pattern.CASE_INSENSITIVE);
 
     public static final int STORAGE_SIZE = 27;
@@ -81,7 +81,7 @@ public class BackpackPreview {
             } catch (Exception ignored) {}
         }
 
-        Matcher backpack = Pattern.compile("(?:Backpack|Mochila).*\\((?:Slot|Ranura)\\s*#?(\\d+)\\)", Pattern.CASE_INSENSITIVE).matcher(title);
+        Matcher backpack = BACKPACK_PATTERN.matcher(title);
         if (backpack.find()) {
             try {
                 return Integer.parseInt(backpack.group(1)) + 8;

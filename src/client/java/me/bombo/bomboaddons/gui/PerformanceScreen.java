@@ -24,6 +24,8 @@ public class PerformanceScreen extends Screen {
     private PerformanceProfiler.Snapshot hoveredSnapshot = null;
 
     private String drillDownFilter = null;
+    private long dumpFeedbackTime = 0L;
+    private String dumpFeedbackMsg = "";
 
     public PerformanceScreen(Screen parent) {
         super(Component.literal("BomboAddons Performance Profiler"));
@@ -117,18 +119,25 @@ public class PerformanceScreen extends Screen {
                 usedMem, totalMem, maxMem, activeThreads);
         g.text(font, memSummary, winX + 16, winY + 38, 0xFF888888, false);
 
-        // Right side header buttons (Back / Reset Stats / Close)
+        // Right side header buttons (Back / Dump Log / Reset Stats / Close)
         int btnW = 80;
         int btnH = 22;
 
         if (drillDownFilter != null) {
-            int backBtnX = winX + winW - btnW * 3 - 30;
+            int backBtnX = winX + winW - btnW * 4 - 40;
             int backBtnY = winY + 16;
             boolean hoverBack = mouseX >= backBtnX && mouseX <= backBtnX + btnW && mouseY >= backBtnY && mouseY <= backBtnY + btnH;
             g.fill(backBtnX, backBtnY, backBtnX + btnW, backBtnY + btnH, hoverBack ? 0x4400E5FF : 0x22FFFFFF);
             g.outline(backBtnX, backBtnY, btnW, btnH, hoverBack ? 0xFF00E5FF : 0x44FFFFFF);
             g.text(font, "§b← All", backBtnX + 18, backBtnY + 7, 0xFFFFFFFF, false);
         }
+
+        int dumpBtnX = winX + winW - btnW * 3 - 30;
+        int dumpBtnY = winY + 16;
+        boolean hoverDump = mouseX >= dumpBtnX && mouseX <= dumpBtnX + btnW && mouseY >= dumpBtnY && mouseY <= dumpBtnY + btnH;
+        g.fill(dumpBtnX, dumpBtnY, dumpBtnX + btnW, dumpBtnY + btnH, hoverDump ? 0x4400FF66 : 0x22FFFFFF);
+        g.outline(dumpBtnX, dumpBtnY, btnW, btnH, hoverDump ? 0xFF00FF66 : 0x44FFFFFF);
+        g.text(font, "§aDump Log", dumpBtnX + 14, dumpBtnY + 7, 0xFFFFFFFF, false);
 
         int resetBtnX = winX + winW - btnW * 2 - 20;
         int resetBtnY = winY + 16;
@@ -143,6 +152,10 @@ public class PerformanceScreen extends Screen {
         g.fill(closeBtnX, closeBtnY, closeBtnX + btnW, closeBtnY + btnH, hoverClose ? 0x44FF3333 : 0x22FFFFFF);
         g.outline(closeBtnX, closeBtnY, btnW, btnH, hoverClose ? 0xFFFF4444 : 0x44FFFFFF);
         g.text(font, "§cClose (ESC)", closeBtnX + 10, closeBtnY + 7, 0xFFFFFFFF, false);
+
+        if (dumpFeedbackTime > 0 && System.currentTimeMillis() - dumpFeedbackTime < 4000L) {
+            g.text(font, "§a" + dumpFeedbackMsg, winX + 16, winY + headerH - 12, 0xFF00FF66, true);
+        }
 
         // Content Area with Scrolling
         int contentX = winX + 16;
@@ -275,8 +288,8 @@ public class PerformanceScreen extends Screen {
             int btnH = 22;
 
             if (drillDownFilter != null) {
-                int backBtnX = winX + winW - btnW * 3 - 30;
-                int backBtnY = winY + 12;
+                int backBtnX = winX + winW - btnW * 4 - 40;
+                int backBtnY = winY + 16;
                 if (event.x() >= backBtnX && event.x() <= backBtnX + btnW && event.y() >= backBtnY && event.y() <= backBtnY + btnH) {
                     drillDownFilter = null;
                     scrollAmount = 0;
@@ -285,8 +298,18 @@ public class PerformanceScreen extends Screen {
                 }
             }
 
+            int dumpBtnX = winX + winW - btnW * 3 - 30;
+            int dumpBtnY = winY + 16;
+            if (event.x() >= dumpBtnX && event.x() <= dumpBtnX + btnW && event.y() >= dumpBtnY && event.y() <= dumpBtnY + btnH) {
+                PerformanceProfiler.dumpNowToFile((comp) -> {
+                    dumpFeedbackMsg = comp.getString();
+                    dumpFeedbackTime = System.currentTimeMillis();
+                });
+                return true;
+            }
+
             int resetBtnX = winX + winW - btnW * 2 - 20;
-            int resetBtnY = winY + 12;
+            int resetBtnY = winY + 16;
             if (event.x() >= resetBtnX && event.x() <= resetBtnX + btnW && event.y() >= resetBtnY && event.y() <= resetBtnY + btnH) {
                 for (PerformanceProfiler.FeatureStats s : PerformanceProfiler.STATS.values()) {
                     s.reset();
@@ -296,7 +319,7 @@ public class PerformanceScreen extends Screen {
             }
 
             int closeBtnX = winX + winW - btnW - 10;
-            int closeBtnY = winY + 12;
+            int closeBtnY = winY + 16;
             if (event.x() >= closeBtnX && event.x() <= closeBtnX + btnW && event.y() >= closeBtnY && event.y() <= closeBtnY + btnH) {
                 this.onClose();
                 return true;

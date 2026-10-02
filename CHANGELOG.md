@@ -1,5 +1,35 @@
 # BomboAddons Changelog
  
+## [26.2.28.61] - 2026-10-02 (Beta)
+
+### Native Win32 JNA Spotify Controls & Keybindings
+- **Zero-Focus Windows Media Controls (`SpotifyWin32Handler`):** Implemented native Win32 `PostMessage` via JNA targeting Spotify's window class `"Chrome_WidgetWin_0"` with `WM_APPCOMMAND` (`0x0319`). Controls playback (Play/Pause `0xE0000`, Next Track `0xB0000`, Previous Track `0xC0000`) without opening terminal popups, stealing window focus, or pausing external audio.
+- **Dedicated Fabric Keybindings:** Registered keybindings under `key.categories.bomboaddons` (`key.bomboaddons.spotify_play_pause`, `key.bomboaddons.spotify_next`, `key.bomboaddons.spotify_prev`) consumed smoothly in `ClientTickEvents.END_CLIENT_TICK`.
+
+### Discord IPC Desktop Concurrency & Watchdog Crash Elimination
+- **Watchdog Shutdown Deadlock Resolved:** Fixed Client shutdown watchdog crash (`crash-2026-10-02_03.39.53-client.txt`) caused by blocking `pipe.close()` on the render thread while `workerThread` waited in native `readBytes0`. Named pipe closing is now handled asynchronously in a background daemon thread.
+- **Async Voice Channel Sync:** Wrapped `/b discord sync` (`forceSync()`) and `/b discord auth` (`requestAuthorization()`) in `CompletableFuture.runAsync`, eliminating client freezes and crashes on manual sync.
+
+### Lyrics Engine Monotonic Progression & Debug Logger (`/b lyrics debug`)
+- **Strictly Monotonic Forward Progression:** Eliminated active phrase jumping backwards (oscillating back and forth between line 3 and line 2) by locking line progression forward unless the user explicitly rewinds audio by >2500ms or jumps forward >8000ms.
+- **Per-Frame Frame Debugger:** Added `/b lyrics debug` (and `/lyrics debug`) toggle logging per-frame rendering details (playback time, raw line index, active line index, line bounds, and syllable highlights) directly into `run/bombo_lyrics_debug.log`.
+- **Album Art Epoch Isolation:** Added `currentTrackEpoch` guards so delayed asynchronous album cover downloads from previous tracks are discarded and never overwrite the active track's cover art.
+
+### Screenshare Streaming Latency & Command Fixes
+- **/b ss config Command Fix:** Fixed `/b ss config` / `/ss config` routing so it opens `BomboConfigScreen(null, "Discord")` instead of sending an IRC player invitation to a player named `"config"`.
+- **Stream Commands & Async Pipeline:** Added `/b stream` and `/b ss stream` commands. Pipelined frame POST requests asynchronously (`inFlightPosts`), significantly reducing stream broadcast delay to `https://bombo.dpdns.org/screenshare`.
+- **Quality Presets:** Set default streaming to 720p 30fps, supporting up to 2K (1440p) 60/120fps.
+
+### Storage Overlay Full Regex Support & Diagnostic Tracing
+- **Comprehensive Container Pattern Matching:** Updated `BackpackPreview.java` regex to support `Ender Chest (x/x)` (1-2 digits), `(size) Backpack (slot #(x))` across all backpack sizes (Small, Medium, Large, Greater, Jumbo) and 1-2 digit slots.
+- **Container Reuse & In-Game Tracing:** Reused `player.containerMenu` safely in `MenuScreensConstructorMixin.java` and added real-time in-game debug chat notifications detailing menu titles, parsed storage indices, and handler status when `/storage`, Ender Chests, or Backpacks open.
+
+### HUD Performance / 240Hz Render Optimization & Profiler Dump (`/b perf log`)
+- **Composter HUD Calculation Decoupling:** Decoupled container slot tooltip scanning and mathematical string formatting from the 240Hz screen refresh loop. Throttled container checks to 500ms (2x/s) and cached calculated lines, dropping CPU time to <0.001 ms.
+- **Profiler Diagnostic Log Dump:** Added `PerformanceProfiler.dumpNowToFile` writing system specifications, JVM heap, thread count, explanation of display refresh rates on HUD calls, and a complete feature breakdown to `run/bombo_perf_debug.log`.
+- **In-GUI Dump Button:** Added `[Dump Log]` button in `PerformanceScreen` header alongside the `/b perf log` command.
+- **Version Catalog Date Display:** Added release date (`📅 <date>`) next to each entry in `UpdateVersionsScreen` (`/b update versions`).
+
 ## [26.2.28.60] - 2026-10-01 (Beta)
 
 ### Screenshare Direct Framebuffer & Streaming Engine

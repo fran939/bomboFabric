@@ -714,7 +714,10 @@ public class BomboConfig {
 
       // Chat image hover preview fixed position
       public boolean chatImagePreviewFixed = false;
-      public String chatImagePreviewAnchor = "Top Right"; // "Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center"
+      public String chatImagePreviewAnchor = "Top Right"; // "Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center", "Custom"
+      public int chatImagePreviewCustomX = 20;
+      public int chatImagePreviewCustomY = 20;
+      public float chatImagePreviewScale = 1.0F;
       public boolean diceTracker = false;
       public boolean showCommandOnHover = false;
       public boolean autoHoppityCalls = false;

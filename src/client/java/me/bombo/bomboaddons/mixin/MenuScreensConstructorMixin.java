@@ -34,24 +34,41 @@ public class MenuScreensConstructorMixin {
 		String nameClean = net.minecraft.ChatFormatting.stripFormatting(rawTitle).trim().toLowerCase(Locale.ROOT);
 		
 		boolean isEligible = StorageOverlayScreen.enabled(nameClean);
-		Bomboaddons.LOGGER.info("[StorageOverlay] Intercepted menu create: id={}, title='{}' (clean='{}'), configEnabled={}, eligible={}", 
-				id, rawTitle, nameClean, configOn, isEligible);
+		int storageIdx = BackpackPreview.getStorageIndexFromTitle(nameClean);
 
-		if (!configOn) return;
-		if (!isEligible) {
-			Bomboaddons.LOGGER.info("[StorageOverlay] Skipped overlay: title '{}' not recognized as storage/backpack/echest or disabled for next load", nameClean);
+		boolean isStorageRelated = nameClean.contains("storage") || nameClean.contains("almacenamiento")
+				|| nameClean.contains("ender chest") || nameClean.contains("cofre de ender")
+				|| nameClean.contains("backpack") || nameClean.contains("mochila")
+				|| storageIdx != -1;
+
+		Bomboaddons.LOGGER.info("[StorageOverlay] Intercepted menu create: id={}, title='{}' (clean='{}'), configEnabled={}, eligible={}, storageIdx={}", 
+				id, rawTitle, nameClean, configOn, isEligible, storageIdx);
+
+		if (isStorageRelated && player != null) {
+			String statusText = !configOn ? "§cDisabled in /b config" : (isEligible ? "§aLaunching Overlay" : "§eBypassed/Ineligible");
+			player.sendSystemMessage(Component.literal(String.format(
+					"§8[§bStorageOverlay Debug§8] §7Title: '§f%s§7' | Index: §e%d §7| Status: %s",
+					rawTitle, storageIdx, statusText)));
+		}
+
+		if (!configOn || !isEligible) {
 			return;
 		}
 
 		try {
-			T screenHandler = type.create(id, player.getInventory());
-			Bomboaddons.LOGGER.info("[StorageOverlay] Created handler: {} (isChestMenu={})", 
-					(screenHandler != null ? screenHandler.getClass().getName() : "null"), 
-					(screenHandler instanceof ChestMenu));
+			ChestMenu containerScreenHandler = null;
+			if (player.containerMenu instanceof ChestMenu cm && cm.containerId == id) {
+				containerScreenHandler = cm;
+			} else {
+				T created = type.create(id, player.getInventory());
+				if (created instanceof ChestMenu cm) {
+					containerScreenHandler = cm;
+				}
+			}
 
-			if (screenHandler instanceof ChestMenu containerScreenHandler) {
+			if (containerScreenHandler != null) {
 				int height = client.getWindow().getGuiScaledHeight() - (client.getWindow().getGuiScaledHeight() / 5);
-				boolean isBackpack = BackpackPreview.getStorageIndexFromTitle(nameClean) != -1;
+				boolean isBackpack = storageIdx != -1;
 				Bomboaddons.LOGGER.info("[StorageOverlay] Opening StorageOverlayScreen: height={}, isBackpack={}, windowScaledH={}", 
 						height, isBackpack, client.getWindow().getGuiScaledHeight());
 
@@ -62,6 +79,9 @@ public class MenuScreensConstructorMixin {
 				Bomboaddons.LOGGER.info("[StorageOverlay] Successfully launched StorageOverlayScreen and cancelled vanilla screen!");
 			} else {
 				Bomboaddons.LOGGER.warn("[StorageOverlay] Handler is not ChestMenu! Cannot wrap menu type {}", type);
+				if (player != null) {
+					player.sendSystemMessage(Component.literal("§8[§bStorageOverlay Debug§8] §cHandler is not ChestMenu for menu type: " + type));
+				}
 			}
 		} catch (Throwable t) {
 			Bomboaddons.LOGGER.error("[StorageOverlay] Exception while initializing StorageOverlayScreen: " + t.getMessage(), t);

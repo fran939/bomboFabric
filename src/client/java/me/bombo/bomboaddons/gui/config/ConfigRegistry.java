@@ -230,7 +230,10 @@ public class ConfigRegistry {
                 items.add(ConfigItem.keybind("Chat Peek Key", "Hold keybind to peek chat history while moving without opening chat box.", category, () -> s.chatPeekKey != null ? s.chatPeekKey : "y", v -> s.chatPeekKey = v));
                 items.add(ConfigItem.header("Chat Image Preview", category));
                 items.add(ConfigItem.toggle("Fixed Preview Position", "Fix image preview at a stationary position instead of following mouse cursor.", category, () -> s.chatImagePreviewFixed, v -> s.chatImagePreviewFixed = v));
-                items.add(ConfigItem.cycle("Preview Anchor Position", "Screen position where the preview will be anchored when fixed.", category, List.of("Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center"), () -> s.chatImagePreviewAnchor != null ? s.chatImagePreviewAnchor : "Top Right", v -> s.chatImagePreviewAnchor = v));
+                items.add(ConfigItem.cycle("Preview Anchor Position", "Screen position where the preview will be anchored when fixed.", category, List.of("Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center", "Custom"), () -> s.chatImagePreviewAnchor != null ? s.chatImagePreviewAnchor : "Top Right", v -> s.chatImagePreviewAnchor = v));
+                items.add(ConfigItem.sliderInt("Custom Position X Offset", "Custom horizontal position in pixels from left edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomX, v -> s.chatImagePreviewCustomX = v));
+                items.add(ConfigItem.sliderInt("Custom Position Y Offset", "Custom vertical position in pixels from top edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomY, v -> s.chatImagePreviewCustomY = v));
+                items.add(ConfigItem.sliderFloat("Preview Scale", "Scaling multiplier for preview images (0.5x to 2.0x).", category, 0.5f, 2.0f, 0.05f, "x", () -> s.chatImagePreviewScale, v -> s.chatImagePreviewScale = v));
             }
 
             case "Chat Triggers" -> {
@@ -853,6 +856,13 @@ public class ConfigRegistry {
                 items.add(ConfigItem.button("❖ Move All HUD Elements", "Open HUD Canvas", "Enter interactive drag-and-drop HUD repositioning screen.", category, () -> {
                     Minecraft.getInstance().setScreenAndShow(new HudMoveScreen());
                 }));
+                items.add(ConfigItem.header("Chat Image Preview HUD", category));
+                items.add(ConfigItem.toggle("Fixed Image Preview", "Fix image preview at a stationary position instead of following mouse cursor.", category, () -> s.chatImagePreviewFixed, v -> s.chatImagePreviewFixed = v));
+                items.add(ConfigItem.cycle("Preview Anchor Position", "Screen position where the preview will be anchored when fixed.", category, List.of("Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center", "Custom"), () -> s.chatImagePreviewAnchor != null ? s.chatImagePreviewAnchor : "Top Right", v -> s.chatImagePreviewAnchor = v));
+                items.add(ConfigItem.sliderInt("Custom Position X Offset", "Custom horizontal position in pixels from left edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomX, v -> s.chatImagePreviewCustomX = v));
+                items.add(ConfigItem.sliderInt("Custom Position Y Offset", "Custom vertical position in pixels from top edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomY, v -> s.chatImagePreviewCustomY = v));
+                items.add(ConfigItem.sliderFloat("Preview Scale", "Scaling multiplier for preview images (0.5x to 2.0x).", category, 0.5f, 2.0f, 0.05f, "x", () -> s.chatImagePreviewScale, v -> s.chatImagePreviewScale = v));
+                items.add(ConfigItem.header("Gameplay Trackers & HUDs", category));
                 items.add(ConfigItem.hudToggle("Dice Tracker HUD", "Tracks High Class Archfiend Dice rolls and profit.", category, () -> s.diceTracker, v -> s.diceTracker = v, HudTarget.DICE));
                 items.add(ConfigItem.hudToggle("Feast Bakery HUD", "Displays Feast bakery cake timers and buffs.", category, () -> s.feastBakeryHud, v -> s.feastBakeryHud = v, HudTarget.BAKERY));
                 items.add(ConfigItem.hudToggle("RNG Profit HUD", "Real-time RNG drop profit statistics.", category, () -> s.rngProfitHud, v -> s.rngProfitHud = v, HudTarget.RNG));

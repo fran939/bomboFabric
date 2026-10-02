@@ -378,15 +378,37 @@ public class SpotifyManager {
     }
 
     public static void playPause() {
-        sendMediaKey(VK_MEDIA_PLAY_PAUSE);
+        if (SpotifyWin32Handler.isWindows()) {
+            SpotifyWin32Handler.playPause();
+        } else {
+            sendMediaKey(VK_MEDIA_PLAY_PAUSE);
+        }
     }
 
     public static void nextTrack() {
-        sendMediaKey(VK_MEDIA_NEXT_TRACK);
+        if (SpotifyWin32Handler.isWindows()) {
+            SpotifyWin32Handler.nextTrack();
+        } else {
+            sendMediaKey(VK_MEDIA_NEXT_TRACK);
+        }
     }
 
     public static void prevTrack() {
-        sendMediaKey(VK_MEDIA_PREV_TRACK);
+        if (SpotifyWin32Handler.isWindows()) {
+            SpotifyWin32Handler.prevTrack();
+        } else {
+            sendMediaKey(VK_MEDIA_PREV_TRACK);
+        }
+    }
+
+    public static void sendMediaKeyFallback(int appCommand) {
+        if (appCommand == SpotifyWin32Handler.APPCOMMAND_MEDIA_PLAY_PAUSE) {
+            sendMediaKey(VK_MEDIA_PLAY_PAUSE);
+        } else if (appCommand == SpotifyWin32Handler.APPCOMMAND_MEDIA_NEXTTRACK) {
+            sendMediaKey(VK_MEDIA_NEXT_TRACK);
+        } else if (appCommand == SpotifyWin32Handler.APPCOMMAND_MEDIA_PREVIOUSTRACK) {
+            sendMediaKey(VK_MEDIA_PREV_TRACK);
+        }
     }
 
     private static void sendMediaKey(byte vkCode) {

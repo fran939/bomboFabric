@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -103,18 +104,20 @@ public class DiscordIpcManager {
         connected = false;
         RandomAccessFile pipe = currentPipe;
         currentPipe = null;
-        if (pipe != null) {
-            try {
-                pipe.close();
-            } catch (Exception ignored) {}
-        }
         if (pollThread != null) {
-            pollThread.interrupt();
+            try { pollThread.interrupt(); } catch (Throwable ignored) {}
             pollThread = null;
         }
         if (workerThread != null) {
-            workerThread.interrupt();
+            try { workerThread.interrupt(); } catch (Throwable ignored) {}
             workerThread = null;
+        }
+        if (pipe != null) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    pipe.close();
+                } catch (Throwable ignored) {}
+            });
         }
     }
 
@@ -199,34 +202,61 @@ public class DiscordIpcManager {
     private record Packet(int opcode, String json) {}
 
     public static void forceSync() {
-        pollVoiceStatus();
+        CompletableFuture.runAsync(() -> {
+            try {
+                if (!connected || currentPipe == null) {
+                    init();
+                    return;
+                }
+                synchronized (PIPE_LOCK) {
+                    RandomAccessFile pipe = currentPipe;
+                    if (pipe != null && connected) {
+                        if (!hasAuthorizedThisSession && !authCancelled) {
+                            sendAuthorize(pipe);
+                        }
+                        JsonObject getVoice = new JsonObject();
+                        getVoice.addProperty("cmd", "GET_SELECTED_VOICE_CHANNEL");
+                        getVoice.addProperty("nonce", UUID.randomUUID().toString());
+                        writePacket(pipe, 1, getVoice.toString());
+                    }
+                }
+            } catch (Throwable t) {
+                lastError = "forceSync: " + t.getMessage();
+            }
+        });
     }
 
     public static void requestAuthorization() {
         authCancelled = false;
         hasAuthorizedThisSession = false;
-        synchronized (PIPE_LOCK) {
-            RandomAccessFile pipe = currentPipe;
-            if (pipe != null && connected) {
-                try {
-                    JsonObject authArgs = new JsonObject();
-                    authArgs.addProperty("client_id", CLIENT_ID);
-                    JsonArray scopes = new JsonArray();
-                    scopes.add("rpc");
-                    scopes.add("rpc.voice.read");
-                    authArgs.add("scopes", scopes);
-
-                    JsonObject authReq = new JsonObject();
-                    authReq.addProperty("cmd", "AUTHORIZE");
-                    authReq.add("args", authArgs);
-                    authReq.addProperty("nonce", UUID.randomUUID().toString());
-                    writePacket(pipe, 1, authReq.toString());
-                    hasAuthorizedThisSession = true;
-                } catch (Throwable t) {
-                    lastError = "Auth request: " + t.getMessage();
+        CompletableFuture.runAsync(() -> {
+            synchronized (PIPE_LOCK) {
+                RandomAccessFile pipe = currentPipe;
+                if (pipe != null && connected) {
+                    try {
+                        sendAuthorize(pipe);
+                    } catch (Throwable t) {
+                        lastError = "Auth request: " + t.getMessage();
+                    }
                 }
             }
-        }
+        });
+    }
+
+    private static void sendAuthorize(RandomAccessFile pipe) throws Exception {
+        JsonObject authArgs = new JsonObject();
+        authArgs.addProperty("client_id", CLIENT_ID);
+        JsonArray scopes = new JsonArray();
+        scopes.add("rpc");
+        scopes.add("rpc.voice.read");
+        authArgs.add("scopes", scopes);
+
+        JsonObject authReq = new JsonObject();
+        authReq.addProperty("cmd", "AUTHORIZE");
+        authReq.add("args", authArgs);
+        authReq.addProperty("nonce", UUID.randomUUID().toString());
+        writePacket(pipe, 1, authReq.toString());
+        hasAuthorizedThisSession = true;
     }
 
     private static void startPollThread() {

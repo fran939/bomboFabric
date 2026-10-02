@@ -78,6 +78,47 @@ public class LyricsManager {
 
     public static final String[] PROVIDERS = new String[]{"ALL (Vivi Music)", "PAXSENIX", "LRCLIB", "BETTERLYRICS", "KUGOU", "UNISON", "YOULYPLUS"};
 
+    private static final java.util.concurrent.atomic.AtomicLong currentTrackEpoch = new java.util.concurrent.atomic.AtomicLong(0);
+    public static volatile boolean lyricsDebugActive = false;
+    private static java.io.PrintWriter debugWriter = null;
+    private static int debugFrameCount = 0;
+
+    public static synchronized boolean toggleDebug() {
+        lyricsDebugActive = !lyricsDebugActive;
+        if (lyricsDebugActive) {
+            debugFrameCount = 0;
+            try {
+                java.io.File logFile = new java.io.File(net.minecraft.client.Minecraft.getInstance().gameDirectory, "bombo_lyrics_debug.log");
+                debugWriter = new java.io.PrintWriter(new java.io.FileWriter(logFile, false));
+                debugWriter.println("=== BomboAddons Lyrics Debug Log Started: " + java.time.LocalDateTime.now() + " ===");
+                debugWriter.println("Track: " + SpotifyManager.getCurrentTrack() + " | Artist: " + SpotifyManager.getCurrentArtist());
+                debugWriter.println("Provider: " + getProvider() + " | Total Lines: " + currentLines.size());
+                debugWriter.println("--------------------------------------------------------------------------------");
+                debugWriter.flush();
+            } catch (Throwable t) {
+                lyricsDebugActive = false;
+            }
+        } else {
+            if (debugWriter != null) {
+                debugWriter.println("=== BomboAddons Lyrics Debug Log Stopped (Total frames logged: " + debugFrameCount + ") ===");
+                debugWriter.flush();
+                debugWriter.close();
+                debugWriter = null;
+            }
+        }
+        return lyricsDebugActive;
+    }
+
+    public static synchronized void logFrame(long currentMs, int rawIdx, int activeIdx, String lineText, long lineStart, long lineEnd, int activeWords, int totalWords) {
+        if (!lyricsDebugActive || debugWriter == null) return;
+        debugFrameCount++;
+        debugWriter.printf("[%05d | %s] ms=%d | rawIdx=%d | activeIdx=%d | line=[%dms..%dms] \"%s\" | words=%d/%d%n",
+                debugFrameCount, java.time.LocalTime.now().toString(), currentMs, rawIdx, activeIdx, lineStart, lineEnd, lineText, activeWords, totalWords);
+        if (debugFrameCount % 10 == 0) {
+            debugWriter.flush();
+        }
+    }
+
     private static volatile Identifier albumArtTexture = null;
     private static volatile String lastArtworkUrl = "";
 
@@ -183,6 +224,9 @@ public class LyricsManager {
 
         activeTrack = track;
         activeArtist = artist;
+        long epoch = currentTrackEpoch.incrementAndGet();
+        albumArtTexture = null;
+        lastArtworkUrl = "";
 
         if (CACHE.containsKey(cacheKey)) {
             List<LyricCandidate> cached = CACHE.get(cacheKey);
@@ -191,10 +235,11 @@ public class LyricsManager {
             if (!availableCandidates.isEmpty()) {
                 applyCandidate(availableCandidates.get(0));
             }
+            fetchArtwork(cleanTitle(track), cleanTitle(artist), epoch);
             return;
         }
 
-        fetchLyricsAsync(track, artist, cacheKey);
+        fetchLyricsAsync(track, artist, cacheKey, epoch);
     }
 
     public static void applyCandidate(LyricCandidate cand) {
@@ -245,18 +290,19 @@ public class LyricsManager {
         applyCandidate(customCand);
     }
 
-    private static void fetchLyricsAsync(String track, String artist, String cacheKey) {
+    private static void fetchLyricsAsync(String track, String artist, String cacheKey, long epoch) {
         loading = true;
         statusMessage = "Searching lyrics across providers...";
         availableCandidates.clear();
         selectedCandidateIndex = -1;
 
         new Thread(() -> {
+            if (epoch != currentTrackEpoch.get()) return;
             String cleanTrack = cleanTitle(track);
             String cleanArtist = cleanTitle(artist);
 
-            // Fetch Artwork via iTunes Search
-            fetchArtwork(cleanTrack, cleanArtist);
+            // Fetch Artwork via iTunes Search with epoch guard
+            fetchArtwork(cleanTrack, cleanArtist, epoch);
 
             List<LyricCandidate> candidates = new ArrayList<>();
 
@@ -283,6 +329,8 @@ public class LyricsManager {
                 fetchYouLyPlusCandidates(cleanTrack, cleanArtist, candidates);
             } catch (Throwable ignored) {}
 
+            if (epoch != currentTrackEpoch.get()) return;
+
             // Deduplicate by ID but keep multiple candidates per provider
             List<LyricCandidate> unique = new ArrayList<>();
             Set<String> seenIds = new HashSet<>();
@@ -305,6 +353,8 @@ public class LyricsManager {
                 return Integer.compare(scoreB, scoreA);
             });
 
+            if (epoch != currentTrackEpoch.get()) return;
+
             availableCandidates.clear();
             availableCandidates.addAll(unique);
 
@@ -321,7 +371,8 @@ public class LyricsManager {
         }, "Bombo-LyricsFetcher").start();
     }
 
-    private static void fetchArtwork(String cleanTrack, String cleanArtist) {
+    private static void fetchArtwork(String cleanTrack, String cleanArtist, long epoch) {
+        if (epoch != currentTrackEpoch.get()) return;
         try {
             String query = (cleanTrack + " " + cleanArtist).trim();
             String itunesUrl = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
@@ -333,12 +384,13 @@ public class LyricsManager {
                     .GET()
                     .build();
             HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+            if (epoch != currentTrackEpoch.get()) return;
             if (resp.statusCode() == 200) {
                 JsonObject itunesJson = JsonParser.parseString(resp.body()).getAsJsonObject();
                 if (itunesJson.has("results") && itunesJson.getAsJsonArray("results").size() > 0) {
                     JsonObject songObj = itunesJson.getAsJsonArray("results").get(0).getAsJsonObject();
                     if (songObj.has("artworkUrl100")) {
-                        downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"));
+                        downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"), epoch);
                     }
                 }
             }
@@ -347,7 +399,8 @@ public class LyricsManager {
 
     private static final java.util.concurrent.atomic.AtomicInteger albumArtCounter = new java.util.concurrent.atomic.AtomicInteger(0);
 
-    private static void downloadAndRegisterAlbumArt(String artworkUrl) {
+    private static void downloadAndRegisterAlbumArt(String artworkUrl, long epoch) {
+        if (epoch != currentTrackEpoch.get()) return;
         if (artworkUrl == null || artworkUrl.equals(lastArtworkUrl)) return;
         lastArtworkUrl = artworkUrl;
 
@@ -359,11 +412,13 @@ public class LyricsManager {
                     .GET()
                     .build();
             HttpResponse<byte[]> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofByteArray());
+            if (epoch != currentTrackEpoch.get()) return;
             if (resp.statusCode() == 200 && resp.body() != null && resp.body().length > 0) {
                 byte[] bytes = resp.body();
                 Minecraft mc = Minecraft.getInstance();
                 if (mc != null) {
                     mc.execute(() -> {
+                        if (epoch != currentTrackEpoch.get()) return;
                         NativeImage img = null;
                         try (InputStream in = new ByteArrayInputStream(bytes)) {
                             img = NativeImage.read(in);
@@ -380,7 +435,7 @@ public class LyricsManager {
                             } catch (Throwable ignored) {}
                         }
 
-                        if (img != null) {
+                        if (img != null && epoch == currentTrackEpoch.get()) {
                             int artNum = albumArtCounter.incrementAndGet();
                             DynamicTexture dynTex = new DynamicTexture(() -> "spotify_album_art_" + artNum, img);
                             dynTex.upload();

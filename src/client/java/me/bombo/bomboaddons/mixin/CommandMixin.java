@@ -142,9 +142,29 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.equals("lyrics debug") || lower.equals("b lyrics debug") || lower.equals("bombo lyrics debug") || lower.equals("bomboaddons lyrics debug")) {
+         boolean active = me.bombo.bomboaddons.features.spotify.LyricsManager.toggleDebug();
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+               active ? "§8[§3Bombo§8] §aLyrics frame debug logger §lSTARTED§a! Logging to §ebombo_lyrics_debug.log§a. Run §e/b lyrics debug§a again to stop."
+                      : "§8[§3Bombo§8] §cLyrics frame debug logger §lSTOPPED§c. Saved to §ebombo_lyrics_debug.log§c."
+            ));
+         }
+         ci.cancel();
+         return;
+      }
       if (lower.equals("lyrics") || lower.equals("b lyrics") || lower.equals("bombo lyrics") || lower.equals("bomboaddons lyrics")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("b perf log") || lower.equals("perf log") || lower.equals("bombo perf log") || lower.equals("bomboaddons perf log")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         me.bombo.bomboaddons.PerformanceProfiler.dumpNowToFile((comp) -> {
+            if (mc.player != null) mc.player.sendSystemMessage(comp);
+         });
          ci.cancel();
          return;
       }

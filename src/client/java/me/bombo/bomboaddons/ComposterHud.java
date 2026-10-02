@@ -141,6 +141,23 @@ public class ComposterHud {
       return val;
    }
 
+   private static long lastContainerCheckTime = 0L;
+   private static long lastTimerCalcTime = 0L;
+   private static String cachedTimerLine = "§cEmpty!";
+   private static long lastInfoCalcTime = 0L;
+   private static List<String> cachedInfoLines = new ArrayList<>();
+   private static ItemStack cachedCompostStack = ItemStack.EMPTY;
+
+   private static ItemStack getCompostItem() {
+      if (cachedCompostStack.isEmpty()) {
+         cachedCompostStack = SkyblockItemManager.createSkyblockItem("COMPOST");
+         if (cachedCompostStack.isEmpty()) {
+            cachedCompostStack = new ItemStack(Items.COMPOSTER);
+         }
+      }
+      return cachedCompostStack;
+   }
+
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
       try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Composter")) {
          BomboConfig.Settings s = BomboConfig.get();
@@ -150,8 +167,12 @@ public class ComposterHud {
                if (client.gui.screen() == null || client.gui.screen() instanceof HudMoveScreen || client.gui.screen() instanceof AbstractContainerScreen) {
                   Screen var5 = client.gui.screen();
                   if (var5 instanceof AbstractContainerScreen) {
-                     AbstractContainerScreen<?> containerScreen = (AbstractContainerScreen)var5;
-                     onContainerTick(containerScreen);
+                     long now = System.currentTimeMillis();
+                     if (now - lastContainerCheckTime > 500L) {
+                        lastContainerCheckTime = now;
+                        AbstractContainerScreen<?> containerScreen = (AbstractContainerScreen)var5;
+                        onContainerTick(containerScreen);
+                     }
                   }
 
                   if (s.composterHud && (s.composterLastOrganic >= (double)0.0F || s.composterLastFuel >= (double)0.0F)) {
@@ -170,128 +191,128 @@ public class ComposterHud {
 
    public static void drawComposterTimerInfo(GuiGraphicsExtractor g, int x, int y, boolean isDummy) {
       BomboConfig.Settings s = BomboConfig.get();
-      double baseOrgCur = isDummy ? (double)1200.0F : Math.max((double)0.0F, s.composterLastOrganic);
-      double baseFuelCur = isDummy ? (double)464937.5F : Math.max((double)0.0F, s.composterLastFuel);
-      int speedLvl = s.composterSpeedLevel >= 0 ? s.composterSpeedLevel : (isDummy ? 25 : 0);
-      int costLvl = s.composterCostReductionLevel >= 0 ? s.composterCostReductionLevel : (isDummy ? 25 : 0);
-      boolean missingUpgrades = (s.composterSpeedLevel < 0 || s.composterCostReductionLevel < 0) && !isDummy;
-      double speedMultiplier = (double)1.0F + (double)speedLvl * 0.2;
-      double timePerCompostSec = (double)600.0F / speedMultiplier;
-      double costMultiplier = (double)1.0F - (double)costLvl * 0.01;
-      double orgPerCompost = (double)4000.0F * costMultiplier;
-      double fuelPerCompost = (double)2000.0F * costMultiplier;
-      double orgRatePerSec = orgPerCompost / timePerCompostSec;
-      double fuelRatePerSec = fuelPerCompost / timePerCompostSec;
-      double elapsedSec = !isDummy && s.composterLastSavedTime > 0L ? (double)(System.currentTimeMillis() - s.composterLastSavedTime) / (double)1000.0F : (double)0.0F;
-      double usableBaseOrg = Math.max((double)0.0F, baseOrgCur - orgPerCompost);
-      double usableBaseFuel = Math.max((double)0.0F, baseFuelCur - fuelPerCompost);
-      double maxRunningSec = Math.min(orgRatePerSec > (double)0.0F ? usableBaseOrg / orgRatePerSec : (double)0.0F, fuelRatePerSec > (double)0.0F ? usableBaseFuel / fuelRatePerSec : (double)0.0F);
-      double actualElapsedSec = Math.min(elapsedSec, maxRunningSec);
-      double orgCur = Math.max((double)0.0F, baseOrgCur - orgRatePerSec * actualElapsedSec);
-      double fuelCur = Math.max((double)0.0F, baseFuelCur - fuelRatePerSec * actualElapsedSec);
-      double usableOrg = Math.max((double)0.0F, orgCur - orgPerCompost);
-      double usableFuel = Math.max((double)0.0F, fuelCur - fuelPerCompost);
-      double secondsOrg = usableOrg > (double)0.0F && orgRatePerSec > (double)0.0F ? usableOrg / orgRatePerSec : (double)0.0F;
-      double secondsFuel = usableFuel > (double)0.0F && fuelRatePerSec > (double)0.0F ? usableFuel / fuelRatePerSec : (double)0.0F;
-      double timeUntilEmptySec = Math.min(secondsOrg, secondsFuel);
-      String line;
-      if (missingUpgrades) {
-         line = "§eOpen Upgrades Menu!";
-      } else if (timeUntilEmptySec <= (double)0.0F) {
-         line = "§cEmpty!";
-      } else {
-         line = "§c" + formatTime((long)timeUntilEmptySec);
+      long now = System.currentTimeMillis();
+      if (isDummy || now - lastTimerCalcTime > 1000L) {
+         lastTimerCalcTime = now;
+         double baseOrgCur = isDummy ? (double)1200.0F : Math.max((double)0.0F, s.composterLastOrganic);
+         double baseFuelCur = isDummy ? (double)464937.5F : Math.max((double)0.0F, s.composterLastFuel);
+         int speedLvl = s.composterSpeedLevel >= 0 ? s.composterSpeedLevel : (isDummy ? 25 : 0);
+         int costLvl = s.composterCostReductionLevel >= 0 ? s.composterCostReductionLevel : (isDummy ? 25 : 0);
+         boolean missingUpgrades = (s.composterSpeedLevel < 0 || s.composterCostReductionLevel < 0) && !isDummy;
+         double speedMultiplier = (double)1.0F + (double)speedLvl * 0.2;
+         double timePerCompostSec = (double)600.0F / speedMultiplier;
+         double costMultiplier = (double)1.0F - (double)costLvl * 0.01;
+         double orgPerCompost = (double)4000.0F * costMultiplier;
+         double fuelPerCompost = (double)2000.0F * costMultiplier;
+         double orgRatePerSec = orgPerCompost / timePerCompostSec;
+         double fuelRatePerSec = fuelPerCompost / timePerCompostSec;
+         double elapsedSec = !isDummy && s.composterLastSavedTime > 0L ? (double)(now - s.composterLastSavedTime) / (double)1000.0F : (double)0.0F;
+         double usableBaseOrg = Math.max((double)0.0F, baseOrgCur - orgPerCompost);
+         double usableBaseFuel = Math.max((double)0.0F, baseFuelCur - fuelPerCompost);
+         double maxRunningSec = Math.min(orgRatePerSec > (double)0.0F ? usableBaseOrg / orgRatePerSec : (double)0.0F, fuelRatePerSec > (double)0.0F ? usableBaseFuel / fuelRatePerSec : (double)0.0F);
+         double actualElapsedSec = Math.min(elapsedSec, maxRunningSec);
+         double orgCur = Math.max((double)0.0F, baseOrgCur - orgRatePerSec * actualElapsedSec);
+         double fuelCur = Math.max((double)0.0F, baseFuelCur - fuelRatePerSec * actualElapsedSec);
+         double usableOrg = Math.max((double)0.0F, orgCur - orgPerCompost);
+         double usableFuel = Math.max((double)0.0F, fuelCur - fuelPerCompost);
+         double secondsOrg = usableOrg > (double)0.0F && orgRatePerSec > (double)0.0F ? usableOrg / orgRatePerSec : (double)0.0F;
+         double secondsFuel = usableFuel > (double)0.0F && fuelRatePerSec > (double)0.0F ? usableFuel / fuelRatePerSec : (double)0.0F;
+         double timeUntilEmptySec = Math.min(secondsOrg, secondsFuel);
+         if (missingUpgrades) {
+            cachedTimerLine = "§eOpen Upgrades Menu!";
+         } else if (timeUntilEmptySec <= (double)0.0F) {
+            cachedTimerLine = "§cEmpty!";
+         } else {
+            cachedTimerLine = "§c" + formatTime((long)timeUntilEmptySec);
+         }
       }
 
       g.pose().pushMatrix();
       g.pose().translate((float)x, (float)y);
       float scale = s.composterTimerHudScale;
       g.pose().scale(scale, scale);
-      ItemStack compostStack = SkyblockItemManager.createSkyblockItem("COMPOST");
-      if (compostStack.isEmpty()) {
-         compostStack = new ItemStack(Items.COMPOSTER);
-      }
 
       g.pose().pushMatrix();
       g.pose().translate(0.0F, -2.0F);
       g.pose().scale(0.75F, 0.75F);
-      g.item(compostStack, 0, 0);
+      g.item(getCompostItem(), 0, 0);
       g.pose().popMatrix();
-      g.text(Minecraft.getInstance().font, line, 15, 0, -1, true);
+      g.text(Minecraft.getInstance().font, cachedTimerLine, 15, 0, -1, true);
       g.pose().popMatrix();
    }
 
    public static void drawComposterInfo(GuiGraphicsExtractor g, int x, int y, boolean isDummy) {
       BomboConfig.Settings s = BomboConfig.get();
-      double baseOrgCur = isDummy ? (double)1200.0F : Math.max((double)0.0F, s.composterLastOrganic);
-      double orgMax = isDummy ? (double)790000.0F : Math.max((double)0.0F, s.composterLastMaxOrganic);
-      double baseFuelCur = isDummy ? (double)464937.5F : Math.max((double)0.0F, s.composterLastFuel);
-      double fuelMax = isDummy ? (double)850000.0F : Math.max((double)0.0F, s.composterLastMaxFuel);
-      int speedLvl = s.composterSpeedLevel >= 0 ? s.composterSpeedLevel : (isDummy ? 25 : 0);
-      int costLvl = s.composterCostReductionLevel >= 0 ? s.composterCostReductionLevel : (isDummy ? 25 : 0);
-      boolean missingUpgrades = (s.composterSpeedLevel < 0 || s.composterCostReductionLevel < 0) && !isDummy;
-      double speedMultiplier = (double)1.0F + (double)speedLvl * 0.2;
-      double timePerCompostSec = (double)600.0F / speedMultiplier;
-      double costMultiplier = (double)1.0F - (double)costLvl * 0.01;
-      double orgPerCompost = (double)4000.0F * costMultiplier;
-      double fuelPerCompost = (double)2000.0F * costMultiplier;
-      double orgRatePerSec = orgPerCompost / timePerCompostSec;
-      double fuelRatePerSec = fuelPerCompost / timePerCompostSec;
-      double elapsedSec = !isDummy && s.composterLastSavedTime > 0L ? (double)(System.currentTimeMillis() - s.composterLastSavedTime) / (double)1000.0F : (double)0.0F;
-      double usableBaseOrg = Math.max((double)0.0F, baseOrgCur - orgPerCompost);
-      double usableBaseFuel = Math.max((double)0.0F, baseFuelCur - fuelPerCompost);
-      double maxRunningSec = Math.min(orgRatePerSec > (double)0.0F ? usableBaseOrg / orgRatePerSec : (double)0.0F, fuelRatePerSec > (double)0.0F ? usableBaseFuel / fuelRatePerSec : (double)0.0F);
-      double actualElapsedSec = Math.min(elapsedSec, maxRunningSec);
-      double orgCur = Math.max((double)0.0F, baseOrgCur - orgRatePerSec * actualElapsedSec);
-      double fuelCur = Math.max((double)0.0F, baseFuelCur - fuelRatePerSec * actualElapsedSec);
-      double usableOrg = Math.max((double)0.0F, orgCur - orgPerCompost);
-      double usableFuel = Math.max((double)0.0F, fuelCur - fuelPerCompost);
-      double secondsOrg = usableOrg > (double)0.0F && orgRatePerSec > (double)0.0F ? usableOrg / orgRatePerSec : (double)0.0F;
-      double secondsFuel = usableFuel > (double)0.0F && fuelRatePerSec > (double)0.0F ? usableFuel / fuelRatePerSec : (double)0.0F;
-      double timeUntilEmptySec = Math.min(secondsOrg, secondsFuel);
-      boolean orgLimiting = secondsOrg <= secondsFuel;
-      List<String> lines = new ArrayList();
-      lines.add("§a§lComposter Status");
-      String var10001 = formatNum(orgCur);
-      lines.add("§fOrganic: §e" + var10001 + "§7/§e" + formatNum(orgMax) + " §7(" + String.format("%.1f", orgCur > (double)0.0F && orgMax > (double)0.0F ? orgCur / orgMax * (double)100.0F : (double)0.0F) + "%)");
-      var10001 = formatNum(fuelCur);
-      lines.add("§fFuel: §b" + var10001 + "§7/§b" + formatNum(fuelMax) + " §7(" + String.format("%.1f", fuelCur > (double)0.0F && fuelMax > (double)0.0F ? fuelCur / fuelMax * (double)100.0F : (double)0.0F) + "%)");
-      if (missingUpgrades) {
-         lines.add("§cTime Left: §eOpen Upgrades Menu!");
-      } else if (timeUntilEmptySec <= (double)0.0F) {
-         lines.add("§cComposter is empty!");
-      } else {
-         var10001 = formatTime((long)timeUntilEmptySec);
-         lines.add("§fTime Left: §c" + var10001 + (!(orgCur > (double)0.0F) && !(fuelCur > (double)0.0F) ? "" : " §7(" + (orgLimiting ? "Organic" : "Fuel") + ")"));
-      }
+      long now = System.currentTimeMillis();
+      if (isDummy || now - lastInfoCalcTime > 1000L || cachedInfoLines.isEmpty()) {
+         lastInfoCalcTime = now;
+         double baseOrgCur = isDummy ? (double)1200.0F : Math.max((double)0.0F, s.composterLastOrganic);
+         double orgMax = isDummy ? (double)790000.0F : Math.max((double)0.0F, s.composterLastMaxOrganic);
+         double baseFuelCur = isDummy ? (double)464937.5F : Math.max((double)0.0F, s.composterLastFuel);
+         double fuelMax = isDummy ? (double)850000.0F : Math.max((double)0.0F, s.composterLastMaxFuel);
+         int speedLvl = s.composterSpeedLevel >= 0 ? s.composterSpeedLevel : (isDummy ? 25 : 0);
+         int costLvl = s.composterCostReductionLevel >= 0 ? s.composterCostReductionLevel : (isDummy ? 25 : 0);
+         boolean missingUpgrades = (s.composterSpeedLevel < 0 || s.composterCostReductionLevel < 0) && !isDummy;
+         double speedMultiplier = (double)1.0F + (double)speedLvl * 0.2;
+         double timePerCompostSec = (double)600.0F / speedMultiplier;
+         double costMultiplier = (double)1.0F - (double)costLvl * 0.01;
+         double orgPerCompost = (double)4000.0F * costMultiplier;
+         double fuelPerCompost = (double)2000.0F * costMultiplier;
+         double orgRatePerSec = orgPerCompost / timePerCompostSec;
+         double fuelRatePerSec = fuelPerCompost / timePerCompostSec;
+         double elapsedSec = !isDummy && s.composterLastSavedTime > 0L ? (double)(now - s.composterLastSavedTime) / (double)1000.0F : (double)0.0F;
+         double usableBaseOrg = Math.max((double)0.0F, baseOrgCur - orgPerCompost);
+         double usableBaseFuel = Math.max((double)0.0F, baseFuelCur - fuelPerCompost);
+         double maxRunningSec = Math.min(orgRatePerSec > (double)0.0F ? usableBaseOrg / orgRatePerSec : (double)0.0F, fuelRatePerSec > (double)0.0F ? usableBaseFuel / fuelRatePerSec : (double)0.0F);
+         double actualElapsedSec = Math.min(elapsedSec, maxRunningSec);
+         double orgCur = Math.max((double)0.0F, baseOrgCur - orgRatePerSec * actualElapsedSec);
+         double fuelCur = Math.max((double)0.0F, baseFuelCur - fuelRatePerSec * actualElapsedSec);
+         double usableOrg = Math.max((double)0.0F, orgCur - orgPerCompost);
+         double usableFuel = Math.max((double)0.0F, fuelCur - fuelPerCompost);
+         double secondsOrg = usableOrg > (double)0.0F && orgRatePerSec > (double)0.0F ? usableOrg / orgRatePerSec : (double)0.0F;
+         double secondsFuel = usableFuel > (double)0.0F && fuelRatePerSec > (double)0.0F ? usableFuel / fuelRatePerSec : (double)0.0F;
+         double timeUntilEmptySec = Math.min(secondsOrg, secondsFuel);
+         boolean orgLimiting = secondsOrg <= secondsFuel;
 
-      if (s.composterDebug) {
-         lines.add("§8[Debug] Speed Lvl: " + speedLvl + " (+" + speedLvl * 20 + "%) | Cost Lvl: " + costLvl + " (-" + costLvl + "%)");
-         var10001 = String.format("%.1fs", actualElapsedSec);
-         lines.add("§8[Debug] Elapsed: " + var10001 + " | Rate: " + String.format("%.2f", orgRatePerSec) + " Org/s, " + String.format("%.2f", fuelRatePerSec) + " Fuel/s");
+         List<String> lines = new ArrayList<>();
+         lines.add("§a§lComposter Status");
+         String var10001 = formatNum(orgCur);
+         lines.add("§fOrganic: §e" + var10001 + "§7/§e" + formatNum(orgMax) + " §7(" + String.format("%.1f", orgCur > (double)0.0F && orgMax > (double)0.0F ? orgCur / orgMax * (double)100.0F : (double)0.0F) + "%)");
+         var10001 = formatNum(fuelCur);
+         lines.add("§fFuel: §b" + var10001 + "§7/§b" + formatNum(fuelMax) + " §7(" + String.format("%.1f", fuelCur > (double)0.0F && fuelMax > (double)0.0F ? fuelCur / fuelMax * (double)100.0F : (double)0.0F) + "%)");
+         if (missingUpgrades) {
+            lines.add("§cTime Left: §eOpen Upgrades Menu!");
+         } else if (timeUntilEmptySec <= (double)0.0F) {
+            lines.add("§cComposter is empty!");
+         } else {
+            var10001 = formatTime((long)timeUntilEmptySec);
+            lines.add("§fTime Left: §c" + var10001 + (!(orgCur > (double)0.0F) && !(fuelCur > (double)0.0F) ? "" : " §7(" + (orgLimiting ? "Organic" : "Fuel") + ")"));
+         }
+
+         if (s.composterDebug) {
+            lines.add("§8[Debug] Speed Lvl: " + speedLvl + " (+" + speedLvl * 20 + "%) | Cost Lvl: " + costLvl + " (-" + costLvl + "%)");
+            var10001 = String.format("%.1fs", actualElapsedSec);
+            lines.add("§8[Debug] Elapsed: " + var10001 + " | Rate: " + String.format("%.2f", orgRatePerSec) + " Org/s, " + String.format("%.2f", fuelRatePerSec) + " Fuel/s");
+         }
+         cachedInfoLines = lines;
       }
 
       g.pose().pushMatrix();
       g.pose().translate((float)x, (float)y);
       float scale = s.composterHudScale;
       g.pose().scale(scale, scale);
-      ItemStack compostStack = SkyblockItemManager.createSkyblockItem("COMPOST");
-      if (compostStack.isEmpty()) {
-         compostStack = new ItemStack(Items.COMPOSTER);
-      }
-
       int curY = 0;
-
-      for(int i = 0; i < lines.size(); ++i) {
+      List<String> toDraw = cachedInfoLines;
+      for(int i = 0; i < toDraw.size(); ++i) {
          if (i == 0) {
             g.pose().pushMatrix();
             g.pose().translate(0.0F, -2.0F);
             g.pose().scale(0.75F, 0.75F);
-            g.item(compostStack, 0, 0);
+            g.item(getCompostItem(), 0, 0);
             g.pose().popMatrix();
-            g.text(Minecraft.getInstance().font, (String)lines.get(0), 15, curY, -1, true);
+            g.text(Minecraft.getInstance().font, toDraw.get(0), 15, curY, -1, true);
          } else {
-            g.text(Minecraft.getInstance().font, (String)lines.get(i), 0, curY, -1, true);
+            g.text(Minecraft.getInstance().font, toDraw.get(i), 0, curY, -1, true);
          }
 
          curY += 10;

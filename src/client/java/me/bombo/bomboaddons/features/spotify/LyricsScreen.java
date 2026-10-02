@@ -44,6 +44,7 @@ public class LyricsScreen extends Screen {
     private int lastActiveLineIdx = -1;
     private int maxActiveWordIdx = -1;
     private long lastSeenCurrentMs = 0L;
+    private String lastSeenTrack = "";
 
     // Offset editing & slider dragging state
     private boolean isDraggingSlider = false;
@@ -144,18 +145,38 @@ public class LyricsScreen extends Screen {
         // --- LYRICS CONTENT AREA ---
         List<LyricsManager.LyricsLine> lines = LyricsManager.getLines();
         long currentMs = SpotifyManager.getProgressMs() + BomboConfig.get().lyricsOffsetMs;
-        int rawActiveIdx = LyricsManager.getCurrentLineIndex(currentMs);
-        int activeIdx = rawActiveIdx;
+        String curTrack = SpotifyManager.getCurrentTrack();
 
-        // Monotonic progression: don't let activeIdx jump backwards on micro-jitter unless user jumped/seeked > 2.5s
-        if (rawActiveIdx < lastActiveLineIdx && (lastSeenCurrentMs - currentMs) < 2500L && lastActiveLineIdx < lines.size()) {
-            activeIdx = lastActiveLineIdx;
-        } else if (rawActiveIdx != lastActiveLineIdx || Math.abs(currentMs - lastSeenCurrentMs) > 2500L) {
-            lastActiveLineIdx = rawActiveIdx;
-            activeIdx = rawActiveIdx;
+        // Reset if song changed
+        if (!curTrack.equals(lastSeenTrack)) {
+            lastSeenTrack = curTrack;
+            lastActiveLineIdx = -1;
+            lastSeenCurrentMs = 0L;
             maxActiveWordIdx = -1;
         }
+
+        int rawActiveIdx = LyricsManager.getCurrentLineIndex(currentMs);
+
+        // Strictly monotonic forward progression: NEVER jump backwards on micro-jitter!
+        // Only jump backwards if user explicitly rewound by > 2.5 seconds, or forward seek > 8.0s
+        if (currentMs < lastSeenCurrentMs - 2500L || currentMs > lastSeenCurrentMs + 8000L) {
+            lastActiveLineIdx = rawActiveIdx;
+            maxActiveWordIdx = -1;
+        } else if (rawActiveIdx > lastActiveLineIdx) {
+            lastActiveLineIdx = rawActiveIdx;
+            maxActiveWordIdx = -1;
+        }
+        int activeIdx = lastActiveLineIdx;
         lastSeenCurrentMs = currentMs;
+
+        // Per-frame debug logging if enabled via /b lyrics debug
+        if (LyricsManager.lyricsDebugActive) {
+            String activeLineText = (activeIdx >= 0 && activeIdx < lines.size()) ? lines.get(activeIdx).text() : "None";
+            long activeStart = (activeIdx >= 0 && activeIdx < lines.size()) ? lines.get(activeIdx).startMs() : 0L;
+            long activeEnd = (activeIdx >= 0 && activeIdx < lines.size()) ? lines.get(activeIdx).endMs() : 0L;
+            int totalWords = (activeIdx >= 0 && activeIdx < lines.size() && lines.get(activeIdx).words() != null) ? lines.get(activeIdx).words().size() : 0;
+            LyricsManager.logFrame(currentMs, rawActiveIdx, activeIdx, activeLineText, activeStart, activeEnd, maxActiveWordIdx + 1, totalWords);
+        }
 
         // Auto-scroll
         if (!userScrolled || (System.currentTimeMillis() - lastUserScrollTime > 3500L)) {
