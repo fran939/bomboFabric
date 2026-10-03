@@ -40,6 +40,24 @@ public class SkyblockUtils {
    public static String lastExecutedCommand = "";
    public static String simulatedArea = null;
 
+   private static final java.util.regex.Pattern PROFILE_ID_PATTERN = java.util.regex.Pattern.compile("Profile ID:\\s*([0-9a-fA-F-]+)", java.util.regex.Pattern.CASE_INSENSITIVE);
+
+   public static void onChatMessage(String message) {
+      if (message == null) return;
+      java.util.regex.Matcher m = PROFILE_ID_PATTERN.matcher(message);
+      if (m.find()) {
+         String pid = m.group(1).trim().toLowerCase(java.util.Locale.ROOT);
+         setActiveProfileId(pid);
+      }
+   }
+
+   public static void setActiveProfileId(String pid) {
+      if (pid != null && !pid.isEmpty() && !pid.equalsIgnoreCase(currentProfileId)) {
+         currentProfileId = pid;
+         me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.onProfileChanged(pid);
+      }
+   }
+
    public static void setSimulatedArea(String area) {
       if (area == null || area.trim().isEmpty() || area.equalsIgnoreCase("clear") || area.equalsIgnoreCase("reset") || area.equalsIgnoreCase("none")) {
          simulatedArea = null;

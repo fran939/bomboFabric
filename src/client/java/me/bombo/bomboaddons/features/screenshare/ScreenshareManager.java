@@ -309,7 +309,7 @@ public class ScreenshareManager {
                         // Compress in asynchronous background task to avoid render thread stalls
                         CompletableFuture.runAsync(() -> {
                             try {
-                                BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+                                BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
                                 bi.setRGB(0, 0, w, h, pixels, 0, w);
                                 drawCursorIfVisible(mc, bi, w, h);
                                 byte[] jpeg = compressScaledJpeg(bi, targetW, targetH, quality);

@@ -5,8 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.bombo.bomboaddons.Bomboaddons;
+import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.SkyblockUtils;
 import me.bombo.bomboaddons.features.StorageTracker;
+import java.util.Arrays;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -96,11 +98,31 @@ public class BackpackPreview {
     }
 
     public static String getStorageName(int index) {
-        if (index <= 8) {
-            return "Ender Chest " + (index + 1);
-        } else {
-            return "Backpack " + (index - 8);
+        String defaultName = (index <= 8) ? "Ender Chest " + (index + 1) : "Backpack " + (index - 8);
+        try {
+            Map<String, String> customs = BomboConfig.get().storageCustomNames;
+            if (customs != null && customs.containsKey(String.valueOf(index))) {
+                String custom = customs.get(String.valueOf(index));
+                if (custom != null && !custom.trim().isEmpty()) {
+                    return custom.trim();
+                }
+            }
+        } catch (Throwable ignored) {}
+        return defaultName;
+    }
+
+    public static void setCustomStorageName(int index, String newName) {
+        if (index < 0 || index >= STORAGE_SIZE) return;
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s.storageCustomNames == null) {
+            s.storageCustomNames = new java.util.HashMap<>();
         }
+        if (newName == null || newName.trim().isEmpty()) {
+            s.storageCustomNames.remove(String.valueOf(index));
+        } else {
+            s.storageCustomNames.put(String.valueOf(index), newName.trim());
+        }
+        BomboConfig.save();
     }
 
     public static int extractSlotNumber(String text) {
@@ -131,6 +153,12 @@ public class BackpackPreview {
         return -1;
     }
 
+    public static void onProfileChanged(String newProfileId) {
+        loadedProfile = "";
+        Arrays.fill(storages, null);
+        tick();
+    }
+
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         if (!SkyblockUtils.isOnSkyblock() || mc.getUser() == null || mc.getUser().getProfileId() == null) {
@@ -146,6 +174,7 @@ public class BackpackPreview {
 
         if (!combined.equals(loadedProfile)) {
             loadedProfile = combined;
+            Arrays.fill(storages, null);
             saveDir = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons").resolve("backpack-preview").resolve(uuid).resolve(profileId);
             try {
                 Files.createDirectories(saveDir);
@@ -181,9 +210,46 @@ public class BackpackPreview {
             ItemStack slotItem = container.getItem(i);
             int index = i - 9;
             if (slotItem.is(Items.STAINED_GLASS_PANE.pick(net.minecraft.world.item.DyeColor.RED))) continue;
+
+            // Detect exact capacity / rows from lore if present, or previously saved size from disk
+            int detectedSize = 54;
+            ItemLore lore = slotItem.get(DataComponents.LORE);
+            if (lore != null) {
+                for (Component line : lore.lines()) {
+                    String str = line.getString();
+                    Matcher mRows = Pattern.compile("(\\d+)\\s*(?:rows|filas)", Pattern.CASE_INSENSITIVE).matcher(str);
+                    if (mRows.find()) {
+                        try {
+                            detectedSize = (Integer.parseInt(mRows.group(1)) * 9) + 9;
+                            break;
+                        } catch (Exception ignored) {}
+                    }
+                    Matcher mSlots = Pattern.compile("(\\d+)\\s*(?:slots|items|ranuras)", Pattern.CASE_INSENSITIVE).matcher(str);
+                    if (mSlots.find()) {
+                        try {
+                            detectedSize = Integer.parseInt(mSlots.group(1)) + 9;
+                            break;
+                        } catch (Exception ignored) {}
+                    }
+                }
+            }
+
+            if (detectedSize == 54 && saveDir != null) {
+                File f = saveDir.resolve(index + ".json").toFile();
+                if (f.exists() && f.isFile()) {
+                    try (FileReader r = new FileReader(f)) {
+                        JsonObject o = JsonParser.parseReader(r).getAsJsonObject();
+                        if (o.has("size")) {
+                            detectedSize = o.get("size").getAsInt();
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
             if (storages[index] == null) {
+                final int finalSize = detectedSize;
                 storages[index] = new Storage(
-                        new SimpleContainer(Stream.generate(() -> ItemStack.EMPTY).limit(54).toArray(ItemStack[]::new)),
+                        new SimpleContainer(Stream.generate(() -> ItemStack.EMPTY).limit(finalSize).toArray(ItemStack[]::new)),
                         getStorageName(index), true
                 );
             }
@@ -200,22 +266,36 @@ public class BackpackPreview {
             }
             if (storages[index] != null) continue;
 
+            int capacity = 54;
             ItemLore lore = slotItem.get(DataComponents.LORE);
             if (lore != null) {
                 for (Component line : lore.lines()) {
                     Matcher m = BACKPACK_SIZE_PATTERN.matcher(line.getString());
                     if (m.find()) {
                         try {
-                            int capacity = Integer.parseInt(m.group(1));
-                            storages[index] = new Storage(
-                                    new SimpleContainer(Stream.generate(() -> ItemStack.EMPTY).limit(capacity + 9).toArray(ItemStack[]::new)),
-                                    getStorageName(index), true
-                            );
+                            capacity = Integer.parseInt(m.group(1));
                             break;
                         } catch (Exception ignored) {}
                     }
                 }
             }
+
+            if (capacity == 54 && saveDir != null) {
+                File f = saveDir.resolve(index + ".json").toFile();
+                if (f.exists() && f.isFile()) {
+                    try (FileReader r = new FileReader(f)) {
+                        JsonObject o = JsonParser.parseReader(r).getAsJsonObject();
+                        if (o.has("size")) {
+                            capacity = o.get("size").getAsInt() - 9;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            storages[index] = new Storage(
+                    new SimpleContainer(Stream.generate(() -> ItemStack.EMPTY).limit(Math.max(9, capacity + 9)).toArray(ItemStack[]::new)),
+                    getStorageName(index), true
+            );
         }
     }
 
@@ -304,13 +384,13 @@ public class BackpackPreview {
                         Bomboaddons.LOGGER.warn("[BomboAddons] Failed to load backpack preview file {}: {}", file.getName(), e.getMessage());
                     }
                 });
-            } else {
-                seedStorageFromStorageTracker(i);
             }
         }
     }
 
     private static void seedFromStorageTrackerIfEmpty() {
+        // Only seed from StorageTracker if no disk save directory was available
+        if (saveDir != null) return;
         for (int i = 0; i < STORAGE_SIZE; i++) {
             if (storages[i] == null) {
                 seedStorageFromStorageTracker(i);
@@ -350,15 +430,16 @@ public class BackpackPreview {
 
         if (slots == null || slots.isEmpty()) return;
 
-        int maxSlot = 53;
+        int maxSlot = 17;
         for (Integer slotNum : slots.keySet()) {
             if (slotNum > maxSlot) maxSlot = slotNum;
         }
+        int finalSize = Math.min(54, Math.max(18, ((maxSlot / 9) + 1) * 9));
 
         Minecraft mc = Minecraft.getInstance();
         RegistryOps<Tag> ops = mc.level != null ? RegistryOps.create(NbtOps.INSTANCE, mc.level.registryAccess()) : null;
 
-        ItemStack[] itemArray = Stream.generate(() -> ItemStack.EMPTY).limit(maxSlot + 1).toArray(ItemStack[]::new);
+        ItemStack[] itemArray = Stream.generate(() -> ItemStack.EMPTY).limit(finalSize).toArray(ItemStack[]::new);
         if (ops != null) {
             for (Map.Entry<Integer, String> entry : slots.entrySet()) {
                 int slot = entry.getKey();

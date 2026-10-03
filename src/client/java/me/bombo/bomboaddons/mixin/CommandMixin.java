@@ -28,13 +28,13 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("b buttons move") || trimmed.equalsIgnoreCase("bombo buttons move") || trimmed.equalsIgnoreCase("bomboaddons buttons move")) {
+      if (trimmed.equalsIgnoreCase("buttons move") || trimmed.equalsIgnoreCase("b buttons move") || trimmed.equalsIgnoreCase("bombo buttons move") || trimmed.equalsIgnoreCase("bomboaddons buttons move")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonMoveScreen(null)));
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("b buttons") || trimmed.equalsIgnoreCase("bombo buttons") || trimmed.equalsIgnoreCase("bomboaddons buttons")) {
+      if (trimmed.equalsIgnoreCase("buttons") || trimmed.equalsIgnoreCase("b buttons") || trimmed.equalsIgnoreCase("bombo buttons") || trimmed.equalsIgnoreCase("bomboaddons buttons")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonsScreen(null)));
          ci.cancel();

@@ -1,5 +1,35 @@
 # BomboAddons Changelog
  
+## [26.2.28.68] - 2026-10-03 (Beta)
+
+### Storage Overlay Dynamic Sizing & Account/Profile Isolation
+- **Per-Profile Storage Segregation:** Captured `Profile ID: <uuid>` on lobby swaps in `SkyblockUtils.java` and isolated disk storage paths to `<player_uuid>/<profile_id>/`, preventing inventory and backpack data from leaking across alternate accounts or cooperative profiles.
+- **Dynamic Container Rows:** Accurately parsed container item counts and lore capacity in `BackpackPreview.java`, rendering 1-row Ender Chests (9x1) and compact backpacks without empty black void rows.
+- **Persistent Search Filter:** Preserved active search query and slot highlights across container tabs and screen transitions in `StorageOverlayScreen.java` and `SearchableGridWidget.java`.
+- **Interactive Visual Renaming:** Added `RenameStorageScreen.java` modal allowing players to click any storage category header (e.g. "Ender Chest 1") and assign a custom visual label (e.g. "Mining Gear").
+- **Custom Themes & Transparency:** Added Default, Dark, Light, and Transparent overlay themes with customizable ARGB background tint in `/b` configuration.
+
+### Discord Voice HUD Stale Pruning & User Muting
+- **WebRTC Inbound Stream Pruning:** Evaluated log line timestamps with a 25-second active cutoff window, purging disconnected callers and eliminating ghost member counts (e.g. showing 7 callers when only 5 remain).
+- **Direct User Muting:** Clicking any player row on `DiscordVoiceHud` (or `/b discord mute <id>`) dispatches `SET_USER_VOICE_SETTINGS` via Discord IPC RPC and renders muted members with `§c[MUTED]`.
+- **Full Debug Diagnostics:** Added full snowflake IDs and voice channel IDs in `/b discord debug` and resolved display names properly from `/api/bot/users`.
+
+### Live Synced Lyrics Web Player & Backend Synchronization
+- **Live Web Player (`/lyrics`):** Deployed live synchronized lyrics web player at `https://bombo.dpdns.org/lyrics` featuring Spotify dark aesthetics, glassmorphic now-playing cards, and real-time word-by-word active glow animations.
+- **Client Playback Telemetry:** Added non-blocking now-playing state dispatch in `SpotifyManager.java` reporting song titles, artists, and millisecond playback timestamps to `/api/spotify/now-playing`.
+- **Direct Album Resolution:** Enhanced `/api/spotify/resolve` and `SpotifyManager.java` to resolve Spotify album URIs (`spotify:album:<id>`) via MusicBrainz release relations, launching albums directly without web search fallbacks.
+
+### Screenshare 1440p Pipeline & Hardware Streaming
+- **Direct INT_RGB Framebuffer Pipeline:** Switched screen capture in `ScreenshareManager.java` from `TYPE_INT_ARGB` to native `TYPE_INT_RGB`, eliminating expensive per-frame color space conversions for 1440p displays.
+- **Hardware-Accelerated MJPEG Viewer:** Connected `screenshare.html` directly to `/api/screenshare/stream/:user`, eliminating repeated Image allocation garbage collection and achieving smooth 60 FPS playback.
+
+### Config Backups, Fresh Defaults & Brigadier Registration
+- **Automatic Version Upgrade Backups:** Added automatic backup snapshot creation on mod version upgrade under `.minecraft/config/bomboaddons/backups/`.
+- **Config Backup Commands:** Registered `/b backup create [name]`, `/b backup list`, `/b backup check`, and `/b backup restore <name>` with tab completion without deleting backup files.
+- **Safe Defaults:** Ensured macro hotkeys, auto sequences, and inventory buttons are disabled by default on clean installations.
+- **Brigadier Registration:** Registered `/buttons`, `/buttons move`, `/b buttons`, and backup subcommands into Brigadier dispatcher and `CommandMixin.java`.
+- **Single-Character Obfuscate Exception:** Maintained `§k` obfuscation for single characters (recombobulator tags `&ka>>`) while removing obfuscation from multi-character chat spam.
+
 ## [26.2.28.67] - 2026-10-03 (Beta)
 
 ### Storage Overlay Render Thread Safety

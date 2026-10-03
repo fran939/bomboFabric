@@ -611,6 +611,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                return false;
             } else if (isAllowedHudClickScreen && s.spotifyHudEnabled && me.bombo.bomboaddons.features.spotify.SpotifyHud.onMouseClick(mouseX, mouseY, button)) {
                return false;
+            } else if (isAllowedHudClickScreen && s.discordHudEnabled && button == 0 && me.bombo.bomboaddons.features.discord.DiscordVoiceHud.handleMouseClick(mouseX, mouseY)) {
+               return false;
             } else {
                if (s.diceTracker && DiceTracker.shouldShowHud()) {
                   int w = (int)(260.0F * s.diceHudScale);
@@ -941,6 +943,46 @@ public class BomboaddonsClient implements ClientModInitializer {
                      mc.execute(() -> mc.setScreenAndShow(BomboConfigGUI.create()));
                      return 1;
                   }));
+                  builder.then(ClientCommands.literal("buttons")
+                          .executes((context) -> {
+                             Minecraft mc = Minecraft.getInstance();
+                             mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonsScreen(null)));
+                             return 1;
+                          })
+                          .then(ClientCommands.literal("move").executes((context) -> {
+                             Minecraft mc = Minecraft.getInstance();
+                             mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonMoveScreen(null)));
+                             return 1;
+                          })));
+                  builder.then(ClientCommands.literal("backup")
+                          .executes((context) -> {
+                             BomboConfig.listBackups((FabricClientCommandSource)context.getSource());
+                             return 1;
+                          })
+                          .then(ClientCommands.literal("list").executes((context) -> {
+                             BomboConfig.listBackups((FabricClientCommandSource)context.getSource());
+                             return 1;
+                          }))
+                          .then(ClientCommands.literal("check").executes((context) -> {
+                             BomboConfig.listBackups((FabricClientCommandSource)context.getSource());
+                             return 1;
+                          }))
+                          .then(ClientCommands.literal("create")
+                                  .executes((context) -> {
+                                     BomboConfig.createBackup((FabricClientCommandSource)context.getSource(), null);
+                                     return 1;
+                                  })
+                                  .then(ClientCommands.argument("name", StringArgumentType.greedyString()).executes((context) -> {
+                                     BomboConfig.createBackup((FabricClientCommandSource)context.getSource(), StringArgumentType.getString(context, "name"));
+                                     return 1;
+                                  })))
+                          .then(ClientCommands.literal("restore")
+                                  .then(ClientCommands.argument("name", StringArgumentType.greedyString())
+                                          .suggests((ctx, b) -> BomboConfig.suggestBackups(b))
+                                          .executes((context) -> {
+                                             BomboConfig.restoreBackup((FabricClientCommandSource)context.getSource(), StringArgumentType.getString(context, "name"));
+                                             return 1;
+                                          }))));
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("history").executes((context) -> {
                      return showCommandHistory((FabricClientCommandSource)context.getSource(), 25, null);
                   })).then(ClientCommands.argument("query", StringArgumentType.greedyString()).executes((context) -> {
@@ -4758,6 +4800,17 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(buildScreenshareCommand("ss"));
                dispatcher.register(buildScreenshareCommand("screenshare"));
                dispatcher.register(buildScreenshareCommand("stream"));
+               dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("buttons")
+                       .executes((context) -> {
+                          Minecraft mc = Minecraft.getInstance();
+                          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonsScreen(null)));
+                          return 1;
+                       })
+                       .then(ClientCommands.literal("move").executes((context) -> {
+                          Minecraft mc = Minecraft.getInstance();
+                          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonMoveScreen(null)));
+                          return 1;
+                       })));
                 dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("lyrics").executes((context) -> {
                    Minecraft mc = Minecraft.getInstance();
                    mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));

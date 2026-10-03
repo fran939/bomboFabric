@@ -62,6 +62,28 @@ public class DiscordVoiceHud {
         return 16 + count * 11;
     }
 
+    private static final List<String> cachedUserRowIds = new ArrayList<>();
+
+    public static boolean handleMouseClick(double mouseX, double mouseY) {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s == null || !s.discordHudEnabled || !DiscordIpcManager.isInVoice()) return false;
+        float scale = s.discordHudScale <= 0 ? 1.0f : s.discordHudScale;
+        double relX = (mouseX - s.discordHudX) / scale;
+        double relY = (mouseY - s.discordHudY) / scale;
+        if (relX < 0 || relX > cachedMaxW || relY < 0 || relY > cachedTotalH) return false;
+
+        int lineIdx = (int) ((relY - 3) / 11);
+        int userRowIdx = lineIdx - 1;
+        if (userRowIdx >= 0 && userRowIdx < cachedUserRowIds.size()) {
+            String uid = cachedUserRowIds.get(userRowIdx);
+            if (uid != null && !uid.isEmpty() && !uid.equals("self") && !uid.equals(DiscordIpcManager.getMyUserId())) {
+                DiscordIpcManager.toggleUserMute(uid);
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void drawHud(GuiGraphicsExtractor g, int baseX, int baseY, float scale, boolean isDummy) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) return;
@@ -79,6 +101,7 @@ public class DiscordVoiceHud {
             lastHudUpdate = now;
             String channel = isDummy ? "General (Voice)" : (DiscordIpcManager.isInVoice() ? DiscordIpcManager.getCurrentChannelName() : "Not in Call");
             List<String> lines = new ArrayList<>();
+            cachedUserRowIds.clear();
             lines.add("§9§lDiscord §8| §b#" + channel);
 
             if (isDummy) {
@@ -90,9 +113,14 @@ public class DiscordVoiceHud {
                 lines.add(" §8(Not in voice call)");
             } else {
                 for (DiscordIpcManager.DiscordVoiceUser u : DiscordIpcManager.getVoiceUsers()) {
+                    cachedUserRowIds.add(u.id());
                     StringBuilder sb = new StringBuilder();
                     sb.append(u.isSpeaking() ? " §a● " : " §8○ ");
-                    sb.append(u.isSpeaking() ? "§a" : "§f").append(u.displayName());
+                    if (u.isLocallyMuted()) {
+                        sb.append("§7§m").append(u.displayName()).append("§r §c[MUTED]");
+                    } else {
+                        sb.append(u.isSpeaking() ? "§a" : "§f").append(u.displayName());
+                    }
                     if (u.isScreenSharing()) {
                         sb.append(" §c§l[LIVE]§r");
                     }

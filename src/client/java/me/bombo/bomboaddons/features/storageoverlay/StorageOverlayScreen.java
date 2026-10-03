@@ -128,9 +128,10 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	}
 
 	protected void switchOpenStorage(int index) {
-		if (grid == null) return;
-
-		savedScroll = grid.getScrollAmount();
+		if (grid != null) {
+			savedScroll = grid.getScrollAmount();
+			savedSearch = grid.getSearch();
+		}
 		MessageScheduler.INSTANCE.sendMessageAfterCooldown(getCommandForIndex(index), true);
 		saveMousePosition = BomboConfig.get().storageOverlayDoNotResetCursor;
 	}
@@ -231,8 +232,11 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		internalCols = internalCols > 0 ? internalCols : 9;
 
 		grid = new BackpackGridWidget(getMinLeftPos() + 8, this.topPos + 8, getMaxWidth() - 16, getHeight() - 16, storagesPerRow, internalCols, true);
-		grid.setSearch(savedSearch);
+		if (savedSearch != null && !savedSearch.isEmpty()) {
+			grid.setSearch(savedSearch);
+		}
 		grid.setScrollAmount(savedScroll);
+		grid.refreshSearch();
 		this.addRenderableWidget(grid);
 
 		LinearLayout extraButtons = new LinearLayout(width - 90, height - 84, LinearLayout.Orientation.VERTICAL);
@@ -265,17 +269,18 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	@Override
 	public void onClose() {
-		savedScroll = 0;
-		if (BomboConfig.get().storageOverlayRememberSearch && grid != null) {
+		if (grid != null) {
 			savedScroll = grid.getScrollAmount();
-		} else {
-			savedSearch = "";
-		}
-		if (BomboConfig.get().storageOverlayRememberOpened && grid != null && grid.openBackpack != null) {
-			savedIndex = grid.openBackpack.index;
-			savedScroll = grid.getScrollAmount();
-		} else {
-			savedIndex = -1;
+			if (BomboConfig.get().storageOverlayRememberSearch || !grid.getSearch().isEmpty()) {
+				savedSearch = grid.getSearch();
+			} else {
+				savedSearch = "";
+			}
+			if (BomboConfig.get().storageOverlayRememberOpened && grid.openBackpack != null) {
+				savedIndex = grid.openBackpack.index;
+			} else {
+				savedIndex = -1;
+			}
 		}
 		super.onClose();
 	}
@@ -329,8 +334,29 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
 		super.extractBackground(graphics, mouseX, mouseY, a);
-		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, getLeftPos(), this.topPos, getWidth(), getHeight());
-		graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.leftPos, this.topPos + getHeight() - 3, 0, 132, 175, 90, 256, 256);
+		BomboConfig.Settings s = BomboConfig.get();
+		String theme = s != null && s.storageOverlayTheme != null ? s.storageOverlayTheme.toUpperCase(Locale.ROOT) : "DEFAULT";
+		boolean transparent = s != null && (s.storageOverlayTransparent || theme.equals("TRANSPARENT"));
+
+		if (transparent) {
+			int customColor = 0x66000000;
+			try {
+				if (s != null && s.storageOverlayCustomColor != null && !s.storageOverlayCustomColor.isEmpty()) {
+					customColor = (int) Long.parseLong(s.storageOverlayCustomColor.replace("#", ""), 16);
+				}
+			} catch (Throwable ignored) {}
+			graphics.fill(getLeftPos(), this.topPos, getLeftPos() + getWidth(), this.topPos + getHeight(), customColor);
+			graphics.outline(getLeftPos(), this.topPos, getWidth(), getHeight(), 0x44FFFFFF);
+		} else if (theme.equals("DARK")) {
+			graphics.fill(getLeftPos(), this.topPos, getLeftPos() + getWidth(), this.topPos + getHeight(), 0xEE1A1A1A);
+			graphics.outline(getLeftPos(), this.topPos, getWidth(), getHeight(), 0xFF333333);
+		} else if (theme.equals("LIGHT")) {
+			graphics.fill(getLeftPos(), this.topPos, getLeftPos() + getWidth(), this.topPos + getHeight(), 0xEEF0F0F0);
+			graphics.outline(getLeftPos(), this.topPos, getWidth(), getHeight(), 0xFFCCCCCC);
+		} else {
+			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BACKGROUND, getLeftPos(), this.topPos, getWidth(), getHeight());
+			graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.leftPos, this.topPos + getHeight() - 3, 0, 132, 175, 90, 256, 256);
+		}
 	}
 
 	private class BackpackGridWidget extends SearchableGridWidget {
@@ -477,6 +503,20 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		}
 
 		private void customInventorySize(GuiGraphicsExtractor graphics, int x, int y, int rows, int columns) {
+			BomboConfig.Settings s = BomboConfig.get();
+			String theme = s != null && s.storageOverlayTheme != null ? s.storageOverlayTheme.toUpperCase(Locale.ROOT) : "DEFAULT";
+			boolean transparent = s != null && (s.storageOverlayTransparent || theme.equals("TRANSPARENT"));
+
+			if (transparent || theme.equals("DARK") || theme.equals("LIGHT")) {
+				int bg = theme.equals("LIGHT") ? 0xDDEEEEEE : (transparent ? 0x55111111 : 0xEE202020);
+				int border = theme.equals("LIGHT") ? 0xFFBBBBBB : (transparent ? 0x44FFFFFF : 0xFF383838);
+				int w = columns * SLOT_SIZE + EDGE_PADDING * 2;
+				int h = rows * SLOT_SIZE + HEADER_H + EDGE_PADDING;
+				graphics.fill(x, y, x + w, y + h, bg);
+				graphics.outline(x, y, w, h, border);
+				return;
+			}
+
 			extractSection(graphics, x, y, columns, HEADER_H, 0);
 
 			int rowsRemaining = rows;
@@ -508,7 +548,12 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			customInventorySize(graphics, x, y, rows, columns);
 
 			Font textRenderer = CLIENT.font;
-			graphics.text(textRenderer, label, x + 8, y + 6, 0xFF404040, false);
+			BomboConfig.Settings s = BomboConfig.get();
+			String theme = s != null && s.storageOverlayTheme != null ? s.storageOverlayTheme.toUpperCase(Locale.ROOT) : "DEFAULT";
+			boolean transparent = s != null && (s.storageOverlayTransparent || theme.equals("TRANSPARENT"));
+			int titleColor = theme.equals("LIGHT") ? 0xFF222222 : ((transparent || theme.equals("DARK")) ? 0xFFE0E0E0 : 0xFF404040);
+
+			graphics.text(textRenderer, label, x + 8, y + 6, titleColor, false);
 
 			for (int i = size() - 9; i < rows * columns; ++i) {
 				int itemX = x + i % columns * SLOT_SIZE + 8;
@@ -553,6 +598,10 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		@Override
 		public void onClick(MouseButtonEvent event, boolean doubleClick) {
 			super.onClick(event, doubleClick);
+			if (event.y() >= getY() && event.y() <= getY() + HEADER_H) {
+				CLIENT.setScreenAndShow(new RenameStorageScreen(StorageOverlayScreen.this, index, label));
+				return;
+			}
 			if (!open) {
 				switchOpenStorage(index);
 			}

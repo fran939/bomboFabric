@@ -324,6 +324,23 @@ public class BomboConfig {
          instance.keybindBinds.putIfAbsent(p, new ArrayList());
       }
 
+      // Version upgrade automatic backup
+      try {
+         String currentModVer = FabricLoader.getInstance().getModContainer("bomboaddons")
+                 .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("");
+         if (!currentModVer.isEmpty() && Files.exists(CONFIG_PATH) && !currentModVer.equals(instance.lastModVersion)) {
+            Path backupDir = BOMBOADDONS_DIR.resolve("backups");
+            Files.createDirectories(backupDir);
+            String backupName = "config_backup_v" + (instance.lastModVersion == null || instance.lastModVersion.isEmpty() ? "pre-upgrade" : instance.lastModVersion)
+                    + "_" + System.currentTimeMillis() + ".json";
+            Files.copy(CONFIG_PATH, backupDir.resolve(backupName), StandardCopyOption.REPLACE_EXISTING);
+            instance.lastModVersion = currentModVer;
+            save();
+            System.out.println("[BomboConfig] Created version upgrade backup: " + backupName);
+         }
+      } catch (Throwable t) {
+         System.err.println("[BomboConfig] Failed to create version upgrade backup: " + t.getMessage());
+      }
    }
 
    public static void save() {
@@ -338,6 +355,75 @@ public class BomboConfig {
          System.err.println("[BomboConfig] Failed to save config: " + e.getMessage());
          e.printStackTrace();
       }
+   }
+
+   public static void createBackup(net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource src, String customName) {
+      try {
+         Path backupDir = BOMBOADDONS_DIR.resolve("backups");
+         Files.createDirectories(backupDir);
+         String name = (customName != null && !customName.trim().isEmpty())
+                 ? (customName.trim().endsWith(".json") ? customName.trim() : customName.trim() + ".json")
+                 : "backup_" + System.currentTimeMillis() + ".json";
+         Path target = backupDir.resolve(name);
+         save();
+         Files.copy(CONFIG_PATH, target, StandardCopyOption.REPLACE_EXISTING);
+         src.sendFeedback(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aBackup created successfully: §e" + name));
+      } catch (Exception e) {
+         src.sendError(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §cFailed to create backup: " + e.getMessage()));
+      }
+   }
+
+   public static void listBackups(net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource src) {
+      try {
+         Path backupDir = BOMBOADDONS_DIR.resolve("backups");
+         if (!Files.exists(backupDir) || !Files.isDirectory(backupDir)) {
+            src.sendFeedback(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §7No backups found."));
+            return;
+         }
+         List<Path> backups = Files.list(backupDir).filter(p -> p.toString().endsWith(".json")).toList();
+         if (backups.isEmpty()) {
+            src.sendFeedback(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §7No backups found."));
+            return;
+         }
+         src.sendFeedback(net.minecraft.network.chat.Component.literal("§9========== §b[BomboAddons Config Backups] §9=========="));
+         for (Path p : backups) {
+            String fname = p.getFileName().toString();
+            long sizeKb = Files.size(p) / 1024L;
+            src.sendFeedback(net.minecraft.network.chat.Component.literal("§7• §e" + fname + " §8(" + sizeKb + " KB) §a[Use: /b backup restore " + fname.replace(".json", "") + "]"));
+         }
+         src.sendFeedback(net.minecraft.network.chat.Component.literal("§9=================================================="));
+      } catch (Exception e) {
+         src.sendError(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §cFailed to list backups: " + e.getMessage()));
+      }
+   }
+
+   public static void restoreBackup(net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource src, String backupName) {
+      try {
+         Path backupDir = BOMBOADDONS_DIR.resolve("backups");
+         String fname = backupName.endsWith(".json") ? backupName : backupName + ".json";
+         Path source = backupDir.resolve(fname);
+         if (!Files.exists(source)) {
+            src.sendError(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §cBackup file not found: " + fname));
+            return;
+         }
+         Files.copy(source, CONFIG_PATH, StandardCopyOption.REPLACE_EXISTING);
+         load();
+         src.sendFeedback(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aConfig restored from backup: §e" + fname + " §7(Backup preserved)"));
+      } catch (Exception e) {
+         src.sendError(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §cFailed to restore backup: " + e.getMessage()));
+      }
+   }
+
+   public static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestBackups(com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
+      try {
+         Path backupDir = BOMBOADDONS_DIR.resolve("backups");
+         if (Files.exists(backupDir) && Files.isDirectory(backupDir)) {
+            Files.list(backupDir).filter(p -> p.toString().endsWith(".json")).forEach(p -> {
+               builder.suggest(p.getFileName().toString().replace(".json", ""));
+            });
+         }
+      } catch (Throwable ignored) {}
+      return builder.buildFuture();
    }
 
    public static boolean isDev() {
@@ -398,11 +484,11 @@ public class BomboConfig {
       public List<BlockedSlotDef> blockedSlots = new ArrayList();
       public String blockedSlotsBypassKey = "LSHIFT";
       public List<CustomTimerDef> customTimers = new ArrayList();
-      public boolean dailyRewardHelper = true;
+      public boolean dailyRewardHelper = false;
       public boolean frozenBlazeWarning = false;
-      public boolean fbWarnSound = true;
-      public boolean fbWarnTitle = true;
-      public boolean fbWarnChat = true;
+      public boolean fbWarnSound = false;
+      public boolean fbWarnTitle = false;
+      public boolean fbWarnChat = false;
       public boolean fbWarnTimerOnScreen = false;
       public boolean fbWarnRequireRod = false;
       public int fbWarnTimerX = 10;
@@ -415,15 +501,15 @@ public class BomboConfig {
       public float cameraDistance = 4.0F;
       public boolean cameraPassThroughWalls = false;
       public boolean disableFrontCamera = false;
-      public boolean dojoMasteryWool = true;
-      public boolean dojoNextWoolTracer = true;
-      public boolean dojoShootHud = true;
-      public boolean dojoShootSound = true;
+      public boolean dojoMasteryWool = false;
+      public boolean dojoNextWoolTracer = false;
+      public boolean dojoShootHud = false;
+      public boolean dojoShootSound = false;
       public boolean dojoDebug = false;
       public int dojoShootHudX = -1;
       public int dojoShootHudY = -1;
       public float dojoShootHudScale = 1.0F;
-      public boolean storagePreview = true;
+      public boolean storagePreview = false;
       public boolean storagePreviewDebug = false;
       public boolean storageOverlay = false;
       public int storageOverlayStoragesPerRow = 3;
@@ -431,8 +517,14 @@ public class BomboConfig {
       public boolean storageOverlayRememberSearch = false;
       public boolean storageOverlayRememberOpened = false;
       public boolean storageOverlayDoNotResetCursor = true;
-      public boolean preventSlotSwapOnGuiKeybind = true;
-      public boolean inventorySlotSwapEnabled = true;
+      public Map<String, String> storageCustomNames = new HashMap<>();
+      public String storageOverlayTheme = "DEFAULT";
+      public boolean storageOverlayTransparent = false;
+      public String storageOverlayCustomColor = "#88000000";
+      public boolean inventoryButtons = false;
+      public String lastModVersion = "";
+      public boolean preventSlotSwapOnGuiKeybind = false;
+      public boolean inventorySlotSwapEnabled = false;
       public String inventorySlotSwapKey = "X";
       public String inventorySlotSwapTrigger = "Shift"; // "Shift", "Ctrl", "Alt", "Hotkey"
       public boolean autoKismet = false;
@@ -441,8 +533,8 @@ public class BomboConfig {
       public boolean debugReconnect = false;
       public boolean hypixelIspFix = true;
       public String hypixelBypassIp = "mc.hypixel.net";
-      public boolean autoRejoinSkyblock = true;
-      public boolean autoRejoinHud = true;
+      public boolean autoRejoinSkyblock = false;
+      public boolean autoRejoinHud = false;
       public boolean autoHitman = false;
       public int autoHitmanIntervalMinutes = 5;
       public String updateChannel = "Betas & Full"; // "Betas & Full" or "Full Only"
@@ -453,14 +545,14 @@ public class BomboConfig {
       public int autoRejoinHudX = 10;
       public int autoRejoinHudY = 150;
       public float autoRejoinHudScale = 1.0F;
-      public boolean itemValueBreakdownHud = true;
+      public boolean itemValueBreakdownHud = false;
       public int itemValueBreakdownHudX = -1;
       public int itemValueBreakdownHudY = -1;
       public float itemValueBreakdownHudScale = 1.0F;
       public boolean performanceDebug = false;
       public boolean debugKeys = false;
       public boolean apiKeyDebug = false;
-      public boolean clickableChatCommands = true;
+      public boolean clickableChatCommands = false;
       public boolean sbeCommands = false;
       public boolean leftClickEtherwarp = false;
       public boolean etherwarpBlockOnly = false;

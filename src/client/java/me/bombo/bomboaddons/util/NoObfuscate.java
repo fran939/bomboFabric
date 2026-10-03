@@ -113,7 +113,12 @@ public final class NoObfuscate {
     private static Style clean(Style style, String text, boolean rarityHeader) {
         Style s = style != null ? style : Style.EMPTY;
         if (!s.isObfuscated()) return s;
-        // Unconditionally strip obfuscation so recombobulated characters and hidden text stop shaking
+        String visible = text != null ? text.trim() : "";
+        // If it's a single decorative character (e.g. §ka§r on recombobulator or achievement borders), keep it obfuscated!
+        if (visible.length() <= 1 && !visible.isEmpty()) {
+            return s;
+        }
+        // If it's a word (>= 2 characters), remove obfuscation to reveal the text
         return s.withObfuscated(false);
     }
 

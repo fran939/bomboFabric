@@ -190,7 +190,7 @@ public class InventoryButtonManager {
         }
 
         if (profileButtons.isEmpty()) {
-            profileButtons.put("default", createDefaultButtons());
+            profileButtons.put("default", new ArrayList<>());
             save();
         }
     }
@@ -440,6 +440,7 @@ public class InventoryButtonManager {
     }
 
     public static void renderButtons(GuiGraphicsExtractor g, AbstractContainerScreen<?> screen, int mouseX, int mouseY, int leftPos, int topPos, int imageWidth, int imageHeight) {
+        if (!BomboConfig.get().inventoryButtons) return;
         init();
         List<InventoryButton> buttons = getButtonsForActiveProfile();
         boolean isInventoryScreen = screen instanceof InventoryScreen;
@@ -571,6 +572,7 @@ public class InventoryButtonManager {
     }
 
     public static boolean mouseClicked(AbstractContainerScreen<?> screen, double mouseX, double mouseY, int mouseButton, int leftPos, int topPos, int imageWidth, int imageHeight) {
+        if (!BomboConfig.get().inventoryButtons) return false;
         if (mouseButton != 0 && mouseButton != 1 && mouseButton != 2) return false;
         init();
         List<InventoryButton> buttons = getButtonsForActiveProfile();

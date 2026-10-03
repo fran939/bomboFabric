@@ -130,7 +130,16 @@ public class SpotifyManager {
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(resp.body()).getAsJsonObject();
-                    if (obj.has("trackId") && !obj.get("trackId").isJsonNull()) {
+                    if (obj.has("albumUri") && !obj.get("albumUri").isJsonNull()) {
+                        nativeUri = obj.get("albumUri").getAsString();
+                        if (obj.has("albumUrl") && !obj.get("albumUrl").isJsonNull()) {
+                            webFallback = obj.get("albumUrl").getAsString();
+                        }
+                    } else if (obj.has("albumId") && !obj.get("albumId").isJsonNull()) {
+                        String aid = obj.get("albumId").getAsString();
+                        nativeUri = "spotify:album:" + aid;
+                        webFallback = "https://open.spotify.com/album/" + aid;
+                    } else if (obj.has("trackId") && !obj.get("trackId").isJsonNull()) {
                         String tid = obj.get("trackId").getAsString();
                         nativeUri = "spotify:track:" + tid;
                         webFallback = "https://open.spotify.com/track/" + tid;
@@ -138,6 +147,36 @@ public class SpotifyManager {
                 }
             } catch (Throwable ignored) {}
             openSpotifyUri(nativeUri, webFallback);
+        });
+    }
+
+    public static void openAlbumInSpotify() {
+        openTrackInSpotify();
+    }
+
+    private static volatile long lastReportTime = 0L;
+    private static void reportNowPlayingToServer(String title, String artist, long posMs, long durMs, boolean playing) {
+        long now = System.currentTimeMillis();
+        if (now - lastReportTime < 2000L && title.equals(currentTrack)) {
+            return;
+        }
+        lastReportTime = now;
+        CompletableFuture.runAsync(() -> {
+            try {
+                com.google.gson.JsonObject payload = new com.google.gson.JsonObject();
+                payload.addProperty("title", title);
+                payload.addProperty("artist", artist);
+                payload.addProperty("progressMs", posMs);
+                payload.addProperty("durationMs", durMs);
+                payload.addProperty("isPlaying", playing);
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                        .uri(URI.create("https://api.bombo.dpdns.org/api/spotify/now-playing"))
+                        .header("Content-Type", "application/json")
+                        .timeout(Duration.ofSeconds(2))
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
+                        .build();
+                java.net.http.HttpClient.newHttpClient().sendAsync(req, java.net.http.HttpResponse.BodyHandlers.discarding());
+            } catch (Throwable ignored) {}
         });
     }
 
@@ -308,6 +347,7 @@ public class SpotifyManager {
 
                                     // Notify LyricsManager of track update
                                     LyricsManager.updateTrack(title, artist, (int) (posMs / 1000L));
+                                    reportNowPlayingToServer(title, artist, posMs, durMs, nowPlaying);
                                 }
                             } else if (line.equals("NONE")) {
                                 fallbackToWindowInspection();
@@ -439,6 +479,7 @@ public class SpotifyManager {
                         monotonicProgressMs = 0L;
                         lastStateUpdate = System.currentTimeMillis();
                         LyricsManager.updateTrack(track, artist, 0);
+                        reportNowPlayingToServer(track, artist, 0, 0, true);
                     }
                     isPlaying = true;
                 } else {

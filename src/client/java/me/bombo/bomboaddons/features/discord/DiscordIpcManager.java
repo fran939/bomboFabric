@@ -63,6 +63,7 @@ public class DiscordIpcManager {
 
     // Track active voice users: userId -> DiscordVoiceUser
     private static final Map<String, DiscordVoiceUser> voiceUsers = new ConcurrentHashMap<>();
+    private static final Set<String> locallyMutedUsers = ConcurrentHashMap.newKeySet();
 
     public record DiscordVoiceUser(
             String id,
@@ -71,8 +72,66 @@ public class DiscordIpcManager {
             boolean isMuted,
             boolean isDeafened,
             boolean isSpeaking,
-            boolean isScreenSharing
-    ) {}
+            boolean isScreenSharing,
+            boolean isLocallyMuted
+    ) {
+        public DiscordVoiceUser(String id, String username, String displayName, boolean isMuted, boolean isDeafened, boolean isSpeaking, boolean isScreenSharing) {
+            this(id, username, displayName, isMuted, isDeafened, isSpeaking, isScreenSharing, locallyMutedUsers.contains(id));
+        }
+    }
+
+    public static boolean isUserLocallyMuted(String userId) {
+        return userId != null && locallyMutedUsers.contains(userId);
+    }
+
+    public static boolean toggleUserMute(String userId) {
+        if (userId == null || userId.isEmpty()) return false;
+        boolean nowMuted;
+        if (locallyMutedUsers.contains(userId)) {
+            locallyMutedUsers.remove(userId);
+            nowMuted = false;
+        } else {
+            locallyMutedUsers.add(userId);
+            nowMuted = true;
+        }
+
+        // Send RPC voice setting command over pipe if connected
+        CompletableFuture.runAsync(() -> {
+            try {
+                synchronized (PIPE_LOCK) {
+                    RandomAccessFile pipe = currentPipe;
+                    if (pipe != null && connected) {
+                        JsonObject args = new JsonObject();
+                        args.addProperty("user_id", userId);
+                        args.addProperty("mute", nowMuted);
+                        JsonObject rpc = new JsonObject();
+                        rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
+                        rpc.add("args", args);
+                        rpc.addProperty("nonce", UUID.randomUUID().toString());
+                        writePacket(pipe, 1, rpc.toString());
+                    }
+                }
+            } catch (Throwable ignored) {}
+        });
+
+        // Update in-memory user
+        DiscordVoiceUser existing = voiceUsers.get(userId);
+        if (existing != null) {
+            voiceUsers.put(userId, new DiscordVoiceUser(
+                    existing.id(), existing.username(), existing.displayName(),
+                    existing.isMuted(), existing.isDeafened(), existing.isSpeaking(),
+                    existing.isScreenSharing(), nowMuted
+            ));
+        }
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc != null && mc.player != null) {
+            String name = existing != null ? existing.displayName() : userId;
+            mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] " + (nowMuted ? "§cMuted " : "§aUnmuted ") + "§f" + name));
+        }
+
+        return nowMuted;
+    }
 
     public static boolean isConnected() {
         return connected;
@@ -319,6 +378,12 @@ public class DiscordIpcManager {
     private static long lastBotFetchTime = 0L;
     private static final Pattern INBOUND_USER_PATTERN = Pattern.compile("Inbound audio delay stats for user:\\s*(\\d{15,20})");
 
+    public static String getMyUserId() {
+        return myUserId;
+    }
+
+    private static final Pattern LINE_TIME_PATTERN = Pattern.compile("^\\[(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?)\\]");
+
     private static void fetchMissingBotUsersAsync(Set<String> missingIds) {
         long now = System.currentTimeMillis();
         if (now - lastBotFetchTime < 3000L || missingIds.isEmpty()) return;
@@ -336,14 +401,24 @@ public class DiscordIpcManager {
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
-                    for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+                    JsonObject usersObj = root.has("users") && root.get("users").isJsonObject() ? root.getAsJsonObject("users") : root;
+                    for (Map.Entry<String, JsonElement> entry : usersObj.entrySet()) {
                         if (entry.getValue().isJsonObject()) {
                             JsonObject uObj = entry.getValue().getAsJsonObject();
                             String uId = entry.getKey();
-                            String uName = uObj.has("username") ? uObj.get("username").getAsString() : "User";
-                            String dName = uObj.has("displayName") ? uObj.get("displayName").getAsString() : uName;
+                            String uName = uObj.has("username") && !uObj.get("username").isJsonNull() ? uObj.get("username").getAsString() : "User";
+                            String dName = uObj.has("displayName") && !uObj.get("displayName").isJsonNull() ? uObj.get("displayName").getAsString() :
+                                    (uObj.has("globalName") && !uObj.get("globalName").isJsonNull() ? uObj.get("globalName").getAsString() : uName);
                             String av = uObj.has("avatar") && !uObj.get("avatar").isJsonNull() ? uObj.get("avatar").getAsString() : null;
                             BOT_USER_CACHE.put(uId, new DiscordBotUserInfo(uId, uName, dName, av));
+
+                            DiscordVoiceUser existing = voiceUsers.get(uId);
+                            if (existing != null) {
+                                voiceUsers.put(uId, new DiscordVoiceUser(
+                                        uId, uName, dName, existing.isMuted(), existing.isDeafened(),
+                                        existing.isSpeaking(), existing.isScreenSharing(), existing.isLocallyMuted()
+                                ));
+                            }
                         }
                     }
                 }
@@ -408,8 +483,11 @@ public class DiscordIpcManager {
                 }
             }
 
-            // 2. Scan WebRTC logs (both discord-webrtc_0 AND discord-webrtc_1) for active inbound streams
+            // 2. Scan WebRTC logs (both discord-webrtc_0 AND discord-webrtc_1) for active inbound streams with timestamp tracking
             Set<String> webrtcUserIds = new LinkedHashSet<>();
+            Map<String, Long> userLastSeenMap = new HashMap<>();
+            long maxLogTimestamp = 0L;
+
             File webrtc0 = new File(appData, "discord/logs/discord-webrtc_0");
             File webrtc1 = new File(appData, "discord/logs/discord-webrtc_1");
             File[] webrtcFiles = new File[]{webrtc0, webrtc1};
@@ -426,12 +504,48 @@ public class DiscordIpcManager {
                         wraf.readFully(wbuf);
                     }
                     String wContent = new String(wbuf, StandardCharsets.UTF_8);
-                    Matcher m = INBOUND_USER_PATTERN.matcher(wContent);
-                    while (m.find()) {
-                        String uid = m.group(1);
-                        if (!uid.equals(myUserId)) {
-                            webrtcUserIds.add(uid);
+                    String[] wLines = wContent.split("\r?\n");
+
+                    for (String wLine : wLines) {
+                        Matcher m = INBOUND_USER_PATTERN.matcher(wLine);
+                        if (m.find()) {
+                            String uid = m.group(1);
+                            if (!uid.equals(myUserId)) {
+                                long lineTime = 0L;
+                                Matcher tMatcher = LINE_TIME_PATTERN.matcher(wLine);
+                                if (tMatcher.find()) {
+                                    try {
+                                        String tStr = tMatcher.group(1);
+                                        // Parse local date-time string
+                                        String[] parts = tStr.split("[ .]");
+                                        if (parts.length >= 2) {
+                                            String[] hm = parts[1].split(":");
+                                            long h = Long.parseLong(hm[0]);
+                                            long min = Long.parseLong(hm[1]);
+                                            long s = Long.parseLong(hm[2]);
+                                            long ms = parts.length > 2 ? Long.parseLong(parts[2]) : 0;
+                                            lineTime = h * 3600_000L + min * 60_000L + s * 1000L + ms;
+                                        }
+                                    } catch (Throwable ignored) {}
+                                }
+                                if (lineTime > 0) {
+                                    maxLogTimestamp = Math.max(maxLogTimestamp, lineTime);
+                                    userLastSeenMap.put(uid, lineTime);
+                                } else {
+                                    webrtcUserIds.add(uid);
+                                }
+                            }
                         }
+                    }
+                }
+            }
+
+            if (maxLogTimestamp > 0) {
+                for (Map.Entry<String, Long> entry : userLastSeenMap.entrySet()) {
+                    // Only include users whose audio stats were received within 25 seconds of the latest log activity
+                    long diff = maxLogTimestamp - entry.getValue();
+                    if (diff >= 0 && diff <= 25000L) {
+                        webrtcUserIds.add(entry.getKey());
                     }
                 }
             }
@@ -483,8 +597,8 @@ public class DiscordIpcManager {
                         voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive));
                     }
 
-                    // Remove placeholder member_X entries
-                    voiceUsers.keySet().removeIf(k -> k.startsWith("member_"));
+                    // Remove users who have disconnected from the call
+                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !webrtcUserIds.contains(k));
                 } else if (voiceUsers.isEmpty() || voiceUsers.size() < memberCount) {
                     voiceUsers.clear();
                     String name = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
@@ -711,7 +825,7 @@ public class DiscordIpcManager {
         feedback.accept(Component.literal("§7Connected: " + (connected ? "§aYes (User: " + myDiscordUsername + ")" : "§cNo")));
         feedback.accept(Component.literal("§7Active Pipe: §f" + activePipeName));
         feedback.accept(Component.literal("§7Last Handshake: §e" + lastHandshakeStatus));
-        feedback.accept(Component.literal("§7In Voice: " + (inVoice ? "§aYes (#" + currentChannelName + ", ID: " + currentChannelId + ")" : "§cNo")));
+        feedback.accept(Component.literal("§7In Voice: " + (inVoice ? "§aYes (Channel ID: " + (currentChannelId.isEmpty() ? "Unknown" : currentChannelId) + ", Name: #" + currentChannelName + ")" : "§cNo")));
         feedback.accept(Component.literal("§7Local Log Reader: §e" + logReaderStatus));
         feedback.accept(Component.literal("§7Active Members: §b" + voiceUsers.size() + " in call"));
         feedback.accept(Component.literal("§7Last Error: " + (lastError.equals("None") ? "§aNone" : "§c" + lastError)));
@@ -725,10 +839,11 @@ public class DiscordIpcManager {
         if (!voiceUsers.isEmpty()) {
             feedback.accept(Component.literal("§6-- Call Members --"));
             for (DiscordVoiceUser u : voiceUsers.values()) {
-                feedback.accept(Component.literal("  §7• §f" + u.displayName() + " (§e" + u.username() + "§7) - "
+                String muteStatus = u.isLocallyMuted() ? "§c[MUTED] " : (u.isMuted() ? "§8[Muted] " : "");
+                feedback.accept(Component.literal("  §7• §f" + u.displayName() + " (§e" + u.username() + "§7) [ID: §b" + u.id() + "§7] - "
                         + (u.isSpeaking() ? "§aSpeaking " : "§7Silent ")
                         + (u.isScreenSharing() ? "§c[LIVE] " : "")
-                        + (u.isMuted() ? "§8[Muted] " : "")
+                        + muteStatus
                         + (u.isDeafened() ? "§8[Deafened]" : "")));
             }
         }

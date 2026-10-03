@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.67` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.68` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,21 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.67`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.68`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.68 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Dynamic Sizing & Account/Profile Isolation (`BackpackPreview`, `SkyblockUtils`):** Captured `Profile ID: <uuid>` on lobby swaps in `SkyblockUtils.java` and isolated disk storage paths to `<player_uuid>/<profile_id>/`, preventing inventory and backpack data from leaking across alternate accounts or cooperative profiles. Accurately parsed container item counts and lore capacity in `BackpackPreview.java`, rendering 1-row Ender Chests (9x1) and compact backpacks without empty black void rows.
+> 2. **Storage Visual Renaming & Custom Themes (`StorageOverlayScreen`, `RenameStorageScreen`):** Added `RenameStorageScreen.java` modal allowing players to click any storage category header (e.g. "Ender Chest 1") and assign a custom visual label (e.g. "Mining Gear"). Added Default, Dark, Light, and Transparent overlay themes with customizable ARGB background tint in `/b` configuration. Preserved search queries and highlights across storage switches.
+> 3. **Discord Voice HUD Stale Pruning & User Muting (`DiscordIpcManager`, `DiscordVoiceHud`):** Pruned WebRTC call members inactive for >25s to eliminate ghost participants, added in-HUD user muting via Discord RPC `SET_USER_VOICE_SETTINGS`, and resolved full display names/usernames from `/api/bot/users`. Added full IDs to `/b discord debug`.
+> 4. **Live Synced Lyrics Web Player & Backend Synchronization (`/lyrics`, `bomboapi`, `SpotifyManager`):** Deployed live synchronized lyrics web player at `https://bombo.dpdns.org/lyrics` featuring Spotify dark aesthetics, glassmorphic now-playing cards, and real-time word-by-word active glow animations. Added non-blocking now-playing state dispatch in `SpotifyManager.java` reporting song titles, artists, and millisecond playback timestamps to `/api/spotify/now-playing`.
+> 5. **Spotify Direct Album Resolution (`SpotifyManager`, `bomboapi`):** Enhanced `/api/spotify/resolve` and `SpotifyManager.java` to resolve Spotify album URIs (`spotify:album:<id>`) via MusicBrainz release relations, launching albums directly without web search fallbacks.
+> 6. **Screenshare 1440p Framebuffer Pipeline & Hardware Streaming (`ScreenshareManager`, `screenshare.html`):** Switched screen capture in `ScreenshareManager.java` from `TYPE_INT_ARGB` to native `TYPE_INT_RGB`, eliminating expensive per-frame color space conversions for 1440p displays. Connected `screenshare.html` directly to `/api/screenshare/stream/:user` for smooth 60 FPS playback.
+> 7. **Config Backups, Safety Defaults & Brigadier Registration (`BomboConfig`, `BomboaddonsClient`, `CommandMixin`):** Added automatic backup snapshot creation on mod version upgrade under `.minecraft/config/bomboaddons/backups/`. Registered `/b backup create [name]`, `/b backup list`, `/b backup check`, and `/b backup restore <name>` with tab completion without deleting backup files. Ensured macro hotkeys, auto sequences, and inventory buttons are disabled by default on clean installations. Registered `/buttons`, `/buttons move`, `/b buttons` into Brigadier.
+> 8. **Single-Character Obfuscate Exception (`NoObfuscate`):** Maintained `§k` obfuscation for single characters (recombobulator tags `&ka>>`) while removing obfuscation from multi-character chat spam.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.67 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Render Thread Safety (`ClientPacketListenerMixin`):** Wrapped container menu assignment, `StorageOverlayScreenHandler` instantiation, and `mc.setScreen` in `mc.execute(() -> { ... })`. Completely resolves `IllegalStateException: Rendersystem called from wrong thread ("Netty NIO IO #2")` crash when opening `/st` or container menus.

@@ -242,15 +242,7 @@ public class AutoSequenceManager {
             e.printStackTrace();
         }
 
-        // Add default demonstration sequence if empty
-        if (sequences.isEmpty()) {
-            AutoSequence sample = new AutoSequence("Plushie Transfer Macro", "TAB");
-            sample.actions.add(AutoAction.clickSlot(-1, "marketable plushie", "LEFT", 250));
-            sample.actions.add(AutoAction.closeGui(200));
-            sample.actions.add(AutoAction.clickWorld(true, 300));
-            sequences.add(sample);
-            save();
-        }
+        // Sequences start empty by default so fresh installs don't have active macros or keybinds
     }
 
     public static synchronized void save() {
