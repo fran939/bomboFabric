@@ -388,9 +388,14 @@ public class BackpackPreview {
         }
     }
 
+    public static boolean hasAnyStorage() {
+        for (int i = 0; i < STORAGE_SIZE; i++) {
+            if (storages[i] != null) return true;
+        }
+        return false;
+    }
+
     private static void seedFromStorageTrackerIfEmpty() {
-        // Only seed from StorageTracker if no disk save directory was available
-        if (saveDir != null) return;
         for (int i = 0; i < STORAGE_SIZE; i++) {
             if (storages[i] == null) {
                 seedStorageFromStorageTracker(i);

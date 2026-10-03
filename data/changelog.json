@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.69",
+    "date": "2026-10-03",
+    "changes": [
+      "SkyHanni Enchantment Color Compatibility: Mutated tooltip components in-place in ItemStackMixin without canceling the callback info, preserving Fabric ItemTooltipCallback and restoring SkyHanni high-tier enchantment recoloring (T6, T7, TX)",
+      "Storage Overlay Discovery Deadlock Resolution: Allowed native /storage GUI to open when no storages are discovered so backpacks seed automatically, and removed Netty thread packet blocking in ClientPacketListenerMixin",
+      "Discord Voice HUD Member Pruning & Muting: Restricted WebRTC log analysis to newest log file with a 15-second activity window to purge left members, and added rpc.voice.write OAuth scope for working mute commands",
+      "Live Synced Lyrics Web Search & Simulated Playback: Added interactive title/artist search bar, presets, scrub bar, speed settings, and simulated word-by-word karaoke playback at https://bombo.dpdns.org/lyrics",
+      "Screenshare Fast Downsampled Pipeline: Direct integer pixel downsampling into 1080p/720p (<2ms), dropping capture latency from 135ms to <15ms, and added instant single-frame preloading in screenshare.html",
+      "Config Backup Filenames & Lore Settings: Formatted backup snapshots with readable mod version and timestamp (config_backup_v<ver>_<date>.json), and added showRabbitRarity / showDungeonQuality settings"
+    ]
+  },
+  {
     "version": "26.2.28.68",
     "date": "2026-10-03",
     "changes": [

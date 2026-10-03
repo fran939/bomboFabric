@@ -154,9 +154,9 @@ public class SupercraftHelper {
       return comp;
    }
 
-   public static List<Component> appendTooltip(ItemStack stack, List<Component> lines) {
+   public static void appendTooltipInPlace(ItemStack stack, List<Component> lines) {
       if (!BomboConfig.get().loreAdditionsEnabled || stack == null || stack.isEmpty() || lines == null) {
-         return mutableCopy(lines);
+         return;
       }
       try {
          BomboConfig.Settings s = BomboConfig.get();
@@ -179,74 +179,74 @@ public class SupercraftHelper {
                int maxCrafts = calculateMaxCrafts(screen, stack);
                String pos = s.getLorePos("supercraft", "BOTTOM");
                int order = s.getLoreOrder("supercraft", 2);
-               additions.add(new LoreAddition("supercraft", Component.literal("§bMax craftable: §a" + maxCrafts), pos, order));
-               additions.add(new LoreAddition("supercraft", Component.literal("§eHold Ctrl + Click to copy " + maxCrafts), pos, order));
+               if (maxCrafts > 0) {
+                  additions.add(new LoreAddition("supercraft", Component.literal("§aHold Ctrl + Click to copy " + maxCrafts + " (Max Crafts)"), pos, order));
+               } else {
+                  additions.add(new LoreAddition("supercraft", Component.literal("§cHold Ctrl + Click: Not enough materials for 1 craft"), pos, order));
+               }
             }
          }
 
-         // 3. Starts In Absolute Time Tooltip
-         if (s.startsInAbsoluteTime) {
-            ItemLore lore = stack.get(DataComponents.LORE);
-            if (lore != null) {
-               for (Component line : lore.lines()) {
-                  String clean = line.getString().replaceAll("(?i)§[0-9a-fk-or]", "");
-                  Matcher m = STARTS_IN_PATTERN.matcher(clean);
-                  if (m.find()) {
-                     long days = m.group(1) != null ? Long.parseLong(m.group(1)) : 0L;
-                     long hours = m.group(2) != null ? Long.parseLong(m.group(2)) : 0L;
-                     long mins = m.group(3) != null ? Long.parseLong(m.group(3)) : 0L;
-                     long secs = m.group(4) != null ? Long.parseLong(m.group(4)) : 0L;
-                     long totalMillis = (days * 86400L + hours * 3600L + mins * 60L + secs) * 1000L;
-                     if (totalMillis > 0L) {
-                        long targetEpoch = System.currentTimeMillis() + totalMillis;
-                        Locale loc = Locale.getDefault();
-                        SimpleDateFormat dayFmt = new SimpleDateFormat("EEEE", loc);
-                        String dayName = dayFmt.format(new Date(targetEpoch));
-                        java.text.DateFormat dateFmt = java.text.DateFormat.getDateInstance(java.text.DateFormat.SHORT, loc);
-                        String dateStr = dateFmt.format(new Date(targetEpoch));
-                        java.text.DateFormat timeFmt = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT, loc);
-                        String timeStr = timeFmt.format(new Date(targetEpoch));
-                        String formatted = dayName + " " + dateStr + " " + timeStr;
-                        additions.add(new LoreAddition("startsIn", Component.literal("§7Starts at: §e" + formatted), s.getLorePos("startsIn", "BOTTOM"), s.getLoreOrder("startsIn", 3)));
+         // Hypixel ExtraAttributes tags
+         net.minecraft.world.item.component.CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+         net.minecraft.nbt.CompoundTag tag = customData != null ? customData.copyTag() : null;
+         net.minecraft.nbt.CompoundTag ea = tag != null && tag.contains("ExtraAttributes") ? tag.getCompound("ExtraAttributes").orElse(null) : null;
+
+         // 3. Chocolate Factory Rabbit Rarity
+         if (s.showRabbitRarity && ea != null) {
+            String rabbitId = ea.getString("rabbit").orElse(tag != null ? tag.getString("rabbit").orElse("") : "");
+            if (!rabbitId.isEmpty()) {
+               String rName = rabbitId.replace("_", " ").toLowerCase(Locale.ROOT);
+               String rRarity = "COMMON";
+               String colorCode = "§f";
+
+               if (rName.contains("mythic") || rName.contains("divine")) {
+                  rRarity = "MYTHIC";
+                  colorCode = "§d§l";
+               } else if (rName.contains("legendary")) {
+                  rRarity = "LEGENDARY";
+                  colorCode = "§6§l";
+               } else if (rName.contains("epic")) {
+                  rRarity = "EPIC";
+                  colorCode = "§5§l";
+               } else if (rName.contains("rare")) {
+                  rRarity = "RARE";
+                  colorCode = "§9§l";
+               } else if (rName.contains("uncommon")) {
+                  rRarity = "UNCOMMON";
+                  colorCode = "§a§l";
+               }
+
+               additions.add(new LoreAddition("rabbitRarity", Component.literal("§7Rabbit: " + colorCode + rRarity), s.getLorePos("rabbitRarity", "BOTTOM"), s.getLoreOrder("rabbitRarity", 3)));
+            }
+         }
+
+         // 4. Dungeon Item Quality / Drop Floor
+         if (s.showDungeonQuality && ea != null) {
+            int baseQuality = ea.getInt("baseStatBoostPercentage").orElse(tag != null ? tag.getInt("baseStatBoostPercentage").orElse(-1) : -1);
+            int itemTier = ea.getInt("item_tier").orElse(tag != null ? tag.getInt("item_tier").orElse(-1) : -1);
+            int quality = baseQuality >= 0 ? baseQuality : (itemTier >= 0 ? itemTier : -1);
+
+            if (quality >= 0) {
+               int reqNum = 0;
+               ItemLore loreComp = stack.get(DataComponents.LORE);
+               if (loreComp != null) {
+                  for (Component l : loreComp.lines()) {
+                     String sClean = l.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+                     if (sClean.startsWith("Requires Catacombs Floor") || sClean.startsWith("Requires Master Mode Catacombs Floor")) {
+                        String numStr = sClean.replaceAll("[^0-9]", "");
+                        if (!numStr.isEmpty()) {
+                           try {
+                              reqNum = Integer.parseInt(numStr);
+                           } catch (NumberFormatException ignored) {}
+                        }
                         break;
                      }
                   }
                }
-            }
-         }
 
-         net.minecraft.world.item.component.CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-         net.minecraft.nbt.CompoundTag tag = customData != null ? customData.copyTag() : null;
-         net.minecraft.nbt.CompoundTag ea = tag != null ? tag.getCompound("ExtraAttributes").orElse(tag) : null;
-
-         // 4. Dungeon Item Quality
-         if (s.showDungeonQuality && ea != null) {
-            int quality = 0;
-            if (ea.getInt("baseStatBoostPercentage").isPresent()) {
-               quality = ea.getInt("baseStatBoostPercentage").get();
-            } else if (tag != null && tag.getInt("baseStatBoostPercentage").isPresent()) {
-               quality = tag.getInt("baseStatBoostPercentage").get();
-            }
-
-            if (quality > 0) {
-               String skillReq = ea.getString("dungeon_skill_req").orElse(tag != null ? tag.getString("dungeon_skill_req").orElse("") : "");
                String floor = null;
-               int reqNum = -1;
-               if (!skillReq.isEmpty()) {
-                  String numStr = skillReq.replaceAll("[^0-9]", "");
-                  if (!numStr.isEmpty()) {
-                     try {
-                        reqNum = Integer.parseInt(numStr);
-                     } catch (Exception ignored) {}
-                  }
-               }
-               if (reqNum >= 36) floor = "M7";
-               else if (reqNum >= 34) floor = "M6";
-               else if (reqNum >= 32) floor = "M5";
-               else if (reqNum >= 30) floor = "M4";
-               else if (reqNum >= 28) floor = "M3";
-               else if (reqNum >= 26) floor = "M2";
-               else if (reqNum >= 24) floor = "M1/F7";
+               if (reqNum >= 24) floor = "F7";
                else if (reqNum >= 19) floor = "F6";
                else if (reqNum >= 14) floor = "F5";
                else if (reqNum >= 9) floor = "F4";
@@ -314,15 +314,12 @@ public class SupercraftHelper {
             }
          }
 
-         return applyAdditionsToLines(lines, additions);
-      } catch (Throwable ignored) {
-         return mutableCopy(lines);
-      }
+         applyAdditionsInPlace(lines, additions);
+      } catch (Throwable ignored) {}
    }
 
-   public static List<Component> applyAdditionsToLines(List<Component> lines, List<LoreAddition> additions) {
-      List<Component> mutableLines = mutableCopy(lines);
-      if (additions == null || additions.isEmpty()) return mutableLines;
+   public static void applyAdditionsInPlace(List<Component> lines, List<LoreAddition> additions) {
+      if (lines == null || additions == null || additions.isEmpty()) return;
       try {
          List<LoreAddition> top = new ArrayList<>();
          List<LoreAddition> bottom = new ArrayList<>();
@@ -338,15 +335,26 @@ public class SupercraftHelper {
          top.sort(Comparator.comparingInt(a -> a.order));
          bottom.sort(Comparator.comparingInt(a -> a.order));
 
-         int insertIndex = Math.min(1, mutableLines.size());
+         int insertIndex = Math.min(1, lines.size());
          for (LoreAddition a : top) {
-            mutableLines.add(insertIndex++, a.line);
+            lines.add(insertIndex++, a.line);
          }
 
          for (LoreAddition a : bottom) {
-            mutableLines.add(a.line);
+            lines.add(a.line);
          }
       } catch (Throwable ignored) {}
+   }
+
+   public static List<Component> appendTooltip(ItemStack stack, List<Component> lines) {
+      List<Component> mutable = mutableCopy(lines);
+      appendTooltipInPlace(stack, mutable);
+      return mutable;
+   }
+
+   public static List<Component> applyAdditionsToLines(List<Component> lines, List<LoreAddition> additions) {
+      List<Component> mutableLines = mutableCopy(lines);
+      applyAdditionsInPlace(mutableLines, additions);
       return mutableLines;
    }
 

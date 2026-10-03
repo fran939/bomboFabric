@@ -115,10 +115,16 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		if (rawTitle == null) return false;
 		String title = net.minecraft.ChatFormatting.stripFormatting(rawTitle).trim().toLowerCase(Locale.ROOT);
 		openStorage = BackpackPreview.getStorageIndexFromTitle(title);
-		boolean isStorageMenu = title.contains("storage") || title.contains("almacenamiento") || title.contains("ender chest") || title.contains("cofre de ender") || title.contains("backpack") || title.contains("mochila");
+		boolean isMainStorageMenu = title.equals("storage") || title.startsWith("storage ") || title.equals("almacenamiento") || title.startsWith("almacenamiento ");
+		boolean isStorageMenu = isMainStorageMenu || title.contains("ender chest") || title.contains("cofre de ender") || title.contains("backpack") || title.contains("mochila");
 		if (disableOnNextLoad) {
 			disableOnNextLoad = false;
 			me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] StorageOverlayScreen.enabled: disableOnNextLoad was true! Bypassing overlay once.");
+			return false;
+		}
+		// If main /storage menu is opened and no storages are loaded yet, let vanilla open so initializeStorage can discover them!
+		if (isMainStorageMenu && !BackpackPreview.hasAnyStorage()) {
+			me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] No storages discovered yet! Bypassing overlay on /storage to discover backpacks.");
 			return false;
 		}
 		boolean result = BomboConfig.get().storageOverlay && (isStorageMenu || openStorage != -1);
@@ -404,6 +410,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		}
 
 		private void reload(Button button) {
+			disableOnNextLoad = true;
 			MessageScheduler.INSTANCE.sendMessageAfterCooldown("/storage", true);
 		}
 

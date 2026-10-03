@@ -65,10 +65,8 @@ public abstract class ItemStackMixin {
          cir.setReturnValue(java.util.Collections.emptyList());
          return;
       }
-      List<Component> originalLines = (List)cir.getReturnValue();
-      if (originalLines == null) return;
-      List<Component> lines = new java.util.ArrayList<>(originalLines);
-      cir.setReturnValue(lines);
+      List<Component> lines = (List)cir.getReturnValue();
+      if (lines == null) return;
 
       try {
          String uuid = me.bombo.bomboaddons.ItemCustomizeScreen.extractItemUuid(currentStack);
@@ -100,8 +98,7 @@ public abstract class ItemStackMixin {
       } catch (Throwable ignored) {}
 
       try {
-         lines = me.bombo.bomboaddons.features.SupercraftHelper.appendTooltip(currentStack, lines);
-         cir.setReturnValue(lines);
+         me.bombo.bomboaddons.features.SupercraftHelper.appendTooltipInPlace(currentStack, lines);
       } catch (Throwable ignored) {}
 
       BomboConfig.Settings s = BomboConfig.get();
@@ -395,8 +392,7 @@ public abstract class ItemStackMixin {
                   priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("gardenBlocked", Component.literal("§cBlocked by Garden Movement"), "BOTTOM", 999));
                }
 
-               lines = me.bombo.bomboaddons.features.SupercraftHelper.applyAdditionsToLines(lines, priceAdditions);
-               cir.setReturnValue(lines);
+               me.bombo.bomboaddons.features.SupercraftHelper.applyAdditionsInPlace(lines, priceAdditions);
             } catch (Throwable ignored) {}
          }
       }

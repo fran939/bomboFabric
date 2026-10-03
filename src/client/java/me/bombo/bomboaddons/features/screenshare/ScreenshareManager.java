@@ -162,17 +162,17 @@ public class ScreenshareManager {
                     targetW = 2560;
                     targetH = 1440;
                     targetDelayMs = q.contains("120fps") ? 8L : 16L;
-                    quality = 0.72f;
+                    quality = 0.65f;
                 } else if (q.contains("1080p")) {
                     targetW = 1920;
                     targetH = 1080;
                     targetDelayMs = q.contains("60fps") ? 16L : 33L;
-                    quality = 0.75f;
+                    quality = 0.68f;
                 } else {
                     targetW = 1280;
                     targetH = 720;
                     targetDelayMs = q.contains("60fps") ? 16L : 33L;
-                    quality = 0.70f;
+                    quality = 0.65f;
                 }
 
                 currentTargetW = targetW;
@@ -306,12 +306,28 @@ public class ScreenshareManager {
                         int[] pixels = nativeImg.makePixelArray();
                         nativeImg.close();
 
-                        // Compress in asynchronous background task to avoid render thread stalls
+                        // Fast async downsample directly to target dimensions
                         CompletableFuture.runAsync(() -> {
                             try {
-                                BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-                                bi.setRGB(0, 0, w, h, pixels, 0, w);
-                                drawCursorIfVisible(mc, bi, w, h);
+                                BufferedImage bi;
+                                if (w == targetW && h == targetH) {
+                                    bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+                                    bi.setRGB(0, 0, w, h, pixels, 0, w);
+                                    drawCursorIfVisible(mc, bi, w, h);
+                                } else {
+                                    int[] downsampled = new int[targetW * targetH];
+                                    for (int y = 0; y < targetH; y++) {
+                                        int srcY = (y * h) / targetH;
+                                        int srcRow = srcY * w;
+                                        int dstRow = y * targetW;
+                                        for (int x = 0; x < targetW; x++) {
+                                            downsampled[dstRow + x] = pixels[srcRow + (x * w) / targetW];
+                                        }
+                                    }
+                                    bi = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_RGB);
+                                    bi.setRGB(0, 0, targetW, targetH, downsampled, 0, targetW);
+                                    drawCursorIfVisible(mc, bi, targetW, targetH);
+                                }
                                 byte[] jpeg = compressScaledJpeg(bi, targetW, targetH, quality);
                                 future.complete(jpeg);
                             } catch (Throwable t) {

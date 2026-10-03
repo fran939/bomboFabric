@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.68` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.69` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.68`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.69`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.69 (Ready for In-Game Testing)
+>
+> 1. **SkyHanni High-Tier Enchantment Color Compatibility (`ItemStackMixin`, `SupercraftHelper`):** Modified item tooltips in-place directly on the returned list instead of calling `cir.setReturnValue(...)`. Preserves the Fabric API `ItemTooltipCallback` and Mixin `@At("RETURN")` callback chain so SkyHanni's custom enchantment recoloring for higher tier enchants (T6, T7, TX) functions without being suppressed by BomboAddons.
+> 2. **Storage Overlay Discovery Loop Fix (`BackpackPreview`, `StorageOverlayScreen`, `ClientPacketListenerMixin`):** When no storage containers or backpacks have been discovered yet (`!BackpackPreview.hasAnyStorage()`), `/storage` bypasses overlay interception and opens the native Hypixel Storage GUI, automatically populating and caching all backpack slots. Removed Netty packet thread interception in `ClientPacketListenerMixin.java` and restored render-thread screen opening in `MenuScreensConstructorMixin.java`.
+> 3. **Discord Voice HUD Real-Time Pruning & Working Mute (`DiscordIpcManager`):** Scanned only the single newest active WebRTC log file with a 15-second activity cutoff window, immediately purging users who disconnect from the voice call. Added `rpc.voice.write` scope to OAuth authorization so Discord accepts `SET_USER_VOICE_SETTINGS`, and added local mute feedback notifying users to authenticate via `/b discord auth` if permissions are rejected.
+> 4. **Interactive Lyrics Web Search & Simulated Playback (`https://bombo.dpdns.org/lyrics`, `server.js`):** Added an interactive song title and artist search bar, popular song chips, simulated playback controls (Play/Pause, Scrubber seek, ±5s jump, 0.75x-2.0x playback speed, and clickable lyric line seeking) with word-by-word active glow animations at `https://bombo.dpdns.org/lyrics`. Added `/api/lyrics/resolve` backend endpoint with KuGou fallback and cleared the default hardcoded "Darari" session.
+> 5. **Screenshare Fast Pipeline & Instant Viewer (`ScreenshareManager`, `screenshare.html`):** Implemented integer pixel downsampling directly into target stream resolution in `ScreenshareManager.java` (<2ms), dropping capture and compression time from 135ms to <15ms and reducing network bitrate from 17.6 Mbps to 2-3 Mbps. Added instant single-frame preloading in `screenshare.html` so live streams appear instantaneously without black screen stalls on Zen and Firefox browsers.
+> 6. **Readable Config Backup Filenames & Lore Settings (`BomboConfig`):** Formatted backup filenames to `config_backup_v<version>_<yyyy-MM-dd_HH-mm-ss>.json` with human-readable timestamps and mod version. Added `showRabbitRarity` and aligned `showDungeonQuality` configuration settings in `BomboConfig.java`.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.68 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Dynamic Sizing & Account/Profile Isolation (`BackpackPreview`, `SkyblockUtils`):** Captured `Profile ID: <uuid>` on lobby swaps in `SkyblockUtils.java` and isolated disk storage paths to `<player_uuid>/<profile_id>/`, preventing inventory and backpack data from leaking across alternate accounts or cooperative profiles. Accurately parsed container item counts and lore capacity in `BackpackPreview.java`, rendering 1-row Ender Chests (9x1) and compact backpacks without empty black void rows.

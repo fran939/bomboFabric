@@ -1,5 +1,32 @@
 # BomboAddons Changelog
  
+## [26.2.28.69] - 2026-10-03 (Beta)
+
+### SkyHanni Enchantment Color Compatibility
+- **In-Place Tooltip Modification:** Replaced `cir.setReturnValue(lines)` and full list replacements in `ItemStackMixin.java` and `SupercraftHelper.java` with in-place list modification (`appendTooltipInPlace`). This prevents `cir.cancel()` from terminating the Mixin callback chain, allowing Fabric API's `ItemTooltipCallback` and SkyHanni's high-tier enchantment recoloring (T6, T7, TX) to execute uninhibited.
+
+### Storage Overlay Discovery Deadlock Resolution
+- **Unseeded Storage Fallback:** When no storages have been discovered yet (`!BackpackPreview.hasAnyStorage()`), `/storage` no longer intercepts into an empty overlay. It opens the native Hypixel Storage GUI to automatically scan, seed, and populate all backpack items.
+- **Render Thread Screen Handling:** Removed Netty IO thread packet interception in `ClientPacketListenerMixin.java` and allowed `MenuScreensConstructorMixin.java` to handle screen creation on the render thread synchronously, ensuring slot contents are always populated.
+
+### Discord Voice HUD Member Pruning & Muting
+- **Single Active Log Scan:** Restricted WebRTC scanning in `DiscordIpcManager.java` to the newest log file by file modification time, discarding older rotated files.
+- **15-Second Cutoff Window:** Members not heard within 15 seconds of the latest log timestamp are immediately purged, removing users who left the call from the HUD.
+- **Voice RPC Permissions & Error Nonce:** Added `rpc.voice.write` scope to OAuth authorization so Discord accepts `SET_USER_VOICE_SETTINGS`, and added error handling prompting players to run `/b discord auth` if mute permissions are rejected.
+
+### Live Synced Lyrics Web Search & Simulated Playback
+- **Interactive Search & Presets:** Added a modern search bar (Song Title and Artist) and popular preset chips on `https://bombo.dpdns.org/lyrics`, allowing players to test synced lyrics for any song.
+- **Simulated Karaoke Playback:** Added interactive player controls (Play/Pause, Scrubber seek, ±5s jump, 0.75x - 2.0x playback speed, and clickable lyric line seeking) with word-by-word active glow animations without needing local audio playback.
+- **Backend Lyrics Resolver:** Added `/api/lyrics/resolve` endpoint on `bomboapi` querying LRCLIB and KuGou fallback, and cleared the hardcoded "Darari" default session.
+
+### Screenshare Fast Pipeline & Instant Viewer
+- **Integer Direct Downsampling:** Implemented fast integer pixel downsampling directly into target stream resolution in `ScreenshareManager.java` (<2ms), dropping capture and compression time from 135ms to <15ms and reducing network bitrate from 17.6 Mbps to 2-3 Mbps.
+- **Instant Frame Preload:** Added instant single-frame preloading in `screenshare.html` so live streams appear instantaneously without black screen stalls on Zen and Firefox browsers.
+
+### Config Backup Filenames & Lore Settings
+- **Readable Backup Filenames:** Formatted backup filenames to `config_backup_v<version>_<yyyy-MM-dd_HH-mm-ss>.json` with human-readable timestamps and mod version.
+- **Lore Settings:** Added `showRabbitRarity` and aligned `showDungeonQuality` configuration settings in `BomboConfig.java`.
+
 ## [26.2.28.68] - 2026-10-03 (Beta)
 
 ### Storage Overlay Dynamic Sizing & Account/Profile Isolation

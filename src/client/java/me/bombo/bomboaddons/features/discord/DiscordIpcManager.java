@@ -80,12 +80,23 @@ public class DiscordIpcManager {
         }
     }
 
+    private record PendingMute(String userId, boolean intendedMute) {}
+    private static final Map<String, PendingMute> pendingMutes = new ConcurrentHashMap<>();
+
     public static boolean isUserLocallyMuted(String userId) {
         return userId != null && locallyMutedUsers.contains(userId);
     }
 
     public static boolean toggleUserMute(String userId) {
         if (userId == null || userId.isEmpty()) return false;
+        Minecraft mc = Minecraft.getInstance();
+        if (!connected || currentPipe == null) {
+            if (mc != null && mc.player != null) {
+                mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] §cDiscord Desktop IPC is not connected. Make sure Discord is open on your PC!"));
+            }
+            return false;
+        }
+
         boolean nowMuted;
         if (locallyMutedUsers.contains(userId)) {
             locallyMutedUsers.remove(userId);
@@ -94,6 +105,9 @@ public class DiscordIpcManager {
             locallyMutedUsers.add(userId);
             nowMuted = true;
         }
+
+        String nonce = UUID.randomUUID().toString();
+        pendingMutes.put(nonce, new PendingMute(userId, nowMuted));
 
         // Send RPC voice setting command over pipe if connected
         CompletableFuture.runAsync(() -> {
@@ -107,7 +121,7 @@ public class DiscordIpcManager {
                         JsonObject rpc = new JsonObject();
                         rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
                         rpc.add("args", args);
-                        rpc.addProperty("nonce", UUID.randomUUID().toString());
+                        rpc.addProperty("nonce", nonce);
                         writePacket(pipe, 1, rpc.toString());
                     }
                 }
@@ -124,7 +138,6 @@ public class DiscordIpcManager {
             ));
         }
 
-        Minecraft mc = Minecraft.getInstance();
         if (mc != null && mc.player != null) {
             String name = existing != null ? existing.displayName() : userId;
             mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] " + (nowMuted ? "§cMuted " : "§aUnmuted ") + "§f" + name));
@@ -315,6 +328,7 @@ public class DiscordIpcManager {
         JsonArray scopes = new JsonArray();
         scopes.add("rpc");
         scopes.add("rpc.voice.read");
+        scopes.add("rpc.voice.write");
         authArgs.add("scopes", scopes);
 
         JsonObject authReq = new JsonObject();
@@ -376,7 +390,7 @@ public class DiscordIpcManager {
 
     private static final Map<String, DiscordBotUserInfo> BOT_USER_CACHE = new ConcurrentHashMap<>();
     private static long lastBotFetchTime = 0L;
-    private static final Pattern INBOUND_USER_PATTERN = Pattern.compile("Inbound audio delay stats for user:\\s*(\\d{15,20})");
+    private static final Pattern INBOUND_USER_PATTERN = Pattern.compile("Inbound (?:audio delay )?stats for user:\\s*(\\d{15,20})");
 
     public static String getMyUserId() {
         return myUserId;
@@ -483,74 +497,74 @@ public class DiscordIpcManager {
                 }
             }
 
-            // 2. Scan WebRTC logs (both discord-webrtc_0 AND discord-webrtc_1) for active inbound streams with timestamp tracking
+            // 2. Scan WebRTC logs (only the NEWEST active log file)
             Set<String> webrtcUserIds = new LinkedHashSet<>();
             Map<String, Long> userLastSeenMap = new HashMap<>();
             long maxLogTimestamp = 0L;
 
             File webrtc0 = new File(appData, "discord/logs/discord-webrtc_0");
             File webrtc1 = new File(appData, "discord/logs/discord-webrtc_1");
-            File[] webrtcFiles = new File[]{webrtc0, webrtc1};
-
+            File newestWebrtc = null;
             long newestWebrtcMod = 0L;
-            for (File wf : webrtcFiles) {
-                if (wf.exists() && wf.canRead() && wf.length() > 0) {
-                    newestWebrtcMod = Math.max(newestWebrtcMod, wf.lastModified());
-                    long wlen = wf.length();
-                    int wToRead = (int) Math.min(65536L, wlen);
-                    byte[] wbuf = new byte[wToRead];
-                    try (RandomAccessFile wraf = new RandomAccessFile(wf, "r")) {
-                        wraf.seek(wlen - wToRead);
-                        wraf.readFully(wbuf);
-                    }
-                    String wContent = new String(wbuf, StandardCharsets.UTF_8);
-                    String[] wLines = wContent.split("\r?\n");
+            for (File wf : new File[]{webrtc0, webrtc1}) {
+                if (wf.exists() && wf.canRead() && wf.length() > 0 && wf.lastModified() > newestWebrtcMod) {
+                    newestWebrtcMod = wf.lastModified();
+                    newestWebrtc = wf;
+                }
+            }
 
-                    for (String wLine : wLines) {
-                        Matcher m = INBOUND_USER_PATTERN.matcher(wLine);
-                        if (m.find()) {
-                            String uid = m.group(1);
-                            if (!uid.equals(myUserId)) {
-                                long lineTime = 0L;
-                                Matcher tMatcher = LINE_TIME_PATTERN.matcher(wLine);
-                                if (tMatcher.find()) {
-                                    try {
-                                        String tStr = tMatcher.group(1);
-                                        // Parse local date-time string
-                                        String[] parts = tStr.split("[ .]");
-                                        if (parts.length >= 2) {
-                                            String[] hm = parts[1].split(":");
-                                            long h = Long.parseLong(hm[0]);
-                                            long min = Long.parseLong(hm[1]);
-                                            long s = Long.parseLong(hm[2]);
-                                            long ms = parts.length > 2 ? Long.parseLong(parts[2]) : 0;
-                                            lineTime = h * 3600_000L + min * 60_000L + s * 1000L + ms;
-                                        }
-                                    } catch (Throwable ignored) {}
-                                }
-                                if (lineTime > 0) {
-                                    maxLogTimestamp = Math.max(maxLogTimestamp, lineTime);
-                                    userLastSeenMap.put(uid, lineTime);
-                                } else {
-                                    webrtcUserIds.add(uid);
-                                }
+            boolean hasFreshWebrtc = newestWebrtc != null && (System.currentTimeMillis() - newestWebrtcMod) < 30000L;
+            if (hasFreshWebrtc) {
+                long wlen = newestWebrtc.length();
+                int wToRead = (int) Math.min(65536L, wlen);
+                byte[] wbuf = new byte[wToRead];
+                try (RandomAccessFile wraf = new RandomAccessFile(newestWebrtc, "r")) {
+                    wraf.seek(wlen - wToRead);
+                    wraf.readFully(wbuf);
+                }
+                String wContent = new String(wbuf, StandardCharsets.UTF_8);
+                String[] wLines = wContent.split("\r?\n");
+
+                for (String wLine : wLines) {
+                    Matcher m = INBOUND_USER_PATTERN.matcher(wLine);
+                    if (m.find()) {
+                        String uid = m.group(1);
+                        if (!uid.equals(myUserId)) {
+                            long lineTime = 0L;
+                            Matcher tMatcher = LINE_TIME_PATTERN.matcher(wLine);
+                            if (tMatcher.find()) {
+                                try {
+                                    String tStr = tMatcher.group(1);
+                                    String[] parts = tStr.split("[ .]");
+                                    if (parts.length >= 2) {
+                                        String[] hm = parts[1].split(":");
+                                        long h = Long.parseLong(hm[0]);
+                                        long min = Long.parseLong(hm[1]);
+                                        long s = Long.parseLong(hm[2]);
+                                        long ms = parts.length > 2 ? Long.parseLong(parts[2]) : 0;
+                                        lineTime = h * 3600_000L + min * 60_000L + s * 1000L + ms;
+                                    }
+                                } catch (Throwable ignored) {}
                             }
+                            if (lineTime > 0) {
+                                maxLogTimestamp = Math.max(maxLogTimestamp, lineTime);
+                                userLastSeenMap.put(uid, lineTime);
+                            }
+                        }
+                    }
+                }
+
+                if (maxLogTimestamp > 0) {
+                    for (Map.Entry<String, Long> entry : userLastSeenMap.entrySet()) {
+                        // Only include users whose audio stats were received within 15 seconds of the latest log activity
+                        long diff = maxLogTimestamp - entry.getValue();
+                        if (diff >= 0 && diff <= 15000L) {
+                            webrtcUserIds.add(entry.getKey());
                         }
                     }
                 }
             }
 
-            if (maxLogTimestamp > 0) {
-                for (Map.Entry<String, Long> entry : userLastSeenMap.entrySet()) {
-                    // Only include users whose audio stats were received within 25 seconds of the latest log activity
-                    long diff = maxLogTimestamp - entry.getValue();
-                    if (diff >= 0 && diff <= 25000L) {
-                        webrtcUserIds.add(entry.getKey());
-                    }
-                }
-            }
-
-            boolean hasFreshWebrtc = (System.currentTimeMillis() - newestWebrtcMod) < 45000L;
             if (!webrtcUserIds.isEmpty() && hasFreshWebrtc) {
                 foundDisconnect = false; // Active audio streams override any stale disconnect logs
             }
@@ -659,12 +673,34 @@ public class DiscordIpcManager {
             if ("ERROR".equals(evt) || (obj.has("data") && obj.getAsJsonObject("data").has("code") && obj.getAsJsonObject("data").has("message"))) {
                 JsonObject data = obj.getAsJsonObject("data");
                 int errCode = data.has("code") ? data.get("code").getAsInt() : 0;
+                String errMsg = data.has("message") ? data.get("message").getAsString() : "Error";
+                String nonce = obj.has("nonce") && !obj.get("nonce").isJsonNull() ? obj.get("nonce").getAsString() : "";
+                PendingMute pm = nonce.isEmpty() ? null : pendingMutes.remove(nonce);
+                if (pm != null) {
+                    if (pm.intendedMute()) {
+                        locallyMutedUsers.remove(pm.userId());
+                    } else {
+                        locallyMutedUsers.add(pm.userId());
+                    }
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc != null && mc.player != null) {
+                        mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] §cVoice mute failed (" + errCode + "): " + errMsg));
+                        if (errCode == 4003 || errCode == 4001 || errMsg.toLowerCase().contains("not authenticated") || errMsg.toLowerCase().contains("unauthorized")) {
+                            mc.player.sendSystemMessage(Component.literal("§7Tip: Run §e/b discord auth§7 in chat to authorize voice control."));
+                        }
+                    }
+                }
                 if (errCode == 5000) {
                     authCancelled = true;
                     hasAuthorizedThisSession = true;
                 }
-                lastError = "Discord Error (" + errCode + "): " + data.get("message").getAsString();
+                lastError = "Discord Error (" + errCode + "): " + errMsg;
                 return;
+            }
+
+            if ("SET_USER_VOICE_SETTINGS".equals(cmd) && !"ERROR".equals(evt)) {
+                String nonce = obj.has("nonce") && !obj.get("nonce").isJsonNull() ? obj.get("nonce").getAsString() : "";
+                if (!nonce.isEmpty()) pendingMutes.remove(nonce);
             }
 
             if ("DISPATCH".equals(cmd)) {
@@ -686,6 +722,7 @@ public class DiscordIpcManager {
                         JsonArray scopes = new JsonArray();
                         scopes.add("rpc");
                         scopes.add("rpc.voice.read");
+                        scopes.add("rpc.voice.write");
                         authArgs.add("scopes", scopes);
 
                         JsonObject authReq = new JsonObject();

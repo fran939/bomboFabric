@@ -331,8 +331,9 @@ public class BomboConfig {
          if (!currentModVer.isEmpty() && Files.exists(CONFIG_PATH) && !currentModVer.equals(instance.lastModVersion)) {
             Path backupDir = BOMBOADDONS_DIR.resolve("backups");
             Files.createDirectories(backupDir);
-            String backupName = "config_backup_v" + (instance.lastModVersion == null || instance.lastModVersion.isEmpty() ? "pre-upgrade" : instance.lastModVersion)
-                    + "_" + System.currentTimeMillis() + ".json";
+            String prevVer = (instance.lastModVersion == null || instance.lastModVersion.isEmpty()) ? currentModVer : instance.lastModVersion;
+            String timeStr = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
+            String backupName = "config_backup_v" + prevVer + "_" + timeStr + ".json";
             Files.copy(CONFIG_PATH, backupDir.resolve(backupName), StandardCopyOption.REPLACE_EXISTING);
             instance.lastModVersion = currentModVer;
             save();
@@ -361,9 +362,12 @@ public class BomboConfig {
       try {
          Path backupDir = BOMBOADDONS_DIR.resolve("backups");
          Files.createDirectories(backupDir);
+         String currentModVer = FabricLoader.getInstance().getModContainer("bomboaddons")
+                 .map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("26.2");
+         String timeStr = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new java.util.Date());
          String name = (customName != null && !customName.trim().isEmpty())
                  ? (customName.trim().endsWith(".json") ? customName.trim() : customName.trim() + ".json")
-                 : "backup_" + System.currentTimeMillis() + ".json";
+                 : "config_backup_v" + currentModVer + "_" + timeStr + ".json";
          Path target = backupDir.resolve(name);
          save();
          Files.copy(CONFIG_PATH, target, StandardCopyOption.REPLACE_EXISTING);
@@ -647,6 +651,7 @@ public class BomboConfig {
       public boolean loreAdditionsEnabled = true;
       public boolean startsInAbsoluteTime = true;
       public boolean supercraftMaxCalculator = true;
+      public boolean showRabbitRarity = true;
       public boolean showDungeonQuality = true;
       public boolean showItemCreationDate = true;
       public boolean showLeatherColor = true;
