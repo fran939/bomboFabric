@@ -378,15 +378,14 @@ public class DiscordIpcManager {
 
                 for (int i = lines.length - 1; i >= 0; i--) {
                     String line = lines[i];
-                    if (!foundDisconnect && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("[VOICE_DISCONNECT]")) {
-                        foundDisconnect = true;
-                        break;
-                    }
-                    if (!foundConnected && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("RTC_CONNECTED")) {
+                    if (line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("RTC_CONNECTED")) {
                         foundConnected = true;
                     }
-                    if (!foundHeartbeat && line.contains("[RTCControlSocket(default)]") && line.contains("Heartbeat")) {
+                    if (line.contains("[RTCControlSocket(default)]") && line.contains("Heartbeat")) {
                         foundHeartbeat = true;
+                    }
+                    if (!foundConnected && !foundDisconnect && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("[VOICE_DISCONNECT]")) {
+                        foundDisconnect = true;
                     }
                     if (foundChannel == null && line.contains("Updating channel:")) {
                         int idx = line.indexOf("Updating channel:");
@@ -409,28 +408,37 @@ public class DiscordIpcManager {
                 }
             }
 
-            // 2. Scan WebRTC logs (discord-webrtc_0, discord-webrtc_1) for actual incoming user IDs in call
+            // 2. Scan WebRTC logs (both discord-webrtc_0 AND discord-webrtc_1) for active inbound streams
             Set<String> webrtcUserIds = new LinkedHashSet<>();
             File webrtc0 = new File(appData, "discord/logs/discord-webrtc_0");
             File webrtc1 = new File(appData, "discord/logs/discord-webrtc_1");
-            File activeWebrtc = (webrtc0.exists() && webrtc0.length() > 0) ? webrtc0 : (webrtc1.exists() ? webrtc1 : null);
+            File[] webrtcFiles = new File[]{webrtc0, webrtc1};
 
-            if (activeWebrtc != null && activeWebrtc.canRead() && activeWebrtc.length() > 0) {
-                long wlen = activeWebrtc.length();
-                int wToRead = (int) Math.min(65536L, wlen);
-                byte[] wbuf = new byte[wToRead];
-                try (RandomAccessFile wraf = new RandomAccessFile(activeWebrtc, "r")) {
-                    wraf.seek(wlen - wToRead);
-                    wraf.readFully(wbuf);
-                }
-                String wContent = new String(wbuf, StandardCharsets.UTF_8);
-                Matcher m = INBOUND_USER_PATTERN.matcher(wContent);
-                while (m.find()) {
-                    String uid = m.group(1);
-                    if (!uid.equals(myUserId)) {
-                        webrtcUserIds.add(uid);
+            long newestWebrtcMod = 0L;
+            for (File wf : webrtcFiles) {
+                if (wf.exists() && wf.canRead() && wf.length() > 0) {
+                    newestWebrtcMod = Math.max(newestWebrtcMod, wf.lastModified());
+                    long wlen = wf.length();
+                    int wToRead = (int) Math.min(65536L, wlen);
+                    byte[] wbuf = new byte[wToRead];
+                    try (RandomAccessFile wraf = new RandomAccessFile(wf, "r")) {
+                        wraf.seek(wlen - wToRead);
+                        wraf.readFully(wbuf);
+                    }
+                    String wContent = new String(wbuf, StandardCharsets.UTF_8);
+                    Matcher m = INBOUND_USER_PATTERN.matcher(wContent);
+                    while (m.find()) {
+                        String uid = m.group(1);
+                        if (!uid.equals(myUserId)) {
+                            webrtcUserIds.add(uid);
+                        }
                     }
                 }
+            }
+
+            boolean hasFreshWebrtc = (System.currentTimeMillis() - newestWebrtcMod) < 45000L;
+            if (!webrtcUserIds.isEmpty() && hasFreshWebrtc) {
+                foundDisconnect = false; // Active audio streams override any stale disconnect logs
             }
 
             if (!webrtcUserIds.isEmpty()) {
@@ -447,7 +455,7 @@ public class DiscordIpcManager {
                 }
             }
 
-            if ((foundConnected || foundHeartbeat || !webrtcUserIds.isEmpty()) && !foundDisconnect) {
+            if ((foundConnected || foundHeartbeat || (!webrtcUserIds.isEmpty() && hasFreshWebrtc)) && !foundDisconnect) {
                 inVoice = true;
                 logReaderStatus = "Active (" + memberCount + " in call via " + (!webrtcUserIds.isEmpty() ? "WebRTC" : "Log") + ")";
                 if (currentChannelName.isEmpty() || currentChannelName.startsWith("Voice Call") || currentChannelName.startsWith("Voice (")) {

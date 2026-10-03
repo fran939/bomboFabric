@@ -199,7 +199,7 @@ public class ScreenshareManager {
                             JsonObject payload = new JsonObject();
                             payload.addProperty("user", myIgn);
                             payload.addProperty("frame", b64);
-                            payload.addProperty("fps", (int) Math.max(15, currentFps));
+                            payload.addProperty("fps", (int) Math.max(1, Math.round(currentFps)));
                             payload.addProperty("width", targetW);
                             payload.addProperty("height", targetH);
 
@@ -373,9 +373,17 @@ public class ScreenshareManager {
     }
 
     private static byte[] compressScaledJpeg(BufferedImage src, int targetW, int targetH, float quality) throws Exception {
+        int srcW = src.getWidth();
+        int srcH = src.getHeight();
         BufferedImage scaled;
-        if (src.getType() == BufferedImage.TYPE_INT_RGB && src.getWidth() == targetW && src.getHeight() == targetH) {
+        if (src.getType() == BufferedImage.TYPE_INT_RGB && (srcW == targetW && srcH == targetH || (srcW <= targetW && srcH <= targetH))) {
             scaled = src;
+        } else if (srcW <= targetW && srcH <= targetH) {
+            // Keep native 1:1 pixel sharpness without upscaling
+            scaled = new BufferedImage(srcW, srcH, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2 = scaled.createGraphics();
+            g2.drawImage(src, 0, 0, null);
+            g2.dispose();
         } else {
             scaled = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_RGB);
             Graphics2D g2 = scaled.createGraphics();

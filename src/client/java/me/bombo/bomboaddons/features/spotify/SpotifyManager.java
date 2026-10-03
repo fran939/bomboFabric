@@ -114,8 +114,31 @@ public class SpotifyManager {
         String artist = currentArtist.trim();
         if (track.isEmpty()) return;
         String query = (track + " " + artist).trim();
-        String webUrl = "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8).replace("+", "%20") + "/tracks";
-        openCleanUri(webUrl);
+
+        CompletableFuture.runAsync(() -> {
+            String nativeUri = "spotify:search:" + URLEncoder.encode(query, StandardCharsets.UTF_8).replace("+", "%20");
+            String webFallback = "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8).replace("+", "%20") + "/tracks";
+            try {
+                String apiUrl = "https://api.bombo.dpdns.org/api/spotify/resolve?track=" + URLEncoder.encode(track, StandardCharsets.UTF_8)
+                        + "&artist=" + URLEncoder.encode(artist, StandardCharsets.UTF_8);
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                        .uri(URI.create(apiUrl))
+                        .timeout(Duration.ofSeconds(2))
+                        .GET()
+                        .build();
+                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                        .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (resp.statusCode() == 200) {
+                    com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(resp.body()).getAsJsonObject();
+                    if (obj.has("trackId") && !obj.get("trackId").isJsonNull()) {
+                        String tid = obj.get("trackId").getAsString();
+                        nativeUri = "spotify:track:" + tid;
+                        webFallback = "https://open.spotify.com/track/" + tid;
+                    }
+                }
+            } catch (Throwable ignored) {}
+            openSpotifyUri(nativeUri, webFallback);
+        });
     }
 
     public static void openArtistInSpotify() {
@@ -124,13 +147,17 @@ public class SpotifyManager {
         String lower = artist.toLowerCase(java.util.Locale.ROOT);
         String cached = ARTIST_URL_CACHE.get(lower);
         if (cached != null && !cached.isEmpty()) {
-            openCleanUri(cached);
+            String nativeUri = cached.contains("/artist/")
+                    ? "spotify:artist:" + cached.substring(cached.indexOf("/artist/") + 8).split("[/?]")[0]
+                    : cached;
+            openSpotifyUri(nativeUri, cached);
             return;
         }
 
         // Asynchronously resolve direct Spotify Artist profile URL via backend
         CompletableFuture.runAsync(() -> {
-            String targetUrl = "https://open.spotify.com/search/" + URLEncoder.encode(artist, StandardCharsets.UTF_8).replace("+", "%20") + "/artists";
+            String webUrl = "https://open.spotify.com/search/" + URLEncoder.encode(artist, StandardCharsets.UTF_8).replace("+", "%20") + "/artists";
+            String nativeUri = "spotify:search:" + URLEncoder.encode(artist, StandardCharsets.UTF_8).replace("+", "%20");
             try {
                 String apiUrl = "https://api.bombo.dpdns.org/api/spotify/resolve?artist=" + URLEncoder.encode(artist, StandardCharsets.UTF_8);
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
@@ -145,14 +172,24 @@ public class SpotifyManager {
                     if (obj.has("artistUrl") && !obj.get("artistUrl").isJsonNull()) {
                         String directUrl = obj.get("artistUrl").getAsString();
                         if (directUrl.contains("/artist/")) {
-                            targetUrl = directUrl;
+                            webUrl = directUrl;
+                            String aid = directUrl.substring(directUrl.indexOf("/artist/") + 8).split("[/?]")[0];
+                            nativeUri = "spotify:artist:" + aid;
                             ARTIST_URL_CACHE.put(lower, directUrl);
                         }
                     }
                 }
             } catch (Throwable ignored) {}
-            openCleanUri(targetUrl);
+            openSpotifyUri(nativeUri, webUrl);
         });
+    }
+
+    private static void openSpotifyUri(String nativeUri, String webFallback) {
+        try {
+            net.minecraft.util.Util.getPlatform().openUri(URI.create(nativeUri));
+        } catch (Throwable t) {
+            openCleanUri(webFallback);
+        }
     }
 
     private static void openCleanUri(String url) {

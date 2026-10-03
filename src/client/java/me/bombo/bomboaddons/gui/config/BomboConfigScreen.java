@@ -1277,7 +1277,7 @@ public class BomboConfigScreen extends Screen {
         // 1. Color Picker Modal handling
         if (activeColorItem != null) {
             int modalW = 280;
-            int modalH = 260;
+            int modalH = 280;
             int modalX = (this.width - modalW) / 2;
             int modalY = (this.height - modalH) / 2;
 

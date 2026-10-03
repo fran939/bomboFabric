@@ -240,12 +240,12 @@ public class LyricsScreen extends Screen {
                                 maxActiveWordIdx = Math.max(maxActiveWordIdx, w);
                             }
                             boolean isWordActive = (w <= maxActiveWordIdx);
-                            int wordSlotW = font.width("§b§l" + wt.word());
+                            int wordSlotW = font.width("§l" + wt.word());
 
                             if (isWordActive) {
                                 g.text(font, "§b§l" + wt.word(), curX, lineIntY, 0xFF00E5FF, true);
                             } else {
-                                g.text(font, "§f§l" + wt.word(), curX, lineIntY, 0xFFFFFFFF, true);
+                                g.text(font, "§7§l" + wt.word(), curX, lineIntY, 0x88CBD5E1, false);
                             }
                             curX += wordSlotW + spaceW;
                         }
@@ -946,6 +946,23 @@ public class LyricsScreen extends Screen {
             }
         }
 
+        // Global playback shortcuts when not actively editing text boxes
+        if (!isEditingOffsetBox && !(showRawModal && isEditingCustom)) {
+            boolean isCtrl = event.hasControlDown() || (mc != null && mc.hasControlDown());
+            if (event.key() == GLFW.GLFW_KEY_SPACE) {
+                SpotifyManager.playPause();
+                return true;
+            }
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_LEFT) {
+                SpotifyManager.prevTrack();
+                return true;
+            }
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_RIGHT) {
+                SpotifyManager.nextTrack();
+                return true;
+            }
+        }
+
         if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
             if (showCandidatesModal) {
                 showCandidatesModal = false;
@@ -959,6 +976,7 @@ public class LyricsScreen extends Screen {
         }
         return super.keyPressed(event);
     }
+
 
     private void commitOffsetInput() {
         if (isEditingOffsetBox) {

@@ -817,15 +817,38 @@ public class LyricsManager {
                             String text = lineObj.has("text") ? lineObj.get("text").getAsString().trim() : "";
                             List<WordTime> words = new ArrayList<>();
                             if (lineObj.has("syllabus") && lineObj.get("syllabus").isJsonArray()) {
+                                StringBuilder curWord = new StringBuilder();
+                                long curWordStart = -1L;
+                                long curWordEnd = -1L;
+
                                 for (JsonElement sel : lineObj.getAsJsonArray("syllabus")) {
                                     if (!sel.isJsonObject()) continue;
                                     JsonObject so = sel.getAsJsonObject();
                                     String stext = so.has("text") ? so.get("text").getAsString() : "";
                                     long stime = so.has("time") ? so.get("time").getAsLong() : time;
                                     long sdur = so.has("duration") ? so.get("duration").getAsLong() : 200L;
-                                    if (!stext.isEmpty()) {
-                                        words.add(new WordTime(stext, stime, stime + sdur));
+
+                                    if (stext.equals(" ") || stext.equals("\t")) {
+                                        if (curWord.length() > 0) {
+                                            words.add(new WordTime(curWord.toString(), curWordStart, curWordEnd));
+                                            curWord.setLength(0);
+                                            curWordStart = -1L;
+                                            curWordEnd = -1L;
+                                        }
+                                    } else {
+                                        if (curWordStart < 0) curWordStart = stime;
+                                        curWordEnd = stime + sdur;
+                                        curWord.append(stext.trim());
+                                        if (stext.endsWith(" ")) {
+                                            words.add(new WordTime(curWord.toString(), curWordStart, curWordEnd));
+                                            curWord.setLength(0);
+                                            curWordStart = -1L;
+                                            curWordEnd = -1L;
+                                        }
                                     }
+                                }
+                                if (curWord.length() > 0) {
+                                    words.add(new WordTime(curWord.toString(), curWordStart, curWordEnd));
                                 }
                             }
                             if (!text.isEmpty()) {

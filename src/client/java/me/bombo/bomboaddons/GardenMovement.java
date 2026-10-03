@@ -64,16 +64,6 @@ public class GardenMovement {
 
             if (breaking) {
                mc.options.keyAttack.setDown(true);
-               if (mc.gameMode != null && mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult bhr) {
-                  net.minecraft.core.BlockPos pos = bhr.getBlockPos();
-                  net.minecraft.core.Direction dir = bhr.getDirection();
-                  if (mc.level != null && !mc.level.getBlockState(pos).isAir()) {
-                     mc.gameMode.continueDestroyBlock(pos, dir);
-                     if (mc.player != null) {
-                        mc.player.swing(InteractionHand.MAIN_HAND);
-                     }
-                  }
-               }
             }
 
             if (using) {

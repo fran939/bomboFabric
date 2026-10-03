@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.67",
+    "date": "2026-10-03",
+    "changes": [
+      "Storage Overlay Render Thread Safety: Scheduled StorageOverlayScreen initialization on Minecraft render thread via mc.execute, preventing IllegalStateException crash on /st",
+      "Discord Voice WebRTC Stream Recovery: Scanned both discord-webrtc_0 and discord-webrtc_1 logs so active inbound streams immediately clear stale disconnect states and restore call members",
+      "Spotify Desktop App URI Support: Prioritized native spotify:track:<id> and spotify:search:<query> protocol URIs to launch Spotify desktop app directly before falling back to browser",
+      "Lyrics Word-by-Word Sync & Shortcuts: Grouped Apple Music/YouLyPlus syllables into words, added global playback hotkeys (Space to toggle play/pause, Ctrl+Left/Right to skip tracks), and dimmed inactive karaoke words",
+      "Config Color Picker Modal Hitbox: Corrected modal height bounding box in mouseClicked from 260 to 280, restoring responsive 1-click Done button hitboxes",
+      "Screenshare 1440p Frame Preservation: Removed artificial 15 FPS clamp and prevented blurry upscaling of smaller framebuffers by preserving 1:1 native resolution",
+      "Changelog Version Box Alignment: Measured text bounding box with bold styling so subversions fit cleanly inside outline, and adjusted scroll offset alignment",
+      "Speedometer HUD Registration: Hooked SpeedometerHud.init() and onClientTick into mod initialization and client tick loops",
+      "Garden Cocoa Angle Validation: Replaced forced block destruction with vanilla keyAttack input so breaking cocoa beans respects physical angles and reach limits"
+    ]
+  },
+  {
     "version": "26.2.28.66",
     "date": "2026-10-02",
     "changes": [

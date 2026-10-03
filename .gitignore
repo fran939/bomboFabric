@@ -38,3 +38,4 @@ crash_exception.log
 libs/
 update_bestiary.py
 .env*
+scratch/

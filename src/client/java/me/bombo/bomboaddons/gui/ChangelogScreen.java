@@ -197,12 +197,12 @@ public class ChangelogScreen extends Screen {
                     this.scrolledToTarget = true;
                     break;
                 }
-                targetYOffset += 24;
+                targetYOffset += 22;
                 for (String c : r.changes) {
                     var wrapped = font.getSplitter().splitLines(Component.literal("• " + c), contentW - 20, net.minecraft.network.chat.Style.EMPTY);
                     targetYOffset += Math.max(1, wrapped.size()) * 12;
                 }
-                targetYOffset += 12;
+                targetYOffset += 10;
             }
             this.scrolledToTarget = true;
         }
@@ -217,16 +217,20 @@ public class ChangelogScreen extends Screen {
             boolean isTarget = targetVersion != null && (r.version.equalsIgnoreCase(targetVersion) || ("v" + r.version).equalsIgnoreCase(targetVersion));
             // Release badge + version title
             if (curY + 20 >= contentY && curY <= contentY + contentH) {
-                int badgeW = font.width("v" + r.version) + 12;
+                String badgeText = (isTarget ? "§b§l" : "§b") + "v" + r.version;
+                int badgeW = font.width(badgeText) + 12;
                 g.fill(contentX, curY, contentX + badgeW, curY + 16, isTarget ? 0x6600E5FF : 0x3300E5FF);
                 g.outline(contentX, curY, badgeW, 16, isTarget ? 0xFF00E5FF : accent);
-                g.text(font, (isTarget ? "§b§l" : "§b") + "v" + r.version, contentX + 6, curY + 4, accent, true);
+                g.text(font, badgeText, contentX + 6, curY + 4, accent, true);
 
+                int dateOffset = 0;
                 if (!r.date.isEmpty()) {
-                    g.text(font, "§8(" + r.date + ")", contentX + badgeW + 8, curY + 4, 0xFFA0AEC0, false);
+                    String dateStr = "§8(" + r.date + ")";
+                    g.text(font, dateStr, contentX + badgeW + 8, curY + 4, 0xFFA0AEC0, false);
+                    dateOffset = font.width(dateStr) + 8;
                 }
                 if (isTarget) {
-                    g.text(font, "§e★ Selected Version", contentX + badgeW + 90, curY + 4, 0xFFFBBF24, false);
+                    g.text(font, "§e★ Selected Version", contentX + badgeW + 8 + dateOffset, curY + 4, 0xFFFBBF24, false);
                 }
             }
             curY += 22;

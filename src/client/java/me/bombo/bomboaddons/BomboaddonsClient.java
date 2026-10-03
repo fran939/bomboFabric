@@ -514,6 +514,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             me.bombo.bomboaddons.features.StorageChestWaypoints.onClientTick(client);
             me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.tick();
             handleSpotifyKeybinds();
+            me.bombo.bomboaddons.features.SpeedometerHud.onClientTick(client);
          } catch (Throwable ignored) {
          }
       });
@@ -524,6 +525,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.hud.ArmorHud.init();
       me.bombo.bomboaddons.features.hud.EquipmentHud.init();
       me.bombo.bomboaddons.features.hud.InventoryHud.init();
+      me.bombo.bomboaddons.features.SpeedometerHud.init();
       me.bombo.bomboaddons.features.discord.DiscordIpcManager.init();
       me.bombo.bomboaddons.features.discord.DiscordVoiceHud.init();
       me.bombo.bomboaddons.features.spotify.SpotifyHud.init();

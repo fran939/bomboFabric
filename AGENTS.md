@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.66` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.67` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,22 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.66`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.67`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.67 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Render Thread Safety (`ClientPacketListenerMixin`):** Wrapped container menu assignment, `StorageOverlayScreenHandler` instantiation, and `mc.setScreen` in `mc.execute(() -> { ... })`. Completely resolves `IllegalStateException: Rendersystem called from wrong thread ("Netty NIO IO #2")` crash when opening `/st` or container menus.
+> 2. **Discord Voice WebRTC Stream Recovery (`DiscordIpcManager`):** Scanned both `discord-webrtc_0` and `discord-webrtc_1` log files. Active inbound audio streams now immediately clear stale `[VOICE_DISCONNECT]` states and restore in-call member rosters without requiring Minecraft client restart.
+> 3. **Spotify Desktop App Native URIs (`SpotifyManager`):** Prioritizes native `spotify:track:<id>` and `spotify:search:<query>` protocol URIs using Windows Shell/Desktop URL schemes, opening Spotify directly in the desktop app rather than searching via Google in the default web browser.
+> 4. **Lyrics Word-by-Word Sync & Shortcuts (`LyricsManager`, `LyricsScreen`):** Grouped Apple Music and YouLyPlus syllable chunks into real words, eliminating single-character space tokens that corrupted line width and broken word-by-word highlight animations. Added keyboard shortcuts in `/b lyrics` (Space to toggle play/pause, Ctrl+Left to skip previous, Ctrl+Right to skip next) and dimmed upcoming karaoke words for clear visual distinction.
+> 5. **Config Color Picker Modal Hitbox (`BomboConfigScreen`):** Corrected modal height bounding box in `BomboConfigScreen.mouseClicked` from 260 to 280, matching the visual modal dimensions and restoring responsive 1-click Done button hitboxes.
+> 6. **Screenshare 1440p Frame Preservation (`ScreenshareManager`):** Removed artificial 15 FPS clamp and prevented blurry upscaling of smaller framebuffers by preserving 1:1 native resolution during high-framerate 1440p capture.
+> 7. **Changelog Version Box Alignment (`ChangelogScreen`):** Measured box width using styled text `(isTarget ? "§b§l" : "§b") + "v" + r.version` so subversions like `.51` fit cleanly inside the cyan outline without overflow, and aligned scroll step calculations to match render heights.
+> 8. **Speedometer HUD Registration (`BomboaddonsClient`):** Added `SpeedometerHud.init()` and `SpeedometerHud.onClientTick(client)` into `BomboaddonsClient.java`, activating the speedometer HUD in-game.
+> 9. **Garden Cocoa Angle Validation (`GardenMovement`):** Replaced forced block destruction calls with vanilla `keyAttack.setDown(true)` input so cocoa bean farming strictly honors physical crosshair angles and vanilla reach limits.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.66 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Packet Interception (`ClientPacketListenerMixin`):** Intercepted `ClientboundOpenScreenPacket` at `HEAD`. If `storageOverlay` is enabled and `StorageOverlayScreen.enabled(...)`, the client directly wraps the container in `StorageOverlayScreenHandler`, sets `client.player.containerMenu`, launches `StorageOverlayScreen`, and cancels normal container screen opening.

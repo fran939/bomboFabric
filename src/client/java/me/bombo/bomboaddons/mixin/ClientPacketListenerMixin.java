@@ -37,18 +37,21 @@ public class ClientPacketListenerMixin {
       Component name = packet.getTitle();
       String rawTitle = name != null ? name.getString() : "";
       if (me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.enabled(rawTitle)) {
-         net.minecraft.world.inventory.MenuType<?> type = packet.getType();
-         net.minecraft.world.inventory.AbstractContainerMenu menu = type.create(packet.getContainerId(), mc.player.getInventory());
-         if (menu instanceof net.minecraft.world.inventory.ChestMenu cm) {
-            ci.cancel();
-            int height = mc.getWindow().getGuiScaledHeight() - (mc.getWindow().getGuiScaledHeight() / 5);
-            int storageIdx = me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.getStorageIndexFromTitle(rawTitle);
-            boolean isBackpack = storageIdx != -1;
-            me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler handler =
-                  new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler(cm, isBackpack, height, mc.player.getInventory());
-            mc.player.containerMenu = handler;
-            mc.setScreenAndShow(new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen(handler, cm, name, mc.player.getInventory(), height));
-         }
+         ci.cancel();
+         mc.execute(() -> {
+            if (mc.player == null) return;
+            net.minecraft.world.inventory.MenuType<?> type = packet.getType();
+            net.minecraft.world.inventory.AbstractContainerMenu menu = type.create(packet.getContainerId(), mc.player.getInventory());
+            if (menu instanceof net.minecraft.world.inventory.ChestMenu cm) {
+               int height = mc.getWindow().getGuiScaledHeight() - (mc.getWindow().getGuiScaledHeight() / 5);
+               int storageIdx = me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.getStorageIndexFromTitle(rawTitle);
+               boolean isBackpack = storageIdx != -1;
+               me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler handler =
+                     new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler(cm, isBackpack, height, mc.player.getInventory());
+               mc.player.containerMenu = handler;
+               mc.setScreenAndShow(new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen(handler, cm, name, mc.player.getInventory(), height));
+            }
+         });
       }
    }
 

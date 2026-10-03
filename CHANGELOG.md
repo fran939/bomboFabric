@@ -1,5 +1,35 @@
 # BomboAddons Changelog
  
+## [26.2.28.67] - 2026-10-03 (Beta)
+
+### Storage Overlay Render Thread Safety
+- **Thread Delegation:** Scheduled container menu assignment, `StorageOverlayScreenHandler` initialization, and `mc.setScreen` within `mc.execute(() -> { ... })` in `ClientPacketListenerMixin.java`. Completely eliminates the `IllegalStateException: Rendersystem called from wrong thread ("Netty NIO IO #2")` crash on `/st` and storage menus.
+
+### Discord WebRTC Stream Recovery
+- **Multi-File Voice Scanning:** Scans both `discord-webrtc_0` and `discord-webrtc_1` log files. Active inbound audio streams now immediately clear stale `[VOICE_DISCONNECT]` states and restore in-call member rosters without requiring Minecraft client restart.
+
+### Spotify Desktop App Native URIs
+- **Desktop App Protocol:** Prioritizes native `spotify:track:<id>` and `spotify:search:<query>` protocol URIs using Windows Shell/Desktop URL schemes, opening Spotify directly in the desktop app rather than searching via Google in the default web browser.
+
+### Lyrics Word-by-Word Sync & Shortcuts
+- **Word Syllable Grouping:** Grouped Apple Music and YouLyPlus syllable chunks into real words, eliminating single-character space tokens that corrupted line width and broken word-by-word highlight animations.
+- **Global Playback Controls:** Added keyboard shortcuts in `/b lyrics` (Space to toggle play/pause, Ctrl+Left to skip previous, Ctrl+Right to skip next) and dimmed upcoming karaoke words for clear visual distinction.
+
+### Config Color Picker Modal Hitbox
+- **Hitbox Alignment:** Corrected modal height bounding box in `BomboConfigScreen.mouseClicked` from 260 to 280, matching the visual modal dimensions and restoring responsive 1-click Done button hitboxes.
+
+### Screenshare 1440p Frame Preservation
+- **Framerate & Native Resolution:** Removed artificial 15 FPS clamp and prevented blurry upscaling of smaller framebuffers by preserving 1:1 native resolution during high-framerate 1440p capture.
+
+### Changelog Version Box Alignment
+- **Bold Text Width Measurement:** Measured box width using styled text `(isTarget ? "§b§l" : "§b") + "v" + r.version` so subversions like `.51` fit cleanly inside the cyan outline without overflow, and aligned scroll step calculations to match render heights.
+
+### Speedometer HUD Registration
+- **Lifecycle Hooks:** Added `SpeedometerHud.init()` and `SpeedometerHud.onClientTick(client)` into `BomboaddonsClient.java`, activating the speedometer HUD in-game.
+
+### Garden Cocoa Angle Validation
+- **Vanilla Key Simulation:** Replaced forced block destruction calls with vanilla `keyAttack.setDown(true)` input so cocoa bean farming strictly honors physical crosshair angles and vanilla reach limits.
+
 ## [26.2.28.66] - 2026-10-02 (Beta)
 
 ### Storage Overlay Packet Interception
