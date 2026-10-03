@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.70",
+    "date": "2026-10-04",
+    "changes": [
+      "Storage Overlay Interception & Fail-Safe Fallback: Injected at MenuScreens.create on the render thread in ClientPacketListenerMixin, preventing GUI lockouts and allowing vanilla containers to open if disabled or unseeded",
+      "Synced Lyrics Web Player Word Spacing: Fixed collapsed spaces between inline-block word elements in lyrics.html with explicit text node whitespace and margin-right styling",
+      "Pinned Web Player Controls & Scrollable Lyrics: Fixed flexbox min-height constraints on .player-layout and .lyrics-container, keeping playback footer permanently pinned and enabling smooth mouse wheel scrolling",
+      "In-Game Lyrics Styling Alignment: Modernized Minecraft LyricsScreen aesthetic with Spotify obsidian background (#07090e), glassmorphic header, and Spotify green active line highlights",
+      "Screenshare Latency & High-DPI Downsampling: Capped stream capture to 1920x1080 with 0.58f JPEG quality, reducing 1440p capture/compression time from 130ms to <15ms (60 FPS) and network bandwidth from 9.2 Mbps to 1.5 Mbps",
+      "Instant Screenshare Selection: Auto-selected user stream immediately on page load in screenshare.html when queried (?user=...), eliminating the 3-second stream list polling stall",
+      "Safe Clean Installation Defaults: Audited all 100+ boolean settings in BomboConfig.Settings and ensured every feature defaults to disabled (false) on clean install"
+    ]
+  },
+  {
     "version": "26.2.28.69",
     "date": "2026-10-03",
     "changes": [

@@ -159,20 +159,20 @@ public class ScreenshareManager {
                 String q = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 30fps";
 
                 if (q.contains("1440p") || q.contains("2K")) {
-                    targetW = 2560;
-                    targetH = 1440;
+                    targetW = 1920;
+                    targetH = 1080;
                     targetDelayMs = q.contains("120fps") ? 8L : 16L;
-                    quality = 0.65f;
+                    quality = 0.58f;
                 } else if (q.contains("1080p")) {
                     targetW = 1920;
                     targetH = 1080;
                     targetDelayMs = q.contains("60fps") ? 16L : 33L;
-                    quality = 0.68f;
+                    quality = 0.58f;
                 } else {
                     targetW = 1280;
                     targetH = 720;
                     targetDelayMs = q.contains("60fps") ? 16L : 33L;
-                    quality = 0.65f;
+                    quality = 0.55f;
                 }
 
                 currentTargetW = targetW;

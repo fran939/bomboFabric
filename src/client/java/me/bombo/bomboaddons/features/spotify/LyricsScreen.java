@@ -77,8 +77,8 @@ public class LyricsScreen extends Screen {
     }
 
     private void renderLyrics(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        // Dark plum background matching Spotify overlay theme
-        g.fill(0, 0, this.width, this.height, 0xFA140E1A);
+        // Modern Spotify dark obsidian background matching the web lyrics player
+        g.fill(0, 0, this.width, this.height, 0xF807090E);
 
         Font font = this.font;
         int topH = 68;
@@ -87,8 +87,8 @@ public class LyricsScreen extends Screen {
         int lyricsAreaH = this.height - topH - bottomH;
 
         // --- TOP HEADER ---
-        g.fill(0, 0, this.width, topH, 0x881E1324);
-        g.fill(0, topH - 1, this.width, topH, 0x3300A4DC);
+        g.fill(0, 0, this.width, topH, 0xEE121826);
+        g.fill(0, topH - 1, this.width, topH, 0x4438BDF8);
 
         // Spotify icon or Album Art
         int iconSize = 28;
@@ -225,11 +225,12 @@ public class LyricsScreen extends Screen {
                         totalLineW = font.width("§f§l" + line.text());
                     }
 
-                    // Background highlight pill
+                    // Background highlight pill (Spotify green glass)
                     int pillX = (this.width - totalLineW) / 2 - 14;
                     int pillW = totalLineW + 28;
                     int pillH = line.backgroundText() != null ? 30 : 22;
-                    g.fill(pillX, lineIntY - 5, pillX + pillW, lineIntY + pillH, 0x3300A4DC);
+                    g.fill(pillX, lineIntY - 5, pillX + pillW, lineIntY + pillH, 0x2E1DB954);
+                    g.outline(pillX, lineIntY - 5, pillW, pillH + 5, 0x551DB954);
 
                     if (words != null && !words.isEmpty()) {
                         // Word-by-word karaoke rendering

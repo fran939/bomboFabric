@@ -520,7 +520,7 @@ public class BomboConfig {
       public int storageOverlayBackpackWidth = 9;
       public boolean storageOverlayRememberSearch = false;
       public boolean storageOverlayRememberOpened = false;
-      public boolean storageOverlayDoNotResetCursor = true;
+      public boolean storageOverlayDoNotResetCursor = false;
       public Map<String, String> storageCustomNames = new HashMap<>();
       public String storageOverlayTheme = "DEFAULT";
       public boolean storageOverlayTransparent = false;
@@ -535,7 +535,7 @@ public class BomboConfig {
       public long kismetThreshold = 3000000L;
       public boolean debugDailyReward = false;
       public boolean debugReconnect = false;
-      public boolean hypixelIspFix = true;
+      public boolean hypixelIspFix = false;
       public String hypixelBypassIp = "mc.hypixel.net";
       public boolean autoRejoinSkyblock = false;
       public boolean autoRejoinHud = false;
@@ -572,18 +572,18 @@ public class BomboConfig {
       public int etherwarpMaxDistance = 61;
 
       public boolean dianaLootshareEnabled = false;
-      public boolean dianaLsInquisitor = true;
-      public boolean dianaLsChampion = true;
-      public boolean dianaLsGaia = true;
-      public boolean dianaLsMinotaur = true;
-      public boolean dianaLsSiamese = true;
-      public boolean dianaLsUserMessage = true;
+      public boolean dianaLsInquisitor = false;
+      public boolean dianaLsChampion = false;
+      public boolean dianaLsGaia = false;
+      public boolean dianaLsMinotaur = false;
+      public boolean dianaLsSiamese = false;
+      public boolean dianaLsUserMessage = false;
       public String dianaLsUserMessageText = "&8[&eDiana&8] &aLootshare ready on &6{mob}&a!";
       public boolean dianaLsCommand = false;
       public String dianaLsCommandText = "pc Lootshare Ready on {mob}!";
-      public boolean dianaLsTitle = true;
+      public boolean dianaLsTitle = false;
       public String dianaLsTitleText = "&e&lLOOTSHARE READY &7({mob})";
-      public boolean dianaLsSound = true;
+      public boolean dianaLsSound = false;
       public int signCalcX = -1;
       public int signCalcY = -1;
       public int storageGuiCols = 9;
@@ -646,17 +646,17 @@ public class BomboConfig {
       public boolean hotspotDebug = false;
       public boolean coordBindDebug = false;
       public boolean pvDebug = false;
-      public boolean eggFinderDebug = true;
-      public boolean copyCanceledOrderAmount = true;
-      public boolean loreAdditionsEnabled = true;
-      public boolean startsInAbsoluteTime = true;
-      public boolean supercraftMaxCalculator = true;
-      public boolean showRabbitRarity = true;
-      public boolean showDungeonQuality = true;
-      public boolean showItemCreationDate = true;
-      public boolean showLeatherColor = true;
-      public boolean showMuseumDonated = true;
-      public boolean showSkyblockId = true;
+      public boolean eggFinderDebug = false;
+      public boolean copyCanceledOrderAmount = false;
+      public boolean loreAdditionsEnabled = false;
+      public boolean startsInAbsoluteTime = false;
+      public boolean supercraftMaxCalculator = false;
+      public boolean showRabbitRarity = false;
+      public boolean showDungeonQuality = false;
+      public boolean showItemCreationDate = false;
+      public boolean showLeatherColor = false;
+      public boolean showMuseumDonated = false;
+      public boolean showSkyblockId = false;
        public boolean signCalculator = false;
        public boolean chestClicker = false;
        public boolean autoCloseClicker = false;
@@ -718,7 +718,7 @@ public class BomboConfig {
       public float guiWindowScale = 1.0F;
       public int guiBackgroundOpacity = 90;
       public int guiSidebarWidth = 180;
-      public boolean guiCardGlow = true;
+      public boolean guiCardGlow = false;
       public float guiTextScale = 1.0F;
       public String customSbLevelColor = ""; // e.g. "&b", "&6", "&d", "&c", "&a", "Chroma"
 
@@ -738,7 +738,7 @@ public class BomboConfig {
       public Map<String, List<CommandBind>> keybindBinds = new HashMap();
       public boolean hollowWandClickThrough = false;
       public boolean hollowWandAutoCombine = false;
-      public boolean lassoClickThroughBats = true;
+      public boolean lassoClickThroughBats = false;
       public boolean autoAcceptCarnival = false;
       public boolean autoAcceptNpcLore = false;
       public String autoAcceptNpcLoreExceptions = "Safari Receptionist, Safari Manager";
@@ -766,14 +766,14 @@ public class BomboConfig {
       public boolean reconnectButton = false;
       public String lastServerIp = "";
       public String lastServerName = "";
-      public boolean hideCheats = true;
+      public boolean hideCheats = false;
       // --- Flavor / build identity (additive; see FlavorMigration) ---
       /** Marks which migration steps have already run on this config. */
       public int configSchemaVersion = 0;
       /** "legit" or "cheat"; empty when the flavor was never recorded. */
       public String flavor = "";
       /** Value of hideCheats before the flavor migration touched it. */
-      public boolean legacyHideCheats = true;
+      public boolean legacyHideCheats = false;
 
       /** Strip obfuscated (\u00a7k) text from chat and item tooltips. */
       public boolean noObfuscate = false;
@@ -781,7 +781,7 @@ public class BomboConfig {
       public String chatHistoryKey = "";
       // Discord Desktop IPC Integration & Voice HUD
       public boolean discordHudEnabled = false;
-      public boolean discordHudOnlyInCall = true;
+      public boolean discordHudOnlyInCall = false;
       public int discordHudX = 10;
       public int discordHudY = 120;
       public float discordHudScale = 1.0F;
@@ -801,13 +801,13 @@ public class BomboConfig {
       public String spotifyProgressBgColor = "#333344";
       public String lyricsProvider = "LRCLIB"; // "LRCLIB", "PAXSENIX", "UNISON", "YOULYPLUS"
       public String lyricsPreferredProvider = "Auto"; // "Auto", "LRCLIB", "Paxsenix", "Kugou", "Unison", "YouLyPlus"
-      public boolean spotifyHudShowAlbumArt = true;
+      public boolean spotifyHudShowAlbumArt = false;
       public int lyricsOffsetMs = 0;
 
       // Screenshare / Spectate Whitelist & Settings
       public String autoAcceptScreenshareUsers = "";
       public String screenshareQuality = "720p 30fps"; // "720p 30fps", "1080p 60fps"
-      public boolean screenshareOnlyMinecraft = true;
+      public boolean screenshareOnlyMinecraft = false;
 
       // Chat image hover preview fixed position
       public boolean chatImagePreviewFixed = false;
@@ -826,7 +826,7 @@ public class BomboConfig {
       public String speedometerUnit = "bps";
       public int diceHudX = 10;
       public int diceHudY = 50;
-      public boolean composterHelper = true;
+      public boolean composterHelper = false;
       public boolean composterHud = false;
       public int composterHudX = 10;
       public int composterHudY = 150;
@@ -867,11 +867,11 @@ public class BomboConfig {
        public int gardenMacroCheckSoundCount = 10;
        public int gardenMacroCheckSoundDelay = 500;
        public boolean cropBreakWarning = false;
-       public boolean sunsGraspWarning = true;
+       public boolean sunsGraspWarning = false;
        public boolean sunsGraspAutoSwap = false;
        public boolean totemRareDrops = false;
        public boolean totemAllDrops = false;
-       public boolean gardenBlockSlotsWhileFarming = true;
+       public boolean gardenBlockSlotsWhileFarming = false;
        public String gardenForwardKey = "up";
        public String gardenBackwardKey = "down";
        public String gardenLeftKey = "left";
@@ -880,11 +880,11 @@ public class BomboConfig {
        public String gardenUseKey = "u";
        public boolean pestEspDebug = false;
        public boolean autoSwapProfiles = false;
-       public boolean autoSwapNotifyChat = true;
-       public boolean autoSwapNotifyScreen = true;
-       public boolean autoSwapNotifySound = true;
+       public boolean autoSwapNotifyChat = false;
+       public boolean autoSwapNotifyScreen = false;
+       public boolean autoSwapNotifySound = false;
        public List<ProfileAutoSwapRule> autoProfileRules = new ArrayList<>();
-       public boolean craftCostTooltip = true;
+       public boolean craftCostTooltip = false;
       public boolean lowestBin = false;
       public boolean npcPrice = false;
       public Map<String, String> calculatorAliases = new HashMap();
@@ -903,17 +903,17 @@ public class BomboConfig {
       public int critterHudY = 10;
       public float critterHudScale = 1.0F;
       public String critterTrackingMode = "Uniques";
-      public boolean critterShowPerPlayer = true;
-      public boolean critterShowMissing = true;
-      public boolean critterOnlyInSafari = true;
-      public boolean critterHighlightMobs = true;
-      public boolean critterTracers = true;
-      public boolean critterHighlightStrings = true;
-      public boolean critterHighlightBeeNests = true;
-      public boolean critterHighlightWalls = true;
-      public boolean autoAcceptHideyho = true;
-      public boolean critterCapsuleTrajectory = true;
-      public boolean critterMapHud = true;
+      public boolean critterShowPerPlayer = false;
+      public boolean critterShowMissing = false;
+      public boolean critterOnlyInSafari = false;
+      public boolean critterHighlightMobs = false;
+      public boolean critterTracers = false;
+      public boolean critterHighlightStrings = false;
+      public boolean critterHighlightBeeNests = false;
+      public boolean critterHighlightWalls = false;
+      public boolean autoAcceptHideyho = false;
+      public boolean critterCapsuleTrajectory = false;
+      public boolean critterMapHud = false;
       public int critterMapX = -1;
       public int critterMapY = -1;
       public float critterMapScale = 1.0F;
@@ -925,15 +925,15 @@ public class BomboConfig {
       public boolean critterMap3D = false;
       public String critterCompletionNotify = "Chat (Self)"; // "Disabled", "Chat (Self)", "Party (/pc)"
       public String sparklingTracerColor = "LIGHT_PURPLE"; // Purple default for Sparkling mobs
-      public boolean chatTabs = true;
+      public boolean chatTabs = false;
       public int chatTabsX = 4;
       public int chatTabsY = -1;
       public float chatTabsScale = 1.0F;
       public String activeChatTab = "All";
-      public boolean showGuildChatTab = true;
-      public boolean showPartyChatTab = true;
-      public boolean showDmChatTab = true;
-      public boolean showBomboChatTab = true;
+      public boolean showGuildChatTab = false;
+      public boolean showPartyChatTab = false;
+      public boolean showDmChatTab = false;
+      public boolean showBomboChatTab = false;
       public String guildTabClickCommand = "/chat g";
       public String partyTabClickCommand = "/chat p";
       public String allTabClickCommand = "/chat a";
@@ -991,25 +991,25 @@ public class BomboConfig {
       public int itemListY = -1;
       public int itemListW = 150;
       public int itemListH = 200;
-      public boolean tracerRat = true;
-      public boolean tracerWorm = true;
-      public boolean tracerSlug = true;
-      public boolean tracerFly = true;
-      public boolean tracerLocust = true;
-      public boolean tracerBeetle = true;
-      public boolean tracerCricket = true;
-      public boolean tracerSpider = true;
-      public boolean tracerMoth = true;
-      public boolean tracerMite = true;
-      public boolean tracerMouse = true;
-      public boolean tracerMosquito = true;
+      public boolean tracerRat = false;
+      public boolean tracerWorm = false;
+      public boolean tracerSlug = false;
+      public boolean tracerFly = false;
+      public boolean tracerLocust = false;
+      public boolean tracerBeetle = false;
+      public boolean tracerCricket = false;
+      public boolean tracerSpider = false;
+      public boolean tracerMoth = false;
+      public boolean tracerMite = false;
+      public boolean tracerMouse = false;
+      public boolean tracerMosquito = false;
       public List<CustomSlot> customSlots = new ArrayList();
       public int customTimeHour = 12;
       public boolean customWeatherEnabled = false;
       public int customWeatherMode = 0; // 0=Clear, 1=Rain, 2=Thunder
       public boolean chatSearchBar = false;
-      public boolean controlsSearchBar = true;
-      public boolean chatSearchBackground = true;
+      public boolean controlsSearchBar = false;
+      public boolean chatSearchBackground = false;
       public int chatSearchX = 4;
       public int chatSearchY = -1;
       public float chatSearchScale = 1.0F;
@@ -1023,10 +1023,10 @@ public class BomboConfig {
       public String freecamKey = "";
       public boolean freecamToggle = false;
       public boolean cameraDebug = false;
-      public boolean tracerLapis = true;
-      public boolean tracerTungsten = true;
-      public boolean tracerUmber = true;
-      public boolean tracerVanguard = true;
+      public boolean tracerLapis = false;
+      public boolean tracerTungsten = false;
+      public boolean tracerUmber = false;
+      public boolean tracerVanguard = false;
       public String diceDisplayMode = "Current";
       public boolean dungeonSecretsTracker = false;
       public boolean dungeonSecretsDebug = false;
@@ -1071,11 +1071,11 @@ public class BomboConfig {
       // INSTANT_BUY = lowest BIN (what you would pay now);
       // INSTANT_SELL = Bazaar sell offer / average BIN (what you would actually receive).
       public String priceSourceMode = "INSTANT_BUY";
-      public boolean autoCroesusBuyPaid = true;
+      public boolean autoCroesusBuyPaid = false;
       public boolean autoCroesusReroll = false;
       public long autoCroesusRerollValue = 3000000L;
-      public boolean autoCroesusDungeons = true;
-      public boolean autoCroesusUseDungeonKey = true;
+      public boolean autoCroesusDungeons = false;
+      public boolean autoCroesusUseDungeonKey = false;
       public long autoCroesusDungeonKeyProfit = 200000L;
       public long autoCroesusDungeonProfitThreshold = 0L;
       // MANUAL uses autoCroesusDungeonKeyProfit; AUTO prices a Dungeon Chest Key from the live
@@ -1103,19 +1103,19 @@ public class BomboConfig {
       public boolean dungeonDebug = false;
       public boolean commandDebug = false;
       public boolean greenhouseDebug = false;
-      public boolean greenhouseProfitTracker = true;
+      public boolean greenhouseProfitTracker = false;
       public Set<Integer> greenhousePlots = new HashSet();
-      public boolean dungeonBossWaypoints = true;
-      public boolean dungeonCrystalWaypoints = true;
-      public boolean dungeonTerminalWaypoints = true;
-      public boolean dungeonBreakWaypoints = true;
-      public boolean dungeonTracers = true;
+      public boolean dungeonBossWaypoints = false;
+      public boolean dungeonCrystalWaypoints = false;
+      public boolean dungeonTerminalWaypoints = false;
+      public boolean dungeonBreakWaypoints = false;
+      public boolean dungeonTracers = false;
       public boolean dungeonShowAllClassWaypoints = false;
-      public boolean dungeonKeyHighlight = true;
+      public boolean dungeonKeyHighlight = false;
       public boolean m4EtherwarpHelper = false;
       public String dungeonKeyColor = "GOLD";
-      public boolean dungeonKeyTracers = true;
-      public boolean dungeonStarredMobHighlight = true;
+      public boolean dungeonKeyTracers = false;
+      public boolean dungeonStarredMobHighlight = false;
       public String dungeonStarredMobColor = "GOLD";
       public boolean dungeonStarredMobTracers = false;
       public String dungeonMageColor = "aqua";
@@ -1143,12 +1143,12 @@ public class BomboConfig {
       public boolean eggFinder = false;
       public boolean eggFinderChat = false;
       public boolean eggFinderBeacon = false;
-      public boolean eggFinderThroughWalls = true;
+      public boolean eggFinderThroughWalls = false;
       public boolean goldenDragonNestFinder = false;
       public boolean structureFinder = false;
-      public boolean structureFinderCorleone1 = true;
-      public boolean structureFinderGoldenDragon = true;
-      public boolean structureFinderTracers = true;
+      public boolean structureFinderCorleone1 = false;
+      public boolean structureFinderGoldenDragon = false;
+      public boolean structureFinderTracers = false;
       public String structureFinderColor = "AQUA";
       public String structurePasteWrongBorderColor = "RED";
       public String structurePasteUnplacedBorderColor = "BROWN";
@@ -1156,21 +1156,21 @@ public class BomboConfig {
       public int structureFinderRadius = 256;
       public float tracerWidth = 2.0F;
       public boolean hoppityHud = false;
-      public boolean hoppityHideWhenInactive = true;
+      public boolean hoppityHideWhenInactive = false;
       public boolean hoppityWarp = false;
       public boolean replaceGrayCarpetDwarven = false;
       public int hoppityHudX = 10;
       public int hoppityHudY = 100;
       public boolean alphaTrackerHud = false;
-      public boolean alphaTrackerOnlyWhenOpen = true;
-      public boolean alphaTrackerHideWhenClosed = true;
-      public boolean alphaTrackerShowPlayers = true;
+      public boolean alphaTrackerOnlyWhenOpen = false;
+      public boolean alphaTrackerHideWhenClosed = false;
+      public boolean alphaTrackerShowPlayers = false;
       public float alphaTrackerHudScale = 1.0F;
       public int alphaTrackerHudX = 10;
       public int alphaTrackerHudY = 120;
-      public boolean alphaOpenAlert = true;
-      public boolean alphaOpenAlertSound = true;
-      public boolean alphaOpenAlertTitle = true;
+      public boolean alphaOpenAlert = false;
+      public boolean alphaOpenAlertSound = false;
+      public boolean alphaOpenAlertTitle = false;
       public boolean dungeonBigHitbox = false;
       public Map<String, List<CoordBind>> coordBinds = new HashMap();
       public boolean corpseEsp = false;
@@ -1198,12 +1198,12 @@ public class BomboConfig {
       public String clipboardRunLastCommandKey = "";
       public boolean swapUnifiedLineColor = false;
       public int swapUnifiedLineColorValue = 0xFF22C55E;
-      public boolean swapShowLines = true;
+      public boolean swapShowLines = false;
       public float swapLineWidth = 2.0f;
       public String warpedAotvCustomModelOverride = "";
       public int chatHistoryMaxMessages = 500;
       public boolean unlimitedChatHistory = false;
-      public boolean persistHistoryAcrossServers = true;
+      public boolean persistHistoryAcrossServers = false;
       public String vanillaToggleCrouchKey = "";
       public String vanillaToggleAttackKey = "";
       public String vanillaToggleUseKey = "";
@@ -1211,19 +1211,19 @@ public class BomboConfig {
       public String priceHistoryBgColor = "#120824";
       public String priceHistoryBorderColor = "#7C3AED";
       public String priceHistoryLineColor = "#A855F7";
-      public boolean priceHistoryShowMayors = true;
+      public boolean priceHistoryShowMayors = false;
       public boolean showBazaarBuySell = false;
       public boolean showAvgLowestBin7d = false;
       public boolean showAvgLowestBin30d = false;
       public String backpackPreviewBgMode = "AUTO"; // AUTO, CUSTOM, VANILLA, TRANSPARENT
       public String backpackPreviewCustomColor = "#1E293B";
-      public boolean backpackPreviewItemRarity = true;
+      public boolean backpackPreviewItemRarity = false;
       public String backpackPreviewRarityShape = "SQUARE"; // SQUARE, CIRCLE
       public float backpackPreviewCircleSize = 5.0F; // 2.0 - 8.0 radius
       public boolean backpackPreviewItemBorder = false; // 1px rarity outline
       public float backpackPreviewRarityAlpha = 0.35F;
       // Outbound API/WebSocket history (/b apihistory).
-      public boolean apiHistoryEnabled = true;
+      public boolean apiHistoryEnabled = false;
       public int apiHistoryMaxEntries = 500;
       // BetterPV profile viewer window.
       public float pvScale = 1.15F; // /b pv window size multiplier (1.0 - 1.8)
@@ -1231,26 +1231,26 @@ public class BomboConfig {
       public String backpackPreviewTrigger = "ALWAYS"; // ALWAYS, ON_KEY
       public String backpackPreviewKey = "LEFT_SHIFT";
       public boolean inventoryItemRarityBg = false; // Rarity colors on normal inventory slots & HUDs
-      public boolean autoExpCapsuleEnabled = true;
+      public boolean autoExpCapsuleEnabled = false;
       public boolean bypassResourcePack = false;
-      public boolean autoUpdateSkyblockPack = true;
+      public boolean autoUpdateSkyblockPack = false;
       public String lastSkyblockPackHash = "";
       public boolean hideArmor = false;
-      public boolean hideHelmet = true;
-      public boolean hideChestplate = true;
-      public boolean hideLeggings = true;
-      public boolean hideBoots = true;
-      public boolean hideArmorOnlySelf = true;
+      public boolean hideHelmet = false;
+      public boolean hideChestplate = false;
+      public boolean hideLeggings = false;
+      public boolean hideBoots = false;
+      public boolean hideArmorOnlySelf = false;
       public boolean removeSelfInvisibility = false;
-      public boolean showEstimatedValue = true;
+      public boolean showEstimatedValue = false;
       public String storageTheme = "Default"; // Default, Dark, Transparent
       public String storageSortMode = "Total Count"; // Total Count, Estimated Value, Name
       public boolean hotspotGoneAlert = false;
       public boolean hotspotAlertCommand = false;
       public String hotspotAlertCommandText = "";
-      public boolean hotspotAlertTitle = true;
-      public boolean hotspotAlertChat = true;
-      public boolean hotspotAlertSound = true;
+      public boolean hotspotAlertTitle = false;
+      public boolean hotspotAlertChat = false;
+      public boolean hotspotAlertSound = false;
       public String hotspotAlertSoundName = "Anvil";
       public int hotspotAlertSoundCount = 3;
       public int hotspotAlertSoundDelay = 400;
@@ -1278,12 +1278,12 @@ public class BomboConfig {
       public boolean bedwarsEspOwnTeam = false;
       public boolean borderlessFullscreen = false;
       public boolean dojoUtilities = false;
-      public boolean waypointShowFill = true;
+      public boolean waypointShowFill = false;
       public int waypointFillOpacity = 30; // 0-100%
       public float waypointBorderWidth = 2.0F;
       public boolean waypointRemoveWhenNear = false;
       public double waypointRemoveDistance = 3.0;
-      public boolean orderedWaypointsThroughWalls = true;
+      public boolean orderedWaypointsThroughWalls = false;
       public int orderedWaypointsVisibleCount = 3;
       public java.util.Map<String, OrderedRoute> orderedRoutes = new java.util.LinkedHashMap<>();
       public String activeOrderedRoute = "Default";
@@ -1294,14 +1294,14 @@ public class BomboConfig {
       public float dungeonMapScale = 1.0F;
       public int dungeonMapX = 10;
       public int dungeonMapY = 10;
-      public boolean dungeonMapShowFullMap = true;
-      public boolean dungeonMapShowPlayerHeads = true;
-      public boolean dungeonMapShowSecrets = true;
-      public boolean dungeonMapShowRoomNames = true;
-      public boolean dungeonMapShowCheckmarks = true;
-      public boolean dungeonMapShowClears = true;
+      public boolean dungeonMapShowFullMap = false;
+      public boolean dungeonMapShowPlayerHeads = false;
+      public boolean dungeonMapShowSecrets = false;
+      public boolean dungeonMapShowRoomNames = false;
+      public boolean dungeonMapShowCheckmarks = false;
+      public boolean dungeonMapShowClears = false;
       public boolean dungeonMapShowInBoss = false;
-      public boolean dungeonMapTimeline = true;
+      public boolean dungeonMapTimeline = false;
       public boolean dungeonMapDebug = false;
 
       // Custom Room Colors (HEX/ARGB)
@@ -1312,7 +1312,7 @@ public class BomboConfig {
       public String dungeonMapColorYellow = "#EAB308";
       public String dungeonMapColorFairy = "#D946EF";
       public String dungeonMapColorBlood = "#DC2626";
-      public boolean sunsGraspAutoEmptySlot = true;
+      public boolean sunsGraspAutoEmptySlot = false;
       public boolean armorHud = false;
       public int armorHudX = 10;
       public int armorHudY = 160;
@@ -1320,7 +1320,7 @@ public class BomboConfig {
       public String armorHudClickAction = "Wardrobe";
       public boolean armorHudVertical = false;
       public boolean armorHudShowInInventory = false;
-      public boolean armorHudShowTooltip = true;
+      public boolean armorHudShowTooltip = false;
       public boolean equipmentHud = false;
       public int equipmentHudX = 10;
       public int equipmentHudY = 220;
@@ -1328,7 +1328,7 @@ public class BomboConfig {
       public String equipmentHudClickAction = "Equipment";
       public boolean equipmentHudVertical = false;   // false = horizontal (1 2 3 4), true = vertical (1\n2\n3\n4)
       public boolean equipmentHudShowInInventory = false; // show HUD when any allowed GUI is open
-      public boolean equipmentHudShowTooltip = true;
+      public boolean equipmentHudShowTooltip = false;
       public List<String> savedEquipmentNbt = new ArrayList<>();
       public boolean inventoryHud = false;
       public int inventoryHudX = 10;
@@ -1336,7 +1336,7 @@ public class BomboConfig {
       public float inventoryHudScale = 1.0F;
       public boolean inventoryHudVertical = false; // false = 9x3 horizontal, true = 3x9 vertical
       public boolean inventoryHudShowInInventory = false;
-      public boolean inventoryHudShowTooltip = true;
+      public boolean inventoryHudShowTooltip = false;
       public String hudBgColor = "#0F172A";
       public int hudBgAlpha = 170; // 0-255
       public String hudBorderColor = "#00E5FF";
@@ -1380,16 +1380,16 @@ public class BomboConfig {
       public int getHudSlotBorderColorArgb() {
          return BomboRenderUtils.parseHexColorWithAlpha(hudSlotBorderColor, hudSlotBorderAlpha, 0x33FFFFFF);
       }
-      public boolean fixSkyblockF3Day = true;
+      public boolean fixSkyblockF3Day = false;
       public boolean pestDebug = false;
       public boolean estimatedValueBazaarMode = false;
-      public boolean estimatedValuePreferCheapest = true;
-      public boolean estimatedValueFullBreakdown = true;
+      public boolean estimatedValuePreferCheapest = false;
+      public boolean estimatedValueFullBreakdown = false;
       public String estimatedValuePriceMode = "INSTA_BUY"; // INSTA_BUY, INSTA_SELL, BOTH
-      public boolean hiderEnabled = true;
+      public boolean hiderEnabled = false;
       public List<EntityHideRule> hiddenEntities = new ArrayList<>();
       public List<BlockReplaceRule> blockReplacements = new ArrayList<>();
-      public boolean ringPartyInvite = true;
+      public boolean ringPartyInvite = false;
    }
 
    public static class EntityHideRule {

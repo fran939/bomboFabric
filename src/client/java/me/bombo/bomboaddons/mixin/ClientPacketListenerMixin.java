@@ -24,6 +24,39 @@ public class ClientPacketListenerMixin {
    private static final ThreadLocal<Boolean> IS_HANDLING_SEND_CHAT = ThreadLocal.withInitial(() -> false);
    private static final ThreadLocal<Boolean> IS_HANDLING_SEND_COMMAND = ThreadLocal.withInitial(() -> false);
 
+   @Inject(
+      method = {"handleOpenScreen"},
+      at = {@At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/MenuScreens;create(Lnet/minecraft/world/inventory/MenuType;Lnet/minecraft/client/Minecraft;ILnet/minecraft/network/chat/Component;)V")},
+      cancellable = true
+   )
+   private void onHandleOpenScreen(ClientboundOpenScreenPacket packet, CallbackInfo ci) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player == null) return;
+      if (!BomboConfig.get().storageOverlay) return;
+
+      Component name = packet.getTitle();
+      String rawTitle = name != null ? name.getString() : "";
+      if (me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.enabled(rawTitle)) {
+         try {
+            int id = packet.getContainerId();
+            net.minecraft.world.inventory.AbstractContainerMenu menu = packet.getType().create(id, mc.player.getInventory());
+            if (menu instanceof net.minecraft.world.inventory.ChestMenu cm) {
+               int height = mc.getWindow().getGuiScaledHeight() - (mc.getWindow().getGuiScaledHeight() / 5);
+               int storageIdx = me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.getStorageIndexFromTitle(rawTitle);
+               boolean isBackpack = storageIdx != -1;
+               me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler handler =
+                     new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler(cm, isBackpack, height, mc.player.getInventory());
+               mc.player.containerMenu = handler;
+               mc.gui.setScreen(new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen(handler, cm, name, mc.player.getInventory(), height));
+               ci.cancel();
+               me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] Intercepted and launched StorageOverlayScreen for '{}'", rawTitle);
+            }
+         } catch (Throwable t) {
+            me.bombo.bomboaddons.Bomboaddons.LOGGER.error("[StorageOverlay] Exception opening overlay: " + t.getMessage(), t);
+         }
+      }
+   }
+
 
    @Inject(
       method = {"sendChat"},

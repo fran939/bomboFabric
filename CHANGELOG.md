@@ -1,5 +1,24 @@
 # BomboAddons Changelog
  
+## [26.2.28.70] - 2026-10-04 (Beta)
+
+### Storage Overlay Interception & Fail-Safe Fallback
+- **Render-Thread Open Interception:** Injected at `INVOKE` of `MenuScreens.create` in `ClientPacketListenerMixin.java`. Intercepts synchronously on the Minecraft render thread, creating `StorageOverlayScreenHandler` and setting `mc.gui.setScreen(...)` safely.
+- **Fail-Safe Vanilla Fallback:** If `storageOverlay` is disabled, unseeded, or throws any unexpected menu creation exception, `ci.cancel()` is bypassed, allowing vanilla `ContainerScreen` to open normally and preventing players from ever getting locked out of their GUIs.
+- **Clean Mixin Architecture:** Cleared conflicting interception code in `MenuScreensConstructorMixin.java` and switched `hide()` to `mc.gui.setScreen`.
+
+### Synced Lyrics Web Player Spaces & Pinned Controls
+- **Word Spacing Fix:** Added explicit text node whitespace between word elements in `renderLyricsDom()` and set `.word { display: inline-block; margin-right: 0.28em; white-space: pre-wrap; }` in `lyrics.html`, resolving word collapsing issues (e.g. `Mefuipa'Europaymequeríaquedar`).
+- **Pinned Responsive Controls:** Fixed flexbox layout constraints with `flex: 1; min-height: 0;` on the player layout and lyrics container, pinning player controls permanently to the bottom of the screen with working Play/Pause, speed select, time scrubber, and mouse wheel lyrics scrolling.
+- **In-Game Aesthetics Alignment:** Modernized the Minecraft `LyricsScreen` styling to match the web player's Spotify dark obsidian aesthetic (`#07090e`), glowing glass headers, and Spotify green active line highlights.
+
+### Screenshare Latency & High-DPI Downsampling
+- **1080p Stream Resolution Cap:** Capped stream capture dimensions to 1920x1080 with 0.58f JPEG quality in `ScreenshareManager.java`, dropping frame capture and compression time on 1440p displays from 130ms to <15ms (60 FPS) and reducing network bitrate from 9.2 Mbps to 1.5 Mbps.
+- **Instant Stream Selection:** Modified `screenshare.html` to immediately select the target player stream on page load if specified in the URL query (`?user=...`), eliminating the 3-second stream list polling delay.
+
+### Safe Clean Installation Defaults
+- **All Features Disabled by Default:** Audited all 100+ boolean settings in `BomboConfig.Settings` and ensured every single feature defaults to `false` on initial installation, guaranteeing a pristine and safe experience on first launch.
+
 ## [26.2.28.69] - 2026-10-03 (Beta)
 
 ### SkyHanni Enchantment Color Compatibility

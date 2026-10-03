@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.69` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.70` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.69`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.70`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.70 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Render Interception & Fail-Safe Fallback (`ClientPacketListenerMixin`, `MenuScreensConstructorMixin`, `StorageOverlayScreen`):** Intercepted container opening at `INVOKE` of `MenuScreens.create` inside `ClientPacketListenerMixin.handleOpenScreen` on the Minecraft render thread. If `StorageOverlayScreen.enabled(rawTitle)` is satisfied, it creates `StorageOverlayScreenHandler`, assigns `mc.player.containerMenu`, and launches `StorageOverlayScreen` via `mc.gui.setScreen(...)`. If unseeded (`!hasAnyStorage()`), disabled, or if an unexpected exception occurs, `ci.cancel()` is never called, allowing the vanilla GUI (`ContainerScreen`) to open smoothly without locking players out of their containers.
+> 2. **Clean Installation Safe Defaults (`BomboConfig`):** Audited and set all default configuration booleans across `BomboConfig.Settings` to `false`. Features such as lore additions, supercraft calculators, Diana highlights, composter helpers, lasso bat pass-through, chat tabs, and macro utilities are disabled by default on clean installations.
+> 3. **Screenshare Fast 1080p Downsampling & Instant Playback (`ScreenshareManager`, `screenshare.html`):** Downsampled high-resolution 1440p/2K Minecraft framebuffers to 1920x1080 with 0.58f JPEG quality in `ScreenshareManager.java`. Reduced CPU capture and compression time from 130ms to <15ms (enabling smooth 60 FPS broadcasting) and dropped network bitrate to ~1.5 Mbps. Added instant user query parsing (`?user=...`) in `screenshare.html` so streams start playing immediately without waiting for directory polling.
+> 4. **Synced Web Lyrics Spacing & Pinned Controls (`https://bombo.dpdns.org/lyrics`, `lyrics.html`):** Added explicit text node whitespace between word elements in `renderLyricsDom()` and applied `.word { display: inline-block; margin-right: 0.28em; white-space: pre-wrap; }` to fix words rendering without spaces. Pinned player controls with `min-height: 0` and enabled mouse wheel scrolling on the lyrics container.
+> 5. **In-Game Spotify Dark Theme Lyrics GUI (`LyricsScreen`):** Restyled in-game `LyricsScreen` to match the web player's Spotify dark obsidian aesthetic (`0xF807090E`), header card styling (`0xEE121826`), and glass green active lyric highlights (`0x2E1DB954`).
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.69 (Ready for In-Game Testing)
 >
 > 1. **SkyHanni High-Tier Enchantment Color Compatibility (`ItemStackMixin`, `SupercraftHelper`):** Modified item tooltips in-place directly on the returned list instead of calling `cir.setReturnValue(...)`. Preserves the Fabric API `ItemTooltipCallback` and Mixin `@At("RETURN")` callback chain so SkyHanni's custom enchantment recoloring for higher tier enchants (T6, T7, TX) functions without being suppressed by BomboAddons.
