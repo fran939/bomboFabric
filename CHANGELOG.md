@@ -1,5 +1,30 @@
 # BomboAddons Changelog
  
+## [26.2.28.75] - 2026-10-04 (Beta)
+
+### Storage Overlay Navigation, Scroll, and Inline Renaming
+- **Scroll Position Persistence:** Preserved exact scroll offset across container switches and backpack clicks (e.g. Backpack 18), preventing the grid from abruptly scrolling back to the top.
+- **Reliable Inline Renaming:** Fixed text editing on storage cards; typing hotkeys (like 'E' or numbers) types directly into the rename input instead of closing the GUI. Backspace, Enter (save), and Escape (cancel) work smoothly.
+- **Single Active Rename Box:** Opening an inline rename on any card automatically commits any previously open rename box, preventing multiple cards from simultaneously displaying text inputs.
+- **Dedicated Storage Navigation Hotkeys:** Integrated Next Page (`nextPageKey`), Previous Page (`prevPageKey`), and Smart Go Back (`smartGoBackKey`) hotkeys directly into `StorageOverlayScreen`, cycling sequentially through unlocked storages or returning to `/storage`.
+- **Right-Click Search Clear:** Right-clicking the search bar immediately clears the input text and refreshes the grid.
+
+### Discord Voice HUD Local Controls & Accurate Status
+- **Client-Side Local Mute:** Clicking the mute icon in the HUD now exclusively mutes the target user locally for the player via client-side volume suppression, preventing unintentional guild-wide server mutes.
+- **Self Mute & Deafen Controls:** Updated `/b discord mute` and `/b discord deafen` without user arguments (and HUD self buttons) to toggle the local user's own Discord microphone and headphone status via IPC `SET_VOICE_SETTINGS` and Windows global shortcuts.
+- **Strict [LIVE] Validation:** Screen sharing detection now strictly requires non-zero video resolution (`resolution: [1-9]\d* x [1-9]\d*`) and active video transmission within 3.5s of the latest WebRTC log line, eliminating false `[LIVE]` badges.
+
+### Auto Sequences Lore & Condition Filtering
+- **Lore & Tooltip Matching:** Added `l:` and `lore:` matcher prefixes (e.g. `l:soulbound`, `lore:recombobulated`), inspecting both item tooltip lines and `DataComponents.LORE`.
+- **Location Conditions:** Added inventory vs container targeting via `inv:` / `i:` (player inventory only) and `c:` / `container:` (open container only).
+- **Slot Index Conditions:** Added slot index conditions (e.g. `<9`, `<=8`, `>9`, `0-8`) to target specific slot ranges like the hotbar.
+- **GUI Conditions:** Added GUI state guards (`NONE` / `NO_GUI` to run only outside menus, or specific GUI title matching).
+
+### Clipboard Multi-Image Upload & Aliases
+- **Multi-Image Paste:** Pasting multiple distinct images assigns sequential placeholders (`$imgur`, `$imgur2`, `$imgur3`), uploading all screenshots in parallel and replacing all placeholders simultaneously when sending chat.
+- **Case-Insensitive Aliases & Tab Completion:** Registered `/B`, `/bombo`, `/Bombo`, `/BOMBO`, `/ba`, and `/BA` with complete tab completion and subcommands.
+- **Screenshare Fast Stream:** Removed 80ms double-load cancel stall in `screenshare.html` and flushed headers immediately in `server.js` for instant playback.
+
 ## [26.2.28.74] - 2026-10-04 (Beta)
 
 ### Storage Overlay Live Sync & Rename Typing

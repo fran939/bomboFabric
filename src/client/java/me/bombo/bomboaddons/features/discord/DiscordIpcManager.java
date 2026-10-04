@@ -83,6 +83,7 @@ public class DiscordIpcManager {
     private record PendingMute(String userId, boolean intendedMute) {}
     private static final Map<String, PendingMute> pendingMutes = new ConcurrentHashMap<>();
     private static volatile String lastSubscribedChannelId = "";
+    private static volatile long lastBotFetchTime = 0L;
 
     public static boolean isUserLocallyMuted(String userId) {
         return userId != null && locallyMutedUsers.contains(userId);
@@ -117,9 +118,6 @@ public class DiscordIpcManager {
             });
         }
 
-        // Also attempt server-mute via bot API in guild
-        muteUserViaBotAsync(userId, targetMute, null);
-
         if (connected && currentPipe != null) {
             String nonce = UUID.randomUUID().toString();
             pendingMutes.put(nonce, new PendingMute(userId, targetMute));
@@ -129,9 +127,6 @@ public class DiscordIpcManager {
                     synchronized (PIPE_LOCK) {
                         RandomAccessFile pipe = currentPipe;
                         if (pipe != null && connected) {
-                            if (!hasAuthorizedThisSession && !authCancelled) {
-                                sendAuthorize(pipe);
-                            }
                             JsonObject args = new JsonObject();
                             args.addProperty("user_id", userId);
                             args.addProperty("mute", targetMute);
@@ -150,22 +145,70 @@ public class DiscordIpcManager {
         return targetMute;
     }
 
+    private static void toggleDiscordShortcut(int keyCode) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                java.awt.Robot robot = new java.awt.Robot();
+                robot.keyPress(java.awt.event.KeyEvent.VK_CONTROL);
+                robot.keyPress(java.awt.event.KeyEvent.VK_SHIFT);
+                robot.keyPress(keyCode);
+                robot.keyRelease(keyCode);
+                robot.keyRelease(java.awt.event.KeyEvent.VK_SHIFT);
+                robot.keyRelease(java.awt.event.KeyEvent.VK_CONTROL);
+            } catch (Throwable ignored) {}
+        });
+    }
+
     public static void setSelfMute(boolean mute, Consumer<Component> feedback) {
-        String selfId = !myUserId.isEmpty() ? myUserId : "";
-        if (selfId.isEmpty()) {
-            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cYour Discord User ID could not be identified yet. Ensure Discord is connected."));
-            return;
+        if (connected && currentPipe != null) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    synchronized (PIPE_LOCK) {
+                        RandomAccessFile pipe = currentPipe;
+                        if (pipe != null && connected) {
+                            JsonObject args = new JsonObject();
+                            args.addProperty("mute", mute);
+                            JsonObject rpc = new JsonObject();
+                            rpc.addProperty("cmd", "SET_VOICE_SETTINGS");
+                            rpc.add("args", args);
+                            rpc.addProperty("nonce", UUID.randomUUID().toString());
+                            writePacket(pipe, 1, rpc.toString());
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            });
         }
-        muteTargetUser(selfId, mute, feedback);
+        toggleDiscordShortcut(java.awt.event.KeyEvent.VK_M);
+
+        if (feedback != null) {
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMuted microphone §7(self)" : "§aUnmuted microphone §7(self)")));
+        }
     }
 
     public static void setSelfDeafen(boolean deafen, Consumer<Component> feedback) {
-        String selfId = !myUserId.isEmpty() ? myUserId : "";
-        if (selfId.isEmpty()) {
-            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cYour Discord User ID could not be identified yet. Ensure Discord is connected."));
-            return;
+        if (connected && currentPipe != null) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    synchronized (PIPE_LOCK) {
+                        RandomAccessFile pipe = currentPipe;
+                        if (pipe != null && connected) {
+                            JsonObject args = new JsonObject();
+                            args.addProperty("deaf", deafen);
+                            JsonObject rpc = new JsonObject();
+                            rpc.addProperty("cmd", "SET_VOICE_SETTINGS");
+                            rpc.add("args", args);
+                            rpc.addProperty("nonce", UUID.randomUUID().toString());
+                            writePacket(pipe, 1, rpc.toString());
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            });
         }
-        deafenTargetUser(selfId, deafen, feedback);
+        toggleDiscordShortcut(java.awt.event.KeyEvent.VK_D);
+
+        if (feedback != null) {
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§cDeafened audio §7(self)" : "§aUndeafened audio §7(self)")));
+        }
     }
 
     public static void muteTargetUser(String userIdOrName, boolean mute, Consumer<Component> feedback) {
@@ -178,6 +221,18 @@ public class DiscordIpcManager {
             locallyMutedUsers.add(resolvedId);
         } else {
             locallyMutedUsers.remove(resolvedId);
+        }
+        DiscordVoiceUser existing = voiceUsers.get(resolvedId);
+        if (existing != null) {
+            voiceUsers.put(resolvedId, new DiscordVoiceUser(
+                    existing.id(), existing.username(), existing.displayName(),
+                    existing.isMuted(), existing.isDeafened(), existing.isSpeaking(),
+                    existing.isScreenSharing(), mute
+            ));
+        }
+        if (feedback != null) {
+            String name = existing != null ? existing.displayName() : resolvedId;
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cLocally muted §e" : "§aLocally unmuted §e") + name));
         }
         muteUserViaBotAsync(resolvedId, mute, respMsg -> {
             if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
@@ -522,9 +577,10 @@ public class DiscordIpcManager {
     private static final Map<String, DiscordBotUserInfo> BOT_USER_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, String> CHANNEL_NAME_CACHE = new ConcurrentHashMap<>();
     private static final Set<String> fetchingChannelIds = ConcurrentHashMap.newKeySet();
-    private static long lastBotFetchTime = 0L;
     private static final Pattern INBOUND_USER_PATTERN = Pattern.compile("Inbound (?:audio delay )?stats for user:\\s*(\\d{15,20})");
-    private static final Pattern INBOUND_VIDEO_USER_PATTERN = Pattern.compile("Inbound (?:video (?:delay )?)?stats for user:\\s*(\\d{15,20}).*?video ssrc:\\s*([1-9]\\d*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern INBOUND_VIDEO_USER_PATTERN = Pattern.compile("Inbound stats for user:\\s*(\\d{15,20}).*?video ssrc:\\s*([1-9]\\d*)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern OUTBOUND_VIDEO_PATTERN = Pattern.compile("Outbound video stats for user:\\s*(\\d{15,20})", Pattern.CASE_INSENSITIVE);
+    private static final Pattern VIDEO_RESOLUTION_PATTERN = Pattern.compile("resolution:\\s*([1-9]\\d*)\\s*x\\s*([1-9]\\d*)");
 
     public static String getMyUserId() {
         return myUserId;
@@ -665,6 +721,7 @@ public class DiscordIpcManager {
             Set<String> webrtcUserIds = new LinkedHashSet<>();
             Set<String> screensharingUserIds = new HashSet<>();
             Map<String, Long> userLastSeenMap = new HashMap<>();
+            Map<String, Long> userVideoLastSeenMap = new HashMap<>();
             long maxLogTimestamp = 0L;
 
             File webrtc0 = new File(appData, "discord/logs/discord-webrtc_0");
@@ -691,45 +748,53 @@ public class DiscordIpcManager {
                 String[] wLines = wContent.split("\r?\n");
 
                 for (String wLine : wLines) {
+                    long lineTime = 0L;
+                    Matcher tMatcher = LINE_TIME_PATTERN.matcher(wLine);
+                    if (tMatcher.find()) {
+                        try {
+                            String tStr = tMatcher.group(1);
+                            String[] parts = tStr.split("[ .]");
+                            if (parts.length >= 2) {
+                                String[] hm = parts[1].split(":");
+                                long h = Long.parseLong(hm[0]);
+                                long min = Long.parseLong(hm[1]);
+                                long s = Long.parseLong(hm[2]);
+                                long ms = parts.length > 2 ? Long.parseLong(parts[2]) : 0;
+                                lineTime = h * 3600_000L + min * 60_000L + s * 1000L + ms;
+                            }
+                        } catch (Throwable ignored) {}
+                    }
+                    if (lineTime > 0) {
+                        maxLogTimestamp = Math.max(maxLogTimestamp, lineTime);
+                    }
+
                     Matcher m = INBOUND_USER_PATTERN.matcher(wLine);
                     if (m.find()) {
                         String uid = m.group(1);
-                        if (!uid.equals(myUserId)) {
-                            long lineTime = 0L;
-                            Matcher tMatcher = LINE_TIME_PATTERN.matcher(wLine);
-                            if (tMatcher.find()) {
-                                try {
-                                    String tStr = tMatcher.group(1);
-                                    String[] parts = tStr.split("[ .]");
-                                    if (parts.length >= 2) {
-                                        String[] hm = parts[1].split(":");
-                                        long h = Long.parseLong(hm[0]);
-                                        long min = Long.parseLong(hm[1]);
-                                        long s = Long.parseLong(hm[2]);
-                                        long ms = parts.length > 2 ? Long.parseLong(parts[2]) : 0;
-                                        lineTime = h * 3600_000L + min * 60_000L + s * 1000L + ms;
-                                    }
-                                } catch (Throwable ignored) {}
-                            }
-                            if (lineTime > 0) {
-                                maxLogTimestamp = Math.max(maxLogTimestamp, lineTime);
-                                userLastSeenMap.put(uid, lineTime);
-                            }
+                        if (!uid.equals(myUserId) && lineTime > 0) {
+                            userLastSeenMap.put(uid, lineTime);
                         }
                     }
 
-                    Matcher vm = INBOUND_VIDEO_USER_PATTERN.matcher(wLine);
-                    if (vm.find()) {
-                        String vuid = vm.group(1);
-                        if (!vuid.equals(myUserId)) {
-                            screensharingUserIds.add(vuid);
-                        }
-                    }
-
-                    if (wLine.contains("Outbound video stats for user:") || (wLine.contains("[stream] Outbound") && wLine.contains("video"))) {
-                        screensharingUserIds.add(myUserId.isEmpty() ? "self" : myUserId);
-                        if (!myUserId.isEmpty()) {
-                            screensharingUserIds.add(myUserId);
+                    // Check for active video streams with non-zero resolution
+                    if (wLine.contains("resolution:") && !wLine.contains("resolution: 0 x 0")) {
+                        Matcher resM = VIDEO_RESOLUTION_PATTERN.matcher(wLine);
+                        if (resM.find()) {
+                            Matcher vm = INBOUND_VIDEO_USER_PATTERN.matcher(wLine);
+                            if (vm.find()) {
+                                String vuid = vm.group(1);
+                                if (!vuid.equals(myUserId) && lineTime > 0) {
+                                    userVideoLastSeenMap.put(vuid, lineTime);
+                                }
+                            }
+                            if (wLine.contains("Outbound video stats for user:")) {
+                                Matcher om = OUTBOUND_VIDEO_PATTERN.matcher(wLine);
+                                if (om.find() && lineTime > 0) {
+                                    String selfId = om.group(1);
+                                    userVideoLastSeenMap.put(selfId, lineTime);
+                                    userVideoLastSeenMap.put("self", lineTime);
+                                }
+                            }
                         }
                     }
                 }
@@ -740,6 +805,12 @@ public class DiscordIpcManager {
                         long diff = maxLogTimestamp - entry.getValue();
                         if (diff >= 0 && diff <= 3500L) {
                             webrtcUserIds.add(entry.getKey());
+                        }
+                    }
+                    for (Map.Entry<String, Long> entry : userVideoLastSeenMap.entrySet()) {
+                        long diff = maxLogTimestamp - entry.getValue();
+                        if (diff >= 0 && diff <= 3500L) {
+                            screensharingUserIds.add(entry.getKey());
                         }
                     }
                 }

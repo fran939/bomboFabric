@@ -13,6 +13,7 @@ import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.Collection;
@@ -24,7 +25,7 @@ public abstract class SearchableGridWidget extends AbstractContainerWidget {
 	private final List<AbstractWidget> filteredWidgets = new ObjectArrayList<>();
 
 	private final LinearLayout layoutWidget = LinearLayout.vertical();
-	private final EditBox searchField;
+	public final EditBox searchField;
 	private final WidgetsContainer widgetsContainer;
 
 	private final int expectedWidgetWidth;
@@ -140,6 +141,18 @@ public abstract class SearchableGridWidget extends AbstractContainerWidget {
 		widgetsContainer.extractRenderState(context, mouseX, mouseY, deltaTicks);
 	}
 
+	@Override
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (searchField != null && searchField.isMouseOver(event.x(), event.y())) {
+			if (event.button() == 1) { // Right click clears search
+				searchField.setValue("");
+				refreshSearch();
+				return true;
+			}
+		}
+		return super.mouseClicked(event, doubleClick);
+	}
+
 	private class WidgetsContainer extends AbstractContainerWidget {
 		protected GridLayout grid = new GridLayout();
 
@@ -156,7 +169,7 @@ public abstract class SearchableGridWidget extends AbstractContainerWidget {
 		@Override
 		public void setY(int y) {
 			super.setY(y);
-			grid.setY(y);
+			grid.setY(y - (int) scrollAmount());
 		}
 
 		@Override
@@ -218,10 +231,11 @@ public abstract class SearchableGridWidget extends AbstractContainerWidget {
 				newGrid.columnSpacing(((getWidth() - AbstractScrollArea.SCROLLBAR_WIDTH) - columns * expectedWidgetWidth) / columns);
 			}
 			newGrid.arrangeElements();
-			newGrid.setPosition(grid.getX(), grid.getY());
+			newGrid.setPosition(getX(), getY() - (int) scrollAmount());
 			grid = newGrid;
 
 			widgetsContainer.refreshScrollAmount();
+			grid.setY(getY() - (int) scrollAmount());
 		}
 	}
 

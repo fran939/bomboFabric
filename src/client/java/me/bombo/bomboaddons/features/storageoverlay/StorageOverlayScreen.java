@@ -1,6 +1,7 @@
 package me.bombo.bomboaddons.features.storageoverlay;
 
 import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.ClickLogic;
 import me.bombo.bomboaddons.SkyblockUtils;
 import me.bombo.bomboaddons.util.MessageScheduler;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
@@ -236,8 +237,8 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		if (savedSearch != null && !savedSearch.isEmpty()) {
 			grid.setSearch(savedSearch);
 		}
-		grid.setScrollAmount(savedScroll);
 		grid.refreshSearch();
+		grid.setScrollAmount(savedScroll);
 		this.addRenderableWidget(grid);
 
 		LinearLayout extraButtons = new LinearLayout(width - 90, height - 84, LinearLayout.Orientation.VERTICAL);
@@ -349,12 +350,19 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 						bw.cancelInlineRename();
 						return true;
 					}
+					if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE) {
+						String val = bw.inlineTitleBox.getValue();
+						if (!val.isEmpty()) {
+							bw.inlineTitleBox.setValue(val.substring(0, val.length() - 1));
+						}
+						return true;
+					}
+					bw.inlineTitleBox.setFocused(true);
 					if (bw.inlineTitleBox.keyPressed(event)) {
 						return true;
 					}
-					if (this.minecraft.options.keyInventory.matches(event)) {
-						return true;
-					}
+					// Always consume keys while editing title so inventory/movement keys don't close the GUI
+					return true;
 				}
 			}
 		}
@@ -362,6 +370,34 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		if (this.minecraft.options.keyInventory.matches(event) && focusPath != null && focusPath.leafComponent() instanceof EditBox) {
 			return true;
 		}
+
+		// Hotkey navigation: Next Page, Prev Page, Smart Go Back
+		boolean isTypingInSearch = grid != null && grid.searchField != null && grid.searchField.isFocused();
+		if (!isTypingInSearch) {
+			int key = event.key();
+			int nextKey = ClickLogic.getKeyCode(BomboConfig.get().nextPageKey);
+			int prevKey = ClickLogic.getKeyCode(BomboConfig.get().prevPageKey);
+			int goBackKey = ClickLogic.getKeyCode(BomboConfig.get().goBackKey);
+			int smartBackKey = ClickLogic.getKeyCode(BomboConfig.get().smartGoBackKey);
+
+			if (key != -1 && key == nextKey) {
+				int nextIdx = (openStorage >= 0) ? openStorage + 1 : 0;
+				if (nextIdx < BackpackPreview.STORAGE_SIZE) {
+					switchOpenStorage(nextIdx);
+					return true;
+				}
+			}
+			if (key != -1 && (key == prevKey || key == smartBackKey || key == goBackKey)) {
+				if (openStorage > 0) {
+					switchOpenStorage(openStorage - 1);
+					return true;
+				} else if (openStorage == 0 || key == smartBackKey || key == goBackKey) {
+					home(null);
+					return true;
+				}
+			}
+		}
+
 		return super.keyPressed(event);
 	}
 
@@ -370,7 +406,9 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		if (grid != null && grid.backpackWidgets != null) {
 			for (BackpackWidget bw : grid.backpackWidgets) {
 				if (bw.isEditingTitle && bw.inlineTitleBox != null) {
-					if (bw.inlineTitleBox.charTyped(event)) {
+					char c = (char) event.codepoint();
+					if (c >= 32 && c != 127) {
+						bw.inlineTitleBox.insertText(Character.toString(c));
 						return true;
 					}
 				}
@@ -404,6 +442,9 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	@Override
 	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
 		super.extractBackground(graphics, mouseX, mouseY, a);
+		if (grid != null) {
+			savedScroll = grid.getScrollAmount();
+		}
 		BomboConfig.Settings s = BomboConfig.get();
 		String theme = s != null && s.storageOverlayTheme != null ? s.storageOverlayTheme.toUpperCase(Locale.ROOT) : "DEFAULT";
 		boolean transparent = s != null && (s.storageOverlayTransparent || theme.equals("TRANSPARENT"));
@@ -695,6 +736,14 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		public void onClick(MouseButtonEvent event, boolean doubleClick) {
 			super.onClick(event, doubleClick);
 			if (event.y() >= getY() && event.y() <= getY() + HEADER_H) {
+				// Commit any other backpack that is currently being edited
+				if (StorageOverlayScreen.this.grid != null && StorageOverlayScreen.this.grid.backpackWidgets != null) {
+					for (BackpackWidget other : StorageOverlayScreen.this.grid.backpackWidgets) {
+						if (other != this && other.isEditingTitle) {
+							other.commitInlineRename();
+						}
+					}
+				}
 				if (!isEditingTitle) {
 					isEditingTitle = true;
 					int boxW = Math.max(80, getWidth() - 16);
@@ -708,6 +757,14 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			}
 			if (isEditingTitle) {
 				commitInlineRename();
+			}
+			// Also commit any other backpack being edited
+			if (StorageOverlayScreen.this.grid != null && StorageOverlayScreen.this.grid.backpackWidgets != null) {
+				for (BackpackWidget other : StorageOverlayScreen.this.grid.backpackWidgets) {
+					if (other != this && other.isEditingTitle) {
+						other.commitInlineRename();
+					}
+				}
 			}
 			if (!open) {
 				switchOpenStorage(index);

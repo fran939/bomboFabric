@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.74` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.75` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.74`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.75`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.75 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Navigation, Scroll, and Inline Renaming (`StorageOverlayScreen`, `SearchableGridWidget`):** Preserved exact scroll offset across container switches and backpack clicks, preventing grid jumps back to top. Fixed inline card title editing by capturing keystrokes (`charTyped` and guarded `keyPressed`) so letters or hotkeys like 'E' insert directly into the text box instead of closing the GUI. Enforced single active rename card across the grid. Added Next Page, Previous Page, and Smart Go Back hotkey navigation directly in `StorageOverlayScreen`. Made right-clicking the search bar immediately clear the search query.
+> 2. **Discord Voice HUD Local Controls & Accurate [LIVE] (`DiscordIpcManager`, `DiscordVoiceHud`):** HUD user mute button now exclusively suppresses user audio locally on the player's client, completely preventing unintentional guild-wide server mutes. Self mute and deafen actions control the local user's own Discord client state via IPC `SET_VOICE_SETTINGS` and Windows hotkeys. False `[LIVE]` badges fixed by strictly requiring active non-zero video resolution (`resolution: [1-9]\d* x [1-9]\d*`) and transmission within 3.5s of the newest WebRTC log line.
+> 3. **Auto Sequences Lore Matching & Conditions (`AutoSequenceManager`, `AutoSequenceExecutor`):** Added `l:` and `lore:` matcher prefixes inspecting tooltip lines and `DataComponents.LORE`. Added location conditions (`inv:` for player inventory only, `c:` for container only), slot conditions (`<9`, `<=8`, `>9`, `0-8`), and GUI state guards (`NONE` / `NO_GUI` or specific title substring).
+> 4. **Clipboard Multi-Image Upload & Case-Insensitive Aliases (`ClipboardImageUploader`, `BomboaddonsClient`, `PerformanceScreen`):** Enabled sequential placeholder assignment (`$imgur`, `$imgur2`, `$imgur3`) for pasting distinct screenshots, uploading in parallel and replacing all placeholders atomically on chat send. Registered `/B`, `/bombo`, `/Bombo`, `/BOMBO`, `/ba`, and `/BA` aliases with complete tab completion and screenshare subcommands. Fixed `String.format` crash in `/b perf`.
+> 5. **Screenshare Fast Stream Loading (`screenshare.html`, `server.js`):** Removed 80ms double-load aborts in `screenshare.html` and flushed headers immediately on connection in `server.js`, eliminating 10-15s stream startup stalls.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.74 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Live Sync & Rename Typing (`BackpackPreview`, `StorageOverlayScreen`, `AbstractContainerScreenMixin`):** Hooked `slotClicked` and `removed` across `AbstractContainerScreenMixin` and `StorageOverlayScreen` so item clicks and drag-moves in vanilla menus and overlay synchronize to disk and in-memory caches immediately. Added `charTyped` and guarded `keyPressed` in `StorageOverlayScreen` so hotkeys like 'E' enter text into rename inputs rather than closing the menu. Added `/b storage debug` printing diagnostic snapshot dumps to `.minecraft/config/bomboaddons/storage_debug.log`.

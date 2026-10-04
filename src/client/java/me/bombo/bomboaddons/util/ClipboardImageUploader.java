@@ -33,6 +33,9 @@ public class ClipboardImageUploader {
    // Cache and in-flight deduplication
    private static final Map<String, String> COMPLETED_LINKS = new ConcurrentHashMap<>();
    private static final Map<String, CompletableFuture<String>> IN_FLIGHT_UPLOADS = new ConcurrentHashMap<>();
+   private static final Map<String, String> TAG_TO_HASH = new ConcurrentHashMap<>();
+   private static final Map<String, String> HASH_TO_TAG = new ConcurrentHashMap<>();
+   private static final java.util.regex.Pattern IMGUR_PATTERN = java.util.regex.Pattern.compile("\\$imgur\\d*");
    private static volatile String latestImageHash = null;
 
    public static boolean hasClipboardImage() {
@@ -173,20 +176,40 @@ public class ClipboardImageUploader {
             return false;
          }
 
-         // Insert $imgur placeholder immediately into the input box
-         if (targetInput != null) {
-            targetInput.insertText("$imgur");
-         }
-
          // Compute image hash for deduplication
          String hash = computeHash(pngBytes);
          latestImageHash = hash;
+
+         // Determine which placeholder tag to assign:
+         // If this exact image already has a tag in targetInput, reuse it; otherwise pick lowest unused tag
+         String currentVal = (targetInput != null) ? targetInput.getValue() : "";
+         String chosenTag = HASH_TO_TAG.get(hash);
+         if (chosenTag == null || (!currentVal.contains(chosenTag) && TAG_TO_HASH.containsKey(chosenTag) && !hash.equals(TAG_TO_HASH.get(chosenTag)))) {
+            int idx = 1;
+            while (true) {
+               String candidate = (idx == 1) ? "$imgur" : ("$imgur" + idx);
+               if (!currentVal.contains(candidate)) {
+                  chosenTag = candidate;
+                  break;
+               }
+               idx++;
+            }
+            HASH_TO_TAG.put(hash, chosenTag);
+            TAG_TO_HASH.put(chosenTag, hash);
+         } else {
+            TAG_TO_HASH.put(chosenTag, hash);
+         }
+
+         // Insert placeholder into the input box
+         if (targetInput != null) {
+            targetInput.insertText(chosenTag);
+         }
 
          // Check if already uploaded
          if (COMPLETED_LINKS.containsKey(hash)) {
             String existingLink = COMPLETED_LINKS.get(hash);
             if (mc.gui != null && mc.gui.hud.getChat() != null) {
-               mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §aUsing cached image link: §b" + existingLink));
+               mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §aUsing cached image link for " + chosenTag + ": §b" + existingLink));
             }
             return true;
          }
@@ -194,7 +217,7 @@ public class ClipboardImageUploader {
          // Check if already in-flight
          if (IN_FLIGHT_UPLOADS.containsKey(hash)) {
             if (mc.gui != null && mc.gui.hud.getChat() != null) {
-               mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §eImage upload already in progress... ($imgur queued)"));
+               mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §eImage upload already in progress... (" + chosenTag + " queued)"));
             }
             return true;
          }
@@ -204,7 +227,7 @@ public class ClipboardImageUploader {
          IN_FLIGHT_UPLOADS.put(hash, future);
 
          if (mc.gui != null && mc.gui.hud.getChat() != null) {
-            mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §eUploading screenshot (" + (pngBytes.length / 1024) + " KB) to Imgur... ($imgur placed)"));
+            mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §eUploading screenshot (" + (pngBytes.length / 1024) + " KB) to Imgur... (" + chosenTag + " placed)"));
          }
 
          CompletableFuture.runAsync(() -> {
@@ -303,39 +326,64 @@ public class ClipboardImageUploader {
          return;
       }
 
-      String hash = latestImageHash;
-      if (hash != null) {
-         if (COMPLETED_LINKS.containsKey(hash)) {
-            String link = COMPLETED_LINKS.get(hash);
-            onSend.accept(rawMessage.replace("$imgur", link));
-            return;
-         }
+      java.util.regex.Matcher matcher = IMGUR_PATTERN.matcher(rawMessage);
+      java.util.Set<String> tagsFound = new java.util.LinkedHashSet<>();
+      while (matcher.find()) {
+         tagsFound.add(matcher.group());
+      }
 
-         if (IN_FLIGHT_UPLOADS.containsKey(hash)) {
-            CompletableFuture<String> future = IN_FLIGHT_UPLOADS.get(hash);
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.gui != null && mc.gui.hud.getChat() != null) {
-               mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §eWaiting for image upload to complete... Message queued!"));
-            }
+      if (tagsFound.isEmpty()) {
+         onSend.accept(rawMessage);
+         return;
+      }
 
-            future.thenAccept(link -> {
-               mc.execute(() -> {
-                  onSend.accept(rawMessage.replace("$imgur", link));
-               });
-            }).exceptionally(ex -> {
-               mc.execute(() -> {
-                  if (mc.gui != null && mc.gui.hud.getChat() != null) {
-                     mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §cImage upload failed! Sending original text."));
-                  }
-                  onSend.accept(rawMessage);
-               });
-               return null;
-            });
-            return;
+      Minecraft mc = Minecraft.getInstance();
+      Map<String, CompletableFuture<String>> futuresToWait = new java.util.HashMap<>();
+      Map<String, String> resolvedLinks = new java.util.HashMap<>();
+
+      for (String tag : tagsFound) {
+         String hash = TAG_TO_HASH.get(tag);
+         if (hash == null) hash = latestImageHash;
+
+         if (hash != null && COMPLETED_LINKS.containsKey(hash)) {
+            resolvedLinks.put(tag, COMPLETED_LINKS.get(hash));
+         } else if (hash != null && IN_FLIGHT_UPLOADS.containsKey(hash)) {
+            futuresToWait.put(tag, IN_FLIGHT_UPLOADS.get(hash));
          }
       }
 
-      onSend.accept(rawMessage);
+      if (futuresToWait.isEmpty()) {
+         // All already resolved or none pending
+         String result = rawMessage;
+         for (Map.Entry<String, String> entry : resolvedLinks.entrySet()) {
+            result = result.replace(entry.getKey(), entry.getValue());
+         }
+         onSend.accept(result);
+         return;
+      }
+
+      if (mc.gui != null && mc.gui.hud.getChat() != null) {
+         mc.gui.hud.getChat().addClientSystemMessage(Component.literal("§8[§bBomboAddons§8] §eWaiting for " + futuresToWait.size() + " image upload(s) to complete... Message queued!"));
+      }
+
+      CompletableFuture<?>[] array = futuresToWait.values().toArray(new CompletableFuture[0]);
+      CompletableFuture.allOf(array).whenComplete((res, err) -> {
+         mc.execute(() -> {
+            String result = rawMessage;
+            for (Map.Entry<String, String> entry : resolvedLinks.entrySet()) {
+               result = result.replace(entry.getKey(), entry.getValue());
+            }
+            for (Map.Entry<String, CompletableFuture<String>> entry : futuresToWait.entrySet()) {
+               try {
+                  String link = entry.getValue().getNow(null);
+                  if (link != null) {
+                     result = result.replace(entry.getKey(), link);
+                  }
+               } catch (Throwable ignored) {}
+            }
+            onSend.accept(result);
+         });
+      });
    }
 
    private static String computeHash(byte[] data) {

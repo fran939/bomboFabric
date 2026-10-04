@@ -127,8 +127,8 @@ public class PerformanceScreen extends Screen {
         } catch (Throwable ignored) {}
         String cpuPart = (processCpu >= 0.0) ? String.format(" | §eCPU: §a%.1f%%", processCpu) : "";
 
-        String memSummary = String.format("§7JVM: §a%dMB §8/ §7%dMB" + cpuPart + " §8| §7Threads: §b%d",
-                usedMem, totalMem, activeThreads);
+        String memSummary = String.format("§7JVM: §a%dMB §8/ §7%dMB%s §8| §7Threads: §b%d",
+                usedMem, totalMem, cpuPart, activeThreads);
         if (ScreenshareManager.isStreaming()) {
             memSummary += String.format(" | §3Stream: §a%.0f FPS §7(%s)", ScreenshareManager.getCurrentFps(), ScreenshareManager.getLastCaptureMode());
         } else {

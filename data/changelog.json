@@ -1,5 +1,24 @@
 [
   {
+    "version": "26.2.28.75",
+    "date": "2026-10-04",
+    "changes": [
+      "Storage Overlay Scroll Persistence: Retained exact scroll position across container switches and backpack clicks, preventing grid jumps",
+      "Storage Overlay Inline Rename: Fixed key typing so hotkeys and letters type into the rename input without closing the GUI, with single active edit box guard",
+      "Storage Navigation Hotkeys: Added support for Next Page, Previous Page, and Smart Go Back hotkeys in StorageOverlayScreen",
+      "Storage Search Right-Click: Right-clicking the search bar immediately clears search text and refreshes the item grid",
+      "Discord Voice HUD Client-Side Local Mute: HUD mute button exclusively mutes target user locally for the player, preventing accidental guild-wide server mutes",
+      "Discord Voice HUD Self Controls: Toggling mute or deafen on self now controls local Discord microphone and headphone status via IPC SET_VOICE_SETTINGS and shortcuts",
+      "Discord Accurate [LIVE] Status: Strictly requires non-zero video resolution (resolution: [1-9]d* x [1-9]d*) and recent frame transmission to eliminate false [LIVE] badges",
+      "Auto Sequences Lore Matching: Added l: and lore: prefixes to match against item lore and tooltip lines",
+      "Auto Sequences Conditions: Added location conditions (inv: for player inventory, c: for container) and slot conditions (<9, <=8, 0-8)",
+      "Auto Sequences GUI Guards: Added GUI state guards (NONE / NO_GUI to require no open screen, or specific GUI title substring)",
+      "Clipboard Multi-Image Upload: Pasting multiple distinct images assigns sequential $imgur, $imgur2, $imgur3 placeholders, uploading in parallel and replacing simultaneously",
+      "Case-Insensitive Command Aliases: Registered /B, /bombo, /Bombo, /BOMBO, /ba, and /BA with complete tab completion and subcommands",
+      "Screenshare Fast Stream: Removed 80ms double-load cancel stall in screenshare.html and flushed headers immediately in server.js for instant playback"
+    ]
+  },
+  {
     "version": "26.2.28.74",
     "date": "2026-10-04",
     "changes": [

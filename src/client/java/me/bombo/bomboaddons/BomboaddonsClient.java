@@ -924,9 +924,6 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
 
             try {
-               LiteralArgumentBuilder<FabricClientCommandSource> bBuilder = ClientCommands.literal("b");
-               LiteralArgumentBuilder<FabricClientCommandSource> baBuilder = ClientCommands.literal("bomboaddons");
-               LiteralArgumentBuilder<FabricClientCommandSource> bomboBuilder = ClientCommands.literal("bombo");
                Consumer<LiteralArgumentBuilder<FabricClientCommandSource>> setupCommands = (builder) -> {
                   builder.executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
@@ -4854,12 +4851,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                   // /b ss -> screenshare command tree
                   builder.then(buildScreenshareCommand("ss"));
                };
-               setupCommands.accept(bBuilder);
-               setupCommands.accept(baBuilder);
-               setupCommands.accept(bomboBuilder);
-               dispatcher.register(bBuilder);
-               dispatcher.register(baBuilder);
-               dispatcher.register(bomboBuilder);
+               String[] mainCommandAliases = new String[] { "b", "B", "bombo", "Bombo", "BOMBO", "bomboaddons", "ba", "BA" };
+               for (String alias : mainCommandAliases) {
+                  LiteralArgumentBuilder<FabricClientCommandSource> cmdBuilder = ClientCommands.literal(alias);
+                  setupCommands.accept(cmdBuilder);
+                  dispatcher.register(cmdBuilder);
+               }
                dispatcher.register(createBlockHighlightCommand("bh"));
                dispatcher.register(createBlockHighlightCommand("blockhighlight"));
                // /ss, /screenshare, and /stream - Mod-to-mod screenshare and live streaming
@@ -8228,10 +8225,6 @@ public class BomboaddonsClient implements ClientModInitializer {
             return 1;
          })).then(argsNode);
          dispatcher.register(builder);
-         dispatcher.register(ClientCommands.literal("B").executes((context) -> { openGuiNextTick = true; return 1; }));
-         dispatcher.register(ClientCommands.literal("bombo").executes((context) -> { openGuiNextTick = true; return 1; }));
-         dispatcher.register(ClientCommands.literal("Bombo").executes((context) -> { openGuiNextTick = true; return 1; }));
-         dispatcher.register(ClientCommands.literal("BOMBO").executes((context) -> { openGuiNextTick = true; return 1; }));
          dispatcher.register(ClientCommands.literal("sound").executes((context) -> {
             me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = "Sounds";
             me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -8300,6 +8293,16 @@ public class BomboaddonsClient implements ClientModInitializer {
             return 1;
          }))
          .then(ClientCommands.argument("action", StringArgumentType.word())
+            .suggests((c, b) -> {
+               String[] subs = new String[]{"config", "start", "stop", "debug", "status", "stream", "accept", "deny", "whitelist", "remove", "list", "discord"};
+               String remaining = b.getRemaining().toLowerCase(java.util.Locale.ROOT);
+               for (String s : subs) {
+                  if (s.startsWith(remaining)) {
+                     b.suggest(s);
+                  }
+               }
+               return b.buildFuture();
+            })
             .executes(context -> {
                String action = StringArgumentType.getString(context, "action");
                handleScreenshareCommand((FabricClientCommandSource) context.getSource(), new String[]{action});
@@ -8444,6 +8447,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
 
       if (sub.equals("config") || sub.equals("settings") || sub.equals("gui")) {
+         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
          mc.execute(() -> {
             mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboConfigScreen(null, "Discord"));
          });

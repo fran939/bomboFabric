@@ -67,12 +67,18 @@ public class AutoSequenceManager {
         /** How many times this step runs before moving on. */
         public int repeatCount = 1;
         public int delayMs = 200; // delay after this action before next
-        /**
-         * Per-step switch. A disabled step stays in the sequence (so it can be re-enabled later)
+        /** Per-step switch. A disabled step stays in the sequence (so it can be re-enabled later)
          * but the runtime skips it without consuming its delay. Existing saved sequences have no
          * such field, so GSON leaves it at the default {@code true}.
          */
         public boolean enabled = true;
+
+        /** Optional GUI condition: "NONE", "NO_GUI", or specific title substring. Blank means any. */
+        public String guiCondition = "";
+        /** Optional location condition: "ANY", "INVENTORY", or "CONTAINER". */
+        public String locationCondition = "ANY";
+        /** Optional slot condition filter: e.g. "<9", "<=8", ">9", "0-8". */
+        public String slotCondition = "";
 
         public AutoAction() {
         }
@@ -132,19 +138,29 @@ public class AutoSequenceManager {
         public String getSummary() {
             String repeat = repeatCount > 1 ? (" x" + repeatCount) : "";
             String prefix = enabled ? "" : "§8[OFF] ";
+            String condInfo = "";
+            if (locationCondition != null && !locationCondition.equalsIgnoreCase("ANY") && !locationCondition.isBlank()) {
+                condInfo += " [" + locationCondition.toLowerCase() + "]";
+            }
+            if (slotCondition != null && !slotCondition.isBlank()) {
+                condInfo += " [slot " + slotCondition + "]";
+            }
+            if (guiCondition != null && !guiCondition.isBlank()) {
+                condInfo += " [gui:" + guiCondition + "]";
+            }
             return prefix + switch (type) {
                 case CLICK_SLOT -> {
                     String target = slotIndex >= 0 ? ("Slot #" + slotIndex)
                             : (itemMatcher == null || itemMatcher.isBlank() ? "anything" : "\"" + itemMatcher + "\"");
                     String gui = guiMatcher != null && !guiMatcher.isBlank() ? " in \"" + guiMatcher + "\"" : "";
-                    yield "Click " + target + gui + " (" + clickType + ", " + delayMs + "ms)" + repeat;
+                    yield "Click " + target + gui + condInfo + " (" + clickType + ", " + delayMs + "ms)" + repeat;
                 }
-                case CLOSE_GUI -> "Close GUI (" + delayMs + "ms)" + repeat;
-                case RUN_COMMAND -> "Run \"" + command + "\" (" + delayMs + "ms)" + repeat;
-                case CLICK_WORLD -> (rightClick ? "Right-Click World" : "Left-Click World") + " (" + delayMs + "ms)" + repeat;
+                case CLOSE_GUI -> "Close GUI" + condInfo + " (" + delayMs + "ms)" + repeat;
+                case RUN_COMMAND -> "Run \"" + command + "\"" + condInfo + " (" + delayMs + "ms)" + repeat;
+                case CLICK_WORLD -> (rightClick ? "Right-Click World" : "Left-Click World") + condInfo + " (" + delayMs + "ms)" + repeat;
                 case INTERACT_ENTITY -> (rightClick ? "Right-Click" : "Left-Click")
                         + (entityMatcher == null || entityMatcher.isBlank() ? " NPC" : " \"" + entityMatcher + "\"")
-                        + " /" + (int) searchRadius + "m (" + delayMs + "ms)" + repeat;
+                        + " /" + (int) searchRadius + "m" + condInfo + " (" + delayMs + "ms)" + repeat;
                 case WAIT -> "Wait " + delayMs + "ms" + repeat;
             };
         }

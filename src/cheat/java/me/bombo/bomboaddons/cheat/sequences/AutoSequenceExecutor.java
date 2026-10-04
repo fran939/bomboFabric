@@ -260,17 +260,43 @@ public final class AutoSequenceExecutor {
     private static boolean executeAction(Minecraft mc, AutoAction action) {
         if (action == null || action.type == null) return false;
         try {
+            // Check GUI condition across all actions:
+            String guiCond = (action.guiCondition != null && !action.guiCondition.isBlank())
+                    ? action.guiCondition
+                    : action.guiMatcher;
+
+            if (guiCond != null && !guiCond.isBlank()) {
+                String trimmedCond = guiCond.trim();
+                if (trimmedCond.equalsIgnoreCase("NONE") || trimmedCond.equalsIgnoreCase("NO_GUI")) {
+                    if (mc.gui.screen() != null) {
+                        return false; // must NOT be in a GUI
+                    }
+                } else if (action.type != AutoSequenceManager.ActionType.CLICK_SLOT) {
+                    // Non-slot-click actions can also require a specific GUI screen
+                    if (mc.gui.screen() == null) {
+                        return false;
+                    }
+                    String title = ChatFormatting.stripFormatting(mc.gui.screen().getTitle().getString()).trim().toLowerCase(Locale.ROOT);
+                    if (!title.contains(trimmedCond.toLowerCase(Locale.ROOT))) {
+                        return false;
+                    }
+                }
+            }
+
             switch (action.type) {
                 case CLICK_SLOT -> {
                     if (!(mc.gui.screen() instanceof AbstractContainerScreen<?> containerScreen)) {
                         return false;
                     }
-                    // Optional GUI title guard: a step that names a GUI only clicks inside it,
-                    // so a "Click auction house" step never fires inside an unrelated chest.
-                    if (action.guiMatcher != null && !action.guiMatcher.isBlank()) {
+                    // Optional GUI title guard: a step that names a GUI only clicks inside it
+                    if (guiCond != null && !guiCond.isBlank()) {
+                        String trimmedCond = guiCond.trim();
+                        if (trimmedCond.equalsIgnoreCase("NONE") || trimmedCond.equalsIgnoreCase("NO_GUI")) {
+                            return false;
+                        }
                         String title = ChatFormatting.stripFormatting(
                                 containerScreen.getTitle().getString()).trim().toLowerCase(Locale.ROOT);
-                        String want = action.guiMatcher.trim().toLowerCase(Locale.ROOT);
+                        String want = trimmedCond.toLowerCase(Locale.ROOT);
                         if (!title.contains(want)) {
                             return false;
                         }
@@ -278,8 +304,8 @@ public final class AutoSequenceExecutor {
                     int targetSlot = -1;
                     if (action.slotIndex >= 0 && action.slotIndex < containerScreen.getMenu().slots.size()) {
                         targetSlot = action.slotIndex;
-                    } else if (action.itemMatcher != null && !action.itemMatcher.trim().isEmpty()) {
-                        targetSlot = findSlotMatching(containerScreen, action.itemMatcher.trim());
+                    } else {
+                        targetSlot = findSlotMatching(mc, containerScreen, action);
                     }
                     if (targetSlot < 0) return false;
 
@@ -410,13 +436,46 @@ public final class AutoSequenceExecutor {
         return best;
     }
 
-    private static int findSlotMatching(AbstractContainerScreen<?> screen, String matcher) {
-        // The single target field accepts a slot number ("5"), a "slot 5" prefix, or an
-        // item-name matcher - whichever the user finds natural for this step.
-        String trimmed = matcher.trim();
-        String loweredAll = trimmed.toLowerCase(Locale.ROOT);
-        if (loweredAll.matches("^slot\\s*#?\\s*\\d+$")) {
-            String digits = loweredAll.replaceAll("[^\\d]", "");
+    private static int findSlotMatching(Minecraft mc, AbstractContainerScreen<?> screen, AutoAction action) {
+        String matcher = action.itemMatcher != null ? action.itemMatcher.trim() : "";
+        String loweredAll = matcher.toLowerCase(Locale.ROOT);
+
+        String locationCond = (action.locationCondition != null && !action.locationCondition.isBlank())
+                ? action.locationCondition.trim().toUpperCase(Locale.ROOT) : "ANY";
+        String slotCond = (action.slotCondition != null) ? action.slotCondition.trim() : "";
+
+        String targetMatcher = loweredAll;
+        boolean isLore = false;
+
+        // Check location prefixes in matcher string
+        if (targetMatcher.startsWith("inv:") || targetMatcher.startsWith("inventory:") || targetMatcher.startsWith("i:")) {
+            locationCond = "INVENTORY";
+            targetMatcher = targetMatcher.substring(targetMatcher.indexOf(':') + 1).trim();
+        } else if (targetMatcher.startsWith("container:") || targetMatcher.startsWith("c:") || targetMatcher.startsWith("chest:")) {
+            locationCond = "CONTAINER";
+            targetMatcher = targetMatcher.substring(targetMatcher.indexOf(':') + 1).trim();
+        }
+
+        // Check slot condition prefix in matcher string: e.g. "slot:<9", "slot:<=8", "slot:>9"
+        if (targetMatcher.startsWith("slot:")) {
+            int nextSpace = targetMatcher.indexOf(' ');
+            if (nextSpace != -1) {
+                slotCond = targetMatcher.substring(5, nextSpace).trim();
+                targetMatcher = targetMatcher.substring(nextSpace + 1).trim();
+            } else {
+                slotCond = targetMatcher.substring(5).trim();
+                targetMatcher = "";
+            }
+        }
+
+        // Check lore prefix: "l:" or "lore:"
+        if (targetMatcher.startsWith("l:") || targetMatcher.startsWith("lore:")) {
+            isLore = true;
+            targetMatcher = targetMatcher.substring(targetMatcher.indexOf(':') + 1).trim();
+        }
+
+        if (targetMatcher.matches("^slot\\s*#?\\s*\\d+$")) {
+            String digits = targetMatcher.replaceAll("[^\\d]", "");
             try {
                 int idx = Integer.parseInt(digits);
                 if (idx >= 0 && idx < screen.getMenu().slots.size()) return idx;
@@ -425,21 +484,112 @@ public final class AutoSequenceExecutor {
             return -1;
         }
 
-        String query = loweredAll;
         List<Slot> slots = screen.getMenu().slots;
-
         for (int i = 0; i < slots.size(); i++) {
-            ItemStack stack = slots.get(i).getItem();
+            Slot slot = slots.get(i);
+
+            // Check slot condition
+            if (!slotCond.isEmpty() && !matchesSlotCondition(i, slotCond)) {
+                continue;
+            }
+
+            // Check location condition
+            boolean isInventory = (slot.container instanceof net.minecraft.world.entity.player.Inventory)
+                    || (mc.player != null && slot.container == mc.player.getInventory());
+            if ("INVENTORY".equals(locationCond) && !isInventory) {
+                continue;
+            }
+            if ("CONTAINER".equals(locationCond) && isInventory) {
+                continue;
+            }
+
+            ItemStack stack = slot.getItem();
+            if (targetMatcher.isEmpty() && !stack.isEmpty()) {
+                return i;
+            }
+
             if (!stack.isEmpty()) {
-                String hover = ChatFormatting.stripFormatting(stack.getHoverName().getString())
-                        .toLowerCase(Locale.ROOT).trim();
-                String sbId = SkyblockUtils.getSkyblockId(stack).toLowerCase(Locale.ROOT).trim();
-                if (hover.contains(query) || sbId.contains(query) || sbId.replace("_", " ").contains(query)) {
-                    return i;
+                if (isLore) {
+                    if (matchesLore(mc, stack, targetMatcher)) {
+                        return i;
+                    }
+                } else {
+                    String hover = ChatFormatting.stripFormatting(stack.getHoverName().getString())
+                            .toLowerCase(Locale.ROOT).trim();
+                    String sbId = SkyblockUtils.getSkyblockId(stack).toLowerCase(Locale.ROOT).trim();
+                    if (hover.contains(targetMatcher) || sbId.contains(targetMatcher) || sbId.replace("_", " ").contains(targetMatcher)) {
+                        return i;
+                    }
                 }
             }
         }
         return -1;
+    }
+
+    private static boolean matchesSlotCondition(int slotIndex, String cond) {
+        if (cond == null || cond.isBlank()) return true;
+        try {
+            String c = cond.trim();
+            if (c.startsWith("<=")) {
+                return slotIndex <= Integer.parseInt(c.substring(2).trim());
+            } else if (c.startsWith("<")) {
+                return slotIndex < Integer.parseInt(c.substring(1).trim());
+            } else if (c.startsWith(">=")) {
+                return slotIndex >= Integer.parseInt(c.substring(2).trim());
+            } else if (c.startsWith(">")) {
+                return slotIndex > Integer.parseInt(c.substring(1).trim());
+            } else if (c.startsWith("==") || c.startsWith("=")) {
+                String val = c.startsWith("==") ? c.substring(2).trim() : c.substring(1).trim();
+                return slotIndex == Integer.parseInt(val);
+            } else if (c.contains("-")) {
+                String[] parts = c.split("-");
+                int min = Integer.parseInt(parts[0].trim());
+                int max = Integer.parseInt(parts[1].trim());
+                return slotIndex >= min && slotIndex <= max;
+            } else if (c.matches("^\\d+$")) {
+                return slotIndex == Integer.parseInt(c);
+            }
+        } catch (Throwable ignored) {
+        }
+        return true;
+    }
+
+    private static boolean matchesLore(Minecraft mc, ItemStack stack, String targetLore) {
+        if (targetLore == null || targetLore.isEmpty()) return true;
+        String query = targetLore.toLowerCase(Locale.ROOT).trim();
+
+        // 1. Check DataComponents.LORE
+        net.minecraft.world.item.component.ItemLore itemLore = stack.get(net.minecraft.core.component.DataComponents.LORE);
+        if (itemLore != null) {
+            for (net.minecraft.network.chat.Component line : itemLore.lines()) {
+                String text = ChatFormatting.stripFormatting(line.getString()).toLowerCase(Locale.ROOT);
+                if (text.contains(query)) {
+                    return true;
+                }
+            }
+        }
+
+        // 2. Check full tooltip lines
+        if (mc.level != null && mc.player != null) {
+            try {
+                List<net.minecraft.network.chat.Component> tooltip = stack.getTooltipLines(
+                        net.minecraft.world.item.Item.TooltipContext.of(mc.level),
+                        mc.player,
+                        net.minecraft.world.item.TooltipFlag.NORMAL);
+                for (net.minecraft.network.chat.Component line : tooltip) {
+                    String text = ChatFormatting.stripFormatting(line.getString()).toLowerCase(Locale.ROOT);
+                    if (text.contains(query)) {
+                        return true;
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        return false;
+    }
+
+    private static int findSlotMatching(AbstractContainerScreen<?> screen, String matcher) {
+        return findSlotMatching(Minecraft.getInstance(), screen, new AutoAction(AutoSequenceManager.ActionType.CLICK_SLOT, -1, matcher, "LEFT", 0));
     }
 
     private static String triggerText(String kind, String label) {
