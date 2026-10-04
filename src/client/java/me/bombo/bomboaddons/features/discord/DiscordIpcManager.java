@@ -148,6 +148,16 @@ public class DiscordIpcManager {
             });
         }
 
+        muteUserViaBotAsync(userId, targetMute, respMsg -> {
+            if (mc != null) {
+                mc.execute(() -> {
+                    if (mc.player != null) {
+                        mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] " + respMsg));
+                    }
+                });
+            }
+        });
+
         return targetMute;
     }
 
@@ -166,11 +176,10 @@ public class DiscordIpcManager {
                     WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0x1D, 0, 0); // VK_CONTROL down
                     WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0x2A, 0, 0); // VK_SHIFT down
                     WinUser32.INSTANCE.keybd_event(vk, scan, 0, 0);                 // Key down
-                    Thread.sleep(40L);
+                    Thread.sleep(50L);
                     WinUser32.INSTANCE.keybd_event(vk, scan, 2, 0);                 // Key up (KEYEVENTF_KEYUP = 2)
                     WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0x2A, 2, 0); // Shift up
                     WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0x1D, 2, 0); // Ctrl up
-                    return;
                 }
             } catch (Throwable ignored) {}
             try {
@@ -178,6 +187,7 @@ public class DiscordIpcManager {
                 robot.keyPress(java.awt.event.KeyEvent.VK_CONTROL);
                 robot.keyPress(java.awt.event.KeyEvent.VK_SHIFT);
                 robot.keyPress(keyCode);
+                Thread.sleep(40L);
                 robot.keyRelease(keyCode);
                 robot.keyRelease(java.awt.event.KeyEvent.VK_SHIFT);
                 robot.keyRelease(java.awt.event.KeyEvent.VK_CONTROL);
@@ -206,6 +216,9 @@ public class DiscordIpcManager {
             });
         }
         toggleDiscordShortcut(java.awt.event.KeyEvent.VK_M);
+        if (!selfId.equals("self")) {
+            muteUserViaBotAsync(selfId, mute, null);
+        }
 
         DiscordVoiceUser existing = voiceUsers.get(selfId);
         if (existing != null) {
@@ -217,7 +230,8 @@ public class DiscordIpcManager {
         }
 
         if (feedback != null) {
-            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMicrophone Muted §7(Discord client)" : "§aMicrophone Unmuted §7(Discord client)")));
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMicrophone Muted §7(Sent Ctrl+Shift+M & Discord IPC)" : "§aMicrophone Unmuted §7(Sent Ctrl+Shift+M & Discord IPC)")));
+            feedback.accept(Component.literal("§7(Tip: For background mute, add 'Toggle Mute' = Ctrl+Shift+M in Discord Settings -> Keybinds)"));
         }
     }
 
@@ -242,6 +256,9 @@ public class DiscordIpcManager {
             });
         }
         toggleDiscordShortcut(java.awt.event.KeyEvent.VK_D);
+        if (!selfId.equals("self")) {
+            deafenUserViaBotAsync(selfId, deafen, null);
+        }
 
         DiscordVoiceUser existing = voiceUsers.get(selfId);
         if (existing != null) {
@@ -253,7 +270,8 @@ public class DiscordIpcManager {
         }
 
         if (feedback != null) {
-            feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§cAudio Deafened §7(Discord client)" : "§aAudio Undeafened §7(Discord client)")));
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§cAudio Deafened §7(Sent Ctrl+Shift+D & Discord IPC)" : "§aAudio Undeafened §7(Sent Ctrl+Shift+D & Discord IPC)")));
+            feedback.accept(Component.literal("§7(Tip: For background deafen, add 'Toggle Deafen' = Ctrl+Shift+D in Discord Settings -> Keybinds)"));
         }
     }
 
@@ -278,8 +296,30 @@ public class DiscordIpcManager {
         }
         if (feedback != null) {
             String name = existing != null ? existing.displayName() : resolvedId;
-            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cLocally muted §e" : "§aLocally unmuted §e") + name));
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMuted §e" : "§aUnmuted §e") + name + " §7(local)"));
         }
+
+        if (connected && currentPipe != null) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    synchronized (PIPE_LOCK) {
+                        RandomAccessFile pipe = currentPipe;
+                        if (pipe != null && connected) {
+                            JsonObject args = new JsonObject();
+                            args.addProperty("user_id", resolvedId);
+                            args.addProperty("mute", mute);
+                            args.addProperty("volume", mute ? 0 : 100);
+                            JsonObject rpc = new JsonObject();
+                            rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
+                            rpc.add("args", args);
+                            rpc.addProperty("nonce", UUID.randomUUID().toString());
+                            writePacket(pipe, 1, rpc.toString());
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            });
+        }
+
         muteUserViaBotAsync(resolvedId, mute, respMsg -> {
             if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
         });
@@ -305,9 +345,17 @@ public class DiscordIpcManager {
                 return u.id();
             }
         }
+        for (DiscordVoiceUser u : voiceUsers.values()) {
+            if (u.username().toLowerCase(Locale.ROOT).contains(clean.toLowerCase(Locale.ROOT))
+                    || u.displayName().toLowerCase(Locale.ROOT).contains(clean.toLowerCase(Locale.ROOT))) {
+                return u.id();
+            }
+        }
         for (Map.Entry<String, DiscordBotUserInfo> e : BOT_USER_CACHE.entrySet()) {
             DiscordBotUserInfo info = e.getValue();
-            if (info.username.equalsIgnoreCase(clean) || info.displayName.equalsIgnoreCase(clean)) {
+            if (info.username.equalsIgnoreCase(clean) || info.displayName.equalsIgnoreCase(clean)
+                    || info.username.toLowerCase(Locale.ROOT).contains(clean.toLowerCase(Locale.ROOT))
+                    || info.displayName.toLowerCase(Locale.ROOT).contains(clean.toLowerCase(Locale.ROOT))) {
                 return e.getKey();
             }
         }
@@ -601,7 +649,9 @@ public class DiscordIpcManager {
         }
         // Fallback / complementary detection from Discord desktop logs
         scanDiscordLogForVoice();
-        if (currentChannelId != null && !currentChannelId.isEmpty()) {
+        long now = System.currentTimeMillis();
+        if (currentChannelId != null && !currentChannelId.isEmpty() && (now - lastBotFetchTime > 30000L || !currentChannelId.equals(lastSubscribedChannelId))) {
+            lastBotFetchTime = now;
             fetchChannelNameAsync(currentChannelId);
         }
     }
@@ -663,38 +713,37 @@ public class DiscordIpcManager {
                     }
                     if (root.has("members") && root.get("members").isJsonArray()) {
                         JsonArray arr = root.getAsJsonArray("members");
-                        Set<String> channelMemberIds = new HashSet<>();
                         for (JsonElement el : arr) {
                             if (!el.isJsonObject()) continue;
                             JsonObject m = el.getAsJsonObject();
                             String mId = m.has("id") ? m.get("id").getAsString() : "";
                             if (mId.isEmpty()) continue;
-                            channelMemberIds.add(mId);
 
                             String uName = m.has("username") ? m.get("username").getAsString() : "User";
                             String dName = m.has("displayName") ? m.get("displayName").getAsString() : uName;
                             String av = m.has("avatarUrl") && !m.get("avatarUrl").isJsonNull() ? m.get("avatarUrl").getAsString() : null;
                             BOT_USER_CACHE.put(mId, new DiscordBotUserInfo(mId, uName, dName, av));
 
-                            boolean sMute = m.has("selfMute") && m.get("selfMute").getAsBoolean();
-                            boolean sDeaf = m.has("selfDeaf") && m.get("selfDeaf").getAsBoolean();
-                            boolean svMute = m.has("serverMute") && m.get("serverMute").getAsBoolean();
-                            boolean svDeaf = m.has("serverDeaf") && m.get("serverDeaf").getAsBoolean();
-                            boolean streaming = m.has("streaming") && m.get("streaming").getAsBoolean();
-                            boolean speaking = voiceUsers.containsKey(mId) && voiceUsers.get(mId).isSpeaking();
-
-                            voiceUsers.put(mId, new DiscordVoiceUser(
-                                    mId, uName, dName,
-                                    sMute || svMute, sDeaf || svDeaf,
-                                    speaking, streaming,
-                                    locallyMutedUsers.contains(mId),
-                                    sMute, sDeaf
-                            ));
+                            // Only update users who are ALREADY present in the call (WebRTC or local user)
+                            // Do not inject offline/unrelated server members into active DM/group calls
+                            DiscordVoiceUser existing = voiceUsers.get(mId);
+                            if (existing != null) {
+                                boolean sMute = m.has("selfMute") && m.get("selfMute").getAsBoolean();
+                                boolean sDeaf = m.has("selfDeaf") && m.get("selfDeaf").getAsBoolean();
+                                boolean svMute = m.has("serverMute") && m.get("serverMute").getAsBoolean();
+                                boolean svDeaf = m.has("serverDeaf") && m.get("serverDeaf").getAsBoolean();
+                                boolean streaming = m.has("streaming") && m.get("streaming").getAsBoolean();
+                                voiceUsers.put(mId, new DiscordVoiceUser(
+                                        mId, uName, dName,
+                                        sMute || svMute || existing.isMuted(),
+                                        sDeaf || svDeaf || existing.isDeafened(),
+                                        existing.isSpeaking(),
+                                        streaming || existing.isScreenSharing(),
+                                        locallyMutedUsers.contains(mId),
+                                        sMute, sDeaf
+                                ));
+                            }
                         }
-
-                        // Users who left the voice channel are purged immediately
-                        String selfId = !myUserId.isEmpty() ? myUserId : "self";
-                        voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !channelMemberIds.contains(k));
                     }
                 }
             } catch (Throwable ignored) {
@@ -792,22 +841,24 @@ public class DiscordIpcManager {
                     if (!foundConnected && !foundDisconnect && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("[VOICE_DISCONNECT]")) {
                         foundDisconnect = true;
                     }
-                    if (foundChannel == null && line.contains("Updating channel:")) {
+                    if (foundChannel == null && foundConnected && line.contains("Updating channel:")) {
                         int idx = line.indexOf("Updating channel:");
                         if (idx != -1) {
                             String rest = line.substring(idx + 17).trim();
                             int paren = rest.indexOf('(');
+                            int count = 0;
                             if (paren != -1) {
                                 String cStr = rest.substring(paren + 1);
                                 int closeP = cStr.indexOf(')');
                                 if (closeP != -1) {
                                     try {
-                                        memberCount = Math.max(1, Integer.parseInt(cStr.substring(0, closeP).trim()));
+                                        count = Integer.parseInt(cStr.substring(0, closeP).trim());
+                                        if (count > 0) memberCount = count;
                                     } catch (Throwable ignored) {}
                                 }
                                 rest = rest.substring(0, paren).trim();
                             }
-                            if (!rest.isEmpty()) foundChannel = rest;
+                            if (!rest.isEmpty() && count > 0) foundChannel = rest;
                         }
                     }
                 }
@@ -907,13 +958,13 @@ public class DiscordIpcManager {
                 if (maxLogTimestamp > 0) {
                     for (Map.Entry<String, Long> entry : userLastSeenMap.entrySet()) {
                         long diff = maxLogTimestamp - entry.getValue();
-                        if (diff >= 0 && diff <= 7500L) {
+                        if (diff >= 0 && diff <= 35000L) {
                             webrtcUserIds.add(entry.getKey());
                         }
                     }
                     for (Map.Entry<String, Long> entry : userVideoLastSeenMap.entrySet()) {
                         long diff = maxLogTimestamp - entry.getValue();
-                        if (diff >= 0 && diff <= 7500L && webrtcUserIds.contains(entry.getKey())) {
+                        if (diff >= 0 && diff <= 35000L && webrtcUserIds.contains(entry.getKey())) {
                             screensharingUserIds.add(entry.getKey());
                         }
                     }
@@ -941,7 +992,7 @@ public class DiscordIpcManager {
             if ((foundConnected || foundHeartbeat || (!webrtcUserIds.isEmpty() && hasFreshWebrtc)) && !foundDisconnect) {
                 inVoice = true;
                 logReaderStatus = "Active (" + memberCount + " in call via " + (!webrtcUserIds.isEmpty() ? "WebRTC" : "Log") + ")";
-                if (foundChannel != null && !foundChannel.isEmpty()) {
+                if (foundChannel != null && !foundChannel.isEmpty() && currentChannelId.isEmpty()) {
                     currentChannelId = foundChannel;
                     if (CHANNEL_NAME_CACHE.containsKey(foundChannel)) {
                         currentChannelName = CHANNEL_NAME_CACHE.get(foundChannel);

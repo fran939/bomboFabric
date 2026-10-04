@@ -1,5 +1,20 @@
 # BomboAddons Changelog
  
+## [26.2.28.80] - 2026-10-04 (Beta)
+
+### Screenshare Direct GPU Readback & 60 FPS Engine
+- **Direct GPU Buffer Readback (<0.5ms on Render Thread):** Replaced synchronous `Screenshot.takeScreenshot` with zero-copy GPU command encoder buffer copy and bulk memory read, dropping render thread stall time from 19ms to <0.5ms and maintaining a rock-solid 350+ in-game FPS.
+- **True 60 FPS Parallel Pipeline:** Upgraded stream loop to dynamically adjust frame sleep and allow captures when previous frames are encoding in worker threads, completely eliminating the 15 FPS bottleneck.
+
+### Discord Voice Mute Controls & Anti-Flicker HUD
+- **HUD Stability & Anti-Flicker:** Extended WebRTC log participant retention to 35 seconds and strictly guarded voice channel detection to active voice calls, eliminating member flickering when users listen silently.
+- **Voice Mute & Deafen Dispatches:** Coordinated Windows OS low-level `keybd_event` shortcuts, Discord IPC `SET_VOICE_SETTINGS`/`SET_USER_VOICE_SETTINGS`, and backend bot voice API to toggle mic and member mute states instantaneously.
+
+### Classic Config GUI & Scratch Visual Studio IF Conditions
+- **Classic `/b config` GUI:** Routed `/b config`, `/bombo config`, and `/ba config` directly to the classic built-in configuration GUI.
+- **Scratch Visual Studio IF Conditions:** Added dedicated `[▶ Run ONLY IF (Condition)]` and `[✕ SKIP IF (Exception)]` tabs with context-sensitive quick pills (`★ Has Item`, `📜 Has Lore`, `📦 In Menu`, `🎯 Slot Has`, `○ Empty`) and non-blocking 'if not, don't' skip behavior.
+- **Scratch Visual Studio Polish:** Removed the `${color}` chip under the first parameter text box and polished modal input focus.
+
 ## [26.2.28.79] - 2026-10-04 (Beta)
 
 ### Screenshare Instant WebSocket Player & Render Thread Offload

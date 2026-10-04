@@ -247,6 +247,13 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("b config") || trimmed.equalsIgnoreCase("bombo config") || trimmed.equalsIgnoreCase("bomboaddons config")
+            || trimmed.equalsIgnoreCase("ba config")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.BomboConfigGUI.create()));
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b") || trimmed.equalsIgnoreCase("bombo") || trimmed.equalsIgnoreCase("bomboaddons")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create()));

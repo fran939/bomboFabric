@@ -937,7 +937,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }));
                   builder.then(ClientCommands.literal("config").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
-                     mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create()));
+                     mc.execute(() -> mc.setScreenAndShow(BomboConfigGUI.create()));
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("old").executes((context) -> {

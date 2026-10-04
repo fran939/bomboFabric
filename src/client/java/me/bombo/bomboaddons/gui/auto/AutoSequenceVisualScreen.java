@@ -40,6 +40,7 @@ public class AutoSequenceVisualScreen extends Screen {
     private EditBox conditionInput = null;
     private EditBox delayInput = null;
     private String editingModalMode = null; // null, "EDIT_BLOCK", "RENAME_SEQ", "SET_KEY"
+    private boolean conditionIsIfMode = true;
 
     // Drag-and-drop reordering state
     private int draggedActionIndex = -1;
@@ -618,53 +619,82 @@ public class AutoSequenceVisualScreen extends Screen {
                     primaryInput.extractRenderState(g, mouseX, mouseY, 0);
                 }
 
-                // Quick buttons for parameter
-                renderSmallChip(g, font, modalX + 16, modalY + 68, 70, 14, "${color}", mouseX, mouseY,
-                        "§d§lDynamic ${color}", "§7Extracts color word from container title", "§7and dynamically replaces ${color} parameter.");
-
                 // Section 2: Delay
-                g.text(font, "Delay (ms):", modalX + 16, modalY + 88, 0xFF9CA3AF, false);
+                g.text(font, "Delay (ms):", modalX + 16, modalY + 72, 0xFF9CA3AF, false);
                 if (delayInput != null) {
-                    delayInput.setPosition(modalX + 16, modalY + 100);
+                    delayInput.setPosition(modalX + 16, modalY + 84);
                     delayInput.setWidth(100);
                     delayInput.extractRenderState(g, mouseX, mouseY, 0);
                 }
-                renderSmallChip(g, font, modalX + 124, modalY + 102, 48, 16, "50ms", mouseX, mouseY, "§7Fast 50ms pause");
-                renderSmallChip(g, font, modalX + 176, modalY + 102, 54, 16, "100ms", mouseX, mouseY, "§7Standard 100ms pause");
-                renderSmallChip(g, font, modalX + 234, modalY + 102, 54, 16, "200ms", mouseX, mouseY, "§7Safe 200ms pause");
-                renderSmallChip(g, font, modalX + 292, modalY + 102, 54, 16, "500ms", mouseX, mouseY, "§7Relaxed 500ms pause");
+                renderSmallChip(g, font, modalX + 124, modalY + 86, 48, 16, "50ms", mouseX, mouseY, "§7Fast 50ms pause");
+                renderSmallChip(g, font, modalX + 176, modalY + 86, 54, 16, "100ms", mouseX, mouseY, "§7Standard 100ms pause");
+                renderSmallChip(g, font, modalX + 234, modalY + 86, 54, 16, "200ms", mouseX, mouseY, "§7Safe 200ms pause");
+                renderSmallChip(g, font, modalX + 292, modalY + 86, 54, 16, "500ms", mouseX, mouseY, "§7Relaxed 500ms pause");
 
-                // Section 3: Scratch-Style Condition / Exception Guard
-                g.text(font, "Exception Guard (Skip if condition true):", modalX + 16, modalY + 126, 0xFF9CA3AF, false);
+                // Section 3: Scratch-Style Condition Guard Mode Tabs
+                int tabY = modalY + 112;
+                int tab1W = 155;
+                int tab2W = 145;
+                // Tab 1: [ ▶ Run ONLY IF (Condition) ]
+                boolean hoverTab1 = mouseX >= modalX + 16 && mouseX <= modalX + 16 + tab1W && mouseY >= tabY && mouseY <= tabY + 18;
+                int tab1Bg = conditionIsIfMode ? 0xFF059669 : (hoverTab1 ? 0x44059669 : 0x22374151);
+                int tab1Border = conditionIsIfMode ? 0xFF10B981 : 0xFF4B5563;
+                g.fill(modalX + 16, tabY, modalX + 16 + tab1W, tabY + 18, tab1Bg);
+                g.outline(modalX + 16, tabY, tab1W, 18, tab1Border);
+                g.text(font, "▶ Run ONLY IF (Condition)", modalX + 22, tabY + 5, conditionIsIfMode ? 0xFFFFFFFF : 0xFF9CA3AF, false);
+
+                // Tab 2: [ ✕ SKIP IF (Exception) ]
+                int tab2X = modalX + 16 + tab1W + 8;
+                boolean hoverTab2 = mouseX >= tab2X && mouseX <= tab2X + tab2W && mouseY >= tabY && mouseY <= tabY + 18;
+                int tab2Bg = !conditionIsIfMode ? 0xFFDC2626 : (hoverTab2 ? 0x44DC2626 : 0x22374151);
+                int tab2Border = !conditionIsIfMode ? 0xFFEF4444 : 0xFF4B5563;
+                g.fill(tab2X, tabY, tab2X + tab2W, tabY + 18, tab2Bg);
+                g.outline(tab2X, tabY, tab2W, 18, tab2Border);
+                g.text(font, "✕ SKIP IF (Exception)", tab2X + 16, tabY + 5, !conditionIsIfMode ? 0xFFFFFFFF : 0xFF9CA3AF, false);
 
                 // Visual Condition Quick-Pick Pills
-                int pillY = modalY + 140;
-                renderConditionPill(g, font, modalX + 16, pillY, 74, 16, "■ Full", 0xFFB91C1C, 0xFFEF4444, mouseX, mouseY,
-                        "§c§lSkip: Container Full", "§7Skips this step if the opened container", "§7or chest has no empty slots left.");
-                renderConditionPill(g, font, modalX + 94, pillY, 82, 16, "✕ No Item", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY,
-                        "§6§lSkip: Missing Item", "§7Skips this step if the target item or lore", "§7is missing from the opened container.");
-                renderConditionPill(g, font, modalX + 180, pillY, 84, 16, "★ Has Item", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY,
-                        "§a§lSkip: Contains Item", "§7Skips this step if the target item already", "§7exists in container or inventory.");
-                renderConditionPill(g, font, modalX + 268, pillY, 78, 16, "○ Empty", 0xFF4338CA, 0xFF6366F1, mouseX, mouseY,
-                        "§9§lSkip: Slot Empty", "§7Skips this step if the target slot number", "§7currently has no item.");
-                renderConditionPill(g, font, modalX + 350, pillY, 74, 16, "≡ In Menu", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY,
-                        "§b§lSkip: In Menu", "§7Skips this step if the player is currently", "§7viewing an open container GUI.");
+                int pillY = modalY + 138;
+                if (conditionIsIfMode) {
+                    renderConditionPill(g, font, modalX + 16, pillY, 82, 16, "★ Has Item", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY,
+                            "§a§lCondition: Contains Item", "§7Only executes if target item exists in container/inventory,", "§7otherwise skips this step cleanly.");
+                    renderConditionPill(g, font, modalX + 102, pillY, 82, 16, "📜 Has Lore", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY,
+                            "§b§lCondition: Matches Lore", "§7Only executes if item lore contains specified text,", "§7otherwise skips this step cleanly.");
+                    renderConditionPill(g, font, modalX + 188, pillY, 74, 16, "📦 In Menu", 0xFF6366F1, 0xFF818CF8, mouseX, mouseY,
+                            "§d§lCondition: In Menu", "§7Only executes if container GUI is open,", "§7otherwise skips this step cleanly.");
+                    renderConditionPill(g, font, modalX + 266, pillY, 80, 16, "🎯 Slot Has", 0xFFD97706, 0xFFF59E0B, mouseX, mouseY,
+                            "§6§lCondition: Slot Has Item", "§7Format: slot_has:<slot>,<item> (e.g. slot_has:10,diamond)");
+                    renderConditionPill(g, font, modalX + 350, pillY, 74, 16, "○ Empty", 0xFF4338CA, 0xFF6366F1, mouseX, mouseY,
+                            "§9§lCondition: Slot Empty", "§7Only executes if slot is currently empty.");
+                } else {
+                    renderConditionPill(g, font, modalX + 16, pillY, 74, 16, "■ Full", 0xFFB91C1C, 0xFFEF4444, mouseX, mouseY,
+                            "§c§lSkip: Container Full", "§7Skips this step if opened container has no empty slots left.");
+                    renderConditionPill(g, font, modalX + 94, pillY, 82, 16, "✕ No Item", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY,
+                            "§6§lSkip: Missing Item", "§7Skips this step if target item or lore is missing.");
+                    renderConditionPill(g, font, modalX + 180, pillY, 84, 16, "★ Has Item", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY,
+                            "§a§lSkip: Contains Item", "§7Skips this step if target item already exists.");
+                    renderConditionPill(g, font, modalX + 268, pillY, 78, 16, "○ Empty", 0xFF4338CA, 0xFF6366F1, mouseX, mouseY,
+                            "§9§lSkip: Slot Empty", "§7Skips this step if target slot has no item.");
+                    renderConditionPill(g, font, modalX + 350, pillY, 74, 16, "≡ In Menu", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY,
+                            "§b§lSkip: In Menu", "§7Skips this step if container GUI is open.");
+                }
 
                 if (conditionInput != null) {
-                    conditionInput.setPosition(modalX + 16, modalY + 162);
+                    conditionInput.setPosition(modalX + 16, modalY + 160);
                     conditionInput.setWidth(modalW - 74);
                     conditionInput.extractRenderState(g, mouseX, mouseY, 0);
 
                     // Clear button
-                    renderSmallChip(g, font, modalX + modalW - 54, modalY + 162, 38, 20, "Clear", mouseX, mouseY,
-                            "§c§lClear Guard", "§7Removes condition so step always executes.");
+                    renderSmallChip(g, font, modalX + modalW - 54, modalY + 160, 38, 20, "Clear", mouseX, mouseY,
+                            "§c§lClear Condition", "§7Removes condition so step always executes unconditionally.");
 
                     String condVal = conditionInput.getValue().trim();
                     if (!condVal.isEmpty()) {
-                        String friendlyDesc = "▶ Reads as: " + formatFriendlyCondition(condVal);
-                        g.text(font, friendlyDesc, modalX + 16, modalY + 188, 0xFF38BDF8, false);
+                        String friendlyDesc = conditionIsIfMode
+                                ? "▶ Reads as: Run ONLY IF " + formatFriendlyCondition(condVal) + " (otherwise skip)"
+                                : "✕ Reads as: SKIP step IF " + formatFriendlyCondition(condVal);
+                        g.text(font, friendlyDesc, modalX + 16, modalY + 186, conditionIsIfMode ? 0xFF34D399 : 0xFFF87171, false);
                     } else {
-                        g.text(font, "§8(No condition set - step always executes)", modalX + 16, modalY + 188, 0xFF6B7280, false);
+                        g.text(font, "§8(No condition set - step always executes unconditionally)", modalX + 16, modalY + 186, 0xFF6B7280, false);
                     }
                 }
             }
@@ -747,17 +777,8 @@ public class AutoSequenceVisualScreen extends Screen {
                 }
 
                 if ("EDIT_BLOCK".equals(editingModalMode)) {
-                    // Check quick parameter chip (${color})
-                    if (my >= modalY + 68 && my <= modalY + 82) {
-                        if (mx >= modalX + 16 && mx <= modalX + 86 && primaryInput != null) {
-                            primaryInput.setValue("${color}");
-                            setFocusedInput(primaryInput, null);
-                            return true;
-                        }
-                    }
-
                     // Check quick delay chips
-                    if (my >= modalY + 102 && my <= modalY + 118) {
+                    if (my >= modalY + 86 && my <= modalY + 102) {
                         if (mx >= modalX + 124 && mx <= modalX + 172 && delayInput != null) {
                             delayInput.setValue("50");
                             setFocusedInput(delayInput, null);
@@ -780,43 +801,101 @@ public class AutoSequenceVisualScreen extends Screen {
                         }
                     }
 
-                    // Check quick condition pills
-                    int pillY = modalY + 140;
-                    if (my >= pillY && my <= pillY + 16) {
-                        if (mx >= modalX + 16 && mx <= modalX + 90 && conditionInput != null) {
-                            conditionInput.setValue("gui_full");
-                            setFocusedInput(conditionInput, null);
-                            conditionInput.moveCursorToEnd(false);
+                    // Check Condition Mode Switcher Tabs
+                    AutoSequence seq = getActiveSequence();
+                    int tabY = modalY + 112;
+                    int tab1W = 155;
+                    int tab2W = 145;
+                    int tab2X = modalX + 16 + tab1W + 8;
+                    if (my >= tabY && my <= tabY + 18) {
+                        if (mx >= modalX + 16 && mx <= modalX + 16 + tab1W) {
+                            conditionIsIfMode = true;
+                            AutoAction act = (seq != null && editingActionIndex >= 0 && editingActionIndex < seq.actions.size()) ? seq.actions.get(editingActionIndex) : null;
+                            if (act != null && conditionInput != null && act.onlyIf != null && !act.onlyIf.isBlank()) {
+                                conditionInput.setValue(act.onlyIf);
+                            }
                             return true;
                         }
-                        if (mx >= modalX + 94 && mx <= modalX + 176 && conditionInput != null) {
-                            conditionInput.setValue("no_item:");
-                            setFocusedInput(conditionInput, null);
-                            conditionInput.moveCursorToEnd(false);
-                            return true;
-                        }
-                        if (mx >= modalX + 180 && mx <= modalX + 264 && conditionInput != null) {
-                            conditionInput.setValue("has_item:");
-                            setFocusedInput(conditionInput, null);
-                            conditionInput.moveCursorToEnd(false);
-                            return true;
-                        }
-                        if (mx >= modalX + 268 && mx <= modalX + 346 && conditionInput != null) {
-                            conditionInput.setValue("slot_empty:0");
-                            setFocusedInput(conditionInput, null);
-                            conditionInput.moveCursorToEnd(false);
-                            return true;
-                        }
-                        if (mx >= modalX + 350 && mx <= modalX + 424 && conditionInput != null) {
-                            conditionInput.setValue("in_gui:Chest");
-                            setFocusedInput(conditionInput, null);
-                            conditionInput.moveCursorToEnd(false);
+                        if (mx >= tab2X && mx <= tab2X + tab2W) {
+                            conditionIsIfMode = false;
+                            AutoAction act = (seq != null && editingActionIndex >= 0 && editingActionIndex < seq.actions.size()) ? seq.actions.get(editingActionIndex) : null;
+                            if (act != null && conditionInput != null && act.exceptIf != null && !act.exceptIf.isBlank()) {
+                                conditionInput.setValue(act.exceptIf);
+                            }
                             return true;
                         }
                     }
 
+                    // Check quick condition pills
+                    int pillY = modalY + 138;
+                    if (my >= pillY && my <= pillY + 16) {
+                        if (conditionIsIfMode) {
+                            if (mx >= modalX + 16 && mx <= modalX + 98 && conditionInput != null) {
+                                conditionInput.setValue("has_item:");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                            if (mx >= modalX + 102 && mx <= modalX + 184 && conditionInput != null) {
+                                conditionInput.setValue("has_lore:");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                            if (mx >= modalX + 188 && mx <= modalX + 262 && conditionInput != null) {
+                                conditionInput.setValue("in_gui:Chest");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                            if (mx >= modalX + 266 && mx <= modalX + 346 && conditionInput != null) {
+                                conditionInput.setValue("slot_has:0,Diamond");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                            if (mx >= modalX + 350 && mx <= modalX + 424 && conditionInput != null) {
+                                conditionInput.setValue("slot_empty:0");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                        } else {
+                            if (mx >= modalX + 16 && mx <= modalX + 90 && conditionInput != null) {
+                                conditionInput.setValue("gui_full");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                            if (mx >= modalX + 94 && mx <= modalX + 176 && conditionInput != null) {
+                                conditionInput.setValue("no_item:");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                            if (mx >= modalX + 180 && mx <= modalX + 264 && conditionInput != null) {
+                                conditionInput.setValue("has_item:");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                            if (mx >= modalX + 268 && mx <= modalX + 346 && conditionInput != null) {
+                                conditionInput.setValue("slot_empty:0");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                            if (mx >= modalX + 350 && mx <= modalX + 424 && conditionInput != null) {
+                                conditionInput.setValue("in_gui:Chest");
+                                setFocusedInput(conditionInput, null);
+                                conditionInput.moveCursorToEnd(false);
+                                return true;
+                            }
+                        }
+                    }
+
                     // Clear condition button
-                    if (mx >= modalX + modalW - 54 && mx <= modalX + modalW - 16 && my >= modalY + 162 && my <= modalY + 182) {
+                    if (mx >= modalX + modalW - 54 && mx <= modalX + modalW - 16 && my >= modalY + 160 && my <= modalY + 180) {
                         if (conditionInput != null) {
                             conditionInput.setValue("");
                             setFocusedInput(conditionInput, null);
@@ -1205,9 +1284,18 @@ public class AutoSequenceVisualScreen extends Screen {
         delayInput.setMaxLength(8);
         delayInput.setValue(String.valueOf(a.delayMs));
 
-        conditionInput = new EditBox(font, 0, 0, 380, 20, Component.literal("ExceptIf"));
+        conditionInput = new EditBox(font, 0, 0, 380, 20, Component.literal("Condition"));
         conditionInput.setMaxLength(64);
-        conditionInput.setValue(a.exceptIf != null ? a.exceptIf : "");
+        if (a.onlyIf != null && !a.onlyIf.isBlank()) {
+            conditionIsIfMode = true;
+            conditionInput.setValue(a.onlyIf);
+        } else if (a.exceptIf != null && !a.exceptIf.isBlank()) {
+            conditionIsIfMode = false;
+            conditionInput.setValue(a.exceptIf);
+        } else {
+            conditionIsIfMode = true;
+            conditionInput.setValue("");
+        }
 
         primaryInput.setFocused(true);
     }
@@ -1250,7 +1338,14 @@ public class AutoSequenceVisualScreen extends Screen {
                     } catch (Throwable ignored) {}
                 }
                 if (conditionInput != null) {
-                    a.exceptIf = conditionInput.getValue().trim();
+                    String cond = conditionInput.getValue().trim();
+                    if (conditionIsIfMode) {
+                        a.onlyIf = cond;
+                        a.exceptIf = "";
+                    } else {
+                        a.exceptIf = cond;
+                        a.onlyIf = "";
+                    }
                 }
                 AutoSequenceManager.save();
             }

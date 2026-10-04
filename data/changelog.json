@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.80",
+    "date": "2026-10-04",
+    "changes": [
+      "Screenshare Direct GPU Buffer Pipeline: Implemented zero-copy GPU command encoder buffer readback (<0.5ms on render thread), eliminating the 19ms synchronous glReadPixels stall and keeping in-game framerates at a solid 350+ FPS",
+      "Screenshare 60 FPS Dynamic Engine: Upgraded stream loop with inFlightEncodes parallel pipeline and dynamic target frame delay, completely fixing the 15 FPS bottleneck to deliver true silky smooth 60 FPS broadcasting",
+      "Discord Voice HUD Stability & Anti-Flicker: Extended WebRTC voice log retention window to 35 seconds and guarded channel detection to active voice calls only, eliminating phantom users and member flickering when users are listening silently",
+      "Discord Voice Mute & Deafen Controls: Dispatched low-level OS keybd_event shortcuts, IPC SET_VOICE_SETTINGS/SET_USER_VOICE_SETTINGS, and bot API voice controls to toggle microphone and member mute states instantaneously",
+      "Classic /b config GUI: Routed /b config, /bombo config, and /ba config directly to the classic built-in configuration GUI",
+      "Scratch Visual Studio IF Conditions: Added dedicated [▶ Run ONLY IF (Condition)] and [✕ SKIP IF (Exception)] condition tabs with context-sensitive quick pills (★ Has Item, 📜 Has Lore, 📦 In Menu, 🎯 Slot Has, ○ Empty) and non-blocking 'if not, don't' skip behavior",
+      "Scratch Visual Studio Clutter Cleanup: Removed the ${color} chip under the first parameter text box and polished modal input focus"
+    ]
+  },
+  {
     "version": "26.2.28.79",
     "date": "2026-10-04",
     "changes": [

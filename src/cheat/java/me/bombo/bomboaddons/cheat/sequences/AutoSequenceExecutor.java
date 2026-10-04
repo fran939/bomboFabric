@@ -260,10 +260,10 @@ public final class AutoSequenceExecutor {
     private static boolean executeAction(Minecraft mc, AutoAction action) {
         if (action == null || action.type == null) return false;
         try {
-            // Evaluate onlyIf condition (must be true to proceed)
+            // Evaluate onlyIf condition (must be true to execute, otherwise skip step cleanly)
             if (action.onlyIf != null && !action.onlyIf.isBlank()) {
                 if (!evaluateCondition(mc, action.onlyIf)) {
-                    return false; // wait for condition to be met
+                    return true; // Precondition not met: skip this action cleanly ("if not, don't")
                 }
             }
 

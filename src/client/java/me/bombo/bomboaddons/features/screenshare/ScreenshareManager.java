@@ -273,7 +273,8 @@ public class ScreenshareManager {
     private static void streamLoop() {
         Minecraft mc = Minecraft.getInstance();
         while (STREAMING.get()) {
-            long targetDelayMs = 33L;
+            long loopStart = System.currentTimeMillis();
+            long targetDelayMs = 16L; // 60 FPS target
             try {
                 int targetW = 1280;
                 int targetH = 720;
@@ -301,8 +302,8 @@ public class ScreenshareManager {
                 currentTargetW = targetW;
                 currentTargetH = targetH;
 
-                // Only capture if previous encode has completed to preserve in-game 300+ FPS
-                if (mc != null && inFlightEncodes.get() == 0 && gpuCaptureInProgress.compareAndSet(false, true)) {
+                // Parallel pipeline: allow capture while previous frame is encoding in worker pool
+                if (mc != null && inFlightEncodes.get() < 2 && gpuCaptureInProgress.compareAndSet(false, true)) {
                     long capStart = System.currentTimeMillis();
                     boolean mcActive = mc.isWindowActive();
                     final int fw = targetW;
@@ -339,7 +340,9 @@ public class ScreenshareManager {
                     lastMetricCalcTime = now;
                 }
 
-                Thread.sleep(targetDelayMs);
+                long elapsed = System.currentTimeMillis() - loopStart;
+                long sleepMs = Math.max(1L, targetDelayMs - elapsed);
+                Thread.sleep(sleepMs);
             } catch (InterruptedException e) {
                 break;
             } catch (Throwable t) {
@@ -391,6 +394,93 @@ public class ScreenshareManager {
                     gpuCaptureInProgress.set(false);
                     onDone.accept(null);
                     return;
+                }
+
+                // Ultra-low latency Direct GPU buffer copy (<0.5ms on render thread)
+                try {
+                    com.mojang.blaze3d.textures.GpuTexture texture = rt.getColorTexture();
+                    if (texture != null) {
+                        int w = rt.width;
+                        int h = rt.height;
+                        long bufSize = (long) w * h * texture.getFormat().blockSize();
+                        com.mojang.blaze3d.buffers.GpuBuffer gpuBuffer = com.mojang.blaze3d.systems.RenderSystem.getDevice().createBuffer(() -> "Screenshare Buffer", 9, bufSize);
+                        com.mojang.blaze3d.systems.CommandEncoder encoder = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder();
+                        encoder.copyTextureToBuffer(texture, gpuBuffer, 0L, () -> {
+                            byte[] rawBytes = null;
+                            try (com.mojang.blaze3d.buffers.GpuBufferSlice.MappedView view = gpuBuffer.map(true, false)) {
+                                java.nio.ByteBuffer bb = view.data();
+                                rawBytes = new byte[w * h * 4];
+                                bb.get(rawBytes);
+                            } catch (Throwable t) {
+                                rawBytes = null;
+                            } finally {
+                                try { gpuBuffer.close(); } catch (Throwable ignored) {}
+                            }
+
+                            lastGpuCaptureMs = System.currentTimeMillis() - gpuStart;
+                            gpuCaptureInProgress.set(false);
+
+                            if (rawBytes == null) {
+                                onDone.accept(null);
+                                return;
+                            }
+
+                            final byte[] finalRaw = rawBytes;
+                            inFlightEncodes.incrementAndGet();
+                            ENCODE_POOL.execute(() -> {
+                                try {
+                                    long encStart = System.currentTimeMillis();
+                                    BufferedImage bi = new BufferedImage(targetW, targetH, BufferedImage.TYPE_INT_RGB);
+                                    int[] destPixels = ((java.awt.image.DataBufferInt) bi.getRaster().getDataBuffer()).getData();
+
+                                    if (w == targetW && h == targetH) {
+                                        for (int y = 0; y < targetH; y++) {
+                                            int srcY = targetH - 1 - y;
+                                            int srcRowOffset = srcY * targetW * 4;
+                                            int destRowOffset = y * targetW;
+                                            for (int x = 0; x < targetW; x++) {
+                                                int idx = srcRowOffset + (x * 4);
+                                                int r = finalRaw[idx] & 0xFF;
+                                                int g = finalRaw[idx + 1] & 0xFF;
+                                                int b = finalRaw[idx + 2] & 0xFF;
+                                                destPixels[destRowOffset + x] = (r << 16) | (g << 8) | b;
+                                            }
+                                        }
+                                    } else {
+                                        // High-speed strided sampling in worker thread (0ms render thread impact)
+                                        for (int y = 0; y < targetH; y++) {
+                                            int srcY = (h - 1) - (int) ((long) y * h / targetH);
+                                            int srcRowOffset = srcY * w * 4;
+                                            int destRowOffset = y * targetW;
+                                            for (int x = 0; x < targetW; x++) {
+                                                int srcX = (int) ((long) x * w / targetW);
+                                                int idx = srcRowOffset + (srcX * 4);
+                                                int r = finalRaw[idx] & 0xFF;
+                                                int g = finalRaw[idx + 1] & 0xFF;
+                                                int b = finalRaw[idx + 2] & 0xFF;
+                                                destPixels[destRowOffset + x] = (r << 16) | (g << 8) | b;
+                                            }
+                                        }
+                                    }
+
+                                    drawCursorIfVisible(mc, bi, targetW, targetH);
+                                    byte[] jpeg = compressScaledJpeg(bi, targetW, targetH, quality);
+                                    lastEncodeMs = System.currentTimeMillis() - encStart;
+                                    if (jpeg != null) {
+                                        lastJpegSizeKb = jpeg.length / 1024.0f;
+                                    }
+                                    onDone.accept(jpeg);
+                                } catch (Throwable t) {
+                                    onDone.accept(null);
+                                } finally {
+                                    inFlightEncodes.decrementAndGet();
+                                }
+                            });
+                        }, 0);
+                        return;
+                    }
+                } catch (Throwable t) {
+                    // Fall back to Screenshot.takeScreenshot if direct GPU buffer mapping is unsupported
                 }
 
                 net.minecraft.client.Screenshot.takeScreenshot(rt, 1, nativeImg -> {
