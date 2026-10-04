@@ -56,7 +56,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	private static final int NOT_MATCHED_COLOR = 0x99000000;
 
-	protected static int openStorage;
+	public static int openStorage;
 	private static double savedScroll = 0;
 	private static String savedSearch = "";
 	private static int savedIndex = -1;
@@ -495,10 +495,6 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 		private BackpackWidget(int columns, int index, BackpackPreview.Storage storage, Boolean open) {
 			int rows = Math.max(1, Math.ceilDiv(storage.size() - 9, columns));
-			if (index <= 8) {
-				// Ender Chests in Hypixel are always 5 rows (45 item slots)
-				rows = Math.max(rows, 5);
-			}
 			if (open) {
 				rows = Math.max(rows, Math.ceilDiv(handler.getContainer().getContainerSize() - 9, columns));
 			}

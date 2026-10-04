@@ -1,5 +1,22 @@
 [
   {
+    "version": "26.2.28.73",
+    "date": "2026-10-04",
+    "changes": [
+      "Storage Overlay Container Synchronization: Added updateStorageDirectly and intercepted container updates in AbstractContainerMenuMixin to immediately reflect moved or updated backpack contents",
+      "Dynamic Ender Chest & Backpack Sizing: Removed hardcoded 5-row constraint so Ender Chest 4 and compact backpacks render only their unlocked rows without dark void rows or empty slot graying",
+      "Expanded Title Patterns: Updated ECHEST_PATTERN and BACKPACK_PATTERN to match 'Backpack 1', 'Backpack #1', and arbitrary container names",
+      "Discord Voice HUD Immediate Mute & Responsive Polling: Reduced polling interval to 350ms for snappy voice updates, implemented instant local mute memory toggling with thread-safe chat feedback, and auto-dispatched RPC authorization",
+      "Discord Screenshare [LIVE] Detection: Updated regex to match inbound video ssrcs and active streams, and added outbound video scanner to display [LIVE] for self streams",
+      "Asynchronous 60 FPS Screenshare Pipeline: Replaced synchronous future.get render-thread block with a dedicated 2-thread encoder pool and atomic in-flight guard, delivering fluid 60 FPS streaming without client frame drops",
+      "Screenshare Capture Indicator in /b perf: Added live stream framerate and capture mode (Direct GPU OpenGL vs AWT Robot Desktop) to the performance profiler header",
+      "Chat /bc Placeholder Resolution: Applied SkyblockUtils.replaceCoordPlaceholders to /bc commands so $item, $coords, and $paste are properly resolved",
+      "Discord Lore Item Glyphs: Replaced synchronous new Image() with await loadImage() in bombot/render_item.js, restoring authentic 7x7 gemstone sockets and stat glyphs on Discord",
+      "HUD Move Dedicated Mode Filter Button: Added a separate Filter button (Both -> In-GUI -> In-Game) in HudMoveScreen and guarded all 33 HUD elements so invisible HUDs are completely hidden and unclickable",
+      "Multi-Provider Synced Lyrics with Syllable Word Timing: Enhanced /api/lyrics/resolve on bomboapi to query YouLyPlus first, converting Apple Music syllables into <mm:ss.xxx> word-by-word karaoke timing with LRCLIB, KuGou, and Paxsenix fallbacks"
+    ]
+  },
+  {
     "version": "26.2.28.72",
     "date": "2026-10-04",
     "changes": [

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.PerformanceProfiler;
+import me.bombo.bomboaddons.features.screenshare.ScreenshareManager;
 import me.bombo.bomboaddons.gui.config.ConfigUITheme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -117,6 +118,11 @@ public class PerformanceScreen extends Screen {
         int activeThreads = Thread.activeCount();
         String memSummary = String.format("§7JVM Heap: §a%dMB §8/ §7%dMB §8(Max: %dMB) | §7Threads: §b%d",
                 usedMem, totalMem, maxMem, activeThreads);
+        if (ScreenshareManager.isStreaming()) {
+            memSummary += String.format(" | §3Stream: §a%.0f FPS §7(%s)", ScreenshareManager.getCurrentFps(), ScreenshareManager.getLastCaptureMode());
+        } else {
+            memSummary += " | §3Screenshare: §7" + ScreenshareManager.getLastCaptureMode();
+        }
         g.text(font, memSummary, winX + 16, winY + 38, 0xFF888888, false);
 
         // Right side header buttons (Back / Dump Log / Reset Stats / Close)

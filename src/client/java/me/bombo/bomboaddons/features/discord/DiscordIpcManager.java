@@ -91,39 +91,58 @@ public class DiscordIpcManager {
     public static boolean toggleUserMute(String userId) {
         if (userId == null || userId.isEmpty()) return false;
         Minecraft mc = Minecraft.getInstance();
-        if (!connected || currentPipe == null) {
-            if (mc != null && mc.player != null) {
-                mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] §cDiscord Desktop IPC is not connected. Make sure Discord is open on your PC!"));
-            }
-            return false;
-        }
 
         boolean targetMute = !locallyMutedUsers.contains(userId);
-        String nonce = UUID.randomUUID().toString();
-        pendingMutes.put(nonce, new PendingMute(userId, targetMute));
+        if (targetMute) {
+            locallyMutedUsers.add(userId);
+        } else {
+            locallyMutedUsers.remove(userId);
+        }
 
-        // Dispatch SET_USER_VOICE_SETTINGS over Named Pipe; state updates on acknowledgment
-        CompletableFuture.runAsync(() -> {
-            try {
-                synchronized (PIPE_LOCK) {
-                    RandomAccessFile pipe = currentPipe;
-                    if (pipe != null && connected) {
-                        JsonObject args = new JsonObject();
-                        args.addProperty("user_id", userId);
-                        args.addProperty("mute", targetMute);
-                        args.addProperty("volume", targetMute ? 0 : 100);
-                        JsonObject rpc = new JsonObject();
-                        rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
-                        rpc.add("args", args);
-                        rpc.addProperty("nonce", nonce);
-                        if (!hasAuthorizedThisSession) {
-                            sendAuthorize(pipe);
-                        }
-                        writePacket(pipe, 1, rpc.toString());
-                    }
+        DiscordVoiceUser existing = voiceUsers.get(userId);
+        if (existing != null) {
+            voiceUsers.put(userId, new DiscordVoiceUser(
+                    existing.id(), existing.username(), existing.displayName(),
+                    existing.isMuted(), existing.isDeafened(), existing.isSpeaking(),
+                    existing.isScreenSharing(), targetMute
+            ));
+        }
+
+        if (mc != null) {
+            mc.execute(() -> {
+                if (mc.player != null) {
+                    String name = existing != null ? existing.displayName() : userId;
+                    mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] " + (targetMute ? "§cMuted §e" : "§aUnmuted §e") + name + " §7(local)"));
                 }
-            } catch (Throwable ignored) {}
-        });
+            });
+        }
+
+        if (connected && currentPipe != null) {
+            String nonce = UUID.randomUUID().toString();
+            pendingMutes.put(nonce, new PendingMute(userId, targetMute));
+
+            CompletableFuture.runAsync(() -> {
+                try {
+                    synchronized (PIPE_LOCK) {
+                        RandomAccessFile pipe = currentPipe;
+                        if (pipe != null && connected) {
+                            if (!hasAuthorizedThisSession && !authCancelled) {
+                                sendAuthorize(pipe);
+                            }
+                            JsonObject args = new JsonObject();
+                            args.addProperty("user_id", userId);
+                            args.addProperty("mute", targetMute);
+                            args.addProperty("volume", targetMute ? 0 : 100);
+                            JsonObject rpc = new JsonObject();
+                            rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
+                            rpc.add("args", args);
+                            rpc.addProperty("nonce", nonce);
+                            writePacket(pipe, 1, rpc.toString());
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            });
+        }
 
         return targetMute;
     }
@@ -326,7 +345,7 @@ public class DiscordIpcManager {
             pollThread = new Thread(() -> {
                 while (RUNNING.get() && connected) {
                     try {
-                        Thread.sleep(1000L);
+                        Thread.sleep(350L);
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -379,7 +398,7 @@ public class DiscordIpcManager {
     private static final Set<String> fetchingChannelIds = ConcurrentHashMap.newKeySet();
     private static long lastBotFetchTime = 0L;
     private static final Pattern INBOUND_USER_PATTERN = Pattern.compile("Inbound (?:audio delay )?stats for user:\\s*(\\d{15,20})");
-    private static final Pattern INBOUND_VIDEO_USER_PATTERN = Pattern.compile("Inbound video (?:delay )?stats for user:\\s*(\\d{15,20})", Pattern.CASE_INSENSITIVE);
+    private static final Pattern INBOUND_VIDEO_USER_PATTERN = Pattern.compile("Inbound (?:video (?:delay )?)?stats for user:\\s*(\\d{15,20}).*?video ssrc:\\s*([1-9]\\d*)", Pattern.CASE_INSENSITIVE);
 
     public static String getMyUserId() {
         return myUserId;
@@ -580,6 +599,13 @@ public class DiscordIpcManager {
                             screensharingUserIds.add(vuid);
                         }
                     }
+
+                    if (wLine.contains("[stream] Outbound") || wLine.contains("[stream] Transport stats for user:") || wLine.contains("Outbound video stats for user:")) {
+                        screensharingUserIds.add(myUserId.isEmpty() ? "self" : myUserId);
+                        if (!myUserId.isEmpty()) {
+                            screensharingUserIds.add(myUserId);
+                        }
+                    }
                 }
 
                 if (maxLogTimestamp > 0) {
@@ -633,7 +659,7 @@ public class DiscordIpcManager {
                     String selfId = !myUserId.isEmpty() ? myUserId : "self";
                     String selfName = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
                     boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
-                    boolean selfLive = !myUserId.isEmpty() && voiceUsers.containsKey(myUserId) && voiceUsers.get(myUserId).isScreenSharing();
+                    boolean selfLive = screensharingUserIds.contains(selfId) || screensharingUserIds.contains(myUserId) || (!myUserId.isEmpty() && voiceUsers.containsKey(myUserId) && voiceUsers.get(myUserId).isScreenSharing());
                     voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, false, false, selfSpeaking, selfLive));
 
                     for (String uid : webrtcUserIds) {
@@ -766,22 +792,11 @@ public class DiscordIpcManager {
                         }
                     }
 
-                    // Only send AUTHORIZE if enabled in config to avoid the repeated popup modal!
-                    if (BomboConfig.get().discordVoiceAutoAuth && !hasAuthorizedThisSession && !authCancelled) {
-                        JsonObject authArgs = new JsonObject();
-                        authArgs.addProperty("client_id", CLIENT_ID);
-                        JsonArray scopes = new JsonArray();
-                        scopes.add("rpc");
-                        scopes.add("rpc.voice.read");
-                        scopes.add("rpc.voice.write");
-                        authArgs.add("scopes", scopes);
-
-                        JsonObject authReq = new JsonObject();
-                        authReq.addProperty("cmd", "AUTHORIZE");
-                        authReq.add("args", authArgs);
-                        authReq.addProperty("nonce", UUID.randomUUID().toString());
-                        writePacket(pipe, 1, authReq.toString());
-                        hasAuthorizedThisSession = true;
+                    // Send AUTHORIZE to enable voice subscriptions and remote mute
+                    if (!hasAuthorizedThisSession && !authCancelled) {
+                        try {
+                            sendAuthorize(pipe);
+                        } catch (Throwable ignored) {}
                     }
 
                     // Subscribe to global voice connection and selection events

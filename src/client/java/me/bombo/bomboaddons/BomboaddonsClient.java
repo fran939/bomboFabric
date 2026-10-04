@@ -5135,20 +5135,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §cIRC Chat is currently disabled! Toggle it on with §e/b chat§c."));
                      return 1;
                   } else {
-                     String message = StringArgumentType.getString(context, "message");
-                     Minecraft mc = Minecraft.getInstance();
-                     if (mc.player != null) {
-                        int x = (int)Math.floor(mc.player.getX());
-                        int y = (int)Math.floor(mc.player.getY());
-                        int z = (int)Math.floor(mc.player.getZ());
-                        if (message.contains("$coords")) {
-                           message = message.replace("$coords", x + " " + y + " " + z);
-                        }
-
-                        if (message.contains("$coord")) {
-                           message = message.replace("$coord", "x: " + x + ", y: " + y + ", z: " + z);
-                        }
-                     }
+                     String rawMessage = StringArgumentType.getString(context, "message");
+                     String message = SkyblockUtils.replaceCoordPlaceholders(rawMessage);
 
                       me.bombo.bomboaddons.util.ClipboardImageUploader.processOutgoingMessage(message, (resolvedMsg) -> {
                          IRCClient.sendMessage(resolvedMsg);

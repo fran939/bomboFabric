@@ -146,12 +146,76 @@ public class ScreenshareManager {
         }
     }
 
+    public static String getLastCaptureMode() {
+        return lastCaptureMode;
+    }
+
+    public static float getCurrentFps() {
+        return currentFps;
+    }
+
+    private static final java.util.concurrent.atomic.AtomicBoolean captureInProgress = new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static final java.util.concurrent.ExecutorService ENCODE_POOL = java.util.concurrent.Executors.newFixedThreadPool(2, r -> {
+        Thread t = new Thread(r, "Bombo-ScreenshareEncoder");
+        t.setDaemon(true);
+        return t;
+    });
+
     private static final java.util.concurrent.atomic.AtomicInteger inFlightPosts = new java.util.concurrent.atomic.AtomicInteger(0);
+
+    private static void processAndSendFrame(Minecraft mc, byte[] jpegBytes, int targetW, int targetH, long capStart) {
+        try {
+            lastCaptureDurationMs = System.currentTimeMillis() - capStart;
+            if (jpegBytes != null && jpegBytes.length > 0) {
+                framesCaptured++;
+                final int jpegLen = jpegBytes.length;
+                String b64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(jpegBytes);
+                String myIgn = (mc != null && mc.player != null) ? mc.player.getScoreboardName() : "User";
+
+                JsonObject payload = new JsonObject();
+                payload.addProperty("user", myIgn);
+                payload.addProperty("frame", b64);
+                payload.addProperty("fps", (int) Math.max(1, Math.round(currentFps)));
+                payload.addProperty("width", targetW);
+                payload.addProperty("height", targetH);
+
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create("https://api.bombo.dpdns.org/api/screenshare/frame"))
+                        .header("Content-Type", "application/json")
+                        .timeout(Duration.ofMillis(1200))
+                        .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
+                        .build();
+
+                // Non-blocking async pipeline (up to 3 concurrent HTTP requests) for 30-60 FPS
+                if (inFlightPosts.get() < 3) {
+                    inFlightPosts.incrementAndGet();
+                    long postStart = System.currentTimeMillis();
+                    HTTP_CLIENT.sendAsync(req, HttpResponse.BodyHandlers.discarding())
+                            .whenComplete((resp, err) -> {
+                                inFlightPosts.decrementAndGet();
+                                if (resp != null && resp.statusCode() == 200) {
+                                    framesSent++;
+                                    totalBytesSent += jpegLen;
+                                    windowFramesSent++;
+                                    windowBytesSent += jpegLen;
+                                    lastLatencyMs = System.currentTimeMillis() - postStart;
+                                    lastError = "";
+                                } else if (resp != null) {
+                                    lastError = "Server HTTP " + resp.statusCode();
+                                } else if (err != null) {
+                                    lastError = err.getMessage();
+                                }
+                            });
+                }
+            }
+        } finally {
+            captureInProgress.set(false);
+        }
+    }
 
     private static void streamLoop() {
         Minecraft mc = Minecraft.getInstance();
         while (STREAMING.get()) {
-            long frameStart = System.currentTimeMillis();
             long targetDelayMs = 33L;
             try {
                 int targetW = 1280;
@@ -180,91 +244,53 @@ public class ScreenshareManager {
                 currentTargetW = targetW;
                 currentTargetH = targetH;
 
-                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Screenshare: StreamLoop")) {
-                    if (mc != null) {
-                        long capStart = System.currentTimeMillis();
-                        byte[] jpegBytes = null;
-                        boolean mcActive = mc.isWindowActive();
-                        if (s == null || s.screenshareOnlyMinecraft || mcActive) {
-                            jpegBytes = captureMinecraftFrame(mc, targetW, targetH, quality);
-                            if (jpegBytes != null && jpegBytes.length > 0) {
-                                lastCaptureMode = "Direct GPU (OpenGL - <3ms)";
+                if (mc != null && captureInProgress.compareAndSet(false, true)) {
+                    long capStart = System.currentTimeMillis();
+                    boolean mcActive = mc.isWindowActive();
+                    final int fw = targetW;
+                    final int fh = targetH;
+                    final float fq = quality;
+                    if (s == null || s.screenshareOnlyMinecraft || mcActive) {
+                        lastCaptureMode = "Direct GPU (OpenGL - <3ms)";
+                        triggerMinecraftCapture(mc, fw, fh, fq, jpeg -> {
+                            if (jpeg != null && jpeg.length > 0) {
+                                processAndSendFrame(mc, jpeg, fw, fh, capStart);
+                            } else {
+                                lastCaptureMode = "AWT Robot Desktop (High CPU)";
+                                triggerRobotCapture(mc, fw, fh, fq, rJpeg -> {
+                                    processAndSendFrame(mc, rJpeg, fw, fh, capStart);
+                                });
                             }
-                        }
-                        if (jpegBytes == null || jpegBytes.length == 0) {
-                            jpegBytes = captureRobotFrame(mc, targetW, targetH, quality);
-                            if (jpegBytes != null && jpegBytes.length > 0) {
-                                lastCaptureMode = "AWT Robot Desktop (" + (System.currentTimeMillis() - capStart) + "ms - High CPU)";
-                            }
-                        }
-                        lastCaptureDurationMs = System.currentTimeMillis() - capStart;
-
-                        if (jpegBytes != null && jpegBytes.length > 0) {
-                            framesCaptured++;
-                            final int jpegLen = jpegBytes.length;
-                            String b64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(jpegBytes);
-                            String myIgn = mc.player != null ? mc.player.getScoreboardName() : "User";
-
-                            JsonObject payload = new JsonObject();
-                            payload.addProperty("user", myIgn);
-                            payload.addProperty("frame", b64);
-                            payload.addProperty("fps", (int) Math.max(1, Math.round(currentFps)));
-                            payload.addProperty("width", targetW);
-                            payload.addProperty("height", targetH);
-
-                            HttpRequest req = HttpRequest.newBuilder()
-                                    .uri(URI.create("https://api.bombo.dpdns.org/api/screenshare/frame"))
-                                    .header("Content-Type", "application/json")
-                                    .timeout(Duration.ofMillis(1200))
-                                    .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
-                                    .build();
-
-                            // Non-blocking async pipeline (up to 3 concurrent HTTP requests) for 30-60 FPS
-                            if (inFlightPosts.get() < 3) {
-                                inFlightPosts.incrementAndGet();
-                                long postStart = System.currentTimeMillis();
-                                HTTP_CLIENT.sendAsync(req, HttpResponse.BodyHandlers.discarding())
-                                        .whenComplete((resp, err) -> {
-                                            inFlightPosts.decrementAndGet();
-                                            if (resp != null && resp.statusCode() == 200) {
-                                                framesSent++;
-                                                totalBytesSent += jpegLen;
-                                                windowFramesSent++;
-                                                windowBytesSent += jpegLen;
-                                                lastLatencyMs = System.currentTimeMillis() - postStart;
-                                                lastError = "";
-                                            } else if (resp != null) {
-                                                lastError = "Server HTTP " + resp.statusCode();
-                                            } else if (err != null) {
-                                                lastError = err.getMessage();
-                                            }
-                                        });
-                            }
-                        }
-                    }
-
-                    // Calculate rolling FPS & Bitrate every second
-                    long now = System.currentTimeMillis();
-                    long dt = now - lastMetricCalcTime;
-                    if (dt >= 1000L) {
-                        currentFps = (windowFramesSent * 1000.0f) / dt;
-                        currentBitrateKbps = ((windowBytesSent * 8.0f) / 1024.0f) / (dt / 1000.0f);
-                        windowFramesSent = 0L;
-                        windowBytesSent = 0L;
-                        lastMetricCalcTime = now;
+                        });
+                    } else {
+                        lastCaptureMode = "AWT Robot Desktop (High CPU)";
+                        triggerRobotCapture(mc, fw, fh, fq, rJpeg -> {
+                            processAndSendFrame(mc, rJpeg, fw, fh, capStart);
+                        });
                     }
                 }
 
-                long elapsed = System.currentTimeMillis() - frameStart;
-                long sleepTime = Math.max(2L, targetDelayMs - elapsed);
-                Thread.sleep(sleepTime);
+                // Calculate rolling FPS & Bitrate every second
+                long now = System.currentTimeMillis();
+                long dt = now - lastMetricCalcTime;
+                if (dt >= 1000L) {
+                    currentFps = (windowFramesSent * 1000.0f) / dt;
+                    currentBitrateKbps = ((windowBytesSent * 8.0f) / 1024.0f) / (dt / 1000.0f);
+                    windowFramesSent = 0L;
+                    windowBytesSent = 0L;
+                    lastMetricCalcTime = now;
+                }
+
+                Thread.sleep(targetDelayMs);
             } catch (InterruptedException e) {
                 break;
             } catch (Throwable t) {
                 lastError = t.getClass().getSimpleName() + ": " + t.getMessage();
+                captureInProgress.set(false);
                 try { Thread.sleep(50L); } catch (InterruptedException ignored) { break; }
             }
         }
+        captureInProgress.set(false);
     }
 
     private static void drawCursorIfVisible(Minecraft mc, BufferedImage bi, int imgW, int imgH) {
@@ -292,22 +318,24 @@ public class ScreenshareManager {
         } catch (Throwable ignored) {}
     }
 
-    private static byte[] captureMinecraftFrame(Minecraft mc, int targetW, int targetH, float quality) {
-        if (mc.gameRenderer == null || mc.gameRenderer.mainRenderTarget() == null) return null;
-        CompletableFuture<byte[]> future = new CompletableFuture<>();
+    private static void triggerMinecraftCapture(Minecraft mc, int targetW, int targetH, float quality, Consumer<byte[]> onDone) {
+        if (mc.gameRenderer == null || mc.gameRenderer.mainRenderTarget() == null) {
+            onDone.accept(null);
+            return;
+        }
 
         mc.execute(() -> {
             try {
                 com.mojang.blaze3d.pipeline.RenderTarget rt = mc.gameRenderer.mainRenderTarget();
                 if (rt == null || rt.width <= 0 || rt.height <= 0) {
-                    future.complete(null);
+                    onDone.accept(null);
                     return;
                 }
 
                 net.minecraft.client.Screenshot.takeScreenshot(rt, 1, nativeImg -> {
                     try {
                         if (nativeImg == null) {
-                            future.complete(null);
+                            onDone.accept(null);
                             return;
                         }
                         int w = nativeImg.getWidth();
@@ -316,7 +344,7 @@ public class ScreenshareManager {
                         nativeImg.close();
 
                         // Fast async downsample directly to target dimensions
-                        CompletableFuture.runAsync(() -> {
+                        ENCODE_POOL.execute(() -> {
                             try {
                                 BufferedImage bi;
                                 if (w == targetW && h == targetH) {
@@ -338,26 +366,31 @@ public class ScreenshareManager {
                                     drawCursorIfVisible(mc, bi, targetW, targetH);
                                 }
                                 byte[] jpeg = compressScaledJpeg(bi, targetW, targetH, quality);
-                                future.complete(jpeg);
+                                onDone.accept(jpeg);
                             } catch (Throwable t) {
-                                future.complete(null);
+                                onDone.accept(null);
                             }
                         });
                     } catch (Throwable t) {
                         try { nativeImg.close(); } catch (Throwable ignored) {}
-                        future.complete(null);
+                        onDone.accept(null);
                     }
                 });
             } catch (Throwable t) {
-                future.complete(null);
+                onDone.accept(null);
             }
         });
+    }
 
-        try {
-            return future.get(800, TimeUnit.MILLISECONDS);
-        } catch (Throwable t) {
-            return null;
-        }
+    private static void triggerRobotCapture(Minecraft mc, int targetW, int targetH, float quality, Consumer<byte[]> onDone) {
+        ENCODE_POOL.execute(() -> {
+            try {
+                byte[] jpeg = captureRobotFrame(mc, targetW, targetH, quality);
+                onDone.accept(jpeg);
+            } catch (Throwable t) {
+                onDone.accept(null);
+            }
+        });
     }
 
     private static byte[] captureRobotFrame(Minecraft mc, int targetW, int targetH, float quality) {

@@ -40,9 +40,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class BackpackPreview {
-    private static final Pattern ECHEST_PATTERN = Pattern.compile(".*?(?:Ender Chest|Cofre de Ender).*?\\((\\d{1,2})/(\\d{1,2})\\)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ECHEST_PATTERN = Pattern.compile(".*?(?:Ender Chest|Cofre de Ender).*?(?:\\((\\d{1,2})/(\\d{1,2})\\)|Page\\s*(\\d{1,2})|#?\\s*(\\d{1,2}))", Pattern.CASE_INSENSITIVE);
     private static final Pattern ECHEST_PAGE_PATTERN = Pattern.compile(".*?(?:Ender Chest|Cofre de Ender).*?Page\\s*(\\d{1,2})", Pattern.CASE_INSENSITIVE);
-    private static final Pattern BACKPACK_PATTERN = Pattern.compile(".*?(?:Backpack|Mochila).*?\\((?:Slot|Ranura)\\s*#?\\(?(\\d{1,2})\\)?\\)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern BACKPACK_PATTERN = Pattern.compile(".*?(?:Backpack|Mochila).*?(?:\\((?:Slot|Ranura)\\s*#?\\(?(\\d{1,2})\\)?\\)|#?\\s*(\\d{1,2}))", Pattern.CASE_INSENSITIVE);
     private static final Pattern BACKPACK_SIZE_PATTERN = Pattern.compile("(?:has|tiene)\\s+(\\d+)\\s+(?:slots|ranuras)", Pattern.CASE_INSENSITIVE);
 
     public static final int STORAGE_SIZE = 27;
@@ -71,9 +71,14 @@ public class BackpackPreview {
 
         Matcher echest = ECHEST_PATTERN.matcher(title);
         if (echest.find()) {
-            try {
-                return Integer.parseInt(echest.group(1)) - 1;
-            } catch (Exception ignored) {}
+            for (int g = 1; g <= echest.groupCount(); g++) {
+                String val = echest.group(g);
+                if (val != null && !val.isEmpty()) {
+                    try {
+                        return Integer.parseInt(val) - 1;
+                    } catch (Exception ignored) {}
+                }
+            }
         }
 
         Matcher echestPage = ECHEST_PAGE_PATTERN.matcher(title);
@@ -85,9 +90,14 @@ public class BackpackPreview {
 
         Matcher backpack = BACKPACK_PATTERN.matcher(title);
         if (backpack.find()) {
-            try {
-                return Integer.parseInt(backpack.group(1)) + 8;
-            } catch (Exception ignored) {}
+            for (int g = 1; g <= backpack.groupCount(); g++) {
+                String val = backpack.group(g);
+                if (val != null && !val.isEmpty()) {
+                    try {
+                        return Integer.parseInt(val) + 8;
+                    } catch (Exception ignored) {}
+                }
+            }
         }
 
         if (lower.equals("ender chest") || lower.startsWith("ender chest") || lower.equals("cofre de ender") || lower.startsWith("cofre de ender")) {
@@ -95,6 +105,17 @@ public class BackpackPreview {
         }
 
         return -1;
+    }
+
+    public static void updateStorageDirectly(int index, Container container) {
+        if (index < 0 || index >= STORAGE_SIZE || container == null) return;
+        int size = container.getContainerSize();
+        ItemStack[] copy = new ItemStack[size];
+        for (int i = 0; i < size; i++) {
+            copy[i] = container.getItem(i).copy();
+        }
+        storages[index] = new Storage(new SimpleContainer(copy), getStorageName(index), true);
+        saveStorage(index);
     }
 
     public static String getStorageName(int index) {

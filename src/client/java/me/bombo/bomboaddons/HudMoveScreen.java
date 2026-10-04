@@ -31,7 +31,7 @@ public class HudMoveScreen extends Screen {
     public static boolean isGuiHud(HudTarget target) {
         if (target == null) return false;
         return switch (target) {
-            case CROESUS_PROFIT, CROESUS_TRACKER, ITEM_LIST, ITEM_LIST_SEARCH, ITEM_VALUE_BREAKDOWN, RNG, SIGN_CALCULATOR, CHAT_SEARCH -> true;
+            case CROESUS_PROFIT, CROESUS_TRACKER, ITEM_LIST, ITEM_LIST_SEARCH, ITEM_VALUE_BREAKDOWN, RNG, SIGN_CALCULATOR, CHAT_SEARCH, CHAT_TABS -> true;
             default -> false;
         };
     }
@@ -42,8 +42,9 @@ public class HudMoveScreen extends Screen {
         return false;
     }
 
-    private boolean isTargetVisible(HudTarget target, boolean configActive) {
-        if (shouldSkipForFilter(target)) return false;
+    public static boolean isTargetVisible(HudTarget target, boolean configActive) {
+        if (hudTypeFilter == 1 && !isGuiHud(target)) return false;
+        if (hudTypeFilter == 2 && isGuiHud(target)) return false;
         BomboConfig.Settings s = BomboConfig.get();
         if (s != null && s.showOnlyActiveHuds && !configActive) return false;
         return true;
@@ -112,23 +113,29 @@ public class HudMoveScreen extends Screen {
             s.croesusProfitHudX = this.width / 2 + 120;
             s.croesusProfitHudY = Math.max(4, this.height / 2 - 100);
         }
-        String filterLabel = hudTypeFilter == 1 ? "§d [GUI]" : (hudTypeFilter == 2 ? "§b [Game]" : "§7 [Both]");
-        String toggleModeText = (s.showOnlyActiveHuds ? "§eActive" : "§aAll") + " " + filterLabel;
-        this.addRenderableWidget(Button.builder(Component.literal(toggleModeText), btn -> {
+
+        this.addRenderableWidget(Button.builder(Component.literal(s.showOnlyActiveHuds ? "§eActive" : "§aAll"), btn -> {
             s.showOnlyActiveHuds = !s.showOnlyActiveHuds;
             BomboConfig.save();
+            btn.setMessage(Component.literal(s.showOnlyActiveHuds ? "§eActive" : "§aAll"));
             this.init();
-        }).bounds(10, 10, 130, 20).build());
+        }).bounds(10, 8, 75, 20).build());
+
+        String filterLabel = hudTypeFilter == 1 ? "§dFilter: In-GUI" : (hudTypeFilter == 2 ? "§bFilter: In-Game" : "§7Filter: Both");
+        this.addRenderableWidget(Button.builder(Component.literal(filterLabel), btn -> {
+            hudTypeFilter = (hudTypeFilter + 1) % 3;
+            this.init();
+        }).bounds(90, 8, 110, 20).build());
 
         String snapText = snappingEnabled ? "§aSnapping: ON" : "§cSnapping: OFF";
         this.addRenderableWidget(Button.builder(Component.literal(snapText), btn -> {
             snappingEnabled = !snappingEnabled;
             btn.setMessage(Component.literal(snappingEnabled ? "§aSnapping: ON" : "§cSnapping: OFF"));
-        }).bounds(145, 10, 110, 20).build());
+        }).bounds(205, 8, 105, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("§cSave & Close"), btn -> {
             this.onClose();
-        }).bounds(this.width - 110, 10, 100, 20).build());
+        }).bounds(this.width - 110, 8, 100, 20).build());
     }
 
     @Override
@@ -156,7 +163,7 @@ public class HudMoveScreen extends Screen {
         BomboConfig.Settings s = BomboConfig.get();
 
         // 1. DICE
-        if (!s.showOnlyActiveHuds || (s.diceTracker && DiceTracker.shouldShowHud())) {
+        if (isTargetVisible(HudTarget.DICE, (s.diceTracker && DiceTracker.shouldShowHud()))) {
             int w = (int) (260.0F * s.diceHudScale);
             int h = (int) (52.0F * s.diceHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.DICE, (nx, ny) -> {
@@ -171,7 +178,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 2. BAKERY
-        if (!s.showOnlyActiveHuds || s.feastBakeryHud) {
+        if (isTargetVisible(HudTarget.BAKERY, s.feastBakeryHud)) {
             int w = (int) ((float) FeastBakeryHud.getHudWidth() * s.feastBakeryHudScale);
             int h = (int) ((float) FeastBakeryHud.getHudHeight(3) * s.feastBakeryHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.BAKERY, (nx, ny) -> {
@@ -187,7 +194,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 3. RNG
-        if (!s.showOnlyActiveHuds || s.rngProfitHud) {
+        if (isTargetVisible(HudTarget.RNG, s.rngProfitHud)) {
             int w = (int) (185.0F * s.rngProfitHudScale);
             int h = (int) ((float) ExperimentationTableHud.getHudHeight() * s.rngProfitHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.RNG, (nx, ny) -> {
@@ -199,7 +206,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 4. KUUDRA
-        if (!s.showOnlyActiveHuds || (s.kuudraBlindnessTimer && KuudraTimer.isActive())) {
+        if (isTargetVisible(HudTarget.KUUDRA, (s.kuudraBlindnessTimer && KuudraTimer.isActive()))) {
             int w = (int) (80.0F * s.kuudraBlindnessTimerScale);
             int h = (int) (12.0F * s.kuudraBlindnessTimerScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.KUUDRA, (nx, ny) -> {
@@ -211,7 +218,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 5. PAD_TIMERS
-        if (!s.showOnlyActiveHuds || ((s.padTimersPurple || s.padTimersGreen) && DungeonPadTimers.isActive())) {
+        if (isTargetVisible(HudTarget.PAD_TIMERS, ((s.padTimersPurple || s.padTimersGreen) && DungeonPadTimers.isActive()))) {
             int w = (int) (120.0F * s.padTimersScale);
             int h = (int) (12.0F * s.padTimersScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.PAD_TIMERS, (nx, ny) -> {
@@ -223,7 +230,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 6. TIMERS
-        if (!s.showOnlyActiveHuds || (s.customTimeEnabled && !CustomTimerManager.activeTimers.isEmpty())) {
+        if (isTargetVisible(HudTarget.TIMERS, (s.customTimeEnabled && !CustomTimerManager.activeTimers.isEmpty()))) {
             int w = (int) ((float) CustomTimerManager.getWidth() * s.customTimerHudScale);
             int h = (int) ((float) CustomTimerManager.getHeight() * s.customTimerHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.TIMERS, (nx, ny) -> {
@@ -236,7 +243,7 @@ public class HudMoveScreen extends Screen {
 
         // 7. COMPOSTER
         boolean compDataExists = s.composterLastOrganic >= 0.0 || s.composterLastFuel >= 0.0;
-        if (!s.showOnlyActiveHuds || (s.composterHud && compDataExists)) {
+        if (isTargetVisible(HudTarget.COMPOSTER, (s.composterHud && compDataExists))) {
             int w = (int) ((float) ComposterHud.getWidth() * s.composterHudScale);
             int h = (int) ((float) ComposterHud.getHeight() * s.composterHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.COMPOSTER, (nx, ny) -> {
@@ -248,7 +255,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 8. COMPOSTER_TIMER
-        if (!s.showOnlyActiveHuds || (s.composterTimerHud && compDataExists)) {
+        if (isTargetVisible(HudTarget.COMPOSTER_TIMER, (s.composterTimerHud && compDataExists))) {
             int w = (int) (140.0F * s.composterTimerHudScale);
             int h = (int) (12.0F * s.composterTimerHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.COMPOSTER_TIMER, (nx, ny) -> {
@@ -260,7 +267,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 9. HOPPITY
-        if (!s.showOnlyActiveHuds || (s.hoppityHud && (AlphaTrackerHud.isHoppityActive() || !s.hoppityHideWhenInactive))) {
+        if (isTargetVisible(HudTarget.HOPPITY, (s.hoppityHud && (AlphaTrackerHud.isHoppityActive() || !s.hoppityHideWhenInactive)))) {
             int w = HoppityHud.getHudWidth();
             int h = HoppityHud.getHudHeight();
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.HOPPITY, (nx, ny) -> {
@@ -272,7 +279,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 10. ALPHA_TRACKER
-        if (!s.showOnlyActiveHuds || s.alphaTrackerHud) {
+        if (isTargetVisible(HudTarget.ALPHA_TRACKER, s.alphaTrackerHud)) {
             int w = (int) ((float) AlphaTrackerHud.getHudWidth() * s.alphaTrackerHudScale);
             int h = (int) ((float) AlphaTrackerHud.getHudHeight() * s.alphaTrackerHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.ALPHA_TRACKER, (nx, ny) -> {
@@ -284,7 +291,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 11. SIGN_CALCULATOR & SIGN GUI
-        if (!s.showOnlyActiveHuds || s.signCalculator) {
+        if (isTargetVisible(HudTarget.SIGN_CALCULATOR, s.signCalculator)) {
             float scale = s.signCalculatorScale > 0.0F ? s.signCalculatorScale : 1.0F;
             int signW = (int) (96 * scale);
             int signH = (int) (48 * scale);
@@ -327,7 +334,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 12. CHAT_SEARCH
-        if (!s.showOnlyActiveHuds || s.chatSearchBar) {
+        if (isTargetVisible(HudTarget.CHAT_SEARCH, s.chatSearchBar)) {
             int w = (int) (160.0F * s.chatSearchScale);
             int h = (int) (14.0F * s.chatSearchScale);
             int curX = s.chatSearchX >= 0 ? s.chatSearchX : 4;
@@ -343,7 +350,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 13. FROZEN_BLAZE
-        if (!s.showOnlyActiveHuds || (s.frozenBlazeWarning && s.fbWarnTimerOnScreen)) {
+        if (isTargetVisible(HudTarget.FROZEN_BLAZE, (s.frozenBlazeWarning && s.fbWarnTimerOnScreen))) {
             float scale = s.fbWarnTimerScale > 0.0F ? s.fbWarnTimerScale : 1.0F;
             int w = (int) (65.0F * scale);
             int h = (int) (12.0F * scale);
@@ -360,7 +367,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 14. DOJO_SHOOT
-        if (!s.showOnlyActiveHuds || (s.dojoUtilities && s.dojoMasteryWool)) {
+        if (isTargetVisible(HudTarget.DOJO_SHOOT, (s.dojoUtilities && s.dojoMasteryWool))) {
             float scale = s.dojoShootHudScale > 0.0F ? s.dojoShootHudScale : 1.0F;
             int w = (int) (56.0F * scale);
             int h = (int) (16.0F * scale);
@@ -377,7 +384,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 15. BOBBER_TIME
-        if (!s.showOnlyActiveHuds || s.showBobberTime) {
+        if (isTargetVisible(HudTarget.BOBBER_TIME, s.showBobberTime)) {
             float scale = s.bobberTimeHudScale > 0.0F ? s.bobberTimeHudScale : 1.0F;
             int w = (int) (95.0F * scale);
             int h = (int) (12.0F * scale);
@@ -394,7 +401,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 16. SPEEDOMETER
-        if (!s.showOnlyActiveHuds || s.speedometer) {
+        if (isTargetVisible(HudTarget.SPEEDOMETER, s.speedometer)) {
             float scale = s.speedometerScale > 0.0F ? s.speedometerScale : 1.0F;
             int w = (int) (75.0F * scale);
             int h = (int) (12.0F * scale);
@@ -412,7 +419,7 @@ public class HudMoveScreen extends Screen {
 
         // 17. AUTO_CROESUS
         // Chest value panel (contents + profit per chest) - movable like every other HUD.
-        if (!s.showOnlyActiveHuds || s.croesusHelper) {
+        if (isTargetVisible(HudTarget.CROESUS_PROFIT, s.croesusHelper)) {
             int w = (int) (280.0F * s.croesusProfitHudScale);
             int h = (int) (200.0F * s.croesusProfitHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.CROESUS_PROFIT, (nx, ny) -> {
@@ -423,7 +430,7 @@ public class HudMoveScreen extends Screen {
             me.bombo.bomboaddons.cheat.dungeons.DungeonChestProfitHud.renderDummy(g, s.croesusProfitHudX, s.croesusProfitHudY, s.croesusProfitHudScale);
         }
 
-        if (!s.showOnlyActiveHuds || s.autoCroesusHud) {
+        if (isTargetVisible(HudTarget.AUTO_CROESUS, s.autoCroesusHud)) {
             int w = (int) (220.0F * s.autoCroesusHudScale);
             int h = (int) (110.0F * s.autoCroesusHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.AUTO_CROESUS, (nx, ny) -> {
@@ -435,7 +442,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 17b. CROESUS_TRACKER (cumulative profit + per-floor)
-        if (!s.showOnlyActiveHuds || s.croesusProfitTracker) {
+        if (isTargetVisible(HudTarget.CROESUS_TRACKER, s.croesusProfitTracker)) {
             int w = (int) (me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
             int h = (int) (60.0F * s.croesusTrackerHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.CROESUS_TRACKER, (nx, ny) -> {
@@ -447,7 +454,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // AUTO_REJOIN
-        if (!s.showOnlyActiveHuds || s.autoRejoinHud) {
+        if (isTargetVisible(HudTarget.AUTO_REJOIN, s.autoRejoinHud)) {
             int w = (int) ((float) me.bombo.bomboaddons.features.AutoRejoinHud.getHudWidth() * s.autoRejoinHudScale);
             int h = (int) ((float) me.bombo.bomboaddons.features.AutoRejoinHud.getHudHeight() * s.autoRejoinHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.AUTO_REJOIN, (nx, ny) -> {
@@ -459,7 +466,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // ITEM_VALUE_BREAKDOWN
-        if (!s.showOnlyActiveHuds || s.itemValueBreakdownHud) {
+        if (isTargetVisible(HudTarget.ITEM_VALUE_BREAKDOWN, s.itemValueBreakdownHud)) {
             int w = (int) ((float) me.bombo.bomboaddons.features.ItemValueBreakdownHud.getHudWidth() * s.itemValueBreakdownHudScale);
             int h = (int) ((float) me.bombo.bomboaddons.features.ItemValueBreakdownHud.getHudHeight(null) * s.itemValueBreakdownHudScale);
             int curX = s.itemValueBreakdownHudX >= 0 ? s.itemValueBreakdownHudX : 10;
@@ -475,7 +482,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 18. TAB_WIDGET
-        if (!s.showOnlyActiveHuds || s.tabWidgetHudEnabled) {
+        if (isTargetVisible(HudTarget.TAB_WIDGET, s.tabWidgetHudEnabled)) {
             List<String> lines = TabWidgetHud.getMatchedWidgetLines(s.tabWidgetQuery != null && !s.tabWidgetQuery.isEmpty() ? s.tabWidgetQuery : "Bestiary", false);
             if (lines.isEmpty()) {
                 lines = TabWidgetHud.getMatchedWidgetLines(s.tabWidgetQuery != null && !s.tabWidgetQuery.isEmpty() ? s.tabWidgetQuery : "Bestiary", true);
@@ -493,7 +500,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // Individual Tab Widgets
-        if (s.tabWidgets != null) {
+        if (s.tabWidgets != null && isTargetVisible(HudTarget.TAB_WIDGET, true)) {
             for (int i = 0; i < s.tabWidgets.size(); ++i) {
                 BomboConfig.TabWidgetInfo widget = s.tabWidgets.get(i);
                 if (widget.enabled || !s.showOnlyActiveHuds) {
@@ -524,7 +531,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 19. ITEM_LIST & 20. ITEM_LIST_SEARCH
-        if (BomboConfig.get().itemListEnabled) {
+        if (isTargetVisible(HudTarget.ITEM_LIST, BomboConfig.get().itemListEnabled)) {
             int ilX = s.itemListX == -1 ? this.width - 150 : s.itemListX;
             int ilY = s.itemListY == -1 ? 20 : s.itemListY;
             this.updateDragPosition(mouseX, mouseY, s.itemListW, s.itemListH, HudTarget.ITEM_LIST, (nx, ny) -> {
@@ -534,7 +541,7 @@ public class HudMoveScreen extends Screen {
             this.renderTargetBox(g, mouseX, mouseY, ilX, ilY, s.itemListW, s.itemListH, HudTarget.ITEM_LIST, 1.0f);
             ItemListOverlay.render(g, Minecraft.getInstance().font, mouseX, mouseY);
 
-            if (s.itemListSeparateSearch) {
+            if (s.itemListSeparateSearch && isTargetVisible(HudTarget.ITEM_LIST_SEARCH, BomboConfig.get().itemListEnabled)) {
                 int searchX = s.itemListSearchX == -1 ? this.width / 2 - 75 : s.itemListSearchX;
                 int searchY = s.itemListSearchY == -1 ? this.height / 2 + 20 : s.itemListSearchY;
                 int searchW = (int) ((float) s.itemListSearchW * s.itemListSearchScale);
@@ -562,9 +569,8 @@ public class HudMoveScreen extends Screen {
             g.fill(0, this.snapGuideY, this.width, this.snapGuideY + 1, 0x8800FFFF);
         }
 
-        // 21. DUNGEON MAP
         // 21. DUNGEON_MAP
-        if (!s.showOnlyActiveHuds || s.dungeonMap) {
+        if (isTargetVisible(HudTarget.DUNGEON_MAP, s.dungeonMap)) {
             int mapW = me.bombo.bomboaddons.features.dungeons.map.DungeonMapOverlay.getMapWidth();
             int mapH = me.bombo.bomboaddons.features.dungeons.map.DungeonMapOverlay.getMapHeight();
             int curX = s.dungeonMapX >= 0 ? s.dungeonMapX : 10;
@@ -580,7 +586,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 22. ARMOR_HUD
-        if (!s.showOnlyActiveHuds || s.armorHud) {
+        if (isTargetVisible(HudTarget.ARMOR_HUD, s.armorHud)) {
             int armW = (int) ((float) me.bombo.bomboaddons.features.hud.ArmorHud.getHudWidth() * s.armorHudScale);
             int armH = (int) ((float) me.bombo.bomboaddons.features.hud.ArmorHud.getHudHeight() * s.armorHudScale);
             this.updateDragPosition(mouseX, mouseY, armW, armH, HudTarget.ARMOR_HUD, (nx, ny) -> {
@@ -597,7 +603,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 23. EQUIPMENT_HUD
-        if (!s.showOnlyActiveHuds || s.equipmentHud) {
+        if (isTargetVisible(HudTarget.EQUIPMENT_HUD, s.equipmentHud)) {
             int eqW = (int) ((float) me.bombo.bomboaddons.features.hud.EquipmentHud.getHudWidth() * s.equipmentHudScale);
             int eqH = (int) ((float) me.bombo.bomboaddons.features.hud.EquipmentHud.getHudHeight() * s.equipmentHudScale);
             this.updateDragPosition(mouseX, mouseY, eqW, eqH, HudTarget.EQUIPMENT_HUD, (nx, ny) -> {
@@ -614,7 +620,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 24. INVENTORY_HUD
-        if (!s.showOnlyActiveHuds || s.inventoryHud) {
+        if (isTargetVisible(HudTarget.INVENTORY_HUD, s.inventoryHud)) {
             int invW = (int) ((float) me.bombo.bomboaddons.features.hud.InventoryHud.getHudWidth() * s.inventoryHudScale);
             int invH = (int) ((float) me.bombo.bomboaddons.features.hud.InventoryHud.getHudHeight() * s.inventoryHudScale);
             this.updateDragPosition(mouseX, mouseY, invW, invH, HudTarget.INVENTORY_HUD, (nx, ny) -> {
@@ -631,7 +637,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 25. CRITTER_HUD
-        if (!s.showOnlyActiveHuds || s.critterHud) {
+        if (isTargetVisible(HudTarget.CRITTER_HUD, s.critterHud)) {
             int critW = (int) ((float) me.bombo.bomboaddons.features.critters.CritterHud.getWidth() * s.critterHudScale);
             int critH = (int) ((float) me.bombo.bomboaddons.features.critters.CritterHud.getHeight() * s.critterHudScale);
             this.updateDragPosition(mouseX, mouseY, critW, critH, HudTarget.CRITTER_HUD, (nx, ny) -> {
@@ -643,7 +649,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 26. CRITTER_MAP
-        if (!s.showOnlyActiveHuds || s.critterMapHud) {
+        if (isTargetVisible(HudTarget.CRITTER_MAP, s.critterMapHud)) {
             int mapW = (int) (120.0f * s.critterMapScale);
             int mapH = (int) (120.0f * s.critterMapScale);
             int mx = s.critterMapX >= 0 ? s.critterMapX : (this.width - 130);
@@ -657,7 +663,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 27. CHAT_TABS
-        if (!s.showOnlyActiveHuds || s.chatTabs) {
+        if (isTargetVisible(HudTarget.CHAT_TABS, s.chatTabs)) {
             int chatTabsW = (int) ((float) me.bombo.bomboaddons.features.chat.ChatTabsOverlay.getWidth() * s.chatTabsScale);
             int chatTabsH = (int) (14.0f * s.chatTabsScale);
             int defaultY = this.height - 28;
@@ -672,7 +678,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 28. DISCORD_HUD
-        if (!s.showOnlyActiveHuds || s.discordHudEnabled) {
+        if (isTargetVisible(HudTarget.DISCORD_HUD, s.discordHudEnabled)) {
             int dcW = (int) ((float) me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudWidth() * s.discordHudScale);
             int dcH = (int) ((float) me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudHeight() * s.discordHudScale);
             this.updateDragPosition(mouseX, mouseY, dcW, dcH, HudTarget.DISCORD_HUD, (nx, ny) -> {
@@ -684,7 +690,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 29. SPOTIFY_HUD
-        if (!s.showOnlyActiveHuds || s.spotifyHudEnabled) {
+        if (isTargetVisible(HudTarget.SPOTIFY_HUD, s.spotifyHudEnabled)) {
             int spW = (int) ((float) me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudWidth() * s.spotifyHudScale);
             int spH = (int) ((float) me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudHeight() * s.spotifyHudScale);
             this.updateDragPosition(mouseX, mouseY, spW, spH, HudTarget.SPOTIFY_HUD, (nx, ny) -> {
@@ -958,6 +964,7 @@ public class HudMoveScreen extends Screen {
         List<HudTarget> underMouse = new ArrayList<>();
         for (int i = this.renderedOrder.size() - 1; i >= 0; i--) {
             HudTarget t = this.renderedOrder.get(i);
+            if (shouldSkipForFilter(t)) continue;
             int[] b = this.lastRenderedBounds.get(t);
             if (b != null && this.checkHit(mouseX, mouseY, b[0], b[1], b[2], b[3])) {
                 if (!underMouse.contains(t)) {

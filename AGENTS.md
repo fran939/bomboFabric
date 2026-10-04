@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.72` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.73` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.72`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.73`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.73 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Dynamic Sizing & Live Inventory Sync (`BackpackPreview`, `StorageOverlayScreen`, `AbstractContainerMenuMixin`):** Removed artificial 5-row constraint on Ender Chests so Ender Chest 4 and compact backpacks dynamically size to their exact unlocked row count, eliminating dark empty slots and gray backgrounds. Hooked `AbstractContainerMenuMixin.setItem` and `initializeContents` to immediately update in-memory storage slots and save them to disk when items are moved or opened. Expanded regex patterns to match arbitrary container titles like `"Backpack 1"`, `"Backpack #1"`, `"Ender Chest 4"`.
+> 2. **Discord Voice HUD Instant Local Mute & Fast Leave Detection (`DiscordIpcManager`):** Local mute now toggles instantaneously in-memory with verified client chat feedback and asynchronously dispatches `SET_USER_VOICE_SETTINGS` with volume clamp. Voice log scan polling reduced from 1000ms to 350ms for near-instant user leave detection. Added WebRTC video stream tracking and Go-Live detection to display `[LIVE]` next to screensharing users.
+> 3. **Screenshare Asynchronous 60 FPS Engine & Capture Indicator (`ScreenshareManager`, `PerformanceScreen`):** Replaced synchronous blocking `future.get(800ms)` with a dedicated 2-thread encoder pool (`ENCODE_POOL`) and an `AtomicBoolean captureInProgress` gate. Direct OpenGL framebuffer capture and AWT Robot desktop fallback now encode frames asynchronously without stuttering the render thread or throttling framerates. Displayed real-time screenshare FPS and active capture pipeline (`Direct GPU (OpenGL)` vs `AWT Robot Desktop`) in the `/b perf` performance dashboard header.
+> 4. **Chat `$item` Alias & Discord Item Glyph Decoders (`BomboaddonsClient`, `bombot/index.js`, `bombot/render_item.js`):** Enabled coordinate and placeholder expansion across `/bc` commands so `$item` accurately expands into `[SHOW:...]` format. Fixed canvas sprite icon rendering in Discord bot by replacing unrendered `new Image().src = buffer` with `await loadImage(path)`, ensuring authentic 7x7 gemstone sockets and stat icons render properly with drop shadows in lore images.
+> 5. **Multi-Provider Synced Lyrics with Apple Music Syllable Timing (`bomboapi/server.js`, `LyricsManager`):** Enhanced `/api/lyrics/resolve` to query YouLyPlus Apple Music syllable timestamps and synthesize `<mm:ss.xxx>` enhanced karaoke word timings, with robust fallbacks to LRCLIB, KuGou, Paxsenix, BetterLyrics, and Musixmatch. Verified word-by-word active glow rendering with "Dákiti" by Bad Bunny on web and client.
+> 6. **HUD Move Screen Mode Filtering (`HudMoveScreen`):** Added a dedicated `Filter: Both / In-GUI / In-Game` button to the HUD Move header bar. Enforced visibility filtering across all 33 HUD target render passes in `extractRenderState` and guarded hit testing in `mouseClicked` so In-GUI HUDs (like Chat Tabs and Container Overlays) are hidden when editing In-Game HUDs, and vice versa.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.72 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Sizing & Inline Header Renaming (`StorageOverlayScreen`, `BackpackPreview`):** Fixed Ender Chest row collapse by strictly enforcing 54 slots (5 rows) for EC 1–4, seeded only discovered Ender Chests to eliminate phantom EC 5–9 chat errors, added inline card header renaming via `EditBox` (Enter to save, Esc to cancel), and corrected slot search/focus backgrounds so matching item slots remain transparent while empty slots render subtle gray.

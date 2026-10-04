@@ -1,5 +1,29 @@
 # BomboAddons Changelog
  
+## [26.2.28.73] - 2026-10-04 (Beta)
+
+### Storage Overlay Dynamic Sizing & Live Updates
+- **Live Container Synchronization:** Added `updateStorageDirectly` and intercepted slot/inventory updates in `AbstractContainerMenuMixin` so active backpack contents update instantly when moving items or opening containers.
+- **Dynamic Unlocked Rows:** Removed forced 5-row constraint so Ender Chest 4 and compact backpacks size dynamically to their exact unlocked row count without dark void rows or unselected gray empty slot backgrounds.
+- **Flexible Title Matching:** Expanded `ECHEST_PATTERN` and `BACKPACK_PATTERN` to match `"Backpack 1"`, `"Backpack #1"`, `"Ender Chest 4"`, and custom title formats.
+
+### Discord Voice HUD & Screenshare Status
+- **Snappy 350ms Polling:** Reduced polling interval from 1000ms to 350ms for near-instant voice status synchronization.
+- **Instant Local Mute Feedback:** Toggles mute state immediately in memory and dispatches thread-safe in-game feedback via `mc.execute(...)`, sending `SET_USER_VOICE_SETTINGS` asynchronously.
+- **Accurate [LIVE] Detection:** Updated regex to match inbound video streams (`video ssrc: ...`) and outbound heartbeat telemetry so local user screensharing reliably shows `[LIVE]`.
+
+### Screenshare Asynchronous 60 FPS Engine
+- **Non-Blocking Encoding Pool:** Replaced synchronous `future.get(...)` render-thread block with a dedicated 2-thread background encoder pool and atomic in-flight guard, achieving genuine 60 FPS broadcasting without frame stalls or client stutter.
+- **Live Pipeline Indicator in `/b perf`:** Added live screenshare capture mode (`Direct GPU (OpenGL)` vs `AWT Robot Desktop`) and real-time streaming FPS in the performance profiler header.
+
+### Chat Placeholders & Discord Lore Item Glyphs
+- **`/bc` Placeholder Resolution:** Applied `SkyblockUtils.replaceCoordPlaceholders` to `/bc` messages so `$item`, `$coords`, and other placeholders resolve into item tooltips and coordinates.
+- **Discord Lore Glyphs Fixed:** Switched texture loading in `bombot/render_item.js` from `new Image()` to `await loadImage()`, restoring authentic 7x7 gemstone sockets, mana symbols, and stat glyphs on Discord lore images.
+
+### HUD Move Mode Filtering & Synced Lyrics
+- **Dedicated HUD Mode Filter Button:** Added a dedicated Filter button (`Filter: Both` / `Filter: In-GUI` / `Filter: In-Game`) in `HudMoveScreen` and guarded all 33 HUD elements so filtered-out HUDs are completely hidden and unclickable.
+- **YouLyPlus Syllabic Word Timing:** Enhanced `/api/lyrics/resolve` on `bomboapi` to prioritize YouLyPlus, converting Apple Music syllable timing into `<mm:ss.xxx>` word-by-word karaoke formatting with LRCLIB, KuGou, and Paxsenix fallbacks.
+
 ## [26.2.28.72] - 2026-10-04 (Beta)
 
 ### Storage Overlay Fixes & Inline Renaming
