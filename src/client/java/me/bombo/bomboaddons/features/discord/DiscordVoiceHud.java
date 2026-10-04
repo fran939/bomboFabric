@@ -129,9 +129,15 @@ public class DiscordVoiceHud {
         int userRowIdx = lineIdx - 1;
         if (userRowIdx >= 0 && userRowIdx < cachedUserRowIds.size()) {
             String uid = cachedUserRowIds.get(userRowIdx);
-            if (uid != null && !uid.isEmpty() && !uid.equals("self") && !uid.equals(DiscordIpcManager.getMyUserId())) {
-                DiscordIpcManager.toggleUserMute(uid);
-                return true;
+            if (uid != null && !uid.isEmpty()) {
+                if (uid.equals("self") || uid.equals(DiscordIpcManager.getMyUserId())) {
+                    Minecraft mc = Minecraft.getInstance();
+                    DiscordIpcManager.toggleSelfMute(mc != null && mc.player != null ? mc.player::sendSystemMessage : null);
+                    return true;
+                } else {
+                    DiscordIpcManager.toggleUserMute(uid);
+                    return true;
+                }
             }
         }
         return false;

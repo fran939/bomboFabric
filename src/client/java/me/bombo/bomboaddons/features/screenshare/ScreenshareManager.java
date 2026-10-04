@@ -394,8 +394,8 @@ public class ScreenshareManager {
                 currentTargetW = targetW;
                 currentTargetH = targetH;
 
-                // Parallel pipeline: allow capture while previous frames are encoding in worker pool
-                if (mc != null && inFlightEncodes.get() < 4 && gpuCaptureInProgress.compareAndSet(false, true)) {
+                // Parallel pipeline: only capture when previous frame finished encoding and network is clear
+                if (mc != null && inFlightEncodes.get() == 0 && inFlightPosts.get() <= 1 && gpuCaptureInProgress.compareAndSet(false, true)) {
                     long capStart = System.currentTimeMillis();
                     boolean mcActive = mc.isWindowActive();
                     final int fw = targetW;
@@ -509,14 +509,25 @@ public class ScreenshareManager {
 
                         byte[] rawBytes = null;
                         if (readSlot.hasData && readSlot.buffer != null && readSlot.width == w && readSlot.height == h) {
+                            int rowBytes = w * 4;
+                            int neededBytes = targetH * rowBytes;
                             int slot = (rawRingIndex++) & 3;
-                            if (RAW_BYTE_RING[slot] == null || RAW_BYTE_RING[slot].length != w * h * 4) {
-                                RAW_BYTE_RING[slot] = new byte[w * h * 4];
+                            if (RAW_BYTE_RING[slot] == null || RAW_BYTE_RING[slot].length != neededBytes) {
+                                RAW_BYTE_RING[slot] = new byte[neededBytes];
                             }
                             rawBytes = RAW_BYTE_RING[slot];
                             try (com.mojang.blaze3d.buffers.GpuBufferSlice.MappedView view = readSlot.buffer.map(true, false)) {
                                 java.nio.ByteBuffer bb = view.data();
-                                bb.get(rawBytes);
+                                if (h == targetH) {
+                                    bb.get(rawBytes, 0, neededBytes);
+                                } else {
+                                    LutPair lut = getOrCreateLut(w, h, targetW, targetH);
+                                    for (int y = 0; y < targetH; y++) {
+                                        int srcOffset = lut.lutY[y];
+                                        bb.position(srcOffset);
+                                        bb.get(rawBytes, y * rowBytes, rowBytes);
+                                    }
+                                }
                             } catch (Throwable t) {
                                 rawBytes = null;
                             }
@@ -540,10 +551,11 @@ public class ScreenshareManager {
                                 BufferedImage bi = getOrCreateBufferedImage(targetW, targetH);
                                 int[] destPixels = ((java.awt.image.DataBufferInt) bi.getRaster().getDataBuffer()).getData();
 
+                                int rowBytes = srcW * 4;
                                 if (srcW == targetW && srcH == targetH) {
                                     for (int y = 0; y < targetH; y++) {
                                         int srcY = targetH - 1 - y;
-                                        int srcRowOffset = srcY * targetW * 4;
+                                        int srcRowOffset = srcY * rowBytes;
                                         int destRowOffset = y * targetW;
                                         for (int x = 0; x < targetW; x++) {
                                             int idx = srcRowOffset + (x * 4);
@@ -554,13 +566,12 @@ public class ScreenshareManager {
                                         }
                                     }
                                 } else {
-                                    // High-speed cached LUT strided sampling with zero per-frame allocation (<0.8ms duration)
+                                    // High-speed cached LUT strided sampling with sequential row access (<0.5ms duration)
                                     LutPair lut = getOrCreateLut(srcW, srcH, targetW, targetH);
                                     int[] lutX = lut.lutX;
-                                    int[] lutY = lut.lutY;
 
                                     for (int y = 0; y < targetH; y++) {
-                                        int srcRowOffset = lutY[y];
+                                        int srcRowOffset = y * rowBytes;
                                         int destRowOffset = y * targetW;
                                         for (int x = 0; x < targetW; x++) {
                                             int idx = srcRowOffset + lutX[x];

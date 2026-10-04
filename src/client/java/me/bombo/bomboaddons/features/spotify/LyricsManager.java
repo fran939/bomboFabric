@@ -146,7 +146,14 @@ public class LyricsManager {
         return statusMessage;
     }
 
+    public static boolean isWordSynced() {
+        return currentLines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+    }
+
     public static String getRawLyrics() {
+        if (!currentLines.isEmpty() && isWordSynced()) {
+            return formatCleanLrc(currentLines);
+        }
         return lastRawLyrics != null ? lastRawLyrics : "No raw lyrics available.";
     }
 
@@ -276,12 +283,14 @@ public class LyricsManager {
         }
 
         String preview = parsed.size() > 0 ? parsed.get(0).text() : "Custom Lyrics";
+        boolean hasWords = parsed.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+        String syncType = hasWords ? "Word-Synced" : (isSyn ? "Line-Synced" : "Plain");
         LyricCandidate customCand = new LyricCandidate(
                 "custom-" + System.currentTimeMillis(),
                 "Custom",
-                isSyn ? "Synced" : "Plain",
+                syncType,
                 preview,
-                customRaw,
+                hasWords ? formatCleanLrc(parsed) : customRaw,
                 parsed
         );
 
@@ -604,7 +613,24 @@ public class LyricsManager {
             long min = (l.startMs() / 1000) / 60;
             long sec = (l.startMs() / 1000) % 60;
             long ms = l.startMs() % 1000;
-            sb.append(String.format("[%02d:%02d.%03d]%s\n", min, sec, ms, l.text()));
+            sb.append(String.format("[%02d:%02d.%03d]", min, sec, ms));
+            if (l.words() != null && !l.words().isEmpty()) {
+                for (WordTime wt : l.words()) {
+                    long wMin = (wt.startMs() / 1000) / 60;
+                    long wSec = (wt.startMs() / 1000) % 60;
+                    long wMs = wt.startMs() % 1000;
+                    sb.append(String.format("<%02d:%02d.%03d>%s ", wMin, wSec, wMs, wt.word()));
+                }
+                if (l.backgroundText() != null && !l.backgroundText().isEmpty()) {
+                    sb.append(l.backgroundText());
+                }
+            } else {
+                sb.append(l.text());
+                if (l.backgroundText() != null && !l.backgroundText().isEmpty()) {
+                    sb.append(" ").append(l.backgroundText());
+                }
+            }
+            sb.append("\n");
         }
         return sb.toString();
     }

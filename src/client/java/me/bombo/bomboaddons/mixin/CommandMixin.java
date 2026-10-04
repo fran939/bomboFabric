@@ -178,7 +178,9 @@ public class CommandMixin {
             feedback.accept(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aRequested Discord IPC authorization prompt."));
          } else if (subLower.startsWith("mute")) {
             String target = sub.substring(4).trim();
-            if (target.isEmpty() || target.equalsIgnoreCase("self") || target.equalsIgnoreCase("me")) {
+            if (target.isEmpty()) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfMute(feedback);
+            } else if (target.equalsIgnoreCase("self") || target.equalsIgnoreCase("me")) {
                me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(true, feedback);
             } else {
                me.bombo.bomboaddons.features.discord.DiscordIpcManager.muteTargetUser(target, true, feedback);
@@ -192,7 +194,9 @@ public class CommandMixin {
             }
          } else if (subLower.startsWith("deafen")) {
             String target = sub.substring(6).trim();
-            if (target.isEmpty() || target.equalsIgnoreCase("self") || target.equalsIgnoreCase("me")) {
+            if (target.isEmpty()) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfDeafen(feedback);
+            } else if (target.equalsIgnoreCase("self") || target.equalsIgnoreCase("me")) {
                me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(true, feedback);
             } else {
                me.bombo.bomboaddons.features.discord.DiscordIpcManager.deafenTargetUser(target, true, feedback);

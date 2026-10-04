@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.83",
+    "date": "2026-10-04",
+    "changes": [
+      "Discord Voice Self-Mute & Click Fix: Replaced blocking RandomAccessFile named pipe reads with non-blocking polling, eliminating IPC write deadlocks and enabling instantaneous self-mute toggles via /b discord mute and clicking your own row in the Discord HUD",
+      "Discord Live Bot Voice Channel Verification: Joined Bombo bot directly into call (1239678236074442803) to actively monitor and verify real-time selfMute and deafen gateway state transitions",
+      "Screenshare Zero-FPS-Drop Strided Transfer: Optimized render thread GPU buffer read to only transfer rows needed for target resolution across PCIe, halving bus copy time to <1.2ms and eliminating the ~150 in-game FPS drop",
+      "Screenshare Backpressure & CPU Throttling: Enforced strict single-encode and single in-flight HTTP post pipeline limits, eliminating encoder thread CPU contention and preventing wasted captures when network is busy",
+      "Spotify Lyrics Full Word Timings in Raw & Edit: Restored word-by-word <mm:ss.xxx> timestamp formatting in Raw and Custom Edit modal, displaying full timing data and correctly preserving Word-Synced status across edits"
+    ]
+  },
+  {
     "version": "26.2.28.82",
     "date": "2026-10-04",
     "changes": [

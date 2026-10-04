@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.RandomAccessFile;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -185,6 +186,24 @@ public class DiscordIpcManager {
         }
 
         return targetMute;
+    }
+
+    public static boolean toggleSelfMute(Consumer<Component> feedback) {
+        String selfId = !myUserId.isEmpty() ? myUserId : resolveUserId("self");
+        DiscordVoiceUser existing = voiceUsers.get(selfId);
+        boolean currentlyMuted = existing != null && (existing.isSelfMuted() || existing.isMuted());
+        boolean targetMute = !currentlyMuted;
+        setSelfMute(targetMute, feedback);
+        return targetMute;
+    }
+
+    public static boolean toggleSelfDeafen(Consumer<Component> feedback) {
+        String selfId = !myUserId.isEmpty() ? myUserId : resolveUserId("self");
+        DiscordVoiceUser existing = voiceUsers.get(selfId);
+        boolean currentlyDeaf = existing != null && (existing.isSelfDeafened() || existing.isDeafened());
+        boolean targetDeaf = !currentlyDeaf;
+        setSelfDeafen(targetDeaf, feedback);
+        return targetDeaf;
     }
 
     public static void setSelfMute(boolean mute, Consumer<Component> feedback) {
@@ -520,6 +539,8 @@ public class DiscordIpcManager {
                     connected = true;
                     startPollThread();
 
+                    FileInputStream in = new FileInputStream(pipe.getFD());
+
                     // Send Handshake
                     JsonObject handshake = new JsonObject();
                     handshake.addProperty("v", 1);
@@ -527,8 +548,8 @@ public class DiscordIpcManager {
                     writePacket(pipe, 0, handshake.toString());
 
                     // Read frames
-                    while (RUNNING.get()) {
-                        Packet packet = readPacket(pipe);
+                    while (RUNNING.get() && connected) {
+                        Packet packet = readPacket(pipe, in);
                         if (packet == null) break;
                         handlePacket(pipe, packet);
                     }
@@ -1112,19 +1133,36 @@ public class DiscordIpcManager {
         logPacket(false, json);
     }
 
-    private static Packet readPacket(RandomAccessFile pipe) throws Exception {
-        byte[] header = new byte[8];
-        pipe.readFully(header);
-        ByteBuffer buf = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN);
-        int opcode = buf.getInt();
-        int len = buf.getInt();
-        if (len < 0 || len > 2_000_000) return null;
+    private static Packet readPacket(RandomAccessFile pipe, FileInputStream in) throws Exception {
+        while (RUNNING.get() && connected) {
+            int avail = in.available();
+            if (avail >= 8) {
+                byte[] header = new byte[8];
+                int read = 0;
+                while (read < 8) {
+                    int n = in.read(header, read, 8 - read);
+                    if (n < 0) return null;
+                    read += n;
+                }
+                ByteBuffer buf = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN);
+                int opcode = buf.getInt();
+                int len = buf.getInt();
+                if (len < 0 || len > 2_000_000) return null;
 
-        byte[] body = new byte[len];
-        pipe.readFully(body);
-        String json = new String(body, StandardCharsets.UTF_8);
-        logPacket(true, json);
-        return new Packet(opcode, json);
+                byte[] body = new byte[len];
+                read = 0;
+                while (read < len) {
+                    int n = in.read(body, read, len - read);
+                    if (n < 0) return null;
+                    read += n;
+                }
+                String json = new String(body, StandardCharsets.UTF_8);
+                logPacket(true, json);
+                return new Packet(opcode, json);
+            }
+            Thread.sleep(15L);
+        }
+        return null;
     }
 
     private static void handlePacket(RandomAccessFile pipe, Packet packet) {

@@ -448,7 +448,8 @@ public class LyricsScreen extends Screen {
         g.outline(modalX, modalY, modalW, modalH, 0xFF00A4DC);
 
         // Header Title
-        String title = isEditingCustom ? "§e§lCustom Lyrics Editor §7(Ctrl+A/C/V/X supported)" : "§b§lRaw Lyrics API Data (" + LyricsManager.getProvider() + ")";
+        String syncBadge = LyricsManager.isWordSynced() ? "§b[Word-Synced]" : (LyricsManager.isSynced() ? "§a[Line-Synced]" : "§7[Plain]");
+        String title = isEditingCustom ? "§e§lCustom Lyrics Editor §7(Ctrl+A/C/V/X supported)" : "§b§lRaw Lyrics §7(" + LyricsManager.getProvider() + ") " + syncBadge;
         g.text(font, title, modalX + 16, modalY + 14, 0xFF00E5FF, true);
 
         // Buttons in header: [Edit / View Mode] [Paste / Copy] [Apply] [✕]
