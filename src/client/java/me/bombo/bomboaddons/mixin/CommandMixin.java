@@ -31,9 +31,29 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("b order") || trimmed.equalsIgnoreCase("bombo order") || trimmed.equalsIgnoreCase("bomboaddons order")) {
+      if (trimmed.equalsIgnoreCase("b order") || trimmed.equalsIgnoreCase("bombo order") || trimmed.equalsIgnoreCase("bomboaddons order") || trimmed.equalsIgnoreCase("order")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b mute") || trimmed.equalsIgnoreCase("bombo mute") || trimmed.equalsIgnoreCase("b discord mute") || trimmed.equalsIgnoreCase("mute")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfMute((msg) -> {});
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b unmute") || trimmed.equalsIgnoreCase("bombo unmute") || trimmed.equalsIgnoreCase("b discord unmute") || trimmed.equalsIgnoreCase("unmute")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(false, (msg) -> {});
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b deafen") || trimmed.equalsIgnoreCase("bombo deafen") || trimmed.equalsIgnoreCase("b discord deafen") || trimmed.equalsIgnoreCase("deafen")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfDeafen((msg) -> {});
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b undeafen") || trimmed.equalsIgnoreCase("bombo undeafen") || trimmed.equalsIgnoreCase("b discord undeafen") || trimmed.equalsIgnoreCase("undeafen")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, (msg) -> {});
          ci.cancel();
          return;
       }
@@ -510,6 +530,37 @@ public class CommandMixin {
          String inner = trimmed.substring(sIdx + 3).trim();
          if (inner.startsWith("/")) inner = inner.substring(1);
          me.bombo.bomboaddons.BomboaddonsClient.executeSilentCommand(inner);
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b order") || trimmed.equalsIgnoreCase("/bombo order") || trimmed.equalsIgnoreCase("/bomboaddons order") || trimmed.equalsIgnoreCase("/order")
+            || trimmed.equalsIgnoreCase("b order") || trimmed.equalsIgnoreCase("bombo order") || trimmed.equalsIgnoreCase("order")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b mute") || trimmed.equalsIgnoreCase("/bombo mute") || trimmed.equalsIgnoreCase("/mute")
+            || trimmed.equalsIgnoreCase("b mute") || trimmed.equalsIgnoreCase("mute")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfMute((msg) -> {});
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b unmute") || trimmed.equalsIgnoreCase("/bombo unmute") || trimmed.equalsIgnoreCase("/unmute")
+            || trimmed.equalsIgnoreCase("b unmute") || trimmed.equalsIgnoreCase("unmute")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(false, (msg) -> {});
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b deafen") || trimmed.equalsIgnoreCase("/bombo deafen") || trimmed.equalsIgnoreCase("/deafen")
+            || trimmed.equalsIgnoreCase("b deafen") || trimmed.equalsIgnoreCase("deafen")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfDeafen((msg) -> {});
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b undeafen") || trimmed.equalsIgnoreCase("/bombo undeafen") || trimmed.equalsIgnoreCase("/undeafen")
+            || trimmed.equalsIgnoreCase("b undeafen") || trimmed.equalsIgnoreCase("undeafen")) {
+         me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, (msg) -> {});
          ci.cancel();
          return;
       }

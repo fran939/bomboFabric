@@ -51,7 +51,7 @@ public class SpotifyHud {
     public static int getHudWidth() {
         BomboConfig.Settings s = BomboConfig.get();
         if (s != null && s.spotifyHudLyricsMode) {
-            return 280;
+            return 290;
         }
         return HUD_WIDTH;
     }
@@ -200,12 +200,9 @@ public class SpotifyHud {
                     currentLineText = isDummy ? "Sé que te gusta el calentón" : (LyricsManager.isLoading() ? "Loading lyrics..." : track);
                 }
 
-                // Scale font slightly if line is very long so it never overlaps controls
+                // Scale font proportionally so all lyrics words fit within textMaxW without clipping
                 int activeTextW = font.width("§l" + currentLineText);
-                float fontScale = 1.0f;
-                if (activeTextW > textMaxW && textMaxW > 0) {
-                    fontScale = Math.max(0.78f, (float) textMaxW / (float) activeTextW);
-                }
+                float fontScale = (activeTextW > textMaxW && textMaxW > 0) ? ((float) textMaxW / (float) activeTextW) : 1.0f;
 
                 g.pose().pushMatrix();
                 g.pose().translate((float) textX, 5.0f);
@@ -216,7 +213,6 @@ public class SpotifyHud {
                     // Syllable / word-by-word karaoke wipe
                     int curX = 0;
                     int spaceW = font.width(" ");
-                    int maxAllowedX = (int) (textMaxW / fontScale);
                     for (int w = 0; w < words.size(); w++) {
                         LyricsManager.WordTime wt = words.get(w);
                         String wordStr = wt.word();
@@ -228,7 +224,6 @@ public class SpotifyHud {
                             char ch = wordStr.charAt(c);
                             String chStr = String.valueOf(ch);
                             int chW = font.width("§l" + chStr);
-                            if (curX + chW > maxAllowedX) break;
 
                             long letterTargetMs = wt.startMs() + (c * perLetterMs);
                             boolean isLetterActive = progressMs >= letterTargetMs;
@@ -237,7 +232,6 @@ public class SpotifyHud {
                             curX += chW;
                         }
                         curX += spaceW;
-                        if (curX >= maxAllowedX) break;
                     }
                 } else if (activeLine != null && activeLine.endMs() > activeLine.startMs()) {
                     // Line-synced smooth karaoke reveal
@@ -247,17 +241,11 @@ public class SpotifyHud {
                     String sang = currentLineText.substring(0, Math.min(currentLineText.length(), fullLen));
                     String unsang = currentLineText.substring(Math.min(currentLineText.length(), fullLen));
 
-                    int maxAllowedX = (int) (textMaxW / fontScale);
-                    String fitSang = font.plainSubstrByWidth(sang, maxAllowedX);
-                    int sangW = font.width("§l" + fitSang);
-                    g.text(font, "§l" + fitSang, 0, 0, activeLyricsColor, true);
-                    if (sangW < maxAllowedX) {
-                        String fitUnsang = font.plainSubstrByWidth(unsang, maxAllowedX - sangW);
-                        g.text(font, "§l" + fitUnsang, sangW, 0, 0x66CBD5E1, false);
-                    }
+                    int sangW = font.width("§l" + sang);
+                    g.text(font, "§l" + sang, 0, 0, activeLyricsColor, true);
+                    g.text(font, "§l" + unsang, sangW, 0, 0x66CBD5E1, false);
                 } else {
-                    String dispCurrent = font.plainSubstrByWidth(currentLineText, (int) (textMaxW / fontScale));
-                    g.text(font, "§l" + dispCurrent, 0, 0, activeLyricsColor, true);
+                    g.text(font, "§l" + currentLineText, 0, 0, activeLyricsColor, true);
                 }
                 g.pose().popMatrix();
 
@@ -270,8 +258,13 @@ public class SpotifyHud {
                         nextLineText = "Tú me miras y yo te miro lento";
                     }
                     if (!nextLineText.isEmpty()) {
-                        String dispNext = font.plainSubstrByWidth(nextLineText, textMaxW);
-                        g.text(font, dispNext, textX, lineY, artistColor, false);
+                        int nextW = font.width(nextLineText);
+                        float nextScale = (nextW > textMaxW && textMaxW > 0) ? ((float) textMaxW / (float) nextW) : 1.0f;
+                        g.pose().pushMatrix();
+                        g.pose().translate((float) textX, (float) lineY);
+                        g.pose().scale(nextScale, nextScale);
+                        g.text(font, nextLineText, 0, 0, artistColor, false);
+                        g.pose().popMatrix();
                     }
                     lineY += 11;
                 }

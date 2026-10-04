@@ -314,6 +314,24 @@ public class BomboaddonsClient implements ClientModInitializer {
                 for (cleanCmd = command.trim(); cleanCmd.startsWith("/"); cleanCmd = cleanCmd.substring(1).trim()) {}
                 if (cleanCmd.isEmpty()) return;
 
+                String lower = cleanCmd.toLowerCase(java.util.Locale.ROOT);
+                if (lower.equals("b mute") || lower.equals("mute") || lower.equals("bombo mute") || lower.equals("ba mute")) {
+                    me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfMute((msg) -> {});
+                    return;
+                }
+                if (lower.equals("b unmute") || lower.equals("unmute") || lower.equals("bombo unmute") || lower.equals("ba unmute")) {
+                    me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(false, (msg) -> {});
+                    return;
+                }
+                if (lower.equals("b deafen") || lower.equals("deafen") || lower.equals("bombo deafen") || lower.equals("ba deafen")) {
+                    me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfDeafen((msg) -> {});
+                    return;
+                }
+                if (lower.equals("b undeafen") || lower.equals("undeafen") || lower.equals("bombo undeafen") || lower.equals("ba undeafen")) {
+                    me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, (msg) -> {});
+                    return;
+                }
+
                 String root = cleanCmd.split(" ")[0];
                 if (clientDispatcher != null && clientDispatcher.getRoot().getChild(root) != null && mc.player != null) {
                     try {
@@ -982,6 +1000,65 @@ public class BomboaddonsClient implements ClientModInitializer {
                      mc.execute(() -> mc.setScreenAndShow(BomboConfigGUI.create()));
                      return 1;
                   }));
+                  builder.then(ClientCommands.literal("order").executes((context) -> {
+                     Minecraft mc = Minecraft.getInstance();
+                     mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("s")
+                     .then(ClientCommands.argument("command", StringArgumentType.greedyString()).executes((context) -> {
+                        String cmd = StringArgumentType.getString(context, "command");
+                        executeSilentCommand(cmd);
+                        return 1;
+                     })));
+                  builder.then(ClientCommands.literal("mute")
+                     .executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfMute(src::sendFeedback);
+                        return 1;
+                     })
+                     .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        String user = StringArgumentType.getString(context, "user");
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.muteTargetUser(user, true, src::sendFeedback);
+                        return 1;
+                     })));
+                  builder.then(ClientCommands.literal("unmute")
+                     .executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(false, src::sendFeedback);
+                        return 1;
+                     })
+                     .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        String user = StringArgumentType.getString(context, "user");
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.muteTargetUser(user, false, src::sendFeedback);
+                        return 1;
+                     })));
+                  builder.then(ClientCommands.literal("deafen")
+                     .executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfDeafen(src::sendFeedback);
+                        return 1;
+                     })
+                     .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        String user = StringArgumentType.getString(context, "user");
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.deafenTargetUser(user, true, src::sendFeedback);
+                        return 1;
+                     })));
+                  builder.then(ClientCommands.literal("undeafen")
+                     .executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, src::sendFeedback);
+                        return 1;
+                     })
+                     .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        String user = StringArgumentType.getString(context, "user");
+                        me.bombo.bomboaddons.features.discord.DiscordIpcManager.deafenTargetUser(user, false, src::sendFeedback);
+                        return 1;
+                     })));
                   builder.then(ClientCommands.literal("buttons")
                           .executes((context) -> {
                              Minecraft mc = Minecraft.getInstance();
@@ -4928,6 +5005,17 @@ public class BomboaddonsClient implements ClientModInitializer {
                    AlphaTrackerHud.sendCurrentStatusToChat();
                    return 1;
                 }));
+                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("order").executes((context) -> {
+                   Minecraft mc = Minecraft.getInstance();
+                   mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));
+                   return 1;
+                }));
+                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("s")
+                   .then(ClientCommands.argument("command", StringArgumentType.greedyString()).executes((context) -> {
+                      String cmd = StringArgumentType.getString(context, "command");
+                      executeSilentCommand(cmd);
+                      return 1;
+                   })));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("bomboprof").executes((context) -> {
                   pendingConfigSearch = "Profile";
                   openGuiNextTick = true;

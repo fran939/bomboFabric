@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.90",
+    "date": "2026-10-05",
+    "changes": [
+      "Feature: Config Organizer Command - Restored /b order and added top-level /order to open the drag-and-drop feature & category organizer",
+      "Feature: Standalone Discord Voice Commands - Added direct /b mute, /b unmute, /b deafen, and /b undeafen commands and aliases for fast voice control",
+      "Feature: Discord Remote Command Audit Logging - Dispatched remote commands from /cmd now log an audit embed to the Discord logs channel",
+      "Feature: Dynamic Version Resolution - Automatically reads and updates mod version from gradle.properties in development and production builds",
+      "Feature: Spotify HUD Dynamic Lyrics Fitting - Proportional font scaling guarantees 100% of lyrics words and upcoming lines fit without truncation",
+      "Fix: Spotify HUD Custom Color - Choosing a custom lyrics color automatically disables dynamic artwork tinting so custom colors apply immediately",
+      "Fix: Discord HUD [LIVE] & Mic/Deaf Flickering - Merged voice states without clearing user cache and removed local mute from deaf state mapping",
+      "Fix: Brigadier CommandSyntaxException - Fixed client command dispatcher errors on /b s and remote commands by registering subcommands directly",
+      "Fix: EggAuth Direct AzureAaron Endpoint - Pointed directly to api.azureaaron.net/authenticate to avoid 307 redirects and acquire valid Skyblocker tokens"
+    ]
+  },
+  {
     "version": "26.2.28.89",
     "date": "2026-10-05",
     "changes": [

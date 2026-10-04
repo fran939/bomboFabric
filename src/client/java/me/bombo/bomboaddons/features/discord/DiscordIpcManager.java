@@ -870,7 +870,7 @@ public class DiscordIpcManager {
                             voiceUsers.put(mId, new DiscordVoiceUser(
                                     mId, uName, dName,
                                     isSelfMute || svMute || isLocallyMuted,
-                                    isSelfDeaf || svDeaf || isLocallyMuted,
+                                    isSelfDeaf || svDeaf,
                                     isSpeaking,
                                     isLive,
                                     isLocallyMuted,
@@ -1498,12 +1498,18 @@ public class DiscordIpcManager {
         }
 
         if (data.has("voice_states") && data.get("voice_states").isJsonArray() && data.getAsJsonArray("voice_states").size() > 0) {
-            voiceUsers.clear();
+            Set<String> activeIds = new HashSet<>();
             for (JsonElement el : data.getAsJsonArray("voice_states")) {
                 if (el.isJsonObject()) {
-                    updateVoiceUser(el.getAsJsonObject());
+                    JsonObject state = el.getAsJsonObject();
+                    if (state.has("user") && state.get("user").isJsonObject() && state.getAsJsonObject("user").has("id")) {
+                        activeIds.add(state.getAsJsonObject("user").get("id").getAsString());
+                    }
+                    updateVoiceUser(state);
                 }
             }
+            // Prune users who left the channel (never prune local user)
+            voiceUsers.keySet().removeIf(k -> !k.equals("self") && !k.equals(myUserId) && !activeIds.contains(k));
         }
     }
 
@@ -1517,15 +1523,27 @@ public class DiscordIpcManager {
         String displayName = user.has("global_name") && !user.get("global_name").isJsonNull()
                 ? user.get("global_name").getAsString() : username;
 
-        boolean mute = (state.has("mute") && state.get("mute").getAsBoolean())
+        DiscordVoiceUser existing = voiceUsers.get(id);
+
+        boolean sMute = (state.has("mute") && state.get("mute").getAsBoolean())
                 || (state.has("self_mute") && state.get("self_mute").getAsBoolean());
-        boolean deaf = (state.has("deaf") && state.get("deaf").getAsBoolean())
+        boolean sDeaf = (state.has("deaf") && state.get("deaf").getAsBoolean())
                 || (state.has("self_deaf") && state.get("self_deaf").getAsBoolean());
-        boolean screenSharing = state.has("self_stream") && state.get("self_stream").getAsBoolean();
 
-        boolean speaking = voiceUsers.containsKey(id) && voiceUsers.get(id).isSpeaking();
+        boolean isLocallyMuted = locallyMutedUsers.contains(id) || (existing != null && existing.isLocallyMuted());
+        boolean isLive = (state.has("self_stream") && state.get("self_stream").getAsBoolean())
+                || (System.currentTimeMillis() < USER_STREAM_ACTIVE_UNTIL.getOrDefault(id, 0L))
+                || (existing != null && existing.isScreenSharing());
+        boolean speaking = existing != null && existing.isSpeaking();
 
-        voiceUsers.put(id, new DiscordVoiceUser(id, username, displayName, mute, deaf, speaking, screenSharing));
+        boolean finalMute = (id.equals(myUserId) || id.equals("self")) ? (isSelfMuted || sMute || isLocallyMuted) : (sMute || isLocallyMuted);
+        boolean finalDeaf = (id.equals(myUserId) || id.equals("self")) ? (isSelfDeafened || sDeaf) : sDeaf;
+
+        voiceUsers.put(id, new DiscordVoiceUser(
+                id, username, displayName,
+                finalMute, finalDeaf, speaking, isLive,
+                isLocallyMuted, sMute, sDeaf
+        ));
     }
 
     private static void removeVoiceUser(JsonObject state) {

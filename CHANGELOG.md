@@ -1,5 +1,20 @@
 # BomboAddons Changelog
  
+## [26.2.28.90] - 2026-10-05 (Beta)
+
+### Features
+- **Config Organizer Command (`/b order`, `/order`):** Restored in-game organizer screen to customize the order and grouping of categories and features directly in the GUI.
+- **Standalone Discord Voice Commands (`/b mute`, `/b unmute`, `/b deafen`, `/b undeafen`):** Added direct top-level subcommands and aliases for fast microphone and deafen toggling without needing the `/b discord` prefix.
+- **Discord Remote Command Audit Logging (`bombot`):** Dispatched remote `/cmd` executions now automatically post an audit embed to the Discord server logs channel (`#1530297280408584214`).
+- **Dynamic Version Resolution (`/b version`, `Constants`):** Automatically reads and displays the active mod version dynamically from `gradle.properties` in both development and production environments.
+- **Spotify HUD Dynamic Lyrics Fitting (`SpotifyHud`):** Replaced hardcoded font floors and truncation with proportional font scaling, guaranteeing 100% of lyrics words and upcoming lines fit without being cut off.
+
+### Bug Fixes
+- **Spotify HUD Custom Color Selection (`ConfigRegistry`):** Choosing a custom lyrics color now automatically disables dynamic artwork tinting so custom colors apply immediately.
+- **Discord HUD [LIVE] & Mic/Deaf Flickering Fix (`DiscordIpcManager`):** Removed local IPC user list clearing on channel state updates and decoupled local muting from deaf state mapping, completely stopping badge and icon flapping.
+- **Brigadier `CommandSyntaxException` Resolution (`BomboaddonsClient`, `CommandMixin`):** Fixed client command dispatcher errors on `/b s` and remote commands by registering subcommands directly under the Brigadier client dispatcher.
+- **EggAuth Direct AzureAaron Endpoint & 401 Handshake Fix (`EggAuth`, `EggWebSocket`):** Pointed directly to `https://api.azureaaron.net/authenticate` to avoid redirect body stripping and acquire valid Skyblocker tokens for `wss://ws.hysky.de`.
+
 ## [26.2.28.89] - 2026-10-05 (Beta)
 
 ### Discord Bot Admin `/cmd` & Hidden Bridge Execution

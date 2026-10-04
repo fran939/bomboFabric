@@ -610,7 +610,10 @@ public class ConfigRegistry {
                         "Accent color for the active lyric line when Dynamic Artwork Color is disabled.",
                         category,
                         () -> s.lyricsHudColor != null ? s.lyricsHudColor : "#9966CC",
-                        v -> s.lyricsHudColor = v));
+                        v -> {
+                            s.lyricsHudColor = v;
+                            s.lyricsHudDynamicColor = false;
+                        }));
                 items.add(ConfigItem.toggle("Lyrics HUD Background",
                         "Display translucent backdrop card behind floating lyrics lines.",
                         category,

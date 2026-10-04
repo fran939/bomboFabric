@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.89` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.90` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,22 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.89`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.90`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.90 (Ready for In-Game Testing)
+>
+> 1. **Config Organizer Command (`/b order`, `/order`):** Restored in-game organizer screen to customize the order and grouping of categories and features directly in the GUI without syntax errors.
+> 2. **Standalone Discord Voice Commands (`/b mute`, `/b unmute`, `/b deafen`, `/b undeafen`):** Added direct top-level subcommands and aliases for fast microphone and deafen toggling without needing the `/b discord` prefix.
+> 3. **Discord Remote Command Audit Logging (`bombot`):** Dispatched remote `/cmd` executions now automatically post an audit embed to the Discord server logs channel (`#1530297280408584214`).
+> 4. **Dynamic Version Resolution (`/b version`, `Constants`):** Automatically reads and displays the active mod version dynamically from `gradle.properties` in both development and production environments.
+> 5. **Spotify HUD Dynamic Lyrics Fitting (`SpotifyHud`):** Replaced hardcoded font floors and truncation with proportional font scaling, guaranteeing 100% of lyrics words and upcoming lines fit without being cut off.
+> 6. **Spotify HUD Custom Color Selection (`ConfigRegistry`):** Choosing a custom lyrics color now automatically disables dynamic artwork tinting so custom colors apply immediately.
+> 7. **Discord HUD [LIVE] & Mic/Deaf Flickering Fix (`DiscordIpcManager`):** Removed local IPC user list clearing on channel state updates and decoupled local muting from deaf state mapping, completely stopping badge and icon flapping.
+> 8. **Brigadier `CommandSyntaxException` Resolution (`BomboaddonsClient`, `CommandMixin`):** Fixed client command dispatcher errors on `/b s` and remote commands by registering subcommands directly under the Brigadier client dispatcher.
+> 9. **EggAuth Direct AzureAaron Endpoint & 401 Handshake Fix (`EggAuth`, `EggWebSocket`):** Pointed directly to `https://api.azureaaron.net/authenticate` to avoid redirect body stripping and acquire valid Skyblocker tokens for `wss://ws.hysky.de`.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.89 (Ready for In-Game Testing)
 >
 > 1. **Discord Bot Admin `/cmd` & Hidden Bridge Command (`bombot`, `IRCClient`, `BomboaddonsClient`):** Replaced legacy RCON `/cmd` with an admin-restricted Discord slash command `/cmd (user) (command)`. Dispatches a hidden bridge frame (`[CMD]\x02EXEC\x02<user>\x02<command>`) over `#bomboaddons_chat`. The command is completely hidden across older mod versions, bridge in-game chat, and Discord channels. When received by the targeted user, it runs via `executeSilentCommand` without local chat echoing unless the command itself generates output.

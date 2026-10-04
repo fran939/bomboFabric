@@ -80,9 +80,11 @@ public final class Constants {
      * so a literal {@code getModContainer("bomboaddons")} returns empty on the cheat build and
      * the old {@code .get()} call would throw.
      */
-    public static final String FALLBACK_VERSION = "26.2.28.64";
+    public static final String FALLBACK_VERSION = "26.2.28.90";
+    private static volatile String cachedVersion = null;
 
     public static String myVersion() {
+        if (cachedVersion != null) return cachedVersion;
         try {
             net.fabricmc.loader.api.FabricLoader loader = net.fabricmc.loader.api.FabricLoader.getInstance();
             if (loader != null) {
@@ -92,12 +94,39 @@ public final class Constants {
                 if (container.isPresent()) {
                     String ver = container.get().getMetadata().getVersion().getFriendlyString();
                     if (ver != null && !ver.isBlank() && !"unknown".equalsIgnoreCase(ver) && !ver.contains("${")) {
+                        cachedVersion = ver;
                         return ver;
                     }
                 }
             }
         } catch (Throwable ignored) {
         }
+
+        // Dynamically resolve mod_version from gradle.properties (for dev run environment)
+        String[] candidatePaths = {
+            "gradle.properties",
+            "../gradle.properties",
+            "../../gradle.properties"
+        };
+        for (String p : candidatePaths) {
+            java.io.File f = new java.io.File(p);
+            if (f.exists() && f.isFile()) {
+                try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(f))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String trimmed = line.trim();
+                        if (trimmed.startsWith("mod_version")) {
+                            String[] parts = trimmed.split("=", 2);
+                            if (parts.length == 2 && !parts[1].trim().isEmpty()) {
+                                cachedVersion = parts[1].trim();
+                                return cachedVersion;
+                            }
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+
         return FALLBACK_VERSION;
     }
 
