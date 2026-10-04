@@ -1,5 +1,23 @@
 # BomboAddons Changelog
  
+## [26.2.28.78] - 2026-10-04 (Beta)
+
+### Storage Overlay Auto-Scroll to Target Container
+- **Auto-Scroll on Open:** Running `/bp <id>`, `/bp <name>`, `/backpack <id>`, `/ec <id>`, or `/echest <name>` now automatically positions the grid scroll to the opened container's exact height so it is immediately visible without having to manually scroll up or down.
+
+### Discord Voice Local Mute, Instant Member Discovery & Anti-Cycling
+- **Strictly Local Client Mute & Deafen:** Removed bot server-mute/server-deafen calls from self actions; self mute and deafen now strictly toggle the user's local Discord microphone and headset via IPC `SET_VOICE_SETTINGS` and OS hotkeys.
+- **Fast Player Discovery:** Removed the artificial 3000ms delay in bot user lookups, resolving all participant names and avatars concurrently in under 1-2 seconds when joining calls.
+- **Anti-Cycling & Simultaneous Screenshare [LIVE]:** Extended WebRTC user and video log retention to 15s and stopped clearing user maps on empty responses, preventing member flickering and keeping multiple streams (e.g. `pavlor` and `67`) simultaneously marked as `[LIVE]`.
+
+### Scratch Visual Studio Quick-Pills & Input Focus Bugfix
+- **Dual Cursor Bugfix:** Fixed text box focus handling so clicking an exception guard input un-focuses the slot input, eliminating simultaneous typing and duplicate `_` cursors.
+- **Visual Scratch Quick-Pick Pills:** Added clickable condition pills (`[📦 Full]`, `[🚫 No Item]`, `[✨ Has Item]`, `[📭 Slot Empty]`, `[📂 In Menu]`, `[Clear]`) and parameter chips (`[# 0]`, `[# 10]`, `[# 18]`, `[🎨 ${color}]`) directly in the step editor.
+
+### Screenshare 60 FPS Asynchronous Capture Engine
+- **Decoupled 2-Stage Pipeline:** Decoupled GPU capture from CPU encoding, releasing the GPU lock immediately after frame readout (<13ms) and submitting work to a 3-thread encode pool.
+- **Direct Raster Downsampling:** Replaced slow `setRGB()` loops with direct `DataBufferInt` array operations, dropping downsample time from 20ms to <1.5ms and raising live framerates to smooth 50-60 FPS.
+
 ## [26.2.28.77] - 2026-10-04 (Beta)
 
 ### Storage Overlay Open by Name

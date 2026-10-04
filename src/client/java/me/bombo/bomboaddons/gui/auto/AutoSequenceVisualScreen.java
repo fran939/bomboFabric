@@ -494,12 +494,21 @@ public class AutoSequenceVisualScreen extends Screen {
         };
     }
 
-    private void renderModal(GuiGraphicsExtractor g, Font font, int mouseX, int mouseY) {
-        // Modal overlay
-        g.fill(0, 0, this.width, this.height, 0xCC000000);
+    private void setFocusedInput(EditBox target, MouseButtonEvent event) {
+        if (primaryInput != null) primaryInput.setFocused(primaryInput == target);
+        if (delayInput != null) delayInput.setFocused(delayInput == target);
+        if (conditionInput != null) conditionInput.setFocused(conditionInput == target);
+        if (target != null && event != null) {
+            target.mouseClicked(event, false);
+        }
+    }
 
-        int modalW = 420;
-        int modalH = 260;
+    private void renderModal(GuiGraphicsExtractor g, Font font, int mouseX, int mouseY) {
+        // Modal backdrop overlay
+        g.fill(0, 0, this.width, this.height, 0x88000000);
+
+        int modalW = 440;
+        int modalH = 295;
         int modalX = (this.width - modalW) / 2;
         int modalY = (this.height - modalH) / 2;
 
@@ -525,31 +534,62 @@ public class AutoSequenceVisualScreen extends Screen {
             AutoAction action = (seq != null && editingActionIndex >= 0 && editingActionIndex < seq.actions.size())
                     ? seq.actions.get(editingActionIndex) : null;
 
-            g.text(font, "Configure Step #" + (editingActionIndex + 1), modalX + 16, modalY + 16, 0xFFFFFFFF, true);
+            g.text(font, "Configure Step #" + (editingActionIndex + 1), modalX + 16, modalY + 14, 0xFFFFFFFF, true);
 
             if (action != null) {
+                // Section 1: Target / Parameter
                 String label1 = action.type == ActionType.CLICK_SLOT ? "Slot # or Item Matcher / ${color}:" :
                         (action.type == ActionType.RUN_COMMAND ? "Command or Chat Message:" : "Entity Matcher:");
-                g.text(font, label1, modalX + 16, modalY + 36, 0xFF9CA3AF, false);
+                g.text(font, label1, modalX + 16, modalY + 32, 0xFF9CA3AF, false);
                 if (primaryInput != null) {
-                    primaryInput.setPosition(modalX + 16, modalY + 50);
+                    primaryInput.setPosition(modalX + 16, modalY + 44);
+                    primaryInput.setWidth(modalW - 32);
                     primaryInput.extractRenderState(g, mouseX, mouseY, 0);
                 }
 
-                g.text(font, "Delay After Step (ms):", modalX + 16, modalY + 84, 0xFF9CA3AF, false);
+                // Quick buttons for parameter
+                renderSmallChip(g, font, modalX + 16, modalY + 68, 48, 14, "# 0", mouseX, mouseY);
+                renderSmallChip(g, font, modalX + 68, modalY + 68, 54, 14, "# 10", mouseX, mouseY);
+                renderSmallChip(g, font, modalX + 126, modalY + 68, 54, 14, "# 18", mouseX, mouseY);
+                renderSmallChip(g, font, modalX + 184, modalY + 68, 70, 14, "🎨 ${color}", mouseX, mouseY);
+
+                // Section 2: Delay
+                g.text(font, "Delay (ms):", modalX + 16, modalY + 88, 0xFF9CA3AF, false);
                 if (delayInput != null) {
-                    delayInput.setPosition(modalX + 16, modalY + 98);
+                    delayInput.setPosition(modalX + 16, modalY + 100);
+                    delayInput.setWidth(100);
                     delayInput.extractRenderState(g, mouseX, mouseY, 0);
                 }
+                renderSmallChip(g, font, modalX + 124, modalY + 102, 48, 16, "50ms", mouseX, mouseY);
+                renderSmallChip(g, font, modalX + 176, modalY + 102, 54, 16, "100ms", mouseX, mouseY);
+                renderSmallChip(g, font, modalX + 234, modalY + 102, 54, 16, "200ms", mouseX, mouseY);
+                renderSmallChip(g, font, modalX + 292, modalY + 102, 54, 16, "500ms", mouseX, mouseY);
 
-                g.text(font, "Exception Guard (Skip if true - e.g. gui_full, item_count:diamond>=64, slot_has:0,diamond):", modalX + 16, modalY + 132, 0xFF9CA3AF, false);
+                // Section 3: Scratch-Style Condition / Exception Guard
+                g.text(font, "Exception Guard (Skip if condition true):", modalX + 16, modalY + 126, 0xFF9CA3AF, false);
+
+                // Visual Condition Quick-Pick Pills
+                int pillY = modalY + 140;
+                renderConditionPill(g, font, modalX + 16, pillY, 78, 16, "📦 Full", 0xFFB91C1C, 0xFFEF4444, mouseX, mouseY);
+                renderConditionPill(g, font, modalX + 98, pillY, 78, 16, "🚫 No Item", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY);
+                renderConditionPill(g, font, modalX + 180, pillY, 78, 16, "✨ Has Item", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY);
+                renderConditionPill(g, font, modalX + 262, pillY, 82, 16, "📭 Slot Empty", 0xFF4338CA, 0xFF6366F1, mouseX, mouseY);
+                renderConditionPill(g, font, modalX + 348, pillY, 74, 16, "📂 In Menu", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY);
+
                 if (conditionInput != null) {
-                    conditionInput.setPosition(modalX + 16, modalY + 146);
+                    conditionInput.setPosition(modalX + 16, modalY + 162);
+                    conditionInput.setWidth(modalW - 74);
                     conditionInput.extractRenderState(g, mouseX, mouseY, 0);
+
+                    // Clear button
+                    renderSmallChip(g, font, modalX + modalW - 54, modalY + 162, 38, 20, "Clear", mouseX, mouseY);
+
                     String condVal = conditionInput.getValue().trim();
                     if (!condVal.isEmpty()) {
                         String friendlyDesc = "▶ Reads as: " + formatFriendlyCondition(condVal);
-                        g.text(font, friendlyDesc, modalX + 16, modalY + 170, 0xFF38BDF8, false);
+                        g.text(font, friendlyDesc, modalX + 16, modalY + 188, 0xFF38BDF8, false);
+                    } else {
+                        g.text(font, "§8(No condition set - step always executes)", modalX + 16, modalY + 188, 0xFF6B7280, false);
                     }
                 }
             }
@@ -571,6 +611,22 @@ public class AutoSequenceVisualScreen extends Screen {
         g.text(font, "Cancel", cancelX + 22, btnY + 7, 0xFFFFFFFF, true);
     }
 
+    private void renderSmallChip(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String text, int mouseX, int mouseY) {
+        boolean hover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+        g.fill(x, y, x + w, y + h, hover ? 0x446B7280 : 0x22374151);
+        g.outline(x, y, w, h, hover ? 0xFF9CA3AF : 0x449CA3AF);
+        int textW = font.width(text);
+        g.text(font, text, x + (w - textW) / 2, y + (h - 8) / 2, hover ? 0xFFFFFFFF : 0xFFD1D5DB, false);
+    }
+
+    private void renderConditionPill(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String text, int colorBg, int colorBorder, int mouseX, int mouseY) {
+        boolean hover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+        g.fill(x, y, x + w, y + h, hover ? colorBg : (colorBg & 0x66FFFFFF));
+        g.outline(x, y, w, h, colorBorder);
+        int textW = font.width(text);
+        g.text(font, text, x + (w - textW) / 2, y + (h - 8) / 2, 0xFFFFFFFF, false);
+    }
+
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double amountX, double amountY) {
         if (editingModalMode != null) return true;
@@ -590,8 +646,8 @@ public class AutoSequenceVisualScreen extends Screen {
 
             // Handle Modal Clicks
             if (editingModalMode != null) {
-                int modalW = 420;
-                int modalH = 260;
+                int modalW = 440;
+                int modalH = 295;
                 int modalX = (this.width - modalW) / 2;
                 int modalY = (this.height - modalH) / 2;
                 int btnW = 80;
@@ -608,16 +664,111 @@ public class AutoSequenceVisualScreen extends Screen {
                     editingModalMode = null;
                     return true;
                 }
+
+                if ("EDIT_BLOCK".equals(editingModalMode)) {
+                    // Check quick parameter chips
+                    if (my >= modalY + 68 && my <= modalY + 82) {
+                        if (mx >= modalX + 16 && mx <= modalX + 64 && primaryInput != null) {
+                            primaryInput.setValue("0");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 68 && mx <= modalX + 122 && primaryInput != null) {
+                            primaryInput.setValue("10");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 126 && mx <= modalX + 180 && primaryInput != null) {
+                            primaryInput.setValue("18");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 184 && mx <= modalX + 254 && primaryInput != null) {
+                            primaryInput.setValue("${color}");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                    }
+
+                    // Check quick delay chips
+                    if (my >= modalY + 102 && my <= modalY + 118) {
+                        if (mx >= modalX + 124 && mx <= modalX + 172 && delayInput != null) {
+                            delayInput.setValue("50");
+                            setFocusedInput(delayInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 176 && mx <= modalX + 230 && delayInput != null) {
+                            delayInput.setValue("100");
+                            setFocusedInput(delayInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 234 && mx <= modalX + 288 && delayInput != null) {
+                            delayInput.setValue("200");
+                            setFocusedInput(delayInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 292 && mx <= modalX + 346 && delayInput != null) {
+                            delayInput.setValue("500");
+                            setFocusedInput(delayInput, null);
+                            return true;
+                        }
+                    }
+
+                    // Check quick condition pills
+                    int pillY = modalY + 140;
+                    if (my >= pillY && my <= pillY + 16) {
+                        if (mx >= modalX + 16 && mx <= modalX + 94 && conditionInput != null) {
+                            conditionInput.setValue("gui_full");
+                            setFocusedInput(conditionInput, null);
+                            conditionInput.moveCursorToEnd(false);
+                            return true;
+                        }
+                        if (mx >= modalX + 98 && mx <= modalX + 176 && conditionInput != null) {
+                            conditionInput.setValue("no_item:");
+                            setFocusedInput(conditionInput, null);
+                            conditionInput.moveCursorToEnd(false);
+                            return true;
+                        }
+                        if (mx >= modalX + 180 && mx <= modalX + 258 && conditionInput != null) {
+                            conditionInput.setValue("has_item:");
+                            setFocusedInput(conditionInput, null);
+                            conditionInput.moveCursorToEnd(false);
+                            return true;
+                        }
+                        if (mx >= modalX + 262 && mx <= modalX + 344 && conditionInput != null) {
+                            conditionInput.setValue("slot_empty:0");
+                            setFocusedInput(conditionInput, null);
+                            conditionInput.moveCursorToEnd(false);
+                            return true;
+                        }
+                        if (mx >= modalX + 348 && mx <= modalX + 422 && conditionInput != null) {
+                            conditionInput.setValue("in_gui:Chest");
+                            setFocusedInput(conditionInput, null);
+                            conditionInput.moveCursorToEnd(false);
+                            return true;
+                        }
+                    }
+
+                    // Clear condition button
+                    if (mx >= modalX + modalW - 54 && mx <= modalX + modalW - 16 && my >= modalY + 162 && my <= modalY + 182) {
+                        if (conditionInput != null) {
+                            conditionInput.setValue("");
+                            setFocusedInput(conditionInput, null);
+                            return true;
+                        }
+                    }
+                }
+
                 if (primaryInput != null && primaryInput.isMouseOver(mx, my)) {
-                    primaryInput.setFocused(true);
+                    setFocusedInput(primaryInput, event);
                     return true;
                 }
                 if (delayInput != null && delayInput.isMouseOver(mx, my)) {
-                    delayInput.setFocused(true);
+                    setFocusedInput(delayInput, event);
                     return true;
                 }
                 if (conditionInput != null && conditionInput.isMouseOver(mx, my)) {
-                    conditionInput.setFocused(true);
+                    setFocusedInput(conditionInput, event);
                     return true;
                 }
                 return true; // Modal is blocking

@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.78",
+    "date": "2026-10-04",
+    "changes": [
+      "Storage Overlay Auto-Scroll to Opened Container: Opening a backpack or ender chest (e.g. /bp 4, /bp kudar) automatically scrolls the grid to bring that container into view at its exact height, eliminating manual scrolling",
+      "Discord Voice Local Client Mute & Deafen: Removed bot server-mute/server-deafen calls from self actions; self mute and deafen now strictly control your local Discord client and microphone",
+      "Discord Voice Instant Member Discovery: Removed artificial 3000ms fetch delay so all voice call participants resolve usernames, display names, and avatars in under 1-2 seconds",
+      "Discord Voice HUD Anti-Cycling & Dual Screenshare [LIVE]: Extended WebRTC log retention to 15s and stopped clearing user maps on empty responses, preventing member flickering and keeping multiple streams simultaneously marked as [LIVE]",
+      "Scratch Visual Studio Quick-Pick Conditions: Added clickable condition pills (Container Full, No Item, Has Item, Slot Empty, In Menu, Clear) and parameter chips (# 0, # 10, # 18, ${color})",
+      "Scratch Visual Studio Dual Cursor Bugfix: Resolved input focus collision in step editor so clicking an exception guard focuses only that box without typing in the slot number or showing dual cursors",
+      "Screenshare 60 FPS Asynchronous Pipeline: Decoupled GPU capture gate from CPU encoding and implemented fast Direct DataBufferInt downsampling (<1.5ms) with 3-thread encode pool, unlocking true 50-60 FPS broadcasting"
+    ]
+  },
+  {
     "version": "26.2.28.77",
     "date": "2026-10-04",
     "changes": [

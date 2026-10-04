@@ -239,6 +239,10 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		}
 		grid.refreshSearch();
 		grid.setScrollAmount(savedScroll);
+		if (grid.openBackpack != null) {
+			grid.scrollToWidget(grid.openBackpack);
+			savedScroll = grid.getScrollAmount();
+		}
 		this.addRenderableWidget(grid);
 
 		LinearLayout extraButtons = new LinearLayout(width - 90, height - 84, LinearLayout.Orientation.VERTICAL);

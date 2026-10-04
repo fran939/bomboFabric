@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.77` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.78` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,17 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.77`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.78`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.78 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Dynamic Target Auto-Scroll (`SearchableGridWidget`, `StorageOverlayScreen`):** Opening specific backpacks or ender chests via name or slot (e.g. `/bp 4` or `/bp kudar` while currently viewing backpack 18) now automatically calculates the container widget's Y offset and smoothly positions the scroll viewport directly at that container's height on open.
+> 2. **Discord Voice HUD Local-Only Self Mute/Deafen & Anti-Cycling (`DiscordIpcManager`):** Strictly restricted self-mute and self-deafen to client-local actions via Discord IPC `SET_VOICE_SETTINGS` and OS hotkey toggles, removing server-wide Discord bot administrative mutes for the user. Eliminated the 3000ms delay in bot member resolution so multi-user calls resolve all names within 1-2 seconds. Extended WebRTC user and video retention windows from 3.5s to 15s, stopping user list cycling/flickering and accurately preserving simultaneous `[LIVE]` stream badges for multiple concurrent screen sharers (e.g. `pavlor` and `67`).
+> 3. **Scratch Visual Studio Quick-Condition Pills & Input Focus (`AutoSequenceVisualScreen`):** Isolated modal text box focus into a single active `EditBox` target, eliminating the bug where clicking exception guards simultaneously typed into the slot number with duplicate `_` cursor indicators. Added clickable Scratch-style quick pills (`[📦 Full]`, `[🚫 No Item]`, `[✨ Has Item]`, `[📭 Slot Empty]`, `[📂 In Menu]`, `[Clear]`) and slot parameter chips (`[# 0]`, `[# 10]`, `[# 18]`, `[🎨 ${color}]`) for effortless one-click rule composition.
+> 4. **Screenshare Asynchronous GPU Capture & 60 FPS Engine (`ScreenshareManager`):** Decoupled the OpenGL screenshot lock (<13ms) from CPU encoding tasks and replaced pixel-by-pixel `setRGB()` loops with direct memory-mapped `DataBufferInt` raster scaling (<1.5ms). Upgraded worker thread pools to handle up to 60 FPS continuous broadcasting without throttling client render loops.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.77 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Open by Custom Name (`BackpackPreview`, `CommandMixin`):** Commands like `/bp <name>`, `/backpack <name>`, `/ec <name>`, `/enderchest <name>`, and `/echest <name>` now automatically resolve custom storage card names (e.g. `/bp kudar` automatically opens `/backpack 18` if backpack 18 is named "kudar"). If no custom name matches, displays a friendly chat notification listing matching candidates instead of failing silently.

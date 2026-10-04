@@ -180,11 +180,6 @@ public class DiscordIpcManager {
 
     public static void setSelfMute(boolean mute, Consumer<Component> feedback) {
         String selfId = !myUserId.isEmpty() ? myUserId : resolveUserId("self");
-        if (!selfId.isEmpty() && !selfId.equals("self")) {
-            muteUserViaBotAsync(selfId, mute, respMsg -> {
-                if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
-            });
-        }
         if (connected && currentPipe != null) {
             CompletableFuture.runAsync(() -> {
                 try {
@@ -214,18 +209,13 @@ public class DiscordIpcManager {
             ));
         }
 
-        if (feedback != null && (selfId.isEmpty() || selfId.equals("self"))) {
-            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMuted microphone §7(self)" : "§aUnmuted microphone §7(self)")));
+        if (feedback != null) {
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMicrophone Muted §7(Discord client)" : "§aMicrophone Unmuted §7(Discord client)")));
         }
     }
 
     public static void setSelfDeafen(boolean deafen, Consumer<Component> feedback) {
         String selfId = !myUserId.isEmpty() ? myUserId : resolveUserId("self");
-        if (!selfId.isEmpty() && !selfId.equals("self")) {
-            deafenUserViaBotAsync(selfId, deafen, respMsg -> {
-                if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
-            });
-        }
         if (connected && currentPipe != null) {
             CompletableFuture.runAsync(() -> {
                 try {
@@ -255,8 +245,8 @@ public class DiscordIpcManager {
             ));
         }
 
-        if (feedback != null && (selfId.isEmpty() || selfId.equals("self"))) {
-            feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§cDeafened audio §7(self)" : "§aUndeafened audio §7(self)")));
+        if (feedback != null) {
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§cAudio Deafened §7(Discord client)" : "§aAudio Undeafened §7(Discord client)")));
         }
     }
 
@@ -576,7 +566,7 @@ public class DiscordIpcManager {
             pollThread = new Thread(() -> {
                 while (RUNNING.get() && connected) {
                     try {
-                        Thread.sleep(350L);
+                        Thread.sleep(1500L);
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -668,13 +658,20 @@ public class DiscordIpcManager {
         });
     }
 
+    private static final Set<String> IN_FLIGHT_BOT_FETCHES = ConcurrentHashMap.newKeySet();
+
     private static void fetchMissingBotUsersAsync(Set<String> missingIds) {
-        long now = System.currentTimeMillis();
-        if (now - lastBotFetchTime < 3000L || missingIds.isEmpty()) return;
-        lastBotFetchTime = now;
+        if (missingIds.isEmpty()) return;
+        List<String> toFetch = new ArrayList<>();
+        for (String id : missingIds) {
+            if (!BOT_USER_CACHE.containsKey(id) && IN_FLIGHT_BOT_FETCHES.add(id)) {
+                toFetch.add(id);
+            }
+        }
+        if (toFetch.isEmpty()) return;
         CompletableFuture.runAsync(() -> {
             try {
-                String idsParam = String.join(",", missingIds);
+                String idsParam = String.join(",", toFetch);
                 String url = "https://api.bombo.dpdns.org/api/bot/users?ids=" + idsParam;
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(url))
@@ -706,7 +703,10 @@ public class DiscordIpcManager {
                         }
                     }
                 }
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            } finally {
+                IN_FLIGHT_BOT_FETCHES.removeAll(toFetch);
+            }
         });
     }
 
@@ -851,15 +851,16 @@ public class DiscordIpcManager {
 
                 if (maxLogTimestamp > 0) {
                     for (Map.Entry<String, Long> entry : userLastSeenMap.entrySet()) {
-                        // Users whose audio stats were received within 3.5 seconds of the latest log activity
+                        // Users whose audio stats were received within 15 seconds of the latest log activity
                         long diff = maxLogTimestamp - entry.getValue();
-                        if (diff >= 0 && diff <= 3500L) {
+                        if (diff >= 0 && diff <= 15000L) {
                             webrtcUserIds.add(entry.getKey());
                         }
                     }
                     for (Map.Entry<String, Long> entry : userVideoLastSeenMap.entrySet()) {
+                        // Video streams active within 15 seconds of the latest log activity
                         long diff = maxLogTimestamp - entry.getValue();
-                        if (diff >= 0 && diff <= 3500L) {
+                        if (diff >= 0 && diff <= 15000L) {
                             screensharingUserIds.add(entry.getKey());
                         }
                     }
@@ -1134,14 +1135,14 @@ public class DiscordIpcManager {
         inVoice = true;
         currentChannelId = data.get("id").getAsString();
         currentChannelName = data.has("name") && !data.get("name").isJsonNull() ? data.get("name").getAsString() : "Voice Channel";
-        voiceUsers.clear();
 
         if (pipe != null && connected && !currentChannelId.isEmpty() && !currentChannelId.equals(lastSubscribedChannelId)) {
             lastSubscribedChannelId = currentChannelId;
             subscribeToChannel(pipe, currentChannelId);
         }
 
-        if (data.has("voice_states") && data.get("voice_states").isJsonArray()) {
+        if (data.has("voice_states") && data.get("voice_states").isJsonArray() && data.getAsJsonArray("voice_states").size() > 0) {
+            voiceUsers.clear();
             for (JsonElement el : data.getAsJsonArray("voice_states")) {
                 if (el.isJsonObject()) {
                     updateVoiceUser(el.getAsJsonObject());

@@ -121,6 +121,16 @@ public abstract class SearchableGridWidget extends AbstractContainerWidget {
 		return widgetsContainer.getRectangle();
 	}
 
+	public void scrollToWidget(AbstractWidget widget) {
+		if (widget == null) return;
+		double relY = widget.getY() - widgetsContainer.getY() + widgetsContainer.scrollAmount();
+		double currentScroll = widgetsContainer.scrollAmount();
+		int viewportH = widgetsContainer.getHeight();
+		if (relY < currentScroll || relY + widget.getHeight() > currentScroll + viewportH) {
+			setScrollAmount(Math.max(0, relY - 4));
+		}
+	}
+
 	private void filterInternal(String input) {
 		Collection<? extends AbstractWidget> widgets = filterWidgets(input);
 		filteredWidgets.clear();
