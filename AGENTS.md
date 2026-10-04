@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.83` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.84` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,16 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.83`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.84`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.84 (Ready for In-Game Testing)
+>
+> 1. **Discord Voice Toggle Commands, Anti-Bounce & Clickable Auth Prompt (`CommandMixin`, `DiscordIpcManager`, `DiscordVoiceHud`):** Made `/b discord mute` and `/b discord deafen` behave as instantaneous toggles by default, while supporting explicit target states (`/b discord mute mute`, `/b discord mute unmute`, `/b discord deafen deafen`, `/b discord deafen undeafen`). Removed circular local mute state fallbacks from bot synchronization loops, establishing `locallyMutedUsers` as the single source of truth and completely eliminating rapid mute/unmute bouncing. Bound local Discord user ID when bot user events match local username and filtered duplicate synthetic self entries in `DiscordVoiceHud`, preventing duplicate "fran" and "fran938" listings. Muting or deafening while unauthenticated now sends an interactive, clickable chat component (`[Click to Authorize Voice]`) running `/b discord auth`. Automatic authorization dialogs remain strictly disabled during normal sync.
+> 2. **Synchronized Lyrics HUD, Letter-for-Letter Karaoke & Interactive Seeking (`LyricsHud`, `SpotifyHud`, `LyricsManager`, `LyricsScreen`, `SpotifyManager`):** Introduced a fully customizable on-screen Lyrics HUD displaying synchronized lyrics in real time with configurable lines before and after, live dragging/resizing via `/b hud`, and dynamic style presets. Added progressive character-level interpolation (`wordDuration / letterCount`) inspired by ViviMusic / Apple Music, smoothly filling syllable letters as the vocal plays. Supported `v2` / background duet vocalist detection, cleanly offsetting secondary vocal lines to the right side of the screen while lead vocals align left. Clicking the top progress bar or clicking any individual lyric line in `/b lyrics` instantly seeks track playback position using Windows Media Transport Controls. Persisted manual lyrics candidate selections across polling updates and preserved `- remix` tags in search queries so remixes cleanly match their specific lyrics. Sampled album cover textures using `NativeImage` to dynamically tint lyrics accent colors and backlighting glow to match song artwork.
+> 3. **Screenshare Throughput & Native Capture Architectural Research (`ScreenshareManager`):** Analyzed and documented the deep architectural differences between Java OpenGL software readback/JPEG compression vs native GPU-direct video engines (OBS Game Capture / NVENC / Discord Hook / ShadowPlay DXGI Desktop Duplication).
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.83 (Ready for In-Game Testing)
 >
 > 1. **Discord Voice Self-Mute, HUD Click & Live Bot Verification (`DiscordIpcManager`, `DiscordVoiceHud`, `CommandMixin`):** Replaced blocking `RandomAccessFile.readFully` with non-blocking `in.available() >= 8` polling on Windows named pipes, preventing native file handle deadlocks and enabling sub-millisecond dispatch of `SET_VOICE_SETTINGS` and `SET_USER_VOICE_SETTINGS`. Removed self-row click exclusion in `DiscordVoiceHud` and properly resolved Minecraft player instance, allowing players to toggle microphone mute instantly by clicking their own name in the Discord HUD or typing `/b discord mute`. Connected `Bombo#0766` bot directly into user's call `1239678236074442803` to actively monitor and verify in real time that toggling mute and deafen accurately triggers gateway state updates.

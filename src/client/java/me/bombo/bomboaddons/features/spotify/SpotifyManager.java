@@ -63,6 +63,39 @@ public class SpotifyManager {
         return currentArtist;
     }
 
+    public static String getFullArtistDisplay() {
+        String base = currentArtist != null ? currentArtist.trim() : "";
+        if (base.isEmpty()) return "";
+        if (currentTrack == null || currentTrack.isEmpty()) return base;
+        if (!base.toLowerCase(java.util.Locale.ROOT).contains("feat") && !base.toLowerCase(java.util.Locale.ROOT).contains("ft.")) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?i)\\((?:feat|ft)\\.?\\s*([^\\)]+)\\)").matcher(currentTrack);
+            if (m.find()) {
+                return base + " (feat. " + m.group(1).trim() + ")";
+            }
+        }
+        return base;
+    }
+
+    public static void seekTo(long targetMs) {
+        if (targetMs < 0) targetMs = 0;
+        if (durationMs > 0 && targetMs > durationMs) targetMs = durationMs;
+        baseProgressMs = targetMs;
+        monotonicProgressMs = targetMs;
+        lastStateUpdate = System.currentTimeMillis();
+        long finalMs = targetMs;
+        CompletableFuture.runAsync(() -> {
+            try {
+                if (gsmtcProcess != null && gsmtcProcess.isAlive()) {
+                    OutputStream out = gsmtcProcess.getOutputStream();
+                    if (out != null) {
+                        out.write(("SEEK|" + finalMs + "\n").getBytes(StandardCharsets.UTF_8));
+                        out.flush();
+                    }
+                }
+            } catch (Throwable ignored) {}
+        });
+    }
+
     public static int getProgressSeconds() {
         return (int) (getProgressMs() / 1000L);
     }
@@ -408,9 +441,21 @@ public class SpotifyManager {
                     + "}\r\n"
                     + "[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType=WindowsRuntime] | Out-Null\r\n"
                     + "$asyncOp = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()\r\n"
-                    + "$mgr = Await $asyncOp ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])\r\n\r\n"
+                    + "$mgr = Await $asyncOp ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])\r\n"
+                    + "$reader = [System.IO.StreamReader]::new([System.Console]::OpenStandardInput())\r\n\r\n"
                     + "while ($true) {\r\n"
                     + "    try {\r\n"
+                    + "        while ($reader.Peek() -ge 0) {\r\n"
+                    + "            $cmd = $reader.ReadLine()\r\n"
+                    + "            if ($cmd -and $cmd.StartsWith('SEEK|')) {\r\n"
+                    + "                $seekMs = [long]$cmd.Substring(5)\r\n"
+                    + "                $targetTicks = [long]($seekMs * 10000)\r\n"
+                    + "                $curSess = $mgr.GetCurrentSession()\r\n"
+                    + "                if ($curSess) {\r\n"
+                    + "                    Await ($curSess.TryChangePlaybackPositionAsync($targetTicks)) ([bool]) | Out-Null\r\n"
+                    + "                }\r\n"
+                    + "            }\r\n"
+                    + "        }\r\n"
                     + "        $session = $mgr.GetCurrentSession()\r\n"
                     + "        if ($session) {\r\n"
                     + "            $tl = $session.GetTimelineProperties()\r\n"

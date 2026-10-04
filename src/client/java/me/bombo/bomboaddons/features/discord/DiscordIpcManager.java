@@ -237,8 +237,27 @@ public class DiscordIpcManager {
             ));
         }
 
+        promptAuthIfNeeded(feedback);
         if (feedback != null) {
             feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMicrophone Muted §a✔" : "§aMicrophone Unmuted §a✔")));
+        }
+    }
+
+    public static void promptAuthIfNeeded(Consumer<Component> feedback) {
+        if (!hasAuthorizedThisSession && (authenticatedAccessToken == null || authenticatedAccessToken.isEmpty())) {
+            Component prompt = Component.literal("§8[§9Discord§8] §cDiscord voice controls require one-time authorization: ")
+                    .append(Component.literal("§e§n[Click to Authorize Voice]§r")
+                            .withStyle(style -> style
+                                    .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/b discord auth"))
+                                    .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick to authorize Discord voice control with your desktop app")))));
+            if (feedback != null) {
+                feedback.accept(prompt);
+            } else {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc != null && mc.player != null) {
+                    mc.player.sendSystemMessage(prompt);
+                }
+            }
         }
     }
 
@@ -273,12 +292,14 @@ public class DiscordIpcManager {
             ));
         }
 
+        promptAuthIfNeeded(feedback);
         if (feedback != null) {
             feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§4Audio Deafened §a✔" : "§aAudio Undeafened §a✔")));
         }
     }
 
     public static void muteTargetUser(String userIdOrName, boolean mute, Consumer<Component> feedback) {
+        promptAuthIfNeeded(feedback);
         String resolvedId = resolveUserId(userIdOrName);
         if (resolvedId == null || resolvedId.isEmpty()) {
             if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cUser not found: §e" + userIdOrName));
@@ -326,6 +347,7 @@ public class DiscordIpcManager {
     }
 
     public static void deafenTargetUser(String userIdOrName, boolean deafen, Consumer<Component> feedback) {
+        promptAuthIfNeeded(feedback);
         String resolvedId = resolveUserId(userIdOrName);
         if (resolvedId == null || resolvedId.isEmpty()) {
             if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cUser not found: §e" + userIdOrName));
@@ -369,6 +391,26 @@ public class DiscordIpcManager {
             String name = existing != null ? existing.displayName() : resolvedId;
             feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§4Deafened (Muted volume) §e" : "§aUndeafened (Restored volume) §e") + name + " §7(local only)"));
         }
+    }
+
+    public static void toggleTargetUser(String userIdOrName, Consumer<Component> feedback) {
+        String resolvedId = resolveUserId(userIdOrName);
+        if (resolvedId == null || resolvedId.isEmpty()) {
+            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cUser not found: §e" + userIdOrName));
+            return;
+        }
+        boolean isMuted = locallyMutedUsers.contains(resolvedId);
+        muteTargetUser(resolvedId, !isMuted, feedback);
+    }
+
+    public static void toggleTargetDeafen(String userIdOrName, Consumer<Component> feedback) {
+        String resolvedId = resolveUserId(userIdOrName);
+        if (resolvedId == null || resolvedId.isEmpty()) {
+            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cUser not found: §e" + userIdOrName));
+            return;
+        }
+        boolean isDeaf = locallyMutedUsers.contains(resolvedId);
+        deafenTargetUser(resolvedId, !isDeaf, feedback);
     }
 
     public static String resolveUserId(String input) {
@@ -777,14 +819,25 @@ public class DiscordIpcManager {
                             boolean streaming = m.has("streaming") && m.get("streaming").getAsBoolean();
                             DiscordVoiceUser existing = voiceUsers.get(mId);
                             boolean isSpeaking = existing != null && existing.isSpeaking();
+                            boolean isLocallyMuted = locallyMutedUsers.contains(mId);
+
+                            if (myUserId.isEmpty() || myUserId.equals("self")) {
+                                if (!myDiscordUsername.isEmpty() && (uName.equalsIgnoreCase(myDiscordUsername) || dName.equalsIgnoreCase(myDiscordUsername))) {
+                                    myUserId = mId;
+                                    voiceUsers.remove("self");
+                                }
+                            }
+                            if (!myUserId.isEmpty() && mId.equals(myUserId)) {
+                                voiceUsers.remove("self");
+                            }
 
                             voiceUsers.put(mId, new DiscordVoiceUser(
                                     mId, uName, dName,
-                                    sMute || svMute || (existing != null && existing.isMuted()),
-                                    sDeaf || svDeaf || (existing != null && existing.isDeafened()),
+                                    sMute || svMute || isLocallyMuted,
+                                    sDeaf || svDeaf || isLocallyMuted,
                                     isSpeaking,
                                     streaming,
-                                    locallyMutedUsers.contains(mId),
+                                    isLocallyMuted,
                                     sMute, sDeaf
                             ));
                         }
@@ -1087,13 +1140,13 @@ public class DiscordIpcManager {
                         String dName = info != null ? info.displayName : ("User (" + uid.substring(Math.max(0, uid.length() - 4)) + ")");
                         String uName = info != null ? info.username : dName;
                         DiscordVoiceUser prev = voiceUsers.get(uid);
-                        boolean isSpeaking = prev != null && prev.isSpeaking();
-                        boolean isMuted = prev != null && prev.isMuted();
-                        boolean isDeaf = prev != null && prev.isDeafened();
-                        boolean isLive = screensharingUserIds.contains(uid) || (prev != null && prev.isScreenSharing());
                         boolean isLocallyMuted = locallyMutedUsers.contains(uid);
+                        boolean isSpeaking = prev != null && prev.isSpeaking();
                         boolean isSelfMuted = prev != null && prev.isSelfMuted();
                         boolean isSelfDeafened = prev != null && prev.isSelfDeafened();
+                        boolean isMuted = isLocallyMuted || isSelfMuted;
+                        boolean isDeaf = isLocallyMuted || isSelfDeafened;
+                        boolean isLive = screensharingUserIds.contains(uid) || (prev != null && prev.isScreenSharing());
                         voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive, isLocallyMuted, isSelfMuted, isSelfDeafened));
                     }
 

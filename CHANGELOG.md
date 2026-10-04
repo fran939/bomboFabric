@@ -1,5 +1,21 @@
 # BomboAddons Changelog
  
+## [26.2.28.84] - 2026-10-04 (Beta)
+
+### Discord Voice Toggle Commands, Anti-Bounce & Clickable Auth Prompt
+- **Default Toggle Mute & Deafen (`CommandMixin`, `DiscordIpcManager`):** Made `/b discord mute` and `/b discord deafen` behave as instantaneous toggles by default, while supporting explicit target states (`/b discord mute mute`, `/b discord mute unmute`, `/b discord deafen deafen`, `/b discord deafen undeafen`).
+- **Mute Bounce & Oscillating Unmute Fix:** Removed circular local mute state fallbacks from bot synchronization loops, establishing `locallyMutedUsers` as the single source of truth and completely eliminating rapid mute/unmute bouncing.
+- **HUD Row Deduplication:** Bound local Discord user ID when bot user events match local username and filtered duplicate synthetic self entries in `DiscordVoiceHud`, preventing duplicate "fran" and "fran938" listings.
+- **Clickable Authorization Prompt:** Muting or deafening while unauthenticated now sends an interactive, clickable chat component (`[Click to Authorize Voice]`) running `/b discord auth`. Automatic authorization dialogs remain strictly disabled during normal sync.
+
+### Synchronized Lyrics HUD, Letter-for-Letter Karaoke & Interactive Seeking
+- **Dedicated Floating Lyrics HUD (`LyricsHud`, `BomboConfig`, `HudMoveScreen`):** Introduced a fully customizable on-screen Lyrics HUD displaying synchronized lyrics in real time with configurable lines before and after, live dragging/resizing via `/b hud`, and dynamic style presets.
+- **Sub-Word Letter-for-Letter Karaoke Wipe:** Added progressive character-level interpolation (`wordDuration / letterCount`) inspired by ViviMusic / Apple Music, smoothly filling syllable letters as the vocal plays.
+- **Duet & Background Vocal Separation:** Supported `v2` / background duet vocalist detection, cleanly offsetting secondary vocal lines to the right side of the screen while lead vocals align left.
+- **Interactive Click-to-Seek:** Clicking the top progress bar or clicking any individual lyric line in `/b lyrics` instantly seeks track playback position using Windows Media Transport Controls.
+- **Candidate Persistence & Remix Support:** Persisted manual lyrics candidate selections across polling updates and preserved `- remix` tags in search queries so remixes cleanly match their specific lyrics.
+- **Dynamic Artwork Dominant Color:** Sampled album cover textures using `NativeImage` to dynamically tint lyrics accent colors and backlighting glow to match song artwork.
+
 ## [26.2.28.83] - 2026-10-04 (Beta)
 
 ### Discord Voice Instant Self-Mute, HUD Click & Live Bot Verification

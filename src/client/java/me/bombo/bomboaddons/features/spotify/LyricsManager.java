@@ -20,6 +20,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,9 +44,13 @@ public class LyricsManager {
 
     public record WordTime(String word, long startMs, long endMs) {}
 
-    public record LyricsLine(long startMs, long endMs, String text, List<WordTime> words, String backgroundText) {
+    public record LyricsLine(long startMs, long endMs, String text, List<WordTime> words, String backgroundText, String agent) {
+        public LyricsLine(long startMs, long endMs, String text, List<WordTime> words, String backgroundText) {
+            this(startMs, endMs, text, words, backgroundText, (backgroundText != null && !backgroundText.isEmpty()) || (text != null && text.startsWith("(") && text.endsWith(")")) ? "v2" : "v1");
+        }
+
         public LyricsLine(long startMs, long endMs, String text, List<WordTime> words) {
-            this(startMs, endMs, text, words, null);
+            this(startMs, endMs, text, words, null, "v1");
         }
 
         public boolean isWordActive(int wordIdx, long currentMs) {
@@ -75,6 +80,12 @@ public class LyricsManager {
     public static volatile int selectedCandidateIndex = -1;
 
     private static final Map<String, List<LyricCandidate>> CACHE = new HashMap<>();
+    private static final Map<String, String> USER_PREFERRED_CANDIDATES = new ConcurrentHashMap<>();
+    private static volatile int dominantColor = 0xFF1ED760;
+
+    public static int getDominantColor() {
+        return dominantColor;
+    }
 
     public static final String[] PROVIDERS = new String[]{"ALL (Vivi Music)", "PAXSENIX", "LRCLIB", "BETTERLYRICS", "KUGOU", "UNISON", "YOULYPLUS"};
 
@@ -239,7 +250,17 @@ public class LyricsManager {
             availableCandidates.clear();
             availableCandidates.addAll(cached);
             if (!availableCandidates.isEmpty()) {
-                applyCandidate(availableCandidates.get(0));
+                String preferredId = USER_PREFERRED_CANDIDATES.get(cacheKey);
+                LyricCandidate toApply = availableCandidates.get(0);
+                if (preferredId != null) {
+                    for (LyricCandidate c : availableCandidates) {
+                        if (c.id().equals(preferredId)) {
+                            toApply = c;
+                            break;
+                        }
+                    }
+                }
+                applyCandidate(toApply);
             }
             fetchArtwork(cleanTitle(track), cleanTitle(artist), epoch);
             return;
@@ -256,6 +277,16 @@ public class LyricsManager {
         synced = !"Plain".equalsIgnoreCase(cand.syncType());
         statusMessage = cand.syncType() + " (" + cand.provider() + ")";
         loading = false;
+
+        String curKey = (activeArtist + " - " + activeTrack).toLowerCase(Locale.ROOT).trim();
+        if (!curKey.isEmpty()) {
+            USER_PREFERRED_CANDIDATES.put(curKey, cand.id());
+            List<LyricCandidate> cached = CACHE.get(curKey);
+            if (cached != null) {
+                cached.removeIf(c -> c.id().equals(cand.id()));
+                cached.add(0, cand);
+            }
+        }
 
         for (int i = 0; i < availableCandidates.size(); i++) {
             if (availableCandidates.get(i).id().equals(cand.id())) {
@@ -449,6 +480,7 @@ public class LyricsManager {
                         }
 
                         if (img != null && epoch == currentTrackEpoch.get()) {
+                            dominantColor = extractDominantColor(img);
                             int artNum = albumArtCounter.incrementAndGet();
                             DynamicTexture dynTex = new DynamicTexture(() -> "spotify_album_art_" + artNum, img);
                             dynTex.upload();
@@ -462,6 +494,49 @@ public class LyricsManager {
         } catch (Throwable t) {
             System.err.println("[BomboAddons] Failed to download/register album art: " + t.getMessage());
         }
+    }
+
+    private static int extractDominantColor(NativeImage img) {
+        if (img == null) return 0xFF1ED760;
+        try {
+            int w = img.getWidth();
+            int h = img.getHeight();
+            long sumR = 0, sumG = 0, sumB = 0;
+            int count = 0;
+            int bestVibrant = 0xFF1ED760;
+            int maxSat = 0;
+
+            for (int y = 4; y < h - 4; y += Math.max(1, h / 16)) {
+                for (int x = 4; x < w - 4; x += Math.max(1, w / 16)) {
+                    int argb = img.getPixel(x, y);
+                    int r = (argb) & 0xFF;
+                    int g = (argb >> 8) & 0xFF;
+                    int b = (argb >> 16) & 0xFF;
+                    int max = Math.max(r, Math.max(g, b));
+                    int min = Math.min(r, Math.min(g, b));
+                    int delta = max - min;
+                    if (delta > 25 && max > 50 && min < 210) {
+                        sumR += r;
+                        sumG += g;
+                        sumB += b;
+                        count++;
+                        if (delta > maxSat) {
+                            maxSat = delta;
+                            bestVibrant = 0xFF000000 | (r << 16) | (g << 8) | b;
+                        }
+                    }
+                }
+            }
+            if (maxSat > 30) {
+                return bestVibrant;
+            } else if (count > 0) {
+                int avgR = (int) (sumR / count);
+                int avgG = (int) (sumG / count);
+                int avgB = (int) (sumB / count);
+                return 0xFF000000 | (avgR << 16) | (avgG << 8) | avgB;
+            }
+        } catch (Throwable ignored) {}
+        return 0xFF1ED760;
     }
 
     private static void fetchPaxsenixCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
@@ -1103,7 +1178,6 @@ public class LyricsManager {
         return s.replaceAll("(?i)\\s*\\(feat\\..*?\\)", "")
                 .replaceAll("(?i)\\s*\\[official.*?\\]", "")
                 .replaceAll("(?i)\\s*- remastered.*", "")
-                .replaceAll("(?i)\\s*- remix.*", "")
                 .trim();
     }
 }

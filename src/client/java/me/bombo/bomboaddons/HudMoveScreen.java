@@ -730,6 +730,18 @@ public class HudMoveScreen extends Screen {
             me.bombo.bomboaddons.features.spotify.SpotifyHud.drawHud(g, s.spotifyHudX, s.spotifyHudY, s.spotifyHudScale, true);
         }
 
+        // 30. LYRICS_HUD
+        if (isTargetVisible(HudTarget.LYRICS_HUD, s.lyricsHudEnabled)) {
+            int lyrW = (int) ((float) me.bombo.bomboaddons.features.spotify.LyricsHud.getHudWidth() * s.lyricsHudScale);
+            int lyrH = (int) ((float) me.bombo.bomboaddons.features.spotify.LyricsHud.getHudHeight() * s.lyricsHudScale);
+            this.updateDragPosition(mouseX, mouseY, lyrW, lyrH, HudTarget.LYRICS_HUD, (nx, ny) -> {
+                s.lyricsHudX = nx;
+                s.lyricsHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.lyricsHudX, s.lyricsHudY, lyrW, lyrH, HudTarget.LYRICS_HUD, s.lyricsHudScale);
+            me.bombo.bomboaddons.features.spotify.LyricsHud.drawHud(g, s.lyricsHudX, s.lyricsHudY, s.lyricsHudScale, true);
+        }
+
         // Snap Guide Lines (Cyan/Teal)
         if (this.snapGuideX != null) {
             g.fill(this.snapGuideX - 1, 0, this.snapGuideX + 1, this.height, 0xDD00E5FF);
@@ -800,6 +812,8 @@ public class HudMoveScreen extends Screen {
             list.add(new HudRect(s.discordHudX, s.discordHudY, (int)(me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudWidth() * s.discordHudScale), (int)(me.bombo.bomboaddons.features.discord.DiscordVoiceHud.getHudHeight() * s.discordHudScale), HudTarget.DISCORD_HUD));
         if (current != HudTarget.SPOTIFY_HUD && (!s.showOnlyActiveHuds || s.spotifyHudEnabled))
             list.add(new HudRect(s.spotifyHudX, s.spotifyHudY, (int)(me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudWidth() * s.spotifyHudScale), (int)(me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudHeight() * s.spotifyHudScale), HudTarget.SPOTIFY_HUD));
+        if (current != HudTarget.LYRICS_HUD && (!s.showOnlyActiveHuds || s.lyricsHudEnabled))
+            list.add(new HudRect(s.lyricsHudX, s.lyricsHudY, (int)(me.bombo.bomboaddons.features.spotify.LyricsHud.getHudWidth() * s.lyricsHudScale), (int)(me.bombo.bomboaddons.features.spotify.LyricsHud.getHudHeight() * s.lyricsHudScale), HudTarget.LYRICS_HUD));
 
         list.removeIf(r -> r.target != null && shouldSkipForFilter(r.target));
         return list;
@@ -1477,6 +1491,17 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // LYRICS_HUD
+        if (!s.showOnlyActiveHuds || s.lyricsHudEnabled) {
+            int lyrW = (int) ((float) me.bombo.bomboaddons.features.spotify.LyricsHud.getHudWidth() * s.lyricsHudScale);
+            int lyrH = (int) ((float) me.bombo.bomboaddons.features.spotify.LyricsHud.getHudHeight() * s.lyricsHudScale);
+            if (this.startCornerResize(mouseX, mouseY, s.lyricsHudX, s.lyricsHudY, lyrW, lyrH, HudTarget.LYRICS_HUD, s.lyricsHudScale)) return true;
+            if (this.checkHit(mouseX, mouseY, s.lyricsHudX, s.lyricsHudY, lyrW, lyrH)) {
+                this.selectAndDrag(HudTarget.LYRICS_HUD, (int) mouseX - s.lyricsHudX, (int) mouseY - s.lyricsHudY);
+                return true;
+            }
+        }
+
         return super.mouseClicked(event, handled);
     }
 
@@ -2029,6 +2054,18 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // LYRICS_HUD
+        if (!s.showOnlyActiveHuds || s.lyricsHudEnabled) {
+            int lyrW = (int) ((float) me.bombo.bomboaddons.features.spotify.LyricsHud.getHudWidth() * s.lyricsHudScale);
+            int lyrH = (int) ((float) me.bombo.bomboaddons.features.spotify.LyricsHud.getHudHeight() * s.lyricsHudScale);
+            if (this.checkHit(mouseX, mouseY, s.lyricsHudX, s.lyricsHudY, lyrW, lyrH)) {
+                s.lyricsHudScale = clampScale(s.lyricsHudScale + delta);
+                this.selectedTarget = HudTarget.LYRICS_HUD;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -2105,7 +2142,7 @@ public class HudMoveScreen extends Screen {
             case CRITTER_HUD, CRITTER_MAP -> "Critters";
             case CHAT_TABS -> "Chat";
             case DISCORD_HUD -> "Discord";
-            case SPOTIFY_HUD -> "Spotify";
+            case SPOTIFY_HUD, LYRICS_HUD -> "Spotify";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -2169,6 +2206,7 @@ public class HudMoveScreen extends Screen {
                     case CHAT_TABS -> { s.chatTabsX = 4; s.chatTabsY = this.height - 28; s.chatTabsScale = 1.0f; }
                     case DISCORD_HUD -> { s.discordHudX = 10; s.discordHudY = 120; s.discordHudScale = 1.0f; }
                     case SPOTIFY_HUD -> { s.spotifyHudX = 10; s.spotifyHudY = 80; s.spotifyHudScale = 1.0f; }
+                    case LYRICS_HUD -> { s.lyricsHudX = 10; s.lyricsHudY = 160; s.lyricsHudScale = 1.0f; }
                 }
                 BomboConfig.save();
                 return true;
@@ -2221,6 +2259,7 @@ public class HudMoveScreen extends Screen {
         CROESUS_PROFIT,
         CROESUS_TRACKER,
         DISCORD_HUD,
-        SPOTIFY_HUD;
+        SPOTIFY_HUD,
+        LYRICS_HUD;
     }
 }

@@ -1,40 +1,40 @@
 # Graph Report - bomboaddons-26.2  (2026-10-04)
 
 ## Corpus Check
-- 614 files · ~1,505,472 words
+- 614 files · ~1,517,717 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 7 file(s) not represented in the graph (top: (none) 2, .properties 2, .jar 1)
 
 ## Summary
-- 9869 nodes · 34099 edges · 372 communities (234 shown, 138 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 1503 edges (avg confidence: 0.83)
+- 9950 nodes · 34263 edges · 369 communities (238 shown, 131 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 1519 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8ffc7ec0`
+- Built from commit: `e04046bb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- arraylist
+- locale
 - minecraft
-- jsonparser
-- net.minecraft.client.gui.Font
-- BomboaddonsClient.java
+- map
+- ForagingUi
+- list
 - MiningSnapshot
 - CrimsonSnapshot
 - ForagingSnapshot
 - HomePage
 - org.spongepowered.asm.mixin.injection.Inject
-- SkyBlockItemFactory
-- PetsPage
+- net.minecraft.world.item.ItemStack
+- .text
 - ButtonBlockMixin.java
-- .longOf
+- .obj
 - .parseUnsafe
 - .onInitializeClient
-- InventoryPage
+- net.minecraft.network.chat.Component
 - org.spongepowered.asm.mixin.Mixin
-- net.minecraft.client.Minecraft
+- WardrobeHelper
 - AuctionSnapshot
 - com.google.gson.JsonObject
 - PlayerCustomization
@@ -44,22 +44,22 @@
 - AutoCroesus
 - Line
 - NameStyler
-- FishingSnapshot
-- list
-- BomboConfig
+- .fill
+- SkyBlockItemFactory.java
+- net.minecraft.client.Minecraft
 - GardenSnapshot
 - CrimsonKuudraCard
 - ArmorStandRendererMixin.java
 - BomboOrderScreen
-- .save
-- net.minecraft.network.chat.Component
+- BomboConfigGUI
+- SupercraftHelper
 - EventsSnapshot
 - net.minecraft.nbt.CompoundTag
 - BomboConfigScreen
 - .registerTickEvents
 - BestiaryPage
 - ChatMixin
-- .getLevel
+- Progress
 - IRCClient
 - SlotHighlight
 - CollectionSnapshot
@@ -69,41 +69,41 @@
 - NetworthBreakdown
 - StructureScanner
 - OrderedWaypoints
-- EquipmentHud
+- EggAuth
 - Cosmetics and Badge Management
 - PvSubTab
-- .cachedGradient
-- DungeonSnapshot
+- net.minecraft.network.chat.Style
+- ClientPacketListenerMixin
 - MagicFindOptimizer
 - RiftUi
 - .innerPanel
-- DungeonBossManager
+- DungeonClass
 - net.minecraft.world.entity.Entity
 - InventorySlotSwapManager
 - ItemValueOverlay
-- .merge
+- PlayerStatsSnapshot
 - ChatHistoryTracker
 - AccountManager
-- ClientItemInfoLoaderMixin.java
+- net.minecraft.server.packs.resources.ResourceManager
 - InventorySnapshot
 - GreenhouseTracker
 - ProfileFetcher
 - BetterPvSessionAuth
-- DungeonPage
-- .get
+- .commas
+- .save
 - SlayerMayorMods
 - AutoFishing
-- AutoSequenceManager
-- Supply
+- AutoSequenceVisualScreen
+- KuudraUtils
 - Type
 - net.minecraft.world.entity.LivingEntity
 - ItemInHandRendererMixin.java
-- LowestBinManager
+- .formatPrice
 - SkyblockItemManager
-- PickupSpot
+- net.minecraft.world.phys.Vec3
 - LF
 - LeftClickEtherwarp
-- .fill
+- BestiaryData
 - Settings
 - NeuRepoCache
 - NetworthData
@@ -112,7 +112,7 @@
 - MuseumCatalog
 - InventoryButtonsScreen
 - SearchableGridWidget
-- .drawPillButton
+- .get
 - net.minecraft.client.gui.GuiGraphicsExtractor
 - EggFinder
 - net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext
@@ -127,18 +127,18 @@
 - SafariSession
 - PriceHistoryScreen
 - DailyRewardHelper
-- Tier
+- GuildStatus
 - Auction House Automation
 - PlaytimeTracker
-- GardenOverviewPage
-- .calculateForClass
+- AutoSequenceManager
+- DungeonSnapshot
 - CustomBindsProcessor
-- Player Online Status
+- PlayerStatus
 - StoragePreviewManager
 - 4. Current Implementation State & Untested Features
 - com.mojang.authlib.GameProfile
-- .buildTransformPlan
-- .calculate
+- .findFirstNameMatch
+- EssenceShop
 - GardenMovement
 - AthenPriceCache
 - MuseumPage
@@ -149,39 +149,38 @@
 - SafariBiome
 - SafariLocation
 - FakeBanScreen
-- .ensureLoaded
+- ProfileSnapshot
 - ForagingHotfData
 - StorageOverlayScreen
 - MagicalPowerCalculator
-- Username History Tracker
+- UsernameHistory
 - LegitFlavor
 - DiceTracker
 - Hotbar Snapshot Manager
 - FreecamDebugPositionMixin.java
 - AttributeShardsData
-- CollectionsUi.java
+- IChatComponent
 - LyricsManager
 - Dungeon Modifier Scanner
 - BackpackPreview
 - SkyBlockPackCache
-- Part
+- Section
 - ItemHotkeysMixin
 - .renderLyrics
-- .drawFarmingToolkit
+- AutoSequenceExecutor
 - GlobalStorageScreen
 - ProfileViewerScreen
-- GardenData
+- .fromSlot
 - ChatImagePreview.java
 - ExperimentationTableHud
-- ChatModifier
+- ChatModifierScreen
 - .render
-- MuseumCache
 - CmdScreen
-- PvCategory
-- HypixelCollectionsCache
-- InventoryButtonMoveScreen
+- DungeonMapOverlay
+- BestiarySnapshot
+- UpdateVersionsScreen
 - ItemModelResolverMixin.java
-- net.minecraft.world.item.ItemStack
+- TextureToggleManager
 - BomboAddons Changelog
 - SignCalculator
 - Job Category Definitions
@@ -189,34 +188,34 @@
 - .render
 - PerformanceProfiler
 - Auto Hitman Automation
-- BomboRenderUtils
+- .parseNamedLoadouts
 - Menu Tab Navigation
 - ApiHistory
-- net.minecraft.network.chat.Style
+- ChatClickProcessor
 - MiningHotmData
 - ChromaTextHelper
-- .fromMember
+- .rebuildCache
 - PetLoreResolver
 - RtcaChatFormatter
-- KuudraUtils
+- DungeonChestProfitHud
 - ItemListOverlay
 - ChatHistoryScreen
-- InventorySlotColorScreen
-- .colorize
+- AutoAction
+- .drawPillGradient
 - AutoAhSell
 - DungeonProfitLog
 - FlavorBridge
-- .mouseClicked
+- HudMoveScreen
 - SkyblockCalculator
 - CustomSoundsScreen
 - ScreenshareManager
-- ClassLevelQuery
-- net.minecraft.world.phys.Vec3
+- GuiMixin
+- FakePlayer.java
 - Auto Rejoin Manager
 - ComposterHud
 - ChangelogScreen
-- CustomListEditorScreen
-- ModeStats
+- .ensureBarCaches
+- GreenhouseProfitScreen
 - ParticleTracker
 - ProfileViewerOpener
 - SpotifyManager
@@ -224,10 +223,10 @@
 - NameStylerIdentityCache
 - Dungeon Room Types
 - VirtualContainerGUI
-- TitleScreenMixin.java
+- .getSidebarLines
 - CheatFlavor
 - PingTest
-- net.minecraft.world.level.block.state.BlockState
+- net.minecraft.core.BlockPos
 - Party Join Notifier
 - BackpackWidget
 - TabCompletionManager
@@ -237,7 +236,6 @@
 - DungeonMapHistory
 - DungeonMapScanner
 - ClipboardImageUploader
-- PerformanceScreen
 - StorageOverlayManager
 - StorageOverlayScreenHandler
 - .onInitializeClient
@@ -246,7 +244,7 @@
 - Dungeon Clear Tracker
 - KismetEv
 - BlockHighlight
-- KeyBindsListMixin.java
+- NoObfuscate
 - ⚠️ UNTESTED IN-GAME (Requires Minecraft Client Testing)
 - .recordChestPurchase
 - HypixelProfileSpyButton
@@ -259,44 +257,44 @@
 - ItemCustomizeScreen
 - BomboAddons (Minecraft 26.2 Fabric)
 - AutoExperiments
-- SupplySpot
+- [26.2.28.66] - 2026-10-02 (Beta)
 - DungeonPadTimers
-- net.minecraft.client.gui.components.Button
+- [26.2.28.70] - 2026-10-04 (Beta)
 - Safari Area Data
 - MuseumSort
-- GardenPage
+- v26.2.28.45: Interactive RTCA Chat
 - MayorChatFormatter
 - InventoryButton
-- .collectionHover
+- .colorize
 - Totem Animation Manager
-- .parseComposter
+- [26.2.28.38] - 2026-09-24 (Beta)
 - Critters
-- .getTabListLines
-- GameRendererMixin
+- bomboaddons/gui/ProfileViewerScreen.java
+- [26.2.28.43] - 2026-09-24 (Beta)
 - FontMixin.java
-- SphinxMacro
+- .drawBakeryInfo
 - .computePathAsync
 - net.minecraft.ChatFormatting
-- TrophyFishData
+- ActionType
 - AGENT HANDOFF: BomboAddons (Fabric 26.2)
 - CorpseHighlight
-- net.minecraft.core.BlockPos
+- [26.2.28.69] - 2026-10-03 (Beta)
 - Clipboard Command Manager
 - ClientLevelMixin
 - Gradle Wrapper Scripts
 - .sendMessage
 - DungeonPricesScreen
 - ForagingOverviewPage.java
-- [26.2.28.72] - 2026-10-04 (Beta)
-- SkyBlockStats
+- .onTickUnsafe
+- .parseAccessoryInfo
 - .getSkyblockId
 - Performance Profiler Expansion (`/b perf`)
 - SpotifyHud
-- EssencePerkTips
+- LoadingEgg
 - NetworkDebugLogger
 - API and Backend
-- FlavorMigration
-- InventoryHud
+- Constants
+- .parseEquipmentWardrobePages
 - SpotifyWin32Handler
 - [26.2.28.35] - 2026-09-23 (Beta)
 - SpeedometerHud
@@ -323,74 +321,70 @@
 - Heart of the Mountain Icon
 - Skyblock XP Main GUI Texture
 - BomboAddons Mod Icon
-- 2. Features Implemented & Awaiting In-Game Testing (v26.2.28.68)
+- BomboAddons Agent Continuation & Knowledge Handoff
 - .suggestPages
-- InventorySwapScreen
-- Pearls
+- .load
+- HoppityHud
 - .extractRenderState
 - ApiHistoryScreen
 - imagewriter
 - EntityBlockHiderScreen
 - PostPassMixin.java
 - SkyHelperPriceCache
-- v26.2.28.45: Interactive RTCA Chat
+- RingManager
 - [26.2.28.34] - 2026-09-23 (Beta)
-- .calculate
+- [26.2.28.57] - 2026-09-30 (Beta)
 - CollectionsListPage
-- ChatMessageTracker
+- DianaLootshare
 - FilterTab
 - [26.2.28.33] - 2026-09-23 (Beta)
 - AlphaTrackerHud
 - [26.2.28.36] - 2026-09-23 (Beta)
 - [26.2.28.71] - 2026-10-04 (Beta)
-- BetterPVClient.java
-- .onAddMessage
-- Failure
-- InventorySnapshot
+- net.minecraft.resources.Identifier
+- RankCache
+- [26.2.28.42] - 2026-09-24 (Beta)
+- [26.2.28.75] - 2026-10-04 (Beta)
 - GradientColors
-- .parseBrackets
+- [26.2.28.78] - 2026-10-04 (Beta)
 - ChatTabsOverlay
 - RenameStorageScreen
 - [26.2.28.39] - 2026-09-24 (Beta)
 - SkyHanniAdvancedPlayerListCosmeticsMixin.java
-- .onKeyPressed
+- AutoCroesusHud
 - WaypointManager
 - SkyBlockSymbols
-- [26.2.28.30] - 2026-09-21 (Beta)
+- SlayerEntry
 - Status
 - HoppityRabbitsData
-- Kind
-- [26.2.28.52] - 2026-09-28 (Beta)
-- [26.2.28.74] - 2026-10-04 (Beta)
+- Role
+- GardenWaypoints
+- CheatFlavor.java
 - MenuScreensConstructorMixin
-- [26.2.28.65] - 2026-10-02 (Beta)
+- [26.2.28.56] - 2026-09-29 (Beta)
 - [26.2.28.76] - 2026-10-04 (Beta)
 - BedwarsESP
 - LoadState
-- PearlRenderData
-- .onCrack
+- .onCreateParticle
 - [26.2.28.73] - 2026-10-04 (Beta)
 - Mode
-- [26.2.28.50] - 2026-09-28 (Beta)
-- [26.2.28.53] - 2026-09-28 (Beta)
-- BookScreenMixin
+- TestReflect.java
+- fileinputstream
 - GoldenDragonNestFinder
-- .removeEldestEntry
 - bufferedimage
 - guieventlistener
 - menutype
 - randomsource
-- FontCosmeticsMixin
+- net.minecraft.network.chat.FormattedText
 - .findLookTarget
-- GreenhouseRow
 - .suggestBackups
 
 ## God Nodes (most connected - your core abstractions)
 1. `BomboConfig` - 163 edges
 2. `ForagingSnapshot` - 140 edges
 3. `GardenSnapshot` - 137 edges
-4. `SkyBlockItemFactory` - 120 edges
-5. `4. Current Implementation State & Untested Features` - 120 edges
+4. `4. Current Implementation State & Untested Features` - 123 edges
+5. `SkyBlockItemFactory` - 120 edges
 6. `InventoryDecoder` - 107 edges
 7. `BomboaddonsClient` - 104 edges
 8. `ProfileViewerScreen` - 103 edges
@@ -415,291 +409,299 @@
 ## Hyperedges (group relationships)
 - **Safari Location System** — safari_area_0, safari_area_1, safari_area_2, safari_area_3, safari_area_4 [EXTRACTED 1.00]
 
-## Communities (372 total, 138 thin omitted)
+## Communities (369 total, 131 thin omitted)
 
-### Community 0 - "arraylist"
+### Community 0 - "locale"
 Cohesion: 0.10
-Nodes (14): arraylist, comparator, datetimeparseexception, enumset, instant, linkedhashmap, linkedhashset, listtag (+6 more)
+Nodes (15): com.google.gson.JsonElement, comparator, datetimeparseexception, enumset, executor, instant, linkedhashmap, linkedhashset (+7 more)
 
 ### Community 1 - "minecraft"
-Cohesion: 0.07
-Nodes (44): arraydeque, atomiclong, bufferedreader, button, characterevent, clientpacketlistener, component, configuitheme (+36 more)
+Cohesion: 0.05
+Nodes (66): abstractscrollarea, audioinputstream, audiosystem, bufferedreader, button, characterevent, checkbox, clientpacketlistener (+58 more)
 
-### Community 2 - "jsonparser"
+### Community 2 - "map"
+Cohesion: 0.05
+Nodes (108): atomicboolean, authenticationexception, awt, basicfileattributes, bodyhandlers, bodypublishers, bytebuffer, byteorder (+100 more)
+
+### Community 3 - "ForagingUi"
 Cohesion: 0.06
-Nodes (99): atomicboolean, authenticationexception, basicfileattributes, bodyhandlers, bodypublishers, bytebuffer, byteorder, com.google.gson.Gson (+91 more)
+Nodes (12): AttributeShardRow, ForagingPage, ForagingUi, HoverZone, Line, AttributeShardsPage, Line, ForagingOverviewPage (+4 more)
 
-### Community 3 - "net.minecraft.client.gui.Font"
+### Community 4 - "list"
 Cohesion: 0.04
-Nodes (15): net.minecraft.client.gui.Font, AttributeShardRow, SafariInfo, AuctionPage, Entry, Slot, Stats, ForagingPage (+7 more)
-
-### Community 4 - "BomboaddonsClient.java"
-Cohesion: 0.04
-Nodes (80): aabb, argumentbuilder, argumentcommandnode, armorstand, atomicreference, barrelblock, beaconrenderer, blockhitresult (+72 more)
+Nodes (85): aabb, argumentbuilder, argumentcommandnode, armorstand, arraylist, atomicreference, barrelblock, beaconrenderer (+77 more)
 
 ### Community 5 - "MiningSnapshot"
 Cohesion: 0.04
-Nodes (17): CorpseCounts, CorpseMilestone, Crystal, ForgeProcess, MiningSnapshot, Powder, MiningPage, HoverZone (+9 more)
+Nodes (16): CorpseMilestone, Crystal, ForgeProcess, MiningSnapshot, Powder, MiningPage, HoverZone, Line (+8 more)
 
 ### Community 6 - "CrimsonSnapshot"
 Cohesion: 0.03
-Nodes (24): 5. Profit tracking & web sync, AbiphoneContact, CrimsonSnapshot, DojoChallenge, ARCHER, FIREBALL, LOCK_HEAD, MOB_KB (+16 more)
+Nodes (25): AbiphoneContact, CrimsonSnapshot, DojoChallenge, ARCHER, FIREBALL, LOCK_HEAD, MOB_KB, SNAKE (+17 more)
 
 ### Community 7 - "ForagingSnapshot"
 Cohesion: 0.03
-Nodes (12): FishFamilyData, AttrStack, CollectionRow, ForagingSnapshot, HarpSong, HoneyInfo, HotfNode, OwnedShard (+4 more)
+Nodes (12): AttrStack, CollectionRow, ForagingSnapshot, HarpSong, HoneyInfo, HotfNode, OwnedShard, SafariInfo (+4 more)
 
 ### Community 8 - "HomePage"
-Cohesion: 0.04
-Nodes (20): ActiveSlayerQuest, BankTransaction, EmblemInfo, ProfileSnapshot, SkillEntry, SlayerEntry, CachedBar, HomePage (+12 more)
+Cohesion: 0.05
+Nodes (12): HomePage, HoverZone, Layout, SbXpExpandPhase, CLOSED, COLLAPSING_LEFT, COLLAPSING_RIGHT, EXPANDING_LEFT (+4 more)
 
 ### Community 9 - "org.spongepowered.asm.mixin.injection.Inject"
-Cohesion: 0.02
-Nodes (67): Key Mixins & Target Injections, Flavors & Security, ClientboundBlockUpdatePacket, ClientboundExplodePacket, ClientboundLoginPacket, ClientboundSetEntityDataPacket, ClientboundSetTimePacket, ClientboundSoundEntityPacket (+59 more)
+Cohesion: 0.05
+Nodes (31): clientlevel, mobeffects, net.minecraft.client.ClientBrandRetriever, net.minecraft.client.ClientClockManager, net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil, net.minecraft.client.renderer.entity.player.AvatarRenderer, net.minecraft.client.renderer.entity.state.AvatarRenderState, net.minecraft.client.resources.sounds.SoundInstance (+23 more)
 
-### Community 10 - "SkyBlockItemFactory"
+### Community 10 - "net.minecraft.world.item.ItemStack"
+Cohesion: 0.04
+Nodes (5): net.minecraft.world.item.ItemStack, CollectionCategoryIcons, SkyBlockIconRenderer, SkyBlockItemFactory, SubTab
+
+### Community 11 - ".text"
 Cohesion: 0.06
-Nodes (3): net.minecraft.world.item.Item, Slot, SkyBlockItemFactory
-
-### Community 11 - "PetsPage"
-Cohesion: 0.14
-Nodes (9): Entry, Line, PetsPage, SlotHit, SortMode, LEVEL, NAME, NETWORTH (+1 more)
+Nodes (17): CommunityUpgrade, AuctionPage, Entry, Slot, Stats, HoverZone, Line, MiscStatsPage (+9 more)
 
 ### Community 12 - "ButtonBlockMixin.java"
-Cohesion: 0.22
-Nodes (13): attachface, blockstateproperties, net.minecraft.world.level.block.ButtonBlock, net.minecraft.world.level.block.LeverBlock, net.minecraft.world.level.block.SkullBlock, net.minecraft.world.level.block.WallSkullBlock, net.minecraft.world.level.BlockGetter, net.minecraft.world.phys.shapes.CollisionContext (+5 more)
+Cohesion: 0.24
+Nodes (12): attachface, net.minecraft.world.level.block.ButtonBlock, net.minecraft.world.level.block.LeverBlock, net.minecraft.world.level.block.SkullBlock, net.minecraft.world.level.block.WallSkullBlock, net.minecraft.world.level.BlockGetter, net.minecraft.world.phys.shapes.CollisionContext, net.minecraft.world.phys.shapes.VoxelShape (+4 more)
+
+### Community 13 - ".obj"
+Cohesion: 0.05
+Nodes (5): DamagePeak, Leveling, MaxwellPowers, PowerDef, CorpseCounts
 
 ### Community 14 - ".parseUnsafe"
 Cohesion: 0.06
-Nodes (6): CacheEntry, CoopMemberRef, CoopSummary, LoadedProfile, ProfileChoice, ProfileFetcher
+Nodes (7): ItemStack, ProfileEnrichmentSession, CacheEntry, CoopMemberRef, CoopSummary, LoadedProfile, ProfileFetcher
 
 ### Community 15 - ".onInitializeClient"
 Cohesion: 0.04
-Nodes (21): com.mojang.brigadier.builder.LiteralArgumentBuilder, com.mojang.brigadier.Command, com.mojang.brigadier.CommandDispatcher, com.mojang.brigadier.suggestion.SuggestionProvider, com.mojang.brigadier.suggestion.Suggestions, com.mojang.brigadier.suggestion.SuggestionsBuilder, net.fabricmc.api.ClientModInitializer, net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource (+13 more)
+Nodes (18): com.mojang.brigadier.builder.LiteralArgumentBuilder, com.mojang.brigadier.Command, com.mojang.brigadier.CommandDispatcher, com.mojang.brigadier.suggestion.SuggestionProvider, com.mojang.brigadier.tree.CommandNode, net.fabricmc.api.ClientModInitializer, net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource, net.minecraft.client.multiplayer.ClientSuggestionProvider (+10 more)
 
-### Community 16 - "InventoryPage"
+### Community 16 - "net.minecraft.network.chat.Component"
 Cohesion: 0.06
-Nodes (20): InventoryPage, Slot, RunnableHit, SlotHit, InventoryPane, ACCESSORY_BAG, BACKPACKS, CANDY_BAG (+12 more)
+Nodes (8): net.minecraft.network.chat.Component, InventoryPage, Slot, RunnableHit, SlotHit, Slot, SuppressWarnings, TestComponent
 
 ### Community 17 - "org.spongepowered.asm.mixin.Mixin"
-Cohesion: 0.03
-Nodes (105): abstractsigneditscreen, action, at, blockgetter, blockstate, checkbox, clientintent, color (+97 more)
-
-### Community 18 - "net.minecraft.client.Minecraft"
-Cohesion: 0.07
-Nodes (28): abstractcontainermenu, auto, containerinput, datetimeformatter, default, fishingroditem, formattedtext, interactionhand (+20 more)
+Cohesion: 0.02
+Nodes (110): abstractsigneditscreen, account, action, at, blockgetter, blockitem, clipcontext, color (+102 more)
 
 ### Community 19 - "AuctionSnapshot"
-Cohesion: 0.06
-Nodes (8): AuctionSnapshot, Bucket, ACTIVE, BOUGHT, SOLD, Listing, Stats, Slot
+Cohesion: 0.08
+Nodes (7): AuctionSnapshot, Bucket, ACTIVE, BOUGHT, SOLD, Listing, Stats
 
 ### Community 20 - "com.google.gson.JsonObject"
-Cohesion: 0.05
-Nodes (11): com.google.gson.JsonObject, DamagePeak, EssencePerk, EssenceShop, MaxwellPowers, PowerDef, AttributeFlat, PlayerStatsCalculator (+3 more)
+Cohesion: 0.09
+Nodes (5): com.google.gson.JsonObject, AttributeFlat, PlayerStatsCalculator, StatDef, RepoData
 
 ### Community 21 - "PlayerCustomization"
-Cohesion: 0.13
-Nodes (8): ComparatorByCandidateLength, NameBadge, NameCandidate, NameColors, NameRankPrefix, PlayerCustomization, PlayerCustomizationRegistry, Snapshot
+Cohesion: 0.08
+Nodes (9): RankPrefixReplacement, ComparatorByCandidateLength, NameBadge, NameCandidate, NameColors, NameRankPrefix, PlayerCustomization, PlayerCustomizationRegistry (+1 more)
 
 ### Community 22 - "ProfileViewerScreen"
 Cohesion: 0.06
-Nodes (6): CoopMemberHit, Entry, Font, Override, ProfileMenuLayout, ProfileViewerScreen
+Nodes (8): ProfileChoice, GardenPage, CoopMemberHit, Entry, Font, Override, ProfileMenuLayout, ProfileViewerScreen
 
 ### Community 23 - "RiftSnapshot"
 Cohesion: 0.06
-Nodes (13): QuestLine, QuestRegion, RiftSnapshot, TimecharmDef, CHICKEN_N_EGG, CITIZEN, LAZY_LIVING, MIRRORED (+5 more)
-
-### Community 24 - "InventoryDecoder"
-Cohesion: 0.06
-Nodes (11): com.google.gson.JsonElement, net.minecraft.nbt.Tag, AccessoryInfo, Loadout, TuningTemplate, InventoryDecoder, Slot, JsonStyle (+3 more)
+Nodes (14): QuestLine, QuestRegion, RiftSnapshot, Timecharm, TimecharmDef, CHICKEN_N_EGG, CITIZEN, LAZY_LIVING (+6 more)
 
 ### Community 25 - "AutoCroesus"
 Cohesion: 0.06
-Nodes (12): AutoCroesus, DungeonChestData, ItemDetail, KeyCostDetail, KuudraTier, BASIC, BURNING, FIERY (+4 more)
+Nodes (9): AutoCroesus, KeyCostDetail, KuudraTier, BASIC, BURNING, FIERY, HOT, INFERNAL (+1 more)
+
+### Community 26 - "Line"
+Cohesion: 0.08
+Nodes (12): EssencePerkTips, Line, Kind, ACTION, BLANK, DIVIDER, META, ROW (+4 more)
 
 ### Community 27 - "NameStyler"
-Cohesion: 0.09
-Nodes (17): net.minecraft.network.chat.FormattedText, net.minecraft.util.FormattedCharSequence, NameStyler, OrderedTextAnimatedFrameCacheKey, OrderedTextPlanCacheKey, OrderedTextResultCacheKey, OrderedTextSourceData, StringCacheKey (+9 more)
+Cohesion: 0.10
+Nodes (18): net.minecraft.util.FormattedCharSequence, NameStyler, OrderedTextAnimatedFrameCacheKey, OrderedTextPlanCacheKey, OrderedTextResultCacheKey, OrderedTextSourceData, OrderedTextTransformPlan, ResolvedOrderedMatch (+10 more)
 
-### Community 28 - "FishingSnapshot"
-Cohesion: 0.08
+### Community 28 - ".fill"
+Cohesion: 0.07
 Nodes (6): FishingSnapshot, TrophyRow, FishingPage, HoverZone, Line, Tier
 
-### Community 29 - "list"
-Cohesion: 0.11
-Nodes (23): decimalformatsymbols, enummap, gameprofile, identityhashmap, immutablelistmultimap, inventorysnapshot, itemdisplaycontext, items (+15 more)
+### Community 29 - "SkyBlockItemFactory.java"
+Cohesion: 0.10
+Nodes (21): bar_hunt, decimalformatsymbols, dyeditemcolor, enummap, gameprofile, identityhashmap, immutablelistmultimap, inventorysnapshot (+13 more)
 
-### Community 30 - "BomboConfig"
+### Community 30 - "net.minecraft.client.Minecraft"
 Cohesion: 0.04
-Nodes (68): abstractscrollarea, anvilscreen, arrays, audioinputstream, audiosystem, bitset, builtinregistries, chatformatting (+60 more)
+Nodes (78): abstractcontainermenu, auto, bitset, blockstate, builtinregistries, chatformatting, clickevent, clientreceivemessageevents (+70 more)
 
 ### Community 31 - "GardenSnapshot"
-Cohesion: 0.08
-Nodes (4): ActiveVisitor, ChipEntry, GardenSnapshot, VisitorRow
+Cohesion: 0.03
+Nodes (17): GardenData, LevelProgress, ActiveVisitor, BracketCount, ChipEntry, Composter, ContestEntry, CropMedal (+9 more)
 
 ### Community 32 - "CrimsonKuudraCard"
 Cohesion: 0.11
 Nodes (5): ArmorPiece, CrimsonKuudraCard, ImportantItem, JsonElement, Vanq
 
 ### Community 33 - "ArmorStandRendererMixin.java"
-Cohesion: 0.22
-Nodes (9): net.minecraft.client.model.geom.ModelPart, net.minecraft.client.model.object.armorstand.ArmorStandModel, net.minecraft.client.renderer.entity.ArmorStandRenderer, net.minecraft.client.renderer.entity.state.ArmorStandRenderState, net.minecraft.world.entity.decoration.ArmorStand, ArmorStandModelMixin, ArmorStandRendererMixin, unique (+1 more)
+Cohesion: 0.29
+Nodes (6): net.minecraft.client.renderer.entity.ArmorStandRenderer, net.minecraft.client.renderer.entity.state.ArmorStandRenderState, net.minecraft.world.entity.decoration.ArmorStand, ArmorStandRendererMixin, unique, WeakHashMap
 
 ### Community 34 - "BomboOrderScreen"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (5): BomboOrderScreen, Override, FeatureMeta, FeatureOrganizerManager, OrganizerData
 
-### Community 35 - ".save"
-Cohesion: 0.06
-Nodes (7): Priority 0: RTCA Chat Hover (`v26.2.28.46` / `v26.2.28.45`) — newest and least verified, CustomTimerDef, BomboConfigGUI, LoreOptionDef, BomboApiKeyManager, WarpedAotvFixer, IQStyleConfigScreen
-
-### Community 36 - "net.minecraft.network.chat.Component"
-Cohesion: 0.05
-Nodes (20): [26.2.28.69] - 2026-10-03 (Beta), Config Backup Filenames & Lore Settings, Discord Voice HUD Member Pruning & Muting, Live Synced Lyrics Web Search & Simulated Playback, Screenshare Fast Pipeline & Instant Viewer, SkyHanni Enchantment Color Compatibility, Storage Overlay Discovery Deadlock Resolution, net.minecraft.client.player.RemotePlayer (+12 more)
+### Community 35 - "BomboConfigGUI"
+Cohesion: 0.07
+Nodes (3): BomboConfigGUI, LoreOptionDef, CustomListEditorScreen
 
 ### Community 37 - "EventsSnapshot"
 Cohesion: 0.08
 Nodes (16): ChocolateEmployees, Def, Bingo, BingoEvent, BingoGoal, Chocolate, Employee, EventsSnapshot (+8 more)
 
 ### Community 38 - "net.minecraft.nbt.CompoundTag"
-Cohesion: 0.14
-Nodes (5): net.minecraft.nbt.CompoundTag, GemBucket, ItemWorth, UpgradeEnchant, NbtAttrs
+Cohesion: 0.13
+Nodes (6): net.minecraft.nbt.CompoundTag, GemBucket, ItemWorth, Part, UpgradeEnchant, NbtAttrs
 
 ### Community 39 - "BomboConfigScreen"
 Cohesion: 0.05
 Nodes (20): 1. Method, 2. Measured results, 3. Dead config fields (do not delete), 5. Deferred, Caveat on the 379, Feature Audit — reachability and dead code, java.util.function.IntConsumer, BomboConfigScreen (+12 more)
 
 ### Community 40 - ".registerTickEvents"
-Cohesion: 0.05
-Nodes (6): AutoCombine, AFKManager, ClearInfoHUD, AutoProfileSwapper, StorageTracker, GardenWaypoints
-
-### Community 41 - "BestiaryPage"
-Cohesion: 0.06
-Nodes (8): BestiaryData, Category, Family, Icon, BestiarySnapshot, CategoryProgress, FamilyProgress, BestiaryPage
+Cohesion: 0.07
+Nodes (6): AFKManager, PendingCommand, ProfileAutoSwapRule, DwarvenCarpetReplacer, AutoProfileSwapper, PetManager
 
 ### Community 42 - "ChatMixin"
-Cohesion: 0.16
-Nodes (5): Screenshare Clickable Chat Links & Web Quality, org.spongepowered.asm.mixin.injection.ModifyConstant, org.spongepowered.asm.mixin.Unique, ChatMixin, Line
+Cohesion: 0.07
+Nodes (17): 5. Core Architecture, Entry Point, Key Mixins & Target Injections, Screenshare Clickable Chat Links & Web Quality, ModelManager, net.minecraft.client.multiplayer.chat.GuiMessage, net.minecraft.client.multiplayer.chat.GuiMessageSource, net.minecraft.client.multiplayer.chat.GuiMessageTag (+9 more)
 
-### Community 43 - ".getLevel"
-Cohesion: 0.06
-Nodes (12): Leveling, Progress, RepoData, Category, Line, WeightBreakdown, Part, WeightCalculator (+4 more)
+### Community 43 - "Progress"
+Cohesion: 0.09
+Nodes (10): Progress, Category, Line, WeightBreakdown, Part, WeightCalculator, WeightStages, WeightSystem (+2 more)
 
 ### Community 44 - "IRCClient"
 Cohesion: 0.08
 Nodes (6): MutableComponent, IRCClient, BlockPos, HoverEvent, MutableComponent, ModUser
+
+### Community 46 - "CollectionSnapshot"
+Cohesion: 0.06
+Nodes (9): BossCollections, BossDef, CollectionIds, CollectionSnapshot, Member, Category, HypixelCollectionsCache, Item (+1 more)
 
 ### Community 47 - "com.google.gson.JsonArray"
 Cohesion: 0.09
 Nodes (5): com.google.gson.JsonArray, CoflnetApiClient, EliteBotApiClient, HypixelApiClient, UuidName
 
 ### Community 48 - "MiscStatsSnapshot"
-Cohesion: 0.04
-Nodes (17): GuildStatus, PvDrawCompat, State, ERROR, IDLE, LOADING, NONE, READY (+9 more)
+Cohesion: 0.06
+Nodes (6): CountEntry, ExperimentationStats, ExperimentGame, MiscStatsSnapshot, Section, TrophySkulls
 
 ### Community 49 - "LF.java"
-Cohesion: 0.08
-Nodes (40): atomicinteger, base64, bytearrayinputstream, clientlifecycleevents, com.mojang.authlib.properties.Property, com.mojang.authlib.properties.PropertyMap, compoundtag, customdata (+32 more)
+Cohesion: 0.09
+Nodes (37): anvilscreen, arraydeque, arrays, atomicinteger, atomiclong, base64, bytearrayinputstream, Quality of Life & Fixes (+29 more)
 
 ### Community 50 - "NetworthBreakdown"
 Cohesion: 0.09
 Nodes (13): ItemLine, Line, NetworthBreakdown, NetworthCalculator, NetworthMode, NON_COSMETIC, NORMAL, UNSOULBOUND (+5 more)
 
 ### Community 51 - "StructureScanner"
-Cohesion: 0.14
-Nodes (5): FoundStructure, StructureFinder, ScannedBlock, StructurePattern, StructureScanner
+Cohesion: 0.12
+Nodes (6): net.minecraft.world.phys.AABB, FoundStructure, StructureFinder, ScannedBlock, StructurePattern, StructureScanner
 
 ### Community 52 - "OrderedWaypoints"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (3): Waypoint, OrderedWaypoints, Waypoint
+
+### Community 53 - "EggAuth"
+Cohesion: 0.09
+Nodes (8): java.net.http.WebSocket, java.security.PrivateKey, Listener, EggAuth, SignedData, EggWebSocket, SocketListener, WebSocketListener
 
 ### Community 54 - "Cosmetics and Badge Management"
 Cohesion: 0.12
 Nodes (17): BadgeFile, CosmeticsContentManager, LoadedBadge, LoadedNameStyle, LoadedPlayerCustomization, LoadedRankPrefix, Mode, ANIMATED_GRADIENT (+9 more)
 
 ### Community 55 - "PvSubTab"
-Cohesion: 0.04
-Nodes (36): MinionEntry, IntConsumer, MinionsPage, SlotHit, PvSubTab, AUCTION_BOUGHT, AUCTION_SOLD, AUCTION_STATS (+28 more)
+Cohesion: 0.05
+Nodes (36): EventsUi, HoverZone, Line, ChocolatePage, PvSubTab, AUCTION_BOUGHT, AUCTION_SOLD, AUCTION_STATS (+28 more)
 
-### Community 56 - ".cachedGradient"
-Cohesion: 0.17
-Nodes (4): AnimatedGradientCacheKey, AnimatedGradientStyle, ColorizedCacheKey, NameStylerLruCache
+### Community 56 - "net.minecraft.network.chat.Style"
+Cohesion: 0.14
+Nodes (4): net.minecraft.network.chat.Style, AnimatedGradientCacheKey, AnimatedGradientStyle, ColorizedCacheKey
+
+### Community 57 - "ClientPacketListenerMixin"
+Cohesion: 0.08
+Nodes (12): ClientboundBlockUpdatePacket, ClientboundExplodePacket, ClientboundLoginPacket, ClientboundSetEntityDataPacket, ClientboundSetTimePacket, ClientboundSoundEntityPacket, ClientboundSoundPacket, net.minecraft.network.protocol.game.ClientboundOpenScreenPacket (+4 more)
 
 ### Community 58 - "MagicFindOptimizer"
 Cohesion: 0.09
 Nodes (17): AnalysisResult, Category, ALL, BASE, COLLECTIONS, COMMUNITY, CONSUMABLES, ENCHANTMENTS (+9 more)
 
 ### Community 59 - "RiftUi"
-Cohesion: 0.09
-Nodes (10): Timecharm, Slot, RiftInventoryPage, RiftOverviewPage, RiftPage, HoverZone, Line, Slot (+2 more)
+Cohesion: 0.10
+Nodes (9): Slot, RiftInventoryPage, RiftOverviewPage, RiftPage, HoverZone, Line, Slot, RiftUi (+1 more)
 
 ### Community 60 - ".innerPanel"
-Cohesion: 0.13
-Nodes (3): GardenUi, HoverZone, JacobPage
+Cohesion: 0.05
+Nodes (10): ComposterUpgrade, GardenUi, HoverZone, Line, CropsPage, GardenOverviewPage, Line, GreenhousePage (+2 more)
 
-### Community 61 - "DungeonBossManager"
+### Community 61 - "DungeonClass"
 Cohesion: 0.07
-Nodes (17): BossPhase, GOLDOR, MAXOR, NECRON, NONE, STORM, DungeonBossManager, DungeonClass (+9 more)
+Nodes (15): BossPhase, GOLDOR, MAXOR, NECRON, NONE, STORM, DungeonClass, ARCHER (+7 more)
 
 ### Community 62 - "net.minecraft.world.entity.Entity"
 Cohesion: 0.10
 Nodes (9): net.minecraft.world.entity.Entity, EntityHighlightInfo, HighlightESP, HighlightTracer, EntityInfoCache, Pattern, TargetPests, EntityVariantHelper (+1 more)
 
+### Community 63 - "InventorySlotSwapManager"
+Cohesion: 0.08
+Nodes (6): InventorySlotColorScreen, Override, InventorySlotSwapManager, SwapRule, InventorySwapScreen, Override
+
 ### Community 64 - "ItemValueOverlay"
 Cohesion: 0.10
 Nodes (15): Section, ItemValueOverlay, Part, Kind, DETAIL, DIVIDER, ITEM, NOTE (+7 more)
 
-### Community 65 - ".merge"
-Cohesion: 0.15
-Nodes (4): ItemStack, ProfileEnrichmentSession, Entry, PlayerStatsSnapshot
+### Community 65 - "PlayerStatsSnapshot"
+Cohesion: 0.33
+Nodes (3): optionaldouble, Entry, PlayerStatsSnapshot
 
 ### Community 66 - "ChatHistoryTracker"
-Cohesion: 0.21
-Nodes (4): 4. Findings that were acted on, ChatHistoryTracker, Entry, StackTraceElement
+Cohesion: 0.13
+Nodes (11): 1. Missing Vanilla Textures (lead etc.), [26.2.28.30] - 2026-09-21 (Beta), 2. Search Bar & Text Fields (Ctrl + A, Ctrl + Z, Word Deletions), 3. Aspect of the Void Texture Overrides, 4. Compact Chat History & Accurate Mod Origin Detection, 5. Clicker Trigger Keybind, 6. New "Auto" Automation Category & Sequencer, 4. Findings that were acted on (+3 more)
 
 ### Community 67 - "AccountManager"
 Cohesion: 0.13
 Nodes (9): cipher, javax.crypto.SecretKey, keygenerator, openoption, secretkeyspec, Account, AccountManager, CryptoUtils (+1 more)
 
-### Community 68 - "ClientItemInfoLoaderMixin.java"
-Cohesion: 0.26
-Nodes (9): clientitem, com.llamalad7.mixinextras.injector.ModifyReturnValue, cuboiditemmodelwrapper, executor, LoadedClientInfos, local, net.minecraft.client.resources.model.ClientItemInfoLoader, net.minecraft.server.packs.resources.ResourceManager (+1 more)
+### Community 68 - "net.minecraft.server.packs.resources.ResourceManager"
+Cohesion: 0.43
+Nodes (5): com.llamalad7.mixinextras.injector.ModifyReturnValue, LoadedClientInfos, net.minecraft.client.resources.model.ClientItemInfoLoader, net.minecraft.server.packs.resources.ResourceManager, ClientItemInfoLoaderMixin
+
+### Community 69 - "InventorySnapshot"
+Cohesion: 0.10
+Nodes (6): AccessoryInfo, InventorySnapshot, Loadout, Page, Slot, RiftInventories
 
 ### Community 70 - "GreenhouseTracker"
-Cohesion: 0.11
-Nodes (6): Entry, GreenhouseProfitScreen, Override, GreenhouseTracker, Gson, Session
+Cohesion: 0.15
+Nodes (3): GreenhouseTracker, Gson, Session
 
 ### Community 71 - "ProfileFetcher"
 Cohesion: 0.15
 Nodes (8): CachedProfile, LightweightStats, Pet, ProfileData, ProfileFetcher, SlayerInfo, Trophy, Builder
 
 ### Community 72 - "BetterPvSessionAuth"
-Cohesion: 0.13
-Nodes (4): BetterPvSessionAuth, Builder, Minecraft, HypixelItemsCache
+Cohesion: 0.09
+Nodes (12): BetterPvSessionAuth, Failure, AUTH_HTTP, AUTH_REJECTED, JOIN_SERVER_FAILED, MISSING_JWT, MISSING_SESSION, NONE (+4 more)
 
-### Community 73 - "DungeonPage"
+### Community 73 - ".commas"
 Cohesion: 0.07
 Nodes (15): ClassBlock, DungeonCalcOverlay, FloorLine, Line, View, CalcRow, DungeonPage, FieldFocus (+7 more)
 
-### Community 74 - ".get"
-Cohesion: 0.05
-Nodes (7): Storage & GUI, AutoCroesusHud, DianaLootshare, Entity, ConfigCustomWidgets, LoreItemDef, ChatSearchHelper
+### Community 74 - ".save"
+Cohesion: 0.04
+Nodes (8): 7. Repository and audit, Storage & GUI, net.minecraft.network.protocol.common.ClientboundResourcePackPushPacket, BomboApiKeyManager, WarpedAotvFixer, ConfigCustomWidgets, LoreItemDef, IQStyleConfigScreen
 
 ### Community 75 - "SlayerMayorMods"
-Cohesion: 0.16
+Cohesion: 0.17
 Nodes (5): Perk, SlayerMayorMods, Result, SlayerXpCalculator, TierLine
 
 ### Community 76 - "AutoFishing"
 Cohesion: 0.09
 Nodes (14): AutoFishing, State, ATTACKING_WEAPON, IDLE, RECASTING, REELING, SWAPPING_TO_ROD, SWAPPING_TO_WEAPON (+6 more)
 
-### Community 77 - "AutoSequenceManager"
-Cohesion: 0.06
-Nodes (13): AutoSequenceExecutor, ActionType, CLICK_SLOT, CLICK_WORLD, CLOSE_GUI, INTERACT_ENTITY, RUN_COMMAND, WAIT (+5 more)
-
-### Community 78 - "Supply"
-Cohesion: 0.13
-Nodes (6): Supply, SupplyStatus, COMPLETED, INPROGRESS, NOTHING, RECEIVED
+### Community 78 - "KuudraUtils"
+Cohesion: 0.05
+Nodes (17): net.minecraft.world.entity.monster.cubemob.MagmaCube, KuudraUtils, PearlHUDText, Pearls, Supply, SupplySpot, SUPPLY1, SUPPLY2 (+9 more)
 
 ### Community 79 - "Type"
 Cohesion: 0.15
@@ -710,67 +712,63 @@ Cohesion: 0.14
 Nodes (7): net.minecraft.client.entity.ClientMannequin, net.minecraft.client.renderer.entity.state.EntityRenderState, net.minecraft.world.entity.LivingEntity, MoulberryMode, GuiPlayer, Override, PlayerModelRenderer
 
 ### Community 81 - "ItemInHandRendererMixin.java"
-Cohesion: 0.11
-Nodes (13): [26.2.28.49] - 2026-09-28 (Beta), Mayor & RTCA Live Integration, Spectator & Camera Fixes, HumanoidArm, net.minecraft.client.player.AbstractClientPlayer, net.minecraft.client.renderer.ItemInHandRenderer, net.minecraft.client.renderer.SubmitNodeCollector, AbstractClientPlayerMixin (+5 more)
+Cohesion: 0.14
+Nodes (10): HumanoidArm, net.minecraft.client.gui.Hud, net.minecraft.client.player.AbstractClientPlayer, net.minecraft.client.renderer.ItemInHandRenderer, net.minecraft.client.renderer.SubmitNodeCollector, net.minecraft.world.entity.player.Player, HudMixin, ItemInHandRendererMixin (+2 more)
 
-### Community 82 - "LowestBinManager"
-Cohesion: 0.12
-Nodes (4): ItemStack, LowestBinManager, ValueEntry, TooltipContext
+### Community 82 - ".formatPrice"
+Cohesion: 0.10
+Nodes (6): ItemValueBreakdownHud, ItemValueBreakdown, ItemStack, ValueEntry, ItemStackMixin, TooltipContext
 
 ### Community 83 - "SkyblockItemManager"
-Cohesion: 0.10
+Cohesion: 0.11
 Nodes (5): com.llamalad7.mixinextras.injector.ModifyExpressionValue, NpcShopScreen, RecipeViewerScreen, SkyblockItemInfo, SkyblockItemManager
 
-### Community 84 - "PickupSpot"
-Cohesion: 0.09
-Nodes (12): DoublePearl, DoublePearlDefaults, DoublePearlRegistry, PickupSpot, EQUALS, NONE, SHOP, SLASH (+4 more)
+### Community 84 - "net.minecraft.world.phys.Vec3"
+Cohesion: 0.06
+Nodes (20): net.minecraft.world.phys.Vec3, CritterCapsuleArc, DoublePearl, DoublePearlDefaults, DoublePearlRegistry, NoPre, PearlRenderData, PearlSolution (+12 more)
 
 ### Community 86 - "LeftClickEtherwarp"
-Cohesion: 0.16
-Nodes (6): Key, net.minecraft.client.KeyMapping, BlockPos, Direction, Level, LeftClickEtherwarp
+Cohesion: 0.13
+Nodes (7): Key, net.minecraft.client.KeyMapping, GardenMacroDetector, BlockPos, Direction, Level, LeftClickEtherwarp
 
-### Community 87 - ".fill"
-Cohesion: 0.22
-Nodes (4): EventsUi, HoverZone, Line, ChocolatePage
+### Community 87 - "BestiaryData"
+Cohesion: 0.18
+Nodes (4): BestiaryData, Category, Family, Icon
 
 ### Community 88 - "Settings"
-Cohesion: 0.06
-Nodes (17): BlockedSlotDef, BlockReplaceRule, ChatTrigger, CoordBind, CustomItemOverride, CustomPartyCommand, CustomSlot, CustomTracerInfo (+9 more)
+Cohesion: 0.05
+Nodes (19): BlockedSlotDef, BlockReplaceRule, ChatTrigger, CoordBind, CustomItemOverride, CustomPartyCommand, CustomTimerDef, CustomTracerInfo (+11 more)
 
 ### Community 90 - "NetworthData"
 Cohesion: 0.16
 Nodes (3): NetworthData, LevelInfo, PetWorth
 
-### Community 91 - ".extractRenderState"
-Cohesion: 0.19
-Nodes (3): DetectedItem, FeastBakeryHud, HudRect
-
 ### Community 92 - "HudTarget"
-Cohesion: 0.05
+Cohesion: 0.06
 Nodes (34): HudTarget, ALPHA_TRACKER, ARMOR_HUD, AUTO_CROESUS, AUTO_REJOIN, BAKERY, BOBBER_TIME, CHAT_SEARCH (+26 more)
 
-### Community 93 - "MuseumCatalog"
-Cohesion: 0.12
-Nodes (3): Entry, MuseumCatalog, ResolvedDonation
-
 ### Community 95 - "SearchableGridWidget"
-Cohesion: 0.09
+Cohesion: 0.10
 Nodes (6): net.minecraft.client.gui.components.AbstractContainerWidget, net.minecraft.client.gui.layouts.GridLayout, net.minecraft.client.gui.narration.NarrationElementOutput, Override, SearchableGridWidget, WidgetsContainer
 
+### Community 96 - ".get"
+Cohesion: 0.11
+Nodes (3): CrosshairRenderer, ConfigUITheme, ChatSearchHelper
+
 ### Community 97 - "net.minecraft.client.gui.GuiGraphicsExtractor"
-Cohesion: 0.05
-Nodes (8): net.minecraft.client.gui.GuiGraphicsExtractor, Hit, IconButtonBar, Metrics, DungeonMapOverlay, HotMNodeInfo, LevelProgress, ProfileViewerScreen
+Cohesion: 0.06
+Nodes (9): net.minecraft.client.gui.Font, net.minecraft.client.gui.GuiGraphicsExtractor, Entry, Hit, IconButtonBar, Metrics, HotMNodeInfo, LevelProgress (+1 more)
 
 ### Community 98 - "EggFinder"
-Cohesion: 0.05
-Nodes (17): java.net.http.WebSocket, Listener, EggFinder, EggType, BREAKFAST, BRUNCH, DEJEUNER, DINNER (+9 more)
+Cohesion: 0.12
+Nodes (10): EggFinder, EggType, BREAKFAST, BRUNCH, DEJEUNER, DINNER, LUNCH, SUPPER (+2 more)
 
 ### Community 99 - "net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext"
-Cohesion: 0.17
-Nodes (5): net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext, DisplayESP, ParticleESP, CritterCapsuleArc, CritterSafariEngine
+Cohesion: 0.12
+Nodes (12): com.mojang.blaze3d.vertex.PoseStack, com.mojang.blaze3d.vertex.VertexConsumer, net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext, org.joml.Matrix4f, DisplayESP, BomboRenderUtils, Pose, DungeonBossManager (+4 more)
 
 ### Community 100 - "DiscordIpcManager"
-Cohesion: 0.11
+Cohesion: 0.09
 Nodes (7): Discord IPC Desktop Concurrency & Watchdog Crash Elimination, java.io.RandomAccessFile, DiscordBotUserInfo, DiscordIpcManager, DiscordVoiceUser, Packet, PendingMute
 
 ### Community 102 - "Custom Sound Management"
@@ -782,103 +780,107 @@ Cohesion: 0.09
 Nodes (16): PvTab, AUCTIONS, BESTIARY, COLLECTIONS, CRIMSON, DUNGEONS, EVENTS, FISHING (+8 more)
 
 ### Community 105 - "PetSnapshot"
-Cohesion: 0.09
+Cohesion: 0.14
 Nodes (3): AutopetRule, Entry, PetSnapshot
 
 ### Community 106 - "org.spongepowered.asm.mixin.Shadow"
-Cohesion: 0.13
-Nodes (5): v26.2.28.47: Chat Imgur Delete / Supr Fix, org.spongepowered.asm.mixin.Shadow, AbstractWidgetMixin, EditBoxMixin, KeyEvent
+Cohesion: 0.11
+Nodes (7): v26.2.28.47: Chat Imgur Delete / Supr Fix, org.spongepowered.asm.mixin.Shadow, AbstractWidgetMixin, CameraMixin, DeltaTracker, EditBoxMixin, KeyEvent
+
+### Community 107 - "InventoryButtonManager"
+Cohesion: 0.17
+Nodes (3): InventoryButtonManager, InventoryButtonMoveScreen, Override
 
 ### Community 109 - "PriceHistoryScreen"
 Cohesion: 0.10
 Nodes (10): MayorManager, MayorPerk, MayorTerm, FetchTask, ItemHistoryData, PriceHistoryManager, PricePoint, KeyEvent (+2 more)
 
 ### Community 110 - "DailyRewardHelper"
-Cohesion: 0.19
-Nodes (5): DailyRewardHelper, FetchResult, RewardCard, RewardPageData, DailyRewardScreen
+Cohesion: 0.15
+Nodes (7): net.minecraft.client.gui.screens.inventory.BookViewScreen, DailyRewardHelper, FetchResult, RewardCard, RewardPageData, DailyRewardScreen, BookScreenMixin
 
-### Community 111 - "Tier"
-Cohesion: 0.16
-Nodes (6): TierCounts, Tier, BRONZE, DIAMOND, GOLD, SILVER
+### Community 111 - "GuildStatus"
+Cohesion: 0.06
+Nodes (16): TierCounts, GuildStatus, PvDrawCompat, State, ERROR, IDLE, LOADING, NONE (+8 more)
 
 ### Community 112 - "Auction House Automation"
 Cohesion: 0.08
 Nodes (25): Step, CHECK_NEXT_ITEM, CHECK_SAFETY_AND_CONFIRM, CLICK_CREATE_AUCTION, CLICK_CREATE_BIN_AUCTION, CLICK_DURATION_CLOCK_1, CLICK_DURATION_CUSTOM_CLOCK_2, CLICK_ITEM_PRICE_OR_BIN (+17 more)
 
 ### Community 113 - "PlaytimeTracker"
-Cohesion: 0.10
-Nodes (11): HoveredTooltip, PlaytimeGUI, ViewItem, ViewMode, AREAS, DAY_DETAIL, DAY_SUB_AREAS, DAYS (+3 more)
-
-### Community 114 - "GardenOverviewPage"
 Cohesion: 0.11
-Nodes (3): GardenOverviewPage, Line, VisitorsPage
+Nodes (10): PlaytimeGUI, ViewItem, ViewMode, AREAS, DAY_DETAIL, DAY_SUB_AREAS, DAYS, SUB_AREAS (+2 more)
 
-### Community 115 - ".calculateForClass"
-Cohesion: 0.20
-Nodes (6): AverageResult, ClassRuns, ClassXpCalculator, FloorEstimate, FloorPick, Result
+### Community 115 - "DungeonSnapshot"
+Cohesion: 0.05
+Nodes (20): ClassEntry, DungeonSnapshot, FloorEntry, HubRace, JsonElement, ModeStats, CataXpCalculator, FloorEstimate (+12 more)
 
-### Community 117 - "Player Online Status"
-Cohesion: 0.15
+### Community 117 - "PlayerStatus"
+Cohesion: 0.14
 Nodes (7): PlayerStatus, State, ERROR, IDLE, LOADING, OFFLINE, ONLINE
 
+### Community 118 - "StoragePreviewManager"
+Cohesion: 0.07
+Nodes (6): SphinxMacro, InventorySnapshot, ParsedTooltipCache, StoragePreviewManager, AcceptInfo, ChatMessageTracker
+
 ### Community 119 - "4. Current Implementation State & Untested Features"
-Cohesion: 0.12
-Nodes (10): 4. Current Implementation State & Untested Features, [26.2.28.58] - 2026-09-30 (Beta), Discord Image Link & Query Parameter Preservation, Watchdog Shutdown Crash Elimination (`NTSTATUS 0xFFFFFFF8`), java.security.PrivateKey, EggAuth, SignedData, ChatImagePreview (+2 more)
+Cohesion: 0.20
+Nodes (7): 4. Current Implementation State & Untested Features, [26.2.28.58] - 2026-09-30 (Beta), Discord Image Link & Query Parameter Preservation, Watchdog Shutdown Crash Elimination (`NTSTATUS 0xFFFFFFF8`), ChatImagePreview, GifFrame, LoadedImage
 
 ### Community 120 - "com.mojang.authlib.GameProfile"
 Cohesion: 0.13
-Nodes (9): clientasset, com.mojang.authlib.GameProfile, net.minecraft.client.multiplayer.PlayerInfo, net.minecraft.world.entity.player.PlayerSkin, BetterPvCosmetics, CapeCacheKey, OwnerCape, EntityCosmeticsMixin (+1 more)
+Nodes (11): clientasset, com.mojang.authlib.GameProfile, net.minecraft.client.gui.components.PlayerTabOverlay, net.minecraft.client.multiplayer.PlayerInfo, net.minecraft.world.entity.player.PlayerSkin, BetterPvCosmetics, CapeCacheKey, OwnerCape (+3 more)
 
-### Community 121 - ".buildTransformPlan"
-Cohesion: 0.10
-Nodes (5): MatchedCustomization, NameStyleMatcher, OrderedTextTransformPlan, RankPrefixReplacement, ResolvedOrderedMatch
-
-### Community 122 - ".calculate"
-Cohesion: 0.21
-Nodes (4): ColeWeight, Line, Result, Threshold
+### Community 122 - "EssenceShop"
+Cohesion: 0.09
+Nodes (6): Line, Result, EssencePerk, EssenceShop, Def, EssenceShopData
 
 ### Community 123 - "GardenMovement"
 Cohesion: 0.10
 Nodes (3): CommandTracker, GardenMovement, Screen
 
 ### Community 125 - "MuseumPage"
-Cohesion: 0.15
+Cohesion: 0.16
 Nodes (3): CheapRow, MuseumPage, Slot
 
 ### Community 127 - "DiscordVoiceHud"
-Cohesion: 0.08
-Nodes (17): [26.2.28.66] - 2026-10-02 (Beta), [26.2.28.68] - 2026-10-03 (Beta), Bridge Color Formatting & Clean IGN Decoupling, Clickable Versions Changelog, Config Backups, Fresh Defaults & Brigadier Registration, Config Color Picker Alpha Slider & ARGB Support, Discord Voice HUD Stale Pruning & User Muting, Discord WebRTC Call Member Tracking (+9 more)
+Cohesion: 0.12
+Nodes (10): [26.2.28.68] - 2026-10-03 (Beta), [26.2.28.83] - 2026-10-04 (Beta), Config Backups, Fresh Defaults & Brigadier Registration, Discord Voice HUD Stale Pruning & User Muting, Discord Voice Instant Self-Mute, HUD Click & Live Bot Verification, Live Synced Lyrics Web Player & Backend Synchronization, Screenshare 1440p Pipeline & Hardware Streaming, Screenshare Zero-FPS-Drop Transfer & Dynamic Backpressure (+2 more)
 
 ### Community 129 - "BestiaryManager"
-Cohesion: 0.13
+Cohesion: 0.12
 Nodes (7): com.google.gson.stream.JsonReader, com.google.gson.stream.JsonWriter, com.google.gson.TypeAdapter, HighlightInfo, HighlightInfoAdapter, BestiaryManager, Pattern
 
 ### Community 130 - "SafariBiome"
-Cohesion: 0.13
+Cohesion: 0.15
 Nodes (7): BiomeRowBounds, SafariAreaMap, SafariBiome, CAVERN, FOREST, HAUNTED, ICY
 
 ### Community 131 - "SafariLocation"
-Cohesion: 0.14
+Cohesion: 0.17
 Nodes (5): SafariLocation, Where, ELSEWHERE, ENTRANCE, INSIDE
 
 ### Community 132 - "FakeBanScreen"
-Cohesion: 0.12
+Cohesion: 0.11
 Nodes (11): FakeBanScreen, Override, LoadingEggFinale, Step, CLOSE_PV, DONE, IDLE, SEND_LIMBO (+3 more)
 
+### Community 133 - "ProfileSnapshot"
+Cohesion: 0.17
+Nodes (4): BankTransaction, EmblemInfo, ProfileSnapshot, SkillEntry
+
 ### Community 135 - "StorageOverlayScreen"
-Cohesion: 0.12
-Nodes (6): net.minecraft.client.renderer.Rect2i, org.joml.Vector2dc, CharacterEvent, ContainerInput, Override, StorageOverlayScreen
+Cohesion: 0.09
+Nodes (8): net.minecraft.client.renderer.Rect2i, @Nullable BackpackWidget, org.joml.Vector2dc, BackpackGridWidget, CharacterEvent, ContainerInput, Override, StorageOverlayScreen
 
 ### Community 136 - "MagicalPowerCalculator"
-Cohesion: 0.20
+Cohesion: 0.21
 Nodes (3): Candidate, FamilyPos, MagicalPowerCalculator
 
-### Community 137 - "Username History Tracker"
-Cohesion: 0.17
+### Community 137 - "UsernameHistory"
+Cohesion: 0.20
 Nodes (7): Entry, State, ERROR, IDLE, LOADING, READY, UsernameHistory
 
 ### Community 139 - "DiceTracker"
-Cohesion: 0.18
+Cohesion: 0.16
 Nodes (3): DiceHud, DiceTracker, Stats
 
 ### Community 140 - "Hotbar Snapshot Manager"
@@ -890,79 +892,75 @@ Cohesion: 0.16
 Nodes (9): chunkpos, mth, net.minecraft.client.gui.components.debug.DebugEntryPosition, net.minecraft.client.gui.components.debug.DebugScreenDisplayer, net.minecraft.core.Direction, net.minecraft.world.level.chunk.LevelChunk, sectionpos, FreecamManager (+1 more)
 
 ### Community 142 - "AttributeShardsData"
-Cohesion: 0.17
+Cohesion: 0.16
 Nodes (3): AttributeShardsData, Def, TrophyFrogData
 
-### Community 143 - "CollectionsUi.java"
-Cohesion: 0.16
-Nodes (5): BossCollections, BossDef, CollectionIds, CollectionsPage, CollectionsUi
+### Community 143 - "IChatComponent"
+Cohesion: 0.12
+Nodes (3): ChatScreenMixin, IChatComponent, Line
 
 ### Community 144 - "LyricsManager"
 Cohesion: 0.19
-Nodes (4): LyricCandidate, LyricsLine, LyricsManager, WordTime
+Nodes (5): Spotify Lyrics Word Timings in Raw & Custom Editor, LyricCandidate, LyricsLine, LyricsManager, WordTime
 
 ### Community 145 - "Dungeon Modifier Scanner"
 Cohesion: 0.25
 Nodes (4): DungeonModifierScanner, JsonElement, JsonObject, Mods
 
 ### Community 146 - "BackpackPreview"
-Cohesion: 0.17
-Nodes (4): net.minecraft.world.Container, org.jetbrains.annotations.Nullable, BackpackPreview, Storage
+Cohesion: 0.13
+Nodes (6): Storage Overlay Diagnostics, Storage Overlay Dynamic Sizing & Live Updates, net.minecraft.world.Container, org.jetbrains.annotations.Nullable, BackpackPreview, AbstractContainerMenuMixin
 
 ### Community 147 - "SkyBlockPackCache"
-Cohesion: 0.09
+Cohesion: 0.08
 Nodes (7): com.mojang.blaze3d.platform.NativeImage, CapeTexture, CapeTextureManager, IconState, SkyBlockItemIconCache, SkyBlockPackCache, Texture
 
-### Community 148 - "Part"
-Cohesion: 0.12
-Nodes (12): Part, Role, DETAIL, ITEM, NOTE, UPGRADE, Section, BASE (+4 more)
-
-### Community 149 - "ItemHotkeysMixin"
-Cohesion: 0.17
-Nodes (3): ItemValueBreakdownHud, ItemValueBreakdown, ItemHotkeysMixin
-
-### Community 151 - ".drawFarmingToolkit"
-Cohesion: 0.14
-Nodes (4): CropMedal, CropRow, FarmingToolkitSlot, Line
+### Community 148 - "Section"
+Cohesion: 0.20
+Nodes (6): Section, BASE, ENCHANTMENTS, GEMSTONES, OTHER, UPGRADES
 
 ### Community 152 - "GlobalStorageScreen"
 Cohesion: 0.17
 Nodes (4): AggregatedItem, GlobalStorageScreen, ParsedItemInfo, TabInfo
 
+### Community 153 - "ProfileViewerScreen"
+Cohesion: 0.10
+Nodes (16): Override, ProfileViewerScreen, PvCategory, ACCESSORIES, ARMOR, BACKPACKS, DUNGEONS, ENDERCHEST (+8 more)
+
 ### Community 155 - "ChatImagePreview.java"
 Cohesion: 0.07
-Nodes (35): account, awt, bytearrayoutputstream, dataflavor, guimessage, iioimage, iiometadata, iiometadatanode (+27 more)
+Nodes (31): bytearrayoutputstream, clientintent, dataflavor, guimessage, iiometadata, iiometadatanode, image, imageinputstream (+23 more)
 
 ### Community 156 - "ExperimentationTableHud"
-Cohesion: 0.35
+Cohesion: 0.31
 Nodes (3): DetectedRngItem, ExperimentationTableHud, RngDataState
 
-### Community 157 - "ChatModifier"
+### Community 157 - "ChatModifierScreen"
 Cohesion: 0.16
-Nodes (4): ChatModifier, ChatRule, MouseButtonEvent, Override
+Nodes (5): ChatModifier, ChatRule, ChatModifierScreen, MouseButtonEvent, Override
 
-### Community 161 - "PvCategory"
-Cohesion: 0.13
-Nodes (14): PvCategory, ACCESSORIES, ARMOR, BACKPACKS, DUNGEONS, ENDERCHEST, INVENTORY, MAIN (+6 more)
+### Community 158 - ".render"
+Cohesion: 0.17
+Nodes (3): HudStyle, CritterHud, PlayerRowBounds
+
+### Community 163 - "UpdateVersionsScreen"
+Cohesion: 0.26
+Nodes (3): Override, UpdateVersionsScreen, VersionEntry
 
 ### Community 164 - "ItemModelResolverMixin.java"
-Cohesion: 0.20
-Nodes (12): com.llamalad7.mixinextras.injector.wrapoperation.Operation, com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation, missingitemmodel, ModelManager, net.minecraft.client.renderer.item.ItemModel, net.minecraft.client.renderer.item.ItemModelResolver, net.minecraft.client.renderer.item.ItemStackRenderState, net.minecraft.core.component.DataComponentType (+4 more)
-
-### Community 165 - "net.minecraft.world.item.ItemStack"
-Cohesion: 0.05
-Nodes (10): net.minecraft.resources.Identifier, net.minecraft.world.item.ItemStack, CollectionCategoryIcons, SkyBlockIconRenderer, Entry, ItemInfoCommand, CustomSkyblockModelRegistry, OverrideRule (+2 more)
+Cohesion: 0.13
+Nodes (13): com.llamalad7.mixinextras.injector.wrapoperation.Operation, com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation, missingitemmodel, net.minecraft.client.renderer.item.ItemModel, net.minecraft.client.renderer.item.ItemModelResolver, net.minecraft.client.renderer.item.ItemStackRenderState, net.minecraft.core.component.DataComponentType, net.minecraft.world.entity.ItemOwner (+5 more)
 
 ### Community 166 - "BomboAddons Changelog"
-Cohesion: 0.04
-Nodes (45): 1. Bombo authentication server (the "endpoint like hysky but ours"), 1. Sequence editor: steps are editable, [26.2.28] - 2026-09-15 (Full Release), [26.2.28.32] - 2026-09-21 (Beta), [26.2.28.37] - 2026-09-24 (Beta), [26.2.28.38] - 2026-09-24 (Beta), [26.2.28.41] - 2026-09-24 (Beta), [26.2.28.42] - 2026-09-24 (Beta) (+37 more)
+Cohesion: 0.03
+Nodes (66): 1. Bombo authentication server (the "endpoint like hysky but ours"), 1. Freecam actually usable, [26.2.28] - 2026-09-15 (Full Release), [26.2.28.32] - 2026-09-21 (Beta), [26.2.28.37] - 2026-09-24 (Beta), [26.2.28.40] - 2026-09-24 (Beta), [26.2.28.41] - 2026-09-24 (Beta), [26.2.28.44] - 2026-09-25 (Beta) (+58 more)
 
 ### Community 168 - "Job Category Definitions"
 Cohesion: 0.12
 Nodes (16): Job, AUCTIONS, BESTIARY, COLLECTIONS, CRIMSON, DUNGEONS, EVENTS, FISHING (+8 more)
 
 ### Community 169 - "User32"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (13): Callback, [26.2.28.61] - 2026-10-02 (Beta), Lyrics Engine Monotonic Progression & Debug Logger (`/b lyrics debug`), Native Win32 JNA Spotify Controls & Keybindings, Screenshare Streaming Latency & Command Fixes, Storage Overlay Full Regex Support & Diagnostic Tracing, com.sun.jna.Library, com.sun.jna.Pointer (+5 more)
 
 ### Community 171 - "PerformanceProfiler"
@@ -973,10 +971,6 @@ Nodes (6): HUD Performance / 240Hz Render Optimization & Profiler Dump (`/b perf
 Cohesion: 0.17
 Nodes (8): AutoHitman, State, CLAIMED, CLOSING, IDLE, IN_CF, IN_HITMAN, OPENING_CF
 
-### Community 173 - "BomboRenderUtils"
-Cohesion: 0.20
-Nodes (8): com.mojang.blaze3d.vertex.PoseStack, com.mojang.blaze3d.vertex.VertexConsumer, org.joml.Matrix4f, BomboRenderUtils, Pose, CustomGeometryRenderer, DisplayMode, Pose
-
 ### Community 174 - "Menu Tab Navigation"
 Cohesion: 0.12
 Nodes (14): Tab, CHOCOLATE_FACTORY, COLLECTIONS, COMBAT, DUNGEONS, FARMING, FISHING, FORAGING (+6 more)
@@ -985,100 +979,112 @@ Nodes (14): Tab, CHOCOLATE_FACTORY, COLLECTIONS, COMBAT, DUNGEONS, FARMING, FISH
 Cohesion: 0.16
 Nodes (5): ApiHistory, Entry, Kind, HTTP, WS
 
-### Community 176 - "net.minecraft.network.chat.Style"
-Cohesion: 0.13
-Nodes (5): net.minecraft.network.chat.Style, ChatClickProcessor, NameRange, IChatComponent, Line
-
-### Community 179 - ".fromMember"
-Cohesion: 0.16
-Nodes (4): FarmingWeightInfo, GreenhouseMeta, MedalCounts, PersonalBest
+### Community 180 - "PetLoreResolver"
+Cohesion: 0.12
+Nodes (3): Entry, MuseumCache, PetLoreResolver
 
 ### Community 181 - "RtcaChatFormatter"
-Cohesion: 0.19
-Nodes (5): v26.2.28.46: RTCA Boost Honesty Fix, CacheEntry, ClassInfo, RtcaChatFormatter, RtcaData
+Cohesion: 0.21
+Nodes (4): CacheEntry, ClassInfo, RtcaChatFormatter, RtcaData
+
+### Community 182 - "DungeonChestProfitHud"
+Cohesion: 0.41
+Nodes (3): DungeonChestData, ItemDetail, DungeonChestProfitHud
 
 ### Community 183 - "ItemListOverlay"
-Cohesion: 0.11
+Cohesion: 0.12
 Nodes (3): ItemListOverlay, RomanNumber, StopwatchManager
 
-### Community 186 - ".colorize"
-Cohesion: 0.15
-Nodes (3): EnchantTooltip, BarColorAt, FunctionalInterface
-
 ### Community 188 - "DungeonProfitLog"
-Cohesion: 0.18
+Cohesion: 0.19
 Nodes (4): DungeonProfitLog, ItemLine, ClientPacketListener, RunRecord
 
 ### Community 189 - "FlavorBridge"
-Cohesion: 0.10
-Nodes (5): 1. Freecam actually usable, [26.2.28.40] - 2026-09-24 (Beta), 2. The legit build can no longer install the cheat build, 3. Modularisation groundwork (no user-visible change), FlavorBridge
+Cohesion: 0.06
+Nodes (16): Spectator Camera, GameType, MultiPlayerGameMode, net.minecraft.client.Camera, net.minecraft.client.renderer.culling.Frustum, net.minecraft.client.renderer.extract.LevelExtractor, net.minecraft.client.renderer.GameRenderer, FreecamEntityVisibilityMixin (+8 more)
+
+### Community 190 - "HudMoveScreen"
+Cohesion: 0.17
+Nodes (3): HudMoveScreen, HudRect, Override
 
 ### Community 192 - "CustomSoundsScreen"
-Cohesion: 0.22
+Cohesion: 0.24
 Nodes (3): net.minecraft.client.gui.components.AbstractSliderButton, CustomSoundsScreen, VolumeSlider
 
 ### Community 193 - "ScreenshareManager"
-Cohesion: 0.10
-Nodes (14): [26.2.28.56] - 2026-09-29 (Beta), [26.2.28.57] - 2026-09-30 (Beta), Discord Desktop IPC Concurrency & Authorization Fixes, Discord Desktop IPC Voice HUD, High-Speed Screenshare Streaming (25-30 FPS MJPEG) & Diagnostics, Interactive Version Catalog GUI (`/b update versions`), Live Screenshare Streaming & Web Dashboard, Lyrics Engine Polish & Custom Editor Hotkeys (`/b lyrics`) (+6 more)
+Cohesion: 0.07
+Nodes (11): java.awt.image.BufferedImage, javax.imageio.ImageWriter, Rectangle, Robot, GpuBuffer, LutPair, PboSlot, ScreenshareManager (+3 more)
 
-### Community 194 - "ClassLevelQuery"
-Cohesion: 0.20
-Nodes (3): CataXpMath, ClassLevelQuery, Parsed
-
-### Community 195 - "net.minecraft.world.phys.Vec3"
-Cohesion: 0.23
-Nodes (5): net.minecraft.world.phys.Vec3, PearlSolution, SearchResult, SimResult, TrajectorySolver
+### Community 195 - "FakePlayer.java"
+Cohesion: 0.32
+Nodes (3): net.minecraft.client.player.RemotePlayer, net.minecraft.world.entity.EquipmentSlot, FakePlayer
 
 ### Community 198 - "ChangelogScreen"
 Cohesion: 0.32
 Nodes (3): ChangelogScreen, Override, ReleaseEntry
 
-### Community 200 - "ModeStats"
-Cohesion: 0.22
-Nodes (4): FloorEntry, HubRace, JsonElement, ModeStats
+### Community 199 - ".ensureBarCaches"
+Cohesion: 0.36
+Nodes (3): ActiveSlayerQuest, CachedBar, Line
+
+### Community 200 - "GreenhouseProfitScreen"
+Cohesion: 0.33
+Nodes (3): Entry, GreenhouseProfitScreen, Override
+
+### Community 201 - "ParticleTracker"
+Cohesion: 0.20
+Nodes (3): net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket, ParticleEntry, ParticleTracker
+
+### Community 202 - "ProfileViewerOpener"
+Cohesion: 0.23
+Nodes (3): profileviewerscreen, LiteralArgumentBuilder, ProfileViewerOpener
+
+### Community 205 - "NameStylerIdentityCache"
+Cohesion: 0.13
+Nodes (5): SuppressWarnings, NameStylerIdentityCache, Entry, Override, NameStylerLruCache
 
 ### Community 206 - "Dungeon Room Types"
 Cohesion: 0.17
 Nodes (11): Type, BLOOD, BOSS, ENTRANCE, FAIRY, MINIBOSS, NORMAL, PUZZLE (+3 more)
 
-### Community 208 - "TitleScreenMixin.java"
-Cohesion: 0.08
-Nodes (20): commoncomponents, componentcontents, connectscreen, framelayout, inputwithmodifiers, joinmultiplayerscreen, net.minecraft.client.gui.components.MultiLineTextWidget, net.minecraft.client.gui.components.Renderable (+12 more)
+### Community 207 - "VirtualContainerGUI"
+Cohesion: 0.21
+Nodes (3): HoveredTooltip, HoveredTooltip, VirtualContainerGUI
 
-### Community 211 - "net.minecraft.world.level.block.state.BlockState"
+### Community 208 - ".getSidebarLines"
 Cohesion: 0.12
-Nodes (13): com.mojang.blaze3d.vertex.QuadInstance, Int2BooleanOpenHashMap, net.minecraft.client.renderer.block.BlockAndTintGetter, net.minecraft.client.renderer.block.BlockModelLighter, net.minecraft.client.renderer.block.BlockQuadOutput, net.minecraft.client.resources.model.geometry.BakedQuad, net.minecraft.world.level.block.Block, net.minecraft.world.level.block.state.BlockState (+5 more)
+Nodes (3): org.spongepowered.asm.mixin.gen.Accessor, AbstractContainerScreenAccessor, PlayerTabOverlayAccessor
+
+### Community 211 - "net.minecraft.core.BlockPos"
+Cohesion: 0.17
+Nodes (15): com.mojang.blaze3d.vertex.QuadInstance, net.minecraft.client.renderer.block.BlockAndTintGetter, net.minecraft.client.renderer.block.BlockModelLighter, net.minecraft.client.renderer.block.BlockQuadOutput, net.minecraft.client.renderer.block.BlockStateModelSet, net.minecraft.client.renderer.block.dispatch.BlockStateModel, net.minecraft.client.renderer.block.ModelBlockRenderer, net.minecraft.client.resources.model.geometry.BakedQuad (+7 more)
+
+### Community 214 - "TabCompletionManager"
+Cohesion: 0.27
+Nodes (4): com.mojang.brigadier.suggestion.Suggestions, com.mojang.brigadier.suggestion.SuggestionsBuilder, AutocompleteData, TabCompletionManager
 
 ### Community 217 - "Dungeon Door Types"
 Cohesion: 0.20
 Nodes (8): DungeonDoor, Type, BLOOD, ENTRANCE, NONE, NORMAL, OPENED, WITHER
 
 ### Community 218 - "DungeonMapHistory"
-Cohesion: 0.27
+Cohesion: 0.31
 Nodes (3): DungeonMapHistory, PlayerState, Snapshot
 
 ### Community 219 - "DungeonMapScanner"
-Cohesion: 0.31
+Cohesion: 0.27
 Nodes (3): DungeonMapScanner, Block, RoomDefinition
 
 ### Community 220 - "ClipboardImageUploader"
-Cohesion: 0.18
-Nodes (7): [26.2.28.48] - 2026-09-28 (Beta), Commands, Scoreboard & Network, Dungeons, Camera & Commands, RTCA & Backend, Storage & GUI, ClipboardImageUploader, Pattern
-
-### Community 221 - "PerformanceScreen"
-Cohesion: 0.27
-Nodes (3): Override, Snapshot, PerformanceScreen
-
-### Community 222 - "StorageOverlayManager"
-Cohesion: 0.19
-Nodes (5): 3. Features Implemented in v26.2.28.47 -> v26.2.28.43, v26.2.28.43: Refinements & Bugfixes, v26.2.28.44: Skyblocker Storage Overlay Port, ContainerDisplayData, StorageOverlayManager
+Cohesion: 0.14
+Nodes (10): [26.2.28.48] - 2026-09-28 (Beta), [26.2.28.49] - 2026-09-28 (Beta), Commands, Scoreboard & Network, Dungeons, Camera & Commands, Mayor & RTCA Live Integration, RTCA & Backend, Spectator & Camera Fixes, Storage & GUI (+2 more)
 
 ### Community 223 - "StorageOverlayScreenHandler"
-Cohesion: 0.21
-Nodes (7): net.minecraft.world.entity.player.Inventory, net.minecraft.world.inventory.ChestMenu, net.minecraft.world.inventory.MenuType, InactiveSlot, Override, StorageOverlayScreenHandler, Unsafe
+Cohesion: 0.14
+Nodes (8): net.minecraft.world.entity.player.Inventory, net.minecraft.world.inventory.ChestMenu, net.minecraft.world.inventory.MenuType, InactiveSlot, Override, StorageOverlayScreenHandler, InventoryViewScreen, Unsafe
 
 ### Community 224 - ".onInitializeClient"
-Cohesion: 0.13
+Cohesion: 0.20
 Nodes (3): BetterPVConfig, Override, PlayerInteractPvOpener
 
 ### Community 225 - "CritterEvent"
@@ -1090,16 +1096,12 @@ Cohesion: 0.20
 Nodes (7): DungeonClearTracker, Checkmark, FAILED, GRAY, GREEN, NONE, WHITE
 
 ### Community 229 - "BlockHighlight"
-Cohesion: 0.36
+Cohesion: 0.43
 Nodes (3): BlockHighlight, ParsedBlockRule, BlockHighlightInfo
 
-### Community 230 - "KeyBindsListMixin.java"
-Cohesion: 0.24
-Nodes (6): keymapping, net.minecraft.client.gui.components.ContainerObjectSelectionList, net.minecraft.client.gui.screens.options.controls.KeyBindsList, IBomboKeyBindsList, Entry, KeyBindsListMixin
-
 ### Community 231 - "⚠️ UNTESTED IN-GAME (Requires Minecraft Client Testing)"
-Cohesion: 0.12
-Nodes (15): 1. Build & Flavors Architecture, 2. Remote Server Infrastructure (`bomboapi`), 4. Current Testing State: Tested vs. Untested, 5. Known Quirks & Troubleshooting, API Endpoints:, COMPREHENSIVE REPOSITORY KNOWLEDGE & HANDOFF GUIDE, How Flavors Work:, Key Directories & Files: (+7 more)
+Cohesion: 0.14
+Nodes (13): [26.2.28.47] - 2026-09-28 (Beta), Chat & Input, Documentation, 4. Current Testing State: Tested vs. Untested, Priority 0: RTCA Chat Hover (`v26.2.28.46` / `v26.2.28.45`) — newest and least verified, Priority 1: Storage Overlay (`v26.2.28.44`), Priority 2: Camera & Spectator FOV (`v26.2.28.43`), Priority 3: AutoCroesus & Dungeon Profits (`v26.2.28.43`) (+5 more)
 
 ### Community 232 - ".recordChestPurchase"
 Cohesion: 0.21
@@ -1113,10 +1115,6 @@ Nodes (3): BitItem, BitsManager, SimpleBitItem
 Cohesion: 0.22
 Nodes (6): Rarity, COMMON, EPIC, LEGENDARY, RARE, UNCOMMON
 
-### Community 239 - ".checkAndUpdate"
-Cohesion: 0.11
-Nodes (5): Override, Override, UpdateVersionsScreen, VersionEntry, ModUpdater
-
 ### Community 240 - "ItemCustomizeScreen"
 Cohesion: 0.22
 Nodes (3): ItemCustomizeScreen, MouseButtonEvent, Override
@@ -1125,21 +1123,25 @@ Nodes (3): ItemCustomizeScreen, MouseButtonEvent, Override
 Cohesion: 0.12
 Nodes (15): BomboAddons (Minecraft 26.2 Fabric), Build Instructions, 🛠️ Building from Source, 📥 Downloads, 🚀 GitHub Actions, ⚔️ Hypixel SkyBlock Utilities, 👥 Interactive Screensharing & Spectator (`/ss <player>`), ✨ Key Features (+7 more)
 
-### Community 243 - "SupplySpot"
-Cohesion: 0.11
-Nodes (8): NoPre, SupplySpot, SUPPLY1, SUPPLY2, SUPPLY3, SUPPLY4, SUPPLY5, SUPPLY6
+### Community 243 - "[26.2.28.66] - 2026-10-02 (Beta)"
+Cohesion: 0.22
+Nodes (9): [26.2.28.66] - 2026-10-02 (Beta), Bridge Color Formatting & Clean IGN Decoupling, Clickable Versions Changelog, Config Color Picker Alpha Slider & ARGB Support, Discord WebRTC Call Member Tracking, Multi-Provider Lyrics Expansion & Test Endpoint, Screenshare 0 FPS Fix & Fallback, Spotify UTF-8 URI Support & Direct Artist Pages (+1 more)
 
-### Community 245 - "net.minecraft.client.gui.components.Button"
-Cohesion: 0.11
-Nodes (9): [26.2.28.70] - 2026-10-04 (Beta), Safe Clean Installation Defaults, Screenshare Latency & High-DPI Downsampling, Storage Overlay Interception & Fail-Safe Fallback, Synced Lyrics Web Player Spaces & Pinned Controls, net.minecraft.client.gui.components.Button, @Nullable BackpackWidget, BackpackGridWidget (+1 more)
+### Community 245 - "[26.2.28.70] - 2026-10-04 (Beta)"
+Cohesion: 0.33
+Nodes (5): [26.2.28.70] - 2026-10-04 (Beta), Safe Clean Installation Defaults, Screenshare Latency & High-DPI Downsampling, Storage Overlay Interception & Fail-Safe Fallback, Synced Lyrics Web Player Spaces & Pinned Controls
 
 ### Community 246 - "Safari Area Data"
 Cohesion: 0.29
 Nodes (7): Safari Area 0, Safari Area 1, Safari Area 2, Safari Area 3, Safari Area 4, Safari Areas Data, Hypixel Logo Icon
 
 ### Community 247 - "MuseumSort"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (12): Mutable, MuseumSort, ALL, COMBAT, DUNGEONEERING, FARMING, FISHING, FORAGING (+4 more)
+
+### Community 248 - "v26.2.28.45: Interactive RTCA Chat"
+Cohesion: 0.22
+Nodes (8): 3. Features Implemented in v26.2.28.47 -> v26.2.28.43, Editing method, MC 26.2 API notes (bit me twice), Two false alarms — do not "fix" these, v26.2.28.43: Refinements & Bugfixes, v26.2.28.44: Skyblocker Storage Overlay Port, v26.2.28.45: Interactive RTCA Chat, v26.2.28.46: RTCA Boost Honesty Fix
 
 ### Community 249 - "MayorChatFormatter"
 Cohesion: 0.33
@@ -1149,37 +1151,45 @@ Nodes (4): ElectionData, MayorChatFormatter, MinisterInfo, PerkInfo
 Cohesion: 0.09
 Nodes (21): Anchor, BOTTOM_LEFT, BOTTOM_RIGHT, PLAYER_INV_LEFT, PLAYER_INV_RIGHT, TOP_LEFT, TOP_RIGHT, BackgroundStyle (+13 more)
 
-### Community 251 - ".collectionHover"
-Cohesion: 0.22
-Nodes (3): Line, Item, Tier
+### Community 253 - "[26.2.28.38] - 2026-09-24 (Beta)"
+Cohesion: 0.25
+Nodes (8): 1. Sequence editor: steps are editable, [26.2.28.38] - 2026-09-24 (Beta), 2. Croesus profit tracker (like `/gp`), 3. Auto Croesus settings in the config GUI, 4. Chest value panel is movable, 5. Debug no longer spams chat, 6. `/b cmd`, 7. EggFinder
 
-### Community 256 - "GameRendererMixin"
-Cohesion: 0.10
-Nodes (20): [26.2.28.43] - 2026-09-24 (Beta), [26.2.28.55] - 2026-09-28 (Beta), [26.2.28.63] - 2026-10-02 (Beta), Auto Croesus & Profit Tracking, Camera & Spectator, Client Startup Mixin Target Fix, Commands & Profile Viewer, Estimated Item Value & UI (+12 more)
+### Community 255 - "bomboaddons/gui/ProfileViewerScreen.java"
+Cohesion: 0.36
+Nodes (6): defaultplayerskin, entityrenderdispatcher, livingentityrenderstate, quaternionf, supplier, vector3f
+
+### Community 256 - "[26.2.28.43] - 2026-09-24 (Beta)"
+Cohesion: 0.33
+Nodes (6): [26.2.28.43] - 2026-09-24 (Beta), Auto Croesus & Profit Tracking, Camera & Spectator, Commands & Profile Viewer, Estimated Item Value & UI, Storage & Eggs
 
 ### Community 257 - "FontMixin.java"
-Cohesion: 0.23
-Nodes (10): com.mojang.blaze3d.font.GlyphInfo, net.minecraft.client.gui.font.glyphs.BakedGlyph, net.minecraft.client.gui.GlyphSource, net.minecraft.util.RandomSource, org.spongepowered.asm.mixin.injection.Redirect, FontMixin, Override, StableObfuscatedGlyph (+2 more)
+Cohesion: 0.24
+Nodes (9): com.mojang.blaze3d.font.GlyphInfo, net.minecraft.client.gui.font.glyphs.BakedGlyph, net.minecraft.client.gui.GlyphSource, net.minecraft.util.RandomSource, FontMixin, Override, StableObfuscatedGlyph, Styled (+1 more)
 
 ### Community 259 - ".computePathAsync"
 Cohesion: 0.42
 Nodes (3): GraphNode, GraphPathfinder, NodeData
 
-### Community 261 - "TrophyFishData"
+### Community 260 - "net.minecraft.ChatFormatting"
 Cohesion: 0.23
-Nodes (3): Def, TrophyFishData, TrophySkulls
+Nodes (3): net.minecraft.ChatFormatting, HypixelRanks, LegacyChatFormatting
+
+### Community 261 - "ActionType"
+Cohesion: 0.25
+Nodes (7): ActionType, CLICK_SLOT, CLICK_WORLD, CLOSE_GUI, INTERACT_ENTITY, RUN_COMMAND, WAIT
 
 ### Community 262 - "AGENT HANDOFF: BomboAddons (Fabric 26.2)"
-Cohesion: 0.14
-Nodes (13): 1. Minecraft & Loader Specifications, 2. Mandatory Release & Versioning Protocol (EVERY PROMPT FINISH), 3. Server Endpoints & Architecture (`bomboapi`), 5. Core Architecture, 6. Next Direct Actions, 7. Key Architecture & Ported Files (v26.2.28.46 -> v26.2.28.43), A. Version Bumping Convention: `(mc version).(mod version).(mod subversion)`, AGENT HANDOFF: BomboAddons (Fabric 26.2) (+5 more)
+Cohesion: 0.17
+Nodes (11): 1. Minecraft & Loader Specifications, 2. Mandatory Release & Versioning Protocol (EVERY PROMPT FINISH), 3. Server Endpoints & Architecture (`bomboapi`), 6. Next Direct Actions, 7. Key Architecture & Ported Files (v26.2.28.46 -> v26.2.28.43), A. Version Bumping Convention: `(mc version).(mod version).(mod subversion)`, AGENT HANDOFF: BomboAddons (Fabric 26.2), B. Verify Clean Compilation (BOTH flavors) (+3 more)
 
 ### Community 263 - "CorpseHighlight"
-Cohesion: 0.20
-Nodes (8): CorpseHighlight, CorpseTracer, CorpseType, Lapis, None, Tungsten, Umber, Vanguard
+Cohesion: 0.15
+Nodes (10): org.joml.Vector2f, CorpseHighlight, CorpseTracer, CorpseType, Lapis, None, Tungsten, Umber (+2 more)
 
-### Community 264 - "net.minecraft.core.BlockPos"
-Cohesion: 0.35
-Nodes (4): net.minecraft.core.BlockPos, net.minecraft.world.level.Level, AStarPathfinder, Node
+### Community 264 - "[26.2.28.69] - 2026-10-03 (Beta)"
+Cohesion: 0.29
+Nodes (7): [26.2.28.69] - 2026-10-03 (Beta), Config Backup Filenames & Lore Settings, Discord Voice HUD Member Pruning & Muting, Live Synced Lyrics Web Search & Simulated Playback, Screenshare Fast Pipeline & Instant Viewer, SkyHanni Enchantment Color Compatibility, Storage Overlay Discovery Deadlock Resolution
 
 ### Community 266 - "ClientLevelMixin"
 Cohesion: 0.21
@@ -1195,19 +1205,23 @@ Nodes (3): DungeonItemEntry, DungeonPricesScreen, Override
 
 ### Community 270 - "ForagingOverviewPage.java"
 Cohesion: 0.06
-Nodes (49): bar_after, bar_forage, bar_hunt, barb_color, color_maxed, disabled, dojo_color, drawhover (+41 more)
+Nodes (43): bar_after, bar_forage, barb_color, color_maxed, disabled, dojo_color, drawhover, drawitemicon (+35 more)
 
-### Community 271 - "[26.2.28.72] - 2026-10-04 (Beta)"
-Cohesion: 0.29
-Nodes (7): [26.2.28.72] - 2026-10-04 (Beta), Bridge Colors & Discord Item Glyphs, Discord Voice HUD & Real-Time IPC Protocol, HUD Move Screen & Performance Profiler, Screenshare Direct GPU Framebuffer Prioritization, Storage Overlay Fixes & Inline Renaming, Synced Lyrics Multi-Provider & Web UI
-
-### Community 272 - "SkyBlockStats"
-Cohesion: 0.29
-Nodes (3): StatPoint, SkyBlockStats, StatStyle
+### Community 273 - ".getSkyblockId"
+Cohesion: 0.19
+Nodes (3): AutoExpCapsule, ToolExpInfo, FrozenBlazeAFKTracker
 
 ### Community 274 - "Performance Profiler Expansion (`/b perf`)"
-Cohesion: 0.18
-Nodes (8): [26.2.28.60] - 2026-10-01 (Beta), Auto-Reconnection & Server Play Guard, Discord Desktop IPC Auth Guard, Fixed-Position Chat Image Hover Preview, Performance Profiler Expansion (`/b perf`), Screenshare Direct Framebuffer & Streaming Engine, Synchronized Lyrics Engine Polish, KuudraTimer
+Cohesion: 0.17
+Nodes (9): [26.2.28.60] - 2026-10-01 (Beta), Auto-Reconnection & Server Play Guard, Discord Desktop IPC Auth Guard, Fixed-Position Chat Image Hover Preview, Performance Profiler Expansion (`/b perf`), Screenshare Direct Framebuffer & Streaming Engine, Spotify HUD Rendering Optimization & Album Covers, Synchronized Lyrics Engine Polish (+1 more)
+
+### Community 275 - "SpotifyHud"
+Cohesion: 0.13
+Nodes (8): [26.2.28.55] - 2026-09-28 (Beta), HUD High-Refresh 60 FPS Throttling, Performance Profiler (`/b perf`), Screensharing & Social, Spotify HUD Overlay & Config, Storage & Containers, Synchronized Lyrics (`/b lyrics`), SpotifyHud
+
+### Community 276 - "LoadingEgg"
+Cohesion: 0.43
+Nodes (3): Beat, LoadingEgg, Stage
 
 ### Community 278 - "API and Backend"
 Cohesion: 0.67
@@ -1221,9 +1235,9 @@ Nodes (11): 10. Account swapper race fix, 1. Chat history attribution, [26.2.28.
 Cohesion: 0.11
 Nodes (12): [26.2.28.67] - 2026-10-03 (Beta), Changelog Version Box Alignment, Config Color Picker Modal Hitbox, Discord WebRTC Stream Recovery, Garden Cocoa Angle Validation, Lyrics Word-by-Word Sync & Shortcuts, Screenshare 1440p Frame Preservation, Speedometer HUD Registration (+4 more)
 
-### Community 310 - "2. Features Implemented & Awaiting In-Game Testing (v26.2.28.68)"
-Cohesion: 0.18
-Nodes (10): 1. Mandatory Release & Versioning Protocol (CRITICAL), 2. Features Implemented & Awaiting In-Game Testing (v26.2.28.68), 3. Server Architecture & Ports Reference, 4. Key Code Locations, A. Storage Overlay (`/st`, Ender Chests, Backpacks), B. Discord Voice HUD & IPC, BomboAddons Agent Continuation & Knowledge Handoff, C. Live Synced Lyrics Web Player & Spotify Sync (+2 more)
+### Community 310 - "BomboAddons Agent Continuation & Knowledge Handoff"
+Cohesion: 0.06
+Nodes (35): [26.2.28.77] - 2026-10-04 (Beta), [26.2.28.80] - 2026-10-04 (Beta), [26.2.28.81] - 2026-10-04 (Beta), Chat Image Hover Preview Bounds Guard, Classic Config GUI & Scratch Visual Studio IF Conditions, Configuration GUI & Visual Studio Clean Separation, Discord Voice Local-Only Member Muting & StreamKit Anti-Sneak, Discord Voice Mute Controls & Anti-Flicker HUD (+27 more)
 
 ### Community 314 - ".extractRenderState"
 Cohesion: 0.36
@@ -1234,28 +1248,28 @@ Cohesion: 0.31
 Nodes (3): ApiHistoryScreen, Entry, Override
 
 ### Community 317 - "EntityBlockHiderScreen"
-Cohesion: 0.33
-Nodes (3): EntityBlockHiderScreen, MouseButtonEvent, Override
+Cohesion: 0.16
+Nodes (8): Int2BooleanOpenHashMap, net.minecraft.world.level.block.Block, BlockReplaceTarget, EntityBlockHider, SuppressWarnings, EntityBlockHiderScreen, MouseButtonEvent, Override
 
 ### Community 318 - "PostPassMixin.java"
 Cohesion: 0.27
 Nodes (8): com.mojang.blaze3d.buffers.GpuBuffer, com.mojang.blaze3d.buffers.GpuBufferSlice, com.mojang.blaze3d.framegraph.FrameGraphBuilder, commandencoder, gpudevice, net.minecraft.client.renderer.PostPass, rendersystem, PostPassMixin
 
-### Community 320 - "v26.2.28.45: Interactive RTCA Chat"
-Cohesion: 0.20
-Nodes (7): Editing method, MC 26.2 API notes (bit me twice), Server bugs found and fixed while building this, Two false alarms — do not "fix" these, v26.2.28.45: Interactive RTCA Chat, RingManager, ScheduledChat
+### Community 320 - "RingManager"
+Cohesion: 0.15
+Nodes (9): 1. Build & Flavors Architecture, 2. Remote Server Infrastructure (`bomboapi`), 5. Known Quirks & Troubleshooting, API Endpoints:, COMPREHENSIVE REPOSITORY KNOWLEDGE & HANDOFF GUIDE, How Flavors Work:, Key Directories & Files:, RingManager (+1 more)
 
 ### Community 321 - "[26.2.28.34] - 2026-09-23 (Beta)"
 Cohesion: 0.22
 Nodes (9): 1. Chat history fixes, [26.2.28.34] - 2026-09-23 (Beta), 2. Auto sequences are editable again, 3. Build: one command, two jars, 4. Each build has its own mod id, 5. Hide Mod ID On Join (both builds), 6. No Obfuscate (§k), 7. `/b cmd` - in-game terminal (+1 more)
 
-### Community 322 - ".calculate"
+### Community 322 - "[26.2.28.57] - 2026-09-30 (Beta)"
 Cohesion: 0.33
-Nodes (3): CataXpCalculator, FloorEstimate, Result
+Nodes (6): [26.2.28.57] - 2026-09-30 (Beta), Discord Desktop IPC Concurrency & Authorization Fixes, High-Speed Screenshare Streaming (25-30 FPS MJPEG) & Diagnostics, Interactive Version Catalog GUI (`/b update versions`), Lyrics Engine Polish & Custom Editor Hotkeys (`/b lyrics`), Restored Config Options & Error Tooltips
 
 ### Community 323 - "CollectionsListPage"
-Cohesion: 0.40
-Nodes (4): BoardLayout, CollectionsListPage, ItemHit, Category
+Cohesion: 0.09
+Nodes (11): MinionEntry, CollectionsPage, CollectionsUi, IntConsumer, BoardLayout, CollectionsListPage, ItemHit, Category (+3 more)
 
 ### Community 325 - "FilterTab"
 Cohesion: 0.22
@@ -1277,53 +1291,53 @@ Nodes (8): 1. Sequences actually run now, [26.2.28.36] - 2026-09-23 (Beta), 2. S
 Cohesion: 0.20
 Nodes (9): [26.2.28.71] - 2026-10-04 (Beta), Config UI & HUD Move Screen, Discord Voice HUD & IPC Real-Time Control, Item Chat & Dialogue Interactions, Lyrics Clock Monotonicity & Web Enhancements, Mod Updater Stale Flavor Cleanup, Storage Overlay Launch & Ender Chest Pre-Seeding, ClickEvent (+1 more)
 
-### Community 330 - "BetterPVClient.java"
-Cohesion: 0.12
-Nodes (13): autosequence, clientcommandregistrationcallback, clientcommands, com.mojang.brigadier.tree.CommandNode, event, literalcommandnode, modcontainer, packtype (+5 more)
+### Community 330 - "net.minecraft.resources.Identifier"
+Cohesion: 0.05
+Nodes (28): clientcommandregistrationcallback, event, literalcommandnode, net.minecraft.resources.Identifier, net.minecraft.world.item.Item, packtype, resourcemanager, resourcemanagerhelper (+20 more)
 
-### Community 331 - ".onAddMessage"
-Cohesion: 0.27
-Nodes (3): net.minecraft.client.multiplayer.chat.GuiMessageSource, net.minecraft.client.multiplayer.chat.GuiMessageTag, net.minecraft.network.chat.MessageSignature
+### Community 332 - "[26.2.28.42] - 2026-09-24 (Beta)"
+Cohesion: 0.40
+Nodes (5): [26.2.28.42] - 2026-09-24 (Beta), Auth & APIs, Automation & Dungeons, Flavors & Security, Freecam & Camera
 
-### Community 332 - "Failure"
-Cohesion: 0.20
-Nodes (9): Failure, AUTH_HTTP, AUTH_REJECTED, JOIN_SERVER_FAILED, MISSING_JWT, MISSING_SESSION, NONE, OFFLINE_SESSION (+1 more)
+### Community 333 - "[26.2.28.75] - 2026-10-04 (Beta)"
+Cohesion: 0.40
+Nodes (5): [26.2.28.75] - 2026-10-04 (Beta), Auto Sequences Lore & Condition Filtering, Clipboard Multi-Image Upload & Aliases, Discord Voice HUD Local Controls & Accurate Status, Storage Overlay Navigation, Scroll, and Inline Renaming
+
+### Community 335 - "[26.2.28.78] - 2026-10-04 (Beta)"
+Cohesion: 0.40
+Nodes (5): [26.2.28.78] - 2026-10-04 (Beta), Discord Voice Local Mute, Instant Member Discovery & Anti-Cycling, Scratch Visual Studio Quick-Pills & Input Focus Bugfix, Screenshare 60 FPS Asynchronous Capture Engine, Storage Overlay Auto-Scroll to Target Container
+
+### Community 336 - "ChatTabsOverlay"
+Cohesion: 0.18
+Nodes (8): [26.2.28.74] - 2026-10-04 (Beta), Discord Lore Item Glyphs & Synced Lyrics Spacing, Discord Voice HUD Bot Voice Bridge & Accurate Live Status, Screenshare 1440p High-Resolution Engine & Instant Viewer, Storage Overlay Live Sync & Rename Typing, UI & Autocomplete Improvements, ChatTab, ChatTabsOverlay
 
 ### Community 338 - "[26.2.28.39] - 2026-09-24 (Beta)"
-Cohesion: 0.25
-Nodes (8): 1. Sequences & config GUI, [26.2.28.39] - 2026-09-24 (Beta), 2. Chat history survives everything, 3. Dungeons, 4. Auto Croesus fixes, 6. Storage, 7. Egg Finder & API history, 8. Textures, obfuscation & values
+Cohesion: 0.22
+Nodes (9): 1. Sequences & config GUI, [26.2.28.39] - 2026-09-24 (Beta), 2. Chat history survives everything, 3. Dungeons, 4. Auto Croesus fixes, 5. Profit tracking & web sync, 6. Storage, 7. Egg Finder & API history (+1 more)
 
 ### Community 339 - "SkyHanniAdvancedPlayerListCosmeticsMixin.java"
-Cohesion: 0.38
-Nodes (6): org.spongepowered.asm.mixin.injection.invoke.arg.Args, org.spongepowered.asm.mixin.injection.ModifyArgs, org.spongepowered.asm.mixin.Pseudo, SkyHanniAdvancedPlayerListCosmeticsMixin, SkyHanniScoreboardElementPartyCosmeticsMixin, SkyHanniScoreboardEventDungeonsCosmeticsMixin
-
-### Community 343 - "[26.2.28.30] - 2026-09-21 (Beta)"
-Cohesion: 0.29
-Nodes (7): 1. Missing Vanilla Textures (lead etc.), [26.2.28.30] - 2026-09-21 (Beta), 2. Search Bar & Text Fields (Ctrl + A, Ctrl + Z, Word Deletions), 3. Aspect of the Void Texture Overrides, 4. Compact Chat History & Accurate Mod Origin Detection, 5. Clicker Trigger Keybind, 6. New "Auto" Automation Category & Sequencer
+Cohesion: 0.50
+Nodes (3): org.spongepowered.asm.mixin.injection.invoke.arg.Args, org.spongepowered.asm.mixin.injection.ModifyArgs, SkyHanniAdvancedPlayerListCosmeticsMixin
 
 ### Community 344 - "Status"
 Cohesion: 0.29
 Nodes (6): Status, ALLOWED, BLOCKED, BLOCKED_EVENT, EVENT, OUTGOING
 
-### Community 346 - "Kind"
-Cohesion: 0.29
-Nodes (7): Kind, ACTION, BLANK, DIVIDER, META, ROW, TEXT
+### Community 346 - "Role"
+Cohesion: 0.40
+Nodes (5): Role, DETAIL, ITEM, NOTE, UPGRADE
 
-### Community 347 - "[26.2.28.52] - 2026-09-28 (Beta)"
-Cohesion: 0.33
-Nodes (6): [26.2.28.52] - 2026-09-28 (Beta), Polish, Screensharing & Social, Spectator Camera & HUD, Spotify HUD Overlay, Storage & Overlay
-
-### Community 348 - "[26.2.28.74] - 2026-10-04 (Beta)"
-Cohesion: 0.33
-Nodes (6): [26.2.28.74] - 2026-10-04 (Beta), Discord Lore Item Glyphs & Synced Lyrics Spacing, Discord Voice HUD Bot Voice Bridge & Accurate Live Status, Screenshare 1440p High-Resolution Engine & Instant Viewer, Storage Overlay Live Sync & Rename Typing, UI & Autocomplete Improvements
+### Community 348 - "CheatFlavor.java"
+Cohesion: 0.50
+Nodes (3): autosequence, clientcommands, stringargumenttype
 
 ### Community 349 - "MenuScreensConstructorMixin"
-Cohesion: 0.11
-Nodes (17): [26.2.28.54] - 2026-09-28 (Beta), [26.2.28.64] - 2026-10-02 (Beta), CI/CD & Documentation, Discord Voice Local Log Fallback Reader, Performance Profiler & Engine (`/b perf`), Screenshare Streaming Latency, Mouse Cursor & Profiler Optimization, Screensharing & Social, Spectator Camera (+9 more)
+Cohesion: 0.12
+Nodes (16): [26.2.28.54] - 2026-09-28 (Beta), [26.2.28.64] - 2026-10-02 (Beta), CI/CD & Documentation, Discord Voice Local Log Fallback Reader, Performance Profiler & Engine (`/b perf`), Screenshare Streaming Latency, Mouse Cursor & Profiler Optimization, Screensharing & Social, Spectator Camera (+8 more)
 
-### Community 350 - "[26.2.28.65] - 2026-10-02 (Beta)"
-Cohesion: 0.33
-Nodes (6): [26.2.28.65] - 2026-10-02 (Beta), Bridge Name Sanitization & Webhook Fixes, Discord Voice Local Log Scanner Polish, Screenshare Streaming Reliability & Presets, Spotify HUD GUI Movement & Artist Direct Filter, Version Display & Lyrics Deduplication
+### Community 350 - "[26.2.28.56] - 2026-09-29 (Beta)"
+Cohesion: 0.50
+Nodes (4): [26.2.28.56] - 2026-09-29 (Beta), Discord Desktop IPC Voice HUD, Live Screenshare Streaming & Web Dashboard, Synchronized Lyrics Overhaul (`/b lyrics` & `/lyrics`)
 
 ### Community 351 - "[26.2.28.76] - 2026-10-04 (Beta)"
 Cohesion: 0.33
@@ -1333,45 +1347,41 @@ Nodes (6): [26.2.28.76] - 2026-10-04 (Beta), Discord Voice HUD Mute/Deafen, Clea
 Cohesion: 0.33
 Nodes (5): LoadState, ERROR, IDLE, LOADING, READY
 
-### Community 355 - ".onCrack"
-Cohesion: 0.40
-Nodes (4): BlockPos, BlockState, CallbackInfo, Direction
+### Community 355 - ".onCreateParticle"
+Cohesion: 0.22
+Nodes (8): net.minecraft.client.particle.Particle, net.minecraft.client.particle.ParticleEngine, net.minecraft.core.particles.ParticleOptions, BlockPos, BlockState, CallbackInfo, Direction, ParticleEngineMixin
 
 ### Community 356 - "[26.2.28.73] - 2026-10-04 (Beta)"
-Cohesion: 0.33
-Nodes (6): [26.2.28.73] - 2026-10-04 (Beta), Chat Placeholders & Discord Lore Item Glyphs, Discord Voice HUD & Screenshare Status, HUD Move Mode Filtering & Synced Lyrics, Screenshare Asynchronous 60 FPS Engine, Storage Overlay Dynamic Sizing & Live Updates
+Cohesion: 0.40
+Nodes (5): [26.2.28.73] - 2026-10-04 (Beta), Chat Placeholders & Discord Lore Item Glyphs, Discord Voice HUD & Screenshare Status, HUD Move Mode Filtering & Synced Lyrics, Screenshare Asynchronous 60 FPS Engine
 
 ### Community 357 - "Mode"
 Cohesion: 0.40
 Nodes (5): Mode, ANIMATED_GRADIENT, COPY_NAME, GRADIENT, SOLID
 
-### Community 358 - "[26.2.28.50] - 2026-09-28 (Beta)"
-Cohesion: 0.40
-Nodes (5): [26.2.28.50] - 2026-09-28 (Beta), Commands & Subareas, Hoppity & Phone Calls, Spectator & Player Body Rendering, Storage & GUI
-
-### Community 359 - "[26.2.28.53] - 2026-09-28 (Beta)"
-Cohesion: 0.40
-Nodes (5): [26.2.28.53] - 2026-09-28 (Beta), Bug Fixes & Improvements, Screensharing & Social, Spotify HUD Overlay, Synchronized Lyrics (`/b lyrics` & `/lyrics`)
+### Community 367 - "net.minecraft.network.chat.FormattedText"
+Cohesion: 0.25
+Nodes (3): net.minecraft.network.chat.FormattedText, FontCosmeticsMixin, SuppressWarnings
 
 ## Knowledge Gaps
-- **691 isolated node(s):** `BASIC`, `HOT`, `BURNING`, `FIERY`, `INFERNAL` (+686 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1482 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **138 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **713 isolated node(s):** `BASIC`, `HOT`, `BURNING`, `FIERY`, `INFERNAL` (+708 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1510 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **131 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `4. Current Implementation State & Untested Features` connect `4. Current Implementation State & Untested Features` to `CustomTimerManager`, `GameRendererMixin`, `SafariLocation`, `.ensureLoaded`, `AGENT HANDOFF: BomboAddons (Fabric 26.2)`, `StorageOverlayScreen`, `org.spongepowered.asm.mixin.injection.Inject`, `.onInitializeClient`, `LyricsManager`, `org.spongepowered.asm.mixin.Mixin`, `.getSkyblockId`, `SpotifyHud`, `BackpackPreview`, `ItemHotkeysMixin`, `ProfileViewerScreen`, `Performance Profiler Expansion (`/b perf`)`, `InventoryHud`, `AutoCroesus`, `SpotifyWin32Handler`, `SpeedometerHud`, `ChatImagePreview.java`, `BomboConfig`, `BomboOrderScreen`, `.save`, `net.minecraft.network.chat.Component`, `net.minecraft.world.item.ItemStack`, `ItemModelResolverMixin.java`, `BomboConfigScreen`, `User32`, `ChatMixin`, `PerformanceProfiler`, `IRCClient`, `EquipmentHud`, `ItemListOverlay`, `DungeonBossManager`, `net.minecraft.world.entity.Entity`, `FlavorBridge`, `.mouseClicked`, `ScreenshareManager`, `ChatHistoryTracker`, `AccountManager`, `ComposterHud`, `AlphaTrackerHud`, `ProfileFetcher`, `[26.2.28.71] - 2026-10-04 (Beta)`, `.get`, `SpotifyManager`, `AutoSequenceManager`, `ChatTabsOverlay`, `TitleScreenMixin.java`, `LowestBinManager`, `ItemInHandRendererMixin.java`, `TabCompletionManager`, `Settings`, `ClipboardImageUploader`, `MenuScreensConstructorMixin`, `StorageOverlayManager`, `EggFinder`, `DiscordIpcManager`, `.recordChestPurchase`, `org.spongepowered.asm.mixin.Shadow`, `InventoryButtonManager`, `.checkAndUpdate`, `PlaytimeTracker`, `CustomBindsProcessor`, `StoragePreviewManager`, `GardenMovement`, `DiscordVoiceHud`?**
-  _High betweenness centrality (0.046) - this node is a cross-community bridge._
-- **Why does `BomboConfig` connect `BomboConfig` to `minecraft`, `jsonparser`, `BestiaryManager`, `BomboaddonsClient.java`, `org.spongepowered.asm.mixin.injection.Inject`, `ButtonBlockMixin.java`, `.onInitializeClient`, `org.spongepowered.asm.mixin.Mixin`, `net.minecraft.client.Minecraft`, `ChatImagePreview.java`, `.save`, `net.minecraft.network.chat.Component`, `BomboAddons Changelog`, `BomboConfigScreen`, `.render`, `LF.java`, `BetterPVClient.java`, `.get`, `TitleScreenMixin.java`, `net.minecraft.world.level.block.state.BlockState`, `Settings`, `net.minecraft.client.gui.GuiGraphicsExtractor`, `BlockHighlight`, `.suggestBackups`, `CustomBindsProcessor`, `4. Current Implementation State & Untested Features`?**
-  _High betweenness centrality (0.044) - this node is a cross-community bridge._
-- **Why does `PvSubTab` connect `PvSubTab` to `net.minecraft.client.gui.GuiGraphicsExtractor`, `net.minecraft.client.gui.Font`, `MiningSnapshot`, `CrimsonSnapshot`, `net.minecraft.world.item.ItemStack`, `PvTab`, `SkyBlockItemFactory`, `CollectionsUi.java`, `GardenOverviewPage`, `ProfileViewerScreen`, `.fill`, `GardenPage`, `RiftUi`, `.innerPanel`, `list`?**
+- **Why does `BomboConfig` connect `minecraft` to `BestiaryManager`, `map`, `list`, `org.spongepowered.asm.mixin.injection.Inject`, `ButtonBlockMixin.java`, `org.spongepowered.asm.mixin.Mixin`, `ChatImagePreview.java`, `.render`, `net.minecraft.client.Minecraft`, `BomboAddons Changelog`, `BomboConfigScreen`, `.registerTickEvents`, `LF.java`, `.load`, `.save`, `net.minecraft.core.BlockPos`, `Settings`, `CheatFlavor.java`, `.get`, `net.minecraft.client.gui.GuiGraphicsExtractor`, `BlockHighlight`, `.suggestBackups`, `CustomBindsProcessor`, `4. Current Implementation State & Untested Features`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `4. Current Implementation State & Untested Features` connect `4. Current Implementation State & Untested Features` to `CustomTimerManager`, `minecraft`, `FakeBanScreen`, `AGENT HANDOFF: BomboAddons (Fabric 26.2)`, `StorageOverlayScreen`, `.onInitializeClient`, `LyricsManager`, `.getSkyblockId`, `BackpackPreview`, `SpotifyHud`, `Performance Profiler Expansion (`/b perf`)`, `org.spongepowered.asm.mixin.Mixin`, `AutoSequenceExecutor`, `AutoCroesus`, `SpotifyWin32Handler`, `SpeedometerHud`, `ChatImagePreview.java`, `net.minecraft.client.Minecraft`, `BomboOrderScreen`, `BomboConfigGUI`, `UpdateVersionsScreen`, `SupercraftHelper`, `TextureToggleManager`, `BomboConfigScreen`, `.registerTickEvents`, `User32`, `.render`, `ChatMixin`, `IRCClient`, `PerformanceProfiler`, `EggAuth`, `DungeonChestProfitHud`, `BomboAddons Agent Continuation & Knowledge Handoff`, `ItemListOverlay`, `HoppityHud`, `ClientPacketListenerMixin`, `FlavorBridge`, `net.minecraft.world.entity.Entity`, `HudMoveScreen`, `ScreenshareManager`, `ChatHistoryTracker`, `AccountManager`, `ComposterHud`, `AlphaTrackerHud`, `ProfileFetcher`, `[26.2.28.71] - 2026-10-04 (Beta)`, `.save`, `SpotifyManager`, `ChatTabsOverlay`, `ItemInHandRendererMixin.java`, `.formatPrice`, `TabCompletionManager`, `Settings`, `ClipboardImageUploader`, `MenuScreensConstructorMixin`, `.isInGarden`, `EggFinder`, `net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext`, `DiscordIpcManager`, `NoObfuscate`, `.recordChestPurchase`, `org.spongepowered.asm.mixin.Shadow`, `InventoryButtonManager`, `.checkAndUpdate`, `PlaytimeTracker`, `AutoSequenceManager`, `DungeonSnapshot`, `CustomBindsProcessor`, `StoragePreviewManager`, `GardenMovement`, `DiscordVoiceHud`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `PvSubTab` connect `PvSubTab` to `locale`, `CollectionsListPage`, `ForagingUi`, `MiningSnapshot`, `CrimsonSnapshot`, `PvTab`, `net.minecraft.resources.Identifier`, `.text`, `ProfileViewerScreen`, `RiftUi`, `.innerPanel`, `SkyBlockItemFactory.java`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **What connects `BASIC`, `HOT`, `BURNING` to the rest of the system?**
-  _691 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `arraylist` be split into smaller, more focused modules?**
-  _Cohesion score 0.09759615384615385 - nodes in this community are weakly interconnected._
+  _713 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `locale` be split into smaller, more focused modules?**
+  _Cohesion score 0.09643605870020965 - nodes in this community are weakly interconnected._
 - **Should `minecraft` be split into smaller, more focused modules?**
-  _Cohesion score 0.07076167076167077 - nodes in this community are weakly interconnected._
-- **Should `jsonparser` be split into smaller, more focused modules?**
-  _Cohesion score 0.056345475910693305 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0499586435070306 - nodes in this community are weakly interconnected._
+- **Should `map` be split into smaller, more focused modules?**
+  _Cohesion score 0.05221417664154475 - nodes in this community are weakly interconnected._

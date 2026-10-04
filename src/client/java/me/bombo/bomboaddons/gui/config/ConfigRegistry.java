@@ -540,6 +540,54 @@ public class ConfigRegistry {
                             Minecraft mc = Minecraft.getInstance();
                             mc.execute(() -> mc.setScreenAndShow(new HudMoveScreen(HudTarget.SPOTIFY_HUD)));
                         }));
+
+                items.add(ConfigItem.header("Synchronized Lyrics HUD", category));
+                items.add(ConfigItem.hudToggle("Enable Lyrics HUD",
+                        "Display floating synchronized lyrics in-game with letter-by-letter karaoke wipe.",
+                        category,
+                        () -> s.lyricsHudEnabled,
+                        v -> s.lyricsHudEnabled = v,
+                        HudTarget.LYRICS_HUD));
+                items.add(ConfigItem.sliderInt("Lines Before",
+                        "Number of preceding lyric lines to display before the active line.",
+                        category,
+                        0, 3, 1, " lines",
+                        () -> s.lyricsHudLinesBefore,
+                        v -> s.lyricsHudLinesBefore = v));
+                items.add(ConfigItem.sliderInt("Lines After",
+                        "Number of upcoming lyric lines to display after the active line.",
+                        category,
+                        0, 5, 1, " lines",
+                        () -> s.lyricsHudLinesAfter,
+                        v -> s.lyricsHudLinesAfter = v));
+                items.add(ConfigItem.toggle("Dynamic Artwork Color",
+                        "Automatically tint lyrics glow and accent based on album artwork dominant colors.",
+                        category,
+                        () -> s.lyricsHudDynamicColor,
+                        v -> s.lyricsHudDynamicColor = v));
+                items.add(ConfigItem.color("Custom Lyrics Color",
+                        "Accent color for the active lyric line when Dynamic Artwork Color is disabled.",
+                        category,
+                        () -> s.lyricsHudColor != null ? s.lyricsHudColor : "#1DB954",
+                        v -> s.lyricsHudColor = v));
+                items.add(ConfigItem.toggle("Duet Vocal Separation",
+                        "Align secondary / background vocalist lines to the right side of the screen.",
+                        category,
+                        () -> s.lyricsHudDuetSides,
+                        v -> s.lyricsHudDuetSides = v));
+                items.add(ConfigItem.cycle("Lyrics HUD Style",
+                        "Visual presentation: Karaoke Fade (letter-by-letter wipe), Classic, or Plain text.",
+                        category,
+                        List.of("Karaoke Fade", "Classic", "Plain"),
+                        () -> s.lyricsHudStyle != null ? s.lyricsHudStyle : "Karaoke Fade",
+                        v -> s.lyricsHudStyle = v));
+                items.add(ConfigItem.button("Move Lyrics HUD", "Move Lyrics",
+                        "Reposition and resize the Lyrics HUD.",
+                        category,
+                        () -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            mc.execute(() -> mc.setScreenAndShow(new HudMoveScreen(HudTarget.LYRICS_HUD)));
+                        }));
             }
 
             case "Dungeons" -> {

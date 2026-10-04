@@ -534,6 +534,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.discord.DiscordIpcManager.init();
       me.bombo.bomboaddons.features.discord.DiscordVoiceHud.init();
       me.bombo.bomboaddons.features.spotify.SpotifyHud.init();
+      me.bombo.bomboaddons.features.spotify.LyricsHud.init();
       me.bombo.bomboaddons.features.auto.AutoSequenceManager.load();
       me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.setup();
       me.bombo.bomboaddons.flavor.Flavor.get().init();

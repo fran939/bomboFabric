@@ -22,7 +22,7 @@ import java.util.Objects;
  */
 public class SpotifyHud {
 
-    public static final int HUD_WIDTH = 180;
+    public static final int HUD_WIDTH = 220;
     public static final int HUD_HEIGHT = 34;
 
     private static final Identifier SPOTIFY_ICON = Identifier.fromNamespaceAndPath("bomboaddons", "textures/gui/spotify.png");
@@ -89,7 +89,7 @@ public class SpotifyHud {
         boolean open = isDummy || SpotifyManager.isSpotifyOpen();
 
         String track = isDummy ? "CALENTÓN" : (open ? (SpotifyManager.getCurrentTrack().isEmpty() ? "No Track" : SpotifyManager.getCurrentTrack()) : "Spotify Closed");
-        String artist = isDummy ? "Mora" : (open ? (SpotifyManager.getCurrentArtist().isEmpty() ? "Paused" : SpotifyManager.getCurrentArtist()) : "Not Running");
+        String artist = isDummy ? "Mora (feat. Feid)" : (open ? (SpotifyManager.getFullArtistDisplay().isEmpty() ? "Paused" : SpotifyManager.getFullArtistDisplay()) : "Not Running");
 
         BomboConfig.Settings s = BomboConfig.get();
         if (s != null) {
@@ -142,35 +142,41 @@ public class SpotifyHud {
         if (albumArt != null) {
             g.blit(albumArt, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
         } else {
-            // Procedural Spotify green icon - completely prevents purple/black missing texture
             int bgGreen = 0xFF1DB954;
             int waveColor = 0xFF121212;
             g.fill(iconX, iconY, iconX + iconSize, iconY + iconSize, bgGreen);
-            // 3 audio wave arcs
             g.fill(iconX + 3, iconY + 5, iconX + 17, iconY + 7, waveColor);
             g.fill(iconX + 4, iconY + 9, iconX + 16, iconY + 11, waveColor);
             g.fill(iconX + 5, iconY + 13, iconX + 15, iconY + 15, waveColor);
         }
 
-        // Track and Artist text (cached width calculation)
+        // Track and Artist text (cached width calculation with bold support)
         int textX = 29;
+        int ctrlW = 46;
+        int ctrlX = HUD_WIDTH - ctrlW - 4;
+        int textMaxW = ctrlX - textX - 4;
+
         if (!track.equals(lastRawTrack)) {
             lastRawTrack = track;
-            cachedTrackDisplay = font.plainSubstrByWidth(track, 96);
+            String disp = track;
+            while (font.width("§l" + disp) > textMaxW && disp.length() > 3) {
+                disp = disp.substring(0, disp.length() - 2) + "…";
+            }
+            cachedTrackDisplay = disp;
         }
         g.text(font, "§l" + cachedTrackDisplay, textX, 5, titleColor, true);
 
         if (!artist.equals(lastRawArtist)) {
             lastRawArtist = artist;
-            cachedArtistDisplay = font.plainSubstrByWidth(artist, 96);
+            cachedArtistDisplay = font.plainSubstrByWidth(artist, textMaxW);
         }
         g.text(font, cachedArtistDisplay, textX, 16, artistColor, false);
 
         // Controls on the right: |◀  ⏸/▶  ▶|
         int ctrlY = 9;
-        g.text(font, "|◀", 130, ctrlY, accentColor, true);
-        g.text(font, playing ? "⏸" : "▶", 147, ctrlY, accentColor, true);
-        g.text(font, "▶|", 163, ctrlY, accentColor, true);
+        g.text(font, "|◀", ctrlX, ctrlY, accentColor, true);
+        g.text(font, playing ? "⏸" : "▶", ctrlX + 16, ctrlY, accentColor, true);
+        g.text(font, "▶|", ctrlX + 32, ctrlY, accentColor, true);
 
         // Progress bar at the bottom
         int barX = 5;
@@ -208,27 +214,30 @@ public class SpotifyHud {
             return true;
         }
 
+        int ctrlW = 46;
+        int ctrlX = HUD_WIDTH - ctrlW - 4;
+
         // Track title click -> open song in Spotify Desktop App
-        if (relX >= 27 && relX <= 126 && relY >= 3 && relY <= 15) {
+        if (relX >= 27 && relX <= ctrlX - 4 && relY >= 3 && relY <= 15) {
             SpotifyManager.openTrackInSpotify();
             return true;
         }
 
         // Artist click -> open artist in Spotify Desktop App
-        if (relX >= 27 && relX <= 126 && relY >= 16 && relY <= 28) {
+        if (relX >= 27 && relX <= ctrlX - 4 && relY >= 16 && relY <= 28) {
             SpotifyManager.openArtistInSpotify();
             return true;
         }
 
         // Media controls (Y: 5..28)
         if (relY >= 5 && relY <= 28) {
-            if (relX >= 126 && relX <= 142) {
+            if (relX >= ctrlX - 4 && relX <= ctrlX + 14) {
                 SpotifyManager.prevTrack();
                 return true;
-            } else if (relX >= 143 && relX <= 159) {
+            } else if (relX >= ctrlX + 15 && relX <= ctrlX + 29) {
                 SpotifyManager.playPause();
                 return true;
-            } else if (relX >= 160 && relX <= 178) {
+            } else if (relX >= ctrlX + 30 && relX <= HUD_WIDTH - 2) {
                 SpotifyManager.nextTrack();
                 return true;
             }

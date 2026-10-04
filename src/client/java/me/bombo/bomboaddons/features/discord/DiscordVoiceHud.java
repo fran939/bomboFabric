@@ -178,7 +178,21 @@ public class DiscordVoiceHud {
             } else if (!DiscordIpcManager.isInVoice() || DiscordIpcManager.getVoiceUsers().isEmpty()) {
                 lines.add(" §8(Not in voice call)");
             } else {
+                java.util.Set<String> seenKeys = new java.util.HashSet<>();
+                String myUid = DiscordIpcManager.getMyUserId();
                 for (DiscordIpcManager.DiscordVoiceUser u : DiscordIpcManager.getVoiceUsers()) {
+                    String normDisplay = u.displayName() != null ? u.displayName().toLowerCase(java.util.Locale.ROOT).trim() : "";
+                    String normUser = u.username() != null ? u.username().toLowerCase(java.util.Locale.ROOT).trim() : "";
+                    if ("self".equals(u.id()) && (!myUid.isEmpty() || seenKeys.contains(normDisplay) || seenKeys.contains(normUser))) {
+                        continue;
+                    }
+                    if (seenKeys.contains(u.id()) || (!normDisplay.isEmpty() && seenKeys.contains(normDisplay)) || (!normUser.isEmpty() && seenKeys.contains(normUser))) {
+                        continue;
+                    }
+                    seenKeys.add(u.id());
+                    if (!normDisplay.isEmpty()) seenKeys.add(normDisplay);
+                    if (!normUser.isEmpty()) seenKeys.add(normUser);
+
                     cachedUserRowIds.add(u.id());
                     StringBuilder sb = new StringBuilder();
                     sb.append(u.isSpeaking() ? " §a● " : " §8○ ");

@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.84",
+    "date": "2026-10-04",
+    "changes": [
+      "Discord Voice Toggle Mute & Deafen: Made /b discord mute and /b discord deafen toggle by default with support for explicit states (mute/unmute, deafen/undeafen)",
+      "Discord Mute Anti-Bounce Fix: Eliminated rapid oscillating mute/unmute loop by establishing local state as single source of truth during bot polling",
+      "Discord HUD Duplicate Row Fix: Bound Discord user IDs properly and filtered duplicate synthetic rows so users never show twice (fran / fran938)",
+      "Discord Clickable Auth Prompt: Unauthenticated voice commands now send a clickable chat message [Click to Authorize Voice] running /b discord auth without automatic popups",
+      "Synchronized Lyrics HUD: Added floating in-game Lyrics HUD with configurable lines before/after, movable in /b hud, and dynamic artwork color glow",
+      "Sub-Word Letter-for-Letter Karaoke Wipe: Smooth character-by-character fill animation inspired by ViviMusic / Apple Music as lyrics progress",
+      "Duet & Background Vocal Separation: Secondary and background vocalist lines cleanly align to the right side of the screen",
+      "Interactive Click-to-Seek: Clicking progress bar or individual lyric lines in /b lyrics instantly seeks track playback position",
+      "Remix & Candidate Persistence: Preserved - remix tags in title lookups and persisted manual candidate selections across polling updates"
+    ]
+  },
+  {
     "version": "26.2.28.83",
     "date": "2026-10-04",
     "changes": [

@@ -225,15 +225,21 @@ public class LyricsScreen extends Screen {
                         totalLineW = font.width("§f§l" + line.text());
                     }
 
-                    // Background highlight pill (Spotify green glass)
+                    int highlightColor = (BomboConfig.get() != null && BomboConfig.get().lyricsHudDynamicColor)
+                            ? LyricsManager.getDominantColor()
+                            : 0xFF1ED760;
+
+                    // Subtle background highlight pill
                     int pillX = (this.width - totalLineW) / 2 - 14;
                     int pillW = totalLineW + 28;
-                    int pillH = line.backgroundText() != null ? 30 : 22;
-                    g.fill(pillX, lineIntY - 5, pillX + pillW, lineIntY + pillH, 0x331DB954);
-                    g.outline(pillX, lineIntY - 5, pillW, pillH, 0x661DB954);
+                    int pillH = line.backgroundText() != null ? 34 : 22;
+                    int pillBg = (0x28000000) | (highlightColor & 0x00FFFFFF);
+                    int pillBorder = (0x44000000) | (highlightColor & 0x00FFFFFF);
+                    g.fill(pillX, lineIntY - 4, pillX + pillW, lineIntY + pillH, pillBg);
+                    g.outline(pillX, lineIntY - 4, pillW, pillH, pillBorder);
 
                     if (words != null && !words.isEmpty()) {
-                        // Word-by-word karaoke rendering with vibrant Spotify glow
+                        // Word-by-word karaoke rendering with progressive highlight
                         int curX = (this.width - totalLineW) / 2;
                         for (int w = 0; w < words.size(); w++) {
                             LyricsManager.WordTime wt = words.get(w);
@@ -244,23 +250,22 @@ public class LyricsScreen extends Screen {
                             int wordSlotW = font.width("§l" + wt.word());
 
                             if (isWordActive) {
-                                g.text(font, "§a§l" + wt.word(), curX, lineIntY, 0xFF1ED760, true);
+                                g.text(font, "§l" + wt.word(), curX, lineIntY, highlightColor, true);
                             } else {
                                 g.text(font, "§7§l" + wt.word(), curX, lineIntY, 0x66CBD5E1, false);
                             }
                             curX += wordSlotW + spaceW;
                         }
                     } else {
-                        // SPOTIFY FULL LINE HIGHLIGHT: Highlight active line in bright Spotify green
                         int startX = (this.width - totalLineW) / 2;
-                        g.text(font, "§a§l" + line.text(), startX, lineIntY, 0xFF1ED760, true);
+                        g.text(font, "§l" + line.text(), startX, lineIntY, highlightColor, true);
                     }
 
-                    // Background vocals underneath
+                    // Background vocals underneath (clean white italic, no green box clash)
                     if (line.backgroundText() != null && !line.backgroundText().isEmpty()) {
                         String bg = line.backgroundText();
-                        int bgW = font.width("§7§o" + bg);
-                        g.text(font, "§7§o" + bg, (this.width - bgW) / 2, lineIntY + 14, 0xFFA098B0, false);
+                        int bgW = font.width("§f§o" + bg);
+                        g.text(font, "§f§o" + bg, (this.width - bgW) / 2, lineIntY + 14, 0xFFFFFFFF, true);
                     }
                 } else {
                     int textW = font.width(line.text());
@@ -270,8 +275,8 @@ public class LyricsScreen extends Screen {
 
                     if (line.backgroundText() != null && !line.backgroundText().isEmpty()) {
                         String bg = line.backgroundText();
-                        int bgW = font.width("§8§o" + bg);
-                        g.text(font, "§8§o" + bg, (this.width - bgW) / 2, lineIntY + 12, 0xFF6B7280, false);
+                        int bgW = font.width("§f§o" + bg);
+                        g.text(font, "§7§o" + bg, (this.width - bgW) / 2, lineIntY + 12, 0xFFA0AAB8, false);
                     }
                 }
             }
@@ -732,6 +737,37 @@ public class LyricsScreen extends Screen {
                 } else if (mouseX >= nextX - 6 && mouseX <= nextX + 16) {
                     SpotifyManager.nextTrack();
                     return true;
+                }
+            }
+
+            // Top progress bar seek
+            int barW = Math.min(400, this.width - 240);
+            int barX = (this.width - barW) / 2;
+            int barY = 54;
+            if (mouseY >= barY - 6 && mouseY <= barY + 12 && mouseX >= barX && mouseX <= barX + barW) {
+                float seekRatio = Math.max(0.0f, Math.min(1.0f, (float) (mouseX - barX) / (float) barW));
+                long totalDur = SpotifyManager.getDurationSeconds() * 1000L;
+                if (totalDur > 0) {
+                    SpotifyManager.seekTo((long) (seekRatio * totalDur));
+                }
+                return true;
+            }
+
+            // Click any lyric line to jump/seek playback to that time
+            int lyricsAreaY = 72;
+            int lyricsAreaH = this.height - 72 - 38;
+            if (mouseY >= lyricsAreaY && mouseY <= lyricsAreaY + lyricsAreaH) {
+                int viewCenterY = lyricsAreaY + lyricsAreaH / 2;
+                List<LyricsManager.LyricsLine> lines = LyricsManager.getLines();
+                for (int i = 0; i < lines.size(); i++) {
+                    double lineY = viewCenterY + (i * (double) LINE_HEIGHT) - scrollY;
+                    if (mouseY >= lineY - 4 && mouseY <= lineY + LINE_HEIGHT - 4) {
+                        LyricsManager.LyricsLine clicked = lines.get(i);
+                        if (clicked.startMs() >= 0) {
+                            SpotifyManager.seekTo(clicked.startMs());
+                            return true;
+                        }
+                    }
                 }
             }
 

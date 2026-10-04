@@ -806,6 +806,18 @@ public class BomboConfig {
       public boolean spotifyHudShowAlbumArt = false;
       public int lyricsOffsetMs = 0;
 
+      // Lyrics HUD & Styling
+      public boolean lyricsHudEnabled = false;
+      public int lyricsHudX = 10;
+      public int lyricsHudY = 130;
+      public float lyricsHudScale = 1.0F;
+      public int lyricsHudLinesBefore = 0;
+      public int lyricsHudLinesAfter = 2;
+      public boolean lyricsHudDynamicColor = true;
+      public String lyricsHudColor = "#1ED760";
+      public boolean lyricsHudDuetSides = true;
+      public String lyricsHudStyle = "karaoke_fade"; // "karaoke_fade", "classic", "plain"
+
       // Screenshare / Spectate Whitelist & Settings
       public String autoAcceptScreenshareUsers = "";
       public String screenshareQuality = "720p 60fps"; // "720p 60fps", "720p 30fps", "1080p 60fps"
