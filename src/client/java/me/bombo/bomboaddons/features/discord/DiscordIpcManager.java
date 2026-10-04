@@ -145,8 +145,27 @@ public class DiscordIpcManager {
         return targetMute;
     }
 
+    private interface WinUser32 extends com.sun.jna.Library {
+        WinUser32 INSTANCE = com.sun.jna.Native.load("user32", WinUser32.class);
+        void keybd_event(byte bVk, byte bScan, int dwFlags, int dwExtraInfo);
+    }
+
     private static void toggleDiscordShortcut(int keyCode) {
         CompletableFuture.runAsync(() -> {
+            try {
+                if (System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("win")) {
+                    byte vk = (byte) (keyCode == java.awt.event.KeyEvent.VK_M ? 0x4D : 0x44);
+                    // Windows OS hardware driver keyboard event to trigger global Discord shortcuts
+                    WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0, 0, 0); // VK_CONTROL down
+                    WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0, 0, 0); // VK_SHIFT down
+                    WinUser32.INSTANCE.keybd_event(vk, (byte) 0, 0, 0);          // Key down
+                    Thread.sleep(30L);
+                    WinUser32.INSTANCE.keybd_event(vk, (byte) 0, 2, 0);          // Key up (KEYEVENTF_KEYUP = 2)
+                    WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0, 2, 0); // Shift up
+                    WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0, 2, 0); // Ctrl up
+                    return;
+                }
+            } catch (Throwable ignored) {}
             try {
                 java.awt.Robot robot = new java.awt.Robot();
                 robot.keyPress(java.awt.event.KeyEvent.VK_CONTROL);
@@ -379,9 +398,10 @@ public class DiscordIpcManager {
     }
 
     public static void init() {
-        if (!BomboConfig.get().discordHudEnabled) {
-            return;
-        }
+        start();
+    }
+
+    public static void start() {
         if (RUNNING.compareAndSet(false, true)) {
             workerThread = new Thread(DiscordIpcManager::runLoop, "Bombo-DiscordIPC");
             workerThread.setDaemon(true);
@@ -883,12 +903,23 @@ public class DiscordIpcManager {
 
                 String selfId = !myUserId.isEmpty() ? myUserId : "self";
                 String selfName = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
+
+                // Clean up phantom "self" key if real user ID is known
+                if (!myUserId.isEmpty()) {
+                    voiceUsers.remove("self");
+                    webrtcUserIds.remove(myUserId);
+                    webrtcUserIds.remove("self");
+                }
+
                 boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
                 boolean selfLive = screensharingUserIds.contains(selfId) || screensharingUserIds.contains(myUserId) || screensharingUserIds.contains("self");
-                voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, false, false, selfSpeaking, selfLive));
+                boolean selfMuted = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isMuted();
+                boolean selfDeaf = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isDeafened();
+                voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, selfMuted, selfDeaf, selfSpeaking, selfLive));
 
                 if (!webrtcUserIds.isEmpty()) {
                     for (String uid : webrtcUserIds) {
+                        if (uid.equals(selfId) || uid.equals(myUserId) || uid.equals("self")) continue;
                         DiscordBotUserInfo info = BOT_USER_CACHE.get(uid);
                         String dName = info != null ? info.displayName : ("User (" + uid.substring(Math.max(0, uid.length() - 4)) + ")");
                         String uName = info != null ? info.username : dName;
@@ -900,10 +931,11 @@ public class DiscordIpcManager {
                     }
 
                     // Remove users who have disconnected from the call
-                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !k.equals(myUserId) && !webrtcUserIds.contains(k));
+                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !webrtcUserIds.contains(k));
                 } else {
                     // No active WebRTC audio streams: user is alone in call
-                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !k.equals(myUserId) && !k.equals("self"));
+                    memberCount = 1;
+                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId));
                 }
             } else if (foundDisconnect) {
                 logReaderStatus = "Disconnected (VOICE_DISCONNECT detected)";
@@ -1242,23 +1274,22 @@ public class DiscordIpcManager {
         feedback.accept(Component.literal("§9========================================================"));
     }
 
-    public static void handleSsCommand() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+    public static void printVoiceStatus(Consumer<Component> feedback) {
+        if (feedback == null) return;
 
         if (!connected) {
-            mc.player.sendSystemMessage(Component.literal("§9[Discord] §cDiscord Desktop app is not connected. Make sure Discord is open on your PC!"));
-            dumpDebugInfo(mc.player::sendSystemMessage);
+            feedback.accept(Component.literal("§9[Discord] §cDiscord Desktop app is not connected. Make sure Discord is open on your PC!"));
+            dumpDebugInfo(feedback);
             return;
         }
 
         if (!inVoice || voiceUsers.isEmpty()) {
-            mc.player.sendSystemMessage(Component.literal("§9[Discord] §7Connected as §b" + myDiscordUsername + "§7, but you are not in an active Discord voice channel."));
-            mc.player.sendSystemMessage(Component.literal("§7Tip: Join a Discord voice channel, then use §e/b discord sync §7or §e/b discord debug§7."));
+            feedback.accept(Component.literal("§9[Discord] §7Connected as §b" + (myDiscordUsername.isEmpty() ? "User" : myDiscordUsername) + "§7, but you are not in an active Discord voice channel."));
+            feedback.accept(Component.literal("§7Tip: Join a Discord voice channel, then use §e/b discord sync §7or §e/b discord debug§7."));
             return;
         }
 
-        mc.player.sendSystemMessage(Component.literal("§9[Discord] §bVoice Channel: §f#" + currentChannelName + " §7(" + voiceUsers.size() + " in call)"));
+        feedback.accept(Component.literal("§9[Discord] §bVoice Channel: §f#" + currentChannelName + " §7(" + voiceUsers.size() + " in call)"));
         boolean foundStream = false;
         for (DiscordVoiceUser u : voiceUsers.values()) {
             StringBuilder sb = new StringBuilder();
@@ -1270,22 +1301,29 @@ public class DiscordIpcManager {
             }
             if (u.isMuted()) sb.append(" §8[Muted]");
             if (u.isDeafened()) sb.append(" §8[Deafened]");
-            mc.player.sendSystemMessage(Component.literal(sb.toString()));
+            feedback.accept(Component.literal(sb.toString()));
         }
 
         if (!foundStream) {
-            mc.player.sendSystemMessage(Component.literal("§9[Discord] §7No users are currently sharing their screen."));
+            feedback.accept(Component.literal("§9[Discord] §7No users are currently sharing their screen."));
         }
+    }
 
-        // Toggle HUD visibility
+    public static void toggleHud(Consumer<Component> feedback) {
         BomboConfig.Settings s = BomboConfig.get();
         s.discordHudEnabled = !s.discordHudEnabled;
         BomboConfig.save();
         if (s.discordHudEnabled) {
-            init();
-        } else {
-            stop();
+            start();
         }
-        mc.player.sendSystemMessage(Component.literal("§9[Discord] §7Discord Voice HUD: " + (s.discordHudEnabled ? "§aEnabled" : "§cDisabled")));
+        if (feedback != null) {
+            feedback.accept(Component.literal("§9[Discord] §7Discord Voice HUD: " + (s.discordHudEnabled ? "§aEnabled" : "§cDisabled")));
+        }
+    }
+
+    public static void handleSsCommand() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+        printVoiceStatus(mc.player::sendSystemMessage);
     }
 }

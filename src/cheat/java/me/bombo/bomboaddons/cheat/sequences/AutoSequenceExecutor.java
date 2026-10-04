@@ -753,6 +753,31 @@ public final class AutoSequenceExecutor {
                 return compareNumeric(emptyCount, op);
             }
 
+            // 7.5. no_item:Name or !has_item:Name
+            if (cond.startsWith("no_item:") || cond.startsWith("!has_item:") || cond.startsWith("!item:")) {
+                String want = cond.substring(cond.indexOf(':') + 1).trim();
+                for (Slot s : slots) {
+                    ItemStack st = s.getItem();
+                    if (!st.isEmpty()) {
+                        String hover = ChatFormatting.stripFormatting(st.getHoverName().getString()).toLowerCase(Locale.ROOT);
+                        String sbId = SkyblockUtils.getSkyblockId(st).toLowerCase(Locale.ROOT);
+                        if (hover.contains(want) || sbId.contains(want)) return false;
+                    }
+                }
+                return true;
+            }
+
+            // 7.6. slot_empty:slotIdx
+            if (cond.startsWith("slot_empty:")) {
+                String numStr = cond.substring(11).trim();
+                try {
+                    int idx = Integer.parseInt(numStr);
+                    if (idx >= 0 && idx < slots.size()) {
+                        return slots.get(idx).getItem().isEmpty();
+                    }
+                } catch (Throwable ignored) {}
+            }
+
             // 8. has_item:Name
             if (cond.startsWith("has_item:") || cond.startsWith("item:")) {
                 String want = cond.substring(cond.indexOf(':') + 1).trim();
@@ -780,14 +805,14 @@ public final class AutoSequenceExecutor {
             }
 
             // 10. item_count:ItemName>N or <N
-            if (cond.startsWith("item_count:") || cond.startsWith("count:")) {
+            if (cond.startsWith("item_count:") || cond.startsWith("count:") || cond.startsWith("repeat_until:")) {
                 String rest = cond.substring(cond.indexOf(':') + 1).trim();
                 String op = "";
                 int opIdx = -1;
                 if (rest.contains(">=")) { op = ">="; opIdx = rest.indexOf(">="); }
                 else if (rest.contains("<=")) { op = "<="; opIdx = rest.indexOf("<="); }
                 else if (rest.contains(">")) { op = ">"; opIdx = rest.indexOf(">"); }
-                else if (rest.contains("<")) { op = "<"; opIdx = rest.indexOf("<="); }
+                else if (rest.contains("<")) { op = "<"; opIdx = rest.indexOf("<"); }
                 else if (rest.contains("=")) { op = "="; opIdx = rest.indexOf("="); }
 
                 if (opIdx != -1) {

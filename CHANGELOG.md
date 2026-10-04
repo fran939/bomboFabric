@@ -1,5 +1,29 @@
 # BomboAddons Changelog
  
+## [26.2.28.77] - 2026-10-04 (Beta)
+
+### Storage Overlay Open by Name
+- **Custom Name Storage Resolution:** Commands like `/bp <name>`, `/backpack <name>`, `/ec <name>`, `/enderchest <name>`, and `/echest <name>` now automatically resolve custom storage card names (e.g. `/bp kudar` automatically opens `/backpack 18` if backpack 18 is named "kudar").
+- **Graceful Fallbacks:** If the name query does not match any renamed backpack or ender chest, prints a clear chat notification listing possible matches rather than failing silently.
+
+### Discord Voice Single-User Deduplication & Command Overhaul
+- **Pruned Duplicate "You" Entry:** Fixed an issue where being alone in a voice call caused both your Discord username (e.g. `fran938`) and a synthetic duplicate `You` to be displayed.
+- **Persistent IPC Worker:** Separated `/b discord` status from HUD toggle so checking voice status no longer terminates the IPC worker thread or Named Pipe connection.
+- **Low-Level Windows Shortcut Dispatch:** Upgraded shortcut dispatch to Windows OS-level `keybd_event` (Ctrl+Shift+M and Ctrl+Shift+D) to ensure Discord hotkeys trigger even when Minecraft is focused.
+- **Full Voice Command Routing:** Fully routed `/b discord mute [user]`, `/b discord unmute [user]`, `/b discord deafen [user]`, `/b discord undeafen [user]`, `/b discord hud`, `/b discord sync`, and `/b discord auth`.
+
+### Scratch Visual Studio Drag-and-Drop & Visuals
+- **Draggable Block Reordering:** Added complete drag-and-drop block reordering to `AutoSequenceVisualScreen`, with a live floating cursor ghost preview and horizontal insertion indicator lines.
+- **Clean Kid-Friendly UI:** Replaced broken unicode font emojis with crisp UI symbols (`▶`, `■`, `>`, `*`, `~`, `[!]`, `[+]`) and translated raw condition codes into human-readable phrases ("Container is Full", "Top N Rows Full", "Slot [X] has [Item]", "Contains [Item]", "NO [Item]", "Repeat until count is [N]").
+- **Engine Bugfixes:** Fixed `<` comparison evaluation bug in `AutoSequenceExecutor` and added `no_item:`, `!has_item:`, and `slot_empty:` conditions.
+
+### Screenshare Live Telemetry & VulkanMod Direct GPU
+- **Profiler Telemetry Card:** Added a dedicated, pulsing live streaming telemetry card to `/b perf` displaying active FPS, bitrate in kbps, GPU capture pipeline, HTTP POST latency, payload size, and total MB sent.
+- **VulkanMod Auto-Detection:** Automatically detects VulkanMod to switch capture pipeline reporting to `Direct GPU (Vulkan - <3ms)`.
+
+### Chat Image Hover Preview Bounds Guard
+- **Restricted Hover Bounds:** Guarded `ChatMixin.bombo$getLineAt()` against off-screen messages, preventing image hover preview popups when the mouse is positioned in the sky or above the chat box in the open world.
+
 ## [26.2.28.76] - 2026-10-04 (Beta)
 
 ### Storage Overlay In-Place Card Rename & Unblocked Scrollwheel

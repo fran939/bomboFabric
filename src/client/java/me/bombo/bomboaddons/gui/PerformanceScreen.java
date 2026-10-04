@@ -79,7 +79,8 @@ public class PerformanceScreen extends Screen {
     private int getHeaderH() { return 56; }
     private int getWinW() { return Math.min(860, this.width - 40); }
     private int getWinH() {
-        int estimatedH = getHeaderH() + Math.max(1, cachedSnapshots.size()) * 36 + 24;
+        int streamCardH = ScreenshareManager.isStreaming() ? 38 : 0;
+        int estimatedH = getHeaderH() + streamCardH + Math.max(1, cachedSnapshots.size()) * 36 + 24;
         return Math.min(Math.max(estimatedH, 200), Math.min(560, this.height - 24));
     }
     private int getWinX() { return (this.width - getWinW()) / 2; }
@@ -223,16 +224,48 @@ public class PerformanceScreen extends Screen {
         double maxSingleFeatureMs = cachedSnapshots.get(0).totalMsPerSec;
         if (maxSingleFeatureMs <= 0.0001) maxSingleFeatureMs = 1.0;
 
-        int totalContentHeight = 0;
         int cardHeight = 32;
         int cardGap = 4;
-        totalContentHeight = cachedSnapshots.size() * (cardHeight + cardGap);
+        boolean isStreaming = ScreenshareManager.isStreaming();
+        int streamCardH = isStreaming ? 34 : 0;
+        int totalContentHeight = (cachedSnapshots.size() * (cardHeight + cardGap)) + (isStreaming ? (streamCardH + cardGap) : 0);
         maxScroll = Math.max(0, totalContentHeight - contentH);
         scrollAmount = Math.max(0, Math.min(scrollAmount, maxScroll));
 
         g.enableScissor(contentX, contentY, contentW, contentH);
 
         int curY = contentY - (int) scrollAmount;
+
+        // Render live streaming telemetry card first if streaming
+        if (isStreaming) {
+            int cardY = curY;
+            curY += streamCardH + cardGap;
+            if (cardY + streamCardH >= contentY && cardY <= contentY + contentH) {
+                boolean isHovered = mouseX >= contentX && mouseX <= contentX + contentW && mouseY >= cardY && mouseY <= cardY + streamCardH;
+                g.fill(contentX, cardY, contentX + contentW, cardY + streamCardH, isHovered ? 0x3300E5FF : 0x1A003344);
+                g.outline(contentX, cardY, contentW, streamCardH, isHovered ? 0xFF00E5FF : 0xFF0088AA);
+
+                // Live pulsing indicator
+                boolean pulse = (System.currentTimeMillis() / 600) % 2 == 0;
+                g.fill(contentX + 10, cardY + 7, contentX + 18, cardY + 15, pulse ? 0xFFFF3333 : 0xFF990000);
+                g.text(font, "§c§lLIVE §bScreenshare Broadcasting", contentX + 24, cardY + 6, 0xFFFFFFFF, true);
+
+                String resStr = ScreenshareManager.getCurrentTargetW() + "x" + ScreenshareManager.getCurrentTargetH();
+                String rightMetrics = String.format("§a%.1f FPS §8| §d%.1f kbps §8| §b%s",
+                        ScreenshareManager.getCurrentFps(), ScreenshareManager.getCurrentBitrateKbps(), resStr);
+                int rmW = font.width(rightMetrics);
+                g.text(font, rightMetrics, contentX + contentW - rmW - 12, cardY + 6, 0xFFFFFFFF, false);
+
+                String details = String.format("§7Mode: §e%s §8| §7HTTP Latency: §a%dms §8| §7Payload: §b%.1f KB §8| §7Sent: §6%.2f MB §8| §7Frames: §f%d/%d",
+                        ScreenshareManager.getLastCaptureMode(),
+                        ScreenshareManager.getLastLatencyMs(),
+                        ScreenshareManager.getLastJpegSizeKb(),
+                        ScreenshareManager.getTotalBytesSent() / (1024.0 * 1024.0),
+                        ScreenshareManager.getFramesSent(),
+                        ScreenshareManager.getFramesCaptured());
+                g.text(font, details, contentX + 10, cardY + 19, 0xFF9CA3AF, false);
+            }
+        }
 
         for (int i = 0; i < cachedSnapshots.size(); i++) {
             PerformanceProfiler.Snapshot snap = cachedSnapshots.get(i);

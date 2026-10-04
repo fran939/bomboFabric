@@ -104,6 +104,54 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.startsWith("bp ") || lower.startsWith("backpack ")) {
+         String arg = lower.startsWith("backpack ") ? trimmed.substring(9).trim() : trimmed.substring(3).trim();
+         boolean isNumeric = arg.matches("^\\d+$");
+         int bpNum = me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.resolveBackpackNumber(arg);
+         if (bpNum > 0) {
+            if (!isNumeric || bpNum != Integer.parseInt(arg)) {
+               ci.cancel();
+               net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+               if (mc.getConnection() != null) {
+                  mc.getConnection().sendCommand("backpack " + bpNum);
+               }
+               return;
+            }
+         } else if (!isNumeric) {
+            ci.cancel();
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bBomboAddons§8] §cNo backpack found with name: §e\"" + arg + "\""));
+            }
+            return;
+         }
+      }
+      if (lower.startsWith("ec ") || lower.startsWith("echest ") || lower.startsWith("enderchest ")) {
+         String arg = "";
+         if (lower.startsWith("enderchest ")) arg = trimmed.substring(11).trim();
+         else if (lower.startsWith("echest ")) arg = trimmed.substring(7).trim();
+         else if (lower.startsWith("ec ")) arg = trimmed.substring(3).trim();
+
+         boolean isNumeric = arg.matches("^\\d+$");
+         int ecNum = me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.resolveEnderChestNumber(arg);
+         if (ecNum > 0) {
+            if (!isNumeric || ecNum != Integer.parseInt(arg)) {
+               ci.cancel();
+               net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+               if (mc.getConnection() != null) {
+                  mc.getConnection().sendCommand("enderchest " + ecNum);
+               }
+               return;
+            }
+         } else if (!isNumeric) {
+            ci.cancel();
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§bBomboAddons§8] §cNo ender chest found with name: §e\"" + arg + "\""));
+            }
+            return;
+         }
+      }
       if (lower.equals("discord") || lower.startsWith("discord ")
             || lower.equals("b discord") || lower.startsWith("b discord ")
             || lower.equals("bombo discord") || lower.startsWith("bombo discord ")
@@ -119,16 +167,47 @@ public class CommandMixin {
             if (mc.player != null) mc.player.sendSystemMessage(comp);
          };
 
-         if (sub.equalsIgnoreCase("debug")) {
+         String subLower = sub.toLowerCase(java.util.Locale.ROOT);
+         if (subLower.equals("debug")) {
             me.bombo.bomboaddons.features.discord.DiscordIpcManager.dumpDebugInfo(feedback);
-         } else if (sub.equalsIgnoreCase("sync")) {
+         } else if (subLower.equals("sync")) {
             me.bombo.bomboaddons.features.discord.DiscordIpcManager.forceSync();
             feedback.accept(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aTriggered immediate Discord IPC voice channel sync."));
-         } else if (sub.equalsIgnoreCase("auth")) {
+         } else if (subLower.equals("auth")) {
             me.bombo.bomboaddons.features.discord.DiscordIpcManager.requestAuthorization();
             feedback.accept(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aRequested Discord IPC authorization prompt."));
+         } else if (subLower.startsWith("mute")) {
+            String target = sub.substring(4).trim();
+            if (target.isEmpty() || target.equalsIgnoreCase("self") || target.equalsIgnoreCase("me")) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(true, feedback);
+            } else {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.muteTargetUser(target, true, feedback);
+            }
+         } else if (subLower.startsWith("unmute")) {
+            String target = sub.substring(6).trim();
+            if (target.isEmpty() || target.equalsIgnoreCase("self") || target.equalsIgnoreCase("me")) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(false, feedback);
+            } else {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.muteTargetUser(target, false, feedback);
+            }
+         } else if (subLower.startsWith("deafen")) {
+            String target = sub.substring(6).trim();
+            if (target.isEmpty() || target.equalsIgnoreCase("self") || target.equalsIgnoreCase("me")) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(true, feedback);
+            } else {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.deafenTargetUser(target, true, feedback);
+            }
+         } else if (subLower.startsWith("undeafen")) {
+            String target = sub.substring(8).trim();
+            if (target.isEmpty() || target.equalsIgnoreCase("self") || target.equalsIgnoreCase("me")) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, feedback);
+            } else {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.deafenTargetUser(target, false, feedback);
+            }
+         } else if (subLower.equals("hud") || subLower.equals("toggle")) {
+            me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleHud(feedback);
          } else {
-            me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
+            me.bombo.bomboaddons.features.discord.DiscordIpcManager.printVoiceStatus(feedback);
          }
          ci.cancel();
          return;

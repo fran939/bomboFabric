@@ -1,5 +1,21 @@
 [
   {
+    "version": "26.2.28.77",
+    "date": "2026-10-04",
+    "changes": [
+      "Storage Overlay Open by Name: /bp <name>, /backpack <name>, /ec <name>, /echest <name>, and /enderchest <name> automatically resolve custom container names (e.g. /bp kudar -> /backpack 18)",
+      "Discord Voice Single-User Deduplication: Purged duplicate synthetic 'You' participant when alone in voice channel and accurately bound local Discord ID",
+      "Discord Voice Commands & Persistent IPC: Separated /b discord status from HUD toggle so named pipe connection stays active; added full /b discord mute/unmute/deafen/undeafen routing",
+      "Discord Windows OS Hotkey Triggers: Upgraded shortcut dispatch to low-level Windows keybd_event to trigger Discord mute/deafen even when Minecraft window is focused",
+      "Scratch Studio Drag-and-Drop: Added draggable block reordering with dynamic insertion indicator line and floating cursor preview",
+      "Kid-Friendly Scratch Formatting: Replaced broken font emojis with clean UI symbols and added readable block condition translations (Container is Full, Top N Rows Full, Slot [X] has [Item], etc.)",
+      "Auto Sequence Engine Bugfix: Corrected < comparison evaluation in AutoSequenceExecutor and added no_item:, !has_item:, and slot_empty: conditions",
+      "Screenshare Live Telemetry: Added dedicated live streaming telemetry card to /b perf visualizer displaying real-time FPS, bitrate, mode, latency, and bandwidth sent",
+      "Screenshare VulkanMod Detection: Automatically detected VulkanMod to display 'Direct GPU (Vulkan - <3ms)' in streaming diagnostics",
+      "Chat Image Hover Preview Bounds: Guarded getLineAt against off-screen messages, preventing image hover popups when the mouse is positioned above the chat box in the open world"
+    ]
+  },
+  {
     "version": "26.2.28.76",
     "date": "2026-10-04",
     "changes": [

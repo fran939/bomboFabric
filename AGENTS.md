@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.76` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.77` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.76`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.77`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.77 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Open by Custom Name (`BackpackPreview`, `CommandMixin`):** Commands like `/bp <name>`, `/backpack <name>`, `/ec <name>`, `/enderchest <name>`, and `/echest <name>` now automatically resolve custom storage card names (e.g. `/bp kudar` automatically opens `/backpack 18` if backpack 18 is named "kudar"). If no custom name matches, displays a friendly chat notification listing matching candidates instead of failing silently.
+> 2. **Discord Voice HUD Single-User Deduplication & Command Overhaul (`DiscordIpcManager`, `CommandMixin`):** Eliminated duplicate synthetic "You" entry when alone in voice calls and accurately bound local Discord ID to prevent duplicate listings. Separated `/b discord` status from HUD toggle so status checks never kill the IPC worker thread or Named Pipe connection. Upgraded shortcut dispatch to low-level Windows OS `keybd_event` (Ctrl+Shift+M and Ctrl+Shift+D) to ensure Discord hotkeys trigger even when Minecraft is focused. Fully routed `/b discord mute [user]`, `/b discord unmute [user]`, `/b discord deafen [user]`, `/b discord undeafen [user]`, `/b discord hud`, `/b discord sync`, and `/b discord auth`.
+> 3. **Scratch Visual Studio Drag-and-Drop & Visuals (`AutoSequenceVisualScreen`, `AutoSequenceExecutor`):** Added complete drag-and-drop block reordering to `AutoSequenceVisualScreen`, with a dynamic insertion indicator line and floating cursor ghost preview. Replaced broken unicode font emojis with crisp UI symbols (`▶`, `■`, `>`, `*`, `~`, `[!]`, `[+]`) and translated raw condition codes into human-readable phrases ("Container is Full", "Top N Rows Full", "Slot [X] has [Item]", "Contains [Item]", "NO [Item]", "Repeat until count is [N]"). Fixed `<` comparison evaluation bug in `AutoSequenceExecutor` and added `no_item:`, `!has_item:`, and `slot_empty:` conditions.
+> 4. **Screenshare Live Telemetry & VulkanMod Direct GPU (`ScreenshareManager`, `PerformanceScreen`):** Added a dedicated, pulsing live streaming telemetry card to `/b perf` displaying active FPS, bitrate in kbps, GPU capture pipeline, HTTP POST latency, payload size in KB, and total MB sent. Automatically detects VulkanMod to switch capture pipeline reporting to `Direct GPU (Vulkan - <3ms)`.
+> 5. **Chat Image Hover Preview Bounds Guard (`ChatMixin`, `ChatImagePreview`):** Guarded `ChatMixin.bombo$getLineAt()` against off-screen messages, preventing image hover preview popups when the mouse is positioned in the sky or above the chat box in the open world.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.76 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay In-Place Card Rename & Unblocked Scrollwheel (`StorageOverlayScreen`):** Pressing Enter updates the storage card title in-place immediately without requiring `/storage` to be closed and reopened. Clicking between cards (e.g. backpacks 12, 13, 14) cleanly commits the previous edit and activates only the newly clicked card without duplicate text boxes or widget hierarchy destruction. Fixed mouse scrollwheel being intercepted when hovering over focused/open storage slots by routing scroll events directly to the container grid.

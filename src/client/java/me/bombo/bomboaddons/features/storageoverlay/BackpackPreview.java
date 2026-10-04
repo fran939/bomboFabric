@@ -230,6 +230,64 @@ public class BackpackPreview {
         BomboConfig.save();
     }
 
+    public static int resolveBackpackNumber(String query) {
+        if (query == null) return -1;
+        String q = query.trim();
+        if (q.isEmpty()) return -1;
+
+        String cleanNum = q.replaceAll("(?i)^(?:backpack|bp)\\s*#?", "").trim();
+        try {
+            int num = Integer.parseInt(cleanNum);
+            if (num >= 1 && num <= 18) return num;
+        } catch (NumberFormatException ignored) {}
+
+        Map<String, String> customs = BomboConfig.get().storageCustomNames;
+        if (customs != null) {
+            for (int i = 9; i < STORAGE_SIZE; i++) {
+                String c = customs.get(String.valueOf(i));
+                if (c != null && c.trim().equalsIgnoreCase(q)) {
+                    return (i - 8);
+                }
+            }
+            for (int i = 9; i < STORAGE_SIZE; i++) {
+                String c = customs.get(String.valueOf(i));
+                if (c != null && c.toLowerCase(java.util.Locale.ROOT).contains(q.toLowerCase(java.util.Locale.ROOT))) {
+                    return (i - 8);
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static int resolveEnderChestNumber(String query) {
+        if (query == null) return -1;
+        String q = query.trim();
+        if (q.isEmpty()) return -1;
+
+        String cleanNum = q.replaceAll("(?i)^(?:enderchest|echest|ec)\\s*#?", "").trim();
+        try {
+            int num = Integer.parseInt(cleanNum);
+            if (num >= 1 && num <= 9) return num;
+        } catch (NumberFormatException ignored) {}
+
+        Map<String, String> customs = BomboConfig.get().storageCustomNames;
+        if (customs != null) {
+            for (int i = 0; i <= 8; i++) {
+                String c = customs.get(String.valueOf(i));
+                if (c != null && c.trim().equalsIgnoreCase(q)) {
+                    return (i + 1);
+                }
+            }
+            for (int i = 0; i <= 8; i++) {
+                String c = customs.get(String.valueOf(i));
+                if (c != null && c.toLowerCase(java.util.Locale.ROOT).contains(q.toLowerCase(java.util.Locale.ROOT))) {
+                    return (i + 1);
+                }
+            }
+        }
+        return -1;
+    }
+
     public static int extractSlotNumber(String text) {
         if (text == null) return -1;
         Matcher m = Pattern.compile("(?:slot\\s*#?\\s*|backpack\\s+(?:slot\\s*#?\\s*)?)(\\d+)", Pattern.CASE_INSENSITIVE).matcher(text);

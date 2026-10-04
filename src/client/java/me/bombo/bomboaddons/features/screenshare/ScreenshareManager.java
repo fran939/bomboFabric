@@ -149,12 +149,65 @@ public class ScreenshareManager {
         }
     }
 
+    public static String getDirectGpuModeName() {
+        try {
+            if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("vulkanmod")) {
+                return "Direct GPU (Vulkan - <3ms)";
+            }
+        } catch (Throwable ignored) {}
+        return "Direct GPU (OpenGL - <3ms)";
+    }
+
     public static String getLastCaptureMode() {
         return lastCaptureMode;
     }
 
     public static float getCurrentFps() {
         return currentFps;
+    }
+
+    public static float getCurrentBitrateKbps() {
+        return currentBitrateKbps;
+    }
+
+    public static long getLastLatencyMs() {
+        return lastLatencyMs;
+    }
+
+    public static long getLastCaptureDurationMs() {
+        return lastCaptureDurationMs;
+    }
+
+    public static long getLastGpuCaptureMs() {
+        return lastGpuCaptureMs;
+    }
+
+    public static long getLastEncodeMs() {
+        return lastEncodeMs;
+    }
+
+    public static float getLastJpegSizeKb() {
+        return lastJpegSizeKb;
+    }
+
+    public static long getTotalBytesSent() {
+        return totalBytesSent;
+    }
+
+    public static long getFramesCaptured() {
+        return framesCaptured;
+    }
+
+    public static long getFramesSent() {
+        return framesSent;
+    }
+
+    public static int getCurrentTargetW() {
+        return currentTargetW;
+    }
+
+    public static int getCurrentTargetH() {
+        return currentTargetH;
     }
 
     private static final java.util.concurrent.atomic.AtomicBoolean captureInProgress = new java.util.concurrent.atomic.AtomicBoolean(false);
@@ -258,7 +311,7 @@ public class ScreenshareManager {
                     final int fh = targetH;
                     final float fq = quality;
                     if (s == null || s.screenshareOnlyMinecraft || mcActive) {
-                        lastCaptureMode = "Direct GPU (OpenGL - <3ms)";
+                        lastCaptureMode = getDirectGpuModeName();
                         triggerMinecraftCapture(mc, fw, fh, fq, jpeg -> {
                             if (jpeg != null && jpeg.length > 0) {
                                 processAndSendFrame(mc, jpeg, fw, fh, capStart);

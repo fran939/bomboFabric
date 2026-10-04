@@ -155,6 +155,9 @@ public class ChatImagePreview {
       if (mc.gui == null || mc.gui.hud.getChat() == null || !(mc.gui.hud.getChat() instanceof IChatComponent chatAccessor)) {
          return null;
       }
+      if (mc.gui.screen() == null || !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) {
+         return null;
+      }
 
       GuiMessage.Line line = chatAccessor.bombo$getLineAt(mouseX, mouseY);
       if (line == null) {

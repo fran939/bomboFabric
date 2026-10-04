@@ -41,6 +41,13 @@ public class AutoSequenceVisualScreen extends Screen {
     private EditBox delayInput = null;
     private String editingModalMode = null; // null, "EDIT_BLOCK", "RENAME_SEQ", "SET_KEY"
 
+    // Drag-and-drop reordering state
+    private int draggedActionIndex = -1;
+    private double dragStartX = 0.0;
+    private double dragStartY = 0.0;
+    private boolean isDragging = false;
+    private int dropTargetIndex = -1;
+
     public AutoSequenceVisualScreen(Screen parent) {
         super(Component.literal("Auto Sequences Visual Studio"));
         this.parent = parent;
@@ -183,6 +190,21 @@ public class AutoSequenceVisualScreen extends Screen {
         if (editingModalMode != null) {
             renderModal(g, font, mouseX, mouseY);
         }
+
+        // Floating drag preview
+        if (isDragging && draggedActionIndex >= 0 && getActiveSequence() != null
+                && draggedActionIndex < getActiveSequence().actions.size()) {
+            AutoAction dragging = getActiveSequence().actions.get(draggedActionIndex);
+            int dragW = 230;
+            int dragH = 34;
+            int dragX = mouseX - 25;
+            int dragY = mouseY - 17;
+            g.fill(dragX, dragY, dragX + dragW, dragY + dragH, 0xEE1E293B);
+            g.outline(dragX, dragY, dragW, dragH, 0xFF00E5FF);
+            g.fill(dragX, dragY, dragX + 5, dragY + dragH, 0xFF00E5FF);
+            g.text(font, "#" + (draggedActionIndex + 1) + " " + dragging.type.displayName, dragX + 12, dragY + 6, 0xFFFFFFFF, true);
+            g.text(font, getActionParamsText(dragging), dragX + 12, dragY + 18, 0xFF94A3B8, false);
+        }
     }
 
     private void renderPalette(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -199,37 +221,43 @@ public class AutoSequenceVisualScreen extends Screen {
         g.text(font, "§9Actions", x + 10, curY, 0xFF60A5FA, false);
         curY += 14;
 
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "👆 Click Slot", 0xFF2563EB, 0xFF3B82F6, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "▶ Click Slot", 0xFF2563EB, 0xFF3B82F6, mouseX, mouseY);
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "📦 Click Item / Lore", 0xFF1D4ED8, 0xFF60A5FA, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "▶ Click Item / Lore", 0xFF1D4ED8, 0xFF60A5FA, mouseX, mouseY);
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "🚪 Close GUI", 0xFFDC2626, 0xFFEF4444, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "■ Close Container", 0xFFDC2626, 0xFFEF4444, mouseX, mouseY);
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "💬 Run Command", 0xFF7C3AED, 0xFF8B5CF6, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "> Run Command", 0xFF7C3AED, 0xFF8B5CF6, mouseX, mouseY);
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "🌍 Click World", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "* Click World", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY);
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "👤 Click NPC", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "* Interact NPC", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY);
         curY += blockH + 12;
 
         // Flow & Timing Blocks (Amber)
         g.text(font, "§6Timing & Control", x + 10, curY, 0xFFFBBF24, false);
         curY += 14;
 
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "⏳ Wait Delay (ms)", 0xFFD97706, 0xFFF59E0B, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "~ Wait Delay (ms)", 0xFFD97706, 0xFFF59E0B, mouseX, mouseY);
         curY += blockH + 12;
 
-        // Conditions & Dynamic Presets (Green / Purple)
+        // Conditions & Dynamic Presets (Green / Orange)
         g.text(font, "§aConditions & Exceptions", x + 10, curY, 0xFF34D399, false);
         curY += 14;
 
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "⚠️ Except If: GUI Full", 0xFFB91C1C, 0xFFF87171, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: When Full", 0xFFB91C1C, 0xFFF87171, mouseX, mouseY);
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "⚠️ Except: Item Count", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Item Count", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY);
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "🎨 Dynamic: ${color}", 0xFF6D28D9, 0xFFA78BFA, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Slot Has Item", 0xFF991B1B, 0xFFEF4444, mouseX, mouseY);
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "🛡️ Only If: In Area", 0xFF047857, 0xFF34D399, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Has NO Item", 0xFF9A3412, 0xFFF97316, mouseX, mouseY);
+        curY += blockH + 4;
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[+] Only: Menu Open", 0xFF047857, 0xFF34D399, mouseX, mouseY);
+        curY += blockH + 4;
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[+] Only: In Area", 0xFF065F46, 0xFF10B981, mouseX, mouseY);
+        curY += blockH + 4;
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "● Dynamic: ${color}", 0xFF6D28D9, 0xFFA78BFA, mouseX, mouseY);
     }
 
     private void renderPaletteItem(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String title, int color, int border, int mouseX, int mouseY) {
@@ -238,6 +266,57 @@ public class AutoSequenceVisualScreen extends Screen {
         g.fill(x, y, x + w, y + h, bg);
         g.outline(x, y, w, h, hover ? border : 0x55FFFFFF);
         g.text(font, title, x + 8, y + 8, 0xFFFFFFFF, false);
+    }
+
+    public static String formatFriendlyCondition(String cond) {
+        if (cond == null || cond.isBlank()) return "";
+        String c = cond.trim();
+        String lower = c.toLowerCase(Locale.ROOT);
+        if (lower.equals("gui_full") || lower.equals("full")) return "Container Full";
+        if (lower.equals("no_gui") || lower.equals("none")) return "No Menu Open";
+        if (lower.startsWith("rows_full:") || lower.startsWith("rf:")) {
+            return "Top " + c.substring(c.indexOf(':') + 1).trim() + " Rows Full";
+        }
+        if (lower.startsWith("empty_slots:") || lower.startsWith("empty:")) {
+            return "Empty Slots " + c.substring(c.indexOf(':') + 1).trim();
+        }
+        if (lower.startsWith("no_item:") || lower.startsWith("!has_item:") || lower.startsWith("!item:")) {
+            return "NO " + c.substring(c.indexOf(':') + 1).trim();
+        }
+        if (lower.startsWith("has_item:") || lower.startsWith("item:")) {
+            return "Contains " + c.substring(c.indexOf(':') + 1).trim();
+        }
+        if (lower.startsWith("has_lore:") || lower.startsWith("lore:")) {
+            return "Lore: \"" + c.substring(c.indexOf(':') + 1).trim() + "\"";
+        }
+        if (lower.startsWith("slot_empty:")) {
+            return "Slot " + c.substring(11).trim() + " is Empty";
+        }
+        if (lower.startsWith("slot_has:") || lower.startsWith("slot:")) {
+            String rest = c.substring(c.indexOf(':') + 1).trim();
+            String[] parts = rest.split(",", 2);
+            if (parts.length == 2) {
+                return "Slot " + parts[0].trim() + " has " + parts[1].trim();
+            }
+            return "Slot " + rest;
+        }
+        if (lower.startsWith("item_count:") || lower.startsWith("count:") || lower.startsWith("repeat_until:")) {
+            String rest = c.substring(c.indexOf(':') + 1).trim();
+            return "Count of " + rest;
+        }
+        if (lower.startsWith("area:")) {
+            return "In " + c.substring(5).trim();
+        }
+        if (lower.startsWith("subarea:")) {
+            return "In " + c.substring(8).trim();
+        }
+        if (lower.startsWith("coords:") || lower.startsWith("c:")) {
+            return "Near (" + c.substring(c.indexOf(':') + 1).trim() + ")";
+        }
+        if (lower.startsWith("in_gui:") || lower.startsWith("gui:")) {
+            return "Menu \"" + c.substring(c.indexOf(':') + 1).trim() + "\"";
+        }
+        return c;
     }
 
     private void renderCanvas(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -276,7 +355,20 @@ public class AutoSequenceVisualScreen extends Screen {
                 continue;
             }
 
+            // Draw insertion marker if dragging above this card
+            if (isDragging && dropTargetIndex == i) {
+                g.fill(x + 10, cardY - 4, x + w - 14, cardY - 1, 0xFF00E5FF);
+                g.fill(x + 6, cardY - 5, x + 10, cardY, 0xFF00E5FF);
+            }
+
             renderActionBlock(g, font, x + 10, cardY, w - 24, blockH, action, i, mouseX, mouseY);
+        }
+
+        if (isDragging && dropTargetIndex >= actions.size()) {
+            int insertY = curY - 3;
+            if (insertY >= y && insertY <= y + h) {
+                g.fill(x + 10, insertY, x + w - 14, insertY + 3, 0xFF00E5FF);
+            }
         }
 
         g.disableScissor();
@@ -328,7 +420,7 @@ public class AutoSequenceVisualScreen extends Screen {
         // Exception / Condition Badges
         int badgeX = x + 44 + font.width(paramText) + 8;
         if (action.exceptIf != null && !action.exceptIf.isBlank()) {
-            String excLabel = "⚠️ Except: " + action.exceptIf;
+            String excLabel = "§c[Skip if: " + formatFriendlyCondition(action.exceptIf) + "]";
             int excW = font.width(excLabel) + 8;
             g.fill(badgeX, y + 20, badgeX + excW, y + 34, 0x33EF4444);
             g.outline(badgeX, y + 20, excW, 14, 0xFFEF4444);
@@ -337,7 +429,7 @@ public class AutoSequenceVisualScreen extends Screen {
         }
 
         if (action.onlyIf != null && !action.onlyIf.isBlank()) {
-            String onlyLabel = "🛡️ Only: " + action.onlyIf;
+            String onlyLabel = "§a[Only if: " + formatFriendlyCondition(action.onlyIf) + "]";
             int onlyW = font.width(onlyLabel) + 8;
             g.fill(badgeX, y + 20, badgeX + onlyW, y + 34, 0x3310B981);
             g.outline(badgeX, y + 20, onlyW, 14, 0xFF10B981);
@@ -450,10 +542,15 @@ public class AutoSequenceVisualScreen extends Screen {
                     delayInput.extractRenderState(g, mouseX, mouseY, 0);
                 }
 
-                g.text(font, "Exception Guard (Skip if true - e.g. gui_full, rows_full:3, area:Hub):", modalX + 16, modalY + 132, 0xFF9CA3AF, false);
+                g.text(font, "Exception Guard (Skip if true - e.g. gui_full, item_count:diamond>=64, slot_has:0,diamond):", modalX + 16, modalY + 132, 0xFF9CA3AF, false);
                 if (conditionInput != null) {
                     conditionInput.setPosition(modalX + 16, modalY + 146);
                     conditionInput.extractRenderState(g, mouseX, mouseY, 0);
+                    String condVal = conditionInput.getValue().trim();
+                    if (!condVal.isEmpty()) {
+                        String friendlyDesc = "▶ Reads as: " + formatFriendlyCondition(condVal);
+                        g.text(font, friendlyDesc, modalX + 16, modalY + 170, 0xFF38BDF8, false);
+                    }
                 }
             }
         }
@@ -715,16 +812,37 @@ public class AutoSequenceVisualScreen extends Screen {
         // Except If: Item Count
         if (my >= curY && my <= curY + blockH) {
             AutoAction a = AutoAction.closeGui(100);
-            a.exceptIf = "item_count:diamond>133";
+            a.exceptIf = "item_count:diamond>=64";
             seq.actions.add(a);
             AutoSequenceManager.save();
             return;
         }
         curY += blockH + 4;
 
-        // Dynamic ${color}
+        // Except If: Slot Has Item
         if (my >= curY && my <= curY + blockH) {
-            AutoAction a = AutoAction.clickSlot(-1, "${color}", "LEFT", 200);
+            AutoAction a = AutoAction.clickSlot(10, "diamond", "SHIFT_LEFT", 200);
+            a.exceptIf = "slot_has:10,diamond";
+            seq.actions.add(a);
+            AutoSequenceManager.save();
+            return;
+        }
+        curY += blockH + 4;
+
+        // Except If: Has NO Item
+        if (my >= curY && my <= curY + blockH) {
+            AutoAction a = AutoAction.closeGui(100);
+            a.exceptIf = "no_item:diamond";
+            seq.actions.add(a);
+            AutoSequenceManager.save();
+            return;
+        }
+        curY += blockH + 4;
+
+        // Only If: Menu Open
+        if (my >= curY && my <= curY + blockH) {
+            AutoAction a = AutoAction.clickSlot(10, "", "LEFT", 200);
+            a.onlyIf = "in_gui:Chest";
             seq.actions.add(a);
             AutoSequenceManager.save();
             return;
@@ -735,6 +853,15 @@ public class AutoSequenceVisualScreen extends Screen {
         if (my >= curY && my <= curY + blockH) {
             AutoAction a = AutoAction.runCommand("/warp hub", 400);
             a.onlyIf = "area:Hub";
+            seq.actions.add(a);
+            AutoSequenceManager.save();
+            return;
+        }
+        curY += blockH + 4;
+
+        // Dynamic ${color}
+        if (my >= curY && my <= curY + blockH) {
+            AutoAction a = AutoAction.clickSlot(-1, "${color}", "LEFT", 200);
             seq.actions.add(a);
             AutoSequenceManager.save();
         }
@@ -813,8 +940,12 @@ public class AutoSequenceVisualScreen extends Screen {
                     return;
                 }
 
-                // Clicking anywhere on block body opens editor
-                openEditBlockModal(seq, i);
+                // Dragging or clicking block body
+                draggedActionIndex = i;
+                dragStartX = mx;
+                dragStartY = my;
+                isDragging = false;
+                dropTargetIndex = i;
                 return;
             }
         }
@@ -943,6 +1074,57 @@ public class AutoSequenceVisualScreen extends Screen {
             if (conditionInput != null && conditionInput.isFocused() && conditionInput.charTyped(event)) return true;
         }
         return super.charTyped(event);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        if (draggedActionIndex >= 0) {
+            double mx = event.x();
+            double my = event.y();
+            if (!isDragging && Math.hypot(mx - dragStartX, my - dragStartY) > 4) {
+                isDragging = true;
+            }
+            if (isDragging) {
+                AutoSequence seq = getActiveSequence();
+                if (seq != null) {
+                    int headerH = 44;
+                    int canvasY = headerH + 8;
+                    int blockH = 46;
+                    int blockGap = 6;
+                    int relY = (int) (my - (canvasY + 10 - scrollAmount));
+                    int target = (int) Math.round((double) relY / (blockH + blockGap));
+                    dropTargetIndex = Math.max(0, Math.min(target, seq.actions.size()));
+                }
+            }
+            return true;
+        }
+        return super.mouseDragged(event, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (isDragging && draggedActionIndex >= 0) {
+            AutoSequence seq = getActiveSequence();
+            if (seq != null && dropTargetIndex >= 0 && dropTargetIndex != draggedActionIndex) {
+                if (draggedActionIndex < seq.actions.size()) {
+                    AutoAction a = seq.actions.remove(draggedActionIndex);
+                    int insertIdx = dropTargetIndex;
+                    if (insertIdx > draggedActionIndex) insertIdx--;
+                    insertIdx = Math.max(0, Math.min(insertIdx, seq.actions.size()));
+                    seq.actions.add(insertIdx, a);
+                    AutoSequenceManager.save();
+                }
+            }
+        } else if (!isDragging && draggedActionIndex >= 0) {
+            AutoSequence seq = getActiveSequence();
+            if (seq != null && draggedActionIndex < seq.actions.size()) {
+                openEditBlockModal(seq, draggedActionIndex);
+            }
+        }
+        draggedActionIndex = -1;
+        isDragging = false;
+        dropTargetIndex = -1;
+        return super.mouseReleased(event);
     }
 
     @Override

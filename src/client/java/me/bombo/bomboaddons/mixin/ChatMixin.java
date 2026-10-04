@@ -107,6 +107,9 @@ public abstract class ChatMixin implements IChatComponent {
    public abstract int getWidth();
 
    @Shadow
+   public abstract int getLinesPerPage();
+
+   @Shadow
    protected abstract void addMessage(Component var1, MessageSignature var2, GuiMessageSource var3, GuiMessageTag var4);
 
    @Inject(
@@ -498,9 +501,11 @@ public abstract class ChatMixin implements IChatComponent {
                double chatLineSpacing = (Double)this.minecraft.options.chatLineSpacing().get();
                double chatLineHeight = (double)9.0F * (chatLineSpacing + (double)1.0F);
                int lineIndex = Mth.floor(e / chatLineHeight);
-               int scrolledLineIndex = lineIndex + this.chatScrollbarPos;
-               if (scrolledLineIndex >= 0 && scrolledLineIndex < this.trimmedMessages.size()) {
-                  return (GuiMessage.Line)this.trimmedMessages.get(scrolledLineIndex);
+               if (lineIndex >= 0 && lineIndex < this.getLinesPerPage()) {
+                  int scrolledLineIndex = lineIndex + this.chatScrollbarPos;
+                  if (scrolledLineIndex >= 0 && scrolledLineIndex < this.trimmedMessages.size()) {
+                     return (GuiMessage.Line)this.trimmedMessages.get(scrolledLineIndex);
+                  }
                }
             }
 
