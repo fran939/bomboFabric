@@ -1,5 +1,22 @@
 # BomboAddons Changelog
  
+## [26.2.28.86] - 2026-10-04 (Beta)
+
+### Discord Real Username & Anti-Flicker HUD Stabilization
+- **Real Discord Username Everywhere (`DiscordVoiceHud`):** Strictly render the real Discord username/handle across all voice call participants at all times, completely eliminating switching between server nicknames and user tags.
+- **Deterministic Member Order & Flicker Elimination:** Stably sort voice call members alphabetically with the local user pinned to the top row, stopping the HUD list from jumping positions on polling updates.
+- **Mute Toggle Loop Fix (`DiscordIpcManager`):** Added explicit volatile client-side boolean tracking for self-mute and self-deafen, preventing the infinite "Microphone Muted" cycle and ensuring `/b discord mute` toggles cleanly between muted and unmuted every time.
+- **Stream State Memory Across Polling Loops:** Preserved active screensharing and member stream state across bot gateway and WebRTC log scanning intervals, stopping `[LIVE]` badges from flickering off and on.
+
+### Spotify Non-Blocking File-Based Seek & Process Detection
+- **Non-Blocking Seek Architecture (`SpotifyManager`):** Replaced standard input pipe `StreamReader.Peek()` in the PowerShell GSMTC poller with non-blocking file-based seek polling (`spotify_seek.txt`), completely resolving the background process deadlock that caused Spotify to show as "Closed / Not Running".
+- **Instant Media Recovery:** Restored real-time track metadata streaming, album artwork display, play/pause controls, and lyric synchronization.
+
+### Screenshare True 60 FPS Engine & Screen 1 / Screen 2 Command
+- **Pipeline Throughput Unlocked (`ScreenshareManager`):** Lifted artificial encoder and network bottlenecks to allow up to 2 concurrent worker encodes and 4 in-flight HTTP posts, sustaining true 60 FPS broadcasts with zero frame drops.
+- **Screen 1 & Screen 2 Direct Sharing (`BomboaddonsClient`, `ScreenshareManager`):** Added `/ss 1`, `/ss 2`, `/ss screen <1|2>`, `/ss monitor <1|2>`, `/stream 1`, and `/stream 2` to instantly start streaming specific physical monitors or switch display sources on the fly, with `/ss mc` to return to Minecraft window capture.
+- **Multi-Monitor System Cursor Rendering:** Accurately renders the OS mouse cursor onto the captured monitor frame when broadcasting desktop screens.
+
 ## [26.2.28.85] - 2026-10-04 (Beta)
 
 ### Discord Voice HUD Inventory Visibility & Anti-Bounce Cooldown

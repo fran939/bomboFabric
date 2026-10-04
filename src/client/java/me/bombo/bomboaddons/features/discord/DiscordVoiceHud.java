@@ -180,7 +180,18 @@ public class DiscordVoiceHud {
             } else {
                 java.util.Set<String> seenKeys = new java.util.HashSet<>();
                 String myUid = DiscordIpcManager.getMyUserId();
-                for (DiscordIpcManager.DiscordVoiceUser u : DiscordIpcManager.getVoiceUsers()) {
+                List<DiscordIpcManager.DiscordVoiceUser> userList = new ArrayList<>(DiscordIpcManager.getVoiceUsers());
+                userList.sort((a, b) -> {
+                    boolean aSelf = a.id().equals(myUid) || "self".equals(a.id());
+                    boolean bSelf = b.id().equals(myUid) || "self".equals(b.id());
+                    if (aSelf && !bSelf) return -1;
+                    if (!aSelf && bSelf) return 1;
+                    String na = (a.username() != null && !a.username().isEmpty()) ? a.username() : a.displayName();
+                    String nb = (b.username() != null && !b.username().isEmpty()) ? b.username() : b.displayName();
+                    return String.CASE_INSENSITIVE_ORDER.compare(na != null ? na : "", nb != null ? nb : "");
+                });
+
+                for (DiscordIpcManager.DiscordVoiceUser u : userList) {
                     String normDisplay = u.displayName() != null ? u.displayName().toLowerCase(java.util.Locale.ROOT).trim() : "";
                     String normUser = u.username() != null ? u.username().toLowerCase(java.util.Locale.ROOT).trim() : "";
                     if ("self".equals(u.id()) && (!myUid.isEmpty() || seenKeys.contains(normDisplay) || seenKeys.contains(normUser))) {
@@ -194,10 +205,10 @@ public class DiscordVoiceHud {
                     if (!normUser.isEmpty()) seenKeys.add(normUser);
 
                     cachedUserRowIds.add(u.id());
-                    String nameToRender = showServerNick
-                            ? (u.displayName() != null && !u.displayName().isEmpty() ? u.displayName() : u.username())
-                            : (u.username() != null && !u.username().isEmpty() ? u.username() : u.displayName());
-                    if (nameToRender == null || nameToRender.isEmpty()) nameToRender = "User";
+                    // Always show the real Discord username (handle) across all members
+                    String nameToRender = (u.username() != null && !u.username().isEmpty() && !u.username().startsWith("User ("))
+                            ? u.username()
+                            : (u.displayName() != null && !u.displayName().isEmpty() ? u.displayName() : "User");
 
                     StringBuilder sb = new StringBuilder();
                     sb.append(u.isSpeaking() ? " §a● " : " §8○ ");

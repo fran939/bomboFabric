@@ -59,6 +59,15 @@ public class ScreenshareManager {
     private static volatile float lastJpegSizeKb = 0.0f;
     private static volatile String lastCaptureMode = "Direct GPU (OpenGL)";
     private static volatile String lastError = "";
+    private static volatile int targetMonitorIndex = 0; // 0 = Auto / Minecraft Window, 1 = Screen 1, 2 = Screen 2
+
+    public static void setTargetMonitor(int monitorIndex) {
+        targetMonitorIndex = Math.max(0, monitorIndex);
+    }
+
+    public static int getTargetMonitor() {
+        return targetMonitorIndex;
+    }
 
     // Window FPS calculation
     private static long lastMetricCalcTime = 0L;
@@ -394,14 +403,21 @@ public class ScreenshareManager {
                 currentTargetW = targetW;
                 currentTargetH = targetH;
 
-                // Parallel pipeline: only capture when previous frame finished encoding and network is clear
-                if (mc != null && inFlightEncodes.get() == 0 && inFlightPosts.get() <= 1 && gpuCaptureInProgress.compareAndSet(false, true)) {
+                // Parallel pipeline: allow up to 2 concurrent encodes and 4 in-flight network posts for true 60 FPS
+                if (mc != null && inFlightEncodes.get() <= 1 && inFlightPosts.get() < 4 && gpuCaptureInProgress.compareAndSet(false, true)) {
                     long capStart = System.currentTimeMillis();
                     boolean mcActive = mc.isWindowActive();
                     final int fw = targetW;
                     final int fh = targetH;
                     final float fq = quality;
-                    if (s == null || s.screenshareOnlyMinecraft || mcActive) {
+                    final int monIdx = targetMonitorIndex;
+
+                    if (monIdx > 0) {
+                        lastCaptureMode = "Screen " + monIdx + " (Desktop Robot)";
+                        triggerRobotCapture(mc, fw, fh, fq, rJpeg -> {
+                            processAndSendFrame(mc, rJpeg, fw, fh, capStart);
+                        });
+                    } else if (s == null || s.screenshareOnlyMinecraft || mcActive) {
                         lastCaptureMode = getDirectGpuModeName();
                         triggerMinecraftCapture(mc, fw, fh, fq, jpeg -> {
                             if (jpeg != null && jpeg.length > 0) {
@@ -686,29 +702,59 @@ public class ScreenshareManager {
                 robotInstance = new Robot();
             }
 
-            int winX = mc.getWindow().getX();
-            int winY = mc.getWindow().getY();
-            int winW = mc.getWindow().getWidth();
-            int winH = mc.getWindow().getHeight();
+            Rectangle rect;
+            int monIdx = targetMonitorIndex;
+            if (monIdx > 0) {
+                GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+                if (devices != null && monIdx <= devices.length) {
+                    rect = devices[monIdx - 1].getDefaultConfiguration().getBounds();
+                } else {
+                    rect = getVirtualScreenBounds();
+                }
+            } else {
+                int winX = mc.getWindow().getX();
+                int winY = mc.getWindow().getY();
+                int winW = mc.getWindow().getWidth();
+                int winH = mc.getWindow().getHeight();
 
-            if (winW <= 0 || winH <= 0) return null;
+                if (winW <= 0 || winH <= 0) return null;
 
-            Rectangle virtualBounds = getVirtualScreenBounds();
-            int clampedX = Math.max(virtualBounds.x, Math.min(winX, virtualBounds.x + virtualBounds.width - 50));
-            int clampedY = Math.max(virtualBounds.y, Math.min(winY, virtualBounds.y + virtualBounds.height - 50));
-            int clampedW = Math.min(winW, virtualBounds.x + virtualBounds.width - clampedX);
-            int clampedH = Math.min(winH, virtualBounds.y + virtualBounds.height - clampedY);
+                Rectangle virtualBounds = getVirtualScreenBounds();
+                int clampedX = Math.max(virtualBounds.x, Math.min(winX, virtualBounds.x + virtualBounds.width - 50));
+                int clampedY = Math.max(virtualBounds.y, Math.min(winY, virtualBounds.y + virtualBounds.height - 50));
+                int clampedW = Math.min(winW, virtualBounds.x + virtualBounds.width - clampedX);
+                int clampedH = Math.min(winH, virtualBounds.y + virtualBounds.height - clampedY);
 
-            if (clampedW <= 10 || clampedH <= 10) {
-                clampedX = virtualBounds.x;
-                clampedY = virtualBounds.y;
-                clampedW = Math.min(virtualBounds.width, targetW);
-                clampedH = Math.min(virtualBounds.height, targetH);
+                if (clampedW <= 10 || clampedH <= 10) {
+                    clampedX = virtualBounds.x;
+                    clampedY = virtualBounds.y;
+                    clampedW = Math.min(virtualBounds.width, targetW);
+                    clampedH = Math.min(virtualBounds.height, targetH);
+                }
+
+                rect = new Rectangle(clampedX, clampedY, clampedW, clampedH);
             }
 
-            Rectangle rect = new Rectangle(clampedX, clampedY, clampedW, clampedH);
             BufferedImage fullImg = robotInstance.createScreenCapture(rect);
             if (fullImg == null) return null;
+
+            // Draw system mouse cursor if cursor is within captured rectangle
+            try {
+                java.awt.Point p = java.awt.MouseInfo.getPointerInfo().getLocation();
+                if (rect.contains(p)) {
+                    int cx = p.x - rect.x;
+                    int cy = p.y - rect.y;
+                    Graphics2D g2 = fullImg.createGraphics();
+                    int[] xPoints = {cx, cx, cx + 11, cx + 7, cx + 12, cx + 10, cx + 5, cx + 8};
+                    int[] yPoints = {cy, cy + 15, cy + 11, cy + 9, cy + 15, cy + 16, cy + 10, cy + 8};
+                    g2.setColor(Color.BLACK);
+                    g2.setStroke(new BasicStroke(2.0f));
+                    g2.drawPolygon(xPoints, yPoints, xPoints.length);
+                    g2.setColor(Color.WHITE);
+                    g2.fillPolygon(xPoints, yPoints, xPoints.length);
+                    g2.dispose();
+                }
+            } catch (Throwable ignored) {}
 
             return compressScaledJpeg(fullImg, targetW, targetH, quality);
         } catch (Throwable t) {

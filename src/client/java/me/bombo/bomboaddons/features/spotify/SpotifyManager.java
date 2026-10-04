@@ -85,12 +85,11 @@ public class SpotifyManager {
         long finalMs = targetMs;
         CompletableFuture.runAsync(() -> {
             try {
-                if (gsmtcProcess != null && gsmtcProcess.isAlive()) {
-                    OutputStream out = gsmtcProcess.getOutputStream();
-                    if (out != null) {
-                        out.write(("SEEK|" + finalMs + "\n").getBytes(StandardCharsets.UTF_8));
-                        out.flush();
-                    }
+                File dir = new File(System.getProperty("java.io.tmpdir"), "bomboaddons");
+                if (!dir.exists()) dir.mkdirs();
+                File seekFile = new File(dir, "spotify_seek.txt");
+                try (FileOutputStream fos = new FileOutputStream(seekFile)) {
+                    fos.write(("SEEK|" + finalMs + "\r\n").getBytes(StandardCharsets.UTF_8));
                 }
             } catch (Throwable ignored) {}
         });
@@ -444,7 +443,7 @@ public class SpotifyManager {
                     + "[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager, Windows.Media.Control, ContentType=WindowsRuntime] | Out-Null\r\n"
                     + "$asyncOp = [Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager]::RequestAsync()\r\n"
                     + "$mgr = Await $asyncOp ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager])\r\n"
-                    + "$reader = [System.IO.StreamReader]::new([System.Console]::OpenStandardInput())\r\n\r\n"
+                    + "$seekFile = Join-Path $env:TEMP 'bomboaddons\\spotify_seek.txt'\r\n\r\n"
                     + "while ($true) {\r\n"
                     + "    try {\r\n"
                     + "        $session = $null\r\n"
@@ -464,15 +463,18 @@ public class SpotifyManager {
                     + "                $session = $cur\r\n"
                     + "            }\r\n"
                     + "        }\r\n"
-                    + "        while ($reader.Peek() -ge 0) {\r\n"
-                    + "            $cmd = $reader.ReadLine()\r\n"
-                    + "            if ($cmd -and $cmd.StartsWith('SEEK|')) {\r\n"
-                    + "                $seekMs = [long]$cmd.Substring(5)\r\n"
-                    + "                $targetTicks = [long]($seekMs * 10000)\r\n"
-                    + "                if ($session) {\r\n"
-                    + "                    Await ($session.TryChangePlaybackPositionAsync($targetTicks)) ([bool]) | Out-Null\r\n"
+                    + "        if (Test-Path $seekFile) {\r\n"
+                    + "            try {\r\n"
+                    + "                $cmd = Get-Content -Path $seekFile -Raw\r\n"
+                    + "                Remove-Item -Path $seekFile -Force -ErrorAction SilentlyContinue\r\n"
+                    + "                if ($cmd -and $cmd.StartsWith('SEEK|')) {\r\n"
+                    + "                    $seekMs = [long]($cmd.Substring(5).Trim())\r\n"
+                    + "                    $targetTicks = [long]($seekMs * 10000)\r\n"
+                    + "                    if ($session) {\r\n"
+                    + "                        Await ($session.TryChangePlaybackPositionAsync($targetTicks)) ([bool]) | Out-Null\r\n"
+                    + "                    }\r\n"
                     + "                }\r\n"
-                    + "            }\r\n"
+                    + "            } catch {}\r\n"
                     + "        }\r\n"
                     + "        if ($session) {\r\n"
                     + "            $tl = $session.GetTimelineProperties()\r\n"

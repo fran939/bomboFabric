@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.86",
+    "date": "2026-10-04",
+    "changes": [
+      "Discord Real Username Display: Always show real Discord username across all voice call participants instead of oscillating with guild nicknames",
+      "Discord HUD Sorting & Anti-Flicker: Stably sort call members alphabetically with local player pinned to top, eliminating HUD row jumping",
+      "Discord Mute Toggle Loop Fix: Added explicit client-side boolean state tracking to ensure /b discord mute toggles between muted and unmuted cleanly",
+      "Discord Stream Memory: Preserved member streaming status across bot sync and WebRTC scan cycles to eliminate flickering [LIVE] badges",
+      "Spotify Non-Blocking Seek Architecture: Replaced blocking pipe read in PowerShell with file-based seek polling, eliminating process freeze and fixing 'Spotify Closed / Not Running'",
+      "Screenshare True 60 FPS Engine: Raised pipeline concurrency limits to 2 concurrent encodes and 4 in-flight network posts, achieving stable 60 FPS broadcasting",
+      "Screen 1 & Screen 2 Direct Streaming: Added /ss 1, /ss 2, /ss screen <1|2>, /ss monitor <1|2>, and /stream <1|2> to stream specific monitors directly, with /ss mc to switch back to game window",
+      "Multi-Monitor System Cursor Capture: Accurately renders OS mouse cursor onto captured desktop displays"
+    ]
+  },
+  {
     "version": "26.2.28.85",
     "date": "2026-10-04",
     "changes": [

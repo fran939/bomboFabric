@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.85` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.86` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.85`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.86`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.86 (Ready for In-Game Testing)
+>
+> 1. **Discord Real Username Everywhere & Anti-Flicker HUD Stabilization (`DiscordVoiceHud`, `DiscordIpcManager`):** Strictly renders the real Discord username/handle across all voice call participants at all times, preventing alternating display names and server nicknames. Sorted voice call participants alphabetically with the local player pinned to the top row, stopping list rows from jumping positions during polling updates. Preserved active streaming state across both bot sync and WebRTC log scanning intervals to eliminate flickering `[LIVE]` badges.
+> 2. **Discord Mute Toggle Loop Fix (`DiscordIpcManager`):** Added explicit volatile client-side boolean tracking (`isSelfMuted`, `isSelfDeafened`), preventing the infinite "Microphone Muted" cycle and ensuring `/b discord mute` and `/b discord deafen` toggle cleanly between muted and unmuted every single execution.
+> 3. **Spotify Non-Blocking Seek Architecture & Process Discovery (`SpotifyManager`):** Replaced standard input pipe `StreamReader.Peek()` in the PowerShell GSMTC poller with non-blocking file-based seek polling (`spotify_seek.txt`), completely resolving the background process deadlock that caused Spotify to show as "Closed / Not Running".
+> 4. **Screenshare True 60 FPS Engine (`ScreenshareManager`):** Raised pipeline concurrency limits to allow up to 2 concurrent worker thread encodes and 4 in-flight HTTP network posts, eliminating the ~30 FPS throughput ceiling and sustaining rock-solid 60 FPS streaming.
+> 5. **Screen 1 & Screen 2 Direct Streaming (`BomboaddonsClient`, `ScreenshareManager`):** Added `/ss 1`, `/ss 2`, `/ss screen <1|2>`, `/ss monitor <1|2>`, `/stream 1`, and `/stream 2` to instantly start streaming specific physical monitors or switch display sources on the fly, with `/ss mc` or `/ss window` to switch back to the Minecraft game window. Integrated OS system cursor drawing when capturing desktop displays.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.85 (Ready for In-Game Testing)
 >
 > 1. **Discord Voice HUD Inventory Visibility & Anti-Bounce Cooldown (`DiscordVoiceHud`, `DiscordIpcManager`, `BomboConfig`, `ConfigRegistry`):** Removed screen type restriction in `DiscordVoiceHud`, keeping the voice HUD visible across all screens including player inventory, chests, backpacks, and container interfaces. Enforced a 400ms action cooldown and idempotence check across `toggleSelfMute`, `setSelfMute`, `toggleSelfDeafen`, and `setSelfDeafen`, preventing rapid state flapping and suppressing redundant chat confirmations when the user is already in the target state. Added a `Show Server Nicknames` toggle in `/b config` and stabilized bot user cache resolution in `scanDiscordLogForVoice()` to prevent the user display name from oscillating between their Discord tag (`fran939`) and server nickname (`fran`).

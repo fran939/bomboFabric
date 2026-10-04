@@ -8328,7 +8328,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          }))
          .then(ClientCommands.argument("action", StringArgumentType.word())
             .suggests((c, b) -> {
-               String[] subs = new String[]{"config", "start", "stop", "debug", "status", "stream", "accept", "deny", "whitelist", "remove", "list", "discord"};
+               String[] subs = new String[]{"config", "start", "stop", "debug", "status", "stream", "screen", "monitor", "1", "2", "mc", "accept", "deny", "whitelist", "remove", "list", "discord"};
                String remaining = b.getRemaining().toLowerCase(java.util.Locale.ROOT);
                for (String s : subs) {
                   if (s.startsWith(remaining)) {
@@ -8376,6 +8376,8 @@ public class BomboaddonsClient implements ClientModInitializer {
          feedback.accept(Component.literal("§e/ss remove <player> §7- Remove player from auto-accept list"));
          feedback.accept(Component.literal("§e/ss list §7- View auto-accept whitelist"));
          feedback.accept(Component.literal("§e/ss discord §7- Toggle Discord Voice Call HUD"));
+         feedback.accept(Component.literal("§e/ss screen <1|2> §7- Start sharing Screen 1 or Screen 2 (or /ss 1, /ss 2)"));
+         feedback.accept(Component.literal("§e/ss mc §7- Switch back to Minecraft window capture"));
          feedback.accept(Component.literal("§8§m--------------------------------------------------"));
          return;
       }
@@ -8397,6 +8399,39 @@ public class BomboaddonsClient implements ClientModInitializer {
          IRCClient.activeScreenshareWith = target;
          me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming(target);
          feedback.accept(Component.literal("§8[§3Bombo§8] §aAccepted screenshare request from §e" + target + "§a. Your screen is now live on §b§nhttps://bombo.dpdns.org/screenshare?user=" + myIgn));
+         return;
+      }
+
+      if (sub.equals("1") || sub.equals("screen1") || sub.equals("monitor1")
+              || ((sub.equals("screen") || sub.equals("monitor")) && args.length > 1 && args[1].equals("1"))) {
+         me.bombo.bomboaddons.features.screenshare.ScreenshareManager.setTargetMonitor(1);
+         if (!me.bombo.bomboaddons.features.screenshare.ScreenshareManager.isStreaming()) {
+            me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming("All");
+         }
+         String url = "https://bombo.dpdns.org/screenshare?user=" + myIgn;
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aSharing §eScreen 1 §a(Monitor 1)!"));
+         feedback.accept(Component.literal("§8[§3Bombo§8] §7Watch live on web: §b§n" + url)
+                 .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(java.net.URI.create(url)))));
+         return;
+      }
+
+      if (sub.equals("2") || sub.equals("screen2") || sub.equals("monitor2")
+              || ((sub.equals("screen") || sub.equals("monitor")) && args.length > 1 && args[1].equals("2"))) {
+         me.bombo.bomboaddons.features.screenshare.ScreenshareManager.setTargetMonitor(2);
+         if (!me.bombo.bomboaddons.features.screenshare.ScreenshareManager.isStreaming()) {
+            me.bombo.bomboaddons.features.screenshare.ScreenshareManager.startStreaming("All");
+         }
+         String url = "https://bombo.dpdns.org/screenshare?user=" + myIgn;
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aSharing §eScreen 2 §a(Monitor 2)!"));
+         feedback.accept(Component.literal("§8[§3Bombo§8] §7Watch live on web: §b§n" + url)
+                 .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(java.net.URI.create(url)))));
+         return;
+      }
+
+      if (sub.equals("mc") || sub.equals("game") || sub.equals("window") || sub.equals("auto") || sub.equals("0")
+              || ((sub.equals("screen") || sub.equals("monitor")) && args.length > 1 && (args[1].equals("0") || args[1].equalsIgnoreCase("mc") || args[1].equalsIgnoreCase("window")))) {
+         me.bombo.bomboaddons.features.screenshare.ScreenshareManager.setTargetMonitor(0);
+         feedback.accept(Component.literal("§8[§3Bombo§8] §aScreenshare source set to §eMinecraft Window (Direct GPU)§a."));
          return;
       }
 
