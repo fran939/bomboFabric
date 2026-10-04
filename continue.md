@@ -1,6 +1,6 @@
 # BomboAddons Agent Continuation & Knowledge Handoff
 
-> **Current Version:** `26.2.28.69` (Beta)
+> **Current Version:** `26.2.28.77` (Beta)
 > **Branch:** `26.2` (`origin/26.2`)
 > **Minecraft:** `26.2` | **Fabric Loader:** `0.19.3` | **Loom:** `1.17.11` | **Java:** `25` (compatibility 21/25)
 > **Flavors:** `bomboaddons` (legit) & `bomboclient` (cheat)
@@ -14,7 +14,7 @@
 On **EVERY PROMPT FINISH**, every agent **MUST** complete all of the following:
 
 1. **Version Format:** `26.2.<mod_version>.<subversion>`
-   - Subversion (Beta): 4 parts (e.g. `26.2.28.68`, next is `26.2.28.69`).
+   - Subversion (Beta): 4 parts (e.g. `26.2.28.76` -> `26.2.28.77`).
    - Milestone (Full): 3 parts (e.g. `26.2.29`).
    - Bump `mod_version` in [`gradle.properties`](file:///e:/Users/frand/Documents/bomboaddons-26.2/gradle.properties).
 2. **Build Verification (Both Flavors):**
@@ -44,98 +44,82 @@ On **EVERY PROMPT FINISH**, every agent **MUST** complete all of the following:
 
 ---
 
-## 2. Features Implemented & Awaiting In-Game Testing (v26.2.28.68)
+## 2. Server Architecture & Endpoints (`bomboapi`)
 
-### A. Storage Overlay (`/st`, Ender Chests, Backpacks)
-1. **Dynamic Sizing & Void Row Elimination:**
-   - [`BackpackPreview.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java) parses item count and lore capacity lines.
-   - Ender Chest 4 (and 1-row ender chests 9x1) now renders strictly its 1 real row. Empty black void rows are eliminated.
-2. **Account UUID & Profile ID Segregation:**
-   - When switching SkyBlock lobbies, chat message `Profile ID: <uuid>` is intercepted by [`SkyblockUtils.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/SkyblockUtils.java) and [`ChatMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java).
-   - Storages are persisted to `.minecraft/config/bomboaddons/storage/<account_uuid>/<profile_id>/<slot>.json`.
-   - Accounts on the same coop share the profile ID; different coop profiles or separate accounts have isolated caches. Changing profile immediately clears memory cache and reloads from disk.
-3. **Persistent Search Highlighting Across Tabs:**
-   - Query in search box (e.g. `aurora`) remains highlighted when clicking on an item, switching between Ender Chests, or navigating backpacks. Fixed in [`StorageOverlayScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java) and [`SearchableGridWidget.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/SearchableGridWidget.java).
-4. **Visual Header Renaming (`RenameStorageScreen.java`):**
-   - Clicking any category header (e.g. "Ender Chest 1") opens [`RenameStorageScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/RenameStorageScreen.java) modal allowing the user to rename it (e.g. "Mining Gear"). Names are stored in `BomboConfig.get().storageCustomNames`.
-5. **Storage Overlay Themes:**
-   - Themes added in [`BomboConfig.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/BomboConfig.java): Default (vanilla), Dark (`0xEE1A1A1A`), Light (`0xEEF0F0F0`), Transparent (`storageOverlayTransparent = true` with custom ARGB hex color `storageOverlayCustomColor`).
+The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bomboapi`, Nginx reverse proxy on 80/443):
 
-### B. Discord Voice HUD & IPC
-1. **Ghost Caller Pruning (WebRTC 25s Cutoff):**
-   - Scans `%APPDATA%\discord\logs\discord-webrtc_0` and `discord-webrtc_1` in [`DiscordIpcManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/discord/DiscordIpcManager.java).
-   - Inbound audio stats timestamps `[YYYY-MM-DD HH:mm:ss.SSS]` are parsed. Users not heard within 25 seconds of the log's newest entry are pruned from `voiceUsers`. Resolves the bug where 7 people were shown when only 5 remained.
-2. **In-HUD User Muting:**
-   - Clicking a user on [`DiscordVoiceHud.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/discord/DiscordVoiceHud.java) (or running `/b discord mute <id>`) sends `SET_USER_VOICE_SETTINGS` via Discord IPC RPC and tags them `§c[MUTED]`.
-3. **Debug Diagnostics & Bot Resolution:**
-   - Fixed JSON parsing for `https://api.bombo.dpdns.org/api/bot/users?ids=...` (`root.getAsJsonObject("users")`), resolving display names and global names.
-   - `/b discord debug` prints channel snowflake ID and full user IDs.
-
-### C. Live Synced Lyrics Web Player & Spotify Sync
-1. **Live Web Player (`https://bombo.dpdns.org/lyrics`):**
-   - Deployed at `https://bombo.dpdns.org/lyrics` (served from `/home/ubuntu/bomboapi/public/lyrics.html`).
-   - Glassmorphic Spotify dark aesthetic, real-time animated background glow, scrubbing progress bar, and play/pause controls.
-   - Synchronized word-by-word active glow animation with automatic center scroll.
-   - Interpolates audio progress at 60 FPS via `requestAnimationFrame`.
-2. **Client Telemetry Dispatch:**
-   - [`SpotifyManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/spotify/SpotifyManager.java) periodically POSTs track name, artist, duration, and millisecond progress to `https://api.bombo.dpdns.org/api/spotify/now-playing`.
-3. **Direct Album URI Resolution:**
-   - Server endpoint `/api/spotify/resolve` queries MusicBrainz release relations and returns `albumUri` (`spotify:album:<id>`) and `albumUrl`.
-   - Clicking tracks/albums in `/b lyrics` or `SpotifyHud` opens Spotify Desktop directly without falling back to Google web searches.
-
-### D. Screenshare 1440p Frame Pipeline
-1. **Direct INT_RGB GPU Capture:**
-   - Switched [`ScreenshareManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/screenshare/ScreenshareManager.java) framebuffer capture from `TYPE_INT_ARGB` to native `TYPE_INT_RGB`, eliminating expensive per-frame color space conversions for 1440p displays.
-2. **Native MJPEG Stream in Web Viewer:**
-   - Updated `/home/ubuntu/bomboapi/public/screenshare.html` to connect directly to `/api/screenshare/stream/:user` (`multipart/x-mixed-replace`), removing continuous `Image` garbage collection and achieving smooth 60 FPS playback.
-
-### E. Config Backups, Fresh Defaults & Brigadier Registration
-1. **Automatic Backup on Upgrade:**
-   - [`BomboConfig.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/BomboConfig.java) automatically backs up `.minecraft/config/bomboaddons/bomboaddons.json` to `.minecraft/config/bomboaddons/backups/config_backup_v<version>.json` whenever `lastModVersion` increases.
-2. **Backup Commands:**
-   - `/b backup create [name]`
-   - `/b backup list` / `/b backup check`
-   - `/b backup restore <name>` (supports tab-completion; restoring never deletes the backup).
-3. **Safety Defaults:**
-   - All macros, auto sequences, and inventory buttons are initialized to disabled (`false`) on fresh configs.
-4. **Brigadier Registration:**
-   - `/buttons`, `/buttons move`, `/b buttons`, and `/b backup` subcommands registered in Brigadier client dispatcher in [`BomboaddonsClient.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/BomboaddonsClient.java) and [`CommandMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/CommandMixin.java).
-5. **No Obfuscate Single-Character Exception:**
-   - [`NoObfuscate.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/util/NoObfuscate.java) retains `§k` obfuscation if the string length is 1 (e.g. recombobulator tag `&ka>>`), while stripping obfuscation from multi-character chat spam.
+| Endpoint / Service | Purpose & Behavior |
+| :--- | :--- |
+| `https://api.bombo.dpdns.org/mod/latest` | **CRITICAL:** ALWAYS resolves to the **LATEST FULL VERSION** (3 parts, e.g. `26.2.28` or `26.2.29`). Never serves beta subversions. |
+| `https://api.bombo.dpdns.org/mod/version` | JSON API catalog listing all versions, `latestFull`, and `latestBeta`. |
+| `https://api.bombo.dpdns.org/mod/version/beta` | JSON catalog of beta releases and download links. |
+| `https://api.bombo.dpdns.org/mod/version/:version` | Direct `.jar` download for the requested version with `Content-Disposition`. |
+| `https://api.bombo.dpdns.org/mod/changelog` | Serves `/home/ubuntu/bomboapi/data/changelog.json` for in-game `/b changelog`. |
+| `https://bombo.dpdns.org/screenshare` | Web dashboard displaying live streams from active Minecraft players. |
+| `https://api.bombo.dpdns.org/api/screenshare/stream/:user` | Ultra-low latency MJPEG streaming (`multipart/x-mixed-replace`). |
+| `https://api.bombo.dpdns.org/api/screenshare/frame` | Ingestion endpoint for base64 JPEG client frames (Nginx rate-limit bypassed). |
+| `bombot` (`/home/ubuntu/bombot/`, port 6668) | Privileged Discord bot bridge for voice muting/deafening (`/api/bot/voice/mute`, `/api/bot/voice/deafen`). |
 
 ---
 
-## 3. Server Architecture & Ports Reference
+## 3. Features Implemented in v26.2.28.77 (Awaiting In-Game Testing)
 
-| Service / Port | Location | Description |
-| :--- | :--- | :--- |
-| **`bomboapi` (Port 3000)** | `/home/ubuntu/bomboapi/server.js` | PM2 backend serving mod updates, releases, changelog, Discord bot proxy, Spotify resolver, now-playing sync, and lyrics player. |
-| **`bombot` (Port 6668)** | `/home/ubuntu/bombot/` | Discord bot process proxied by `bomboapi` via `/api/bot/*`. |
-| **Releases Directory** | `/home/ubuntu/bomboapi/releases/` | Houses compiled `.jar` files served by `/mod/version/:version` and `/mod/latest`. |
-| **Live Lyrics** | `https://bombo.dpdns.org/lyrics` | HTML5 synced lyrics web player. |
-| **Screenshare Web** | `https://bombo.dpdns.org/screenshare` | Low-latency MJPEG player. |
+### A. Storage Overlay Open by Name (`/bp <name>`, `/backpack <name>`, `/ec <name>`, `/enderchest <name>`, `/echest <name>`)
+- **Location:** [`BackpackPreview.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java), [`CommandMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/CommandMixin.java)
+- **Behavior:**
+  - Automatically resolves custom storage card names stored in `BomboConfig.get().storageCustomNames`.
+  - For example, if backpack 18 is renamed to `"kudar"`, typing `/bp kudar` or `/backpack kudar` automatically translates to `/backpack 18` and sends it to the server.
+  - Same for Ender Chests (`/ec <name>`, `/enderchest <name>`, `/echest <name>`).
+  - If no custom name matches and the argument is non-numeric, displays a helpful chat message listing known custom storage names instead of failing silently.
+
+### B. Discord Voice Call "You" Duplication, Commands & Low-Level Hotkeys
+- **Location:** [`DiscordIpcManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/discord/DiscordIpcManager.java), [`CommandMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/CommandMixin.java)
+- **Behavior:**
+  - **Single-User Deduplication:** Purged the synthetic duplicate `"You"` card when alone in a voice call (`webrtcUserIds.isEmpty()`), cleanly binding the local Discord user ID to prevent duplicate user listings.
+  - **Persistent Background IPC:** Separated `/b discord` status from HUD toggle so status checks never invoke `stop()` or destroy the background Named Pipe thread (`\\.\pipe\discord-ipc-0`).
+  - **OS-Level Windows Shortcuts:** Replaced high-level robot key dispatch with low-level Windows `keybd_event` via JNA `WinUser32` for `Ctrl+Shift+M` (mute) and `Ctrl+Shift+D` (deafen). Hotkeys trigger reliably even when Minecraft has exclusive OS window focus.
+  - **Complete Command Routing:** Registered and fully routed `/b discord mute [user]`, `/b discord unmute [user]`, `/b discord deafen [user]`, `/b discord undeafen [user]`, `/b discord hud`, `/b discord sync`, and `/b discord auth`.
+
+### C. Scratch Visual Studio Drag-and-Drop & Visuals
+- **Location:** [`AutoSequenceVisualScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/gui/auto/AutoSequenceVisualScreen.java), [`AutoSequenceExecutor.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/cheat/java/me/bombo/bomboaddons/cheat/sequences/AutoSequenceExecutor.java)
+- **Behavior:**
+  - **Draggable Block Reordering:** Implemented mouse drag-and-drop reordering with a live floating ghost block preview and horizontal blue insertion indicator line.
+  - **Kid-Friendly Visuals:** Replaced broken unicode font emojis with crisp UI symbols (`▶`, `■`, `>`, `*`, `~`, `[!]`, `[+]`) and added `formatFriendlyCondition()` translating condition codes into human-readable phrases ("Container is Full", "Top N Rows Full", "Slot [X] has [Item]", "Contains [Item]", "NO [Item]", "Repeat until count is [N]").
+  - **Comparison Engine Bugfix:** In `AutoSequenceExecutor`, fixed a bug where `<` comparison checked `indexOf("<=")`. Added `no_item:`, `!has_item:`, and `slot_empty:` condition matchers.
+
+### D. Screenshare Live Telemetry & VulkanMod Direct GPU
+- **Location:** [`PerformanceScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/gui/PerformanceScreen.java), [`ScreenshareManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/screenshare/ScreenshareManager.java), [`data/screenshare.html`](file:///e:/Users/frand/Documents/bomboaddons-26.2/data/screenshare.html)
+- **Behavior:**
+  - **Live Profiler Telemetry Card:** In `/b perf`, renders a dedicated pulsing live streaming telemetry card displaying active FPS, bitrate in kbps, capture pipeline mode, HTTP POST latency, frame payload size in KB, and total bandwidth sent in MB.
+  - **VulkanMod Auto-Detection:** Automatically detects VulkanMod via `FabricLoader.getInstance().isModLoaded("vulkanmod")` and sets capture pipeline reporting to `Direct GPU (Vulkan - <3ms)`.
+  - **Web Viewer Synchronized:** Deployed `screenshare.html` to the remote server with instant canvas unhiding on player selection.
+
+### E. Chat Image Hover Preview Bounds Guard
+- **Location:** [`ChatMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java), [`ChatImagePreview.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/util/ChatImagePreview.java)
+- **Behavior:**
+  - Bounded line inspection in `bombo$getLineAt()` to `lineIndex >= 0 && lineIndex < this.getLinesPerPage()`.
+  - In `ChatImagePreview`, strictly requires `mc.gui.screen() instanceof ChatScreen`.
+  - Hovering in the upper game world above the chat box now never triggers unintended image preview popups.
 
 ---
 
-## 4. Key Code Locations
+## 4. Key File Locations Quick Reference
 
 - **Storage Overlay:**
-  - Dynamic sizing & profiles: [`src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java)
-  - Overlay screen & themes: [`src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java)
-  - Renaming modal: [`src/client/java/me/bombo/bomboaddons/features/storageoverlay/RenameStorageScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/RenameStorageScreen.java)
-  - Search grid widget: [`src/client/java/me/bombo/bomboaddons/features/storageoverlay/SearchableGridWidget.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/SearchableGridWidget.java)
-  - Screen packet interception: [`src/client/java/me/bombo/bomboaddons/mixin/ClientPacketListenerMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ClientPacketListenerMixin.java)
+  - Custom name resolver: [`BackpackPreview.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java)
+  - Overlay screen: [`StorageOverlayScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java)
+  - Command routing: [`CommandMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/CommandMixin.java)
 - **Discord Voice:**
-  - Local log scanner & muting: [`src/client/java/me/bombo/bomboaddons/features/discord/DiscordIpcManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/discord/DiscordIpcManager.java)
-  - Voice HUD overlay: [`src/client/java/me/bombo/bomboaddons/features/discord/DiscordVoiceHud.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/discord/DiscordVoiceHud.java)
-- **Spotify & Lyrics:**
-  - Desktop integration & now-playing: [`src/client/java/me/bombo/bomboaddons/features/spotify/SpotifyManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/spotify/SpotifyManager.java)
-  - Lyrics screen: [`src/client/java/me/bombo/bomboaddons/features/spotify/LyricsScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/spotify/LyricsScreen.java)
-  - Lyrics engine & multi-provider: [`src/client/java/me/bombo/bomboaddons/features/spotify/LyricsManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/spotify/LyricsManager.java)
-- **Screenshare:**
-  - Engine: [`src/client/java/me/bombo/bomboaddons/features/screenshare/ScreenshareManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/screenshare/ScreenshareManager.java)
-- **Config & Backups:**
-  - Backups & properties: [`src/client/java/me/bombo/bomboaddons/BomboConfig.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/BomboConfig.java)
-  - Client initialization & Brigadier: [`src/client/java/me/bombo/bomboaddons/BomboaddonsClient.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/BomboaddonsClient.java)
-  - Chat commands: [`src/client/java/me/bombo/bomboaddons/mixin/CommandMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/CommandMixin.java)
-  - Chat interceptor: [`src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java)
+  - Named Pipe IPC & OS shortcuts: [`DiscordIpcManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/discord/DiscordIpcManager.java)
+  - Voice HUD overlay: [`DiscordVoiceHud.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/discord/DiscordVoiceHud.java)
+- **Scratch Visual Studio:**
+  - Visual block editor: [`AutoSequenceVisualScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/gui/auto/AutoSequenceVisualScreen.java)
+  - Macro execution engine: [`AutoSequenceExecutor.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/cheat/java/me/bombo/bomboaddons/cheat/sequences/AutoSequenceExecutor.java)
+  - Sequence data model & manager: [`AutoSequenceManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/cheat/java/me/bombo/bomboaddons/cheat/sequences/AutoSequenceManager.java)
+- **Screenshare & Performance:**
+  - Performance visualizer: [`PerformanceScreen.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/gui/PerformanceScreen.java)
+  - Stream capture engine: [`ScreenshareManager.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/features/screenshare/ScreenshareManager.java)
+  - Web player: [`data/screenshare.html`](file:///e:/Users/frand/Documents/bomboaddons-26.2/data/screenshare.html)
+- **Chat Enhancements:**
+  - Chat mixin: [`ChatMixin.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java)
+  - Hover preview: [`ChatImagePreview.java`](file:///e:/Users/frand/Documents/bomboaddons-26.2/src/client/java/me/bombo/bomboaddons/util/ChatImagePreview.java)
