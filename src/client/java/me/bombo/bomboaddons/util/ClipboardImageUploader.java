@@ -353,12 +353,7 @@ public class ClipboardImageUploader {
       }
 
       if (futuresToWait.isEmpty()) {
-         // All already resolved or none pending
-         String result = rawMessage;
-         for (Map.Entry<String, String> entry : resolvedLinks.entrySet()) {
-            result = result.replace(entry.getKey(), entry.getValue());
-         }
-         onSend.accept(result);
+         onSend.accept(replaceImageTags(rawMessage, resolvedLinks));
          return;
       }
 
@@ -369,21 +364,34 @@ public class ClipboardImageUploader {
       CompletableFuture<?>[] array = futuresToWait.values().toArray(new CompletableFuture[0]);
       CompletableFuture.allOf(array).whenComplete((res, err) -> {
          mc.execute(() -> {
-            String result = rawMessage;
-            for (Map.Entry<String, String> entry : resolvedLinks.entrySet()) {
-               result = result.replace(entry.getKey(), entry.getValue());
-            }
+            Map<String, String> allReplacements = new java.util.HashMap<>(resolvedLinks);
             for (Map.Entry<String, CompletableFuture<String>> entry : futuresToWait.entrySet()) {
                try {
                   String link = entry.getValue().getNow(null);
                   if (link != null) {
-                     result = result.replace(entry.getKey(), link);
+                     allReplacements.put(entry.getKey(), link);
                   }
                } catch (Throwable ignored) {}
             }
-            onSend.accept(result);
+            onSend.accept(replaceImageTags(rawMessage, allReplacements));
          });
       });
+   }
+
+   private static String replaceImageTags(String message, Map<String, String> replacements) {
+      if (message == null || replacements == null || replacements.isEmpty()) return message;
+      // Sort tags in descending order of length so $imgur2 / $imgur10 are replaced BEFORE $imgur
+      java.util.List<String> sortedTags = new java.util.ArrayList<>(replacements.keySet());
+      sortedTags.sort((a, b) -> Integer.compare(b.length(), a.length()));
+
+      String result = message;
+      for (String tag : sortedTags) {
+         String link = replacements.get(tag);
+         if (link != null) {
+            result = result.replaceAll(java.util.regex.Pattern.quote(tag) + "(?!\\d)", java.util.regex.Matcher.quoteReplacement(link));
+         }
+      }
+      return result;
    }
 
    private static String computeHash(byte[] data) {

@@ -52,6 +52,9 @@ public class ScreenshareManager {
     private static volatile float currentBitrateKbps = 0.0f;
     private static volatile long lastLatencyMs = 0L;
     private static volatile long lastCaptureDurationMs = 0L;
+    private static volatile long lastGpuCaptureMs = 0L;
+    private static volatile long lastEncodeMs = 0L;
+    private static volatile float lastJpegSizeKb = 0.0f;
     private static volatile String lastCaptureMode = "Direct GPU (OpenGL)";
     private static volatile String lastError = "";
 
@@ -226,22 +229,22 @@ public class ScreenshareManager {
                 int targetH = 720;
                 float quality = 0.70f;
                 BomboConfig.Settings s = BomboConfig.get();
-                String q = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 30fps";
+                String q = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 60fps";
 
                 if (q.contains("1440p") || q.contains("2K")) {
                     targetW = 2560;
                     targetH = 1440;
                     targetDelayMs = q.contains("120fps") ? 8L : (q.contains("60fps") ? 16L : 33L);
-                    quality = 0.52f;
+                    quality = 0.50f;
                 } else if (q.contains("1080p")) {
                     targetW = 1920;
                     targetH = 1080;
                     targetDelayMs = q.contains("120fps") ? 8L : (q.contains("60fps") ? 16L : 33L);
-                    quality = 0.58f;
+                    quality = 0.55f;
                 } else {
                     targetW = 1280;
                     targetH = 720;
-                    targetDelayMs = q.contains("60fps") ? 16L : 33L;
+                    targetDelayMs = q.contains("30fps") ? 33L : 16L;
                     quality = 0.55f;
                 }
 
@@ -328,6 +331,7 @@ public class ScreenshareManager {
             return;
         }
 
+        long gpuStart = System.currentTimeMillis();
         mc.execute(() -> {
             try {
                 com.mojang.blaze3d.pipeline.RenderTarget rt = mc.gameRenderer.mainRenderTarget();
@@ -342,6 +346,7 @@ public class ScreenshareManager {
                             onDone.accept(null);
                             return;
                         }
+                        lastGpuCaptureMs = System.currentTimeMillis() - gpuStart;
                         int w = nativeImg.getWidth();
                         int h = nativeImg.getHeight();
                         int[] pixels = nativeImg.makePixelArray();
@@ -350,6 +355,7 @@ public class ScreenshareManager {
                         // Fast async downsample directly to target dimensions
                         ENCODE_POOL.execute(() -> {
                             try {
+                                long encStart = System.currentTimeMillis();
                                 BufferedImage bi;
                                 if (w == targetW && h == targetH) {
                                     bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
@@ -370,6 +376,10 @@ public class ScreenshareManager {
                                     drawCursorIfVisible(mc, bi, targetW, targetH);
                                 }
                                 byte[] jpeg = compressScaledJpeg(bi, targetW, targetH, quality);
+                                lastEncodeMs = System.currentTimeMillis() - encStart;
+                                if (jpeg != null) {
+                                    lastJpegSizeKb = jpeg.length / 1024.0f;
+                                }
                                 onDone.accept(jpeg);
                             } catch (Throwable t) {
                                 onDone.accept(null);
@@ -506,8 +516,8 @@ public class ScreenshareManager {
         feedback.accept(Component.literal("§7Configured Quality: §e" + qualityMode + " §7(Streaming: §b" + currentTargetW + "x" + currentTargetH + "§7)"));
         feedback.accept(Component.literal("§7Live Framerate: §b" + String.format("%.1f", currentFps) + " FPS"));
         feedback.accept(Component.literal("§7Current Bitrate: §d" + String.format("%.1f", currentBitrateKbps) + " kbps"));
-        feedback.accept(Component.literal("§7HTTP POST Latency: §a" + lastLatencyMs + "ms"));
-        feedback.accept(Component.literal("§7Frame Capture Time: §f" + lastCaptureDurationMs + "ms"));
+        feedback.accept(Component.literal("§7HTTP POST Latency: §a" + lastLatencyMs + "ms §8| §7Frame Payload Size: §b" + String.format("%.1f", lastJpegSizeKb) + " KB"));
+        feedback.accept(Component.literal("§7Frame Capture Time: §f" + lastCaptureDurationMs + "ms §7(GPU Read: §a" + lastGpuCaptureMs + "ms §7| Downsample & Encode: §e" + lastEncodeMs + "ms§7)"));
         feedback.accept(Component.literal("§7Frames Captured / Sent: §e" + framesCaptured + " §7/ §a" + framesSent));
         feedback.accept(Component.literal("§7Total Bandwidth Sent: §e" + String.format("%.2f", totalBytesSent / 1048576.0) + " MB"));
         feedback.accept(Component.literal("§7Last Stream Error: " + (lastError.isEmpty() ? "§aNone" : "§c" + lastError)));

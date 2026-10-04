@@ -1,5 +1,32 @@
 # BomboAddons Changelog
  
+## [26.2.28.76] - 2026-10-04 (Beta)
+
+### Storage Overlay In-Place Card Rename & Unblocked Scrollwheel
+- **In-Place Rename Commit:** Pressing Enter now updates the card title in-place immediately without requiring `/storage` to be closed and reopened.
+- **Single Active Rename Focus:** Switching between cards (e.g. backpacks 12, 13, 14) cleanly commits the previous edit and activates only the newly clicked card without duplicate text boxes or widget hierarchy destruction.
+- **Unblocked Scrollwheel:** Fixed mouse scrollwheel being intercepted when hovering over focused/open storage slots by routing scroll events directly to the container grid.
+
+### Discord Voice HUD Mute/Deafen, Clean Startup & Phantom User Pruning
+- **Eliminated Startup Popups:** Removed automatic `AUTHORIZE` dispatches on IPC `READY`, preventing Discord OAuth2 error 5000 dialogs on game launch.
+- **Bot Bridge Self Mute & Deafen:** Fixed self mute and deafen by routing requests through the privileged `bombot` voice bridge (`/api/bot/voice/mute` and `/api/bot/voice/deafen`) using `myUserId`, sending IPC `SET_VOICE_SETTINGS`, and updating local voice user state.
+- **Accurate [LIVE] Status:** Fixed false permanent `[LIVE]` badge by removing self-referential `isScreenSharing()` check on local user.
+- **Pruned Phantom Participants:** Eliminated lingering users (e.g. `xMave`) when alone in voice channels by clearing unconfirmed WebRTC participant IDs.
+
+### Scratch Visual Studio & Advanced Macro Conditions
+- **Scratch Visual Sequence Studio:** Added a full-screen Scratch-style block programming studio accessible via `/b sequence`, `/b sequences`, `/sequence`, `/sequences`, and modern Config GUI ("Open Scratch Studio").
+- **Advanced Action Conditions:** Added `exceptIf` (skip on condition) and `onlyIf` (precondition) block conditions supporting `gui_full`, `rows_full:N`, `empty_slots:<N`, `has_item:Item`, `has_lore:Lore`, `item_count:Item>N`, `slot_has:slot,item`, `coords:x,y,z,r`, `area:AreaName`, `no_gui`.
+- **Dynamic Variables & Prefixes:** Supported dynamic `${color}` container title extraction and `starts_with:(key)` / `sw:(key)` item matching.
+
+### Imgur Multi-Upload Tag Bug & Performance Dashboard
+- **Tag Disambiguation:** Fixed `$imgur2` corruption where `$imgur` was replaced first, resulting in broken URLs like `https://...png2`. Fixed with descending length placeholder sorting and regex negative lookahead `(?!\\d)`.
+- **Accurate Button Hitboxes:** Fixed button hitboxes in `/b perf` (`← All`, `Dump Log`, `Reset Stats`, `Close`) being displaced 200px due to height mismatch between render state and mouse click handlers.
+- **Throttled Metric Sampling:** Throttled `getProcessCpuLoad()` and JVM memory measurements to 1000ms intervals, eliminating a 50 FPS drop when viewing the performance dashboard.
+
+### Screenshare 60 FPS Engine & Real-Time Telemetry
+- **Fast 720p 60 FPS Profile:** Optimized default streaming profile to 720p 60fps (1280x720, quality 0.55f), reducing JPEG compression time to <10ms and bandwidth to ~1.5 Mbps for smooth real-time 60 FPS broadcasting.
+- **Comprehensive Telemetry:** Added diagnostic telemetry tracking GPU capture time, downsample & JPEG encode latency, HTTP post duration, and frame payload size in KB.
+
 ## [26.2.28.75] - 2026-10-04 (Beta)
 
 ### Storage Overlay Navigation, Scroll, and Inline Renaming

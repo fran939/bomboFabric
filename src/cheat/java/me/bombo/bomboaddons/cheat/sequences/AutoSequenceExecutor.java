@@ -260,6 +260,20 @@ public final class AutoSequenceExecutor {
     private static boolean executeAction(Minecraft mc, AutoAction action) {
         if (action == null || action.type == null) return false;
         try {
+            // Evaluate onlyIf condition (must be true to proceed)
+            if (action.onlyIf != null && !action.onlyIf.isBlank()) {
+                if (!evaluateCondition(mc, action.onlyIf)) {
+                    return false; // wait for condition to be met
+                }
+            }
+
+            // Evaluate exceptIf condition (if true, skip this action)
+            if (action.exceptIf != null && !action.exceptIf.isBlank()) {
+                if (evaluateCondition(mc, action.exceptIf)) {
+                    return true; // exception triggered, skip cleanly
+                }
+            }
+
             // Check GUI condition across all actions:
             String guiCond = (action.guiCondition != null && !action.guiCondition.isBlank())
                     ? action.guiCondition
@@ -484,6 +498,21 @@ public final class AutoSequenceExecutor {
             return -1;
         }
 
+        // Dynamic variable replacement (${color}):
+        if (targetMatcher.contains("${color}") && screen != null) {
+            String title = ChatFormatting.stripFormatting(screen.getTitle().getString()).toLowerCase(Locale.ROOT);
+            String detected = extractColorFromTitle(title);
+            if (!detected.isEmpty()) {
+                targetMatcher = targetMatcher.replace("${color}", detected).trim();
+            }
+        }
+
+        boolean startsWithMatch = false;
+        if (targetMatcher.startsWith("starts_with:") || targetMatcher.startsWith("sw:")) {
+            startsWithMatch = true;
+            targetMatcher = targetMatcher.substring(targetMatcher.indexOf(':') + 1).trim();
+        }
+
         List<Slot> slots = screen.getMenu().slots;
         for (int i = 0; i < slots.size(); i++) {
             Slot slot = slots.get(i);
@@ -517,8 +546,14 @@ public final class AutoSequenceExecutor {
                     String hover = ChatFormatting.stripFormatting(stack.getHoverName().getString())
                             .toLowerCase(Locale.ROOT).trim();
                     String sbId = SkyblockUtils.getSkyblockId(stack).toLowerCase(Locale.ROOT).trim();
-                    if (hover.contains(targetMatcher) || sbId.contains(targetMatcher) || sbId.replace("_", " ").contains(targetMatcher)) {
-                        return i;
+                    if (startsWithMatch) {
+                        if (hover.startsWith(targetMatcher) || sbId.startsWith(targetMatcher)) {
+                            return i;
+                        }
+                    } else {
+                        if (hover.contains(targetMatcher) || sbId.contains(targetMatcher) || sbId.replace("_", " ").contains(targetMatcher)) {
+                            return i;
+                        }
                     }
                 }
             }
@@ -597,6 +632,255 @@ public final class AutoSequenceExecutor {
             return label != null && !label.isEmpty() ? label : "Unknown trigger";
         }
         return label != null && !label.isEmpty() ? kind + " " + label : kind;
+    }
+
+    private static final String[] COLOR_NAMES = {
+        "light purple", "dark purple", "purple",
+        "dark red", "red",
+        "lime", "dark green", "green",
+        "light blue", "dark blue", "blue",
+        "cyan", "yellow", "orange",
+        "pink", "magenta", "black", "white",
+        "light gray", "dark gray", "gray", "light grey", "dark grey", "grey", "brown"
+    };
+
+    private static String extractColorFromTitle(String title) {
+        if (title == null || title.isEmpty()) return "";
+        for (String c : COLOR_NAMES) {
+            if (title.contains(c)) return c;
+        }
+        return "";
+    }
+
+    private static int getTopContainerSlotCount(AbstractContainerScreen<?> screen, Minecraft mc) {
+        int total = screen.getMenu().slots.size();
+        if (total > 36) return total - 36;
+        return total;
+    }
+
+    private static boolean compareNumeric(int value, String opStr) {
+        try {
+            if (opStr.startsWith(">=")) return value >= Integer.parseInt(opStr.substring(2).trim());
+            if (opStr.startsWith("<=")) return value <= Integer.parseInt(opStr.substring(2).trim());
+            if (opStr.startsWith(">")) return value > Integer.parseInt(opStr.substring(1).trim());
+            if (opStr.startsWith("<")) return value < Integer.parseInt(opStr.substring(1).trim());
+            if (opStr.startsWith("==")) return value == Integer.parseInt(opStr.substring(2).trim());
+            if (opStr.startsWith("=")) return value == Integer.parseInt(opStr.substring(1).trim());
+            return value == Integer.parseInt(opStr.trim());
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    public static boolean evaluateCondition(Minecraft mc, String condition) {
+        if (condition == null || condition.trim().isEmpty()) return true;
+        String cond = condition.trim().toLowerCase(Locale.ROOT);
+
+        // 1. no_gui / none
+        if (cond.equals("no_gui") || cond.equals("none")) {
+            return mc.gui.screen() == null;
+        }
+
+        // 2. in_gui:Title or gui:Title
+        if (cond.startsWith("in_gui:") || cond.startsWith("gui:")) {
+            String expectedTitle = cond.substring(cond.indexOf(':') + 1).trim();
+            if (mc.gui.screen() == null) return false;
+            String title = ChatFormatting.stripFormatting(mc.gui.screen().getTitle().getString()).toLowerCase(Locale.ROOT);
+            return title.contains(expectedTitle);
+        }
+
+        // 3. Area / Subarea
+        if (cond.startsWith("area:")) {
+            String expectedArea = cond.substring(5).trim();
+            String currentArea = SkyblockUtils.getLocation();
+            return currentArea != null && currentArea.toLowerCase(Locale.ROOT).contains(expectedArea);
+        }
+        if (cond.startsWith("subarea:")) {
+            String expectedSubArea = cond.substring(8).trim();
+            String currentSubArea = SkyblockUtils.getSubArea();
+            return currentSubArea != null && currentSubArea.toLowerCase(Locale.ROOT).contains(expectedSubArea);
+        }
+
+        // 4. Coordinates: coords:x,y,z,radius or c:x,y,z,r
+        if (cond.startsWith("coords:") || cond.startsWith("c:")) {
+            String rest = cond.substring(cond.indexOf(':') + 1).trim();
+            String[] parts = rest.split(",");
+            if (parts.length >= 3 && mc.player != null) {
+                try {
+                    double tx = Double.parseDouble(parts[0].trim());
+                    double ty = Double.parseDouble(parts[1].trim());
+                    double tz = Double.parseDouble(parts[2].trim());
+                    double r = parts.length > 3 ? Double.parseDouble(parts[3].trim()) : 3.0D;
+                    double distSq = mc.player.distanceToSqr(tx, ty, tz);
+                    return distSq <= (r * r);
+                } catch (Throwable ignored) {}
+            }
+        }
+
+        // Container-based checks:
+        if (mc.gui.screen() instanceof AbstractContainerScreen<?> containerScreen) {
+            List<Slot> slots = containerScreen.getMenu().slots;
+
+            // 5. gui_full: all container slots have items
+            if (cond.equals("gui_full") || cond.equals("full")) {
+                int containerSlots = getTopContainerSlotCount(containerScreen, mc);
+                for (int i = 0; i < containerSlots; i++) {
+                    if (slots.get(i).getItem().isEmpty()) return false;
+                }
+                return true;
+            }
+
+            // 6. rows_full:N
+            if (cond.startsWith("rows_full:") || cond.startsWith("rf:")) {
+                try {
+                    int rows = Integer.parseInt(cond.substring(cond.indexOf(':') + 1).trim());
+                    int slotCount = Math.min(slots.size(), rows * 9);
+                    for (int i = 0; i < slotCount; i++) {
+                        if (slots.get(i).getItem().isEmpty()) return false;
+                    }
+                    return true;
+                } catch (Throwable ignored) {}
+            }
+
+            // 7. empty_slots:<N, empty_slots:>N, etc.
+            if (cond.startsWith("empty_slots:") || cond.startsWith("empty:")) {
+                String op = cond.substring(cond.indexOf(':') + 1).trim();
+                int emptyCount = 0;
+                int containerSlots = getTopContainerSlotCount(containerScreen, mc);
+                for (int i = 0; i < containerSlots; i++) {
+                    if (slots.get(i).getItem().isEmpty()) emptyCount++;
+                }
+                return compareNumeric(emptyCount, op);
+            }
+
+            // 8. has_item:Name
+            if (cond.startsWith("has_item:") || cond.startsWith("item:")) {
+                String want = cond.substring(cond.indexOf(':') + 1).trim();
+                for (Slot s : slots) {
+                    ItemStack st = s.getItem();
+                    if (!st.isEmpty()) {
+                        String hover = ChatFormatting.stripFormatting(st.getHoverName().getString()).toLowerCase(Locale.ROOT);
+                        String sbId = SkyblockUtils.getSkyblockId(st).toLowerCase(Locale.ROOT);
+                        if (hover.contains(want) || sbId.contains(want)) return true;
+                    }
+                }
+                return false;
+            }
+
+            // 9. has_lore:Text
+            if (cond.startsWith("has_lore:") || cond.startsWith("lore:")) {
+                String want = cond.substring(cond.indexOf(':') + 1).trim();
+                for (Slot s : slots) {
+                    ItemStack st = s.getItem();
+                    if (!st.isEmpty() && matchesLore(mc, st, want)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // 10. item_count:ItemName>N or <N
+            if (cond.startsWith("item_count:") || cond.startsWith("count:")) {
+                String rest = cond.substring(cond.indexOf(':') + 1).trim();
+                String op = "";
+                int opIdx = -1;
+                if (rest.contains(">=")) { op = ">="; opIdx = rest.indexOf(">="); }
+                else if (rest.contains("<=")) { op = "<="; opIdx = rest.indexOf("<="); }
+                else if (rest.contains(">")) { op = ">"; opIdx = rest.indexOf(">"); }
+                else if (rest.contains("<")) { op = "<"; opIdx = rest.indexOf("<="); }
+                else if (rest.contains("=")) { op = "="; opIdx = rest.indexOf("="); }
+
+                if (opIdx != -1) {
+                    String itemName = rest.substring(0, opIdx).trim();
+                    String numStr = rest.substring(opIdx + op.length()).trim();
+                    try {
+                        int targetCount = Integer.parseInt(numStr);
+                        int totalFound = 0;
+                        for (Slot s : slots) {
+                            ItemStack st = s.getItem();
+                            if (!st.isEmpty()) {
+                                String hover = ChatFormatting.stripFormatting(st.getHoverName().getString()).toLowerCase(Locale.ROOT);
+                                String sbId = SkyblockUtils.getSkyblockId(st).toLowerCase(Locale.ROOT);
+                                if (hover.contains(itemName) || sbId.contains(itemName)) {
+                                    totalFound += st.getCount();
+                                }
+                            }
+                        }
+                        return switch (op) {
+                            case ">=" -> totalFound >= targetCount;
+                            case "<=" -> totalFound <= targetCount;
+                            case ">" -> totalFound > targetCount;
+                            case "<" -> totalFound < targetCount;
+                            case "=" -> totalFound == targetCount;
+                            default -> false;
+                        };
+                    } catch (Throwable ignored) {}
+                }
+            }
+
+            // 11. slot_has:slotIdx,ItemOrLore
+            if (cond.startsWith("slot_has:") || cond.startsWith("slot:")) {
+                String rest = cond.substring(cond.indexOf(':') + 1).trim();
+                String[] parts = rest.split(",", 2);
+                if (parts.length == 2) {
+                    try {
+                        int idx = Integer.parseInt(parts[0].trim());
+                        String match = parts[1].trim().toLowerCase(Locale.ROOT);
+                        if (idx >= 0 && idx < slots.size()) {
+                            ItemStack st = slots.get(idx).getItem();
+                            if (!st.isEmpty()) {
+                                String hover = ChatFormatting.stripFormatting(st.getHoverName().getString()).toLowerCase(Locale.ROOT);
+                                String sbId = SkyblockUtils.getSkyblockId(st).toLowerCase(Locale.ROOT);
+                                if (hover.contains(match) || sbId.contains(match) || matchesLore(mc, st, match)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    } catch (Throwable ignored) {}
+                }
+            }
+        } else {
+            // Not in container screen: check player inventory for item_count if player is present
+            if (mc.player != null && (cond.startsWith("item_count:") || cond.startsWith("count:"))) {
+                String rest = cond.substring(cond.indexOf(':') + 1).trim();
+                String op = "";
+                int opIdx = -1;
+                if (rest.contains(">=")) { op = ">="; opIdx = rest.indexOf(">="); }
+                else if (rest.contains("<=")) { op = "<="; opIdx = rest.indexOf("<="); }
+                else if (rest.contains(">")) { op = ">"; opIdx = rest.indexOf(">"); }
+                else if (rest.contains("<")) { op = "<"; opIdx = rest.indexOf("<"); }
+                else if (rest.contains("=")) { op = "="; opIdx = rest.indexOf("="); }
+
+                if (opIdx != -1) {
+                    String itemName = rest.substring(0, opIdx).trim();
+                    String numStr = rest.substring(opIdx + op.length()).trim();
+                    try {
+                        int targetCount = Integer.parseInt(numStr);
+                        int totalFound = 0;
+                        for (int j = 0; j < mc.player.getInventory().getContainerSize(); j++) {
+                            ItemStack st = mc.player.getInventory().getItem(j);
+                            if (!st.isEmpty()) {
+                                String hover = ChatFormatting.stripFormatting(st.getHoverName().getString()).toLowerCase(Locale.ROOT);
+                                String sbId = SkyblockUtils.getSkyblockId(st).toLowerCase(Locale.ROOT);
+                                if (hover.contains(itemName) || sbId.contains(itemName)) {
+                                    totalFound += st.getCount();
+                                }
+                            }
+                        }
+                        return switch (op) {
+                            case ">=" -> totalFound >= targetCount;
+                            case "<=" -> totalFound <= targetCount;
+                            case ">" -> totalFound > targetCount;
+                            case "<" -> totalFound < targetCount;
+                            case "=" -> totalFound == targetCount;
+                            default -> false;
+                        };
+                    } catch (Throwable ignored) {}
+                }
+            }
+        }
+
+        return false;
     }
 
     private static void record(String message, String trigger) {

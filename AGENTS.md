@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.75` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.76` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.75`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.76`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.76 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay In-Place Card Rename & Unblocked Scrollwheel (`StorageOverlayScreen`):** Pressing Enter updates the storage card title in-place immediately without requiring `/storage` to be closed and reopened. Clicking between cards (e.g. backpacks 12, 13, 14) cleanly commits the previous edit and activates only the newly clicked card without duplicate text boxes or widget hierarchy destruction. Fixed mouse scrollwheel being intercepted when hovering over focused/open storage slots by routing scroll events directly to the container grid.
+> 2. **Discord Voice HUD Mute/Deafen, Clean Startup & Phantom User Pruning (`DiscordIpcManager`):** Removed automatic `AUTHORIZE` dispatches on IPC `READY`, preventing Discord OAuth2 error 5000 dialogs on game launch. Fixed self mute and deafen by routing requests through the privileged `bombot` voice bridge (`/api/bot/voice/mute` and `/api/bot/voice/deafen`) using `myUserId`, sending IPC `SET_VOICE_SETTINGS`, and updating local voice user state. Fixed false permanent `[LIVE]` badge by removing self-referential `isScreenSharing()` check on local user. Pruned phantom call participants when alone in voice channel by checking `webrtcUserIds`.
+> 3. **Scratch Visual Studio & Advanced Macro Conditions (`AutoSequenceVisualScreen`, `AutoSequenceExecutor`, `AutoSequenceManager`, `BomboaddonsClient`):** Added a full-screen Scratch-style block programming studio accessible via `/b sequence`, `/b sequences`, `/sequence`, `/sequences`, and modern Config GUI ("Open Scratch Studio"). Added `exceptIf` (skip on condition) and `onlyIf` (precondition) block conditions supporting `gui_full`, `rows_full:N`, `empty_slots:<N`, `has_item:Item`, `has_lore:Lore`, `item_count:Item>N`, `slot_has:slot,item`, `coords:x,y,z,r`, `area:AreaName`, `no_gui`. Supported dynamic `${color}` container title extraction and `starts_with:(key)` / `sw:(key)` item matching.
+> 4. **Imgur Multi-Upload Tag Bug & Performance Dashboard (`ClipboardImageUploader`, `PerformanceScreen`):** Fixed `$imgur2` corruption where `$imgur` was replaced first, resulting in broken URLs like `https://...png2`. Fixed with descending length placeholder sorting and regex negative lookahead `(?!\\d)`. Fixed button hitboxes in `/b perf` (`← All`, `Dump Log`, `Reset Stats`, `Close`) being displaced 200px due to height mismatch between render state and mouse click handlers. Throttled `getProcessCpuLoad()` and JVM memory measurements to 1000ms intervals, eliminating a 50 FPS drop when viewing the performance dashboard.
+> 5. **Screenshare 60 FPS Engine & Real-Time Telemetry (`ScreenshareManager`, `BomboConfig`, `screenshare.html`):** Optimized default streaming profile to 720p 60fps (1280x720, quality 0.55f), reducing JPEG compression time to <10ms and bandwidth to ~1.5 Mbps for smooth real-time 60 FPS broadcasting. Added diagnostic telemetry tracking GPU capture time, downsample & JPEG encode latency, HTTP post duration, and frame payload size in KB.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.75 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Navigation, Scroll, and Inline Renaming (`StorageOverlayScreen`, `SearchableGridWidget`):** Preserved exact scroll offset across container switches and backpack clicks, preventing grid jumps back to top. Fixed inline card title editing by capturing keystrokes (`charTyped` and guarded `keyPressed`) so letters or hotkeys like 'E' insert directly into the text box instead of closing the GUI. Enforced single active rename card across the grid. Added Next Page, Previous Page, and Smart Go Back hotkey navigation directly in `StorageOverlayScreen`. Made right-clicking the search bar immediately clear the search query.

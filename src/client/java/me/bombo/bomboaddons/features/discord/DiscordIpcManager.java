@@ -160,6 +160,12 @@ public class DiscordIpcManager {
     }
 
     public static void setSelfMute(boolean mute, Consumer<Component> feedback) {
+        String selfId = !myUserId.isEmpty() ? myUserId : resolveUserId("self");
+        if (!selfId.isEmpty() && !selfId.equals("self")) {
+            muteUserViaBotAsync(selfId, mute, respMsg -> {
+                if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
+            });
+        }
         if (connected && currentPipe != null) {
             CompletableFuture.runAsync(() -> {
                 try {
@@ -180,12 +186,27 @@ public class DiscordIpcManager {
         }
         toggleDiscordShortcut(java.awt.event.KeyEvent.VK_M);
 
-        if (feedback != null) {
+        DiscordVoiceUser existing = voiceUsers.get(selfId);
+        if (existing != null) {
+            voiceUsers.put(selfId, new DiscordVoiceUser(
+                    existing.id(), existing.username(), existing.displayName(),
+                    mute, existing.isDeafened(), existing.isSpeaking(),
+                    existing.isScreenSharing(), existing.isLocallyMuted()
+            ));
+        }
+
+        if (feedback != null && (selfId.isEmpty() || selfId.equals("self"))) {
             feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMuted microphone §7(self)" : "§aUnmuted microphone §7(self)")));
         }
     }
 
     public static void setSelfDeafen(boolean deafen, Consumer<Component> feedback) {
+        String selfId = !myUserId.isEmpty() ? myUserId : resolveUserId("self");
+        if (!selfId.isEmpty() && !selfId.equals("self")) {
+            deafenUserViaBotAsync(selfId, deafen, respMsg -> {
+                if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
+            });
+        }
         if (connected && currentPipe != null) {
             CompletableFuture.runAsync(() -> {
                 try {
@@ -206,7 +227,16 @@ public class DiscordIpcManager {
         }
         toggleDiscordShortcut(java.awt.event.KeyEvent.VK_D);
 
-        if (feedback != null) {
+        DiscordVoiceUser existing = voiceUsers.get(selfId);
+        if (existing != null) {
+            voiceUsers.put(selfId, new DiscordVoiceUser(
+                    existing.id(), existing.username(), existing.displayName(),
+                    existing.isMuted(), deafen, existing.isSpeaking(),
+                    existing.isScreenSharing(), existing.isLocallyMuted()
+            ));
+        }
+
+        if (feedback != null && (selfId.isEmpty() || selfId.equals("self"))) {
             feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§cDeafened audio §7(self)" : "§aUndeafened audio §7(self)")));
         }
     }
@@ -851,14 +881,13 @@ public class DiscordIpcManager {
                     currentChannelName = "Voice Call";
                 }
 
-                if (!webrtcUserIds.isEmpty()) {
-                    // Populate voiceUsers using precise WebRTC IDs and resolved bot names
-                    String selfId = !myUserId.isEmpty() ? myUserId : "self";
-                    String selfName = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
-                    boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
-                    boolean selfLive = screensharingUserIds.contains(selfId) || screensharingUserIds.contains(myUserId) || (!myUserId.isEmpty() && voiceUsers.containsKey(myUserId) && voiceUsers.get(myUserId).isScreenSharing());
-                    voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, false, false, selfSpeaking, selfLive));
+                String selfId = !myUserId.isEmpty() ? myUserId : "self";
+                String selfName = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
+                boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
+                boolean selfLive = screensharingUserIds.contains(selfId) || screensharingUserIds.contains(myUserId) || screensharingUserIds.contains("self");
+                voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, false, false, selfSpeaking, selfLive));
 
+                if (!webrtcUserIds.isEmpty()) {
                     for (String uid : webrtcUserIds) {
                         DiscordBotUserInfo info = BOT_USER_CACHE.get(uid);
                         String dName = info != null ? info.displayName : ("User (" + uid.substring(Math.max(0, uid.length() - 4)) + ")");
@@ -866,21 +895,15 @@ public class DiscordIpcManager {
                         boolean isSpeaking = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isSpeaking();
                         boolean isMuted = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isMuted();
                         boolean isDeaf = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isDeafened();
-                        boolean isLive = screensharingUserIds.contains(uid) || (voiceUsers.containsKey(uid) && voiceUsers.get(uid).isScreenSharing());
+                        boolean isLive = screensharingUserIds.contains(uid);
                         voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive));
                     }
 
                     // Remove users who have disconnected from the call
-                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !webrtcUserIds.contains(k));
-                } else if (voiceUsers.isEmpty() || voiceUsers.size() < memberCount) {
-                    voiceUsers.clear();
-                    String name = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
-                    String id = !myUserId.isEmpty() ? myUserId : "self";
-                    voiceUsers.put(id, new DiscordVoiceUser(id, name, name, false, false, false, false));
-                    for (int m_idx = 2; m_idx <= memberCount; m_idx++) {
-                        String mId = "member_" + m_idx;
-                        voiceUsers.put(mId, new DiscordVoiceUser(mId, "Member " + m_idx, "Member " + m_idx, false, false, false, false));
-                    }
+                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !k.equals(myUserId) && !webrtcUserIds.contains(k));
+                } else {
+                    // No active WebRTC audio streams: user is alone in call
+                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !k.equals(myUserId) && !k.equals("self"));
                 }
             } else if (foundDisconnect) {
                 logReaderStatus = "Disconnected (VOICE_DISCONNECT detected)";
@@ -989,12 +1012,8 @@ public class DiscordIpcManager {
                         }
                     }
 
-                    // Send AUTHORIZE to enable voice subscriptions and remote mute
-                    if (!hasAuthorizedThisSession && !authCancelled) {
-                        try {
-                            sendAuthorize(pipe);
-                        } catch (Throwable ignored) {}
-                    }
+                    // Authorization is requested explicitly by the user via /b discord auth if needed,
+                    // avoiding annoying app permission popups on every Minecraft launch.
 
                     // Subscribe to global voice connection and selection events
                     subscribe(pipe, "VOICE_CHANNEL_SELECT");

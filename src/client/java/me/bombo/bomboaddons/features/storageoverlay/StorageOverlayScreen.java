@@ -331,10 +331,10 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	@Override
 	public boolean mouseScrolled(double x, double y, double scrollX, double scrollY) {
-		if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
-			return super.mouseScrolled(x, y, scrollX, scrollY);
+		if (grid != null && grid.mouseScrolled(x, y, scrollX, scrollY)) {
+			return true;
 		}
-		return this.getChildAt(x, y).filter(child -> child.mouseScrolled(x, y, scrollX, scrollY)).isPresent();
+		return super.mouseScrolled(x, y, scrollX, scrollY);
 	}
 
 	@Override
@@ -557,7 +557,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	private class BackpackWidget extends AbstractWidget {
 		private final int rows;
 		private final int columns;
-		private final String label;
+		private String label;
 		private final int index;
 		private final BackpackPreview.Storage storage;
 		private final boolean open;
@@ -591,11 +591,9 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			if (isEditingTitle && inlineTitleBox != null) {
 				String newName = inlineTitleBox.getValue().trim();
 				BackpackPreview.setCustomStorageName(index, newName);
+				this.label = getStorageName(index);
 				isEditingTitle = false;
 				inlineTitleBox = null;
-				if (grid != null) {
-					grid.rebuildBackpacks();
-				}
 			}
 		}
 

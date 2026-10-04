@@ -492,12 +492,7 @@
                     stats.textContent = `Live Stream • ${fps} FPS • ${screenCanvas.naturalWidth}x${screenCanvas.naturalHeight} • Ultra-low Latency`;
                 }
             };
-            screenCanvas.src = `/api/screenshare/frame/${encodeURIComponent(user)}?t=${Date.now()}`;
-            setTimeout(() => {
-                if (currentTarget && currentTarget.toLowerCase() === user.toLowerCase()) {
-                    screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(user)}`;
-                }
-            }, 80);
+            screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(user)}`;
             screenCanvas.onerror = () => {
                 setTimeout(() => {
                     if (currentTarget && currentTarget.toLowerCase() === user.toLowerCase()) {

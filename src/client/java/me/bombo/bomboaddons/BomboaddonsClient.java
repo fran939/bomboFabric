@@ -1065,6 +1065,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                   // Flavor specific subcommands (/b hide, /b stealth ...). The legit build
                   // contributes nothing here.
                   .then(registerNoObfuscateCommands());
+                  builder.then(createAutoCommands("sequence"));
+                  builder.then(createAutoCommands("sequences"));
                   me.bombo.bomboaddons.flavor.Flavor.get().registerCommands(builder);
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("behighlight").then(ClientCommands.literal("add").then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
                      String mob = StringArgumentType.getString(context, "mob").trim();
@@ -4863,6 +4865,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(buildScreenshareCommand("ss"));
                dispatcher.register(buildScreenshareCommand("screenshare"));
                dispatcher.register(buildScreenshareCommand("stream"));
+               dispatcher.register(createAutoCommands("sequence"));
+               dispatcher.register(createAutoCommands("sequences"));
+               dispatcher.register(createAutoCommands("autosequence"));
+               dispatcher.register(createAutoCommands("autosequences"));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("buttons")
                        .executes((context) -> {
                           Minecraft mc = Minecraft.getInstance();
@@ -7441,7 +7447,29 @@ public class BomboaddonsClient implements ClientModInitializer {
     * and {@code run} says so plainly when it is missing instead of failing silently.
     */
    private static LiteralArgumentBuilder<FabricClientCommandSource> registerAutoCommands() {
-      var auto = ClientCommands.literal("auto");
+      return createAutoCommands("auto");
+   }
+
+   private static LiteralArgumentBuilder<FabricClientCommandSource> createAutoCommands(String root) {
+      var auto = ClientCommands.literal(root);
+
+      auto.executes((context) -> {
+         Minecraft mc = Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.auto.AutoSequenceVisualScreen(mc.gui.screen())));
+         return 1;
+      });
+
+      auto.then(ClientCommands.literal("gui").executes((context) -> {
+         Minecraft mc = Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.auto.AutoSequenceVisualScreen(mc.gui.screen())));
+         return 1;
+      }));
+
+      auto.then(ClientCommands.literal("visual").executes((context) -> {
+         Minecraft mc = Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.auto.AutoSequenceVisualScreen(mc.gui.screen())));
+         return 1;
+      }));
 
       auto.then(ClientCommands.literal("list").executes((context) -> {
          FabricClientCommandSource src = context.getSource();

@@ -808,7 +808,7 @@ public class BomboConfig {
 
       // Screenshare / Spectate Whitelist & Settings
       public String autoAcceptScreenshareUsers = "";
-      public String screenshareQuality = "720p 30fps"; // "720p 30fps", "1080p 60fps"
+      public String screenshareQuality = "720p 60fps"; // "720p 60fps", "720p 30fps", "1080p 60fps"
       public boolean screenshareOnlyMinecraft = true;
 
       // Chat image hover preview fixed position

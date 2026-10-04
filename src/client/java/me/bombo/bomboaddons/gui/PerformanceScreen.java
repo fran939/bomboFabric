@@ -76,22 +76,57 @@ public class PerformanceScreen extends Screen {
         cachedSnapshots.sort((a, b) -> Double.compare(b.totalMsPerSec, a.totalMsPerSec));
     }
 
+    private int getHeaderH() { return 56; }
+    private int getWinW() { return Math.min(860, this.width - 40); }
+    private int getWinH() {
+        int estimatedH = getHeaderH() + Math.max(1, cachedSnapshots.size()) * 36 + 24;
+        return Math.min(Math.max(estimatedH, 200), Math.min(560, this.height - 24));
+    }
+    private int getWinX() { return (this.width - getWinW()) / 2; }
+    private int getWinY() { return (this.height - getWinH()) / 2; }
+
+    private double cachedProcessCpu = -1.0;
+    private long cachedUsedMem = 0L;
+    private long cachedTotalMem = 0L;
+    private int cachedActiveThreads = 0;
+    private long lastSysInfoFetch = 0L;
+
+    private void updateSysInfo() {
+        long now = System.currentTimeMillis();
+        if (now - lastSysInfoFetch < 1000L && lastSysInfoFetch > 0L) return;
+        lastSysInfoFetch = now;
+
+        Runtime rt = Runtime.getRuntime();
+        long totalMem = rt.totalMemory() / (1024 * 1024);
+        long freeMem = rt.freeMemory() / (1024 * 1024);
+        cachedTotalMem = totalMem;
+        cachedUsedMem = totalMem - freeMem;
+        cachedActiveThreads = Thread.activeCount();
+
+        try {
+            java.lang.management.OperatingSystemMXBean osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+            if (osBean instanceof com.sun.management.OperatingSystemMXBean sunBean) {
+                cachedProcessCpu = sunBean.getProcessCpuLoad() * 100.0;
+            }
+        } catch (Throwable ignored) {}
+    }
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         // Refresh snapshots every 1.5 seconds if actively viewing
         if (System.currentTimeMillis() - lastFetchTime > 1500L) {
             refreshSnapshots();
         }
+        updateSysInfo();
 
         // Dark frosted backdrop
         g.fill(0, 0, this.width, this.height, 0xDD0A0C10);
 
-        int winW = Math.min(860, this.width - 40);
-        int headerH = 56;
-        int estimatedH = headerH + Math.max(1, cachedSnapshots.size()) * 36 + 24;
-        int winH = Math.min(Math.max(estimatedH, 200), Math.min(560, this.height - 24));
-        int winX = (this.width - winW) / 2;
-        int winY = (this.height - winH) / 2;
+        int winW = getWinW();
+        int headerH = getHeaderH();
+        int winH = getWinH();
+        int winX = getWinX();
+        int winY = getWinY();
 
         // Window base
         g.fill(winX, winY, winX + winW, winY + winH, ConfigUITheme.getMainWindowBg());
@@ -111,24 +146,9 @@ public class PerformanceScreen extends Screen {
                 cachedSnapshots.size(), totalMeasuredMsPerSec);
         g.text(font, statusSummary, winX + 16, winY + 25, 0xFFAAAAAA, false);
 
-        Runtime rt = Runtime.getRuntime();
-        long maxMem = rt.maxMemory() / (1024 * 1024);
-        long totalMem = rt.totalMemory() / (1024 * 1024);
-        long freeMem = rt.freeMemory() / (1024 * 1024);
-        long usedMem = totalMem - freeMem;
-        int activeThreads = Thread.activeCount();
-
-        double processCpu = -1.0;
-        try {
-            java.lang.management.OperatingSystemMXBean osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-            if (osBean instanceof com.sun.management.OperatingSystemMXBean sunBean) {
-                processCpu = sunBean.getProcessCpuLoad() * 100.0;
-            }
-        } catch (Throwable ignored) {}
-        String cpuPart = (processCpu >= 0.0) ? String.format(" | §eCPU: §a%.1f%%", processCpu) : "";
-
+        String cpuPart = (cachedProcessCpu >= 0.0) ? String.format(" | §eCPU: §a%.1f%%", cachedProcessCpu) : "";
         String memSummary = String.format("§7JVM: §a%dMB §8/ §7%dMB%s §8| §7Threads: §b%d",
-                usedMem, totalMem, cpuPart, activeThreads);
+                cachedUsedMem, cachedTotalMem, cpuPart, cachedActiveThreads);
         if (ScreenshareManager.isStreaming()) {
             memSummary += String.format(" | §3Stream: §a%.0f FPS §7(%s)", ScreenshareManager.getCurrentFps(), ScreenshareManager.getLastCaptureMode());
         } else {
@@ -298,11 +318,11 @@ public class PerformanceScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         if (event.button() == 0) {
-            int winW = Math.min(860, this.width - 40);
-            int winH = Math.min(600, this.height - 24);
-            int winX = (this.width - winW) / 2;
-            int winY = (this.height - winH) / 2;
-            int headerH = 46;
+            int winW = getWinW();
+            int winH = getWinH();
+            int winX = getWinX();
+            int winY = getWinY();
+            int headerH = getHeaderH();
 
             int btnW = 80;
             int btnH = 22;

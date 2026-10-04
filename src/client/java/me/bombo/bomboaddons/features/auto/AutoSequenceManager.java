@@ -79,8 +79,34 @@ public class AutoSequenceManager {
         public String locationCondition = "ANY";
         /** Optional slot condition filter: e.g. "<9", "<=8", ">9", "0-8". */
         public String slotCondition = "";
+        /** Optional exception guard: if satisfied, this action is skipped. */
+        public String exceptIf = "";
+        /** Optional precondition: only executes if satisfied. */
+        public String onlyIf = "";
 
         public AutoAction() {
+        }
+
+        public AutoAction copy() {
+            AutoAction copy = new AutoAction();
+            copy.type = this.type;
+            copy.slotIndex = this.slotIndex;
+            copy.itemMatcher = this.itemMatcher;
+            copy.guiMatcher = this.guiMatcher;
+            copy.clickType = this.clickType;
+            copy.command = this.command;
+            copy.rightClick = this.rightClick;
+            copy.entityMatcher = this.entityMatcher;
+            copy.searchRadius = this.searchRadius;
+            copy.repeatCount = this.repeatCount;
+            copy.delayMs = this.delayMs;
+            copy.enabled = this.enabled;
+            copy.guiCondition = this.guiCondition;
+            copy.locationCondition = this.locationCondition;
+            copy.slotCondition = this.slotCondition;
+            copy.exceptIf = this.exceptIf;
+            copy.onlyIf = this.onlyIf;
+            return copy;
         }
 
         public AutoAction(ActionType type, int slotIndex, String itemMatcher, String clickType, int delayMs) {
@@ -147,6 +173,12 @@ public class AutoSequenceManager {
             }
             if (guiCondition != null && !guiCondition.isBlank()) {
                 condInfo += " [gui:" + guiCondition + "]";
+            }
+            if (onlyIf != null && !onlyIf.isBlank()) {
+                condInfo += " [only:" + onlyIf + "]";
+            }
+            if (exceptIf != null && !exceptIf.isBlank()) {
+                condInfo += " [except:" + exceptIf + "]";
             }
             return prefix + switch (type) {
                 case CLICK_SLOT -> {

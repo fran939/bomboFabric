@@ -1,5 +1,24 @@
 [
   {
+    "version": "26.2.28.76",
+    "date": "2026-10-04",
+    "changes": [
+      "Storage Overlay In-Place Rename: Pressing Enter updates card title in-place immediately without needing to reopen /storage",
+      "Storage Overlay Single Active Rename: Switching between cards cleanly commits previous rename and focuses new card without duplicate inputs",
+      "Storage Overlay Unblocked Scrollwheel: Routed scroll events to container grid when hovering over focused/open storage slots",
+      "Discord Voice HUD Clean Startup: Removed automatic AUTHORIZE calls on IPC READY, eliminating OAuth2 5000 dialogs on launch",
+      "Discord Voice HUD Bot Self Mute & Deafen: Routed self voice actions through bombot bridge using myUserId and local voice state",
+      "Discord Accurate [LIVE] Status: Removed self-referential check on local user to eliminate permanent false [LIVE] badges",
+      "Discord Phantom User Pruning: Eliminated lingering users like xMave when alone in voice channel by checking WebRTC participant list",
+      "Scratch Visual Studio: Added full-screen visual block editor accessible via /b sequence, /b sequences, /sequence, and Config GUI",
+      "Auto Sequence Advanced Conditions: Added exceptIf (skip) and onlyIf (precondition) with GUI, item, lore, count, and coord guards",
+      "Dynamic Variables: Supported dynamic ${color} container title extraction and starts_with:/sw: item matching",
+      "Clipboard Image Tag Fix: Resolved $imgur2 corruption (.png2) with descending length replacement and regex negative lookahead",
+      "Performance Screen UI Fix: Corrected 200px hitbox displacement on /b perf buttons and throttled CPU/memory sampling to fix FPS drop",
+      "Screenshare 60 FPS Profile: Defaulted to 720p 60fps for <10ms encode time and ~1.5 Mbps bitrate, adding full diagnostic telemetry"
+    ]
+  },
+  {
     "version": "26.2.28.75",
     "date": "2026-10-04",
     "changes": [

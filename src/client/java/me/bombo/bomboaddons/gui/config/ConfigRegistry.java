@@ -186,6 +186,15 @@ public class ConfigRegistry {
                             + "button need " + me.bombo.bomboaddons.Constants.artifactPrefix() + "'s sequence "
                             + "runtime.", category));
                 }
+                items.add(ConfigItem.button("Open Scratch Studio", "Visual Builder",
+                        "Open full-screen Scratch-style visual sequence block editor.",
+                        category,
+                        () -> {
+                            Minecraft mc = Minecraft.getInstance();
+                            if (mc != null) {
+                                mc.setScreenAndShow(new me.bombo.bomboaddons.gui.auto.AutoSequenceVisualScreen(mc.gui.screen()));
+                            }
+                        }));
                 items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", category,
                         ConfigCustomWidgets::getAutoSequencesCardHeight,
                         ConfigCustomWidgets::renderAutoSequencesCard,
@@ -435,8 +444,8 @@ public class ConfigRegistry {
                 items.add(ConfigItem.cycle("Screenshare Quality",
                         "Streaming resolution and target framerate for live web screensharing.",
                         category,
-                        List.of("720p 30fps", "1080p 60fps", "1440p 60fps", "1440p 120fps"),
-                        () -> s.screenshareQuality != null ? s.screenshareQuality : "720p 30fps",
+                        List.of("720p 60fps (Recommended)", "720p 30fps", "1080p 60fps", "1440p 60fps"),
+                        () -> s.screenshareQuality != null ? s.screenshareQuality : "720p 60fps",
                         v -> s.screenshareQuality = v));
                 items.add(ConfigItem.toggle("Only Share Minecraft",
                         "Strictly capture the Minecraft game window only, without desktop background or cursor flicker.",
