@@ -1070,13 +1070,12 @@ public class DiscordIpcManager {
                         }
                     }
 
-                    // Only explicit resolution 0 x 0 signals stream end (NEVER video ssrc: 0 which occurs on simulcast)
+                    // Resolution 0 x 0 indicates temporary simulcast layer change or pause; do not immediately wipe the debounce window
                     if (wLine.contains("resolution: 0 x 0")) {
                         Matcher vm = INBOUND_USER_PATTERN.matcher(wLine);
                         if (vm.find()) {
                             String stoppedUid = vm.group(1);
                             userVideoLastSeenMap.remove(stoppedUid);
-                            USER_STREAM_ACTIVE_UNTIL.remove(stoppedUid);
                         }
                     }
 
@@ -1197,7 +1196,7 @@ public class DiscordIpcManager {
                         boolean isSelfMuted = prev != null && prev.isSelfMuted();
                         boolean isSelfDeafened = prev != null && prev.isSelfDeafened();
                         boolean isMuted = isLocallyMuted || isSelfMuted;
-                        boolean isDeaf = isLocallyMuted || isSelfDeafened;
+                        boolean isDeaf = isSelfDeafened;
                         boolean isLive = (System.currentTimeMillis() < USER_STREAM_ACTIVE_UNTIL.getOrDefault(uid, 0L)) || screensharingUserIds.contains(uid) || (prev != null && prev.isScreenSharing());
                         voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive, isLocallyMuted, isSelfMuted, isSelfDeafened));
                     }

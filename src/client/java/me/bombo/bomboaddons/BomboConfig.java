@@ -807,6 +807,11 @@ public class BomboConfig {
       public boolean spotifyHudShowAlbumArt = false;
       public boolean spotifyHudLyricsMode = false;
       public int spotifyHudLyricsNextLines = 1;
+      public boolean spotifyHudShowCover = true;
+      public boolean spotifyHudShowTitle = true;
+      public boolean spotifyHudShowArtist = true;
+      public boolean spotifyHudShowLyrics = true;
+      public boolean spotifyHudShowControls = true;
       public int lyricsOffsetMs = 0;
 
       // Lyrics HUD & Styling

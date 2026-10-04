@@ -64,6 +64,27 @@ public abstract class ChatMixin implements IChatComponent {
       this.refreshTrimmedMessages();
    }
 
+   @Inject(method = "addClientSystemMessage", at = @At("HEAD"), cancellable = true)
+   private void onAddClientSystemMessage(net.minecraft.network.chat.Component message, CallbackInfo ci) {
+      if (me.bombo.bomboaddons.BomboaddonsClient.silentCommandExecution) {
+         ci.cancel();
+      }
+   }
+
+   @Inject(method = "addServerSystemMessage", at = @At("HEAD"), cancellable = true)
+   private void onAddServerSystemMessage(net.minecraft.network.chat.Component message, CallbackInfo ci) {
+      if (me.bombo.bomboaddons.BomboaddonsClient.silentCommandExecution) {
+         ci.cancel();
+      }
+   }
+
+   @Inject(method = "addPlayerMessage", at = @At("HEAD"), cancellable = true)
+   private void onAddPlayerMessage(net.minecraft.network.chat.Component message, net.minecraft.network.chat.MessageSignature signature, net.minecraft.client.multiplayer.chat.GuiMessageTag tag, CallbackInfo ci) {
+      if (me.bombo.bomboaddons.BomboaddonsClient.silentCommandExecution) {
+         ci.cancel();
+      }
+   }
+
    @Inject(
       method = {"refreshTrimmedMessages"},
       at = {@At("TAIL")}
@@ -151,6 +172,10 @@ public abstract class ChatMixin implements IChatComponent {
       cancellable = true
    )
    private void onAddMessage(Component message, MessageSignature signature, GuiMessageSource source, GuiMessageTag tag, CallbackInfo ci) {
+      if (me.bombo.bomboaddons.BomboaddonsClient.silentCommandExecution) {
+         ci.cancel();
+         return;
+      }
       if (!(Boolean)isFormattingMessage.get()) {
          if (message != null) {
             ChatMessageTracker.addMessage(message);

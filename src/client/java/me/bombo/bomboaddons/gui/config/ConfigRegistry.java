@@ -491,6 +491,31 @@ public class ConfigRegistry {
                         category,
                         () -> s.spotifyHudLyricsMode,
                         v -> s.spotifyHudLyricsMode = v));
+                items.add(ConfigItem.toggle("Show Album Cover",
+                        "Display song album cover or icon on the left side of the HUD.",
+                        category,
+                        () -> s.spotifyHudShowCover,
+                        v -> s.spotifyHudShowCover = v));
+                items.add(ConfigItem.toggle("Show Song Title",
+                        "Display track name text when not in lyrics mode.",
+                        category,
+                        () -> s.spotifyHudShowTitle,
+                        v -> s.spotifyHudShowTitle = v).when(() -> !s.spotifyHudLyricsMode));
+                items.add(ConfigItem.toggle("Show Artist Name",
+                        "Display artist name text when not in lyrics mode.",
+                        category,
+                        () -> s.spotifyHudShowArtist,
+                        v -> s.spotifyHudShowArtist = v).when(() -> !s.spotifyHudLyricsMode));
+                items.add(ConfigItem.toggle("Show Lyrics",
+                        "Display synchronized lyrics when in Spotify HUD Lyrics Mode.",
+                        category,
+                        () -> s.spotifyHudShowLyrics,
+                        v -> s.spotifyHudShowLyrics = v).when(() -> s.spotifyHudLyricsMode));
+                items.add(ConfigItem.toggle("Show Playback Controls",
+                        "Display clickable media playback buttons (|◀ ⏸/▶ ▶|).",
+                        category,
+                        () -> s.spotifyHudShowControls,
+                        v -> s.spotifyHudShowControls = v));
                 items.add(ConfigItem.sliderInt("Lyrics Preview Lines Ahead",
                         "Number of upcoming lyric lines shown after current line in Spotify HUD Lyrics Mode (1 = current + next).",
                         category,

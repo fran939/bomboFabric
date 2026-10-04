@@ -300,6 +300,42 @@ public class BomboaddonsClient implements ClientModInitializer {
         }
     }
     public static final Map<String, Set<String>> npcClickedOptions = new HashMap<>();
+    public static long lastNpcClickTime = 0L;
+    public static volatile boolean silentCommandExecution = false;
+
+    public static void executeSilentCommand(String command) {
+        if (command == null || command.isEmpty()) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) return;
+        mc.execute(() -> {
+            silentCommandExecution = true;
+            try {
+                String cleanCmd;
+                for (cleanCmd = command.trim(); cleanCmd.startsWith("/"); cleanCmd = cleanCmd.substring(1).trim()) {}
+                if (cleanCmd.isEmpty()) return;
+
+                String root = cleanCmd.split(" ")[0];
+                if (clientDispatcher != null && clientDispatcher.getRoot().getChild(root) != null && mc.player != null) {
+                    try {
+                        clientDispatcher.execute(cleanCmd, (FabricClientCommandSource) mc.player);
+                    } catch (Throwable t) {
+                        if (mc.getConnection() != null) {
+                            mc.getConnection().sendCommand(cleanCmd);
+                        }
+                    }
+                } else if (mc.getConnection() != null) {
+                    mc.getConnection().sendCommand(cleanCmd);
+                }
+            } finally {
+                (new Thread(() -> {
+                    try {
+                        Thread.sleep(600L);
+                    } catch (Throwable ignored) {}
+                    silentCommandExecution = false;
+                })).start();
+            }
+        });
+    }
    public static final List<PendingCommand> pendingCommands = new CopyOnWriteArrayList();
    public static final Set<String> clickedNpcOptions = new HashSet();
    public static final Set<String> clickedNpcTextOptions = new HashSet();
@@ -5809,6 +5845,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                         }
 
                         if (pickupCmd[0] != null) {
+                           BomboaddonsClient.npcClickedOptions.clear();
                            String cmd = pickupCmd[0].startsWith("/") ? pickupCmd[0].substring(1) : pickupCmd[0];
                            Minecraft mc = Minecraft.getInstance();
                            mc.execute(() -> {
@@ -5824,6 +5861,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }
 
                   if (plain.contains("Select an option:") || (plain.contains("[Yes]") && plain.contains("[No]"))) {
+                     if (System.currentTimeMillis() - BomboaddonsClient.lastNpcClickTime > 8000L) {
+                        BomboaddonsClient.npcClickedOptions.clear();
+                     }
+
                      List<NpcOptionItem> options = new ArrayList<>();
                      message.visit((style, text) -> {
                         ClickEvent patt0$temp = style.getClickEvent();
@@ -5893,6 +5934,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                         if (toClick != null) {
                            clickedHere.add(toClick.text);
+                           BomboaddonsClient.lastNpcClickTime = System.currentTimeMillis();
                            String cmd = toClick.command;
                            if (cmd.startsWith("/")) {
                               cmd = cmd.substring(1);
@@ -5903,26 +5945,18 @@ public class BomboaddonsClient implements ClientModInitializer {
                               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §d[Debug] §aExecuting: §e/" + cmd + " §7for option: §e" + toClick.text));
                            }
 
-                           if (toClick.clickEvent != null) {
-                              final ClickEvent ce = toClick.clickEvent;
-                              final String fallbackCmd = cmd;
-                              mc.execute(() -> {
+                           final String finalCmd = cmd;
+                           final ClickEvent ce = toClick.clickEvent;
+                           mc.execute(() -> {
+                              if (ce != null && mc.gui.screen() != null) {
                                  try {
                                     me.bombo.bomboaddons.mixin.ScreenAccessor.invokeDefaultHandleGameClickEvent(ce, mc, mc.gui.screen());
-                                 } catch (Throwable t) {
-                                    if (mc.getConnection() != null) {
-                                       mc.getConnection().sendCommand(fallbackCmd);
-                                    }
-                                 }
-                              });
-                           } else {
-                              final String finalCmd = cmd;
-                              mc.execute(() -> {
-                                 if (mc.getConnection() != null) {
-                                    mc.getConnection().sendCommand(finalCmd);
-                                 }
-                              });
-                           }
+                                 } catch (Throwable ignored) {}
+                              }
+                              if (mc.getConnection() != null) {
+                                 mc.getConnection().sendCommand(finalCmd);
+                              }
+                           });
                         } else if (BomboConfig.get().npcLoreDebug && Minecraft.getInstance().player != null) {
                            Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §c[Debug] §7All options exhausted for this NPC prompt."));
                         }

@@ -51,7 +51,7 @@ public class SpotifyHud {
     public static int getHudWidth() {
         BomboConfig.Settings s = BomboConfig.get();
         if (s != null && s.spotifyHudLyricsMode) {
-            return 250;
+            return 280;
         }
         return HUD_WIDTH;
     }
@@ -132,6 +132,11 @@ public class SpotifyHud {
         int hudW = getHudWidth();
         int hudH = getHudHeight();
         boolean lyricsMode = s != null && s.spotifyHudLyricsMode;
+        boolean showCover = s == null || s.spotifyHudShowCover;
+        boolean showTitle = s == null || s.spotifyHudShowTitle;
+        boolean showArtist = s == null || s.spotifyHudShowArtist;
+        boolean showLyrics = s == null || s.spotifyHudShowLyrics;
+        boolean showControls = s == null || s.spotifyHudShowControls;
 
         int bgColor = cachedBg;
         int borderColor = cachedBorder;
@@ -139,6 +144,11 @@ public class SpotifyHud {
         int artistColor = cachedArtist;
         int accentColor = cachedAccent;
         int progressBg = cachedProg;
+
+        // Custom lyrics color resolution (respecting dynamic color or custom preset/hex)
+        int activeLyricsColor = (s != null && s.lyricsHudDynamicColor && LyricsManager.getDominantColor() != 0)
+                ? LyricsManager.getDominantColor()
+                : (s != null ? LyricsHud.parseColor(s.lyricsHudColor, titleColor) : titleColor);
 
         // Background card
         g.fill(0, 0, hudW, hudH, bgColor);
@@ -152,78 +162,150 @@ public class SpotifyHud {
         int iconSize = 20;
         int iconX = 5;
         int iconY = Math.max(5, (hudH - 6 - iconSize) / 2);
-        Identifier albumArt = (s != null && (lyricsMode || s.spotifyHudShowAlbumArt)) ? LyricsManager.getAlbumArtTexture() : null;
-        if (albumArt != null) {
-            g.blit(albumArt, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
-        } else {
-            int bgGreen = 0xFF1DB954;
-            int waveColor = 0xFF121212;
-            g.fill(iconX, iconY, iconX + iconSize, iconY + iconSize, bgGreen);
-            g.fill(iconX + 3, iconY + 5, iconX + 17, iconY + 7, waveColor);
-            g.fill(iconX + 4, iconY + 9, iconX + 16, iconY + 11, waveColor);
-            g.fill(iconX + 5, iconY + 13, iconX + 15, iconY + 15, waveColor);
+        int textX = showCover ? 29 : 8;
+
+        if (showCover) {
+            Identifier albumArt = (s != null && (lyricsMode || s.spotifyHudShowAlbumArt)) ? LyricsManager.getAlbumArtTexture() : null;
+            if (albumArt != null) {
+                g.blit(albumArt, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0F, 1.0F, 0.0F, 1.0F);
+            } else {
+                // Sleek minimal dark music disc with cyan note instead of ugly blocky green square
+                g.fill(iconX, iconY, iconX + iconSize, iconY + iconSize, 0x55000000);
+                g.fill(iconX + 1, iconY + 1, iconX + iconSize - 1, iconY + iconSize - 1, 0x771E1324);
+                g.fill(iconX, iconY, iconX + iconSize, iconY + 1, borderColor);
+                g.fill(iconX, iconY + iconSize - 1, iconX + iconSize, iconY + iconSize, borderColor);
+                g.fill(iconX, iconY, iconX + 1, iconY + iconSize, borderColor);
+                g.fill(iconX + iconSize - 1, iconY, iconX + iconSize, iconY + iconSize, borderColor);
+                g.text(font, "§b♪", iconX + 6, iconY + 6, accentColor, false);
+            }
         }
 
-        int textX = 29;
-        int ctrlW = 46;
-        int ctrlX = hudW - ctrlW - 4;
-        int textMaxW = ctrlX - textX - 4;
+        int ctrlW = showControls ? 44 : 0;
+        int ctrlX = hudW - ctrlW - 6;
+        int textMaxW = ctrlX - textX - 6;
 
         if (lyricsMode) {
-            // Render synchronized lyrics: current active line + next lines
-            long progressMs = isDummy ? 45000L : (long) (SpotifyManager.getProgressRatio() * SpotifyManager.getDurationSeconds() * 1000L);
-            java.util.List<LyricsLine> lines = isDummy ? java.util.List.of(
-                    new LyricsLine(40000L, 48000L, "Sé que te gusta el calentón", java.util.Collections.emptyList()),
-                    new LyricsLine(48000L, 55000L, "Tú me miras y yo te miro lento", java.util.Collections.emptyList())
-            ) : LyricsManager.getLines();
+            if (showLyrics) {
+                // Render synchronized lyrics: high-precision interpolated progressMs with per-song offset
+                long progressMs = isDummy ? 45000L : (SpotifyManager.getProgressMs() + (s != null ? s.lyricsOffsetMs : 0L));
+                java.util.List<LyricsLine> lines = isDummy ? java.util.List.of(
+                        new LyricsLine(40000L, 48000L, "Sé que te gusta el calentón", java.util.Collections.emptyList()),
+                        new LyricsLine(48000L, 55000L, "Tú me miras y yo te miro lento", java.util.Collections.emptyList())
+                ) : LyricsManager.getLines();
 
-            int activeIdx = LyricsManager.getCurrentLineIndex(progressMs);
-            String currentLineText = (activeIdx >= 0 && activeIdx < lines.size()) ? lines.get(activeIdx).text() : "";
-            if (currentLineText.isEmpty()) {
-                currentLineText = isDummy ? "Sé que te gusta el calentón" : (LyricsManager.isLoading() ? "Loading lyrics..." : track);
-            }
-
-            String dispCurrent = font.plainSubstrByWidth(currentLineText, textMaxW);
-            g.text(font, "§l" + dispCurrent, textX, 5, accentColor, true);
-
-            int nextCount = s.spotifyHudLyricsNextLines;
-            int lineY = 16;
-            for (int i = 1; i <= nextCount; i++) {
-                int nextIdx = (activeIdx >= 0) ? activeIdx + i : i - 1;
-                String nextLineText = (nextIdx >= 0 && nextIdx < lines.size()) ? lines.get(nextIdx).text() : "";
-                if (nextLineText.isEmpty() && i == 1 && isDummy) {
-                    nextLineText = "Tú me miras y yo te miro lento";
+                int activeIdx = LyricsManager.getCurrentLineIndex(progressMs);
+                LyricsLine activeLine = (activeIdx >= 0 && activeIdx < lines.size()) ? lines.get(activeIdx) : null;
+                String currentLineText = activeLine != null ? activeLine.text() : "";
+                if (currentLineText.isEmpty()) {
+                    currentLineText = isDummy ? "Sé que te gusta el calentón" : (LyricsManager.isLoading() ? "Loading lyrics..." : track);
                 }
-                if (!nextLineText.isEmpty()) {
-                    String dispNext = font.plainSubstrByWidth(nextLineText, textMaxW);
-                    g.text(font, dispNext, textX, lineY, artistColor, false);
+
+                // Scale font slightly if line is very long so it never overlaps controls
+                int activeTextW = font.width("§l" + currentLineText);
+                float fontScale = 1.0f;
+                if (activeTextW > textMaxW && textMaxW > 0) {
+                    fontScale = Math.max(0.78f, (float) textMaxW / (float) activeTextW);
                 }
-                lineY += 11;
+
+                g.pose().pushMatrix();
+                g.pose().translate((float) textX, 5.0f);
+                g.pose().scale(fontScale, fontScale);
+
+                java.util.List<LyricsManager.WordTime> words = activeLine != null ? activeLine.words() : null;
+                if (words != null && !words.isEmpty()) {
+                    // Syllable / word-by-word karaoke wipe
+                    int curX = 0;
+                    int spaceW = font.width(" ");
+                    int maxAllowedX = (int) (textMaxW / fontScale);
+                    for (int w = 0; w < words.size(); w++) {
+                        LyricsManager.WordTime wt = words.get(w);
+                        String wordStr = wt.word();
+                        int letters = LyricsHud.countLetters(wordStr);
+                        long wordDur = Math.max(10L, wt.endMs() - wt.startMs());
+                        long perLetterMs = letters > 0 ? (wordDur / letters) : wordDur;
+
+                        for (int c = 0; c < wordStr.length(); c++) {
+                            char ch = wordStr.charAt(c);
+                            String chStr = String.valueOf(ch);
+                            int chW = font.width("§l" + chStr);
+                            if (curX + chW > maxAllowedX) break;
+
+                            long letterTargetMs = wt.startMs() + (c * perLetterMs);
+                            boolean isLetterActive = progressMs >= letterTargetMs;
+                            int chColor = isLetterActive ? activeLyricsColor : 0x66CBD5E1;
+                            g.text(font, "§l" + chStr, curX, 0, chColor, isLetterActive);
+                            curX += chW;
+                        }
+                        curX += spaceW;
+                        if (curX >= maxAllowedX) break;
+                    }
+                } else if (activeLine != null && activeLine.endMs() > activeLine.startMs()) {
+                    // Line-synced smooth karaoke reveal
+                    long duration = Math.max(500L, activeLine.endMs() - activeLine.startMs());
+                    float progress = Math.max(0.0f, Math.min(1.0f, (float) (progressMs - activeLine.startMs()) / (float) duration));
+                    int fullLen = (int) (currentLineText.length() * progress);
+                    String sang = currentLineText.substring(0, Math.min(currentLineText.length(), fullLen));
+                    String unsang = currentLineText.substring(Math.min(currentLineText.length(), fullLen));
+
+                    int maxAllowedX = (int) (textMaxW / fontScale);
+                    String fitSang = font.plainSubstrByWidth(sang, maxAllowedX);
+                    int sangW = font.width("§l" + fitSang);
+                    g.text(font, "§l" + fitSang, 0, 0, activeLyricsColor, true);
+                    if (sangW < maxAllowedX) {
+                        String fitUnsang = font.plainSubstrByWidth(unsang, maxAllowedX - sangW);
+                        g.text(font, "§l" + fitUnsang, sangW, 0, 0x66CBD5E1, false);
+                    }
+                } else {
+                    String dispCurrent = font.plainSubstrByWidth(currentLineText, (int) (textMaxW / fontScale));
+                    g.text(font, "§l" + dispCurrent, 0, 0, activeLyricsColor, true);
+                }
+                g.pose().popMatrix();
+
+                int nextCount = s.spotifyHudLyricsNextLines;
+                int lineY = 16;
+                for (int i = 1; i <= nextCount; i++) {
+                    int nextIdx = (activeIdx >= 0) ? activeIdx + i : i - 1;
+                    String nextLineText = (nextIdx >= 0 && nextIdx < lines.size()) ? lines.get(nextIdx).text() : "";
+                    if (nextLineText.isEmpty() && i == 1 && isDummy) {
+                        nextLineText = "Tú me miras y yo te miro lento";
+                    }
+                    if (!nextLineText.isEmpty()) {
+                        String dispNext = font.plainSubstrByWidth(nextLineText, textMaxW);
+                        g.text(font, dispNext, textX, lineY, artistColor, false);
+                    }
+                    lineY += 11;
+                }
             }
         } else {
             // Standard Track & Artist text
-            if (!track.equals(lastRawTrack)) {
-                lastRawTrack = track;
-                String disp = track;
-                while (font.width("§l" + disp) > textMaxW && disp.length() > 3) {
-                    disp = disp.substring(0, disp.length() - 2) + "…";
+            if (showTitle) {
+                if (!track.equals(lastRawTrack)) {
+                    lastRawTrack = track;
+                    String disp = track;
+                    while (font.width("§l" + disp) > textMaxW && disp.length() > 3) {
+                        disp = disp.substring(0, disp.length() - 2) + "…";
+                    }
+                    cachedTrackDisplay = disp;
                 }
-                cachedTrackDisplay = disp;
+                g.text(font, "§l" + cachedTrackDisplay, textX, 5, titleColor, true);
             }
-            g.text(font, "§l" + cachedTrackDisplay, textX, 5, titleColor, true);
 
-            if (!artist.equals(lastRawArtist)) {
-                lastRawArtist = artist;
-                cachedArtistDisplay = font.plainSubstrByWidth(artist, textMaxW);
+            if (showArtist) {
+                if (!artist.equals(lastRawArtist)) {
+                    lastRawArtist = artist;
+                    cachedArtistDisplay = font.plainSubstrByWidth(artist, textMaxW);
+                }
+                g.text(font, cachedArtistDisplay, textX, showTitle ? 16 : 8, artistColor, false);
             }
-            g.text(font, cachedArtistDisplay, textX, 16, artistColor, false);
         }
 
         // Controls on the right: |◀  ⏸/▶  ▶|
-        int ctrlY = Math.max(5, (hudH - 6 - 9) / 2);
-        g.text(font, "|◀", ctrlX, ctrlY, accentColor, true);
-        g.text(font, playing ? "⏸" : "▶", ctrlX + 16, ctrlY, accentColor, true);
-        g.text(font, "▶|", ctrlX + 32, ctrlY, accentColor, true);
+        if (showControls) {
+            int ctrlY = Math.max(5, (hudH - 6 - 9) / 2);
+            g.text(font, "|◀", ctrlX, ctrlY, accentColor, true);
+            g.text(font, playing ? "⏸" : "▶", ctrlX + 15, ctrlY, accentColor, true);
+            g.text(font, "▶|", ctrlX + 30, ctrlY, accentColor, true);
+        }
 
         // Progress bar at the bottom
         int barX = 5;
@@ -291,7 +373,7 @@ public class SpotifyHud {
         }
 
         // Media controls
-        if (relY >= 3 && relY <= hudH - 6) {
+        if ((s == null || s.spotifyHudShowControls) && relY >= 3 && relY <= hudH - 6) {
             if (relX >= ctrlX - 4 && relX <= ctrlX + 14) {
                 SpotifyManager.prevTrack();
                 return true;

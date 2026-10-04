@@ -22,6 +22,15 @@ public class CommandMixin {
       CommandTracker.onCommandSent(command);
       me.bombo.bomboaddons.BomboaddonsClient.recordCommand(command);
       String trimmed = command.trim();
+      String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+      if (lower.startsWith("b s ") || lower.startsWith("bombo s ") || lower.startsWith("bomboaddons s ")) {
+         int sIdx = trimmed.indexOf(" s ");
+         String inner = trimmed.substring(sIdx + 3).trim();
+         if (inner.startsWith("/")) inner = inner.substring(1);
+         me.bombo.bomboaddons.BomboaddonsClient.executeSilentCommand(inner);
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b order") || trimmed.equalsIgnoreCase("bombo order") || trimmed.equalsIgnoreCase("bomboaddons order")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));
@@ -91,7 +100,7 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+      lower = trimmed.toLowerCase(java.util.Locale.ROOT);
       if (lower.equals("ss") || lower.startsWith("ss ") || lower.equals("b ss") || lower.startsWith("b ss ")
             || lower.equals("bombo ss") || lower.startsWith("bombo ss ") || lower.equals("bomboaddons ss") || lower.startsWith("bomboaddons ss ")) {
          String sub = "";
@@ -494,6 +503,16 @@ public class CommandMixin {
    private void onSendChat(String message, CallbackInfo ci) {
       if (message.startsWith("/")) me.bombo.bomboaddons.BomboaddonsClient.recordCommand(message.substring(1));
       String trimmed = message.trim();
+      String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+      if (lower.startsWith("/b s ") || lower.startsWith("/bombo s ") || lower.startsWith("/bomboaddons s ")
+            || lower.startsWith("b s ") || lower.startsWith("bombo s ") || lower.startsWith("bomboaddons s ")) {
+         int sIdx = trimmed.indexOf(" s ");
+         String inner = trimmed.substring(sIdx + 3).trim();
+         if (inner.startsWith("/")) inner = inner.substring(1);
+         me.bombo.bomboaddons.BomboaddonsClient.executeSilentCommand(inner);
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("/b pv") || trimmed.equalsIgnoreCase("/bombo pv")
             || trimmed.toLowerCase().startsWith("/b pv ") || trimmed.toLowerCase().startsWith("/bombo pv ")) {
          String arg = "";

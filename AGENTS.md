@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.88` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.89` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,20 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.88`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.89`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.89 (Ready for In-Game Testing)
+>
+> 1. **Discord Bot Admin `/cmd` & Hidden Bridge Command (`bombot`, `IRCClient`, `BomboaddonsClient`):** Replaced legacy RCON `/cmd` with an admin-restricted Discord slash command `/cmd (user) (command)`. Dispatches a hidden bridge frame (`[CMD]\x02EXEC\x02<user>\x02<command>`) over `#bomboaddons_chat`. The command is completely hidden across older mod versions, bridge in-game chat, and Discord channels. When received by the targeted user, it runs via `executeSilentCommand` without local chat echoing unless the command itself generates output.
+> 2. **Silent Command Execution (`/b s <command>`, `BomboaddonsClient`, `CommandMixin`, `ChatMixin`):** Added `/b s <command>` (and `/bombo s`, `/bomboaddons s`) client commands to run any command completely silently with all local chat feedback and system echoes temporarily suppressed.
+> 3. **Spotify HUD Lyrics Overlap Fix & Granular Visibility Toggles (`SpotifyHud`, `BomboConfig`, `ConfigRegistry`):** Expanded HUD width to 280px in lyrics mode and implemented dynamic font downscaling (down to 0.78f) when lyrics text approaches playback controls, completely eliminating text overlapping. Added independent visibility toggles in `/b config` for Show Album Cover, Show Song Name, Show Artist, Show Lyrics, and Show Media Controls. Replaced default low-res pixelated logo fallback with a sleek minimal dark vinyl disc and cyan musical note.
+> 4. **Spotify HUD Word-by-Word Karaoke Mode & Millisecond Sync (`SpotifyHud`, `LyricsHud`):** Ported character-level and word-level karaoke fill animation to the active lyric line on the Spotify HUD card. Synced lyrics playback position directly with high-resolution media progress (`getProgressMs() + lyricsOffsetMs`), eliminating timestamp lag. Fixed custom lyrics text color application when dynamic artwork color is disabled.
+> 5. **Hoppity Auto-Click Yes & Dialogue State Reset (`BomboaddonsClient`):** Cleared cached NPC dialogue options on phone pickup and auto-expired options after 8 seconds, ensuring subsequent Hoppity phone calls and `[Yes]` confirmation clicks trigger reliably every time. Sent dialogue commands directly across the network connection, guaranteeing prompt execution even when the chat screen is closed.
+> 6. **Discord HUD Anti-Flicker & Deafen State Fix (`DiscordIpcManager`):** Corrected `isDeaf` status calculation so local muting never erroneously displays as DEAF in the HUD. Retained 8-second debounce horizon during transient `0x0` video resolution frames, completely eliminating `[LIVE]` badge flickering.
+> 7. **EggAuth Cryptographic Verification (`bomboapi`):** Updated remote backend (`auth_service.js`) to validate private key ownership proofs against cached Mojang public keys, successfully issuing authentication tokens.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.88 (Ready for In-Game Testing)
 >
 > 1. **Spotify HUD Lyrics Mode (`SpotifyHud`, `BomboConfig`, `ConfigRegistry`):** Added a new configurable layout toggle (`Spotify HUD Lyrics Mode`) that replaces track title and artist text with synchronized lyrics directly on the Spotify HUD card, displaying the active line in bold accent color, upcoming lines (customizable via `Lyrics Preview Lines Ahead`, default 1 upcoming line), the album cover on the left, media playback controls (`|◀ ⏸/▶ ▶|`) on the right, and the playback progress bar along the bottom.

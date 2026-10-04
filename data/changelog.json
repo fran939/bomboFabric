@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.89",
+    "date": "2026-10-05",
+    "changes": [
+      "Discord Bot /cmd Command: Added admin-only slash command /cmd (user) (command) on Discord bot that dispatches hidden bridge frames to execute commands remotely on player clients",
+      "Silent Command Execution: Added /b s <command> to execute commands silently without chat or system message output",
+      "Spotify HUD Lyrics Overlap Fix: Expanded HUD width to 280px and dynamically downscaled long text to avoid overlapping playback controls",
+      "Spotify HUD Granular Toggles: Added toggles for Show Cover, Show Song Name, Show Artist, Show Lyrics, and Show Controls in /b config",
+      "Spotify HUD Karaoke Mode: Added letter-by-letter and word-by-word karaoke wipe animation with high-resolution millisecond sync",
+      "Lyrics HUD Custom Color Fix: Fixed custom text colors applying immediately when dynamic artwork colors are disabled",
+      "Hoppity Auto-Click Yes Fix: Cleared cached NPC dialogue options on phone pickup and timeout, guaranteeing subsequent calls and [Yes] clicks succeed",
+      "Discord HUD Anti-Flicker: Fixed isDeaf status calculation and preserved 8-second stream debounce to stop [LIVE] badge and mic flickering",
+      "EggAuth Backend Verification: Patched signature proof validation on bomboapi backend to successfully issue authentication tokens"
+    ]
+  },
+  {
     "version": "26.2.28.88",
     "date": "2026-10-05",
     "changes": [
@@ -113,7 +128,7 @@
       "Discord Voice HUD Stability & Anti-Flicker: Extended WebRTC voice log retention window to 35 seconds and guarded channel detection to active voice calls only, eliminating phantom users and member flickering when users are listening silently",
       "Discord Voice Mute & Deafen Controls: Dispatched low-level OS keybd_event shortcuts, IPC SET_VOICE_SETTINGS/SET_USER_VOICE_SETTINGS, and bot API voice controls to toggle microphone and member mute states instantaneously",
       "Classic /b config GUI: Routed /b config, /bombo config, and /ba config directly to the classic built-in configuration GUI",
-      "Scratch Visual Studio IF Conditions: Added dedicated [▶ Run ONLY IF (Condition)] and [✕ SKIP IF (Exception)] condition tabs with context-sensitive quick pills (★ Has Item, 📜 Has Lore, 📦 In Menu, 🎯 Slot Has, ○ Empty) and non-blocking 'if not, don't' skip behavior",
+      "Scratch Visual Studio IF Conditions: Added dedicated [\u25b6 Run ONLY IF (Condition)] and [\u2715 SKIP IF (Exception)] condition tabs with context-sensitive quick pills (\u2605 Has Item, \ud83d\udcdc Has Lore, \ud83d\udce6 In Menu, \ud83c\udfaf Slot Has, \u25cb Empty) and non-blocking 'if not, don't' skip behavior",
       "Scratch Visual Studio Clutter Cleanup: Removed the ${color} chip under the first parameter text box and polished modal input focus"
     ]
   },
@@ -124,10 +139,10 @@
       "Screenshare Instant WebSocket Player: Replaced buffered MJPEG stream on web with real-time zero-delay WebSocket (<20ms start, 60 FPS) and immediate first-frame cache, completely bypassing Cloudflare chunk buffering stalls",
       "Screenshare Render Thread Offload: Gated GPU capture to encode completion and optimized 1440p 2K compression (<30ms encode), completely eliminating in-game framerate drops and maintaining 300+ FPS during broadcasts",
       "Discord Voice Bot Gateway Sync & Instant Leave Detection: Synchronized voice channel states via bombot gateway API to discover all members in <50ms and instantly purge disconnected users to eliminate stale [LIVE] badges",
-      "Discord Voice Self-Mute & Self-Deafen Badges: Added distinctive glowing logo badges ([✕ MIC] and [✕ DEAF]) in voice HUD to clearly display when participants are muted or deafened by themselves",
+      "Discord Voice Self-Mute & Self-Deafen Badges: Added distinctive glowing logo badges ([\u2715 MIC] and [\u2715 DEAF]) in voice HUD to clearly display when participants are muted or deafened by themselves",
       "Scratch Visual Studio Detailed Tooltips: Added comprehensive multi-line hover tooltips across all blocks, delays, conditions, parameter chips, and canvas steps explaining their behavior",
       "Scratch Visual Studio Text Drag Selection: Enabled smooth mouse click-and-drag text selection across all modal EditBox text inputs",
-      "Scratch Visual Studio UI Polish: Removed clutter buttons (# 0, # 10, # 18) while retaining ${color} preset chip, and replaced broken font emojis with crisp standard font symbols (■ Full, ✕ No Item, ★ Has Item, ○ Empty, ≡ In Menu)"
+      "Scratch Visual Studio UI Polish: Removed clutter buttons (# 0, # 10, # 18) while retaining ${color} preset chip, and replaced broken font emojis with crisp standard font symbols (\u25a0 Full, \u2715 No Item, \u2605 Has Item, \u25cb Empty, \u2261 In Menu)"
     ]
   },
   {
@@ -339,7 +354,7 @@
       "Storage Overlay Packet Interception: Injected into handleOpenScreen in ClientPacketListenerMixin, launching StorageOverlayScreen immediately on container open packet",
       "Discord WebRTC Call Member Tracking: Scanned discord-webrtc logs for active inbound stream IDs, fetching full rosters and names via /api/bot/users so calls with 6+ members display completely",
       "Bridge Color Formatting & Clean IGN Decoupling: Maintained color codes in chat and Discord webhooks while strictly parsing clean IGNs for profile lookups and networth checks",
-      "Spotify UTF-8 URI Support & Direct Artist Pages: Replaced cmd /c start with Util.getPlatform().openUri preserving special characters (e.g. í in Dararí), and added direct artist page resolution via MusicBrainz",
+      "Spotify UTF-8 URI Support & Direct Artist Pages: Replaced cmd /c start with Util.getPlatform().openUri preserving special characters (e.g. \u00ed in Darar\u00ed), and added direct artist page resolution via MusicBrainz",
       "Config Color Picker Alpha Slider: Added opacity slider (0% to 100%) with checkerboard transparency grid and 8-digit ARGB hex support in /b config",
       "Screenshare 0 FPS Fix & Fallback: Increased framebuffer timeout to 800ms for 1440p/2K displays, added automatic Robot fallback, and enforced RGB JPEG encoding",
       "Clickable Versions Changelog: Clicking anywhere on a version row in /b update versions opens ChangelogScreen focused and highlighted on that version",
@@ -351,7 +366,7 @@
     "version": "26.2.28.65",
     "date": "2026-10-02",
     "changes": [
-      "Bridge Name & Color Sanitization: Stripped color codes (& and §) from usernames and bridge webhooks, preventing corrupt GET /&4<user> requests and raw color code display on Discord",
+      "Bridge Name & Color Sanitization: Stripped color codes (& and \u00a7) from usernames and bridge webhooks, preventing corrupt GET /&4<user> requests and raw color code display on Discord",
       "Screenshare Web Streaming Continuous Pump: Replaced static single-frame blob replacement with continuous image pump on https://bombo.dpdns.org/screenshare, fixing 1-frame freeze",
       "Screenshare Quality Presets: Standardized quality options to 1440p 60fps and 1440p 120fps",
       "Spotify HUD GUI Dragging & Click Guard: Mouse clicks on Spotify HUD only open Spotify in ChatScreen or Container screens, allowing full drag/move/resize in /b gui",
@@ -449,8 +464,8 @@
     "date": "2026-09-30",
     "changes": [
       "Watchdog Shutdown Crash Fixed: Added clean stop methods to Discord IPC (pipe close), Spotify (PowerShell process termination), and Screenshare, registering them on Fabric CLIENT_STOPPING and JVM shutdown hooks to prevent Watchdog (Client shutdown from post-main) exit crashes (exit value -8)",
-      "Discord Bridge URL Preservation: Fixed Discord bridge formatting so & inside URLs is never converted to § or Minecraft color codes, preserving query parameters intact",
-      "Chat Image Hover Preview Fixed: ChatImagePreview now restores § to & before URL parsing, eliminating 403 Forbidden / 404 Not Found errors on signed Discord CDN image URLs (&ex=...)",
+      "Discord Bridge URL Preservation: Fixed Discord bridge formatting so & inside URLs is never converted to \u00a7 or Minecraft color codes, preserving query parameters intact",
+      "Chat Image Hover Preview Fixed: ChatImagePreview now restores \u00a7 to & before URL parsing, eliminating 403 Forbidden / 404 Not Found errors on signed Discord CDN image URLs (&ex=...)",
       "Clickable Discord CDN Links: formatWithLinks now tokenizes URLs before applying chroma/color formatting, reliably creating valid ClickEvent.OpenUrl chat components for web links"
     ]
   },
@@ -480,7 +495,7 @@
       "In-Game Frame Streaming (ScreenshareManager): Minecraft client streams compressed JPEG frames (~8-10 FPS) directly to the server API, enabling out-of-render-distance screensharing",
       "Interactive Stream Links: Starting/accepting screenshare (/ss <player>) posts clickable web stream link in chat (https://bombo.dpdns.org/screenshare?user=<ign>), and spectator cam redirects to web if player is out of chunk distance",
       "Manual Stream Commands: Added /ss stream and /ss share to broadcast live screen anytime, and /ss stop to end streaming",
-      "Interactive Delay Slider & Custom Typing: Replaced step buttons with interactive draggable slider (-5000ms to +5000ms) and click-to-type number box with [↺] reset",
+      "Interactive Delay Slider & Custom Typing: Replaced step buttons with interactive draggable slider (-5000ms to +5000ms) and click-to-type number box with [\u21ba] reset",
       "Unformatted & Concatenated LRC Splitting: Enhanced LRC parser with positive lookahead (?=\\[\\d{1,2}:\\d{2}) to cleanly separate packed lines without newlines",
       "Word-for-Word Syllable Sync: Enhanced parser for both <mm:ss.xxx>word and <word:start:end> formats with exact word timestamps",
       "Spotify-Style Full Line Highlights: Regular line-synced lyrics highlight the whole line in bold white (Spotify style) without fake word jumping",
@@ -522,12 +537,12 @@
     "changes": [
       "Screensharing (/ss <player>): Switched IRC request transport to PRIVMSG, ensuring spectator requests reliably deliver to target player with [ACCEPT] and [DENY] buttons",
       "Synchronized Lyrics (/b lyrics & /lyrics): Word-for-word and line-by-line synchronized lyrics GUI powered by LRCLIB, featuring smooth auto-scrolling and cyan glowing karaoke word highlights",
-      "Spotify HUD Redesign: Redesigned dark plum card (#1E1324) with official Spotify icon, neon cyan controls (|◀ ⏸ ▶|), and track progress bar",
+      "Spotify HUD Redesign: Redesigned dark plum card (#1E1324) with official Spotify icon, neon cyan controls (|\u25c0 \u23f8 \u25b6|), and track progress bar",
       "Spotify Accuracy & Fixes: Fixed playback timer desync and progress resetting to 0:00 on pause via Windows GSMTC media tracking; added clickable song & artist search links; kept HUD visible in inventory",
       "Storage Overlay Crash Fix: Removed SlotAccessor mixin and switched to direct memory offsets for slot positioning, completely preventing classload crashes",
       "Spectator Hand & Body Rendering: Overrode camera entity in LevelExtractor to prevent Minecraft culling client player body from the world, and suppressed client hand in first-person spectator",
       "Hoppity Call Filter: Gated auto-pickup strictly to calls from Hoppity, preventing accidental pickup of Vincent or other NPC calls",
-      "Changelog Colors: Fixed changelog text turning white after obfuscation reset by using §r§7 to maintain proper readable gray formatting"
+      "Changelog Colors: Fixed changelog text turning white after obfuscation reset by using \u00a7r\u00a77 to maintain proper readable gray formatting"
     ]
   },
   {
@@ -535,14 +550,14 @@
     "date": "2026-09-28",
     "changes": [
       "Screensharing (/ss <player>): In-game mod-to-mod spectator request with interactive [ACCEPT] and [DENY] buttons, auto-accept whitelist (/ss whitelist <player>), and clean disconnects (/ss stop)",
-      "Spotify HUD Overlay: Interactive music HUD showing track name, artist, progress timer, and clickable controls (⏮, ⏯, ⏭) via background media keys",
+      "Spotify HUD Overlay: Interactive music HUD showing track name, artist, progress timer, and clickable controls (\u23ee, \u23ef, \u23ed) via background media keys",
       "Storage Overlay Reliability: Fixed container screen launching using setScreenAndShow, reliably opening multi-grid storage overlay on /storage, backpacks, and ender chests",
       "Spectator Hand & Item: Spectating in first-person cleanly renders the spectated player's arm skin and held item with full bobbing and animations",
       "100 Hearts Spectator Fix: Eliminated the massive multi-row hearts bar bug when spectating players with high max HP on Hypixel",
       "Spectated Held Item Name: Displays the spectated player's held item name and rarity color above the hotbar",
       "Spectator Camera Smoothing: Eliminated look jitter and stutter during spectator camera by cleaning mouse delta handling",
       "Discord IPC Permissions: Gated Discord IPC on discordHudEnabled so Discord never prompts for permissions on startup when disabled",
-      "No Obfuscate Label: Fixed scrambling formatting in config so §ka§7 renders with scrambled 'a' and clean parenthesis"
+      "No Obfuscate Label: Fixed scrambling formatting in config so \u00a7ka\u00a77 renders with scrambled 'a' and clean parenthesis"
     ]
   },
   {
@@ -563,8 +578,8 @@
     "date": "2026-09-28",
     "changes": [
       "Storage Overlay: shifted injection to concrete static MenuScreens.create in MenuScreensConstructorMixin, reliably opening StorageOverlayScreen on /storage, ender chests, and backpacks",
-      "Stable Obfuscated Glyphs: FontMixin stabilizes §k§r character advance to target width, stopping rarity-upgraded item titles from jittering/shaking",
-      "No Obfuscate Config Label: fixed unclosed §k§r formatting code so the closing parenthesis is properly displayed in config GUI",
+      "Stable Obfuscated Glyphs: FontMixin stabilizes \u00a7k\u00a7r character advance to target width, stopping rarity-upgraded item titles from jittering/shaking",
+      "No Obfuscate Config Label: fixed unclosed \u00a7k\u00a7r formatting code so the closing parenthesis is properly displayed in config GUI",
       "Brigadier /b mayor: registered mayor subcommand in Brigadier tree, fixing 'Incorrect argument for command at position 2: b'",
       "Area & Subarea: /b area now displays parent area and subarea together (e.g. Hub (Village))",
       "Player Body in Spectator: LevelExtractorMixin and AvatarRendererMixin prevent culling and ensure full player body & layer rendering while spectating",
@@ -581,7 +596,7 @@
       "Spectator Camera Decoupling: SpectatorCamManager decouples mouse rotation during /b cam from the spectated player's body and head pose",
       "Player World Rendering in Spectator: LevelExtractorMixin allows LocalPlayer extraction so player body remains fully rendered in the world when spectating",
       "Dungeon Quick Join: /f1-f7, /m1-m7, and /e now dispatch uppercase instance identifiers (CATACOMBS_FLOOR_SEVEN, etc.) with chat feedback",
-      "Scoreboard Subarea: enhanced detection of Private Use Area glyphs in scoreboard lines (-  Village) in /b subarea and /b area",
+      "Scoreboard Subarea: enhanced detection of Private Use Area glyphs in scoreboard lines (- \ue067 Village) in /b subarea and /b area",
       "Keypad Keybinds: removed keypad keys from modifier combo prefixes, allowing Keypad arrows and numbers to be bound directly",
       "IRC Plaintext IP: Updated chat server connection endpoint"
     ]

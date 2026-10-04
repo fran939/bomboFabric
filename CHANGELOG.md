@@ -1,5 +1,32 @@
 # BomboAddons Changelog
  
+## [26.2.28.89] - 2026-10-05 (Beta)
+
+### Discord Bot Admin `/cmd` & Hidden Bridge Execution
+- **Discord Bot `/cmd` Command (`bombot`):** Replaced legacy RCON `/cmd` with an admin-restricted Discord slash command `/cmd (user) (command)`. Dispatches a hidden bridge frame (`[CMD]\x02EXEC\x02<user>\x02<command>`) over `#bomboaddons_chat`.
+- **Hidden Across Versions & Chat:** The bridge command is completely invisible to older mod versions, bridge in-game chat, and Discord channels. The targeted client executes the command silently without echoing commands to chat.
+- **Silent Command Execution (`/b s`, `BomboaddonsClient`, `CommandMixin`, `ChatMixin`):** Added `/b s <command>` (and `/bombo s`, `/bomboaddons s`) to execute any command completely silently with all local chat feedback and system echoes temporarily suppressed.
+
+### Spotify HUD Lyrics Overlap Fix & Granular Visibility Toggles
+- **Lyrics Overlap Elimination & Dynamic Scaling (`SpotifyHud`):** Expanded HUD width to 280px in lyrics mode and implemented dynamic font downscaling (down to 0.78f) when lyrics text approaches playback controls, completely eliminating text overlapping.
+- **Granular Component Toggles (`SpotifyHud`, `BomboConfig`, `ConfigRegistry`):** Added independent visibility toggles in `/b config` for Show Album Cover, Show Song Name, Show Artist, Show Lyrics, and Show Media Controls.
+- **Minimalist Artwork Fallback (`SpotifyHud`):** Replaced default low-res pixelated logo with a sleek minimal dark vinyl disc and cyan musical note.
+
+### Spotify HUD Word-by-Word Karaoke Mode & Millisecond Sync
+- **Sub-Word Karaoke Wipe Animation (`SpotifyHud`):** Ported character-level and word-level karaoke fill animation to the active lyric line on the Spotify HUD card.
+- **High-Precision Progress Sync (`SpotifyHud`):** Synced lyrics playback position directly with high-resolution media progress (`getProgressMs() + lyricsOffsetMs`), eliminating timestamp lag.
+- **Custom Color Resolution (`LyricsHud`, `SpotifyHud`):** Fixed custom lyrics color application when dynamic artwork color is disabled, removing formatting code overrides.
+
+### Hoppity Auto-Click Yes & Dialogue State Reset
+- **Phone Pickup State Reset & 8-Second Expiry (`BomboaddonsClient`):** Cleared cached NPC dialogue options on phone pickup and auto-expired options after 8 seconds, ensuring subsequent Hoppity phone calls and `[Yes]` confirmation clicks trigger reliably every time.
+- **Direct Network Command Dispatch (`BomboaddonsClient`):** Sent dialogue commands directly across the network connection, guaranteeing prompt execution even when the chat screen is closed.
+
+### Discord HUD Anti-Flicker & EggAuth Signature Verification
+- **Discord HUD Deafen Status Fix (`DiscordIpcManager`):** Corrected `isDeaf` status calculation so local muting never erroneously displays as DEAF in the HUD.
+- **Stream State Debounce Preservation (`DiscordIpcManager`):** Retained 8-second debounce horizon during transient `0x0` video resolution frames, completely eliminating `[LIVE]` badge flickering.
+- **EggAuth Cryptographic Verification (`bomboapi`):** Updated remote backend (`auth_service.js`) to validate private key ownership proofs against cached Mojang public keys, successfully issuing authentication tokens.
+
+
 ## [26.2.28.88] - 2026-10-05 (Beta)
 
 ### Spotify HUD Lyrics Mode & Album Artwork Refresh

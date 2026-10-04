@@ -65,7 +65,7 @@ public class LyricsHud {
         int linesBefore = s != null ? Math.max(0, s.lyricsHudLinesBefore) : 0;
         int linesAfter = s != null ? Math.max(0, s.lyricsHudLinesAfter) : 2;
         boolean duetSides = s == null || s.lyricsHudDuetSides;
-        boolean dynamicColor = s == null || s.lyricsHudDynamicColor;
+        boolean dynamicColor = s != null && s.lyricsHudDynamicColor;
 
         int highlightColor = dynamicColor
                 ? LyricsManager.getDominantColor()
