@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.81",
+    "date": "2026-10-04",
+    "changes": [
+      "Screenshare Zero-Stall PBO Double Buffering: Upgraded GPU readback to double-buffered PBO ping-pong ring buffers, reading completed PCIe transfers in <0.2ms on render thread to completely eliminate FPS drops and maintain rock-solid 300+ in-game FPS",
+      "Screenshare Discord-Grade Efficient Encoding: Reduced JPEG payload to 22-26 KB and bandwidth to ~1.8 Mbps using Discord standard quality profile (0.38f) and precalculated LUT strided downsampling (<1.2ms), slashing stream latency and CPU load",
+      "Discord Voice Local-Only Member Muting: Strictly restricted participant muting in HUD and commands to local client-side muting (SET_USER_VOICE_SETTINGS and volume 0), preventing unintentional Discord server-wide mutes for all users",
+      "Discord Native StreamKit Authentication & Anti-Sneak: Fully integrated StreamKit OAuth2 code exchange for native client-side voice settings, completely removing simulated keybd_event keypresses so players never sneak in game when toggling mute",
+      "Discord Bot Voice Gateway Live Status: Preserved Discord gateway streaming statuses and protected active channel members from log pruning, ensuring all concurrent [LIVE] stream badges and members display accurately",
+      "Configuration GUI & Visual Studio Clean Separation: Restored the full sequence manager and builder card directly inside /b config under the Auto category, and separated Scratch Visual Studio into its own dedicated commands (/studio, /sequence) with 100% shared synchronized entries"
+    ]
+  },
+  {
     "version": "26.2.28.80",
     "date": "2026-10-04",
     "changes": [

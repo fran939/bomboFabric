@@ -937,7 +937,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }));
                   builder.then(ClientCommands.literal("config").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
-                     mc.execute(() -> mc.setScreenAndShow(BomboConfigGUI.create()));
+                     mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create()));
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("old").executes((context) -> {
@@ -1067,6 +1067,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   .then(registerNoObfuscateCommands());
                   builder.then(createAutoCommands("sequence"));
                   builder.then(createAutoCommands("sequences"));
+                  builder.then(createAutoCommands("studio"));
                   me.bombo.bomboaddons.flavor.Flavor.get().registerCommands(builder);
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("behighlight").then(ClientCommands.literal("add").then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
                      String mob = StringArgumentType.getString(context, "mob").trim();
@@ -4869,6 +4870,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(createAutoCommands("sequences"));
                dispatcher.register(createAutoCommands("autosequence"));
                dispatcher.register(createAutoCommands("autosequences"));
+               dispatcher.register(createAutoCommands("studio"));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("buttons")
                        .executes((context) -> {
                           Minecraft mc = Minecraft.getInstance();

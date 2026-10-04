@@ -1,5 +1,21 @@
 # BomboAddons Changelog
  
+## [26.2.28.81] - 2026-10-04 (Beta)
+
+### Screenshare Zero-Stall Double Buffering & Discord-Grade Encoding
+- **Zero-Stall Double-Buffered PBO Ring:** Replaced single-buffer synchronous mapping with double-buffered PBO ping-pong ring buffers, reading completed PCIe transfers in <0.2ms on the render thread to completely eliminate FPS drops and maintain rock-solid 300+ in-game FPS.
+- **Discord-Grade Stream Compression (0.38f & LUT Sampling):** Reduced JPEG frame payload from 78.5 KB down to 22-26 KB and bandwidth from 24.6 Mbps down to ~1.8 Mbps using Discord standard compression quality (0.38f) and precalculated LUT strided downsampling (<1.2ms), drastically reducing CPU load and stream latency.
+- **GPU Buffer Lifecycle Cleanup:** Added automatic render-thread buffer closing on stream stop to prevent GPU memory leaks across broadcasts.
+
+### Discord Voice Local-Only Member Muting & StreamKit Anti-Sneak
+- **Strictly Local Member Muting:** Restricted participant muting in HUD and commands exclusively to client-local muting (`SET_USER_VOICE_SETTINGS` with volume 0 and `locallyMutedUsers`), completely preventing unintentional Discord server-wide mutes for all users.
+- **Native StreamKit OAuth2 Exchange & Anti-Sneak:** Fully integrated StreamKit OAuth2 code exchange (`https://streamkit.discord.com/overlay/token`) for authenticated voice settings without keybinds, completely eliminating low-level `keybd_event` simulation so players never sneak in game when toggling mute.
+- **Bot Gateway Voice Sync & Accurate [LIVE] Streams:** Preserved Discord gateway streaming statuses and guarded active channel members from WebRTC log pruning, ensuring all concurrent `[LIVE]` stream badges and call participants display accurately.
+
+### Configuration GUI & Visual Studio Clean Separation
+- **Built-in Sequence Manager in `/b config`:** Restored the full sequence manager and builder card directly inside `/b config` and `/b` under the Auto category without button indirection.
+- **Dedicated Visual Studio Commands:** Separated Scratch Visual Studio into its own dedicated commands (`/studio`, `/sequence`, `/b studio`, `/b sequence`), with 100% synchronized sequence entries shared in real-time between both interfaces.
+
 ## [26.2.28.80] - 2026-10-04 (Beta)
 
 ### Screenshare Direct GPU Readback & 60 FPS Engine

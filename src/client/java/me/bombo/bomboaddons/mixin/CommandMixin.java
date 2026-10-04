@@ -247,14 +247,26 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("b config") || trimmed.equalsIgnoreCase("bombo config") || trimmed.equalsIgnoreCase("bomboaddons config")
-            || trimmed.equalsIgnoreCase("ba config")) {
+      if (trimmed.equalsIgnoreCase("b sequence") || trimmed.equalsIgnoreCase("b sequences")
+            || trimmed.equalsIgnoreCase("b studio") || trimmed.equalsIgnoreCase("sequence")
+            || trimmed.equalsIgnoreCase("sequences") || trimmed.equalsIgnoreCase("studio")
+            || trimmed.equalsIgnoreCase("/sequence") || trimmed.equalsIgnoreCase("/sequences")
+            || trimmed.equalsIgnoreCase("/studio") || trimmed.equalsIgnoreCase("/b sequence")
+            || trimmed.equalsIgnoreCase("/b studio") || trimmed.equalsIgnoreCase("/b sequences")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.auto.AutoSequenceVisualScreen(mc.gui.screen())));
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("b old") || trimmed.equalsIgnoreCase("bombo old") || trimmed.equalsIgnoreCase("bomboaddons old")
+            || trimmed.equalsIgnoreCase("/b old") || trimmed.equalsIgnoreCase("/bombo old")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.BomboConfigGUI.create()));
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("b") || trimmed.equalsIgnoreCase("bombo") || trimmed.equalsIgnoreCase("bomboaddons")) {
+      if (trimmed.equalsIgnoreCase("b config") || trimmed.equalsIgnoreCase("bombo config") || trimmed.equalsIgnoreCase("bomboaddons config")
+            || trimmed.equalsIgnoreCase("ba config") || trimmed.equalsIgnoreCase("b") || trimmed.equalsIgnoreCase("bombo") || trimmed.equalsIgnoreCase("bomboaddons")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create()));
          ci.cancel();

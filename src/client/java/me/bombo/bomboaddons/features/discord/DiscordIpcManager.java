@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  */
 public class DiscordIpcManager {
 
-    private static final String CLIENT_ID = "383226320970055681"; // Discord Desktop IPC Client
+    private static final String CLIENT_ID = "207646673902501888"; // Discord Streamkit (approved for rpc.voice.write & SET_VOICE_SETTINGS)
     private static final AtomicBoolean RUNNING = new AtomicBoolean(false);
     private static Thread workerThread = null;
 
@@ -53,9 +53,11 @@ public class DiscordIpcManager {
     private static final Object PIPE_LOCK = new Object();
     private static Thread pollThread = null;
 
-    // Prevent repeated popup authorizations
+    // Prevent repeated popup authorizations & store access token
     private static volatile boolean hasAuthorizedThisSession = false;
     private static volatile boolean authCancelled = false;
+    private static volatile String authenticatedAccessToken = "";
+    private static final Set<String> BOT_ACTIVE_MEMBERS = ConcurrentHashMap.newKeySet();
 
     // Rolling log of the last 15 RPC packets for detailed diagnosis
     private static final Deque<String> packetHistory = new ConcurrentLinkedDeque<>();
@@ -148,51 +150,7 @@ public class DiscordIpcManager {
             });
         }
 
-        muteUserViaBotAsync(userId, targetMute, respMsg -> {
-            if (mc != null) {
-                mc.execute(() -> {
-                    if (mc.player != null) {
-                        mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] " + respMsg));
-                    }
-                });
-            }
-        });
-
         return targetMute;
-    }
-
-    private interface WinUser32 extends com.sun.jna.Library {
-        WinUser32 INSTANCE = com.sun.jna.Native.load("user32", WinUser32.class);
-        void keybd_event(byte bVk, byte bScan, int dwFlags, int dwExtraInfo);
-    }
-
-    private static void toggleDiscordShortcut(int keyCode) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                if (System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("win")) {
-                    byte vk = (byte) (keyCode == java.awt.event.KeyEvent.VK_M ? 0x4D : 0x44);
-                    byte scan = (byte) (keyCode == java.awt.event.KeyEvent.VK_M ? 0x32 : 0x20);
-                    // Windows OS hardware driver keyboard event to trigger global Discord shortcuts
-                    WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0x1D, 0, 0); // VK_CONTROL down
-                    WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0x2A, 0, 0); // VK_SHIFT down
-                    WinUser32.INSTANCE.keybd_event(vk, scan, 0, 0);                 // Key down
-                    Thread.sleep(50L);
-                    WinUser32.INSTANCE.keybd_event(vk, scan, 2, 0);                 // Key up (KEYEVENTF_KEYUP = 2)
-                    WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0x2A, 2, 0); // Shift up
-                    WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0x1D, 2, 0); // Ctrl up
-                }
-            } catch (Throwable ignored) {}
-            try {
-                java.awt.Robot robot = new java.awt.Robot();
-                robot.keyPress(java.awt.event.KeyEvent.VK_CONTROL);
-                robot.keyPress(java.awt.event.KeyEvent.VK_SHIFT);
-                robot.keyPress(keyCode);
-                Thread.sleep(40L);
-                robot.keyRelease(keyCode);
-                robot.keyRelease(java.awt.event.KeyEvent.VK_SHIFT);
-                robot.keyRelease(java.awt.event.KeyEvent.VK_CONTROL);
-            } catch (Throwable ignored) {}
-        });
     }
 
     public static void setSelfMute(boolean mute, Consumer<Component> feedback) {
@@ -215,23 +173,19 @@ public class DiscordIpcManager {
                 } catch (Throwable ignored) {}
             });
         }
-        toggleDiscordShortcut(java.awt.event.KeyEvent.VK_M);
-        if (!selfId.equals("self")) {
-            muteUserViaBotAsync(selfId, mute, null);
-        }
 
         DiscordVoiceUser existing = voiceUsers.get(selfId);
         if (existing != null) {
             voiceUsers.put(selfId, new DiscordVoiceUser(
                     existing.id(), existing.username(), existing.displayName(),
                     mute, existing.isDeafened(), existing.isSpeaking(),
-                    existing.isScreenSharing(), existing.isLocallyMuted()
+                    existing.isScreenSharing(), existing.isLocallyMuted(),
+                    mute, existing.isSelfDeafened()
             ));
         }
 
         if (feedback != null) {
-            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMicrophone Muted §7(Sent Ctrl+Shift+M & Discord IPC)" : "§aMicrophone Unmuted §7(Sent Ctrl+Shift+M & Discord IPC)")));
-            feedback.accept(Component.literal("§7(Tip: For background mute, add 'Toggle Mute' = Ctrl+Shift+M in Discord Settings -> Keybinds)"));
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMicrophone Muted §a✔" : "§aMicrophone Unmuted §a✔")));
         }
     }
 
@@ -255,23 +209,19 @@ public class DiscordIpcManager {
                 } catch (Throwable ignored) {}
             });
         }
-        toggleDiscordShortcut(java.awt.event.KeyEvent.VK_D);
-        if (!selfId.equals("self")) {
-            deafenUserViaBotAsync(selfId, deafen, null);
-        }
 
         DiscordVoiceUser existing = voiceUsers.get(selfId);
         if (existing != null) {
             voiceUsers.put(selfId, new DiscordVoiceUser(
                     existing.id(), existing.username(), existing.displayName(),
                     existing.isMuted(), deafen, existing.isSpeaking(),
-                    existing.isScreenSharing(), existing.isLocallyMuted()
+                    existing.isScreenSharing(), existing.isLocallyMuted(),
+                    existing.isSelfMuted(), deafen
             ));
         }
 
         if (feedback != null) {
-            feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§cAudio Deafened §7(Sent Ctrl+Shift+D & Discord IPC)" : "§aAudio Undeafened §7(Sent Ctrl+Shift+D & Discord IPC)")));
-            feedback.accept(Component.literal("§7(Tip: For background deafen, add 'Toggle Deafen' = Ctrl+Shift+D in Discord Settings -> Keybinds)"));
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§4Audio Deafened §a✔" : "§aAudio Undeafened §a✔")));
         }
     }
 
@@ -291,12 +241,13 @@ public class DiscordIpcManager {
             voiceUsers.put(resolvedId, new DiscordVoiceUser(
                     existing.id(), existing.username(), existing.displayName(),
                     existing.isMuted(), existing.isDeafened(), existing.isSpeaking(),
-                    existing.isScreenSharing(), mute
+                    existing.isScreenSharing(), mute,
+                    existing.isSelfMuted(), existing.isSelfDeafened()
             ));
         }
         if (feedback != null) {
             String name = existing != null ? existing.displayName() : resolvedId;
-            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMuted §e" : "§aUnmuted §e") + name + " §7(local)"));
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (mute ? "§cMuted §e" : "§aUnmuted §e") + name + " §7(local only)"));
         }
 
         if (connected && currentPipe != null) {
@@ -319,10 +270,6 @@ public class DiscordIpcManager {
                 } catch (Throwable ignored) {}
             });
         }
-
-        muteUserViaBotAsync(resolvedId, mute, respMsg -> {
-            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
-        });
     }
 
     public static void deafenTargetUser(String userIdOrName, boolean deafen, Consumer<Component> feedback) {
@@ -331,9 +278,44 @@ public class DiscordIpcManager {
             if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cUser not found: §e" + userIdOrName));
             return;
         }
-        deafenUserViaBotAsync(resolvedId, deafen, respMsg -> {
-            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
-        });
+        if (deafen) {
+            locallyMutedUsers.add(resolvedId);
+        } else {
+            locallyMutedUsers.remove(resolvedId);
+        }
+        DiscordVoiceUser existing = voiceUsers.get(resolvedId);
+        if (existing != null) {
+            voiceUsers.put(resolvedId, new DiscordVoiceUser(
+                    existing.id(), existing.username(), existing.displayName(),
+                    existing.isMuted(), existing.isDeafened(), existing.isSpeaking(),
+                    existing.isScreenSharing(), deafen,
+                    existing.isSelfMuted(), existing.isSelfDeafened()
+            ));
+        }
+        if (connected && currentPipe != null) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    synchronized (PIPE_LOCK) {
+                        RandomAccessFile pipe = currentPipe;
+                        if (pipe != null && connected) {
+                            JsonObject args = new JsonObject();
+                            args.addProperty("user_id", resolvedId);
+                            args.addProperty("mute", deafen);
+                            args.addProperty("volume", deafen ? 0 : 100);
+                            JsonObject rpc = new JsonObject();
+                            rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
+                            rpc.add("args", args);
+                            rpc.addProperty("nonce", UUID.randomUUID().toString());
+                            writePacket(pipe, 1, rpc.toString());
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            });
+        }
+        if (feedback != null) {
+            String name = existing != null ? existing.displayName() : resolvedId;
+            feedback.accept(Component.literal("§8[§9Discord§8] " + (deafen ? "§4Deafened (Muted volume) §e" : "§aUndeafened (Restored volume) §e") + name + " §7(local only)"));
+        }
     }
 
     public static String resolveUserId(String input) {
@@ -650,9 +632,9 @@ public class DiscordIpcManager {
         // Fallback / complementary detection from Discord desktop logs
         scanDiscordLogForVoice();
         long now = System.currentTimeMillis();
-        if (currentChannelId != null && !currentChannelId.isEmpty() && (now - lastBotFetchTime > 30000L || !currentChannelId.equals(lastSubscribedChannelId))) {
+        if (now - lastBotFetchTime > 3000L && (inVoice || !myUserId.isEmpty() || !currentChannelId.isEmpty())) {
             lastBotFetchTime = now;
-            fetchChannelNameAsync(currentChannelId);
+            syncChannelWithBotAsync(currentChannelId);
         }
     }
 
@@ -688,13 +670,18 @@ public class DiscordIpcManager {
 
     private static final Pattern LINE_TIME_PATTERN = Pattern.compile("^\\[(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?)\\]");
 
-    private static void fetchChannelNameAsync(String channelId) {
-        if (channelId == null || channelId.isEmpty() || fetchingChannelIds.contains(channelId)) return;
-        fetchingChannelIds.add(channelId);
+    public static void syncChannelWithBotAsync(String channelId) {
+        String key = (channelId != null && !channelId.isEmpty()) ? channelId : ("user:" + myUserId);
+        if (fetchingChannelIds.contains(key)) return;
+        fetchingChannelIds.add(key);
         CompletableFuture.runAsync(() -> {
             try {
-                String uParam = !myUserId.isEmpty() ? ("&userId=" + java.net.URLEncoder.encode(myUserId, StandardCharsets.UTF_8)) : "";
-                String url = "https://api.bombo.dpdns.org/api/bot/voice/channel?id=" + java.net.URLEncoder.encode(channelId, StandardCharsets.UTF_8) + uParam;
+                String cParam = (channelId != null && !channelId.isEmpty()) ? ("id=" + java.net.URLEncoder.encode(channelId, StandardCharsets.UTF_8)) : "";
+                String uParam = !myUserId.isEmpty() ? ((cParam.isEmpty() ? "" : "&") + "userId=" + java.net.URLEncoder.encode(myUserId, StandardCharsets.UTF_8)) : "";
+                String query = cParam + uParam;
+                if (query.isEmpty()) return;
+
+                String url = "https://api.bombo.dpdns.org/api/bot/voice/channel?" + query;
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .timeout(Duration.ofSeconds(3))
@@ -706,51 +693,71 @@ public class DiscordIpcManager {
                     JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
                     if (root.has("name") && !root.get("name").isJsonNull()) {
                         String name = root.get("name").getAsString();
-                        CHANNEL_NAME_CACHE.put(channelId, name);
-                        if (channelId.equals(currentChannelId) || currentChannelName.startsWith("Voice (")) {
-                            currentChannelName = name;
+                        currentChannelName = name;
+                        if (channelId != null && !channelId.isEmpty()) {
+                            CHANNEL_NAME_CACHE.put(channelId, name);
                         }
+                    }
+                    if (root.has("id") && !root.get("id").isJsonNull()) {
+                        currentChannelId = root.get("id").getAsString();
+                    }
+                    if (root.has("guildName") && !root.get("guildName").isJsonNull()) {
+                        currentGuildName = root.get("guildName").getAsString();
                     }
                     if (root.has("members") && root.get("members").isJsonArray()) {
                         JsonArray arr = root.getAsJsonArray("members");
+                        Set<String> activeIds = new HashSet<>();
                         for (JsonElement el : arr) {
                             if (!el.isJsonObject()) continue;
                             JsonObject m = el.getAsJsonObject();
                             String mId = m.has("id") ? m.get("id").getAsString() : "";
                             if (mId.isEmpty()) continue;
+                            activeIds.add(mId);
 
                             String uName = m.has("username") ? m.get("username").getAsString() : "User";
                             String dName = m.has("displayName") ? m.get("displayName").getAsString() : uName;
                             String av = m.has("avatarUrl") && !m.get("avatarUrl").isJsonNull() ? m.get("avatarUrl").getAsString() : null;
                             BOT_USER_CACHE.put(mId, new DiscordBotUserInfo(mId, uName, dName, av));
 
-                            // Only update users who are ALREADY present in the call (WebRTC or local user)
-                            // Do not inject offline/unrelated server members into active DM/group calls
+                            boolean sMute = m.has("selfMute") && m.get("selfMute").getAsBoolean();
+                            boolean sDeaf = m.has("selfDeaf") && m.get("selfDeaf").getAsBoolean();
+                            boolean svMute = m.has("serverMute") && m.get("serverMute").getAsBoolean();
+                            boolean svDeaf = m.has("serverDeaf") && m.get("serverDeaf").getAsBoolean();
+                            boolean streaming = m.has("streaming") && m.get("streaming").getAsBoolean();
                             DiscordVoiceUser existing = voiceUsers.get(mId);
-                            if (existing != null) {
-                                boolean sMute = m.has("selfMute") && m.get("selfMute").getAsBoolean();
-                                boolean sDeaf = m.has("selfDeaf") && m.get("selfDeaf").getAsBoolean();
-                                boolean svMute = m.has("serverMute") && m.get("serverMute").getAsBoolean();
-                                boolean svDeaf = m.has("serverDeaf") && m.get("serverDeaf").getAsBoolean();
-                                boolean streaming = m.has("streaming") && m.get("streaming").getAsBoolean();
-                                voiceUsers.put(mId, new DiscordVoiceUser(
-                                        mId, uName, dName,
-                                        sMute || svMute || existing.isMuted(),
-                                        sDeaf || svDeaf || existing.isDeafened(),
-                                        existing.isSpeaking(),
-                                        streaming || existing.isScreenSharing(),
-                                        locallyMutedUsers.contains(mId),
-                                        sMute, sDeaf
-                                ));
-                            }
+                            boolean isSpeaking = existing != null && existing.isSpeaking();
+
+                            voiceUsers.put(mId, new DiscordVoiceUser(
+                                    mId, uName, dName,
+                                    sMute || svMute || (existing != null && existing.isMuted()),
+                                    sDeaf || svDeaf || (existing != null && existing.isDeafened()),
+                                    isSpeaking,
+                                    streaming,
+                                    locallyMutedUsers.contains(mId),
+                                    sMute, sDeaf
+                            ));
+                        }
+
+                        BOT_ACTIVE_MEMBERS.clear();
+                        BOT_ACTIVE_MEMBERS.addAll(activeIds);
+
+                        // Prune users who are no longer in the channel (except local user)
+                        String selfId = !myUserId.isEmpty() ? myUserId : "self";
+                        voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !k.equals(myUserId) && !k.equals("self") && !activeIds.contains(k));
+                        if (!activeIds.isEmpty()) {
+                            inVoice = true;
                         }
                     }
                 }
             } catch (Throwable ignored) {
             } finally {
-                fetchingChannelIds.remove(channelId);
+                fetchingChannelIds.remove(key);
             }
         });
+    }
+
+    private static void fetchChannelNameAsync(String channelId) {
+        syncChannelWithBotAsync(channelId);
     }
 
     private static final Set<String> IN_FLIGHT_BOT_FETCHES = ConcurrentHashMap.newKeySet();
@@ -1017,7 +1024,7 @@ public class DiscordIpcManager {
                 }
 
                 boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
-                boolean selfLive = screensharingUserIds.contains(selfId) || screensharingUserIds.contains(myUserId) || screensharingUserIds.contains("self");
+                boolean selfLive = screensharingUserIds.contains(selfId) || screensharingUserIds.contains(myUserId) || screensharingUserIds.contains("self") || (voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isScreenSharing());
                 boolean selfMuted = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isMuted();
                 boolean selfDeaf = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isDeafened();
                 voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, selfMuted, selfDeaf, selfSpeaking, selfLive));
@@ -1028,19 +1035,28 @@ public class DiscordIpcManager {
                         DiscordBotUserInfo info = BOT_USER_CACHE.get(uid);
                         String dName = info != null ? info.displayName : ("User (" + uid.substring(Math.max(0, uid.length() - 4)) + ")");
                         String uName = info != null ? info.username : dName;
-                        boolean isSpeaking = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isSpeaking();
-                        boolean isMuted = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isMuted();
-                        boolean isDeaf = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isDeafened();
-                        boolean isLive = screensharingUserIds.contains(uid);
-                        voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive));
+                        DiscordVoiceUser prev = voiceUsers.get(uid);
+                        boolean isSpeaking = prev != null && prev.isSpeaking();
+                        boolean isMuted = prev != null && prev.isMuted();
+                        boolean isDeaf = prev != null && prev.isDeafened();
+                        boolean isLive = screensharingUserIds.contains(uid) || (prev != null && prev.isScreenSharing());
+                        boolean isLocallyMuted = locallyMutedUsers.contains(uid);
+                        boolean isSelfMuted = prev != null && prev.isSelfMuted();
+                        boolean isSelfDeafened = prev != null && prev.isSelfDeafened();
+                        voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive, isLocallyMuted, isSelfMuted, isSelfDeafened));
                     }
 
-                    // Remove users who have disconnected from the call
-                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !webrtcUserIds.contains(k));
+                    // Remove users who have disconnected from the call, guarding active bot members
+                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !webrtcUserIds.contains(k) && !BOT_ACTIVE_MEMBERS.contains(k));
                 } else {
-                    // No active WebRTC audio streams: user is alone in call
-                    memberCount = 1;
-                    voiceUsers.keySet().removeIf(k -> !k.equals(selfId));
+                    // No active WebRTC audio streams: guard against wiping active bot members
+                    if (BOT_ACTIVE_MEMBERS.isEmpty()) {
+                        memberCount = 1;
+                        voiceUsers.keySet().removeIf(k -> !k.equals(selfId));
+                    } else {
+                        memberCount = Math.max(memberCount, BOT_ACTIVE_MEMBERS.size());
+                        voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !BOT_ACTIVE_MEMBERS.contains(k));
+                    }
                 }
             } else if (foundDisconnect) {
                 logReaderStatus = "Disconnected (VOICE_DISCONNECT detected)";
@@ -1129,11 +1145,6 @@ public class DiscordIpcManager {
                                 existing.isScreenSharing(), pm.intendedMute()
                         ));
                     }
-                    Minecraft mc = Minecraft.getInstance();
-                    if (mc != null && mc.player != null) {
-                        String name = existing != null ? existing.displayName() : pm.userId();
-                        mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] " + (pm.intendedMute() ? "§cMuted §e" : "§aUnmuted §e") + name + " §7(local)"));
-                    }
                 }
             }
 
@@ -1147,6 +1158,18 @@ public class DiscordIpcManager {
                             myDiscordUsername = user.has("username") ? user.get("username").getAsString() : "User";
                             myUserId = user.has("id") ? user.get("id").getAsString() : "";
                         }
+                    }
+
+                    if (!authenticatedAccessToken.isEmpty()) {
+                        try {
+                            JsonObject authArgs = new JsonObject();
+                            authArgs.addProperty("access_token", authenticatedAccessToken);
+                            JsonObject authReq = new JsonObject();
+                            authReq.addProperty("cmd", "AUTHENTICATE");
+                            authReq.add("args", authArgs);
+                            authReq.addProperty("nonce", UUID.randomUUID().toString());
+                            writePacket(pipe, 1, authReq.toString());
+                        } catch (Throwable ignored) {}
                     }
 
                     // Authorization is requested explicitly by the user via /b discord auth if needed,
@@ -1183,7 +1206,16 @@ public class DiscordIpcManager {
                     setSpeaking(obj.has("data") && obj.get("data").isJsonObject() ? obj.getAsJsonObject("data") : null, false);
                 }
             } else if ("AUTHORIZE".equals(cmd)) {
-                lastHandshakeStatus = "Authorized (Approval confirmed)";
+                lastHandshakeStatus = "Authorized (Code received)";
+                if (obj.has("data") && obj.get("data").isJsonObject()) {
+                    JsonObject data = obj.getAsJsonObject("data");
+                    if (data.has("code") && !data.get("code").isJsonNull()) {
+                        String code = data.get("code").getAsString();
+                        exchangeCodeForTokenAsync(pipe, code);
+                    }
+                }
+            } else if ("AUTHENTICATE".equals(cmd)) {
+                lastHandshakeStatus = "Authenticated (StreamKit RPC Ready)";
                 pollVoiceStatus();
             } else if ("GET_SELECTED_VOICE_CHANNEL".equals(cmd)) {
                 if (obj.has("data") && obj.get("data").isJsonObject()) {
@@ -1195,6 +1227,42 @@ public class DiscordIpcManager {
         } catch (Exception t) {
             lastError = "Handle: " + t.getMessage();
         }
+    }
+
+    private static void exchangeCodeForTokenAsync(RandomAccessFile pipe, String code) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                JsonObject body = new JsonObject();
+                body.addProperty("code", code);
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                        .uri(URI.create("https://streamkit.discord.com/overlay/token"))
+                        .header("Content-Type", "application/json")
+                        .timeout(Duration.ofSeconds(5))
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body.toString()))
+                        .build();
+                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                        .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (resp.statusCode() == 200) {
+                    JsonObject res = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    if (res.has("access_token")) {
+                        authenticatedAccessToken = res.get("access_token").getAsString();
+                        synchronized (PIPE_LOCK) {
+                            if (pipe != null && connected && !authenticatedAccessToken.isEmpty()) {
+                                JsonObject authArgs = new JsonObject();
+                                authArgs.addProperty("access_token", authenticatedAccessToken);
+                                JsonObject authReq = new JsonObject();
+                                authReq.addProperty("cmd", "AUTHENTICATE");
+                                authReq.add("args", authArgs);
+                                authReq.addProperty("nonce", UUID.randomUUID().toString());
+                                writePacket(pipe, 1, authReq.toString());
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                lastError = "Token exchange: " + t.getMessage();
+            }
+        });
     }
 
     private static void subscribe(RandomAccessFile pipe, String event) throws Exception {

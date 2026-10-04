@@ -186,15 +186,6 @@ public class ConfigRegistry {
                             + "button need " + me.bombo.bomboaddons.Constants.artifactPrefix() + "'s sequence "
                             + "runtime.", category));
                 }
-                items.add(ConfigItem.button("Open Scratch Studio", "Visual Builder",
-                        "Open full-screen Scratch-style visual sequence block editor.",
-                        category,
-                        () -> {
-                            Minecraft mc = Minecraft.getInstance();
-                            if (mc != null) {
-                                mc.setScreenAndShow(new me.bombo.bomboaddons.gui.auto.AutoSequenceVisualScreen(mc.gui.screen()));
-                            }
-                        }));
                 items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", category,
                         ConfigCustomWidgets::getAutoSequencesCardHeight,
                         ConfigCustomWidgets::renderAutoSequencesCard,
