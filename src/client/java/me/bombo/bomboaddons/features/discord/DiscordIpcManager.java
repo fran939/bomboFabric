@@ -13,11 +13,14 @@ import java.io.RandomAccessFile;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import net.fabricmc.loader.api.FabricLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -54,10 +57,41 @@ public class DiscordIpcManager {
     private static Thread pollThread = null;
 
     // Prevent repeated popup authorizations & store access token
+    private static final Path TOKEN_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/discord_token.json");
     private static volatile boolean hasAuthorizedThisSession = false;
     private static volatile boolean authCancelled = false;
     private static volatile String authenticatedAccessToken = "";
     private static final Set<String> BOT_ACTIVE_MEMBERS = ConcurrentHashMap.newKeySet();
+
+    private static void loadSavedToken() {
+        try {
+            if (Files.exists(TOKEN_FILE)) {
+                String content = Files.readString(TOKEN_FILE, StandardCharsets.UTF_8);
+                JsonObject obj = JsonParser.parseString(content).getAsJsonObject();
+                if (obj.has("access_token") && !obj.get("access_token").isJsonNull()) {
+                    String token = obj.get("access_token").getAsString();
+                    if (token != null && !token.isBlank()) {
+                        authenticatedAccessToken = token;
+                        hasAuthorizedThisSession = true;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private static void saveToken(String token) {
+        try {
+            Files.createDirectories(TOKEN_FILE.getParent());
+            JsonObject obj = new JsonObject();
+            obj.addProperty("access_token", token);
+            obj.addProperty("updated_at", System.currentTimeMillis());
+            Files.writeString(TOKEN_FILE, obj.toString(), StandardCharsets.UTF_8);
+        } catch (Throwable ignored) {}
+    }
+
+    static {
+        loadSavedToken();
+    }
 
     // Rolling log of the last 15 RPC packets for detailed diagnosis
     private static final Deque<String> packetHistory = new ConcurrentLinkedDeque<>();
@@ -459,8 +493,7 @@ public class DiscordIpcManager {
     }
 
     public static void requestAuth() {
-        hasAuthorizedThisSession = false;
-        forceSync();
+        requestAuthorization();
     }
 
     private static void logPacket(boolean incoming, String json) {
@@ -549,9 +582,6 @@ public class DiscordIpcManager {
                 synchronized (PIPE_LOCK) {
                     RandomAccessFile pipe = currentPipe;
                     if (pipe != null && connected) {
-                        if (!hasAuthorizedThisSession && !authCancelled) {
-                            sendAuthorize(pipe);
-                        }
                         JsonObject getVoice = new JsonObject();
                         getVoice.addProperty("cmd", "GET_SELECTED_VOICE_CHANNEL");
                         getVoice.addProperty("nonce", UUID.randomUUID().toString());
@@ -1124,6 +1154,10 @@ public class DiscordIpcManager {
                     authCancelled = true;
                     hasAuthorizedThisSession = true;
                 }
+                if (errCode == 4001 || errCode == 4003) {
+                    authenticatedAccessToken = "";
+                    try { Files.deleteIfExists(TOKEN_FILE); } catch (Throwable ignored) {}
+                }
                 lastError = "Discord Error (" + errCode + "): " + errMsg;
                 return;
             }
@@ -1246,6 +1280,8 @@ public class DiscordIpcManager {
                     JsonObject res = JsonParser.parseString(resp.body()).getAsJsonObject();
                     if (res.has("access_token")) {
                         authenticatedAccessToken = res.get("access_token").getAsString();
+                        saveToken(authenticatedAccessToken);
+                        hasAuthorizedThisSession = true;
                         synchronized (PIPE_LOCK) {
                             if (pipe != null && connected && !authenticatedAccessToken.isEmpty()) {
                                 JsonObject authArgs = new JsonObject();

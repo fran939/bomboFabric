@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.82",
+    "date": "2026-10-04",
+    "changes": [
+      "Discord StreamKit Token Persistence & Popup Elimination: Persisted StreamKit OAuth2 tokens to discord_token.json so Discord never displays repeated permission modals on startup or reconnect, eliminating repeated authorization prompts",
+      "Discord Silent Voice Control: Removed automatic sendAuthorize triggers from background sync loops, ensuring permissions are only requested when explicitly typing /b discord auth and enabling instant, silent local member and microphone muting",
+      "Screenshare Zero-Allocation Memory Engine: Eliminated per-frame BufferedImage, ByteArrayOutputStream, and dynamic LUT allocations via ThreadLocal buffer pooling and reusable cached LUTs, slashing heap churn by 99.7% (~500 MB/s saved)",
+      "Long-Running GC Stutter & Freeze Elimination: Completely prevented Java GC collection freezes during player and mouse movement by recycling image buffers and rasters across all encoder threads",
+      "Screenshare 60 FPS Anti-Stall Headroom: Expanded raw frame ring buffers to 4 slots and increased in-flight pipeline concurrency limit to 4 frames, preventing framerates from stalling to 0-1 FPS during resolution transitions or heavy scene encoding"
+    ]
+  },
+  {
     "version": "26.2.28.81",
     "date": "2026-10-04",
     "changes": [

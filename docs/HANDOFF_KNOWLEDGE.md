@@ -1,5 +1,5 @@
 # COMPREHENSIVE REPOSITORY KNOWLEDGE & HANDOFF GUIDE
-**Mod Version:** `26.2.28.76` | **Target MC:** `26.2` | **Branch:** `26.2`
+**Mod Version:** `26.2.28.82` | **Target MC:** `26.2` | **Branch:** `26.2`
 
 This document serves as the complete knowledge reservoir for AI agents continuing work on BomboAddons / BomboClient. It captures architecture details, feature implementations, testing states, remote server setup, and operational quirks.
 
