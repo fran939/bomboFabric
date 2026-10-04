@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.88",
+    "date": "2026-10-05",
+    "changes": [
+      "Spotify HUD Lyrics Mode: Added toggle in /b config to display album cover, synchronized lyrics (current line + customizable upcoming lines), controls, and progress bar directly on the Spotify HUD",
+      "Album Artwork Stale Cover Fix: Cleared album cover immediately upon song change and added 7-second delayed verification check to guarantee artwork transitions cleanly",
+      "EggAuth Mojang Signature Verification: Fixed public key signature checking in bomboapi backend with proper Minecraft 24-byte header and playerCertificateKeys support",
+      "EggAuth Automatic Bombo Fallback: Automatically attempts Bombo API authentication when Aaron route is unavailable and reconnects WebSocket on success"
+    ]
+  },
+  {
     "version": "26.2.28.87",
     "date": "2026-10-04",
     "changes": [

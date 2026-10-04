@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.87` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.88` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,17 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.87`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.88`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.88 (Ready for In-Game Testing)
+>
+> 1. **Spotify HUD Lyrics Mode (`SpotifyHud`, `BomboConfig`, `ConfigRegistry`):** Added a new configurable layout toggle (`Spotify HUD Lyrics Mode`) that replaces track title and artist text with synchronized lyrics directly on the Spotify HUD card, displaying the active line in bold accent color, upcoming lines (customizable via `Lyrics Preview Lines Ahead`, default 1 upcoming line), the album cover on the left, media playback controls (`|◀ ⏸/▶ ▶|`) on the right, and the playback progress bar along the bottom.
+> 2. **Album Cover Transition & 7-Second Verification (`LyricsManager`):** Resolved stale album covers persisting from previous songs by clearing the cached texture immediately on song change, and scheduling an automatic verification check 7 seconds later to guarantee the artwork updates even if media metadata transitions late.
+> 3. **EggAuth Mojang Key Verification (`bomboapi`):** Fixed public key signature validation in the remote backend (`auth_service.js`) by caching both `playerCertificateKeys` and `profilePropertyKeys` from `api.minecraftservices.com/publickeys`, and verifying signatures with the standard Minecraft wire format (`16-byte UUID` + `8-byte BE expiry in ms` + `DER public key bytes`), completely resolving HTTP 401 `publicKeySignature is not a valid Mojang signature` errors.
+> 4. **EggAuth Automatic Bombo Fallback (`EggAuth`):** When external Aaron authentication fails or routes change (HTTP 400), `EggAuth` now automatically falls back to Bombo API authentication asynchronously, updates active tokens, and immediately triggers `EggWebSocket.onTokenRefreshed()` to keep Egg Finder connected.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.87 (Ready for In-Game Testing)
 >
 > 1. **Discord Screen Share Anti-Flicker (`DiscordIpcManager`):** Enforced an 8-second forward debounce horizon on active video stream packets and eliminated false stop events from simulcast `video ssrc: 0` logs, completely eliminating screen share flickering.

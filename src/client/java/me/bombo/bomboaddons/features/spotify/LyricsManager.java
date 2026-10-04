@@ -315,7 +315,15 @@ public class LyricsManager {
         activeTrack = track;
         activeArtist = artist;
         long epoch = currentTrackEpoch.incrementAndGet();
+        albumArtTexture = null;
         lastArtworkUrl = "";
+
+        // Re-verify artwork after 7 seconds to guarantee it updated even if metadata transitioned late
+        java.util.concurrent.CompletableFuture.delayedExecutor(7, java.util.concurrent.TimeUnit.SECONDS).execute(() -> {
+            if (epoch == currentTrackEpoch.get() && albumArtTexture == null && !activeTrack.isEmpty()) {
+                fetchArtwork(cleanTitle(activeTrack), cleanTitle(activeArtist), epoch);
+            }
+        });
 
         if (CACHE.containsKey(cacheKey)) {
             List<LyricCandidate> cached = CACHE.get(cacheKey);

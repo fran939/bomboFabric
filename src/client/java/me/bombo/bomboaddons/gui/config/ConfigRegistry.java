@@ -486,6 +486,17 @@ public class ConfigRegistry {
                         category,
                         () -> s.spotifyHudShowAlbumArt,
                         v -> s.spotifyHudShowAlbumArt = v));
+                items.add(ConfigItem.toggle("Spotify HUD Lyrics Mode",
+                        "Replaces song/artist text with synchronized lyrics (current line and upcoming lines) alongside album art and controls.",
+                        category,
+                        () -> s.spotifyHudLyricsMode,
+                        v -> s.spotifyHudLyricsMode = v));
+                items.add(ConfigItem.sliderInt("Lyrics Preview Lines Ahead",
+                        "Number of upcoming lyric lines shown after current line in Spotify HUD Lyrics Mode (1 = current + next).",
+                        category,
+                        0, 3, 1, " lines",
+                        () -> s.spotifyHudLyricsNextLines,
+                        v -> s.spotifyHudLyricsNextLines = v).when(() -> s.spotifyHudLyricsMode));
                 items.add(ConfigItem.color("Background Color",
                         "Select color for the Spotify HUD card background.",
                         category,

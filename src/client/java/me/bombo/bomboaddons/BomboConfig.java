@@ -805,6 +805,8 @@ public class BomboConfig {
       public String lyricsProvider = "LRCLIB"; // "LRCLIB", "PAXSENIX", "UNISON", "YOULYPLUS"
       public String lyricsPreferredProvider = "Auto"; // "Auto", "LRCLIB", "Paxsenix", "Kugou", "Unison", "YouLyPlus"
       public boolean spotifyHudShowAlbumArt = false;
+      public boolean spotifyHudLyricsMode = false;
+      public int spotifyHudLyricsNextLines = 1;
       public int lyricsOffsetMs = 0;
 
       // Lyrics HUD & Styling

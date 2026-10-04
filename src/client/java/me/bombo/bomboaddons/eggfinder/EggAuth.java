@@ -107,11 +107,16 @@ public class EggAuth {
          } catch (Throwable ignored) {}
       }
 
-      if (token == null && !authenticating) {
-         updateToken();
+      if (token == null && bomboToken != null) {
+         return bomboToken;
       }
 
-      return token;
+      if (token == null && !authenticating) {
+         updateToken();
+         authenticateWithBomboAsync();
+      }
+
+      return token != null ? token : bomboToken;
    }
 
    public static void forceUpdateToken() {
@@ -246,12 +251,14 @@ public class EggAuth {
                }
             } else {
                LOGGER.error("[EggAuth] aaron auth failed: HTTP " + resp.statusCode() + " body: " + resp.body());
-               debugChat("§ehysky aaron auth failed (HTTP " + resp.statusCode() + ").");
+               debugChat("§ehysky aaron auth failed (HTTP " + resp.statusCode() + ") - attempting Bombo auth fallback...");
+               authenticateWithBomboAsync();
                SCHEDULER.schedule(EggAuth::forceUpdateToken, 900_000L, TimeUnit.MILLISECONDS);
             }
          } catch (Throwable t) {
             LOGGER.error("[EggAuth] aaron auth exception: " + t.getMessage(), t);
-            debugChat("§ehysky auth exception (" + t.getClass().getSimpleName() + ")");
+            debugChat("§ehysky auth exception (" + t.getClass().getSimpleName() + ") - attempting Bombo auth fallback...");
+            authenticateWithBomboAsync();
          }
       });
    }
@@ -286,6 +293,10 @@ public class EggAuth {
             JsonObject json = GSON.fromJson(resp.body(), JsonObject.class);
             if (json != null && json.has("token")) {
                bomboToken = json.get("token").getAsString();
+               if (token == null) {
+                  token = bomboToken;
+                  tokenSource = "bomboapi";
+               }
                long issuedAt = json.has("issuedAt") ? json.get("issuedAt").getAsLong() : System.currentTimeMillis();
                long exp = json.has("expiresAt") ? json.get("expiresAt").getAsLong() : System.currentTimeMillis() + 3600_000L;
                LOGGER.info("[EggAuth] Bombo auth succeeded; refresh scheduled.");
@@ -293,6 +304,7 @@ public class EggAuth {
 
                long refreshInMs = Math.max(60_000L, (exp - issuedAt) - 300_000L);
                SCHEDULER.schedule(EggAuth::authenticateWithBomboAsync, refreshInMs, TimeUnit.MILLISECONDS);
+               EggWebSocket.onTokenRefreshed();
                return true;
             }
          }

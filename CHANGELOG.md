@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.88] - 2026-10-05 (Beta)
+
+### Spotify HUD Lyrics Mode & Album Artwork Refresh
+- **Spotify HUD Lyrics Mode (`SpotifyHud`, `BomboConfig`, `ConfigRegistry`):** Added a new configurable layout toggle (`Spotify HUD Lyrics Mode`) that replaces track title and artist text with synchronized lyrics directly on the Spotify HUD card, displaying the active line in bold accent color, upcoming lines (customizable via `Lyrics Preview Lines Ahead`, default 1 upcoming line), the album cover on the left, media playback controls (`|◀ ⏸/▶ ▶|`) on the right, and the playback progress bar along the bottom.
+- **Album Cover Transition & 7-Second Verification (`LyricsManager`):** Resolved stale album covers persisting from previous songs by clearing the cached texture immediately on song change, and scheduling an automatic verification check 7 seconds later to guarantee the artwork updates even if media metadata transitions late.
+
+### EggAuth Mojang Key Verification & Automatic Bombo Fallback
+- **Mojang Profile Public Key Signature Verification (`bomboapi`):** Fixed public key signature validation in the remote backend (`auth_service.js`) by caching both `playerCertificateKeys` and `profilePropertyKeys` from `api.minecraftservices.com/publickeys`, and verifying signatures with the standard Minecraft wire format (`16-byte UUID` + `8-byte BE expiry in ms` + `DER public key bytes`), completely resolving HTTP 401 `publicKeySignature is not a valid Mojang signature` errors.
+- **Client Fallback & Automatic WebSocket Handshake (`EggAuth`):** When external Aaron authentication fails or routes change (HTTP 400), `EggAuth` now automatically falls back to Bombo API authentication asynchronously, updates active tokens, and immediately triggers `EggWebSocket.onTokenRefreshed()` to keep Egg Finder connected.
+
 ## [26.2.28.87] - 2026-10-04 (Beta)
 
 ### Discord Voice Mute Command Toggle & Automatic Auth
