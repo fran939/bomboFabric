@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.86` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.87` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.86`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.87`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.87 (Ready for In-Game Testing)
+>
+> 1. **Discord Screen Share Anti-Flicker (`DiscordIpcManager`):** Enforced an 8-second forward debounce horizon on active video stream packets and eliminated false stop events from simulcast `video ssrc: 0` logs, completely eliminating screen share flickering.
+> 2. **Discord Voice Mute Command Toggle & Auto-Auth (`BomboaddonsClient`, `DiscordIpcManager`):** Corrected Brigadier `/b discord mute` and `/b discord deafen` client commands to call `toggleSelfMute()` and `toggleSelfDeafen()`, restoring proper toggle behavior every time. Enabled automatic background authorization and token recovery on pipe connection so Discord RPC controls operate seamlessly without manual `/b discord auth`.
+> 3. **Discord Local Member Muting Visual Icon (`DiscordVoiceHud`):** Removed strikethrough styling and `[MUTE]` tags when muting participants in HUD, cleanly rendering their real Discord username alongside the official Discord red mic icon (`§4[§c✕ MIC§4]`).
+> 4. **Lyrics Screen Text-Bounded Seeking (`LyricsScreen`):** Bounded line click seeking to the exact horizontal boundaries of the lyric text (`[startX - 16, startX + textW + 16]`), preventing accidental jumps when clicking empty space to the sides.
+> 5. **Lyrics Screen Karaoke Style Wipe (`LyricsScreen`):** Integrated letter-by-letter sub-word karaoke fill animation and smooth line-progress reveal into `/b lyrics`, matching the HUD visual presentation.
+> 6. **Lyrics Color Palette Resolution & Backdrop Toggle (`LyricsHud`, `LyricsScreen`, `BomboConfig`, `ConfigRegistry`):** Added named palette preset resolution (`Amethyst`, `Cyan`, `Gold`, `Ruby`, `Emerald`, etc.) and hex parsing, defaulting `Dynamic Artwork Color` to disabled so custom colors apply immediately. Added padding to floating lyrics card and added a `Lyrics HUD Background` toggle to allow completely transparent floating lyrics.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.86 (Ready for In-Game Testing)
 >
 > 1. **Discord Real Username Everywhere & Anti-Flicker HUD Stabilization (`DiscordVoiceHud`, `DiscordIpcManager`):** Strictly renders the real Discord username/handle across all voice call participants at all times, preventing alternating display names and server nicknames. Sorted voice call participants alphabetically with the local player pinned to the top row, stopping list rows from jumping positions during polling updates. Preserved active streaming state across both bot sync and WebRTC log scanning intervals to eliminate flickering `[LIVE]` badges.

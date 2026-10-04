@@ -69,7 +69,7 @@ public class LyricsHud {
 
         int highlightColor = dynamicColor
                 ? LyricsManager.getDominantColor()
-                : parseHexColor(s != null ? s.lyricsHudColor : "#1ED760", 0xFF1ED760);
+                : parseColor(s != null ? s.lyricsHudColor : "#9966CC", 0xFF9966CC);
 
         g.pose().pushMatrix();
         g.pose().translate((float) baseX, (float) baseY);
@@ -104,9 +104,9 @@ public class LyricsHud {
         int maxW = 140;
         for (int i = startIdx; i <= endIdx; i++) {
             LyricsManager.LyricsLine l = allLines.get(i);
-            int w = font.width(l.text()) + (duetSides && "v2".equalsIgnoreCase(l.agent()) ? 28 : 8);
+            int w = font.width("§l" + l.text()) + (duetSides && "v2".equalsIgnoreCase(l.agent()) ? 28 : 16);
             if (l.backgroundText() != null && !l.backgroundText().isEmpty()) {
-                w = Math.max(w, font.width(l.backgroundText()) + 16);
+                w = Math.max(w, font.width(l.backgroundText()) + 20);
             }
             maxW = Math.max(maxW, w);
         }
@@ -124,10 +124,15 @@ public class LyricsHud {
         cachedHudWidth = maxW;
         cachedHudHeight = totalH;
 
-        // Subtle translucent backdrop card
-        g.fill(0, 0, maxW, totalH, 0x660B0F19);
-        g.fill(0, 0, maxW, 1, 0x22FFFFFF);
-        g.fill(0, totalH - 1, maxW, totalH, 0x22FFFFFF);
+        // Translucent backdrop card (can be toggled in /b config)
+        boolean showBg = s == null || s.lyricsHudShowBackground;
+        if (showBg) {
+            int padX = 8;
+            int padY = 5;
+            g.fill(-padX, -padY, maxW + padX, totalH + padY, 0x77000000);
+            g.fill(-padX, -padY, maxW + padX, -padY + 1, 0x22FFFFFF);
+            g.fill(-padX, totalH + padY - 1, maxW + padX, totalH + padY, 0x22FFFFFF);
+        }
 
         int drawY = 4;
         for (int i = startIdx; i <= endIdx; i++) {
@@ -206,9 +211,13 @@ public class LyricsHud {
         cachedHudWidth = w;
         cachedHudHeight = h;
 
-        g.fill(0, 0, w, h, 0x660B0F19);
-        g.fill(0, 0, w, 1, 0x4438BDF8);
-        g.fill(0, h - 1, w, h, 0x4438BDF8);
+        BomboConfig.Settings s = BomboConfig.get();
+        boolean showBg = s == null || s.lyricsHudShowBackground;
+        if (showBg) {
+            g.fill(0, 0, w, h, 0x77000000);
+            g.fill(0, 0, w, 1, 0x4438BDF8);
+            g.fill(0, h - 1, w, h, 0x4438BDF8);
+        }
 
         long cycle = System.currentTimeMillis() % 3000L;
         String sampleWord = "Baby, ya yo me enteré";
@@ -223,7 +232,7 @@ public class LyricsHud {
         g.text(font, "§7Se nota cuando me ve'", 6, 31, 0xFF94A3B8, false);
     }
 
-    private static int countLetters(String word) {
+    public static int countLetters(String word) {
         if (word == null) return 0;
         int count = 0;
         for (int i = 0; i < word.length(); i++) {
@@ -235,7 +244,35 @@ public class LyricsHud {
         return Math.max(1, count);
     }
 
-    private static int parseHexColor(String hex, int def) {
+    public static int parseColor(String colStr, int defaultColor) {
+        if (colStr == null || colStr.trim().isEmpty()) return defaultColor;
+        String s = colStr.trim();
+        switch (s.toLowerCase(java.util.Locale.ROOT)) {
+            case "amethyst": return 0xFF9966CC;
+            case "cyan": return 0xFF00E5FF;
+            case "gold", "yellow": return 0xFFFFD700;
+            case "emerald", "green": return 0xFF10B981;
+            case "purple": return 0xFFA855F7;
+            case "red": return 0xFFEF4444;
+            case "blue": return 0xFF3B82F6;
+            case "pink": return 0xFFEC4899;
+            case "white": return 0xFFFFFFFF;
+            case "aquamarine": return 0xFF7FFFD4;
+            case "ruby": return 0xFFE0115F;
+            case "coral": return 0xFFFF7F50;
+            case "metallic": return 0xFFD4AF37;
+            case "pure gold": return 0xFFFFD700;
+            case "pure black", "black": return 0xFF000000;
+            default: break;
+        }
+        try {
+            return me.bombo.bomboaddons.gui.config.BomboConfigScreen.parseColorArgb(s);
+        } catch (Throwable t) {
+            return parseHexColor(s, defaultColor);
+        }
+    }
+
+    public static int parseHexColor(String hex, int def) {
         if (hex == null || hex.isEmpty()) return def;
         try {
             String clean = hex.trim().replace("#", "");

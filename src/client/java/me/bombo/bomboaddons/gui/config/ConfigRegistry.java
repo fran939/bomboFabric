@@ -573,8 +573,13 @@ public class ConfigRegistry {
                 items.add(ConfigItem.color("Custom Lyrics Color",
                         "Accent color for the active lyric line when Dynamic Artwork Color is disabled.",
                         category,
-                        () -> s.lyricsHudColor != null ? s.lyricsHudColor : "#1DB954",
+                        () -> s.lyricsHudColor != null ? s.lyricsHudColor : "#9966CC",
                         v -> s.lyricsHudColor = v));
+                items.add(ConfigItem.toggle("Lyrics HUD Background",
+                        "Display translucent backdrop card behind floating lyrics lines.",
+                        category,
+                        () -> s.lyricsHudShowBackground,
+                        v -> s.lyricsHudShowBackground = v));
                 items.add(ConfigItem.toggle("Duet Vocal Separation",
                         "Align secondary / background vocalist lines to the right side of the screen.",
                         category,

@@ -63,6 +63,7 @@ public class DiscordIpcManager {
     private static volatile boolean authCancelled = false;
     private static volatile String authenticatedAccessToken = "";
     private static final Set<String> BOT_ACTIVE_MEMBERS = ConcurrentHashMap.newKeySet();
+    private static final Map<String, Long> USER_STREAM_ACTIVE_UNTIL = new ConcurrentHashMap<>();
     private static volatile long lastSelfMuteActionTime = 0L;
     private static volatile long lastSelfDeafenActionTime = 0L;
     private static volatile boolean isSelfMuted = false;
@@ -176,6 +177,9 @@ public class DiscordIpcManager {
                     synchronized (PIPE_LOCK) {
                         RandomAccessFile pipe = currentPipe;
                         if (pipe != null && connected) {
+                            if (authenticatedAccessToken.isEmpty() && !authCancelled) {
+                                try { sendAuthorize(pipe); } catch (Throwable ignored) {}
+                            }
                             JsonObject args = new JsonObject();
                             args.addProperty("user_id", userId);
                             args.addProperty("mute", targetMute);
@@ -843,10 +847,13 @@ public class DiscordIpcManager {
                             boolean svMute = m.has("serverMute") && m.get("serverMute").getAsBoolean();
                             boolean svDeaf = m.has("serverDeaf") && m.get("serverDeaf").getAsBoolean();
                             boolean streaming = m.has("streaming") && m.get("streaming").getAsBoolean();
+                            if (streaming) {
+                                USER_STREAM_ACTIVE_UNTIL.put(mId, System.currentTimeMillis() + 8000L);
+                            }
                             DiscordVoiceUser existing = voiceUsers.get(mId);
                             boolean isSpeaking = existing != null && existing.isSpeaking();
                             boolean isLocallyMuted = locallyMutedUsers.contains(mId);
-                            boolean isLive = streaming || (existing != null && existing.isScreenSharing());
+                            boolean isLive = streaming || (System.currentTimeMillis() < USER_STREAM_ACTIVE_UNTIL.getOrDefault(mId, 0L)) || (existing != null && existing.isScreenSharing());
                             boolean isSelfMute = (mId.equals(myUserId) || mId.equals("self")) ? (isSelfMuted || sMute) : sMute;
                             boolean isSelfDeaf = (mId.equals(myUserId) || mId.equals("self")) ? (isSelfDeafened || sDeaf) : sDeaf;
 
@@ -1063,12 +1070,13 @@ public class DiscordIpcManager {
                         }
                     }
 
-                    // Explicitly detect stream stops (video ssrc: 0 or resolution: 0 x 0)
-                    if (wLine.contains("resolution: 0 x 0") || wLine.contains("video ssrc: 0,")) {
+                    // Only explicit resolution 0 x 0 signals stream end (NEVER video ssrc: 0 which occurs on simulcast)
+                    if (wLine.contains("resolution: 0 x 0")) {
                         Matcher vm = INBOUND_USER_PATTERN.matcher(wLine);
                         if (vm.find()) {
                             String stoppedUid = vm.group(1);
                             userVideoLastSeenMap.remove(stoppedUid);
+                            USER_STREAM_ACTIVE_UNTIL.remove(stoppedUid);
                         }
                     }
 
@@ -1081,6 +1089,7 @@ public class DiscordIpcManager {
                                 String vuid = vm.group(1);
                                 if (!vuid.equals(myUserId) && lineTime > 0) {
                                     userVideoLastSeenMap.put(vuid, lineTime);
+                                    USER_STREAM_ACTIVE_UNTIL.put(vuid, System.currentTimeMillis() + 8000L);
                                 }
                             }
                             if (wLine.contains("Outbound video stats for user:")) {
@@ -1089,6 +1098,8 @@ public class DiscordIpcManager {
                                     String selfId = om.group(1);
                                     userVideoLastSeenMap.put(selfId, lineTime);
                                     userVideoLastSeenMap.put("self", lineTime);
+                                    USER_STREAM_ACTIVE_UNTIL.put(selfId, System.currentTimeMillis() + 8000L);
+                                    USER_STREAM_ACTIVE_UNTIL.put("self", System.currentTimeMillis() + 8000L);
                                 }
                             }
                         }
@@ -1100,6 +1111,12 @@ public class DiscordIpcManager {
                         long diff = maxLogTimestamp - entry.getValue();
                         if (diff >= 0 && diff <= 35000L) {
                             webrtcUserIds.add(entry.getKey());
+                        }
+                    }
+                    long nowMs = System.currentTimeMillis();
+                    for (Map.Entry<String, Long> entry : USER_STREAM_ACTIVE_UNTIL.entrySet()) {
+                        if (nowMs < entry.getValue()) {
+                            screensharingUserIds.add(entry.getKey());
                         }
                     }
                     for (Map.Entry<String, Long> entry : userVideoLastSeenMap.entrySet()) {
@@ -1157,7 +1174,7 @@ public class DiscordIpcManager {
                 }
 
                 boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
-                boolean selfLive = screensharingUserIds.contains(selfId) || screensharingUserIds.contains(myUserId) || screensharingUserIds.contains("self") || (voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isScreenSharing());
+                boolean selfLive = (System.currentTimeMillis() < USER_STREAM_ACTIVE_UNTIL.getOrDefault(selfId, 0L)) || screensharingUserIds.contains(selfId) || screensharingUserIds.contains(myUserId) || screensharingUserIds.contains("self") || (voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isScreenSharing());
                 boolean selfMuted = isSelfMuted || (voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isMuted());
                 boolean selfDeaf = isSelfDeafened || (voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isDeafened());
 
@@ -1181,7 +1198,7 @@ public class DiscordIpcManager {
                         boolean isSelfDeafened = prev != null && prev.isSelfDeafened();
                         boolean isMuted = isLocallyMuted || isSelfMuted;
                         boolean isDeaf = isLocallyMuted || isSelfDeafened;
-                        boolean isLive = screensharingUserIds.contains(uid) || (prev != null && prev.isScreenSharing());
+                        boolean isLive = (System.currentTimeMillis() < USER_STREAM_ACTIVE_UNTIL.getOrDefault(uid, 0L)) || screensharingUserIds.contains(uid) || (prev != null && prev.isScreenSharing());
                         voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive, isLocallyMuted, isSelfMuted, isSelfDeafened));
                     }
 
@@ -1283,6 +1300,11 @@ public class DiscordIpcManager {
                 if (errCode == 4001 || errCode == 4003) {
                     authenticatedAccessToken = "";
                     try { Files.deleteIfExists(TOKEN_FILE); } catch (Throwable ignored) {}
+                    if (pipe != null && connected && !authCancelled) {
+                        try {
+                            sendAuthorize(pipe);
+                        } catch (Throwable ignored) {}
+                    }
                 }
                 lastError = "Discord Error (" + errCode + "): " + errMsg;
                 return;
@@ -1330,10 +1352,11 @@ public class DiscordIpcManager {
                             authReq.addProperty("nonce", UUID.randomUUID().toString());
                             writePacket(pipe, 1, authReq.toString());
                         } catch (Throwable ignored) {}
+                    } else if (!authCancelled) {
+                        try {
+                            sendAuthorize(pipe);
+                        } catch (Throwable ignored) {}
                     }
-
-                    // Authorization is requested explicitly by the user via /b discord auth if needed,
-                    // avoiding annoying app permission popups on every Minecraft launch.
 
                     // Subscribe to global voice connection and selection events
                     subscribe(pipe, "VOICE_CHANNEL_SELECT");

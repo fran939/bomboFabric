@@ -231,7 +231,7 @@ public class LyricsScreen extends Screen {
 
                     int highlightColor = (BomboConfig.get() != null && BomboConfig.get().lyricsHudDynamicColor)
                             ? LyricsManager.getDominantColor()
-                            : 0xFF1ED760;
+                            : LyricsHud.parseColor(BomboConfig.get() != null ? BomboConfig.get().lyricsHudColor : "#9966CC", 0xFF9966CC);
 
                     // Subtle background highlight pill
                     int pillX = (this.width - totalLineW) / 2 - 14;
@@ -243,26 +243,42 @@ public class LyricsScreen extends Screen {
                     g.outline(pillX, lineIntY - 4, pillW, pillH, pillBorder);
 
                     if (words != null && !words.isEmpty()) {
-                        // Word-by-word karaoke rendering with progressive highlight
+                        // Letter-by-letter karaoke animation across words
                         int curX = (this.width - totalLineW) / 2;
                         for (int w = 0; w < words.size(); w++) {
                             LyricsManager.WordTime wt = words.get(w);
-                            if (currentMs >= wt.startMs()) {
-                                maxActiveWordIdx = Math.max(maxActiveWordIdx, w);
-                            }
-                            boolean isWordActive = (w <= maxActiveWordIdx);
-                            int wordSlotW = font.width("§l" + wt.word());
+                            String wordStr = wt.word();
+                            int letters = LyricsHud.countLetters(wordStr);
+                            long wordDur = Math.max(10L, wt.endMs() - wt.startMs());
+                            long perLetterMs = letters > 0 ? (wordDur / letters) : wordDur;
 
-                            if (isWordActive) {
-                                g.text(font, "§l" + wt.word(), curX, lineIntY, highlightColor, true);
-                            } else {
-                                g.text(font, "§7§l" + wt.word(), curX, lineIntY, 0x66CBD5E1, false);
+                            for (int c = 0; c < wordStr.length(); c++) {
+                                char ch = wordStr.charAt(c);
+                                String chStr = String.valueOf(ch);
+                                int chW = font.width("§l" + chStr);
+
+                                long letterTargetMs = wt.startMs() + (c * perLetterMs);
+                                boolean isLetterActive = currentMs >= letterTargetMs;
+
+                                int chColor = isLetterActive ? highlightColor : 0x66CBD5E1;
+                                g.text(font, (isLetterActive ? "§l" : "§7§l") + chStr, curX, lineIntY, chColor, isLetterActive);
+                                curX += chW;
                             }
-                            curX += wordSlotW + spaceW;
+                            curX += spaceW;
                         }
                     } else {
+                        // Smooth progress reveal for line-synced lyrics
+                        long duration = Math.max(500L, line.endMs() - line.startMs());
+                        float progress = Math.max(0.0f, Math.min(1.0f, (float) (currentMs - line.startMs()) / (float) duration));
+                        int fullLen = (int) (line.text().length() * progress);
+
+                        String sang = line.text().substring(0, Math.min(line.text().length(), fullLen));
+                        String unsang = line.text().substring(Math.min(line.text().length(), fullLen));
+
                         int startX = (this.width - totalLineW) / 2;
-                        g.text(font, "§l" + line.text(), startX, lineIntY, highlightColor, true);
+                        int sangW = font.width("§l" + sang);
+                        g.text(font, "§l" + sang, startX, lineIntY, highlightColor, true);
+                        g.text(font, "§7§l" + unsang, startX + sangW, lineIntY, 0x66CBD5E1, false);
                     }
 
                     // Background vocals underneath (clean white italic, no green box clash)
@@ -782,9 +798,13 @@ public class LyricsScreen extends Screen {
                     double lineY = viewCenterY + (i * (double) LINE_HEIGHT) - scrollY;
                     if (mouseY >= lineY - 4 && mouseY <= lineY + LINE_HEIGHT - 4) {
                         LyricsManager.LyricsLine clicked = lines.get(i);
-                        if (clicked.startMs() >= 0) {
-                            SpotifyManager.seekTo(clicked.startMs());
-                            return true;
+                        int textW = this.font.width("§l" + clicked.text());
+                        int startX = (this.width - textW) / 2;
+                        if (mouseX >= startX - 16 && mouseX <= startX + textW + 16) {
+                            if (clicked.startMs() >= 0) {
+                                SpotifyManager.seekTo(clicked.startMs());
+                                return true;
+                            }
                         }
                     }
                 }

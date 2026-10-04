@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.87",
+    "date": "2026-10-04",
+    "changes": [
+      "Discord Live Screen Share Anti-Flicker: Enforced 8-second forward debounce horizon on active video stream packets and eliminated false stop events from simulcast ssrc:0 lines, completely stopping [LIVE] badge flickering",
+      "Discord Local Member Mute Icon: Removed strikethrough name styling and [MUTE] label when muting other users, cleanly displaying their normal username alongside the official Discord red mic icon",
+      "Discord Voice Mute Command Toggle Fix: Corrected Brigadier /b discord mute and /b discord deafen client command registrations to invoke toggle actions instead of forcing state true",
+      "Discord Background StreamKit Auto-Auth: Added automatic background authorization exchange and token re-authentication on startup and on error, eliminating manual weekly auth prompts",
+      "Lyrics Text-Bounded Click Seeking: Bounded click-to-seek detection to the exact pixel width of the lyric text line, preventing accidental jumps when clicking empty space on either side",
+      "Lyrics Screen Karaoke Style Fill: Integrated letter-by-letter sub-word karaoke fill animation and smooth line-progress wipe into /b lyrics screen",
+      "Lyrics HUD Custom Color & Palette Support: Corrected color resolution across named palette presets (Amethyst, Cyan, Gold, Ruby) and hex strings, defaulting Dynamic Artwork Color to off so custom colors apply immediately",
+      "Lyrics HUD Backdrop Fill & Removal: Added generous padding to prevent text touching borders and introduced 'Lyrics HUD Background' config toggle to allow completely transparent floating lyrics"
+    ]
+  },
+  {
     "version": "26.2.28.86",
     "date": "2026-10-04",
     "changes": [

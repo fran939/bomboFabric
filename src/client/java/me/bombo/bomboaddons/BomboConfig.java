@@ -814,8 +814,9 @@ public class BomboConfig {
       public float lyricsHudScale = 1.0F;
       public int lyricsHudLinesBefore = 0;
       public int lyricsHudLinesAfter = 2;
-      public boolean lyricsHudDynamicColor = true;
-      public String lyricsHudColor = "#1ED760";
+      public boolean lyricsHudDynamicColor = false;
+      public boolean lyricsHudShowBackground = true;
+      public String lyricsHudColor = "#9966CC";
       public boolean lyricsHudDuetSides = true;
       public String lyricsHudStyle = "karaoke_fade"; // "karaoke_fade", "classic", "plain"
 

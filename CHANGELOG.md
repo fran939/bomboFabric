@@ -1,5 +1,23 @@
 # BomboAddons Changelog
  
+## [26.2.28.87] - 2026-10-04 (Beta)
+
+### Discord Voice Mute Command Toggle & Automatic Auth
+- **Brigadier Command Toggle Fix (`BomboaddonsClient`):** Corrected `/b discord mute` and `/b discord deafen` to invoke `toggleSelfMute()` and `toggleSelfDeafen()` instead of hardcoded `setSelfMute(true)`. Running `/b discord mute` repeatedly now toggles cleanly between muted and unmuted every single execution.
+- **StreamKit Automatic Background Auth (`DiscordIpcManager`):** Automatically requests authorization and exchanges tokens on initial connection and upon token expiration, operating silently just like Stream Deck plugins without requiring manual `/b discord auth` commands.
+
+### Discord Screen Share Anti-Flicker & Member Mute Icon
+- **Rock-Solid [LIVE] Badge Debouncing (`DiscordIpcManager`):** Established an 8-second forward horizon on inbound video streams and filtered out false stop events caused by WebRTC simulcast `video ssrc: 0` logs, completely eliminating screen share flickering.
+- **Discord Mic Icon for Member Muting (`DiscordVoiceHud`):** Removed ugly strikethrough text and `[MUTE]` tags when muting participants. The user's name remains clean while displaying the official Discord mic icon (`§4[§c✕ MIC§4]`).
+
+### Lyrics Screen Text-Bounded Seeking & Karaoke Wipe
+- **Text-Bounded Click Seeking (`LyricsScreen`):** Bounded click-to-seek detection to the exact horizontal boundaries of the lyric text (`[startX - 16, startX + textW + 16]`), preventing accidental track seeks when clicking empty space to the sides.
+- **Letter-by-Letter Karaoke Animation (`LyricsScreen`):** Ported sub-word character-by-character karaoke fill animation and smooth line progress reveal into `/b lyrics`, matching the HUD visual presentation.
+
+### Lyrics Color Palette & Customizable Background
+- **Accurate Color Palette Resolution (`LyricsHud`, `LyricsScreen`, `BomboConfigScreen`):** Implemented comprehensive named color parsing supporting preset dyes (`Amethyst` `#9966CC`, `Cyan`, `Gold`, `Ruby`, `Emerald`, etc.) and hex inputs. Defaulted `Dynamic Artwork Color` to disabled so custom colors take effect immediately.
+- **Lyrics HUD Padding & Removal Toggle (`LyricsHud`, `BomboConfig`, `ConfigRegistry`):** Added generous padding around floating lyrics so text never touches card borders, and introduced a new `Lyrics HUD Background` toggle in `/b config` to allow completely transparent floating lyrics.
+
 ## [26.2.28.86] - 2026-10-04 (Beta)
 
 ### Discord Real Username & Anti-Flicker HUD Stabilization

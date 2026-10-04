@@ -1528,7 +1528,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      .then(ClientCommands.literal("mute")
                         .executes((context) -> {
                            FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
-                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(true, src::sendFeedback);
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfMute(src::sendFeedback);
                            return 1;
                         })
                         .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
@@ -1552,7 +1552,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      .then(ClientCommands.literal("deafen")
                         .executes((context) -> {
                            FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
-                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(true, src::sendFeedback);
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfDeafen(src::sendFeedback);
                            return 1;
                         })
                         .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
