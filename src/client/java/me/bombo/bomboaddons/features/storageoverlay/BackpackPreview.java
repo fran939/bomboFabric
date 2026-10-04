@@ -401,6 +401,14 @@ public class BackpackPreview {
                 seedStorageFromStorageTracker(i);
             }
         }
+        for (int i = 0; i <= 8; i++) {
+            if (storages[i] == null) {
+                storages[i] = new Storage(
+                    new SimpleContainer(Stream.generate(() -> ItemStack.EMPTY).limit(54).toArray(ItemStack[]::new)),
+                    getStorageName(i), false
+                );
+            }
+        }
     }
 
     private static void seedStorageFromStorageTracker(int index) {

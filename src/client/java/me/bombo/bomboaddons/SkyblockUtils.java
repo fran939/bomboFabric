@@ -125,11 +125,11 @@ public class SkyblockUtils {
                result = result.replaceAll("(?i)!wiki\\s+hand\\b", "!wiki " + (sbId != null ? sbId : ""));
             }
 
-            if (result.contains("$show") || result.contains("[item]") || result.contains("$lore")) {
+            if (result.contains("$show") || result.contains("[item]") || result.contains("$lore") || result.contains("$item")) {
                net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
                if (held != null && !held.isEmpty()) {
                   String serialized = serializeItemForChat(held);
-                  result = result.replace("$show", serialized).replace("[item]", serialized).replace("$lore", serialized);
+                  result = result.replace("$show", serialized).replace("[item]", serialized).replace("$lore", serialized).replace("$item", serialized);
                }
             }
 
@@ -212,13 +212,13 @@ public class SkyblockUtils {
                return text.replaceAll("(?i)!wiki\\s+hand\\b", "!wiki " + (sbId != null ? sbId : ""));
             }
          }
-         if (text != null && (text.contains("$show") || text.contains("[item]") || text.contains("$lore"))) {
+         if (text != null && (text.contains("$show") || text.contains("[item]") || text.contains("$lore") || text.contains("$item"))) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
                net.minecraft.world.item.ItemStack held = mc.player.getMainHandItem();
                if (held != null && !held.isEmpty()) {
                   String serialized = serializeItemForChat(held);
-                  return text.replace("$show", serialized).replace("[item]", serialized).replace("$lore", serialized);
+                  return text.replace("$show", serialized).replace("[item]", serialized).replace("$lore", serialized).replace("$item", serialized);
                }
             }
          }

@@ -389,10 +389,20 @@ public class BomboConfigScreen extends Screen {
         boolean hovered = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h && activeColorItem == null && activeDropdownItem == null;
         ConfigUITheme.drawCard(g, x, y, w, h, hovered);
 
-        // Title & Description
-        g.text(this.font, ConfigUITheme.formatFont(item.name), x + 10, y + 7, ConfigUITheme.getTextTitle(), false);
+        // Title & Description (clipped to prevent overlapping right-side controls)
+        int maxTextW = Math.max(100, w - (item.type == ConfigItem.Type.TOGGLE && item.hudTarget == null ? 65 : (item.type == ConfigItem.Type.TOGGLE ? 105 : 185)));
+        String title = item.name;
+        if (this.font.width(title) > maxTextW) {
+            title = this.font.plainSubstrByWidth(title, maxTextW - 6) + "...";
+        }
+        g.text(this.font, ConfigUITheme.formatFont(title), x + 10, y + 7, ConfigUITheme.getTextTitle(), false);
+
         if (item.description != null && !item.description.isEmpty()) {
-            g.text(this.font, ConfigUITheme.formatFont(item.description), x + 10, y + 21, ConfigUITheme.getTextMuted(), false);
+            String desc = item.description;
+            if (this.font.width(desc) > maxTextW) {
+                desc = this.font.plainSubstrByWidth(desc, maxTextW - 6) + "...";
+            }
+            g.text(this.font, ConfigUITheme.formatFont(desc), x + 10, y + 21, ConfigUITheme.getTextMuted(), false);
         }
 
         // Right side controls

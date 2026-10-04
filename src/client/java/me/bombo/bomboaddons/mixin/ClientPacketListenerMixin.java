@@ -47,7 +47,7 @@ public class ClientPacketListenerMixin {
                me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler handler =
                      new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreenHandler(cm, isBackpack, height, mc.player.getInventory());
                mc.player.containerMenu = handler;
-               mc.gui.setScreen(new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen(handler, cm, name, mc.player.getInventory(), height));
+               mc.setScreenAndShow(new me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen(handler, cm, name, mc.player.getInventory(), height));
                ci.cancel();
                me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] Intercepted and launched StorageOverlayScreen for '{}'", rawTitle);
             }

@@ -468,6 +468,7 @@
             const screenCanvas = document.getElementById("screenCanvas");
             const viewerIgn = document.getElementById("viewerIgn");
             const viewerAvatar = document.getElementById("viewerAvatar");
+            const stats = document.getElementById("viewerStats");
 
             viewerHeader.style.display = "flex";
             emptyState.style.display = "none";
@@ -476,29 +477,59 @@
             viewerIgn.textContent = user;
             viewerAvatar.src = `https://mc-heads.net/avatar/${encodeURIComponent(user)}/64`;
 
-            // Start polling frames
             if (streamInterval) clearInterval(streamInterval);
-            pollFrame();
-            streamInterval = setInterval(pollFrame, 100); // 10 FPS
-        }
 
-        function pollFrame() {
-            if (!currentTarget) return;
-            const screenCanvas = document.getElementById("screenCanvas");
-            const stats = document.getElementById("viewerStats");
-            const t0 = performance.now();
+            const targetStream = streams.find(s => s.user.toLowerCase() === user.toLowerCase());
+            const fpsText = targetStream ? (targetStream.fps || 30) : 30;
+            const resText = targetStream ? `${targetStream.width || 1280}x${targetStream.height || 720}` : "1280x720";
+            stats.textContent = `Live Stream • ${fpsText} FPS • ${resText} • Ultra-low Latency`;
 
-            const img = new Image();
-            img.onload = () => {
-                screenCanvas.src = img.src;
-                const dt = Math.round(performance.now() - t0);
-                stats.textContent = `Live Stream • Latency: ${dt}ms`;
+            // Ultra-low latency native MJPEG streaming (zero GC overhead, smooth 60 FPS)
+            screenCanvas.onload = () => {
+                if (screenCanvas.naturalWidth && screenCanvas.naturalHeight) {
+                    const targetStream = streams.find(s => s.user.toLowerCase() === user.toLowerCase());
+                    const fps = targetStream ? (targetStream.fps || 30) : 30;
+                    stats.textContent = `Live Stream • ${fps} FPS • ${screenCanvas.naturalWidth}x${screenCanvas.naturalHeight} • Ultra-low Latency`;
+                }
             };
-            img.src = `/api/screenshare/frame/${encodeURIComponent(currentTarget)}?t=${Date.now()}`;
+            screenCanvas.src = `/api/screenshare/frame/${encodeURIComponent(user)}?t=${Date.now()}`;
+            setTimeout(() => {
+                if (currentTarget && currentTarget.toLowerCase() === user.toLowerCase()) {
+                    screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(user)}`;
+                }
+            }, 80);
+            screenCanvas.onerror = () => {
+                setTimeout(() => {
+                    if (currentTarget && currentTarget.toLowerCase() === user.toLowerCase()) {
+                        screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(user)}?t=${Date.now()}`;
+                    }
+                }, 1500);
+            };
+
+            // Monitor active status and update resolution / FPS dynamically
+            streamInterval = setInterval(async () => {
+                try {
+                    const res = await fetch("/api/screenshare/list");
+                    if (res.ok) {
+                        const data = await res.json();
+                        streams = data.streams || [];
+                        const targetStream = streams.find(s => s.user.toLowerCase() === currentTarget.toLowerCase());
+                        if (targetStream) {
+                            const w = screenCanvas.naturalWidth || targetStream.width || 1280;
+                            const h = screenCanvas.naturalHeight || targetStream.height || 720;
+                            stats.textContent = `Live Stream • ${targetStream.fps || 30} FPS • ${w}x${h} • Ultra-low Latency`;
+                        } else {
+                            stats.textContent = "Stream paused or waiting for host...";
+                        }
+                    }
+                } catch (e) {}
+            }, 2500);
         }
 
         function reloadStream() {
-            pollFrame();
+            if (!currentTarget) return;
+            const screenCanvas = document.getElementById("screenCanvas");
+            screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(currentTarget)}?t=${Date.now()}`;
         }
 
         function toggleFullscreen() {
@@ -512,6 +543,9 @@
 
         document.getElementById("searchBox").addEventListener("input", renderStreamsList);
 
+        if (queryUser) {
+            selectUser(queryUser);
+        }
         fetchStreams();
         setInterval(fetchStreams, 3000);
     </script>

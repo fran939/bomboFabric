@@ -410,6 +410,16 @@ public class ConfigRegistry {
                         category,
                         () -> s.discordHudOnlyInCall,
                         v -> s.discordHudOnlyInCall = v));
+                items.add(ConfigItem.toggle("Hide Discord Brand Text",
+                        "Hides 'Discord |' and only shows the voice channel name in the HUD header.",
+                        category,
+                        () -> s.discordHudHideBrand,
+                        v -> s.discordHudHideBrand = v));
+                items.add(ConfigItem.toggle("Show Member Avatars",
+                        "Displays profile avatars alongside voice participants in the HUD.",
+                        category,
+                        () -> s.discordHudShowAvatars,
+                        v -> s.discordHudShowAvatars = v));
                 items.add(ConfigItem.toggle("Auto Request Authorization",
                         "Automatically prompt Discord Desktop authorization on startup (keep disabled to prevent permission popups).",
                         category,

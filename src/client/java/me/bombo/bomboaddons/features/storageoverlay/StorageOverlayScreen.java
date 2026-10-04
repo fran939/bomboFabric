@@ -122,11 +122,6 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] StorageOverlayScreen.enabled: disableOnNextLoad was true! Bypassing overlay once.");
 			return false;
 		}
-		// If main /storage menu is opened and no storages are loaded yet, let vanilla open so initializeStorage can discover them!
-		if (isMainStorageMenu && !BackpackPreview.hasAnyStorage()) {
-			me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] No storages discovered yet! Bypassing overlay on /storage to discover backpacks.");
-			return false;
-		}
 		boolean result = BomboConfig.get().storageOverlay && (isStorageMenu || openStorage != -1);
 		me.bombo.bomboaddons.Bomboaddons.LOGGER.info("[StorageOverlay] StorageOverlayScreen.enabled check: raw='{}', title='{}', isStorageMenu={}, openStorage={}, configOn={}, result={}", 
 				rawTitle, title, isStorageMenu, openStorage, BomboConfig.get().storageOverlay, result);
@@ -163,7 +158,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	private void hide(Button button) {
 		if (CLIENT.player == null) return;
 		CLIENT.player.containerMenu = defaultHandler;
-		CLIENT.gui.setScreen(new ContainerScreen(defaultHandler, CLIENT.player.getInventory(), name));
+		CLIENT.setScreenAndShow(new ContainerScreen(defaultHandler, CLIENT.player.getInventory(), name));
 	}
 
 	private void home(Button button) {

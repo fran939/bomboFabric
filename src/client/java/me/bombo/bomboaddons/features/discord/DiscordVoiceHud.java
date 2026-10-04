@@ -1,5 +1,6 @@
 package me.bombo.bomboaddons.features.discord;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.HudMoveScreen;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -8,16 +9,24 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 
+import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Renders the Discord Voice Call HUD on screen:
  * Displays the current channel, connected members, speaking indicators (green/gray dots),
- * mute/deafen states, and [LIVE] screenshare indicators.
+ * mute/deafen states, member avatars, and [LIVE] screenshare indicators.
  */
 public class DiscordVoiceHud {
 
@@ -31,6 +40,50 @@ public class DiscordVoiceHud {
     private static int cachedMaxW = 100;
     private static int cachedTotalH = 26;
 
+    private static final Map<String, Identifier> AVATAR_TEXTURE_CACHE = new ConcurrentHashMap<>();
+    private static final Set<String> FETCHING_AVATARS = ConcurrentHashMap.newKeySet();
+
+    private static Identifier getOrFetchAvatar(String userId, String avatarHash) {
+        if (userId == null || avatarHash == null || avatarHash.isEmpty()) return null;
+        String key = userId + "_" + avatarHash;
+        Identifier cached = AVATAR_TEXTURE_CACHE.get(key);
+        if (cached != null) return cached;
+
+        if (FETCHING_AVATARS.add(key)) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    String url = "https://cdn.discordapp.com/avatars/" + userId + "/" + avatarHash + ".png?size=32";
+                    java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                            .uri(URI.create(url))
+                            .timeout(Duration.ofSeconds(3))
+                            .GET()
+                            .build();
+                    java.net.http.HttpResponse<byte[]> resp = java.net.http.HttpClient.newHttpClient()
+                            .send(req, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+                    if (resp.statusCode() == 200 && resp.body() != null && resp.body().length > 0) {
+                        try (ByteArrayInputStream in = new ByteArrayInputStream(resp.body())) {
+                            NativeImage nImg = NativeImage.read(in);
+                            if (nImg != null) {
+                                Minecraft.getInstance().execute(() -> {
+                                    try {
+                                        DynamicTexture dynTex = new DynamicTexture(() -> "discord_avatar_" + key, nImg);
+                                        Identifier id = Identifier.fromNamespaceAndPath("bomboaddons", "discord_avatar_" + key.toLowerCase(java.util.Locale.ROOT));
+                                        Minecraft.getInstance().getTextureManager().register(id, dynTex);
+                                        AVATAR_TEXTURE_CACHE.put(key, id);
+                                    } catch (Throwable ignored) {}
+                                });
+                            }
+                        }
+                    }
+                } catch (Throwable ignored) {
+                } finally {
+                    FETCHING_AVATARS.remove(key);
+                }
+            });
+        }
+        return null;
+    }
+
     private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null) return;
@@ -38,7 +91,7 @@ public class DiscordVoiceHud {
         if (mc.gui.screen() != null && !(mc.gui.screen() instanceof ChatScreen)) return;
 
         long now = System.currentTimeMillis();
-        if (now - lastBackgroundScan > 2000L) {
+        if (now - lastBackgroundScan > 1000L) {
             lastBackgroundScan = now;
             DiscordIpcManager.scanDiscordLogForVoice();
         }
@@ -53,7 +106,7 @@ public class DiscordVoiceHud {
     }
 
     public static int getHudWidth() {
-        return 140;
+        return cachedMaxW > 0 ? cachedMaxW : 140;
     }
 
     public static int getHudHeight() {
@@ -91,6 +144,9 @@ public class DiscordVoiceHud {
         if (font == null) return;
 
         if (scale <= 0.0f) scale = 1.0f;
+        BomboConfig.Settings s = BomboConfig.get();
+        boolean hideBrand = s != null && s.discordHudHideBrand;
+        boolean showAvatars = s != null && s.discordHudShowAvatars;
 
         g.pose().pushMatrix();
         g.pose().translate((float) baseX, (float) baseY);
@@ -102,11 +158,15 @@ public class DiscordVoiceHud {
             String channel = isDummy ? "General (Voice)" : (DiscordIpcManager.isInVoice() ? DiscordIpcManager.getCurrentChannelName() : "Not in Call");
             List<String> lines = new ArrayList<>();
             cachedUserRowIds.clear();
-            lines.add("§9§lDiscord §8| §b#" + channel);
+
+            String brandPrefix = hideBrand ? "" : "§9§lDiscord §8| ";
+            lines.add(brandPrefix + "§b#" + channel);
 
             if (isDummy) {
                 lines.add(" §a● §fPlayer1 §c§l[LIVE]");
                 lines.add(" §7○ §fPlayer2 §8[M]");
+                cachedUserRowIds.add("dummy1");
+                cachedUserRowIds.add("dummy2");
             } else if (!DiscordIpcManager.isConnected()) {
                 lines.add(" §8(Discord Disconnected)");
             } else if (!DiscordIpcManager.isInVoice() || DiscordIpcManager.getVoiceUsers().isEmpty()) {
@@ -130,9 +190,10 @@ public class DiscordVoiceHud {
                 }
             }
 
+            int extraW = showAvatars ? 12 : 0;
             int maxW = 100;
             for (String line : lines) {
-                maxW = Math.max(maxW, font.width(line) + 8);
+                maxW = Math.max(maxW, font.width(line) + 8 + extraW);
             }
             cachedLines = lines;
             cachedMaxW = maxW;
@@ -143,8 +204,23 @@ public class DiscordVoiceHud {
         g.fill(0, 0, cachedMaxW, cachedTotalH, 0x88000000);
 
         int y = 3;
-        for (String line : cachedLines) {
-            g.text(font, line, 4, y, 0xFFFFFFFF, true);
+        for (int i = 0; i < cachedLines.size(); i++) {
+            String line = cachedLines.get(i);
+            int textX = 4;
+            if (i > 0 && showAvatars && (i - 1) < cachedUserRowIds.size()) {
+                String uid = cachedUserRowIds.get(i - 1);
+                DiscordIpcManager.DiscordBotUserInfo botInfo = DiscordIpcManager.getBotUserInfo(uid);
+                int avX = 4;
+                int avY = y + 1;
+                Identifier avTex = (botInfo != null && botInfo.avatar != null) ? getOrFetchAvatar(uid, botInfo.avatar) : null;
+                if (avTex != null) {
+                    g.blit(avTex, avX, avY, avX + 8, avY + 8, 0.0F, 1.0F, 0.0F, 1.0F);
+                } else {
+                    g.fill(avX, avY, avX + 8, avY + 8, 0x555865F2);
+                }
+                textX += 10;
+            }
+            g.text(font, line, textX, y, 0xFFFFFFFF, true);
             y += 11;
         }
 

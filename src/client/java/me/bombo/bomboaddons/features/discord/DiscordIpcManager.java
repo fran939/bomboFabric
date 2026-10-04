@@ -118,10 +118,14 @@ public class DiscordIpcManager {
                         JsonObject args = new JsonObject();
                         args.addProperty("user_id", userId);
                         args.addProperty("mute", nowMuted);
+                        args.addProperty("volume", nowMuted ? 0 : 100);
                         JsonObject rpc = new JsonObject();
                         rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
                         rpc.add("args", args);
                         rpc.addProperty("nonce", nonce);
+                        if (!hasAuthorizedThisSession) {
+                            sendAuthorize(pipe);
+                        }
                         writePacket(pipe, 1, rpc.toString());
                     }
                 }
@@ -344,7 +348,7 @@ public class DiscordIpcManager {
             pollThread = new Thread(() -> {
                 while (RUNNING.get() && connected) {
                     try {
-                        Thread.sleep(3000L);
+                        Thread.sleep(1000L);
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -388,15 +392,52 @@ public class DiscordIpcManager {
         }
     }
 
+    public static DiscordBotUserInfo getBotUserInfo(String userId) {
+        return userId != null ? BOT_USER_CACHE.get(userId) : null;
+    }
+
     private static final Map<String, DiscordBotUserInfo> BOT_USER_CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, String> CHANNEL_NAME_CACHE = new ConcurrentHashMap<>();
+    private static final Set<String> fetchingChannelIds = ConcurrentHashMap.newKeySet();
     private static long lastBotFetchTime = 0L;
     private static final Pattern INBOUND_USER_PATTERN = Pattern.compile("Inbound (?:audio delay )?stats for user:\\s*(\\d{15,20})");
+    private static final Pattern INBOUND_VIDEO_USER_PATTERN = Pattern.compile("Inbound video (?:delay )?stats for user:\\s*(\\d{15,20})", Pattern.CASE_INSENSITIVE);
 
     public static String getMyUserId() {
         return myUserId;
     }
 
     private static final Pattern LINE_TIME_PATTERN = Pattern.compile("^\\[(\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?)\\]");
+
+    private static void fetchChannelNameAsync(String channelId) {
+        if (channelId == null || channelId.isEmpty() || fetchingChannelIds.contains(channelId)) return;
+        fetchingChannelIds.add(channelId);
+        CompletableFuture.runAsync(() -> {
+            try {
+                String url = "https://api.bombo.dpdns.org/api/bot/channel?id=" + channelId;
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofSeconds(3))
+                        .GET()
+                        .build();
+                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                        .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (resp.statusCode() == 200) {
+                    JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    if (root.has("name") && !root.get("name").isJsonNull()) {
+                        String name = root.get("name").getAsString();
+                        CHANNEL_NAME_CACHE.put(channelId, name);
+                        if (channelId.equals(currentChannelId) || currentChannelName.startsWith("Voice (")) {
+                            currentChannelName = name;
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {
+            } finally {
+                fetchingChannelIds.remove(channelId);
+            }
+        });
+    }
 
     private static void fetchMissingBotUsersAsync(Set<String> missingIds) {
         long now = System.currentTimeMillis();
@@ -499,6 +540,7 @@ public class DiscordIpcManager {
 
             // 2. Scan WebRTC logs (only the NEWEST active log file)
             Set<String> webrtcUserIds = new LinkedHashSet<>();
+            Set<String> screensharingUserIds = new HashSet<>();
             Map<String, Long> userLastSeenMap = new HashMap<>();
             long maxLogTimestamp = 0L;
 
@@ -552,13 +594,24 @@ public class DiscordIpcManager {
                             }
                         }
                     }
+
+                    Matcher vm = INBOUND_VIDEO_USER_PATTERN.matcher(wLine);
+                    if (vm.find()) {
+                        String vuid = vm.group(1);
+                        screensharingUserIds.add(vuid);
+                    }
+                    if (wLine.contains("Outbound video") || wLine.contains("video ssrc:") || wLine.toLowerCase().contains("screenshare")) {
+                        if (!myUserId.isEmpty()) {
+                            screensharingUserIds.add(myUserId);
+                        }
+                    }
                 }
 
                 if (maxLogTimestamp > 0) {
                     for (Map.Entry<String, Long> entry : userLastSeenMap.entrySet()) {
-                        // Only include users whose audio stats were received within 15 seconds of the latest log activity
+                        // Users whose audio stats were received within 3.5 seconds of the latest log activity
                         long diff = maxLogTimestamp - entry.getValue();
-                        if (diff >= 0 && diff <= 15000L) {
+                        if (diff >= 0 && diff <= 3500L) {
                             webrtcUserIds.add(entry.getKey());
                         }
                     }
@@ -586,11 +639,18 @@ public class DiscordIpcManager {
             if ((foundConnected || foundHeartbeat || (!webrtcUserIds.isEmpty() && hasFreshWebrtc)) && !foundDisconnect) {
                 inVoice = true;
                 logReaderStatus = "Active (" + memberCount + " in call via " + (!webrtcUserIds.isEmpty() ? "WebRTC" : "Log") + ")";
-                if (currentChannelName.isEmpty() || currentChannelName.startsWith("Voice Call") || currentChannelName.startsWith("Voice (")) {
-                    currentChannelName = foundChannel != null ? ("Voice (" + foundChannel.substring(Math.max(0, foundChannel.length() - 4)) + ")") : "Voice Call";
-                }
-                if (foundChannel != null && currentChannelId.isEmpty()) {
+                if (foundChannel != null && !foundChannel.isEmpty()) {
                     currentChannelId = foundChannel;
+                    if (CHANNEL_NAME_CACHE.containsKey(foundChannel)) {
+                        currentChannelName = CHANNEL_NAME_CACHE.get(foundChannel);
+                    } else {
+                        if (currentChannelName.isEmpty() || currentChannelName.startsWith("Voice Call") || currentChannelName.startsWith("Voice (")) {
+                            currentChannelName = "Voice (" + foundChannel.substring(Math.max(0, foundChannel.length() - 4)) + ")";
+                        }
+                        fetchChannelNameAsync(foundChannel);
+                    }
+                } else if (currentChannelName.isEmpty()) {
+                    currentChannelName = "Voice Call";
                 }
 
                 if (!webrtcUserIds.isEmpty()) {
@@ -598,7 +658,8 @@ public class DiscordIpcManager {
                     String selfId = !myUserId.isEmpty() ? myUserId : "self";
                     String selfName = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
                     boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
-                    voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, false, false, selfSpeaking, false));
+                    boolean selfLive = screensharingUserIds.contains(selfId) || (voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isScreenSharing());
+                    voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, false, false, selfSpeaking, selfLive));
 
                     for (String uid : webrtcUserIds) {
                         DiscordBotUserInfo info = BOT_USER_CACHE.get(uid);
@@ -607,7 +668,7 @@ public class DiscordIpcManager {
                         boolean isSpeaking = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isSpeaking();
                         boolean isMuted = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isMuted();
                         boolean isDeaf = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isDeafened();
-                        boolean isLive = voiceUsers.containsKey(uid) && voiceUsers.get(uid).isScreenSharing();
+                        boolean isLive = screensharingUserIds.contains(uid) || (voiceUsers.containsKey(uid) && voiceUsers.get(uid).isScreenSharing());
                         voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive));
                     }
 

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.70` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.71` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,21 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.70`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.71`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.71 (Ready for In-Game Testing)
+>
+> 1. **Mod Updater Stale Flavor Cleanup (`ModUpdater`):** Automatically purges older version jars of the active flavor (e.g. `bomboclient-26.2.28.54.jar`) from the Minecraft mods directory on update download and startup sweep via detached script execution.
+> 2. **Storage Overlay Launch & Pre-Seeding (`ClientPacketListenerMixin`, `StorageOverlayScreen`, `BackpackPreview`):** Fixed storage overlay opening by invoking `mc.setScreenAndShow(...)` directly on the render thread and pre-seeding Ender Chests 0-8 so `/storage` is never treated as uninitialized.
+> 3. **Discord Voice HUD Fast Member Leave Pruning & Working Mute (`DiscordIpcManager`, `DiscordVoiceHud`):** Reduced WebRTC prune threshold to 3.5s and polling sleep to 1s, reducing leave latency from ~18s to ~2s. Added `volume: 0` alongside `mute: true` in `SET_USER_VOICE_SETTINGS` and auto-authorized with Discord Desktop. Resolved channel IDs to exact voice channel names via bombot `/api/bot/channel?id=`. Added `discordHudHideBrand` to hide brand header, `discordHudShowAvatars` to display member avatars, and detected WebRTC video streams to display `[LIVE]` next to active screensharing members.
+> 4. **Monotonic Lyrics Clock & Web Enhancements (`SpotifyManager`, `lyrics.html`):** Enforced linear forward time progression in `SpotifyManager.java`, preventing GSMTC polling latency from jumping playback clock backwards (`2:42 -> 2:39 -> 2:43`). Added `<mm:ss.xxx>` enhanced word timestamps, raw lyrics modal, provider switcher, and fixed past lines ending on blue on the web player.
+> 5. **Screenshare Chat Link Fix & Web Quality (`ChatMixin`, `ScreenshareManager`, `screenshare.html`):** Guarded `ChatMixin.makeChatCommandsClickable` against converting existing ClickEvents or URLs into unknown commands. Added dynamic resolution & FPS mid-stream updating in `screenshare.html`.
+> 6. **Item Chat $item Alias & Formatting (`SkyblockUtils`, `ChatMixin`, `bombot`):** Added `$item` alias, preserved chat colors in `[SHOW:...]`, and registered Unifont & DejaVu Sans in bombot for stars and gemstone glyphs. Disabled `[BPV]` spam in party chat.
+> 7. **Simulated NPC Game Clicks (`BomboaddonsClient`, `ScreenAccessor`):** Used `ScreenAccessor.invokeDefaultHandleGameClickEvent` for dialogue options with `autoHoppityConfirm`.
+> 8. **Config UI & HUD Move Improvements (`BomboConfigScreen`, `HudMoveScreen`):** Clipped card description text with ellipsis and unified HUD hit testing with reverse z-order and overlap cycling.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.70 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Render Interception & Fail-Safe Fallback (`ClientPacketListenerMixin`, `MenuScreensConstructorMixin`, `StorageOverlayScreen`):** Intercepted container opening at `INVOKE` of `MenuScreens.create` inside `ClientPacketListenerMixin.handleOpenScreen` on the Minecraft render thread. If `StorageOverlayScreen.enabled(rawTitle)` is satisfied, it creates `StorageOverlayScreenHandler`, assigns `mc.player.containerMenu`, and launches `StorageOverlayScreen` via `mc.gui.setScreen(...)`. If unseeded (`!hasAnyStorage()`), disabled, or if an unexpected exception occurs, `ci.cancel()` is never called, allowing the vanilla GUI (`ContainerScreen`) to open smoothly without locking players out of their containers.

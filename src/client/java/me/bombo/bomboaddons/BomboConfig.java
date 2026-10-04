@@ -782,6 +782,8 @@ public class BomboConfig {
       // Discord Desktop IPC Integration & Voice HUD
       public boolean discordHudEnabled = false;
       public boolean discordHudOnlyInCall = false;
+      public boolean discordHudHideBrand = false;
+      public boolean discordHudShowAvatars = false;
       public int discordHudX = 10;
       public int discordHudY = 120;
       public float discordHudScale = 1.0F;

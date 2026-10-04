@@ -2,6 +2,9 @@ package me.bombo.bomboaddons;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import me.bombo.bomboaddons.cheat.automation.AutoCroesusHud;
 import me.bombo.bomboaddons.cheat.automation.AutoFishing;
 import net.minecraft.client.Minecraft;
@@ -42,6 +45,10 @@ public class HudMoveScreen extends Screen {
     private HudTarget hoveredTarget = null;
     private int lastMouseX = 0;
     private int lastMouseY = 0;
+
+    private final Map<HudTarget, int[]> lastRenderedBounds = new ConcurrentHashMap<>();
+    private final Map<HudTarget, Float> lastRenderedScales = new ConcurrentHashMap<>();
+    private final List<HudTarget> renderedOrder = new CopyOnWriteArrayList<>();
 
     // Visual snapping guide lines
     private Integer snapGuideX = null;
@@ -107,6 +114,9 @@ public class HudMoveScreen extends Screen {
         this.hoveredTarget = null;
         this.snapGuideX = null;
         this.snapGuideY = null;
+        this.lastRenderedBounds.clear();
+        this.lastRenderedScales.clear();
+        this.renderedOrder.clear();
 
         // Dark background overlay
         g.fill(0, 0, this.width, this.height, 0x90000000);
@@ -378,7 +388,7 @@ public class HudMoveScreen extends Screen {
 
         // 17. AUTO_CROESUS
         // Chest value panel (contents + profit per chest) - movable like every other HUD.
-        {
+        if (!s.showOnlyActiveHuds || s.croesusHelper) {
             int w = (int) (280.0F * s.croesusProfitHudScale);
             int h = (int) (200.0F * s.croesusProfitHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.CROESUS_PROFIT, (nx, ny) -> {
@@ -401,7 +411,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 17b. CROESUS_TRACKER (cumulative profit + per-floor)
-        {
+        if (!s.showOnlyActiveHuds || s.croesusProfitTracker) {
             int w = (int) (me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
             int h = (int) (60.0F * s.croesusTrackerHudScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.CROESUS_TRACKER, (nx, ny) -> {
@@ -821,6 +831,11 @@ public class HudMoveScreen extends Screen {
         if (hovered) {
             this.hoveredTarget = target;
         }
+        if (!this.renderedOrder.contains(target)) {
+            this.renderedOrder.add(target);
+        }
+        this.lastRenderedBounds.put(target, new int[]{x, y, w, h});
+        this.lastRenderedScales.put(target, scale);
 
         boolean isSelected = (this.selectedTarget == target);
         boolean isDragged = (this.draggingTarget == target);
@@ -878,6 +893,75 @@ public class HudMoveScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         if (handled) return true;
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
+
+        // 1. Check corner resize on currently selected target first
+        if (this.selectedTarget != null) {
+            int[] b = this.lastRenderedBounds.get(this.selectedTarget);
+            Float sc = this.lastRenderedScales.get(this.selectedTarget);
+            if (b != null && sc != null) {
+                if (this.startCornerResize(mouseX, mouseY, b[0], b[1], b[2], b[3], this.selectedTarget, sc)) {
+                    return true;
+                }
+            }
+        }
+
+        // 2. Find all rendered targets under cursor in reverse order (topmost first)
+        List<HudTarget> underMouse = new ArrayList<>();
+        for (int i = this.renderedOrder.size() - 1; i >= 0; i--) {
+            HudTarget t = this.renderedOrder.get(i);
+            int[] b = this.lastRenderedBounds.get(t);
+            if (b != null && this.checkHit(mouseX, mouseY, b[0], b[1], b[2], b[3])) {
+                if (!underMouse.contains(t)) {
+                    underMouse.add(t);
+                }
+            }
+        }
+
+        // Check corner resize on any target under cursor
+        for (HudTarget t : underMouse) {
+            int[] b = this.lastRenderedBounds.get(t);
+            Float sc = this.lastRenderedScales.get(t);
+            if (b != null && sc != null) {
+                if (this.startCornerResize(mouseX, mouseY, b[0], b[1], b[2], b[3], t, sc)) {
+                    return true;
+                }
+            }
+        }
+
+        if (!underMouse.isEmpty()) {
+            HudTarget targetToSelect;
+            // Overlap cycling: if the user clicks repeatedly on an overlapping cluster, cycle through them
+            if (this.selectedTarget != null && underMouse.contains(this.selectedTarget) && underMouse.size() > 1) {
+                int curIdx = underMouse.indexOf(this.selectedTarget);
+                int nextIdx = (curIdx + 1) % underMouse.size();
+                targetToSelect = underMouse.get(nextIdx);
+            } else {
+                targetToSelect = underMouse.get(0); // Top-most rendered target
+            }
+
+            int[] b = this.lastRenderedBounds.get(targetToSelect);
+            if (b != null) {
+                if (targetToSelect == HudTarget.DICE && (button == 1 || button == 2)) {
+                    BomboConfig.Settings s = BomboConfig.get();
+                    if (s != null) {
+                        s.diceDisplayMode = "Current".equalsIgnoreCase(s.diceDisplayMode) ? "Lifetime" : "Current";
+                        BomboConfig.save();
+                        return true;
+                    }
+                }
+                this.selectAndDrag(targetToSelect, (int) mouseX - b[0], (int) mouseY - b[1]);
+                return true;
+            }
+        }
+
+        this.selectedTarget = null;
+        return super.mouseClicked(event, handled);
+    }
+
+    private boolean legacyMouseClicked(MouseButtonEvent event, boolean handled) {
         BomboConfig.Settings s = BomboConfig.get();
         double mouseX = event.x();
         double mouseY = event.y();
@@ -1055,21 +1139,25 @@ public class HudMoveScreen extends Screen {
         }
 
         // 15b. CROESUS_PROFIT (chest value panel)
-        int cpW = (int) (280.0F * s.croesusProfitHudScale);
-        int cpH = (int) (200.0F * s.croesusProfitHudScale);
-        if (this.startCornerResize(mouseX, mouseY, s.croesusProfitHudX, s.croesusProfitHudY, cpW, cpH, HudTarget.CROESUS_PROFIT, s.croesusProfitHudScale)) return true;
-        if (this.checkHit(mouseX, mouseY, s.croesusProfitHudX, s.croesusProfitHudY, cpW, cpH)) {
-            this.selectAndDrag(HudTarget.CROESUS_PROFIT, (int) mouseX - s.croesusProfitHudX, (int) mouseY - s.croesusProfitHudY);
-            return true;
+        if (!s.showOnlyActiveHuds || s.croesusHelper) {
+            int cpW = (int) (280.0F * s.croesusProfitHudScale);
+            int cpH = (int) (200.0F * s.croesusProfitHudScale);
+            if (this.startCornerResize(mouseX, mouseY, s.croesusProfitHudX, s.croesusProfitHudY, cpW, cpH, HudTarget.CROESUS_PROFIT, s.croesusProfitHudScale)) return true;
+            if (this.checkHit(mouseX, mouseY, s.croesusProfitHudX, s.croesusProfitHudY, cpW, cpH)) {
+                this.selectAndDrag(HudTarget.CROESUS_PROFIT, (int) mouseX - s.croesusProfitHudX, (int) mouseY - s.croesusProfitHudY);
+                return true;
+            }
         }
 
         // 15c. CROESUS_TRACKER (cumulative profit + per-floor)
-        int ctW = (int) (me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
-        int ctH = (int) (60.0F * s.croesusTrackerHudScale);
-        if (this.startCornerResize(mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, ctW, ctH, HudTarget.CROESUS_TRACKER, s.croesusTrackerHudScale)) return true;
-        if (this.checkHit(mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, ctW, ctH)) {
-            this.selectAndDrag(HudTarget.CROESUS_TRACKER, (int) mouseX - s.croesusTrackerHudX, (int) mouseY - s.croesusTrackerHudY);
-            return true;
+        if (!s.showOnlyActiveHuds || s.croesusProfitTracker) {
+            int ctW = (int) (me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.BASE_W * s.croesusTrackerHudScale);
+            int ctH = (int) (60.0F * s.croesusTrackerHudScale);
+            if (this.startCornerResize(mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, ctW, ctH, HudTarget.CROESUS_TRACKER, s.croesusTrackerHudScale)) return true;
+            if (this.checkHit(mouseX, mouseY, s.croesusTrackerHudX, s.croesusTrackerHudY, ctW, ctH)) {
+                this.selectAndDrag(HudTarget.CROESUS_TRACKER, (int) mouseX - s.croesusTrackerHudX, (int) mouseY - s.croesusTrackerHudY);
+                return true;
+            }
         }
 
         // 16. AUTO_CROESUS

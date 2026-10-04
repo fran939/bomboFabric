@@ -94,7 +94,8 @@ public class ScreenshareManager {
 
             Minecraft mc = Minecraft.getInstance();
             if (mc != null && mc.player != null) {
-                String myIgn = mc.player.getScoreboardName();
+                String rawIgn = mc.player.getScoreboardName();
+                String myIgn = rawIgn != null ? net.minecraft.ChatFormatting.stripFormatting(rawIgn).trim() : "player";
                 String streamUrl = "https://bombo.dpdns.org/screenshare?user=" + myIgn;
                 net.minecraft.network.chat.MutableComponent link = Component.literal(streamUrl)
                         .withStyle(style -> style
@@ -459,7 +460,15 @@ public class ScreenshareManager {
         feedback.accept(Component.literal("§7Frames Captured / Sent: §e" + framesCaptured + " §7/ §a" + framesSent));
         feedback.accept(Component.literal("§7Total Bandwidth Sent: §e" + String.format("%.2f", totalBytesSent / 1048576.0) + " MB"));
         feedback.accept(Component.literal("§7Last Stream Error: " + (lastError.isEmpty() ? "§aNone" : "§c" + lastError)));
-        feedback.accept(Component.literal("§7Live Stream Viewer: §b§nhttps://bombo.dpdns.org/screenshare?user=" + myIgn));
+        String cleanIgn = myIgn != null ? net.minecraft.ChatFormatting.stripFormatting(myIgn).trim() : "player";
+        String diagStreamUrl = "https://bombo.dpdns.org/screenshare?user=" + cleanIgn;
+        net.minecraft.network.chat.MutableComponent diagLink = Component.literal(diagStreamUrl)
+                .withStyle(style -> style
+                        .withColor(net.minecraft.ChatFormatting.AQUA)
+                        .withUnderlined(true)
+                        .withClickEvent(new net.minecraft.network.chat.ClickEvent.OpenUrl(URI.create(diagStreamUrl)))
+                        .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick to view live stream on web"))));
+        feedback.accept(Component.literal("§7Live Stream Viewer: ").append(diagLink));
         feedback.accept(Component.literal("§9========================================================"));
     }
 }

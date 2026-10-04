@@ -328,21 +328,29 @@ public class SpotifyManager {
                                     isSpotifyOpen = true;
 
                                     long now = System.currentTimeMillis();
-                                    if (trackChanged || Math.abs(posMs - monotonicProgressMs) > 3000L) {
+                                    if (trackChanged) {
                                         baseProgressMs = posMs;
                                         monotonicProgressMs = posMs;
                                         lastStateUpdate = now;
                                     } else if (nowPlaying) {
-                                        // Smooth drift towards true GSMTC position without sudden backwards jumps
                                         if (posMs > monotonicProgressMs) {
+                                            // GSMTC caught up or track jumped forward
+                                            baseProgressMs = posMs;
+                                            monotonicProgressMs = posMs;
+                                            lastStateUpdate = now;
+                                        } else if (monotonicProgressMs - posMs > 7500L) {
+                                            // Deliberate user seek backwards by > 7.5 seconds
                                             baseProgressMs = posMs;
                                             monotonicProgressMs = posMs;
                                             lastStateUpdate = now;
                                         }
+                                        // Small lag behind current monotonic time (< 7.5s) is ignored so time never stutters backward
                                     } else {
-                                        baseProgressMs = posMs;
-                                        monotonicProgressMs = posMs;
-                                        lastStateUpdate = now;
+                                        if (Math.abs(posMs - monotonicProgressMs) > 1000L) {
+                                            baseProgressMs = posMs;
+                                            monotonicProgressMs = posMs;
+                                            lastStateUpdate = now;
+                                        }
                                     }
 
                                     // Notify LyricsManager of track update

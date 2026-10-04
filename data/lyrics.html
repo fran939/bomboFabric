@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bombo Lyrics - Live Karaoke & Synced Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07090e;
+            --surface: rgba(18, 24, 38, 0.75);
+            --surface-hover: rgba(30, 41, 67, 0.85);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-active: rgba(29, 185, 84, 0.5);
+            --spotify-green: #1db954;
+            --spotify-glow: rgba(29, 185, 84, 0.45);
+            --accent-cyan: #38bdf8;
+            --accent-purple: #a855f7;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --text-dim: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ambient Dynamic Background Glow */
+        .ambient-glow {
+            position: absolute;
+            top: -20%;
+            left: 20%;
+            width: 65vw;
+            height: 65vw;
+            background: radial-gradient(circle, rgba(29, 185, 84, 0.14) 0%, rgba(56, 189, 248, 0.09) 35%, rgba(168, 85, 247, 0.06) 70%, transparent 100%);
+            filter: blur(90px);
+            z-index: 0;
+            pointer-events: none;
+            animation: pulseGlow 14s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.8; }
+            50% { transform: scale(1.15) translate(-4%, 4%); opacity: 1; }
+            100% { transform: scale(0.95) translate(4%, -4%); opacity: 0.7; }
+        }
+
+        /* Top Header */
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 0.85rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(16px);
+            background: rgba(7, 9, 14, 0.82);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, #1db954, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            box-shadow: 0 0 16px var(--spotify-glow);
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.25s ease;
+        }
+
+        .mode-badge.synced {
+            background: rgba(29, 185, 84, 0.15);
+            border: 1px solid rgba(29, 185, 84, 0.4);
+            color: var(--spotify-green);
+        }
+
+        .mode-badge.testing {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: var(--accent-cyan);
+        }
+
+        .dot-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+            box-shadow: 0 0 8px currentColor;
+            animation: pulseDot 1.8s infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* Search Section */
+        .search-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 880px;
+            margin: 0.5rem auto 0;
+            padding: 0 1rem;
+            flex-shrink: 0;
+        }
+
+        .search-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 0.75rem 1rem;
+            backdrop-filter: blur(14px);
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        .search-inputs {
+            display: flex;
+            gap: 0.6rem;
+            width: 100%;
+        }
+
+        .search-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.6rem 0.9rem;
+            color: #fff;
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--spotify-green);
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 0 12px rgba(29, 185, 84, 0.25);
+        }
+
+        .search-input::placeholder {
+            color: #64748b;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #1db954, #10b981);
+            color: #000;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: none;
+            border-radius: 10px;
+            padding: 0 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px var(--spotify-glow);
+            white-space: nowrap;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+        }
+
+        .search-btn:active {
+            transform: translateY(1px);
+        }
+
+        .presets-row {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+        }
+
+        .presets-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .presets-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .preset-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 9999px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .preset-chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Player Layout */
+        .player-layout {
+            position: relative;
+            z-index: 5;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0.4rem 1.5rem 0.65rem;
+            overflow: hidden;
+        }
+
+        /* Now Playing Header Card */
+        .song-card {
+            width: 100%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            padding: 0.65rem 1.25rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .album-art {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
+        }
+
+        .song-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .song-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #fff;
+        }
+
+        .song-artist {
+            font-size: 0.92rem;
+            color: var(--text-sub);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sync-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-sub);
+            border-radius: 10px;
+            padding: 0.45rem 0.85rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .sync-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* Synced Lyrics Scroll Area */
+        .lyrics-container {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            margin: 0.4rem 0;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8vh 1rem;
+            mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+        }
+
+        .lyrics-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .lyrics-placeholder {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 1.05rem;
+            padding: 4rem 1rem;
+            line-height: 1.6;
+        }
+
+        .lyric-line {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.25);
+            margin: 0.65rem 0;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            max-width: 800px;
+            user-select: none;
+            transform-origin: center center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+        }
+
+        .lyric-line:hover {
+            color: rgba(255, 255, 255, 0.65);
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .lyric-line.active {
+            color: #fff;
+            transform: scale(1.07);
+            text-shadow: 0 0 24px rgba(255, 255, 255, 0.35);
+        }
+
+        /* Word-by-Word Karaoke Elements */
+        .word {
+            display: inline-block;
+            margin-right: 0.28em;
+            white-space: pre-wrap;
+            transition: color 0.15s ease, text-shadow 0.15s ease, transform 0.15s ease;
+        }
+
+        .word.sung {
+            color: #ffffff;
+            opacity: 0.95;
+        }
+
+        .lyric-line.active .word.current {
+            color: #ffffff;
+            text-shadow: 0 0 16px rgba(29, 185, 84, 0.95), 0 0 30px rgba(29, 185, 84, 0.6);
+            transform: scale(1.08);
+            font-weight: 800;
+        }
+
+        .word.upcoming {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* Player Controls & Scrubber Footer */
+        .player-footer {
+            flex-shrink: 0;
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 0.65rem 1.4rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .progress-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            width: 100%;
+        }
+
+        .time-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-sub);
+            min-width: 44px;
+        }
+
+        .time-label.right {
+            text-align: right;
+        }
+
+        .progress-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: height 0.15s ease;
+        }
+
+        .progress-bar-bg:hover {
+            height: 9px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #1db954, #38bdf8);
+            border-radius: 9999px;
+            position: relative;
+            box-shadow: 0 0 12px rgba(29, 185, 84, 0.5);
+            transition: width 0.1s linear;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .controls-left, .controls-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 120px;
+        }
+
+        .controls-right {
+            justify-content: flex-end;
+        }
+
+        .controls-center {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .ctrl-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            font-size: 1.15rem;
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .ctrl-btn:hover {
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .play-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #fff;
+            color: #000;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 24px rgba(255, 255, 255, 0.6);
+        }
+
+        .speed-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-sub);
+            font-size: 0.75rem;
+            font-family: inherit;
+            padding: 3px 8px;
+            border-radius: 6px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .speed-select:hover {
+            color: #fff;
+        }
+
+        .shortcut-hint {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <header>
+        <a href="#" class="brand">
+            <div class="brand-icon">🎵</div>
+            <div class="brand-title">Bombo Lyrics</div>
+        </a>
+
+        <div class="header-actions">
+            <div class="mode-badge synced" id="modeBadge">
+                <span class="dot-indicator"></span>
+                <span id="modeText">Synced to Game</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Top Search & Test Toolbar -->
+    <div class="search-container">
+        <div class="search-card">
+            <div class="search-inputs">
+                <input type="text" id="inputSong" class="search-input" placeholder="Song title (e.g. Blinding Lights, Starboy, Viva La Vida)...">
+                <input type="text" id="inputArtist" class="search-input" style="max-width: 260px;" placeholder="Artist (optional)...">
+                <button type="button" id="btnSearch" class="search-btn">
+                    <span>🔍</span> Search & Sync
+                </button>
+            </div>
+            <div class="presets-row">
+                <span class="presets-label">Popular:</span>
+                <button type="button" class="preset-chip" onclick="searchPreset('Blinding Lights', 'The Weeknd')">✨ Blinding Lights</button>
+                <button type="button" class="preset-chip" onclick="searchPreset('Viva La Vida', 'Coldplay')">👑 Viva La Vida</button>
+                <button type="button" class="preset-chip" onclick="searchPreset('Shape of You', 'Ed Sheeran')">🎸 Shape of You</button>
+                <button type="button" class="preset-chip" onclick="searchPreset('Bohemian Rhapsody', 'Queen')">⚡ Bohemian Rhapsody</button>
+                <button type="button" class="preset-chip" onclick="searchPreset('Believer', 'Imagine Dragons')">🔥 Believer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Player Layout -->
+    <div class="player-layout">
+        <!-- Now Playing Card -->
+        <div class="song-card">
+            <div class="album-art" id="albumArt">💿</div>
+            <div class="song-details">
+                <div class="song-title" id="songTitle">Waiting for song or search...</div>
+                <div class="song-artist" id="songArtist">Search any song above or play Spotify in-game</div>
+            </div>
+            <button type="button" class="sync-btn" id="btnSyncToggle" onclick="toggleSyncMode()">
+                <span id="syncIcon">🔄</span> <span id="syncBtnText">Sync with Game</span>
+            </button>
+        </div>
+
+        <!-- Lyrics Container -->
+        <div class="lyrics-container" id="lyricsContainer">
+            <div class="lyrics-placeholder">
+                <p>🔍 Search any song and artist above to test synced lyrics</p>
+                <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #475569;">Click Play to simulate playback, scrub anywhere on the bar, or click any lyric line to jump!</p>
+            </div>
+
+            <!-- Provider Selection & Raw Lyrics Row -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 1.4rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); font-size: 0.8rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; overflow-x: auto;">
+                    <span style="color: var(--text-sub); font-size: 0.75rem;">Provider:</span>
+                    <button type="button" class="chip active" id="prov-auto" onclick="switchProvider('auto')">Auto</button>
+                    <button type="button" class="chip" id="prov-lrclib" onclick="switchProvider('lrclib')">LRCLIB</button>
+                    <button type="button" class="chip" id="prov-kugou" onclick="switchProvider('kugou')">KuGou</button>
+                    <button type="button" class="chip" id="prov-paxsenix" onclick="switchProvider('paxsenix')">Paxsenix</button>
+                    <button type="button" class="chip" id="prov-youly" onclick="switchProvider('youlyplus')">YouLyPlus</button>
+                </div>
+                <div>
+                    <button type="button" class="chip" onclick="openRawModal()" style="border-color: rgba(255,255,255,0.2); color: #fff;">📜 View Raw</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw Lyrics Modal -->
+        <div id="rawModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 640px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.8);">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--border);">
+                    <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">Raw Lyrics (LRC)</span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" class="chip" onclick="copyRawLyrics()" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">📋 Copy</button>
+                        <button type="button" class="chip" onclick="closeRawModal()" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);">✕ Close</button>
+                    </div>
+                </div>
+                <pre id="rawContent" style="padding: 1rem; overflow-y: auto; color: var(--text-sub); font-family: monospace; font-size: 0.82rem; white-space: pre-wrap; line-height: 1.6; margin: 0;"></pre>
+            </div>
+        </div>
+
+        <!-- Player Footer Controls -->
+        <div class="player-footer">
+            <div class="progress-bar-wrap">
+                <span class="time-label" id="timeCurrent">0:00</span>
+                <div class="progress-bar-bg" id="progressBar" onclick="seekTrack(event)">
+                    <div class="progress-bar-fill" id="progressFill"></div>
+                </div>
+                <span class="time-label right" id="timeTotal">0:00</span>
+            </div>
+
+            <div class="controls-row">
+                <div class="controls-left">
+                    <span class="shortcut-hint">Space: Play/Pause • Arrows: ±5s</span>
+                </div>
+
+                <div class="controls-center">
+                    <button type="button" class="ctrl-btn" onclick="restartTrack()" title="Restart">⏮</button>
+                    <button type="button" class="ctrl-btn" onclick="jumpSeconds(-5)" title="Rewind 5s">⏪</button>
+                    <button type="button" class="play-btn" id="playBtn" onclick="togglePlayPause()">▶</button>
+                    <button type="button" class="ctrl-btn" onclick="jumpSeconds(5)" title="Forward 5s">⏩</button>
+                </div>
+
+                <div class="controls-right">
+                    <span style="font-size: 0.75rem; color: var(--text-sub);">Speed:</span>
+                    <select class="speed-select" id="speedSelect" onchange="changeSpeed(this.value)">
+                        <option value="0.75">0.75x</option>
+                        <option value="1.0" selected>1.0x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2.0">2.0x</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isSyncEnabled = true;
+        let isPlaying = false;
+        let currentProgressMs = 0;
+        let totalDurationMs = 180000;
+        let playbackRate = 1.0;
+        let lastTimestamp = performance.now();
+        let lyricsLines = [];
+        let activeLineIndex = -1;
+        let currentTitle = "";
+        let currentArtist = "";
+
+        // Elements
+        const songTitleEl = document.getElementById("songTitle");
+        const songArtistEl = document.getElementById("songArtist");
+        const albumArtEl = document.getElementById("albumArt");
+        const lyricsContainer = document.getElementById("lyricsContainer");
+        const timeCurrentEl = document.getElementById("timeCurrent");
+        const timeTotalEl = document.getElementById("timeTotal");
+        const progressFill = document.getElementById("progressFill");
+        const playBtn = document.getElementById("playBtn");
+        const modeBadge = document.getElementById("modeBadge");
+        const modeText = document.getElementById("modeText");
+        const syncBtnText = document.getElementById("syncBtnText");
+        let currentRawLyrics = "";
+        let selectedProvider = "auto";
+
+        function switchProvider(prov) {
+            selectedProvider = prov;
+            ["auto", "lrclib", "kugou", "paxsenix", "youly"].forEach(id => {
+                const btn = document.getElementById("prov-" + id);
+                if (btn) {
+                    if ((id === "youly" && prov === "youlyplus") || id === prov) {
+                        btn.className = "chip active";
+                        btn.style.borderColor = "var(--spotify-green)";
+                        btn.style.color = "var(--spotify-green)";
+                    } else {
+                        btn.className = "chip";
+                        btn.style.borderColor = "";
+                        btn.style.color = "";
+                    }
+                }
+            });
+            if (currentTitle) {
+                executeSearch(currentTitle, currentArtist);
+            }
+        }
+
+        function openRawModal() {
+            document.getElementById("rawContent").textContent = currentRawLyrics || "No lyrics loaded yet.";
+            document.getElementById("rawModal").style.display = "flex";
+        }
+
+        function closeRawModal() {
+            document.getElementById("rawModal").style.display = "none";
+        }
+
+        function copyRawLyrics() {
+            if (currentRawLyrics) {
+                navigator.clipboard.writeText(currentRawLyrics);
+                alert("Raw lyrics copied to clipboard!");
+            }
+        }
+
+        function formatTime(ms) {
+            const totalSec = Math.max(0, Math.floor(ms / 1000));
+            const m = Math.floor(totalSec / 60);
+            const s = totalSec % 60;
+            return m + ":" + (s < 10 ? "0" : "") + s;
+        }
+
+        // Search Handlers
+        document.getElementById("btnSearch").addEventListener("click", () => {
+            const title = document.getElementById("inputSong").value.trim();
+            const artist = document.getElementById("inputArtist").value.trim();
+            if (title) executeSearch(title, artist);
+        });
+
+        document.getElementById("inputSong").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                const title = document.getElementById("inputSong").value.trim();
+                const artist = document.getElementById("inputArtist").value.trim();
+                if (title) executeSearch(title, artist);
+            }
+        });
+
+        function searchPreset(title, artist) {
+            document.getElementById("inputSong").value = title;
+            document.getElementById("inputArtist").value = artist;
+            executeSearch(title, artist);
+        }
+
+        async function executeSearch(title, artist) {
+            setTestMode();
+            currentTitle = title;
+            currentArtist = artist || "Unknown Artist";
+            songTitleEl.textContent = currentTitle;
+            songArtistEl.textContent = currentArtist;
+
+            lyricsContainer.innerHTML = '<div class="lyrics-placeholder"><p>⚡ Searching synced lyrics for <b>' + escapeHtml(currentTitle) + '</b>...</p></div>';
+
+            try {
+                const url = "/api/lyrics/resolve?title=" + encodeURIComponent(title) + "&artist=" + encodeURIComponent(artist) + (selectedProvider !== "auto" ? "&provider=" + encodeURIComponent(selectedProvider) : "");
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.lrc) {
+                        if (data.title) songTitleEl.textContent = data.title;
+                        if (data.artist) songArtistEl.textContent = data.artist;
+                        if (data.durationMs) totalDurationMs = data.durationMs;
+                        parseAndRenderLrc(data.lrc);
+                        currentProgressMs = 0;
+                        isPlaying = true;
+                        playBtn.textContent = "⏸";
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error("Resolve error:", e);
+            }
+
+            // Fallback direct LRCLIB search
+            try {
+                const r = await fetch("https://lrclib.net/api/search?q=" + encodeURIComponent(title + " " + artist));
+                if (r.ok) {
+                    const d = await r.json();
+                    const item = Array.isArray(d) ? d[0] : null;
+                    if (item && item.syncedLyrics) {
+                        if (item.duration) totalDurationMs = Math.round(item.duration * 1000);
+                        parseAndRenderLrc(item.syncedLyrics);
+                        currentProgressMs = 0;
+                        isPlaying = true;
+                        playBtn.textContent = "⏸";
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            lyricsContainer.innerHTML = '<div class="lyrics-placeholder"><p style="color: #ef4444;">❌ No synchronized lyrics found for "' + escapeHtml(title) + '".</p><p style="font-size: 0.85rem; margin-top: 0.5rem; color: #64748b;">Try adding the artist name or search another popular song above.</p></div>';
+        }
+
+        function setTestMode() {
+            isSyncEnabled = false;
+            modeBadge.className = "mode-badge testing";
+            modeText.textContent = "Interactive Test Player";
+            syncBtnText.textContent = "Resume Game Sync";
+        }
+
+        function toggleSyncMode() {
+            isSyncEnabled = !isSyncEnabled;
+            if (isSyncEnabled) {
+                modeBadge.className = "mode-badge synced";
+                modeText.textContent = "Synced to Game";
+                syncBtnText.textContent = "Test Mode";
+                fetchNowPlaying();
+            } else {
+                setTestMode();
+            }
+        }
+
+        async function fetchNowPlaying() {
+            if (!isSyncEnabled) return;
+            try {
+                const res = await fetch("/api/spotify/now-playing");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.title && (data.title !== currentTitle || data.artist !== currentArtist)) {
+                        currentTitle = data.title;
+                        currentArtist = data.artist || "Unknown Artist";
+                        totalDurationMs = data.durationMs || 180000;
+                        songTitleEl.textContent = currentTitle;
+                        songArtistEl.textContent = currentArtist;
+                        loadLyrics(currentTitle, currentArtist);
+                    }
+                    if (data.durationMs) totalDurationMs = data.durationMs;
+                    if (typeof data.isPlaying === "boolean") {
+                        isPlaying = data.isPlaying;
+                        playBtn.textContent = isPlaying ? "⏸" : "▶";
+                    }
+                    if (typeof data.currentProgressMs === "number") {
+                        if (Math.abs(currentProgressMs - data.currentProgressMs) > 1500) {
+                            currentProgressMs = data.currentProgressMs;
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function loadLyrics(title, artist) {
+            try {
+                const res = await fetch("/api/lyrics/resolve?title=" + encodeURIComponent(title) + "&artist=" + encodeURIComponent(artist));
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.lrc) {
+                        parseAndRenderLrc(data.lrc);
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                const r = await fetch("https://lrclib.net/api/search?q=" + encodeURIComponent(title + " " + artist));
+                if (r.ok) {
+                    const d = await r.json();
+                    const item = Array.isArray(d) ? d[0] : null;
+                    if (item && item.syncedLyrics) {
+                        parseAndRenderLrc(item.syncedLyrics);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function parseAndRenderLrc(lrcText) {
+            currentRawLyrics = lrcText;
+            lyricsLines = [];
+            activeLineIndex = -1;
+            const lines = lrcText.split('\n');
+            const timeRegex = /\[(\d{1,2}):(\d{2})(?:\.|:)(\d{2,3})\](.*)/;
+
+            for (const line of lines) {
+                const match = line.match(timeRegex);
+                if (match) {
+                    const min = parseInt(match[1]);
+                    const sec = parseInt(match[2]);
+                    const ms = parseInt(match[3].padEnd(3, '0').slice(0, 3));
+                    const timeMs = min * 60000 + sec * 1000 + ms;
+                    let text = match[4].trim();
+                    text = text.replace(/\{[^}]+\}/g, '').trim();
+                    if (!text) continue;
+
+                    // Check for word-by-word timestamps: <mm:ss.xxx>word
+                    const wordTagRegex = /<(\d{1,2}):(\d{2})(?:\.|:)(\d{2,3})>([^<]+)/g;
+                    let wMatch;
+                    const words = [];
+                    while ((wMatch = wordTagRegex.exec(text)) !== null) {
+                        const wMin = parseInt(wMatch[1]);
+                        const wSec = parseInt(wMatch[2]);
+                        const wMs = parseInt(wMatch[3].padEnd(3, '0').slice(0, 3));
+                        const wStart = wMin * 60000 + wSec * 1000 + wMs;
+                        const wText = wMatch[4].trim();
+                        if (wText) {
+                            words.push({ word: wText, startMs: wStart });
+                        }
+                    }
+
+                    if (words.length > 0) {
+                        for (let w = 0; w < words.length; w++) {
+                            words[w].endMs = (w + 1 < words.length) ? words[w + 1].startMs : (timeMs + 4000);
+                        }
+                        const cleanText = words.map(w => w.word).join(" ");
+                        lyricsLines.push({ timeMs, text: cleanText, words, hasWordSync: true });
+                    } else {
+                        const cleanText = text.replace(/<[^>]+>/g, '').trim();
+                        const wordTokens = cleanText.split(/\s+/).filter(w => w.length > 0).map(w => ({ word: w }));
+                        lyricsLines.push({ timeMs, text: cleanText, words: wordTokens, hasWordSync: false });
+                    }
+                }
+            }
+
+            lyricsLines.sort((a, b) => a.timeMs - b.timeMs);
+            renderLyricsDom();
+        }
+
+        function renderLyricsDom() {
+            lyricsContainer.innerHTML = "";
+            lyricsLines.forEach((l, idx) => {
+                const lineDiv = document.createElement("div");
+                lineDiv.className = "lyric-line";
+                lineDiv.id = "lyric-" + idx;
+                lineDiv.dataset.state = "upcoming";
+                lineDiv.onclick = () => {
+                    currentProgressMs = l.timeMs;
+                    lastTimestamp = performance.now();
+                };
+
+                l.words.forEach((w, widx) => {
+                    const sp = document.createElement("span");
+                    sp.className = "word upcoming";
+                    sp.id = "word-" + idx + "-" + widx;
+                    sp.textContent = w.word;
+                    lineDiv.appendChild(sp);
+                    if (widx < l.words.length - 1) {
+                        lineDiv.appendChild(document.createTextNode(" "));
+                    }
+                });
+
+                lyricsContainer.appendChild(lineDiv);
+            });
+        }
+
+        function updateFrame() {
+            const now = performance.now();
+            const dt = (now - lastTimestamp) * playbackRate;
+            lastTimestamp = now;
+
+            if (isPlaying) {
+                currentProgressMs += dt;
+                if (totalDurationMs > 0 && currentProgressMs > totalDurationMs) {
+                    currentProgressMs = totalDurationMs;
+                    isPlaying = false;
+                    playBtn.textContent = "▶";
+                }
+            }
+
+            timeCurrentEl.textContent = formatTime(currentProgressMs);
+            timeTotalEl.textContent = formatTime(totalDurationMs);
+            const ratio = totalDurationMs > 0 ? (currentProgressMs / totalDurationMs) : 0;
+            progressFill.style.width = (Math.min(100, Math.max(0, ratio * 100))) + "%";
+
+            // Find Active Line
+            let newActiveIdx = -1;
+            for (let i = 0; i < lyricsLines.length; i++) {
+                if (currentProgressMs >= lyricsLines[i].timeMs) {
+                    newActiveIdx = i;
+                } else {
+                    break;
+                }
+            }
+
+            if (newActiveIdx !== activeLineIndex && newActiveIdx !== -1) {
+                if (activeLineIndex !== -1) {
+                    const prevEl = document.getElementById("lyric-" + activeLineIndex);
+                    if (prevEl) {
+                        prevEl.classList.remove("active");
+                        prevEl.querySelectorAll(".word").forEach(w => w.className = "word sung");
+                    }
+                }
+                activeLineIndex = newActiveIdx;
+                const activeEl = document.getElementById("lyric-" + activeLineIndex);
+                if (activeEl) {
+                    activeEl.classList.add("active");
+                    const containerHeight = lyricsContainer.clientHeight;
+                    const elOffsetTop = activeEl.offsetTop;
+                    const elHeight = activeEl.clientHeight;
+                    lyricsContainer.scrollTo({
+                        top: elOffsetTop - (containerHeight / 2) + (elHeight / 2),
+                        behavior: 'smooth'
+                    });
+                }
+            }
+
+            // Clean up states of past and future lines to avoid lingering classes
+            for (let i = 0; i < lyricsLines.length; i++) {
+                if (i < activeLineIndex) {
+                    const pastEl = document.getElementById("lyric-" + i);
+                    if (pastEl && pastEl.dataset.state !== "sung") {
+                        pastEl.dataset.state = "sung";
+                        pastEl.classList.remove("active");
+                        pastEl.querySelectorAll(".word").forEach(w => w.className = "word sung");
+                    }
+                } else if (i > activeLineIndex) {
+                    const futureEl = document.getElementById("lyric-" + i);
+                    if (futureEl && futureEl.dataset.state !== "upcoming") {
+                        futureEl.dataset.state = "upcoming";
+                        futureEl.classList.remove("active");
+                        futureEl.querySelectorAll(".word").forEach(w => w.className = "word upcoming");
+                    }
+                }
+            }
+
+            // Word-by-word karaoke progression for active line
+            if (activeLineIndex !== -1 && lyricsLines[activeLineIndex]) {
+                const currentLine = lyricsLines[activeLineIndex];
+                if (currentLine.hasWordSync) {
+                    currentLine.words.forEach((w, widx) => {
+                        const wordEl = document.getElementById("word-" + activeLineIndex + "-" + widx);
+                        if (wordEl) {
+                            if (currentProgressMs >= w.endMs) {
+                                wordEl.className = "word sung";
+                            } else if (currentProgressMs >= w.startMs) {
+                                wordEl.className = "word current";
+                            } else {
+                                wordEl.className = "word upcoming";
+                            }
+                        }
+                    });
+                } else {
+                    const nextLineTime = (activeLineIndex + 1 < lyricsLines.length) ? lyricsLines[activeLineIndex + 1].timeMs : (currentLine.timeMs + 3800);
+                    const lineDuration = Math.max(1000, nextLineTime - currentLine.timeMs);
+                    const lineElapsed = Math.max(0, currentProgressMs - currentLine.timeMs);
+                    const lineRatio = Math.min(1, lineElapsed / lineDuration);
+                    const totalWords = currentLine.words.length;
+                    const currentWordIdx = Math.floor(lineRatio * totalWords);
+
+                    currentLine.words.forEach((w, widx) => {
+                        const wordEl = document.getElementById("word-" + activeLineIndex + "-" + widx);
+                        if (wordEl) {
+                            if (widx < currentWordIdx) {
+                                wordEl.className = "word sung";
+                            } else if (widx === currentWordIdx) {
+                                wordEl.className = "word current";
+                            } else {
+                                wordEl.className = "word upcoming";
+                            }
+                        }
+                    });
+                }
+            }
+
+            requestAnimationFrame(updateFrame);
+        }
+
+        function togglePlayPause() {
+            isPlaying = !isPlaying;
+            playBtn.textContent = isPlaying ? "⏸" : "▶";
+            lastTimestamp = performance.now();
+        }
+
+        function restartTrack() {
+            currentProgressMs = 0;
+            lastTimestamp = performance.now();
+        }
+
+        function jumpSeconds(sec) {
+            currentProgressMs = Math.max(0, Math.min(totalDurationMs, currentProgressMs + (sec * 1000)));
+            lastTimestamp = performance.now();
+        }
+
+        function seekTrack(event) {
+            const rect = document.getElementById("progressBar").getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+            currentProgressMs = ratio * totalDurationMs;
+            lastTimestamp = performance.now();
+        }
+
+        function changeSpeed(val) {
+            playbackRate = parseFloat(val) || 1.0;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+        }
+
+        // Keyboard Shortcuts
+        window.addEventListener("keydown", (e) => {
+            if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return;
+            if (e.code === "Space") {
+                e.preventDefault();
+                togglePlayPause();
+            } else if (e.code === "ArrowLeft") {
+                jumpSeconds(-5);
+            } else if (e.code === "ArrowRight") {
+                jumpSeconds(5);
+            }
+        });
+
+        // Start
+        setInterval(fetchNowPlaying, 1500);
+        requestAnimationFrame(updateFrame);
+    </script>
+</body>
+</html>

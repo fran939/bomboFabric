@@ -219,7 +219,8 @@ public abstract class ChatMixin implements IChatComponent {
             me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, false, me.bombo.bomboaddons.features.chat.ChatHistoryTracker.detectCategory(raw));
 
             if (raw.contains("[SHOW:")) {
-               Component formatted = me.bombo.bomboaddons.IRCClient.formatWithLinks(raw);
+               String formattedRaw = me.bombo.bomboaddons.SkyblockUtils.getFormattedComponentText(message);
+               Component formatted = me.bombo.bomboaddons.IRCClient.formatWithLinks(formattedRaw);
                if (formatted != null && !formatted.getString().equals(raw)) {
                   ci.cancel();
                   isFormattingMessage.set(true);
@@ -511,12 +512,30 @@ public abstract class ChatMixin implements IChatComponent {
    }
 
    @Unique
+   private static boolean hasAnyClickOrHover(Component component) {
+      if (component == null) return false;
+      boolean[] found = new boolean[]{false};
+      component.visit((style, text) -> {
+         if (style != null && (style.getClickEvent() != null || style.getHoverEvent() != null)) {
+            found[0] = true;
+            return Optional.of(false);
+         }
+         return Optional.empty();
+      }, Style.EMPTY);
+      return found[0];
+   }
+
+   @Unique
    private static Component makeChatCommandsClickable(Component message) {
       if (message == null) {
+         return message;
+      } else if (hasAnyClickOrHover(message)) {
          return message;
       } else {
          String raw = message.getString();
          if (!raw.contains("/")) {
+            return message;
+         } else if (raw.contains("http://") || raw.contains("https://") || raw.contains("www.")) {
             return message;
          } else if (raw.startsWith("[DailyRewardDebug")) {
             return message;

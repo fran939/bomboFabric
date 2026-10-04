@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import net.fabricmc.loader.api.FabricLoader;
@@ -29,13 +30,15 @@ public class ModUpdater {
    private static final Path PENDING_DELETE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons_pending_delete.txt");
 
    public static void init() {
+      // 1. Process pending delete queue
       if (Files.exists(PENDING_DELETE, new LinkOption[0])) {
          try {
             List<String> lines = Files.readAllLines(PENDING_DELETE, StandardCharsets.UTF_8);
             File currentJar = getCurrentJar();
             String currentPath = currentJar != null ? currentJar.getAbsolutePath() : "";
+            List<String> remaining = new ArrayList<>();
 
-            for(String line : lines) {
+            for (String line : lines) {
                String oldJarPath = line.trim();
                if (!oldJarPath.isEmpty()) {
                   File oldJar = new File(oldJarPath);
@@ -43,18 +46,69 @@ public class ModUpdater {
                      if (oldJar.delete()) {
                         Bomboaddons.LOGGER.info("[BomboAddons] Deleted old version: " + oldJarPath);
                      } else {
-                        Bomboaddons.LOGGER.warn("[BomboAddons] FAILED to delete old version: " + oldJarPath);
+                        remaining.add(oldJarPath);
+                        scheduleDetachedDeleteOnExit(oldJar);
                      }
                   }
                }
             }
 
-            Files.deleteIfExists(PENDING_DELETE);
+            if (remaining.isEmpty()) {
+               Files.deleteIfExists(PENDING_DELETE);
+            } else {
+               Files.write(PENDING_DELETE, remaining, StandardCharsets.UTF_8);
+            }
          } catch (Exception e) {
             e.printStackTrace();
          }
       }
 
+      // 2. Scan mods folder for any older duplicates of our flavor that were left behind
+      scanAndCleanupOldFlavorJars();
+   }
+
+   public static void scheduleDetachedDeleteOnExit(File jarFile) {
+      if (jarFile == null || !jarFile.exists()) return;
+      try {
+         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+               String os = System.getProperty("os.name", "").toLowerCase();
+               if (os.contains("win")) {
+                  String cmd = "cmd.exe /c \"ping 127.0.0.1 -n 3 >nul & del /f /q \\\"" + jarFile.getAbsolutePath() + "\\\"\"";
+                  Runtime.getRuntime().exec(cmd);
+               } else {
+                  String cmd = "sh -c \"sleep 2; rm -f '" + jarFile.getAbsolutePath() + "'\"";
+                  Runtime.getRuntime().exec(cmd);
+               }
+            } catch (Throwable ignored) {}
+         }, "Bombo-JarDeleteHook"));
+      } catch (Throwable ignored) {}
+   }
+
+   public static void scanAndCleanupOldFlavorJars() {
+      try {
+         Path modsFolder = FabricLoader.getInstance().getGameDir().resolve("mods");
+         File currentJar = getCurrentJar();
+         String currentPath = currentJar != null ? currentJar.getAbsolutePath() : "";
+         String prefix = Constants.artifactFilePrefix();
+
+         if (Files.exists(modsFolder)) {
+            try (Stream<Path> stream = Files.list(modsFolder)) {
+               stream.filter(p -> p.getFileName().toString().startsWith(prefix) && p.getFileName().toString().endsWith(".jar"))
+                     .filter(p -> currentPath.isEmpty() || !p.toAbsolutePath().toString().equals(currentPath))
+                     .forEach(p -> {
+                        File oldFile = p.toFile();
+                        if (oldFile.exists()) {
+                           if (oldFile.delete()) {
+                              Bomboaddons.LOGGER.info("[BomboAddons] Cleaned up duplicate/old jar: " + oldFile.getName());
+                           } else {
+                              scheduleDetachedDeleteOnExit(oldFile);
+                           }
+                        }
+                     });
+            }
+         }
+      } catch (Throwable ignored) {}
    }
 
    public static void checkAndUpdate(boolean silent) {
@@ -317,7 +371,10 @@ public class ModUpdater {
                      stream.filter((p) -> p.getFileName().toString().startsWith(Constants.artifactFilePrefix())
                                  && p.getFileName().toString().endsWith(".jar"))
                            .filter((p) -> !p.equals(newJarFile.toPath()))
-                           .forEach((p) -> pending.append(p.toAbsolutePath().toString()).append("\n"));
+                           .forEach((p) -> {
+                              pending.append(p.toAbsolutePath().toString()).append("\n");
+                              scheduleDetachedDeleteOnExit(p.toFile());
+                           });
                   }
                }
 

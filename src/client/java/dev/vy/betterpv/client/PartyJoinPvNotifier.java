@@ -56,17 +56,8 @@ public final class PartyJoinPvNotifier {
 
 	/** Queue a delayed BPV line for a party-join player name. */
 	public static void schedule(String name) {
-		String cleaned = valid(name);
-		if (cleaned == null) {
-			return;
-		}
-		long now = System.currentTimeMillis();
-		String key = cleaned.toLowerCase(Locale.ROOT);
-		Long last = RECENT.put(key, now);
-		if (last != null && now - last < DEDUPE_MS) {
-			return;
-		}
-		PENDING.add(new Pending(cleaned, now + DELAY_MS));
+		// Disabled per user request to remove [BPV] Click to open <player>'s pv announcement
+		return;
 	}
 
 	private static void onLiveMessage(Component message) {

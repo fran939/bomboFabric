@@ -288,10 +288,15 @@ public class BomboaddonsClient implements ClientModInitializer {
         public String text;
         public String color;
         public String command;
+        public ClickEvent clickEvent;
         public NpcOptionItem(String text, String color, String command) {
+            this(text, color, command, null);
+        }
+        public NpcOptionItem(String text, String color, String command, ClickEvent clickEvent) {
             this.text = text;
             this.color = color;
             this.command = command;
+            this.clickEvent = clickEvent;
         }
     }
     public static final Map<String, Set<String>> npcClickedOptions = new HashMap<>();
@@ -5686,7 +5691,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }
                }
 
-               if ((BomboConfig.get().autoAcceptNpcLore || BomboConfig.get().autoHoppityCalls) && !overlay) {
+               if ((BomboConfig.get().autoAcceptNpcLore || BomboConfig.get().autoHoppityCalls || BomboConfig.get().autoHoppityConfirm) && !overlay) {
                   if (plain.contains("[Debug]")) {
                      return true;
                   }
@@ -5767,7 +5772,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                         if (patt0$temp instanceof ClickEvent.RunCommand runCmd) {
                            String t = text.trim();
                            if (!t.isEmpty() && !t.equals("[") && !t.equals("]")) {
-                              options.add(new NpcOptionItem(t, style.getColor() != null ? style.getColor().toString() : "none", runCmd.command()));
+                              options.add(new NpcOptionItem(t, style.getColor() != null ? style.getColor().toString() : "none", runCmd.command(), patt0$temp));
                            }
                         }
 
@@ -5835,11 +5840,31 @@ public class BomboaddonsClient implements ClientModInitializer {
                               cmd = cmd.substring(1);
                            }
 
-                           if (BomboConfig.get().npcLoreDebug && Minecraft.getInstance().player != null) {
-                              Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §d[Debug] §aExecuting: §e/" + cmd + " §7for option: §e" + toClick.text));
+                           Minecraft mc = Minecraft.getInstance();
+                           if (BomboConfig.get().npcLoreDebug && mc.player != null) {
+                              mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §d[Debug] §aExecuting: §e/" + cmd + " §7for option: §e" + toClick.text));
                            }
 
-                           Minecraft.getInstance().getConnection().sendCommand(cmd);
+                           if (toClick.clickEvent != null) {
+                              final ClickEvent ce = toClick.clickEvent;
+                              final String fallbackCmd = cmd;
+                              mc.execute(() -> {
+                                 try {
+                                    me.bombo.bomboaddons.mixin.ScreenAccessor.invokeDefaultHandleGameClickEvent(ce, mc, mc.gui.screen());
+                                 } catch (Throwable t) {
+                                    if (mc.getConnection() != null) {
+                                       mc.getConnection().sendCommand(fallbackCmd);
+                                    }
+                                 }
+                              });
+                           } else {
+                              final String finalCmd = cmd;
+                              mc.execute(() -> {
+                                 if (mc.getConnection() != null) {
+                                    mc.getConnection().sendCommand(finalCmd);
+                                 }
+                              });
+                           }
                         } else if (BomboConfig.get().npcLoreDebug && Minecraft.getInstance().player != null) {
                            Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §c[Debug] §7All options exhausted for this NPC prompt."));
                         }
@@ -8123,7 +8148,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       if (clickEvent instanceof ClickEvent.RunCommand runCmd) {
          String t = component.getString().trim();
          if (!t.isEmpty() && !t.equals("[") && !t.equals("]")) {
-            options.add(new NpcOptionItem(t, (style.getColor() != null ? style.getColor().toString() : "none"), runCmd.command()));
+            options.add(new NpcOptionItem(t, (style.getColor() != null ? style.getColor().toString() : "none"), runCmd.command(), clickEvent));
          }
       }
       for (Component sib : component.getSiblings()) {

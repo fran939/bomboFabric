@@ -1,5 +1,38 @@
 # BomboAddons Changelog
  
+## [26.2.28.71] - 2026-10-04 (Beta)
+
+### Mod Updater Stale Flavor Cleanup
+- **Automatic Old Flavor Removal:** Automatically detects and purges older version jars of the active flavor (e.g. `bomboclient-26.2.28.54.jar`) from the Minecraft mods directory on update download and startup sweep via detached script execution.
+
+### Storage Overlay Launch & Ender Chest Pre-Seeding
+- **Fixed Screen Launching:** Fixed the storage overlay opening issue by using `mc.setScreenAndShow(...)` directly on the render thread and pre-seeding Ender Chests 0-8 so `/storage` is never treated as uninitialized.
+
+### Discord Voice HUD & IPC Real-Time Control
+- **Instant Member Leave Detection:** Reduced prune threshold to 3.5s and polling sleep to 1s in `DiscordIpcManager.java`, dropping leave detection latency from 18s to ~2s.
+- **Reliable Voice Muting:** Added `volume: 0` alongside `mute: true` in `SET_USER_VOICE_SETTINGS` and auto-authorized with Discord Desktop to ensure mute requests succeed.
+- **Channel Name Resolution:** Resolved numeric channel IDs to real Discord voice channel names (e.g. `｜𝐂𝐨𝐦𝐮𝐧𝐚 𝟏`) via the bot endpoint `/api/bot/channel?id=`.
+- **Brand Toggle & Avatar Support:** Added `discordHudHideBrand` to hide the `Discord | ` prefix and `discordHudShowAvatars` to display member avatars.
+- **WebRTC Screenshare [LIVE] Indicator:** Detects inbound/outbound video streams from WebRTC logs and displays `[LIVE]` next to screensharing members.
+
+### Lyrics Clock Monotonicity & Web Enhancements
+- **Non-Linear Time Stutter Elimination:** Enforced monotonic time progression during active playback in `SpotifyManager.java`, preventing GSMTC polling jitter from jumping time backwards (`2:42 -> 2:39 -> 2:43`).
+- **Web Lyrics Word Timestamps & Providers:** Added `<mm:ss.xxx>` enhanced word-level LRC timestamps, raw lyrics view modal, provider switching (Musixmatch, KuGou, YouLyPlus, Paxsenix, LrcLib), and fixed the last word of past lines remaining highlighted in blue.
+
+### Screenshare Clickable Chat Links & Web Quality
+- **Command Mixin URL Protection:** Guarded `ChatMixin.makeChatCommandsClickable` against overriding messages containing existing `ClickEvent`s or URLs, fixing screenshare chat links executing as unknown commands.
+- **Dynamic Resolution & FPS Display:** Automatically updates stream resolution and frame rate mid-stream on `https://bombo.dpdns.org/screenshare`.
+
+### Item Chat & Dialogue Interactions
+- **$item Chat Alias & Color Preservation:** Added `$item` as an alias for `$lore`/`$show` and preserved original chat formatting via `SkyblockUtils.getFormattedComponentText(message)`.
+- **Discord Lore Image Glyphs:** Registered Unifont and DejaVu Sans in `bombot` item rendering, fixing stars `✪` and gemstones `◆` rendering as rectangles `[]`.
+- **Clean Party Chat:** Removed `[BPV] Click to open <player>'s pv.` chat announcements.
+- **Simulated NPC Game Clicks:** Simulated real client clicks using `ScreenAccessor.invokeDefaultHandleGameClickEvent` for dialogue options with `autoHoppityConfirm`.
+
+### Config UI & HUD Move Screen
+- **Ellipsis Text Clipping:** Clipped description text in config cards to prevent overflow across toggle switches.
+- **Reverse Hit-Testing & Overlap Cycling:** Unified HUD move screen hit testing with reverse z-order priority and click cycling for stacked elements.
+
 ## [26.2.28.70] - 2026-10-04 (Beta)
 
 ### Storage Overlay Interception & Fail-Safe Fallback
