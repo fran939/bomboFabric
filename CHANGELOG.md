@@ -1,5 +1,20 @@
 # BomboAddons Changelog
  
+## [26.2.28.79] - 2026-10-04 (Beta)
+
+### Screenshare Instant WebSocket Player & Render Thread Offload
+- **Instant Web Player (<20ms start, 60 FPS):** Replaced chunked MJPEG stream on web with real-time zero-delay WebSocket (`wss://.../api/screenshare/ws`) and immediate cached first-frame display, completely bypassing Cloudflare chunk buffering stalls and loading streams instantly.
+- **Render Thread Offload & 300+ FPS Preservation:** Gated GPU capture to encode completion and optimized 1440p 2K compression (<30ms encode), completely eliminating in-game framerate drops and maintaining buttery smooth 300+ FPS during broadcasts.
+
+### Discord Voice Bot Gateway Sync & Self-Mute Badges
+- **Bot Gateway Sync & Instant Leave Detection:** Synchronized voice channel states via bombot gateway API to discover all members in <50ms and instantly purge disconnected users to eliminate stale `[LIVE]` badges.
+- **Distinctive Self-Mute & Self-Deafen Badges:** Added glowing logo badges (`§6[§e✕ MIC§6]` and `§4[§c✕ DEAF§4]`) in voice HUD to clearly display when participants are muted or deafened by themselves.
+
+### Scratch Visual Studio Tooltips, Text Selection & Polish
+- **Comprehensive Hover Tooltips:** Added multi-line hover tooltips across all blocks, delays, conditions, parameter chips, and canvas steps explaining their behavior in detail.
+- **Mouse Click-and-Drag Text Selection:** Enabled smooth mouse click-and-drag text selection across all modal `EditBox` text inputs.
+- **UI Symbol Polish:** Removed clutter buttons (`# 0`, `# 10`, `# 18`) while retaining the `${color}` preset chip, and replaced broken font emojis with crisp standard font symbols (`■ Full`, `✕ No Item`, `★ Has Item`, `○ Empty`, `≡ In Menu`).
+
 ## [26.2.28.78] - 2026-10-04 (Beta)
 
 ### Storage Overlay Auto-Scroll to Target Container

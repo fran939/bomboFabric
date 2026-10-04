@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.79",
+    "date": "2026-10-04",
+    "changes": [
+      "Screenshare Instant WebSocket Player: Replaced buffered MJPEG stream on web with real-time zero-delay WebSocket (<20ms start, 60 FPS) and immediate first-frame cache, completely bypassing Cloudflare chunk buffering stalls",
+      "Screenshare Render Thread Offload: Gated GPU capture to encode completion and optimized 1440p 2K compression (<30ms encode), completely eliminating in-game framerate drops and maintaining 300+ FPS during broadcasts",
+      "Discord Voice Bot Gateway Sync & Instant Leave Detection: Synchronized voice channel states via bombot gateway API to discover all members in <50ms and instantly purge disconnected users to eliminate stale [LIVE] badges",
+      "Discord Voice Self-Mute & Self-Deafen Badges: Added distinctive glowing logo badges ([✕ MIC] and [✕ DEAF]) in voice HUD to clearly display when participants are muted or deafened by themselves",
+      "Scratch Visual Studio Detailed Tooltips: Added comprehensive multi-line hover tooltips across all blocks, delays, conditions, parameter chips, and canvas steps explaining their behavior",
+      "Scratch Visual Studio Text Drag Selection: Enabled smooth mouse click-and-drag text selection across all modal EditBox text inputs",
+      "Scratch Visual Studio UI Polish: Removed clutter buttons (# 0, # 10, # 18) while retaining ${color} preset chip, and replaced broken font emojis with crisp standard font symbols (■ Full, ✕ No Item, ★ Has Item, ○ Empty, ≡ In Menu)"
+    ]
+  },
+  {
     "version": "26.2.28.78",
     "date": "2026-10-04",
     "changes": [

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.78` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.79` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,16 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.78`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.79`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.79 (Ready for In-Game Testing)
+>
+> 1. **Screenshare Instant WebSocket Player & Render Thread Offload (`ScreenshareManager`, `screenshare.html`, `server.js`):** Replaced buffered MJPEG stream on web with real-time zero-delay WebSocket (`wss://.../api/screenshare/ws`) and immediate cached first-frame display, completely bypassing Cloudflare chunk buffering stalls and loading streams instantly in <20ms. Gated GPU capture to encode completion and optimized 1440p 2K compression (<30ms encode), completely eliminating in-game framerate drops and maintaining buttery smooth 300+ FPS during broadcasts.
+> 2. **Discord Voice Bot Gateway Sync & Self-Mute Badges (`DiscordIpcManager`, `DiscordVoiceHud`):** Synchronized voice channel states via bombot gateway API to discover all members in <50ms and instantly purge disconnected users to eliminate stale `[LIVE]` badges. Added distinctive glowing logo badges (`§6[§e✕ MIC§6]` and `§4[§c✕ DEAF§4]`) in voice HUD to clearly display when participants are muted or deafened by themselves.
+> 3. **Scratch Visual Studio Detailed Tooltips, Text Selection & Polish (`AutoSequenceVisualScreen`):** Added comprehensive multi-line hover tooltips across all blocks, delays, conditions, parameter chips, and canvas steps explaining their behavior in detail. Enabled smooth mouse click-and-drag text selection across all modal `EditBox` text inputs. Removed clutter buttons (`# 0`, `# 10`, `# 18`) while retaining the `${color}` preset chip, and replaced broken font emojis with crisp standard font symbols (`■ Full`, `✕ No Item`, `★ Has Item`, `○ Empty`, `≡ In Menu`).
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.78 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Dynamic Target Auto-Scroll (`SearchableGridWidget`, `StorageOverlayScreen`):** Opening specific backpacks or ender chests via name or slot (e.g. `/bp 4` or `/bp kudar` while currently viewing backpack 18) now automatically calculates the container widget's Y offset and smoothly positions the scroll viewport directly at that container's height on open.

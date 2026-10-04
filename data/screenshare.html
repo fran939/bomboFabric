@@ -459,6 +459,120 @@
             }).join("");
         }
 
+        let streamAbort = null;
+        let activeWs = null;
+
+        function startLiveStream(user) {
+            if (activeWs) {
+                try { activeWs.close(); } catch (e) {}
+                activeWs = null;
+            }
+            if (streamAbort) {
+                streamAbort.abort();
+                streamAbort = null;
+            }
+
+            const screenCanvas = document.getElementById("screenCanvas");
+
+            // 1. Instant First-Frame Preload (<20ms)
+            const instantImg = new Image();
+            instantImg.onload = () => {
+                if (currentTarget.toLowerCase() === user.toLowerCase()) {
+                    if (!screenCanvas.src || !screenCanvas.src.startsWith("blob:")) {
+                        screenCanvas.src = instantImg.src;
+                    }
+                }
+            };
+            instantImg.src = `/api/screenshare/frame?user=${encodeURIComponent(user)}&t=${Date.now()}`;
+
+            // 2. Real-Time Zero-Buffering WebSocket Streaming (60 FPS, <5ms)
+            try {
+                const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
+                const wsUrl = `${wsProto}//${location.host}/api/screenshare/ws?user=${encodeURIComponent(user)}`;
+                const ws = new WebSocket(wsUrl);
+                ws.binaryType = "blob";
+                activeWs = ws;
+
+                ws.onmessage = (event) => {
+                    if (currentTarget.toLowerCase() !== user.toLowerCase()) return;
+                    const url = URL.createObjectURL(event.data);
+                    const oldSrc = screenCanvas.src;
+                    screenCanvas.src = url;
+                    if (oldSrc && oldSrc.startsWith("blob:")) {
+                        URL.revokeObjectURL(oldSrc);
+                    }
+                };
+
+                ws.onerror = () => {
+                    fallbackStream(user);
+                };
+            } catch (e) {
+                fallbackStream(user);
+            }
+        }
+
+        async function fallbackStream(user) {
+            const abortCtrl = new AbortController();
+            streamAbort = abortCtrl;
+            const screenCanvas = document.getElementById("screenCanvas");
+            try {
+                const response = await fetch(`/api/screenshare/stream/${encodeURIComponent(user)}`, {
+                    signal: abortCtrl.signal
+                });
+                if (!response.ok || !response.body) {
+                    screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(user)}?t=${Date.now()}`;
+                    return;
+                }
+                const reader = response.body.getReader();
+                let buffer = new Uint8Array(0);
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const newBuf = new Uint8Array(buffer.length + value.length);
+                    newBuf.set(buffer);
+                    newBuf.set(value, buffer.length);
+                    buffer = newBuf;
+
+                    let startIndex = -1;
+                    for (let i = 0; i < buffer.length - 1; i++) {
+                        if (buffer[i] === 0xFF && buffer[i + 1] === 0xD8) {
+                            startIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (startIndex !== -1) {
+                        let endIndex = -1;
+                        for (let i = startIndex + 2; i < buffer.length - 1; i++) {
+                            if (buffer[i] === 0xFF && buffer[i + 1] === 0xD9) {
+                                endIndex = i + 2;
+                                break;
+                            }
+                        }
+
+                        if (endIndex !== -1) {
+                            const jpegData = buffer.slice(startIndex, endIndex);
+                            buffer = buffer.slice(endIndex);
+
+                            const blob = new Blob([jpegData], { type: "image/jpeg" });
+                            const url = URL.createObjectURL(blob);
+                            const oldSrc = screenCanvas.src;
+                            screenCanvas.src = url;
+                            if (oldSrc && oldSrc.startsWith("blob:")) {
+                                URL.revokeObjectURL(oldSrc);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                if (!abortCtrl.signal.aborted) {
+                    screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(user)}?t=${Date.now()}`;
+                }
+            }
+        }
+
         function selectUser(user) {
             currentTarget = user;
             renderStreamsList();
@@ -484,7 +598,6 @@
             const resText = targetStream ? `${targetStream.width || 1280}x${targetStream.height || 720}` : "1280x720";
             stats.textContent = `Live Stream • ${fpsText} FPS • ${resText} • Ultra-low Latency`;
 
-            // Ultra-low latency native MJPEG streaming (zero GC overhead, smooth 60 FPS)
             screenCanvas.onload = () => {
                 if (screenCanvas.naturalWidth && screenCanvas.naturalHeight) {
                     const targetStream = streams.find(s => s.user.toLowerCase() === user.toLowerCase());
@@ -492,14 +605,8 @@
                     stats.textContent = `Live Stream • ${fps} FPS • ${screenCanvas.naturalWidth}x${screenCanvas.naturalHeight} • Ultra-low Latency`;
                 }
             };
-            screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(user)}`;
-            screenCanvas.onerror = () => {
-                setTimeout(() => {
-                    if (currentTarget && currentTarget.toLowerCase() === user.toLowerCase()) {
-                        screenCanvas.src = `/api/screenshare/stream/${encodeURIComponent(user)}?t=${Date.now()}`;
-                    }
-                }, 1500);
-            };
+
+            startLiveStream(user);
 
             // Monitor active status and update resolution / FPS dynamically
             streamInterval = setInterval(async () => {

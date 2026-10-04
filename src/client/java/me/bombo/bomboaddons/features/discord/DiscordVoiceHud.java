@@ -177,15 +177,22 @@ public class DiscordVoiceHud {
                     StringBuilder sb = new StringBuilder();
                     sb.append(u.isSpeaking() ? " §a● " : " §8○ ");
                     if (u.isLocallyMuted()) {
-                        sb.append("§7§m").append(u.displayName()).append("§r §c[MUTED]");
+                        sb.append("§7§m").append(u.displayName()).append("§r §6[MUTE]");
                     } else {
                         sb.append(u.isSpeaking() ? "§a" : "§f").append(u.displayName());
                     }
                     if (u.isScreenSharing()) {
                         sb.append(" §c§l[LIVE]§r");
                     }
-                    if (u.isMuted()) sb.append(" §c[M]");
-                    if (u.isDeafened()) sb.append(" §c[D]");
+                    if (u.isSelfDeafened()) {
+                        sb.append(" §4[§c✕ DEAF§4]");
+                    } else if (u.isSelfMuted()) {
+                        sb.append(" §6[§e✕ MIC§6]");
+                    } else if (u.isDeafened()) {
+                        sb.append(" §4[§c✕ DEAF§4]");
+                    } else if (u.isMuted()) {
+                        sb.append(" §4[§c✕ MIC§4]");
+                    }
                     lines.add(sb.toString());
                 }
             }

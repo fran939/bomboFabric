@@ -48,6 +48,9 @@ public class AutoSequenceVisualScreen extends Screen {
     private boolean isDragging = false;
     private int dropTargetIndex = -1;
 
+    // Hover tooltip container
+    private final List<String> activeTooltip = new ArrayList<>();
+
     public AutoSequenceVisualScreen(Screen parent) {
         super(Component.literal("Auto Sequences Visual Studio"));
         this.parent = parent;
@@ -80,6 +83,7 @@ public class AutoSequenceVisualScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        activeTooltip.clear();
         // Dark studio backdrop
         g.fill(0, 0, this.width, this.height, 0xF00A0D14);
 
@@ -205,6 +209,25 @@ public class AutoSequenceVisualScreen extends Screen {
             g.text(font, "#" + (draggedActionIndex + 1) + " " + dragging.type.displayName, dragX + 12, dragY + 6, 0xFFFFFFFF, true);
             g.text(font, getActionParamsText(dragging), dragX + 12, dragY + 18, 0xFF94A3B8, false);
         }
+
+        // Render Active Hover Tooltip on Top of Everything
+        if (!activeTooltip.isEmpty()) {
+            int maxLineW = 0;
+            for (String s : activeTooltip) {
+                maxLineW = Math.max(maxLineW, font.width(s));
+            }
+            int boxW = maxLineW + 16;
+            int boxH = activeTooltip.size() * 11 + 8;
+            int tipX = Math.min(mouseX + 12, this.width - boxW - 8);
+            int tipY = Math.min(Math.max(8, mouseY - 8), this.height - boxH - 8);
+            g.fill(tipX, tipY, tipX + boxW, tipY + boxH, 0xF50F172A);
+            g.outline(tipX, tipY, boxW, boxH, 0xFF38BDF8);
+            int ty = tipY + 5;
+            for (String s : activeTooltip) {
+                g.text(font, s, tipX + 8, ty, 0xFFFFFFFF, false);
+                ty += 11;
+            }
+        }
     }
 
     private void renderPalette(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -221,51 +244,68 @@ public class AutoSequenceVisualScreen extends Screen {
         g.text(font, "§9Actions", x + 10, curY, 0xFF60A5FA, false);
         curY += 14;
 
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "▶ Click Slot", 0xFF2563EB, 0xFF3B82F6, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "▶ Click Slot", 0xFF2563EB, 0xFF3B82F6, mouseX, mouseY,
+                "§9§lClick Slot", "§7Clicks a specific numeric slot inside an open container.", "§7Tip: Slot 0-53 for chests, 54-89 for inventory.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "▶ Click Item / Lore", 0xFF1D4ED8, 0xFF60A5FA, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "▶ Click Item / Lore", 0xFF1D4ED8, 0xFF60A5FA, mouseX, mouseY,
+                "§9§lClick Item / Lore", "§7Finds and clicks an item by name or tooltip lore.", "§7Supports 'lore:text' and 'starts_with:prefix'.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "■ Close Container", 0xFFDC2626, 0xFFEF4444, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "■ Close Container", 0xFFDC2626, 0xFFEF4444, mouseX, mouseY,
+                "§c§lClose Container", "§7Closes any open chest, backpack, or menu GUI.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "> Run Command", 0xFF7C3AED, 0xFF8B5CF6, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "> Run Command", 0xFF7C3AED, 0xFF8B5CF6, mouseX, mouseY,
+                "§5§lRun Command", "§7Executes a chat command (e.g. /warp garden, /bz).");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "* Click World", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "* Click World", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY,
+                "§2§lClick World", "§7Simulates a mouse click towards where crosshair looks.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "* Interact NPC", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "* Interact NPC", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY,
+                "§3§lInteract NPC", "§7Interacts with the nearest NPC entity matching name.");
         curY += blockH + 12;
 
         // Flow & Timing Blocks (Amber)
         g.text(font, "§6Timing & Control", x + 10, curY, 0xFFFBBF24, false);
         curY += 14;
 
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "~ Wait Delay (ms)", 0xFFD97706, 0xFFF59E0B, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "~ Wait Delay (ms)", 0xFFD97706, 0xFFF59E0B, mouseX, mouseY,
+                "§6§lWait Delay (ms)", "§7Pauses sequence execution for the specified milliseconds.");
         curY += blockH + 12;
 
         // Conditions & Dynamic Presets (Green / Orange)
         g.text(font, "§aConditions & Exceptions", x + 10, curY, 0xFF34D399, false);
         curY += 14;
 
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: When Full", 0xFFB91C1C, 0xFFF87171, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: When Full", 0xFFB91C1C, 0xFFF87171, mouseX, mouseY,
+                "§c§lSkip: Container Full", "§7Bypasses this step if the open container has no empty slots.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Item Count", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Item Count", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY,
+                "§6§lSkip: Item Count", "§7Bypasses step if target item count reaches threshold.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Slot Has Item", 0xFF991B1B, 0xFFEF4444, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Slot Has Item", 0xFF991B1B, 0xFFEF4444, mouseX, mouseY,
+                "§c§lSkip: Slot Occupied", "§7Bypasses step if slot already has an item.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Has NO Item", 0xFF9A3412, 0xFFF97316, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[!] Skip: Has NO Item", 0xFF9A3412, 0xFFF97316, mouseX, mouseY,
+                "§6§lSkip: Missing Item", "§7Bypasses step if target item is not found in menu.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[+] Only: Menu Open", 0xFF047857, 0xFF34D399, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[+] Only: Menu Open", 0xFF047857, 0xFF34D399, mouseX, mouseY,
+                "§a§lOnly: Menu Open", "§7Only runs if player is viewing a container screen.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[+] Only: In Area", 0xFF065F46, 0xFF10B981, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "[+] Only: In Area", 0xFF065F46, 0xFF10B981, mouseX, mouseY,
+                "§a§lOnly: In Area", "§7Only runs if player is inside the specified SkyBlock area.");
         curY += blockH + 4;
-        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "● Dynamic: ${color}", 0xFF6D28D9, 0xFFA78BFA, mouseX, mouseY);
+        renderPaletteItem(g, font, x + 6, curY, w - 12, blockH, "● Dynamic: ${color}", 0xFF6D28D9, 0xFFA78BFA, mouseX, mouseY,
+                "§d§lDynamic ${color}", "§7Extracts color word from container title (e.g. Red, Blue, Green)", "§7and dynamically replaces ${color} parameter.");
     }
 
-    private void renderPaletteItem(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String title, int color, int border, int mouseX, int mouseY) {
+    private void renderPaletteItem(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String title, int color, int border, int mouseX, int mouseY, String... tooltip) {
         boolean hover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
         int bg = hover ? color : (color & 0x00FFFFFF) | 0x33000000;
         g.fill(x, y, x + w, y + h, bg);
         g.outline(x, y, w, h, hover ? border : 0x55FFFFFF);
         g.text(font, title, x + 8, y + 8, 0xFFFFFFFF, false);
+        if (hover && tooltip != null && tooltip.length > 0 && editingModalMode == null) {
+            for (String line : tooltip) activeTooltip.add(line);
+        }
     }
 
     public static String formatFriendlyCondition(String cond) {
@@ -477,6 +517,37 @@ public class AutoSequenceVisualScreen extends Screen {
         boolean hoverUp = mouseX >= toolX && mouseX <= toolX + btnW && mouseY >= toolY && mouseY <= toolY + btnH;
         g.fill(toolX, toolY, toolX + btnW, toolY + btnH, hoverUp ? 0x446B7280 : 0x22374151);
         g.text(font, "▲", toolX + 6, toolY + 6, 0xFFE5E7EB, false);
+
+        if (hover && !isDragging && editingModalMode == null) {
+            if (hoverDel) {
+                activeTooltip.add("§c§lDelete Step");
+                activeTooltip.add("§7Permanently removes this action block.");
+            } else if (hoverToggle) {
+                activeTooltip.add("§a§lToggle Step");
+                activeTooltip.add("§7Enable or temporarily bypass this step.");
+            } else if (hoverDup) {
+                activeTooltip.add("§9§lDuplicate Step");
+                activeTooltip.add("§7Creates a duplicate copy right below.");
+            } else if (hoverEdit) {
+                activeTooltip.add("§e§lEdit Step");
+                activeTooltip.add("§7Open block settings, delay, and conditions.");
+            } else if (hoverDown) {
+                activeTooltip.add("§7Move Step Down");
+            } else if (hoverUp) {
+                activeTooltip.add("§7Move Step Up");
+            } else {
+                activeTooltip.add("§b§lStep #" + (index + 1) + ": §f" + typeTitle);
+                activeTooltip.add("§7Target: §e" + paramText);
+                activeTooltip.add("§7Delay: §a" + action.delayMs + "ms");
+                if (action.exceptIf != null && !action.exceptIf.isBlank()) {
+                    activeTooltip.add("§cSkip When: §f" + formatFriendlyCondition(action.exceptIf));
+                }
+                if (action.onlyIf != null && !action.onlyIf.isBlank()) {
+                    activeTooltip.add("§aOnly Run When: §f" + formatFriendlyCondition(action.onlyIf));
+                }
+                activeTooltip.add("§8Click to edit • Drag to reorder");
+            }
+        }
     }
 
     private String getActionParamsText(AutoAction action) {
@@ -548,10 +619,8 @@ public class AutoSequenceVisualScreen extends Screen {
                 }
 
                 // Quick buttons for parameter
-                renderSmallChip(g, font, modalX + 16, modalY + 68, 48, 14, "# 0", mouseX, mouseY);
-                renderSmallChip(g, font, modalX + 68, modalY + 68, 54, 14, "# 10", mouseX, mouseY);
-                renderSmallChip(g, font, modalX + 126, modalY + 68, 54, 14, "# 18", mouseX, mouseY);
-                renderSmallChip(g, font, modalX + 184, modalY + 68, 70, 14, "🎨 ${color}", mouseX, mouseY);
+                renderSmallChip(g, font, modalX + 16, modalY + 68, 70, 14, "${color}", mouseX, mouseY,
+                        "§d§lDynamic ${color}", "§7Extracts color word from container title", "§7and dynamically replaces ${color} parameter.");
 
                 // Section 2: Delay
                 g.text(font, "Delay (ms):", modalX + 16, modalY + 88, 0xFF9CA3AF, false);
@@ -560,21 +629,26 @@ public class AutoSequenceVisualScreen extends Screen {
                     delayInput.setWidth(100);
                     delayInput.extractRenderState(g, mouseX, mouseY, 0);
                 }
-                renderSmallChip(g, font, modalX + 124, modalY + 102, 48, 16, "50ms", mouseX, mouseY);
-                renderSmallChip(g, font, modalX + 176, modalY + 102, 54, 16, "100ms", mouseX, mouseY);
-                renderSmallChip(g, font, modalX + 234, modalY + 102, 54, 16, "200ms", mouseX, mouseY);
-                renderSmallChip(g, font, modalX + 292, modalY + 102, 54, 16, "500ms", mouseX, mouseY);
+                renderSmallChip(g, font, modalX + 124, modalY + 102, 48, 16, "50ms", mouseX, mouseY, "§7Fast 50ms pause");
+                renderSmallChip(g, font, modalX + 176, modalY + 102, 54, 16, "100ms", mouseX, mouseY, "§7Standard 100ms pause");
+                renderSmallChip(g, font, modalX + 234, modalY + 102, 54, 16, "200ms", mouseX, mouseY, "§7Safe 200ms pause");
+                renderSmallChip(g, font, modalX + 292, modalY + 102, 54, 16, "500ms", mouseX, mouseY, "§7Relaxed 500ms pause");
 
                 // Section 3: Scratch-Style Condition / Exception Guard
                 g.text(font, "Exception Guard (Skip if condition true):", modalX + 16, modalY + 126, 0xFF9CA3AF, false);
 
                 // Visual Condition Quick-Pick Pills
                 int pillY = modalY + 140;
-                renderConditionPill(g, font, modalX + 16, pillY, 78, 16, "📦 Full", 0xFFB91C1C, 0xFFEF4444, mouseX, mouseY);
-                renderConditionPill(g, font, modalX + 98, pillY, 78, 16, "🚫 No Item", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY);
-                renderConditionPill(g, font, modalX + 180, pillY, 78, 16, "✨ Has Item", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY);
-                renderConditionPill(g, font, modalX + 262, pillY, 82, 16, "📭 Slot Empty", 0xFF4338CA, 0xFF6366F1, mouseX, mouseY);
-                renderConditionPill(g, font, modalX + 348, pillY, 74, 16, "📂 In Menu", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY);
+                renderConditionPill(g, font, modalX + 16, pillY, 74, 16, "■ Full", 0xFFB91C1C, 0xFFEF4444, mouseX, mouseY,
+                        "§c§lSkip: Container Full", "§7Skips this step if the opened container", "§7or chest has no empty slots left.");
+                renderConditionPill(g, font, modalX + 94, pillY, 82, 16, "✕ No Item", 0xFFC2410C, 0xFFFB923C, mouseX, mouseY,
+                        "§6§lSkip: Missing Item", "§7Skips this step if the target item or lore", "§7is missing from the opened container.");
+                renderConditionPill(g, font, modalX + 180, pillY, 84, 16, "★ Has Item", 0xFF0D9488, 0xFF14B8A6, mouseX, mouseY,
+                        "§a§lSkip: Contains Item", "§7Skips this step if the target item already", "§7exists in container or inventory.");
+                renderConditionPill(g, font, modalX + 268, pillY, 78, 16, "○ Empty", 0xFF4338CA, 0xFF6366F1, mouseX, mouseY,
+                        "§9§lSkip: Slot Empty", "§7Skips this step if the target slot number", "§7currently has no item.");
+                renderConditionPill(g, font, modalX + 350, pillY, 74, 16, "≡ In Menu", 0xFF0284C7, 0xFF38BDF8, mouseX, mouseY,
+                        "§b§lSkip: In Menu", "§7Skips this step if the player is currently", "§7viewing an open container GUI.");
 
                 if (conditionInput != null) {
                     conditionInput.setPosition(modalX + 16, modalY + 162);
@@ -582,7 +656,8 @@ public class AutoSequenceVisualScreen extends Screen {
                     conditionInput.extractRenderState(g, mouseX, mouseY, 0);
 
                     // Clear button
-                    renderSmallChip(g, font, modalX + modalW - 54, modalY + 162, 38, 20, "Clear", mouseX, mouseY);
+                    renderSmallChip(g, font, modalX + modalW - 54, modalY + 162, 38, 20, "Clear", mouseX, mouseY,
+                            "§c§lClear Guard", "§7Removes condition so step always executes.");
 
                     String condVal = conditionInput.getValue().trim();
                     if (!condVal.isEmpty()) {
@@ -611,20 +686,26 @@ public class AutoSequenceVisualScreen extends Screen {
         g.text(font, "Cancel", cancelX + 22, btnY + 7, 0xFFFFFFFF, true);
     }
 
-    private void renderSmallChip(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String text, int mouseX, int mouseY) {
+    private void renderSmallChip(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String text, int mouseX, int mouseY, String... tooltip) {
         boolean hover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
         g.fill(x, y, x + w, y + h, hover ? 0x446B7280 : 0x22374151);
         g.outline(x, y, w, h, hover ? 0xFF9CA3AF : 0x449CA3AF);
         int textW = font.width(text);
         g.text(font, text, x + (w - textW) / 2, y + (h - 8) / 2, hover ? 0xFFFFFFFF : 0xFFD1D5DB, false);
+        if (hover && tooltip != null && tooltip.length > 0) {
+            for (String line : tooltip) activeTooltip.add(line);
+        }
     }
 
-    private void renderConditionPill(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String text, int colorBg, int colorBorder, int mouseX, int mouseY) {
+    private void renderConditionPill(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String text, int colorBg, int colorBorder, int mouseX, int mouseY, String... tooltip) {
         boolean hover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
         g.fill(x, y, x + w, y + h, hover ? colorBg : (colorBg & 0x66FFFFFF));
         g.outline(x, y, w, h, colorBorder);
         int textW = font.width(text);
         g.text(font, text, x + (w - textW) / 2, y + (h - 8) / 2, 0xFFFFFFFF, false);
+        if (hover && tooltip != null && tooltip.length > 0) {
+            for (String line : tooltip) activeTooltip.add(line);
+        }
     }
 
     @Override
@@ -666,24 +747,9 @@ public class AutoSequenceVisualScreen extends Screen {
                 }
 
                 if ("EDIT_BLOCK".equals(editingModalMode)) {
-                    // Check quick parameter chips
+                    // Check quick parameter chip (${color})
                     if (my >= modalY + 68 && my <= modalY + 82) {
-                        if (mx >= modalX + 16 && mx <= modalX + 64 && primaryInput != null) {
-                            primaryInput.setValue("0");
-                            setFocusedInput(primaryInput, null);
-                            return true;
-                        }
-                        if (mx >= modalX + 68 && mx <= modalX + 122 && primaryInput != null) {
-                            primaryInput.setValue("10");
-                            setFocusedInput(primaryInput, null);
-                            return true;
-                        }
-                        if (mx >= modalX + 126 && mx <= modalX + 180 && primaryInput != null) {
-                            primaryInput.setValue("18");
-                            setFocusedInput(primaryInput, null);
-                            return true;
-                        }
-                        if (mx >= modalX + 184 && mx <= modalX + 254 && primaryInput != null) {
+                        if (mx >= modalX + 16 && mx <= modalX + 86 && primaryInput != null) {
                             primaryInput.setValue("${color}");
                             setFocusedInput(primaryInput, null);
                             return true;
@@ -717,31 +783,31 @@ public class AutoSequenceVisualScreen extends Screen {
                     // Check quick condition pills
                     int pillY = modalY + 140;
                     if (my >= pillY && my <= pillY + 16) {
-                        if (mx >= modalX + 16 && mx <= modalX + 94 && conditionInput != null) {
+                        if (mx >= modalX + 16 && mx <= modalX + 90 && conditionInput != null) {
                             conditionInput.setValue("gui_full");
                             setFocusedInput(conditionInput, null);
                             conditionInput.moveCursorToEnd(false);
                             return true;
                         }
-                        if (mx >= modalX + 98 && mx <= modalX + 176 && conditionInput != null) {
+                        if (mx >= modalX + 94 && mx <= modalX + 176 && conditionInput != null) {
                             conditionInput.setValue("no_item:");
                             setFocusedInput(conditionInput, null);
                             conditionInput.moveCursorToEnd(false);
                             return true;
                         }
-                        if (mx >= modalX + 180 && mx <= modalX + 258 && conditionInput != null) {
+                        if (mx >= modalX + 180 && mx <= modalX + 264 && conditionInput != null) {
                             conditionInput.setValue("has_item:");
                             setFocusedInput(conditionInput, null);
                             conditionInput.moveCursorToEnd(false);
                             return true;
                         }
-                        if (mx >= modalX + 262 && mx <= modalX + 344 && conditionInput != null) {
+                        if (mx >= modalX + 268 && mx <= modalX + 346 && conditionInput != null) {
                             conditionInput.setValue("slot_empty:0");
                             setFocusedInput(conditionInput, null);
                             conditionInput.moveCursorToEnd(false);
                             return true;
                         }
-                        if (mx >= modalX + 348 && mx <= modalX + 422 && conditionInput != null) {
+                        if (mx >= modalX + 350 && mx <= modalX + 424 && conditionInput != null) {
                             conditionInput.setValue("in_gui:Chest");
                             setFocusedInput(conditionInput, null);
                             conditionInput.moveCursorToEnd(false);
@@ -1229,6 +1295,24 @@ public class AutoSequenceVisualScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        if (editingModalMode != null) {
+            Font font = Minecraft.getInstance().font;
+            EditBox focusedBox = (primaryInput != null && primaryInput.isFocused()) ? primaryInput :
+                    ((delayInput != null && delayInput.isFocused()) ? delayInput :
+                    ((conditionInput != null && conditionInput.isFocused()) ? conditionInput : null));
+            if (focusedBox != null && font != null) {
+                int relX = (int) (event.x() - focusedBox.getX() - 4);
+                String val = focusedBox.getValue();
+                if (relX <= 0) {
+                    focusedBox.moveCursorTo(0, true);
+                } else {
+                    int charIdx = font.plainSubstrByWidth(val, relX).length();
+                    focusedBox.moveCursorTo(charIdx, true);
+                }
+                return true;
+            }
+        }
+
         if (draggedActionIndex >= 0) {
             double mx = event.x();
             double my = event.y();
@@ -1254,6 +1338,12 @@ public class AutoSequenceVisualScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        if (editingModalMode != null) {
+            if (primaryInput != null && primaryInput.isFocused()) primaryInput.mouseReleased(event);
+            if (delayInput != null && delayInput.isFocused()) delayInput.mouseReleased(event);
+            if (conditionInput != null && conditionInput.isFocused()) conditionInput.mouseReleased(event);
+        }
+
         if (isDragging && draggedActionIndex >= 0) {
             AutoSequence seq = getActiveSequence();
             if (seq != null && dropTargetIndex >= 0 && dropTargetIndex != draggedActionIndex) {

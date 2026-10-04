@@ -73,10 +73,16 @@ public class DiscordIpcManager {
             boolean isDeafened,
             boolean isSpeaking,
             boolean isScreenSharing,
-            boolean isLocallyMuted
+            boolean isLocallyMuted,
+            boolean isSelfMuted,
+            boolean isSelfDeafened
     ) {
+        public DiscordVoiceUser(String id, String username, String displayName, boolean isMuted, boolean isDeafened, boolean isSpeaking, boolean isScreenSharing, boolean isLocallyMuted) {
+            this(id, username, displayName, isMuted, isDeafened, isSpeaking, isScreenSharing, isLocallyMuted, isMuted, isDeafened);
+        }
+
         public DiscordVoiceUser(String id, String username, String displayName, boolean isMuted, boolean isDeafened, boolean isSpeaking, boolean isScreenSharing) {
-            this(id, username, displayName, isMuted, isDeafened, isSpeaking, isScreenSharing, locallyMutedUsers.contains(id));
+            this(id, username, displayName, isMuted, isDeafened, isSpeaking, isScreenSharing, locallyMutedUsers.contains(id), isMuted, isDeafened);
         }
     }
 
@@ -155,14 +161,15 @@ public class DiscordIpcManager {
             try {
                 if (System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("win")) {
                     byte vk = (byte) (keyCode == java.awt.event.KeyEvent.VK_M ? 0x4D : 0x44);
+                    byte scan = (byte) (keyCode == java.awt.event.KeyEvent.VK_M ? 0x32 : 0x20);
                     // Windows OS hardware driver keyboard event to trigger global Discord shortcuts
-                    WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0, 0, 0); // VK_CONTROL down
-                    WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0, 0, 0); // VK_SHIFT down
-                    WinUser32.INSTANCE.keybd_event(vk, (byte) 0, 0, 0);          // Key down
-                    Thread.sleep(30L);
-                    WinUser32.INSTANCE.keybd_event(vk, (byte) 0, 2, 0);          // Key up (KEYEVENTF_KEYUP = 2)
-                    WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0, 2, 0); // Shift up
-                    WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0, 2, 0); // Ctrl up
+                    WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0x1D, 0, 0); // VK_CONTROL down
+                    WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0x2A, 0, 0); // VK_SHIFT down
+                    WinUser32.INSTANCE.keybd_event(vk, scan, 0, 0);                 // Key down
+                    Thread.sleep(40L);
+                    WinUser32.INSTANCE.keybd_event(vk, scan, 2, 0);                 // Key up (KEYEVENTF_KEYUP = 2)
+                    WinUser32.INSTANCE.keybd_event((byte) 0x10, (byte) 0x2A, 2, 0); // Shift up
+                    WinUser32.INSTANCE.keybd_event((byte) 0x11, (byte) 0x1D, 2, 0); // Ctrl up
                     return;
                 }
             } catch (Throwable ignored) {}
@@ -566,7 +573,7 @@ public class DiscordIpcManager {
             pollThread = new Thread(() -> {
                 while (RUNNING.get() && connected) {
                     try {
-                        Thread.sleep(1500L);
+                        Thread.sleep(400L);
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -594,6 +601,9 @@ public class DiscordIpcManager {
         }
         // Fallback / complementary detection from Discord desktop logs
         scanDiscordLogForVoice();
+        if (currentChannelId != null && !currentChannelId.isEmpty()) {
+            fetchChannelNameAsync(currentChannelId);
+        }
     }
 
     public static class DiscordBotUserInfo {
@@ -633,7 +643,8 @@ public class DiscordIpcManager {
         fetchingChannelIds.add(channelId);
         CompletableFuture.runAsync(() -> {
             try {
-                String url = "https://api.bombo.dpdns.org/api/bot/channel?id=" + channelId;
+                String uParam = !myUserId.isEmpty() ? ("&userId=" + java.net.URLEncoder.encode(myUserId, StandardCharsets.UTF_8)) : "";
+                String url = "https://api.bombo.dpdns.org/api/bot/voice/channel?id=" + java.net.URLEncoder.encode(channelId, StandardCharsets.UTF_8) + uParam;
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .timeout(Duration.ofSeconds(3))
@@ -649,6 +660,41 @@ public class DiscordIpcManager {
                         if (channelId.equals(currentChannelId) || currentChannelName.startsWith("Voice (")) {
                             currentChannelName = name;
                         }
+                    }
+                    if (root.has("members") && root.get("members").isJsonArray()) {
+                        JsonArray arr = root.getAsJsonArray("members");
+                        Set<String> channelMemberIds = new HashSet<>();
+                        for (JsonElement el : arr) {
+                            if (!el.isJsonObject()) continue;
+                            JsonObject m = el.getAsJsonObject();
+                            String mId = m.has("id") ? m.get("id").getAsString() : "";
+                            if (mId.isEmpty()) continue;
+                            channelMemberIds.add(mId);
+
+                            String uName = m.has("username") ? m.get("username").getAsString() : "User";
+                            String dName = m.has("displayName") ? m.get("displayName").getAsString() : uName;
+                            String av = m.has("avatarUrl") && !m.get("avatarUrl").isJsonNull() ? m.get("avatarUrl").getAsString() : null;
+                            BOT_USER_CACHE.put(mId, new DiscordBotUserInfo(mId, uName, dName, av));
+
+                            boolean sMute = m.has("selfMute") && m.get("selfMute").getAsBoolean();
+                            boolean sDeaf = m.has("selfDeaf") && m.get("selfDeaf").getAsBoolean();
+                            boolean svMute = m.has("serverMute") && m.get("serverMute").getAsBoolean();
+                            boolean svDeaf = m.has("serverDeaf") && m.get("serverDeaf").getAsBoolean();
+                            boolean streaming = m.has("streaming") && m.get("streaming").getAsBoolean();
+                            boolean speaking = voiceUsers.containsKey(mId) && voiceUsers.get(mId).isSpeaking();
+
+                            voiceUsers.put(mId, new DiscordVoiceUser(
+                                    mId, uName, dName,
+                                    sMute || svMute, sDeaf || svDeaf,
+                                    speaking, streaming,
+                                    locallyMutedUsers.contains(mId),
+                                    sMute, sDeaf
+                            ));
+                        }
+
+                        // Users who left the voice channel are purged immediately
+                        String selfId = !myUserId.isEmpty() ? myUserId : "self";
+                        voiceUsers.keySet().removeIf(k -> !k.equals(selfId) && !channelMemberIds.contains(k));
                     }
                 }
             } catch (Throwable ignored) {
@@ -826,6 +872,15 @@ public class DiscordIpcManager {
                         }
                     }
 
+                    // Explicitly detect stream stops (video ssrc: 0 or resolution: 0 x 0)
+                    if (wLine.contains("resolution: 0 x 0") || wLine.contains("video ssrc: 0,")) {
+                        Matcher vm = INBOUND_USER_PATTERN.matcher(wLine);
+                        if (vm.find()) {
+                            String stoppedUid = vm.group(1);
+                            userVideoLastSeenMap.remove(stoppedUid);
+                        }
+                    }
+
                     // Check for active video streams with non-zero resolution
                     if (wLine.contains("resolution:") && !wLine.contains("resolution: 0 x 0")) {
                         Matcher resM = VIDEO_RESOLUTION_PATTERN.matcher(wLine);
@@ -851,16 +906,14 @@ public class DiscordIpcManager {
 
                 if (maxLogTimestamp > 0) {
                     for (Map.Entry<String, Long> entry : userLastSeenMap.entrySet()) {
-                        // Users whose audio stats were received within 15 seconds of the latest log activity
                         long diff = maxLogTimestamp - entry.getValue();
-                        if (diff >= 0 && diff <= 15000L) {
+                        if (diff >= 0 && diff <= 7500L) {
                             webrtcUserIds.add(entry.getKey());
                         }
                     }
                     for (Map.Entry<String, Long> entry : userVideoLastSeenMap.entrySet()) {
-                        // Video streams active within 15 seconds of the latest log activity
                         long diff = maxLogTimestamp - entry.getValue();
-                        if (diff >= 0 && diff <= 15000L) {
+                        if (diff >= 0 && diff <= 7500L && webrtcUserIds.contains(entry.getKey())) {
                             screensharingUserIds.add(entry.getKey());
                         }
                     }
