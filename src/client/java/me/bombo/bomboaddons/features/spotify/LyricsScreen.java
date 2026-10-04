@@ -229,11 +229,11 @@ public class LyricsScreen extends Screen {
                     int pillX = (this.width - totalLineW) / 2 - 14;
                     int pillW = totalLineW + 28;
                     int pillH = line.backgroundText() != null ? 30 : 22;
-                    g.fill(pillX, lineIntY - 5, pillX + pillW, lineIntY + pillH, 0x2E1DB954);
-                    g.outline(pillX, lineIntY - 5, pillW, pillH + 5, 0x551DB954);
+                    g.fill(pillX, lineIntY - 5, pillX + pillW, lineIntY + pillH, 0x331DB954);
+                    g.outline(pillX, lineIntY - 5, pillW, pillH, 0x661DB954);
 
                     if (words != null && !words.isEmpty()) {
-                        // Word-by-word karaoke rendering
+                        // Word-by-word karaoke rendering with vibrant Spotify glow
                         int curX = (this.width - totalLineW) / 2;
                         for (int w = 0; w < words.size(); w++) {
                             LyricsManager.WordTime wt = words.get(w);
@@ -244,16 +244,16 @@ public class LyricsScreen extends Screen {
                             int wordSlotW = font.width("§l" + wt.word());
 
                             if (isWordActive) {
-                                g.text(font, "§b§l" + wt.word(), curX, lineIntY, 0xFF00E5FF, true);
+                                g.text(font, "§a§l" + wt.word(), curX, lineIntY, 0xFF1ED760, true);
                             } else {
-                                g.text(font, "§7§l" + wt.word(), curX, lineIntY, 0x88CBD5E1, false);
+                                g.text(font, "§7§l" + wt.word(), curX, lineIntY, 0x66CBD5E1, false);
                             }
                             curX += wordSlotW + spaceW;
                         }
                     } else {
-                        // SPOTIFY FULL LINE HIGHLIGHT (Image 4): Highlight entire line in bright bold white!
+                        // SPOTIFY FULL LINE HIGHLIGHT: Highlight active line in bright Spotify green
                         int startX = (this.width - totalLineW) / 2;
-                        g.text(font, "§f§l" + line.text(), startX, lineIntY, 0xFFFFFFFF, true);
+                        g.text(font, "§a§l" + line.text(), startX, lineIntY, 0xFF1ED760, true);
                     }
 
                     // Background vocals underneath

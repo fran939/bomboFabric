@@ -26,6 +26,29 @@ public class HudMoveScreen extends Screen {
     private Runnable pendingUndoAction = null;
 
     private static boolean snappingEnabled = true;
+    public static int hudTypeFilter = 0; // 0 = Both, 1 = In-GUI Only, 2 = In-Game Only
+
+    public static boolean isGuiHud(HudTarget target) {
+        if (target == null) return false;
+        return switch (target) {
+            case CROESUS_PROFIT, CROESUS_TRACKER, ITEM_LIST, ITEM_LIST_SEARCH, ITEM_VALUE_BREAKDOWN, RNG, SIGN_CALCULATOR, CHAT_SEARCH -> true;
+            default -> false;
+        };
+    }
+
+    private boolean shouldSkipForFilter(HudTarget target) {
+        if (hudTypeFilter == 1 && !isGuiHud(target)) return true;
+        if (hudTypeFilter == 2 && isGuiHud(target)) return true;
+        return false;
+    }
+
+    private boolean isTargetVisible(HudTarget target, boolean configActive) {
+        if (shouldSkipForFilter(target)) return false;
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s != null && s.showOnlyActiveHuds && !configActive) return false;
+        return true;
+    }
+
     private HudTarget selectedTarget = null;
     private HudTarget draggingTarget = null;
     private int dragOffsetX = 0;
@@ -89,7 +112,8 @@ public class HudMoveScreen extends Screen {
             s.croesusProfitHudX = this.width / 2 + 120;
             s.croesusProfitHudY = Math.max(4, this.height / 2 - 100);
         }
-        String toggleModeText = s.showOnlyActiveHuds ? "§eMode: Active HUDs" : "§aMode: All HUDs";
+        String filterLabel = hudTypeFilter == 1 ? "§d [GUI]" : (hudTypeFilter == 2 ? "§b [Game]" : "§7 [Both]");
+        String toggleModeText = (s.showOnlyActiveHuds ? "§eActive" : "§aAll") + " " + filterLabel;
         this.addRenderableWidget(Button.builder(Component.literal(toggleModeText), btn -> {
             s.showOnlyActiveHuds = !s.showOnlyActiveHuds;
             BomboConfig.save();
@@ -679,6 +703,12 @@ public class HudMoveScreen extends Screen {
             g.fill(0, this.snapGuideY - 1, this.width, this.snapGuideY + 1, 0xDD00E5FF);
         }
 
+        // Solid top and bottom header bars so buttons and instructions never blend into underlying HUDs
+        g.fill(0, 0, this.width, 36, 0xEE0B0F19);
+        g.fill(0, 35, this.width, 36, 0x4438BDF8);
+        g.fill(0, this.height - 24, this.width, this.height, 0xEE0B0F19);
+        g.fill(0, this.height - 24, this.width, this.height - 23, 0x4438BDF8);
+
         // Top & bottom info headers
         g.centeredText(this.font, "§6§lHUD EDIT MODE", this.width / 2, 8, -1);
         g.centeredText(this.font, "§7Left-Click + Drag to Move | Scroll Wheel to Scale | §bCtrl+Click to Config | §e[R] Reset Target", this.width / 2, 22, -1);
@@ -688,10 +718,12 @@ public class HudMoveScreen extends Screen {
     }
 
     private boolean isTargetActive(HudTarget target, int mx, int my, int x, int y, int w, int h) {
+        if (shouldSkipForFilter(target)) return false;
         return this.checkHit(mx, my, x, y, w, h) || this.selectedTarget == target || this.draggingTarget == target || this.resizingTarget == target;
     }
 
     private void updateDragPosition(int mouseX, int mouseY, int w, int h, HudTarget target, java.util.function.BiConsumer<Integer, Integer> positionConsumer) {
+        if (shouldSkipForFilter(target)) return;
         if (this.draggingTarget == target) {
             int rawX = mouseX - this.dragOffsetX;
             int rawY = mouseY - this.dragOffsetY;
@@ -734,6 +766,7 @@ public class HudMoveScreen extends Screen {
         if (current != HudTarget.SPOTIFY_HUD && (!s.showOnlyActiveHuds || s.spotifyHudEnabled))
             list.add(new HudRect(s.spotifyHudX, s.spotifyHudY, (int)(me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudWidth() * s.spotifyHudScale), (int)(me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudHeight() * s.spotifyHudScale), HudTarget.SPOTIFY_HUD));
 
+        list.removeIf(r -> r.target != null && shouldSkipForFilter(r.target));
         return list;
     }
 
@@ -827,6 +860,7 @@ public class HudMoveScreen extends Screen {
     }
 
     private void renderTargetBox(GuiGraphicsExtractor g, int mouseX, int mouseY, int x, int y, int w, int h, HudTarget target, float scale) {
+        if (shouldSkipForFilter(target)) return;
         boolean hovered = this.checkHit(mouseX, mouseY, x, y, w, h);
         if (hovered) {
             this.hoveredTarget = target;
@@ -896,6 +930,18 @@ public class HudMoveScreen extends Screen {
         double mouseX = event.x();
         double mouseY = event.y();
         int button = event.button();
+
+        // Right-click on Mode button (bounds: 10, 10, 130, 20) cycles Both -> In-GUI Only -> In-Game Only
+        if (button == 1 && mouseX >= 10 && mouseX <= 140 && mouseY >= 10 && mouseY <= 30) {
+            hudTypeFilter = (hudTypeFilter + 1) % 3;
+            this.init();
+            return true;
+        }
+
+        // Top UI widgets have strict click priority over underlying draggable HUD boxes
+        if (super.mouseClicked(event, handled)) {
+            return true;
+        }
 
         // 1. Check corner resize on currently selected target first
         if (this.selectedTarget != null) {

@@ -82,6 +82,7 @@ public class DiscordIpcManager {
 
     private record PendingMute(String userId, boolean intendedMute) {}
     private static final Map<String, PendingMute> pendingMutes = new ConcurrentHashMap<>();
+    private static volatile String lastSubscribedChannelId = "";
 
     public static boolean isUserLocallyMuted(String userId) {
         return userId != null && locallyMutedUsers.contains(userId);
@@ -97,19 +98,11 @@ public class DiscordIpcManager {
             return false;
         }
 
-        boolean nowMuted;
-        if (locallyMutedUsers.contains(userId)) {
-            locallyMutedUsers.remove(userId);
-            nowMuted = false;
-        } else {
-            locallyMutedUsers.add(userId);
-            nowMuted = true;
-        }
-
+        boolean targetMute = !locallyMutedUsers.contains(userId);
         String nonce = UUID.randomUUID().toString();
-        pendingMutes.put(nonce, new PendingMute(userId, nowMuted));
+        pendingMutes.put(nonce, new PendingMute(userId, targetMute));
 
-        // Send RPC voice setting command over pipe if connected
+        // Dispatch SET_USER_VOICE_SETTINGS over Named Pipe; state updates on acknowledgment
         CompletableFuture.runAsync(() -> {
             try {
                 synchronized (PIPE_LOCK) {
@@ -117,8 +110,8 @@ public class DiscordIpcManager {
                     if (pipe != null && connected) {
                         JsonObject args = new JsonObject();
                         args.addProperty("user_id", userId);
-                        args.addProperty("mute", nowMuted);
-                        args.addProperty("volume", nowMuted ? 0 : 100);
+                        args.addProperty("mute", targetMute);
+                        args.addProperty("volume", targetMute ? 0 : 100);
                         JsonObject rpc = new JsonObject();
                         rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
                         rpc.add("args", args);
@@ -132,22 +125,7 @@ public class DiscordIpcManager {
             } catch (Throwable ignored) {}
         });
 
-        // Update in-memory user
-        DiscordVoiceUser existing = voiceUsers.get(userId);
-        if (existing != null) {
-            voiceUsers.put(userId, new DiscordVoiceUser(
-                    existing.id(), existing.username(), existing.displayName(),
-                    existing.isMuted(), existing.isDeafened(), existing.isSpeaking(),
-                    existing.isScreenSharing(), nowMuted
-            ));
-        }
-
-        if (mc != null && mc.player != null) {
-            String name = existing != null ? existing.displayName() : userId;
-            mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] " + (nowMuted ? "§cMuted " : "§aUnmuted ") + "§f" + name));
-        }
-
-        return nowMuted;
+        return targetMute;
     }
 
     public static boolean isConnected() {
@@ -598,11 +576,8 @@ public class DiscordIpcManager {
                     Matcher vm = INBOUND_VIDEO_USER_PATTERN.matcher(wLine);
                     if (vm.find()) {
                         String vuid = vm.group(1);
-                        screensharingUserIds.add(vuid);
-                    }
-                    if (wLine.contains("Outbound video") || wLine.contains("video ssrc:") || wLine.toLowerCase().contains("screenshare")) {
-                        if (!myUserId.isEmpty()) {
-                            screensharingUserIds.add(myUserId);
+                        if (!vuid.equals(myUserId)) {
+                            screensharingUserIds.add(vuid);
                         }
                     }
                 }
@@ -658,7 +633,7 @@ public class DiscordIpcManager {
                     String selfId = !myUserId.isEmpty() ? myUserId : "self";
                     String selfName = !myDiscordUsername.isEmpty() ? myDiscordUsername : "You";
                     boolean selfSpeaking = voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isSpeaking();
-                    boolean selfLive = screensharingUserIds.contains(selfId) || (voiceUsers.containsKey(selfId) && voiceUsers.get(selfId).isScreenSharing());
+                    boolean selfLive = !myUserId.isEmpty() && voiceUsers.containsKey(myUserId) && voiceUsers.get(myUserId).isScreenSharing();
                     voiceUsers.put(selfId, new DiscordVoiceUser(selfId, selfName, selfName, false, false, selfSpeaking, selfLive));
 
                     for (String uid : webrtcUserIds) {
@@ -738,11 +713,6 @@ public class DiscordIpcManager {
                 String nonce = obj.has("nonce") && !obj.get("nonce").isJsonNull() ? obj.get("nonce").getAsString() : "";
                 PendingMute pm = nonce.isEmpty() ? null : pendingMutes.remove(nonce);
                 if (pm != null) {
-                    if (pm.intendedMute()) {
-                        locallyMutedUsers.remove(pm.userId());
-                    } else {
-                        locallyMutedUsers.add(pm.userId());
-                    }
                     Minecraft mc = Minecraft.getInstance();
                     if (mc != null && mc.player != null) {
                         mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] §cVoice mute failed (" + errCode + "): " + errMsg));
@@ -761,7 +731,27 @@ public class DiscordIpcManager {
 
             if ("SET_USER_VOICE_SETTINGS".equals(cmd) && !"ERROR".equals(evt)) {
                 String nonce = obj.has("nonce") && !obj.get("nonce").isJsonNull() ? obj.get("nonce").getAsString() : "";
-                if (!nonce.isEmpty()) pendingMutes.remove(nonce);
+                PendingMute pm = nonce.isEmpty() ? null : pendingMutes.remove(nonce);
+                if (pm != null) {
+                    if (pm.intendedMute()) {
+                        locallyMutedUsers.add(pm.userId());
+                    } else {
+                        locallyMutedUsers.remove(pm.userId());
+                    }
+                    DiscordVoiceUser existing = voiceUsers.get(pm.userId());
+                    if (existing != null) {
+                        voiceUsers.put(pm.userId(), new DiscordVoiceUser(
+                                existing.id(), existing.username(), existing.displayName(),
+                                existing.isMuted(), existing.isDeafened(), existing.isSpeaking(),
+                                existing.isScreenSharing(), pm.intendedMute()
+                        ));
+                    }
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc != null && mc.player != null) {
+                        String name = existing != null ? existing.displayName() : pm.userId();
+                        mc.player.sendSystemMessage(Component.literal("§8[§9Discord§8] " + (pm.intendedMute() ? "§cMuted §e" : "§aUnmuted §e") + name + " §7(local)"));
+                    }
+                }
             }
 
             if ("DISPATCH".equals(cmd)) {
@@ -794,13 +784,9 @@ public class DiscordIpcManager {
                         hasAuthorizedThisSession = true;
                     }
 
-                    // Subscribe to voice channel select & speaking events
+                    // Subscribe to global voice connection and selection events
                     subscribe(pipe, "VOICE_CHANNEL_SELECT");
-                    subscribe(pipe, "VOICE_STATE_CREATE");
-                    subscribe(pipe, "VOICE_STATE_UPDATE");
-                    subscribe(pipe, "VOICE_STATE_DELETE");
-                    subscribe(pipe, "SPEAKING_START");
-                    subscribe(pipe, "SPEAKING_STOP");
+                    subscribe(pipe, "VOICE_CONNECTION_STATUS");
 
                     // Query current channel
                     JsonObject getVoice = new JsonObject();
@@ -808,7 +794,17 @@ public class DiscordIpcManager {
                     getVoice.addProperty("nonce", UUID.randomUUID().toString());
                     writePacket(pipe, 1, getVoice.toString());
                 } else if ("VOICE_CHANNEL_SELECT".equals(evt)) {
-                    updateVoiceChannel(obj.has("data") && obj.get("data").isJsonObject() ? obj.getAsJsonObject("data") : null);
+                    updateVoiceChannel(pipe, obj.has("data") && obj.get("data").isJsonObject() ? obj.getAsJsonObject("data") : null);
+                } else if ("VOICE_CONNECTION_STATUS".equals(evt)) {
+                    if (obj.has("data") && obj.get("data").isJsonObject()) {
+                        JsonObject d = obj.getAsJsonObject("data");
+                        String state = d.has("state") ? d.get("state").getAsString() : "";
+                        if ("DISCONNECTED".equalsIgnoreCase(state) || "VOICE_DISCONNECTED".equalsIgnoreCase(state)) {
+                            inVoice = false;
+                            voiceUsers.clear();
+                            lastSubscribedChannelId = "";
+                        }
+                    }
                 } else if ("VOICE_STATE_CREATE".equals(evt) || "VOICE_STATE_UPDATE".equals(evt)) {
                     updateVoiceUser(obj.has("data") && obj.get("data").isJsonObject() ? obj.getAsJsonObject("data") : null);
                 } else if ("VOICE_STATE_DELETE".equals(evt)) {
@@ -823,9 +819,9 @@ public class DiscordIpcManager {
                 pollVoiceStatus();
             } else if ("GET_SELECTED_VOICE_CHANNEL".equals(cmd)) {
                 if (obj.has("data") && obj.get("data").isJsonObject()) {
-                    updateVoiceChannel(obj.getAsJsonObject("data"));
+                    updateVoiceChannel(pipe, obj.getAsJsonObject("data"));
                 } else if (obj.has("data") && obj.get("data").isJsonNull()) {
-                    updateVoiceChannel(null);
+                    updateVoiceChannel(pipe, null);
                 }
             }
         } catch (Exception t) {
@@ -834,19 +830,40 @@ public class DiscordIpcManager {
     }
 
     private static void subscribe(RandomAccessFile pipe, String event) throws Exception {
+        subscribe(pipe, event, null);
+    }
+
+    private static void subscribe(RandomAccessFile pipe, String event, JsonObject args) throws Exception {
         JsonObject sub = new JsonObject();
         sub.addProperty("cmd", "SUBSCRIBE");
         sub.addProperty("evt", event);
+        if (args != null) {
+            sub.add("args", args);
+        }
         sub.addProperty("nonce", UUID.randomUUID().toString());
         writePacket(pipe, 1, sub.toString());
     }
 
-    private static void updateVoiceChannel(JsonObject data) {
+    private static void subscribeToChannel(RandomAccessFile pipe, String channelId) {
+        if (pipe == null || channelId == null || channelId.isEmpty()) return;
+        try {
+            JsonObject args = new JsonObject();
+            args.addProperty("channel_id", channelId);
+            subscribe(pipe, "VOICE_STATE_CREATE", args);
+            subscribe(pipe, "VOICE_STATE_UPDATE", args);
+            subscribe(pipe, "VOICE_STATE_DELETE", args);
+            subscribe(pipe, "SPEAKING_START", args);
+            subscribe(pipe, "SPEAKING_STOP", args);
+        } catch (Throwable ignored) {}
+    }
+
+    private static void updateVoiceChannel(RandomAccessFile pipe, JsonObject data) {
         if (data == null || !data.has("id") || data.get("id").isJsonNull()) {
             inVoice = false;
             currentChannelId = "";
             currentChannelName = "";
             currentGuildName = "";
+            lastSubscribedChannelId = "";
             voiceUsers.clear();
             return;
         }
@@ -855,6 +872,11 @@ public class DiscordIpcManager {
         currentChannelId = data.get("id").getAsString();
         currentChannelName = data.has("name") && !data.get("name").isJsonNull() ? data.get("name").getAsString() : "Voice Channel";
         voiceUsers.clear();
+
+        if (pipe != null && connected && !currentChannelId.isEmpty() && !currentChannelId.equals(lastSubscribedChannelId)) {
+            lastSubscribedChannelId = currentChannelId;
+            subscribeToChannel(pipe, currentChannelId);
+        }
 
         if (data.has("voice_states") && data.get("voice_states").isJsonArray()) {
             for (JsonElement el : data.getAsJsonArray("voice_states")) {
@@ -879,8 +901,7 @@ public class DiscordIpcManager {
                 || (state.has("self_mute") && state.get("self_mute").getAsBoolean());
         boolean deaf = (state.has("deaf") && state.get("deaf").getAsBoolean())
                 || (state.has("self_deaf") && state.get("self_deaf").getAsBoolean());
-        boolean screenSharing = (state.has("self_stream") && state.get("self_stream").getAsBoolean())
-                || (state.has("self_video") && state.get("self_video").getAsBoolean());
+        boolean screenSharing = state.has("self_stream") && state.get("self_stream").getAsBoolean();
 
         boolean speaking = voiceUsers.containsKey(id) && voiceUsers.get(id).isSpeaking();
 

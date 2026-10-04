@@ -1,5 +1,37 @@
 # BomboAddons Changelog
  
+## [26.2.28.72] - 2026-10-04 (Beta)
+
+### Storage Overlay Fixes & Inline Renaming
+- **Consistent 5-Row Ender Chests:** Enforced accurate 5-row sizing for Ender Chests 1-4 on initial display and storage switching, eliminating row shrinkage to 2 rows.
+- **Phantom Ender Chest Removal:** Only seeds unlocked Ender Chests, removing phantom unowned Ender Chests 5-9 and preventing "Could not find this Ender Chest menu!" chat errors.
+- **Inline Card Header Renaming:** Replaced modal popup dialog with inline text editing directly on the card header using an EditBox with Enter to save and Escape to cancel.
+- **Transparent Slot Highlighting:** Fixed slot backgrounds turning solid gray when focused or searching; preserved clear transparent backgrounds for items matching searches and light gray for empty slots.
+
+### Discord Voice HUD & Real-Time IPC Protocol
+- **Channel-Scoped IPC Subscriptions:** Subscribes with `channel_id` to `VOICE_STATE_UPDATE`, `VOICE_STATE_CREATE`, `VOICE_STATE_DELETE`, `SPEAKING_START`, `SPEAKING_STOP`, and global `VOICE_CONNECTION_STATUS`.
+- **Real Discord Local Mute:** Dispatches framed `SET_USER_VOICE_SETTINGS` over Named Pipe with `user_id`, `mute`, `volume`, and `nonce`; strictly awaits Discord acknowledgment frame matching `nonce` before updating local mute state and HUD indicators.
+- **False [LIVE] Removal:** Specifically checks `self_stream == true` (Go Live screen share) and ignores `self_video` or WebRTC audio/codec probing lines, preventing self from being falsely marked as streaming.
+
+### Screenshare Direct GPU Framebuffer Prioritization
+- **60-120 FPS Direct GPU Capture:** Prioritized direct OpenGL framebuffer capture via `Screenshot.takeScreenshot` (<3ms) whenever the Minecraft window is active, eliminating CPU-heavy AWT Robot capture (95ms).
+- **Safe Defaults:** Set `screenshareOnlyMinecraft = true` as default on clean installations.
+- **Detailed Telemetry:** Added live capture mode tracking (`Direct GPU (OpenGL)` vs `AWT Robot Desktop`), resolution, frame latency, and throughput in `/b screenshare status`.
+
+### Bridge Colors & Discord Item Glyphs
+- **Chat Color Preservation:** Removed regex color stripping in `bombot/index.js`, preserving section signs and `&` color codes across the bridge so `$item` and colored messages display with authentic Minecraft formatting.
+- **Authentic 7x7 Sprite Tooltips:** Synchronously loaded Hypixel's official font bitmap sheets (`stats.png`, `icons.png`, `skills.png`, `mobs.png`) into `render_item.js`, rendering authentic gemstone sockets (`\ue060`..`\ue063`), mana intelligence symbols (`\ue003`), checkmarks, and stat icons with drop shadows in Discord lore images.
+
+### Synced Lyrics Multi-Provider & Web UI
+- **`/lyric` Web Inspector:** Added `/lyric` and `/api/lyrics/providers` endpoints querying Paxsenix, BetterLyrics, LRCLIB, KuGou, YouLyPlus, and Musixmatch in parallel, ranking by Word-for-Word Sync -> Line-by-Line -> Plain.
+- **Active Provider Badge:** Added dynamic provider badge in `lyrics.html` displaying the active lyric source (e.g. `[YOULYPLUS]`, `[LRCLIB]`, `[KUGOU]`).
+- **In-Game Karaoke Aesthetics:** Enhanced active lyric highlight pill outline (`0x661DB954`) and vibrant Spotify green text (`0xFF1ED760`).
+
+### HUD Move Screen & Performance Profiler
+- **Top Bar Button Priority:** Checked `super.mouseClicked` first in `HudMoveScreen.java` so top buttons are never swallowed by overlapping draggable HUDs. Added solid top header bar background.
+- **Right-Click HUD Filtering:** Added right-click cycling on Mode button (`Both` -> `In-GUI Only` -> `In-Game Only`) to easily filter and position In-GUI overlays (Croesus, Item List, etc.) separately from In-Game HUDs.
+- **Compact Performance Profiler:** Reduced card height to 32px and card gap to 4px with `winH = Math.min(600, height - 24)`, fitting 8-9 feature profiler cards simultaneously without scrolling.
+
 ## [26.2.28.71] - 2026-10-04 (Beta)
 
 ### Mod Updater Stale Flavor Cleanup

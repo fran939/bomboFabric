@@ -86,7 +86,7 @@ public class PerformanceScreen extends Screen {
         g.fill(0, 0, this.width, this.height, 0xDD0A0C10);
 
         int winW = Math.min(860, this.width - 40);
-        int winH = Math.min(540, this.height - 40);
+        int winH = Math.min(600, this.height - 24);
         int winX = (this.width - winW) / 2;
         int winY = (this.height - winH) / 2;
 
@@ -187,8 +187,8 @@ public class PerformanceScreen extends Screen {
         if (maxSingleFeatureMs <= 0.0001) maxSingleFeatureMs = 1.0;
 
         int totalContentHeight = 0;
-        int cardHeight = 44;
-        int cardGap = 8;
+        int cardHeight = 32;
+        int cardGap = 4;
         totalContentHeight = cachedSnapshots.size() * (cardHeight + cardGap);
         maxScroll = Math.max(0, totalContentHeight - contentH);
         scrollAmount = Math.max(0, Math.min(scrollAmount, maxScroll));
@@ -230,21 +230,21 @@ public class PerformanceScreen extends Screen {
                 barColor = 0xFF3B82F6; // Very Low / Blue
             }
 
-            g.fill(contentX, cardY + cardHeight - 3, contentX + barW, cardY + cardHeight, barColor);
+            g.fill(contentX, cardY + cardHeight - 2, contentX + barW, cardY + cardHeight, barColor);
             g.outline(contentX, cardY, contentW, cardHeight, isHovered ? barColor : 0x334B5563);
 
             // Rank badge
             String rank = "#" + (i + 1);
             int rankColor = i == 0 ? 0xFFFFD700 : (i == 1 ? 0xFFC0C0C0 : (i == 2 ? 0xFFCD7F32 : 0xFF9CA3AF));
-            g.text(font, rank, contentX + 10, cardY + 10, rankColor, true);
+            g.text(font, rank, contentX + 10, cardY + 5, rankColor, true);
 
             // Feature Name
-            g.text(font, snap.name, contentX + 44, cardY + 10, 0xFFFFFFFF, false);
+            g.text(font, snap.name, contentX + 44, cardY + 5, 0xFFFFFFFF, false);
 
             // Metrics: Total CPU consumption
             String totalMsStr = String.format("%.2f ms/s (%.1f%% CPU)", snap.totalMsPerSec, snap.cpuPercent);
             int msStrW = font.width(totalMsStr);
-            g.text(font, totalMsStr, contentX + contentW - msStrW - 14, cardY + 10, barColor, true);
+            g.text(font, totalMsStr, contentX + contentW - msStrW - 14, cardY + 5, barColor, true);
 
             // Sub-metrics (Calls/sec or FPS, Avg latency, Max latency, Est Memory)
             boolean isRenderFeature = snap.name.toLowerCase(java.util.Locale.ROOT).contains("hud") || snap.name.toLowerCase(java.util.Locale.ROOT).contains("render");
@@ -252,7 +252,7 @@ public class PerformanceScreen extends Screen {
             String rateUnit = isRenderFeature ? " fps" : "/s";
             String details = String.format("§7%s: §f%.0f%s §8| §7Avg: §f%.3f ms §8| §7Max: §f%.2f ms §8| §7Est Mem: §b~%d KB",
                     callLabel, snap.callsPerSec, rateUnit, snap.avgMs, snap.maxMs, snap.estimatedMemKb);
-            g.text(font, details, contentX + 44, cardY + 24, 0xFF9CA3AF, false);
+            g.text(font, details, contentX + 44, cardY + 17, 0xFF9CA3AF, false);
         }
 
         g.disableScissor();
@@ -282,7 +282,7 @@ public class PerformanceScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         if (event.button() == 0) {
             int winW = Math.min(860, this.width - 40);
-            int winH = Math.min(540, this.height - 40);
+            int winH = Math.min(600, this.height - 24);
             int winX = (this.width - winW) / 2;
             int winY = (this.height - winH) / 2;
             int headerH = 46;

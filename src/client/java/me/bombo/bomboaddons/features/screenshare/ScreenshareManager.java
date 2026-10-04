@@ -52,6 +52,7 @@ public class ScreenshareManager {
     private static volatile float currentBitrateKbps = 0.0f;
     private static volatile long lastLatencyMs = 0L;
     private static volatile long lastCaptureDurationMs = 0L;
+    private static volatile String lastCaptureMode = "Direct GPU (OpenGL)";
     private static volatile String lastError = "";
 
     // Window FPS calculation
@@ -183,11 +184,18 @@ public class ScreenshareManager {
                     if (mc != null) {
                         long capStart = System.currentTimeMillis();
                         byte[] jpegBytes = null;
-                        if (s == null || s.screenshareOnlyMinecraft) {
+                        boolean mcActive = mc.isWindowActive();
+                        if (s == null || s.screenshareOnlyMinecraft || mcActive) {
                             jpegBytes = captureMinecraftFrame(mc, targetW, targetH, quality);
+                            if (jpegBytes != null && jpegBytes.length > 0) {
+                                lastCaptureMode = "Direct GPU (OpenGL - <3ms)";
+                            }
                         }
                         if (jpegBytes == null || jpegBytes.length == 0) {
                             jpegBytes = captureRobotFrame(mc, targetW, targetH, quality);
+                            if (jpegBytes != null && jpegBytes.length > 0) {
+                                lastCaptureMode = "AWT Robot Desktop (" + (System.currentTimeMillis() - capStart) + "ms - High CPU)";
+                            }
                         }
                         lastCaptureDurationMs = System.currentTimeMillis() - capStart;
 
@@ -451,7 +459,7 @@ public class ScreenshareManager {
         feedback.accept(Component.literal("§9========== §b[Screenshare Stream Diagnostics] §9=========="));
         feedback.accept(Component.literal("§7Streaming Active: " + (isStreaming() ? "§aYes (Broadcasting)" : "§cNo (Stopped)")));
         feedback.accept(Component.literal("§7Target Audience: §f" + (activeStreamTarget.isEmpty() ? "None" : activeStreamTarget)));
-        feedback.accept(Component.literal("§7Capture Mode: " + (onlyMc ? "§aMinecraft Framebuffer (Direct GPU, No Cursor Flicker)" : "§eDesktop / Full Screen (AWT Robot)")));
+        feedback.accept(Component.literal("§7Capture Mode: " + (lastCaptureMode.startsWith("Direct") ? "§a" : "§e") + lastCaptureMode));
         feedback.accept(Component.literal("§7Configured Quality: §e" + qualityMode + " §7(Streaming: §b" + currentTargetW + "x" + currentTargetH + "§7)"));
         feedback.accept(Component.literal("§7Live Framerate: §b" + String.format("%.1f", currentFps) + " FPS"));
         feedback.accept(Component.literal("§7Current Bitrate: §d" + String.format("%.1f", currentBitrateKbps) + " kbps"));

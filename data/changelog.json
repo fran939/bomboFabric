@@ -1,5 +1,28 @@
 [
   {
+    "version": "26.2.28.72",
+    "date": "2026-10-04",
+    "changes": [
+      "Storage Overlay Dynamic 5-Row Sizing: Enforced 5 rows for Ender Chests 1-4 on initial display and storage switching, preventing cards from shrinking to 2 rows",
+      "Phantom Ender Chest Elimination: Only discovered/unlocked Ender Chests are displayed, removing unowned EC 5-9 and eliminating chat errors",
+      "Inline Storage Card Renaming: Replaced modal popup with inline EditBox directly on the card header with Enter to commit and Escape to cancel",
+      "Transparent Slot Highlighting: Fixed slots turning solid gray on focus or search, preserving transparent backgrounds for matching items and light gray for empty slots",
+      "Discord Voice HUD Channel Subscriptions: Subscribed with channel_id to VOICE_STATE_UPDATE, SPEAKING_START/STOP, and VOICE_CONNECTION_STATUS for instant state sync",
+      "Real Discord Local Mute: Dispatches framed SET_USER_VOICE_SETTINGS and waits for nonce acknowledgment before updating local mute state and HUD indicators",
+      "False [LIVE] Indicator Removal: Strictly checks self_stream == true (Go Live) and ignores self_video or WebRTC audio setup lines to prevent false screenshare badges",
+      "Screenshare Direct GPU Capture: Prioritized OpenGL framebuffer capture via Screenshot.takeScreenshot (<3ms), avoiding 95ms AWT Robot CPU overhead",
+      "Screenshare Safe Defaults & Telemetry: Defaulted screenshareOnlyMinecraft to true and added live capture mode and latency metrics to /b screenshare status",
+      "Bridge Formatting & $item Colors: Preserved section signs and & chat colors in bombot/index.js so $item retains authentic Minecraft color formatting across bridge",
+      "Discord Lore Item Glyphs: Synchronously loaded Hypixel font sheets (stats.png, icons.png, skills.png, mobs.png) into render_item.js, rendering authentic gemstone sockets and mana symbols",
+      "Multi-Provider /lyric Web UI: Created /lyric web inspector and /api/lyrics/providers endpoint querying providers in parallel and ranking by Word -> Line -> Plain",
+      "Active Provider Badge: Added dynamic provider badge in lyrics.html displaying the active lyric source",
+      "In-Game Lyrics Glow Styling: Enhanced active line highlight pill outline (0x661DB954) and vibrant Spotify green text (0xFF1ED760) in /b lyrics",
+      "HUD Move Top Bar Click Priority: Prioritized super.mouseClicked first so top buttons are never swallowed by overlapping HUDs, with solid header background",
+      "Right-Click Mode Filtering: Added right-click cycling on Mode button (Both -> In-GUI Only -> In-Game Only) to filter container overlays from in-game HUDs",
+      "Compact Performance Profiler: Reduced card height to 32px and gap to 4px with winH = Math.min(600, height - 24), fitting 8-9 feature cards without scrolling"
+    ]
+  },
+  {
     "version": "26.2.28.71",
     "date": "2026-10-04",
     "changes": [

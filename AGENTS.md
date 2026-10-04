@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.71` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.72` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.71`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.72`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.72 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Sizing & Inline Header Renaming (`StorageOverlayScreen`, `BackpackPreview`):** Fixed Ender Chest row collapse by strictly enforcing 54 slots (5 rows) for EC 1–4, seeded only discovered Ender Chests to eliminate phantom EC 5–9 chat errors, added inline card header renaming via `EditBox` (Enter to save, Esc to cancel), and corrected slot search/focus backgrounds so matching item slots remain transparent while empty slots render subtle gray.
+> 2. **Discord Voice HUD Framed IPC & Accurate Live Status (`DiscordIpcManager`):** Subscribed with active `channel_id` to `VOICE_STATE_UPDATE`, `VOICE_STATE_CREATE`, `VOICE_STATE_DELETE`, `SPEAKING_START`, and `SPEAKING_STOP`. Implemented verified local mute awaiting Discord IPC acknowledgment frames matching nonces before state updates. Removed false-positive WebRTC log scanner and strictly required `self_stream == true` (Go Live) for `[LIVE]` badges.
+> 3. **Screenshare Direct GPU Capture Priority (`ScreenshareManager`, `BomboConfig`):** Prioritized direct OpenGL framebuffer capture via `Screenshot.takeScreenshot` (<3ms) whenever the Minecraft window is active, eliminating the 95ms AWT Robot CPU desktop bottleneck. Set `screenshareOnlyMinecraft = true` by default on clean installations and exposed capture mode in `/b screenshare status`.
+> 4. **Bridge Color Formatting & Discord Gemstone Glyphs (`bombot/index.js`, `bombot/render_item.js`):** Preserved `§` and `&` color codes across the chat bridge in `bombot/index.js` for `$item` and colored messages. Synchronously loaded Hypixel's official font sheets (`stats.png`, `icons.png`, `skills.png`, `mobs.png`) into `render_item.js` to render authentic 7x7 gemstone sockets, mana symbols, and stat icons with drop shadows in Discord lore images.
+> 5. **Multi-Provider Lyrics UI & Web Engine (`bomboapi/server.js`, `lyrics.html`, `LyricsScreen`):** Implemented `/lyric` web route and `/api/lyrics/providers` querying Paxsenix, BetterLyrics, LRCLIB, KuGou, YouLyPlus, and Musixmatch in parallel with fallback ranking (Word -> Line -> Plain). Added active provider badge in `lyrics.html` and refined in-game lyrics glow outline (`0x661DB954`) and vibrant Spotify green text (`0xFF1ED760`).
+> 6. **HUD Move Screen Mode Cycling & Performance UI (`HudMoveScreen`, `PerformanceScreen`):** Checked `super.mouseClicked` first in `HudMoveScreen` to prevent header button events from being swallowed by overlapping HUDs, added solid top and bottom header bars, and implemented right-click cycling on the Mode button (`Both` -> `In-GUI Only` -> `In-Game Only`). Compacted `PerformanceScreen` card dimensions (`cardHeight = 32`, `cardGap = 4`, `winH = Math.min(600, height - 24)`) to fit 8–9 cards without scrolling.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.71 (Ready for In-Game Testing)
 >
 > 1. **Mod Updater Stale Flavor Cleanup (`ModUpdater`):** Automatically purges older version jars of the active flavor (e.g. `bomboclient-26.2.28.54.jar`) from the Minecraft mods directory on update download and startup sweep via detached script execution.

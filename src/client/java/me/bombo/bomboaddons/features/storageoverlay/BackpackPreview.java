@@ -196,7 +196,12 @@ public class BackpackPreview {
 
         int index = getStorageIndexFromTitle(rawTitle);
         if (index >= 0 && index < STORAGE_SIZE) {
-            storages[index] = new Storage(container, getStorageName(index), true);
+            int size = container.getContainerSize();
+            ItemStack[] copy = new ItemStack[size];
+            for (int i = 0; i < size; i++) {
+                copy[i] = container.getItem(i).copy();
+            }
+            storages[index] = new Storage(new SimpleContainer(copy), getStorageName(index), true);
             saveStorage(index);
         }
     }
@@ -401,13 +406,12 @@ public class BackpackPreview {
                 seedStorageFromStorageTracker(i);
             }
         }
-        for (int i = 0; i <= 8; i++) {
-            if (storages[i] == null) {
-                storages[i] = new Storage(
-                    new SimpleContainer(Stream.generate(() -> ItemStack.EMPTY).limit(54).toArray(ItemStack[]::new)),
-                    getStorageName(i), false
-                );
-            }
+        // Fallback for Ender Chest 1 only (guaranteed for all SkyBlock players)
+        if (storages[0] == null) {
+            storages[0] = new Storage(
+                new SimpleContainer(Stream.generate(() -> ItemStack.EMPTY).limit(54).toArray(ItemStack[]::new)),
+                getStorageName(0), false
+            );
         }
     }
 
@@ -443,11 +447,17 @@ public class BackpackPreview {
 
         if (slots == null || slots.isEmpty()) return;
 
-        int maxSlot = 17;
-        for (Integer slotNum : slots.keySet()) {
-            if (slotNum > maxSlot) maxSlot = slotNum;
+        int finalSize;
+        if (index <= 8) {
+            // Ender Chests in Hypixel SkyBlock always have 54 container slots (5 rows = 45 items + 9 nav)
+            finalSize = 54;
+        } else {
+            int maxSlot = 17;
+            for (Integer slotNum : slots.keySet()) {
+                if (slotNum > maxSlot) maxSlot = slotNum;
+            }
+            finalSize = Math.min(54, Math.max(18, ((maxSlot / 9) + 1) * 9));
         }
-        int finalSize = Math.min(54, Math.max(18, ((maxSlot / 9) + 1) * 9));
 
         Minecraft mc = Minecraft.getInstance();
         RegistryOps<Tag> ops = mc.level != null ? RegistryOps.create(NbtOps.INSTANCE, mc.level.registryAccess()) : null;

@@ -296,8 +296,29 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			graphics.enableScissor(rectangle.left(), rectangle.top(), rectangle.right(), rectangle.bottom());
 			super.extractSlot(graphics, slot, mouseX, mouseY);
 			graphics.disableScissor();
-			if (grid.openBackpack != null && !grid.openBackpack.matchedSlots.get(slot.getContainerSlot())) {
-				graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, NOT_MATCHED_COLOR);
+
+			String search = grid.getSearch() != null ? grid.getSearch().trim().toLowerCase(Locale.ENGLISH) : "";
+			if (!search.isEmpty() && grid.openBackpack != null) {
+				boolean matches = false;
+				ItemStack stack = slot.getItem();
+				if (!stack.isEmpty()) {
+					if (stack.getHoverName().getString().toLowerCase(Locale.ENGLISH).contains(search)) {
+						matches = true;
+					} else {
+						ItemLore lore = stack.get(DataComponents.LORE);
+						if (lore != null) {
+							for (Component line : lore.lines()) {
+								if (line.getString().toLowerCase(Locale.ENGLISH).contains(search)) {
+									matches = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+				if (!matches) {
+					graphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, NOT_MATCHED_COLOR);
+				}
 			}
 		}
 	}
@@ -317,6 +338,23 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	@Override
 	public boolean keyPressed(KeyEvent event) {
+		if (grid != null && grid.backpackWidgets != null) {
+			for (BackpackWidget bw : grid.backpackWidgets) {
+				if (bw.isEditingTitle && bw.inlineTitleBox != null) {
+					if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) {
+						bw.commitInlineRename();
+						return true;
+					}
+					if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+						bw.cancelInlineRename();
+						return true;
+					}
+					if (bw.inlineTitleBox.keyPressed(event)) {
+						return true;
+					}
+				}
+			}
+		}
 		ComponentPath focusPath = this.getCurrentFocusPath();
 		if (this.minecraft.options.keyInventory.matches(event) && focusPath != null && focusPath.leafComponent() instanceof EditBox) {
 			return true;
@@ -452,11 +490,17 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		private final BackpackPreview.Storage storage;
 		private final boolean open;
 		private final BitSet matchedSlots = new BitSet();
+		private boolean isEditingTitle = false;
+		private EditBox inlineTitleBox = null;
 
 		private BackpackWidget(int columns, int index, BackpackPreview.Storage storage, Boolean open) {
 			int rows = Math.max(1, Math.ceilDiv(storage.size() - 9, columns));
+			if (index <= 8) {
+				// Ender Chests in Hypixel are always 5 rows (45 item slots)
+				rows = Math.max(rows, 5);
+			}
 			if (open) {
-				rows = Math.max(1, Math.ceilDiv(handler.getContainer().getContainerSize() - 9, columns));
+				rows = Math.max(rows, Math.ceilDiv(handler.getContainer().getContainerSize() - 9, columns));
 			}
 			super(0, 0, columns * SLOT_SIZE + EDGE_PADDING * 2, rows * SLOT_SIZE + HEADER_H + EDGE_PADDING, Component.literal("Backpack preview"));
 			this.rows = rows;
@@ -473,6 +517,23 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			} else {
 				return storage.size();
 			}
+		}
+
+		public void commitInlineRename() {
+			if (isEditingTitle && inlineTitleBox != null) {
+				String newName = inlineTitleBox.getValue().trim();
+				BackpackPreview.setCustomStorageName(index, newName);
+				isEditingTitle = false;
+				inlineTitleBox = null;
+				if (grid != null) {
+					grid.rebuildBackpacks();
+				}
+			}
+		}
+
+		public void cancelInlineRename() {
+			isEditingTitle = false;
+			inlineTitleBox = null;
 		}
 
 		public boolean matches(String filter) {
@@ -555,7 +616,12 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			boolean transparent = s != null && (s.storageOverlayTransparent || theme.equals("TRANSPARENT"));
 			int titleColor = theme.equals("LIGHT") ? 0xFF222222 : ((transparent || theme.equals("DARK")) ? 0xFFE0E0E0 : 0xFF404040);
 
-			graphics.text(textRenderer, label, x + 8, y + 6, titleColor, false);
+			if (isEditingTitle && inlineTitleBox != null) {
+				inlineTitleBox.setPosition(x + 6, y + 3);
+				inlineTitleBox.extractRenderState(graphics, mouseX, mouseY, 0);
+			} else {
+				graphics.text(textRenderer, label, x + 8, y + 6, titleColor, false);
+			}
 
 			for (int i = size() - 9; i < rows * columns; ++i) {
 				int itemX = x + i % columns * SLOT_SIZE + 8;
@@ -564,6 +630,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 			}
 
 			if (!open) {
+				String search = StorageOverlayScreen.this.grid != null ? StorageOverlayScreen.this.grid.getSearch().trim().toLowerCase(Locale.ENGLISH) : "";
 				for (int i = 9; i < size(); ++i) {
 					ItemStack currentStack = storage.getStack(i);
 					int itemX = x + (i - 9) % columns * SLOT_SIZE + 8;
@@ -577,7 +644,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 						}
 					}
 
-					if (!matchedSlots.get(i)) {
+					if (!search.isEmpty() && !matchedSlots.get(i)) {
 						graphics.fill(itemX, itemY, itemX + 16, itemY + 16, NOT_MATCHED_COLOR);
 					}
 				}
@@ -601,8 +668,19 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		public void onClick(MouseButtonEvent event, boolean doubleClick) {
 			super.onClick(event, doubleClick);
 			if (event.y() >= getY() && event.y() <= getY() + HEADER_H) {
-				CLIENT.setScreenAndShow(new RenameStorageScreen(StorageOverlayScreen.this, index, label));
+				if (!isEditingTitle) {
+					isEditingTitle = true;
+					int boxW = Math.max(80, getWidth() - 16);
+					inlineTitleBox = new EditBox(CLIENT.font, getX() + 6, getY() + 3, boxW, 12, Component.literal("Rename"));
+					inlineTitleBox.setMaxLength(32);
+					inlineTitleBox.setValue(label);
+					inlineTitleBox.setFocused(true);
+					StorageOverlayScreen.this.setFocused(inlineTitleBox);
+				}
 				return;
+			}
+			if (isEditingTitle) {
+				commitInlineRename();
 			}
 			if (!open) {
 				switchOpenStorage(index);
