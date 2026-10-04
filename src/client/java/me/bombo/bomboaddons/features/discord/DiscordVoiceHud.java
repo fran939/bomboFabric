@@ -88,7 +88,6 @@ public class DiscordVoiceHud {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null) return;
         if (mc.gui.screen() instanceof HudMoveScreen) return;
-        if (mc.gui.screen() != null && !(mc.gui.screen() instanceof ChatScreen)) return;
 
         long now = System.currentTimeMillis();
         if (now - lastBackgroundScan > 1000L) {
@@ -153,6 +152,7 @@ public class DiscordVoiceHud {
         BomboConfig.Settings s = BomboConfig.get();
         boolean hideBrand = s != null && s.discordHudHideBrand;
         boolean showAvatars = s != null && s.discordHudShowAvatars;
+        boolean showServerNick = s == null || s.discordHudShowServerNickname;
 
         g.pose().pushMatrix();
         g.pose().translate((float) baseX, (float) baseY);
@@ -194,12 +194,17 @@ public class DiscordVoiceHud {
                     if (!normUser.isEmpty()) seenKeys.add(normUser);
 
                     cachedUserRowIds.add(u.id());
+                    String nameToRender = showServerNick
+                            ? (u.displayName() != null && !u.displayName().isEmpty() ? u.displayName() : u.username())
+                            : (u.username() != null && !u.username().isEmpty() ? u.username() : u.displayName());
+                    if (nameToRender == null || nameToRender.isEmpty()) nameToRender = "User";
+
                     StringBuilder sb = new StringBuilder();
                     sb.append(u.isSpeaking() ? " §a● " : " §8○ ");
                     if (u.isLocallyMuted()) {
-                        sb.append("§7§m").append(u.displayName()).append("§r §6[MUTE]");
+                        sb.append("§7§m").append(nameToRender).append("§r §6[MUTE]");
                     } else {
-                        sb.append(u.isSpeaking() ? "§a" : "§f").append(u.displayName());
+                        sb.append(u.isSpeaking() ? "§a" : "§f").append(nameToRender);
                     }
                     if (u.isScreenSharing()) {
                         sb.append(" §c§l[LIVE]§r");

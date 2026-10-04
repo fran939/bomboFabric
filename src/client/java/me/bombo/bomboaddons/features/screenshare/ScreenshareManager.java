@@ -781,7 +781,7 @@ public class ScreenshareManager {
         String myIgn = (mc != null && mc.player != null) ? mc.player.getScoreboardName() : "User";
         BomboConfig.Settings s = BomboConfig.get();
         boolean onlyMc = s == null || s.screenshareOnlyMinecraft;
-        String qualityMode = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 30fps";
+        String qualityMode = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 60fps";
 
         feedback.accept(Component.literal("§9========== §b[Screenshare Stream Diagnostics] §9=========="));
         feedback.accept(Component.literal("§7Streaming Active: " + (isStreaming() ? "§aYes (Broadcasting)" : "§cNo (Stopped)")));

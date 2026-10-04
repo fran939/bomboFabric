@@ -1,5 +1,32 @@
 # BomboAddons Changelog
  
+## [26.2.28.85] - 2026-10-04 (Beta)
+
+### Discord Voice HUD Inventory Visibility & Anti-Bounce Cooldown
+- **Persistent Screen Visibility (`DiscordVoiceHud`):** Removed screen type restriction, keeping the Discord voice HUD visible across all screens including player inventory, chests, backpacks, and container interfaces.
+- **Mute & Deafen Action Debounce (`DiscordIpcManager`):** Enforced a 400ms action cooldown and idempotence check across `toggleSelfMute`, `setSelfMute`, `toggleSelfDeafen`, and `setSelfDeafen`, preventing rapid state flapping and suppressing redundant chat confirmations when the user is already in the target state.
+- **Server Nickname Configuration & Stable Naming (`DiscordVoiceHud`, `DiscordIpcManager`, `BomboConfig`, `ConfigRegistry`):** Added a new `Show Server Nicknames` toggle in `/b config`. Stabilized bot user cache resolution in `scanDiscordLogForVoice()` to prevent the user display name from oscillating between their Discord tag (`fran939`) and server nickname (`fran`).
+
+### Spotify Background Process & Multi-Session Media Detection
+- **Multi-Session Media Detection (`SpotifyManager`):** Upgraded Windows GSMTC poller to inspect all system audio sessions (`$mgr.GetSessions()`) and prioritize Spotify even when another application (browser, video player) was recently active or focused.
+- **Background Process Discovery & 'Closed' Fix:** Added fallback process detection (`Get-Process spotify`) to correctly identify running Spotify instances when paused or backgrounded, eliminating erroneous `Spotify Closed` HUD alerts while media controls remain active.
+
+### EggAuth Feature Gating
+- **Join & Background Token Gating (`BomboaddonsClient`, `EggAuth`):** Completely gated `EggAuth.updateToken()` on player join and periodic updates behind the `eggFinder` config toggle, stopping unauthorized console errors (`[EggAuth] auth failed`) from spamming when Egg ESP is disabled.
+
+### Lyrics Delay Input Box, 50ms Steps & Per-Song Persistence
+- **Full Text Editing & Selection (`LyricsScreen`):** Implemented cursor positioning, text selection, and standard shortcuts (`Ctrl+A` select all, `Ctrl+X` cut, `Ctrl+C` copy, `Ctrl+V` paste, `Delete`, `Backspace`, Left/Right arrows) in the click-to-type delay input box.
+- **50ms Increments & Arrow Key Adjustment:** Snapped delay adjustments to 50ms intervals across both the slider and arrow key shortcuts (`Left Arrow` -50ms / `Right Arrow` +50ms).
+- **Per-Song Delay Persistence (`LyricsManager`):** Stored custom delay offsets per song and lyrics provider in `.minecraft/config/bomboaddons/lyrics_offsets.json`, automatically restoring saved timing offsets when returning to previously tuned tracks.
+- **Highest-Quality Lyrics Priority:** Updated candidate provider sorting to strictly prioritize `Word-Synced` > `Line-Synced` > `Plain/Unsynced` before evaluating preferred provider preferences.
+
+### Screenshare Defaults & API History Default
+- **Screenshare Quality Options (`ScreenshareManager`, `ConfigRegistry`, `BomboConfig`):** Added explicit 720p 60fps (Default), 720p 30fps, 1080p 30fps, 1080p 60fps, and 1440p options, establishing 720p 60fps as the out-of-the-box streaming default.
+- **Outbound API History Default (`BomboConfig`):** Changed `apiHistoryEnabled` default from `false` to `true` to ensure outbound API/WebSocket calls are tracked for `/b apihistory`.
+
+### Discord RPC Capabilities Research
+- **Comprehensive IPC Architecture Analysis (`docs/DISCORD_RPC_CAPABILITIES.md`):** Researched and documented Discord's local IPC named pipe wire protocol, packet layouts, all available RPC commands, pub-sub event subscriptions, authentication scopes, and Elgato StreamKit integration opportunities.
+
 ## [26.2.28.84] - 2026-10-04 (Beta)
 
 ### Discord Voice Toggle Commands, Anti-Bounce & Clickable Auth Prompt

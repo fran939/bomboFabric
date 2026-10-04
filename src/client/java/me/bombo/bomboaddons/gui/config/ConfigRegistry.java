@@ -420,6 +420,11 @@ public class ConfigRegistry {
                         category,
                         () -> s.discordHudShowAvatars,
                         v -> s.discordHudShowAvatars = v));
+                items.add(ConfigItem.toggle("Show Server Nicknames",
+                        "Displays server/guild nicknames instead of global Discord usernames in the Voice HUD.",
+                        category,
+                        () -> s.discordHudShowServerNickname,
+                        v -> s.discordHudShowServerNickname = v));
                 items.add(ConfigItem.toggle("Auto Request Authorization",
                         "Automatically prompt Discord Desktop authorization on startup (keep disabled to prevent permission popups).",
                         category,
@@ -435,8 +440,8 @@ public class ConfigRegistry {
                 items.add(ConfigItem.cycle("Screenshare Quality",
                         "Streaming resolution and target framerate for live web screensharing.",
                         category,
-                        List.of("720p 60fps (Recommended)", "720p 30fps", "1080p 60fps", "1440p 60fps"),
-                        () -> s.screenshareQuality != null ? s.screenshareQuality : "720p 60fps",
+                        List.of("720p 60fps (Default)", "720p 30fps", "1080p 30fps", "1080p 60fps", "1440p 30fps (High CPU)"),
+                        () -> s.screenshareQuality != null ? s.screenshareQuality : "720p 60fps (Default)",
                         v -> s.screenshareQuality = v));
                 items.add(ConfigItem.toggle("Only Share Minecraft",
                         "Strictly capture the Minecraft game window only, without desktop background or cursor flicker.",

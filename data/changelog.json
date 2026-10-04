@@ -1,5 +1,23 @@
 [
   {
+    "version": "26.2.28.85",
+    "date": "2026-10-04",
+    "changes": [
+      "Discord HUD Screen Visibility: Kept Discord voice HUD visible across all screens including inventory, chests, and menus",
+      "Discord Mute Debounce & Anti-Bounce: Added 400ms cooldown and state deduplication to prevent rapid flickering and duplicate chat confirmations",
+      "Discord Server Nickname Config: Added 'Show Server Nicknames' toggle in config and stabilized participant name cache to prevent username vs nickname flickering",
+      "Spotify Background Session Detection: Updated GSMTC poller to scan all media sessions and detect running Spotify processes, fixing false 'Spotify Closed' status",
+      "EggAuth Gating: Completely gated EggAuth handshake and background updates behind the eggFinder config toggle, stopping console auth errors when disabled",
+      "Lyrics Delay Input Box Controls: Added full text editing support with cursor positioning, arrow key navigation, Ctrl+A (select all), Ctrl+X (cut), and Delete",
+      "Lyrics Quality Priority Sorting: Strictly prioritized Word-Synced > Line-Synced > Plain/Unsynced across candidate providers",
+      "Per-Song Lyrics Delay Persistence: Stored delay offsets per song and provider to lyrics_offsets.json, automatically restoring offsets when songs play",
+      "Lyrics Delay 50ms Steps & Arrow Keys: Snapped delay slider to 50ms increments and enabled Left/Right arrow keys for quick 50ms delay adjustments",
+      "Screenshare Quality Options & Default: Set 720p 60fps as default and exposed 720p 30/60fps, 1080p 30/60fps, and 1440p options",
+      "API History Default: Enabled outbound API and WebSocket request history (/b apihistory) by default",
+      "Discord RPC Capabilities Research: Documented full protocol, commands, subscriptions, and Elgato StreamKit features in docs/DISCORD_RPC_CAPABILITIES.md"
+    ]
+  },
+  {
     "version": "26.2.28.84",
     "date": "2026-10-04",
     "changes": [

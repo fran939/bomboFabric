@@ -18,12 +18,16 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.fabricmc.loader.api.FabricLoader;
 
 /**
  * Manages fetching, parsing, and real-time synchronization of music lyrics.
@@ -82,6 +86,74 @@ public class LyricsManager {
     private static final Map<String, List<LyricCandidate>> CACHE = new HashMap<>();
     private static final Map<String, String> USER_PREFERRED_CANDIDATES = new ConcurrentHashMap<>();
     private static volatile int dominantColor = 0xFF1ED760;
+
+    private static final Path OFFSETS_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/lyrics_offsets.json");
+    private static final Map<String, Integer> SONG_OFFSETS = new ConcurrentHashMap<>();
+    private static volatile boolean offsetsLoaded = false;
+
+    private static void loadOffsetsIfNeeded() {
+        if (offsetsLoaded) return;
+        offsetsLoaded = true;
+        try {
+            if (Files.exists(OFFSETS_FILE)) {
+                String json = Files.readString(OFFSETS_FILE, StandardCharsets.UTF_8);
+                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+                for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                    if (entry.getValue().isJsonPrimitive()) {
+                        SONG_OFFSETS.put(entry.getKey(), entry.getValue().getAsInt());
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    private static void saveOffsetsAsync() {
+        CompletableFuture.runAsync(() -> {
+            try {
+                Files.createDirectories(OFFSETS_FILE.getParent());
+                JsonObject obj = new JsonObject();
+                for (Map.Entry<String, Integer> entry : SONG_OFFSETS.entrySet()) {
+                    obj.addProperty(entry.getKey(), entry.getValue());
+                }
+                Files.writeString(OFFSETS_FILE, obj.toString(), StandardCharsets.UTF_8);
+            } catch (Throwable ignored) {}
+        });
+    }
+
+    public static LyricCandidate getSelectedCandidate() {
+        int idx = selectedCandidateIndex;
+        if (idx >= 0 && idx < availableCandidates.size()) {
+            return availableCandidates.get(idx);
+        }
+        return null;
+    }
+
+    public static void saveSongOffset(int offsetMs) {
+        loadOffsetsIfNeeded();
+        String songKey = (activeArtist + " - " + activeTrack).toLowerCase(Locale.ROOT).trim();
+        if (songKey.isEmpty()) return;
+        LyricCandidate curCand = getSelectedCandidate();
+        String provKey = curCand != null ? curCand.provider().toLowerCase(Locale.ROOT).trim() : "default";
+        SONG_OFFSETS.put(songKey + "::" + provKey, offsetMs);
+        SONG_OFFSETS.put(songKey, offsetMs);
+        saveOffsetsAsync();
+    }
+
+    public static void restoreSongOffset(LyricCandidate cand) {
+        loadOffsetsIfNeeded();
+        String songKey = (activeArtist + " - " + activeTrack).toLowerCase(Locale.ROOT).trim();
+        if (songKey.isEmpty()) return;
+        String provKey = cand != null ? cand.provider().toLowerCase(Locale.ROOT).trim() : "default";
+        Integer offset = SONG_OFFSETS.get(songKey + "::" + provKey);
+        if (offset == null) {
+            offset = SONG_OFFSETS.get(songKey);
+        }
+        if (offset != null) {
+            BomboConfig.get().lyricsOffsetMs = offset;
+        } else {
+            BomboConfig.get().lyricsOffsetMs = 0;
+        }
+    }
 
     public static int getDominantColor() {
         return dominantColor;
@@ -294,6 +366,8 @@ public class LyricsManager {
                 break;
             }
         }
+
+        restoreSongOffset(cand);
     }
 
     public static void applyCustomLyrics(String customRaw) {
@@ -385,16 +459,21 @@ public class LyricsManager {
                 }
             }
 
-            // Sort: Boost preferred provider, then Word-Synced first, then Line-Synced, then Plain
+            // Sort: Primary priority is sync quality: Word-Synced (3) > Line-Synced (2) > Plain/Unsynced (1) > None (0)
             String pref = BomboConfig.get().lyricsPreferredProvider != null ? BomboConfig.get().lyricsPreferredProvider.trim().toLowerCase(Locale.ROOT) : "auto";
             unique.sort((a, b) -> {
+                int scoreA = a.syncType().contains("Word") ? 3 : (a.syncType().contains("Line") ? 2 : 1);
+                int scoreB = b.syncType().contains("Word") ? 3 : (b.syncType().contains("Line") ? 2 : 1);
+                if (scoreA != scoreB) {
+                    return Integer.compare(scoreB, scoreA);
+                }
+
+                // Both have same quality: boost preferred provider if configured
                 boolean aPref = !pref.equals("auto") && a.provider().toLowerCase(Locale.ROOT).contains(pref);
                 boolean bPref = !pref.equals("auto") && b.provider().toLowerCase(Locale.ROOT).contains(pref);
                 if (aPref != bPref) return aPref ? -1 : 1;
 
-                int scoreA = a.syncType().contains("Word") ? 3 : (a.syncType().contains("Line") ? 2 : 1);
-                int scoreB = b.syncType().contains("Word") ? 3 : (b.syncType().contains("Line") ? 2 : 1);
-                return Integer.compare(scoreB, scoreA);
+                return 0;
             });
 
             if (epoch != currentTrackEpoch.get()) return;

@@ -5662,10 +5662,13 @@ public class BomboaddonsClient implements ClientModInitializer {
             AutoExperiments.reset();
             ModUpdater.checkAndUpdate(true);
 
-            try {
-               EggAuth.updateToken();
-            } catch (Throwable t) {
-               t.printStackTrace();
+            BomboConfig.Settings sCfg = BomboConfig.get();
+            if (sCfg != null && sCfg.eggFinder) {
+               try {
+                  EggAuth.updateToken();
+               } catch (Throwable t) {
+                  t.printStackTrace();
+               }
             }
 
             if (client.getUser() != null) {

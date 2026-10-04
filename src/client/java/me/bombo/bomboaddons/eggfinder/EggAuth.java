@@ -134,7 +134,8 @@ public class EggAuth {
     *              SkyBlock calendar is out of season.
     */
    public static void updateToken(boolean force) {
-      if (!force && !AlphaTrackerHud.isHoppityActive()) {
+      me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
+      if (!force && (s == null || !s.eggFinder || !AlphaTrackerHud.isHoppityActive())) {
          authenticating = false;
          return;
       }

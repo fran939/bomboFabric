@@ -50,6 +50,8 @@ public class LyricsScreen extends Screen {
     private boolean isDraggingSlider = false;
     private boolean isEditingOffsetBox = false;
     private String offsetInputBuffer = "";
+    private int offsetCursorPos = 0;
+    private boolean offsetSelectAll = false;
 
     public LyricsScreen() {
         super(Component.literal("Synced Lyrics"));
@@ -64,6 +66,8 @@ public class LyricsScreen extends Screen {
         isEditingCustom = false;
         isDraggingSlider = false;
         isEditingOffsetBox = false;
+        offsetSelectAll = false;
+        offsetCursorPos = 0;
         lastActiveLineIdx = -1;
         maxActiveWordIdx = -1;
     }
@@ -311,8 +315,9 @@ public class LyricsScreen extends Screen {
             float ratioDrag = Math.max(0.0f, Math.min(1.0f, (float) (mouseX - sliderX) / sliderW));
             int newOffset = Math.round((ratioDrag * 10000.0f) - 5000.0f);
             // Snap to 50ms intervals
-            newOffset = (newOffset / 50) * 50;
+            newOffset = Math.round(newOffset / 50.0f) * 50;
             BomboConfig.get().lyricsOffsetMs = newOffset;
+            LyricsManager.saveSongOffset(newOffset);
             BomboConfig.save();
         }
 
@@ -335,11 +340,25 @@ public class LyricsScreen extends Screen {
         g.fill(boxX, boxY, boxX + boxW, boxY + boxH, isEditingOffsetBox ? 0xFF2A1F33 : 0x441E1324);
         g.outline(boxX, boxY, boxW, boxH, isEditingOffsetBox ? 0xFF00E5FF : 0x4400A4DC);
 
-        String boxDisplay = isEditingOffsetBox
-                ? offsetInputBuffer + ((System.currentTimeMillis() / 400 % 2 == 0) ? "|" : "")
-                : (curOffset >= 0 ? "+" : "") + curOffset + "ms";
-        int dispX = boxX + (boxW - font.width(boxDisplay)) / 2;
-        g.text(font, (isEditingOffsetBox ? "§e" : "§b") + boxDisplay, dispX, boxY + 4, 0xFF00E5FF, false);
+        if (isEditingOffsetBox) {
+            int bTextX = boxX + 6;
+            if (offsetSelectAll) {
+                int selW = font.width(offsetInputBuffer);
+                g.fill(bTextX - 1, boxY + 3, bTextX + selW + 1, boxY + boxH - 3, 0xFF007ACC);
+                g.text(font, "§f" + offsetInputBuffer, bTextX, boxY + 4, 0xFFFFFFFF, false);
+            } else {
+                g.text(font, "§e" + offsetInputBuffer, bTextX, boxY + 4, 0xFFFFEE55, false);
+                if (System.currentTimeMillis() / 400 % 2 == 0) {
+                    int subLen = Math.max(0, Math.min(offsetCursorPos, offsetInputBuffer.length()));
+                    int curX = bTextX + font.width(offsetInputBuffer.substring(0, subLen));
+                    g.fill(curX, boxY + 3, curX + 1, boxY + boxH - 3, 0xFFFFFFFF);
+                }
+            }
+        } else {
+            String boxDisplay = (curOffset >= 0 ? "+" : "") + curOffset + "ms";
+            int dispX = boxX + (boxW - font.width(boxDisplay)) / 2;
+            g.text(font, "§b" + boxDisplay, dispX, boxY + 4, 0xFF00E5FF, false);
+        }
 
         // Reset button [↺]
         int resetX = boxX + boxW + 6;
@@ -802,10 +821,12 @@ public class LyricsScreen extends Screen {
             if (mouseY >= barBottomY + 10 && mouseY <= barBottomY + 24 && mouseX >= sliderX - 4 && mouseX <= sliderX + sliderW + 4) {
                 isDraggingSlider = true;
                 isEditingOffsetBox = false;
+                offsetSelectAll = false;
                 float ratioDrag = Math.max(0.0f, Math.min(1.0f, (float) (mouseX - sliderX) / sliderW));
                 int newOffset = Math.round((ratioDrag * 10000.0f) - 5000.0f);
-                newOffset = (newOffset / 50) * 50;
+                newOffset = Math.round(newOffset / 50.0f) * 50;
                 BomboConfig.get().lyricsOffsetMs = newOffset;
+                LyricsManager.saveSongOffset(newOffset);
                 BomboConfig.save();
                 return true;
             }
@@ -814,6 +835,8 @@ public class LyricsScreen extends Screen {
             if (mouseY >= barBottomY + 6 && mouseY <= barBottomY + 26 && mouseX >= boxX && mouseX <= boxX + boxW) {
                 isEditingOffsetBox = true;
                 offsetInputBuffer = String.valueOf(BomboConfig.get().lyricsOffsetMs);
+                offsetCursorPos = offsetInputBuffer.length();
+                offsetSelectAll = true;
                 return true;
             } else if (isEditingOffsetBox) {
                 commitOffsetInput();
@@ -822,8 +845,10 @@ public class LyricsScreen extends Screen {
             // Reset button click
             if (mouseY >= barBottomY + 6 && mouseY <= barBottomY + 26 && mouseX >= resetX && mouseX <= resetX + 26) {
                 BomboConfig.get().lyricsOffsetMs = 0;
+                LyricsManager.saveSongOffset(0);
                 BomboConfig.save();
                 isEditingOffsetBox = false;
+                offsetSelectAll = false;
                 return true;
             }
 
@@ -853,9 +878,15 @@ public class LyricsScreen extends Screen {
     public boolean charTyped(CharacterEvent event) {
         if (isEditingOffsetBox) {
             char c = (char) event.codepoint();
-            if (Character.isDigit(c) || (c == '-' && offsetInputBuffer.isEmpty())) {
-                if (offsetInputBuffer.length() < 7) {
-                    offsetInputBuffer += c;
+            if (Character.isDigit(c) || (c == '-' && (offsetSelectAll || (offsetCursorPos == 0 && !offsetInputBuffer.contains("-"))))) {
+                if (offsetSelectAll) {
+                    offsetInputBuffer = String.valueOf(c);
+                    offsetCursorPos = 1;
+                    offsetSelectAll = false;
+                } else if (offsetInputBuffer.length() < 7) {
+                    offsetCursorPos = Math.max(0, Math.min(offsetCursorPos, offsetInputBuffer.length()));
+                    offsetInputBuffer = offsetInputBuffer.substring(0, offsetCursorPos) + c + offsetInputBuffer.substring(offsetCursorPos);
+                    offsetCursorPos++;
                 }
                 return true;
             }
@@ -884,16 +915,93 @@ public class LyricsScreen extends Screen {
         Minecraft mc = Minecraft.getInstance();
 
         if (isEditingOffsetBox) {
-            if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
-                if (!offsetInputBuffer.isEmpty()) {
-                    offsetInputBuffer = offsetInputBuffer.substring(0, offsetInputBuffer.length() - 1);
+            boolean isCtrl = event.hasControlDown() || (mc != null && mc.hasControlDown());
+
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_A) {
+                offsetSelectAll = true;
+                return true;
+            }
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_C) {
+                if (mc != null && mc.keyboardHandler != null) {
+                    mc.keyboardHandler.setClipboard(offsetInputBuffer);
                 }
                 return true;
-            } else if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
+            }
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_X) {
+                if (mc != null && mc.keyboardHandler != null) {
+                    mc.keyboardHandler.setClipboard(offsetInputBuffer);
+                }
+                offsetInputBuffer = "";
+                offsetCursorPos = 0;
+                offsetSelectAll = false;
+                return true;
+            }
+            if (isCtrl && event.key() == GLFW.GLFW_KEY_V) {
+                if (mc != null && mc.keyboardHandler != null) {
+                    String clip = mc.keyboardHandler.getClipboard();
+                    if (clip != null) {
+                        String clean = clip.replaceAll("[^0-9\\-]", "");
+                        if (!clean.isEmpty()) {
+                            if (offsetSelectAll) {
+                                offsetInputBuffer = clean;
+                                offsetCursorPos = clean.length();
+                                offsetSelectAll = false;
+                            } else {
+                                offsetCursorPos = Math.max(0, Math.min(offsetCursorPos, offsetInputBuffer.length()));
+                                offsetInputBuffer = offsetInputBuffer.substring(0, offsetCursorPos) + clean + offsetInputBuffer.substring(offsetCursorPos);
+                                offsetCursorPos += clean.length();
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
+                if (offsetSelectAll) {
+                    offsetInputBuffer = "";
+                    offsetCursorPos = 0;
+                    offsetSelectAll = false;
+                } else if (offsetCursorPos > 0 && !offsetInputBuffer.isEmpty()) {
+                    offsetInputBuffer = offsetInputBuffer.substring(0, offsetCursorPos - 1) + offsetInputBuffer.substring(offsetCursorPos);
+                    offsetCursorPos--;
+                }
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_DELETE) {
+                if (offsetSelectAll) {
+                    offsetInputBuffer = "";
+                    offsetCursorPos = 0;
+                    offsetSelectAll = false;
+                } else if (offsetCursorPos < offsetInputBuffer.length()) {
+                    offsetInputBuffer = offsetInputBuffer.substring(0, offsetCursorPos) + offsetInputBuffer.substring(offsetCursorPos + 1);
+                }
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_LEFT) {
+                if (offsetSelectAll) {
+                    offsetSelectAll = false;
+                    offsetCursorPos = 0;
+                } else if (offsetCursorPos > 0) {
+                    offsetCursorPos--;
+                }
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_RIGHT) {
+                if (offsetSelectAll) {
+                    offsetSelectAll = false;
+                    offsetCursorPos = offsetInputBuffer.length();
+                } else if (offsetCursorPos < offsetInputBuffer.length()) {
+                    offsetCursorPos++;
+                }
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
                 commitOffsetInput();
                 return true;
-            } else if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+            }
+            if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
                 isEditingOffsetBox = false;
+                offsetSelectAll = false;
                 return true;
             }
         }
@@ -984,7 +1092,7 @@ public class LyricsScreen extends Screen {
             }
         }
 
-        // Global playback shortcuts when not actively editing text boxes
+        // Global playback & delay shortcuts when not actively editing text boxes
         if (!isEditingOffsetBox && !(showRawModal && isEditingCustom)) {
             boolean isCtrl = event.hasControlDown() || (mc != null && mc.hasControlDown());
             if (event.key() == GLFW.GLFW_KEY_SPACE) {
@@ -997,6 +1105,22 @@ public class LyricsScreen extends Screen {
             }
             if (isCtrl && event.key() == GLFW.GLFW_KEY_RIGHT) {
                 SpotifyManager.nextTrack();
+                return true;
+            }
+            if (!isCtrl && event.key() == GLFW.GLFW_KEY_LEFT) {
+                int cur = BomboConfig.get().lyricsOffsetMs - 50;
+                cur = Math.round(cur / 50.0f) * 50;
+                BomboConfig.get().lyricsOffsetMs = cur;
+                LyricsManager.saveSongOffset(cur);
+                BomboConfig.save();
+                return true;
+            }
+            if (!isCtrl && event.key() == GLFW.GLFW_KEY_RIGHT) {
+                int cur = BomboConfig.get().lyricsOffsetMs + 50;
+                cur = Math.round(cur / 50.0f) * 50;
+                BomboConfig.get().lyricsOffsetMs = cur;
+                LyricsManager.saveSongOffset(cur);
+                BomboConfig.save();
                 return true;
             }
         }
@@ -1022,11 +1146,14 @@ public class LyricsScreen extends Screen {
                 if (!offsetInputBuffer.isEmpty() && !offsetInputBuffer.equals("-")) {
                     int val = Integer.parseInt(offsetInputBuffer);
                     val = Math.max(-100000, Math.min(100000, val));
+                    val = Math.round(val / 50.0f) * 50;
                     BomboConfig.get().lyricsOffsetMs = val;
+                    LyricsManager.saveSongOffset(val);
                     BomboConfig.save();
                 }
             } catch (Throwable ignored) {}
             isEditingOffsetBox = false;
+            offsetSelectAll = false;
         }
     }
 

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.84` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.85` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.84`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.85`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.85 (Ready for In-Game Testing)
+>
+> 1. **Discord Voice HUD Inventory Visibility & Anti-Bounce Cooldown (`DiscordVoiceHud`, `DiscordIpcManager`, `BomboConfig`, `ConfigRegistry`):** Removed screen type restriction in `DiscordVoiceHud`, keeping the voice HUD visible across all screens including player inventory, chests, backpacks, and container interfaces. Enforced a 400ms action cooldown and idempotence check across `toggleSelfMute`, `setSelfMute`, `toggleSelfDeafen`, and `setSelfDeafen`, preventing rapid state flapping and suppressing redundant chat confirmations when the user is already in the target state. Added a `Show Server Nicknames` toggle in `/b config` and stabilized bot user cache resolution in `scanDiscordLogForVoice()` to prevent the user display name from oscillating between their Discord tag (`fran939`) and server nickname (`fran`).
+> 2. **Spotify Background Process & Multi-Session Media Detection (`SpotifyManager`):** Upgraded Windows GSMTC poller to inspect all system audio sessions (`$mgr.GetSessions()`) and prioritize Spotify even when another application (browser, video player) was recently active or focused. Added fallback process detection (`Get-Process spotify`) to correctly identify running Spotify instances when paused or backgrounded, eliminating erroneous `Spotify Closed` HUD alerts while media controls remain active.
+> 3. **EggAuth Feature Gating (`BomboaddonsClient`, `EggAuth`):** Completely gated `EggAuth.updateToken()` on player join and periodic updates behind the `eggFinder` config toggle, stopping unauthorized console errors (`[EggAuth] auth failed`) from spamming when Egg ESP is disabled.
+> 4. **Lyrics Delay Input Box, 50ms Steps & Per-Song Persistence (`LyricsScreen`, `LyricsManager`):** Implemented full text editing support with cursor positioning, text selection, and standard shortcuts (`Ctrl+A` select all, `Ctrl+X` cut, `Ctrl+C` copy, `Ctrl+V` paste, `Delete`, `Backspace`, Left/Right arrows) in the click-to-type delay input box. Snapped delay adjustments to 50ms intervals across both the slider and arrow key shortcuts (`Left Arrow` -50ms / `Right Arrow` +50ms). Stored custom delay offsets per song and lyrics provider in `.minecraft/config/bomboaddons/lyrics_offsets.json`, automatically restoring saved timing offsets when returning to previously tuned tracks. Updated candidate provider sorting to strictly prioritize `Word-Synced` > `Line-Synced` > `Plain/Unsynced` before evaluating preferred provider preferences.
+> 5. **Screenshare Defaults & API History Default (`ScreenshareManager`, `ConfigRegistry`, `BomboConfig`):** Added explicit 720p 60fps (Default), 720p 30fps, 1080p 30fps, 1080p 60fps, and 1440p options, establishing 720p 60fps as the out-of-the-box streaming default. Changed `apiHistoryEnabled` default from `false` to `true` to ensure outbound API/WebSocket calls are tracked for `/b apihistory`.
+> 6. **Discord RPC Capabilities Research (`docs/DISCORD_RPC_CAPABILITIES.md`):** Researched and documented Discord's local IPC named pipe wire protocol, packet layouts, all available RPC commands, pub-sub event subscriptions, authentication scopes, and Elgato StreamKit integration opportunities.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.84 (Ready for In-Game Testing)
 >
 > 1. **Discord Voice Toggle Commands, Anti-Bounce & Clickable Auth Prompt (`CommandMixin`, `DiscordIpcManager`, `DiscordVoiceHud`):** Made `/b discord mute` and `/b discord deafen` behave as instantaneous toggles by default, while supporting explicit target states (`/b discord mute mute`, `/b discord mute unmute`, `/b discord deafen deafen`, `/b discord deafen undeafen`). Removed circular local mute state fallbacks from bot synchronization loops, establishing `locallyMutedUsers` as the single source of truth and completely eliminating rapid mute/unmute bouncing. Bound local Discord user ID when bot user events match local username and filtered duplicate synthetic self entries in `DiscordVoiceHud`, preventing duplicate "fran" and "fran938" listings. Muting or deafening while unauthenticated now sends an interactive, clickable chat component (`[Click to Authorize Voice]`) running `/b discord auth`. Automatic authorization dialogs remain strictly disabled during normal sync.

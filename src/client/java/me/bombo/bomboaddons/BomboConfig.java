@@ -788,6 +788,7 @@ public class BomboConfig {
       public int discordHudY = 120;
       public float discordHudScale = 1.0F;
       public boolean discordVoiceAutoAuth = false;
+      public boolean discordHudShowServerNickname = true;
 
       // Spotify Desktop Integration & Overlay
       public boolean spotifyHudEnabled = false;
@@ -1237,7 +1238,7 @@ public class BomboConfig {
       public boolean backpackPreviewItemBorder = false; // 1px rarity outline
       public float backpackPreviewRarityAlpha = 0.35F;
       // Outbound API/WebSocket history (/b apihistory).
-      public boolean apiHistoryEnabled = false;
+      public boolean apiHistoryEnabled = true;
       public int apiHistoryMaxEntries = 500;
       // BetterPV profile viewer window.
       public float pvScale = 1.15F; // /b pv window size multiplier (1.0 - 1.8)
