@@ -1489,6 +1489,19 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }));
                   // /b ss - Screensharing & spectate command
                   builder.then(buildScreenshareCommand("ss"));
+                  builder.then(ClientCommands.literal("storage")
+                     .executes((context) -> {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.player != null && mc.player.connection != null) {
+                           mc.player.connection.sendCommand("storage");
+                        }
+                        return 1;
+                     })
+                     .then(ClientCommands.literal("debug").executes((context) -> {
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.dumpDebugToFile(src::sendFeedback);
+                        return 1;
+                     })));
                   builder.then(ClientCommands.literal("discord")
                      .executes((context) -> {
                         me.bombo.bomboaddons.features.discord.DiscordIpcManager.handleSsCommand();
@@ -1510,7 +1523,55 @@ public class BomboaddonsClient implements ClientModInitializer {
                         FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
                         src.sendFeedback(Component.literal("§8[§3Bombo§8] §aRequested Discord IPC authorization prompt."));
                         return 1;
-                     })));
+                     }))
+                     .then(ClientCommands.literal("mute")
+                        .executes((context) -> {
+                           FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(true, src::sendFeedback);
+                           return 1;
+                        })
+                        .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
+                           FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                           String user = StringArgumentType.getString(context, "user");
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.muteTargetUser(user, true, src::sendFeedback);
+                           return 1;
+                        })))
+                     .then(ClientCommands.literal("unmute")
+                        .executes((context) -> {
+                           FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(false, src::sendFeedback);
+                           return 1;
+                        })
+                        .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
+                           FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                           String user = StringArgumentType.getString(context, "user");
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.muteTargetUser(user, false, src::sendFeedback);
+                           return 1;
+                        })))
+                     .then(ClientCommands.literal("deafen")
+                        .executes((context) -> {
+                           FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(true, src::sendFeedback);
+                           return 1;
+                        })
+                        .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
+                           FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                           String user = StringArgumentType.getString(context, "user");
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.deafenTargetUser(user, true, src::sendFeedback);
+                           return 1;
+                        })))
+                     .then(ClientCommands.literal("undeafen")
+                        .executes((context) -> {
+                           FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, src::sendFeedback);
+                           return 1;
+                        })
+                        .then(ClientCommands.argument("user", StringArgumentType.greedyString()).executes((context) -> {
+                           FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                           String user = StringArgumentType.getString(context, "user");
+                           me.bombo.bomboaddons.features.discord.DiscordIpcManager.deafenTargetUser(user, false, src::sendFeedback);
+                           return 1;
+                        }))));
                   builder.then(ClientCommands.literal("lyrics").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
                      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.spotify.LyricsScreen()));
@@ -6371,8 +6432,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             if (openGuiNextTick && client.player != null) {
                System.out.println("DEBUG: Tick opening config GUI");
                openGuiNextTick = false;
-               pendingConfigSearch = null;
-               client.setScreenAndShow(BomboConfigGUI.create());
+               client.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create());
                System.out.println("DEBUG: Config GUI set screen success");
             }
 

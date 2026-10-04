@@ -87,7 +87,9 @@ public class PerformanceScreen extends Screen {
         g.fill(0, 0, this.width, this.height, 0xDD0A0C10);
 
         int winW = Math.min(860, this.width - 40);
-        int winH = Math.min(600, this.height - 24);
+        int headerH = 56;
+        int estimatedH = headerH + Math.max(1, cachedSnapshots.size()) * 36 + 24;
+        int winH = Math.min(Math.max(estimatedH, 200), Math.min(560, this.height - 24));
         int winX = (this.width - winW) / 2;
         int winY = (this.height - winH) / 2;
 
@@ -96,7 +98,6 @@ public class PerformanceScreen extends Screen {
         g.outline(winX, winY, winW, winH, ConfigUITheme.getBorderColor());
 
         // Header bar
-        int headerH = 56;
         g.fill(winX, winY, winX + winW, winY + headerH, ConfigUITheme.getSidebarBg());
         g.fill(winX, winY + headerH - 1, winX + winW, winY + headerH, ConfigUITheme.getBorderColor());
 
@@ -116,8 +117,18 @@ public class PerformanceScreen extends Screen {
         long freeMem = rt.freeMemory() / (1024 * 1024);
         long usedMem = totalMem - freeMem;
         int activeThreads = Thread.activeCount();
-        String memSummary = String.format("§7JVM Heap: §a%dMB §8/ §7%dMB §8(Max: %dMB) | §7Threads: §b%d",
-                usedMem, totalMem, maxMem, activeThreads);
+
+        double processCpu = -1.0;
+        try {
+            java.lang.management.OperatingSystemMXBean osBean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
+            if (osBean instanceof com.sun.management.OperatingSystemMXBean sunBean) {
+                processCpu = sunBean.getProcessCpuLoad() * 100.0;
+            }
+        } catch (Throwable ignored) {}
+        String cpuPart = (processCpu >= 0.0) ? String.format(" | §eCPU: §a%.1f%%", processCpu) : "";
+
+        String memSummary = String.format("§7JVM: §a%dMB §8/ §7%dMB" + cpuPart + " §8| §7Threads: §b%d",
+                usedMem, totalMem, activeThreads);
         if (ScreenshareManager.isStreaming()) {
             memSummary += String.format(" | §3Stream: §a%.0f FPS §7(%s)", ScreenshareManager.getCurrentFps(), ScreenshareManager.getLastCaptureMode());
         } else {

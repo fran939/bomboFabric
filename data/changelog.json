@@ -1,5 +1,26 @@
 [
   {
+    "version": "26.2.28.74",
+    "date": "2026-10-04",
+    "changes": [
+      "Storage Overlay Live Sync: Hooked slotClicked and removed across AbstractContainerScreenMixin and StorageOverlayScreen to sync moved or clicked items immediately to memory and disk",
+      "Inline Rename Typing Support: Added charTyped and guarded keyPressed so typing hotkeys or numbers enters text into the rename box without closing the container menu",
+      "Storage Debug Command: Added /b storage debug creating diagnostic storage snapshot dumps in storage_debug.log",
+      "Discord Voice HUD Bot Mute Bridge: Integrated bombot HTTP API with bot administrator permissions to server-mute and deafen call participants or self directly from Minecraft",
+      "Discord Voice Commands: Registered /b discord mute [user], /b discord unmute [user], /b discord deafen [user], and /b discord undeafen [user]",
+      "Discord Screenshare False Positive Fix: Removed stream transport receiver stats check so stream viewers are not falsely flagged as [LIVE]",
+      "True 1440p / 2K Screenshare: Enabled full 2560x1440 capture with 0.52f compression and 60/120 FPS target timing",
+      "Reusable ThreadLocal JPEG Writers: Eliminated per-frame ImageWriter allocation and disposal for reduced encoding overhead",
+      "Flicker-Free Web Screenshare: Removed 80ms delay in screenshare.html and enabled crisp pixel rendering CSS",
+      "Discord Lore Item Glyphs: Proportionally scaled gemstone, star, and stat font glyphs to 22px in bombot lore images",
+      "Synced Lyrics Spacing Fix: Removed extra space between line timestamps and word tags in bomboapi ELRC resolver",
+      "Modern Config Screen Aliases: Directed /B, /bombo, /Bombo, and /BOMBO commands to open the modern BomboConfigScreen",
+      "Autocomplete Suggestion Priority: Injected ChatTabsOverlay at HEAD so autocomplete suggestions render clearly on top",
+      "HUD Move Simulated Chat Area: Added translucent chat message box and [ > Type a message... ] input preview in HudMoveScreen for chat HUD alignment",
+      "Adaptive Performance Window: Dynamically sized PerformanceScreen height to fit active card count without empty black voids, displaying process CPU percentage"
+    ]
+  },
+  {
     "version": "26.2.28.73",
     "date": "2026-10-04",
     "changes": [

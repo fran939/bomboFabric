@@ -160,7 +160,36 @@ public class HudMoveScreen extends Screen {
         int invY = (this.height - dummyInvH) / 2;
         g.blit(invTex, invX, invY, invX + dummyInvW, invY + dummyInvH, 0.0F, 0.6875F, 0.0F, 0.6484375F);
 
+        // Render simulated chat preview when chat tabs or chat search are relevant
         BomboConfig.Settings s = BomboConfig.get();
+        boolean showChatPreview = (hudTypeFilter != 2) && (
+            isTargetVisible(HudTarget.CHAT_TABS, s.chatTabs) ||
+            isTargetVisible(HudTarget.CHAT_SEARCH, s.chatSearchBar) ||
+            this.selectedTarget == HudTarget.CHAT_TABS ||
+            this.selectedTarget == HudTarget.CHAT_SEARCH ||
+            this.draggingTarget == HudTarget.CHAT_TABS ||
+            this.draggingTarget == HudTarget.CHAT_SEARCH
+        );
+        if (showChatPreview) {
+            int chatX = 2;
+            int inputY = this.height - 14;
+            int inputW = this.width - 4;
+            int inputH = 12;
+
+            int msgBoxH = 90;
+            int msgBoxY = inputY - msgBoxH - 4;
+            int msgBoxW = Math.min(320, this.width - 20);
+
+            // Translucent chat background
+            g.fill(chatX, msgBoxY, chatX + msgBoxW, msgBoxY + msgBoxH, 0x44000000);
+            g.text(this.font, "§7[System] §fSimulated Minecraft Chat", chatX + 6, msgBoxY + 6, 0x88FFFFFF, false);
+            g.text(this.font, "§7[Party] §ePlayer§f: Ready for the run!", chatX + 6, msgBoxY + 20, 0x88FFFFFF, false);
+            g.text(this.font, "§a[Guild] §bMember§f: GG on the drop!", chatX + 6, msgBoxY + 34, 0x88FFFFFF, false);
+
+            // Simulated chat input bar
+            g.fill(chatX, inputY, chatX + inputW, inputY + inputH, 0x88000000);
+            g.text(this.font, "§7[ > Type a message... ]", chatX + 4, inputY + 2, 0xFFAAAAAA, false);
+        }
 
         // 1. DICE
         if (isTargetVisible(HudTarget.DICE, (s.diceTracker && DiceTracker.shouldShowHud()))) {

@@ -352,6 +352,9 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 					if (bw.inlineTitleBox.keyPressed(event)) {
 						return true;
 					}
+					if (this.minecraft.options.keyInventory.matches(event)) {
+						return true;
+					}
 				}
 			}
 		}
@@ -363,8 +366,36 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	}
 
 	@Override
+	public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
+		if (grid != null && grid.backpackWidgets != null) {
+			for (BackpackWidget bw : grid.backpackWidgets) {
+				if (bw.isEditingTitle && bw.inlineTitleBox != null) {
+					if (bw.inlineTitleBox.charTyped(event)) {
+						return true;
+					}
+				}
+			}
+		}
+		return super.charTyped(event);
+	}
+
+	@Override
+	protected void slotClicked(Slot slot, int slotId, int mouseButton, net.minecraft.world.inventory.ContainerInput type) {
+		super.slotClicked(slot, slotId, mouseButton, type);
+		int openIdx = openStorage;
+		if (openIdx >= 0 && openIdx < BackpackPreview.STORAGE_SIZE && handler != null) {
+			BackpackPreview.updateStorageDirectly(openIdx, handler.getContainer());
+			refreshSearch();
+		}
+	}
+
+	@Override
 	public void removed() {
 		super.removed();
+		int openIdx = openStorage;
+		if (openIdx >= 0 && openIdx < BackpackPreview.STORAGE_SIZE && handler != null) {
+			BackpackPreview.updateStorageDirectly(openIdx, handler.getContainer());
+		}
 		if (saveMousePosition) {
 			previousMousePosition = new Vector2d(minecraft.mouseHandler.xpos(), minecraft.mouseHandler.ypos());
 		}

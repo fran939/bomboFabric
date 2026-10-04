@@ -1,5 +1,32 @@
 # BomboAddons Changelog
  
+## [26.2.28.74] - 2026-10-04 (Beta)
+
+### Storage Overlay Live Sync & Rename Typing
+- **Slot Click & Move Synchronization:** Hooked `slotClicked` and `removed` across `AbstractContainerScreenMixin` and `StorageOverlayScreen` to update in-memory backpack storage slots directly and persist changes to disk immediately on click or container close.
+- **Inline Rename Keyboard Capture:** Added `charTyped` and guarded `keyPressed` in `StorageOverlayScreen` so typing numbers or inventory hotkeys (e.g. 'E') enters text instead of closing the storage menu.
+- **Storage Debug Command:** Added `/b storage debug` creating detailed container diagnostic dumps in `.minecraft/config/bomboaddons/storage_debug.log`.
+
+### Discord Voice HUD Bot Voice Bridge & Accurate Live Status
+- **Bot Server-Mute & Deafen Bridge:** Integrated `bombot` HTTP API (`/api/bot/voice/mute` and `/api/bot/voice/deafen`) with administrator Discord permissions, allowing players to mute or deafen other call participants or themselves directly from in-game commands.
+- **Voice Control Commands:** Registered `/b discord mute [user]`, `/b discord unmute [user]`, `/b discord deafen [user]`, and `/b discord undeafen [user]`.
+- **False Screenshare Fix:** Removed `[stream] Transport stats for user:` check which falsely flagged the stream viewer as live; now only flags users with active outbound video.
+
+### Screenshare 1440p High-Resolution Engine & Instant Viewer
+- **True 1440p / 2K Broadcasting:** Enabled full 2560x1440 resolution capture with optimized 0.52f compression quality and 60/120 FPS target timing.
+- **Reusable ThreadLocal JPEG Writers:** Replaced per-frame `ImageWriter` allocation with reusable `ThreadLocal<ImageWriter>` and `writer.reset()`, dropping frame encoding overhead.
+- **Flicker-Free Web Viewer:** Eliminated 80ms double-load aborts in `screenshare.html` by connecting directly to the MJPEG stream with crisp edge rendering CSS.
+
+### Discord Lore Item Glyphs & Synced Lyrics Spacing
+- **Proportional Discord Lore Glyphs:** Scaled gemstone, star, and stat font glyphs to 22px (`11 * scale`) with matching baseline alignment in `bombot/render_item.js`.
+- **Standard ELRC Syllable Spacing:** Removed extraneous space between line timestamp and word tags (`${timeTag}${wordParts}`) in `bomboapi` lyrics resolver.
+
+### UI & Autocomplete Improvements
+- **Modern Config GUI Aliases:** Fixed `/B`, `/bombo`, `/Bombo`, and `/BOMBO` opening the deprecated config GUI; now all aliases open the modern `BomboConfigScreen`.
+- **Autocomplete Suggestion Priority:** Injected `ChatTabsOverlay` at `@At("HEAD")` in `ChatScreenMixin` so autocomplete suggestion dropdowns (`/b ly`, player names) render clearly on top.
+- **HUD Move Simulated Chat Area:** Rendered a translucent simulated Minecraft chat box and `[ > Type a message... ]` input bar in `HudMoveScreen` to facilitate precise alignment of Chat Tabs and Chat Search.
+- **Adaptive Performance Window:** Dynamically sized `PerformanceScreen` height to fit active card count without empty black voids, displaying live process CPU percentage.
+
 ## [26.2.28.73] - 2026-10-04 (Beta)
 
 ### Storage Overlay Dynamic Sizing & Live Updates

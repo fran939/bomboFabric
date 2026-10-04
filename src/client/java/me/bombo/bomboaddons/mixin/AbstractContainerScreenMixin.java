@@ -886,4 +886,30 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          }
       }
    }
+
+   @Inject(
+      method = {"slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V"},
+      at = {@At("RETURN")}
+   )
+   private void onSlotClickedReturn(Slot slot, int slotId, int mouseButton, net.minecraft.world.inventory.ContainerInput type, CallbackInfo ci) {
+      try {
+         if ((Object) this instanceof AbstractContainerScreen<?> containerScreen && containerScreen.getMenu() instanceof net.minecraft.world.inventory.ChestMenu chestMenu) {
+            String title = containerScreen.getTitle().getString();
+            me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.updateFromContainer(title, chestMenu.getContainer());
+         }
+      } catch (Throwable ignored) {}
+   }
+
+   @Inject(
+      method = {"removed"},
+      at = {@At("HEAD")}
+   )
+   private void onScreenRemovedHead(CallbackInfo ci) {
+      try {
+         if ((Object) this instanceof AbstractContainerScreen<?> containerScreen && containerScreen.getMenu() instanceof net.minecraft.world.inventory.ChestMenu chestMenu) {
+            String title = containerScreen.getTitle().getString();
+            me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.updateFromContainer(title, chestMenu.getContainer());
+         }
+      } catch (Throwable ignored) {}
+   }
 }

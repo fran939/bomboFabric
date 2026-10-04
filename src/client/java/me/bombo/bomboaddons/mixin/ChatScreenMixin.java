@@ -70,7 +70,7 @@ public abstract class ChatScreenMixin extends Screen {
 
    @Inject(
       method = {"extractRenderState"},
-      at = {@At("TAIL")}
+      at = {@At("HEAD")}
    )
    private void onRender(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta, CallbackInfo ci) {
       me.bombo.bomboaddons.features.chat.ChatTabsOverlay.render(g, mouseX, mouseY);

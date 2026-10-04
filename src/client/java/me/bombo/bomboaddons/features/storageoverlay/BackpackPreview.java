@@ -9,6 +9,7 @@ import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.SkyblockUtils;
 import me.bombo.bomboaddons.features.StorageTracker;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -107,15 +108,98 @@ public class BackpackPreview {
         return -1;
     }
 
+    private static final java.time.format.DateTimeFormatter DEBUG_TIME = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public static synchronized void logStorageDebug(String msg) {
+        try {
+            Path logPath = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons").resolve("storage_debug.log");
+            if (logPath.getParent() != null) Files.createDirectories(logPath.getParent());
+            String line = "[" + java.time.LocalDateTime.now().format(DEBUG_TIME) + "] " + msg + System.lineSeparator();
+            Files.writeString(logPath, line, java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+        } catch (Throwable ignored) {}
+    }
+
+    public static Path getSaveDir() {
+        if (saveDir == null) {
+            try {
+                Minecraft mc = Minecraft.getInstance();
+                String uuid = (mc.getUser() != null && mc.getUser().getProfileId() != null)
+                        ? mc.getUser().getProfileId().toString().replace("-", "") : "default_user";
+                String profileId = (SkyblockUtils.currentProfileId != null && !SkyblockUtils.currentProfileId.isEmpty())
+                        ? SkyblockUtils.currentProfileId : "default";
+                saveDir = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons").resolve("backpack-preview").resolve(uuid).resolve(profileId);
+                Files.createDirectories(saveDir);
+            } catch (Exception ignored) {}
+        }
+        return saveDir;
+    }
+
+    public static void dumpDebugToFile(Consumer<Component> feedback) {
+        try {
+            Path logPath = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons").resolve("storage_debug.log");
+            if (logPath.getParent() != null) Files.createDirectories(logPath.getParent());
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("================================================================================\n");
+            sb.append("BOMBOADDONS STORAGE DEBUG DUMP - ").append(java.time.LocalDateTime.now().format(DEBUG_TIME)).append("\n");
+            sb.append("================================================================================\n");
+            sb.append("Skyblock Active: ").append(SkyblockUtils.isOnSkyblock()).append("\n");
+            sb.append("Current Profile ID: ").append(SkyblockUtils.currentProfileId).append("\n");
+            sb.append("Loaded Profile: ").append(loadedProfile).append("\n");
+            sb.append("Save Directory: ").append(getSaveDir() != null ? getSaveDir().toString() : "null").append("\n");
+            sb.append("Storage Tracker Seeded: ").append(hasAnyStorage()).append("\n\n");
+
+            sb.append("--- DISCOVERED STORAGES (Total 27) ---\n");
+            for (int i = 0; i < STORAGE_SIZE; i++) {
+                Storage s = storages[i];
+                if (s == null) {
+                    sb.append(String.format("[%02d] %-18s : NULL / UNINITIALIZED\n", i, getStorageName(i)));
+                } else {
+                    int nonNullCount = 0;
+                    List<String> sampleItems = new ArrayList<>();
+                    for (int slot = 0; slot < s.size(); slot++) {
+                        ItemStack item = s.getStack(slot);
+                        if (!item.isEmpty()) {
+                            nonNullCount++;
+                            if (sampleItems.size() < 5) {
+                                sampleItems.add(String.format("slot %d: %s (x%d)", slot, item.getHoverName().getString(), item.getCount()));
+                            }
+                        }
+                    }
+                    sb.append(String.format("[%02d] %-18s : Size=%d, Active Items=%d | Sample: %s\n",
+                            i, s.name(), s.size(), nonNullCount,
+                            sampleItems.isEmpty() ? "Empty" : String.join(", ", sampleItems)));
+                }
+            }
+            sb.append("================================================================================\n\n");
+
+            Files.writeString(logPath, sb.toString(), java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+
+            if (feedback != null) {
+                feedback.accept(Component.literal("§8[§3Bombo§8] §aStorage debug dumped to §e.minecraft/config/bomboaddons/storage_debug.log"));
+            }
+        } catch (Throwable t) {
+            if (feedback != null) {
+                feedback.accept(Component.literal("§8[§3Bombo§8] §cFailed to dump storage debug: " + t.getMessage()));
+            }
+        }
+    }
+
     public static void updateStorageDirectly(int index, Container container) {
         if (index < 0 || index >= STORAGE_SIZE || container == null) return;
         int size = container.getContainerSize();
         ItemStack[] copy = new ItemStack[size];
+        List<String> itemNames = new ArrayList<>();
         for (int i = 0; i < size; i++) {
-            copy[i] = container.getItem(i).copy();
+            ItemStack st = container.getItem(i);
+            copy[i] = st.copy();
+            if (!st.isEmpty() && itemNames.size() < 8) {
+                itemNames.add("slot " + i + ": " + st.getHoverName().getString() + " x" + st.getCount());
+            }
         }
         storages[index] = new Storage(new SimpleContainer(copy), getStorageName(index), true);
         saveStorage(index);
+        logStorageDebug("updateStorageDirectly index=" + index + " (" + getStorageName(index) + "), items: " + String.join(", ", itemNames));
     }
 
     public static String getStorageName(int index) {
@@ -210,7 +294,10 @@ public class BackpackPreview {
         if (rawTitle == null || container == null) return;
         String clean = ChatFormatting.stripFormatting(rawTitle).trim().toLowerCase(Locale.ENGLISH);
 
+        logStorageDebug("updateFromContainer called with rawTitle=\"" + rawTitle + "\", containerSize=" + container.getContainerSize());
+
         if (clean.equals("storage") || clean.startsWith("storage ") || clean.contains("storage") || clean.contains("almacenamiento")) {
+            logStorageDebug("Detected main /storage menu opened.");
             initializeStorage(container);
             return;
         }
@@ -219,11 +306,19 @@ public class BackpackPreview {
         if (index >= 0 && index < STORAGE_SIZE) {
             int size = container.getContainerSize();
             ItemStack[] copy = new ItemStack[size];
+            List<String> itemNames = new ArrayList<>();
             for (int i = 0; i < size; i++) {
-                copy[i] = container.getItem(i).copy();
+                ItemStack st = container.getItem(i);
+                copy[i] = st.copy();
+                if (!st.isEmpty() && itemNames.size() < 8) {
+                    itemNames.add("slot " + i + ": " + st.getHoverName().getString() + " x" + st.getCount());
+                }
             }
             storages[index] = new Storage(new SimpleContainer(copy), getStorageName(index), true);
             saveStorage(index);
+            logStorageDebug("Updated storage index=" + index + " (" + getStorageName(index) + "), items: " + String.join(", ", itemNames));
+        } else {
+            logStorageDebug("Could not match title to any storage index: \"" + rawTitle + "\"");
         }
     }
 
@@ -334,7 +429,8 @@ public class BackpackPreview {
     }
 
     private static void saveStorage(int index) {
-        if (saveDir == null || storages[index] == null) return;
+        Path dir = getSaveDir();
+        if (dir == null || storages[index] == null) return;
         Storage storage = storages[index];
 
         CompletableFuture.runAsync(() -> {
@@ -362,7 +458,7 @@ public class BackpackPreview {
                 }
                 root.add("items", items);
 
-                File file = saveDir.resolve(index + ".json").toFile();
+                File file = dir.resolve(index + ".json").toFile();
                 try (FileWriter writer = new FileWriter(file)) {
                     writer.write(root.toString());
                 }
@@ -374,10 +470,11 @@ public class BackpackPreview {
     }
 
     private static void loadStorages() {
+        Path dir = getSaveDir();
         for (int i = 0; i < STORAGE_SIZE; i++) {
             storages[i] = null;
-            if (saveDir == null) continue;
-            File file = saveDir.resolve(i + ".json").toFile();
+            if (dir == null) continue;
+            File file = dir.resolve(i + ".json").toFile();
             if (file.exists() && file.isFile()) {
                 int index = i;
                 CompletableFuture.runAsync(() -> {

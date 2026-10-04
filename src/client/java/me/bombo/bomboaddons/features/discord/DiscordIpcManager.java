@@ -117,6 +117,9 @@ public class DiscordIpcManager {
             });
         }
 
+        // Also attempt server-mute via bot API in guild
+        muteUserViaBotAsync(userId, targetMute, null);
+
         if (connected && currentPipe != null) {
             String nonce = UUID.randomUUID().toString();
             pendingMutes.put(nonce, new PendingMute(userId, targetMute));
@@ -145,6 +148,129 @@ public class DiscordIpcManager {
         }
 
         return targetMute;
+    }
+
+    public static void setSelfMute(boolean mute, Consumer<Component> feedback) {
+        String selfId = !myUserId.isEmpty() ? myUserId : "";
+        if (selfId.isEmpty()) {
+            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cYour Discord User ID could not be identified yet. Ensure Discord is connected."));
+            return;
+        }
+        muteTargetUser(selfId, mute, feedback);
+    }
+
+    public static void setSelfDeafen(boolean deafen, Consumer<Component> feedback) {
+        String selfId = !myUserId.isEmpty() ? myUserId : "";
+        if (selfId.isEmpty()) {
+            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cYour Discord User ID could not be identified yet. Ensure Discord is connected."));
+            return;
+        }
+        deafenTargetUser(selfId, deafen, feedback);
+    }
+
+    public static void muteTargetUser(String userIdOrName, boolean mute, Consumer<Component> feedback) {
+        String resolvedId = resolveUserId(userIdOrName);
+        if (resolvedId == null || resolvedId.isEmpty()) {
+            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cUser not found: §e" + userIdOrName));
+            return;
+        }
+        if (mute) {
+            locallyMutedUsers.add(resolvedId);
+        } else {
+            locallyMutedUsers.remove(resolvedId);
+        }
+        muteUserViaBotAsync(resolvedId, mute, respMsg -> {
+            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
+        });
+    }
+
+    public static void deafenTargetUser(String userIdOrName, boolean deafen, Consumer<Component> feedback) {
+        String resolvedId = resolveUserId(userIdOrName);
+        if (resolvedId == null || resolvedId.isEmpty()) {
+            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] §cUser not found: §e" + userIdOrName));
+            return;
+        }
+        deafenUserViaBotAsync(resolvedId, deafen, respMsg -> {
+            if (feedback != null) feedback.accept(Component.literal("§8[§9Discord§8] " + respMsg));
+        });
+    }
+
+    public static String resolveUserId(String input) {
+        if (input == null || input.trim().isEmpty()) return "";
+        String clean = input.trim();
+        if (clean.matches("\\d{16,20}")) return clean;
+        for (DiscordVoiceUser u : voiceUsers.values()) {
+            if (u.username().equalsIgnoreCase(clean) || u.displayName().equalsIgnoreCase(clean)) {
+                return u.id();
+            }
+        }
+        for (Map.Entry<String, DiscordBotUserInfo> e : BOT_USER_CACHE.entrySet()) {
+            DiscordBotUserInfo info = e.getValue();
+            if (info.username.equalsIgnoreCase(clean) || info.displayName.equalsIgnoreCase(clean)) {
+                return e.getKey();
+            }
+        }
+        return clean;
+    }
+
+    public static void muteUserViaBotAsync(String userId, boolean mute, Consumer<String> onResult) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String url = "https://api.bombo.dpdns.org/api/bot/voice/mute?userId=" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "&mute=" + mute;
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofSeconds(4))
+                        .POST(java.net.http.HttpRequest.BodyPublishers.noBody())
+                        .build();
+                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                        .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (resp.statusCode() == 200) {
+                    JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    boolean success = obj.has("success") && obj.get("success").getAsBoolean();
+                    String memberName = obj.has("memberName") && !obj.get("memberName").isJsonNull() ? obj.get("memberName").getAsString() : userId;
+                    if (success) {
+                        if (onResult != null) onResult.accept((mute ? "§cMuted §e" : "§aUnmuted §e") + memberName + " §a(Server & Local)");
+                    } else {
+                        String err = obj.has("error") && !obj.get("error").isJsonNull() ? obj.get("error").getAsString() : "Not in bot guild";
+                        if (onResult != null) onResult.accept((mute ? "§cLocally Muted §e" : "§aLocally Unmuted §e") + memberName + " §7(Bot note: " + err + ")");
+                    }
+                } else {
+                    if (onResult != null) onResult.accept((mute ? "§cLocally Muted §e" : "§aLocally Unmuted §e") + userId + " §7(Bot status " + resp.statusCode() + ")");
+                }
+            } catch (Throwable t) {
+                if (onResult != null) onResult.accept((mute ? "§cLocally Muted §e" : "§aLocally Unmuted §e") + userId + " §7(Local only)");
+            }
+        });
+    }
+
+    public static void deafenUserViaBotAsync(String userId, boolean deafen, Consumer<String> onResult) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String url = "https://api.bombo.dpdns.org/api/bot/voice/deafen?userId=" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "&deafen=" + deafen;
+                java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .timeout(Duration.ofSeconds(4))
+                        .POST(java.net.http.HttpRequest.BodyPublishers.noBody())
+                        .build();
+                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                        .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (resp.statusCode() == 200) {
+                    JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    boolean success = obj.has("success") && obj.get("success").getAsBoolean();
+                    String memberName = obj.has("memberName") && !obj.get("memberName").isJsonNull() ? obj.get("memberName").getAsString() : userId;
+                    if (success) {
+                        if (onResult != null) onResult.accept((deafen ? "§cDeafened §e" : "§aUndeafened §e") + memberName + " §a(Server)");
+                    } else {
+                        String err = obj.has("error") && !obj.get("error").isJsonNull() ? obj.get("error").getAsString() : "Not in bot guild";
+                        if (onResult != null) onResult.accept("§cDeafen failed: " + err);
+                    }
+                } else {
+                    if (onResult != null) onResult.accept("§cDeafen error HTTP " + resp.statusCode());
+                }
+            } catch (Throwable t) {
+                if (onResult != null) onResult.accept("§cDeafen connection error: " + t.getMessage());
+            }
+        });
     }
 
     public static boolean isConnected() {
@@ -600,7 +726,7 @@ public class DiscordIpcManager {
                         }
                     }
 
-                    if (wLine.contains("[stream] Outbound") || wLine.contains("[stream] Transport stats for user:") || wLine.contains("Outbound video stats for user:")) {
+                    if (wLine.contains("Outbound video stats for user:") || (wLine.contains("[stream] Outbound") && wLine.contains("video"))) {
                         screensharingUserIds.add(myUserId.isEmpty() ? "self" : myUserId);
                         if (!myUserId.isEmpty()) {
                             screensharingUserIds.add(myUserId);

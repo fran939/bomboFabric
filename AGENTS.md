@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.73` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.74` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.73`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.74`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.74 (Ready for In-Game Testing)
+>
+> 1. **Storage Overlay Live Sync & Rename Typing (`BackpackPreview`, `StorageOverlayScreen`, `AbstractContainerScreenMixin`):** Hooked `slotClicked` and `removed` across `AbstractContainerScreenMixin` and `StorageOverlayScreen` so item clicks and drag-moves in vanilla menus and overlay synchronize to disk and in-memory caches immediately. Added `charTyped` and guarded `keyPressed` in `StorageOverlayScreen` so hotkeys like 'E' enter text into rename inputs rather than closing the menu. Added `/b storage debug` printing diagnostic snapshot dumps to `.minecraft/config/bomboaddons/storage_debug.log`.
+> 2. **Discord Voice HUD Bot Voice Bridge & Accurate Live Status (`DiscordIpcManager`, `bombot/index.js`):** Integrated `bombot` HTTP API (`/api/bot/voice/mute` and `/api/bot/voice/deafen`) with Discord bot administrator permissions, enabling server-wide voice mute and deafen toggling for members and self directly from Minecraft. Registered `/b discord mute [user]`, `/b discord unmute [user]`, `/b discord deafen [user]`, and `/b discord undeafen [user]`. Removed `[stream] Transport stats for user:` check so stream viewers are not falsely flagged as `[LIVE]`.
+> 3. **Screenshare 1440p High-Resolution Engine & Instant Viewer (`ScreenshareManager`, `screenshare.html`):** Enabled true 2560x1440 resolution capture with 0.52f compression quality and 60/120 FPS target timing. Replaced per-frame `ImageWriter` allocation with reusable `ThreadLocal<ImageWriter>` and `writer.reset()`. Removed 80ms double-load delay in `screenshare.html` and applied crisp edge rendering CSS.
+> 4. **Discord Lore Item Glyphs & Synced Lyrics Spacing (`bombot/render_item.js`, `bomboapi/server.js`):** Proportionally scaled gemstone, star, and stat font glyphs to 22px (`11 * scale`) with matching baseline alignment in `bombot/render_item.js`. Removed extra space between line timestamps and word tags (`${timeTag}${wordParts}`) in `bomboapi` lyrics resolver.
+> 5. **UI & Autocomplete Priority (`BomboaddonsClient`, `ChatScreenMixin`, `HudMoveScreen`, `PerformanceScreen`):** Fixed `/B`, `/bombo`, `/Bombo`, and `/BOMBO` opening the deprecated config GUI; now all aliases open `BomboConfigScreen`. Injected `ChatTabsOverlay` at `@At("HEAD")` in `ChatScreenMixin` so autocomplete suggestion dropdowns render clearly on top. Rendered simulated Minecraft chat box and `[ > Type a message... ]` input preview in `HudMoveScreen` for chat HUD alignment. Dynamically sized `PerformanceScreen` height to fit active card count without empty black voids and displayed live process CPU load.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.73 (Ready for In-Game Testing)
 >
 > 1. **Storage Overlay Dynamic Sizing & Live Inventory Sync (`BackpackPreview`, `StorageOverlayScreen`, `AbstractContainerMenuMixin`):** Removed artificial 5-row constraint on Ender Chests so Ender Chest 4 and compact backpacks dynamically size to their exact unlocked row count, eliminating dark empty slots and gray backgrounds. Hooked `AbstractContainerMenuMixin.setItem` and `initializeContents` to immediately update in-memory storage slots and save them to disk when items are moved or opened. Expanded regex patterns to match arbitrary container titles like `"Backpack 1"`, `"Backpack #1"`, `"Ender Chest 4"`.

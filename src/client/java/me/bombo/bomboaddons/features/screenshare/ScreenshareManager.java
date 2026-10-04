@@ -160,6 +160,10 @@ public class ScreenshareManager {
         t.setDaemon(true);
         return t;
     });
+    private static final ThreadLocal<ImageWriter> JPEG_WRITERS = ThreadLocal.withInitial(() -> {
+        java.util.Iterator<ImageWriter> it = ImageIO.getImageWritersByFormatName("jpg");
+        return it.hasNext() ? it.next() : null;
+    });
 
     private static final java.util.concurrent.atomic.AtomicInteger inFlightPosts = new java.util.concurrent.atomic.AtomicInteger(0);
 
@@ -225,14 +229,14 @@ public class ScreenshareManager {
                 String q = (s != null && s.screenshareQuality != null) ? s.screenshareQuality : "720p 30fps";
 
                 if (q.contains("1440p") || q.contains("2K")) {
-                    targetW = 1920;
-                    targetH = 1080;
-                    targetDelayMs = q.contains("120fps") ? 8L : 16L;
-                    quality = 0.58f;
+                    targetW = 2560;
+                    targetH = 1440;
+                    targetDelayMs = q.contains("120fps") ? 8L : (q.contains("60fps") ? 16L : 33L);
+                    quality = 0.52f;
                 } else if (q.contains("1080p")) {
                     targetW = 1920;
                     targetH = 1080;
-                    targetDelayMs = q.contains("60fps") ? 16L : 33L;
+                    targetDelayMs = q.contains("120fps") ? 8L : (q.contains("60fps") ? 16L : 33L);
                     quality = 0.58f;
                 } else {
                     targetW = 1280;
@@ -451,18 +455,24 @@ public class ScreenshareManager {
             g2.dispose();
         }
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
-        try (MemoryCacheImageOutputStream mcios = new MemoryCacheImageOutputStream(baos)) {
-            writer.setOutput(mcios);
-            ImageWriteParam param = writer.getDefaultWriteParam();
-            if (param.canWriteCompressed()) {
-                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                param.setCompressionQuality(quality);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
+        ImageWriter writer = JPEG_WRITERS.get();
+        if (writer != null) {
+            synchronized (writer) {
+                try (MemoryCacheImageOutputStream mcios = new MemoryCacheImageOutputStream(baos)) {
+                    writer.setOutput(mcios);
+                    ImageWriteParam param = writer.getDefaultWriteParam();
+                    if (param.canWriteCompressed()) {
+                        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                        param.setCompressionQuality(quality);
+                    }
+                    writer.write(null, new IIOImage(scaled, null, null), param);
+                } finally {
+                    writer.reset();
+                }
             }
-            writer.write(null, new IIOImage(scaled, null, null), param);
-        } finally {
-            writer.dispose();
+        } else {
+            ImageIO.write(scaled, "jpg", baos);
         }
 
         return baos.toByteArray();
