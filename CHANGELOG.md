@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.96] - 2026-10-05 (Beta)
+
+### Features & Fixes
+- **Dungeon Key Highlight & Tracers Restored (`HighlightESP`):** Added the active Hypixel Blood Key skull texture hash (`63438555e899bd9a051a95dbea49eb2ecfa52a69dbba8998f3673819e277fdf5`) and fixed armorstand glowing and tracer targeting so dungeon keys highlight reliably in-game.
+- **Starred Mobs Player Entity Support (`HighlightESP`):** Fixed starred mob detection for Crypt Dreadlord, Crypt Souleater, Crypt Lurker, and other mobs that spawn as `RemotePlayer` entities by scanning floating armorstand nametags with star symbols (`✯`, `★`, `✪`, `☆`).
+- **Interactive GUI Scrollbar Clicking & Dragging (`BomboConfigScreen`, `BomboOrderScreen`, `ChangelogScreen`):** Scrollbars on the side of menus can now be clicked and dragged with the mouse to quickly navigate through settings, categories, and changelogs.
+- **Auto Weapon Swap on Catch Inputs in New GUI (`ConfigRegistry`):** Restored all weapon swap options in `/b config`: Weapon Name / Slot text box, Attack Click Count slider, Attack Click Type cycle (Left/Right), Min/Max Attack Delays, Stop Chat Trigger, and Slug Bobber Time.
+- **HUD Slot Background Color Clarity (`ConfigRegistry`):** Renamed "Slot Background Color" to "HUD Slot Background Color" with clear explanations for Equipment, Inventory, and Armor HUD overlays.
+
 ## [26.2.28.95] - 2026-10-05 (Beta)
 
 ### Features

@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.96",
+    "date": "2026-10-05",
+    "changes": [
+      "+ Dungeon Key Highlight & Tracers - Added active Blood Key skull hash and restored glowing so keys highlight reliably in-game",
+      "+ Starred Mobs Player Support - Fixed starred mob ESP for Crypt Dreadlord, Souleaters, and Lurkers that spawn as player entities",
+      "+ Interactive GUI Scrollbars - Scrollbars can now be clicked and dragged with the mouse across Config, Organizer, and Changelog screens",
+      "+ Auto Weapon Swap on Catch Inputs - Restored weapon name text box, attack clicks, delays, and triggers in the new config GUI",
+      "+ HUD Slot Background Color Clarity - Clarified setting name and description for Equipment, Inventory, and Armor HUD overlays"
+    ]
+  },
+  {
     "version": "26.2.28.95",
     "date": "2026-10-05",
     "changes": [

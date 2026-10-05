@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.95` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.96` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.95`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.96`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.96 (Ready for In-Game Testing)
+>
+> 1. **Dungeon Key Highlight & Tracers Restored (`HighlightESP`):** Added the active Hypixel Blood Key skull texture hash (`63438555e899bd9a051a95dbea49eb2ecfa52a69dbba8998f3673819e277fdf5`) alongside `e49ec7d82b1415acae2059f78cd1d1754b9de9b18ca59f609024c4af843d4d24`, and fixed armorstand head-only glow suppression so dungeon key armor stands highlight and show tracers reliably in Catacombs.
+> 2. **Starred Mobs Player Entity Support (`HighlightESP`):** Resolved issue where starred dungeon mobs (Crypt Dreadlord, Crypt Souleater, Crypt Lurker, etc.) were not highlighted because they spawn as `RemotePlayer` entities. Allowed nametag caching and bounding-box detection to inspect floating armorstand nametags bearing stars (`✯`, `★`, `✪`, `☆`).
+> 3. **Interactive GUI Scrollbar Clicking & Dragging (`BomboConfigScreen`, `BomboOrderScreen`, `ChangelogScreen`):** Scrollbars on the side of menus can now be clicked and dragged with the mouse to quickly navigate through settings, categories, and changelogs.
+> 4. **Auto Weapon Swap on Catch Inputs in New GUI (`ConfigRegistry`):** Restored all weapon swap options in `/b config`: Weapon Name / Slot text box, Attack Click Count slider, Attack Click Type cycle (Left/Right), Min/Max Attack Delays, Stop Chat Trigger, and Slug Bobber Time.
+> 5. **HUD Slot Background Color Clarity (`ConfigRegistry`):** Renamed "Slot Background Color" to "HUD Slot Background Color" with clear explanations for Equipment, Inventory, and Armor HUD overlays.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.95 (Ready for In-Game Testing)
 >
 > 1. **Dungeon Key Highlight Blood Door & Key Pickup Auto-Off (`DungeonBossManager`, `HighlightESP`):** Blood Keys immediately cease highlighting and showing tracers once the Blood Door has been opened (`The BLOOD DOOR has been opened!`) or any player obtains the Blood Key (`has obtained Blood Key!`). Hooked chat events into both `BomboaddonsClient` and `ChatMixin`, and automated state resets on new dungeon start ("Starting in 3 seconds.") and server transfers.

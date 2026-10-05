@@ -721,8 +721,15 @@ public class ConfigRegistry {
                 items.add(ConfigItem.sliderInt("Min Reel Delay", "Minimum randomized delay before reeling in bite.", category, 20, 300, 5, "ms", () -> s.autoFishingMinDelay, v -> s.autoFishingMinDelay = v));
                 items.add(ConfigItem.sliderInt("Max Reel Delay", "Maximum randomized delay before reeling in bite.", category, 20, 300, 5, "ms", () -> s.autoFishingMaxDelay, v -> s.autoFishingMaxDelay = v));
                 items.add(ConfigItem.toggle("Slug Mode", "Waits specified seconds before reeling in for Slugfish.", category, () -> s.autoFishingSlugMode, v -> s.autoFishingSlugMode = v));
+                items.add(ConfigItem.sliderFloat("Slug Min Bobber Time", "Minimum seconds bobber must stay immersed before reeling in Slugfish mode.", category, 1.0f, 30.0f, 0.5f, "s", () -> s.autoFishingSlugDelay, v -> s.autoFishingSlugDelay = v.floatValue()));
                 items.add(ConfigItem.toggle("Trophy Fish Highlight", "3D bounding box ESP on caught rare Trophy Fish.", category, () -> s.trophyHighlight, v -> s.trophyHighlight = v));
                 items.add(ConfigItem.toggle("Auto Weapon Swap on Catch", "Quickly swaps to designated weapon and strikes upon reel.", category, () -> s.autoFishingSwapEnabled, v -> s.autoFishingSwapEnabled = v));
+                items.add(ConfigItem.text("Weapon Name / Slot", "Name of weapon or hotbar slot (1-9) to swap to upon catching sea creature.", category, () -> s.autoFishingWeaponName, v -> s.autoFishingWeaponName = v));
+                items.add(ConfigItem.sliderInt("Attack Click Count", "Number of attack clicks to execute after swapping weapon.", category, 1, 20, 1, "", () -> s.autoFishingClickCount, v -> s.autoFishingClickCount = v));
+                items.add(ConfigItem.cycle("Attack Click Type", "Type of attack click (Left Click for melee / Right Click for abilities).", category, java.util.List.of("Left Click", "Right Click"), () -> s.autoFishingClickType == 1 ? "Left Click" : "Right Click", v -> s.autoFishingClickType = "Left Click".equalsIgnoreCase(v) ? 1 : 0));
+                items.add(ConfigItem.sliderInt("Min Attack Click Delay", "Minimum randomized delay between attack clicks.", category, 20, 500, 5, "ms", () -> s.autoFishingClickDelayMin, v -> s.autoFishingClickDelayMin = v));
+                items.add(ConfigItem.sliderInt("Max Attack Click Delay", "Maximum randomized delay between attack clicks.", category, 20, 500, 5, "ms", () -> s.autoFishingClickDelayMax, v -> s.autoFishingClickDelayMax = v));
+                items.add(ConfigItem.text("Stop Chat Trigger", "Stops auto fishing automation if this message appears in chat.", category, () -> s.autoFishingStopChatMessage, v -> s.autoFishingStopChatMessage = v));
             }
 
             case "Garden" -> {
@@ -1020,10 +1027,10 @@ public class ConfigRegistry {
                 items.add(ConfigItem.sliderInt("HUD Background Opacity", "Alpha transparency of HUD background panel (0-255).", category, 0, 255, 5, "", () -> s.hudBgAlpha, v -> s.hudBgAlpha = v));
                 items.add(ConfigItem.color("HUD Border Color", "Outer border color of HUD panels (HEX e.g. #00E5FF).", category, () -> s.hudBorderColor != null ? s.hudBorderColor : "#00E5FF", v -> s.hudBorderColor = v));
                 items.add(ConfigItem.sliderInt("HUD Border Opacity", "Alpha transparency of HUD outer border (0-255).", category, 0, 255, 5, "", () -> s.hudBorderAlpha, v -> s.hudBorderAlpha = v));
-                items.add(ConfigItem.color("Slot Background Color", "Interior fill color for item slots (HEX e.g. #1E293B).", category, () -> s.hudSlotBgColor != null ? s.hudSlotBgColor : "#1E293B", v -> s.hudSlotBgColor = v));
-                items.add(ConfigItem.sliderInt("Slot Background Opacity", "Alpha transparency of item slot interior (0-255).", category, 0, 255, 5, "", () -> s.hudSlotBgAlpha, v -> s.hudSlotBgAlpha = v));
-                items.add(ConfigItem.color("Slot Lining Color", "Border and lining color around individual slots (HEX e.g. #FFFFFF).", category, () -> s.hudSlotBorderColor != null ? s.hudSlotBorderColor : "#FFFFFF", v -> s.hudSlotBorderColor = v));
-                items.add(ConfigItem.sliderInt("Slot Lining Opacity", "Alpha transparency of slot lining borders (0-255).", category, 0, 255, 5, "", () -> s.hudSlotBorderAlpha, v -> s.hudSlotBorderAlpha = v));
+                items.add(ConfigItem.color("HUD Slot Background Color", "Background fill color for item slot boxes in HUD overlays (Equipment HUD, Inventory HUD, Armor HUD).", category, () -> s.hudSlotBgColor != null ? s.hudSlotBgColor : "#1E293B", v -> s.hudSlotBgColor = v));
+                items.add(ConfigItem.sliderInt("HUD Slot Background Opacity", "Alpha opacity of slot box backgrounds in HUD overlays (0-255).", category, 0, 255, 5, "", () -> s.hudSlotBgAlpha, v -> s.hudSlotBgAlpha = v));
+                items.add(ConfigItem.color("HUD Slot Lining Color", "Border line color around individual slot boxes in HUD overlays (Equipment HUD, Inventory HUD, Armor HUD).", category, () -> s.hudSlotBorderColor != null ? s.hudSlotBorderColor : "#FFFFFF", v -> s.hudSlotBorderColor = v));
+                items.add(ConfigItem.sliderInt("HUD Slot Lining Opacity", "Alpha opacity of slot box border lines in HUD overlays (0-255).", category, 0, 255, 5, "", () -> s.hudSlotBorderAlpha, v -> s.hudSlotBorderAlpha = v));
             }
 
             case "Item Highlights" -> {

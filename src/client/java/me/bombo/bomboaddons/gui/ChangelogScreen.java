@@ -31,6 +31,7 @@ public class ChangelogScreen extends Screen {
     private final List<ReleaseEntry> releases = new ArrayList<>();
     private String targetVersion = null;
     private boolean scrolledToTarget = false;
+    private boolean isDraggingScrollbar = false;
 
     public static class ReleaseEntry {
         public final String version;
@@ -368,6 +369,20 @@ public class ChangelogScreen extends Screen {
         int winX = (this.width - winW) / 2;
         int winY = (this.height - winH) / 2;
 
+        if (this.maxScroll > 0) {
+            int sbW = 4;
+            int sbX = winX + winW - sbW - 6;
+            int contentY = winY + 44;
+            int contentH = winH - 56;
+            if (event.x() >= sbX - 6 && event.x() <= sbX + 10 && event.y() >= contentY && event.y() <= contentY + contentH) {
+                double thumbH = Math.max(20, (double) contentH * contentH / (double) (this.maxScroll + contentH));
+                double fraction = (event.y() - contentY - thumbH / 2.0) / Math.max(1.0, (double) (contentH - thumbH));
+                this.scrollAmount = Math.max(0, Math.min(this.maxScroll, fraction * this.maxScroll));
+                this.isDraggingScrollbar = true;
+                return true;
+            }
+        }
+
         int closeW = 24;
         int closeH = 20;
         int closeX = winX + winW - closeW - 12;
@@ -387,6 +402,28 @@ public class ChangelogScreen extends Screen {
             return true;
         }
         return super.keyPressed(event);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        if (this.isDraggingScrollbar && this.maxScroll > 0) {
+            int winW = Math.min(this.width - 40, 680);
+            int winH = Math.min(this.height - 40, 480);
+            int winY = (this.height - winH) / 2;
+            int contentY = winY + 44;
+            int contentH = winH - 56;
+            double thumbH = Math.max(20, (double) contentH * contentH / (double) (this.maxScroll + contentH));
+            double fraction = (event.y() - contentY - thumbH / 2.0) / Math.max(1.0, (double) (contentH - thumbH));
+            this.scrollAmount = Math.max(0, Math.min(this.maxScroll, fraction * this.maxScroll));
+            return true;
+        }
+        return super.mouseDragged(event, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        this.isDraggingScrollbar = false;
+        return super.mouseReleased(event);
     }
 
     @Override

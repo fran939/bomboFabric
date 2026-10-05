@@ -27,6 +27,8 @@ public class BomboOrderScreen extends Screen {
     private double maxSidebarScroll = 0.0;
     private double featureScroll = 0.0;
     private double maxFeatureScroll = 0.0;
+    private boolean isDraggingCategoryScrollbar = false;
+    private boolean isDraggingFeatureScrollbar = false;
 
     // State
     private String selectedCategory = "ALL";
@@ -501,6 +503,12 @@ public class BomboOrderScreen extends Screen {
 
         g.disableScissor();
         this.maxSidebarScroll = Math.max(0, totalHeight - listH + 16);
+        if (totalHeight > listH) {
+            int trackX = x + w - 4;
+            int thumbH = Math.max(16, (int) ((double) listH * listH / totalHeight));
+            int thumbY = y + (int) ((listH - thumbH) * (this.sidebarScroll / this.maxSidebarScroll));
+            ConfigUITheme.drawScrollBar(g, trackX, y, 4, listH, thumbY, thumbH);
+        }
     }
 
     private void renderFeatureList(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -1770,12 +1778,39 @@ public class BomboOrderScreen extends Screen {
             searchCursorPos = 0;
         }
 
-        // 3. Sidebar Categories Click
+        // 3. Scrollbars Click
         int sideX = winX;
         int sideY = winY + headerH + 1;
         int sideH = winH - headerH - 1;
         int listH = sideH - 34;
 
+        if (this.maxSidebarScroll > 0) {
+            int trackX = sideX + sidebarW - 4;
+            if (mouseX >= trackX - 6 && mouseX <= trackX + 10 && mouseY >= sideY && mouseY <= sideY + listH) {
+                double thumbH = Math.max(16, (double) listH * listH / (double) (this.maxSidebarScroll + listH));
+                double fraction = (mouseY - sideY - thumbH / 2.0) / Math.max(1.0, (double) (listH - thumbH));
+                this.sidebarScroll = Math.max(0, Math.min(this.maxSidebarScroll, fraction * this.maxSidebarScroll));
+                this.isDraggingCategoryScrollbar = true;
+                return true;
+            }
+        }
+
+        int chkContentX = sideX + sidebarW + 12;
+        int chkContentY = sideY + 8;
+        int chkContentW = winW - sidebarW - 24;
+        int chkContentH = sideH - 16;
+        if (this.maxFeatureScroll > 0) {
+            int trackX = chkContentX + chkContentW - 4;
+            if (mouseX >= trackX - 6 && mouseX <= trackX + 10 && mouseY >= chkContentY && mouseY <= chkContentY + chkContentH) {
+                double thumbH = Math.max(16, (double) chkContentH * chkContentH / (double) (this.maxFeatureScroll + chkContentH));
+                double fraction = (mouseY - chkContentY - thumbH / 2.0) / Math.max(1.0, (double) (chkContentH - thumbH));
+                this.featureScroll = Math.max(0, Math.min(this.maxFeatureScroll, fraction * this.maxFeatureScroll));
+                this.isDraggingFeatureScrollbar = true;
+                return true;
+            }
+        }
+
+        // 4. Sidebar Categories Click
         if (mouseX >= sideX && mouseX <= sideX + sidebarW && mouseY >= sideY && mouseY <= sideY + sideH) {
             int curY = sideY + 6 - (int) this.sidebarScroll;
             List<String> categories = new ArrayList<>(FeatureOrganizerManager.customCategories);
@@ -2359,6 +2394,27 @@ public class BomboOrderScreen extends Screen {
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
         double mouseX = event.x();
         double mouseY = event.y();
+
+        int sideX = winX;
+        int sideY = winY + headerH + 1;
+        int sideH = winH - headerH - 1;
+        int listH = sideH - 34;
+        int contentY = sideY + 8;
+        int contentH = sideH - 16;
+
+        if (this.isDraggingCategoryScrollbar && this.maxSidebarScroll > 0) {
+            double thumbH = Math.max(16, (double) listH * listH / (double) (this.maxSidebarScroll + listH));
+            double fraction = (mouseY - sideY - thumbH / 2.0) / Math.max(1.0, (double) (listH - thumbH));
+            this.sidebarScroll = Math.max(0, Math.min(this.maxSidebarScroll, fraction * this.maxSidebarScroll));
+            return true;
+        }
+
+        if (this.isDraggingFeatureScrollbar && this.maxFeatureScroll > 0) {
+            double thumbH = Math.max(16, (double) contentH * contentH / (double) (this.maxFeatureScroll + contentH));
+            double fraction = (mouseY - contentY - thumbH / 2.0) / Math.max(1.0, (double) (contentH - thumbH));
+            this.featureScroll = Math.max(0, Math.min(this.maxFeatureScroll, fraction * this.maxFeatureScroll));
+            return true;
+        }
         if (pendingDragCategory != null && !isCategoryDragging) {
             if (Math.hypot(mouseX - categoryPressX, mouseY - categoryPressY) > 4.0) {
                 isCategoryDragging = true;
@@ -2377,6 +2433,8 @@ public class BomboOrderScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        this.isDraggingCategoryScrollbar = false;
+        this.isDraggingFeatureScrollbar = false;
         double mouseX = event.x();
         double mouseY = event.y();
 

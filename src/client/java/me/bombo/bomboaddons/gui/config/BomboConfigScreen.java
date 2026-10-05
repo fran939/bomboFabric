@@ -46,6 +46,8 @@ public class BomboConfigScreen extends Screen {
     private static double scrollAmount = 0.0;
     private double maxScroll = 0.0;
     private static double sidebarScrollAmount = 0.0;
+    private boolean isDraggingContentScrollbar = false;
+    private boolean isDraggingSidebarScrollbar = false;
     private double maxSidebarScroll = 0.0;
 
     // State for Color Picker, Keybinds, and Text Inputs
@@ -320,6 +322,12 @@ public class BomboConfigScreen extends Screen {
         g.disableScissor();
 
         this.maxSidebarScroll = Math.max(0, totalSidebarHeight - listH + 16);
+        if (totalSidebarHeight > listH) {
+            int trackX = x + w - 4;
+            int thumbH = Math.max(16, (int) ((double) listH * listH / totalSidebarHeight));
+            int thumbY = y + (int) ((listH - thumbH) * (this.sidebarScrollAmount / this.maxSidebarScroll));
+            ConfigUITheme.drawScrollBar(g, trackX, y, 4, listH, thumbY, thumbH);
+        }
     }
 
     private void renderContentArea(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -1537,6 +1545,33 @@ public class BomboConfigScreen extends Screen {
             }
         }
 
+        // 3.5 Check scrollbar clicks on sidebar and content
+        if (this.maxSidebarScroll > 0) {
+            int sideTrackX = sideX + sidebarW - 4;
+            if (mouseX >= sideTrackX - 6 && mouseX <= sideTrackX + 10 && mouseY >= sideY && mouseY <= sideY + listH) {
+                double thumbH = Math.max(16, (double) listH * listH / (double) (this.maxSidebarScroll + listH));
+                double fraction = (mouseY - sideY - thumbH / 2.0) / Math.max(1.0, (double) (listH - thumbH));
+                this.sidebarScrollAmount = Math.max(0, Math.min(this.maxSidebarScroll, fraction * this.maxSidebarScroll));
+                this.isDraggingSidebarScrollbar = true;
+                return true;
+            }
+        }
+
+        int chkContentX = sideX + sidebarW + 12;
+        int chkContentY = sideY + 8;
+        int chkContentW = winW - sidebarW - 24;
+        int chkContentH = sideH - 16;
+        if (this.maxScroll > 0) {
+            int trackX = chkContentX + chkContentW - 5;
+            if (mouseX >= trackX - 6 && mouseX <= trackX + 10 && mouseY >= chkContentY && mouseY <= chkContentY + chkContentH) {
+                double thumbH = Math.max(16, (double) chkContentH * chkContentH / (double) (this.maxScroll + chkContentH));
+                double fraction = (mouseY - chkContentY - thumbH / 2.0) / Math.max(1.0, (double) (chkContentH - thumbH));
+                this.scrollAmount = Math.max(0, Math.min(this.maxScroll, fraction * this.maxScroll));
+                this.isDraggingContentScrollbar = true;
+                return true;
+            }
+        }
+
         // 4. Content Items Click
         int contentX = sideX + sidebarW + 12;
         int contentY = sideY + 8;
@@ -1581,11 +1616,34 @@ public class BomboConfigScreen extends Screen {
             ConfigCustomWidgets.draggedLoreIndex = -1;
             BomboConfig.save();
         }
+        this.isDraggingContentScrollbar = false;
+        this.isDraggingSidebarScrollbar = false;
         return super.mouseReleased(event);
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        int sideX = winX;
+        int sideY = winY + headerH + 1;
+        int sideH = winH - headerH - 1;
+        int listH = sideH - 8;
+        int contentY = sideY + 8;
+        int contentH = sideH - 16;
+
+        if (this.isDraggingSidebarScrollbar && this.maxSidebarScroll > 0) {
+            double thumbH = Math.max(16, (double) listH * listH / (double) (this.maxSidebarScroll + listH));
+            double fraction = (event.y() - sideY - thumbH / 2.0) / Math.max(1.0, (double) (listH - thumbH));
+            this.sidebarScrollAmount = Math.max(0, Math.min(this.maxSidebarScroll, fraction * this.maxSidebarScroll));
+            return true;
+        }
+
+        if (this.isDraggingContentScrollbar && this.maxScroll > 0) {
+            double thumbH = Math.max(16, (double) contentH * contentH / (double) (this.maxScroll + contentH));
+            double fraction = (event.y() - contentY - thumbH / 2.0) / Math.max(1.0, (double) (contentH - thumbH));
+            this.scrollAmount = Math.max(0, Math.min(this.maxScroll, fraction * this.maxScroll));
+            return true;
+        }
+
         if (activeColorItem != null) {
             if (isDraggingWheel || isDraggingVal || isDraggingAlpha) return true;
         }

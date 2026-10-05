@@ -1,0 +1,3872 @@
+{
+  "build.gradle": {
+    "mtime": 1790953561.167424,
+    "seen": 1791079643.2049549,
+    "ast_hash": "03dd99be1243b60410cfbc6d1ca6a3f8",
+    "semantic_hash": ""
+  },
+  "gradlew": {
+    "mtime": 1787091175.924244,
+    "seen": 1789999737.4581463,
+    "ast_hash": "45bf2667b1fbec0e07e42808dc662b6b",
+    "semantic_hash": "45bf2667b1fbec0e07e42808dc662b6b"
+  },
+  "settings.gradle": {
+    "mtime": 1786722761.356347,
+    "seen": 1789999737.4581492,
+    "ast_hash": "ec5136d732d6a8ec00286d190fbc02fe",
+    "semantic_hash": "ec5136d732d6a8ec00286d190fbc02fe"
+  },
+  "src/client/java/dev/vy/betterpv/BetterPV.java": {
+    "mtime": 1790224572.5248833,
+    "seen": 1791079643.2053778,
+    "ast_hash": "4d80bc041a49e79f986b71b1c211ea6c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/BetterPVClient.java": {
+    "mtime": 1790224572.9089756,
+    "seen": 1791079643.205381,
+    "ast_hash": "2a4906b9a006abac67535d1ebb023e53",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/ChatClickProcessor.java": {
+    "mtime": 1790224572.9584265,
+    "seen": 1791079643.2053838,
+    "ast_hash": "dd69bd69fa2420b8f45730c058c915cc",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/HypixelProfileSpyButton.java": {
+    "mtime": 1790224580.599269,
+    "seen": 1791079643.2053862,
+    "ast_hash": "6dbad61227f6003a44eb1388dd40e3b0",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/PartyJoinPvNotifier.java": {
+    "mtime": 1791071953.982759,
+    "seen": 1791079643.2053893,
+    "ast_hash": "7f55e8d290a0d54bbf68a3e72182ccf5",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/PlayerInteractPvOpener.java": {
+    "mtime": 1790224581.2854128,
+    "seen": 1791079643.2053916,
+    "ast_hash": "f92a5fe3c2d1bfb2c987969499711072",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/ProfileViewerOpener.java": {
+    "mtime": 1790224581.6113276,
+    "seen": 1791079643.2053933,
+    "ast_hash": "2c8a0da9838dd2b5723f66ba2ddf017d",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/api/BetterPVConfig.java": {
+    "mtime": 1790224572.5646656,
+    "seen": 1791079643.205395,
+    "ast_hash": "2950c06b865d77dd08765fd4a37f8b7b",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/api/BetterPvSessionAuth.java": {
+    "mtime": 1790224572.6341348,
+    "seen": 1791079643.2053964,
+    "ast_hash": "7b0f64ce89c89e20eea6bfa4e8f1ab8d",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/api/CoflnetApiClient.java": {
+    "mtime": 1790224572.6780353,
+    "seen": 1791079643.2053978,
+    "ast_hash": "7804080515ebdc444929d59a8aed4b53",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/api/EliteBotApiClient.java": {
+    "mtime": 1790224572.722859,
+    "seen": 1791079643.2053993,
+    "ast_hash": "858a4498bb0cc121431cbab9a7817122",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/api/HypixelApiClient.java": {
+    "mtime": 1790277046.6689923,
+    "seen": 1791079643.2054002,
+    "ast_hash": "9532f2de37ed97283ac778fb744f418d",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/api/ProfileEnrichmentSession.java": {
+    "mtime": 1790224572.825383,
+    "seen": 1791079643.2054017,
+    "ast_hash": "ed7d398e054ccfad455bb10922463ef5",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/api/ProfileFetcher.java": {
+    "mtime": 1790224572.8661816,
+    "seen": 1791079643.2054029,
+    "ast_hash": "88c11aa8dbad2fcf6e02d168b35f383e",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/BetterPvCosmetics.java": {
+    "mtime": 1790224572.9993708,
+    "seen": 1791079643.2054048,
+    "ast_hash": "554eccd7953ded04bf32657d5b6f64a5",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/CapeTextureManager.java": {
+    "mtime": 1790224573.0467596,
+    "seen": 1791079643.2054062,
+    "ast_hash": "92d6c8998119330bb1c9e6ad4bf9a5e7",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/CosmeticsContentManager.java": {
+    "mtime": 1790224573.0871468,
+    "seen": 1791079643.2054074,
+    "ast_hash": "1ca5ed3b303f04b551d79aca0b1c91a8",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/GradientColors.java": {
+    "mtime": 1790224573.1357732,
+    "seen": 1791079643.2054086,
+    "ast_hash": "aef9e1daf844a029a47bc68a45f2a544",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/NameStyleMatcher.java": {
+    "mtime": 1790224573.1821551,
+    "seen": 1791079643.20541,
+    "ast_hash": "5cc80b190fc809379bad58fd5d8a32db",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/NameStyler.java": {
+    "mtime": 1790224573.224455,
+    "seen": 1791079643.2054117,
+    "ast_hash": "5637987a70cea45a32f4c3a7cfce03fc",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/NameStylerIdentityCache.java": {
+    "mtime": 1790224573.2748535,
+    "seen": 1791079643.205413,
+    "ast_hash": "ca5271903f91c4d1a11dc4d4f7b07744",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/NameStylerLruCache.java": {
+    "mtime": 1790224573.3222015,
+    "seen": 1791079643.205414,
+    "ast_hash": "8ef2a2f89df419228b137f5e355dd059",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/OwnerCape.java": {
+    "mtime": 1790224573.3641808,
+    "seen": 1791079643.2054155,
+    "ast_hash": "2916dcd91089cfc89f7897b754b27c04",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/cosmetics/PlayerCustomizationRegistry.java": {
+    "mtime": 1790224573.4084268,
+    "seen": 1791079643.205417,
+    "ast_hash": "104f6fa02cc474af2ff9b3c9f16728e5",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/AbiphoneNpcs.java": {
+    "mtime": 1790224573.4451854,
+    "seen": 1791079643.2054183,
+    "ast_hash": "11e1cb1327976a0d2f6e46c9f91390e6",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/AttributeShardsData.java": {
+    "mtime": 1790224573.497691,
+    "seen": 1791079643.2054198,
+    "ast_hash": "17b282691519ec98c4225573a66664fc",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/AuctionSnapshot.java": {
+    "mtime": 1790224573.540455,
+    "seen": 1791079643.2054212,
+    "ast_hash": "d10e293970846ac777884f3f6f627fb5",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/BestiaryData.java": {
+    "mtime": 1790224573.5823512,
+    "seen": 1791079643.2054224,
+    "ast_hash": "0de2d7ac107fe388777ad5fce1d3b574",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/BestiarySnapshot.java": {
+    "mtime": 1790224573.6226037,
+    "seen": 1791079643.2054236,
+    "ast_hash": "3b11d4e8df248cb1df318793bb9fc30b",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/BossCollections.java": {
+    "mtime": 1790224573.658853,
+    "seen": 1791079643.2054248,
+    "ast_hash": "490eb107cb1dda6a4300be635256553d",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/ChocolateEmployees.java": {
+    "mtime": 1790224573.697553,
+    "seen": 1791079643.2054262,
+    "ast_hash": "11ef54143b2f5a1eb4c25e9d447a6489",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/ColeWeight.java": {
+    "mtime": 1790224573.7339854,
+    "seen": 1791079643.2054276,
+    "ast_hash": "c1214529ee06b78a4589127f77f5b2d6",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/CollectionIds.java": {
+    "mtime": 1790224573.773309,
+    "seen": 1791079643.2054288,
+    "ast_hash": "6de64e824cddd92e2073777ef270291f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/CollectionSnapshot.java": {
+    "mtime": 1790224573.8146126,
+    "seen": 1791079643.20543,
+    "ast_hash": "64f14793cc4bda4964a883a97b6c7a1f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/CrimsonKuudraCard.java": {
+    "mtime": 1790224573.851425,
+    "seen": 1791079643.205431,
+    "ast_hash": "f2bc4a9e815c7085676b850cae3e6aa9",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/CrimsonSnapshot.java": {
+    "mtime": 1790224573.9008734,
+    "seen": 1791079643.2054324,
+    "ast_hash": "2154b86e186f502f544d2df4adf8a5ba",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/DungeonSnapshot.java": {
+    "mtime": 1790224573.9443083,
+    "seen": 1791079643.2054334,
+    "ast_hash": "bee36e0d8a85847786b98cf66c332979",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/EventsSnapshot.java": {
+    "mtime": 1790224573.990297,
+    "seen": 1791079643.2054343,
+    "ast_hash": "46f2ea4e147d5a347623412085e8ba90",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/FishFamilyData.java": {
+    "mtime": 1790224574.0271914,
+    "seen": 1791079643.205436,
+    "ast_hash": "7d095eeedeb44087f54585304f9f88ff",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/FishingSnapshot.java": {
+    "mtime": 1790224574.0668695,
+    "seen": 1791079643.205437,
+    "ast_hash": "1466b9e4f8b83a946cb3209a10fe2443",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/ForagingHotfData.java": {
+    "mtime": 1790224574.106577,
+    "seen": 1791079643.2054381,
+    "ast_hash": "d0e86846e677bd4212f5a380e5a96d7a",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/ForagingSnapshot.java": {
+    "mtime": 1790224574.1590133,
+    "seen": 1791079643.2054393,
+    "ast_hash": "45fce98d13b9d5966fa7efd7f284b79b",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/FormatUtil.java": {
+    "mtime": 1790224574.1988008,
+    "seen": 1791079643.2054405,
+    "ast_hash": "f897d1759c879743b39d0141afc96a4d",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/GardenData.java": {
+    "mtime": 1790224574.243631,
+    "seen": 1791079643.2054415,
+    "ast_hash": "2be9d845a29d07301b5a7f180904247c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/GardenSnapshot.java": {
+    "mtime": 1790224574.2924595,
+    "seen": 1791079643.2054431,
+    "ast_hash": "f391767ad6b4ab4412555bf5b619c057",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/GuildStatus.java": {
+    "mtime": 1790224574.3373246,
+    "seen": 1791079643.2054446,
+    "ast_hash": "9e9e7122b00d4aacb4a4b0b8e83a9060",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/HoppityRabbitsData.java": {
+    "mtime": 1790224574.3766568,
+    "seen": 1791079643.205446,
+    "ast_hash": "75deef28d3ce4c5388c15e077736f58f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/HypixelRanks.java": {
+    "mtime": 1790224574.4445465,
+    "seen": 1791079643.2054472,
+    "ast_hash": "21ba2193760935bc57c875c8375b1f21",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/InventorySnapshot.java": {
+    "mtime": 1790224574.4853542,
+    "seen": 1791079643.2054482,
+    "ast_hash": "aae5604131da8886596d99b5a20021df",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/Leveling.java": {
+    "mtime": 1790224574.5321543,
+    "seen": 1791079643.2054496,
+    "ast_hash": "72d66933e56d028014d18698c584f86f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/MagicalPowerCalculator.java": {
+    "mtime": 1790224574.5700097,
+    "seen": 1791079643.2054508,
+    "ast_hash": "d2ec194a40df93c9abbb4cf54a4d4def",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/MaxwellPowers.java": {
+    "mtime": 1790224574.623363,
+    "seen": 1791079643.2054517,
+    "ast_hash": "a6c00695adba979a6fe3f29fdf2b9fe9",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/MiningHotmData.java": {
+    "mtime": 1790224574.6718895,
+    "seen": 1791079643.2054532,
+    "ast_hash": "c5ad086e8162940feed60dae45045b26",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/MiningSnapshot.java": {
+    "mtime": 1790224574.708716,
+    "seen": 1791079643.205454,
+    "ast_hash": "9874827fe6fb3abc105f8ecd248d73d2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/MiscStatsSnapshot.java": {
+    "mtime": 1790224574.757143,
+    "seen": 1791079643.2054553,
+    "ast_hash": "23195bc3bd837f6107287344de5fe9f2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/MuseumCache.java": {
+    "mtime": 1790224574.8114693,
+    "seen": 1791079643.2054565,
+    "ast_hash": "b5cbdbe5de2210af2244961c380185ef",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/MuseumCatalog.java": {
+    "mtime": 1790224574.86842,
+    "seen": 1791079643.2054577,
+    "ast_hash": "024362e3a0ad8dbda3e98c1cb67e4301",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/PetLoreResolver.java": {
+    "mtime": 1790224574.9119174,
+    "seen": 1791079643.2054586,
+    "ast_hash": "2906d1fa595dc99a2a4ea7ad33f2b747",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/PetSnapshot.java": {
+    "mtime": 1790224574.9537976,
+    "seen": 1791079643.20546,
+    "ast_hash": "3474e6f605fb95abeafc3b80e1c2b3d1",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/PlayerStatsCalculator.java": {
+    "mtime": 1790224575.0207906,
+    "seen": 1791079643.205461,
+    "ast_hash": "83a7fde89d00b153f1eb667c3d4dfc12",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/PlayerStatsSnapshot.java": {
+    "mtime": 1790224575.0745323,
+    "seen": 1791079643.2054622,
+    "ast_hash": "a76c6359261d69bc3dd4fb3548eb108c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/PlayerStatus.java": {
+    "mtime": 1790224575.1148481,
+    "seen": 1791079643.2054634,
+    "ast_hash": "005f731fd047236c76d688e1332e9008",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/ProfileSnapshot.java": {
+    "mtime": 1790224575.1769195,
+    "seen": 1791079643.2054646,
+    "ast_hash": "9332b0e9583c241949bda3b88a91b85f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/RepoData.java": {
+    "mtime": 1790224575.2407727,
+    "seen": 1791079643.2054658,
+    "ast_hash": "cf748a1824982d937d41e0093afb0d0a",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/RiftSnapshot.java": {
+    "mtime": 1790224575.4719248,
+    "seen": 1791079643.2054672,
+    "ast_hash": "04a0002da6c93ceb10fb5b5d785daad4",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/TrophyFishData.java": {
+    "mtime": 1790224575.6031377,
+    "seen": 1791079643.2054682,
+    "ast_hash": "69df99d71887035905d50195da7dec99",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/TrophyFrogData.java": {
+    "mtime": 1790224575.6438346,
+    "seen": 1791079643.2054694,
+    "ast_hash": "096141869f8bdfc6a4b1ec7961836821",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/TrophySkulls.java": {
+    "mtime": 1790224575.6871307,
+    "seen": 1791079643.2054708,
+    "ast_hash": "d4f86a1f66fbed50bc07cb23eeec4f79",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/data/UsernameHistory.java": {
+    "mtime": 1790224575.7369978,
+    "seen": 1791079643.205472,
+    "ast_hash": "7718373590c5e06652c5d955f5579088",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/dungeons/CataXpCalculator.java": {
+    "mtime": 1790224575.7837977,
+    "seen": 1791079643.205473,
+    "ast_hash": "11f7a9ebcf2fc6cec6598a8640ae1c95",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/dungeons/CataXpMath.java": {
+    "mtime": 1790224575.8400614,
+    "seen": 1791079643.2054744,
+    "ast_hash": "ad898f346c9120bed657e3b232204b36",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/dungeons/ClassLevelQuery.java": {
+    "mtime": 1790224575.8813896,
+    "seen": 1791079643.2054753,
+    "ast_hash": "191ee2c533737afecf6d2528bc7e0417",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/dungeons/ClassXpCalculator.java": {
+    "mtime": 1790224575.930249,
+    "seen": 1791079643.2054763,
+    "ast_hash": "ae4df45ddae408ee750b82b9f8addd81",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/dungeons/DungeonModifierScanner.java": {
+    "mtime": 1790224575.97288,
+    "seen": 1791079643.2054777,
+    "ast_hash": "349a5bdf95f7c6e04da49600a379d299",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/dungeons/DungeonXpData.java": {
+    "mtime": 1790224576.006177,
+    "seen": 1791079643.205479,
+    "ast_hash": "12db0be5c8d5baf69ce00c2e38741ad4",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/dungeons/EssencePerkTips.java": {
+    "mtime": 1790224576.0471501,
+    "seen": 1791079643.20548,
+    "ast_hash": "17969a2d5afc5eb3afe6d123e6f468ff",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/dungeons/EssenceShopData.java": {
+    "mtime": 1790224576.1073341,
+    "seen": 1791079643.2054818,
+    "ast_hash": "fbebb7131e1cf9fe8d30e63be9e856bb",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/ArmorStacks.java": {
+    "mtime": 1790224576.1527443,
+    "seen": 1791079643.205483,
+    "ast_hash": "0b0153a33ab08612acc47e08778ab02e",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/FakeBanScreen.java": {
+    "mtime": 1790224577.2813294,
+    "seen": 1791079643.2054844,
+    "ast_hash": "539a082eee1a3ae2e49edcfed40866d7",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/LoadingEgg.java": {
+    "mtime": 1790224579.0224776,
+    "seen": 1791079643.2054856,
+    "ast_hash": "65d7d288ec5e6168c769c0ca38273d0f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/LoadingEggFinale.java": {
+    "mtime": 1790224579.074796,
+    "seen": 1791079643.2054865,
+    "ast_hash": "d7d7c51ecbd5035d9a8571eeb47b6632",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/MoulberryMode.java": {
+    "mtime": 1790224579.3786643,
+    "seen": 1791079643.205488,
+    "ast_hash": "72fa9205403ced55fe64cc2c4273cf01",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/PlayerModelRenderer.java": {
+    "mtime": 1790224579.8901534,
+    "seen": 1791079643.2054892,
+    "ast_hash": "77438677bcd26af2ba85932cd67c82ae",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/ProfileViewerScreen.java": {
+    "mtime": 1790564315.6666334,
+    "seen": 1791079643.20549,
+    "ast_hash": "37abb13e43009f913ab403cadb768888",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/PvDraw.java": {
+    "mtime": 1790224579.9952767,
+    "seen": 1791079643.2054918,
+    "ast_hash": "fbcfcffc4c643f6986ae83fded44e8d8",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/PvTooltip.java": {
+    "mtime": 1790224580.0572598,
+    "seen": 1791079643.2054927,
+    "ast_hash": "a9219f43421da6a40704737fa1e7758a",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/SkyBlockLevelColors.java": {
+    "mtime": 1790224580.4326477,
+    "seen": 1791079643.205494,
+    "ast_hash": "6228e9ac7521b818f344ceb2756b78ef",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/SkyBlockStats.java": {
+    "mtime": 1790224580.4954631,
+    "seen": 1791079643.2054954,
+    "ast_hash": "ba93501b745ecb8f3bc89527e22bc82c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/SkyBlockSymbols.java": {
+    "mtime": 1790224580.5494092,
+    "seen": 1791079643.2054965,
+    "ast_hash": "ad6282c7127b3fb71b6da955bf37ac86",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/auctions/AuctionPage.java": {
+    "mtime": 1790224576.2081273,
+    "seen": 1791079643.2054977,
+    "ast_hash": "13d9e9fd907b36607126faa588c3610b",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/bestiary/BestiaryPage.java": {
+    "mtime": 1790224576.2550972,
+    "seen": 1791079643.205499,
+    "ast_hash": "0a333002f99a9778981b088e78b383ec",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/collections/CollectionCategoryIcons.java": {
+    "mtime": 1790224576.3081293,
+    "seen": 1791079643.2055004,
+    "ast_hash": "195ba5378d9dad43bebc042fea10e434",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/collections/CollectionsPage.java": {
+    "mtime": 1790224576.376308,
+    "seen": 1791079643.2055016,
+    "ast_hash": "a24bcc137271851de14423b055551a33",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/collections/CollectionsUi.java": {
+    "mtime": 1790224576.4358473,
+    "seen": 1791079643.2055027,
+    "ast_hash": "85ad6b74f38a6a10e86e1bbb1f5579c5",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/collections/page/CollectionsListPage.java": {
+    "mtime": 1790224576.5108755,
+    "seen": 1791079643.205504,
+    "ast_hash": "040a2553d762ab9e7af7a3a932830a8c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/collections/page/MinionsPage.java": {
+    "mtime": 1790224576.5871928,
+    "seen": 1791079643.2055051,
+    "ast_hash": "852a2672b56984542489592f5029d123",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/crimson/CrimsonPage.java": {
+    "mtime": 1790224576.6256013,
+    "seen": 1791079643.2055063,
+    "ast_hash": "5b6e9bcda8262b36b67de854e9329e29",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/crimson/CrimsonUi.java": {
+    "mtime": 1790224576.6836464,
+    "seen": 1791079643.2055073,
+    "ast_hash": "7b02d00bd5dbce0e1e1acefc1bbb60b5",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/crimson/page/AbiphonePage.java": {
+    "mtime": 1790224576.7291245,
+    "seen": 1791079643.2055087,
+    "ast_hash": "e6a16d6b6ab580f2a332db450b4a24f2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/crimson/page/CrimsonOverviewPage.java": {
+    "mtime": 1790224576.7835572,
+    "seen": 1791079643.20551,
+    "ast_hash": "6c3d8a3222f6adca5e7b2c3d53083636",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/crimson/page/KuudraPage.java": {
+    "mtime": 1790224576.863746,
+    "seen": 1791079643.2055109,
+    "ast_hash": "bfefc443ad7e0937964932df401c7ac2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/dungeons/DungeonCalcOverlay.java": {
+    "mtime": 1790224576.922784,
+    "seen": 1791079643.2055123,
+    "ast_hash": "23c4f41f87f78b64ca7517a3bb630fbb",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/dungeons/DungeonPage.java": {
+    "mtime": 1790224577.0074358,
+    "seen": 1791079643.2055135,
+    "ast_hash": "0ac17fc79ab72223d358d27a017dd94e",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/events/EventsPage.java": {
+    "mtime": 1790224577.079036,
+    "seen": 1791079643.2055144,
+    "ast_hash": "31e0a9a806c5f79fa1418b34115b02ab",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/events/EventsUi.java": {
+    "mtime": 1790224577.1316843,
+    "seen": 1791079643.2055159,
+    "ast_hash": "ac68c334c2b6e5507fd94307effda7a6",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/events/page/BingoPage.java": {
+    "mtime": 1790224577.18109,
+    "seen": 1791079643.2055168,
+    "ast_hash": "6ee1e2d718131793914009a0592684e1",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/events/page/ChocolatePage.java": {
+    "mtime": 1790224577.2325356,
+    "seen": 1791079643.205518,
+    "ast_hash": "c85e5b8c94dd44a4be283d840af6319c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/fishing/FishingPage.java": {
+    "mtime": 1790224577.350422,
+    "seen": 1791079643.2055192,
+    "ast_hash": "0e238423f8bad3ac1df06e5ff44675fc",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/foraging/ForagingPage.java": {
+    "mtime": 1790224577.4043965,
+    "seen": 1791079643.2055204,
+    "ast_hash": "5823776e98edd49e73023de8c46a407a",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/foraging/ForagingUi.java": {
+    "mtime": 1790224577.4654984,
+    "seen": 1791079643.2055213,
+    "ast_hash": "45be6cde893280f0da3a36f195ff3deb",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/foraging/page/AttributeShardsPage.java": {
+    "mtime": 1790224577.53659,
+    "seen": 1791079643.205523,
+    "ast_hash": "5a56a3fda352d65a78c18e78ddd17743",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/foraging/page/ForagingOverviewPage.java": {
+    "mtime": 1790224577.5990973,
+    "seen": 1791079643.2055242,
+    "ast_hash": "949df1dad44c022dbcb0dc014fa7ee25",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/foraging/page/HotfPage.java": {
+    "mtime": 1790224577.67541,
+    "seen": 1791079643.2055252,
+    "ast_hash": "5876a4b4838fab97936072e34a9057c8",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/foraging/page/HuntingPage.java": {
+    "mtime": 1790224577.7735088,
+    "seen": 1791079643.2055266,
+    "ast_hash": "c35580ca091310f436fbce570a6037ae",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/foraging/page/SafariPage.java": {
+    "mtime": 1790224577.8208797,
+    "seen": 1791079643.205528,
+    "ast_hash": "983750b1e848882d7287ad1a3a8321c2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/garden/GardenPage.java": {
+    "mtime": 1790224577.884467,
+    "seen": 1791079643.205529,
+    "ast_hash": "781914b2cc1175c7f1f05345a3205fa0",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/garden/GardenUi.java": {
+    "mtime": 1790224577.9373953,
+    "seen": 1791079643.2055304,
+    "ast_hash": "a57d0b4556439dae4caf71d8505cf965",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/garden/page/CropsPage.java": {
+    "mtime": 1790224577.990387,
+    "seen": 1791079643.2055314,
+    "ast_hash": "cb4f5eb25238d14dc1d499a3e4fd8881",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/garden/page/GardenOverviewPage.java": {
+    "mtime": 1790224578.0422733,
+    "seen": 1791079643.2055328,
+    "ast_hash": "5a9ee4545f19288fe90a79f6f406f3c8",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/garden/page/GreenhousePage.java": {
+    "mtime": 1790224578.0972228,
+    "seen": 1791079643.205534,
+    "ast_hash": "7802eb1176d60960d00be7d6bdbf11e6",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/garden/page/JacobPage.java": {
+    "mtime": 1790224578.1442287,
+    "seen": 1791079643.205535,
+    "ast_hash": "3cef61b39d177faeff08bcc4add91920",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/garden/page/VisitorsPage.java": {
+    "mtime": 1790224578.2813694,
+    "seen": 1791079643.2055364,
+    "ast_hash": "5db625c0aa26ec0026c4d2f340751806",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/home/HomePage.java": {
+    "mtime": 1790224578.402653,
+    "seen": 1791079643.2055376,
+    "ast_hash": "46c60e1043871fc46a8f084dd1969d14",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/home/HomeUi.java": {
+    "mtime": 1790224578.527347,
+    "seen": 1791079643.2055385,
+    "ast_hash": "f4c55a1935ecccbc92c97e6c3868f78a",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/home/page/MiscStatsPage.java": {
+    "mtime": 1790224578.5917802,
+    "seen": 1791079643.20554,
+    "ast_hash": "f693ec42ae8323d06e5f48a8a7a7cbb0",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/inventories/EnchantTooltip.java": {
+    "mtime": 1790224578.6402545,
+    "seen": 1791079643.205541,
+    "ast_hash": "62fd7858134c7f82a81ad0e9721dc8ce",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/inventories/InventoryPage.java": {
+    "mtime": 1790224578.6984172,
+    "seen": 1791079643.205542,
+    "ast_hash": "b789293b998dac8f5b659672c33edeb2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/inventories/ItemValueOverlay.java": {
+    "mtime": 1790224578.7453234,
+    "seen": 1791079643.2055435,
+    "ast_hash": "c1791982273841b7834390b9dd4081e2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/inventories/SkyBlockIconRenderer.java": {
+    "mtime": 1790224578.8160937,
+    "seen": 1791079643.2055447,
+    "ast_hash": "fe169501d4fabc712f39cd117e7d9707",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/inventories/SkyBlockItemFactory.java": {
+    "mtime": 1790224578.8717308,
+    "seen": 1791079643.205546,
+    "ast_hash": "c88f7b17a336f4acdfa51fa15e2a79bd",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/inventories/SkyBlockItemIconCache.java": {
+    "mtime": 1790224578.9504626,
+    "seen": 1791079643.2055473,
+    "ast_hash": "083023493917c37000df2b4014194109",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/mining/MiningPage.java": {
+    "mtime": 1790224579.127447,
+    "seen": 1791079643.2055483,
+    "ast_hash": "2435a31948d639c9ba66db91f2e7face",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/mining/MiningUi.java": {
+    "mtime": 1790224579.1723347,
+    "seen": 1791079643.2055495,
+    "ast_hash": "92b9247bc0b4fb849a76156c29b03a1c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/mining/page/GlacitePage.java": {
+    "mtime": 1790224579.2239301,
+    "seen": 1791079643.2055507,
+    "ast_hash": "ca3208065ad9a8b4f383bd13f91743fb",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/mining/page/HotmPage.java": {
+    "mtime": 1790224579.2773783,
+    "seen": 1791079643.2055519,
+    "ast_hash": "4d744059b2b1ae8692ebc64a8b2f10b6",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/mining/page/MiningOverviewPage.java": {
+    "mtime": 1790224579.3354259,
+    "seen": 1791079643.205553,
+    "ast_hash": "48401cfca8d30b546affc1ecfe456cd2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/museum/MuseumPage.java": {
+    "mtime": 1790224579.4443028,
+    "seen": 1791079643.2055542,
+    "ast_hash": "a45c8ed1f1a153417cdb3a1e578518b3",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/nav/IconButtonBar.java": {
+    "mtime": 1790224579.5053074,
+    "seen": 1791079643.2055554,
+    "ast_hash": "aa57d9d16e77786b9db91c46ed5ecc5f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/nav/InventoryPane.java": {
+    "mtime": 1790224579.5475044,
+    "seen": 1791079643.2055566,
+    "ast_hash": "1bab2b79169defc27e5315b41bbf94e9",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/nav/MuseumSort.java": {
+    "mtime": 1790224579.5964546,
+    "seen": 1791079643.2055578,
+    "ast_hash": "2efeddb0805cfe993ccaef6fc2ed5efa",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/nav/PvSubTab.java": {
+    "mtime": 1790224579.646515,
+    "seen": 1791079643.205559,
+    "ast_hash": "6d347eb2fc83e36b06d81fbf562bff2c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/nav/PvTab.java": {
+    "mtime": 1790224579.6951663,
+    "seen": 1791079643.2055602,
+    "ast_hash": "58ca0fa6ed823de95bf3c2228f2af334",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/page/ProfilePage.java": {
+    "mtime": 1790224579.769272,
+    "seen": 1791079643.2055616,
+    "ast_hash": "4e06243b86c2e9fd7abd343ef18fca5d",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/pets/PetsPage.java": {
+    "mtime": 1790224579.8190536,
+    "seen": 1791079643.2055626,
+    "ast_hash": "65283d884a5074d34f2c16856ce27a01",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/rift/RiftPage.java": {
+    "mtime": 1790224580.2748663,
+    "seen": 1791079643.205564,
+    "ast_hash": "eaa36410c56c196e66c1bf1801d346c6",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/rift/RiftUi.java": {
+    "mtime": 1790224580.3383095,
+    "seen": 1791079643.205565,
+    "ast_hash": "9f2a0c0380d087e16794395780c9bee2",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/rift/page/RiftInventoryPage.java": {
+    "mtime": 1790224580.1139183,
+    "seen": 1791079643.2055662,
+    "ast_hash": "5f9131e68a66e8072bd6afe021c7fc84",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/gui/rift/page/RiftOverviewPage.java": {
+    "mtime": 1790224580.190519,
+    "seen": 1791079643.205568,
+    "ast_hash": "e9a167a9d2a1b9c4fa4ed4c38c523c2f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/networth/InventoryDecoder.java": {
+    "mtime": 1790224580.6542003,
+    "seen": 1791079643.205569,
+    "ast_hash": "8546743428895c23cc10b5e19e74dc5a",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/networth/ItemWorth.java": {
+    "mtime": 1790224580.7157176,
+    "seen": 1791079643.20557,
+    "ast_hash": "61b0dc998db4b45adbc6c461e01e8e05",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/networth/NbtAttrs.java": {
+    "mtime": 1790224580.7740748,
+    "seen": 1791079643.2055714,
+    "ast_hash": "f509de33ed78f9a4e5452ea57cbd8bab",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/networth/NetworthBreakdown.java": {
+    "mtime": 1790224580.8602314,
+    "seen": 1791079643.2055726,
+    "ast_hash": "f94677f89d197d35f85cfa8ab48b23e5",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/networth/NetworthCalculator.java": {
+    "mtime": 1790224580.9192376,
+    "seen": 1791079643.2055736,
+    "ast_hash": "8927d2a9d9974e499f06e77816b58c77",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/networth/NetworthData.java": {
+    "mtime": 1790224580.9631164,
+    "seen": 1791079643.2055755,
+    "ast_hash": "2697fedcead565f7e50b4c1759e46a6f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/networth/NetworthMode.java": {
+    "mtime": 1790224581.0392053,
+    "seen": 1791079643.2055767,
+    "ast_hash": "8bd989b91e4d6dda0a7581bf20946c7a",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/networth/PetWorth.java": {
+    "mtime": 1790224581.0931382,
+    "seen": 1791079643.2055776,
+    "ast_hash": "c8414f470215cb9588e3bb6c9c9127af",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/neu/NeuRepoCache.java": {
+    "mtime": 1790224581.1475718,
+    "seen": 1791079643.205579,
+    "ast_hash": "f5a3ed705177a232e881808afd9a0c8f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/neu/SkyBlockPackCache.java": {
+    "mtime": 1790224581.191908,
+    "seen": 1791079643.2055802,
+    "ast_hash": "a18d3ee3b33c281c369fa428749bbfb6",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/price/AthenPriceCache.java": {
+    "mtime": 1790224581.3537717,
+    "seen": 1791079643.2055817,
+    "ast_hash": "3dc82325843618267b53d2720e979c88",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/price/HypixelCollectionsCache.java": {
+    "mtime": 1790224581.3895428,
+    "seen": 1791079643.2055826,
+    "ast_hash": "3fb7e7f0842751103f3cad0783d0a3eb",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/price/HypixelItemsCache.java": {
+    "mtime": 1790224581.4399426,
+    "seen": 1791079643.2055838,
+    "ast_hash": "c8fe557aed737b98cdc41783b7869a66",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/price/ItemPricer.java": {
+    "mtime": 1790224581.5000465,
+    "seen": 1791079643.205585,
+    "ast_hash": "b77d2eb3b3c7ce87ed9571922bb65d0d",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/price/SkyHelperPriceCache.java": {
+    "mtime": 1790224581.5715718,
+    "seen": 1791079643.2055862,
+    "ast_hash": "3c01a62a32bffc0f8d81d3525cd894e6",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/slayer/SlayerCalcOverlay.java": {
+    "mtime": 1790224581.6556792,
+    "seen": 1791079643.2055871,
+    "ast_hash": "7ea0cba3a4e1c5e4c7ebfc99e5b3e33e",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/slayer/SlayerMayorMods.java": {
+    "mtime": 1790224581.728341,
+    "seen": 1791079643.2055886,
+    "ast_hash": "aca71008752aa4c9040cac4962eb5109",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/slayer/SlayerXpCalculator.java": {
+    "mtime": 1790224581.769243,
+    "seen": 1791079643.2055895,
+    "ast_hash": "0d776d4eaa897cf2b4bbb5e77e66ee35",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/util/LegacyChatFormatting.java": {
+    "mtime": 1790224581.82877,
+    "seen": 1791079643.2055912,
+    "ast_hash": "f2c0cd81efbe6752453400b4dd19a5c8",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/weight/WeightBreakdown.java": {
+    "mtime": 1790224581.8691213,
+    "seen": 1791079643.2055924,
+    "ast_hash": "6d90f5071955fb9bb9b93209c19ee2be",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/weight/WeightCalculator.java": {
+    "mtime": 1790224581.9120338,
+    "seen": 1791079643.2055936,
+    "ast_hash": "71827255e5173ae5a50aae972547034c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/weight/WeightStages.java": {
+    "mtime": 1790224581.9742663,
+    "seen": 1791079643.2055945,
+    "ast_hash": "de7dc404a1cb502bf6620aad56af500e",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/client/weight/WeightSystem.java": {
+    "mtime": 1790224582.037617,
+    "seen": 1791079643.205596,
+    "ast_hash": "7d9680162d5672dad0c3bb12c4281449",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/ChatComponentMixin.java": {
+    "mtime": 1790224582.0996964,
+    "seen": 1791079643.205597,
+    "ast_hash": "26c423d3ba1012641d08805af37bb186",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/EntityCosmeticsMixin.java": {
+    "mtime": 1790224582.1415126,
+    "seen": 1791079643.2055988,
+    "ast_hash": "11dc7335349cba0e454efb79b8a82f3b",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/EntityRendererCosmeticsMixin.java": {
+    "mtime": 1790224582.188893,
+    "seen": 1791079643.2055998,
+    "ast_hash": "51e6acff7d2b951319787962fe5d5fc9",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/FontCosmeticsMixin.java": {
+    "mtime": 1790224582.2549632,
+    "seen": 1791079643.205601,
+    "ast_hash": "e22891c15baf5d485bf44b80aa649c02",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/ItemModelResolverIconProbeMixin.java": {
+    "mtime": 1790224582.3023102,
+    "seen": 1791079643.2056024,
+    "ast_hash": "65bcdb1995b4ddff097e468d7514db2c",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/PlayerInfoCosmeticsMixin.java": {
+    "mtime": 1790224582.3590658,
+    "seen": 1791079643.2056034,
+    "ast_hash": "f17da4b7c926579ed285be613f88c5db",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/PlayerTabOverlayCosmeticsMixin.java": {
+    "mtime": 1790224582.408504,
+    "seen": 1791079643.2056046,
+    "ast_hash": "78a482f6367337205207a15e1525a654",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/ScreenClickCommandMixin.java": {
+    "mtime": 1790224582.4649103,
+    "seen": 1791079643.2056057,
+    "ast_hash": "2c7e71723b91a959df9e4c1deb832999",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/SkyHanniAdvancedPlayerListCosmeticsMixin.java": {
+    "mtime": 1790224582.520604,
+    "seen": 1791079643.205607,
+    "ast_hash": "1a8180989b7d55e3e776610eb4364b5f",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/SkyHanniScoreboardElementPartyCosmeticsMixin.java": {
+    "mtime": 1790224582.5801196,
+    "seen": 1791079643.205608,
+    "ast_hash": "e07f43e3cff6aa34994bdf2bad1d42d7",
+    "semantic_hash": ""
+  },
+  "src/client/java/dev/vy/betterpv/mixin/SkyHanniScoreboardEventDungeonsCosmeticsMixin.java": {
+    "mtime": 1790224582.627134,
+    "seen": 1791079643.2056093,
+    "ast_hash": "86dcf144cf2b0a0c55e3b00d91132abe",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/AFKManager.java": {
+    "mtime": 1790224582.6797366,
+    "seen": 1791079643.2056108,
+    "ast_hash": "f061d15b13b07cab8ddf58419f23861b",
+    "semantic_hash": "f061d15b13b07cab8ddf58419f23861b"
+  },
+  "src/client/java/me/bombo/bomboaddons/AStarPathfinder.java": {
+    "mtime": 1790224582.7842002,
+    "seen": 1791079643.2056117,
+    "ast_hash": "cc6e0c3c3470c90ca9711a9999c0ac5d",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/AlphaTrackerHud.java": {
+    "mtime": 1790825105.9353695,
+    "seen": 1791079643.2056131,
+    "ast_hash": "e67547c78b28dd364f954236d457976e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/BazaarUtils.java": {
+    "mtime": 1790224583.3348997,
+    "seen": 1791079643.2056148,
+    "ast_hash": "0814e5e32ebde4907eb20a8a94d3ddd0",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/BitsManager.java": {
+    "mtime": 1790224583.3994858,
+    "seen": 1791079643.2056162,
+    "ast_hash": "81a27e87f995828f9e3d778288644277",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/BlockHighlight.java": {
+    "mtime": 1790224657.5157309,
+    "seen": 1791079643.2056174,
+    "ast_hash": "c4fd69d40498267634d38bd3f22673bf",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/BomboConfig.java": {
+    "mtime": 1791154209.619508,
+    "seen": 1791155459.5135674,
+    "ast_hash": "f85f6d9bb0fe895136113205a53979c2",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/BomboConfigGUI.java": {
+    "mtime": 1790224750.4006443,
+    "seen": 1791079643.2056198,
+    "ast_hash": "9714d4a4c07e8a43ef7de89aa7c23e21",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/BomboModMenu.java": {
+    "mtime": 1790224583.7619321,
+    "seen": 1791079643.2056212,
+    "ast_hash": "fb6939852eada695a419e8784718cc0b",
+    "semantic_hash": "fb6939852eada695a419e8784718cc0b"
+  },
+  "src/client/java/me/bombo/bomboaddons/BomboRenderUtils.java": {
+    "mtime": 1790224583.8220806,
+    "seen": 1791079643.2056224,
+    "ast_hash": "0b80b3ff98c265fc5061102d89496953",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/Bomboaddons.java": {
+    "mtime": 1790224583.494974,
+    "seen": 1791079643.2056239,
+    "ast_hash": "818d0abfa0865f40b017852e28e8139f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/BomboaddonsClient.java": {
+    "mtime": 1791229019.9017534,
+    "seen": 1791229701.0212007,
+    "ast_hash": "6de9f820be6b06b65652a9b8c6df703f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/ChatModifier.java": {
+    "mtime": 1790224583.9152899,
+    "seen": 1791079643.205626,
+    "ast_hash": "850d5bc9e579d75bb6c54e33f89153bb",
+    "semantic_hash": "850d5bc9e579d75bb6c54e33f89153bb"
+  },
+  "src/client/java/me/bombo/bomboaddons/ChatModifierScreen.java": {
+    "mtime": 1790224583.9565556,
+    "seen": 1791079643.2056274,
+    "ast_hash": "ffdb4baaa4bfdc4cfc68ec25b81781a6",
+    "semantic_hash": "ffdb4baaa4bfdc4cfc68ec25b81781a6"
+  },
+  "src/client/java/me/bombo/bomboaddons/ChatPeek.java": {
+    "mtime": 1790224584.0118184,
+    "seen": 1791079643.2056286,
+    "ast_hash": "f96088932dcd0236d069a1382b6141fb",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/ChromaTextHelper.java": {
+    "mtime": 1790224584.0833619,
+    "seen": 1791079643.2056296,
+    "ast_hash": "c1b66616e899686eaf96d717c6f7f4e8",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/ClickLogic.java": {
+    "mtime": 1790575494.263821,
+    "seen": 1791079643.205631,
+    "ast_hash": "79106c537d9ea455fbec7068097ddc29",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/CommandTracker.java": {
+    "mtime": 1790224584.1988072,
+    "seen": 1791079643.2056322,
+    "ast_hash": "c8a107e668620199af9e3b70a93e1b51",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/ComposterHelper.java": {
+    "mtime": 1790224584.2598555,
+    "seen": 1791079643.2056332,
+    "ast_hash": "b9b930c8572dd8d2911e850309c713dd",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/ComposterHud.java": {
+    "mtime": 1790906598.9092352,
+    "seen": 1791079643.2056346,
+    "ast_hash": "8880f95e1284d0e3770d5626462de086",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/CrosshairPresets.java": {
+    "mtime": 1790224584.5343287,
+    "seen": 1791079643.2056375,
+    "ast_hash": "789a0d5162582a3fbfa17c6a331b66f9",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/CrosshairRenderer.java": {
+    "mtime": 1790224584.5830078,
+    "seen": 1791079643.2056386,
+    "ast_hash": "801110bf3be27c7aa32905554ee8836d",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/CustomBindsProcessor.java": {
+    "mtime": 1790575356.079028,
+    "seen": 1791079643.20564,
+    "ast_hash": "d5a375e7af471044854905da1ad98c2d",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/CustomTimerManager.java": {
+    "mtime": 1790825346.869487,
+    "seen": 1791079643.2056415,
+    "ast_hash": "19c66594b6c0c29264497c0a90212998",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/DailyRewardHelper.java": {
+    "mtime": 1790224584.7713323,
+    "seen": 1791079643.2056425,
+    "ast_hash": "7e7f7fd75e5aa2a66d83e0436f7c55f0",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/DebugMethods.java": {
+    "mtime": 1790224584.8322237,
+    "seen": 1791079643.205644,
+    "ast_hash": "105ae386514d80ab0a50634e4871c0e3",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/DebugRenderType.java": {
+    "mtime": 1790224584.8942337,
+    "seen": 1791079643.2056448,
+    "ast_hash": "26beeeaa817eb0ed55257eef0351269d",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/DebugUtils.java": {
+    "mtime": 1790224584.927002,
+    "seen": 1791079643.205646,
+    "ast_hash": "042b78ff80982740f60d44632d50f2df",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/DiceHud.java": {
+    "mtime": 1790224584.976434,
+    "seen": 1791079643.205647,
+    "ast_hash": "6315346eb598d33f9427ba58d9d78605",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/DiceTracker.java": {
+    "mtime": 1790224585.0348685,
+    "seen": 1791079643.2056484,
+    "ast_hash": "0e57e28ec534a04dc10c370a80d37f01",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/DungeonPadTimers.java": {
+    "mtime": 1790224585.0737715,
+    "seen": 1791079643.2056496,
+    "ast_hash": "70a2ddc774a5a94d8838fdd51c2327b8",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/DungeonSecretsTracker.java": {
+    "mtime": 1790224585.1132338,
+    "seen": 1791079643.205651,
+    "ast_hash": "293f707a60feab6abd765c02523306dc",
+    "semantic_hash": "293f707a60feab6abd765c02523306dc"
+  },
+  "src/client/java/me/bombo/bomboaddons/DwarvenCarpetReplacer.java": {
+    "mtime": 1790224585.165636,
+    "seen": 1791079643.2056522,
+    "ast_hash": "54673d5db434cc9b3ef9315ceee5261b",
+    "semantic_hash": "54673d5db434cc9b3ef9315ceee5261b"
+  },
+  "src/client/java/me/bombo/bomboaddons/EntityVariantHelper.java": {
+    "mtime": 1790224585.449822,
+    "seen": 1791079643.2056532,
+    "ast_hash": "f338104dc653253b5abd7a8180d3c134",
+    "semantic_hash": "f338104dc653253b5abd7a8180d3c134"
+  },
+  "src/client/java/me/bombo/bomboaddons/ExperimentationTableHud.java": {
+    "mtime": 1790224585.661415,
+    "seen": 1791079643.2056546,
+    "ast_hash": "c32bf3d3de7d2e9c315cf9974b92a13b",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/FeastBakeryHud.java": {
+    "mtime": 1790224585.7052233,
+    "seen": 1791079643.2056558,
+    "ast_hash": "6b56f6def3ad11de2457cf0a5e23f0a0",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/FuckDiorite.java": {
+    "mtime": 1790224591.9875715,
+    "seen": 1791079643.2056568,
+    "ast_hash": "e440e4bc2421b3bda2dc8538cd46479e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/GardenMacroDetector.java": {
+    "mtime": 1790224592.0421467,
+    "seen": 1791079643.2056582,
+    "ast_hash": "a5f5b7d94b29b32498afe486e6f821aa",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/GardenMovement.java": {
+    "mtime": 1790989503.799389,
+    "seen": 1791079643.2056594,
+    "ast_hash": "1935ea3b9a0f3972c5d8268afcb99e83",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/GardenWaypoints.java": {
+    "mtime": 1790224592.1411784,
+    "seen": 1791079643.2056608,
+    "ast_hash": "815867c07427b32429c69c34aea68862",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/GlobalData.java": {
+    "mtime": 1790224592.1854599,
+    "seen": 1791079643.2056623,
+    "ast_hash": "5df2e4ef26e21d38d2c644118337bf09",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/GraphPathfinder.java": {
+    "mtime": 1790224592.2791262,
+    "seen": 1791079643.2056634,
+    "ast_hash": "0e94f2ab834d156b31478d70ef2379b4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/HoppityHud.java": {
+    "mtime": 1790825184.6253145,
+    "seen": 1791079643.2056649,
+    "ast_hash": "6e563b0f7ecbe5422b29208793d102e8",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/HotbarConfig.java": {
+    "mtime": 1790224593.6257555,
+    "seen": 1791079643.2056658,
+    "ast_hash": "8b894fdc31d27babf560cfcf69b741bb",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/HotbarSwapper.java": {
+    "mtime": 1790224593.6731815,
+    "seen": 1791079643.205667,
+    "ast_hash": "d53844c8927e0167542aefed50857869",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/HudMoveScreen.java": {
+    "mtime": 1791145001.065804,
+    "seen": 1791145147.9784377,
+    "ast_hash": "28d8d7459ac724723d7e530aaf610f9e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/IBomboKeyBindsList.java": {
+    "mtime": 1790224593.7650032,
+    "seen": 1791079643.2056696,
+    "ast_hash": "535afdd98788c77bd5eb016034d100fc",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/IRCClient.java": {
+    "mtime": 1791158089.883728,
+    "seen": 1791158298.6615155,
+    "ast_hash": "db2ff5433a5e3b22cd0d3066ecd8cce5",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/InventoryConfig.java": {
+    "mtime": 1790224593.857255,
+    "seen": 1791079643.2056723,
+    "ast_hash": "3b58ea8fdb26dbfdc1b10ea2227a2b30",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/InventoryManager.java": {
+    "mtime": 1790224593.9710834,
+    "seen": 1791079643.2056735,
+    "ast_hash": "80a725b381f6ceff1940fd9ac200bd44",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/InventorySnapshot.java": {
+    "mtime": 1790224594.0411336,
+    "seen": 1791079643.2056744,
+    "ast_hash": "45437afd2d3fcfd325b7b4cea0732f80",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/InventoryViewScreen.java": {
+    "mtime": 1790224594.0956516,
+    "seen": 1791079643.2056756,
+    "ast_hash": "763be2ddfdbfaeb99ff935482301a991",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/ItemCustomizeScreen.java": {
+    "mtime": 1790224594.1964786,
+    "seen": 1791079643.2056768,
+    "ast_hash": "299c0e97b3af6c21937c025e8130db17",
+    "semantic_hash": "299c0e97b3af6c21937c025e8130db17"
+  },
+  "src/client/java/me/bombo/bomboaddons/ItemHotkeys.java": {
+    "mtime": 1790224594.2509832,
+    "seen": 1791079643.205678,
+    "ast_hash": "fa7d9f4866726a53ec457237bb51fbe6",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/ItemListOverlay.java": {
+    "mtime": 1790224594.299902,
+    "seen": 1791079643.2056792,
+    "ast_hash": "57f4e948e56bf13a7c61151141e1837b",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/KuudraSummaryOverlay.java": {
+    "mtime": 1790224595.539935,
+    "seen": 1791079643.2056804,
+    "ast_hash": "149711c4cfc81047b99ae2869fdf6d80",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/KuudraTimer.java": {
+    "mtime": 1790825323.5923612,
+    "seen": 1791079643.2056816,
+    "ast_hash": "a974f6b4510b1afd5e3a3aa158a959fa",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/LF.java": {
+    "mtime": 1790224595.7512734,
+    "seen": 1791079643.205683,
+    "ast_hash": "d21a3c7d478670b01b1ce0117da5e5f7",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/LeftClickEtherwarp.java": {
+    "mtime": 1790224595.6595056,
+    "seen": 1791079643.2056844,
+    "ast_hash": "25e7a4ff037199fc873cb726c0bceaf5",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/LookCommand.java": {
+    "mtime": 1790224647.1705868,
+    "seen": 1791079643.2056859,
+    "ast_hash": "7162366664d3564cba457c91c9983026",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/LowestBinManager.java": {
+    "mtime": 1790293050.7477195,
+    "seen": 1791079643.2056868,
+    "ast_hash": "f967818b51c181dde3bab7ab5839f616",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/ModUpdater.java": {
+    "mtime": 1791072239.6415598,
+    "seen": 1791079643.205688,
+    "ast_hash": "e42a914101cf167f098c67e3a6389d85",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/NEUDownloader.java": {
+    "mtime": 1790224569.5893447,
+    "seen": 1791079643.2056892,
+    "ast_hash": "433dbac55e6adeff771735945f68aeff",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/NpcShopScreen.java": {
+    "mtime": 1790224569.6232326,
+    "seen": 1791079643.2056904,
+    "ast_hash": "0453887cf2cff00321c6b8ad0f034a82",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/OrderedSubmitNodeCollector.java": {
+    "mtime": 1790224569.6646593,
+    "seen": 1791079643.2056913,
+    "ast_hash": "23f6011ea4faff01520faaa99fb9ec71",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/OrderedWaypoints.java": {
+    "mtime": 1790224569.7171082,
+    "seen": 1791079643.205693,
+    "ast_hash": "c1175bf0903e84b0a498877ef4f5814a",
+    "semantic_hash": "c1175bf0903e84b0a498877ef4f5814a"
+  },
+  "src/client/java/me/bombo/bomboaddons/PerformanceProfiler.java": {
+    "mtime": 1790906462.3841896,
+    "seen": 1791079643.205694,
+    "ast_hash": "43b74260bed68e7aae3a1e7666ae1eae",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/PetManager.java": {
+    "mtime": 1790224569.93662,
+    "seen": 1791079643.2056952,
+    "ast_hash": "6fe74795c85f9f467de137086b468a76",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/PlaytimeGUI.java": {
+    "mtime": 1790224569.9757192,
+    "seen": 1791079643.2056966,
+    "ast_hash": "0070049601919af0afe79880b0ffb972",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/PlaytimeTracker.java": {
+    "mtime": 1791144444.7256348,
+    "seen": 1791145147.981941,
+    "ast_hash": "56f8bab41ccb1b29838b660d1edf66d2",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/RankCache.java": {
+    "mtime": 1790224570.059924,
+    "seen": 1791079643.2056987,
+    "ast_hash": "377f9226be4ce6da84e56c456572086c",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/RecipeViewerScreen.java": {
+    "mtime": 1790224570.0992365,
+    "seen": 1791079643.2057004,
+    "ast_hash": "9b2f97dfa6732bd1582b7817828f459e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/RomanNumber.java": {
+    "mtime": 1790224570.1491618,
+    "seen": 1791079643.2057016,
+    "ast_hash": "501287840e1439ff0bce37488651a907",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/SBECommands.java": {
+    "mtime": 1790225122.5994792,
+    "seen": 1791079643.205703,
+    "ast_hash": "4f9d08cfb8708d2bab967c246d0c5725",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/SignCalculator.java": {
+    "mtime": 1790224570.2631106,
+    "seen": 1791079643.205704,
+    "ast_hash": "357a423d4b380f1ce23c92e4cd3e39a5",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/SkyblockCalculator.java": {
+    "mtime": 1790224570.3088953,
+    "seen": 1791079643.2057052,
+    "ast_hash": "1212b0859001e374ecc325d4e949731f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/SkyblockItemManager.java": {
+    "mtime": 1790224570.3629375,
+    "seen": 1791079643.2057066,
+    "ast_hash": "bdc0adc6ebeec2f7276d5f1b66dd21c0",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/SkyblockUtils.java": {
+    "mtime": 1791071945.0607736,
+    "seen": 1791079643.2057083,
+    "ast_hash": "b488e415557d7d483c96289500b46f43",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/SlotHighlight.java": {
+    "mtime": 1790224570.4594595,
+    "seen": 1791079643.2057092,
+    "ast_hash": "e9fd027c8ef06dc33ff859111bab0132",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/StopwatchManager.java": {
+    "mtime": 1790825312.1740158,
+    "seen": 1791079643.2057106,
+    "ast_hash": "def21cf680d29a6a50fb9a2abd272869",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/StoragePreviewManager.java": {
+    "mtime": 1790224570.589497,
+    "seen": 1791079643.2057118,
+    "ast_hash": "5f6416259afff9e5cfa30a9688d22ad9",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/TabCompletionManager.java": {
+    "mtime": 1790224570.7229595,
+    "seen": 1791079643.205713,
+    "ast_hash": "1d55456a75b4297582e46e7d95907565",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/TabWidgetHud.java": {
+    "mtime": 1790224570.7638042,
+    "seen": 1791079643.2057145,
+    "ast_hash": "8c9cc0cadcd0beeaa2d10a263ef6607a",
+    "semantic_hash": "8c9cc0cadcd0beeaa2d10a263ef6607a"
+  },
+  "src/client/java/me/bombo/bomboaddons/TestComponent.java": {
+    "mtime": 1790224570.8526103,
+    "seen": 1791079643.2057157,
+    "ast_hash": "1b9030efae188d9a151d2bb8c9a5d485",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/TestReflect.java": {
+    "mtime": 1790224570.895363,
+    "seen": 1791079643.205717,
+    "ast_hash": "5ae3e62feda113b8c6a6eef1554d15f8",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/TestReflection.java": {
+    "mtime": 1790224570.9427433,
+    "seen": 1791079643.2057183,
+    "ast_hash": "2487dcac4996355895eaa390a8c496e2",
+    "semantic_hash": "2487dcac4996355895eaa390a8c496e2"
+  },
+  "src/client/java/me/bombo/bomboaddons/TestUser.java": {
+    "mtime": 1790224570.9885879,
+    "seen": 1791079643.2057195,
+    "ast_hash": "85d50613b68fd44e7318dec91993e811",
+    "semantic_hash": "85d50613b68fd44e7318dec91993e811"
+  },
+  "src/client/java/me/bombo/bomboaddons/VirtualContainerGUI.java": {
+    "mtime": 1790224571.8341527,
+    "seen": 1791079643.2057211,
+    "ast_hash": "19d771c8c70cce60813812ab6cee7ac7",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/WardrobeHelper.java": {
+    "mtime": 1790224571.8646126,
+    "seen": 1791079643.205722,
+    "ast_hash": "6f7f64fe88d1a8cc83f79836d9f98bde",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/WaypointManager.java": {
+    "mtime": 1790224571.9023652,
+    "seen": 1791079643.2057233,
+    "ast_hash": "fb4a62cee5cde9f824467961f49ec03a",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/auth/AccountManager.java": {
+    "mtime": 1790224582.8385253,
+    "seen": 1791079643.2057245,
+    "ast_hash": "66b7f7b75f0b2c9d72898d012245f0b4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/auth/CryptoUtils.java": {
+    "mtime": 1790224582.9075532,
+    "seen": 1791079643.2057257,
+    "ast_hash": "f3a9ae264910b960553c316b64ec2e2e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/eggfinder/EggAuth.java": {
+    "mtime": 1791159401.700394,
+    "seen": 1791159745.7888598,
+    "ast_hash": "81b63a21862cbe921b8eb51ebbf6c978",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/eggfinder/EggFinder.java": {
+    "mtime": 1791144444.7271416,
+    "seen": 1791145147.9853346,
+    "ast_hash": "6512576311d9408e84bed6e7826731a4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/eggfinder/EggWebSocket.java": {
+    "mtime": 1791159411.34769,
+    "seen": 1791159745.7891946,
+    "ast_hash": "7c170d1bc668ae128aaec7f860920ff8",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/AutoAhSell.java": {
+    "mtime": 1790224586.098389,
+    "seen": 1791079643.2057302,
+    "ast_hash": "e9028ac7072e5ec9dbb19edef75aed0a",
+    "semantic_hash": "e9028ac7072e5ec9dbb19edef75aed0a"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/AutoExpCapsule.java": {
+    "mtime": 1790224586.140703,
+    "seen": 1791079643.2057316,
+    "ast_hash": "442c659b2c4fe218f2ded5e130a35ce5",
+    "semantic_hash": "442c659b2c4fe218f2ded5e130a35ce5"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/AutoRejoinHud.java": {
+    "mtime": 1790224586.1810038,
+    "seen": 1791079643.2057328,
+    "ast_hash": "12545201e23cb95515f71dd0236a42b7",
+    "semantic_hash": "12545201e23cb95515f71dd0236a42b7"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/AutoRejoinManager.java": {
+    "mtime": 1790224586.22333,
+    "seen": 1791079643.2057343,
+    "ast_hash": "139b5e008f4504b76afc4caa998b4664",
+    "semantic_hash": "139b5e008f4504b76afc4caa998b4664"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/BestiaryDataFetcher.java": {
+    "mtime": 1790224586.2644422,
+    "seen": 1791079643.2057352,
+    "ast_hash": "4be162da61f3ae53d543fa8fef270a1e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/BestiaryManager.java": {
+    "mtime": 1790224586.3117776,
+    "seen": 1791079643.2057364,
+    "ast_hash": "d4563ccae671048399b7b494c17b3070",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/DojoUtilities.java": {
+    "mtime": 1790224748.9025378,
+    "seen": 1791079643.2057376,
+    "ast_hash": "36416b0f7108cbbaf57bd0637d433698",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/FrozenBlazeAFKTracker.java": {
+    "mtime": 1790825287.3659215,
+    "seen": 1791079643.205739,
+    "ast_hash": "4a6575b44f1cd14e5ef6fe65e2682e49",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/HypixelIpBypass.java": {
+    "mtime": 1790224590.5351253,
+    "seen": 1791079643.2057402,
+    "ast_hash": "2dc4a0523cdb3d710d5d52723b9aa793",
+    "semantic_hash": "2dc4a0523cdb3d710d5d52723b9aa793"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/HypixelWorldPhysics.java": {
+    "mtime": 1790224590.5729818,
+    "seen": 1791079643.2057416,
+    "ast_hash": "17747b559b0bbaf47cc3728dff3ec585",
+    "semantic_hash": "17747b559b0bbaf47cc3728dff3ec585"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/ItemInfoCommand.java": {
+    "mtime": 1790224590.6224856,
+    "seen": 1791079643.2057426,
+    "ast_hash": "041098246caefd1f50d49456d6d8d7f0",
+    "semantic_hash": "041098246caefd1f50d49456d6d8d7f0"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/ItemTradeManager.java": {
+    "mtime": 1790224590.6648002,
+    "seen": 1791079643.2057438,
+    "ast_hash": "673ad4665e89e3bf37937aa581b9a204",
+    "semantic_hash": "673ad4665e89e3bf37937aa581b9a204"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/ItemValueBreakdownHud.java": {
+    "mtime": 1790825336.4172885,
+    "seen": 1791079643.205745,
+    "ast_hash": "9b77031761b6bd1ec279ab359bb60827",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/MayorManager.java": {
+    "mtime": 1790224590.8376203,
+    "seen": 1791079643.2057462,
+    "ast_hash": "cc137e02c02d1a0da44af94f38e876a4",
+    "semantic_hash": "cc137e02c02d1a0da44af94f38e876a4"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/PriceHistoryManager.java": {
+    "mtime": 1790224590.9314554,
+    "seen": 1791079643.2057474,
+    "ast_hash": "308504c0ea296f52e2a857ebdd705230",
+    "semantic_hash": "308504c0ea296f52e2a857ebdd705230"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/SpeedometerHud.java": {
+    "mtime": 1790825264.6186297,
+    "seen": 1791079643.2057486,
+    "ast_hash": "6201883c098b2ae8af3e39bd502e4d00",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/StorageTracker.java": {
+    "mtime": 1790293245.9084008,
+    "seen": 1791079643.205751,
+    "ast_hash": "a183adde15ff9bf8d5857d39c3cc637e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/SupercraftHelper.java": {
+    "mtime": 1791051885.3345003,
+    "seen": 1791079643.2057524,
+    "ast_hash": "770b0f15f05b5d1fd86e212d269bb71a",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/TextureToggleManager.java": {
+    "mtime": 1790289125.7579808,
+    "seen": 1791079643.2057536,
+    "ast_hash": "52bc2c7a610ba35b617f93d8751ba5ec",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/TotemAnimationManager.java": {
+    "mtime": 1790224591.6969173,
+    "seen": 1791079643.205755,
+    "ast_hash": "f428da4096be8b229808c08ddf40b093",
+    "semantic_hash": "f428da4096be8b229808c08ddf40b093"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/auth/BomboApiKeyManager.java": {
+    "mtime": 1790224585.7611501,
+    "seen": 1791079643.2057564,
+    "ast_hash": "70a700878a186d647fa97780bfd3b743",
+    "semantic_hash": "70a700878a186d647fa97780bfd3b743"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/auto/AutoSequenceManager.java": {
+    "mtime": 1791089375.3627129,
+    "seen": 1791089937.8585253,
+    "ast_hash": "44558a04f24192a71098857fee70337a",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/buttons/InventoryButton.java": {
+    "mtime": 1790224586.38238,
+    "seen": 1791079643.205759,
+    "ast_hash": "ca06bcca8e122f65f4d310f3b9db1987",
+    "semantic_hash": "ca06bcca8e122f65f4d310f3b9db1987"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/buttons/InventoryButtonManager.java": {
+    "mtime": 1790993675.4525049,
+    "seen": 1791079643.20576,
+    "ast_hash": "b63131b072aba41ae5bfc2fd344306d6",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/buttons/InventoryButtonMoveScreen.java": {
+    "mtime": 1790224586.5476813,
+    "seen": 1791079643.2057612,
+    "ast_hash": "5385966d804139b30953c0edc843cfb8",
+    "semantic_hash": "5385966d804139b30953c0edc843cfb8"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/buttons/InventoryButtonsScreen.java": {
+    "mtime": 1790224586.6002302,
+    "seen": 1791079643.2057629,
+    "ast_hash": "26af5e3ed0b5c425d55be1ad3a12d15f",
+    "semantic_hash": "26af5e3ed0b5c425d55be1ad3a12d15f"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/chat/ChatHistoryScreen.java": {
+    "mtime": 1790224586.7756264,
+    "seen": 1791079643.2057638,
+    "ast_hash": "b35401114b00724c62bde8ff91464297",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/chat/ChatHistoryTracker.java": {
+    "mtime": 1790275108.7289906,
+    "seen": 1791079643.205765,
+    "ast_hash": "6aae61a691a519b7b83d4f040218769e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/chat/ChatTabsOverlay.java": {
+    "mtime": 1790224587.0173233,
+    "seen": 1791079643.2057664,
+    "ast_hash": "e5b8fc6fe71486275a159f1cbdcc7124",
+    "semantic_hash": "e5b8fc6fe71486275a159f1cbdcc7124"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/Critter.java": {
+    "mtime": 1790224587.1340842,
+    "seen": 1791079643.2057676,
+    "ast_hash": "a28097cb2bc4821c0db1d8b32f11ae93",
+    "semantic_hash": "a28097cb2bc4821c0db1d8b32f11ae93"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/CritterCapsuleArc.java": {
+    "mtime": 1790224587.278532,
+    "seen": 1791079643.205769,
+    "ast_hash": "f13a2dc48f1d410acc28d5c4276558b1",
+    "semantic_hash": "f13a2dc48f1d410acc28d5c4276558b1"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/CritterChatParser.java": {
+    "mtime": 1790224587.4456182,
+    "seen": 1791079643.2057703,
+    "ast_hash": "ac787028259d7159139abf16b2d27d7d",
+    "semantic_hash": "ac787028259d7159139abf16b2d27d7d"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/CritterEvent.java": {
+    "mtime": 1790224587.5248907,
+    "seen": 1791079643.2057714,
+    "ast_hash": "c9d5bb5691ee44308be1ef15e1024a26",
+    "semantic_hash": "c9d5bb5691ee44308be1ef15e1024a26"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/CritterHud.java": {
+    "mtime": 1790224587.6008441,
+    "seen": 1791079643.2057729,
+    "ast_hash": "4d5da268cd51a3cd6ca4b135e4823287",
+    "semantic_hash": "4d5da268cd51a3cd6ca4b135e4823287"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/CritterMapHud.java": {
+    "mtime": 1790224587.7829182,
+    "seen": 1791079643.205774,
+    "ast_hash": "a199ed4d8b0624bdc0351ccaa8f68c8f",
+    "semantic_hash": "a199ed4d8b0624bdc0351ccaa8f68c8f"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/CritterSafariEngine.java": {
+    "mtime": 1790224634.4434252,
+    "seen": 1791079643.205775,
+    "ast_hash": "ccf9d6fae5e599db9e0ccd334e230fd2",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/CritterSessionManager.java": {
+    "mtime": 1790224588.1159067,
+    "seen": 1791079643.2057765,
+    "ast_hash": "993c4c30c20f1441d842084a7db5749d",
+    "semantic_hash": "993c4c30c20f1441d842084a7db5749d"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/Critters.java": {
+    "mtime": 1790224587.9025354,
+    "seen": 1791079643.2057776,
+    "ast_hash": "c56bc62fb09e9fa76089c88f701bcca1",
+    "semantic_hash": "c56bc62fb09e9fa76089c88f701bcca1"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/SafariAreaMap.java": {
+    "mtime": 1790224588.243509,
+    "seen": 1791079643.2057788,
+    "ast_hash": "d121bef42ffa573a33785611416d298e",
+    "semantic_hash": "d121bef42ffa573a33785611416d298e"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/SafariBiome.java": {
+    "mtime": 1790224588.3232615,
+    "seen": 1791079643.2057805,
+    "ast_hash": "8fa03ce43f3fe2443741fed994650349",
+    "semantic_hash": "8fa03ce43f3fe2443741fed994650349"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/SafariLocation.java": {
+    "mtime": 1790224588.4497962,
+    "seen": 1791079643.2057815,
+    "ast_hash": "3b245c6f38e594fbd0408593781b4da5",
+    "semantic_hash": "3b245c6f38e594fbd0408593781b4da5"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/critters/SafariSession.java": {
+    "mtime": 1790224588.5974824,
+    "seen": 1791079643.205783,
+    "ast_hash": "9e057557045dc91fedc7ecc19cc419d5",
+    "semantic_hash": "9e057557045dc91fedc7ecc19cc419d5"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/diana/DianaLootshare.java": {
+    "mtime": 1790224588.7002966,
+    "seen": 1791079643.2057843,
+    "ast_hash": "2e6f5f65c232763194a316dce352473d",
+    "semantic_hash": "2e6f5f65c232763194a316dce352473d"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/ClearInfoHUD.java": {
+    "mtime": 1790224588.951498,
+    "seen": 1791079643.2057881,
+    "ast_hash": "d9c4568f8231681e285f3632116d5020",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/DungeonBossManager.java": {
+    "mtime": 1791228822.1934197,
+    "seen": 1791229701.048527,
+    "ast_hash": "437fcf2b5da287c0dd3532f48a92e5db",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/map/DungeonClearTracker.java": {
+    "mtime": 1790224589.5677605,
+    "seen": 1791079643.2057953,
+    "ast_hash": "93cda29c4ad81bff74088e4b0cf7bfb9",
+    "semantic_hash": "93cda29c4ad81bff74088e4b0cf7bfb9"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/map/DungeonDoor.java": {
+    "mtime": 1790224589.6755998,
+    "seen": 1791079643.2057967,
+    "ast_hash": "39982be5ab0defa91bae7c398b3c2fc0",
+    "semantic_hash": "39982be5ab0defa91bae7c398b3c2fc0"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/map/DungeonMapHistory.java": {
+    "mtime": 1790224589.7542636,
+    "seen": 1791079643.205798,
+    "ast_hash": "5391e752f51c3164911709fa9eb9d38d",
+    "semantic_hash": "5391e752f51c3164911709fa9eb9d38d"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/map/DungeonMapOverlay.java": {
+    "mtime": 1790224589.801231,
+    "seen": 1791079643.2057989,
+    "ast_hash": "855bca83b7650dac20ed864ccd701b3e",
+    "semantic_hash": "855bca83b7650dac20ed864ccd701b3e"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/map/DungeonMapScanner.java": {
+    "mtime": 1790224589.8693326,
+    "seen": 1791079643.2058003,
+    "ast_hash": "e26d410df15cc2117f6b01cf1f0723f6",
+    "semantic_hash": "e26d410df15cc2117f6b01cf1f0723f6"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/map/DungeonRoom.java": {
+    "mtime": 1790224589.9217882,
+    "seen": 1791079643.2058017,
+    "ast_hash": "38ec71d5e0471dfe3aea9e7ccffce77a",
+    "semantic_hash": "38ec71d5e0471dfe3aea9e7ccffce77a"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/fishing/HotspotGoneAlert.java": {
+    "mtime": 1790224589.9676116,
+    "seen": 1791079643.205803,
+    "ast_hash": "f22417c2121316607bb75f0b81eb0f07",
+    "semantic_hash": "f22417c2121316607bb75f0b81eb0f07"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/garden/GreenhouseProfitScreen.java": {
+    "mtime": 1790224590.060753,
+    "seen": 1791079643.205804,
+    "ast_hash": "a9abf4d76fadb2b4c930db3b601c0892",
+    "semantic_hash": "a9abf4d76fadb2b4c930db3b601c0892"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/garden/GreenhouseTracker.java": {
+    "mtime": 1790224590.1116774,
+    "seen": 1791079643.2058053,
+    "ast_hash": "1ed77fb534334c02290bdfb4a2b45c36",
+    "semantic_hash": "1ed77fb534334c02290bdfb4a2b45c36"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/hitman/AutoHitman.java": {
+    "mtime": 1790224590.2525141,
+    "seen": 1791079643.2058067,
+    "ast_hash": "d3a83559f75dfcb22a5fdf4f5d03f252",
+    "semantic_hash": "d3a83559f75dfcb22a5fdf4f5d03f252"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/hud/ArmorHud.java": {
+    "mtime": 1790825254.7299745,
+    "seen": 1791079643.2058082,
+    "ast_hash": "31224b0bcba3de4de339bc81ae03ce10",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/hud/EquipmentHud.java": {
+    "mtime": 1790825227.5500748,
+    "seen": 1791079643.2058094,
+    "ast_hash": "e7daa419320eb0163cdf5610ef0e8a83",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/hud/InventoryHud.java": {
+    "mtime": 1790825236.4798417,
+    "seen": 1791079643.2058108,
+    "ast_hash": "61c4d50cb9dd52a637c81273784b8870",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/magicfind/MagicFindOptimizer.java": {
+    "mtime": 1790224590.7490022,
+    "seen": 1791079643.2058122,
+    "ast_hash": "2654719b420d67563d633bf9bf34ddcd",
+    "semantic_hash": "2654719b420d67563d633bf9bf34ddcd"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/magicfind/MagicFindScreen.java": {
+    "mtime": 1790224590.7978609,
+    "seen": 1791079643.2058134,
+    "ast_hash": "28105e7515c3f422b51dd1fcde9a6855",
+    "semantic_hash": "28105e7515c3f422b51dd1fcde9a6855"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/party/PartyManager.java": {
+    "mtime": 1790224590.8824852,
+    "seen": 1791079643.2058163,
+    "ast_hash": "8099e4fba2841252ce2de0ee018f74ab",
+    "semantic_hash": "8099e4fba2841252ce2de0ee018f74ab"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/profile/AutoProfileSwapper.java": {
+    "mtime": 1790224590.9751198,
+    "seen": 1791079643.2058177,
+    "ast_hash": "aee4d672b781c070d8a0aeb92a9f1eda",
+    "semantic_hash": "aee4d672b781c070d8a0aeb92a9f1eda"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/profile/ProfileFetcher.java": {
+    "mtime": 1790966349.043997,
+    "seen": 1791079643.205819,
+    "ast_hash": "0f74d09a9745258b23467ef247bb2410",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/ring/RingManager.java": {
+    "mtime": 1790224591.063398,
+    "seen": 1791079643.20582,
+    "ast_hash": "545910e3f3ab975b5481fbba7c3744e7",
+    "semantic_hash": "545910e3f3ab975b5481fbba7c3744e7"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/sounds/CustomSoundManager.java": {
+    "mtime": 1790224591.1083136,
+    "seen": 1791079643.2058225,
+    "ast_hash": "c412d03fce38a0d971fe94e5c05d9678",
+    "semantic_hash": "c412d03fce38a0d971fe94e5c05d9678"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/sounds/CustomSoundsScreen.java": {
+    "mtime": 1790224591.1542468,
+    "seen": 1791079643.2058234,
+    "ast_hash": "7dca737857888e275386b36ed59781b7",
+    "semantic_hash": "7dca737857888e275386b36ed59781b7"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/swapper/InventorySlotColorScreen.java": {
+    "mtime": 1790224591.3752036,
+    "seen": 1791079643.2058358,
+    "ast_hash": "df5ad22c85c0108127495ed0aceed81f",
+    "semantic_hash": "df5ad22c85c0108127495ed0aceed81f"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/swapper/InventorySlotSwapManager.java": {
+    "mtime": 1790224591.4295435,
+    "seen": 1791079643.2058372,
+    "ast_hash": "84b97c0290176130fa5735b89a876ff0",
+    "semantic_hash": "84b97c0290176130fa5735b89a876ff0"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/swapper/InventorySwapScreen.java": {
+    "mtime": 1790224591.4810646,
+    "seen": 1791079643.2058384,
+    "ast_hash": "32847ea69669d066bff67156335db717",
+    "semantic_hash": "32847ea69669d066bff67156335db717"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/texturepack/CustomSkyblockModelRegistry.java": {
+    "mtime": 1790224591.533499,
+    "seen": 1791079643.2058396,
+    "ast_hash": "b1c01df2aa11daa8c7b5cd284985b34f",
+    "semantic_hash": "b1c01df2aa11daa8c7b5cd284985b34f"
+  },
+  "src/client/java/me/bombo/bomboaddons/features/texturepack/WarpedAotvFixer.java": {
+    "mtime": 1790224591.603457,
+    "seen": 1791079643.2058408,
+    "ast_hash": "be071c50f1042c204f6f169106149a17",
+    "semantic_hash": "be071c50f1042c204f6f169106149a17"
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/AccountSwitcherScreen.java": {
+    "mtime": 1790224592.3315854,
+    "seen": 1791079643.2058468,
+    "ast_hash": "087c4d49407f272769fab480ca5e0939",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/AccountSwitcherWidget.java": {
+    "mtime": 1790224592.3760252,
+    "seen": 1791079643.2058487,
+    "ast_hash": "0f0d0cba2820463c4edc5628eb6c86d5",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/ChangelogScreen.java": {
+    "mtime": 1791163243.7660456,
+    "seen": 1791163382.7201157,
+    "ast_hash": "2ac7523f12fcad74b072223ee9470b7c",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/CustomListEditorScreen.java": {
+    "mtime": 1790224593.0760899,
+    "seen": 1791079643.2058532,
+    "ast_hash": "062f8b23bce58dcbde57d5baba4a6089",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/CustomSoundsScreen.java": {
+    "mtime": 1790224593.1256647,
+    "seen": 1791079643.2058547,
+    "ast_hash": "a93a147786f291a96dd6acd721654a20",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/DailyRewardScreen.java": {
+    "mtime": 1790224593.169788,
+    "seen": 1791079643.2058563,
+    "ast_hash": "14d9c480ed4d99de04429ce2fb10807a",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/GlobalStorageScreen.java": {
+    "mtime": 1790288635.653716,
+    "seen": 1791079643.2058575,
+    "ast_hash": "3f920ac0c66fc91f11753354b7e9b539",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/IQStyleConfigScreen.java": {
+    "mtime": 1790224593.2537377,
+    "seen": 1791079643.2058587,
+    "ast_hash": "f233d19cd6b7db73401d3d5acaf03fd7",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/PerformanceScreen.java": {
+    "mtime": 1791162915.702816,
+    "seen": 1791163382.7211494,
+    "ast_hash": "82e5e1096cbd9dde1d8a2e2e473ad483",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/PriceHistoryScreen.java": {
+    "mtime": 1790224593.3458302,
+    "seen": 1791079643.2058613,
+    "ast_hash": "d43a7b1cf025bcffafe66009d5a6ed7e",
+    "semantic_hash": "d43a7b1cf025bcffafe66009d5a6ed7e"
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/ProfileViewerScreen.java": {
+    "mtime": 1790224593.3912382,
+    "seen": 1791079643.2058623,
+    "ast_hash": "f2b6c0c27b320b98366eb393ba7d1e5b",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/StorageOverlayManager.java": {
+    "mtime": 1790299263.8034263,
+    "seen": 1791079643.205864,
+    "ast_hash": "b22efab05c3cf76c1e9bb57b2961bd77",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/config/BomboOrderScreen.java": {
+    "mtime": 1791229182.7382648,
+    "seen": 1791229701.0630348,
+    "ast_hash": "5a96f85e2e7aa18b59ee24f9c1ccf338",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/config/ConfigRegistry.java": {
+    "mtime": 1791229369.5173454,
+    "seen": 1791229701.0632172,
+    "ast_hash": "a7d33a8aa7c3fd1dfdf194808a81fc66",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/config/FeatureOrganizerManager.java": {
+    "mtime": 1791229388.4852247,
+    "seen": 1791229701.06356,
+    "ast_hash": "d930513f688fab05b0830abdb9d2018c",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/pv/ProfileViewerScreen.java": {
+    "mtime": 1790224593.4331546,
+    "seen": 1791079643.2058766,
+    "ast_hash": "240c915cf74f12253a2eae708439234f",
+    "semantic_hash": "240c915cf74f12253a2eae708439234f"
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/DoublePearl.java": {
+    "mtime": 1790224594.3680196,
+    "seen": 1791079643.2058778,
+    "ast_hash": "9a02761bd555fc88e2645fa72eafc744",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/DoublePearlDefaults.java": {
+    "mtime": 1790224594.4446042,
+    "seen": 1791079643.2058787,
+    "ast_hash": "23983b27bea5527342757a7a78e15d10",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/DoublePearlRegistry.java": {
+    "mtime": 1790224594.5098553,
+    "seen": 1791079643.2058802,
+    "ast_hash": "94c8106ecff89e51268cef7e38c717f7",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/KuudraUtils.java": {
+    "mtime": 1790224594.5816116,
+    "seen": 1791079643.205881,
+    "ast_hash": "a30e367d03e91545d2dcb6f2d8e8a93a",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/NoPre.java": {
+    "mtime": 1790224594.6441495,
+    "seen": 1791079643.2058825,
+    "ast_hash": "db9440385b2617cbfff62934fe3e6eda",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/PearlRenderData.java": {
+    "mtime": 1790224594.703146,
+    "seen": 1791079643.2058837,
+    "ast_hash": "ebca7300c4b39a96c4cf6be502baa1f4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/PearlSolution.java": {
+    "mtime": 1790224594.900072,
+    "seen": 1791079643.205885,
+    "ast_hash": "9fc28a4c09eb08b9666478edb2b6c4b6",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/Pearls.java": {
+    "mtime": 1790224594.7720032,
+    "seen": 1791079643.2058861,
+    "ast_hash": "22aa2320433f9c54b38e818c6f91d475",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/PickupSpot.java": {
+    "mtime": 1790224594.9989386,
+    "seen": 1791079643.2058876,
+    "ast_hash": "d87dfd263f5af82aee8a5dc74a15568f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/Supply.java": {
+    "mtime": 1790224595.154574,
+    "seen": 1791079643.2058885,
+    "ast_hash": "7cfed70307c8afec2096876c9ecd0fe4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/SupplySpot.java": {
+    "mtime": 1790224595.2334275,
+    "seen": 1791079643.2058897,
+    "ast_hash": "42abe59878ee887de64bc7923c652ae7",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/SupplyStatus.java": {
+    "mtime": 1790224595.3147514,
+    "seen": 1791079643.2058911,
+    "ast_hash": "a2bcc5ce22ddb0a8404e52cbcc022a29",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/kuudra/pearls/TrajectorySolver.java": {
+    "mtime": 1790224595.3879967,
+    "seen": 1791079643.2058923,
+    "ast_hash": "025189e84ebbc396ed184fc1d0565dda",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/AbstractContainerScreenAccessor.java": {
+    "mtime": 1790224595.956939,
+    "seen": 1791079643.205896,
+    "ast_hash": "336040b8b1c0312430fe8430891748eb",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/AbstractContainerScreenMixin.java": {
+    "mtime": 1791083579.5109947,
+    "seen": 1791084438.7231457,
+    "ast_hash": "6b5a0f13b4267380cd916e81262cd690",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/AbstractSoundInstanceMixin.java": {
+    "mtime": 1790224596.1296337,
+    "seen": 1791079643.2058985,
+    "ast_hash": "31fc13fe1d54429d6fe7b35d0770c9e5",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/AbstractWidgetMixin.java": {
+    "mtime": 1790224596.183113,
+    "seen": 1791079643.2058997,
+    "ast_hash": "b614e77d60d25480d2b7de91ab964445",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ArmorStandModelMixin.java": {
+    "mtime": 1790224596.2421808,
+    "seen": 1791079643.2059011,
+    "ast_hash": "3be7eb79b80defa2f657f9a33cff8d73",
+    "semantic_hash": "3be7eb79b80defa2f657f9a33cff8d73"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ArmorStandRendererMixin.java": {
+    "mtime": 1790224596.3090374,
+    "seen": 1791079643.205902,
+    "ast_hash": "fefd6e38d6335af9e48687634123b6ec",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/BlockModelLighterMixin.java": {
+    "mtime": 1790224596.3600204,
+    "seen": 1791079643.2059045,
+    "ast_hash": "493a6ce4a1326225f193bc852428ebd0",
+    "semantic_hash": "493a6ce4a1326225f193bc852428ebd0"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/BlockModelShaperMixin.java": {
+    "mtime": 1790224731.8255477,
+    "seen": 1791079643.2059054,
+    "ast_hash": "e1f90d1ebef476a8520a21a2d85df862",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/BlockRenderDispatcherMixin.java": {
+    "mtime": 1790224731.8678558,
+    "seen": 1791079643.2059064,
+    "ast_hash": "a68b7820bc4c97d3137e57983cc58837",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/BomboGuiMixin.java": {
+    "mtime": 1790224596.5378592,
+    "seen": 1791079643.2059073,
+    "ast_hash": "f47ed784beda1c2dd57ebf7cada2b4a2",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/BookScreenMixin.java": {
+    "mtime": 1790224596.5962105,
+    "seen": 1791079643.2059083,
+    "ast_hash": "2efcfb40bc5041202e7367c32b946bcf",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/BossHealthOverlayMixin.java": {
+    "mtime": 1790224596.6536965,
+    "seen": 1791079643.2059095,
+    "ast_hash": "1a0331ab86c9fd936ae742af7594e80d",
+    "semantic_hash": "1a0331ab86c9fd936ae742af7594e80d"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ButtonBlockMixin.java": {
+    "mtime": 1790224596.7253757,
+    "seen": 1791079643.2059107,
+    "ast_hash": "318ab1c674822d9ef0cb60185a44e47d",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/CameraMixin.java": {
+    "mtime": 1790617339.0989594,
+    "seen": 1791079643.2059119,
+    "ast_hash": "04a10e68bb3994c8b496f4a9cd54aa8b",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ChatComponentAccessor.java": {
+    "mtime": 1790224596.9587808,
+    "seen": 1791079643.2059126,
+    "ast_hash": "7bb29e91710c832a7a6f1f01dc5f421a",
+    "semantic_hash": "7bb29e91710c832a7a6f1f01dc5f421a"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ChatMixin.java": {
+    "mtime": 1791228955.2838871,
+    "seen": 1791229701.0717762,
+    "ast_hash": "77eabf8e3e7fc451ef5d87a148aac315",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ChatPeekScrollMixin.java": {
+    "mtime": 1790224597.2848003,
+    "seen": 1791079643.2059147,
+    "ast_hash": "bcb0c8e3d2a765788f3590e09585a156",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ChatPeekingMixin.java": {
+    "mtime": 1790224597.2014675,
+    "seen": 1791079643.2059157,
+    "ast_hash": "11b0eefbb6b965483dabba1dbe3f504d",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ChatScreenMixin.java": {
+    "mtime": 1791084139.9284618,
+    "seen": 1791084438.7251139,
+    "ast_hash": "51cbf1eb910ca9a371421d871e857e7c",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ChromaGlyphMixin.java": {
+    "mtime": 1790224597.408676,
+    "seen": 1791079643.2059174,
+    "ast_hash": "f80ae40fa6dd739e6e7d7c0818a3d8b5",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ClientClockManagerMixin.java": {
+    "mtime": 1790224597.5272827,
+    "seen": 1791079643.2059195,
+    "ast_hash": "de15ec8fefa5bd1289061a4ad44a1ac7",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ClientCommonPacketListenerMixin.java": {
+    "mtime": 1790224597.5833387,
+    "seen": 1791079643.2059205,
+    "ast_hash": "e7b4247df4c3b7ae42343efebf88f19d",
+    "semantic_hash": "e7b4247df4c3b7ae42343efebf88f19d"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ClientIntentionPacketMixin.java": {
+    "mtime": 1790224597.6445172,
+    "seen": 1791079643.2059212,
+    "ast_hash": "16eec65a385b99aa579f5d44f75bbc12",
+    "semantic_hash": "16eec65a385b99aa579f5d44f75bbc12"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ClientItemInfoLoaderMixin.java": {
+    "mtime": 1790224597.6923954,
+    "seen": 1791079643.2059224,
+    "ast_hash": "a0079de882a78dbaa71425ef5b538127",
+    "semantic_hash": "a0079de882a78dbaa71425ef5b538127"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ClientLevelMixin.java": {
+    "mtime": 1790224632.6265702,
+    "seen": 1791079643.2059233,
+    "ast_hash": "1dd1d7dcd5cda697d9e68b4baff3aca4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ClientPacketListenerMixin.java": {
+    "mtime": 1791070193.104522,
+    "seen": 1791079643.2059243,
+    "ast_hash": "c23de133fd392a48494b30363a3ebad4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/CommandMixin.java": {
+    "mtime": 1791164095.336648,
+    "seen": 1791164676.5442638,
+    "ast_hash": "2773b00c70ad59685ca4440d277a206f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ConnectionMixin.java": {
+    "mtime": 1790224565.9986956,
+    "seen": 1791079643.2059264,
+    "ast_hash": "1913a919983c5634dc031fe5ec3de991",
+    "semantic_hash": "1913a919983c5634dc031fe5ec3de991"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/DisconnectedScreenMixin.java": {
+    "mtime": 1790224566.0614038,
+    "seen": 1791079643.2059274,
+    "ast_hash": "d774e69489e0b6edad9b79c77fe2f162",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/DungeonPadTimersMixin.java": {
+    "mtime": 1790224566.114816,
+    "seen": 1791079643.205928,
+    "ast_hash": "a0b5a9450b0d4c0de897be8e594a3b04",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/EditBoxMixin.java": {
+    "mtime": 1790564837.5611494,
+    "seen": 1791079643.2059293,
+    "ast_hash": "49c13d32ad8f0fb6780048c540929914",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/EffectsInInventoryMixin.java": {
+    "mtime": 1790224566.220678,
+    "seen": 1791079643.2059305,
+    "ast_hash": "f7a532b955abc81345a608ab1a35f130",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/EntityMixin.java": {
+    "mtime": 1790224731.9072537,
+    "seen": 1791079643.2059314,
+    "ast_hash": "c8af99380a95a70986262b84e5a3a711",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/FallingBlockRendererMixin.java": {
+    "mtime": 1790224566.3692327,
+    "seen": 1791079643.2059324,
+    "ast_hash": "aa947195ca9449e3f58c36e1c66a7205",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/GuiMixin.java": {
+    "mtime": 1790224566.436715,
+    "seen": 1791079643.205935,
+    "ast_hash": "4c5d3412760c22b6f58006aab8ae6359",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/HollowWandMixin.java": {
+    "mtime": 1790224566.515847,
+    "seen": 1791079643.2059362,
+    "ast_hash": "dd860355cb9f7c87da77f7fbf13da30e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/InventoryScreenMixin.java": {
+    "mtime": 1790564899.8272896,
+    "seen": 1791079643.2059379,
+    "ast_hash": "7b8dd79d952168456695b7228973fbd4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ItemHotkeysMixin.java": {
+    "mtime": 1790224566.6218283,
+    "seen": 1791079643.205939,
+    "ast_hash": "d6ebbeab6ca0e1c875514ffe780fa63f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ItemModelResolverMixin.java": {
+    "mtime": 1790289112.1799634,
+    "seen": 1791079643.205941,
+    "ast_hash": "18c63d7befdd9b4da519fd01b6479cad",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ItemStackMixin.java": {
+    "mtime": 1791051165.7485466,
+    "seen": 1791079643.205942,
+    "ast_hash": "23cfe25bfb0bfb2fa4431856cd88e8d3",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/KeyBindsListMixin.java": {
+    "mtime": 1790224566.7732215,
+    "seen": 1791079643.2059429,
+    "ast_hash": "d4f136aafeed3fc39534b76d298eba27",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/KeyBindsScreenMixin.java": {
+    "mtime": 1790224566.842726,
+    "seen": 1791079643.2059438,
+    "ast_hash": "6bc97159e5e881d6999a5f1c1800b8d7",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/KeyboardInputMixin.java": {
+    "mtime": 1790227650.1471875,
+    "seen": 1791079643.2059448,
+    "ast_hash": "c52228bfce1be9d6efaf6f17836467d0",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/KeyboardMixin.java": {
+    "mtime": 1790227650.1723113,
+    "seen": 1791079643.205946,
+    "ast_hash": "d59ab5e23564d136eb52abb1a0069d32",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/LevelMixin.java": {
+    "mtime": 1790224567.0137765,
+    "seen": 1791079643.2059479,
+    "ast_hash": "634c14ec2f34620119129e437c9eaf0c",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/LeverBlockMixin.java": {
+    "mtime": 1790224567.0843134,
+    "seen": 1791079643.2059495,
+    "ast_hash": "a779b2cd35aa1d4dfe38e26c6b2f827c",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/MinecraftMixin.java": {
+    "mtime": 1790224747.3986118,
+    "seen": 1791079643.2059515,
+    "ast_hash": "e500ab56dd41a56393dbc19e8a4a6ec6",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/MouseMixin.java": {
+    "mtime": 1790618312.5341983,
+    "seen": 1791079643.2059524,
+    "ast_hash": "7a6708490ab7bab35e0383bba39a9343",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/PackConfirmScreenMixin.java": {
+    "mtime": 1790224567.333254,
+    "seen": 1791079643.2059534,
+    "ast_hash": "61b9067b796eb78337199e32dbef9052",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ParticleEngineMixin.java": {
+    "mtime": 1790224632.6817307,
+    "seen": 1791079643.2059546,
+    "ast_hash": "6703516bcdc17c4410d44ab7f3d3823a",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ParticleMixin.java": {
+    "mtime": 1790224632.7589333,
+    "seen": 1791079643.2059555,
+    "ast_hash": "aa753862b36ccbc303b85e86e3080021",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/PatchedDataComponentMapMixin.java": {
+    "mtime": 1790224567.546244,
+    "seen": 1791079643.2059572,
+    "ast_hash": "abb45d78684337f3ff8f3dc4af44d43b",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/PauseScreenMixin.java": {
+    "mtime": 1790224567.6068127,
+    "seen": 1791079643.2059581,
+    "ast_hash": "975f732e4970c93e40c45442d64ab9a5",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/PlayerMixin.java": {
+    "mtime": 1790224567.6945672,
+    "seen": 1791079643.2059603,
+    "ast_hash": "1d70470e24acd8ea36f3e35cfc459a8f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/PlayerTabOverlayAccessor.java": {
+    "mtime": 1790224567.7585435,
+    "seen": 1791079643.2059612,
+    "ast_hash": "3431ed7f6e77d9af80bdb3957db0e83c",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/PostPassMixin.java": {
+    "mtime": 1790224567.8484454,
+    "seen": 1791079643.2059622,
+    "ast_hash": "9bfcce58d0ff750d977673170a25ca98",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/PropertyMixin.java": {
+    "mtime": 1790224567.946753,
+    "seen": 1791079643.205963,
+    "ast_hash": "576e70ba185741181a52ca844c1061c7",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/RngScrollMixin.java": {
+    "mtime": 1790224568.0750747,
+    "seen": 1791079643.205964,
+    "ast_hash": "1cd01f10230212586e567500cd1ea209",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ScreenAccessor.java": {
+    "mtime": 1790224568.188192,
+    "seen": 1791079643.2059653,
+    "ast_hash": "50bc5d2d7df6dc93c1587a53d0fe5e15",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ScreenEffectRendererMixin.java": {
+    "mtime": 1790224568.2562935,
+    "seen": 1791079643.2059662,
+    "ast_hash": "4331b275b53a8dbc3e83f990c7773999",
+    "semantic_hash": "4331b275b53a8dbc3e83f990c7773999"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ScreenMixin.java": {
+    "mtime": 1790224739.0338807,
+    "seen": 1791079643.2059674,
+    "ast_hash": "336c24642d68c241679df72126966f75",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ServerNameResolverMixin.java": {
+    "mtime": 1790224568.4086938,
+    "seen": 1791079643.2059684,
+    "ast_hash": "b0a2d53c8f697a4089be911202e2676c",
+    "semantic_hash": "b0a2d53c8f697a4089be911202e2676c"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ServerStatusPingerMixin.java": {
+    "mtime": 1790224568.481816,
+    "seen": 1791079643.2059693,
+    "ast_hash": "1975bb166e56fdf811be42b9de6377ea",
+    "semantic_hash": "1975bb166e56fdf811be42b9de6377ea"
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/SignEditMixin.java": {
+    "mtime": 1790224568.539831,
+    "seen": 1791079643.2059703,
+    "ast_hash": "51bc107dcc1e95a7f7b13bc9161a73eb",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/SkullBlockMixin.java": {
+    "mtime": 1790224568.5918589,
+    "seen": 1791079643.2059712,
+    "ast_hash": "e7f9d1a105714f96e1d5c4e859aa6a3d",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/SlotMixin.java": {
+    "mtime": 1790224568.655899,
+    "seen": 1791079643.2059722,
+    "ast_hash": "ced4d0962f65e09ff0327a2444556bf2",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/SoundEngineMixin.java": {
+    "mtime": 1790224568.7582865,
+    "seen": 1791079643.2059731,
+    "ast_hash": "24e79d0df6225345a9a03f4e56ec9a50",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/SoundOptionsScreenMixin.java": {
+    "mtime": 1790224568.8724663,
+    "seen": 1791079643.2059743,
+    "ast_hash": "5341ab980fceae5620af9e72b7ca2ed0",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/TitleScreenMixin.java": {
+    "mtime": 1790224568.9506752,
+    "seen": 1791079643.2059753,
+    "ast_hash": "036b794a898f51be4ad73deabd169017",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/TooltipRenderUtilMixin.java": {
+    "mtime": 1790224569.307067,
+    "seen": 1791079643.2059762,
+    "ast_hash": "d8329c62d54c167618e6cd822132ea68",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/WindowAccessor.java": {
+    "mtime": 1790224569.4297223,
+    "seen": 1791079643.2059772,
+    "ast_hash": "7204868320f0dfe560ed4e6d10db2097",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/WindowMixin.java": {
+    "mtime": 1790224569.4860804,
+    "seen": 1791079643.2059782,
+    "ast_hash": "d26eab90d4a65deccf312d22a9daea35",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/BomboApiUrl.java": {
+    "mtime": 1790224571.0898895,
+    "seen": 1791079643.2059798,
+    "ast_hash": "be9d3002359dbd9d1ab285c83df9821d",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/ChatImagePreview.java": {
+    "mtime": 1791091698.206641,
+    "seen": 1791143068.3792543,
+    "ast_hash": "130432554a0f50aaba58a41fa68a57b1",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/ChatMessageTracker.java": {
+    "mtime": 1790224571.1722302,
+    "seen": 1791079643.205982,
+    "ast_hash": "884725cbb89c8bc2e4c7cf4e5c0699fc",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/ChatSearchHelper.java": {
+    "mtime": 1790224571.215071,
+    "seen": 1791079643.205983,
+    "ast_hash": "b94769e76c1aa073d29fcc194ddce612",
+    "semantic_hash": "b94769e76c1aa073d29fcc194ddce612"
+  },
+  "src/client/java/me/bombo/bomboaddons/util/ClipboardCommandManager.java": {
+    "mtime": 1790224571.2544193,
+    "seen": 1791079643.2059844,
+    "ast_hash": "94bd2d95ec2f6c7194080c65e2ebb074",
+    "semantic_hash": "94bd2d95ec2f6c7194080c65e2ebb074"
+  },
+  "src/client/java/me/bombo/bomboaddons/util/ClipboardImageUploader.java": {
+    "mtime": 1791089212.3861802,
+    "seen": 1791089937.8803592,
+    "ast_hash": "f6ae4941bb22746df475be1cd4436fcb",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/CustomSlotManager.java": {
+    "mtime": 1790224571.343161,
+    "seen": 1791079643.2059863,
+    "ast_hash": "9c1ebfef82308d2603c528912d9471cc",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/EmojiShortcodeHelper.java": {
+    "mtime": 1790224571.4111564,
+    "seen": 1791079643.2059872,
+    "ast_hash": "1983821c6f4f1d8ac111f8c31f3a38a3",
+    "semantic_hash": "1983821c6f4f1d8ac111f8c31f3a38a3"
+  },
+  "src/client/java/me/bombo/bomboaddons/util/FreelookManager.java": {
+    "mtime": 1790224571.4727552,
+    "seen": 1791079643.2059886,
+    "ast_hash": "72051dc60e0815aefd8a965054d20753",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/IChatComponent.java": {
+    "mtime": 1790224571.5130465,
+    "seen": 1791079643.2059896,
+    "ast_hash": "dff573326dd4748555958da812eb9a23",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/NetworkDebugLogger.java": {
+    "mtime": 1790224571.5816672,
+    "seen": 1791079643.2059917,
+    "ast_hash": "e22803389a588a9de8b3e86893437a86",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/ResourcePackHelper.java": {
+    "mtime": 1790224571.6749218,
+    "seen": 1791079643.2059937,
+    "ast_hash": "aa4468be93d483d61e989258c4ba8134",
+    "semantic_hash": "aa4468be93d483d61e989258c4ba8134"
+  },
+  "src/client/java/me/bombo/bomboaddons/utils/FakePlayer.java": {
+    "mtime": 1790224571.7852929,
+    "seen": 1791079643.2059956,
+    "ast_hash": "f1d90de4aec2999899338c7c24758546",
+    "semantic_hash": ""
+  },
+  "src/client/resources/assets/betterpv/data/accessory_families.json": {
+    "mtime": 1789795658.8191338,
+    "seen": 1789999737.4587245,
+    "ast_hash": "a7d589e75dedb21dafa60166290e0d3a",
+    "semantic_hash": "a7d589e75dedb21dafa60166290e0d3a"
+  },
+  "src/client/resources/assets/betterpv/data/dungeons_xp.json": {
+    "mtime": 1789795658.8191338,
+    "seen": 1789999737.458726,
+    "ast_hash": "c9f5ad537ea4d4555c45ed7d57cdff9c",
+    "semantic_hash": "c9f5ad537ea4d4555c45ed7d57cdff9c"
+  },
+  "src/client/resources/assets/betterpv/data/enchants.json": {
+    "mtime": 1789795658.820704,
+    "seen": 1789999737.458727,
+    "ast_hash": "209d24c813857f84cf68e03bf8198235",
+    "semantic_hash": "209d24c813857f84cf68e03bf8198235"
+  },
+  "src/client/resources/assets/betterpv/data/garden.json": {
+    "mtime": 1789795658.820704,
+    "seen": 1789999737.4587278,
+    "ast_hash": "a1ceaeb40a4e2f4772de96335aa16537",
+    "semantic_hash": "a1ceaeb40a4e2f4772de96335aa16537"
+  },
+  "src/client/resources/assets/betterpv/data/leveling.json": {
+    "mtime": 1789795658.820704,
+    "seen": 1789999737.4587293,
+    "ast_hash": "1a6db60993edaa071e3c741ad130694f",
+    "semantic_hash": "1a6db60993edaa071e3c741ad130694f"
+  },
+  "src/client/resources/assets/betterpv/data/networth/application_worth.json": {
+    "mtime": 1789795658.820704,
+    "seen": 1789999737.45873,
+    "ast_hash": "f099175b749db43d210c8de672ca1f1b",
+    "semantic_hash": "f099175b749db43d210c8de672ca1f1b"
+  },
+  "src/client/resources/assets/betterpv/data/networth/misc.json": {
+    "mtime": 1789795658.8217092,
+    "seen": 1789999737.4587312,
+    "ast_hash": "d3118ab4ea239a2867212c9a0593ef5c",
+    "semantic_hash": "d3118ab4ea239a2867212c9a0593ef5c"
+  },
+  "src/client/resources/assets/betterpv/data/networth/pets.json": {
+    "mtime": 1789795658.8217092,
+    "seen": 1789999737.4587324,
+    "ast_hash": "ac7f6fd138407291d0b6a63e0c65cfe9",
+    "semantic_hash": "ac7f6fd138407291d0b6a63e0c65cfe9"
+  },
+  "src/client/resources/assets/betterpv/data/networth/reforges.json": {
+    "mtime": 1789795658.8217092,
+    "seen": 1789999737.4587336,
+    "ast_hash": "17894f9dee1f74b77d5673ec33de3146",
+    "semantic_hash": "17894f9dee1f74b77d5673ec33de3146"
+  },
+  "src/client/resources/assets/betterpv/data/trophy_skulls.json": {
+    "mtime": 1789795658.823715,
+    "seen": 1789999737.4587345,
+    "ast_hash": "863963b40c28acab7fcfb748644650c2",
+    "semantic_hash": "863963b40c28acab7fcfb748644650c2"
+  },
+  "src/client/resources/assets/betterpv/data/weight.json": {
+    "mtime": 1789795658.823715,
+    "seen": 1789999737.458736,
+    "ast_hash": "ab1bd07bf6775f71bc6d1e8dd543ae5d",
+    "semantic_hash": "ab1bd07bf6775f71bc6d1e8dd543ae5d"
+  },
+  "src/client/resources/assets/betterpv/lang/en_us.json": {
+    "mtime": 1789795658.8252227,
+    "seen": 1789999737.458737,
+    "ast_hash": "615a4a534a48d2d8b642567059776163",
+    "semantic_hash": "615a4a534a48d2d8b642567059776163"
+  },
+  "src/client/resources/assets/bomboaddons/dungeons/rooms.json": {
+    "mtime": 1788210928.5816991,
+    "seen": 1789999737.4587379,
+    "ast_hash": "2824d120b8e13453a2d23a4d2758a8f1",
+    "semantic_hash": "2824d120b8e13453a2d23a4d2758a8f1"
+  },
+  "src/client/resources/bestiary_data.json": {
+    "mtime": 1787255551.2393162,
+    "seen": 1789999737.4587393,
+    "ast_hash": "f08261aca4b203e859475c344f3a7a22",
+    "semantic_hash": "f08261aca4b203e859475c344f3a7a22"
+  },
+  "src/client/resources/bomboaddons.client.mixins.json": {
+    "mtime": 1790623424.5513878,
+    "seen": 1791079643.2082286,
+    "ast_hash": "8ed8ca95f33d541116570b31511cf517",
+    "semantic_hash": ""
+  },
+  "src/client/resources/structures/corleone1.json": {
+    "mtime": 1787266847.289485,
+    "seen": 1789999737.4587414,
+    "ast_hash": "c15481a0e3665b4598db8a4bb190bec5",
+    "semantic_hash": "c15481a0e3665b4598db8a4bb190bec5"
+  },
+  "src/client/resources/structures/goldendragon1.json": {
+    "mtime": 1787266952.3319392,
+    "seen": 1789999737.4587429,
+    "ast_hash": "a8a657f85a11f9cc858e0b1b41f43004",
+    "semantic_hash": "a8a657f85a11f9cc858e0b1b41f43004"
+  },
+  "src/client/resources/vypv/content/people.json": {
+    "mtime": 1789795658.830749,
+    "seen": 1789999737.4587438,
+    "ast_hash": "0d3a7b396db86492c81656f15bae3eeb",
+    "semantic_hash": "0d3a7b396db86492c81656f15bae3eeb"
+  },
+  "src/main/resources/assets/betterpv/data/accessory_families.json": {
+    "mtime": 1789795658.8191338,
+    "seen": 1789999737.458745,
+    "ast_hash": "a7d589e75dedb21dafa60166290e0d3a",
+    "semantic_hash": "a7d589e75dedb21dafa60166290e0d3a"
+  },
+  "src/main/resources/assets/betterpv/data/dungeons_xp.json": {
+    "mtime": 1789795658.8191338,
+    "seen": 1789999737.4587462,
+    "ast_hash": "c9f5ad537ea4d4555c45ed7d57cdff9c",
+    "semantic_hash": "c9f5ad537ea4d4555c45ed7d57cdff9c"
+  },
+  "src/main/resources/assets/betterpv/data/enchants.json": {
+    "mtime": 1789795658.820704,
+    "seen": 1789999737.4587471,
+    "ast_hash": "209d24c813857f84cf68e03bf8198235",
+    "semantic_hash": "209d24c813857f84cf68e03bf8198235"
+  },
+  "src/main/resources/assets/betterpv/data/garden.json": {
+    "mtime": 1789795658.820704,
+    "seen": 1789999737.4587483,
+    "ast_hash": "a1ceaeb40a4e2f4772de96335aa16537",
+    "semantic_hash": "a1ceaeb40a4e2f4772de96335aa16537"
+  },
+  "src/main/resources/assets/betterpv/data/leveling.json": {
+    "mtime": 1789795658.820704,
+    "seen": 1789999737.4587495,
+    "ast_hash": "1a6db60993edaa071e3c741ad130694f",
+    "semantic_hash": "1a6db60993edaa071e3c741ad130694f"
+  },
+  "src/main/resources/assets/betterpv/data/networth/application_worth.json": {
+    "mtime": 1789795658.820704,
+    "seen": 1789999737.4587505,
+    "ast_hash": "f099175b749db43d210c8de672ca1f1b",
+    "semantic_hash": "f099175b749db43d210c8de672ca1f1b"
+  },
+  "src/main/resources/assets/betterpv/data/networth/misc.json": {
+    "mtime": 1789795658.8217092,
+    "seen": 1789999737.4587514,
+    "ast_hash": "d3118ab4ea239a2867212c9a0593ef5c",
+    "semantic_hash": "d3118ab4ea239a2867212c9a0593ef5c"
+  },
+  "src/main/resources/assets/betterpv/data/networth/pets.json": {
+    "mtime": 1789795658.8217092,
+    "seen": 1789999737.4587529,
+    "ast_hash": "ac7f6fd138407291d0b6a63e0c65cfe9",
+    "semantic_hash": "ac7f6fd138407291d0b6a63e0c65cfe9"
+  },
+  "src/main/resources/assets/betterpv/data/networth/reforges.json": {
+    "mtime": 1789795658.8217092,
+    "seen": 1789999737.4587538,
+    "ast_hash": "17894f9dee1f74b77d5673ec33de3146",
+    "semantic_hash": "17894f9dee1f74b77d5673ec33de3146"
+  },
+  "src/main/resources/assets/betterpv/data/trophy_skulls.json": {
+    "mtime": 1789795658.823715,
+    "seen": 1789999737.4587548,
+    "ast_hash": "863963b40c28acab7fcfb748644650c2",
+    "semantic_hash": "863963b40c28acab7fcfb748644650c2"
+  },
+  "src/main/resources/assets/betterpv/data/weight.json": {
+    "mtime": 1789795658.823715,
+    "seen": 1789999737.4587557,
+    "ast_hash": "ab1bd07bf6775f71bc6d1e8dd543ae5d",
+    "semantic_hash": "ab1bd07bf6775f71bc6d1e8dd543ae5d"
+  },
+  "src/main/resources/assets/betterpv/lang/en_us.json": {
+    "mtime": 1789795658.8252227,
+    "seen": 1789999737.4587572,
+    "ast_hash": "615a4a534a48d2d8b642567059776163",
+    "semantic_hash": "615a4a534a48d2d8b642567059776163"
+  },
+  "src/main/resources/assets/bomboaddons/lang/en_us.json": {
+    "mtime": 1786722019.6327803,
+    "seen": 1789999737.458758,
+    "ast_hash": "4ed053190ee273e87d1a7cc17f7f5782",
+    "semantic_hash": "4ed053190ee273e87d1a7cc17f7f5782"
+  },
+  "src/main/resources/bestiary_data.json": {
+    "mtime": 1787255560.712568,
+    "seen": 1789999737.4587593,
+    "ast_hash": "0674dca4321e7bda790d067ea9865723",
+    "semantic_hash": "0674dca4321e7bda790d067ea9865723"
+  },
+  "src/main/resources/bomboaddons.client.mixins.json": {
+    "mtime": 1790956355.1359487,
+    "seen": 1791079643.2107375,
+    "ast_hash": "5c10708067b0b4a819bc7afa6fbd5a15",
+    "semantic_hash": ""
+  },
+  "src/main/resources/fabric.mod.json": {
+    "mtime": 1790953519.5518768,
+    "seen": 1791079643.2107391,
+    "ast_hash": "d4f072df4b661d63867e7e3e5084f1ee",
+    "semantic_hash": ""
+  },
+  "src/main/resources/island_graphs/BACKWATER_BAYOU.json": {
+    "mtime": 1786722020.4557986,
+    "seen": 1789999737.4587631,
+    "ast_hash": "c78588f831a8aec738b5f69ce49597ec",
+    "semantic_hash": "c78588f831a8aec738b5f69ce49597ec"
+  },
+  "src/main/resources/island_graphs/CRIMSON_ISLE.json": {
+    "mtime": 1786722020.9063387,
+    "seen": 1789999737.458764,
+    "ast_hash": "b9524d33d4d10ffea00440c3930ccbb8",
+    "semantic_hash": "b9524d33d4d10ffea00440c3930ccbb8"
+  },
+  "src/main/resources/island_graphs/CRYSTAL_HOLLOWS.json": {
+    "mtime": 1786722021.256908,
+    "seen": 1789999737.458765,
+    "ast_hash": "6cb3364ea9f694c0b67be292ec05357f",
+    "semantic_hash": "6cb3364ea9f694c0b67be292ec05357f"
+  },
+  "src/main/resources/island_graphs/DEEP_CAVERNS.json": {
+    "mtime": 1786722021.5904891,
+    "seen": 1789999737.458766,
+    "ast_hash": "3b7547d7d8c07230085554578b9e2b59",
+    "semantic_hash": "3b7547d7d8c07230085554578b9e2b59"
+  },
+  "src/main/resources/island_graphs/DUNGEON_HUB.json": {
+    "mtime": 1786722021.9285326,
+    "seen": 1789999737.4587674,
+    "ast_hash": "09c1983f713ac0ae01300776469457c0",
+    "semantic_hash": "09c1983f713ac0ae01300776469457c0"
+  },
+  "src/main/resources/island_graphs/DWARVEN_MINES.json": {
+    "mtime": 1786722022.3689723,
+    "seen": 1789999737.4587684,
+    "ast_hash": "2cebf8867ab60d5746a8f250d40525a6",
+    "semantic_hash": "2cebf8867ab60d5746a8f250d40525a6"
+  },
+  "src/main/resources/island_graphs/GALATEA.json": {
+    "mtime": 1786722022.8349109,
+    "seen": 1789999737.4587696,
+    "ast_hash": "e64385eb783992b8cdef71b5aa0c3649",
+    "semantic_hash": "e64385eb783992b8cdef71b5aa0c3649"
+  },
+  "src/main/resources/island_graphs/GLACITE_TUNNELS.json": {
+    "mtime": 1786722023.1362877,
+    "seen": 1789999737.4587708,
+    "ast_hash": "37b4ab60c00a29f0a56dd9fa13169f63",
+    "semantic_hash": "37b4ab60c00a29f0a56dd9fa13169f63"
+  },
+  "src/main/resources/island_graphs/GOLD_MINES.json": {
+    "mtime": 1786722023.4785562,
+    "seen": 1789999737.4587717,
+    "ast_hash": "e0eaddcc2ecf017dc5facc34ec61f914",
+    "semantic_hash": "e0eaddcc2ecf017dc5facc34ec61f914"
+  },
+  "src/main/resources/island_graphs/HUB.json": {
+    "mtime": 1786722023.8277204,
+    "seen": 1789999737.458773,
+    "ast_hash": "3fcb740b386dcbbf49dd6942f10e2601",
+    "semantic_hash": "3fcb740b386dcbbf49dd6942f10e2601"
+  },
+  "src/main/resources/island_graphs/LOTUS_ATOLL.json": {
+    "mtime": 1786722024.3865886,
+    "seen": 1789999737.4587743,
+    "ast_hash": "b597864d59c5483bf20fe8f68e3014b0",
+    "semantic_hash": "b597864d59c5483bf20fe8f68e3014b0"
+  },
+  "src/main/resources/island_graphs/MAIN_LOBBY.json": {
+    "mtime": 1786722024.736086,
+    "seen": 1789999737.4587753,
+    "ast_hash": "10904112c59526d0d918d60cb63bde9c",
+    "semantic_hash": "10904112c59526d0d918d60cb63bde9c"
+  },
+  "src/main/resources/island_graphs/SPIDER_DEN.json": {
+    "mtime": 1786722025.0587232,
+    "seen": 1789999737.4587762,
+    "ast_hash": "b47f281f9f2c9d588d637ddb2fb0a1a5",
+    "semantic_hash": "b47f281f9f2c9d588d637ddb2fb0a1a5"
+  },
+  "src/main/resources/island_graphs/THE_END.json": {
+    "mtime": 1786722025.3821099,
+    "seen": 1789999737.4587777,
+    "ast_hash": "ffc6ed617769a56d9f78a689137e71c2",
+    "semantic_hash": "ffc6ed617769a56d9f78a689137e71c2"
+  },
+  "src/main/resources/island_graphs/THE_FARMING_ISLANDS.json": {
+    "mtime": 1786722025.691337,
+    "seen": 1789999737.4587786,
+    "ast_hash": "9e416d82b0ad053a323ceebea7d008d1",
+    "semantic_hash": "9e416d82b0ad053a323ceebea7d008d1"
+  },
+  "src/main/resources/island_graphs/THE_PARK.json": {
+    "mtime": 1786722026.0234997,
+    "seen": 1789999737.4587798,
+    "ast_hash": "2dbd73d73ab5136253e85452cd020008",
+    "semantic_hash": "2dbd73d73ab5136253e85452cd020008"
+  },
+  "src/main/resources/island_graphs/THE_RIFT.json": {
+    "mtime": 1786722026.4595487,
+    "seen": 1789999737.458781,
+    "ast_hash": "7815f5d054de80d83f2e12e3a469a2a8",
+    "semantic_hash": "7815f5d054de80d83f2e12e3a469a2a8"
+  },
+  "src/main/resources/island_graphs/WINTER.json": {
+    "mtime": 1786722026.8205647,
+    "seen": 1789999737.458782,
+    "ast_hash": "f3ddfded3c49d8374e43f98085afcefe",
+    "semantic_hash": "f3ddfded3c49d8374e43f98085afcefe"
+  },
+  "src/main/resources/structures/corleone1.json": {
+    "mtime": 1787266847.2930093,
+    "seen": 1789999737.458783,
+    "ast_hash": "c15481a0e3665b4598db8a4bb190bec5",
+    "semantic_hash": "c15481a0e3665b4598db8a4bb190bec5"
+  },
+  "src/main/resources/structures/corleone2.json": {
+    "mtime": 1787326069.3487186,
+    "seen": 1789999737.4587843,
+    "ast_hash": "809fadbe8f73fd078b4ff386cf6f490a",
+    "semantic_hash": "809fadbe8f73fd078b4ff386cf6f490a"
+  },
+  "src/main/resources/structures/gdrag1.json": {
+    "mtime": 1787328295.4946697,
+    "seen": 1789999737.4587853,
+    "ast_hash": "438ba149189fc78b03e1596d66bb353e",
+    "semantic_hash": "438ba149189fc78b03e1596d66bb353e"
+  },
+  "src/main/resources/structures/gdrag2.json": {
+    "mtime": 1787327036.5870728,
+    "seen": 1789999737.4587865,
+    "ast_hash": "6e643f886e8922c74795560248678e8e",
+    "semantic_hash": "6e643f886e8922c74795560248678e8e"
+  },
+  "src/main/resources/structures/gdrag3.json": {
+    "mtime": 1787328314.5588925,
+    "seen": 1789999737.4587877,
+    "ast_hash": "0171f0f1e83ad58a3e2cb4e7147744c7",
+    "semantic_hash": "0171f0f1e83ad58a3e2cb4e7147744c7"
+  },
+  "src/main/resources/vypv/content/people.json": {
+    "mtime": 1789795658.830749,
+    "seen": 1789999737.4587886,
+    "ast_hash": "0d3a7b396db86492c81656f15bae3eeb",
+    "semantic_hash": "0d3a7b396db86492c81656f15bae3eeb"
+  },
+  "src/test/java/me/bombo/bomboaddons/PingTest.java": {
+    "mtime": 1788729535.3194194,
+    "seen": 1789999737.4587898,
+    "ast_hash": "e6b3028cc93b2e41f54cc82fc65e646a",
+    "semantic_hash": "e6b3028cc93b2e41f54cc82fc65e646a"
+  },
+  ".github/instructions/BOMBOADDONS.instructions.md": {
+    "mtime": 1788999846.7381675,
+    "seen": 1789999737.458791,
+    "ast_hash": "1362835a5977ed7fdc3bcd1305495eaa",
+    "semantic_hash": "1362835a5977ed7fdc3bcd1305495eaa"
+  },
+  "src/main/resources/assets/bomboaddons/safari_areas.txt": {
+    "mtime": 1789143565.4392958,
+    "seen": 1789999737.458792,
+    "ast_hash": "9702a29c5328134e018d28b4ebcbda5a",
+    "semantic_hash": "9702a29c5328134e018d28b4ebcbda5a"
+  },
+  "src/client/resources/assets/betterpv/icon.png": {
+    "mtime": 1789795658.823715,
+    "seen": 1789999737.4587932,
+    "ast_hash": "a5bfb4620b6f5dbfa76c1b7161d18173",
+    "semantic_hash": "a5bfb4620b6f5dbfa76c1b7161d18173"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/garden/medal_bronze.png": {
+    "mtime": 1789795658.8252227,
+    "seen": 1789999737.4587944,
+    "ast_hash": "a760132f594f287c0631efb8317c11b5",
+    "semantic_hash": "a760132f594f287c0631efb8317c11b5"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/garden/medal_diamond.png": {
+    "mtime": 1789795658.8252227,
+    "seen": 1789999737.4587953,
+    "ast_hash": "09064b0a9c5799179fc629cdeeb27ba9",
+    "semantic_hash": "09064b0a9c5799179fc629cdeeb27ba9"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/garden/medal_empty.png": {
+    "mtime": 1789795658.8262281,
+    "seen": 1789999737.4587963,
+    "ast_hash": "7a9617fe0a79a076ab3ad9fb329f1bc2",
+    "semantic_hash": "7a9617fe0a79a076ab3ad9fb329f1bc2"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/garden/medal_gold.png": {
+    "mtime": 1789795658.8262281,
+    "seen": 1789999737.4587975,
+    "ast_hash": "70d0db8326327f12acff36889e3d5f25",
+    "semantic_hash": "70d0db8326327f12acff36889e3d5f25"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/garden/medal_platinum.png": {
+    "mtime": 1789795658.8272326,
+    "seen": 1789999737.4587986,
+    "ast_hash": "cce194a5726da1d2c6ff2dfb507f56cd",
+    "semantic_hash": "cce194a5726da1d2c6ff2dfb507f56cd"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/garden/medal_silver.png": {
+    "mtime": 1789795658.8272326,
+    "seen": 1789999737.4587998,
+    "ast_hash": "0530a9c5c1a81092ca6f68238646af5d",
+    "semantic_hash": "0530a9c5c1a81092ca6f68238646af5d"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/inventories/accessory_bag.png": {
+    "mtime": 1789795658.8287387,
+    "seen": 1789999737.4588013,
+    "ast_hash": "119e03f9a7a35b551699e08489f51607",
+    "semantic_hash": "119e03f9a7a35b551699e08489f51607"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/inventories/potion_bag.png": {
+    "mtime": 1789795658.8287387,
+    "seen": 1789999737.4588022,
+    "ast_hash": "1284ae149af2200c27d84254463ed0f5",
+    "semantic_hash": "1284ae149af2200c27d84254463ed0f5"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/nav/hotm.png": {
+    "mtime": 1789795658.8287387,
+    "seen": 1789999737.4588034,
+    "ast_hash": "8dc51703e0c4eb67179ee2e5330a0440",
+    "semantic_hash": "8dc51703e0c4eb67179ee2e5330a0440"
+  },
+  "src/client/resources/assets/betterpv/textures/gui/skyblock_xp.png": {
+    "mtime": 1789795658.8297453,
+    "seen": 1789999737.4588044,
+    "ast_hash": "e8ab3299f3bc1ce80dc8022aaf1330f1",
+    "semantic_hash": "e8ab3299f3bc1ce80dc8022aaf1330f1"
+  },
+  "src/main/resources/assets/betterpv/icon.png": {
+    "mtime": 1789795658.823715,
+    "seen": 1789999737.4588058,
+    "ast_hash": "a5bfb4620b6f5dbfa76c1b7161d18173",
+    "semantic_hash": "a5bfb4620b6f5dbfa76c1b7161d18173"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/garden/medal_bronze.png": {
+    "mtime": 1789795658.8252227,
+    "seen": 1789999737.458807,
+    "ast_hash": "a760132f594f287c0631efb8317c11b5",
+    "semantic_hash": "a760132f594f287c0631efb8317c11b5"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/garden/medal_diamond.png": {
+    "mtime": 1789795658.8252227,
+    "seen": 1789999737.4588084,
+    "ast_hash": "09064b0a9c5799179fc629cdeeb27ba9",
+    "semantic_hash": "09064b0a9c5799179fc629cdeeb27ba9"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/garden/medal_empty.png": {
+    "mtime": 1789795658.8262281,
+    "seen": 1789999737.4588094,
+    "ast_hash": "7a9617fe0a79a076ab3ad9fb329f1bc2",
+    "semantic_hash": "7a9617fe0a79a076ab3ad9fb329f1bc2"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/garden/medal_gold.png": {
+    "mtime": 1789795658.8262281,
+    "seen": 1789999737.4588106,
+    "ast_hash": "70d0db8326327f12acff36889e3d5f25",
+    "semantic_hash": "70d0db8326327f12acff36889e3d5f25"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/garden/medal_platinum.png": {
+    "mtime": 1789795658.8272326,
+    "seen": 1789999737.4588118,
+    "ast_hash": "cce194a5726da1d2c6ff2dfb507f56cd",
+    "semantic_hash": "cce194a5726da1d2c6ff2dfb507f56cd"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/garden/medal_silver.png": {
+    "mtime": 1789795658.8272326,
+    "seen": 1789999737.458813,
+    "ast_hash": "0530a9c5c1a81092ca6f68238646af5d",
+    "semantic_hash": "0530a9c5c1a81092ca6f68238646af5d"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/inventories/accessory_bag.png": {
+    "mtime": 1789795658.8287387,
+    "seen": 1789999737.458814,
+    "ast_hash": "119e03f9a7a35b551699e08489f51607",
+    "semantic_hash": "119e03f9a7a35b551699e08489f51607"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/inventories/potion_bag.png": {
+    "mtime": 1789795658.8287387,
+    "seen": 1789999737.4588153,
+    "ast_hash": "1284ae149af2200c27d84254463ed0f5",
+    "semantic_hash": "1284ae149af2200c27d84254463ed0f5"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/nav/hotm.png": {
+    "mtime": 1789795658.8287387,
+    "seen": 1789999737.4588165,
+    "ast_hash": "8dc51703e0c4eb67179ee2e5330a0440",
+    "semantic_hash": "8dc51703e0c4eb67179ee2e5330a0440"
+  },
+  "src/main/resources/assets/betterpv/textures/gui/skyblock_xp.png": {
+    "mtime": 1789795658.8297453,
+    "seen": 1789999737.4588177,
+    "ast_hash": "e8ab3299f3bc1ce80dc8022aaf1330f1",
+    "semantic_hash": "e8ab3299f3bc1ce80dc8022aaf1330f1"
+  },
+  "src/main/resources/assets/bomboaddons/icon.png": {
+    "mtime": 1787448432.413645,
+    "seen": 1789999737.458819,
+    "ast_hash": "b51de7b061cd5a5389cec0ef22b0c32c",
+    "semantic_hash": "b51de7b061cd5a5389cec0ef22b0c32c"
+  },
+  "src/main/resources/assets/bomboaddons/textures/gui/hypixel_icon.png": {
+    "mtime": 1786722019.9233277,
+    "seen": 1789999737.45882,
+    "ast_hash": "39f11507b037879e09a2b31afbe5526f",
+    "semantic_hash": "39f11507b037879e09a2b31afbe5526f"
+  },
+  "data/changelog.json": {
+    "mtime": 1791229578.0552444,
+    "seen": 1791229700.9684477,
+    "ast_hash": "04644fc5cd1ebd01f75bcffdad82c9e6",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCombine.java": {
+    "mtime": 1790224758.1413093,
+    "seen": 1791079643.2053378,
+    "ast_hash": "29879549165036a44e7ede93cdb3ab75",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCroesus.java": {
+    "mtime": 1790292988.028567,
+    "seen": 1791079643.2053401,
+    "ast_hash": "d899a0833288075c5f150586e61aea00",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCroesusHud.java": {
+    "mtime": 1790224758.3768153,
+    "seen": 1791079643.205342,
+    "ast_hash": "7f310bbf7e9280d8815ce8894672cdc1",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoExperiments.java": {
+    "mtime": 1790224758.489835,
+    "seen": 1791079643.2053435,
+    "ast_hash": "4f837c83a545ab03bc6e3baacf1dd02f",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoFishing.java": {
+    "mtime": 1790224758.5952978,
+    "seen": 1791079643.205345,
+    "ast_hash": "2a05456f01c94bc877c96d4465a15c87",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/CarnivalAuto.java": {
+    "mtime": 1790224758.72136,
+    "seen": 1791079643.2053463,
+    "ast_hash": "9c05a35d1a60f268f361fbc50a7124f5",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/CroesusHelper.java": {
+    "mtime": 1790224758.8555613,
+    "seen": 1791079643.2053473,
+    "ast_hash": "b35029aedd31ae8590d3658965936d61",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/KuudraPerkClicker.java": {
+    "mtime": 1790224759.0271251,
+    "seen": 1791079643.2053485,
+    "ast_hash": "46b602d9a3dc75d6efe65c3ab364afde",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/automation/SphinxMacro.java": {
+    "mtime": 1790224759.2435787,
+    "seen": 1791079643.20535,
+    "ast_hash": "02f01b73b2b9f13b837d9c21afd522c6",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/camera/FreecamManager.java": {
+    "mtime": 1790275226.663597,
+    "seen": 1791079643.2053514,
+    "ast_hash": "250c234bae51c1029c5a73392847609c",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/dungeons/CroesusProfitTrackerHud.java": {
+    "mtime": 1790224761.6972115,
+    "seen": 1791079643.2053525,
+    "ast_hash": "52d4a67b51857cc43f729875360e4e8e",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/dungeons/DungeonChestProfitHud.java": {
+    "mtime": 1790288429.588937,
+    "seen": 1791079643.2053537,
+    "ast_hash": "0fddd5b9286ef8878c36d14ba910d3ed",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/dungeons/KismetEv.java": {
+    "mtime": 1790224761.9532487,
+    "seen": 1791079643.205355,
+    "ast_hash": "50bdbdd3eddafac3ca4aa9e4e3bdac91",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/BedwarsESP.java": {
+    "mtime": 1790224695.399148,
+    "seen": 1791079643.2053564,
+    "ast_hash": "d925418a1f2537201fee3e3abc5ab946",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/CorpseHighlight.java": {
+    "mtime": 1790224695.4991171,
+    "seen": 1791079643.2053573,
+    "ast_hash": "95b0ae61b23e60a792ffa7feba866d50",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/DisplayESP.java": {
+    "mtime": 1790224695.5891328,
+    "seen": 1791079643.2053585,
+    "ast_hash": "236228d119fb94a350c9f8ec20e449c8",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/GoldenDragonNestFinder.java": {
+    "mtime": 1790224695.6793954,
+    "seen": 1791079643.2053597,
+    "ast_hash": "bd676daf321ebd300441c395b1e94ffc",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/HighlightESP.java": {
+    "mtime": 1791228989.3744905,
+    "seen": 1791229700.9735177,
+    "ast_hash": "b25940579359cd3c4cb531d36f387d94",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/ParticleESP.java": {
+    "mtime": 1790224695.882477,
+    "seen": 1791079643.2053618,
+    "ast_hash": "1727384cdfcf6623c47f585956c338f6",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/ParticleTracker.java": {
+    "mtime": 1790224695.9572163,
+    "seen": 1791079643.2053633,
+    "ast_hash": "587f1969174a4148746c139a6c6257e6",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/PestESP.java": {
+    "mtime": 1790224696.04097,
+    "seen": 1791079643.2053645,
+    "ast_hash": "7027b18c0145b515e72d584101aa5d3c",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/StructureFinder.java": {
+    "mtime": 1790224696.1107407,
+    "seen": 1791079643.2053657,
+    "ast_hash": "ee6031a1d26d24d94ff2eb4bb400f9ac",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/StructureScanner.java": {
+    "mtime": 1790224696.1864421,
+    "seen": 1791079643.2053668,
+    "ast_hash": "655655de7e732e38f0a811f17cdc1f53",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/esp/TargetPests.java": {
+    "mtime": 1790224696.2686982,
+    "seen": 1791079643.2053683,
+    "ast_hash": "f99d977cca50dfe11da40e4c3b3849aa",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/hider/EntityBlockHider.java": {
+    "mtime": 1790224886.740258,
+    "seen": 1791079643.2053697,
+    "ast_hash": "5b64c67fd9c45abe12a66d986193383a",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/hider/EntityBlockHiderScreen.java": {
+    "mtime": 1790224886.7437727,
+    "seen": 1791079643.2053707,
+    "ast_hash": "0eb8e5713bd233fff128f6f45b3d2815",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/cheat/sequences/AutoSequenceExecutor.java": {
+    "mtime": 1791129112.8348298,
+    "seen": 1791143068.3148155,
+    "ast_hash": "2db37c4821812f0562b893c3547e0347",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/flavor/cheat/CheatFlavor.java": {
+    "mtime": 1790274937.1454809,
+    "seen": 1791079643.2053728,
+    "ast_hash": "3609d8fe1808269f629a818fb072f7de",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/mixin/cheat/FreecamDebugPositionMixin.java": {
+    "mtime": 1790227827.4712148,
+    "seen": 1791079643.2053742,
+    "ast_hash": "b715fd31ff6ac611fb6c1f90e191452b",
+    "semantic_hash": ""
+  },
+  "src/cheat/java/me/bombo/bomboaddons/mixin/cheat/FreecamEntityVisibilityMixin.java": {
+    "mtime": 1790563758.5450175,
+    "seen": 1791079643.2053752,
+    "ast_hash": "c1c8789a538afe45769af59dd3ca6ede",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/Constants.java": {
+    "mtime": 1791164557.763404,
+    "seen": 1791164676.502927,
+    "ast_hash": "c56c72a58e452992ce314386d3cb6a62",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/StorageChestWaypoints.java": {
+    "mtime": 1790276115.8349476,
+    "seen": 1791079643.2057498,
+    "ast_hash": "8f3c443ffdeb95cc541040029ac9536b",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/discord/DiscordIpcManager.java": {
+    "mtime": 1791160401.4024343,
+    "seen": 1791160959.8241363,
+    "ast_hash": "e2a049965d41ee56c9ee7d163556f5f8",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/discord/DiscordVoiceHud.java": {
+    "mtime": 1791163183.5428092,
+    "seen": 1791163382.7129443,
+    "ast_hash": "c09eefff307f1b91757d01c6c29c9656",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/DungeonProfitLog.java": {
+    "mtime": 1790292969.5886707,
+    "seen": 1791079643.205791,
+    "ast_hash": "ba2138b196e75ee7c382ad30af851b11",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/DungeonProfitScreen.java": {
+    "mtime": 1790293273.4805658,
+    "seen": 1791079643.205792,
+    "ast_hash": "04686a51ce5d6fa3fa4c0790c61babf6",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/dungeons/RtcaChatFormatter.java": {
+    "mtime": 1790563702.9014351,
+    "seen": 1791079643.205794,
+    "ast_hash": "de24b1c4a07a0ea94870f16ac5355317",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/misc/MayorChatFormatter.java": {
+    "mtime": 1790617383.4087505,
+    "seen": 1791079643.2058148,
+    "ast_hash": "de3dcb42ca24a365dd32acab4648a580",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/screenshare/ScreenshareManager.java": {
+    "mtime": 1791149765.3998244,
+    "seen": 1791155459.5351164,
+    "ast_hash": "387c1910dac88457c22e359075361f20",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/spotify/LyricsManager.java": {
+    "mtime": 1791229468.666929,
+    "seen": 1791229701.0545778,
+    "ast_hash": "8c5e35a454982e9a263c9db9f3b8920a",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/spotify/LyricsScreen.java": {
+    "mtime": 1791151618.077096,
+    "seen": 1791155459.5353687,
+    "ast_hash": "ac39e332c93b8a8ef71ff52d66128035",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/spotify/SpotifyHud.java": {
+    "mtime": 1791160813.8574355,
+    "seen": 1791160959.8283844,
+    "ast_hash": "fc5d9c227e7cdd2606700f54ffe2cb17",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/spotify/SpotifyManager.java": {
+    "mtime": 1791160767.5706131,
+    "seen": 1791160959.8283873,
+    "ast_hash": "c74a45665191eb474384da557cbc9e1f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/spotify/SpotifyWin32Handler.java": {
+    "mtime": 1790905573.0523498,
+    "seen": 1791079643.205829,
+    "ast_hash": "6bcd86ffdc5f167551ef291e41588544",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/storageoverlay/BackpackPreview.java": {
+    "mtime": 1791091598.0249927,
+    "seen": 1791143068.362868,
+    "ast_hash": "f7303f43f73680fe8edbae7d1712125b",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/storageoverlay/RenameStorageScreen.java": {
+    "mtime": 1790994169.1248262,
+    "seen": 1791079643.205831,
+    "ast_hash": "00d1a026751a4c31052bdff5cee28058",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/storageoverlay/SearchableGridWidget.java": {
+    "mtime": 1791119590.629508,
+    "seen": 1791143068.3629935,
+    "ast_hash": "e44afb28371ffe4798189baceff8e2bb",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreen.java": {
+    "mtime": 1791119605.134408,
+    "seen": 1791143068.3629951,
+    "ast_hash": "f8d426088a278c48a896f2965c703a72",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/storageoverlay/StorageOverlayScreenHandler.java": {
+    "mtime": 1790633829.643407,
+    "seen": 1791079643.2058344,
+    "ast_hash": "b38ba0c57da53daf2d3fd4867e1ba08c",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/flavor/Flavor.java": {
+    "mtime": 1790224591.7777562,
+    "seen": 1791079643.2058423,
+    "ast_hash": "7a30e84638108288c868ed1f959a2c0f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/flavor/FlavorBridge.java": {
+    "mtime": 1790227443.7525098,
+    "seen": 1791079643.2058434,
+    "ast_hash": "5a74143c66ad71be464acea07447ed2e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/flavor/FlavorMigration.java": {
+    "mtime": 1790224591.8855584,
+    "seen": 1791079643.2058444,
+    "ast_hash": "833107f572865da84df2504c13f106a1",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/flavor/LegitFlavor.java": {
+    "mtime": 1790227443.7555814,
+    "seen": 1791079643.2058458,
+    "ast_hash": "d4341127662d2ffe1e9c979161c1f5e2",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/ApiHistoryScreen.java": {
+    "mtime": 1790288888.5804753,
+    "seen": 1791079643.2058496,
+    "ast_hash": "c0787d1230fe91824b6f6eba99e42892",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/CmdScreen.java": {
+    "mtime": 1790276263.3157191,
+    "seen": 1791079643.2058518,
+    "ast_hash": "7bbc6b87ce2b39c43a951493fc43a1a9",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/UpdateVersionsScreen.java": {
+    "mtime": 1790971861.2641134,
+    "seen": 1791079643.2058651,
+    "ast_hash": "13c06537f994b0782cecf8a7cd97afac",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/config/BomboConfigScreen.java": {
+    "mtime": 1791071609.0121384,
+    "seen": 1791079643.2058666,
+    "ast_hash": "7e138bd7283b1021d25ce8a425ac9f56",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/config/ConfigCustomWidgets.java": {
+    "mtime": 1790575320.582363,
+    "seen": 1791079643.205869,
+    "ast_hash": "8d0d99c5afd12c054236352e3567d968",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/config/ConfigItem.java": {
+    "mtime": 1791229194.429711,
+    "seen": 1791229701.063214,
+    "ast_hash": "b4e95c21ed44e433b822d00a04303be1",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/config/ConfigUITheme.java": {
+    "mtime": 1790224592.9037025,
+    "seen": 1791079643.205873,
+    "ast_hash": "ca4161925fd9c00b33570a04f615b7ff",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/config/DungeonPricesScreen.java": {
+    "mtime": 1790224738.694463,
+    "seen": 1791079643.205874,
+    "ast_hash": "6a772d93132024a482dfa03600817c8e",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/AbstractClientPlayerMixin.java": {
+    "mtime": 1790627456.5311582,
+    "seen": 1791079643.2058933,
+    "ast_hash": "e57e470ad92528b247eee431ee735bcc",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/AbstractContainerMenuMixin.java": {
+    "mtime": 1791078665.5100572,
+    "seen": 1791079643.2058947,
+    "ast_hash": "7ca7ebdf4c5a88876e8711d4753eee67",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/AvatarRendererMixin.java": {
+    "mtime": 1790608474.816921,
+    "seen": 1791079643.2059033,
+    "ast_hash": "871c23a8bf641a09debb175b4fa8abb4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ClientBrandRetrieverMixin.java": {
+    "mtime": 1790292532.1243076,
+    "seen": 1791079643.2059186,
+    "ast_hash": "9762b38ec414fce69fd92f9f5bed35e4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/FontMixin.java": {
+    "mtime": 1790608445.6345184,
+    "seen": 1791079643.2059333,
+    "ast_hash": "b39087158a3a6f51e127d61ad5c4b6f4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/GameRendererMixin.java": {
+    "mtime": 1790633854.1214392,
+    "seen": 1791079643.205934,
+    "ast_hash": "f3a8c3cc748a3b6d26a5f79040e47c65",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/HudMixin.java": {
+    "mtime": 1790618340.2876768,
+    "seen": 1791079643.2059371,
+    "ast_hash": "e82641b3d7374426599fc19f915427ab",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ItemInHandRendererMixin.java": {
+    "mtime": 1790624082.4875503,
+    "seen": 1791079643.20594,
+    "ast_hash": "fb205a729b43384fb9d29b199300e6fc",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/LevelExtractorMixin.java": {
+    "mtime": 1790624070.402459,
+    "seen": 1791079643.205947,
+    "ast_hash": "bb846a57e34d51e48cf7bb747d6e4c6f",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/MenuScreensConstructorMixin.java": {
+    "mtime": 1791064766.1615374,
+    "seen": 1791079643.2059503,
+    "ast_hash": "ded8b941d507144dbb458e9246e18ef1",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/PlayerHeadSpecialRendererMixin.java": {
+    "mtime": 1790276469.4220767,
+    "seen": 1791079643.205959,
+    "ast_hash": "04ca9d6d222f1e9ca3d468d90bdb680b",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/ApiHistory.java": {
+    "mtime": 1790288873.2515204,
+    "seen": 1791079643.2059789,
+    "ast_hash": "a8fc6444572e1b3f42741efe91284853",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/MessageScheduler.java": {
+    "mtime": 1790298859.8277283,
+    "seen": 1791079643.2059906,
+    "ast_hash": "43a13e87ca6c06a2bc51569f1c0199ef",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/NoObfuscate.java": {
+    "mtime": 1790993503.7864485,
+    "seen": 1791079643.2059927,
+    "ast_hash": "f65d6f47da726b5becde9949e12a2edc",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/SpectatorCamManager.java": {
+    "mtime": 1790627463.2314026,
+    "seen": 1791079643.2059946,
+    "ast_hash": "bf9f031ddc4e839d67538156f6c0771f",
+    "semantic_hash": ""
+  },
+  "src/client/resources/assets/bomboaddons/lang/en_us.json": {
+    "mtime": 1790905655.2324042,
+    "seen": 1791079643.2080443,
+    "ast_hash": "5754f91c746780850c241c309d719e7c",
+    "semantic_hash": ""
+  },
+  "src/flavor/cheat/bomboclient.base.mixins.json": {
+    "mtime": 1790956362.4379814,
+    "seen": 1791079643.20861,
+    "ast_hash": "3368bd0f1beb654d1962bcb296209df4",
+    "semantic_hash": ""
+  },
+  "src/flavor/cheat/bomboclient.client.mixins.json": {
+    "mtime": 1790227961.520827,
+    "seen": 1791079643.2086115,
+    "ast_hash": "405cc5f898540f7c73fa54431031de81",
+    "semantic_hash": ""
+  },
+  "src/flavor/cheat/fabric.mod.json": {
+    "mtime": 1790953503.9146032,
+    "seen": 1791079643.2086132,
+    "ast_hash": "66b31932811f67aac11adc49ee6dd84e",
+    "semantic_hash": ""
+  },
+  ".github/workflows/build.yml": {
+    "mtime": 1790627978.7995803,
+    "seen": 1791079643.2137015,
+    "ast_hash": "ea488d45790915941cedf68f685e89bc",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1791229612.342517,
+    "seen": 1791229701.099013,
+    "ast_hash": "7ecefb088d0279175f11b4868743d448",
+    "semantic_hash": ""
+  },
+  "CHANGELOG.md": {
+    "mtime": 1791229565.247233,
+    "seen": 1791229701.099028,
+    "ast_hash": "afe21feb8ad5536746ea500332dd3280",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1790806512.7769172,
+    "seen": 1791079643.2137058,
+    "ast_hash": "e8d8dad58c1286685aa75acd36f4f256",
+    "semantic_hash": ""
+  },
+  "continue.md": {
+    "mtime": 1791133263.9781482,
+    "seen": 1791143068.3898125,
+    "ast_hash": "6fff3a1c70e0b65487e6710c5d8036db",
+    "semantic_hash": ""
+  },
+  "data/lyrics.html": {
+    "mtime": 1791071404.5971527,
+    "seen": 1791079643.213708,
+    "ast_hash": "88b724ee2c4a2750ae1232a5dd59459b",
+    "semantic_hash": ""
+  },
+  "data/screenshare.html": {
+    "mtime": 1791126670.677083,
+    "seen": 1791143068.3899345,
+    "ast_hash": "fcbcb8a2cc0b5a0270604c64b0f0ad80",
+    "semantic_hash": ""
+  },
+  "docs/FEATURE_AUDIT.md": {
+    "mtime": 1790120303.4333608,
+    "seen": 1791079643.2137098,
+    "ast_hash": "748cec493609d77ff6204b25b3c9a366",
+    "semantic_hash": ""
+  },
+  "docs/HANDOFF_KNOWLEDGE.md": {
+    "mtime": 1791140438.3745203,
+    "seen": 1791143068.3900504,
+    "ast_hash": "7016744d224795c2d21f9b304cbdb706",
+    "semantic_hash": ""
+  },
+  "src/client/resources/assets/bomboaddons/textures/gui/spotify.png": {
+    "mtime": 1790627063.6671128,
+    "seen": 1791079643.2151551,
+    "ast_hash": "98b343639ab3c77ce97461e3eaa15c45",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/gui/auto/AutoSequenceVisualScreen.java": {
+    "mtime": 1791129907.656288,
+    "seen": 1791143068.3662927,
+    "ast_hash": "4a5e81a0d525de2e1b1f95b1e9d502ab",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/spotify/LyricsHud.java": {
+    "mtime": 1791154279.818008,
+    "seen": 1791155459.5353653,
+    "ast_hash": "104cc715b5ae24b9643e079a89ec743a",
+    "semantic_hash": ""
+  },
+  "docs/DISCORD_RPC_CAPABILITIES.md": {
+    "mtime": 1791152870.2198782,
+    "seen": 1791155459.5685642,
+    "ast_hash": "2a205b62a324150ce26f4adcf816e471",
+    "semantic_hash": ""
+  },
+  "features.md": {
+    "mtime": 1791159829.2907114,
+    "seen": 1791160959.8585372,
+    "ast_hash": "d834f45a08558b3fb028dbdcdeedecd4",
+    "semantic_hash": ""
+  }
+}

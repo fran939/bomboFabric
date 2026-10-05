@@ -218,7 +218,7 @@ public class HighlightESP {
          return true;
       if (s.dungeonKeyHighlight && s.dungeonKeyTracers && (matchesIsland("Catacombs") || me.bombo.bomboaddons.SkyblockUtils.isInDungeon()))
          return true;
-      if (s.dungeonStarredMobHighlight && s.dungeonStarredMobTracers)
+      if (s.dungeonStarredMobHighlight && s.dungeonStarredMobTracers && (matchesIsland("Catacombs") || me.bombo.bomboaddons.SkyblockUtils.isInDungeon()))
          return true;
       if (s.customTracers != null && !s.customTracers.isEmpty())
          return true;
@@ -247,7 +247,7 @@ public class HighlightESP {
          return;
       }
       BomboConfig.Settings s = BomboConfig.get();
-      if (s == null || (!s.highlightsEnabled && !s.dungeonKeyHighlight && !s.tracerTestAllEntities && !s.cheeseTracer && (s.customTracers == null || s.customTracers.isEmpty()))) {
+      if (s == null || (!s.highlightsEnabled && !s.dungeonKeyHighlight && !s.dungeonStarredMobHighlight && !s.tracerTestAllEntities && !s.cheeseTracer && (s.customTracers == null || s.customTracers.isEmpty()))) {
          activeTracerEntityIds.clear();
          activeHeadHighlightEntityIds.clear();
          ACTIVE_TRACER_INFOS.clear();
@@ -463,7 +463,8 @@ public class HighlightESP {
 
       String finalCombined = combinedName.toString();
       String nametag = null;
-      if (!(self instanceof Player) && !(self instanceof ArmorStand)) {
+      Minecraft mcInstance = Minecraft.getInstance();
+      if (!(self instanceof ArmorStand) && (mcInstance == null || self != mcInstance.player)) {
          nametag = HighlightESP.getNearbyNametagName(self);
       }
       TargetPests.EntityInfoCache newValue = new TargetPests.EntityInfoCache(now, finalCombined, nametag);
@@ -477,7 +478,7 @@ public class HighlightESP {
    public static String getNearbyNametagName(Entity target) {
       if (target == null || target.level() == null)
          return null;
-      AABB box = target.getBoundingBox().inflate(0.5, 2.5, 0.5);
+      AABB box = target.getBoundingBox().inflate(1.2, 3.2, 1.2);
       for (Entity e2 : target.level().getEntities(target, box)) {
          if (!(e2 instanceof ArmorStand) || !e2.hasCustomName())
             continue;
@@ -651,7 +652,8 @@ public class HighlightESP {
          if (s.dungeonKeyHighlight && (matchesIsland("Catacombs") || me.bombo.bomboaddons.SkyblockUtils.isInDungeon())) {
             String headTex = TargetPests.getHeadTextureValue(self);
             String skullHash = headTex != null ? TargetPests.extractTextureHash(headTex) : null;
-            boolean isBloodKey = skullHash != null && skullHash.equalsIgnoreCase("e49ec7d82b1415acae2059f78cd1d1754b9de9b18ca59f609024c4af843d4d24");
+            boolean isBloodKey = skullHash != null && (skullHash.equalsIgnoreCase("e49ec7d82b1415acae2059f78cd1d1754b9de9b18ca59f609024c4af843d4d24")
+                  || skullHash.equalsIgnoreCase("63438555e899bd9a051a95dbea49eb2ecfa52a69dbba8998f3673819e277fdf5"));
             boolean isWitherKey = skullHash != null && skullHash.equalsIgnoreCase("20de5e8974940375934d32f71c91ad2d5728d38e51647dcc8f39206c099a54c2");
             if (self.hasCustomName()) {
                String cName = self.getCustomName().getString();
@@ -663,8 +665,7 @@ public class HighlightESP {
             }
             if (isBloodKey || isWitherKey) {
                int keyColor = BomboRenderUtils.colorNameToHex(s.dungeonKeyColor != null ? s.dungeonKeyColor : "GOLD");
-               boolean headOnly = (self instanceof ArmorStand);
-               return new EntityHighlightInfo(now, true, keyColor, s.dungeonKeyTracers, keyColor, true, headOnly);
+               return new EntityHighlightInfo(now, true, keyColor, s.dungeonKeyTracers, keyColor, true, false);
             }
          }
 
@@ -676,7 +677,8 @@ public class HighlightESP {
                   isStarred = true;
                }
             }
-            if (!isStarred && !(self instanceof Player) && !(self instanceof ArmorStand)) {
+            Minecraft mcStar = Minecraft.getInstance();
+            if (!isStarred && !(self instanceof ArmorStand) && (mcStar == null || self != mcStar.player)) {
                TargetPests.EntityInfoCache cache = HighlightESP.getCachedInfo(self);
                String nametag = cache != null ? cache.nametagName : null;
                if (nametag != null && (nametag.contains("✯") || nametag.contains("★") || nametag.contains("✪") || nametag.contains("☆"))) {
