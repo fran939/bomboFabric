@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.93] - 2026-10-05 (Beta)
+
+### Features
+- **Spotify Artist Verification (`LyricsManager`):** Strict artist similarity matching for iTunes and Deezer searches and lyrics candidates, preventing songs with identical titles (such as *Déjame entrar* by Rauw Alejandro vs Carlos Vives) from displaying the wrong album artwork or lyrics.
+- **Config Organizer Multi-Feature Selection & Drag (`BomboOrderScreen`):** Enabled `Shift + Click` range selection and `Ctrl + Click` toggle selection on feature cards, allowing selecting multiple features and dragging them all together into any target category.
+- **Config Organizer Custom Search Tags (`FeatureOrganizerManager`, `BomboOrderScreen`):** Added tagging support for categories and features. Right-click any category or feature to add custom search tags (e.g. adding `garden` to `Farming`), so searching tags immediately displays the matching category and its features.
+- **Config Organizer Multi-Delete & Full Undo System (`BomboOrderScreen`):** `Ctrl + W` deletes all currently selected categories at once (safely relocating their features to `Uncategorized`), and `Ctrl + Z` reverts the last change (deletion, move, reorder, tags).
+- **Performance Screen High-FPS Recalibration (`PerformanceScreen`):** Re-calibrated HUD module CPU load bar thresholds from 5.0 ms/s to 30.0 ms/s, eliminating false red alerts at 400+ FPS.
+
+### Bug Fixes
+- **Spotify Deezer Cover Fallback (`LyricsManager`):** Automatically searches Deezer with strict artist verification when iTunes returns mismatched or empty results, ensuring reliable artwork for Spanish and Latin songs.
+- **Discord Voice HUD Idle Check (`DiscordVoiceHud`):** Skips HUD rendering when `discordHudOnlyInCall` is enabled and the player is not connected to a voice channel, slashing idle CPU overhead.
+- **Changelog Screen Spacing (`ChangelogScreen`):** Increased line height, card padding, and vertical spacing to give patch notes clean visual breathing room.
+
 ## [26.2.28.92] - 2026-10-05 (Beta)
 
 ### Features

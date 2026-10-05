@@ -70,8 +70,13 @@ public class LyricsManager {
             String syncType,
             String preview,
             String rawData,
-            List<LyricsLine> lines
-    ) {}
+            List<LyricsLine> lines,
+            String artist
+    ) {
+        public LyricCandidate(String id, String provider, String syncType, String preview, String rawData, List<LyricsLine> lines) {
+            this(id, provider, syncType, preview, rawData, lines, "");
+        }
+    }
 
     private static volatile String activeTrack = "";
     private static volatile String activeArtist = "";
@@ -467,9 +472,15 @@ public class LyricsManager {
                 }
             }
 
-            // Sort: Primary priority is sync quality: Word-Synced (3) > Line-Synced (2) > Plain/Unsynced (1) > None (0)
+            // Sort: Primary priority is artist accuracy, then sync quality: Word-Synced (3) > Line-Synced (2) > Plain/Unsynced (1) > None (0)
             String pref = BomboConfig.get().lyricsPreferredProvider != null ? BomboConfig.get().lyricsPreferredProvider.trim().toLowerCase(Locale.ROOT) : "auto";
             unique.sort((a, b) -> {
+                boolean aArtistMatch = isArtistMatch(cleanArtist, a.artist());
+                boolean bArtistMatch = isArtistMatch(cleanArtist, b.artist());
+                if (aArtistMatch != bArtistMatch) {
+                    return aArtistMatch ? -1 : 1;
+                }
+
                 int scoreA = a.syncType().contains("Word") ? 3 : (a.syncType().contains("Line") ? 2 : 1);
                 int scoreB = b.syncType().contains("Word") ? 3 : (b.syncType().contains("Line") ? 2 : 1);
                 if (scoreA != scoreB) {
@@ -521,7 +532,7 @@ public class LyricsManager {
         try {
             String query = (cleanTrack + " " + cleanArtist).trim();
             String itunesUrl = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
-                    + "&entity=song&limit=1";
+                    + "&entity=song&limit=5";
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(itunesUrl))
                     .header("User-Agent", "Mozilla/5.0")
@@ -532,21 +543,26 @@ public class LyricsManager {
             if (epoch != currentTrackEpoch.get()) return;
             if (resp.statusCode() == 200) {
                 JsonObject itunesJson = JsonParser.parseString(resp.body()).getAsJsonObject();
-                if (itunesJson.has("results") && itunesJson.getAsJsonArray("results").size() > 0) {
-                    JsonObject songObj = itunesJson.getAsJsonArray("results").get(0).getAsJsonObject();
-                    if (songObj.has("artworkUrl100")) {
-                        downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"), epoch);
-                        found = true;
+                if (itunesJson.has("results")) {
+                    for (JsonElement el : itunesJson.getAsJsonArray("results")) {
+                        if (!el.isJsonObject()) continue;
+                        JsonObject songObj = el.getAsJsonObject();
+                        String art = songObj.has("artistName") ? songObj.get("artistName").getAsString() : "";
+                        if (isArtistMatch(cleanArtist, art) && songObj.has("artworkUrl100")) {
+                            downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"), epoch);
+                            found = true;
+                            break;
+                        }
                     }
                 }
             }
         } catch (Throwable ignored) {}
 
-        // Fallback 1: Deezer API
+        // Fallback 1: Deezer API with strict artist match
         if (!found && epoch == currentTrackEpoch.get()) {
             try {
                 String query = (cleanTrack + " " + cleanArtist).trim();
-                String deezerUrl = "https://api.deezer.com/search?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&limit=1";
+                String deezerUrl = "https://api.deezer.com/search?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&limit=5";
                 HttpRequest dReq = HttpRequest.newBuilder()
                         .uri(URI.create(deezerUrl))
                         .header("User-Agent", "Mozilla/5.0")
@@ -557,16 +573,24 @@ public class LyricsManager {
                 if (epoch != currentTrackEpoch.get()) return;
                 if (dResp.statusCode() == 200) {
                     JsonObject dJson = JsonParser.parseString(dResp.body()).getAsJsonObject();
-                    if (dJson.has("data") && dJson.getAsJsonArray("data").size() > 0) {
-                        JsonObject trackObj = dJson.getAsJsonArray("data").get(0).getAsJsonObject();
-                        if (trackObj.has("album") && trackObj.get("album").isJsonObject()) {
-                            JsonObject alb = trackObj.getAsJsonObject("album");
-                            String coverUrl = alb.has("cover_big") && !alb.get("cover_big").isJsonNull()
-                                    ? alb.get("cover_big").getAsString()
-                                    : (alb.has("cover_medium") && !alb.get("cover_medium").isJsonNull() ? alb.get("cover_medium").getAsString() : null);
-                            if (coverUrl != null && !coverUrl.isEmpty()) {
-                                downloadAndRegisterAlbumArt(coverUrl, epoch);
-                                found = true;
+                    if (dJson.has("data")) {
+                        for (JsonElement el : dJson.getAsJsonArray("data")) {
+                            if (!el.isJsonObject()) continue;
+                            JsonObject trackObj = el.getAsJsonObject();
+                            String dArtist = "";
+                            if (trackObj.has("artist") && trackObj.get("artist").isJsonObject()) {
+                                dArtist = trackObj.getAsJsonObject("artist").has("name") ? trackObj.getAsJsonObject("artist").get("name").getAsString() : "";
+                            }
+                            if (isArtistMatch(cleanArtist, dArtist) && trackObj.has("album") && trackObj.get("album").isJsonObject()) {
+                                JsonObject alb = trackObj.getAsJsonObject("album");
+                                String coverUrl = alb.has("cover_big") && !alb.get("cover_big").isJsonNull()
+                                        ? alb.get("cover_big").getAsString()
+                                        : (alb.has("cover_medium") && !alb.get("cover_medium").isJsonNull() ? alb.get("cover_medium").getAsString() : null);
+                                if (coverUrl != null && !coverUrl.isEmpty()) {
+                                    downloadAndRegisterAlbumArt(coverUrl, epoch);
+                                    found = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -702,7 +726,7 @@ public class LyricsManager {
         try {
             String query = (cleanTrack + " " + cleanArtist).trim();
             String itunesUrl = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
-                    + "&entity=song&limit=1";
+                    + "&entity=song&limit=5";
             HttpRequest itunesReq = HttpRequest.newBuilder()
                     .uri(URI.create(itunesUrl))
                     .header("User-Agent", "Mozilla/5.0")
@@ -713,9 +737,19 @@ public class LyricsManager {
             if (itunesResp.statusCode() != 200) return;
 
             JsonObject itunesJson = JsonParser.parseString(itunesResp.body()).getAsJsonObject();
-            if (!itunesJson.has("results") || itunesJson.getAsJsonArray("results").size() == 0) return;
+            if (!itunesJson.has("results")) return;
 
-            JsonObject songObj = itunesJson.getAsJsonArray("results").get(0).getAsJsonObject();
+            JsonObject songObj = null;
+            for (JsonElement el : itunesJson.getAsJsonArray("results")) {
+                if (!el.isJsonObject()) continue;
+                JsonObject sObj = el.getAsJsonObject();
+                String art = sObj.has("artistName") ? sObj.get("artistName").getAsString() : "";
+                if (isArtistMatch(cleanArtist, art)) {
+                    songObj = sObj;
+                    break;
+                }
+            }
+            if (songObj == null) return;
             long trackId = songObj.get("trackId").getAsLong();
 
             String lyricsUrl = "https://lyrics.paxsenix.org/apple-music/lyrics?id=" + trackId;
@@ -816,7 +850,8 @@ public class LyricsManager {
                             hasWords ? "Word-Synced" : "Line-Synced",
                             preview,
                             formatCleanLrc(lines),
-                            lines
+                            lines,
+                            cleanArtist
                     ));
                 }
             }
@@ -833,7 +868,8 @@ public class LyricsManager {
                             hasWords ? "Word-Synced" : "Line-Synced",
                             preview,
                             formatCleanLrc(lines),
-                            lines
+                            lines,
+                            cleanArtist
                     ));
                 }
             }
@@ -891,7 +927,7 @@ public class LyricsManager {
                     if (!lines.isEmpty()) {
                         boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
                         String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
-                        out.add(new LyricCandidate("lrclib-exact-" + id, "LrcLib", hasWords ? "Word-Synced" : "Line-Synced", preview, synced, lines));
+                        out.add(new LyricCandidate("lrclib-exact-" + id, "LrcLib", hasWords ? "Word-Synced" : "Line-Synced", preview, synced, lines, cleanArtist));
                     }
                 }
             }
@@ -920,6 +956,10 @@ public class LyricsManager {
                         if (!itemEl.isJsonObject()) continue;
                         JsonObject obj = itemEl.getAsJsonObject();
                         long id = obj.has("id") ? obj.get("id").getAsLong() : System.currentTimeMillis();
+                        String itemArtist = obj.has("artistName") && !obj.get("artistName").isJsonNull() ? obj.get("artistName").getAsString() : "";
+                        if (!cleanArtist.isEmpty() && !isArtistMatch(cleanArtist, itemArtist)) {
+                            continue; // Skip candidates from mismatched artists
+                        }
 
                         String synced = obj.has("syncedLyrics") && !obj.get("syncedLyrics").isJsonNull()
                                 ? obj.get("syncedLyrics").getAsString() : "";
@@ -940,7 +980,8 @@ public class LyricsManager {
                                             hasWords ? "Word-Synced" : "Line-Synced",
                                             preview,
                                             synced,
-                                            lines
+                                            lines,
+                                            itemArtist
                                     ));
                                     syncedCount++;
                                 }
@@ -966,7 +1007,8 @@ public class LyricsManager {
                                             "Plain",
                                             preview,
                                             plain,
-                                            lines
+                                            lines,
+                                            itemArtist
                                     ));
                                     plainCount++;
                                 }
@@ -1338,5 +1380,33 @@ public class LyricsManager {
                 .replaceAll("(?i)\\s*\\[official.*?\\]", "")
                 .replaceAll("(?i)\\s*- remastered.*", "")
                 .trim();
+    }
+
+    private static String normalizeForMatch(String s) {
+        if (s == null) return "";
+        return java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replaceAll("[^a-zA-Z0-9]", "")
+                .toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean isArtistMatch(String expectedArtist, String candidateArtist) {
+        if (expectedArtist == null || expectedArtist.isEmpty()) return true;
+        if (candidateArtist == null || candidateArtist.isEmpty()) return false;
+        String nExp = normalizeForMatch(expectedArtist);
+        String nCand = normalizeForMatch(candidateArtist);
+        if (nExp.isEmpty()) return true;
+        if (nCand.isEmpty()) return false;
+        if (nExp.equals(nCand)) return true;
+        if (nExp.contains(nCand) || nCand.contains(nExp)) return true;
+
+        String[] expParts = expectedArtist.toLowerCase(Locale.ROOT).split("[,&/]|\\bfeat\\b|\\bft\\b");
+        for (String p : expParts) {
+            String np = normalizeForMatch(p);
+            if (!np.isEmpty() && (nCand.contains(np) || np.contains(nCand))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

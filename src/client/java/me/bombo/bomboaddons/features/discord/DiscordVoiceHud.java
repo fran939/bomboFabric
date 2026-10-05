@@ -94,7 +94,7 @@ public class DiscordVoiceHud {
 
         BomboConfig.Settings s = BomboConfig.get();
         if (s == null || !s.discordHudEnabled) return;
-        if (s.discordHudOnlyInCall && (!DiscordIpcManager.isConnected() || !DiscordIpcManager.isInVoice())) return;
+        if (s.discordHudOnlyInCall && !DiscordIpcManager.isInVoice()) return;
 
         try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Discord Voice")) {
             drawHud(g, s.discordHudX, s.discordHudY, s.discordHudScale, false);
@@ -156,7 +156,7 @@ public class DiscordVoiceHud {
         g.pose().scale(scale, scale);
 
         long now = System.currentTimeMillis();
-        if (now - lastHudUpdate >= 16L || isDummy || cachedLines.isEmpty()) {
+        if (now - lastHudUpdate >= 250L || isDummy || cachedLines.isEmpty()) {
             lastHudUpdate = now;
             String channel = isDummy ? "General (Voice)" : (DiscordIpcManager.isInVoice() ? DiscordIpcManager.getCurrentChannelName() : "Not in Call");
             List<String> lines = new ArrayList<>();

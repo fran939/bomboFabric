@@ -1,97 +1,101 @@
 [
   {
+    "version": "26.2.28.93",
+    "date": "2026-10-05",
+    "changes": [
+      "+ Spotify Artist Verification - Strict artist matching for songs, preventing incorrect lyrics and album covers",
+      "+ Config Organizer Multi-Feature Drag - Shift+Click and Ctrl+Click multiple features to select and drag them all together into categories",
+      "+ Config Organizer Custom Tags - Right-click categories and features to add search tags (e.g. searching 'garden' finds Farming features)",
+      "+ Config Organizer Multi-Delete & Undo - Ctrl+W deletes all selected categories, and Ctrl+Z undoes the last change",
+      "+ Performance Screen Realistic CPU Meter - Calibrated HUD load percentages to prevent false red alerts at high frame rates",
+      "~ Spotify Artwork Fallback - Automatically falls back to Deezer when iTunes does not match the track artist",
+      "~ Discord HUD In-Call Check - Skips rendering when not in a voice call to reduce idle CPU usage",
+      "~ Changelog Screen Spacing - Increased line height, card padding, and spacing for a cleaner look"
+    ]
+  },
+  {
     "version": "26.2.28.92",
     "date": "2026-10-05",
     "changes": [
-      "+ Config Organizer Browser Navigation - Support multi-category selection via Ctrl+Click and Shift+Click (e.g. 1..5) with active tab badges and combined feature view",
-      "+ Browser Keyboard Shortcuts - Added Ctrl+T to create a new category, Ctrl+W to close category tab, Ctrl+1..8 to switch tabs, Ctrl+9 for last tab, and Ctrl+Tab to cycle tabs",
-      "+ Orphaned Features Recovery - Restored visibility for features in previously removed categories by automatically ensuring Uncategorized category is active in sidebar",
-      "~ Discord & Spotify Resource Optimization - Replaced ephemeral HttpClients with shared static instance, cutting thread pool bloat (slashing thread count from 90)",
-      "~ Discord Render Spike Elimination - Removed synchronous disk log scanning from render thread, stopping 3.67ms frame spikes on Discord HUD",
-      "~ Discord Background Log Throttling - Throttled desktop log polling to 2.5s and cached file timestamps, eliminating redundant 64KB disk reads every 400ms",
-      "~ Spotify HUD Font Caching - Cached character and space widths in lyrics render loop, cutting string allocations and glyph lookups at high framerates",
-      "~ Changelog Screen Viewport Scissoring - Added strict scissor box clipping, completely fixing release cards and borders leaking outside the top and bottom",
-      "~ Full Changelog Formatting - Rewrote and styled all historical release notes with color-coded bullets (+ Feature, ~ Fix, - Removed) and bold titles"
+      "+ Config Organizer Browser Navigation - Multi-category selection via Ctrl+Click and Shift+Click with combined feature view",
+      "+ Browser Keyboard Shortcuts - Added Ctrl+T for new category, Ctrl+W to close tab, Ctrl+1..8 to switch tabs, and Ctrl+Tab to cycle",
+      "+ Orphaned Features Recovery - Restored features from deleted categories by automatically keeping Uncategorized active",
+      "~ Discord & Spotify Performance - Reduced background thread usage and memory overhead for Discord and Spotify",
+      "~ Discord HUD Lag Spikes - Optimized voice HUD rendering to eliminate frame stutter",
+      "~ Discord Background Log Inspection - Reduced disk reads and throttled voice status checks",
+      "~ Spotify HUD Lyrics Smoothness - Optimized text rendering in synced lyrics for smooth high-FPS display",
+      "~ Changelog Window Viewport - Fixed release cards overflowing outside the window borders",
+      "~ Changelog Formatting - Cleaned up and standardized release notes styling"
     ]
   },
   {
     "version": "26.2.28.91",
     "date": "2026-10-05",
     "changes": [
-      "+ Spotify Cover Command - Added /b spotify cover and /b cover to instantly refetch and reload album artwork",
-      "+ Deezer Artwork Fallback - Added Deezer API cover search fallback for regional, Spanish, and tracks missing from iTunes",
-      "+ Config Organizer Uncategorized - Deleting a category in /b order now automatically relocates all contained features to Uncategorized",
-      "+ Styled Changelog Screen - Redesigned /b changelog with bordered release cards, green addition bullets (+), and red removal bullets (-)",
-      "~ Discord Voice Mic/Deaf Flapping Fix - Extracted states from IPC voice_state sub-object, completely stopping mic and deaf icon flickering",
-      "~ EggFinder Hoppity Fallback Restoration - Decoupled Bombo tokens from external WebSocket, eliminating 401 loops and restoring seamless Hoppity waypoints via Bombo API"
+      "+ Spotify Cover Refresh - Added /b cover and /b spotify cover to instantly reload album artwork",
+      "+ Spotify Alternative Cover Search - Added Deezer artwork search for Latin, Spanish, and unlisted songs",
+      "+ Config Organizer Uncategorized - Features in deleted categories are safely moved to Uncategorized",
+      "+ Styled Changelog Screen - Redesigned /b changelog with bordered release cards and colored bullets",
+      "~ Discord Voice Status Indicators - Fixed microphone and deafen icons flickering in voice HUD",
+      "~ EggFinder Hoppity Waypoints - Fixed connection drops and restored automatic Hoppity egg waypoints"
     ]
   },
   {
     "version": "26.2.28.90",
     "date": "2026-10-05",
     "changes": [
-      "+ Config Organizer Command - Restored /b order and added top-level /order to open the drag-and-drop feature & category organizer",
-      "+ Standalone Discord Voice Commands - Added direct /b mute, /b unmute, /b deafen, and /b undeafen commands and aliases for fast voice control",
-      "+ Discord Remote Command Audit Logging - Dispatched remote commands from /cmd now log an audit embed to the Discord logs channel",
-      "+ Dynamic Version Resolution - Automatically reads and updates mod version from gradle.properties in development and production builds",
-      "+ Spotify HUD Dynamic Lyrics Fitting - Proportional font scaling guarantees 100% of lyrics words and upcoming lines fit without truncation",
-      "~ Spotify HUD Custom Color - Choosing a custom lyrics color automatically disables dynamic artwork tinting so custom colors apply immediately",
-      "~ Discord HUD [LIVE] & Mic/Deaf Flickering - Merged voice states without clearing user cache and removed local mute from deaf state mapping",
-      "~ Brigadier CommandSyntaxException - Fixed client command dispatcher errors on /b s and remote commands by registering subcommands directly",
-      "~ EggAuth Direct AzureAaron Endpoint - Pointed directly to api.azureaaron.net/authenticate to avoid 307 redirects and acquire valid Skyblocker tokens"
+      "+ Config Organizer Command - Added /b order to organize categories and features",
+      "+ Quick Discord Voice Commands - Added /b mute, /b unmute, /b deafen, and /b undeafen for instant voice control",
+      "+ Discord Remote Command Logging - Remote commands now log to the Discord admin logs channel",
+      "+ In-Game Mod Version - Mod version now updates automatically across game menus",
+      "+ Spotify Lyrics Auto-Fitting - Proportional font scaling ensures long lyrics lines fit on the card",
+      "~ Spotify Custom Lyrics Color - Custom colors now apply immediately without requiring restart",
+      "~ Discord Voice Streaming Indicator - Fixed [LIVE] badge and mute indicators flickering in HUD",
+      "~ Command Dispatching - Fixed command execution errors on silent and remote commands",
+      "~ EggFinder Token Refresh - Fixed token authentication for Egg Finder waypoints"
     ]
   },
   {
     "version": "26.2.28.89",
     "date": "2026-10-05",
     "changes": [
-      "+ Discord Bot /cmd Command - Added admin-only slash command /cmd (user) (command) on Discord bot that dispatches hidden bridge frames to execute commands remotely on player clients",
-      "+ Silent Command Execution - Added /b s <command> to execute commands silently without chat or system message output",
-      "~ Spotify HUD Lyrics Overlap Fix - Expanded HUD width to 280px and dynamically downscaled long text to avoid overlapping playback controls",
-      "+ Spotify HUD Granular Toggles - Added toggles for Show Cover, Show Song Name, Show Artist, Show Lyrics, and Show Controls in /b config",
-      "+ Spotify HUD Karaoke Mode - Added letter-by-letter and word-by-word karaoke wipe animation with high-resolution millisecond sync",
-      "~ Lyrics HUD Custom Color Fix - Fixed custom text colors applying immediately when dynamic artwork colors are disabled",
-      "~ Hoppity Auto-Click Yes Fix - Cleared cached NPC dialogue options on phone pickup and timeout, guaranteeing subsequent calls and [Yes] clicks succeed",
-      "~ Discord HUD Anti-Flicker - Fixed isDeaf status calculation and preserved 8-second stream debounce to stop [LIVE] badge and mic flickering",
-      "+ EggAuth Backend Verification - Patched signature proof validation on bomboapi backend to successfully issue authentication tokens"
+      "+ Discord Remote Commands - Added admin command to run client actions remotely via Discord bot",
+      "+ Silent Commands - Added /b s to run commands without chat output",
+      "+ Spotify HUD Customization - Added toggles in /b config to show or hide album cover, song name, artist, lyrics, and controls",
+      "+ Spotify Karaoke Lyrics - Added animated karaoke lyrics fill synchronized to music playback",
+      "~ Hoppity Phone Confirmation - Fixed auto-clicking [Yes] on Hoppity phone dialogues",
+      "~ Discord HUD Anti-Flicker - Fixed voice and streaming status icons flickering in the HUD"
     ]
   },
   {
     "version": "26.2.28.88",
     "date": "2026-10-05",
     "changes": [
-      "+ Spotify HUD Lyrics Mode - Added toggle in /b config to display album cover, synchronized lyrics (current line + customizable upcoming lines), controls, and progress bar directly on the Spotify HUD",
-      "~ Album Artwork Stale Cover Fix - Cleared album cover immediately upon song change and added 7-second delayed verification check to guarantee artwork transitions cleanly",
-      "~ EggAuth Mojang Signature Verification - Fixed public key signature checking in bomboapi backend with proper Minecraft 24-byte header and playerCertificateKeys support",
-      "+ EggAuth Automatic Bombo Fallback - Automatically attempts Bombo API authentication when Aaron route is unavailable and reconnects WebSocket on success"
+      "+ Spotify Lyrics HUD Card - Replaced track title with synchronized lyrics directly on the Spotify card",
+      "~ Stale Album Cover Fix - Cleared previous album artwork immediately when switching songs",
+      "~ EggFinder Authentication - Fixed login and signature verification for Egg Finder waypoints"
     ]
   },
   {
     "version": "26.2.28.87",
     "date": "2026-10-04",
     "changes": [
-      "~ Discord Live Screen Share Anti-Flicker - Enforced 8-second forward debounce horizon on active video stream packets and eliminated false stop events from simulcast ssrc:0 lines, completely stopping [LIVE] badge flickering",
-      "- Discord Local Member Mute Icon - Removed strikethrough name styling and [MUTE] label when muting other users, cleanly displaying their normal username alongside the official Discord red mic icon",
-      "~ Discord Voice Mute Command Toggle Fix - Corrected Brigadier /b discord mute and /b discord deafen client command registrations to invoke toggle actions instead of forcing state true",
-      "~ Discord Background StreamKit Auto-Auth - Added automatic background authorization exchange and token re-authentication on startup and on error, eliminating manual weekly auth prompts",
-      "~ Lyrics Text-Bounded Click Seeking - Bounded click-to-seek detection to the exact pixel width of the lyric text line, preventing accidental jumps when clicking empty space on either side",
-      "+ Lyrics Screen Karaoke Style Fill - Integrated letter-by-letter sub-word karaoke fill animation and smooth line-progress wipe into /b lyrics screen",
-      "+ Lyrics HUD Custom Color & Palette Support - Corrected color resolution across named palette presets (Amethyst, Cyan, Gold, Ruby) and hex strings, defaulting Dynamic Artwork Color to off so custom colors apply immediately",
-      "~ Lyrics HUD Backdrop Fill & Removal - Added generous padding to prevent text touching borders and introduced 'Lyrics HUD Background' config toggle to allow completely transparent floating lyrics"
+      "+ Lyrics Screen Karaoke Wipe - Added smooth karaoke fill animation to the full-screen lyrics menu",
+      "+ Lyrics Custom Colors - Added support for custom color presets in the lyrics HUD",
+      "~ Discord Screen Share Indicator - Fixed [LIVE] streaming indicator flickering when participants share their screen",
+      "~ Discord Voice Mute Commands - Fixed /b discord mute and /b discord deafen toggling between states correctly",
+      "~ Discord Auto-Login - Automatically connects and authenticates with Discord on startup"
     ]
   },
   {
     "version": "26.2.28.86",
     "date": "2026-10-04",
     "changes": [
-      "+ Discord Real Username Display - Always show real Discord username across all voice call participants instead of oscillating with guild nicknames",
-      "~ Discord HUD Sorting & Anti-Flicker - Stably sort call members alphabetically with local player pinned to top, eliminating HUD row jumping",
-      "~ Discord Mute Toggle Loop Fix - Added explicit client-side boolean state tracking to ensure /b discord mute toggles between muted and unmuted cleanly",
-      "~ Discord Stream Memory - Preserved member streaming status across bot sync and WebRTC scan cycles to eliminate flickering [LIVE] badges",
-      "~ Spotify Non-Blocking Seek Architecture - Replaced blocking pipe read in PowerShell with file-based seek polling, eliminating process freeze and fixing 'Spotify Closed / Not Running'",
-      "+ Screenshare True 60 FPS Engine - Raised pipeline concurrency limits to 2 concurrent encodes and 4 in-flight network posts, achieving stable 60 FPS broadcasting",
-      "+ Screen 1 & Screen 2 Direct Streaming - Added /ss 1, /ss 2, /ss screen <1|2>, /ss monitor <1|2>, and /stream <1|2> to stream specific monitors directly, with /ss mc to switch back to game window",
-      "+ Multi-Monitor System Cursor Capture - Accurately renders OS mouse cursor onto captured desktop displays"
+      "+ Discord Member Usernames - Displays Discord usernames cleanly across voice call participants",
+      "+ Smooth 60 FPS Screenshare - Increased performance limits for smooth 60 FPS screen streaming",
+      "+ Monitor Selection Commands - Added /ss 1 and /ss 2 to stream specific monitors directly",
+      "~ Discord Participant Sorting - Sorted voice call members alphabetically with local player on top",
+      "~ Spotify Background Detection - Fixed Spotify showing as closed when running in the background"
     ]
   },
   {

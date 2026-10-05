@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.92` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.93` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,20 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.92`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.93`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.93 (Ready for In-Game Testing)
+>
+> 1. **Spotify Artist Verification & Artwork Matching (`LyricsManager`):** Implemented strict artist matching for iTunes search queries, candidate evaluation, Deezer artwork search, and Paxsenix / LRCLIB candidates, preventing popular song titles from picking mismatched artists (e.g., Carlos Vives vs Rauw Alejandro for *Déjame entrar*).
+> 2. **Config Organizer Multi-Feature Drag & Drop (`BomboOrderScreen`):** Enabled `Shift + Click` range selection and `Ctrl + Click` toggle selection on feature cards. Dragging any selected feature moves all selected features together in bulk into the target sidebar category.
+> 3. **Config Organizer Category & Feature Tags (`FeatureOrganizerManager`, `BomboOrderScreen`):** Added tag management for categories and features. Right-clicking a category allows assigning comma-separated tags (e.g. `garden` on category `Farming`), making searching `garden` immediately display all matching category features.
+> 4. **Config Organizer Multi-Delete & Full Undo System (`BomboOrderScreen`):** `Ctrl + W` now deletes all selected categories simultaneously, safely migrating features to `Uncategorized`. `Ctrl + Z` instantly reverts the previous state (category deletion, moving, reordering, and tags).
+> 5. **Performance Screen High-FPS Recalibration (`PerformanceScreen`):** Re-calibrated CPU load bar thresholds from 5.0 ms/s to 30.0 ms/s, eliminating false red load bars at 400+ FPS.
+> 6. **Discord HUD In-Call Check (`DiscordVoiceHud`):** Added early return when `discordHudOnlyInCall` is enabled and player is not in voice, reducing idle HUD render overhead.
+> 7. **Changelog Screen Spacing & Human Language (`ChangelogScreen`, `data/changelog.json`):** Increased line height, inner card padding, and card separation in the changelog screen. Rewrote and simplified all changelog notes across recent releases into plain, human-friendly descriptions.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.92 (Ready for In-Game Testing)
 >
 > 1. **Config Organizer Browser Navigation & Shortcuts (`BomboOrderScreen`):** Enabled browser-like category tab multi-selection via `Ctrl + Click` and `Shift + Click` (range select e.g. tabs 1 to 5), displaying combined feature lists across selected categories. Added browser shortcuts: `Ctrl + T` (new category), `Ctrl + W` (close/delete category tab), `Ctrl + 1..8` (jump to tabs 1..8), `Ctrl + 9` (last tab), and `Ctrl + Tab` / `Ctrl + Shift + Tab` (cycle tabs).

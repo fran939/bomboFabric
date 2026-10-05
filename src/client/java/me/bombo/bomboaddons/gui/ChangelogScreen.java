@@ -240,15 +240,15 @@ public class ChangelogScreen extends Screen {
         // Calculate total content height
         int totalHeight = 0;
         for (ReleaseEntry r : releases) {
-            totalHeight += 24; // Header row
-            int cardInnerHeight = 8;
+            totalHeight += 28; // Header row
+            int cardInnerHeight = 18;
             for (String c : r.changes) {
                 FormattedLine fl = new FormattedLine(c);
-                int textW = contentW - 24 - (fl.isSubBullet ? 12 : 0);
+                int textW = contentW - 28 - (fl.isSubBullet ? 14 : 0);
                 var wrapped = font.getSplitter().splitLines(Component.literal(fl.bullet + fl.text), Math.max(80, textW), net.minecraft.network.chat.Style.EMPTY);
-                cardInnerHeight += Math.max(1, wrapped.size()) * 12;
+                cardInnerHeight += Math.max(1, wrapped.size()) * 15 + 4;
             }
-            totalHeight += cardInnerHeight + 8; // Card height + gap
+            totalHeight += cardInnerHeight + 22; // Card height + gap
         }
 
         this.maxScroll = Math.max(0, totalHeight - contentH);
@@ -260,15 +260,15 @@ public class ChangelogScreen extends Screen {
                     this.scrolledToTarget = true;
                     break;
                 }
-                targetYOffset += 24;
-                int cardInner = 8;
+                targetYOffset += 28;
+                int cardInner = 18;
                 for (String c : r.changes) {
                     FormattedLine fl = new FormattedLine(c);
-                    int textW = contentW - 24 - (fl.isSubBullet ? 12 : 0);
+                    int textW = contentW - 28 - (fl.isSubBullet ? 14 : 0);
                     var wrapped = font.getSplitter().splitLines(Component.literal(fl.bullet + fl.text), Math.max(80, textW), net.minecraft.network.chat.Style.EMPTY);
-                    cardInner += Math.max(1, wrapped.size()) * 12;
+                    cardInner += Math.max(1, wrapped.size()) * 15 + 4;
                 }
-                targetYOffset += cardInner + 8;
+                targetYOffset += cardInner + 22;
             }
             this.scrolledToTarget = true;
         }
@@ -283,7 +283,7 @@ public class ChangelogScreen extends Screen {
         for (ReleaseEntry r : releases) {
             boolean isTarget = targetVersion != null && (r.version.equalsIgnoreCase(targetVersion) || ("v" + r.version).equalsIgnoreCase(targetVersion));
             // Release badge + version title
-            if (curY + 20 >= contentY && curY <= contentY + contentH) {
+            if (curY + 22 >= contentY && curY <= contentY + contentH) {
                 String badgeText = (isTarget ? "§b§l" : "§b") + "v" + r.version;
                 int badgeW = font.width(badgeText) + 12;
                 g.fill(contentX, curY, contentX + badgeW, curY + 16, isTarget ? 0x6600E5FF : 0x3300E5FF);
@@ -300,15 +300,15 @@ public class ChangelogScreen extends Screen {
                     g.text(font, "§e★ Selected Version", contentX + badgeW + 8 + dateOffset, curY + 4, 0xFFFBBF24, false);
                 }
             }
-            curY += 20;
+            curY += 26;
 
             // Compute card height for this release
-            int cardH = 8;
+            int cardH = 18;
             for (String c : r.changes) {
                 FormattedLine fl = new FormattedLine(c);
-                int textW = contentW - 24 - (fl.isSubBullet ? 12 : 0);
+                int textW = contentW - 28 - (fl.isSubBullet ? 14 : 0);
                 var wrapped = font.getSplitter().splitLines(Component.literal(fl.bullet + fl.text), Math.max(80, textW), net.minecraft.network.chat.Style.EMPTY);
-                cardH += Math.max(1, wrapped.size()) * 12;
+                cardH += Math.max(1, wrapped.size()) * 15 + 4;
             }
 
             // Draw card background & border
@@ -317,22 +317,23 @@ public class ChangelogScreen extends Screen {
                 g.outline(contentX, curY, contentW, cardH, 0x44475569);
             }
 
-            int itemY = curY + 5;
+            int itemY = curY + 9;
             for (String change : r.changes) {
                 FormattedLine fl = new FormattedLine(change);
-                int indent = fl.isSubBullet ? 18 : 6;
-                int textW = contentW - 24 - (fl.isSubBullet ? 12 : 0);
+                int indent = fl.isSubBullet ? 20 : 8;
+                int textW = contentW - 28 - (fl.isSubBullet ? 14 : 0);
                 var lines = font.getSplitter().splitLines(Component.literal(fl.bullet + fl.text), Math.max(80, textW), net.minecraft.network.chat.Style.EMPTY);
                 for (var l : lines) {
-                    if (itemY + 10 >= contentY && itemY <= contentY + contentH) {
+                    if (itemY + 12 >= contentY && itemY <= contentY + contentH) {
                         String lineStr = l.getString();
                         g.text(font, lineStr, contentX + indent, itemY, 0xFFE2E8F0, false);
                     }
-                    itemY += 12;
+                    itemY += 15;
                 }
+                itemY += 4;
             }
 
-            curY += cardH + 10; // Extra gap between release cards
+            curY += cardH + 22; // Extra gap between release cards
         }
         g.disableScissor();
 

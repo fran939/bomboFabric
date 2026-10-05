@@ -28,6 +28,7 @@ public class FeatureOrganizerManager {
         public String description = "";
         public String parentDependency = ""; // If set, this feature requires parent feature to be enabled
         public boolean enabledByDefault = false;
+        public List<String> tags = new ArrayList<>();
 
         public FeatureMeta() {}
 
@@ -43,16 +44,19 @@ public class FeatureOrganizerManager {
             this.description = description != null ? description : "";
             this.parentDependency = "";
             this.enabledByDefault = false;
+            this.tags = new ArrayList<>();
         }
     }
 
     public static class OrganizerData {
         public List<String> categories = new ArrayList<>();
+        public Map<String, List<String>> categoryTags = new LinkedHashMap<>();
         public Map<String, List<String>> subcategories = new LinkedHashMap<>();
         public Map<String, FeatureMeta> features = new LinkedHashMap<>();
     }
 
     public static final List<String> customCategories = new ArrayList<>();
+    public static final Map<String, List<String>> categoryTagsMap = new LinkedHashMap<>();
     public static final Map<String, List<String>> subcategoriesMap = new LinkedHashMap<>();
     public static final Map<String, FeatureMeta> features = new LinkedHashMap<>();
 
@@ -196,6 +200,10 @@ public class FeatureOrganizerManager {
                     subcategoriesMap.clear();
                     subcategoriesMap.putAll(loaded.subcategories);
                 }
+                if (loaded.categoryTags != null) {
+                    categoryTagsMap.clear();
+                    categoryTagsMap.putAll(loaded.categoryTags);
+                }
                 if (loaded.features != null) {
                     for (Map.Entry<String, FeatureMeta> e : loaded.features.entrySet()) {
                         if (features.containsKey(e.getKey()) && e.getValue() != null) {
@@ -212,6 +220,9 @@ public class FeatureOrganizerManager {
                             }
                             if (e.getValue().parentDependency != null) {
                                 fm.parentDependency = e.getValue().parentDependency;
+                            }
+                            if (e.getValue().tags != null) {
+                                fm.tags = new ArrayList<>(e.getValue().tags);
                             }
                         } else if (e.getValue() != null) {
                             features.put(e.getKey(), e.getValue());
@@ -252,6 +263,7 @@ public class FeatureOrganizerManager {
             }
             OrganizerData data = new OrganizerData();
             data.categories = new ArrayList<>(customCategories);
+            data.categoryTags = new LinkedHashMap<>(categoryTagsMap);
             data.subcategories = new LinkedHashMap<>(subcategoriesMap);
             data.features = new LinkedHashMap<>(features);
 
@@ -382,10 +394,30 @@ public class FeatureOrganizerManager {
             if (!categoryFilter.equals("ALL") && !fm.category.equalsIgnoreCase(categoryFilter)) {
                 continue;
             }
-            if (!q.isEmpty() && !fm.name.toLowerCase(Locale.ROOT).contains(q)
-                    && !fm.category.toLowerCase(Locale.ROOT).contains(q)
-                    && !fm.subCategory.toLowerCase(Locale.ROOT).contains(q)) {
-                continue;
+            if (!q.isEmpty()) {
+                boolean matches = fm.name.toLowerCase(Locale.ROOT).contains(q)
+                        || fm.category.toLowerCase(Locale.ROOT).contains(q)
+                        || fm.subCategory.toLowerCase(Locale.ROOT).contains(q);
+                if (!matches && fm.category != null) {
+                    List<String> cTags = categoryTagsMap.get(fm.category);
+                    if (cTags != null) {
+                        for (String t : cTags) {
+                            if (t != null && t.toLowerCase(Locale.ROOT).contains(q)) {
+                                matches = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!matches && fm.tags != null) {
+                    for (String t : fm.tags) {
+                        if (t != null && t.toLowerCase(Locale.ROOT).contains(q)) {
+                            matches = true;
+                            break;
+                        }
+                    }
+                }
+                if (!matches) continue;
             }
             list.add(fm);
         }

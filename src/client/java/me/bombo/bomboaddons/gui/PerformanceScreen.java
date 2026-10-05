@@ -290,12 +290,12 @@ public class PerformanceScreen extends Screen {
             double loadRatio = Math.min(1.0, snap.totalMsPerSec / maxSingleFeatureMs);
             int barW = (int) (contentW * loadRatio);
             int barColor;
-            if (snap.totalMsPerSec > 5.0) {
-                barColor = 0xFFEF4444; // High CPU / Red
-            } else if (snap.totalMsPerSec > 1.5) {
-                barColor = 0xFFF59E0B; // Moderate CPU / Orange
-            } else if (snap.totalMsPerSec > 0.3) {
-                barColor = 0xFF10B981; // Low CPU / Green
+            if (snap.totalMsPerSec > 30.0 || snap.cpuPercent > 3.0) {
+                barColor = 0xFFEF4444; // High CPU / Red (>3% CPU)
+            } else if (snap.totalMsPerSec > 10.0 || snap.cpuPercent > 1.0) {
+                barColor = 0xFFF59E0B; // Moderate CPU / Orange (>1% CPU)
+            } else if (snap.totalMsPerSec > 2.0 || snap.cpuPercent > 0.2) {
+                barColor = 0xFF10B981; // Low CPU / Green (>0.2% CPU)
             } else {
                 barColor = 0xFF3B82F6; // Very Low / Blue
             }
