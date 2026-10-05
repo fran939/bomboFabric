@@ -1059,6 +1059,20 @@ public class BomboaddonsClient implements ClientModInitializer {
                         me.bombo.bomboaddons.features.discord.DiscordIpcManager.deafenTargetUser(user, false, src::sendFeedback);
                         return 1;
                      })));
+                  builder.then(ClientCommands.literal("cover")
+                     .executes((context) -> {
+                        me.bombo.bomboaddons.features.spotify.LyricsManager.refetchArtwork();
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        src.sendFeedback(Component.literal("§8[§dSpotify§8] §aRefetching album cover for §f" + me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack() + "§a..."));
+                        return 1;
+                     }));
+                  builder.then(ClientCommands.literal("spotify")
+                     .then(ClientCommands.literal("cover").executes((context) -> {
+                        me.bombo.bomboaddons.features.spotify.LyricsManager.refetchArtwork();
+                        FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                        src.sendFeedback(Component.literal("§8[§dSpotify§8] §aRefetching album cover for §f" + me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack() + "§a..."));
+                        return 1;
+                     })));
                   builder.then(ClientCommands.literal("buttons")
                           .executes((context) -> {
                              Minecraft mc = Minecraft.getInstance();
@@ -5008,6 +5022,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                 dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("order").executes((context) -> {
                    Minecraft mc = Minecraft.getInstance();
                    mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));
+                   return 1;
+                }));
+                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("cover").executes((context) -> {
+                   me.bombo.bomboaddons.features.spotify.LyricsManager.refetchArtwork();
+                   FabricClientCommandSource src = (FabricClientCommandSource) context.getSource();
+                   src.sendFeedback(Component.literal("§8[§dSpotify§8] §aRefetching album cover for §f" + me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack() + "§a..."));
                    return 1;
                 }));
                 dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("s")

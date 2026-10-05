@@ -502,8 +502,22 @@ public class LyricsManager {
         }, "Bombo-LyricsFetcher").start();
     }
 
+    public static void refetchArtwork() {
+        lastArtworkUrl = "";
+        albumArtTexture = null;
+        String track = SpotifyManager.getCurrentTrack();
+        String artist = SpotifyManager.getCurrentArtist();
+        if (track != null && !track.isEmpty()) {
+            activeTrack = track;
+            activeArtist = artist != null ? artist : "";
+            long epoch = currentTrackEpoch.incrementAndGet();
+            new Thread(() -> fetchArtwork(cleanTitle(track), cleanTitle(activeArtist), epoch), "Bombo-CoverRefetcher").start();
+        }
+    }
+
     private static void fetchArtwork(String cleanTrack, String cleanArtist, long epoch) {
         if (epoch != currentTrackEpoch.get()) return;
+        boolean found = false;
         try {
             String query = (cleanTrack + " " + cleanArtist).trim();
             String itunesUrl = "https://itunes.apple.com/search?term=" + URLEncoder.encode(query, StandardCharsets.UTF_8)
@@ -522,10 +536,68 @@ public class LyricsManager {
                     JsonObject songObj = itunesJson.getAsJsonArray("results").get(0).getAsJsonObject();
                     if (songObj.has("artworkUrl100")) {
                         downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"), epoch);
+                        found = true;
                     }
                 }
             }
         } catch (Throwable ignored) {}
+
+        // Fallback 1: Deezer API
+        if (!found && epoch == currentTrackEpoch.get()) {
+            try {
+                String query = (cleanTrack + " " + cleanArtist).trim();
+                String deezerUrl = "https://api.deezer.com/search?q=" + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&limit=1";
+                HttpRequest dReq = HttpRequest.newBuilder()
+                        .uri(URI.create(deezerUrl))
+                        .header("User-Agent", "Mozilla/5.0")
+                        .timeout(Duration.ofSeconds(4))
+                        .GET()
+                        .build();
+                HttpResponse<String> dResp = HTTP_CLIENT.send(dReq, HttpResponse.BodyHandlers.ofString());
+                if (epoch != currentTrackEpoch.get()) return;
+                if (dResp.statusCode() == 200) {
+                    JsonObject dJson = JsonParser.parseString(dResp.body()).getAsJsonObject();
+                    if (dJson.has("data") && dJson.getAsJsonArray("data").size() > 0) {
+                        JsonObject trackObj = dJson.getAsJsonArray("data").get(0).getAsJsonObject();
+                        if (trackObj.has("album") && trackObj.get("album").isJsonObject()) {
+                            JsonObject alb = trackObj.getAsJsonObject("album");
+                            String coverUrl = alb.has("cover_big") && !alb.get("cover_big").isJsonNull()
+                                    ? alb.get("cover_big").getAsString()
+                                    : (alb.has("cover_medium") && !alb.get("cover_medium").isJsonNull() ? alb.get("cover_medium").getAsString() : null);
+                            if (coverUrl != null && !coverUrl.isEmpty()) {
+                                downloadAndRegisterAlbumArt(coverUrl, epoch);
+                                found = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+        }
+
+        // Fallback 2: iTunes with track title only
+        if (!found && epoch == currentTrackEpoch.get() && !cleanTrack.isEmpty()) {
+            try {
+                String itunesUrl = "https://itunes.apple.com/search?term=" + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
+                        + "&entity=song&limit=1";
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(itunesUrl))
+                        .header("User-Agent", "Mozilla/5.0")
+                        .timeout(Duration.ofSeconds(4))
+                        .GET()
+                        .build();
+                HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+                if (epoch != currentTrackEpoch.get()) return;
+                if (resp.statusCode() == 200) {
+                    JsonObject itunesJson = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    if (itunesJson.has("results") && itunesJson.getAsJsonArray("results").size() > 0) {
+                        JsonObject songObj = itunesJson.getAsJsonArray("results").get(0).getAsJsonObject();
+                        if (songObj.has("artworkUrl100")) {
+                            downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"), epoch);
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
+        }
     }
 
     private static final java.util.concurrent.atomic.AtomicInteger albumArtCounter = new java.util.concurrent.atomic.AtomicInteger(0);

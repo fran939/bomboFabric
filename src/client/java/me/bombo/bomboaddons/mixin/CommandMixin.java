@@ -52,6 +52,15 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("b spotify cover") || trimmed.equalsIgnoreCase("spotify cover") || trimmed.equalsIgnoreCase("b cover") || trimmed.equalsIgnoreCase("cover")) {
+         me.bombo.bomboaddons.features.spotify.LyricsManager.refetchArtwork();
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§dSpotify§8] §aRefetching album cover for §f" + me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack() + "§a..."));
+         }
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b undeafen") || trimmed.equalsIgnoreCase("bombo undeafen") || trimmed.equalsIgnoreCase("b discord undeafen") || trimmed.equalsIgnoreCase("undeafen")) {
          me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, (msg) -> {});
          ci.cancel();
@@ -555,6 +564,16 @@ public class CommandMixin {
       if (trimmed.equalsIgnoreCase("/b deafen") || trimmed.equalsIgnoreCase("/bombo deafen") || trimmed.equalsIgnoreCase("/deafen")
             || trimmed.equalsIgnoreCase("b deafen") || trimmed.equalsIgnoreCase("deafen")) {
          me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfDeafen((msg) -> {});
+         ci.cancel();
+         return;
+      }
+      if (trimmed.equalsIgnoreCase("/b spotify cover") || trimmed.equalsIgnoreCase("/spotify cover") || trimmed.equalsIgnoreCase("/b cover") || trimmed.equalsIgnoreCase("/cover")
+            || trimmed.equalsIgnoreCase("b spotify cover") || trimmed.equalsIgnoreCase("spotify cover") || trimmed.equalsIgnoreCase("b cover") || trimmed.equalsIgnoreCase("cover")) {
+         me.bombo.bomboaddons.features.spotify.LyricsManager.refetchArtwork();
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§dSpotify§8] §aRefetching album cover for §f" + me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack() + "§a..."));
+         }
          ci.cancel();
          return;
       }

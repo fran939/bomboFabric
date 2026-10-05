@@ -854,8 +854,14 @@ public class DiscordIpcManager {
                             boolean isSpeaking = existing != null && existing.isSpeaking();
                             boolean isLocallyMuted = locallyMutedUsers.contains(mId);
                             boolean isLive = streaming || (System.currentTimeMillis() < USER_STREAM_ACTIVE_UNTIL.getOrDefault(mId, 0L)) || (existing != null && existing.isScreenSharing());
-                            boolean isSelfMute = (mId.equals(myUserId) || mId.equals("self")) ? (isSelfMuted || sMute) : sMute;
-                            boolean isSelfDeaf = (mId.equals(myUserId) || mId.equals("self")) ? (isSelfDeafened || sDeaf) : sDeaf;
+                            
+                            boolean isMe = mId.equals(myUserId) || mId.equals("self");
+                            if (isMe) {
+                                isSelfMuted = sMute;
+                                isSelfDeafened = sDeaf;
+                            }
+                            boolean isSelfMute = isMe ? (isSelfMuted || sMute) : sMute;
+                            boolean isSelfDeaf = isMe ? (isSelfDeafened || sDeaf) : sDeaf;
 
                             if (myUserId.isEmpty() || myUserId.equals("self")) {
                                 if (!myDiscordUsername.isEmpty() && (uName.equalsIgnoreCase(myDiscordUsername) || dName.equalsIgnoreCase(myDiscordUsername))) {
@@ -1192,11 +1198,11 @@ public class DiscordIpcManager {
                         String dName = info != null ? info.displayName : (prev != null && prev.displayName() != null ? prev.displayName() : ("User (" + uid.substring(Math.max(0, uid.length() - 4)) + ")"));
                         String uName = info != null ? info.username : (prev != null && prev.username() != null ? prev.username() : dName);
                         boolean isLocallyMuted = locallyMutedUsers.contains(uid);
-                        boolean isSpeaking = prev != null && prev.isSpeaking();
-                        boolean isSelfMuted = prev != null && prev.isSelfMuted();
-                        boolean isSelfDeafened = prev != null && prev.isSelfDeafened();
+                        boolean isSelfMuted = prev != null && (prev.isSelfMuted() || prev.isMuted());
+                        boolean isSelfDeafened = prev != null && (prev.isSelfDeafened() || prev.isDeafened());
                         boolean isMuted = isLocallyMuted || isSelfMuted;
                         boolean isDeaf = isSelfDeafened;
+                        boolean isSpeaking = prev != null && prev.isSpeaking();
                         boolean isLive = (System.currentTimeMillis() < USER_STREAM_ACTIVE_UNTIL.getOrDefault(uid, 0L)) || screensharingUserIds.contains(uid) || (prev != null && prev.isScreenSharing());
                         voiceUsers.put(uid, new DiscordVoiceUser(uid, uName, dName, isMuted, isDeaf, isSpeaking, isLive, isLocallyMuted, isSelfMuted, isSelfDeafened));
                     }
@@ -1525,19 +1531,32 @@ public class DiscordIpcManager {
 
         DiscordVoiceUser existing = voiceUsers.get(id);
 
-        boolean sMute = (state.has("mute") && state.get("mute").getAsBoolean())
+        JsonObject vs = state.has("voice_state") && state.get("voice_state").isJsonObject()
+                ? state.getAsJsonObject("voice_state")
+                : state;
+
+        boolean sMute = (vs.has("mute") && vs.get("mute").getAsBoolean())
+                || (vs.has("self_mute") && vs.get("self_mute").getAsBoolean())
                 || (state.has("self_mute") && state.get("self_mute").getAsBoolean());
-        boolean sDeaf = (state.has("deaf") && state.get("deaf").getAsBoolean())
+        boolean sDeaf = (vs.has("deaf") && vs.get("deaf").getAsBoolean())
+                || (vs.has("self_deaf") && vs.get("self_deaf").getAsBoolean())
                 || (state.has("self_deaf") && state.get("self_deaf").getAsBoolean());
 
         boolean isLocallyMuted = locallyMutedUsers.contains(id) || (existing != null && existing.isLocallyMuted());
-        boolean isLive = (state.has("self_stream") && state.get("self_stream").getAsBoolean())
+        boolean isLive = (vs.has("self_stream") && vs.get("self_stream").getAsBoolean())
+                || (state.has("self_stream") && state.get("self_stream").getAsBoolean())
                 || (System.currentTimeMillis() < USER_STREAM_ACTIVE_UNTIL.getOrDefault(id, 0L))
                 || (existing != null && existing.isScreenSharing());
         boolean speaking = existing != null && existing.isSpeaking();
 
-        boolean finalMute = (id.equals(myUserId) || id.equals("self")) ? (isSelfMuted || sMute || isLocallyMuted) : (sMute || isLocallyMuted);
-        boolean finalDeaf = (id.equals(myUserId) || id.equals("self")) ? (isSelfDeafened || sDeaf) : sDeaf;
+        boolean isMe = id.equals(myUserId) || id.equals("self");
+        if (isMe) {
+            isSelfMuted = sMute;
+            isSelfDeafened = sDeaf;
+        }
+
+        boolean finalMute = isMe ? (isSelfMuted || sMute || isLocallyMuted) : (sMute || isLocallyMuted);
+        boolean finalDeaf = isMe ? (isSelfDeafened || sDeaf) : sDeaf;
 
         voiceUsers.put(id, new DiscordVoiceUser(
                 id, username, displayName,

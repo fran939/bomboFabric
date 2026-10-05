@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.91",
+    "date": "2026-10-05",
+    "changes": [
+      "+ Spotify Cover Command - Added /b spotify cover and /b cover to instantly refetch and reload album artwork",
+      "+ Deezer Artwork Fallback - Added Deezer API cover search fallback for regional, Spanish, and tracks missing from iTunes",
+      "+ Config Organizer Uncategorized - Deleting a category in /b order now automatically relocates all contained features to Uncategorized",
+      "+ Styled Changelog Screen - Redesigned /b changelog with bordered release cards, green addition bullets (+), and red removal bullets (-)",
+      "~ Discord Voice Mic/Deaf Flapping Fix - Extracted states from IPC voice_state sub-object, completely stopping mic and deaf icon flickering",
+      "~ EggFinder Hoppity Fallback Restoration - Decoupled Bombo tokens from external WebSocket, eliminating 401 loops and restoring seamless Hoppity waypoints via Bombo API"
+    ]
+  },
+  {
     "version": "26.2.28.90",
     "date": "2026-10-05",
     "changes": [

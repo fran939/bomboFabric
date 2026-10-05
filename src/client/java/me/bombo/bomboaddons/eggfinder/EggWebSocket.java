@@ -302,6 +302,16 @@ public class EggWebSocket {
          thread.setDaemon(true);
          return thread;
       });
+      SCHEDULER.scheduleWithFixedDelay(() -> {
+         try {
+            if (BomboConfig.get().eggFinder && activeSubscription != null
+                  && (webSocket == null || webSocket.isInputClosed() || webSocket.isOutputClosed())) {
+               if (EggAuth.getToken() == null) {
+                  pollBomboHoppityFallback();
+               }
+            }
+         } catch (Throwable ignored) {}
+      }, 5L, 8L, TimeUnit.SECONDS);
       webSocket = null;
       connecting = false;
       activeSubscription = null;

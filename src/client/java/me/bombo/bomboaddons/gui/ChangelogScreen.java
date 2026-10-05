@@ -44,6 +44,66 @@ public class ChangelogScreen extends Screen {
         }
     }
 
+    public static class FormattedLine {
+        public final String bullet;
+        public final int color;
+        public final String text;
+        public final boolean isSubBullet;
+
+        public FormattedLine(String raw) {
+            if (raw == null) {
+                this.bullet = "§7• ";
+                this.color = 0xFFA0AEC0;
+                this.text = "";
+                this.isSubBullet = false;
+                return;
+            }
+            this.isSubBullet = raw.startsWith("  ") || raw.startsWith("\t");
+            String trimmed = raw.trim();
+            if (trimmed.startsWith("Feature: ") || trimmed.startsWith("Added: ") || trimmed.startsWith("+ ") || trimmed.startsWith("+")) {
+                this.bullet = "§a+ ";
+                this.color = 0xFF4ADE80;
+                String c = trimmed.startsWith("Feature: ") ? trimmed.substring(9) : (trimmed.startsWith("Added: ") ? trimmed.substring(7) : (trimmed.startsWith("+ ") ? trimmed.substring(2) : trimmed.substring(1)));
+                this.text = formatTitleDesc(c);
+            } else if (trimmed.startsWith("Removed: ") || trimmed.startsWith("Deleted: ") || trimmed.startsWith("- ") || trimmed.startsWith("-")) {
+                this.bullet = "§c- ";
+                this.color = 0xFFF87171;
+                String c = trimmed.startsWith("Removed: ") ? trimmed.substring(9) : (trimmed.startsWith("Deleted: ") ? trimmed.substring(9) : (trimmed.startsWith("- ") ? trimmed.substring(2) : trimmed.substring(1)));
+                this.text = formatTitleDesc(c);
+            } else if (trimmed.startsWith("Fix: ") || trimmed.startsWith("Fixed: ") || trimmed.startsWith("~ ") || trimmed.startsWith("~")) {
+                this.bullet = "§b~ ";
+                this.color = 0xFF38BDF8;
+                String c = trimmed.startsWith("Fix: ") ? trimmed.substring(5) : (trimmed.startsWith("Fixed: ") ? trimmed.substring(7) : (trimmed.startsWith("~ ") ? trimmed.substring(2) : trimmed.substring(1)));
+                this.text = formatTitleDesc(c);
+            } else if (trimmed.startsWith("Improvement: ") || trimmed.startsWith("Improved: ") || trimmed.startsWith("* ") || trimmed.startsWith("*")) {
+                this.bullet = "§e* ";
+                this.color = 0xFFFBBF24;
+                String c = trimmed.startsWith("Improvement: ") ? trimmed.substring(13) : (trimmed.startsWith("Improved: ") ? trimmed.substring(10) : (trimmed.startsWith("* ") ? trimmed.substring(2) : trimmed.substring(1)));
+                this.text = formatTitleDesc(c);
+            } else {
+                this.bullet = isSubBullet ? "§8- " : "§7• ";
+                this.color = 0xFFA0AEC0;
+                this.text = formatTitleDesc(trimmed);
+            }
+        }
+
+        private static String formatTitleDesc(String str) {
+            int dashIdx = str.indexOf(" - ");
+            if (dashIdx > 0 && dashIdx < 50) {
+                String title = str.substring(0, dashIdx).trim();
+                String desc = str.substring(dashIdx + 3).trim();
+                return "§f§l" + title + " §8- §7" + desc;
+            }
+            int colonIdx = str.indexOf(": ");
+            if (colonIdx > 0 && colonIdx < 50) {
+                String title = str.substring(0, colonIdx).trim();
+                String desc = str.substring(colonIdx + 2).trim();
+                return "§f§l" + title + " §8- §7" + desc;
+            }
+            return "§f" + str;
+        }
+    }
+
     public ChangelogScreen(Screen parent) {
         super(Component.literal("BomboAddons Changelog"));
         this.parent = parent;
@@ -181,11 +241,14 @@ public class ChangelogScreen extends Screen {
         int totalHeight = 0;
         for (ReleaseEntry r : releases) {
             totalHeight += 24; // Header row
+            int cardInnerHeight = 8;
             for (String c : r.changes) {
-                var wrapped = font.getSplitter().splitLines(Component.literal("• " + c), contentW - 20, net.minecraft.network.chat.Style.EMPTY);
-                totalHeight += Math.max(1, wrapped.size()) * 12;
+                FormattedLine fl = new FormattedLine(c);
+                int textW = contentW - 24 - (fl.isSubBullet ? 12 : 0);
+                var wrapped = font.getSplitter().splitLines(Component.literal(fl.bullet + fl.text), Math.max(80, textW), net.minecraft.network.chat.Style.EMPTY);
+                cardInnerHeight += Math.max(1, wrapped.size()) * 12;
             }
-            totalHeight += 12; // Gap between releases
+            totalHeight += cardInnerHeight + 8; // Card height + gap
         }
 
         this.maxScroll = Math.max(0, totalHeight - contentH);
@@ -197,12 +260,15 @@ public class ChangelogScreen extends Screen {
                     this.scrolledToTarget = true;
                     break;
                 }
-                targetYOffset += 22;
+                targetYOffset += 24;
+                int cardInner = 8;
                 for (String c : r.changes) {
-                    var wrapped = font.getSplitter().splitLines(Component.literal("• " + c), contentW - 20, net.minecraft.network.chat.Style.EMPTY);
-                    targetYOffset += Math.max(1, wrapped.size()) * 12;
+                    FormattedLine fl = new FormattedLine(c);
+                    int textW = contentW - 24 - (fl.isSubBullet ? 12 : 0);
+                    var wrapped = font.getSplitter().splitLines(Component.literal(fl.bullet + fl.text), Math.max(80, textW), net.minecraft.network.chat.Style.EMPTY);
+                    cardInner += Math.max(1, wrapped.size()) * 12;
                 }
-                targetYOffset += 10;
+                targetYOffset += cardInner + 8;
             }
             this.scrolledToTarget = true;
         }
@@ -233,21 +299,39 @@ public class ChangelogScreen extends Screen {
                     g.text(font, "§e★ Selected Version", contentX + badgeW + 8 + dateOffset, curY + 4, 0xFFFBBF24, false);
                 }
             }
-            curY += 22;
+            curY += 20;
 
-            // Changes
+            // Compute card height for this release
+            int cardH = 8;
+            for (String c : r.changes) {
+                FormattedLine fl = new FormattedLine(c);
+                int textW = contentW - 24 - (fl.isSubBullet ? 12 : 0);
+                var wrapped = font.getSplitter().splitLines(Component.literal(fl.bullet + fl.text), Math.max(80, textW), net.minecraft.network.chat.Style.EMPTY);
+                cardH += Math.max(1, wrapped.size()) * 12;
+            }
+
+            // Draw card background & border
+            if (curY + cardH >= contentY && curY <= contentY + contentH) {
+                g.fill(contentX, curY, contentX + contentW, curY + cardH, 0x221E293B);
+                g.outline(contentX, curY, contentW, cardH, 0x44475569);
+            }
+
+            int itemY = curY + 5;
             for (String change : r.changes) {
-                var lines = font.getSplitter().splitLines(Component.literal("• " + change), contentW - 20, net.minecraft.network.chat.Style.EMPTY);
+                FormattedLine fl = new FormattedLine(change);
+                int indent = fl.isSubBullet ? 18 : 6;
+                int textW = contentW - 24 - (fl.isSubBullet ? 12 : 0);
+                var lines = font.getSplitter().splitLines(Component.literal(fl.bullet + fl.text), Math.max(80, textW), net.minecraft.network.chat.Style.EMPTY);
                 for (var l : lines) {
-                    if (curY + 10 >= contentY && curY <= contentY + contentH) {
-                        String lineStr = l.getString().replace("§r", "§r§7");
-                        g.text(font, "§7" + lineStr, contentX + 8, curY, 0xFFE2E8F0, false);
+                    if (itemY + 10 >= contentY && itemY <= contentY + contentH) {
+                        String lineStr = l.getString();
+                        g.text(font, lineStr, contentX + indent, itemY, 0xFFE2E8F0, false);
                     }
-                    curY += 12;
+                    itemY += 12;
                 }
             }
 
-            curY += 10; // Extra gap
+            curY += cardH + 10; // Extra gap between release cards
         }
 
         // Scrollbar if needed

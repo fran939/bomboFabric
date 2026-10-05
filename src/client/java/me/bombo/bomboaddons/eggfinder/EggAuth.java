@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 public class EggAuth {
    private static final Logger LOGGER = LoggerFactory.getLogger("bomboaddons-eggauth");
-   private static final String AUTH_URL = "https://api.azureaaron.net/authenticate";
+   private static final String AUTH_URL = "https://hysky.de/api/aaron/authenticate";
    private static final String BOMBO_AUTH_URL = "https://api.bombo.dpdns.org/mod/auth";
    private static final String ALGORITHM = "SHA256withRSA";
    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(10L)).build();
@@ -107,16 +107,12 @@ public class EggAuth {
          } catch (Throwable ignored) {}
       }
 
-      if (token == null && bomboToken != null) {
-         return bomboToken;
-      }
-
       if (token == null && !authenticating) {
          updateToken();
          authenticateWithBomboAsync();
       }
 
-      return token != null ? token : bomboToken;
+      return token;
    }
 
    public static void forceUpdateToken() {
@@ -293,10 +289,6 @@ public class EggAuth {
             JsonObject json = GSON.fromJson(resp.body(), JsonObject.class);
             if (json != null && json.has("token")) {
                bomboToken = json.get("token").getAsString();
-               if (token == null) {
-                  token = bomboToken;
-                  tokenSource = "bomboapi";
-               }
                long issuedAt = json.has("issuedAt") ? json.get("issuedAt").getAsLong() : System.currentTimeMillis();
                long exp = json.has("expiresAt") ? json.get("expiresAt").getAsLong() : System.currentTimeMillis() + 3600_000L;
                LOGGER.info("[EggAuth] Bombo auth succeeded; refresh scheduled.");
@@ -304,7 +296,11 @@ public class EggAuth {
 
                long refreshInMs = Math.max(60_000L, (exp - issuedAt) - 300_000L);
                SCHEDULER.schedule(EggAuth::authenticateWithBomboAsync, refreshInMs, TimeUnit.MILLISECONDS);
-               EggWebSocket.onTokenRefreshed();
+               if (token != null) {
+                  EggWebSocket.onTokenRefreshed();
+               } else {
+                  EggWebSocket.pollBomboHoppityFallback();
+               }
                return true;
             }
          }

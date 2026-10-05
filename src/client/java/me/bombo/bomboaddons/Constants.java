@@ -80,7 +80,7 @@ public final class Constants {
      * so a literal {@code getModContainer("bomboaddons")} returns empty on the cheat build and
      * the old {@code .get()} call would throw.
      */
-    public static final String FALLBACK_VERSION = "26.2.28.90";
+    public static final String FALLBACK_VERSION = "26.2.28.91";
     private static volatile String cachedVersion = null;
 
     public static String myVersion() {

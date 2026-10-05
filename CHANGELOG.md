@@ -1,5 +1,17 @@
 # BomboAddons Changelog
  
+## [26.2.28.91] - 2026-10-05 (Beta)
+
+### Features
+- **Spotify Cover Command (`/b spotify cover`, `/b cover`, `/cover`):** Added direct commands to force refetch and reload the current album artwork immediately from external providers.
+- **Deezer Artwork Provider Fallback (`LyricsManager`):** Added automated fallback to the Deezer search API when iTunes returns no results, reliably retrieving high-resolution album artwork for Latin, Spanish, and regional tracks.
+- **Config Organizer Uncategorized Migration (`BomboOrderScreen`):** Deleting a category in `/b order` now automatically relocates all features previously under that category into the `Uncategorized` group instead of unassigned limbo.
+- **Styled Changelog Screen (`ChangelogScreen`):** Redesigned the in-game changelog with bordered release cards, green addition bullets (`+ `), red removal bullets (`- `), cyan fix bullets (`~ `), and bold header styling matching mod announcements.
+
+### Bug Fixes
+- **Discord Voice Mic/Deaf Flapping Fix (`DiscordIpcManager`):** Extracted mute and deaf states from Discord RPC's nested `voice_state` sub-object, synchronized local user voice status across IPC and bot intervals, and stopped microphone and deaf icon flickering.
+- **EggFinder Hoppity Fallback Restoration (`EggAuth`, `EggWebSocket`):** Reverted external Aaron URL to `https://hysky.de/api/aaron/authenticate` and decoupled Bombo tokens from Skyblocker WebSocket connections, eliminating 401 handshake loops while seamlessly serving egg waypoints via Bombo API polling.
+
 ## [26.2.28.90] - 2026-10-05 (Beta)
 
 ### Features

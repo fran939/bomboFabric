@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.90` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.91` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.90`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.91`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.91 (Ready for In-Game Testing)
+>
+> 1. **Spotify Cover Refetch & Fallback (`/b spotify cover`, `/b cover`, `LyricsManager`):** Added direct in-game commands to instantly force refetch and reload the current album cover. Integrated automated Deezer search API fallback (`https://api.deezer.com/search?q=...`) when iTunes returns no results, resolving missing artwork for Latin, Spanish, and regional songs.
+> 2. **Discord Voice HUD Mic/Deaf Flapping Fix (`DiscordIpcManager`):** Extracted mute and deaf states from Discord RPC's nested `voice_state` sub-object, synchronized local user voice status across IPC and bot intervals, and stopped microphone and deaf icon flickering.
+> 3. **EggFinder Hoppity Fallback Restoration (`EggAuth`, `EggWebSocket`):** Reverted external Aaron URL to `https://hysky.de/api/aaron/authenticate` and decoupled Bombo tokens from Skyblocker WebSocket connections, eliminating 401 handshake loops while seamlessly serving egg waypoints via Bombo API polling.
+> 4. **Config Organizer Uncategorized Category (`BomboOrderScreen`):** Deleting a category in `/b order` now automatically relocates all features previously under that category into the `Uncategorized` group instead of unassigned limbo.
+> 5. **Styled Changelog Screen (`ChangelogScreen`):** Redesigned the in-game changelog with bordered release cards, green addition bullets (`+ `), red removal bullets (`- `), cyan fix bullets (`~ `), and bold header styling matching mod announcements.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.90 (Ready for In-Game Testing)
 >
 > 1. **Config Organizer Command (`/b order`, `/order`):** Restored in-game organizer screen to customize the order and grouping of categories and features directly in the GUI without syntax errors.

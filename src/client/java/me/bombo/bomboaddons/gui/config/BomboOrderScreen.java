@@ -977,12 +977,15 @@ public class BomboOrderScreen extends Screen {
                     if (mouseY >= curY && mouseY <= curY + 18) { // Delete
                         String toDelete = contextTargetCategory;
                         FeatureOrganizerManager.customCategories.remove(toDelete);
+                        if (!FeatureOrganizerManager.customCategories.contains("Uncategorized")) {
+                            FeatureOrganizerManager.customCategories.add("Uncategorized");
+                        }
                         for (FeatureOrganizerManager.FeatureMeta fm : FeatureOrganizerManager.features.values()) {
                             if (fm.category.equalsIgnoreCase(toDelete)) {
-                                fm.category = "General";
+                                fm.category = "Uncategorized";
                             }
                         }
-                        if (selectedCategory.equalsIgnoreCase(toDelete)) selectedCategory = "ALL";
+                        if (selectedCategory.equalsIgnoreCase(toDelete)) selectedCategory = "Uncategorized";
                         FeatureOrganizerManager.save();
                         contextMenuOpen = false;
                         return true;
