@@ -24,8 +24,12 @@ public abstract class ArmorStandRendererMixin {
         at = @At("TAIL")
     )
     private void onExtractRenderStateTail(ArmorStand entity, ArmorStandRenderState state, float f, CallbackInfo ci) {
-        if (entity != null && state != null && HighlightESP.shouldHideBody(entity)) {
-            BOMBO_HEAD_ONLY_MAP.put(state, true);
+        if (state != null) {
+            if (entity != null && HighlightESP.shouldHideBody(entity)) {
+                BOMBO_HEAD_ONLY_MAP.put(state, true);
+            } else {
+                BOMBO_HEAD_ONLY_MAP.remove(state);
+            }
         }
     }
 }

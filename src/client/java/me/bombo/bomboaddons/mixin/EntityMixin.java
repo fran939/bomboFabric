@@ -65,10 +65,6 @@ public abstract class EntityMixin {
          return;
       }
       Entity entity = (Entity)(Object)this;
-      if (HighlightESP.shouldHideBody(entity)) {
-         cir.setReturnValue(false);
-         return;
-      }
       if (HighlightESP.shouldEntityGlow(entity)) {
          BomboConfig.Settings s = BomboConfig.get();
          if (s.hideCheats) {

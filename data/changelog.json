@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.97",
+    "date": "2026-10-06",
+    "changes": [
+      "+ Dungeon Key Skull Head-Only Glow - Keys now only outline the skull head instead of outlining the invisible armor stand body and baseplate",
+      "+ Overflux & Power Orb Key Suppression - Overflux, Manaflux, Plasmaflux, Radiant, and Flares sharing skull textures are no longer falsely highlighted as keys",
+      "+ Dungeon Run Key Auto-Off - All dungeon key highlights and tracers immediately turn off once the Blood Key is obtained or Blood Door is opened",
+      "+ Calibrated Key Tracer Position - Tracer lines for dungeon keys now target the center of the skull directly"
+    ]
+  },
+  {
     "version": "26.2.28.96",
     "date": "2026-10-05",
     "changes": [

@@ -233,28 +233,33 @@ public class HighlightESP {
 
    public static final Map<Integer, EntityHighlightInfo> ACTIVE_TRACER_INFOS = new ConcurrentHashMap<>();
    public static final Set<Integer> activeTracerEntityIds = ConcurrentHashMap.newKeySet();
-   public static final Set<Integer> activeHeadHighlightEntityIds = ConcurrentHashMap.newKeySet();
+   private static boolean lastBloodKeyDone = false;
 
    public static void onTick() {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == null || mc.player == null) {
          activeTracerEntityIds.clear();
-         activeHeadHighlightEntityIds.clear();
          ACTIVE_TRACER_INFOS.clear();
          return;
       }
+
+      boolean bloodDone = me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodDoorOpened()
+            || me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodKeyObtained();
+      if (bloodDone != lastBloodKeyDone) {
+         lastBloodKeyDone = bloodDone;
+         clearHighlightCache();
+      }
+
       if (mc.player.tickCount % 10 != 0) {
          return;
       }
       BomboConfig.Settings s = BomboConfig.get();
       if (s == null || (!s.highlightsEnabled && !s.dungeonKeyHighlight && !s.dungeonStarredMobHighlight && !s.tracerTestAllEntities && !s.cheeseTracer && (s.customTracers == null || s.customTracers.isEmpty()))) {
          activeTracerEntityIds.clear();
-         activeHeadHighlightEntityIds.clear();
          ACTIVE_TRACER_INFOS.clear();
          return;
       }
       Set<Integer> newTracers = new HashSet<>();
-      Set<Integer> newHeadHighlights = new HashSet<>();
       Map<Integer, EntityHighlightInfo> newTracerInfos = new HashMap<>();
       try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("HighlightESP: Entity Scan")) {
          for (Entity entity : mc.level.entitiesForRendering()) {
@@ -268,9 +273,6 @@ public class HighlightESP {
                   newTracers.add(entity.getId());
                   newTracerInfos.put(entity.getId(), info);
                }
-               if (info.highlightHeadOnly) {
-                  newHeadHighlights.add(entity.getId());
-               }
             }
          }
       }
@@ -278,8 +280,6 @@ public class HighlightESP {
       activeTracerEntityIds.addAll(newTracers);
       ACTIVE_TRACER_INFOS.clear();
       ACTIVE_TRACER_INFOS.putAll(newTracerInfos);
-      activeHeadHighlightEntityIds.clear();
-      activeHeadHighlightEntityIds.addAll(newHeadHighlights);
    }
 
    public static void render(LevelRenderContext context) {
@@ -306,32 +306,6 @@ public class HighlightESP {
          Vec3 camPos = mc.gameRenderer.mainCamera().position();
          PoseStack poseStack = context.poseStack();
          OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
-
-         // Render custom head-only highlights (e.g. Dungeon Keys)
-         if (!activeHeadHighlightEntityIds.isEmpty()) {
-            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("HighlightESP: Head Boxes")) {
-               for (Integer id : activeHeadHighlightEntityIds) {
-                  Entity entity = mc.level.getEntity(id);
-                  if (entity == null || entity == mc.player || ignoredEntities.contains(id))
-                     continue;
-                  EntityHighlightInfo info = getHighlightInfo(entity);
-                  if (info == null || !info.highlightHeadOnly)
-                     continue;
-                  int colorInt = info.glowColor != null ? info.glowColor : 0xFFFFFF;
-                  float r = (float) (colorInt >> 16 & 0xFF) / 255.0F;
-                  float g = (float) (colorInt >> 8 & 0xFF) / 255.0F;
-                  float b = (float) (colorInt & 0xFF) / 255.0F;
-                  double x = entity.getX() - camPos.x;
-                  double y = entity.getY() - camPos.y;
-                  double z = entity.getZ() - camPos.z;
-                  AABB headBox = new AABB(x - 0.45, y + 1.25, z - 0.45, x + 0.45, y + 2.05, z + 0.45);
-                  collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
-                        (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, headBox, r, g, b, 1.0F, 2.0F));
-                  collector.submitCustomGeometry(poseStack, RenderTypes.debugQuads(),
-                        (pose, vertexConsumer) -> BomboRenderUtils.drawFilledBox(pose.pose(), vertexConsumer, headBox, r, g, b, 0.25F));
-               }
-            }
-         }
 
          if (!hasActiveTracers(s)) {
             return;
@@ -375,7 +349,12 @@ public class HighlightESP {
                }
 
                float endX = (float) (entity.getX() - camPos.x);
-               float endY = (float) (entity.getY() - camPos.y + (double) (entity.getBbHeight() / 2.0F));
+               float endY;
+               if (info.highlightHeadOnly && entity instanceof ArmorStand as) {
+                  endY = (float) (entity.getY() - camPos.y + (as.isSmall() ? 0.70 : 1.70));
+               } else {
+                  endY = (float) (entity.getY() - camPos.y + (double) (entity.getBbHeight() / 2.0F));
+               }
                float endZ = (float) (entity.getZ() - camPos.z);
                int colorInt = info.tracerColor;
                float r = (float) (colorInt >> 16 & 0xFF) / 255.0F;
@@ -650,22 +629,46 @@ public class HighlightESP {
          }
 
          if (s.dungeonKeyHighlight && (matchesIsland("Catacombs") || me.bombo.bomboaddons.SkyblockUtils.isInDungeon())) {
-            String headTex = TargetPests.getHeadTextureValue(self);
-            String skullHash = headTex != null ? TargetPests.extractTextureHash(headTex) : null;
-            boolean isBloodKey = skullHash != null && (skullHash.equalsIgnoreCase("e49ec7d82b1415acae2059f78cd1d1754b9de9b18ca59f609024c4af843d4d24")
-                  || skullHash.equalsIgnoreCase("63438555e899bd9a051a95dbea49eb2ecfa52a69dbba8998f3673819e277fdf5"));
-            boolean isWitherKey = skullHash != null && skullHash.equalsIgnoreCase("20de5e8974940375934d32f71c91ad2d5728d38e51647dcc8f39206c099a54c2");
-            if (self.hasCustomName()) {
-               String cName = self.getCustomName().getString();
-               if (cName.contains("Blood Key")) isBloodKey = true;
-               if (cName.contains("Wither Key")) isWitherKey = true;
-            }
-            if (isBloodKey && (me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodDoorOpened() || me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodKeyObtained())) {
-               isBloodKey = false;
-            }
-            if (isBloodKey || isWitherKey) {
-               int keyColor = BomboRenderUtils.colorNameToHex(s.dungeonKeyColor != null ? s.dungeonKeyColor : "GOLD");
-               return new EntityHighlightInfo(now, true, keyColor, s.dungeonKeyTracers, keyColor, true, false);
+            boolean bloodDone = me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodDoorOpened()
+                  || me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodKeyObtained();
+            if (!bloodDone) {
+               String headTex = TargetPests.getHeadTextureValue(self);
+               String skullHash = headTex != null ? TargetPests.extractTextureHash(headTex) : null;
+               boolean isBloodKey = skullHash != null && (skullHash.equalsIgnoreCase("e49ec7d82b1415acae2059f78cd1d1754b9de9b18ca59f609024c4af843d4d24")
+                     || skullHash.equalsIgnoreCase("63438555e899bd9a051a95dbea49eb2ecfa52a69dbba8998f3673819e277fdf5"));
+               boolean isWitherKey = skullHash != null && skullHash.equalsIgnoreCase("20de5e8974940375934d32f71c91ad2d5728d38e51647dcc8f39206c099a54c2");
+               if (self.hasCustomName()) {
+                  String cName = self.getCustomName().getString();
+                  if (cName.contains("Blood Key")) isBloodKey = true;
+                  if (cName.contains("Wither Key")) isWitherKey = true;
+               }
+               if (isBloodKey || isWitherKey) {
+                  boolean isPowerOrb = false;
+                  if (self.hasCustomName()) {
+                     String cNameLower = self.getCustomName().getString().toLowerCase(Locale.ROOT);
+                     if (cNameLower.contains("overflux") || cNameLower.contains("manaflux") || cNameLower.contains("plasmaflux")
+                           || cNameLower.contains("radiant") || cNameLower.contains("power orb") || cNameLower.contains("flare")) {
+                        isPowerOrb = true;
+                     }
+                  }
+                  if (!isPowerOrb && self.level() != null) {
+                     AABB orbBox = self.getBoundingBox().inflate(1.5, 2.5, 1.5);
+                     for (Entity nearby : self.level().getEntities(self, orbBox)) {
+                        if (nearby instanceof ArmorStand as && as.hasCustomName()) {
+                           String nameLower = as.getCustomName().getString().toLowerCase(Locale.ROOT);
+                           if (nameLower.contains("overflux") || nameLower.contains("manaflux") || nameLower.contains("plasmaflux")
+                                 || nameLower.contains("radiant") || nameLower.contains("power orb") || nameLower.contains("flare")) {
+                              isPowerOrb = true;
+                              break;
+                           }
+                        }
+                     }
+                  }
+                  if (!isPowerOrb) {
+                     int keyColor = BomboRenderUtils.colorNameToHex(s.dungeonKeyColor != null ? s.dungeonKeyColor : "GOLD");
+                     return new EntityHighlightInfo(now, true, keyColor, s.dungeonKeyTracers, keyColor, true, self instanceof ArmorStand);
+                  }
+               }
             }
          }
 

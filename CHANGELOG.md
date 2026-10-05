@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.97] - 2026-10-06 (Beta)
+
+### Features & Fixes
+- **Dungeon Key Skull Head-Only Highlighting (`HighlightESP`, `EntityMixin`, `ArmorStandRendererMixin`, `ArmorStandModelMixin`):** Fixed glowing outline on dungeon key armor stands to outline strictly the skull head. Removed body glowing suppression in `EntityMixin`, enabled `highlightHeadOnly` on dungeon key armor stands, cleanly tracked render states in `ArmorStandRendererMixin`, and hid body, arms, legs, sticks, and base plate in `ArmorStandModelMixin` so the outline shader only outlines the skull. Removed redundant floating wireframe boxes from `HighlightESP.render()`.
+- **Overflux & Deployable Power Orb Key Suppression (`HighlightESP`):** Added nearby nametag checks for Overflux, Manaflux, Plasmaflux, Radiant Power Orb, and Flares (which share the wither skull texture hash `20de5e8974940375934d32f71c91ad2d5728d38e51647dcc8f39206c099a54c2`), completely preventing power orbs from falsely highlighting as dungeon keys.
+- **Dungeon Run Key Auto-Off (`HighlightESP`, `DungeonBossManager`):** Both Blood Key and Wither Key highlights and tracers now immediately disable once the Blood Key has been obtained or the Blood Door has been opened, automatically clearing the highlight cache on state change.
+- **Calibrated Dungeon Key Tracer Heights (`HighlightESP`):** Calibrated tracer endpoint height on head-only armor stands (`y + 0.70` for small stands, `y + 1.70` for normal stands) so tracers point directly at the center of the key skull.
+
 ## [26.2.28.96] - 2026-10-05 (Beta)
 
 ### Features & Fixes
