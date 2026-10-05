@@ -13,7 +13,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Util;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import me.bombo.bomboaddons.features.spotify.LyricsManager.LyricsLine;
 
 /**
@@ -82,6 +84,8 @@ public class SpotifyHud {
     private static String cachedTrackDisplay = "";
     private static String lastRawArtist = null;
     private static String cachedArtistDisplay = "";
+    private static final Map<Character, Integer> BOLD_CHAR_WIDTHS = new ConcurrentHashMap<>();
+    private static int cachedSpaceW = -1;
 
     public static void drawHud(GuiGraphicsExtractor g, int baseX, int baseY, float scale, boolean isDummy) {
         Minecraft mc = Minecraft.getInstance();
@@ -212,7 +216,8 @@ public class SpotifyHud {
                 if (words != null && !words.isEmpty()) {
                     // Syllable / word-by-word karaoke wipe
                     int curX = 0;
-                    int spaceW = font.width(" ");
+                    if (cachedSpaceW < 0) cachedSpaceW = font.width(" ");
+                    int spaceW = cachedSpaceW;
                     for (int w = 0; w < words.size(); w++) {
                         LyricsManager.WordTime wt = words.get(w);
                         String wordStr = wt.word();
@@ -222,13 +227,19 @@ public class SpotifyHud {
 
                         for (int c = 0; c < wordStr.length(); c++) {
                             char ch = wordStr.charAt(c);
-                            String chStr = String.valueOf(ch);
-                            int chW = font.width("§l" + chStr);
+                            Integer chWObj = BOLD_CHAR_WIDTHS.get(ch);
+                            int chW;
+                            if (chWObj != null) {
+                                chW = chWObj;
+                            } else {
+                                chW = font.width("§l" + ch);
+                                BOLD_CHAR_WIDTHS.put(ch, chW);
+                            }
 
                             long letterTargetMs = wt.startMs() + (c * perLetterMs);
                             boolean isLetterActive = progressMs >= letterTargetMs;
                             int chColor = isLetterActive ? activeLyricsColor : 0x66CBD5E1;
-                            g.text(font, "§l" + chStr, curX, 0, chColor, isLetterActive);
+                            g.text(font, "§l" + ch, curX, 0, chColor, isLetterActive);
                             curX += chW;
                         }
                         curX += spaceW;

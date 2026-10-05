@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.91` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.92` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,21 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.91`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.92`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.92 (Ready for In-Game Testing)
+>
+> 1. **Config Organizer Browser Navigation & Shortcuts (`BomboOrderScreen`):** Enabled browser-like category tab multi-selection via `Ctrl + Click` and `Shift + Click` (range select e.g. tabs 1 to 5), displaying combined feature lists across selected categories. Added browser shortcuts: `Ctrl + T` (new category), `Ctrl + W` (close/delete category tab), `Ctrl + 1..8` (jump to tabs 1..8), `Ctrl + 9` (last tab), and `Ctrl + Tab` / `Ctrl + Shift + Tab` (cycle tabs).
+> 2. **Orphaned Features Recovery (`FeatureOrganizerManager`, `BomboOrderScreen`):** Ensured the `Uncategorized` category automatically populates in the sidebar if any features belong to deleted or unregistered categories from earlier sessions, restoring access to all misplaced features.
+> 3. **Discord & Spotify Resource & Thread Optimization (`DiscordIpcManager`, `DiscordVoiceHud`, `SpotifyManager`):** Replaced one-off ephemeral `HttpClient.newHttpClient()` calls across managers with single static shared clients, eliminating redundant worker and selector threads (slashing total JVM thread count from 90).
+> 4. **Discord Render Spike Elimination (`DiscordVoiceHud`):** Removed synchronous disk log scanning from the HUD render loop on the render thread, completely eliminating the 3.67ms frame hitch.
+> 5. **Discord Background Log Throttling & Timestamp Caching (`DiscordIpcManager`):** Throttled background log inspection to 2.5s and added `lastModified` caching, stopping redundant 64KB disk reads every 400ms when log files are unchanged.
+> 6. **Spotify HUD Font & Space Caching (`SpotifyHud`):** Cached character widths and space width in the synchronized lyrics karaoke wipe loop, reducing string allocations and font glyph calculations at 280+ FPS.
+> 7. **Changelog Screen Viewport Scissoring (`ChangelogScreen`):** Added strict scissor box clipping (`enableScissor`) to the scroll view, preventing release cards and outlines from leaking outside the top and bottom of the window.
+> 8. **Full Changelog Human Styling (`data/changelog.json`):** Formatted and rewritten historical changelog entries with human-friendly descriptions, color-coded bullets (`+` green features, `~` cyan fixes, `-` red removals), and bold titles.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.91 (Ready for In-Game Testing)
 >
 > 1. **Spotify Cover Refetch & Fallback (`/b spotify cover`, `/b cover`, `LyricsManager`):** Added direct in-game commands to instantly force refetch and reload the current album cover. Integrated automated Deezer search API fallback (`https://api.deezer.com/search?q=...`) when iTunes returns no results, resolving missing artwork for Latin, Spanish, and regional songs.

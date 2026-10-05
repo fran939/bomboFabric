@@ -276,7 +276,8 @@ public class ChangelogScreen extends Screen {
         if (this.scrollAmount > this.maxScroll) this.scrollAmount = this.maxScroll;
         if (this.scrollAmount < 0) this.scrollAmount = 0;
 
-        // Render visible entries
+        // Render visible entries with strict scissor clipping
+        g.enableScissor(contentX, contentY, contentX + contentW, contentY + contentH);
         int curY = (int) (contentY - this.scrollAmount);
 
         for (ReleaseEntry r : releases) {
@@ -333,6 +334,7 @@ public class ChangelogScreen extends Screen {
 
             curY += cardH + 10; // Extra gap between release cards
         }
+        g.disableScissor();
 
         // Scrollbar if needed
         if (maxScroll > 0) {

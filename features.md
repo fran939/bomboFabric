@@ -53,7 +53,6 @@
 ---
 
 ## ⚙️ Customization & System Utilities
-- **Silent Command Execution (`/b s <command>`):** Execute any command completely silently with all local chat echoes suppressed.
 - **Custom Keybinds & Aliases:** Map custom key combinations to chat messages, commands, or toggles.
 - **Feature & Category Organizer (`/b order`):** Drag-and-drop screen to customize the order and categorization of settings in the configuration menu.
 - **In-Game Changelog (`/b changelog`):** Browse recent updates, new features, and bug fixes directly in-game.

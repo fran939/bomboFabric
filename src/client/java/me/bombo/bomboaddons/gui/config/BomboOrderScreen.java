@@ -30,6 +30,8 @@ public class BomboOrderScreen extends Screen {
 
     // State
     private String selectedCategory = "ALL";
+    private final Set<String> selectedCategories = new LinkedHashSet<>(Collections.singletonList("ALL"));
+    private int lastClickedCategoryIndex = -1;
     private String searchFilter = "";
     private int searchCursorPos = 0;
     private boolean searchFocused = false;
@@ -83,6 +85,19 @@ public class BomboOrderScreen extends Screen {
     @Override
     protected void init() {
         FeatureOrganizerManager.initDefaults();
+        // Ensure "Uncategorized" category exists if any feature belongs to it
+        if (!FeatureOrganizerManager.customCategories.contains("Uncategorized")) {
+            for (FeatureOrganizerManager.FeatureMeta fm : FeatureOrganizerManager.features.values()) {
+                if (fm != null && "Uncategorized".equalsIgnoreCase(fm.category)) {
+                    FeatureOrganizerManager.customCategories.add("Uncategorized");
+                    break;
+                }
+            }
+        }
+        if (selectedCategories.isEmpty()) {
+            selectedCategories.add(selectedCategory);
+        }
+
         BomboConfig.Settings s = BomboConfig.get();
         float scale = s.guiWindowScale > 0.5f ? s.guiWindowScale : 1.0f;
         this.sidebarW = Math.max(140, Math.min(260, s.guiSidebarWidth > 0 ? s.guiSidebarWidth : 180));
@@ -280,7 +295,7 @@ public class BomboOrderScreen extends Screen {
         int totalHeight = 0;
 
         // "ALL" Category option
-        boolean allActive = "ALL".equalsIgnoreCase(selectedCategory);
+        boolean allActive = selectedCategories.contains("ALL") || ("ALL".equalsIgnoreCase(selectedCategory) && selectedCategories.size() <= 1);
         boolean allHover = mouseX >= x + 6 && mouseX <= x + w - 12 && mouseY >= curY && mouseY <= curY + 20 && mouseY >= y && mouseY <= y + listH;
         if (allActive) {
             g.fill(x + 6, curY, x + w - 12, curY + 20, 0x33000000 | (accent & 0x00FFFFFF));
@@ -294,7 +309,8 @@ public class BomboOrderScreen extends Screen {
 
         for (int i = 0; i < categories.size(); i++) {
             String cat = categories.get(i);
-            boolean active = cat.equalsIgnoreCase(selectedCategory);
+            boolean active = selectedCategories.contains(cat) || cat.equalsIgnoreCase(selectedCategory);
+            boolean isPrimary = cat.equalsIgnoreCase(selectedCategory);
             boolean hover = mouseX >= x + 6 && mouseX <= x + w - 12 && mouseY >= curY && mouseY <= curY + 20 && mouseY >= y && mouseY <= y + listH;
             boolean isDragged = cat.equals(draggingCategory);
 
@@ -310,6 +326,9 @@ public class BomboOrderScreen extends Screen {
             } else if (active) {
                 g.fill(x + 6, curY, x + w - 12, curY + 20, 0x33000000 | (accent & 0x00FFFFFF));
                 g.fill(x + 6, curY, x + 9, curY + 20, accent);
+                if (selectedCategories.size() > 1) {
+                    g.outline(x + 6, curY, w - 18, 20, 0x5500E5FF);
+                }
             } else if (hover) {
                 g.fill(x + 6, curY, x + w - 12, curY + 20, 0x1AFFFFFF);
             }
@@ -319,8 +338,9 @@ public class BomboOrderScreen extends Screen {
                 if (fm.category.equalsIgnoreCase(cat) && isFeatureVisible(fm)) count++;
             }
 
+            String idxBadge = (i < 9) ? "§8[" + (i + 1) + "] " : "";
             int textColor = isDragged ? 0xFF64748B : (active ? accent : (hover ? 0xFFFFFFFF : 0xFF94A3B8));
-            g.text(this.font, cat, x + 16, curY + 6, textColor, false);
+            g.text(this.font, idxBadge + cat, x + 16, curY + 6, textColor, false);
             g.text(this.font, "§8" + count, x + w - 24 - this.font.width(String.valueOf(count)), curY + 6, 0xFF64748B, false);
 
             curY += 22;
@@ -341,7 +361,7 @@ public class BomboOrderScreen extends Screen {
 
     private void renderFeatureList(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
         List<FeatureOrganizerManager.FeatureMeta> list = getFilteredFeatures();
-        boolean isAllView = "ALL".equalsIgnoreCase(selectedCategory);
+        boolean isAllView = selectedCategories.contains("ALL") || selectedCategories.size() > 1 || "ALL".equalsIgnoreCase(selectedCategory);
 
         int startY = y + 4 - (int) this.featureScroll;
         int totalH;
@@ -593,10 +613,20 @@ public class BomboOrderScreen extends Screen {
     private List<FeatureOrganizerManager.FeatureMeta> getFilteredFeatures() {
         List<FeatureOrganizerManager.FeatureMeta> list = new ArrayList<>();
         String q = searchFilter.toLowerCase(Locale.ROOT).trim();
+        boolean isAll = selectedCategories.isEmpty() || selectedCategories.contains("ALL");
         for (FeatureOrganizerManager.FeatureMeta fm : FeatureOrganizerManager.features.values()) {
             if (!isFeatureVisible(fm)) continue;
-            if (!"ALL".equalsIgnoreCase(selectedCategory) && !fm.category.equalsIgnoreCase(selectedCategory)) {
-                continue;
+            if (!isAll) {
+                boolean matchesCat = false;
+                for (String sel : selectedCategories) {
+                    if (fm.category != null && fm.category.equalsIgnoreCase(sel)) {
+                        matchesCat = true;
+                        break;
+                    }
+                }
+                if (!matchesCat) {
+                    continue;
+                }
             }
             if (!q.isEmpty()) {
                 String nameLower = fm.name.toLowerCase(Locale.ROOT);
@@ -1063,6 +1093,9 @@ public class BomboOrderScreen extends Screen {
             if (mouseY >= curY && mouseY <= curY + 20) {
                 if (button == 0) {
                     selectedCategory = "ALL";
+                    selectedCategories.clear();
+                    selectedCategories.add("ALL");
+                    lastClickedCategoryIndex = -1;
                     this.featureScroll = 0.0;
                     pendingDragCategory = null;
                     isCategoryDragging = false;
@@ -1076,7 +1109,43 @@ public class BomboOrderScreen extends Screen {
                 String cat = categories.get(i);
                 if (mouseY >= curY && mouseY <= curY + 20) {
                     if (button == 0) {
-                        selectedCategory = cat;
+                        boolean ctrl = isCtrlHeld();
+                        boolean shift = isShiftHeld();
+
+                        if (shift && lastClickedCategoryIndex >= 0 && lastClickedCategoryIndex < categories.size()) {
+                            // Shift-click range selection (e.g. click 1, then Shift+click 5 -> selects 1..5)
+                            int start = Math.min(lastClickedCategoryIndex, i);
+                            int end = Math.max(lastClickedCategoryIndex, i);
+                            selectedCategories.remove("ALL");
+                            for (int idx = start; idx <= end; idx++) {
+                                selectedCategories.add(categories.get(idx));
+                            }
+                            selectedCategory = cat;
+                        } else if (ctrl) {
+                            // Ctrl-click multi-selection toggle
+                            selectedCategories.remove("ALL");
+                            if (selectedCategories.contains(cat)) {
+                                selectedCategories.remove(cat);
+                                if (selectedCategories.isEmpty()) {
+                                    selectedCategories.add("ALL");
+                                    selectedCategory = "ALL";
+                                    lastClickedCategoryIndex = -1;
+                                } else {
+                                    selectedCategory = selectedCategories.iterator().next();
+                                }
+                            } else {
+                                selectedCategories.add(cat);
+                                selectedCategory = cat;
+                                lastClickedCategoryIndex = i;
+                            }
+                        } else {
+                            // Standard single click
+                            selectedCategories.clear();
+                            selectedCategories.add(cat);
+                            selectedCategory = cat;
+                            lastClickedCategoryIndex = i;
+                        }
+
                         this.featureScroll = 0.0;
                         pendingDragCategory = cat;
                         categoryPressX = mouseX;
@@ -1746,6 +1815,85 @@ public class BomboOrderScreen extends Screen {
             }
         }
 
+        if (isCtrl) {
+            List<String> categories = new ArrayList<>(FeatureOrganizerManager.customCategories);
+            // Ctrl+T: New Tab / Add Category
+            if (code == GLFW.GLFW_KEY_T) {
+                isCreatingCategory = true;
+                categoryNameInput = "";
+                categoryNameCursorPos = 0;
+                return true;
+            }
+            // Ctrl+W: Close / Delete current category tab
+            if (code == GLFW.GLFW_KEY_W) {
+                if (!"ALL".equalsIgnoreCase(selectedCategory) && !"Uncategorized".equalsIgnoreCase(selectedCategory)) {
+                    String toDelete = selectedCategory;
+                    for (FeatureOrganizerManager.FeatureMeta fm : FeatureOrganizerManager.features.values()) {
+                        if (fm.category.equalsIgnoreCase(toDelete)) {
+                            fm.category = "Uncategorized";
+                        }
+                    }
+                    int idx = FeatureOrganizerManager.customCategories.indexOf(toDelete);
+                    FeatureOrganizerManager.customCategories.remove(toDelete);
+                    if (!FeatureOrganizerManager.customCategories.contains("Uncategorized")) {
+                        FeatureOrganizerManager.customCategories.add("Uncategorized");
+                    }
+                    if (!FeatureOrganizerManager.customCategories.isEmpty()) {
+                        int nextIdx = Math.max(0, Math.min(idx, FeatureOrganizerManager.customCategories.size() - 1));
+                        selectedCategory = FeatureOrganizerManager.customCategories.get(nextIdx);
+                    } else {
+                        selectedCategory = "ALL";
+                    }
+                    selectedCategories.clear();
+                    selectedCategories.add(selectedCategory);
+                    FeatureOrganizerManager.save();
+                    return true;
+                }
+            }
+            // Ctrl+1 through Ctrl+8: Switch directly to tab 1 to 8
+            if (code >= GLFW.GLFW_KEY_1 && code <= GLFW.GLFW_KEY_8) {
+                int targetIdx = code - GLFW.GLFW_KEY_1;
+                if (targetIdx < categories.size()) {
+                    selectedCategory = categories.get(targetIdx);
+                    selectedCategories.clear();
+                    selectedCategories.add(selectedCategory);
+                    lastClickedCategoryIndex = targetIdx;
+                    this.featureScroll = 0.0;
+                    return true;
+                }
+            }
+            // Ctrl+9: Switch to last tab
+            if (code == GLFW.GLFW_KEY_9) {
+                if (!categories.isEmpty()) {
+                    selectedCategory = categories.get(categories.size() - 1);
+                    selectedCategories.clear();
+                    selectedCategories.add(selectedCategory);
+                    lastClickedCategoryIndex = categories.size() - 1;
+                    this.featureScroll = 0.0;
+                    return true;
+                }
+            }
+            // Ctrl+Tab / Ctrl+Shift+Tab: Cycle tabs
+            if (code == GLFW.GLFW_KEY_TAB) {
+                if (!categories.isEmpty()) {
+                    int curIdx = categories.indexOf(selectedCategory);
+                    boolean shift = event.hasShiftDown() || (Minecraft.getInstance() != null && Minecraft.getInstance().hasShiftDown());
+                    int nextIdx;
+                    if (shift) {
+                        nextIdx = curIdx <= 0 ? categories.size() - 1 : curIdx - 1;
+                    } else {
+                        nextIdx = (curIdx + 1) % categories.size();
+                    }
+                    selectedCategory = categories.get(nextIdx);
+                    selectedCategories.clear();
+                    selectedCategories.add(selectedCategory);
+                    lastClickedCategoryIndex = nextIdx;
+                    this.featureScroll = 0.0;
+                    return true;
+                }
+            }
+        }
+
         if (code == GLFW.GLFW_KEY_ESCAPE) {
             FeatureOrganizerManager.save();
             Minecraft.getInstance().setScreenAndShow(this.parent);
@@ -1782,6 +1930,9 @@ public class BomboOrderScreen extends Screen {
                 if (!FeatureOrganizerManager.customCategories.contains(name)) {
                     FeatureOrganizerManager.customCategories.add(name);
                     selectedCategory = name;
+                    selectedCategories.clear();
+                    selectedCategories.add(name);
+                    lastClickedCategoryIndex = FeatureOrganizerManager.customCategories.size() - 1;
                     FeatureOrganizerManager.save();
                 }
             } else if (isRenamingCategory && contextTargetCategory != null) {
@@ -1793,7 +1944,11 @@ public class BomboOrderScreen extends Screen {
                             fm.category = name;
                         }
                     }
-                    if (selectedCategory.equalsIgnoreCase(contextTargetCategory)) selectedCategory = name;
+                    if (selectedCategory.equalsIgnoreCase(contextTargetCategory)) {
+                        selectedCategory = name;
+                        selectedCategories.remove(contextTargetCategory);
+                        selectedCategories.add(name);
+                    }
                     FeatureOrganizerManager.save();
                 }
             }
@@ -1824,5 +1979,21 @@ public class BomboOrderScreen extends Screen {
             idx++;
         }
         return Math.min(text.length(), idx);
+    }
+
+    private static boolean isCtrlHeld() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.getWindow() == null) return false;
+        long win = mc.getWindow().handle();
+        return GLFW.glfwGetKey(win, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
+            || GLFW.glfwGetKey(win, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
+    }
+
+    private static boolean isShiftHeld() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.getWindow() == null) return false;
+        long win = mc.getWindow().handle();
+        return GLFW.glfwGetKey(win, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
+            || GLFW.glfwGetKey(win, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
     }
 }

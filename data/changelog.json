@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.92",
+    "date": "2026-10-05",
+    "changes": [
+      "+ Config Organizer Browser Navigation - Support multi-category selection via Ctrl+Click and Shift+Click (e.g. 1..5) with active tab badges and combined feature view",
+      "+ Browser Keyboard Shortcuts - Added Ctrl+T to create a new category, Ctrl+W to close category tab, Ctrl+1..8 to switch tabs, Ctrl+9 for last tab, and Ctrl+Tab to cycle tabs",
+      "+ Orphaned Features Recovery - Restored visibility for features in previously removed categories by automatically ensuring Uncategorized category is active in sidebar",
+      "~ Discord & Spotify Resource Optimization - Replaced ephemeral HttpClients with shared static instance, cutting thread pool bloat (slashing thread count from 90)",
+      "~ Discord Render Spike Elimination - Removed synchronous disk log scanning from render thread, stopping 3.67ms frame spikes on Discord HUD",
+      "~ Discord Background Log Throttling - Throttled desktop log polling to 2.5s and cached file timestamps, eliminating redundant 64KB disk reads every 400ms",
+      "~ Spotify HUD Font Caching - Cached character and space widths in lyrics render loop, cutting string allocations and glyph lookups at high framerates",
+      "~ Changelog Screen Viewport Scissoring - Added strict scissor box clipping, completely fixing release cards and borders leaking outside the top and bottom",
+      "~ Full Changelog Formatting - Rewrote and styled all historical release notes with color-coded bullets (+ Feature, ~ Fix, - Removed) and bold titles"
+    ]
+  },
+  {
     "version": "26.2.28.91",
     "date": "2026-10-05",
     "changes": [
@@ -15,885 +30,885 @@
     "version": "26.2.28.90",
     "date": "2026-10-05",
     "changes": [
-      "Feature: Config Organizer Command - Restored /b order and added top-level /order to open the drag-and-drop feature & category organizer",
-      "Feature: Standalone Discord Voice Commands - Added direct /b mute, /b unmute, /b deafen, and /b undeafen commands and aliases for fast voice control",
-      "Feature: Discord Remote Command Audit Logging - Dispatched remote commands from /cmd now log an audit embed to the Discord logs channel",
-      "Feature: Dynamic Version Resolution - Automatically reads and updates mod version from gradle.properties in development and production builds",
-      "Feature: Spotify HUD Dynamic Lyrics Fitting - Proportional font scaling guarantees 100% of lyrics words and upcoming lines fit without truncation",
-      "Fix: Spotify HUD Custom Color - Choosing a custom lyrics color automatically disables dynamic artwork tinting so custom colors apply immediately",
-      "Fix: Discord HUD [LIVE] & Mic/Deaf Flickering - Merged voice states without clearing user cache and removed local mute from deaf state mapping",
-      "Fix: Brigadier CommandSyntaxException - Fixed client command dispatcher errors on /b s and remote commands by registering subcommands directly",
-      "Fix: EggAuth Direct AzureAaron Endpoint - Pointed directly to api.azureaaron.net/authenticate to avoid 307 redirects and acquire valid Skyblocker tokens"
+      "+ Config Organizer Command - Restored /b order and added top-level /order to open the drag-and-drop feature & category organizer",
+      "+ Standalone Discord Voice Commands - Added direct /b mute, /b unmute, /b deafen, and /b undeafen commands and aliases for fast voice control",
+      "+ Discord Remote Command Audit Logging - Dispatched remote commands from /cmd now log an audit embed to the Discord logs channel",
+      "+ Dynamic Version Resolution - Automatically reads and updates mod version from gradle.properties in development and production builds",
+      "+ Spotify HUD Dynamic Lyrics Fitting - Proportional font scaling guarantees 100% of lyrics words and upcoming lines fit without truncation",
+      "~ Spotify HUD Custom Color - Choosing a custom lyrics color automatically disables dynamic artwork tinting so custom colors apply immediately",
+      "~ Discord HUD [LIVE] & Mic/Deaf Flickering - Merged voice states without clearing user cache and removed local mute from deaf state mapping",
+      "~ Brigadier CommandSyntaxException - Fixed client command dispatcher errors on /b s and remote commands by registering subcommands directly",
+      "~ EggAuth Direct AzureAaron Endpoint - Pointed directly to api.azureaaron.net/authenticate to avoid 307 redirects and acquire valid Skyblocker tokens"
     ]
   },
   {
     "version": "26.2.28.89",
     "date": "2026-10-05",
     "changes": [
-      "Discord Bot /cmd Command: Added admin-only slash command /cmd (user) (command) on Discord bot that dispatches hidden bridge frames to execute commands remotely on player clients",
-      "Silent Command Execution: Added /b s <command> to execute commands silently without chat or system message output",
-      "Spotify HUD Lyrics Overlap Fix: Expanded HUD width to 280px and dynamically downscaled long text to avoid overlapping playback controls",
-      "Spotify HUD Granular Toggles: Added toggles for Show Cover, Show Song Name, Show Artist, Show Lyrics, and Show Controls in /b config",
-      "Spotify HUD Karaoke Mode: Added letter-by-letter and word-by-word karaoke wipe animation with high-resolution millisecond sync",
-      "Lyrics HUD Custom Color Fix: Fixed custom text colors applying immediately when dynamic artwork colors are disabled",
-      "Hoppity Auto-Click Yes Fix: Cleared cached NPC dialogue options on phone pickup and timeout, guaranteeing subsequent calls and [Yes] clicks succeed",
-      "Discord HUD Anti-Flicker: Fixed isDeaf status calculation and preserved 8-second stream debounce to stop [LIVE] badge and mic flickering",
-      "EggAuth Backend Verification: Patched signature proof validation on bomboapi backend to successfully issue authentication tokens"
+      "+ Discord Bot /cmd Command - Added admin-only slash command /cmd (user) (command) on Discord bot that dispatches hidden bridge frames to execute commands remotely on player clients",
+      "+ Silent Command Execution - Added /b s <command> to execute commands silently without chat or system message output",
+      "~ Spotify HUD Lyrics Overlap Fix - Expanded HUD width to 280px and dynamically downscaled long text to avoid overlapping playback controls",
+      "+ Spotify HUD Granular Toggles - Added toggles for Show Cover, Show Song Name, Show Artist, Show Lyrics, and Show Controls in /b config",
+      "+ Spotify HUD Karaoke Mode - Added letter-by-letter and word-by-word karaoke wipe animation with high-resolution millisecond sync",
+      "~ Lyrics HUD Custom Color Fix - Fixed custom text colors applying immediately when dynamic artwork colors are disabled",
+      "~ Hoppity Auto-Click Yes Fix - Cleared cached NPC dialogue options on phone pickup and timeout, guaranteeing subsequent calls and [Yes] clicks succeed",
+      "~ Discord HUD Anti-Flicker - Fixed isDeaf status calculation and preserved 8-second stream debounce to stop [LIVE] badge and mic flickering",
+      "+ EggAuth Backend Verification - Patched signature proof validation on bomboapi backend to successfully issue authentication tokens"
     ]
   },
   {
     "version": "26.2.28.88",
     "date": "2026-10-05",
     "changes": [
-      "Spotify HUD Lyrics Mode: Added toggle in /b config to display album cover, synchronized lyrics (current line + customizable upcoming lines), controls, and progress bar directly on the Spotify HUD",
-      "Album Artwork Stale Cover Fix: Cleared album cover immediately upon song change and added 7-second delayed verification check to guarantee artwork transitions cleanly",
-      "EggAuth Mojang Signature Verification: Fixed public key signature checking in bomboapi backend with proper Minecraft 24-byte header and playerCertificateKeys support",
-      "EggAuth Automatic Bombo Fallback: Automatically attempts Bombo API authentication when Aaron route is unavailable and reconnects WebSocket on success"
+      "+ Spotify HUD Lyrics Mode - Added toggle in /b config to display album cover, synchronized lyrics (current line + customizable upcoming lines), controls, and progress bar directly on the Spotify HUD",
+      "~ Album Artwork Stale Cover Fix - Cleared album cover immediately upon song change and added 7-second delayed verification check to guarantee artwork transitions cleanly",
+      "~ EggAuth Mojang Signature Verification - Fixed public key signature checking in bomboapi backend with proper Minecraft 24-byte header and playerCertificateKeys support",
+      "+ EggAuth Automatic Bombo Fallback - Automatically attempts Bombo API authentication when Aaron route is unavailable and reconnects WebSocket on success"
     ]
   },
   {
     "version": "26.2.28.87",
     "date": "2026-10-04",
     "changes": [
-      "Discord Live Screen Share Anti-Flicker: Enforced 8-second forward debounce horizon on active video stream packets and eliminated false stop events from simulcast ssrc:0 lines, completely stopping [LIVE] badge flickering",
-      "Discord Local Member Mute Icon: Removed strikethrough name styling and [MUTE] label when muting other users, cleanly displaying their normal username alongside the official Discord red mic icon",
-      "Discord Voice Mute Command Toggle Fix: Corrected Brigadier /b discord mute and /b discord deafen client command registrations to invoke toggle actions instead of forcing state true",
-      "Discord Background StreamKit Auto-Auth: Added automatic background authorization exchange and token re-authentication on startup and on error, eliminating manual weekly auth prompts",
-      "Lyrics Text-Bounded Click Seeking: Bounded click-to-seek detection to the exact pixel width of the lyric text line, preventing accidental jumps when clicking empty space on either side",
-      "Lyrics Screen Karaoke Style Fill: Integrated letter-by-letter sub-word karaoke fill animation and smooth line-progress wipe into /b lyrics screen",
-      "Lyrics HUD Custom Color & Palette Support: Corrected color resolution across named palette presets (Amethyst, Cyan, Gold, Ruby) and hex strings, defaulting Dynamic Artwork Color to off so custom colors apply immediately",
-      "Lyrics HUD Backdrop Fill & Removal: Added generous padding to prevent text touching borders and introduced 'Lyrics HUD Background' config toggle to allow completely transparent floating lyrics"
+      "~ Discord Live Screen Share Anti-Flicker - Enforced 8-second forward debounce horizon on active video stream packets and eliminated false stop events from simulcast ssrc:0 lines, completely stopping [LIVE] badge flickering",
+      "- Discord Local Member Mute Icon - Removed strikethrough name styling and [MUTE] label when muting other users, cleanly displaying their normal username alongside the official Discord red mic icon",
+      "~ Discord Voice Mute Command Toggle Fix - Corrected Brigadier /b discord mute and /b discord deafen client command registrations to invoke toggle actions instead of forcing state true",
+      "~ Discord Background StreamKit Auto-Auth - Added automatic background authorization exchange and token re-authentication on startup and on error, eliminating manual weekly auth prompts",
+      "~ Lyrics Text-Bounded Click Seeking - Bounded click-to-seek detection to the exact pixel width of the lyric text line, preventing accidental jumps when clicking empty space on either side",
+      "+ Lyrics Screen Karaoke Style Fill - Integrated letter-by-letter sub-word karaoke fill animation and smooth line-progress wipe into /b lyrics screen",
+      "+ Lyrics HUD Custom Color & Palette Support - Corrected color resolution across named palette presets (Amethyst, Cyan, Gold, Ruby) and hex strings, defaulting Dynamic Artwork Color to off so custom colors apply immediately",
+      "~ Lyrics HUD Backdrop Fill & Removal - Added generous padding to prevent text touching borders and introduced 'Lyrics HUD Background' config toggle to allow completely transparent floating lyrics"
     ]
   },
   {
     "version": "26.2.28.86",
     "date": "2026-10-04",
     "changes": [
-      "Discord Real Username Display: Always show real Discord username across all voice call participants instead of oscillating with guild nicknames",
-      "Discord HUD Sorting & Anti-Flicker: Stably sort call members alphabetically with local player pinned to top, eliminating HUD row jumping",
-      "Discord Mute Toggle Loop Fix: Added explicit client-side boolean state tracking to ensure /b discord mute toggles between muted and unmuted cleanly",
-      "Discord Stream Memory: Preserved member streaming status across bot sync and WebRTC scan cycles to eliminate flickering [LIVE] badges",
-      "Spotify Non-Blocking Seek Architecture: Replaced blocking pipe read in PowerShell with file-based seek polling, eliminating process freeze and fixing 'Spotify Closed / Not Running'",
-      "Screenshare True 60 FPS Engine: Raised pipeline concurrency limits to 2 concurrent encodes and 4 in-flight network posts, achieving stable 60 FPS broadcasting",
-      "Screen 1 & Screen 2 Direct Streaming: Added /ss 1, /ss 2, /ss screen <1|2>, /ss monitor <1|2>, and /stream <1|2> to stream specific monitors directly, with /ss mc to switch back to game window",
-      "Multi-Monitor System Cursor Capture: Accurately renders OS mouse cursor onto captured desktop displays"
+      "+ Discord Real Username Display - Always show real Discord username across all voice call participants instead of oscillating with guild nicknames",
+      "~ Discord HUD Sorting & Anti-Flicker - Stably sort call members alphabetically with local player pinned to top, eliminating HUD row jumping",
+      "~ Discord Mute Toggle Loop Fix - Added explicit client-side boolean state tracking to ensure /b discord mute toggles between muted and unmuted cleanly",
+      "~ Discord Stream Memory - Preserved member streaming status across bot sync and WebRTC scan cycles to eliminate flickering [LIVE] badges",
+      "~ Spotify Non-Blocking Seek Architecture - Replaced blocking pipe read in PowerShell with file-based seek polling, eliminating process freeze and fixing 'Spotify Closed / Not Running'",
+      "+ Screenshare True 60 FPS Engine - Raised pipeline concurrency limits to 2 concurrent encodes and 4 in-flight network posts, achieving stable 60 FPS broadcasting",
+      "+ Screen 1 & Screen 2 Direct Streaming - Added /ss 1, /ss 2, /ss screen <1|2>, /ss monitor <1|2>, and /stream <1|2> to stream specific monitors directly, with /ss mc to switch back to game window",
+      "+ Multi-Monitor System Cursor Capture - Accurately renders OS mouse cursor onto captured desktop displays"
     ]
   },
   {
     "version": "26.2.28.85",
     "date": "2026-10-04",
     "changes": [
-      "Discord HUD Screen Visibility: Kept Discord voice HUD visible across all screens including inventory, chests, and menus",
-      "Discord Mute Debounce & Anti-Bounce: Added 400ms cooldown and state deduplication to prevent rapid flickering and duplicate chat confirmations",
-      "Discord Server Nickname Config: Added 'Show Server Nicknames' toggle in config and stabilized participant name cache to prevent username vs nickname flickering",
-      "Spotify Background Session Detection: Updated GSMTC poller to scan all media sessions and detect running Spotify processes, fixing false 'Spotify Closed' status",
-      "EggAuth Gating: Completely gated EggAuth handshake and background updates behind the eggFinder config toggle, stopping console auth errors when disabled",
-      "Lyrics Delay Input Box Controls: Added full text editing support with cursor positioning, arrow key navigation, Ctrl+A (select all), Ctrl+X (cut), and Delete",
-      "Lyrics Quality Priority Sorting: Strictly prioritized Word-Synced > Line-Synced > Plain/Unsynced across candidate providers",
-      "Per-Song Lyrics Delay Persistence: Stored delay offsets per song and provider to lyrics_offsets.json, automatically restoring offsets when songs play",
-      "Lyrics Delay 50ms Steps & Arrow Keys: Snapped delay slider to 50ms increments and enabled Left/Right arrow keys for quick 50ms delay adjustments",
-      "Screenshare Quality Options & Default: Set 720p 60fps as default and exposed 720p 30/60fps, 1080p 30/60fps, and 1440p options",
-      "API History Default: Enabled outbound API and WebSocket request history (/b apihistory) by default",
-      "Discord RPC Capabilities Research: Documented full protocol, commands, subscriptions, and Elgato StreamKit features in docs/DISCORD_RPC_CAPABILITIES.md"
+      "+ Discord HUD Screen Visibility - Kept Discord voice HUD visible across all screens including inventory, chests, and menus",
+      "~ Discord Mute Debounce & Anti-Bounce - Added 400ms cooldown and state deduplication to prevent rapid flickering and duplicate chat confirmations",
+      "~ Discord Server Nickname Config - Added 'Show Server Nicknames' toggle in config and stabilized participant name cache to prevent username vs nickname flickering",
+      "~ Spotify Background Session Detection - Updated GSMTC poller to scan all media sessions and detect running Spotify processes, fixing false 'Spotify Closed' status",
+      "~ EggAuth Gating - Completely gated EggAuth handshake and background updates behind the eggFinder config toggle, stopping console auth errors when disabled",
+      "+ Lyrics Delay Input Box Controls - Added full text editing support with cursor positioning, arrow key navigation, Ctrl+A (select all), Ctrl+X (cut), and Delete",
+      "+ Lyrics Quality Priority Sorting - Strictly prioritized Word-Synced > Line-Synced > Plain/Unsynced across candidate providers",
+      "+ Per-Song Lyrics Delay Persistence - Stored delay offsets per song and provider to lyrics_offsets.json, automatically restoring offsets when songs play",
+      "+ Lyrics Delay 50ms Steps & Arrow Keys - Snapped delay slider to 50ms increments and enabled Left/Right arrow keys for quick 50ms delay adjustments",
+      "+ Screenshare Quality Options & Default - Set 720p 60fps as default and exposed 720p 30/60fps, 1080p 30/60fps, and 1440p options",
+      "+ API History Default - Enabled outbound API and WebSocket request history (/b apihistory) by default",
+      "+ Discord RPC Capabilities Research - Documented full protocol, commands, subscriptions, and Elgato StreamKit features in docs/DISCORD_RPC_CAPABILITIES.md"
     ]
   },
   {
     "version": "26.2.28.84",
     "date": "2026-10-04",
     "changes": [
-      "Discord Voice Toggle Mute & Deafen: Made /b discord mute and /b discord deafen toggle by default with support for explicit states (mute/unmute, deafen/undeafen)",
-      "Discord Mute Anti-Bounce Fix: Eliminated rapid oscillating mute/unmute loop by establishing local state as single source of truth during bot polling",
-      "Discord HUD Duplicate Row Fix: Bound Discord user IDs properly and filtered duplicate synthetic rows so users never show twice (fran / fran938)",
-      "Discord Clickable Auth Prompt: Unauthenticated voice commands now send a clickable chat message [Click to Authorize Voice] running /b discord auth without automatic popups",
-      "Synchronized Lyrics HUD: Added floating in-game Lyrics HUD with configurable lines before/after, movable in /b hud, and dynamic artwork color glow",
-      "Sub-Word Letter-for-Letter Karaoke Wipe: Smooth character-by-character fill animation inspired by ViviMusic / Apple Music as lyrics progress",
-      "Duet & Background Vocal Separation: Secondary and background vocalist lines cleanly align to the right side of the screen",
-      "Interactive Click-to-Seek: Clicking progress bar or individual lyric lines in /b lyrics instantly seeks track playback position",
-      "Remix & Candidate Persistence: Preserved - remix tags in title lookups and persisted manual candidate selections across polling updates"
+      "+ Discord Voice Toggle Mute & Deafen - Made /b discord mute and /b discord deafen toggle by default with support for explicit states (mute/unmute, deafen/undeafen)",
+      "~ Discord Mute Anti-Bounce Fix - Eliminated rapid oscillating mute/unmute loop by establishing local state as single source of truth during bot polling",
+      "~ Discord HUD Duplicate Row Fix - Bound Discord user IDs properly and filtered duplicate synthetic rows so users never show twice (fran / fran938)",
+      "+ Discord Clickable Auth Prompt - Unauthenticated voice commands now send a clickable chat message [Click to Authorize Voice] running /b discord auth without automatic popups",
+      "+ Synchronized Lyrics HUD - Added floating in-game Lyrics HUD with configurable lines before/after, movable in /b hud, and dynamic artwork color glow",
+      "+ Sub-Word Letter-for-Letter Karaoke Wipe - Smooth character-by-character fill animation inspired by ViviMusic / Apple Music as lyrics progress",
+      "+ Duet & Background Vocal Separation - Secondary and background vocalist lines cleanly align to the right side of the screen",
+      "+ Interactive Click-to-Seek - Clicking progress bar or individual lyric lines in /b lyrics instantly seeks track playback position",
+      "+ Remix & Candidate Persistence: Preserved - remix tags in title lookups and persisted manual candidate selections across polling updates"
     ]
   },
   {
     "version": "26.2.28.83",
     "date": "2026-10-04",
     "changes": [
-      "Discord Voice Self-Mute & Click Fix: Replaced blocking RandomAccessFile named pipe reads with non-blocking polling, eliminating IPC write deadlocks and enabling instantaneous self-mute toggles via /b discord mute and clicking your own row in the Discord HUD",
-      "Discord Live Bot Voice Channel Verification: Joined Bombo bot directly into call (1239678236074442803) to actively monitor and verify real-time selfMute and deafen gateway state transitions",
-      "Screenshare Zero-FPS-Drop Strided Transfer: Optimized render thread GPU buffer read to only transfer rows needed for target resolution across PCIe, halving bus copy time to <1.2ms and eliminating the ~150 in-game FPS drop",
-      "Screenshare Backpressure & CPU Throttling: Enforced strict single-encode and single in-flight HTTP post pipeline limits, eliminating encoder thread CPU contention and preventing wasted captures when network is busy",
-      "Spotify Lyrics Full Word Timings in Raw & Edit: Restored word-by-word <mm:ss.xxx> timestamp formatting in Raw and Custom Edit modal, displaying full timing data and correctly preserving Word-Synced status across edits"
+      "~ Discord Voice Self-Mute & Click Fix - Replaced blocking RandomAccessFile named pipe reads with non-blocking polling, eliminating IPC write deadlocks and enabling instantaneous self-mute toggles via /b discord mute and clicking your own row in the Discord HUD",
+      "+ Discord Live Bot Voice Channel Verification - Joined Bombo bot directly into call (1239678236074442803) to actively monitor and verify real-time selfMute and deafen gateway state transitions",
+      "+ Screenshare Zero-FPS-Drop Strided Transfer - Optimized render thread GPU buffer read to only transfer rows needed for target resolution across PCIe, halving bus copy time to <1.2ms and eliminating the ~150 in-game FPS drop",
+      "~ Screenshare Backpressure & CPU Throttling - Enforced strict single-encode and single in-flight HTTP post pipeline limits, eliminating encoder thread CPU contention and preventing wasted captures when network is busy",
+      "~ Spotify Lyrics Full Word Timings in Raw & Edit: Restored word-by-word <mm:ss.xxx> timestamp formatting in Raw and Custom Edit modal, displaying full timing data and correctly preserving Word-Synced status across edits"
     ]
   },
   {
     "version": "26.2.28.82",
     "date": "2026-10-04",
     "changes": [
-      "Discord StreamKit Token Persistence & Popup Elimination: Persisted StreamKit OAuth2 tokens to discord_token.json so Discord never displays repeated permission modals on startup or reconnect, eliminating repeated authorization prompts",
-      "Discord Silent Voice Control: Removed automatic sendAuthorize triggers from background sync loops, ensuring permissions are only requested when explicitly typing /b discord auth and enabling instant, silent local member and microphone muting",
-      "Screenshare Zero-Allocation Memory Engine: Eliminated per-frame BufferedImage, ByteArrayOutputStream, and dynamic LUT allocations via ThreadLocal buffer pooling and reusable cached LUTs, slashing heap churn by 99.7% (~500 MB/s saved)",
-      "Long-Running GC Stutter & Freeze Elimination: Completely prevented Java GC collection freezes during player and mouse movement by recycling image buffers and rasters across all encoder threads",
-      "Screenshare 60 FPS Anti-Stall Headroom: Expanded raw frame ring buffers to 4 slots and increased in-flight pipeline concurrency limit to 4 frames, preventing framerates from stalling to 0-1 FPS during resolution transitions or heavy scene encoding"
+      "+ Discord StreamKit Token Persistence & Popup Elimination: Persisted StreamKit OAuth2 tokens to discord_token.json so Discord never displays repeated permission modals on startup or reconnect, eliminating repeated authorization prompts",
+      "- Discord Silent Voice Control - Removed automatic sendAuthorize triggers from background sync loops, ensuring permissions are only requested when explicitly typing /b discord auth and enabling instant, silent local member and microphone muting",
+      "+ Screenshare Zero-Allocation Memory Engine - Eliminated per-frame BufferedImage, ByteArrayOutputStream, and dynamic LUT allocations via ThreadLocal buffer pooling and reusable cached LUTs, slashing heap churn by 99.7% (~500 MB/s saved)",
+      "~ Long-Running GC Stutter & Freeze Elimination - Completely prevented Java GC collection freezes during player and mouse movement by recycling image buffers and rasters across all encoder threads",
+      "~ Screenshare 60 FPS Anti-Stall Headroom - Expanded raw frame ring buffers to 4 slots and increased in-flight pipeline concurrency limit to 4 frames, preventing framerates from stalling to 0-1 FPS during resolution transitions or heavy scene encoding"
     ]
   },
   {
     "version": "26.2.28.81",
     "date": "2026-10-04",
     "changes": [
-      "Screenshare Zero-Stall PBO Double Buffering: Upgraded GPU readback to double-buffered PBO ping-pong ring buffers, reading completed PCIe transfers in <0.2ms on render thread to completely eliminate FPS drops and maintain rock-solid 300+ in-game FPS",
-      "Screenshare Discord-Grade Efficient Encoding: Reduced JPEG payload to 22-26 KB and bandwidth to ~1.8 Mbps using Discord standard quality profile (0.38f) and precalculated LUT strided downsampling (<1.2ms), slashing stream latency and CPU load",
-      "Discord Voice Local-Only Member Muting: Strictly restricted participant muting in HUD and commands to local client-side muting (SET_USER_VOICE_SETTINGS and volume 0), preventing unintentional Discord server-wide mutes for all users",
-      "Discord Native StreamKit Authentication & Anti-Sneak: Fully integrated StreamKit OAuth2 code exchange for native client-side voice settings, completely removing simulated keybd_event keypresses so players never sneak in game when toggling mute",
-      "Discord Bot Voice Gateway Live Status: Preserved Discord gateway streaming statuses and protected active channel members from log pruning, ensuring all concurrent [LIVE] stream badges and members display accurately",
-      "Configuration GUI & Visual Studio Clean Separation: Restored the full sequence manager and builder card directly inside /b config under the Auto category, and separated Scratch Visual Studio into its own dedicated commands (/studio, /sequence) with 100% shared synchronized entries"
+      "~ Screenshare Zero-Stall PBO Double Buffering - Upgraded GPU readback to double-buffered PBO ping-pong ring buffers, reading completed PCIe transfers in <0.2ms on render thread to completely eliminate FPS drops and maintain rock-solid 300+ in-game FPS",
+      "+ Screenshare Discord-Grade Efficient Encoding - Reduced JPEG payload to 22-26 KB and bandwidth to ~1.8 Mbps using Discord standard quality profile (0.38f) and precalculated LUT strided downsampling (<1.2ms), slashing stream latency and CPU load",
+      "~ Discord Voice Local-Only Member Muting - Strictly restricted participant muting in HUD and commands to local client-side muting (SET_USER_VOICE_SETTINGS and volume 0), preventing unintentional Discord server-wide mutes for all users",
+      "+ Discord Native StreamKit Authentication & Anti-Sneak: Fully integrated StreamKit OAuth2 code exchange for native client-side voice settings, completely removing simulated keybd_event keypresses so players never sneak in game when toggling mute",
+      "+ Discord Bot Voice Gateway Live Status - Preserved Discord gateway streaming statuses and protected active channel members from log pruning, ensuring all concurrent [LIVE] stream badges and members display accurately",
+      "~ Configuration GUI & Visual Studio Clean Separation: Restored the full sequence manager and builder card directly inside /b config under the Auto category, and separated Scratch Visual Studio into its own dedicated commands (/studio, /sequence) with 100% shared synchronized entries"
     ]
   },
   {
     "version": "26.2.28.80",
     "date": "2026-10-04",
     "changes": [
-      "Screenshare Direct GPU Buffer Pipeline: Implemented zero-copy GPU command encoder buffer readback (<0.5ms on render thread), eliminating the 19ms synchronous glReadPixels stall and keeping in-game framerates at a solid 350+ FPS",
-      "Screenshare 60 FPS Dynamic Engine: Upgraded stream loop with inFlightEncodes parallel pipeline and dynamic target frame delay, completely fixing the 15 FPS bottleneck to deliver true silky smooth 60 FPS broadcasting",
-      "Discord Voice HUD Stability & Anti-Flicker: Extended WebRTC voice log retention window to 35 seconds and guarded channel detection to active voice calls only, eliminating phantom users and member flickering when users are listening silently",
-      "Discord Voice Mute & Deafen Controls: Dispatched low-level OS keybd_event shortcuts, IPC SET_VOICE_SETTINGS/SET_USER_VOICE_SETTINGS, and bot API voice controls to toggle microphone and member mute states instantaneously",
-      "Classic /b config GUI: Routed /b config, /bombo config, and /ba config directly to the classic built-in configuration GUI",
-      "Scratch Visual Studio IF Conditions: Added dedicated [\u25b6 Run ONLY IF (Condition)] and [\u2715 SKIP IF (Exception)] condition tabs with context-sensitive quick pills (\u2605 Has Item, \ud83d\udcdc Has Lore, \ud83d\udce6 In Menu, \ud83c\udfaf Slot Has, \u25cb Empty) and non-blocking 'if not, don't' skip behavior",
-      "Scratch Visual Studio Clutter Cleanup: Removed the ${color} chip under the first parameter text box and polished modal input focus"
+      "~ Screenshare Direct GPU Buffer Pipeline - Implemented zero-copy GPU command encoder buffer readback (<0.5ms on render thread), eliminating the 19ms synchronous glReadPixels stall and keeping in-game framerates at a solid 350+ FPS",
+      "~ Screenshare 60 FPS Dynamic Engine - Upgraded stream loop with inFlightEncodes parallel pipeline and dynamic target frame delay, completely fixing the 15 FPS bottleneck to deliver true silky smooth 60 FPS broadcasting",
+      "~ Discord Voice HUD Stability & Anti-Flicker - Extended WebRTC voice log retention window to 35 seconds and guarded channel detection to active voice calls only, eliminating phantom users and member flickering when users are listening silently",
+      "+ Discord Voice Mute & Deafen Controls - Dispatched low-level OS keybd_event shortcuts, IPC SET_VOICE_SETTINGS/SET_USER_VOICE_SETTINGS, and bot API voice controls to toggle microphone and member mute states instantaneously",
+      "+ Classic /b config GUI - Routed /b config, /bombo config, and /ba config directly to the classic built-in configuration GUI",
+      "~ Scratch Visual Studio IF Conditions - Added dedicated [▶ Run ONLY IF (Condition)] and [✕ SKIP IF (Exception)] condition tabs with context-sensitive quick pills (★ Has Item, 📜 Has Lore, 📦 In Menu, 🎯 Slot Has, ○ Empty) and non-blocking 'if not, don't' skip behavior",
+      "- Scratch Visual Studio Clutter Cleanup - Removed the ${color} chip under the first parameter text box and polished modal input focus"
     ]
   },
   {
     "version": "26.2.28.79",
     "date": "2026-10-04",
     "changes": [
-      "Screenshare Instant WebSocket Player: Replaced buffered MJPEG stream on web with real-time zero-delay WebSocket (<20ms start, 60 FPS) and immediate first-frame cache, completely bypassing Cloudflare chunk buffering stalls",
-      "Screenshare Render Thread Offload: Gated GPU capture to encode completion and optimized 1440p 2K compression (<30ms encode), completely eliminating in-game framerate drops and maintaining 300+ FPS during broadcasts",
-      "Discord Voice Bot Gateway Sync & Instant Leave Detection: Synchronized voice channel states via bombot gateway API to discover all members in <50ms and instantly purge disconnected users to eliminate stale [LIVE] badges",
-      "Discord Voice Self-Mute & Self-Deafen Badges: Added distinctive glowing logo badges ([\u2715 MIC] and [\u2715 DEAF]) in voice HUD to clearly display when participants are muted or deafened by themselves",
-      "Scratch Visual Studio Detailed Tooltips: Added comprehensive multi-line hover tooltips across all blocks, delays, conditions, parameter chips, and canvas steps explaining their behavior",
-      "Scratch Visual Studio Text Drag Selection: Enabled smooth mouse click-and-drag text selection across all modal EditBox text inputs",
-      "Scratch Visual Studio UI Polish: Removed clutter buttons (# 0, # 10, # 18) while retaining ${color} preset chip, and replaced broken font emojis with crisp standard font symbols (\u25a0 Full, \u2715 No Item, \u2605 Has Item, \u25cb Empty, \u2261 In Menu)"
+      "~ Screenshare Instant WebSocket Player - Replaced buffered MJPEG stream on web with real-time zero-delay WebSocket (<20ms start, 60 FPS) and immediate first-frame cache, completely bypassing Cloudflare chunk buffering stalls",
+      "+ Screenshare Render Thread Offload - Gated GPU capture to encode completion and optimized 1440p 2K compression (<30ms encode), completely eliminating in-game framerate drops and maintaining 300+ FPS during broadcasts",
+      "- Discord Voice Bot Gateway Sync & Instant Leave Detection: Synchronized voice channel states via bombot gateway API to discover all members in <50ms and instantly purge disconnected users to eliminate stale [LIVE] badges",
+      "+ Discord Voice Self-Mute & Self-Deafen Badges - Added distinctive glowing logo badges ([✕ MIC] and [✕ DEAF]) in voice HUD to clearly display when participants are muted or deafened by themselves",
+      "+ Scratch Visual Studio Detailed Tooltips - Added comprehensive multi-line hover tooltips across all blocks, delays, conditions, parameter chips, and canvas steps explaining their behavior",
+      "+ Scratch Visual Studio Text Drag Selection - Enabled smooth mouse click-and-drag text selection across all modal EditBox text inputs",
+      "- Scratch Visual Studio UI Polish - Removed clutter buttons (# 0, # 10, # 18) while retaining ${color} preset chip, and replaced broken font emojis with crisp standard font symbols (■ Full, ✕ No Item, ★ Has Item, ○ Empty, ≡ In Menu)"
     ]
   },
   {
     "version": "26.2.28.78",
     "date": "2026-10-04",
     "changes": [
-      "Storage Overlay Auto-Scroll to Opened Container: Opening a backpack or ender chest (e.g. /bp 4, /bp kudar) automatically scrolls the grid to bring that container into view at its exact height, eliminating manual scrolling",
-      "Discord Voice Local Client Mute & Deafen: Removed bot server-mute/server-deafen calls from self actions; self mute and deafen now strictly control your local Discord client and microphone",
-      "Discord Voice Instant Member Discovery: Removed artificial 3000ms fetch delay so all voice call participants resolve usernames, display names, and avatars in under 1-2 seconds",
-      "Discord Voice HUD Anti-Cycling & Dual Screenshare [LIVE]: Extended WebRTC log retention to 15s and stopped clearing user maps on empty responses, preventing member flickering and keeping multiple streams simultaneously marked as [LIVE]",
-      "Scratch Visual Studio Quick-Pick Conditions: Added clickable condition pills (Container Full, No Item, Has Item, Slot Empty, In Menu, Clear) and parameter chips (# 0, # 10, # 18, ${color})",
-      "Scratch Visual Studio Dual Cursor Bugfix: Resolved input focus collision in step editor so clicking an exception guard focuses only that box without typing in the slot number or showing dual cursors",
-      "Screenshare 60 FPS Asynchronous Pipeline: Decoupled GPU capture gate from CPU encoding and implemented fast Direct DataBufferInt downsampling (<1.5ms) with 3-thread encode pool, unlocking true 50-60 FPS broadcasting"
+      "+ Storage Overlay Auto-Scroll to Opened Container: Opening a backpack or ender chest (e.g. /bp 4, /bp kudar) automatically scrolls the grid to bring that container into view at its exact height, eliminating manual scrolling",
+      "- Discord Voice Local Client Mute & Deafen - Removed bot server-mute/server-deafen calls from self actions; self mute and deafen now strictly control your local Discord client and microphone",
+      "- Discord Voice Instant Member Discovery - Removed artificial 3000ms fetch delay so all voice call participants resolve usernames, display names, and avatars in under 1-2 seconds",
+      "~ Discord Voice HUD Anti-Cycling & Dual Screenshare [LIVE]: Extended WebRTC log retention to 15s and stopped clearing user maps on empty responses, preventing member flickering and keeping multiple streams simultaneously marked as [LIVE]",
+      "+ Scratch Visual Studio Quick-Pick Conditions - Added clickable condition pills (Container Full, No Item, Has Item, Slot Empty, In Menu, Clear) and parameter chips (# 0, # 10, # 18, ${color})",
+      "~ Scratch Visual Studio Dual Cursor Bugfix - Resolved input focus collision in step editor so clicking an exception guard focuses only that box without typing in the slot number or showing dual cursors",
+      "+ Screenshare 60 FPS Asynchronous Pipeline - Decoupled GPU capture gate from CPU encoding and implemented fast Direct DataBufferInt downsampling (<1.5ms) with 3-thread encode pool, unlocking true 50-60 FPS broadcasting"
     ]
   },
   {
     "version": "26.2.28.77",
     "date": "2026-10-04",
     "changes": [
-      "Storage Overlay Open by Name: /bp <name>, /backpack <name>, /ec <name>, /echest <name>, and /enderchest <name> automatically resolve custom container names (e.g. /bp kudar -> /backpack 18)",
-      "Discord Voice Single-User Deduplication: Purged duplicate synthetic 'You' participant when alone in voice channel and accurately bound local Discord ID",
-      "Discord Voice Commands & Persistent IPC: Separated /b discord status from HUD toggle so named pipe connection stays active; added full /b discord mute/unmute/deafen/undeafen routing",
-      "Discord Windows OS Hotkey Triggers: Upgraded shortcut dispatch to low-level Windows keybd_event to trigger Discord mute/deafen even when Minecraft window is focused",
-      "Scratch Studio Drag-and-Drop: Added draggable block reordering with dynamic insertion indicator line and floating cursor preview",
-      "Kid-Friendly Scratch Formatting: Replaced broken font emojis with clean UI symbols and added readable block condition translations (Container is Full, Top N Rows Full, Slot [X] has [Item], etc.)",
-      "Auto Sequence Engine Bugfix: Corrected < comparison evaluation in AutoSequenceExecutor and added no_item:, !has_item:, and slot_empty: conditions",
-      "Screenshare Live Telemetry: Added dedicated live streaming telemetry card to /b perf visualizer displaying real-time FPS, bitrate, mode, latency, and bandwidth sent",
-      "Screenshare VulkanMod Detection: Automatically detected VulkanMod to display 'Direct GPU (Vulkan - <3ms)' in streaming diagnostics",
-      "Chat Image Hover Preview Bounds: Guarded getLineAt against off-screen messages, preventing image hover popups when the mouse is positioned above the chat box in the open world"
+      "~ Storage Overlay Open by Name - /bp <name>, /backpack <name>, /ec <name>, /echest <name>, and /enderchest <name> automatically resolve custom container names (e.g. /bp kudar -> /backpack 18)",
+      "- Discord Voice Single-User Deduplication - Purged duplicate synthetic 'You' participant when alone in voice channel and accurately bound local Discord ID",
+      "+ Discord Voice Commands & Persistent IPC - Separated /b discord status from HUD toggle so named pipe connection stays active; added full /b discord mute/unmute/deafen/undeafen routing",
+      "+ Discord Windows OS Hotkey Triggers - Upgraded shortcut dispatch to low-level Windows keybd_event to trigger Discord mute/deafen even when Minecraft window is focused",
+      "+ Scratch Studio Drag-and-Drop - Added draggable block reordering with dynamic insertion indicator line and floating cursor preview",
+      "+ Kid-Friendly Scratch Formatting - Replaced broken font emojis with clean UI symbols and added readable block condition translations (Container is Full, Top N Rows Full, Slot [X] has [Item], etc.)",
+      "~ Auto Sequence Engine Bugfix - Corrected < comparison evaluation in AutoSequenceExecutor and added no_item:, !has_item:, and slot_empty: conditions",
+      "+ Screenshare Live Telemetry - Added dedicated live streaming telemetry card to /b perf visualizer displaying real-time FPS, bitrate, mode, latency, and bandwidth sent",
+      "+ Screenshare VulkanMod Detection: Automatically detected VulkanMod to display 'Direct GPU (Vulkan - <3ms)' in streaming diagnostics",
+      "~ Chat Image Hover Preview Bounds - Guarded getLineAt against off-screen messages, preventing image hover popups when the mouse is positioned above the chat box in the open world"
     ]
   },
   {
     "version": "26.2.28.76",
     "date": "2026-10-04",
     "changes": [
-      "Storage Overlay In-Place Rename: Pressing Enter updates card title in-place immediately without needing to reopen /storage",
-      "Storage Overlay Single Active Rename: Switching between cards cleanly commits previous rename and focuses new card without duplicate inputs",
-      "Storage Overlay Unblocked Scrollwheel: Routed scroll events to container grid when hovering over focused/open storage slots",
-      "Discord Voice HUD Clean Startup: Removed automatic AUTHORIZE calls on IPC READY, eliminating OAuth2 5000 dialogs on launch",
-      "Discord Voice HUD Bot Self Mute & Deafen: Routed self voice actions through bombot bridge using myUserId and local voice state",
-      "Discord Accurate [LIVE] Status: Removed self-referential check on local user to eliminate permanent false [LIVE] badges",
-      "Discord Phantom User Pruning: Eliminated lingering users like xMave when alone in voice channel by checking WebRTC participant list",
-      "Scratch Visual Studio: Added full-screen visual block editor accessible via /b sequence, /b sequences, /sequence, and Config GUI",
-      "Auto Sequence Advanced Conditions: Added exceptIf (skip) and onlyIf (precondition) with GUI, item, lore, count, and coord guards",
-      "Dynamic Variables: Supported dynamic ${color} container title extraction and starts_with:/sw: item matching",
-      "Clipboard Image Tag Fix: Resolved $imgur2 corruption (.png2) with descending length replacement and regex negative lookahead",
-      "Performance Screen UI Fix: Corrected 200px hitbox displacement on /b perf buttons and throttled CPU/memory sampling to fix FPS drop",
-      "Screenshare 60 FPS Profile: Defaulted to 720p 60fps for <10ms encode time and ~1.5 Mbps bitrate, adding full diagnostic telemetry"
+      "+ Storage Overlay In-Place Rename - Pressing Enter updates card title in-place immediately without needing to reopen /storage",
+      "+ Storage Overlay Single Active Rename - Switching between cards cleanly commits previous rename and focuses new card without duplicate inputs",
+      "+ Storage Overlay Unblocked Scrollwheel - Routed scroll events to container grid when hovering over focused/open storage slots",
+      "- Discord Voice HUD Clean Startup - Removed automatic AUTHORIZE calls on IPC READY, eliminating OAuth2 5000 dialogs on launch",
+      "+ Discord Voice HUD Bot Self Mute & Deafen - Routed self voice actions through bombot bridge using myUserId and local voice state",
+      "- Discord Accurate [LIVE] Status - Removed self-referential check on local user to eliminate permanent false [LIVE] badges",
+      "+ Discord Phantom User Pruning - Eliminated lingering users like xMave when alone in voice channel by checking WebRTC participant list",
+      "+ Scratch Visual Studio - Added full-screen visual block editor accessible via /b sequence, /b sequences, /sequence, and Config GUI",
+      "+ Auto Sequence Advanced Conditions - Added exceptIf (skip) and onlyIf (precondition) with GUI, item, lore, count, and coord guards",
+      "+ Dynamic Variables - Supported dynamic ${color} container title extraction and starts_with:/sw: item matching",
+      "~ Clipboard Image Tag Fix - Resolved $imgur2 corruption (.png2) with descending length replacement and regex negative lookahead",
+      "~ Performance Screen UI Fix - Corrected 200px hitbox displacement on /b perf buttons and throttled CPU/memory sampling to fix FPS drop",
+      "+ Screenshare 60 FPS Profile - Defaulted to 720p 60fps for <10ms encode time and ~1.5 Mbps bitrate, adding full diagnostic telemetry"
     ]
   },
   {
     "version": "26.2.28.75",
     "date": "2026-10-04",
     "changes": [
-      "Storage Overlay Scroll Persistence: Retained exact scroll position across container switches and backpack clicks, preventing grid jumps",
-      "Storage Overlay Inline Rename: Fixed key typing so hotkeys and letters type into the rename input without closing the GUI, with single active edit box guard",
-      "Storage Navigation Hotkeys: Added support for Next Page, Previous Page, and Smart Go Back hotkeys in StorageOverlayScreen",
-      "Storage Search Right-Click: Right-clicking the search bar immediately clears search text and refreshes the item grid",
-      "Discord Voice HUD Client-Side Local Mute: HUD mute button exclusively mutes target user locally for the player, preventing accidental guild-wide server mutes",
-      "Discord Voice HUD Self Controls: Toggling mute or deafen on self now controls local Discord microphone and headphone status via IPC SET_VOICE_SETTINGS and shortcuts",
-      "Discord Accurate [LIVE] Status: Strictly requires non-zero video resolution (resolution: [1-9]d* x [1-9]d*) and recent frame transmission to eliminate false [LIVE] badges",
-      "Auto Sequences Lore Matching: Added l: and lore: prefixes to match against item lore and tooltip lines",
-      "Auto Sequences Conditions: Added location conditions (inv: for player inventory, c: for container) and slot conditions (<9, <=8, 0-8)",
-      "Auto Sequences GUI Guards: Added GUI state guards (NONE / NO_GUI to require no open screen, or specific GUI title substring)",
-      "Clipboard Multi-Image Upload: Pasting multiple distinct images assigns sequential $imgur, $imgur2, $imgur3 placeholders, uploading in parallel and replacing simultaneously",
-      "Case-Insensitive Command Aliases: Registered /B, /bombo, /Bombo, /BOMBO, /ba, and /BA with complete tab completion and subcommands",
-      "Screenshare Fast Stream: Removed 80ms double-load cancel stall in screenshare.html and flushed headers immediately in server.js for instant playback"
+      "~ Storage Overlay Scroll Persistence - Retained exact scroll position across container switches and backpack clicks, preventing grid jumps",
+      "~ Storage Overlay Inline Rename - Fixed key typing so hotkeys and letters type into the rename input without closing the GUI, with single active edit box guard",
+      "+ Storage Navigation Hotkeys - Added support for Next Page, Previous Page, and Smart Go Back hotkeys in StorageOverlayScreen",
+      "+ Storage Search Right-Click - Right-clicking the search bar immediately clears search text and refreshes the item grid",
+      "~ Discord Voice HUD Client-Side Local Mute - HUD mute button exclusively mutes target user locally for the player, preventing accidental guild-wide server mutes",
+      "+ Discord Voice HUD Self Controls - Toggling mute or deafen on self now controls local Discord microphone and headphone status via IPC SET_VOICE_SETTINGS and shortcuts",
+      "+ Discord Accurate [LIVE] Status - Strictly requires non-zero video resolution (resolution: [1-9]d* x [1-9]d*) and recent frame transmission to eliminate false [LIVE] badges",
+      "~ Auto Sequences Lore Matching - Added l: and lore: prefixes to match against item lore and tooltip lines",
+      "+ Auto Sequences Conditions - Added location conditions (inv: for player inventory, c: for container) and slot conditions (<9, <=8, 0-8)",
+      "+ Auto Sequences GUI Guards - Added GUI state guards (NONE / NO_GUI to require no open screen, or specific GUI title substring)",
+      "+ Clipboard Multi-Image Upload - Pasting multiple distinct images assigns sequential $imgur, $imgur2, $imgur3 placeholders, uploading in parallel and replacing simultaneously",
+      "+ Case-Insensitive Command Aliases - Registered /B, /bombo, /Bombo, /BOMBO, /ba, and /BA with complete tab completion and subcommands",
+      "- Screenshare Fast Stream - Removed 80ms double-load cancel stall in screenshare.html and flushed headers immediately in server.js for instant playback"
     ]
   },
   {
     "version": "26.2.28.74",
     "date": "2026-10-04",
     "changes": [
-      "Storage Overlay Live Sync: Hooked slotClicked and removed across AbstractContainerScreenMixin and StorageOverlayScreen to sync moved or clicked items immediately to memory and disk",
-      "Inline Rename Typing Support: Added charTyped and guarded keyPressed so typing hotkeys or numbers enters text into the rename box without closing the container menu",
-      "Storage Debug Command: Added /b storage debug creating diagnostic storage snapshot dumps in storage_debug.log",
-      "Discord Voice HUD Bot Mute Bridge: Integrated bombot HTTP API with bot administrator permissions to server-mute and deafen call participants or self directly from Minecraft",
-      "Discord Voice Commands: Registered /b discord mute [user], /b discord unmute [user], /b discord deafen [user], and /b discord undeafen [user]",
-      "Discord Screenshare False Positive Fix: Removed stream transport receiver stats check so stream viewers are not falsely flagged as [LIVE]",
-      "True 1440p / 2K Screenshare: Enabled full 2560x1440 capture with 0.52f compression and 60/120 FPS target timing",
-      "Reusable ThreadLocal JPEG Writers: Eliminated per-frame ImageWriter allocation and disposal for reduced encoding overhead",
-      "Flicker-Free Web Screenshare: Removed 80ms delay in screenshare.html and enabled crisp pixel rendering CSS",
-      "Discord Lore Item Glyphs: Proportionally scaled gemstone, star, and stat font glyphs to 22px in bombot lore images",
-      "Synced Lyrics Spacing Fix: Removed extra space between line timestamps and word tags in bomboapi ELRC resolver",
-      "Modern Config Screen Aliases: Directed /B, /bombo, /Bombo, and /BOMBO commands to open the modern BomboConfigScreen",
-      "Autocomplete Suggestion Priority: Injected ChatTabsOverlay at HEAD so autocomplete suggestions render clearly on top",
-      "HUD Move Simulated Chat Area: Added translucent chat message box and [ > Type a message... ] input preview in HudMoveScreen for chat HUD alignment",
-      "Adaptive Performance Window: Dynamically sized PerformanceScreen height to fit active card count without empty black voids, displaying process CPU percentage"
+      "- Storage Overlay Live Sync - Hooked slotClicked and removed across AbstractContainerScreenMixin and StorageOverlayScreen to sync moved or clicked items immediately to memory and disk",
+      "+ Inline Rename Typing Support - Added charTyped and guarded keyPressed so typing hotkeys or numbers enters text into the rename box without closing the container menu",
+      "~ Storage Debug Command - Added /b storage debug creating diagnostic storage snapshot dumps in storage_debug.log",
+      "+ Discord Voice HUD Bot Mute Bridge - Integrated bombot HTTP API with bot administrator permissions to server-mute and deafen call participants or self directly from Minecraft",
+      "+ Discord Voice Commands - Registered /b discord mute [user], /b discord unmute [user], /b discord deafen [user], and /b discord undeafen [user]",
+      "- Discord Screenshare False Positive Fix - Removed stream transport receiver stats check so stream viewers are not falsely flagged as [LIVE]",
+      "+ True 1440p / 2K Screenshare - Enabled full 2560x1440 capture with 0.52f compression and 60/120 FPS target timing",
+      "+ Reusable ThreadLocal JPEG Writers - Eliminated per-frame ImageWriter allocation and disposal for reduced encoding overhead",
+      "- Flicker-Free Web Screenshare - Removed 80ms delay in screenshare.html and enabled crisp pixel rendering CSS",
+      "+ Discord Lore Item Glyphs - Proportionally scaled gemstone, star, and stat font glyphs to 22px in bombot lore images",
+      "- Synced Lyrics Spacing Fix - Removed extra space between line timestamps and word tags in bomboapi ELRC resolver",
+      "+ Modern Config Screen Aliases - Directed /B, /bombo, /Bombo, and /BOMBO commands to open the modern BomboConfigScreen",
+      "+ Autocomplete Suggestion Priority - Injected ChatTabsOverlay at HEAD so autocomplete suggestions render clearly on top",
+      "+ HUD Move Simulated Chat Area - Added translucent chat message box and [ > Type a message... ] input preview in HudMoveScreen for chat HUD alignment",
+      "+ Adaptive Performance Window - Dynamically sized PerformanceScreen height to fit active card count without empty black voids, displaying process CPU percentage"
     ]
   },
   {
     "version": "26.2.28.73",
     "date": "2026-10-04",
     "changes": [
-      "Storage Overlay Container Synchronization: Added updateStorageDirectly and intercepted container updates in AbstractContainerMenuMixin to immediately reflect moved or updated backpack contents",
-      "Dynamic Ender Chest & Backpack Sizing: Removed hardcoded 5-row constraint so Ender Chest 4 and compact backpacks render only their unlocked rows without dark void rows or empty slot graying",
-      "Expanded Title Patterns: Updated ECHEST_PATTERN and BACKPACK_PATTERN to match 'Backpack 1', 'Backpack #1', and arbitrary container names",
-      "Discord Voice HUD Immediate Mute & Responsive Polling: Reduced polling interval to 350ms for snappy voice updates, implemented instant local mute memory toggling with thread-safe chat feedback, and auto-dispatched RPC authorization",
-      "Discord Screenshare [LIVE] Detection: Updated regex to match inbound video ssrcs and active streams, and added outbound video scanner to display [LIVE] for self streams",
-      "Asynchronous 60 FPS Screenshare Pipeline: Replaced synchronous future.get render-thread block with a dedicated 2-thread encoder pool and atomic in-flight guard, delivering fluid 60 FPS streaming without client frame drops",
-      "Screenshare Capture Indicator in /b perf: Added live stream framerate and capture mode (Direct GPU OpenGL vs AWT Robot Desktop) to the performance profiler header",
-      "Chat /bc Placeholder Resolution: Applied SkyblockUtils.replaceCoordPlaceholders to /bc commands so $item, $coords, and $paste are properly resolved",
-      "Discord Lore Item Glyphs: Replaced synchronous new Image() with await loadImage() in bombot/render_item.js, restoring authentic 7x7 gemstone sockets and stat glyphs on Discord",
-      "HUD Move Dedicated Mode Filter Button: Added a separate Filter button (Both -> In-GUI -> In-Game) in HudMoveScreen and guarded all 33 HUD elements so invisible HUDs are completely hidden and unclickable",
-      "Multi-Provider Synced Lyrics with Syllable Word Timing: Enhanced /api/lyrics/resolve on bomboapi to query YouLyPlus first, converting Apple Music syllables into <mm:ss.xxx> word-by-word karaoke timing with LRCLIB, KuGou, and Paxsenix fallbacks"
+      "+ Storage Overlay Container Synchronization - Added updateStorageDirectly and intercepted container updates in AbstractContainerMenuMixin to immediately reflect moved or updated backpack contents",
+      "- Dynamic Ender Chest & Backpack Sizing - Removed hardcoded 5-row constraint so Ender Chest 4 and compact backpacks render only their unlocked rows without dark void rows or empty slot graying",
+      "+ Expanded Title Patterns - Updated ECHEST_PATTERN and BACKPACK_PATTERN to match 'Backpack 1', 'Backpack #1', and arbitrary container names",
+      "+ Discord Voice HUD Immediate Mute & Responsive Polling: Reduced polling interval to 350ms for snappy voice updates, implemented instant local mute memory toggling with thread-safe chat feedback, and auto-dispatched RPC authorization",
+      "+ Discord Screenshare [LIVE] Detection - Updated regex to match inbound video ssrcs and active streams, and added outbound video scanner to display [LIVE] for self streams",
+      "+ Asynchronous 60 FPS Screenshare Pipeline - Replaced synchronous future.get render-thread block with a dedicated 2-thread encoder pool and atomic in-flight guard, delivering fluid 60 FPS streaming without client frame drops",
+      "+ Screenshare Capture Indicator in /b perf - Added live stream framerate and capture mode (Direct GPU OpenGL vs AWT Robot Desktop) to the performance profiler header",
+      "~ Chat /bc Placeholder Resolution - Applied SkyblockUtils.replaceCoordPlaceholders to /bc commands so $item, $coords, and $paste are properly resolved",
+      "+ Discord Lore Item Glyphs - Replaced synchronous new Image() with await loadImage() in bombot/render_item.js, restoring authentic 7x7 gemstone sockets and stat glyphs on Discord",
+      "+ HUD Move Dedicated Mode Filter Button - Added a separate Filter button (Both -> In-GUI -> In-Game) in HudMoveScreen and guarded all 33 HUD elements so invisible HUDs are completely hidden and unclickable",
+      "~ Multi-Provider Synced Lyrics with Syllable Word Timing: Enhanced /api/lyrics/resolve on bomboapi to query YouLyPlus first, converting Apple Music syllables into <mm:ss.xxx> word-by-word karaoke timing with LRCLIB, KuGou, and Paxsenix fallbacks"
     ]
   },
   {
     "version": "26.2.28.72",
     "date": "2026-10-04",
     "changes": [
-      "Storage Overlay Dynamic 5-Row Sizing: Enforced 5 rows for Ender Chests 1-4 on initial display and storage switching, preventing cards from shrinking to 2 rows",
-      "Phantom Ender Chest Elimination: Only discovered/unlocked Ender Chests are displayed, removing unowned EC 5-9 and eliminating chat errors",
-      "Inline Storage Card Renaming: Replaced modal popup with inline EditBox directly on the card header with Enter to commit and Escape to cancel",
-      "Transparent Slot Highlighting: Fixed slots turning solid gray on focus or search, preserving transparent backgrounds for matching items and light gray for empty slots",
-      "Discord Voice HUD Channel Subscriptions: Subscribed with channel_id to VOICE_STATE_UPDATE, SPEAKING_START/STOP, and VOICE_CONNECTION_STATUS for instant state sync",
-      "Real Discord Local Mute: Dispatches framed SET_USER_VOICE_SETTINGS and waits for nonce acknowledgment before updating local mute state and HUD indicators",
-      "False [LIVE] Indicator Removal: Strictly checks self_stream == true (Go Live) and ignores self_video or WebRTC audio setup lines to prevent false screenshare badges",
-      "Screenshare Direct GPU Capture: Prioritized OpenGL framebuffer capture via Screenshot.takeScreenshot (<3ms), avoiding 95ms AWT Robot CPU overhead",
-      "Screenshare Safe Defaults & Telemetry: Defaulted screenshareOnlyMinecraft to true and added live capture mode and latency metrics to /b screenshare status",
-      "Bridge Formatting & $item Colors: Preserved section signs and & chat colors in bombot/index.js so $item retains authentic Minecraft color formatting across bridge",
-      "Discord Lore Item Glyphs: Synchronously loaded Hypixel font sheets (stats.png, icons.png, skills.png, mobs.png) into render_item.js, rendering authentic gemstone sockets and mana symbols",
-      "Multi-Provider /lyric Web UI: Created /lyric web inspector and /api/lyrics/providers endpoint querying providers in parallel and ranking by Word -> Line -> Plain",
-      "Active Provider Badge: Added dynamic provider badge in lyrics.html displaying the active lyric source",
-      "In-Game Lyrics Glow Styling: Enhanced active line highlight pill outline (0x661DB954) and vibrant Spotify green text (0xFF1ED760) in /b lyrics",
-      "HUD Move Top Bar Click Priority: Prioritized super.mouseClicked first so top buttons are never swallowed by overlapping HUDs, with solid header background",
-      "Right-Click Mode Filtering: Added right-click cycling on Mode button (Both -> In-GUI Only -> In-Game Only) to filter container overlays from in-game HUDs",
-      "Compact Performance Profiler: Reduced card height to 32px and gap to 4px with winH = Math.min(600, height - 24), fitting 8-9 feature cards without scrolling"
+      "~ Storage Overlay Dynamic 5-Row Sizing - Enforced 5 rows for Ender Chests 1-4 on initial display and storage switching, preventing cards from shrinking to 2 rows",
+      "~ Phantom Ender Chest Elimination - Only discovered/unlocked Ender Chests are displayed, removing unowned EC 5-9 and eliminating chat errors",
+      "+ Inline Storage Card Renaming - Replaced modal popup with inline EditBox directly on the card header with Enter to commit and Escape to cancel",
+      "~ Transparent Slot Highlighting - Fixed slots turning solid gray on focus or search, preserving transparent backgrounds for matching items and light gray for empty slots",
+      "~ Discord Voice HUD Channel Subscriptions - Subscribed with channel_id to VOICE_STATE_UPDATE, SPEAKING_START/STOP, and VOICE_CONNECTION_STATUS for instant state sync",
+      "+ Real Discord Local Mute - Dispatches framed SET_USER_VOICE_SETTINGS and waits for nonce acknowledgment before updating local mute state and HUD indicators",
+      "~ False [LIVE] Indicator Removal - Strictly checks self_stream == true (Go Live) and ignores self_video or WebRTC audio setup lines to prevent false screenshare badges",
+      "+ Screenshare Direct GPU Capture - Prioritized OpenGL framebuffer capture via Screenshot.takeScreenshot (<3ms), avoiding 95ms AWT Robot CPU overhead",
+      "+ Screenshare Safe Defaults & Telemetry - Defaulted screenshareOnlyMinecraft to true and added live capture mode and latency metrics to /b screenshare status",
+      "+ Bridge Formatting & $item Colors - Preserved section signs and & chat colors in bombot/index.js so $item retains authentic Minecraft color formatting across bridge",
+      "+ Discord Lore Item Glyphs - Synchronously loaded Hypixel font sheets (stats.png, icons.png, skills.png, mobs.png) into render_item.js, rendering authentic gemstone sockets and mana symbols",
+      "+ Multi-Provider /lyric Web UI - Created /lyric web inspector and /api/lyrics/providers endpoint querying providers in parallel and ranking by Word -> Line -> Plain",
+      "+ Active Provider Badge - Added dynamic provider badge in lyrics.html displaying the active lyric source",
+      "+ In-Game Lyrics Glow Styling - Enhanced active line highlight pill outline (0x661DB954) and vibrant Spotify green text (0xFF1ED760) in /b lyrics",
+      "+ HUD Move Top Bar Click Priority - Prioritized super.mouseClicked first so top buttons are never swallowed by overlapping HUDs, with solid header background",
+      "+ Right-Click Mode Filtering - Added right-click cycling on Mode button (Both -> In-GUI Only -> In-Game Only) to filter container overlays from in-game HUDs",
+      "+ Compact Performance Profiler: Reduced card height to 32px and gap to 4px with winH = Math.min(600, height - 24), fitting 8-9 feature cards without scrolling"
     ]
   },
   {
     "version": "26.2.28.71",
     "date": "2026-10-04",
     "changes": [
-      "Mod Updater Stale Flavor Cleanup: Automatically purges older version jars of the active flavor from the mods directory on update download and startup sweep",
-      "Storage Overlay Launch: Fixed screen opening by invoking mc.setScreenAndShow directly on the render thread and pre-seeding Ender Chests 0-8",
-      "Discord Voice HUD Fast Member Leave Pruning: Reduced WebRTC prune threshold to 3.5s and polling sleep to 1s, reducing leave latency from ~18s to ~2s",
-      "Working Voice Mute: Added volume: 0 alongside mute: true in SET_USER_VOICE_SETTINGS and auto-authorized with Discord Desktop",
-      "Real Channel Names: Resolved channel IDs to exact voice channel names via bombot /api/bot/channel?id= endpoint",
-      "Brand Toggle & User Avatars: Added discordHudHideBrand to hide brand header and discordHudShowAvatars to display member avatars",
-      "WebRTC Screenshare [LIVE] Indicator: Detected WebRTC video streams and displayed [LIVE] indicator next to active screensharing members",
-      "Monotonic Lyrics Clock: Enforced linear forward time progression in SpotifyManager, preventing GSMTC polling latency from jumping playback clock backwards",
-      "Web Lyrics Word Timestamps & Providers: Added <mm:ss.xxx> word timestamps, raw lyrics modal, provider switcher, and fixed past lines ending on blue",
-      "Screenshare Chat Link Fix: Guarded ChatMixin.makeChatCommandsClickable against converting existing ClickEvents or URLs into unknown commands",
-      "Item Chat $item Alias & Formatting: Added $item alias, preserved chat colors in [SHOW:...], and registered Unifont & DejaVu Sans in bombot for glyphs",
-      "Removed BPV Party Announcement: Disabled [BPV] Click to open player's pv message spam in party chat",
-      "Simulated NPC Game Clicks: Used ScreenAccessor.invokeDefaultHandleGameClickEvent for dialogue options with autoHoppityConfirm",
-      "Config UI & HUD Move Improvements: Clipped card description text with ellipsis and unified HUD hit testing with reverse z-order and overlap cycling"
+      "- Mod Updater Stale Flavor Cleanup - Automatically purges older version jars of the active flavor from the mods directory on update download and startup sweep",
+      "~ Storage Overlay Launch - Fixed screen opening by invoking mc.setScreenAndShow directly on the render thread and pre-seeding Ender Chests 0-8",
+      "+ Discord Voice HUD Fast Member Leave Pruning - Reduced WebRTC prune threshold to 3.5s and polling sleep to 1s, reducing leave latency from ~18s to ~2s",
+      "+ Working Voice Mute - Added volume: 0 alongside mute: true in SET_USER_VOICE_SETTINGS and auto-authorized with Discord Desktop",
+      "~ Real Channel Names - Resolved channel IDs to exact voice channel names via bombot /api/bot/channel?id= endpoint",
+      "+ Brand Toggle & User Avatars - Added discordHudHideBrand to hide brand header and discordHudShowAvatars to display member avatars",
+      "+ WebRTC Screenshare [LIVE] Indicator - Detected WebRTC video streams and displayed [LIVE] indicator next to active screensharing members",
+      "~ Monotonic Lyrics Clock - Enforced linear forward time progression in SpotifyManager, preventing GSMTC polling latency from jumping playback clock backwards",
+      "~ Web Lyrics Word Timestamps & Providers - Added <mm:ss.xxx> word timestamps, raw lyrics modal, provider switcher, and fixed past lines ending on blue",
+      "~ Screenshare Chat Link Fix - Guarded ChatMixin.makeChatCommandsClickable against converting existing ClickEvents or URLs into unknown commands",
+      "+ Item Chat $item Alias & Formatting - Added $item alias, preserved chat colors in [SHOW:...], and registered Unifont & DejaVu Sans in bombot for glyphs",
+      "- Removed BPV Party Announcement - Disabled [BPV] Click to open player's pv message spam in party chat",
+      "+ Simulated NPC Game Clicks - Used ScreenAccessor.invokeDefaultHandleGameClickEvent for dialogue options with autoHoppityConfirm",
+      "+ Config UI & HUD Move Improvements - Clipped card description text with ellipsis and unified HUD hit testing with reverse z-order and overlap cycling"
     ]
   },
   {
     "version": "26.2.28.70",
     "date": "2026-10-04",
     "changes": [
-      "Storage Overlay Interception & Fail-Safe Fallback: Injected at MenuScreens.create on the render thread in ClientPacketListenerMixin, preventing GUI lockouts and allowing vanilla containers to open if disabled or unseeded",
-      "Synced Lyrics Web Player Word Spacing: Fixed collapsed spaces between inline-block word elements in lyrics.html with explicit text node whitespace and margin-right styling",
-      "Pinned Web Player Controls & Scrollable Lyrics: Fixed flexbox min-height constraints on .player-layout and .lyrics-container, keeping playback footer permanently pinned and enabling smooth mouse wheel scrolling",
-      "In-Game Lyrics Styling Alignment: Modernized Minecraft LyricsScreen aesthetic with Spotify obsidian background (#07090e), glassmorphic header, and Spotify green active line highlights",
-      "Screenshare Latency & High-DPI Downsampling: Capped stream capture to 1920x1080 with 0.58f JPEG quality, reducing 1440p capture/compression time from 130ms to <15ms (60 FPS) and network bandwidth from 9.2 Mbps to 1.5 Mbps",
-      "Instant Screenshare Selection: Auto-selected user stream immediately on page load in screenshare.html when queried (?user=...), eliminating the 3-second stream list polling stall",
-      "Safe Clean Installation Defaults: Audited all 100+ boolean settings in BomboConfig.Settings and ensured every feature defaults to disabled (false) on clean install"
+      "~ Storage Overlay Interception & Fail-Safe Fallback: Injected at MenuScreens.create on the render thread in ClientPacketListenerMixin, preventing GUI lockouts and allowing vanilla containers to open if disabled or unseeded",
+      "~ Synced Lyrics Web Player Word Spacing - Fixed collapsed spaces between inline-block word elements in lyrics.html with explicit text node whitespace and margin-right styling",
+      "~ Pinned Web Player Controls & Scrollable Lyrics: Fixed flexbox min-height constraints on .player-layout and .lyrics-container, keeping playback footer permanently pinned and enabling smooth mouse wheel scrolling",
+      "+ In-Game Lyrics Styling Alignment - Modernized Minecraft LyricsScreen aesthetic with Spotify obsidian background (#07090e), glassmorphic header, and Spotify green active line highlights",
+      "+ Screenshare Latency & High-DPI Downsampling - Capped stream capture to 1920x1080 with 0.58f JPEG quality, reducing 1440p capture/compression time from 130ms to <15ms (60 FPS) and network bandwidth from 9.2 Mbps to 1.5 Mbps",
+      "~ Instant Screenshare Selection - Auto-selected user stream immediately on page load in screenshare.html when queried (?user=...), eliminating the 3-second stream list polling stall",
+      "~ Safe Clean Installation Defaults - Audited all 100+ boolean settings in BomboConfig.Settings and ensured every feature defaults to disabled (false) on clean install"
     ]
   },
   {
     "version": "26.2.28.69",
     "date": "2026-10-03",
     "changes": [
-      "SkyHanni Enchantment Color Compatibility: Mutated tooltip components in-place in ItemStackMixin without canceling the callback info, preserving Fabric ItemTooltipCallback and restoring SkyHanni high-tier enchantment recoloring (T6, T7, TX)",
-      "Storage Overlay Discovery Deadlock Resolution: Allowed native /storage GUI to open when no storages are discovered so backpacks seed automatically, and removed Netty thread packet blocking in ClientPacketListenerMixin",
-      "Discord Voice HUD Member Pruning & Muting: Restricted WebRTC log analysis to newest log file with a 15-second activity window to purge left members, and added rpc.voice.write OAuth scope for working mute commands",
-      "Live Synced Lyrics Web Search & Simulated Playback: Added interactive title/artist search bar, presets, scrub bar, speed settings, and simulated word-by-word karaoke playback at https://bombo.dpdns.org/lyrics",
-      "Screenshare Fast Downsampled Pipeline: Direct integer pixel downsampling into 1080p/720p (<2ms), dropping capture latency from 135ms to <15ms, and added instant single-frame preloading in screenshare.html",
-      "Config Backup Filenames & Lore Settings: Formatted backup snapshots with readable mod version and timestamp (config_backup_v<ver>_<date>.json), and added showRabbitRarity / showDungeonQuality settings"
+      "+ SkyHanni Enchantment Color Compatibility - Mutated tooltip components in-place in ItemStackMixin without canceling the callback info, preserving Fabric ItemTooltipCallback and restoring SkyHanni high-tier enchantment recoloring (T6, T7, TX)",
+      "- Storage Overlay Discovery Deadlock Resolution: Allowed native /storage GUI to open when no storages are discovered so backpacks seed automatically, and removed Netty thread packet blocking in ClientPacketListenerMixin",
+      "+ Discord Voice HUD Member Pruning & Muting - Restricted WebRTC log analysis to newest log file with a 15-second activity window to purge left members, and added rpc.voice.write OAuth scope for working mute commands",
+      "+ Live Synced Lyrics Web Search & Simulated Playback: Added interactive title/artist search bar, presets, scrub bar, speed settings, and simulated word-by-word karaoke playback at https://bombo.dpdns.org/lyrics",
+      "+ Screenshare Fast Downsampled Pipeline - Direct integer pixel downsampling into 1080p/720p (<2ms), dropping capture latency from 135ms to <15ms, and added instant single-frame preloading in screenshare.html",
+      "+ Config Backup Filenames & Lore Settings - Formatted backup snapshots with readable mod version and timestamp (config_backup_v<ver>_<date>.json), and added showRabbitRarity / showDungeonQuality settings"
     ]
   },
   {
     "version": "26.2.28.68",
     "date": "2026-10-03",
     "changes": [
-      "Storage Overlay Dynamic Sizing & Account/Profile Isolation: Parsed container capacity lore to eliminate black rows on 1-row Ender Chests, and isolated disk storage per account UUID and Profile ID to prevent cross-profile data leakage",
-      "Storage Visual Renaming & Custom Themes: Added modal to visually rename storage slots (e.g. Ender Chest 1 -> Mining Gear) and added Default, Dark, Light, and Transparent overlay themes with custom ARGB color tinting",
-      "Discord Voice HUD Stale Pruning & User Muting: Pruned WebRTC call members inactive for >25s to eliminate ghost participants, added in-HUD user muting via Discord RPC SET_USER_VOICE_SETTINGS, and resolved full usernames from /api/bot/users",
-      "Live Synced Lyrics Web Player: Built and deployed real-time syncing lyrics web player at https://bombo.dpdns.org/lyrics with word-by-word active glow, scrub bar, and automatic Minecraft now-playing telemetry sync",
-      "Spotify Direct Album Resolution: Resolved album URIs (spotify:album:<id>) and track URIs via MusicBrainz and backend resolver so clicking songs opens albums in Spotify Desktop directly without web fallback",
-      "Screenshare 1440p Framebuffer Pipeline: Converted screen capture to native TYPE_INT_RGB and switched screenshare.html to hardware-accelerated MJPEG streaming for smooth 60 FPS 1440p performance",
-      "Config Backups & Safety Defaults: Added automatic config backup on version upgrade, added /b backup create/list/check/restore commands, ensured macros and inventory buttons default to OFF, and added /buttons Brigadier registration",
-      "Single-Character Obfuscate Exception: Preserved single-character obfuscated glyphs (such as recombobulator marks &ka>>) while removing spam obfuscation"
+      "~ Storage Overlay Dynamic Sizing & Account/Profile Isolation: Parsed container capacity lore to eliminate black rows on 1-row Ender Chests, and isolated disk storage per account UUID and Profile ID to prevent cross-profile data leakage",
+      "+ Storage Visual Renaming & Custom Themes - Added modal to visually rename storage slots (e.g. Ender Chest 1 -> Mining Gear) and added Default, Dark, Light, and Transparent overlay themes with custom ARGB color tinting",
+      "~ Discord Voice HUD Stale Pruning & User Muting: Pruned WebRTC call members inactive for >25s to eliminate ghost participants, added in-HUD user muting via Discord RPC SET_USER_VOICE_SETTINGS, and resolved full usernames from /api/bot/users",
+      "+ Live Synced Lyrics Web Player - Built and deployed real-time syncing lyrics web player at https://bombo.dpdns.org/lyrics with word-by-word active glow, scrub bar, and automatic Minecraft now-playing telemetry sync",
+      "~ Spotify Direct Album Resolution - Resolved album URIs (spotify:album:<id>) and track URIs via MusicBrainz and backend resolver so clicking songs opens albums in Spotify Desktop directly without web fallback",
+      "+ Screenshare 1440p Framebuffer Pipeline - Converted screen capture to native TYPE_INT_RGB and switched screenshare.html to hardware-accelerated MJPEG streaming for smooth 60 FPS 1440p performance",
+      "~ Config Backups & Safety Defaults - Added automatic config backup on version upgrade, added /b backup create/list/check/restore commands, ensured macros and inventory buttons default to OFF, and added /buttons Brigadier registration",
+      "~ Single-Character Obfuscate Exception - Preserved single-character obfuscated glyphs (such as recombobulator marks &ka>>) while removing spam obfuscation"
     ]
   },
   {
     "version": "26.2.28.67",
     "date": "2026-10-03",
     "changes": [
-      "Storage Overlay Render Thread Safety: Scheduled StorageOverlayScreen initialization on Minecraft render thread via mc.execute, preventing IllegalStateException crash on /st",
-      "Discord Voice WebRTC Stream Recovery: Scanned both discord-webrtc_0 and discord-webrtc_1 logs so active inbound streams immediately clear stale disconnect states and restore call members",
-      "Spotify Desktop App URI Support: Prioritized native spotify:track:<id> and spotify:search:<query> protocol URIs to launch Spotify desktop app directly before falling back to browser",
-      "Lyrics Word-by-Word Sync & Shortcuts: Grouped Apple Music/YouLyPlus syllables into words, added global playback hotkeys (Space to toggle play/pause, Ctrl+Left/Right to skip tracks), and dimmed inactive karaoke words",
-      "Config Color Picker Modal Hitbox: Corrected modal height bounding box in mouseClicked from 260 to 280, restoring responsive 1-click Done button hitboxes",
-      "Screenshare 1440p Frame Preservation: Removed artificial 15 FPS clamp and prevented blurry upscaling of smaller framebuffers by preserving 1:1 native resolution",
-      "Changelog Version Box Alignment: Measured text bounding box with bold styling so subversions fit cleanly inside outline, and adjusted scroll offset alignment",
-      "Speedometer HUD Registration: Hooked SpeedometerHud.init() and onClientTick into mod initialization and client tick loops",
-      "Garden Cocoa Angle Validation: Replaced forced block destruction with vanilla keyAttack input so breaking cocoa beans respects physical angles and reach limits"
+      "~ Storage Overlay Render Thread Safety - Scheduled StorageOverlayScreen initialization on Minecraft render thread via mc.execute, preventing IllegalStateException crash on /st",
+      "~ Discord Voice WebRTC Stream Recovery - Scanned both discord-webrtc_0 and discord-webrtc_1 logs so active inbound streams immediately clear stale disconnect states and restore call members",
+      "+ Spotify Desktop App URI Support - Prioritized native spotify:track:<id> and spotify:search:<query> protocol URIs to launch Spotify desktop app directly before falling back to browser",
+      "+ Lyrics Word-by-Word Sync & Shortcuts - Grouped Apple Music/YouLyPlus syllables into words, added global playback hotkeys (Space to toggle play/pause, Ctrl+Left/Right to skip tracks), and dimmed inactive karaoke words",
+      "+ Config Color Picker Modal Hitbox - Corrected modal height bounding box in mouseClicked from 260 to 280, restoring responsive 1-click Done button hitboxes",
+      "- Screenshare 1440p Frame Preservation - Removed artificial 15 FPS clamp and prevented blurry upscaling of smaller framebuffers by preserving 1:1 native resolution",
+      "+ Changelog Version Box Alignment - Measured text bounding box with bold styling so subversions fit cleanly inside outline, and adjusted scroll offset alignment",
+      "+ Speedometer HUD Registration - Hooked SpeedometerHud.init() and onClientTick into mod initialization and client tick loops",
+      "+ Garden Cocoa Angle Validation - Replaced forced block destruction with vanilla keyAttack input so breaking cocoa beans respects physical angles and reach limits"
     ]
   },
   {
     "version": "26.2.28.66",
     "date": "2026-10-02",
     "changes": [
-      "Storage Overlay Packet Interception: Injected into handleOpenScreen in ClientPacketListenerMixin, launching StorageOverlayScreen immediately on container open packet",
-      "Discord WebRTC Call Member Tracking: Scanned discord-webrtc logs for active inbound stream IDs, fetching full rosters and names via /api/bot/users so calls with 6+ members display completely",
-      "Bridge Color Formatting & Clean IGN Decoupling: Maintained color codes in chat and Discord webhooks while strictly parsing clean IGNs for profile lookups and networth checks",
-      "Spotify UTF-8 URI Support & Direct Artist Pages: Replaced cmd /c start with Util.getPlatform().openUri preserving special characters (e.g. \u00ed in Darar\u00ed), and added direct artist page resolution via MusicBrainz",
-      "Config Color Picker Alpha Slider: Added opacity slider (0% to 100%) with checkerboard transparency grid and 8-digit ARGB hex support in /b config",
-      "Screenshare 0 FPS Fix & Fallback: Increased framebuffer timeout to 800ms for 1440p/2K displays, added automatic Robot fallback, and enforced RGB JPEG encoding",
-      "Clickable Versions Changelog: Clicking anywhere on a version row in /b update versions opens ChangelogScreen focused and highlighted on that version",
-      "Multi-Provider Lyrics Expansion: Implemented Musixmatch provider with HMAC-SHA256 signing, fixed KuGou HTTPS, parsed YouLyPlus Apple Music syllable sync JSON, and added /api/lyrics/test",
-      "HUD 60 FPS Throttling: Throttled SpotifyHud and DiscordVoiceHud layout recalculations to 16ms (60 FPS) to optimize CPU on high-refresh monitors"
+      "+ Storage Overlay Packet Interception - Injected into handleOpenScreen in ClientPacketListenerMixin, launching StorageOverlayScreen immediately on container open packet",
+      "+ Discord WebRTC Call Member Tracking - Scanned discord-webrtc logs for active inbound stream IDs, fetching full rosters and names via /api/bot/users so calls with 6+ members display completely",
+      "+ Bridge Color Formatting & Clean IGN Decoupling: Maintained color codes in chat and Discord webhooks while strictly parsing clean IGNs for profile lookups and networth checks",
+      "+ Spotify UTF-8 URI Support & Direct Artist Pages: Replaced cmd /c start with Util.getPlatform().openUri preserving special characters (e.g. í in Dararí), and added direct artist page resolution via MusicBrainz",
+      "+ Config Color Picker Alpha Slider - Added opacity slider (0% to 100%) with checkerboard transparency grid and 8-digit ARGB hex support in /b config",
+      "~ Screenshare 0 FPS Fix & Fallback - Increased framebuffer timeout to 800ms for 1440p/2K displays, added automatic Robot fallback, and enforced RGB JPEG encoding",
+      "+ Clickable Versions Changelog - Clicking anywhere on a version row in /b update versions opens ChangelogScreen focused and highlighted on that version",
+      "~ Multi-Provider Lyrics Expansion - Implemented Musixmatch provider with HMAC-SHA256 signing, fixed KuGou HTTPS, parsed YouLyPlus Apple Music syllable sync JSON, and added /api/lyrics/test",
+      "+ HUD 60 FPS Throttling - Throttled SpotifyHud and DiscordVoiceHud layout recalculations to 16ms (60 FPS) to optimize CPU on high-refresh monitors"
     ]
   },
   {
     "version": "26.2.28.65",
     "date": "2026-10-02",
     "changes": [
-      "Bridge Name & Color Sanitization: Stripped color codes (& and \u00a7) from usernames and bridge webhooks, preventing corrupt GET /&4<user> requests and raw color code display on Discord",
-      "Screenshare Web Streaming Continuous Pump: Replaced static single-frame blob replacement with continuous image pump on https://bombo.dpdns.org/screenshare, fixing 1-frame freeze",
-      "Screenshare Quality Presets: Standardized quality options to 1440p 60fps and 1440p 120fps",
-      "Spotify HUD GUI Dragging & Click Guard: Mouse clicks on Spotify HUD only open Spotify in ChatScreen or Container screens, allowing full drag/move/resize in /b gui",
-      "Spotify Direct Artist & Track Filters: Clicking artist opens Spotify filtered directly to artist:\"<name>\" (desktop) and /search/<name>/artists (web)",
-      "Discord Voice Local Log Scanner: Enhanced background log parser to detect active voice channels, call members, and heartbeat states from renderer_js.log and discord-webrtc_1",
-      "Version Output Polish: Formatted /b version and /b test as [Bombo] BomboClient Current Version: <version> (or BomboAddons)",
-      "Lyrics Multi-Candidate Deduplication: Deduplicated search candidates by provider, sync type, and preview signature, eliminating 21 duplicate entries in candidate modal",
-      "Performance Profiler Display Clarification: Labeled HUD and render calls as 'Render (FPS)' to clarify display framerate vs logic calls"
+      "~ Bridge Name & Color Sanitization - Stripped color codes (& and §) from usernames and bridge webhooks, preventing corrupt GET /&4<user> requests and raw color code display on Discord",
+      "~ Screenshare Web Streaming Continuous Pump - Replaced static single-frame blob replacement with continuous image pump on https://bombo.dpdns.org/screenshare, fixing 1-frame freeze",
+      "+ Screenshare Quality Presets - Standardized quality options to 1440p 60fps and 1440p 120fps",
+      "+ Spotify HUD GUI Dragging & Click Guard - Mouse clicks on Spotify HUD only open Spotify in ChatScreen or Container screens, allowing full drag/move/resize in /b gui",
+      "+ Spotify Direct Artist & Track Filters - Clicking artist opens Spotify filtered directly to artist:\"<name>\" (desktop) and /search/<name>/artists (web)",
+      "+ Discord Voice Local Log Scanner - Enhanced background log parser to detect active voice channels, call members, and heartbeat states from renderer_js.log and discord-webrtc_1",
+      "+ Version Output Polish - Formatted /b version and /b test as [Bombo] BomboClient Current Version: <version> (or BomboAddons)",
+      "~ Lyrics Multi-Candidate Deduplication - Deduplicated search candidates by provider, sync type, and preview signature, eliminating 21 duplicate entries in candidate modal",
+      "+ Performance Profiler Display Clarification - Labeled HUD and render calls as 'Render (FPS)' to clarify display framerate vs logic calls"
     ]
   },
   {
     "version": "26.2.28.64",
     "date": "2026-10-02",
     "changes": [
-      "Screenshare Clickable Links: Screen sharing notifications in chat now include clickable web stream links with hover previews",
-      "Screenshare In-Game Mouse Pointer: Captured frames now render a crisp cursor arrow whenever any GUI or container is open",
-      "Screenshare 2K 120fps & 1440p Presets: Added high-framerate and resolution presets in /b ss config",
-      "Screenshare Web Streaming Latency: Patched web dashboard and API with instant frame loading (<50ms) and no-transform headers, bypassing Cloudflare buffering",
-      "Screenshare Profiler Fix: Decoupled thread sleep from profiler measurement, dropping reported load from 999.52 ms/s to <10 ms/s",
-      "Discord Voice Local Log Fallback: Added real-time tail reader for Discord desktop renderer logs to accurately detect calls without OAuth voice permissions",
-      "Discord Voice Speaking Activity: Enhanced voice user tracking so speaking state updates dynamically in the HUD",
-      "Spotify & Discord HUD GUI Resizing: Enabled interactive drag-resizing in /b gui (HudMoveScreen)",
-      "Spotify Missing Texture Fix: Replaced missing PNG icon with procedural vector Spotify icon, eliminating magenta/black checkerboard",
-      "Lyrics Infinite Loop Fix: Resolved track change condition in LyricsManager to allow lyrics to fetch and display reliably",
-      "Storage Overlay Mixin Registration: Registered MenuScreensConstructorMixin into both flavor configs to activate storage intercepting",
-      "Version String Dev Filtering: Filtered unexpanded template strings in Constants.myVersion()"
+      "+ Screenshare Clickable Links - Screen sharing notifications in chat now include clickable web stream links with hover previews",
+      "+ Screenshare In-Game Mouse Pointer - Captured frames now render a crisp cursor arrow whenever any GUI or container is open",
+      "+ Screenshare 2K 120fps & 1440p Presets - Added high-framerate and resolution presets in /b ss config",
+      "+ Screenshare Web Streaming Latency - Patched web dashboard and API with instant frame loading (<50ms) and no-transform headers, bypassing Cloudflare buffering",
+      "~ Screenshare Profiler Fix - Decoupled thread sleep from profiler measurement, dropping reported load from 999.52 ms/s to <10 ms/s",
+      "+ Discord Voice Local Log Fallback - Added real-time tail reader for Discord desktop renderer logs to accurately detect calls without OAuth voice permissions",
+      "+ Discord Voice Speaking Activity - Enhanced voice user tracking so speaking state updates dynamically in the HUD",
+      "+ Spotify & Discord HUD GUI Resizing - Enabled interactive drag-resizing in /b gui (HudMoveScreen)",
+      "~ Spotify Missing Texture Fix - Replaced missing PNG icon with procedural vector Spotify icon, eliminating magenta/black checkerboard",
+      "~ Lyrics Infinite Loop Fix - Resolved track change condition in LyricsManager to allow lyrics to fetch and display reliably",
+      "+ Storage Overlay Mixin Registration - Registered MenuScreensConstructorMixin into both flavor configs to activate storage intercepting",
+      "+ Version String Dev Filtering - Filtered unexpanded template strings in Constants.myVersion()"
     ]
   },
   {
     "version": "26.2.28.63",
     "date": "2026-10-02",
     "changes": [
-      "Client Startup Mixin Fix: Fixed Prism Launcher crash by aligning bomboclient.base.mixins.json with exact 70 production mixins, removing inactive ConnectionMixin and GameRendererMixin injection targets"
+      "~ Client Startup Mixin Fix - Fixed Prism Launcher crash by aligning bomboclient.base.mixins.json with exact 70 production mixins, removing inactive ConnectionMixin and GameRendererMixin injection targets"
     ]
   },
   {
     "version": "26.2.28.62",
     "date": "2026-10-02",
     "changes": [
-      "Mixin Configuration Isolation: Created unique bomboclient.base.mixins.json to eliminate Fabric Loader non-unique mixin config runtime crashes between bomboaddons and bomboclient",
-      "Flavor Metadata Separation: Updated bomboclient fabric.mod.json to load only its dedicated mixin configs",
-      "Mutual Flavor Exclusion: Added mutual breaks declarations in fabric.mod.json so bomboaddons and bomboclient cannot be loaded simultaneously",
-      "Automated Dev Clean & Integrity Verification: Updated Gradle build tasks to exclude colliding mixin configs, verify integrity, and purge stale jars from run/mods/"
+      "~ Mixin Configuration Isolation - Created unique bomboclient.base.mixins.json to eliminate Fabric Loader non-unique mixin config runtime crashes between bomboaddons and bomboclient",
+      "+ Flavor Metadata Separation - Updated bomboclient fabric.mod.json to load only its dedicated mixin configs",
+      "+ Mutual Flavor Exclusion - Added mutual breaks declarations in fabric.mod.json so bomboaddons and bomboclient cannot be loaded simultaneously",
+      "- Automated Dev Clean & Integrity Verification - Updated Gradle build tasks to exclude colliding mixin configs, verify integrity, and purge stale jars from run/mods/"
     ]
   },
   {
     "version": "26.2.28.61",
     "date": "2026-10-02",
     "changes": [
-      "Native Win32 JNA Spotify Controls: Zero-focus, non-blocking media playback control (Play/Pause, Next, Previous) targeting Spotify Chrome_WidgetWin_0 without command prompts or stealing focus",
-      "Spotify Fabric Keybindings: Registered configurable keybindings under BomboAddons category consumed on client tick events",
-      "Discord Watchdog Crash Elimination: Fixed Client shutdown watchdog crash by closing named pipe asynchronously in daemon thread rather than blocking render thread",
-      "Async Discord Voice Sync: Made /b discord sync and /b discord auth run asynchronously to prevent render thread freezes",
-      "Lyrics Anti-Oscillation Monotonic Progression: Locked line index progression forward to prevent line jumping back and forth on micro-jitter",
-      "Lyrics Frame Debugger: Added /b lyrics debug to log per-frame rendering metrics to bombo_lyrics_debug.log",
-      "Album Art Epoch Guard: Prevented delayed album cover downloads from previous tracks from overwriting current track art",
-      "Screenshare Command Fix: Fixed /b ss config to open settings instead of sending IRC request to user config, and added /b stream command",
-      "Screenshare Latency Optimization: Pipelined async HTTP frame POST requests to eliminate streaming delay on web dashboard",
-      "Storage Overlay Regex & Debug: Supported all backpack sizes and 1-2 digit slots/echests, added in-game diagnostic chat tracing, and safely reused player containerMenu",
-      "HUD Performance / 240Hz Optimization: Throttled Composter HUD calculations to 1-2x/sec and cached text lines, reducing CPU load to <0.001 ms",
-      "Performance Profiler Log Dump: Added /b perf log and in-GUI Dump Log button to output detailed diagnostics to bombo_perf_debug.log",
-      "Version Catalog Release Date: Displayed release dates next to versions in /b update versions"
+      "+ Native Win32 JNA Spotify Controls - Zero-focus, non-blocking media playback control (Play/Pause, Next, Previous) targeting Spotify Chrome_WidgetWin_0 without command prompts or stealing focus",
+      "+ Spotify Fabric Keybindings - Registered configurable keybindings under BomboAddons category consumed on client tick events",
+      "~ Discord Watchdog Crash Elimination - Fixed Client shutdown watchdog crash by closing named pipe asynchronously in daemon thread rather than blocking render thread",
+      "~ Async Discord Voice Sync - Made /b discord sync and /b discord auth run asynchronously to prevent render thread freezes",
+      "~ Lyrics Anti-Oscillation Monotonic Progression: Locked line index progression forward to prevent line jumping back and forth on micro-jitter",
+      "~ Lyrics Frame Debugger - Added /b lyrics debug to log per-frame rendering metrics to bombo_lyrics_debug.log",
+      "~ Album Art Epoch Guard - Prevented delayed album cover downloads from previous tracks from overwriting current track art",
+      "~ Screenshare Command Fix - Fixed /b ss config to open settings instead of sending IRC request to user config, and added /b stream command",
+      "+ Screenshare Latency Optimization - Pipelined async HTTP frame POST requests to eliminate streaming delay on web dashboard",
+      "~ Storage Overlay Regex & Debug - Supported all backpack sizes and 1-2 digit slots/echests, added in-game diagnostic chat tracing, and safely reused player containerMenu",
+      "+ HUD Performance / 240Hz Optimization - Throttled Composter HUD calculations to 1-2x/sec and cached text lines, reducing CPU load to <0.001 ms",
+      "~ Performance Profiler Log Dump - Added /b perf log and in-GUI Dump Log button to output detailed diagnostics to bombo_perf_debug.log",
+      "+ Version Catalog Release Date - Displayed release dates next to versions in /b update versions"
     ]
   },
   {
     "version": "26.2.28.60",
     "date": "2026-10-01",
     "changes": [
-      "Minecraft Direct Screenshare: Screen streaming now captures only the Minecraft window directly from GPU framebuffer without cursor flickering or whole-desktop capture",
-      "Screenshare Quality & Commands: Added 720p 30fps and 1080p 60fps quality settings in /b ss config, /b stream to start broadcasting, and patched Nginx buffering on web dashboard",
-      "Screenshare Chat Leak Fix: Trapped [SS_ protocol messages across IRC chat handlers so requests and responses never leak into in-game chat",
-      "Chat Image Hover Preview Anchor: Added setting to fix preview position to screen anchors (Top Right, Top Left, Bottom Right, etc.) in /b config instead of mouse cursor",
-      "/b play Reconnect Guard: Prevented reconnecting if already connected to target server (e.g. hypixel.net)",
-      "Discord IPC Auth Guard: Added discordVoiceAutoAuth = false to stop repeated OAuth permission modals on game launch and handled User cancelled authorization gracefully",
-      "Spotify HUD Performance: Cached parsed hex colors and text truncation in SpotifyHud to eliminate per-frame allocations during 60-70 FPS HUD renders",
-      "Spotify Album Art: Restored dynamic texture decoding and uploading for album artwork on Spotify HUD",
-      "Lyrics Monotonic Progression: Prevented active phrase oscillation backwards on audio micro-jitter and expanded syllable/candidate matching across providers",
-      "Performance Profiler Coverage: Added profiler scopes to all HUD elements and mod features in /b perf, and auto-enabled profiling while PerformanceScreen is open",
-      "Storage Overlay Debugging: Added verbose tracing to MenuScreensConstructorMixin and StorageOverlayScreen to pinpoint why container overlays fail to initialize"
+      "~ Minecraft Direct Screenshare - Screen streaming now captures only the Minecraft window directly from GPU framebuffer without cursor flickering or whole-desktop capture",
+      "+ Screenshare Quality & Commands - Added 720p 30fps and 1080p 60fps quality settings in /b ss config, /b stream to start broadcasting, and patched Nginx buffering on web dashboard",
+      "~ Screenshare Chat Leak Fix - Trapped [SS_ protocol messages across IRC chat handlers so requests and responses never leak into in-game chat",
+      "~ Chat Image Hover Preview Anchor - Added setting to fix preview position to screen anchors (Top Right, Top Left, Bottom Right, etc.) in /b config instead of mouse cursor",
+      "~ /b play Reconnect Guard - Prevented reconnecting if already connected to target server (e.g. hypixel.net)",
+      "~ Discord IPC Auth Guard - Added discordVoiceAutoAuth = false to stop repeated OAuth permission modals on game launch and handled User cancelled authorization gracefully",
+      "+ Spotify HUD Performance - Cached parsed hex colors and text truncation in SpotifyHud to eliminate per-frame allocations during 60-70 FPS HUD renders",
+      "~ Spotify Album Art - Restored dynamic texture decoding and uploading for album artwork on Spotify HUD",
+      "~ Lyrics Monotonic Progression - Prevented active phrase oscillation backwards on audio micro-jitter and expanded syllable/candidate matching across providers",
+      "+ Performance Profiler Coverage - Added profiler scopes to all HUD elements and mod features in /b perf, and auto-enabled profiling while PerformanceScreen is open",
+      "~ Storage Overlay Debugging - Added verbose tracing to MenuScreensConstructorMixin and StorageOverlayScreen to pinpoint why container overlays fail to initialize"
     ]
   },
   {
     "version": "26.2.28.59",
     "date": "2026-10-01",
     "changes": [
-      "Hypixel Alpha Alerts Fixed (Server): Resolved server logic where opening alerts were dropped if admins/testers were online before public cap was raised from 0 to 50. Replaced restrictive conditions with strict public capacity detection.",
-      "In-Game Client Alerts: Added chat alert with clickable [JOIN] (/server alpha) shortcut, on-screen title banner, and audible level-up sound when Alpha opens or increases capacity.",
-      "Background Alpha Polling: Polling now runs every 30s in the background independently of whether the Alpha HUD text is enabled.",
-      "Configurable Alert Options: Added Alpha Open Alert, Alpha Open Sound, and Alpha Open Title under /b HUDs settings.",
-      "Alpha Commands: Added /b alpha and standalone /alpha to view current Alpha server player count, cap, and join shortcut in chat."
+      "~ Hypixel Alpha Alerts Fixed (Server) - Resolved server logic where opening alerts were dropped if admins/testers were online before public cap was raised from 0 to 50. Replaced restrictive conditions with strict public capacity detection.",
+      "+ In-Game Client Alerts - Added chat alert with clickable [JOIN] (/server alpha) shortcut, on-screen title banner, and audible level-up sound when Alpha opens or increases capacity.",
+      "+ Background Alpha Polling - Polling now runs every 30s in the background independently of whether the Alpha HUD text is enabled.",
+      "+ Configurable Alert Options - Added Alpha Open Alert, Alpha Open Sound, and Alpha Open Title under /b HUDs settings.",
+      "+ Alpha Commands - Added /b alpha and standalone /alpha to view current Alpha server player count, cap, and join shortcut in chat."
     ]
   },
   {
     "version": "26.2.28.58",
     "date": "2026-09-30",
     "changes": [
-      "Watchdog Shutdown Crash Fixed: Added clean stop methods to Discord IPC (pipe close), Spotify (PowerShell process termination), and Screenshare, registering them on Fabric CLIENT_STOPPING and JVM shutdown hooks to prevent Watchdog (Client shutdown from post-main) exit crashes (exit value -8)",
-      "Discord Bridge URL Preservation: Fixed Discord bridge formatting so & inside URLs is never converted to \u00a7 or Minecraft color codes, preserving query parameters intact",
-      "Chat Image Hover Preview Fixed: ChatImagePreview now restores \u00a7 to & before URL parsing, eliminating 403 Forbidden / 404 Not Found errors on signed Discord CDN image URLs (&ex=...)",
-      "Clickable Discord CDN Links: formatWithLinks now tokenizes URLs before applying chroma/color formatting, reliably creating valid ClickEvent.OpenUrl chat components for web links"
+      "~ Watchdog Shutdown Crash Fixed - Added clean stop methods to Discord IPC (pipe close), Spotify (PowerShell process termination), and Screenshare, registering them on Fabric CLIENT_STOPPING and JVM shutdown hooks to prevent Watchdog (Client shutdown from post-main) exit crashes (exit value -8)",
+      "~ Discord Bridge URL Preservation - Fixed Discord bridge formatting so & inside URLs is never converted to § or Minecraft color codes, preserving query parameters intact",
+      "~ Chat Image Hover Preview Fixed - ChatImagePreview now restores § to & before URL parsing, eliminating 403 Forbidden / 404 Not Found errors on signed Discord CDN image URLs (&ex=...)",
+      "+ Clickable Discord CDN Links - formatWithLinks now tokenizes URLs before applying chroma/color formatting, reliably creating valid ClickEvent.OpenUrl chat components for web links"
     ]
   },
   {
     "version": "26.2.28.57",
     "date": "2026-09-30",
     "changes": [
-      "High-Speed MJPEG Screenshare: Upgraded screenshare streaming to 25-30 FPS MJPEG with <50ms latency directly to the web dashboard (https://bombo.dpdns.org/screenshare)",
-      "Multi-Monitor Screen Clamping: Clamped screen bounds against virtual display metrics to eliminate black screen captures and IllegalArgumentException on multi-monitor setups",
-      "Screenshare Telemetry (/ss debug): Added comprehensive /ss debug and /b ss debug reporting active streaming state, target, quality, rolling FPS, bitrate, and latency metrics",
-      "Bridge Chat Spam Eliminated: Silenced bridge mapping log spam on the server bot when connecting or verifying players",
-      "Discord IPC Auth & Stability: Eliminated repeated VS Code OAuth authorization modals, added PIPE_LOCK to prevent pipe stalls, and registered Brigadier subcommands (/b discord debug, sync, auth)",
-      "Interactive Version Catalog (/b update versions): New GUI screen listing all MC 26.2 releases in descending order with [CURRENT], [FULL], and [BETA] badges and 1-click update/switch",
-      "Strict Minecraft Line Scope: Mod updater now filters strictly for current Minecraft line (26.2) and sends Accept: application/json to avoid downloading older version lines",
-      "Keyboard-Driven Custom Lyrics Editor: Added interactive text selection, cursor positioning, and full keyboard hotkeys (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Enter, Backspace, Delete) to custom lyrics mode",
-      "Lyrics Scissor Clipping Fix: Corrected GUI scissor coordinate calculation (x1, y1, x1+w, y1+h), resolving cut-off provider badges in candidate modal and half-hidden text in raw modal",
-      "Smooth Monotonic Millisecond Clock: Monotonic playback progress tracking at 250ms poller queries eliminates 4-second time jumps and active line oscillation jitter",
-      "Restored Config Suite: Restored full Diana Lootshare alert suite, item tooltip prices (BIN, Craft Cost, NPC), Dojo, Carnival, Sphinx, Hollow Wand, Lasso, Trevor, and Daily Reward to /b",
-      "Playtime Error Hover Tooltips: Added interactive hover tooltips explaining HTTP 429 rate limits, auth errors, server errors, and network diagnostics on sync messages"
+      "+ High-Speed MJPEG Screenshare - Upgraded screenshare streaming to 25-30 FPS MJPEG with <50ms latency directly to the web dashboard (https://bombo.dpdns.org/screenshare)",
+      "~ Multi-Monitor Screen Clamping - Clamped screen bounds against virtual display metrics to eliminate black screen captures and IllegalArgumentException on multi-monitor setups",
+      "~ Screenshare Telemetry (/ss debug) - Added comprehensive /ss debug and /b ss debug reporting active streaming state, target, quality, rolling FPS, bitrate, and latency metrics",
+      "+ Bridge Chat Spam Eliminated - Silenced bridge mapping log spam on the server bot when connecting or verifying players",
+      "~ Discord IPC Auth & Stability - Eliminated repeated VS Code OAuth authorization modals, added PIPE_LOCK to prevent pipe stalls, and registered Brigadier subcommands (/b discord debug, sync, auth)",
+      "+ Interactive Version Catalog (/b update versions): New GUI screen listing all MC 26.2 releases in descending order with [CURRENT], [FULL], and [BETA] badges and 1-click update/switch",
+      "+ Strict Minecraft Line Scope - Mod updater now filters strictly for current Minecraft line (26.2) and sends Accept: application/json to avoid downloading older version lines",
+      "+ Keyboard-Driven Custom Lyrics Editor - Added interactive text selection, cursor positioning, and full keyboard hotkeys (Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Enter, Backspace, Delete) to custom lyrics mode",
+      "~ Lyrics Scissor Clipping Fix - Corrected GUI scissor coordinate calculation (x1, y1, x1+w, y1+h), resolving cut-off provider badges in candidate modal and half-hidden text in raw modal",
+      "+ Smooth Monotonic Millisecond Clock - Monotonic playback progress tracking at 250ms poller queries eliminates 4-second time jumps and active line oscillation jitter",
+      "~ Restored Config Suite - Restored full Diana Lootshare alert suite, item tooltip prices (BIN, Craft Cost, NPC), Dojo, Carnival, Sphinx, Hollow Wand, Lasso, Trevor, and Daily Reward to /b",
+      "~ Playtime Error Hover Tooltips - Added interactive hover tooltips explaining HTTP 429 rate limits, auth errors, server errors, and network diagnostics on sync messages"
     ]
   },
   {
     "version": "26.2.28.56",
     "date": "2026-09-29",
     "changes": [
-      "Live Screenshare Web Dashboard (https://bombo.dpdns.org/screenshare): Live web dashboard showing active in-game streamers with Minecraft heads, resolution, FPS/latency, and HD video canvas",
-      "In-Game Frame Streaming (ScreenshareManager): Minecraft client streams compressed JPEG frames (~8-10 FPS) directly to the server API, enabling out-of-render-distance screensharing",
-      "Interactive Stream Links: Starting/accepting screenshare (/ss <player>) posts clickable web stream link in chat (https://bombo.dpdns.org/screenshare?user=<ign>), and spectator cam redirects to web if player is out of chunk distance",
-      "Manual Stream Commands: Added /ss stream and /ss share to broadcast live screen anytime, and /ss stop to end streaming",
-      "Interactive Delay Slider & Custom Typing: Replaced step buttons with interactive draggable slider (-5000ms to +5000ms) and click-to-type number box with [\u21ba] reset",
-      "Unformatted & Concatenated LRC Splitting: Enhanced LRC parser with positive lookahead (?=\\[\\d{1,2}:\\d{2}) to cleanly separate packed lines without newlines",
-      "Word-for-Word Syllable Sync: Enhanced parser for both <mm:ss.xxx>word and <word:start:end> formats with exact word timestamps",
-      "Spotify-Style Full Line Highlights: Regular line-synced lyrics highlight the whole line in bold white (Spotify style) without fake word jumping",
-      "Custom Lyrics Editor: Edit Custom mode in [Raw / Edit] modal allows typing or pasting custom lyrics from clipboard with instant [Apply]",
-      "Vivi Music Multi-Candidate Modal: Candidate selector modal displaying all lyrics versions collected across Paxsenix, LrcLib, BetterLyrics, Kugou, Unison, and YouLyPlus with sync and provider badges",
-      "Discord IPC Voice Polling & Auth: Added automatic AUTHORIZE code acceptance and 4s background poll so joining voice channels syncs automatically without restarting"
+      "+ Live Screenshare Web Dashboard (https - //bombo.dpdns.org/screenshare): Live web dashboard showing active in-game streamers with Minecraft heads, resolution, FPS/latency, and HD video canvas",
+      "+ In-Game Frame Streaming (ScreenshareManager) - Minecraft client streams compressed JPEG frames (~8-10 FPS) directly to the server API, enabling out-of-render-distance screensharing",
+      "+ Interactive Stream Links - Starting/accepting screenshare (/ss <player>) posts clickable web stream link in chat (https://bombo.dpdns.org/screenshare?user=<ign>), and spectator cam redirects to web if player is out of chunk distance",
+      "~ Manual Stream Commands - Added /ss stream and /ss share to broadcast live screen anytime, and /ss stop to end streaming",
+      "+ Interactive Delay Slider & Custom Typing - Replaced step buttons with interactive draggable slider (-5000ms to +5000ms) and click-to-type number box with [↺] reset",
+      "+ Unformatted & Concatenated LRC Splitting - Enhanced LRC parser with positive lookahead (?=\\[\\d{1,2}:\\d{2}) to cleanly separate packed lines without newlines",
+      "+ Word-for-Word Syllable Sync - Enhanced parser for both <mm:ss.xxx>word and <word:start:end> formats with exact word timestamps",
+      "+ Spotify-Style Full Line Highlights - Regular line-synced lyrics highlight the whole line in bold white (Spotify style) without fake word jumping",
+      "+ Custom Lyrics Editor - Edit Custom mode in [Raw / Edit] modal allows typing or pasting custom lyrics from clipboard with instant [Apply]",
+      "+ Vivi Music Multi-Candidate Modal - Candidate selector modal displaying all lyrics versions collected across Paxsenix, LrcLib, BetterLyrics, Kugou, Unison, and YouLyPlus with sync and provider badges",
+      "+ Discord IPC Voice Polling & Auth - Added automatic AUTHORIZE code acceptance and 4s background poll so joining voice channels syncs automatically without restarting"
     ]
   },
   {
     "version": "26.2.28.55",
     "date": "2026-09-28",
     "changes": [
-      "Screensharing (/ss <player>): Patched remote IRC bot to eliminate protocol leaks to chat/Discord, added live IRC online checks, and instant receipt confirmation [SS_RCVD]",
-      "Discord IPC Handshake: Updated Discord Client ID to standard desktop IPC, expanded pipe scan (0-9), and added comprehensive diagnostic dumper (/b discord debug)",
-      "Word-for-Word Synchronized Lyrics: Integrated iTunes API with Paxsenix Apple Music syllable sync for exact timestamps, stabilized line widths to prevent wobble, and enforced monotonic word progression",
-      "Lyrics Controls & Hotkeys: Added [-100ms] and [+100ms] delay offset buttons with config persistence, secondary/background vocals rendering, and ESC key closing only the raw data modal",
-      "Spotify Artwork & Config Swatches: Asynchronously loads high-res album covers on Spotify HUD, and rendered visible colored swatch boxes for Spotify colors in /b config",
-      "Storage Overlay Slot Fix: Corrected slot index assignment on InactiveSlot to prevent index corruption and reliably display multi-grid storage overlay",
-      "Spectator Camera FOV: Clamped camera FOV to base FOV (max 110) during /b cam and spectating to eliminate distortion",
-      "Performance Profiler (/b perf): Added real-time CPU % load and estimated memory footprint per feature to profiler cards"
+      "~ Screensharing (/ss <player>) - Patched remote IRC bot to eliminate protocol leaks to chat/Discord, added live IRC online checks, and instant receipt confirmation [SS_RCVD]",
+      "~ Discord IPC Handshake - Updated Discord Client ID to standard desktop IPC, expanded pipe scan (0-9), and added comprehensive diagnostic dumper (/b discord debug)",
+      "~ Word-for-Word Synchronized Lyrics - Integrated iTunes API with Paxsenix Apple Music syllable sync for exact timestamps, stabilized line widths to prevent wobble, and enforced monotonic word progression",
+      "+ Lyrics Controls & Hotkeys - Added [-100ms] and [+100ms] delay offset buttons with config persistence, secondary/background vocals rendering, and ESC key closing only the raw data modal",
+      "+ Spotify Artwork & Config Swatches - Asynchronously loads high-res album covers on Spotify HUD, and rendered visible colored swatch boxes for Spotify colors in /b config",
+      "~ Storage Overlay Slot Fix - Corrected slot index assignment on InactiveSlot to prevent index corruption and reliably display multi-grid storage overlay",
+      "+ Spectator Camera FOV - Clamped camera FOV to base FOV (max 110) during /b cam and spectating to eliminate distortion",
+      "+ Performance Profiler (/b perf) - Added real-time CPU % load and estimated memory footprint per feature to profiler cards"
     ]
   },
   {
     "version": "26.2.28.54",
     "date": "2026-09-28",
     "changes": [
-      "Screensharing (/ss <player>): Fixed IRC command parser to split on both delimiter and whitespace, preventing request text from leaking into chat and reliably showing [ACCEPT] and [DENY] buttons",
-      "Synchronized Lyrics (/b lyrics & /lyrics): Fixed word merging with proper bold font spacing, added smooth millisecond timer interpolation, added [Raw / Edit Lyrics] modal with clipboard copy, added multi-provider selector (LRCLIB, PAXSENIX, UNISON, YOULYPLUS), and direct Spotify Desktop App links",
-      "Spotify Theme & Controls: Added customizable HUD theme colors (background, border, title, artist, accent, progress bar) in /b config, and official 64x64 Spotify logo",
-      "Storage Overlay: Fixed container screen launching on main client thread via setScreenAndShow, reliably opening multi-grid storage overlay on /storage, backpacks, and ender chests",
-      "Spectator Camera: Decoupled FOV clamping from spectator camera so FOV remains natural, and smoothed mouse turn sensitivity (0.5x)",
-      "Performance Profiler (/b perf): Optimized entity scanner with negative cache sentinels (<0.01 ms overhead), added JVM Heap usage and thread count metrics, and added profiler scopes for Spotify, Lyrics, and Storage",
-      "CI/CD & Documentation: Added GitHub Actions automated build workflow with downloadable jar artifacts, and created comprehensive README.md for 26.2"
+      "~ Screensharing (/ss <player>) - Fixed IRC command parser to split on both delimiter and whitespace, preventing request text from leaking into chat and reliably showing [ACCEPT] and [DENY] buttons",
+      "~ Synchronized Lyrics (/b lyrics & /lyrics) - Fixed word merging with proper bold font spacing, added smooth millisecond timer interpolation, added [Raw / Edit Lyrics] modal with clipboard copy, added multi-provider selector (LRCLIB, PAXSENIX, UNISON, YOULYPLUS), and direct Spotify Desktop App links",
+      "+ Spotify Theme & Controls - Added customizable HUD theme colors (background, border, title, artist, accent, progress bar) in /b config, and official 64x64 Spotify logo",
+      "~ Storage Overlay - Fixed container screen launching on main client thread via setScreenAndShow, reliably opening multi-grid storage overlay on /storage, backpacks, and ender chests",
+      "+ Spectator Camera - Decoupled FOV clamping from spectator camera so FOV remains natural, and smoothed mouse turn sensitivity (0.5x)",
+      "+ Performance Profiler (/b perf) - Optimized entity scanner with negative cache sentinels (<0.01 ms overhead), added JVM Heap usage and thread count metrics, and added profiler scopes for Spotify, Lyrics, and Storage",
+      "+ CI/CD & Documentation - Added GitHub Actions automated build workflow with downloadable jar artifacts, and created comprehensive README.md for 26.2"
     ]
   },
   {
     "version": "26.2.28.53",
     "date": "2026-09-28",
     "changes": [
-      "Screensharing (/ss <player>): Switched IRC request transport to PRIVMSG, ensuring spectator requests reliably deliver to target player with [ACCEPT] and [DENY] buttons",
-      "Synchronized Lyrics (/b lyrics & /lyrics): Word-for-word and line-by-line synchronized lyrics GUI powered by LRCLIB, featuring smooth auto-scrolling and cyan glowing karaoke word highlights",
-      "Spotify HUD Redesign: Redesigned dark plum card (#1E1324) with official Spotify icon, neon cyan controls (|\u25c0 \u23f8 \u25b6|), and track progress bar",
-      "Spotify Accuracy & Fixes: Fixed playback timer desync and progress resetting to 0:00 on pause via Windows GSMTC media tracking; added clickable song & artist search links; kept HUD visible in inventory",
-      "Storage Overlay Crash Fix: Removed SlotAccessor mixin and switched to direct memory offsets for slot positioning, completely preventing classload crashes",
-      "Spectator Hand & Body Rendering: Overrode camera entity in LevelExtractor to prevent Minecraft culling client player body from the world, and suppressed client hand in first-person spectator",
-      "Hoppity Call Filter: Gated auto-pickup strictly to calls from Hoppity, preventing accidental pickup of Vincent or other NPC calls",
-      "Changelog Colors: Fixed changelog text turning white after obfuscation reset by using \u00a7r\u00a77 to maintain proper readable gray formatting"
+      "+ Screensharing (/ss <player>) - Switched IRC request transport to PRIVMSG, ensuring spectator requests reliably deliver to target player with [ACCEPT] and [DENY] buttons",
+      "+ Synchronized Lyrics (/b lyrics & /lyrics) - Word-for-word and line-by-line synchronized lyrics GUI powered by LRCLIB, featuring smooth auto-scrolling and cyan glowing karaoke word highlights",
+      "+ Spotify HUD Redesign - Redesigned dark plum card (#1E1324) with official Spotify icon, neon cyan controls (|◀ ⏸ ▶|), and track progress bar",
+      "~ Spotify Accuracy & Fixes - Fixed playback timer desync and progress resetting to 0:00 on pause via Windows GSMTC media tracking; added clickable song & artist search links; kept HUD visible in inventory",
+      "- Storage Overlay Crash Fix - Removed SlotAccessor mixin and switched to direct memory offsets for slot positioning, completely preventing classload crashes",
+      "~ Spectator Hand & Body Rendering - Overrode camera entity in LevelExtractor to prevent Minecraft culling client player body from the world, and suppressed client hand in first-person spectator",
+      "~ Hoppity Call Filter - Gated auto-pickup strictly to calls from Hoppity, preventing accidental pickup of Vincent or other NPC calls",
+      "~ Changelog Colors - Fixed changelog text turning white after obfuscation reset by using §r§7 to maintain proper readable gray formatting"
     ]
   },
   {
     "version": "26.2.28.52",
     "date": "2026-09-28",
     "changes": [
-      "Screensharing (/ss <player>): In-game mod-to-mod spectator request with interactive [ACCEPT] and [DENY] buttons, auto-accept whitelist (/ss whitelist <player>), and clean disconnects (/ss stop)",
-      "Spotify HUD Overlay: Interactive music HUD showing track name, artist, progress timer, and clickable controls (\u23ee, \u23ef, \u23ed) via background media keys",
-      "Storage Overlay Reliability: Fixed container screen launching using setScreenAndShow, reliably opening multi-grid storage overlay on /storage, backpacks, and ender chests",
-      "Spectator Hand & Item: Spectating in first-person cleanly renders the spectated player's arm skin and held item with full bobbing and animations",
-      "100 Hearts Spectator Fix: Eliminated the massive multi-row hearts bar bug when spectating players with high max HP on Hypixel",
-      "Spectated Held Item Name: Displays the spectated player's held item name and rarity color above the hotbar",
-      "Spectator Camera Smoothing: Eliminated look jitter and stutter during spectator camera by cleaning mouse delta handling",
-      "Discord IPC Permissions: Gated Discord IPC on discordHudEnabled so Discord never prompts for permissions on startup when disabled",
-      "No Obfuscate Label: Fixed scrambling formatting in config so \u00a7ka\u00a77 renders with scrambled 'a' and clean parenthesis"
+      "~ Screensharing (/ss <player>) - In-game mod-to-mod spectator request with interactive [ACCEPT] and [DENY] buttons, auto-accept whitelist (/ss whitelist <player>), and clean disconnects (/ss stop)",
+      "+ Spotify HUD Overlay - Interactive music HUD showing track name, artist, progress timer, and clickable controls (⏮, ⏯, ⏭) via background media keys",
+      "~ Storage Overlay Reliability - Fixed container screen launching using setScreenAndShow, reliably opening multi-grid storage overlay on /storage, backpacks, and ender chests",
+      "+ Spectator Hand & Item - Spectating in first-person cleanly renders the spectated player's arm skin and held item with full bobbing and animations",
+      "~ 100 Hearts Spectator Fix - Eliminated the massive multi-row hearts bar bug when spectating players with high max HP on Hypixel",
+      "+ Spectated Held Item Name - Displays the spectated player's held item name and rarity color above the hotbar",
+      "+ Spectator Camera Smoothing - Eliminated look jitter and stutter during spectator camera by cleaning mouse delta handling",
+      "+ Discord IPC Permissions - Gated Discord IPC on discordHudEnabled so Discord never prompts for permissions on startup when disabled",
+      "~ No Obfuscate Label - Fixed scrambling formatting in config so §ka§7 renders with scrambled 'a' and clean parenthesis"
     ]
   },
   {
     "version": "26.2.28.51",
     "date": "2026-09-28",
     "changes": [
-      "Storage Overlay: Fixed custom storage overlay failing to open on storage menus, backpacks, and ender chests",
-      "Discord Voice HUD: Added in-game voice call overlay showing speaking indicators and active screenshares, accessible with /ss and /b ss",
-      "Spectator Camera: Camera now turns when the spectated player looks around, and displays their arm skin and held item in first-person",
-      "Player Body Visibility: Your own player model and armor layers remain visible in the world during spectator and freecam",
-      "Text Jitter Fix: Completely stopped recombobulated item titles from shaking horizontally when No Obfuscate is enabled",
-      "Clean Mayor Chat: Removed broken emoji and underlines from mayor announcements and perks while preserving hover tooltips",
-      "Version Fix: Resolved /b version showing 'unknown' in development environments"
+      "~ Storage Overlay - Fixed custom storage overlay failing to open on storage menus, backpacks, and ender chests",
+      "+ Discord Voice HUD - Added in-game voice call overlay showing speaking indicators and active screenshares, accessible with /ss and /b ss",
+      "+ Spectator Camera - Camera now turns when the spectated player looks around, and displays their arm skin and held item in first-person",
+      "+ Player Body Visibility - Your own player model and armor layers remain visible in the world during spectator and freecam",
+      "~ Text Jitter Fix - Completely stopped recombobulated item titles from shaking horizontally when No Obfuscate is enabled",
+      "- Clean Mayor Chat - Removed broken emoji and underlines from mayor announcements and perks while preserving hover tooltips",
+      "~ Version Fix - Resolved /b version showing 'unknown' in development environments"
     ]
   },
   {
     "version": "26.2.28.50",
     "date": "2026-09-28",
     "changes": [
-      "Storage Overlay: shifted injection to concrete static MenuScreens.create in MenuScreensConstructorMixin, reliably opening StorageOverlayScreen on /storage, ender chests, and backpacks",
-      "Stable Obfuscated Glyphs: FontMixin stabilizes \u00a7k\u00a7r character advance to target width, stopping rarity-upgraded item titles from jittering/shaking",
-      "No Obfuscate Config Label: fixed unclosed \u00a7k\u00a7r formatting code so the closing parenthesis is properly displayed in config GUI",
-      "Brigadier /b mayor: registered mayor subcommand in Brigadier tree, fixing 'Incorrect argument for command at position 2: b'",
-      "Area & Subarea: /b area now displays parent area and subarea together (e.g. Hub (Village))",
-      "Player Body in Spectator: LevelExtractorMixin and AvatarRendererMixin prevent culling and ensure full player body & layer rendering while spectating",
-      "Hoppity Call Auto-Pickup: automatically answers incoming Hoppity phone calls (BUZZ... [PICK UP]) on the very first buzz"
+      "+ Storage Overlay - shifted injection to concrete static MenuScreens.create in MenuScreensConstructorMixin, reliably opening StorageOverlayScreen on /storage, ender chests, and backpacks",
+      "~ Stable Obfuscated Glyphs - FontMixin stabilizes §k§r character advance to target width, stopping rarity-upgraded item titles from jittering/shaking",
+      "~ No Obfuscate Config Label - fixed unclosed §k§r formatting code so the closing parenthesis is properly displayed in config GUI",
+      "~ Brigadier /b mayor - registered mayor subcommand in Brigadier tree, fixing 'Incorrect argument for command at position 2: b'",
+      "+ Area & Subarea - /b area now displays parent area and subarea together (e.g. Hub (Village))",
+      "~ Player Body in Spectator - LevelExtractorMixin and AvatarRendererMixin prevent culling and ensure full player body & layer rendering while spectating",
+      "+ Hoppity Call Auto-Pickup - automatically answers incoming Hoppity phone calls (BUZZ... [PICK UP]) on the very first buzz"
     ]
   },
   {
     "version": "26.2.28.49",
     "date": "2026-09-28",
     "changes": [
-      "Storage Overlay: intercepted MenuScreens.ScreenConstructor.fromPacket matching Skyblocker architecture to reliably construct and open the searchable multi-grid overlay",
-      "Interactive Mayor Tooltips: hovering Mayor Diaz displays exact Hypixel calendar GUI tooltip layout with perks list; individual perks show full descriptions; minister shows active perk; added /b mayor",
-      "Live Mayor RTCA Integration: server and client incorporate live active mayor in RTCA boost calculations (e.g. Mayor: Diaz (+0%)) and remove mayor from uncounted list",
-      "Spectator Camera Decoupling: SpectatorCamManager decouples mouse rotation during /b cam from the spectated player's body and head pose",
-      "Player World Rendering in Spectator: LevelExtractorMixin allows LocalPlayer extraction so player body remains fully rendered in the world when spectating",
-      "Dungeon Quick Join: /f1-f7, /m1-m7, and /e now dispatch uppercase instance identifiers (CATACOMBS_FLOOR_SEVEN, etc.) with chat feedback",
-      "Scoreboard Subarea: enhanced detection of Private Use Area glyphs in scoreboard lines (- \ue067 Village) in /b subarea and /b area",
-      "Keypad Keybinds: removed keypad keys from modifier combo prefixes, allowing Keypad arrows and numbers to be bound directly",
-      "IRC Plaintext IP: Updated chat server connection endpoint"
+      "+ Storage Overlay - intercepted MenuScreens.ScreenConstructor.fromPacket matching Skyblocker architecture to reliably construct and open the searchable multi-grid overlay",
+      "+ Interactive Mayor Tooltips - hovering Mayor Diaz displays exact Hypixel calendar GUI tooltip layout with perks list; individual perks show full descriptions; minister shows active perk; added /b mayor",
+      "- Live Mayor RTCA Integration - server and client incorporate live active mayor in RTCA boost calculations (e.g. Mayor: Diaz (+0%)) and remove mayor from uncounted list",
+      "+ Spectator Camera Decoupling - SpectatorCamManager decouples mouse rotation during /b cam from the spectated player's body and head pose",
+      "+ Player World Rendering in Spectator - LevelExtractorMixin allows LocalPlayer extraction so player body remains fully rendered in the world when spectating",
+      "+ Dungeon Quick Join - /f1-f7, /m1-m7, and /e now dispatch uppercase instance identifiers (CATACOMBS_FLOOR_SEVEN, etc.) with chat feedback",
+      "+ Scoreboard Subarea - enhanced detection of Private Use Area glyphs in scoreboard lines (-  Village) in /b subarea and /b area",
+      "- Keypad Keybinds - removed keypad keys from modifier combo prefixes, allowing Keypad arrows and numbers to be bound directly",
+      "+ IRC Plaintext IP - Updated chat server connection endpoint"
     ]
   },
   {
     "version": "26.2.28.48",
     "date": "2026-09-28",
     "changes": [
-      "RTCA Live Boosts: bomboapi server now scans player inventory sync data for highest Hecatomb helmet equipped or in wardrobe, Scarf accessory (Grimoire +6%, Thesis +4%, Studies +2%), and Catacombs Graduate shards (milestones 1..10 = 2%..20%)",
-      "Interactive RTCA Chat: in-place chat update via GuiMessage replacement in mc.gui.hud.getChat(), eliminating duplicate chat lines while resolving chips",
-      "Storage Overlay: fixed container title recognition (stripped color codes, bare Ender Chest, Spanish Cofre de Ender, storage (1/2), and backpacks without #), containerMenu assignment ordering, and dynamic backpack discovery on open",
-      "Backpack Preview Layering: StoragePreviewManager hover preview renders on top of custom inventory buttons and item lists in InventoryScreen",
-      "IDE Dev Client Clipboard: prevented headless AWT mode on initialization, added GLFW modifier key fallbacks in EditBoxMixin, and added retry loops for Windows system clipboard locks",
-      "Spectator / Camera: enabled full mouse rotation in /b cam spectator mode and ensured player body model remains rendered",
-      "Dungeons: /f1-f7, /m1-m7, and /e now use joininstance catacombs_floor_<name> and catacombs_entrance",
-      "ESP: expanded bounding box for starred mob detection in dungeons and added automatic coordinate detection for F4/M4 Thorn etherwarp helper at (27, 81, 18)",
-      "Scoreboard: enhanced subarea parsing for dash-prefixed lines (- Your Island) in /b subarea and /b area"
+      "+ RTCA Live Boosts - bomboapi server now scans player inventory sync data for highest Hecatomb helmet equipped or in wardrobe, Scarf accessory (Grimoire +6%, Thesis +4%, Studies +2%), and Catacombs Graduate shards (milestones 1..10 = 2%..20%)",
+      "+ Interactive RTCA Chat - in-place chat update via GuiMessage replacement in mc.gui.hud.getChat(), eliminating duplicate chat lines while resolving chips",
+      "~ Storage Overlay - fixed container title recognition (stripped color codes, bare Ender Chest, Spanish Cofre de Ender, storage (1/2), and backpacks without #), containerMenu assignment ordering, and dynamic backpack discovery on open",
+      "+ Backpack Preview Layering - StoragePreviewManager hover preview renders on top of custom inventory buttons and item lists in InventoryScreen",
+      "~ IDE Dev Client Clipboard - prevented headless AWT mode on initialization, added GLFW modifier key fallbacks in EditBoxMixin, and added retry loops for Windows system clipboard locks",
+      "+ Spectator / Camera - enabled full mouse rotation in /b cam spectator mode and ensured player body model remains rendered",
+      "+ Dungeons - /f1-f7, /m1-m7, and /e now use joininstance catacombs_floor_<name> and catacombs_entrance",
+      "+ ESP - expanded bounding box for starred mob detection in dungeons and added automatic coordinate detection for F4/M4 Thorn etherwarp helper at (27, 81, 18)",
+      "~ Scoreboard - enhanced subarea parsing for dash-prefixed lines (- Your Island) in /b subarea and /b area"
     ]
   },
   {
     "version": "26.2.28.47",
     "date": "2026-09-28",
     "changes": [
-      "Chat Imgur Delete / Supr Fix: fixed issue where selecting text in chat and pressing Delete (Supr) or Backspace would trigger an Imgur upload and paste $imgur if an image was in the clipboard; removed empty insertText check and ensured clipboard image paste only triggers on Ctrl+V in focused input",
-      "Documentation: AGENTS.md and docs/HANDOFF_KNOWLEDGE.md now cover v26.2.28.45 and v26.2.28.46 with an explicit Tested vs. Untested split",
-      "New Priority 0 test queue: in-game verification of the RTCA hover chips - replacement not duplication, exact levels, the honest +10% boost with its 'Not counted' line, fractional class average, the first-hover loading placeholder and the 60s cache",
-      "Server knowledge captured: the exactLevel = level + into/need fix (classProgress().into is remaining XP, not a fraction), the self-referential boost.label crash that 502'd /api/v1/dungeons, and the xpForNextLevel-is-a-total trap",
-      "False alarms recorded so they are not 'fixed' again: a stale cold_efficiency: 1 profile snapshot (live value is 5, all perks really are tier 5) and the assumeBestCase code-path difference that looked like a caching bug",
-      "MC 26.2 API notes: use Style.EMPTY (no no-arg Style constructor) and a literal class colour code array (ChatFormatting.getChar does not exist)",
-      "Quirks recorded: the bombofabric -> bomboFabric remote rename, that docs/CODE_STYLE.md does not exist, and the write-locally-then-scp rule for server patches",
-      "Known outstanding: top-level classAverage in /api/v1/dungeons/class-average still returns the integer 48 instead of the exact 48.47"
+      "- Chat Imgur Delete / Supr Fix - fixed issue where selecting text in chat and pressing Delete (Supr) or Backspace would trigger an Imgur upload and paste $imgur if an image was in the clipboard; removed empty insertText check and ensured clipboard image paste only triggers on Ctrl+V in focused input",
+      "+ Documentation - AGENTS.md and docs/HANDOFF_KNOWLEDGE.md now cover v26.2.28.45 and v26.2.28.46 with an explicit Tested vs. Untested split",
+      "+ New Priority 0 test queue: in-game verification of the RTCA hover chips - replacement not duplication, exact levels, the honest +10% boost with its 'Not counted' line, fractional class average, the first-hover loading placeholder and the 60s cache",
+      "~ Server knowledge captured - the exactLevel = level + into/need fix (classProgress().into is remaining XP, not a fraction), the self-referential boost.label crash that 502'd /api/v1/dungeons, and the xpForNextLevel-is-a-total trap",
+      "~ False alarms recorded so they are not 'fixed' again: a stale cold_efficiency: 1 profile snapshot (live value is 5, all perks really are tier 5) and the assumeBestCase code-path difference that looked like a caching bug",
+      "+ MC 26.2 API notes - use Style.EMPTY (no no-arg Style constructor) and a literal class colour code array (ChatFormatting.getChar does not exist)",
+      "+ Quirks recorded - the bombofabric -> bomboFabric remote rename, that docs/CODE_STYLE.md does not exist, and the write-locally-then-scp rule for server patches",
+      "+ Known outstanding - top-level classAverage in /api/v1/dungeons/class-average still returns the integer 48 instead of the exact 48.47"
     ]
   },
   {
     "version": "26.2.28.46",
     "date": "2026-09-27",
     "changes": [
-      "RTCA Boost Honesty: stopped defaulting unverifiable boosts to their maximum - Hecatomb X (+4%), Grimoire scarf (+6%) and Catacombs Graduate (+20%) were being invented on every real player lookup, inflating each class to a flat +40%",
-      "Verified Boosts Only: RTCA now reports only what Hypixel actually exposes (the five class essence perks from player_data.perks); unverifiable gear is counted as 0 and listed as not counted",
-      "Impact: M7 XP/run corrected 420,000 to 330,000 and the Class Average 50 estimate for bomboclas corrected 1,070 to 1,361 runs",
-      "Tooltip Honesty: class hover tooltips now end with a 'Not counted' line naming Hecatomb, Scarf, Catacombs Graduate and Mayor as unknown rather than assumed",
-      "Calculator Preserved: /dungeons still opens with best-case defaults via an explicit assumeBestCase opt-in instead of being the silent default on every endpoint"
+      "~ RTCA Boost Honesty: stopped defaulting unverifiable boosts to their maximum - Hecatomb X (+4%), Grimoire scarf (+6%) and Catacombs Graduate (+20%) were being invented on every real player lookup, inflating each class to a flat +40%",
+      "+ Verified Boosts Only - RTCA now reports only what Hypixel actually exposes (the five class essence perks from player_data.perks); unverifiable gear is counted as 0 and listed as not counted",
+      "+ Impact - M7 XP/run corrected 420,000 to 330,000 and the Class Average 50 estimate for bomboclas corrected 1,070 to 1,361 runs",
+      "+ Tooltip Honesty - class hover tooltips now end with a 'Not counted' line naming Hecatomb, Scarf, Catacombs Graduate and Mayor as unknown rather than assumed",
+      "+ Calculator Preserved - /dungeons still opens with best-case defaults via an explicit assumeBestCase opt-in instead of being the silent default on every endpoint"
     ]
   },
   {
     "version": "26.2.28.45",
     "date": "2026-09-27",
     "changes": [
-      "RTCA Hover Chat: BomboBot's flat [RTCA50] line is intercepted in ChatMixin and rebuilt as interactive MutableComponents; each class is a hoverable chip showing runs to max, XP to next level, XP per run, and the full boost breakdown (perk tier, Hecatomb, scarf, Graduate, Global, Mayor)",
-      "RTCA Exact Class Average: class levels and the class average now show exact fractional values (e.g. Archer 48.92, CA 48.47) instead of truncating to integers",
-      "RTCA Formatting: removed the trailing flat '|  | Boost: ...' block from the in-game chat line; the header is now compact and all boost detail lives in the hover tooltips",
-      "Server: /command/rtca and /command/dungeons expose exactLevel, xpToNextLevel, xpPerRun, runsToMax and a per-class boost breakdown; API responses are cached 60s per player in the client"
+      "+ RTCA Hover Chat - BomboBot's flat [RTCA50] line is intercepted in ChatMixin and rebuilt as interactive MutableComponents; each class is a hoverable chip showing runs to max, XP to next level, XP per run, and the full boost breakdown (perk tier, Hecatomb, scarf, Graduate, Global, Mayor)",
+      "+ RTCA Exact Class Average - class levels and the class average now show exact fractional values (e.g. Archer 48.92, CA 48.47) instead of truncating to integers",
+      "- RTCA Formatting - removed the trailing flat '|  | Boost: ...' block from the in-game chat line; the header is now compact and all boost detail lives in the hover tooltips",
+      "+ Server - /command/rtca and /command/dungeons expose exactLevel, xpToNextLevel, xpPerRun, runsToMax and a per-class boost breakdown; API responses are cached 60s per player in the client"
     ]
   },
   {
     "version": "26.2.28.44",
     "date": "2026-09-25",
     "changes": [
-      "Storage Overlay: full port of Skyblocker multi-grid storage overlay, replacing /storage, ender chest, and backpack menus with a compact searchable multi-grid interface",
-      "Multi-Grid Search: live item query filtering across all ender chests and backpacks simultaneously",
-      "Configurable Settings: customizable storages per row, backpack columns, remember search, remember last opened backpack, and mouse cursor position preservation",
-      "Live Inventory Synchronization: dynamic slot updates, container item caching with NBT, base64, and custom player head texture support"
+      "+ Storage Overlay - full port of Skyblocker multi-grid storage overlay, replacing /storage, ender chest, and backpack menus with a compact searchable multi-grid interface",
+      "+ Multi-Grid Search - live item query filtering across all ender chests and backpacks simultaneously",
+      "+ Configurable Settings - customizable storages per row, backpack columns, remember search, remember last opened backpack, and mouse cursor position preservation",
+      "+ Live Inventory Synchronization - dynamic slot updates, container item caching with NBT, base64, and custom player head texture support"
     ]
   },
   {
     "version": "26.2.28.43",
     "date": "2026-09-24",
     "changes": [
-      "Camera & Spectator: clamped camera FOV to options FOV (110) during /b cam and freecam via GameRendererMixin, eliminating sprint distortion and lerp lag",
-      "Auto Croesus: uses instabuy for keys/kismets and instasell for items; resolves live Bazaar prices for Bank/NPNG/Jerry books without hardcoded fallbacks; removed profit threshold gate; redesigned profit HUD to clean text with shadows and no background box",
-      "Dungeon Profit Tracking: deduplicates runs on disk/load; full itemized hover tooltip in /b profit; decoupled profit sync authentication completely from Hoppity egg auth (using UUID + Bombo API key)",
-      "Commands & Profile Viewer: separated /b area and /b subarea; added /b pv1, /b pv2, and /b pvconfig shortcuts; added gear settings button in Profile Viewer header; multi-profile support via all_profiles and ?profile= param",
-      "Storage & Eggs: purged empty slots from storageData on container open (eliminating phantom items like Backpack 10 Divan's Drill); added Island Chests tab to /b storage; added Spanish/localized chest titles; egg finder unsubscribes on private islands/garden/limbo/dungeons and removes only single closest waypoint on collection",
-      "Values & UI: EIV discrepancy fixes (reforge stones, blacksmith apply costs, etherwarp, power scrolls, tuners); added Insta Buy / Insta Sell / Both toggle; suppressed HUD on InventoryScreen; /b apihistory masks sensitive tokens; config sliders accept direct numeric entry; client brand cleanly reports mod ID"
+      "+ Camera & Spectator - clamped camera FOV to options FOV (110) during /b cam and freecam via GameRendererMixin, eliminating sprint distortion and lerp lag",
+      "- Auto Croesus - uses instabuy for keys/kismets and instasell for items; resolves live Bazaar prices for Bank/NPNG/Jerry books without hardcoded fallbacks; removed profit threshold gate; redesigned profit HUD to clean text with shadows and no background box",
+      "+ Dungeon Profit Tracking - deduplicates runs on disk/load; full itemized hover tooltip in /b profit; decoupled profit sync authentication completely from Hoppity egg auth (using UUID + Bombo API key)",
+      "+ Commands & Profile Viewer - separated /b area and /b subarea; added /b pv1, /b pv2, and /b pvconfig shortcuts; added gear settings button in Profile Viewer header; multi-profile support via all_profiles and ?profile= param",
+      "+ Storage & Eggs - purged empty slots from storageData on container open (eliminating phantom items like Backpack 10 Divan's Drill); added Island Chests tab to /b storage; added Spanish/localized chest titles; egg finder unsubscribes on private islands/garden/limbo/dungeons and removes only single closest waypoint on collection",
+      "~ Values & UI - EIV discrepancy fixes (reforge stones, blacksmith apply costs, etherwarp, power scrolls, tuners); added Insta Buy / Insta Sell / Both toggle; suppressed HUD on InventoryScreen; /b apihistory masks sensitive tokens; config sliders accept direct numeric entry; client brand cleanly reports mod ID"
     ]
   },
   {
     "version": "26.2.28.42",
     "date": "2026-09-24",
     "changes": [
-      "Freecam: interpolated per-frame movement using render delta partial ticks eliminates 20Hz jitter; FOV modifier clamped to 1.0 during freecam to avoid distortion",
-      "Flavors & Security: removed flavor switching entirely ('Switch Flavor' button and /b update switch); completely removed brand spoofing and stealth mode",
-      "Automation & Dungeons: AutoCroesus accounts for dungeon chest keys (live pricing/threshold, spent check); DungeonChestProfitHud displays coin + key breakdown; new dedicated /b profit GUI with run statistics, breakdown, and itemized runs; removed obsolete profit sync 404 endpoint and resolved 401s; ultimate enchantment prices resolved accurately",
-      "Auth & APIs: separated Aaron token (hysky.de WebSocket) and Bombo token (api.bombo.dpdns.org); Profile Viewer sends BomboAddons User-Agent and logs queries to ApiHistory; ApiHistoryScreen scrolls to latest entries initially",
-      "Fixes & QoL: chat history locraw tracking stamped correctly; /b area strips PUA unicode glyphs and prints Area / Subarea; storage chest waypoints render through walls and refresh on container close; EggFinder island mapping corrected; /b cmd terminates process tree on interrupt and supports text drag selection/copy/paste; AOTV model fallback fixed to diamond shovel; ported player head skin rendering fix; decoupled tooltip value additions; sliders support typed text with coin abbreviations; /b item suggests SkyBlock item IDs"
+      "+ Freecam - interpolated per-frame movement using render delta partial ticks eliminates 20Hz jitter; FOV modifier clamped to 1.0 during freecam to avoid distortion",
+      "- Flavors & Security - removed flavor switching entirely ('Switch Flavor' button and /b update switch); completely removed brand spoofing and stealth mode",
+      "- Automation & Dungeons - AutoCroesus accounts for dungeon chest keys (live pricing/threshold, spent check); DungeonChestProfitHud displays coin + key breakdown; new dedicated /b profit GUI with run statistics, breakdown, and itemized runs; removed obsolete profit sync 404 endpoint and resolved 401s; ultimate enchantment prices resolved accurately",
+      "+ Auth & APIs - separated Aaron token (hysky.de WebSocket) and Bombo token (api.bombo.dpdns.org); Profile Viewer sends BomboAddons User-Agent and logs queries to ApiHistory; ApiHistoryScreen scrolls to latest entries initially",
+      "~ Fixes & QoL - chat history locraw tracking stamped correctly; /b area strips PUA unicode glyphs and prints Area / Subarea; storage chest waypoints render through walls and refresh on container close; EggFinder island mapping corrected; /b cmd terminates process tree on interrupt and supports text drag selection/copy/paste; AOTV model fallback fixed to diamond shovel; ported player head skin rendering fix; decoupled tooltip value additions; sliders support typed text with coin abbreviations; /b item suggests SkyBlock item IDs"
     ]
   },
   {
     "version": "26.2.28.41",
     "date": "2026-09-24",
     "changes": [
-      "Fixed tooltip rendering crashes caused by modifying immutable ItemStack tooltip lists: SupercraftHelper now copies lines into a mutable ArrayList before applying configured additions, and the ItemStack mixin returns the updated list safely"
+      "~ Fixed tooltip rendering crashes caused by modifying immutable ItemStack tooltip lists: SupercraftHelper now copies lines into a mutable ArrayList before applying configured additions, and the ItemStack mixin returns the updated list safely"
     ]
   },
   {
     "version": "26.2.28.40",
     "date": "2026-09-24",
     "changes": [
-      "Freecam: your own body stays visible while freecam is active - the entity render-cull chain no longer drops the player model once the camera is detached from it",
-      "Freecam: the F3 position block (XYZ / Block / Chunk / Facing / Dimension) now reports the freecam camera, tagged '(freecam camera)', instead of the player's coordinates",
-      "The legit build can no longer install the cheat build: the 'Switch Flavor' button is gone from General and /b update switch explains that this build always stays on the legit artifact",
-      "Groundwork: cheat modules now live in their own source tree (src/cheat/java) and freecam is routed through the flavor SPI, so shared camera, mouse and keyboard mixins no longer name a cheat class"
+      "+ Freecam: your own body stays visible while freecam is active - the entity render-cull chain no longer drops the player model once the camera is detached from it",
+      "+ Freecam - the F3 position block (XYZ / Block / Chunk / Facing / Dimension) now reports the freecam camera, tagged '(freecam camera)', instead of the player's coordinates",
+      "~ The legit build can no longer install the cheat build: the 'Switch Flavor' button is gone from General and /b update switch explains that this build always stays on the legit artifact",
+      "+ Groundwork - cheat modules now live in their own source tree (src/cheat/java) and freecam is routed through the flavor SPI, so shared camera, mouse and keyboard mixins no longer name a cheat class"
     ]
   },
   {
     "version": "26.2.28.39",
     "date": "2026-09-24",
     "changes": [
-      "Sequences: every step row has an [ON]/[OFF] switch - a disabled step stays in the list but is skipped during playback; TAB moves focus from a step field to the GUI/Container name field",
-      "Sliders can be typed into: clicking a slider's numeric label turns it into a text field; coin sliders (100K - 3M) are used by the Auto Croesus key/kismet thresholds",
-      "Chat history no longer disappears: new persistHistoryAcrossServers (on) keeps the buffer across world switches, disconnects and server changes, marking a session divider instead of clearing; new unlimitedChatHistory removes the entry cap",
-      "/b area now shows the floor and phase - 'F4 (clear)' / 'M7 (boss)' - from the scoreboard line plus [BOSS] chat, with the Watcher correctly excluded; new M4/F4 Etherwarp Helper highlights (27, 81, 18) during the F4/M4 boss fight",
-      "Auto Croesus no longer misclicks: chest slots are classified strictly by chest-interaction items, so it cannot click a loot item instead of 'Open Reward Chest', and a purchase is only counted once the click is verified",
-      "Auto Croesus no longer claims 'no profitable chests' while an Emerald chest is +515.6K - every non-bedrock chest is evaluated on real net profit",
-      "Chest modifiers are read from the Redstone Torch tooltip: a greyed/struck-through Kismet Feather or Dungeon Chest Key means that modifier was already spent on the chest",
-      "Auto dungeon key mode prices DUNGEON_CHEST_KEY from the live Bazaar and re-enters for a second chest when its profit beats key price + safety margin; kismet EV matches the Discord bot's !kismet maths",
-      "Itemised profit log: every chest opened (manual or automatic) records items + counts, floor/tier, run duration and net profit, synced to POST /api/v1/profits and browsable at /profits, /profit/:user and /profit/:user/:type; /b profit [user] shows it in game",
-      "Chest value panel gains a NET_ONLY / ITEMIZED display mode",
-      "Backpacks refresh when a container is opened (no more phantom 'Chimera in backpack 15'); /b storage <query> places chest waypoints in world, merges double chests, updates or removes them as items run out and purges verified-broken positions",
-      "/b egg no longer shows 'Active Subscription Area: None' on supported islands, collected eggs are remembered per spawn position across lobby hops, and pickup detection no longer depends on a fixed list of egg flavours",
-      "New /b apihistory (and /b apihistory chat): timestamp, service, method, endpoint, status and response time for every outbound HTTP/WebSocket request, with a log file",
-      "No Obfuscate is now line-aware: recombobulated rarity headers keep their obfuscation padding, while dummy markers like 'Obfuscated-3' are still revealed",
-      "Aspect of the Void always falls back to a valid vanilla model (no more purple/black missing texture), and the no-resource-pack toggle now actually bypasses pack models so vanilla overrides apply",
-      "/b pv shows load failures instead of the endless loading egg (no fake-ban limbo) and supports R to retry; tab completion covers lobby, friends, guild and party and rejects Hypixel's '!A-a' placeholder names; bigger window with a more transparent backdrop (configurable in GUI Settings)",
-      "Estimated Item Value can use Instant Buy (Lowest BIN) or Instant Sell (Bazaar Sell Offer / Average BIN), and now accounts for base item, stars, master stars, enchants, recombobulator, potato books, reforge, gemstones and attributes"
+      "+ Sequences: every step row has an [ON]/[OFF] switch - a disabled step stays in the list but is skipped during playback; TAB moves focus from a step field to the GUI/Container name field",
+      "+ Sliders can be typed into: clicking a slider's numeric label turns it into a text field; coin sliders (100K - 3M) are used by the Auto Croesus key/kismet thresholds",
+      "- Chat history no longer disappears - new persistHistoryAcrossServers (on) keeps the buffer across world switches, disconnects and server changes, marking a session divider instead of clearing; new unlimitedChatHistory removes the entry cap",
+      "+ /b area now shows the floor and phase - 'F4 (clear)' / 'M7 (boss)' - from the scoreboard line plus [BOSS] chat, with the Watcher correctly excluded; new M4/F4 Etherwarp Helper highlights (27, 81, 18) during the F4/M4 boss fight",
+      "+ Auto Croesus no longer misclicks - chest slots are classified strictly by chest-interaction items, so it cannot click a loot item instead of 'Open Reward Chest', and a purchase is only counted once the click is verified",
+      "+ Auto Croesus no longer claims 'no profitable chests' while an Emerald chest is +515.6K - every non-bedrock chest is evaluated on real net profit",
+      "+ Chest modifiers are read from the Redstone Torch tooltip: a greyed/struck-through Kismet Feather or Dungeon Chest Key means that modifier was already spent on the chest",
+      "+ Auto dungeon key mode prices DUNGEON_CHEST_KEY from the live Bazaar and re-enters for a second chest when its profit beats key price + safety margin; kismet EV matches the Discord bot's !kismet maths",
+      "+ Itemised profit log - every chest opened (manual or automatic) records items + counts, floor/tier, run duration and net profit, synced to POST /api/v1/profits and browsable at /profits, /profit/:user and /profit/:user/:type; /b profit [user] shows it in game",
+      "+ Chest value panel gains a NET_ONLY / ITEMIZED display mode",
+      "- Backpacks refresh when a container is opened (no more phantom 'Chimera in backpack 15'); /b storage <query> places chest waypoints in world, merges double chests, updates or removes them as items run out and purges verified-broken positions",
+      "~ /b egg no longer shows 'Active Subscription Area: None' on supported islands, collected eggs are remembered per spawn position across lobby hops, and pickup detection no longer depends on a fixed list of egg flavours",
+      "+ New /b apihistory (and /b apihistory chat) - timestamp, service, method, endpoint, status and response time for every outbound HTTP/WebSocket request, with a log file",
+      "+ No Obfuscate is now line-aware - recombobulated rarity headers keep their obfuscation padding, while dummy markers like 'Obfuscated-3' are still revealed",
+      "+ Aspect of the Void always falls back to a valid vanilla model (no more purple/black missing texture), and the no-resource-pack toggle now actually bypasses pack models so vanilla overrides apply",
+      "+ /b pv shows load failures instead of the endless loading egg (no fake-ban limbo) and supports R to retry; tab completion covers lobby, friends, guild and party and rejects Hypixel's '!A-a' placeholder names; bigger window with a more transparent backdrop (configurable in GUI Settings)",
+      "+ Estimated Item Value can use Instant Buy (Lowest BIN) or Instant Sell (Bazaar Sell Offer / Average BIN), and now accounts for base item, stars, master stars, enchants, recombobulator, potato books, reforge, gemstones and attributes"
     ]
   },
   {
     "version": "26.2.28.38",
     "date": "2026-09-24",
     "changes": [
-      "Sequences: every step can now be edited in place - the pencil button loads the step back into the builder (including Run Chat / Command), so changing 'ah' into '/ah' no longer means deleting and recreating the step",
-      "Croesus profit tracker HUD (like /gp): total profit, runs, kismet count and a per-floor breakdown (F7 / M7 / M4 / T1...), movable and scalable in /b gui",
-      "Auto Croesus settings are now in the config GUI (Auto Croesus category, bomboclient build): thresholds, delays, kismet, dungeon keys, HUD toggles and the debug highlight switch",
-      "The chest value panel is movable/scalable in /b gui, with a sample panel to position it against",
-      "AutoCroesus simulation debug no longer repeats the same 'highlighted slot' line every tick - each slot/action is announced once per container (the outline still follows the real decision)",
-      "/b cmd history is saved to config/bomboaddons/cmd_history.txt and survives restarts (up arrow recalls it); every Bombo keybind is blocked while the terminal is open, so typing never fires a sequence",
-      "/b egg debug|auth|reconnect now exist and always run the handshake - they bypass the Hoppity-season gate, and the websocket connects as soon as the token arrives instead of staying 'Disconnected'",
-      "EggAuth no longer crashes with RuntimeException: the profile key pair is read through Minecraft's public getProfileKeyPairManager() instead of a broken accessor mixin, and failures print the real reason (offline account, expired key pair)"
+      "+ Sequences: every step can now be edited in place - the pencil button loads the step back into the builder (including Run Chat / Command), so changing 'ah' into '/ah' no longer means deleting and recreating the step",
+      "+ Croesus profit tracker HUD (like /gp) - total profit, runs, kismet count and a per-floor breakdown (F7 / M7 / M4 / T1...), movable and scalable in /b gui",
+      "~ Auto Croesus settings are now in the config GUI (Auto Croesus category, bomboclient build): thresholds, delays, kismet, dungeon keys, HUD toggles and the debug highlight switch",
+      "+ The chest value panel is movable/scalable in /b gui, with a sample panel to position it against",
+      "~ AutoCroesus simulation debug no longer repeats the same 'highlighted slot' line every tick - each slot/action is announced once per container (the outline still follows the real decision)",
+      "+ /b cmd history is saved to config/bomboaddons/cmd_history.txt and survives restarts (up arrow recalls it); every Bombo keybind is blocked while the terminal is open, so typing never fires a sequence",
+      "~ /b egg debug|auth|reconnect now exist and always run the handshake - they bypass the Hoppity-season gate, and the websocket connects as soon as the token arrives instead of staying 'Disconnected'",
+      "~ EggAuth no longer crashes with RuntimeException: the profile key pair is read through Minecraft's public getProfileKeyPairManager() instead of a broken accessor mixin, and failures print the real reason (offline account, expired key pair)"
     ]
   },
   {
     "version": "26.2.28.37",
     "date": "2026-09-24",
     "changes": [
-      "New Bombo auth server: POST /mod/auth on bomboapi - aaron-compatible Mojang key-pair verification issuing 6h Bombo tokens; GET /mod/auth/status shows pipeline health",
-      "EggFinder auth fallback chain: Skyblocker token -> hysky aaron -> Bombo auth, so /b egg works even when hysky refuses us",
-      "Hoppity waypoint writes now require a Bearer token (reads stay open); the mod attaches its token to every publish"
+      "+ New Bombo auth server: POST /mod/auth on bomboapi - aaron-compatible Mojang key-pair verification issuing 6h Bombo tokens; GET /mod/auth/status shows pipeline health",
+      "+ EggFinder auth fallback chain - Skyblocker token -> hysky aaron -> Bombo auth, so /b egg works even when hysky refuses us",
+      "+ Hoppity waypoint writes now require a Bearer token (reads stay open); the mod attaches its token to every publish"
     ]
   },
   {
     "version": "26.2.28.36",
     "date": "2026-09-23",
     "changes": [
-      "Sequences actually run now: the executor ships in both builds (it was cheat-only, so pressing the trigger key did nothing); loop, jitter, repeats and safety halts all work",
-      "Click Slot / Item is one field: item name or slot number (5 / slot 5), plus an optional GUI Title guard so the step only fires inside the named GUI",
-      "Sequence editor: Ctrl+X cuts, long text scrolls inside its box instead of overflowing, taller action builder",
-      "/b cmd: typing while a command runs goes to its stdin (ssh ls works), Ctrl+C interrupts, and the view auto-follows output until you scroll up (End re-arms)",
-      "AutoCroesus debug: one summary per GUI visit (no spam) with a hoverable all-chests breakdown; the all-chests value panel now actually renders (its hook was orphaned)",
-      "EggFinder: full Skyblocker aaron authentication ported - profile key pair + SHA256withRSA signed data POST to hysky.de with a real token response, auto-refresh 5 min before expiry; fixes status: disconnected",
-      "Playtime sync: identifies as the mod (Java default UA was intermittently refused) with explicit timeouts",
-      "Chat history: keybind-fired commands keep their Keybind trigger through the deferred execution (pressing B for /bz no longer shows as Server)"
+      "+ Sequences actually run now - the executor ships in both builds (it was cheat-only, so pressing the trigger key did nothing); loop, jitter, repeats and safety halts all work",
+      "+ Click Slot / Item is one field - item name or slot number (5 / slot 5), plus an optional GUI Title guard so the step only fires inside the named GUI",
+      "+ Sequence editor - Ctrl+X cuts, long text scrolls inside its box instead of overflowing, taller action builder",
+      "+ /b cmd - typing while a command runs goes to its stdin (ssh ls works), Ctrl+C interrupts, and the view auto-follows output until you scroll up (End re-arms)",
+      "~ AutoCroesus debug - one summary per GUI visit (no spam) with a hoverable all-chests breakdown; the all-chests value panel now actually renders (its hook was orphaned)",
+      "~ EggFinder: full Skyblocker aaron authentication ported - profile key pair + SHA256withRSA signed data POST to hysky.de with a real token response, auto-refresh 5 min before expiry; fixes status: disconnected",
+      "+ Playtime sync - identifies as the mod (Java default UA was intermittently refused) with explicit timeouts",
+      "+ Chat history - keybind-fired commands keep their Keybind trigger through the deferred execution (pressing B for /bz no longer shows as Server)"
     ]
   },
   {
     "version": "26.2.28.35",
     "date": "2026-09-23",
     "changes": [
-      "Chat history: outgoing rows never show created-by null - keybind-fired commands show Source: BomboAddons with Trigger: Keybind <name>; typed ones show Player Input",
-      "Readable key names everywhere: key 258 is now Tab, plus arrows/PageUp/PageDown/Home/End/Insert/Delete/CapsLock in triggers, tooltips and capture buttons",
-      "Sequences category fixed on installs with a custom /b order: the organizer file is merged, not applied wholesale, so categories added in newer builds appear; Auto is now displayed as Sequences",
-      "/b cmd fixed: a duplicate registration made bare /b cmd run the legacy execute-last-command path; it now opens the terminal, whose session (scrollback, history, running command) survives closing - Ctrl+L clears",
-      "Mod ID hiding is always on now (both builds answer the brand query with the vanilla name); the toggle was removed",
-      "Updater refuses cross-Minecraft-line updates: a 26.1.x install can no longer update to a 26.2.x jar",
-      "Keybind capture supports modifier combos: Ctrl/Alt/Shift open a combo ([CTRL + ...] shown live) and a letter commits Ctrl+A etc.; releasing the modifier alone keeps a single-key bind - fixes Trade Max Pet Hotkey",
-      "Performance: Pest ESP only renders in the Garden; Critter Capsule trajectory only runs in the Safari (render and tick) - both rows vanish from /b perf elsewhere",
-      "AutoCroesus: new /b ac debug simulation mode (highlights instead of clicking), always-buy and worthless classification sets ported from RandomStuff, pet loot parsing, kismet blacklist respected",
-      "EggFinder websocket handshake now byte-matches Skyblocker: Bearer-prefixed aaron token and current Skyblocker/6.10.4 User-Agent (payload envelope already matched)",
-      "Account swapper: selection applies the session synchronously from the cached token, so a fast join can no longer connect as the previous account; partial swaps now warn in chat instead of failing silently"
+      "+ Chat history: outgoing rows never show created-by null - keybind-fired commands show Source: BomboAddons with Trigger: Keybind <name>; typed ones show Player Input",
+      "- Readable key names everywhere - key 258 is now Tab, plus arrows/PageUp/PageDown/Home/End/Insert/Delete/CapsLock in triggers, tooltips and capture buttons",
+      "~ Sequences category fixed on installs with a custom /b order: the organizer file is merged, not applied wholesale, so categories added in newer builds appear; Auto is now displayed as Sequences",
+      "~ /b cmd fixed: a duplicate registration made bare /b cmd run the legacy execute-last-command path; it now opens the terminal, whose session (scrollback, history, running command) survives closing - Ctrl+L clears",
+      "- Mod ID hiding is always on now (both builds answer the brand query with the vanilla name); the toggle was removed",
+      "~ Updater refuses cross-Minecraft-line updates - a 26.1.x install can no longer update to a 26.2.x jar",
+      "~ Keybind capture supports modifier combos: Ctrl/Alt/Shift open a combo ([CTRL + ...] shown live) and a letter commits Ctrl+A etc.; releasing the modifier alone keeps a single-key bind - fixes Trade Max Pet Hotkey",
+      "+ Performance: Pest ESP only renders in the Garden; Critter Capsule trajectory only runs in the Safari (render and tick) - both rows vanish from /b perf elsewhere",
+      "~ AutoCroesus - new /b ac debug simulation mode (highlights instead of clicking), always-buy and worthless classification sets ported from RandomStuff, pet loot parsing, kismet blacklist respected",
+      "~ EggFinder websocket handshake now byte-matches Skyblocker: Bearer-prefixed aaron token and current Skyblocker/6.10.4 User-Agent (payload envelope already matched)",
+      "+ Account swapper - selection applies the session synchronously from the cached token, so a fast join can no longer connect as the previous account; partial swaps now warn in chat instead of failing silently"
     ]
   },
   {
     "version": "26.2.28.34",
     "date": "2026-09-23",
     "changes": [
-      "Fixed chat history attribution: server messages were labelled 'created by bomboaddons' because our own mixin/routing frames were picked as the caller - infrastructure frames are now skipped and network delivery is detected first",
-      "Chat history now merges the [BomboAddons] chat line into the feature event row, so 'Started auto sequence: X' shows Origin, Feature and Trigger (Keybind TAB, Mouse Button 5, Command /b auto run X, Config GUI RUN button) on hover",
-      "Chat history opens at the newest message with End/Home/PageUp/PageDown scrolling and no longer resets its scroll on tab change",
-      "Chat history tabs are now All, BomboAddons, Mods Only, Normal Chat (includes blocked), Blocked Only and Outgoing, plus an Events chip and a Source column; added /b chathistory bombo|mods|normal|blocked|outgoing|events|clear",
-      "Auto sequences are visible and editable in both builds again: the Auto category is no longer gated behind hideCheats and no longer cheat-only (only the executor is), so /b auto and the config card always exist",
-      "New auto step type: Right/Left Click NPC with name matcher, search radius and click button, for sequences like right-click NPC -> click slot -> shift-click -> close GUI",
-      "Auto sequences gained per-step Repeat counts, a randomised loop cooldown and a per-sequence jitter percentage (default 30) - a 3000ms delay fires between ~2100ms and ~3900ms",
-      "Auto sequence commands: /b auto add|remove|run|stop|list|toggle|loop|jitter|key <name> <KEY> - keybind and loop can be edited from chat",
-      "BUILD: ./gradlew build now produces BOTH artifacts at once - bomboaddons-<ver>.jar (legit) and bomboclient-<ver>.jar (cheat)",
-      "Added assertNoCheatReferences: the build fails if shared code references a cheat package (string literals/comments ignored so the reflective SPI stays legal)",
-      "assertFlavorIntegrity now also requires the cheat jar to contain its classes and marker, and stale -sources/-dev jars are deleted from build/libs automatically",
-      "Each build now uses its own Fabric mod id (bomboaddons / bomboclient) so a mod-id blacklist on one cannot affect the other; asset namespace is unchanged and a warning is shown if both jars are installed at once",
-      "New Hide Mod ID On Join setting (both builds, ON by default): the client answers the server brand query with the vanilla name so the join handshake carries no mod marker",
-      "New No Obfuscate setting (/b noobfuscate): strips the section-k scrambling style from chat messages and item lore so the hidden text is readable, keeping colours, formatting and click/hover events",
-      "New /b cmd in-game terminal: /b cmd ping 1.1.1.1 opens a real terminal screen and runs the command instantly, with streaming output, scrollback, up/down history, Ctrl+V paste and click-to-copy",
-      "Fixed updater reporting 'No releases or update jars found' when a build was simply up to date: the channel version is compared first and the flavor message is only shown for a real update that lacks an artifact for this build"
+      "~ Fixed chat history attribution: server messages were labelled 'created by bomboaddons' because our own mixin/routing frames were picked as the caller - infrastructure frames are now skipped and network delivery is detected first",
+      "+ Chat history now merges the [BomboAddons] chat line into the feature event row, so 'Started auto sequence: X' shows Origin, Feature and Trigger (Keybind TAB, Mouse Button 5, Command /b auto run X, Config GUI RUN button) on hover",
+      "+ Chat history opens at the newest message with End/Home/PageUp/PageDown scrolling and no longer resets its scroll on tab change",
+      "+ Chat history tabs are now All, BomboAddons, Mods Only, Normal Chat (includes blocked), Blocked Only and Outgoing, plus an Events chip and a Source column; added /b chathistory bombo|mods|normal|blocked|outgoing|events|clear",
+      "+ Auto sequences are visible and editable in both builds again: the Auto category is no longer gated behind hideCheats and no longer cheat-only (only the executor is), so /b auto and the config card always exist",
+      "+ New auto step type - Right/Left Click NPC with name matcher, search radius and click button, for sequences like right-click NPC -> click slot -> shift-click -> close GUI",
+      "+ Auto sequences gained per-step Repeat counts, a randomised loop cooldown and a per-sequence jitter percentage (default 30) - a 3000ms delay fires between ~2100ms and ~3900ms",
+      "- Auto sequence commands: /b auto add|remove|run|stop|list|toggle|loop|jitter|key <name> <KEY> - keybind and loop can be edited from chat",
+      "+ BUILD: ./gradlew build now produces BOTH artifacts at once - bomboaddons-<ver>.jar (legit) and bomboclient-<ver>.jar (cheat)",
+      "+ Added assertNoCheatReferences - the build fails if shared code references a cheat package (string literals/comments ignored so the reflective SPI stays legal)",
+      "- assertFlavorIntegrity now also requires the cheat jar to contain its classes and marker, and stale -sources/-dev jars are deleted from build/libs automatically",
+      "~ Each build now uses its own Fabric mod id (bomboaddons / bomboclient) so a mod-id blacklist on one cannot affect the other; asset namespace is unchanged and a warning is shown if both jars are installed at once",
+      "+ New Hide Mod ID On Join setting (both builds, ON by default): the client answers the server brand query with the vanilla name so the join handshake carries no mod marker",
+      "+ New No Obfuscate setting (/b noobfuscate) - strips the section-k scrambling style from chat messages and item lore so the hidden text is readable, keeping colours, formatting and click/hover events",
+      "+ New /b cmd in-game terminal - /b cmd ping 1.1.1.1 opens a real terminal screen and runs the command instantly, with streaming output, scrollback, up/down history, Ctrl+V paste and click-to-copy",
+      "~ Fixed updater reporting 'No releases or update jars found' when a build was simply up to date: the channel version is compared first and the flavor message is only shown for a real update that lacks an artifact for this build"
     ]
   },
   {
     "version": "26.2.28.33",
     "date": "2026-09-23",
     "changes": [
-      "Fixed /b chathistory: ChatHistoryScreen was implemented but never instantiated and no command existed - added /b chathistory, /b chathistory auto|all, a chatHistoryKey keybind and a config GUI button",
-      "Fixed a 2px render/click geometry mismatch in ChatHistoryScreen that made the bottom row unclickable, and clamped the scroll offset",
-      "Added ChatHistoryTracker.recordEvent with a new EVENT status so feature messages are no longer dropped by the [BomboAddons] filter",
-      "Auto sequence starts, stops, completions and halts are now recorded in chat history with their real trigger (Keybind TAB, Mouse Button 5, Config GUI RUN button, Command /b auto run)",
-      "Chat history tooltips now show Origin, Feature, Trigger and Sequence lines, plus a new Auto Sequences filter tab",
-      "Added /b auto list, /b auto run <name> and /b auto stop commands",
-      "Auto sequences now retry a failed step 3x before halting, with the reason recorded (container closed, slot not found, player left the world, sequence deleted, no steps)",
-      "Dual flavor build: ./gradlew build produces the legit bomboaddons jar and ./gradlew build -Pflavor=cheat produces bomboclient",
-      "Cheat-only sources moved to src/cheat/java behind a reflective FlavorBridge SPI so the legit jar never links a cheat type, enforced by a new assertFlavorIntegrity build task",
-      "Moved to cheat-only: the sequence executor, /b hide, the Auto category registration and a cheat-only ClientBrandRetriever mixin",
-      "Flavor-aware updater: /b update only installs the artifact matching the running flavor and old-jar cleanup is scoped per flavor; added /b update flavor and /b update switch",
-      "Added FlavorMigration that detects legacy cheat state (hideCheats=false or automation configured) and migrates it safely; config schema version bumped to 2",
-      "Added stealth mode (/b stealth) stopping bridge presence posts, egg publishing and modded brand advertisement, documented as identity hygiene rather than undetectability",
-      "Fixed .gitignore: a bare config/ pattern kept 5 build-critical gui/config sources out of version control - anchored to /config/ and tracked them",
-      "Added docs/FEATURE_AUDIT.md with the feature reachability audit, measured coverage numbers and the no-deletion policy"
+      "~ Fixed /b chathistory: ChatHistoryScreen was implemented but never instantiated and no command existed - added /b chathistory, /b chathistory auto|all, a chatHistoryKey keybind and a config GUI button",
+      "~ Fixed a 2px render/click geometry mismatch in ChatHistoryScreen that made the bottom row unclickable, and clamped the scroll offset",
+      "+ Added ChatHistoryTracker.recordEvent with a new EVENT status so feature messages are no longer dropped by the [BomboAddons] filter",
+      "~ Auto sequence starts, stops, completions and halts are now recorded in chat history with their real trigger (Keybind TAB, Mouse Button 5, Config GUI RUN button, Command /b auto run)",
+      "+ Chat history tooltips now show Origin, Feature, Trigger and Sequence lines, plus a new Auto Sequences filter tab",
+      "~ Added /b auto list, /b auto run <name> and /b auto stop commands",
+      "- Auto sequences now retry a failed step 3x before halting, with the reason recorded (container closed, slot not found, player left the world, sequence deleted, no steps)",
+      "+ Dual flavor build - ./gradlew build produces the legit bomboaddons jar and ./gradlew build -Pflavor=cheat produces bomboclient",
+      "+ Cheat-only sources moved to src/cheat/java behind a reflective FlavorBridge SPI so the legit jar never links a cheat type, enforced by a new assertFlavorIntegrity build task",
+      "+ Moved to cheat-only - the sequence executor, /b hide, the Auto category registration and a cheat-only ClientBrandRetriever mixin",
+      "~ Flavor-aware updater - /b update only installs the artifact matching the running flavor and old-jar cleanup is scoped per flavor; added /b update flavor and /b update switch",
+      "+ Added FlavorMigration that detects legacy cheat state (hideCheats=false or automation configured) and migrates it safely; config schema version bumped to 2",
+      "~ Added stealth mode (/b stealth) stopping bridge presence posts, egg publishing and modded brand advertisement, documented as identity hygiene rather than undetectability",
+      "~ Fixed .gitignore: a bare config/ pattern kept 5 build-critical gui/config sources out of version control - anchored to /config/ and tracked them",
+      "+ Added docs/FEATURE_AUDIT.md with the feature reachability audit, measured coverage numbers and the no-deletion policy"
     ]
   },
   {
     "version": "26.2.28.32",
     "date": "2026-09-21",
     "changes": [
-      "Added mod update channel setting ('Full Only' vs 'Betas & Full') in BomboConfig",
-      "Integrated channel filtering into /b update and background update checks",
-      "Enhanced /b update with subcommands: /b update full, /b update beta, and /b update channel <full|beta>",
-      "Added Update Channel cycle selector and Check For Updates button in Config GUI (General category)",
-      "Automated update downloads from api.bombo.dpdns.org/mod/version directly with proper jar naming and pending cleanup"
+      "+ Added mod update channel setting ('Full Only' vs 'Betas & Full') in BomboConfig",
+      "+ Integrated channel filtering into /b update and background update checks",
+      "+ Enhanced /b update with subcommands - /b update full, /b update beta, and /b update channel <full|beta>",
+      "+ Added Update Channel cycle selector and Check For Updates button in Config GUI (General category)",
+      "- Automated update downloads from api.bombo.dpdns.org/mod/version directly with proper jar naming and pending cleanup"
     ]
   },
   {
     "version": "26.2.28.30",
     "date": "2026-09-21",
     "changes": [
-      "Guarded custom SkyBlock item creation with SkyblockItemManager check in TotemAnimationManager to prevent vanilla items (such as lead) from showing missing stone textures",
-      "Fixed Ctrl+A in InventorySlotColorScreen to select all text with highlight rather than erasing it, plus added full Ctrl+Z / Ctrl+Y undo/redo history",
-      "Enhanced InventoryButtonsScreen text inputs with word deletion (Ctrl+Delete, Ctrl+Backspace), cursor navigation, clipboard shortcuts, and localized undo/redo",
-      "Aspect of the Void Base Texture Override in ItemModelResolverMixin to bypass broken warped variant texture overrides",
-      "Compact Chat History screen layout (13px rows) matching SkyHanni /shchathistory",
-      "Accurate mod origin detection in ChatHistoryTracker skipping Mixin generated and Minecraft proxy methods (Devonian, BomboAddons, SkyHanni, BetterPV, NEU, Odin, Skytils)",
-      "Captured blocked/suppressed messages via Fabric ClientReceiveMessageEvents GAME_CANCELED and CHAT_CANCELED in ChatHistoryTracker",
-      "Added interactive [Press Key...] keybind capture button for Clicker Trigger Keybind in ConfigCustomWidgets",
-      "New 'Auto' Automation Category and Sequence Manager (slot/item clicking, close GUI, run command, click in world/NPC, wait pauses, loop toggles, and hotkey listeners)"
+      "~ Guarded custom SkyBlock item creation with SkyblockItemManager check in TotemAnimationManager to prevent vanilla items (such as lead) from showing missing stone textures",
+      "~ Fixed Ctrl+A in InventorySlotColorScreen to select all text with highlight rather than erasing it, plus added full Ctrl+Z / Ctrl+Y undo/redo history",
+      "- Enhanced InventoryButtonsScreen text inputs with word deletion (Ctrl+Delete, Ctrl+Backspace), cursor navigation, clipboard shortcuts, and localized undo/redo",
+      "~ Aspect of the Void Base Texture Override in ItemModelResolverMixin to bypass broken warped variant texture overrides",
+      "+ Compact Chat History screen layout (13px rows) matching SkyHanni /shchathistory",
+      "+ Accurate mod origin detection in ChatHistoryTracker skipping Mixin generated and Minecraft proxy methods (Devonian, BomboAddons, SkyHanni, BetterPV, NEU, Odin, Skytils)",
+      "+ Captured blocked/suppressed messages via Fabric ClientReceiveMessageEvents GAME_CANCELED and CHAT_CANCELED in ChatHistoryTracker",
+      "+ Added interactive [Press Key...] keybind capture button for Clicker Trigger Keybind in ConfigCustomWidgets",
+      "+ New 'Auto' Automation Category and Sequence Manager (slot/item clicking, close GUI, run command, click in world/NPC, wait pauses, loop toggles, and hotkey listeners)"
     ]
   },
   {
     "version": "26.2.28",
     "date": "2026-09-15",
     "changes": [
-      "Minecraft 26.2 Fabric loader and mapping updates",
-      "Container slot color customizer enhancements",
-      "Inventory quick macro buttons system",
-      "Hypixel SkyBlock dynamic texturepack synchronization",
-      "Advanced chat history search and filtering"
+      "+ Minecraft 26.2 Fabric loader and mapping updates",
+      "+ Container slot color customizer enhancements",
+      "+ Inventory quick macro buttons system",
+      "+ Hypixel SkyBlock dynamic texturepack synchronization",
+      "+ Advanced chat history search and filtering"
     ]
   },
   {
     "version": "26.1.2.25",
     "date": "2026-09-04",
     "changes": [
-      "Restrict storage preview hover to storage containers only",
-      "Unified versioning system across build files",
-      "Etherwarp lore range check",
-      "Highlight search bar and category refinements",
-      "Diana lootshare recursion safety fix"
+      "+ Restrict storage preview hover to storage containers only",
+      "+ Unified versioning system across build files",
+      "+ Etherwarp lore range check",
+      "+ Highlight search bar and category refinements",
+      "~ Diana lootshare recursion safety fix"
     ]
   }
 ]

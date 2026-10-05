@@ -164,10 +164,15 @@ public class FeatureOrganizerManager {
 
         // Re-home features whose saved category no longer exists in this build.
         Set<String> knownCategories = new HashSet<>(customCategories);
+        boolean hasUncategorized = false;
         for (FeatureMeta fm : features.values()) {
-            if (fm != null && (fm.category == null || fm.category.isBlank() || !knownCategories.contains(fm.category))) {
+            if (fm != null && (fm.category == null || fm.category.isBlank() || !knownCategories.contains(fm.category) || "Uncategorized".equalsIgnoreCase(fm.category))) {
                 fm.category = "Uncategorized";
+                hasUncategorized = true;
             }
+        }
+        if (hasUncategorized && !customCategories.contains("Uncategorized")) {
+            customCategories.add("Uncategorized");
         }
     }
 

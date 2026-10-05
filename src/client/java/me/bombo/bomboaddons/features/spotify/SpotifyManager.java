@@ -33,6 +33,9 @@ public class SpotifyManager {
     private static final byte VK_MEDIA_PREV_TRACK = (byte) 0xB1;
     private static final byte VK_MEDIA_PLAY_PAUSE = (byte) 0xB3;
     private static final int KEYEVENTF_KEYUP = 0x0002;
+    private static final java.net.http.HttpClient HTTP_CLIENT = java.net.http.HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(3))
+            .build();
 
     private static final AtomicBoolean running = new AtomicBoolean(false);
     private static Thread pollThread = null;
@@ -158,7 +161,7 @@ public class SpotifyManager {
                         .timeout(Duration.ofSeconds(2))
                         .GET()
                         .build();
-                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                java.net.http.HttpResponse<String> resp = HTTP_CLIENT
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(resp.body()).getAsJsonObject();
@@ -207,7 +210,7 @@ public class SpotifyManager {
                         .timeout(Duration.ofSeconds(2))
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
                         .build();
-                java.net.http.HttpClient.newHttpClient().sendAsync(req, java.net.http.HttpResponse.BodyHandlers.discarding());
+                HTTP_CLIENT.sendAsync(req, java.net.http.HttpResponse.BodyHandlers.discarding());
             } catch (Throwable ignored) {}
         });
     }
@@ -236,7 +239,7 @@ public class SpotifyManager {
                         .timeout(Duration.ofSeconds(2))
                         .GET()
                         .build();
-                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                java.net.http.HttpResponse<String> resp = HTTP_CLIENT
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(resp.body()).getAsJsonObject();

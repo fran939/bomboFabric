@@ -63,6 +63,16 @@ public class DiscordIpcManager {
     private static volatile boolean authCancelled = false;
     private static volatile String authenticatedAccessToken = "";
     private static final Set<String> BOT_ACTIVE_MEMBERS = ConcurrentHashMap.newKeySet();
+    private static final java.net.http.HttpClient HTTP_CLIENT = java.net.http.HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(4))
+            .build();
+    private static volatile long lastLogScanTime = 0L;
+    private static volatile long lastRendererFileMod = 0L;
+    private static volatile long lastWebrtcFileMod = 0L;
+    private static volatile boolean lastFoundConnected = false;
+    private static volatile String lastFoundChannel = null;
+    private static volatile int lastMemberCount = 1;
+
     private static final Map<String, Long> USER_STREAM_ACTIVE_UNTIL = new ConcurrentHashMap<>();
     private static volatile long lastSelfMuteActionTime = 0L;
     private static volatile long lastSelfDeafenActionTime = 0L;
@@ -478,7 +488,7 @@ public class DiscordIpcManager {
                         .timeout(Duration.ofSeconds(4))
                         .POST(java.net.http.HttpRequest.BodyPublishers.noBody())
                         .build();
-                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                java.net.http.HttpResponse<String> resp = HTTP_CLIENT
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
@@ -508,7 +518,7 @@ public class DiscordIpcManager {
                         .timeout(Duration.ofSeconds(4))
                         .POST(java.net.http.HttpRequest.BodyPublishers.noBody())
                         .build();
-                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                java.net.http.HttpResponse<String> resp = HTTP_CLIENT
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     JsonObject obj = JsonParser.parseString(resp.body()).getAsJsonObject();
@@ -752,9 +762,12 @@ public class DiscordIpcManager {
                 }
             }
         }
-        // Fallback / complementary detection from Discord desktop logs
-        scanDiscordLogForVoice();
         long now = System.currentTimeMillis();
+        // Fallback / complementary detection from Discord desktop logs (throttled to 2.5s)
+        if (now - lastLogScanTime > 2500L) {
+            lastLogScanTime = now;
+            scanDiscordLogForVoice();
+        }
         if (now - lastBotFetchTime > 3000L && (inVoice || !myUserId.isEmpty() || !currentChannelId.isEmpty())) {
             lastBotFetchTime = now;
             syncChannelWithBotAsync(currentChannelId);
@@ -810,7 +823,7 @@ public class DiscordIpcManager {
                         .timeout(Duration.ofSeconds(3))
                         .GET()
                         .build();
-                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                java.net.http.HttpResponse<String> resp = HTTP_CLIENT
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
@@ -926,7 +939,7 @@ public class DiscordIpcManager {
                         .timeout(Duration.ofSeconds(3))
                         .GET()
                         .build();
-                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                java.net.http.HttpResponse<String> resp = HTTP_CLIENT
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
@@ -972,48 +985,59 @@ public class DiscordIpcManager {
             int memberCount = 1;
 
             if (logFile.exists() && logFile.canRead() && logFile.length() > 0) {
-                long len = logFile.length();
-                int toRead = (int) Math.min(65536L, len);
-                byte[] buffer = new byte[toRead];
-                try (RandomAccessFile raf = new RandomAccessFile(logFile, "r")) {
-                    raf.seek(len - toRead);
-                    raf.readFully(buffer);
-                }
+                long currentMod = logFile.lastModified();
+                if (currentMod == lastRendererFileMod && lastRendererFileMod > 0) {
+                    foundConnected = lastFoundConnected;
+                    foundChannel = lastFoundChannel;
+                    memberCount = lastMemberCount;
+                } else {
+                    lastRendererFileMod = currentMod;
+                    long len = logFile.length();
+                    int toRead = (int) Math.min(65536L, len);
+                    byte[] buffer = new byte[toRead];
+                    try (RandomAccessFile raf = new RandomAccessFile(logFile, "r")) {
+                        raf.seek(len - toRead);
+                        raf.readFully(buffer);
+                    }
 
-                String content = new String(buffer, StandardCharsets.UTF_8);
-                String[] lines = content.split("\r?\n");
+                    String content = new String(buffer, StandardCharsets.UTF_8);
+                    String[] lines = content.split("\r?\n");
 
-                for (int i = lines.length - 1; i >= 0; i--) {
-                    String line = lines[i];
-                    if (line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("RTC_CONNECTED")) {
-                        foundConnected = true;
-                    }
-                    if (line.contains("[RTCControlSocket(default)]") && line.contains("Heartbeat")) {
-                        foundHeartbeat = true;
-                    }
-                    if (!foundConnected && !foundDisconnect && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("[VOICE_DISCONNECT]")) {
-                        foundDisconnect = true;
-                    }
-                    if (foundChannel == null && foundConnected && line.contains("Updating channel:")) {
-                        int idx = line.indexOf("Updating channel:");
-                        if (idx != -1) {
-                            String rest = line.substring(idx + 17).trim();
-                            int paren = rest.indexOf('(');
-                            int count = 0;
-                            if (paren != -1) {
-                                String cStr = rest.substring(paren + 1);
-                                int closeP = cStr.indexOf(')');
-                                if (closeP != -1) {
-                                    try {
-                                        count = Integer.parseInt(cStr.substring(0, closeP).trim());
-                                        if (count > 0) memberCount = count;
-                                    } catch (Throwable ignored) {}
+                    for (int i = lines.length - 1; i >= 0; i--) {
+                        String line = lines[i];
+                        if (line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("RTC_CONNECTED")) {
+                            foundConnected = true;
+                        }
+                        if (line.contains("[RTCControlSocket(default)]") && line.contains("Heartbeat")) {
+                            foundHeartbeat = true;
+                        }
+                        if (!foundConnected && !foundDisconnect && line.contains("[RTCConnection(") && line.contains("default)]") && line.contains("[VOICE_DISCONNECT]")) {
+                            foundDisconnect = true;
+                        }
+                        if (foundChannel == null && foundConnected && line.contains("Updating channel:")) {
+                            int idx = line.indexOf("Updating channel:");
+                            if (idx != -1) {
+                                String rest = line.substring(idx + 17).trim();
+                                int paren = rest.indexOf('(');
+                                int count = 0;
+                                if (paren != -1) {
+                                    String cStr = rest.substring(paren + 1);
+                                    int closeP = cStr.indexOf(')');
+                                    if (closeP != -1) {
+                                        try {
+                                            count = Integer.parseInt(cStr.substring(0, closeP).trim());
+                                            if (count > 0) memberCount = count;
+                                        } catch (Throwable ignored) {}
+                                    }
+                                    rest = rest.substring(0, paren).trim();
                                 }
-                                rest = rest.substring(0, paren).trim();
+                                if (!rest.isEmpty() && count > 0) foundChannel = rest;
                             }
-                            if (!rest.isEmpty() && count > 0) foundChannel = rest;
                         }
                     }
+                    lastFoundConnected = foundConnected;
+                    lastFoundChannel = foundChannel;
+                    lastMemberCount = memberCount;
                 }
             }
 
@@ -1428,7 +1452,7 @@ public class DiscordIpcManager {
                         .timeout(Duration.ofSeconds(5))
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body.toString()))
                         .build();
-                java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient()
+                java.net.http.HttpResponse<String> resp = HTTP_CLIENT
                         .send(req, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (resp.statusCode() == 200) {
                     JsonObject res = JsonParser.parseString(resp.body()).getAsJsonObject();

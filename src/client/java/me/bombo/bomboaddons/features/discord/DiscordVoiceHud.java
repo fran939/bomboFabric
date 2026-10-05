@@ -43,6 +43,10 @@ public class DiscordVoiceHud {
     private static final Map<String, Identifier> AVATAR_TEXTURE_CACHE = new ConcurrentHashMap<>();
     private static final Set<String> FETCHING_AVATARS = ConcurrentHashMap.newKeySet();
 
+    private static final java.net.http.HttpClient HTTP_CLIENT = java.net.http.HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(3))
+            .build();
+
     private static Identifier getOrFetchAvatar(String userId, String avatarHash) {
         if (userId == null || avatarHash == null || avatarHash.isEmpty()) return null;
         String key = userId + "_" + avatarHash;
@@ -58,8 +62,7 @@ public class DiscordVoiceHud {
                             .timeout(Duration.ofSeconds(3))
                             .GET()
                             .build();
-                    java.net.http.HttpResponse<byte[]> resp = java.net.http.HttpClient.newHttpClient()
-                            .send(req, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+                    java.net.http.HttpResponse<byte[]> resp = HTTP_CLIENT.send(req, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
                     if (resp.statusCode() == 200 && resp.body() != null && resp.body().length > 0) {
                         try (ByteArrayInputStream in = new ByteArrayInputStream(resp.body())) {
                             NativeImage nImg = NativeImage.read(in);
@@ -88,12 +91,6 @@ public class DiscordVoiceHud {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null) return;
         if (mc.gui.screen() instanceof HudMoveScreen) return;
-
-        long now = System.currentTimeMillis();
-        if (now - lastBackgroundScan > 1000L) {
-            lastBackgroundScan = now;
-            DiscordIpcManager.scanDiscordLogForVoice();
-        }
 
         BomboConfig.Settings s = BomboConfig.get();
         if (s == null || !s.discordHudEnabled) return;

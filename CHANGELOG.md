@@ -1,5 +1,20 @@
 # BomboAddons Changelog
  
+## [26.2.28.92] - 2026-10-05 (Beta)
+
+### Features
+- **Config Organizer Browser Navigation (`BomboOrderScreen`):** Enabled browser-like category tab multi-selection via `Ctrl + Click` (toggle) and `Shift + Click` (range select e.g. tabs 1 to 5), rendering combined feature views across selected categories.
+- **Browser Keyboard Shortcuts (`BomboOrderScreen`):** Added `Ctrl + T` to open the New Category modal, `Ctrl + W` to close/delete the active category tab (migrating features to Uncategorized), `Ctrl + 1` through `Ctrl + 8` to jump to tabs 1..8, `Ctrl + 9` for the last tab, and `Ctrl + Tab` / `Ctrl + Shift + Tab` to cycle tabs.
+- **Orphaned Features Recovery (`FeatureOrganizerManager`, `BomboOrderScreen`):** Ensured the `Uncategorized` category automatically populates in the sidebar if any features belong to deleted or unregistered categories from earlier sessions, restoring access to all misplaced features.
+- **Full Changelog Human Styling (`data/changelog.json`):** Formatted and rewritten historical changelog entries with human-friendly descriptions, color-coded bullets (`+` green features, `~` cyan fixes, `-` red removals), and bold titles.
+
+### Bug Fixes
+- **Discord & Spotify Resource & Thread Optimization (`DiscordIpcManager`, `DiscordVoiceHud`, `SpotifyManager`):** Replaced one-off ephemeral `HttpClient.newHttpClient()` calls across managers with single static shared clients, eliminating redundant worker and selector threads (slashing total JVM thread count from 90).
+- **Discord Render Spike Elimination (`DiscordVoiceHud`):** Removed synchronous disk log scanning from the HUD render loop on the render thread, completely eliminating the 3.67ms frame hitch.
+- **Discord Background Log Throttling & Timestamp Caching (`DiscordIpcManager`):** Throttled background log inspection to 2.5s and added `lastModified` caching, stopping redundant 64KB disk reads every 400ms when log files are unchanged.
+- **Spotify HUD Font & Space Caching (`SpotifyHud`):** Cached character widths and space width in the synchronized lyrics karaoke wipe loop, reducing string allocations and font glyph calculations at 280+ FPS.
+- **Changelog Screen Viewport Scissoring (`ChangelogScreen`):** Added strict scissor box clipping (`enableScissor`) to the scroll view, preventing release cards and outlines from leaking outside the top and bottom of the window.
+
 ## [26.2.28.91] - 2026-10-05 (Beta)
 
 ### Features
