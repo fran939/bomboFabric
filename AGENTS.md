@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.97` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.98` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,14 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.97`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.98`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.98 (Ready for In-Game Testing)
+>
+> 1. **Dungeon Key Complete Body Glow Elimination (`ArmorStandRendererMixin`, `ArmorStandRenderStateMixin`, `HeadOnlyRenderState`):** Replaced model part manipulation with direct outline render type suppression in `ArmorStandRenderer.getRenderType`. Implemented `HeadOnlyRenderState` interface on `ArmorStandRenderState` to flag head-only key armor stands, returning `null` in `getRenderType` to completely bypass body model (`ArmorStandArmorModel`) submission to the outline and solid render buffers. The glowing outline is now strictly rendered around the skull head via `CustomHeadLayer` with zero body sticks, spine, or baseplate artifacts.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.97 (Ready for In-Game Testing)
 >
 > 1. **Dungeon Key Skull Head-Only Glow (`HighlightESP`, `EntityMixin`, `ArmorStandRendererMixin`, `ArmorStandModelMixin`):** Fixed glowing outline on dungeon key armor stands to outline strictly the skull head. Removed body glowing suppression in `EntityMixin`, enabled `highlightHeadOnly` on dungeon key armor stands, cleanly tracked render states in `ArmorStandRendererMixin`, and hid body, arms, legs, sticks, and base plate in `ArmorStandModelMixin` so the outline shader only outlines the skull. Removed redundant floating wireframe boxes from `HighlightESP.render()`.

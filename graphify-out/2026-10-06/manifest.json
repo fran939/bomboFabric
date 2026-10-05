@@ -2310,9 +2310,9 @@
     "semantic_hash": "3be7eb79b80defa2f657f9a33cff8d73"
   },
   "src/client/java/me/bombo/bomboaddons/mixin/ArmorStandRendererMixin.java": {
-    "mtime": 1790224596.3090374,
-    "seen": 1791079643.205902,
-    "ast_hash": "fefd6e38d6335af9e48687634123b6ec",
+    "mtime": 1791239224.1095698,
+    "seen": 1791239477.8669655,
+    "ast_hash": "19f9614bb386a43856421229f7b6bb3b",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/mixin/BlockModelLighterMixin.java": {
@@ -2472,9 +2472,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/mixin/EntityMixin.java": {
-    "mtime": 1790224731.9072537,
-    "seen": 1791079643.2059314,
-    "ast_hash": "c8af99380a95a70986262b84e5a3a711",
+    "mtime": 1791239214.9656298,
+    "seen": 1791239477.8712602,
+    "ast_hash": "87a4b4c5e14d6101a5c58acd665c287d",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/mixin/FallingBlockRendererMixin.java": {
@@ -3300,9 +3300,9 @@
     "semantic_hash": "39f11507b037879e09a2b31afbe5526f"
   },
   "data/changelog.json": {
-    "mtime": 1791237528.6461127,
-    "seen": 1791237610.976686,
-    "ast_hash": "acf72ce081a5b77bf230ef2830f851ca",
+    "mtime": 1791239366.826865,
+    "seen": 1791239477.8004642,
+    "ast_hash": "e4a0fbbcc2dac33d651d405ec00d5313",
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCombine.java": {
@@ -3408,9 +3408,9 @@
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/esp/HighlightESP.java": {
-    "mtime": 1791237293.2568302,
-    "seen": 1791237610.9798627,
-    "ast_hash": "a65bab507a9644349e48b15cb6e332a7",
+    "mtime": 1791239309.2444777,
+    "seen": 1791239477.8028853,
+    "ast_hash": "1b5f69e0c9a8c481336d1f6a71ab3e88",
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/esp/ParticleESP.java": {
@@ -3792,15 +3792,15 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791237548.5987704,
-    "seen": 1791237611.059076,
-    "ast_hash": "4284dfe0612b387720e810467c8459d4",
+    "mtime": 1791239417.0905108,
+    "seen": 1791239477.8899188,
+    "ast_hash": "cd57524d5c35f1e7c5d93b645aef21ab",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1791237523.1587107,
-    "seen": 1791237611.0590785,
-    "ast_hash": "48df95b28af4ed3f22725b99cfe04279",
+    "mtime": 1791239378.7484713,
+    "seen": 1791239477.889921,
+    "ast_hash": "217b77313b64b5c86d7f7016edab7755",
     "semantic_hash": ""
   },
   "README.md": {

@@ -1,5 +1,10 @@
 # BomboAddons Changelog
  
+## [26.2.28.98] - 2026-10-06 (Beta)
+
+### Features & Fixes
+- **Dungeon Key Complete Body Glow Elimination (`ArmorStandRendererMixin`, `ArmorStandRenderStateMixin`, `HeadOnlyRenderState`):** Replaced model part manipulation with direct outline render type suppression in `ArmorStandRenderer.getRenderType`. Implemented `HeadOnlyRenderState` interface on `ArmorStandRenderState` to flag head-only key armor stands, returning `null` in `getRenderType` to completely bypass body model (`ArmorStandArmorModel`) submission to the outline and solid render buffers. The glowing outline is now strictly rendered around the skull head via `CustomHeadLayer` with zero body sticks, spine, or baseplate artifacts.
+
 ## [26.2.28.97] - 2026-10-06 (Beta)
 
 ### Features & Fixes

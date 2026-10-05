@@ -2303,16 +2303,10 @@
     "ast_hash": "b614e77d60d25480d2b7de91ab964445",
     "semantic_hash": ""
   },
-  "src/client/java/me/bombo/bomboaddons/mixin/ArmorStandModelMixin.java": {
-    "mtime": 1790224596.2421808,
-    "seen": 1791079643.2059011,
-    "ast_hash": "3be7eb79b80defa2f657f9a33cff8d73",
-    "semantic_hash": "3be7eb79b80defa2f657f9a33cff8d73"
-  },
   "src/client/java/me/bombo/bomboaddons/mixin/ArmorStandRendererMixin.java": {
-    "mtime": 1791239224.1095698,
-    "seen": 1791239477.8669655,
-    "ast_hash": "19f9614bb386a43856421229f7b6bb3b",
+    "mtime": 1791243909.124815,
+    "seen": 1791244099.712544,
+    "ast_hash": "0e213815213dad7ca83c965fb8b85f83",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/mixin/BlockModelLighterMixin.java": {
@@ -2874,9 +2868,9 @@
     "semantic_hash": "f08261aca4b203e859475c344f3a7a22"
   },
   "src/client/resources/bomboaddons.client.mixins.json": {
-    "mtime": 1790623424.5513878,
-    "seen": 1791079643.2082286,
-    "ast_hash": "8ed8ca95f33d541116570b31511cf517",
+    "mtime": 1791243919.7294145,
+    "seen": 1791244099.725771,
+    "ast_hash": "44ea7241bf64cb7c1ff37298f57ef8cb",
     "semantic_hash": ""
   },
   "src/client/resources/structures/corleone1.json": {
@@ -3300,9 +3294,9 @@
     "semantic_hash": "39f11507b037879e09a2b31afbe5526f"
   },
   "data/changelog.json": {
-    "mtime": 1791239366.826865,
-    "seen": 1791239477.8004642,
-    "ast_hash": "e4a0fbbcc2dac33d651d405ec00d5313",
+    "mtime": 1791243997.2543786,
+    "seen": 1791244099.6492083,
+    "ast_hash": "fffd6a8c03ec3e3e47f25d96d7657a65",
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCombine.java": {
@@ -3792,15 +3786,15 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791239417.0905108,
-    "seen": 1791239477.8899188,
-    "ast_hash": "cd57524d5c35f1e7c5d93b645aef21ab",
+    "mtime": 1791244033.45806,
+    "seen": 1791244099.732903,
+    "ast_hash": "3f203f48d20e7a02f4a721e00160bdcf",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1791239378.7484713,
-    "seen": 1791239477.889921,
-    "ast_hash": "217b77313b64b5c86d7f7016edab7755",
+    "mtime": 1791243990.278193,
+    "seen": 1791244099.7329054,
+    "ast_hash": "51d65911922b1cba78cf6b5250b0d8e5",
     "semantic_hash": ""
   },
   "README.md": {
@@ -3867,6 +3861,18 @@
     "mtime": 1791159829.2907114,
     "seen": 1791160959.8585372,
     "ast_hash": "d834f45a08558b3fb028dbdcdeedecd4",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/mixin/ArmorStandRenderStateMixin.java": {
+    "mtime": 1791243897.0771198,
+    "seen": 1791244099.712541,
+    "ast_hash": "a6e08c5719e8bce7a8876114179cd821",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/util/HeadOnlyRenderState.java": {
+    "mtime": 1791243890.4826612,
+    "seen": 1791244099.7227566,
+    "ast_hash": "fcefe0c31cb14828cd89947b712c6e61",
     "semantic_hash": ""
   }
 }

@@ -1,5 +1,12 @@
 [
   {
+    "version": "26.2.28.98",
+    "date": "2026-10-06",
+    "changes": [
+      "+ Dungeon Key Complete Body Glow Elimination - Completely bypassed armor stand body submission in the render outline pass so only the skull head glows without body sticks or baseplate"
+    ]
+  },
+  {
     "version": "26.2.28.97",
     "date": "2026-10-06",
     "changes": [
