@@ -1176,9 +1176,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/BomboaddonsClient.java": {
-    "mtime": 1791159529.5289204,
-    "seen": 1791159745.768968,
-    "ast_hash": "fead766ca4f22393c125d16c9ca93bac",
+    "mtime": 1791164134.9735625,
+    "seen": 1791164676.501647,
+    "ast_hash": "bb09b8dae38f061a9bab00522b938398",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/ChatModifier.java": {
@@ -2178,21 +2178,21 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/BomboOrderScreen.java": {
-    "mtime": 1791163205.4766023,
-    "seen": 1791163382.722223,
-    "ast_hash": "89faee5b0b07331163168ac268e76b9d",
+    "mtime": 1791164496.1539485,
+    "seen": 1791164676.534475,
+    "ast_hash": "2afba47482a484660219bd1cd5cb768b",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/ConfigRegistry.java": {
-    "mtime": 1791157945.0116086,
-    "seen": 1791158298.6826355,
-    "ast_hash": "7f8b35d681bcf677cc9a3bbccf4641df",
+    "mtime": 1791164037.166037,
+    "seen": 1791164676.5348375,
+    "ast_hash": "909a82a0a2312acf355758d14c7fc4ba",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/FeatureOrganizerManager.java": {
-    "mtime": 1791162942.9866843,
-    "seen": 1791163382.7231367,
-    "ast_hash": "d77ab8d02d7edcba72b33cf3c9b7ca9a",
+    "mtime": 1791164027.620543,
+    "seen": 1791164676.535192,
+    "ast_hash": "e54cf9b4cd0381b195ebe38ca065c90c",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/pv/ProfileViewerScreen.java": {
@@ -2436,9 +2436,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/mixin/CommandMixin.java": {
-    "mtime": 1791159466.9752424,
-    "seen": 1791159745.820857,
-    "ast_hash": "425e863bee459bb5171c5ae1f9f33293",
+    "mtime": 1791164095.336648,
+    "seen": 1791164676.5442638,
+    "ast_hash": "2773b00c70ad59685ca4440d277a206f",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/mixin/ConnectionMixin.java": {
@@ -3300,9 +3300,9 @@
     "semantic_hash": "39f11507b037879e09a2b31afbe5526f"
   },
   "data/changelog.json": {
-    "mtime": 1791163259.4207067,
-    "seen": 1791163382.6585104,
-    "ast_hash": "01110524bcc43493dd15417337a6972a",
+    "mtime": 1791164573.6751573,
+    "seen": 1791164676.4721138,
+    "ast_hash": "d1ad3d011e8d1e58b90792c13c132f6d",
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCombine.java": {
@@ -3486,9 +3486,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/Constants.java": {
-    "mtime": 1791163298.131117,
-    "seen": 1791163382.6934316,
-    "ast_hash": "1749767b1601bb21b8ea3c793644d730",
+    "mtime": 1791164557.763404,
+    "seen": 1791164676.502927,
+    "ast_hash": "c56c72a58e452992ce314386d3cb6a62",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/features/StorageChestWaypoints.java": {
@@ -3540,9 +3540,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/features/spotify/LyricsManager.java": {
-    "mtime": 1791162875.0790613,
-    "seen": 1791163382.717081,
-    "ast_hash": "d1c8024bffe02892da984e626d9a332b",
+    "mtime": 1791164149.7721536,
+    "seen": 1791164676.5280418,
+    "ast_hash": "eca71e4355fe67dbca2aa852d937e627",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/features/spotify/LyricsScreen.java": {
@@ -3792,15 +3792,15 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791163319.8894074,
-    "seen": 1791163382.7473679,
-    "ast_hash": "79a99829675a5b258cd2d199adeee040",
+    "mtime": 1791164609.2351346,
+    "seen": 1791164676.5663097,
+    "ast_hash": "db66f5c072e3b94c9fe7c11c6391289f",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1791163268.1022356,
-    "seen": 1791163382.7473702,
-    "ast_hash": "8cebca2ea057076af81e6dd2e964f59c",
+    "mtime": 1791164579.860975,
+    "seen": 1791164676.5663128,
+    "ast_hash": "c1c465080866dba7a37d54e69af729ed",
     "semantic_hash": ""
   },
   "README.md": {
