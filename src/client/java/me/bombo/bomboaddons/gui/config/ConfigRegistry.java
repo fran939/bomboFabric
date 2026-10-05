@@ -1613,12 +1613,48 @@ public class ConfigRegistry {
         List<ConfigItem> assignedItems = new ArrayList<>();
         Map<String, ConfigItem> masterMap = getMasterItemsMap();
 
-        for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
-            FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
-            if (meta.category.equalsIgnoreCase(category)) {
-                ConfigItem baseItem = masterMap.get(entry.getKey());
-                if (baseItem != null) {
-                    assignedItems.add(baseItem.cloneWithCategory(category));
+        List<String> subcats = FeatureOrganizerManager.subcategoriesMap.get(category);
+        if (subcats != null && !subcats.isEmpty()) {
+            // Group 1: Items with no subcategory
+            for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
+                FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
+                if (meta.category.equalsIgnoreCase(category) && (meta.subCategory == null || meta.subCategory.trim().isEmpty())) {
+                    ConfigItem baseItem = masterMap.get(entry.getKey());
+                    if (baseItem != null) {
+                        assignedItems.add(baseItem.cloneWithCategory(category));
+                    }
+                }
+            }
+
+            // Group 2: Items for each defined subcategory
+            for (String subCat : subcats) {
+                boolean subCatAddedHeader = false;
+                for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
+                    FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
+                    if (meta.category.equalsIgnoreCase(category) && subCat.equalsIgnoreCase(meta.subCategory)) {
+                        if (!subCatAddedHeader) {
+                            assignedItems.add(ConfigItem.header(subCat, category));
+                            subCatAddedHeader = true;
+                        }
+                        ConfigItem baseItem = masterMap.get(entry.getKey());
+                        if (baseItem != null) {
+                            assignedItems.add(baseItem.cloneWithCategory(category));
+                        }
+                    }
+                }
+                if (!subCatAddedHeader) {
+                    // Empty subcategory separator
+                    assignedItems.add(ConfigItem.header(subCat, category));
+                }
+            }
+        } else {
+            for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
+                FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
+                if (meta.category.equalsIgnoreCase(category)) {
+                    ConfigItem baseItem = masterMap.get(entry.getKey());
+                    if (baseItem != null) {
+                        assignedItems.add(baseItem.cloneWithCategory(category));
+                    }
                 }
             }
         }

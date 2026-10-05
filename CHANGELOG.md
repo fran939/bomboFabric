@@ -1,5 +1,18 @@
 # BomboAddons Changelog
  
+## [26.2.28.94] - 2026-10-05 (Beta)
+
+### Features
+- **Config Organizer Subcategories & Separators (`BomboOrderScreen`):** Right-clicking an empty spot in the feature list creates a subcategory/separator (e.g. `Garden` or `Farming` within the Farming category). Subcategories render with folder icons, header accents, and divider lines.
+- **Tree Hierarchy & Indented Features (`BomboOrderScreen`):** Features assigned to a subcategory are indented with sleek amber visual guide tree lines, displaying a clean `Category -> Subcategory -> Features` hierarchy.
+- **Subcategory Quick Actions & Drag & Drop (`BomboOrderScreen`):** Added `▲` (Move Up), `▼` (Move Down), `✎` (Rename), and `✕` (Delete) quick buttons on each subcategory header. Dragging any feature onto a subcategory header instantly assigns it to that subcategory.
+- **Config Screen Section Headers (`ConfigRegistry`):** Subcategories created in `/b order` automatically group settings in `/b config` with prominent section headers.
+- **Spotify Refetch Song & Artist Feedback (`CommandMixin`, `BomboaddonsClient`, `LyricsManager`):** `/b cover` and `/cover` now display both the song title and artist in chat and refetch both album artwork and synchronized lyrics simultaneously.
+
+### Bug Fixes
+- **Empty Default Categories on Startup (`FeatureOrganizerManager`):** Fixed issue where default categories were repeatedly recreated as empty tabs on restart even after being deleted or cleared.
+- **Spotify Cover Strict Matching (`LyricsManager`):** Enforced artist verification across all fallback lookups to ensure popular titles never load artwork or lyrics from mismatched artists.
+
 ## [26.2.28.93] - 2026-10-05 (Beta)
 
 ### Features

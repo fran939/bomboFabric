@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.94",
+    "date": "2026-10-05",
+    "changes": [
+      "+ Config Organizer Subcategories & Separators - Right-click an empty spot in the feature list to create custom subcategories (e.g. Garden within Farming)",
+      "+ Tree Hierarchy & Indented Features - Subcategories display tree guide lines with indented features and dedicated separator headers",
+      "+ Subcategory Quick Actions & Drag & Drop - Drag features directly onto subcategory headers to assign them, with Move Up/Down, Rename, and Delete buttons",
+      "+ Config Menu Section Headers - Subcategories created in /b order automatically show as organized section headers in /b config",
+      "+ Spotify Song & Artist Search - /b cover and refetch commands now search both title and artist with instant chat feedback",
+      "~ Empty Categories on Startup - Fixed bug where default categories were recreated as empty tabs on restart",
+      "~ Spotify Cover & Lyrics Fallbacks - Strict artist verification prevents wrong artwork and lyrics from loading for popular songs"
+    ]
+  },
+  {
     "version": "26.2.28.93",
     "date": "2026-10-05",
     "changes": [

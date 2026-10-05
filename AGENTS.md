@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.93` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.94` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,19 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.93`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.94`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.94 (Ready for In-Game Testing)
+>
+> 1. **Config Organizer Subcategories & Separators (`BomboOrderScreen`):** Right-clicking an empty spot on the feature list creates a subcategory/separator (e.g. `Garden` or `Farming` in category `Farming`). Visual tree structure displays separator cards with folder icon `§6§l▾ §eNAME` and divider lines.
+> 2. **Tree Hierarchy & Indented Features (`BomboOrderScreen`):** Features assigned to a subcategory are indented by 20px with subtle amber tree guide lines connecting from the subcategory separator down to each child feature.
+> 3. **Subcategory Quick Actions & Drag & Drop (`BomboOrderScreen`):** Added `▲` (Move Up), `▼` (Move Down), `✎` (Rename), and `✕` (Delete) buttons on each subcategory header. Dragging any single feature or multi-selection onto a subcategory header assigns them to that subcategory.
+> 4. **Config Screen Section Headers (`ConfigRegistry`):** Subcategories created in `/b order` automatically group settings in `/b config` with prominent section headers.
+> 5. **Empty Default Categories on Startup Fixed (`FeatureOrganizerManager`):** Resolved bug where standard categories reappeared as empty tabs on restart by only seeding defaults if no custom categories exist, and otherwise only keeping categories that contain active features.
+> 6. **Spotify Song & Artist Refetch Feedback (`CommandMixin`, `BomboaddonsClient`, `LyricsManager`):** `/b cover` and `/cover` now display both the song title and artist in chat and refetch both album artwork and synchronized lyrics simultaneously.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.93 (Ready for In-Game Testing)
 >
 > 1. **Spotify Artist Verification & Artwork Matching (`LyricsManager`):** Implemented strict artist matching for iTunes search queries, candidate evaluation, Deezer artwork search, and Paxsenix / LRCLIB candidates, preventing popular song titles from picking mismatched artists (e.g., Carlos Vives vs Rauw Alejandro for *Déjame entrar*).

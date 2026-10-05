@@ -56,7 +56,10 @@ public class CommandMixin {
          me.bombo.bomboaddons.features.spotify.LyricsManager.refetchArtwork();
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§dSpotify§8] §aRefetching album cover for §f" + me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack() + "§a..."));
+            String tr = me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack();
+            String ar = me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentArtist();
+            String label = (tr == null || tr.isEmpty()) ? "current song" : ("§f" + tr + (ar != null && !ar.isEmpty() ? " §7by §f" + ar : ""));
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§dSpotify§8] §aRefetching album cover & lyrics for " + label + "§a..."));
          }
          ci.cancel();
          return;
@@ -572,7 +575,10 @@ public class CommandMixin {
          me.bombo.bomboaddons.features.spotify.LyricsManager.refetchArtwork();
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§dSpotify§8] §aRefetching album cover for §f" + me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack() + "§a..."));
+            String tr = me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentTrack();
+            String ar = me.bombo.bomboaddons.features.spotify.SpotifyManager.getCurrentArtist();
+            String label = (tr == null || tr.isEmpty()) ? "current song" : ("§f" + tr + (ar != null && !ar.isEmpty() ? " §7by §f" + ar : ""));
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§dSpotify§8] §aRefetching album cover & lyrics for " + label + "§a..."));
          }
          ci.cancel();
          return;

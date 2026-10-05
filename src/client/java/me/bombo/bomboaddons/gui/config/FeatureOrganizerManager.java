@@ -155,16 +155,21 @@ public class FeatureOrganizerManager {
         // 2. Load user customized overrides from file
         load();
 
-        // 3. Merge, don't replace: a saved organizer file written before a category existed
-        //    (e.g. a 26.2.28.33 /b order save with no "Auto") must not hide categories that
-        //    ship in the current build. The user's saved order is kept; new built-in
-        //    categories are appended at the end.
-        java.util.List<String> merged = new ArrayList<>(customCategories);
-        for (String cat : ConfigRegistry.BASE_CATEGORIES) {
-            if (!merged.contains(cat)) merged.add(cat);
+        // 3. Only initialize default categories if the user has no saved categories (first launch)
+        if (customCategories.isEmpty()) {
+            for (String cat : ConfigRegistry.BASE_CATEGORIES) {
+                if (!customCategories.contains(cat)) customCategories.add(cat);
+            }
+        } else {
+            // Only ensure categories that actually have assigned features
+            for (FeatureMeta fm : features.values()) {
+                if (fm != null && fm.category != null && !fm.category.isBlank() && !"Uncategorized".equalsIgnoreCase(fm.category)) {
+                    if (!customCategories.contains(fm.category)) {
+                        customCategories.add(fm.category);
+                    }
+                }
+            }
         }
-        customCategories.clear();
-        customCategories.addAll(merged);
 
         // Re-home features whose saved category no longer exists in this build.
         Set<String> knownCategories = new HashSet<>(customCategories);
