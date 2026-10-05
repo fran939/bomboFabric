@@ -6103,6 +6103,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                            String newServer = json.get("server").getAsString();
                            if (!newServer.equals(locrawServer)) {
                               StructureFinder.clear();
+                              me.bombo.bomboaddons.features.dungeons.DungeonBossManager.resetAll();
                            }
                            locrawServer = newServer;
                         }
@@ -6174,6 +6175,7 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             DiceTracker.onChatMessage(clean);
             DungeonSecretsTracker.onChatMessage(clean);
+            me.bombo.bomboaddons.features.dungeons.DungeonBossManager.onChatMessage(clean);
             AFKManager.onChatMessage(clean);
             ClearInfoHUD.onChatMessage(clean);
             me.bombo.bomboaddons.features.diana.DianaLootshare.onChatMessage(clean);

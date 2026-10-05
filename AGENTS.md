@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.94` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.95` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,17 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.94`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.95`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.95 (Ready for In-Game Testing)
+>
+> 1. **Dungeon Key Highlight Blood Door & Key Pickup Auto-Off (`DungeonBossManager`, `HighlightESP`):** Blood Keys immediately cease highlighting and showing tracers once the Blood Door has been opened (`The BLOOD DOOR has been opened!`) or any player obtains the Blood Key (`has obtained Blood Key!`). Hooked chat events into both `BomboaddonsClient` and `ChatMixin`, and automated state resets on new dungeon start ("Starting in 3 seconds.") and server transfers.
+> 2. **Config Organizer Description Word Wrap & Scissoring (`BomboOrderScreen`):** Enlarged feature edit modal to 380x330px with a 42px description input box. Replaced 50-character hard truncation with multi-line word wrapping (`font.split`) and multi-line cursor navigation. Enabled strict scissor box clipping (`g.enableScissor`) on all modal text fields and feature cards, preventing text from ever overflowing outside box boundaries.
+> 3. **Comprehensive Feature Descriptions Across All Menus (`ConfigRegistry`, `FeatureOrganizerManager`):** Added clear, descriptive explanations to all custom cards (`In-Game Command Keybinds`, `GUI Container Keybinds`, `Auto Sequences Manager`, `Command Aliases Manager`, `Highlight Editor & Entries`, `Custom Waypoints`, `Canvas & Presets`, etc.) and automated fallback population so blank feature descriptions are seamlessly filled from config metadata.
+> 4. **Enhanced Multi-Provider Lyrics Accuracy & ISRC Integration (`LyricsManager`):** Retained all lyrics providers (Paxsenix, Musixmatch, LRCLIB, Kugou, Unison, YouLyPlus) while eliminating mismatched song lyrics by enforcing both track title and artist verification across all queries, enhancing title cleaning for remasters and edits, and integrating MusicBrainz ISRC resolution for exact LRCLIB recording matching.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.94 (Ready for In-Game Testing)
 >
 > 1. **Config Organizer Subcategories & Separators (`BomboOrderScreen`):** Right-clicking an empty spot on the feature list creates a subcategory/separator (e.g. `Garden` or `Farming` in category `Farming`). Visual tree structure displays separator cards with folder icon `§6§l▾ §eNAME` and divider lines.

@@ -29,6 +29,8 @@ public class FeatureOrganizerManager {
         public String parentDependency = ""; // If set, this feature requires parent feature to be enabled
         public boolean enabledByDefault = false;
         public List<String> tags = new ArrayList<>();
+        /** Extra categories this feature is linked/cloned into (Ctrl+Drag). */
+        public List<String> linkedCategories = new ArrayList<>();
 
         public FeatureMeta() {}
 
@@ -45,6 +47,19 @@ public class FeatureOrganizerManager {
             this.parentDependency = "";
             this.enabledByDefault = false;
             this.tags = new ArrayList<>();
+            this.linkedCategories = new ArrayList<>();
+        }
+
+        /** Returns true if this feature belongs to (or is linked into) the given category. */
+        public boolean belongsToCategory(String cat) {
+            if (cat == null) return false;
+            if (category != null && category.equalsIgnoreCase(cat)) return true;
+            if (linkedCategories != null) {
+                for (String lc : linkedCategories) {
+                    if (lc != null && lc.equalsIgnoreCase(cat)) return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -115,7 +130,7 @@ public class FeatureOrganizerManager {
             try {
                 List<ConfigItem> items = ConfigRegistry.getRegisteredItemsForCategory(cat);
                 for (ConfigItem item : items) {
-                    if (item.type == ConfigItem.Type.HEADER || item.type == ConfigItem.Type.CUSTOM_CARD) {
+                    if (item.type == ConfigItem.Type.HEADER) {
                         continue;
                     }
                     if (item.name != null && !item.name.trim().isEmpty() && !features.containsKey(item.name)) {
@@ -151,6 +166,21 @@ public class FeatureOrganizerManager {
         ensureFeature("Chat Triggers Manager", "Chat Triggers", "", false, "Manager and rule entries for automated chat triggers.");
         ensureFeature("Entity Hider Rules", "Entity & Block Hider", "", false, "Rules to hide entities by hash or display name.");
         ensureFeature("Block Replacement Rules", "Entity & Block Hider", "", false, "Rules to visually replace blocks in world.");
+        ensureFeature("Auto Sequences Manager", "Auto", "", true, "Custom automation sequences editor and runner.");
+        ensureFeature("Clicker Targets Manager", "Clicker", "", true, "Auto-click targets and intervals manager.");
+        ensureFeature("Coordinate Command Binds", "Coord Binds", "", false, "Location-triggered command binds.");
+        ensureFeature("Custom Sounds & Replacements Manager", "Sounds", "", false, "Custom sound files and replacement rules.");
+        ensureFeature("Custom Waypoints Manager", "Waypoints", "", false, "Custom world coordinate waypoints and beacons.");
+        ensureFeature("Ordered Waypoints Manager", "Ordered Waypoints", "", false, "Sequential route waypoint manager.");
+        ensureFeature("Lore Additions Ordering & Display", "Lore Additions", "", false, "Lore tooltip ordering and custom display.");
+        ensureFeature("Profile Management & Binds", "Profiles", "", false, "Configuration profiles and auto-swap rules.");
+        ensureFeature("Auto Profile Swap Rules", "Profiles", "", false, "Automatic profile switching based on island/class/armor.");
+        ensureFeature("Interactive Canvas & Presets", "Custom Crosshair", "", false, "Custom 15x15 pixel crosshair designer.");
+        ensureFeature("Command Aliases Manager", "Aliases", "", false, "Custom command shortcut aliases.");
+        ensureFeature("Particle ESP Filters", "Particle Highlights", "", false, "Particle ESP filter configuration.");
+        ensureFeature("In-Game Command Keybinds", "Keybinds", "", false, "Keybind-to-command mappings for quick execution.");
+        ensureFeature("GUI Container Keybinds (Profile Binds)", "Keybinds", "", false, "Container GUI keybinds per profile.");
+        ensureFeature("Feature Category & Cheat Organizer", "GUI Settings", "", false, "Feature organization and cheat classification manager.");
 
         // 2. Load user customized overrides from file
         load();
@@ -229,8 +259,20 @@ public class FeatureOrganizerManager {
                             if (e.getValue().tags != null) {
                                 fm.tags = new ArrayList<>(e.getValue().tags);
                             }
+                            if (e.getValue().linkedCategories != null) {
+                                fm.linkedCategories = new ArrayList<>(e.getValue().linkedCategories);
+                            }
                         } else if (e.getValue() != null) {
                             features.put(e.getKey(), e.getValue());
+                        }
+                    }
+                }
+                // Populate default descriptions for any feature that has an empty description
+                for (FeatureMeta fm : features.values()) {
+                    if (fm != null && (fm.description == null || fm.description.trim().isEmpty())) {
+                        ConfigItem ci = ConfigRegistry.getMasterItemsMap().get(fm.name);
+                        if (ci != null && ci.description != null && !ci.description.trim().isEmpty()) {
+                            fm.description = ci.description;
                         }
                     }
                 }

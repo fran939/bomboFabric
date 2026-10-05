@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.95",
+    "date": "2026-10-05",
+    "changes": [
+      "+ Dungeon Key Blood Door & Pickup Filter - Blood Keys automatically stop highlighting once the Blood Door opens or any player picks up the Blood Key",
+      "+ Config Organizer Description Word Wrap - Feature edit modal descriptions now wrap cleanly across multiple lines without overflowing outside the box",
+      "+ Feature Descriptions Across Menus - Added clear, detailed descriptions for In-Game Command Keybinds, Container Binds, Auto Sequences, and all custom cards",
+      "+ Strict Lyrics & Artwork Matching - Verifies both song name and artist across all providers so songs by the same artist never get mismatched",
+      "+ ISRC Exact Song Matching - Integrates MusicBrainz ISRC resolution for exact 100% accurate lyrics on LRCLIB while keeping Paxsenix and Musixmatch intact"
+    ]
+  },
+  {
     "version": "26.2.28.94",
     "date": "2026-10-05",
     "changes": [

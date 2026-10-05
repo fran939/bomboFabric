@@ -153,7 +153,7 @@ public class ConfigRegistry {
         switch (category) {
             case "Aliases" -> {
                 items.add(ConfigItem.header("Custom Command Aliases (/shortcut -> /command)", category));
-                items.add(ConfigItem.customCard("Command Aliases Manager", category,
+                items.add(ConfigItem.customCard("Command Aliases Manager", "Create and manage shorthand chat aliases (e.g. /shortcut -> /command) with click actions and tab-complete previews.", category,
                         ConfigCustomWidgets.getAliasesCardHeight(),
                         ConfigCustomWidgets::renderAliasesCard,
                         ConfigCustomWidgets::handleAliasesCardClick));
@@ -186,7 +186,7 @@ public class ConfigRegistry {
                             + "button need " + me.bombo.bomboaddons.Constants.artifactPrefix() + "'s sequence "
                             + "runtime.", category));
                 }
-                items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", category,
+                items.add(ConfigItem.dynamicCustomCard("Auto Sequences Manager", "Visual automation editor to record, build, and trigger step-by-step macro sequences with custom click delays.", category,
                         ConfigCustomWidgets::getAutoSequencesCardHeight,
                         ConfigCustomWidgets::renderAutoSequencesCard,
                         ConfigCustomWidgets::handleAutoSequencesCardClick));
@@ -206,7 +206,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.sliderInt("Block Scan Radius", "Search radius in blocks around player.", category, 5, 256, 1, "m", () -> s.blockScanRadius > 0 ? s.blockScanRadius : 20, v -> s.blockScanRadius = v));
 
                 // Block Highlights Manager Card
-                items.add(ConfigItem.dynamicCustomCard("Block Highlights Manager", category,
+                items.add(ConfigItem.dynamicCustomCard("Block Highlights Manager", "Configure custom 3D bounding box highlights and tracer lines for blocks across islands by block type or coordinates.", category,
                         ConfigCustomWidgets::getBlockHighlightCardHeight,
                         ConfigCustomWidgets::renderBlockHighlightsCard,
                         ConfigCustomWidgets::handleBlockHighlightsClick));
@@ -242,7 +242,7 @@ public class ConfigRegistry {
                         allProfiles,
                         () -> s.activeProfile != null ? s.activeProfile : "default",
                         v -> s.activeProfile = v));
-                items.add(ConfigItem.dynamicCustomCard("Chat Triggers Manager", category,
+                items.add(ConfigItem.dynamicCustomCard("Chat Triggers Manager", "Set up automated rules to trigger commands, playsound cues, or chat replies when specific text appears in chat.", category,
                         ConfigCustomWidgets::getChatTriggersCardHeight,
                         ConfigCustomWidgets::renderChatTriggersCard,
                         ConfigCustomWidgets::handleChatTriggersCardClick));
@@ -250,7 +250,7 @@ public class ConfigRegistry {
 
             case "Clicker" -> {
                 items.add(ConfigItem.header("Auto Clicker Logic", category));
-                items.add(ConfigItem.dynamicCustomCard("Clicker Targets Manager", category,
+                items.add(ConfigItem.dynamicCustomCard("Clicker Targets Manager", "Define custom auto-click targets, click intervals, and container slots for automatic inventory clicking.", category,
                         ConfigCustomWidgets::getClickerCardHeight,
                         ConfigCustomWidgets::renderClickerCard,
                         ConfigCustomWidgets::handleClickerCardClick));
@@ -264,7 +264,7 @@ public class ConfigRegistry {
                         v -> s.activeProfile = v));
 
                 // Dedicated Coordinate Command Binds Card
-                items.add(ConfigItem.customCard("Coordinate Command Binds", category,
+                items.add(ConfigItem.customCard("Coordinate Command Binds", "Execute preset commands automatically when your player walks into specified world coordinate bounding boxes.", category,
                         ConfigCustomWidgets.getCoordBindsCardHeight(),
                         ConfigCustomWidgets::renderCoordBindsManager,
                         ConfigCustomWidgets::handleCoordBindsClick));
@@ -315,7 +315,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.sliderFloat("Crosshair Scale", "Render size multiplier.", category, 0.5f, 3.0f, 0.1f, "x", () -> s.customCrosshair.scale > 0 ? s.customCrosshair.scale : 1.0f, v -> s.customCrosshair.scale = v));
 
                 // Interactive 15x15 Canvas Card Widget
-                items.add(ConfigItem.customCard("Interactive Canvas & Presets", category, 265,
+                items.add(ConfigItem.customCard("Interactive Canvas & Presets", "Interactive 15x15 pixel designer to draw custom HUD crosshairs with custom colors, shapes, and preset imports.", category, 265,
                         ConfigCustomWidgets::renderCrosshairDesigner,
                         ConfigCustomWidgets::handleCrosshairClick));
             }
@@ -673,11 +673,11 @@ public class ConfigRegistry {
             case "Entity & Block Hider" -> {
                 items.add(ConfigItem.header("Entity & Block Hider (Anti-Lag & Custom Model Rendering)", category));
                 items.add(ConfigItem.toggle("Hider Master Toggle", "Enable hiding entities by hash/name and custom block replacements.", category, () -> s.hiderEnabled, v -> s.hiderEnabled = v));
-                items.add(ConfigItem.dynamicCustomCard("Entity Hider Rules", category,
+                items.add(ConfigItem.dynamicCustomCard("Entity Hider Rules", "Hide specific entities, armor stands, or player models in the world by entity name, UUID, or skin texture hash.", category,
                     ConfigCustomWidgets::getEntityHiderCardHeight,
                     ConfigCustomWidgets::renderEntityHiderCard,
                     ConfigCustomWidgets::handleEntityHiderClick));
-                items.add(ConfigItem.dynamicCustomCard("Block Replacement Rules", category,
+                items.add(ConfigItem.dynamicCustomCard("Block Replacement Rules", "Visually swap world blocks locally (e.g. replace unwanted stone, diorite, or stained glass) for clear visibility.", category,
                     ConfigCustomWidgets::getBlockHiderCardHeight,
                     ConfigCustomWidgets::renderBlockHiderCard,
                     ConfigCustomWidgets::handleBlockHiderClick));
@@ -905,7 +905,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.keybind("Bestiary Toggle Key", "Keybind to cycle Bestiary mob highlight overlay.", category, () -> s.bestiaryHighlightKey != null ? s.bestiaryHighlightKey : "h", v -> s.bestiaryHighlightKey = v));
 
                 // Dedicated Advanced / Basic Highlight Editor Card with Inputs and Entries List
-                items.add(ConfigItem.dynamicCustomCard("Highlight Editor & Entries", category,
+                items.add(ConfigItem.dynamicCustomCard("Highlight Editor & Entries", "Manage custom entity glow outlines, ESP boxes, bestiary mob highlights, and customizable tracer indicators.", category,
                         ConfigCustomWidgets::getHighlightCardHeight,
                         ConfigCustomWidgets::renderHighlightEditor,
                         ConfigCustomWidgets::handleHighlightEditorClick));
@@ -1040,13 +1040,13 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Ignore Caps Lock", "Allow command keybind execution when Caps Lock is on.", category, () -> s.ignoreCapsLock, v -> s.ignoreCapsLock = v));
 
                 // Dedicated In-Game Command Keybinds Card
-                items.add(ConfigItem.dynamicCustomCard("In-Game Command Keybinds", category,
+                items.add(ConfigItem.dynamicCustomCard("In-Game Command Keybinds", "Bind any keyboard key to instantly execute chat commands, toggles, or custom macros without opening chat.", category,
                         ConfigCustomWidgets::getKeybindsCardHeight,
                         ConfigCustomWidgets::renderKeybindsManager,
                         ConfigCustomWidgets::handleKeybindsClick));
 
                 // Dedicated GUI Container Keybinds (Profile Binds) Card
-                items.add(ConfigItem.dynamicCustomCard("GUI Container Keybinds (Profile Binds)", category,
+                items.add(ConfigItem.dynamicCustomCard("GUI Container Keybinds (Profile Binds)", "Configure custom hotkeys that trigger slot clicks and actions while viewing specific container menus or chests.", category,
                         ConfigCustomWidgets::getGuiBindsCardHeight,
                         ConfigCustomWidgets::renderGuiBindsManager,
                         ConfigCustomWidgets::handleGuiBindsClick));
@@ -1090,7 +1090,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Show Full Value Breakdown", "Shows detailed line-by-line coin breakdown (Base, Enchants, Stars, Reforge, Gems) on item hover.", category, () -> s.estimatedValueFullBreakdown, v -> s.estimatedValueFullBreakdown = v));
 
                 // Dedicated Custom Tooltip Ordering and Position Card
-                items.add(ConfigItem.customCard("Lore Additions Ordering & Display", category,
+                items.add(ConfigItem.customCard("Lore Additions Ordering & Display", "Reorder, format, and toggle custom item tooltip lines, estimated coin values, price histories, and craft costs.", category,
                         ConfigCustomWidgets.getLoreAdditionsCardHeight(),
                         ConfigCustomWidgets::renderLoreAdditionsCard,
                         ConfigCustomWidgets::handleLoreAdditionsClick));
@@ -1237,7 +1237,7 @@ public class ConfigRegistry {
                         0, 50, 1, "",
                         () -> s.orderedWaypointsVisibleCount,
                         v -> { s.orderedWaypointsVisibleCount = v; BomboConfig.save(); }));
-                items.add(ConfigItem.dynamicCustomCard("Ordered Waypoints Manager", category,
+                items.add(ConfigItem.dynamicCustomCard("Ordered Waypoints Manager", "Create and follow numbered waypoint routes with sequence order, line tracers, and distance progression.", category,
                         ConfigCustomWidgets::getOrderedWaypointsCardHeight,
                         ConfigCustomWidgets::renderOrderedWaypointsManager,
                         ConfigCustomWidgets::handleOrderedWaypointsClick));
@@ -1249,7 +1249,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.text("Active Island Filter", "Only enable particle ESP on specific island (leave blank for all).", category, () -> s.particleHighlightsIsland != null ? s.particleHighlightsIsland : "", v -> s.particleHighlightsIsland = v));
 
                 // Dedicated Particle Highlights Manager Card
-                items.add(ConfigItem.customCard("Particle ESP Filters", category,
+                items.add(ConfigItem.customCard("Particle ESP Filters", "Filter and draw bounding boxes around specific world particles, ability effects, and hidden secrets.", category,
                         ConfigCustomWidgets.getParticleHighlightsCardHeight(),
                         ConfigCustomWidgets::renderParticleHighlightsCard,
                         ConfigCustomWidgets::handleParticleHighlightsClick));
@@ -1277,7 +1277,7 @@ public class ConfigRegistry {
                         v -> s.activeProfile = v));
 
                 // Profile Management & Binds Card
-                items.add(ConfigItem.customCard("Profile Management & Binds", category, 210,
+                items.add(ConfigItem.customCard("Profile Management & Binds", "Manage mod configuration profiles (create, clone, reset) and bind active profiles to custom keyboard hotkeys.", category, 210,
                         ConfigCustomWidgets::renderProfilesManager,
                         ConfigCustomWidgets::handleProfilesManagerClick));
 
@@ -1287,7 +1287,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Screen Notification", "Shows on-screen title when profile auto-swap activates.", category, () -> s.autoSwapNotifyScreen, v -> s.autoSwapNotifyScreen = v));
                 items.add(ConfigItem.toggle("Sound Chime", "Plays chime sound when profile auto-swap activates.", category, () -> s.autoSwapNotifySound, v -> s.autoSwapNotifySound = v));
 
-                items.add(ConfigItem.dynamicCustomCard("Auto Profile Swap Rules", category,
+                items.add(ConfigItem.dynamicCustomCard("Auto Profile Swap Rules", "Automatically switch config profiles based on your current island location, dungeon floor, class, or armor set.", category,
                         ConfigCustomWidgets::getAutoProfileRulesCardHeight,
                         ConfigCustomWidgets::renderAutoProfileRulesCard,
                         ConfigCustomWidgets::handleAutoProfileRulesClick));
@@ -1296,7 +1296,7 @@ public class ConfigRegistry {
             case "Sounds" -> {
                 items.add(ConfigItem.header("Custom Sound Files & Replacements", category));
                 // Dedicated Modern Sounds Manager Card (replaces old GUI)
-                items.add(ConfigItem.customCard("Custom Sounds & Replacements Manager", category,
+                items.add(ConfigItem.customCard("Custom Sounds & Replacements Manager", "Import custom audio files and set up triggers to replace default game sound effects with custom sound effects.", category,
                         ConfigCustomWidgets.getCustomSoundsCardHeight(),
                         ConfigCustomWidgets::renderCustomSoundsCard,
                         ConfigCustomWidgets::handleCustomSoundsClick));
@@ -1337,7 +1337,7 @@ public class ConfigRegistry {
                         v -> s.activeProfile = v));
 
                 // Dedicated Custom Waypoints Manager Card
-                items.add(ConfigItem.customCard("Custom Waypoints Manager", category,
+                items.add(ConfigItem.customCard("Custom Waypoints Manager", "Place permanent 3D waypoints with custom titles, RGB beacon beams, and distance indicators at any coordinates.", category,
                         ConfigCustomWidgets.getWaypointsCardHeight(),
                         ConfigCustomWidgets::renderWaypointsManager,
                         ConfigCustomWidgets::handleWaypointsClick));
@@ -1549,7 +1549,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.button("Open Drag & Drop Organizer GUI", "Open GUI", "Opens dedicated drag & drop feature & category organizer (/b order).", category, () -> {
                     Minecraft.getInstance().setScreenAndShow(new BomboOrderScreen(Minecraft.getInstance().gui.screen()));
                 }));
-                items.add(ConfigItem.dynamicCustomCard("Feature Category & Cheat Organizer", category,
+                items.add(ConfigItem.dynamicCustomCard("Feature Category & Cheat Organizer", "Customize feature categories, subcategories, tags, and cheat classifications via drag-and-drop (/b order).", category,
                         FeatureOrganizerManager::getCardHeight,
                         FeatureOrganizerManager::renderOrganizerCard,
                         FeatureOrganizerManager::handleClick));
@@ -1618,7 +1618,7 @@ public class ConfigRegistry {
             // Group 1: Items with no subcategory
             for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
                 FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
-                if (meta.category.equalsIgnoreCase(category) && (meta.subCategory == null || meta.subCategory.trim().isEmpty())) {
+                if (meta.belongsToCategory(category) && (meta.subCategory == null || meta.subCategory.trim().isEmpty())) {
                     ConfigItem baseItem = masterMap.get(entry.getKey());
                     if (baseItem != null) {
                         assignedItems.add(baseItem.cloneWithCategory(category));
@@ -1631,7 +1631,7 @@ public class ConfigRegistry {
                 boolean subCatAddedHeader = false;
                 for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
                     FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
-                    if (meta.category.equalsIgnoreCase(category) && subCat.equalsIgnoreCase(meta.subCategory)) {
+                    if (meta.belongsToCategory(category) && subCat.equalsIgnoreCase(meta.subCategory)) {
                         if (!subCatAddedHeader) {
                             assignedItems.add(ConfigItem.header(subCat, category));
                             subCatAddedHeader = true;
@@ -1650,7 +1650,7 @@ public class ConfigRegistry {
         } else {
             for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
                 FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
-                if (meta.category.equalsIgnoreCase(category)) {
+                if (meta.belongsToCategory(category)) {
                     ConfigItem baseItem = masterMap.get(entry.getKey());
                     if (baseItem != null) {
                         assignedItems.add(baseItem.cloneWithCategory(category));

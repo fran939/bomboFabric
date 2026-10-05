@@ -71,10 +71,15 @@ public class LyricsManager {
             String preview,
             String rawData,
             List<LyricsLine> lines,
-            String artist
+            String artist,
+            String track
     ) {
+        public LyricCandidate(String id, String provider, String syncType, String preview, String rawData, List<LyricsLine> lines, String artist) {
+            this(id, provider, syncType, preview, rawData, lines, artist, "");
+        }
+
         public LyricCandidate(String id, String provider, String syncType, String preview, String rawData, List<LyricsLine> lines) {
-            this(id, provider, syncType, preview, rawData, lines, "");
+            this(id, provider, syncType, preview, rawData, lines, "", "");
         }
     }
 
@@ -475,14 +480,20 @@ public class LyricsManager {
             // Sort: Primary priority is artist accuracy, then sync quality: Word-Synced (3) > Line-Synced (2) > Plain/Unsynced (1) > None (0)
             String pref = BomboConfig.get().lyricsPreferredProvider != null ? BomboConfig.get().lyricsPreferredProvider.trim().toLowerCase(Locale.ROOT) : "auto";
             unique.sort((a, b) -> {
+                boolean aTrackMatch = isTrackMatch(cleanTrack, a.track());
+                boolean bTrackMatch = isTrackMatch(cleanTrack, b.track());
+                if (aTrackMatch != bTrackMatch) {
+                    return aTrackMatch ? -1 : 1;
+                }
+
                 boolean aArtistMatch = isArtistMatch(cleanArtist, a.artist());
                 boolean bArtistMatch = isArtistMatch(cleanArtist, b.artist());
                 if (aArtistMatch != bArtistMatch) {
                     return aArtistMatch ? -1 : 1;
                 }
 
-                int scoreA = a.syncType().contains("Word") ? 3 : (a.syncType().contains("Line") ? 2 : 1);
-                int scoreB = b.syncType().contains("Word") ? 3 : (b.syncType().contains("Line") ? 2 : 1);
+                int scoreA = (a.syncType().contains("ISRC") ? 4 : (a.syncType().contains("Word") ? 3 : (a.syncType().contains("Line") ? 2 : 1)));
+                int scoreB = (b.syncType().contains("ISRC") ? 4 : (b.syncType().contains("Word") ? 3 : (b.syncType().contains("Line") ? 2 : 1)));
                 if (scoreA != scoreB) {
                     return Integer.compare(scoreB, scoreA);
                 }
@@ -551,7 +562,8 @@ public class LyricsManager {
                         if (!el.isJsonObject()) continue;
                         JsonObject songObj = el.getAsJsonObject();
                         String art = songObj.has("artistName") ? songObj.get("artistName").getAsString() : "";
-                        if (isArtistMatch(cleanArtist, art) && songObj.has("artworkUrl100")) {
+                        String tName = songObj.has("trackName") ? songObj.get("trackName").getAsString() : "";
+                        if (isTrackMatch(cleanTrack, tName) && isArtistMatch(cleanArtist, art) && songObj.has("artworkUrl100")) {
                             downloadAndRegisterAlbumArt(songObj.get("artworkUrl100").getAsString().replace("100x100bb", "256x256bb"), epoch);
                             found = true;
                             break;
@@ -584,7 +596,8 @@ public class LyricsManager {
                             if (trackObj.has("artist") && trackObj.get("artist").isJsonObject()) {
                                 dArtist = trackObj.getAsJsonObject("artist").has("name") ? trackObj.getAsJsonObject("artist").get("name").getAsString() : "";
                             }
-                            if (isArtistMatch(cleanArtist, dArtist) && trackObj.has("album") && trackObj.get("album").isJsonObject()) {
+                            String dTitle = trackObj.has("title") ? trackObj.get("title").getAsString() : "";
+                            if (isTrackMatch(cleanTrack, dTitle) && isArtistMatch(cleanArtist, dArtist) && trackObj.has("album") && trackObj.get("album").isJsonObject()) {
                                 JsonObject alb = trackObj.getAsJsonObject("album");
                                 String coverUrl = alb.has("cover_big") && !alb.get("cover_big").isJsonNull()
                                         ? alb.get("cover_big").getAsString()
@@ -623,7 +636,8 @@ public class LyricsManager {
                             if (trackObj.has("artist") && trackObj.get("artist").isJsonObject()) {
                                 dArtist = trackObj.getAsJsonObject("artist").has("name") ? trackObj.getAsJsonObject("artist").get("name").getAsString() : "";
                             }
-                            if (isArtistMatch(cleanArtist, dArtist) && trackObj.has("album") && trackObj.get("album").isJsonObject()) {
+                            String dTitle = trackObj.has("title") ? trackObj.get("title").getAsString() : "";
+                            if (isTrackMatch(cleanTrack, dTitle) && isArtistMatch(cleanArtist, dArtist) && trackObj.has("album") && trackObj.get("album").isJsonObject()) {
                                 JsonObject alb = trackObj.getAsJsonObject("album");
                                 String coverUrl = alb.has("cover_big") && !alb.get("cover_big").isJsonNull()
                                         ? alb.get("cover_big").getAsString()
@@ -792,9 +806,21 @@ public class LyricsManager {
                 if (!el.isJsonObject()) continue;
                 JsonObject sObj = el.getAsJsonObject();
                 String art = sObj.has("artistName") ? sObj.get("artistName").getAsString() : "";
-                if (isArtistMatch(cleanArtist, art)) {
+                String tName = sObj.has("trackName") ? sObj.get("trackName").getAsString() : "";
+                if (isTrackMatch(cleanTrack, tName) && isArtistMatch(cleanArtist, art)) {
                     songObj = sObj;
                     break;
+                }
+            }
+            if (songObj == null) {
+                for (JsonElement el : itunesJson.getAsJsonArray("results")) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject sObj = el.getAsJsonObject();
+                    String tName = sObj.has("trackName") ? sObj.get("trackName").getAsString() : "";
+                    if (isTrackMatch(cleanTrack, tName)) {
+                        songObj = sObj;
+                        break;
+                    }
                 }
             }
             if (songObj == null) return;
@@ -899,7 +925,8 @@ public class LyricsManager {
                             preview,
                             formatCleanLrc(lines),
                             lines,
-                            cleanArtist
+                            cleanArtist,
+                            cleanTrack
                     ));
                 }
             }
@@ -917,7 +944,8 @@ public class LyricsManager {
                             preview,
                             formatCleanLrc(lines),
                             lines,
-                            cleanArtist
+                            cleanArtist,
+                            cleanTrack
                     ));
                 }
             }
@@ -954,6 +982,36 @@ public class LyricsManager {
     }
 
     private static void fetchLrcLibCandidates(String cleanTrack, String cleanArtist, List<LyricCandidate> out) {
+        // 0. ISRC lookup attempt (highest accuracy)
+        try {
+            String isrc = fetchIsrc(cleanTrack, cleanArtist);
+            if (isrc != null && !isrc.isEmpty()) {
+                String isrcUrl = "https://lrclib.net/api/get?track_name="
+                        + URLEncoder.encode(cleanTrack, StandardCharsets.UTF_8)
+                        + "&artist_name=" + URLEncoder.encode(cleanArtist, StandardCharsets.UTF_8);
+                HttpRequest isrcReq = HttpRequest.newBuilder()
+                        .uri(URI.create(isrcUrl))
+                        .header("User-Agent", "BomboAddons/1.0 (https://github.com/fran939/bombofabric)")
+                        .timeout(Duration.ofSeconds(4))
+                        .GET()
+                        .build();
+                HttpResponse<String> isrcResp = HTTP_CLIENT.send(isrcReq, HttpResponse.BodyHandlers.ofString());
+                if (isrcResp.statusCode() == 200) {
+                    JsonObject obj = JsonParser.parseString(isrcResp.body()).getAsJsonObject();
+                    long id = obj.has("id") ? obj.get("id").getAsLong() : System.currentTimeMillis();
+                    String synced = obj.has("syncedLyrics") && !obj.get("syncedLyrics").isJsonNull() ? obj.get("syncedLyrics").getAsString() : "";
+                    if (!synced.isEmpty()) {
+                        List<LyricsLine> lines = parseLrc(synced);
+                        if (!lines.isEmpty()) {
+                            boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
+                            String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
+                            out.add(new LyricCandidate("lrclib-isrc-" + id, "LrcLib", hasWords ? "Word-Synced (ISRC)" : "Line-Synced (ISRC)", preview, synced, lines, cleanArtist, cleanTrack));
+                        }
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+
         // 1. Exact match attempt via /api/get
         try {
             String exactUrl = "https://lrclib.net/api/get?track_name="
@@ -975,7 +1033,7 @@ public class LyricsManager {
                     if (!lines.isEmpty()) {
                         boolean hasWords = lines.stream().anyMatch(l -> l.words() != null && !l.words().isEmpty());
                         String preview = lines.get(0).text() + (lines.size() > 1 ? " | " + lines.get(1).text() : "");
-                        out.add(new LyricCandidate("lrclib-exact-" + id, "LrcLib", hasWords ? "Word-Synced" : "Line-Synced", preview, synced, lines, cleanArtist));
+                        out.add(new LyricCandidate("lrclib-exact-" + id, "LrcLib", hasWords ? "Word-Synced" : "Line-Synced", preview, synced, lines, cleanArtist, cleanTrack));
                     }
                 }
             }
@@ -1005,8 +1063,12 @@ public class LyricsManager {
                         JsonObject obj = itemEl.getAsJsonObject();
                         long id = obj.has("id") ? obj.get("id").getAsLong() : System.currentTimeMillis();
                         String itemArtist = obj.has("artistName") && !obj.get("artistName").isJsonNull() ? obj.get("artistName").getAsString() : "";
+                        String itemTrack = obj.has("trackName") && !obj.get("trackName").isJsonNull() ? obj.get("trackName").getAsString() : "";
                         if (!cleanArtist.isEmpty() && !isArtistMatch(cleanArtist, itemArtist)) {
                             continue; // Skip candidates from mismatched artists
+                        }
+                        if (!cleanTrack.isEmpty() && !isTrackMatch(cleanTrack, itemTrack)) {
+                            continue; // Skip candidates from mismatched track names
                         }
 
                         String synced = obj.has("syncedLyrics") && !obj.get("syncedLyrics").isJsonNull()
@@ -1029,7 +1091,8 @@ public class LyricsManager {
                                             preview,
                                             synced,
                                             lines,
-                                            itemArtist
+                                            itemArtist,
+                                            itemTrack
                                     ));
                                     syncedCount++;
                                 }
@@ -1422,11 +1485,68 @@ public class LyricsManager {
         return list;
     }
 
+    public static boolean isTrackMatch(String expectedTrack, String candidateTrack) {
+        if (expectedTrack == null || expectedTrack.isEmpty()) return true;
+        if (candidateTrack == null || candidateTrack.isEmpty()) return false;
+        String nExp = normalizeForMatch(cleanTitle(expectedTrack));
+        String nCand = normalizeForMatch(cleanTitle(candidateTrack));
+        if (nExp.isEmpty() || nCand.isEmpty()) return false;
+        if (nExp.equals(nCand)) return true;
+        if (nExp.startsWith(nCand) || nCand.startsWith(nExp)) return true;
+
+        String[] expWords = nExp.split("\\s+");
+        int matched = 0;
+        for (String w : expWords) {
+            if (!w.isEmpty() && nCand.contains(w)) matched++;
+        }
+        return expWords.length > 0 && ((double) matched / expWords.length) >= 0.75;
+    }
+
+    private static String fetchIsrc(String cleanTrack, String cleanArtist) {
+        if (cleanTrack == null || cleanTrack.isEmpty()) return null;
+        try {
+            String q = "recording:\"" + cleanTrack + "\"";
+            if (cleanArtist != null && !cleanArtist.isEmpty()) {
+                q += " AND artist:\"" + cleanArtist + "\"";
+            }
+            String mbUrl = "https://musicbrainz.org/ws/2/recording?query=" + URLEncoder.encode(q, StandardCharsets.UTF_8) + "&fmt=json&limit=3";
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(mbUrl))
+                    .header("User-Agent", "BomboAddons/1.0 (contact@bombo.dpdns.org)")
+                    .timeout(Duration.ofSeconds(3))
+                    .GET()
+                    .build();
+            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200) {
+                JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
+                if (json.has("recordings")) {
+                    for (JsonElement el : json.getAsJsonArray("recordings")) {
+                        if (!el.isJsonObject()) continue;
+                        JsonObject rec = el.getAsJsonObject();
+                        String rTitle = rec.has("title") ? rec.get("title").getAsString() : "";
+                        if (isTrackMatch(cleanTrack, rTitle) && rec.has("isrcs") && rec.get("isrcs").isJsonArray()) {
+                            JsonArray isrcs = rec.getAsJsonArray("isrcs");
+                            if (isrcs.size() > 0) {
+                                return isrcs.get(0).getAsString();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
     private static String cleanTitle(String s) {
         if (s == null) return "";
-        return s.replaceAll("(?i)\\s*\\(feat\\..*?\\)", "")
-                .replaceAll("(?i)\\s*\\[official.*?\\]", "")
-                .replaceAll("(?i)\\s*- remastered.*", "")
+        return s.replaceAll("(?i)\\s*\\((?:feat\\.|ft\\.|with).*?\\)", "")
+                .replaceAll("(?i)\\s*\\[(?:feat\\.|ft\\.|with).*?\\]", "")
+                .replaceAll("(?i)\\s*\\b(?:feat\\.|ft\\.)\\s+.*", "")
+                .replaceAll("(?i)\\s*\\[(?:official|explicit|audio|video|lyrics).*?\\]", "")
+                .replaceAll("(?i)\\s*\\((?:official|explicit|audio|video|lyrics).*?\\)", "")
+                .replaceAll("(?i)\\s*-\\s*(?:remastered|remaster|live|radio edit|bonus track|deluxe).*?", "")
+                .replaceAll("(?i)\\s*\\((?:remastered|remaster|live|radio edit|deluxe|bonus track).*?\\)", "")
+                .replaceAll("(?i)\\s*\\[(?:remastered|remaster|live|radio edit|deluxe|bonus track).*?\\]", "")
                 .trim();
     }
 

@@ -216,7 +216,7 @@ public class HighlightESP {
          return false;
       if (s.tracerTestAllEntities || s.cheeseTracer)
          return true;
-      if (s.dungeonKeyHighlight && s.dungeonKeyTracers && matchesIsland("Catacombs"))
+      if (s.dungeonKeyHighlight && s.dungeonKeyTracers && (matchesIsland("Catacombs") || me.bombo.bomboaddons.SkyblockUtils.isInDungeon()))
          return true;
       if (s.dungeonStarredMobHighlight && s.dungeonStarredMobTracers)
          return true;
@@ -648,11 +648,20 @@ public class HighlightESP {
             }
          }
 
-         if (s.dungeonKeyHighlight && matchesIsland("Catacombs") && !me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodDoorOpened()) {
+         if (s.dungeonKeyHighlight && (matchesIsland("Catacombs") || me.bombo.bomboaddons.SkyblockUtils.isInDungeon())) {
             String headTex = TargetPests.getHeadTextureValue(self);
             String skullHash = headTex != null ? TargetPests.extractTextureHash(headTex) : null;
-            if (skullHash != null && (skullHash.equalsIgnoreCase("20de5e8974940375934d32f71c91ad2d5728d38e51647dcc8f39206c099a54c2")
-                  || skullHash.equalsIgnoreCase("e49ec7d82b1415acae2059f78cd1d1754b9de9b18ca59f609024c4af843d4d24"))) {
+            boolean isBloodKey = skullHash != null && skullHash.equalsIgnoreCase("e49ec7d82b1415acae2059f78cd1d1754b9de9b18ca59f609024c4af843d4d24");
+            boolean isWitherKey = skullHash != null && skullHash.equalsIgnoreCase("20de5e8974940375934d32f71c91ad2d5728d38e51647dcc8f39206c099a54c2");
+            if (self.hasCustomName()) {
+               String cName = self.getCustomName().getString();
+               if (cName.contains("Blood Key")) isBloodKey = true;
+               if (cName.contains("Wither Key")) isWitherKey = true;
+            }
+            if (isBloodKey && (me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodDoorOpened() || me.bombo.bomboaddons.features.dungeons.DungeonBossManager.isBloodKeyObtained())) {
+               isBloodKey = false;
+            }
+            if (isBloodKey || isWitherKey) {
                int keyColor = BomboRenderUtils.colorNameToHex(s.dungeonKeyColor != null ? s.dungeonKeyColor : "GOLD");
                boolean headOnly = (self instanceof ArmorStand);
                return new EntityHighlightInfo(now, true, keyColor, s.dungeonKeyTracers, keyColor, true, headOnly);

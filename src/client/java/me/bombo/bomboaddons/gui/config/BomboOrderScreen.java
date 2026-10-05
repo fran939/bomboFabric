@@ -321,7 +321,11 @@ public class BomboOrderScreen extends Screen {
                 List<String> categories = new ArrayList<>(FeatureOrganizerManager.customCategories);
                 for (String cat : categories) {
                     if (mouseY >= curY && mouseY <= curY + 20) {
-                        hoverHint = "§b→ Move to category: " + cat;
+                        if (isCtrlHeld()) {
+                            hoverHint = "§d⊕ Link to category: " + cat + " §7(Ctrl+Drop)";
+                        } else {
+                            hoverHint = "§b→ Move to category: " + cat;
+                        }
                         break;
                     }
                     curY += 22;
@@ -475,7 +479,7 @@ public class BomboOrderScreen extends Screen {
 
             int count = 0;
             for (FeatureOrganizerManager.FeatureMeta fm : FeatureOrganizerManager.features.values()) {
-                if (fm.category.equalsIgnoreCase(cat) && isFeatureVisible(fm)) count++;
+                if (fm.belongsToCategory(cat) && isFeatureVisible(fm)) count++;
             }
 
             String idxBadge = (i < 9) ? "§8[" + (i + 1) + "] " : "";
@@ -711,7 +715,7 @@ public class BomboOrderScreen extends Screen {
                     if (fm.parentDependency != null && !fm.parentDependency.trim().isEmpty()) {
                         title += " §6↳ Requires: " + fm.parentDependency.trim();
                     }
-                    int maxTitleW = Math.max(100, controlsLeft - (cx + 28) - 8);
+                    int maxTitleW = Math.max(30, controlsLeft - (cx + 28) - 8);
                     if (this.font.width(title) > maxTitleW) {
                         title = this.font.plainSubstrByWidth(title, maxTitleW - this.font.width("..")) + "..";
                     }
@@ -723,7 +727,7 @@ public class BomboOrderScreen extends Screen {
                         if (item != null && item.description != null) desc = item.description;
                     }
                     if (desc != null && !desc.isEmpty()) {
-                        int maxDescW = Math.max(100, controlsLeft - (cx + 28) - 8);
+                        int maxDescW = Math.max(30, controlsLeft - (cx + 28) - 8);
                         String descDisp = desc;
                         if (this.font.width(descDisp) > maxDescW) {
                             descDisp = this.font.plainSubstrByWidth(desc, maxDescW - this.font.width("...")) + "...";
@@ -895,7 +899,7 @@ public class BomboOrderScreen extends Screen {
             if (!isAll) {
                 boolean matchesCat = false;
                 for (String sel : selectedCategories) {
-                    if (fm.category != null && fm.category.equalsIgnoreCase(sel)) {
+                    if (fm.belongsToCategory(sel)) {
                         matchesCat = true;
                         break;
                     }
@@ -1213,8 +1217,8 @@ public class BomboOrderScreen extends Screen {
     private void renderFeatureEditModal(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         g.fill(0, 0, this.width, this.height, 0x88000000);
 
-        int mw = 340;
-        int mh = 310;
+        int mw = 380;
+        int mh = 330;
         int mx = (this.width - mw) / 2;
         int my = (this.height - mh) / 2;
 
@@ -1224,57 +1228,102 @@ public class BomboOrderScreen extends Screen {
         g.text(this.font, "§b§lEdit Feature Details", mx + 16, my + 12, 0xFFFFFFFF, false);
 
         // Field 0: Name input label + box
-        g.text(this.font, "§7Feature Name:", mx + 16, my + 28, 0xFF94A3B8, false);
+        g.text(this.font, "§7Feature Name:", mx + 16, my + 27, 0xFF94A3B8, false);
         int nameInputX = mx + 16;
-        int nameInputY = my + 39;
+        int nameInputY = my + 38;
         int nameInputW = mw - 32;
         g.fill(nameInputX, nameInputY, nameInputX + nameInputW, nameInputY + 18, 0xFF1E293B);
         g.outline(nameInputX, nameInputY, nameInputW, 18, editFeatureFocusField == 0 ? 0xFF38BDF8 : 0x3364748B);
 
         String nameText = editFeatureNameInput;
+        g.enableScissor(nameInputX + 2, nameInputY + 1, nameInputX + nameInputW - 2, nameInputY + 17);
         g.text(this.font, nameText, nameInputX + 6, nameInputY + 5, 0xFFFFFFFF, false);
         if (editFeatureFocusField == 0 && (System.currentTimeMillis() / 500 % 2 == 0)) {
             editFeatureCursorPos = Math.max(0, Math.min(nameText.length(), editFeatureCursorPos));
             int cursorX = nameInputX + 6 + this.font.width(nameText.substring(0, editFeatureCursorPos));
             g.fill(cursorX, nameInputY + 3, cursorX + 1, nameInputY + 15, 0xFF38BDF8);
         }
+        g.disableScissor();
 
-        // Field 1: Description input label + box
-        g.text(this.font, "§7Description:", mx + 16, my + 63, 0xFF94A3B8, false);
+        // Field 1: Description input label + box (multi-line word-wrapped and strictly scissored)
+        g.text(this.font, "§7Description:", mx + 16, my + 60, 0xFF94A3B8, false);
         int descInputX = mx + 16;
-        int descInputY = my + 74;
+        int descInputY = my + 71;
         int descInputW = mw - 32;
-        g.fill(descInputX, descInputY, descInputX + descInputW, descInputY + 28, 0xFF1E293B);
-        g.outline(descInputX, descInputY, descInputW, 28, editFeatureFocusField == 1 ? 0xFF38BDF8 : 0x3364748B);
+        int descInputH = 42;
+        g.fill(descInputX, descInputY, descInputX + descInputW, descInputY + descInputH, 0xFF1E293B);
+        g.outline(descInputX, descInputY, descInputW, descInputH, editFeatureFocusField == 1 ? 0xFF38BDF8 : 0x3364748B);
 
         String descText = editFeatureDescInput;
         editFeatureCursorPos = Math.max(0, Math.min(descText.length(), editFeatureCursorPos));
 
-        if (descText.length() > 50) {
-            String line1 = descText.substring(0, 50);
-            String line2 = descText.substring(50);
-            g.text(this.font, line1, descInputX + 6, descInputY + 4, 0xFFFFFFFF, false);
-            g.text(this.font, line2, descInputX + 6, descInputY + 15, 0xFFFFFFFF, false);
+        List<net.minecraft.util.FormattedCharSequence> wrappedLines = this.font.split(Component.literal(descText), descInputW - 12);
+        g.enableScissor(descInputX + 2, descInputY + 2, descInputX + descInputW - 2, descInputY + descInputH - 2);
 
+        if (wrappedLines.isEmpty()) {
             if (editFeatureFocusField == 1 && (System.currentTimeMillis() / 500 % 2 == 0)) {
-                if (editFeatureCursorPos <= 50) {
-                    int cursorX = descInputX + 6 + this.font.width(descText.substring(0, editFeatureCursorPos));
-                    g.fill(cursorX, descInputY + 3, cursorX + 1, descInputY + 13, 0xFF38BDF8);
-                } else {
-                    int cursorX = descInputX + 6 + this.font.width(descText.substring(50, editFeatureCursorPos));
-                    g.fill(cursorX, descInputY + 14, cursorX + 1, descInputY + 24, 0xFF38BDF8);
-                }
+                g.fill(descInputX + 6, descInputY + 4, descInputX + 7, descInputY + 14, 0xFF38BDF8);
             }
         } else {
-            g.text(this.font, descText, descInputX + 6, descInputY + 5, 0xFFFFFFFF, false);
+            int lineY = descInputY + 4;
+            int running = 0;
+            int cursorLine = 0;
+            int cursorCol = 0;
+            boolean cursorFound = false;
+
+            for (int l = 0; l < wrappedLines.size(); l++) {
+                net.minecraft.util.FormattedCharSequence seq = wrappedLines.get(l);
+                StringBuilder sb = new StringBuilder();
+                seq.accept((idx, style, cp) -> {
+                    sb.appendCodePoint(cp);
+                    return true;
+                });
+                String lineStr = sb.toString();
+                g.text(this.font, lineStr, descInputX + 6, lineY, 0xFFFFFFFF, false);
+
+                if (!cursorFound) {
+                    if (editFeatureCursorPos <= running + lineStr.length()) {
+                        cursorLine = l;
+                        cursorCol = Math.max(0, editFeatureCursorPos - running);
+                        cursorFound = true;
+                    } else {
+                        running += lineStr.length();
+                        if (running < descText.length() && descText.charAt(running) == ' ') {
+                            running++;
+                        }
+                    }
+                }
+                lineY += 10;
+            }
+
+            if (!cursorFound) {
+                cursorLine = Math.max(0, wrappedLines.size() - 1);
+                net.minecraft.util.FormattedCharSequence lastSeq = wrappedLines.get(cursorLine);
+                StringBuilder lastSb = new StringBuilder();
+                lastSeq.accept((idx, style, cp) -> {
+                    lastSb.appendCodePoint(cp);
+                    return true;
+                });
+                cursorCol = lastSb.length();
+            }
+
             if (editFeatureFocusField == 1 && (System.currentTimeMillis() / 500 % 2 == 0)) {
-                int cursorX = descInputX + 6 + this.font.width(descText.substring(0, editFeatureCursorPos));
-                g.fill(cursorX, descInputY + 3, cursorX + 1, descInputY + 15, 0xFF38BDF8);
+                net.minecraft.util.FormattedCharSequence curSeq = wrappedLines.get(Math.min(cursorLine, wrappedLines.size() - 1));
+                StringBuilder curSb = new StringBuilder();
+                curSeq.accept((idx, style, cp) -> {
+                    curSb.appendCodePoint(cp);
+                    return true;
+                });
+                String sub = curSb.substring(0, Math.min(cursorCol, curSb.length()));
+                int cursorX = descInputX + 6 + this.font.width(sub);
+                int cY = descInputY + 4 + cursorLine * 10;
+                g.fill(cursorX, cY, cursorX + 1, cY + 9, 0xFF38BDF8);
             }
         }
+        g.disableScissor();
 
         // Field 2: Requires Parent Feature (Dependency)
-        int depY = my + 108;
+        int depY = my + 119;
         g.text(this.font, "§7Requires Parent Feature (Dependency):", mx + 16, depY, 0xFF94A3B8, false);
         int depInputX = mx + 16;
         int depInputY = depY + 11;
@@ -1285,6 +1334,7 @@ public class BomboOrderScreen extends Screen {
         g.outline(depInputX, depInputY, depInputW, 18, editFeatureFocusField == 2 ? 0xFFFFAA00 : 0x3364748B);
 
         String depText = editFeatureParentInput;
+        g.enableScissor(depInputX + 2, depInputY + 1, depInputX + depInputW - 2, depInputY + 17);
         if (depText.isEmpty()) {
             g.text(this.font, "§8(None - runs independently)", depInputX + 6, depInputY + 5, 0xFF64748B, false);
         } else {
@@ -1295,6 +1345,7 @@ public class BomboOrderScreen extends Screen {
             int cursorX = depInputX + 6 + this.font.width(depText.substring(0, editFeatureCursorPos));
             g.fill(cursorX, depInputY + 3, cursorX + 1, depInputY + 15, 0xFFFFAA00);
         }
+        g.disableScissor();
 
         if (clearW > 0) {
             int clearX = depInputX + depInputW + 6;
@@ -1303,7 +1354,7 @@ public class BomboOrderScreen extends Screen {
         }
 
         // Field 3: Subcategory / Separator
-        int subcatY = my + 138;
+        int subcatY = my + 152;
         g.text(this.font, "§7Subcategory / Separator (optional):", mx + 16, subcatY, 0xFF94A3B8, false);
         int subcatInputX = mx + 16;
         int subcatInputY = subcatY + 11;
@@ -1313,15 +1364,17 @@ public class BomboOrderScreen extends Screen {
 
         String subcatText = editFeatureSubcatInput;
         String subcatDisp = subcatText.isEmpty() ? "§8(No subcategory - top level)" : subcatText;
+        g.enableScissor(subcatInputX + 2, subcatInputY + 1, subcatInputX + subcatInputW - 2, subcatInputY + 17);
         g.text(this.font, subcatDisp, subcatInputX + 6, subcatInputY + 5, subcatText.isEmpty() ? 0xFF64748B : 0xFFFFAA00, false);
         if (editFeatureFocusField == 3 && (System.currentTimeMillis() / 500 % 2 == 0)) {
             editFeatureCursorPos = Math.max(0, Math.min(subcatText.length(), editFeatureCursorPos));
             int cursorX = subcatInputX + 6 + this.font.width(subcatText.substring(0, editFeatureCursorPos));
             g.fill(cursorX, subcatInputY + 3, cursorX + 1, subcatInputY + 15, 0xFFFFAA00);
         }
+        g.disableScissor();
 
         // Field 4: Tags input label + box
-        int tagsY = my + 168;
+        int tagsY = my + 185;
         g.text(this.font, "§7Tags (comma-separated, e.g. garden, crops):", mx + 16, tagsY, 0xFF94A3B8, false);
         int tagsInputX = mx + 16;
         int tagsInputY = tagsY + 11;
@@ -1331,15 +1384,17 @@ public class BomboOrderScreen extends Screen {
 
         String tagsText = editFeatureTagsInput;
         String tagsDisp = tagsText.isEmpty() ? "§8(No custom tags)" : tagsText;
+        g.enableScissor(tagsInputX + 2, tagsInputY + 1, tagsInputX + tagsInputW - 2, tagsInputY + 17);
         g.text(this.font, tagsDisp, tagsInputX + 6, tagsInputY + 5, tagsText.isEmpty() ? 0xFF64748B : 0xFFFFFFFF, false);
         if (editFeatureFocusField == 4 && (System.currentTimeMillis() / 500 % 2 == 0)) {
             editFeatureCursorPos = Math.max(0, Math.min(tagsText.length(), editFeatureCursorPos));
             int cursorX = tagsInputX + 6 + this.font.width(tagsText.substring(0, editFeatureCursorPos));
             g.fill(cursorX, tagsInputY + 3, cursorX + 1, tagsInputY + 15, 0xFF38BDF8);
         }
+        g.disableScissor();
 
         // Enabled by Default checkbox row
-        int defY = my + 202;
+        int defY = my + 220;
         int togBoxX = mx + 16;
         int togBoxY = defY;
         boolean togHover = mouseX >= togBoxX && mouseX <= togBoxX + 180 && mouseY >= togBoxY && mouseY <= togBoxY + 16;
@@ -1372,13 +1427,13 @@ public class BomboOrderScreen extends Screen {
 
         // 1. Feature Edit Modal
         if (isEditingFeature && editingFeature != null) {
-            int mw = 340;
-            int mh = 310;
+            int mw = 380;
+            int mh = 330;
             int mx = (this.width - mw) / 2;
             int my = (this.height - mh) / 2;
 
             int nameInputX = mx + 16;
-            int nameInputY = my + 39;
+            int nameInputY = my + 38;
             int nameInputW = mw - 32;
             if (mouseX >= nameInputX && mouseX <= nameInputX + nameInputW && mouseY >= nameInputY && mouseY <= nameInputY + 18) {
                 editFeatureFocusField = 0;
@@ -1387,16 +1442,17 @@ public class BomboOrderScreen extends Screen {
             }
 
             int descInputX = mx + 16;
-            int descInputY = my + 74;
+            int descInputY = my + 71;
             int descInputW = mw - 32;
-            if (mouseX >= descInputX && mouseX <= descInputX + descInputW && mouseY >= descInputY && mouseY <= descInputY + 28) {
+            int descInputH = 42;
+            if (mouseX >= descInputX && mouseX <= descInputX + descInputW && mouseY >= descInputY && mouseY <= descInputY + descInputH) {
                 editFeatureFocusField = 1;
                 editFeatureCursorPos = editFeatureDescInput.length();
                 return true;
             }
 
             // Parent Dependency field and Clear button
-            int depY = my + 108;
+            int depY = my + 119;
             int depInputY = depY + 11;
             int clearW = editFeatureParentInput.isEmpty() ? 0 : 64;
             int depInputW = mw - 32 - (clearW > 0 ? (clearW + 6) : 0);
@@ -1418,7 +1474,7 @@ public class BomboOrderScreen extends Screen {
             }
 
             // Field 3: Subcategory input box
-            int subcatY = my + 138;
+            int subcatY = my + 152;
             int subcatInputX = mx + 16;
             int subcatInputY = subcatY + 11;
             int subcatInputW = mw - 32;
@@ -1429,7 +1485,7 @@ public class BomboOrderScreen extends Screen {
             }
 
             // Field 4: Tags input box
-            int tagsY = my + 168;
+            int tagsY = my + 185;
             int tagsInputX = mx + 16;
             int tagsInputY = tagsY + 11;
             int tagsInputW = mw - 32;
@@ -1440,7 +1496,7 @@ public class BomboOrderScreen extends Screen {
             }
 
             // Enabled by default checkbox toggle
-            int defY = my + 202;
+            int defY = my + 220;
             int togBoxX = mx + 16;
             int togBoxY = defY;
             if (mouseX >= togBoxX && mouseX <= togBoxX + 180 && mouseY >= togBoxY && mouseY <= togBoxY + 16) {
@@ -2369,15 +2425,30 @@ public class BomboOrderScreen extends Screen {
                         } else {
                             toMove.add(draggingFeature);
                         }
+                        boolean ctrlHeld = isCtrlHeld();
                         for (FeatureOrganizerManager.FeatureMeta meta : toMove) {
-                            meta.category = cat;
+                            if (ctrlHeld) {
+                                // Ctrl+Drag: link the feature into the target category (duplicate)
+                                if (meta.linkedCategories == null) meta.linkedCategories = new java.util.ArrayList<>();
+                                if (!meta.belongsToCategory(cat)) {
+                                    meta.linkedCategories.add(cat);
+                                }
+                            } else {
+                                // Normal drag: move the feature to the target category
+                                // Remove from linkedCategories if it was linked there
+                                if (meta.linkedCategories != null) {
+                                    meta.linkedCategories.removeIf(lc -> lc != null && lc.equalsIgnoreCase(cat));
+                                }
+                                meta.category = cat;
+                            }
                         }
                         FeatureOrganizerManager.save();
                         if (Minecraft.getInstance().player != null) {
+                            String verb = ctrlHeld ? "Linked" : "Moved";
                             if (toMove.size() > 1) {
-                                Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aMoved §e" + toMove.size() + "§a features to category §b" + cat));
+                                Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §a" + verb + " §e" + toMove.size() + "§a features to category §b" + cat));
                             } else {
-                                Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aMoved '§e" + draggingFeature.name + "§a' to category §b" + cat));
+                                Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §a" + verb + " '§e" + draggingFeature.name + "§a' to category §b" + cat));
                             }
                         }
                         dropped = true;

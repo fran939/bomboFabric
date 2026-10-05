@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.95] - 2026-10-05 (Beta)
+
+### Features
+- **Dungeon Key Highlight Blood Door & Key Pickup Auto-Off (`DungeonBossManager`, `HighlightESP`):** Blood Keys no longer highlight or show tracers after the Blood Door has been opened or after any player obtains the Blood Key. Added chat event hooks in `BomboaddonsClient` and `ChatMixin` to detect `The BLOOD DOOR has been opened!` and `has obtained Blood Key!`, with automatic reset on run start ("Starting in 3 seconds.") and server transfer.
+- **Config Organizer Description Box Word Wrap & Scissoring (`BomboOrderScreen`):** Enlarged feature edit modal dimensions (`380x330`), added full multi-line word wrapping for the description box with multi-line cursor navigation, and enabled strict scissor clipping on all modal text boxes and list cards so text never exceeds boundaries.
+- **Comprehensive Feature Descriptions Across All Menus (`ConfigRegistry`, `FeatureOrganizerManager`):** Added descriptive explanations for all custom cards (In-Game Command Keybinds, GUI Container Keybinds, Auto Sequences Manager, Command Aliases Manager, Highlight Editor, Custom Waypoints, Canvas, Profile Swapper, etc.) and auto-populated any blank feature descriptions.
+- **Enhanced Multi-Provider Lyrics Accuracy & ISRC Integration (`LyricsManager`):** Retained all providers (Paxsenix, Musixmatch, LRCLIB, Kugou, Unison, YouLyPlus) while eliminating mismatched song lyrics by enforcing both track title and artist verification across all queries, enhancing title cleaning for remasters and edits, and integrating MusicBrainz ISRC resolution for exact LRCLIB recording matching.
+
 ## [26.2.28.94] - 2026-10-05 (Beta)
 
 ### Features

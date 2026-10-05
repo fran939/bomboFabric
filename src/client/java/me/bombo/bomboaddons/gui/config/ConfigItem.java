@@ -261,7 +261,11 @@ public class ConfigItem {
     }
 
     public static ConfigItem customCard(String name, String category, int fixedHeight, CustomCardRenderer renderer, CustomCardClickHandler clickHandler) {
-        ConfigItem item = new ConfigItem(Type.CUSTOM_CARD, name, null, category);
+        return customCard(name, "", category, fixedHeight, renderer, clickHandler);
+    }
+
+    public static ConfigItem customCard(String name, String description, String category, int fixedHeight, CustomCardRenderer renderer, CustomCardClickHandler clickHandler) {
+        ConfigItem item = new ConfigItem(Type.CUSTOM_CARD, name, description, category);
         item.cardHeight = fixedHeight;
         item.customRenderer = renderer;
         item.customClickHandler = clickHandler;
@@ -269,7 +273,11 @@ public class ConfigItem {
     }
 
     public static ConfigItem dynamicCustomCard(String name, String category, Supplier<Integer> heightSupplier, CustomCardRenderer renderer, CustomCardClickHandler clickHandler) {
-        ConfigItem item = new ConfigItem(Type.CUSTOM_CARD, name, null, category);
+        return dynamicCustomCard(name, "", category, heightSupplier, renderer, clickHandler);
+    }
+
+    public static ConfigItem dynamicCustomCard(String name, String description, String category, Supplier<Integer> heightSupplier, CustomCardRenderer renderer, CustomCardClickHandler clickHandler) {
+        ConfigItem item = new ConfigItem(Type.CUSTOM_CARD, name, description, category);
         item.dynamicHeightSupplier = heightSupplier;
         item.customRenderer = renderer;
         item.customClickHandler = clickHandler;

@@ -190,6 +190,7 @@ public abstract class ChatMixin implements IChatComponent {
             me.bombo.bomboaddons.features.TotemAnimationManager.onChatMessage(raw);
             me.bombo.bomboaddons.features.party.PartyManager.onChatMessage(raw);
             me.bombo.bomboaddons.SkyblockUtils.onChatMessage(raw);
+            me.bombo.bomboaddons.features.dungeons.DungeonBossManager.onChatMessage(raw);
 
             if (me.bombo.bomboaddons.features.ring.RingManager.shouldSuppressMessage(raw)) {
                me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, "RING_SUPPRESS");

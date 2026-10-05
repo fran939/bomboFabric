@@ -184,6 +184,7 @@ public class DungeonBossManager {
     private static final String WATCHER = "The Watcher";
 
     private static boolean bloodDoorOpened = false;
+    private static boolean bloodKeyObtained = false;
     private static boolean leftCrystalPickedUp = false;
     private static boolean rightCrystalPickedUp = false;
     private static boolean leftCrystalPlaced = false;
@@ -191,6 +192,10 @@ public class DungeonBossManager {
 
     public static boolean isBloodDoorOpened() {
         return bloodDoorOpened;
+    }
+
+    public static boolean isBloodKeyObtained() {
+        return bloodKeyObtained;
     }
 
     public static BossPhase getCurrentPhase() {
@@ -251,6 +256,7 @@ public class DungeonBossManager {
         goldorSection = 1;
         i4Done = false;
         bloodDoorOpened = false;
+        bloodKeyObtained = false;
         leftCrystalPickedUp = false;
         rightCrystalPickedUp = false;
         leftCrystalPlaced = false;
@@ -266,11 +272,23 @@ public class DungeonBossManager {
         Minecraft mc = Minecraft.getInstance();
         BomboConfig.Settings s = BomboConfig.get();
 
+        if (cleanMessage.contains("Starting in 3 seconds.")) {
+            resetAll();
+        }
+
         // Blood Door Opened
-        if (cleanMessage.contains("The BLOOD DOOR has been opened!")) {
+        if (cleanMessage.contains("The BLOOD DOOR has been opened!") || cleanMessage.contains("BLOOD DOOR has been opened")) {
             bloodDoorOpened = true;
             if (s != null && s.dungeonDebug && mc.player != null) {
                 mc.player.sendSystemMessage(Component.literal("§8[§bDungeon Boss§8] §cBlood door opened detected."));
+            }
+        }
+
+        // Blood Key Obtained
+        if (cleanMessage.contains("has obtained Blood Key!") || cleanMessage.contains("obtained Blood Key")) {
+            bloodKeyObtained = true;
+            if (s != null && s.dungeonDebug && mc.player != null) {
+                mc.player.sendSystemMessage(Component.literal("§8[§bDungeon Boss§8] §cBlood Key obtained detected."));
             }
         }
 
