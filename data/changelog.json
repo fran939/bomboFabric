@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.105",
+    "date": "2026-10-07",
+    "changes": [
+      "+ Picture-in-Picture Media Overlay - Added in-game /b pip and /pip media overlay with opacity adjustment, scaling, and ad-free clean video canvas for YouTube",
+      "~ Subcategory Casing Preservation - Subcategories in /b order now retain exact casing as entered (e.g. Auto Fishing)",
+      "+ Draggable Subcategory Headers - Subcategory blocks in /b order can now be dragged and dropped to reorder them within categories",
+      "~ Conditional Image Preview Visibility - Fixed custom X/Y sliders and Move button to only display when Preview Anchor is set to Custom",
+      "+ Category & Dependency-Aware Search - Searching category names or dependent/parent features now shows all related settings in search results",
+      "+ Minimizable Aliases & Triggers Cards - Added collapse arrows and master toggle switches to Command Aliases and Chat Triggers managers",
+      "~ Developer Bridge Display Name - Ensured developer API key strictly emits and renders name 'bombo' across chat and bridge",
+      "+ Profile Viewer Brigadier Registration - Registered /pv and /bpv in Brigadier with online player and tab completions"
+    ]
+  },
+  {
     "version": "26.2.28.104",
     "date": "2026-10-07",
     "changes": [

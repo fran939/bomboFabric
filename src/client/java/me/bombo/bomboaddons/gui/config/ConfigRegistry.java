@@ -233,9 +233,24 @@ public class ConfigRegistry {
                 items.add(ConfigItem.keybind("Chat Peek Key", "Hold keybind to peek chat history while moving without opening chat box.", category, () -> s.chatPeekKey != null ? s.chatPeekKey : "y", v -> s.chatPeekKey = v));
                 items.add(ConfigItem.header("Chat Image Preview", category));
                 items.add(ConfigItem.toggle("Fixed Preview Position", "Fix image preview at a stationary position instead of following mouse cursor.", category, () -> s.chatImagePreviewFixed, v -> s.chatImagePreviewFixed = v));
-                items.add(ConfigItem.cycle("Preview Anchor Position", "Screen position where the preview will be anchored when fixed.", category, List.of("Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center", "Custom"), () -> s.chatImagePreviewAnchor != null ? s.chatImagePreviewAnchor : "Top Right", v -> s.chatImagePreviewAnchor = v));
-                items.add(ConfigItem.sliderInt("Custom Position X Offset", "Custom horizontal position in pixels from left edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomX, v -> s.chatImagePreviewCustomX = v));
-                items.add(ConfigItem.sliderInt("Custom Position Y Offset", "Custom vertical position in pixels from top edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomY, v -> s.chatImagePreviewCustomY = v));
+                ConfigItem anchorItem1 = ConfigItem.cycle("Preview Anchor Position", "Screen position where the preview will be anchored when fixed.", category, List.of("Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center", "Custom"), () -> s.chatImagePreviewAnchor != null ? s.chatImagePreviewAnchor : "Top Right", v -> s.chatImagePreviewAnchor = v);
+                anchorItem1.visibleCondition = () -> s.chatImagePreviewFixed;
+                items.add(anchorItem1);
+
+                ConfigItem customX1 = ConfigItem.sliderInt("Custom Position X Offset", "Custom horizontal position in pixels from left edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomX, v -> s.chatImagePreviewCustomX = v);
+                customX1.visibleCondition = () -> s.chatImagePreviewFixed && "Custom".equalsIgnoreCase(s.chatImagePreviewAnchor);
+                items.add(customX1);
+
+                ConfigItem customY1 = ConfigItem.sliderInt("Custom Position Y Offset", "Custom vertical position in pixels from top edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomY, v -> s.chatImagePreviewCustomY = v);
+                customY1.visibleCondition = () -> s.chatImagePreviewFixed && "Custom".equalsIgnoreCase(s.chatImagePreviewAnchor);
+                items.add(customY1);
+
+                ConfigItem moveBtn1 = ConfigItem.button("Move Custom Preview", "Move Position", "Interactively drag and place image preview position.", category, () -> {
+                    Minecraft.getInstance().setScreenAndShow(new HudMoveScreen());
+                });
+                moveBtn1.visibleCondition = () -> s.chatImagePreviewFixed && "Custom".equalsIgnoreCase(s.chatImagePreviewAnchor);
+                items.add(moveBtn1);
+
                 items.add(ConfigItem.sliderFloat("Preview Scale", "Scaling multiplier for preview images (0.5x to 2.0x).", category, 0.5f, 2.0f, 0.05f, "x", () -> s.chatImagePreviewScale, v -> s.chatImagePreviewScale = v));
             }
 
@@ -975,10 +990,39 @@ public class ConfigRegistry {
                 }));
                 items.add(ConfigItem.header("Chat Image Preview HUD", category));
                 items.add(ConfigItem.toggle("Fixed Image Preview", "Fix image preview at a stationary position instead of following mouse cursor.", category, () -> s.chatImagePreviewFixed, v -> s.chatImagePreviewFixed = v));
-                items.add(ConfigItem.cycle("Preview Anchor Position", "Screen position where the preview will be anchored when fixed.", category, List.of("Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center", "Custom"), () -> s.chatImagePreviewAnchor != null ? s.chatImagePreviewAnchor : "Top Right", v -> s.chatImagePreviewAnchor = v));
-                items.add(ConfigItem.sliderInt("Custom Position X Offset", "Custom horizontal position in pixels from left edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomX, v -> s.chatImagePreviewCustomX = v));
-                items.add(ConfigItem.sliderInt("Custom Position Y Offset", "Custom vertical position in pixels from top edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomY, v -> s.chatImagePreviewCustomY = v));
+                ConfigItem anchorItem2 = ConfigItem.cycle("Preview Anchor Position", "Screen position where the preview will be anchored when fixed.", category, List.of("Top Right", "Top Left", "Bottom Right", "Bottom Left", "Center", "Custom"), () -> s.chatImagePreviewAnchor != null ? s.chatImagePreviewAnchor : "Top Right", v -> s.chatImagePreviewAnchor = v);
+                anchorItem2.visibleCondition = () -> s.chatImagePreviewFixed;
+                items.add(anchorItem2);
+
+                ConfigItem customX2 = ConfigItem.sliderInt("Custom Position X Offset", "Custom horizontal position in pixels from left edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomX, v -> s.chatImagePreviewCustomX = v);
+                customX2.visibleCondition = () -> s.chatImagePreviewFixed && "Custom".equalsIgnoreCase(s.chatImagePreviewAnchor);
+                items.add(customX2);
+
+                ConfigItem customY2 = ConfigItem.sliderInt("Custom Position Y Offset", "Custom vertical position in pixels from top edge when using Custom anchor.", category, 0, 1000, 10, "px", () -> s.chatImagePreviewCustomY, v -> s.chatImagePreviewCustomY = v);
+                customY2.visibleCondition = () -> s.chatImagePreviewFixed && "Custom".equalsIgnoreCase(s.chatImagePreviewAnchor);
+                items.add(customY2);
+
+                ConfigItem moveBtn2 = ConfigItem.button("Move Custom Preview", "Move Position", "Interactively drag and place image preview position.", category, () -> {
+                    Minecraft.getInstance().setScreenAndShow(new HudMoveScreen());
+                });
+                moveBtn2.visibleCondition = () -> s.chatImagePreviewFixed && "Custom".equalsIgnoreCase(s.chatImagePreviewAnchor);
+                items.add(moveBtn2);
+
                 items.add(ConfigItem.sliderFloat("Preview Scale", "Scaling multiplier for preview images (0.5x to 2.0x).", category, 0.5f, 2.0f, 0.05f, "x", () -> s.chatImagePreviewScale, v -> s.chatImagePreviewScale = v));
+
+                items.add(ConfigItem.header("Picture-in-Picture (PiP) Overlay", category));
+                items.add(ConfigItem.hudToggle("Picture-in-Picture Media HUD", "In-game media player & video stream overlay. Supports YouTube videos and direct image links (/b pip <url>).", category, () -> s.pipEnabled, v -> s.pipEnabled = v, HudTarget.PIP_OVERLAY));
+                items.add(ConfigItem.text("PiP Media URL", "Direct media or YouTube URL currently loaded into the PiP display.", category, () -> s.pipUrl != null ? s.pipUrl : "", v -> {
+                    s.pipUrl = v;
+                    if (v != null && !v.trim().isEmpty()) {
+                        me.bombo.bomboaddons.features.pip.PipManager.loadMedia(v.trim());
+                    }
+                }));
+                items.add(ConfigItem.sliderFloat("PiP Transparency / Opacity", "Visual opacity of the picture-in-picture media frame (5% to 100%).", category, 0.05f, 1.0f, 0.05f, "", () -> s.pipOpacity, v -> s.pipOpacity = v));
+                items.add(ConfigItem.sliderFloat("PiP Scale", "Size multiplier for the PiP window (0.2x to 5.0x).", category, 0.2f, 5.0f, 0.1f, "x", () -> s.pipScale, v -> s.pipScale = v));
+                items.add(ConfigItem.toggle("PiP Clean Video Canvas", "For YouTube videos, strip out all interface elements, likes, and subscription banners, showing only a clean 16:9 canvas.", category, () -> s.pipCleanVideo, v -> s.pipCleanVideo = v));
+                items.add(ConfigItem.toggle("PiP Show Border", "Render a subtle outer border around the picture-in-picture window.", category, () -> s.pipShowBorder, v -> s.pipShowBorder = v));
+
                 items.add(ConfigItem.header("Gameplay Trackers & HUDs", category));
                 items.add(ConfigItem.hudToggle("Dice Tracker HUD", "Tracks High Class Archfiend Dice rolls and profit.", category, () -> s.diceTracker, v -> s.diceTracker = v, HudTarget.DICE));
                 items.add(ConfigItem.hudToggle("Feast Bakery HUD", "Displays Feast bakery cake timers and buffs.", category, () -> s.feastBakeryHud, v -> s.feastBakeryHud = v, HudTarget.BAKERY));

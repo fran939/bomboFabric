@@ -437,10 +437,24 @@ public class BomboConfigScreen extends Screen {
         }
         FeatureOrganizerManager.FeatureMeta fm = FeatureOrganizerManager.features.get(item.name);
         if (fm != null && fm.parentDependency != null && !fm.parentDependency.trim().isEmpty()) {
-            String parentName = fm.parentDependency.trim();
-            ConfigItem parentItem = ConfigRegistry.getMasterItemsMap().get(parentName);
-            if (parentItem != null && parentItem.boolGetter != null) {
-                return !Boolean.TRUE.equals(parentItem.boolGetter.get());
+            String dep = fm.parentDependency.trim();
+            if (dep.contains("=")) {
+                String[] parts = dep.split("=", 2);
+                String parentName = parts[0].trim();
+                String targetVal = parts[1].trim();
+                ConfigItem parentItem = ConfigRegistry.getMasterItemsMap().get(parentName);
+                if (parentItem != null) {
+                    if (parentItem.stringGetter != null) {
+                        return !targetVal.equalsIgnoreCase(parentItem.stringGetter.get());
+                    } else if (parentItem.boolGetter != null) {
+                        return Boolean.parseBoolean(targetVal) != Boolean.TRUE.equals(parentItem.boolGetter.get());
+                    }
+                }
+            } else {
+                ConfigItem parentItem = ConfigRegistry.getMasterItemsMap().get(dep);
+                if (parentItem != null && parentItem.boolGetter != null) {
+                    return !Boolean.TRUE.equals(parentItem.boolGetter.get());
+                }
             }
         }
         return false;
@@ -2066,6 +2080,48 @@ public class BomboConfigScreen extends Screen {
         }
     }
 
+    private boolean itemMatchesQuery(ConfigItem item, String cat, String q) {
+        if (item.type == ConfigItem.Type.HEADER) return false;
+        if (cat != null && cat.toLowerCase().contains(q)) return true;
+        if (item.name != null && item.name.toLowerCase().contains(q)) return true;
+        if (item.description != null && item.description.toLowerCase().contains(q)) return true;
+        if (item.subCategoryName != null && item.subCategoryName.toLowerCase().contains(q)) return true;
+
+        // Tags matching
+        FeatureOrganizerManager.FeatureMeta fm = FeatureOrganizerManager.features.get(item.name);
+        if (fm != null && fm.tags != null) {
+            for (String tag : fm.tags) {
+                if (tag.toLowerCase().contains(q)) return true;
+            }
+        }
+
+        // Parent dependency matching: if this item requires parent, and parent matches query -> show both!
+        if (fm != null && fm.parentDependency != null && !fm.parentDependency.isEmpty()) {
+            String parentName = fm.parentDependency;
+            if (parentName.contains("=")) parentName = parentName.split("=")[0].trim();
+            if (parentName.toLowerCase().contains(q)) return true;
+            ConfigItem parentItem = ConfigRegistry.getMasterItemsMap().get(parentName);
+            if (parentItem != null && ((parentItem.name != null && parentItem.name.toLowerCase().contains(q))
+                    || (parentItem.description != null && parentItem.description.toLowerCase().contains(q)))) {
+                return true;
+            }
+        }
+
+        // Child dependency matching: if another item requires this item, and that other item matches query -> show both!
+        for (FeatureOrganizerManager.FeatureMeta other : FeatureOrganizerManager.features.values()) {
+            if (other.parentDependency != null && !other.parentDependency.isEmpty()) {
+                String reqParent = other.parentDependency;
+                if (reqParent.contains("=")) reqParent = reqParent.split("=")[0].trim();
+                if (reqParent.equalsIgnoreCase(item.name)) {
+                    if (other.name != null && other.name.toLowerCase().contains(q)) return true;
+                    if (other.description != null && other.description.toLowerCase().contains(q)) return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private List<ConfigItem> searchMatchingItems() {
         List<ConfigItem> list = new ArrayList<>();
         String q = searchQuery.toLowerCase().trim();
@@ -2073,9 +2129,7 @@ public class BomboConfigScreen extends Screen {
             List<ConfigItem> catMatches = new ArrayList<>();
             for (ConfigItem item : ConfigRegistry.getItemsForCategory(cat)) {
                 if (item.type == ConfigItem.Type.HEADER) continue;
-                if ((item.name != null && item.name.toLowerCase().contains(q))
-                        || (item.description != null && item.description.toLowerCase().contains(q))
-                        || (item.subCategoryName != null && item.subCategoryName.toLowerCase().contains(q))) {
+                if (itemMatchesQuery(item, cat, q)) {
                     catMatches.add(item);
                 }
             }

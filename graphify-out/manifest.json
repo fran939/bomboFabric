@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/BetterPVClient.java": {
-    "mtime": 1790224572.9089756,
-    "seen": 1791079643.205381,
-    "ast_hash": "2a4906b9a006abac67535d1ebb023e53",
+    "mtime": 1791329912.4810715,
+    "seen": 1791330103.9690645,
+    "ast_hash": "a662134fab765403c686f87eb833d4d1",
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/ChatClickProcessor.java": {
@@ -84,9 +84,9 @@
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/api/HypixelApiClient.java": {
-    "mtime": 1790277046.6689923,
-    "seen": 1791079643.2054002,
-    "ast_hash": "9532f2de37ed97283ac778fb744f418d",
+    "mtime": 1791328218.9355693,
+    "seen": 1791330103.9701083,
+    "ast_hash": "4cf56732935a19ba041d9c4697f60c5d",
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/api/ProfileEnrichmentSession.java": {
@@ -516,9 +516,9 @@
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/gui/ProfileViewerScreen.java": {
-    "mtime": 1791327226.392231,
-    "seen": 1791327306.828651,
-    "ast_hash": "a0410b2649a6ee897459c47eddd042ec",
+    "mtime": 1791329010.4098547,
+    "seen": 1791330103.978446,
+    "ast_hash": "18cfcc43bf49a73aaf589b182e457fee",
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/gui/PvDraw.java": {
@@ -1146,9 +1146,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/BomboConfig.java": {
-    "mtime": 1791327053.7468336,
-    "seen": 1791327306.841776,
-    "ast_hash": "1eb748c1c207c2010fad95825e81e72a",
+    "mtime": 1791329267.7298439,
+    "seen": 1791330103.991394,
+    "ast_hash": "fd2c38ee825489f07ba584ab02513113",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/BomboConfigGUI.java": {
@@ -1176,9 +1176,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/BomboaddonsClient.java": {
-    "mtime": 1791324652.7865677,
-    "seen": 1791325088.6396434,
-    "ast_hash": "5995ee6286a1ce31a01297d6567f9d18",
+    "mtime": 1791329799.9412935,
+    "seen": 1791330103.9920464,
+    "ast_hash": "5fb58f70747f9ffee1a0ba12706a0e51",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/ChatModifier.java": {
@@ -1242,9 +1242,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/CustomBindsProcessor.java": {
-    "mtime": 1790575356.079028,
-    "seen": 1791079643.20564,
-    "ast_hash": "d5a375e7af471044854905da1ad98c2d",
+    "mtime": 1791329343.232376,
+    "seen": 1791330103.9932926,
+    "ast_hash": "3b1ef83fd8feab78babf7ceb2dba7255",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/CustomTimerManager.java": {
@@ -1380,9 +1380,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/HudMoveScreen.java": {
-    "mtime": 1791145001.065804,
-    "seen": 1791145147.9784377,
-    "ast_hash": "28d8d7459ac724723d7e530aaf610f9e",
+    "mtime": 1791329666.2839527,
+    "seen": 1791330103.9965289,
+    "ast_hash": "9310b0b7aa5ac252b34d2b4380acd3c3",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/IBomboKeyBindsList.java": {
@@ -1800,9 +1800,9 @@
     "semantic_hash": "f428da4096be8b229808c08ddf40b093"
   },
   "src/client/java/me/bombo/bomboaddons/features/auth/BomboApiKeyManager.java": {
-    "mtime": 1791249863.8991263,
-    "seen": 1791250730.3163662,
-    "ast_hash": "038d3eb6812ea7ab2071657bcb45b6ba",
+    "mtime": 1791328959.931781,
+    "seen": 1791330104.0046165,
+    "ast_hash": "02a17b429521256fac95e2501d152cfe",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/features/auto/AutoSequenceManager.java": {
@@ -2178,15 +2178,15 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/BomboOrderScreen.java": {
-    "mtime": 1791250590.3482244,
-    "seen": 1791250730.3272479,
-    "ast_hash": "21799ada624f64cb06bc979b85f403b7",
+    "mtime": 1791329194.9815629,
+    "seen": 1791330104.0162272,
+    "ast_hash": "ec793c5fefe523f28963da58abd5ec29",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/ConfigRegistry.java": {
-    "mtime": 1791324740.7909524,
-    "seen": 1791325088.6665065,
-    "ast_hash": "136e3508a34c02db3df52d3ddd836492",
+    "mtime": 1791329817.3881855,
+    "seen": 1791330104.0163429,
+    "ast_hash": "e2c7db91e4ffcad49d62cfb68ff1b1df",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/FeatureOrganizerManager.java": {
@@ -3294,9 +3294,9 @@
     "semantic_hash": "39f11507b037879e09a2b31afbe5526f"
   },
   "data/changelog.json": {
-    "mtime": 1791327295.5667543,
-    "seen": 1791327306.8141048,
-    "ast_hash": "cf4ec5debf68e251e16966132a4aaed1",
+    "mtime": 1791330026.1156576,
+    "seen": 1791330103.9646187,
+    "ast_hash": "90430adf6a6aee93db394c7875180134",
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCombine.java": {
@@ -3636,15 +3636,15 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/BomboConfigScreen.java": {
-    "mtime": 1791250120.6176329,
-    "seen": 1791250730.3272462,
-    "ast_hash": "05bcaa52bd2c22512c8e36a3a6a6334e",
+    "mtime": 1791329181.276665,
+    "seen": 1791330104.0162253,
+    "ast_hash": "c0e84ce568942667e4215d738024b063",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/ConfigCustomWidgets.java": {
-    "mtime": 1790575320.582363,
-    "seen": 1791079643.205869,
-    "ast_hash": "8d0d99c5afd12c054236352e3567d968",
+    "mtime": 1791329922.3794467,
+    "seen": 1791330104.016229,
+    "ast_hash": "c78c53070ccdc6e129c59be5cb3cc5b8",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/ConfigItem.java": {
@@ -3786,15 +3786,15 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791325139.3812876,
-    "seen": 1791327306.8897,
-    "ast_hash": "1329c7e049b848bb7ec222e8513fff0e",
+    "mtime": 1791330049.1149645,
+    "seen": 1791330104.041141,
+    "ast_hash": "13e3a79095b523975dde1dd91ea6d9a5",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1791325099.7093961,
-    "seen": 1791327306.889702,
-    "ast_hash": "447d95eb76d5a8b09556f0f5153ee3ff",
+    "mtime": 1791330018.4683187,
+    "seen": 1791330104.0411427,
+    "ast_hash": "113be6368cca5ce4004bd15ca1fdfdd7",
     "semantic_hash": ""
   },
   "README.md": {
@@ -3873,6 +3873,12 @@
     "mtime": 1791243890.4826612,
     "seen": 1791244099.7227566,
     "ast_hash": "fcefe0c31cb14828cd89947b712c6e61",
+    "semantic_hash": ""
+  },
+  "src/client/java/me/bombo/bomboaddons/features/pip/PipManager.java": {
+    "mtime": 1791329949.902454,
+    "seen": 1791330104.0101435,
+    "ast_hash": "832ecaa37209eaa4f8268d244655b2cb",
     "semantic_hash": ""
   }
 }

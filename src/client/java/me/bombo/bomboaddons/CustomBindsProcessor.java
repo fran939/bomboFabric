@@ -538,7 +538,7 @@ public class CustomBindsProcessor {
    public static boolean processAlias(String commandText) {
       if (commandText != null && !commandText.trim().isEmpty()) {
          BomboConfig.Settings s = BomboConfig.get();
-         if (s != null && s.commandAliases != null) {
+         if (s != null && s.commandAliases != null && s.commandAliasesEnabled) {
             String input = commandText.trim();
             if (input.startsWith("/")) {
                input = input.substring(1).trim();
@@ -582,7 +582,7 @@ public class CustomBindsProcessor {
             return;
          }
          BomboConfig.Settings s = BomboConfig.get();
-         if (s != null) {
+         if (s != null && s.chatTriggersEnabled) {
             List<BomboConfig.ChatTrigger> triggers = null;
             if (s.profileChatTriggers != null) {
                triggers = s.profileChatTriggers.get(s.activeProfile != null ? s.activeProfile : "default");

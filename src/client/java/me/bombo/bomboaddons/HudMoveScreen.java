@@ -742,6 +742,18 @@ public class HudMoveScreen extends Screen {
             me.bombo.bomboaddons.features.spotify.LyricsHud.drawHud(g, s.lyricsHudX, s.lyricsHudY, s.lyricsHudScale, true);
         }
 
+        // 31. PIP_OVERLAY
+        if (isTargetVisible(HudTarget.PIP_OVERLAY, s.pipEnabled)) {
+            int pipW = (int) ((float) s.pipW * s.pipScale);
+            int pipH = (int) ((float) s.pipH * s.pipScale);
+            this.updateDragPosition(mouseX, mouseY, pipW, pipH, HudTarget.PIP_OVERLAY, (nx, ny) -> {
+                s.pipX = nx;
+                s.pipY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.pipX, s.pipY, pipW, pipH, HudTarget.PIP_OVERLAY, s.pipScale);
+            me.bombo.bomboaddons.features.pip.PipManager.renderPipInMoveScreen(g, s.pipX, s.pipY, pipW, pipH);
+        }
+
         // Snap Guide Lines (Cyan/Teal)
         if (this.snapGuideX != null) {
             g.fill(this.snapGuideX - 1, 0, this.snapGuideX + 1, this.height, 0xDD00E5FF);
@@ -814,6 +826,8 @@ public class HudMoveScreen extends Screen {
             list.add(new HudRect(s.spotifyHudX, s.spotifyHudY, (int)(me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudWidth() * s.spotifyHudScale), (int)(me.bombo.bomboaddons.features.spotify.SpotifyHud.getHudHeight() * s.spotifyHudScale), HudTarget.SPOTIFY_HUD));
         if (current != HudTarget.LYRICS_HUD && (!s.showOnlyActiveHuds || s.lyricsHudEnabled))
             list.add(new HudRect(s.lyricsHudX, s.lyricsHudY, (int)(me.bombo.bomboaddons.features.spotify.LyricsHud.getHudWidth() * s.lyricsHudScale), (int)(me.bombo.bomboaddons.features.spotify.LyricsHud.getHudHeight() * s.lyricsHudScale), HudTarget.LYRICS_HUD));
+        if (current != HudTarget.PIP_OVERLAY && (!s.showOnlyActiveHuds || s.pipEnabled))
+            list.add(new HudRect(s.pipX, s.pipY, (int)((float)s.pipW * s.pipScale), (int)((float)s.pipH * s.pipScale), HudTarget.PIP_OVERLAY));
 
         list.removeIf(r -> r.target != null && shouldSkipForFilter(r.target));
         return list;
@@ -969,6 +983,10 @@ public class HudMoveScreen extends Screen {
             case CRITTER_HUD -> "Critter Safari HUD";
             case CRITTER_MAP -> "Critter Safari Map";
             case CHAT_TABS -> "Chat Tabs Overlay";
+            case DISCORD_HUD -> "Discord Voice HUD";
+            case SPOTIFY_HUD -> "Spotify HUD";
+            case LYRICS_HUD -> "Lyrics HUD";
+            case PIP_OVERLAY -> "Picture-in-Picture";
             default -> "HUD Element";
         };
     }
@@ -1502,6 +1520,17 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // PIP_OVERLAY
+        if (!s.showOnlyActiveHuds || s.pipEnabled) {
+            int pipW = (int) ((float) s.pipW * s.pipScale);
+            int pipH = (int) ((float) s.pipH * s.pipScale);
+            if (this.startCornerResize(mouseX, mouseY, s.pipX, s.pipY, pipW, pipH, HudTarget.PIP_OVERLAY, s.pipScale)) return true;
+            if (this.checkHit(mouseX, mouseY, s.pipX, s.pipY, pipW, pipH)) {
+                this.selectAndDrag(HudTarget.PIP_OVERLAY, (int) mouseX - s.pipX, (int) mouseY - s.pipY);
+                return true;
+            }
+        }
+
         return super.mouseClicked(event, handled);
     }
 
@@ -1528,6 +1557,7 @@ public class HudMoveScreen extends Screen {
         int armX = s.armorHudX, armY = s.armorHudY; float armS = s.armorHudScale;
         int eqX = s.equipmentHudX, eqY = s.equipmentHudY; float eqS = s.equipmentHudScale;
         int invHX = s.inventoryHudX, invHY = s.inventoryHudY; float invHS = s.inventoryHudScale;
+        int pipX = s.pipX, pipY = s.pipY; float pipS = s.pipScale;
 
         return () -> {
             s.diceHudX = diceX; s.diceHudY = diceY; s.diceHudScale = diceS;
@@ -1549,6 +1579,7 @@ public class HudMoveScreen extends Screen {
             s.armorHudX = armX; s.armorHudY = armY; s.armorHudScale = armS;
             s.equipmentHudX = eqX; s.equipmentHudY = eqY; s.equipmentHudScale = eqS;
             s.inventoryHudX = invHX; s.inventoryHudY = invHY; s.inventoryHudScale = invHS;
+            s.pipX = pipX; s.pipY = pipY; s.pipScale = pipS;
             BomboConfig.save();
         };
     }
@@ -1634,6 +1665,10 @@ public class HudMoveScreen extends Screen {
                 s.spotifyHudScale = (float) newScale;
             } else if (this.resizingTarget == HudTarget.DISCORD_HUD) {
                 s.discordHudScale = (float) newScale;
+            } else if (this.resizingTarget == HudTarget.LYRICS_HUD) {
+                s.lyricsHudScale = (float) newScale;
+            } else if (this.resizingTarget == HudTarget.PIP_OVERLAY) {
+                s.pipScale = (float) newScale;
             }
             return true;
         }
@@ -2066,6 +2101,18 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // PIP_OVERLAY
+        if (!s.showOnlyActiveHuds || s.pipEnabled) {
+            int pipW = (int) ((float) s.pipW * s.pipScale);
+            int pipH = (int) ((float) s.pipH * s.pipScale);
+            if (this.checkHit(mouseX, mouseY, s.pipX, s.pipY, pipW, pipH)) {
+                s.pipScale = clampScale(s.pipScale + delta);
+                this.selectedTarget = HudTarget.PIP_OVERLAY;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -2143,6 +2190,7 @@ public class HudMoveScreen extends Screen {
             case CHAT_TABS -> "Chat";
             case DISCORD_HUD -> "Discord";
             case SPOTIFY_HUD, LYRICS_HUD -> "Spotify";
+            case PIP_OVERLAY -> "HUDs";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -2207,6 +2255,7 @@ public class HudMoveScreen extends Screen {
                     case DISCORD_HUD -> { s.discordHudX = 10; s.discordHudY = 120; s.discordHudScale = 1.0f; }
                     case SPOTIFY_HUD -> { s.spotifyHudX = 10; s.spotifyHudY = 80; s.spotifyHudScale = 1.0f; }
                     case LYRICS_HUD -> { s.lyricsHudX = 10; s.lyricsHudY = 160; s.lyricsHudScale = 1.0f; }
+                    case PIP_OVERLAY -> { s.pipX = centerX - 160; s.pipY = centerY - 90; s.pipScale = 1.0f; }
                 }
                 BomboConfig.save();
                 return true;
@@ -2260,6 +2309,7 @@ public class HudMoveScreen extends Screen {
         CROESUS_TRACKER,
         DISCORD_HUD,
         SPOTIFY_HUD,
-        LYRICS_HUD;
+        LYRICS_HUD,
+        PIP_OVERLAY;
     }
 }

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.104` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.105` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,21 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.104`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.105`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.105 (Ready for In-Game Testing)
+>
+> 1. **Picture-in-Picture Media Overlay (`PipManager`, `HudMoveScreen`, `BomboConfig`, `ConfigRegistry`, `BomboaddonsClient`):** Added in-game media player & video stream overlay (`/b pip <link>` and `/pip <link>`). Fully repositionable and resizable in `/b gui` (`PIP_OVERLAY` target) with corner resizing, mousewheel scaling, snapping, Ctrl+Z undo, and reset. Supports transparency/opacity adjustment (`/b pip opacity <0-100>` and slider in `/b config`), clean 16:9 YouTube video canvas stripped of all ads, like/subscribe UI, and banners, as well as direct web images (PNG, JPG, WEBP, GIF). Subcommands: `off`, `on`, `toggle`, `opacity`, `scale`, `clean`, `reset`, `gui`.
+> 2. **Config Organizer Subcategory Casing Preservation (`BomboOrderScreen`):** Subcategories in `/b order` preserve exact casing as entered (e.g. `Auto Fishing`) instead of being forced into uppercase.
+> 3. **Draggable Subcategory Headers (`BomboOrderScreen`):** Subcategory headers can now be dragged to reorder subcategory blocks inside category tabs just like feature cards.
+> 4. **Conditional Option Visibility & Custom Move Button (`ConfigRegistry`, `BomboConfigScreen`, `BomboOrderScreen`):** Image preview anchor settings only display custom offsets and "Move Position" button when anchor is set to "Custom". Parent dependency parsing now supports `Feature=Value` syntax.
+> 5. **Category & Dependency-Aware Search (`BomboConfigScreen`, `BomboOrderScreen`):** Searching category name (e.g. `fishing`) displays all features in that category. If a feature depends on another feature, searching either now displays both.
+> 6. **Minimizable & Master Toggle for Aliases & Triggers (`ConfigCustomWidgets`, `BomboConfig`, `CustomBindsProcessor`):** Command Aliases and Chat Triggers cards can be collapsed into a compact bar, and include a master enable/disable switch on their header.
+> 7. **Bridge Display Name Fix (`bombot`, `bomboapi`, `BomboApiKeyManager`):** The primary developer API key strictly emits and renders name `bombo` instead of inheriting secondary account names like `ickre`.
+> 8. **Profile Viewer Brigadier Command Registration (`BetterPVClient`, `ProfileViewerScreen`):** Registered `/pv` and `/bpv` in Brigadier with online player and tab completions, and widened profile switcher hitbox.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.104 (Ready for In-Game Testing)
 >
 > 1. **Remote Command Targeted Execution Fix (`IRCClient`, `BomboConfig`):** Fixed issue where running targeted `/cmd` (e.g. `user: fran938`) caused unintended players (`zamasu12045`) to execute the command. Removed default `fran938` Discord fallback from `BomboConfig` and eliminated loose Discord link matching in remote action dispatcher so commands strictly execute on the targeted Minecraft IGN.

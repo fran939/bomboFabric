@@ -43,8 +43,10 @@ public final class BetterPVClient implements ClientModInitializer {
 		SkyBlockPackCache.start();
 		BetterPvCosmetics.initialize();
 
-		// /pv command registration disabled here to keep /pv and /bpv untouched.
-		// Handled via /b pv in BomboaddonsClient.
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+			dispatcher.register(buildPvCommand(ClientCommands.literal("pv")));
+			dispatcher.register(buildPvCommand(ClientCommands.literal("bpv")));
+		});
 
 		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(
 			new SimpleSynchronousResourceReloadListener() {
@@ -101,6 +103,19 @@ public final class BetterPVClient implements ClientModInitializer {
 			})
 			.then(
 				ClientCommands.argument("player", StringArgumentType.word())
+					.suggests((ctx, builder) -> {
+						net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+						if (mc != null && mc.getConnection() != null) {
+							String rem = builder.getRemainingLowerCase();
+							for (var p : mc.getConnection().getOnlinePlayers()) {
+								String name = p.getProfile().name();
+								if (rem.isEmpty() || name.toLowerCase().startsWith(rem)) {
+									builder.suggest(name);
+								}
+							}
+						}
+						return builder.buildFuture();
+					})
 					.executes(ctx -> {
 						ProfileViewerOpener.handleTypedArg(StringArgumentType.getString(ctx, "player"));
 						return 1;

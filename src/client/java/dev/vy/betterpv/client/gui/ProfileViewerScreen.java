@@ -1684,8 +1684,8 @@ public final class ProfileViewerScreen extends Screen {
 		if (this.profileChoices.size() <= 1) {
 			return false;
 		}
-		if (mx >= this.profileFooterX && mx < this.profileFooterX + this.profileFooterW
-			&& my >= this.profileFooterY && my < this.profileFooterY + this.profileFooterH) {
+		if (mx >= this.profileFooterX - 4 && mx < this.profileFooterX + this.profileFooterW + 12
+			&& my >= this.profileFooterY - 4 && my < this.profileFooterY + this.profileFooterH + 6) {
 			if (button == 1) {
 				cycleNextProfile();
 				return true;

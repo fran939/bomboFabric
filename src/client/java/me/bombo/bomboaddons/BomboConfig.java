@@ -1146,8 +1146,25 @@ public class BomboConfig {
       public Map<String, Integer> commandCycleIndices = new HashMap();
       public Map<String, GetTarget> getTargets = new HashMap();
       public Map<String, String> commandAliases = new HashMap();
+      public boolean commandAliasesEnabled = true;
+      public boolean commandAliasesCollapsed = false;
       public List<ChatTrigger> chatTriggers = null;
+      public boolean chatTriggersEnabled = true;
+      public boolean chatTriggersCollapsed = false;
       public Map<String, List<ChatTrigger>> profileChatTriggers = new HashMap();
+
+      // Picture-in-Picture (PiP)
+      public boolean pipEnabled = false;
+      public String pipUrl = "";
+      public int pipX = 20;
+      public int pipY = 20;
+      public int pipW = 240;
+      public int pipH = 135;
+      public float pipScale = 1.0f;
+      public float pipOpacity = 0.90f;
+      public boolean pipCleanVideo = true;
+      public boolean pipShowBorder = true;
+      public boolean pipAutoSkipAds = true;
       public Map<String, CustomTracerInfo> customTracers = new HashMap();
       public boolean ircChatEnabled = false;
       public boolean ircDefaultChat = false;

@@ -99,6 +99,14 @@ public class BomboOrderScreen extends Screen {
     private boolean isFeatureListContextMenu = false;
     private String editFeatureSubcatInput = "";
 
+    // Subcategory dragging
+    private String pendingDragSubcat = null;
+    private double subcatPressX = 0;
+    private double subcatPressY = 0;
+    private boolean isSubcatDragging = false;
+    private String draggingSubcat = null;
+    private int dragSubcatOffsetY = 0;
+
     // Row representation for category subcategory layout
     private static class FeatureRow {
         final boolean isSubcatHeader;
@@ -431,6 +439,18 @@ public class BomboOrderScreen extends Screen {
             g.outline(dx, dy, catW, catH, 0xFF38BDF8);
             g.text(this.font, "§b" + draggingCategory, dx + 10, dy + 6, 0xFFFFFFFF, true);
         }
+
+        // 8c. Render Dragged Subcategory Floating under cursor
+        if (draggingSubcat != null) {
+            int cardW = 220;
+            int cardH = 26;
+            int dx = mouseX - 10;
+            int dy = mouseY - dragSubcatOffsetY;
+
+            g.fill(dx, dy, dx + cardW, dy + cardH, 0xEE1E293B);
+            g.outline(dx, dy, cardW, cardH, 0xFFFFAA00);
+            g.text(this.font, "§6§l▾ §e" + draggingSubcat, dx + 10, dy + 9, 0xFFFFAA00, true);
+        }
     }
 
     private boolean isFeatureVisible(FeatureOrganizerManager.FeatureMeta fm) {
@@ -443,9 +463,24 @@ public class BomboOrderScreen extends Screen {
             if (s != null && !"ON_KEY".equalsIgnoreCase(s.backpackPreviewTrigger)) return false;
         }
         if (fm.parentDependency != null && !fm.parentDependency.trim().isEmpty()) {
-            ConfigItem parentItem = ConfigRegistry.getMasterItemsMap().get(fm.parentDependency.trim());
-            if (parentItem != null && parentItem.boolGetter != null) {
-                if (!Boolean.TRUE.equals(parentItem.boolGetter.get())) return false;
+            String dep = fm.parentDependency.trim();
+            if (dep.contains("=")) {
+                String[] parts = dep.split("=", 2);
+                String parentName = parts[0].trim();
+                String targetVal = parts[1].trim();
+                ConfigItem parentItem = ConfigRegistry.getMasterItemsMap().get(parentName);
+                if (parentItem != null) {
+                    if (parentItem.stringGetter != null) {
+                        if (!targetVal.equalsIgnoreCase(parentItem.stringGetter.get())) return false;
+                    } else if (parentItem.boolGetter != null) {
+                        if (Boolean.parseBoolean(targetVal) != Boolean.TRUE.equals(parentItem.boolGetter.get())) return false;
+                    }
+                }
+            } else {
+                ConfigItem parentItem = ConfigRegistry.getMasterItemsMap().get(dep);
+                if (parentItem != null && parentItem.boolGetter != null) {
+                    if (!Boolean.TRUE.equals(parentItem.boolGetter.get())) return false;
+                }
             }
         }
         return true;
@@ -649,10 +684,10 @@ public class BomboOrderScreen extends Screen {
                     g.outline(cx, cy, cardW, cardH, borderCol);
 
                     // Subcategory title & folder icon
-                    g.text(this.font, "§6§l▾ §e" + row.subcatName.toUpperCase(Locale.ROOT), cx + 10, cy + 9, 0xFFFFAA00, false);
+                    g.text(this.font, "§6§l▾ §e" + row.subcatName, cx + 10, cy + 9, 0xFFFFAA00, false);
 
                     // Horizontal separator line next to title
-                    int titleW = this.font.width("▾ " + row.subcatName.toUpperCase(Locale.ROOT)) + 20;
+                    int titleW = this.font.width("▾ " + row.subcatName) + 20;
                     int lineStartX = cx + 10 + titleW;
                     int lineEndX = cx + cardW - 84;
                     if (lineEndX > lineStartX) {
@@ -978,6 +1013,38 @@ public class BomboOrderScreen extends Screen {
                             if (tag.toLowerCase(Locale.ROOT).contains(q)) {
                                 matches = true;
                                 break;
+                            }
+                        }
+                    }
+                }
+
+                // Check parent dependency: if this feature requires parent and parent matches query -> show both!
+                if (!matches && fm.parentDependency != null && !fm.parentDependency.isEmpty()) {
+                    String pName = fm.parentDependency;
+                    if (pName.contains("=")) pName = pName.split("=")[0].trim();
+                    if (pName.toLowerCase(Locale.ROOT).contains(q)) {
+                        matches = true;
+                    } else {
+                        FeatureOrganizerManager.FeatureMeta parentFm = FeatureOrganizerManager.features.get(pName);
+                        if (parentFm != null && ((parentFm.name != null && parentFm.name.toLowerCase(Locale.ROOT).contains(q))
+                                || (parentFm.description != null && parentFm.description.toLowerCase(Locale.ROOT).contains(q)))) {
+                            matches = true;
+                        }
+                    }
+                }
+
+                // Check child dependencies: if another feature requires this feature and matches query -> show both!
+                if (!matches) {
+                    for (FeatureOrganizerManager.FeatureMeta other : FeatureOrganizerManager.features.values()) {
+                        if (other.parentDependency != null && !other.parentDependency.isEmpty()) {
+                            String reqP = other.parentDependency;
+                            if (reqP.contains("=")) reqP = reqP.split("=")[0].trim();
+                            if (reqP.equalsIgnoreCase(fm.name)) {
+                                if ((other.name != null && other.name.toLowerCase(Locale.ROOT).contains(q))
+                                        || (other.description != null && other.description.toLowerCase(Locale.ROOT).contains(q))) {
+                                    matches = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -2024,6 +2091,12 @@ public class BomboOrderScreen extends Screen {
                                 moveSubcategory(selectedCategory, r.subcatName, -1);
                                 return true;
                             }
+                            if (button == 0) {
+                                pendingDragSubcat = r.subcatName;
+                                subcatPressX = mouseX;
+                                subcatPressY = mouseY;
+                                dragSubcatOffsetY = (int) mouseY - cy;
+                            }
                             return true;
                         }
                     } else {
@@ -2494,6 +2567,12 @@ public class BomboOrderScreen extends Screen {
                 draggingFeature = pendingDragFeature;
             }
         }
+        if (pendingDragSubcat != null && !isSubcatDragging) {
+            if (Math.hypot(mouseX - subcatPressX, mouseY - subcatPressY) > 3.0) {
+                isSubcatDragging = true;
+                draggingSubcat = pendingDragSubcat;
+            }
+        }
         // Do not reorder in-memory while dragging to prevent list shifting/flickering
         return super.mouseDragged(event, dragX, dragY);
     }
@@ -2504,6 +2583,38 @@ public class BomboOrderScreen extends Screen {
         this.isDraggingFeatureScrollbar = false;
         double mouseX = event.x();
         double mouseY = event.y();
+
+        if (isSubcatDragging && draggingSubcat != null && selectedCategory != null) {
+            List<String> subcats = FeatureOrganizerManager.subcategoriesMap.get(selectedCategory);
+            if (subcats != null && subcats.contains(draggingSubcat)) {
+                int contentY = winY + headerH + 1 + 8;
+                int startY = contentY + 4 - (int) this.featureScroll;
+                List<FeatureRow> rows = getCategoryRows(getFilteredFeatures());
+                int curRowY = startY;
+                for (FeatureRow r : rows) {
+                    int cardH = r.isSubcatHeader ? 26 : 40;
+                    int cy = curRowY;
+                    curRowY += cardH + 6;
+                    if (mouseY >= cy && mouseY <= cy + cardH) {
+                        String targetSub = r.isSubcatHeader ? r.subcatName : (r.feature != null ? r.feature.subCategory : null);
+                        if (targetSub != null && !targetSub.isEmpty() && !targetSub.equals(draggingSubcat)) {
+                            int fromIdx = subcats.indexOf(draggingSubcat);
+                            int toIdx = subcats.indexOf(targetSub);
+                            if (fromIdx != -1 && toIdx != -1) {
+                                pushUndoSnapshot();
+                                subcats.remove(fromIdx);
+                                subcats.add(toIdx, draggingSubcat);
+                                FeatureOrganizerManager.save();
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        pendingDragSubcat = null;
+        isSubcatDragging = false;
+        draggingSubcat = null;
 
         if (isCategoryDragging && draggingCategory != null) {
             int sideX = winX;

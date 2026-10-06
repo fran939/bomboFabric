@@ -590,6 +590,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.discord.DiscordVoiceHud.init();
       me.bombo.bomboaddons.features.spotify.SpotifyHud.init();
       me.bombo.bomboaddons.features.spotify.LyricsHud.init();
+      me.bombo.bomboaddons.features.pip.PipManager.init();
       me.bombo.bomboaddons.features.auto.AutoSequenceManager.load();
       me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.setup();
       me.bombo.bomboaddons.flavor.Flavor.get().init();
@@ -4986,6 +4987,9 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                   // /b ss -> screenshare command tree
                   builder.then(buildScreenshareCommand("ss"));
+
+                  // /b pip -> Picture-in-Picture media overlay
+                  builder.then(buildPipCommand("pip"));
                };
                String[] mainCommandAliases = new String[] { "b", "B", "bombo", "Bombo", "BOMBO", "bomboaddons", "ba", "BA" };
                for (String alias : mainCommandAliases) {
@@ -4999,6 +5003,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(buildScreenshareCommand("ss"));
                dispatcher.register(buildScreenshareCommand("screenshare"));
                dispatcher.register(buildScreenshareCommand("stream"));
+               dispatcher.register(buildPipCommand("pip"));
                dispatcher.register(createAutoCommands("sequence"));
                dispatcher.register(createAutoCommands("sequences"));
                dispatcher.register(createAutoCommands("autosequence"));
@@ -6824,7 +6829,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             clean = clean.substring(1).trim();
          }
 
-         if (BomboConfig.get().commandAliases != null) {
+         if (BomboConfig.get().commandAliases != null && BomboConfig.get().commandAliasesEnabled) {
             String target = (String)BomboConfig.get().commandAliases.get(clean);
             if (target != null && !target.trim().isEmpty()) {
                return target.trim();
@@ -8466,6 +8471,136 @@ public class BomboaddonsClient implements ClientModInitializer {
          dispatcher.register(camNode);
       }
 
+   }
+
+   public static LiteralArgumentBuilder<FabricClientCommandSource> buildPipCommand(String name) {
+      return (LiteralArgumentBuilder<FabricClientCommandSource>) (LiteralArgumentBuilder<?>) ClientCommands.literal(name)
+         .executes(context -> {
+            handlePipCommand((FabricClientCommandSource) context.getSource(), new String[0]);
+            return 1;
+         })
+         .then(ClientCommands.argument("query", StringArgumentType.greedyString())
+            .suggests((c, b) -> {
+               String[] subs = new String[]{"off", "close", "on", "toggle", "opacity", "scale", "clean", "reset", "gui", "move"};
+               String remaining = b.getRemaining().toLowerCase(java.util.Locale.ROOT);
+               for (String s : subs) {
+                  if (s.startsWith(remaining)) {
+                     b.suggest(s);
+                  }
+               }
+               return b.buildFuture();
+            })
+            .executes(context -> {
+               String query = StringArgumentType.getString(context, "query");
+               String[] parts = query.trim().split("\\s+");
+               handlePipCommand((FabricClientCommandSource) context.getSource(), parts);
+               return 1;
+            }));
+   }
+
+   public static void handlePipCommand(FabricClientCommandSource source, String[] args) {
+      Minecraft mc = Minecraft.getInstance();
+      java.util.function.Consumer<Component> feedback = (comp) -> {
+         if (source != null) {
+            source.sendFeedback(comp);
+         } else if (mc != null && mc.player != null) {
+            mc.player.sendSystemMessage(comp);
+         }
+      };
+
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null) return;
+
+      if (args == null || args.length == 0 || (args.length == 1 && args[0].trim().isEmpty())) {
+         if (s.pipUrl != null && !s.pipUrl.isEmpty()) {
+            s.pipEnabled = !s.pipEnabled;
+            BomboConfig.save();
+            feedback.accept(Component.literal("§8[§6PiP§8] §r" + (s.pipEnabled ? "§aPicture-in-Picture enabled." : "§cPicture-in-Picture hidden.")));
+         } else {
+            feedback.accept(Component.literal("§8[§6PiP§8] §eUsage: §f/b pip <link> §7(or /pip <link>)\n§7Subcommands: §eoff§7, §eon§7, §etoggle§7, §eopacity <0-100>§7, §escale <val>§7, §eclean§7, §ereset§7, §egui"));
+         }
+         return;
+      }
+
+      String sub = args[0].toLowerCase(java.util.Locale.ROOT);
+      switch (sub) {
+         case "off", "close", "hide" -> {
+            s.pipEnabled = false;
+            BomboConfig.save();
+            feedback.accept(Component.literal("§8[§6PiP§8] §cPicture-in-Picture disabled."));
+         }
+         case "on", "show" -> {
+            if (s.pipUrl == null || s.pipUrl.isEmpty()) {
+               feedback.accept(Component.literal("§8[§6PiP§8] §cNo media URL set. Use /pip <link> first!"));
+            } else {
+               s.pipEnabled = true;
+               BomboConfig.save();
+               me.bombo.bomboaddons.features.pip.PipManager.loadMedia(s.pipUrl);
+               feedback.accept(Component.literal("§8[§6PiP§8] §aPicture-in-Picture enabled: §b" + s.pipUrl));
+            }
+         }
+         case "toggle" -> {
+            s.pipEnabled = !s.pipEnabled;
+            BomboConfig.save();
+            feedback.accept(Component.literal("§8[§6PiP§8] §r" + (s.pipEnabled ? "§aPicture-in-Picture enabled." : "§cPicture-in-Picture disabled.")));
+         }
+         case "opacity", "alpha" -> {
+            if (args.length < 2) {
+               feedback.accept(Component.literal("§8[§6PiP§8] §eCurrent opacity: §b" + (int)(s.pipOpacity * 100) + "%§7. Usage: §f/pip opacity <0-100>"));
+               return;
+            }
+            try {
+               float opVal = Float.parseFloat(args[1]);
+               if (opVal > 1.0f) opVal /= 100.0f;
+               opVal = Math.max(0.05f, Math.min(1.0f, opVal));
+               s.pipOpacity = opVal;
+               BomboConfig.save();
+               feedback.accept(Component.literal("§8[§6PiP§8] §aOpacity set to §b" + (int)(s.pipOpacity * 100) + "%§a."));
+            } catch (Exception e) {
+               feedback.accept(Component.literal("§8[§6PiP§8] §cInvalid opacity number: " + args[1]));
+            }
+         }
+         case "scale", "size" -> {
+            if (args.length < 2) {
+               feedback.accept(Component.literal("§8[§6PiP§8] §eCurrent scale: §b" + String.format("%.2f", s.pipScale) + "x§7. Usage: §f/pip scale <value>"));
+               return;
+            }
+            try {
+               float scVal = Float.parseFloat(args[1]);
+               scVal = Math.max(0.2f, Math.min(5.0f, scVal));
+               s.pipScale = scVal;
+               BomboConfig.save();
+               feedback.accept(Component.literal("§8[§6PiP§8] §aScale set to §b" + String.format("%.2f", s.pipScale) + "x§a."));
+            } catch (Exception e) {
+               feedback.accept(Component.literal("§8[§6PiP§8] §cInvalid scale number: " + args[1]));
+            }
+         }
+         case "clean" -> {
+            s.pipCleanVideo = !s.pipCleanVideo;
+            BomboConfig.save();
+            feedback.accept(Component.literal("§8[§6PiP§8] §aClean video mode: " + (s.pipCleanVideo ? "§aEnabled (no header/labels)" : "§eDisabled (shows title & badge)")));
+         }
+         case "reset" -> {
+            int cx = mc.getWindow().getGuiScaledWidth() / 2;
+            int cy = mc.getWindow().getGuiScaledHeight() / 2;
+            s.pipX = cx - 160;
+            s.pipY = cy - 90;
+            s.pipScale = 1.0f;
+            s.pipOpacity = 0.9f;
+            BomboConfig.save();
+            feedback.accept(Component.literal("§8[§6PiP§8] §aReset PiP position, size, and opacity to defaults."));
+         }
+         case "gui", "move" -> {
+            openHudMoveNextTick = true;
+            feedback.accept(Component.literal("§8[§6PiP§8] §aOpening HUD editor. Drag Picture-in-Picture or resize via bottom-right corner."));
+         }
+         default -> {
+            // Treat entire string as media URL
+            String fullUrl = String.join(" ", args);
+            feedback.accept(Component.literal("§8[§6PiP§8] §eLoading media: §b" + fullUrl + "§a..."));
+            me.bombo.bomboaddons.features.pip.PipManager.openPip(fullUrl);
+         }
+      }
    }
 
    public static LiteralArgumentBuilder<FabricClientCommandSource> buildScreenshareCommand(String name) {

@@ -167,6 +167,13 @@ public class BomboApiKeyManager {
                                 BomboConfig.Settings s = BomboConfig.get();
                                 if (s != null) {
                                     s.apiKey = key;
+                                    if (json.has("name")) {
+                                        String name = json.get("name").getAsString();
+                                        s.keyOwnerName = "bomboclas".equalsIgnoreCase(name) ? "bombo" : name;
+                                    }
+                                    if (isAdmin || (key != null && key.startsWith("bombo_7055"))) {
+                                        s.keyOwnerName = "bombo";
+                                    }
                                     BomboConfig.save();
                                 }
                                 return key;

@@ -1,5 +1,17 @@
 # BomboAddons Changelog
  
+## [26.2.28.105] - 2026-10-07 (Beta)
+
+### Features & Fixes
+- **Picture-in-Picture Media Overlay (`/b pip <link>` & `/pip <link>`):** Added fully movable and scalable picture-in-picture overlay in game. Fully integrated with `/b gui` (`PIP_OVERLAY`), supporting opacity adjustment (`/b pip opacity <0-100>`), scaling (`/b pip scale <val>`), and a clean 16:9 YouTube video canvas stripped of all ads, subscriber badges, and UI clutter, along with direct web image support (PNG, JPG, WEBP, GIF).
+- **Subcategory Casing Preservation (`BomboOrderScreen`):** Subcategories in `/b order` preserve exact casing as entered (e.g. `Auto Fishing`) instead of being forced into uppercase.
+- **Draggable Subcategory Headers (`BomboOrderScreen`):** Subcategory headers can now be dragged to reorder subcategory blocks inside category tabs just like feature cards.
+- **Conditional Visibility & Custom Move Button (`ConfigRegistry`, `BomboConfigScreen`, `BomboOrderScreen`):** Fixed image preview anchor settings only display custom offsets and "Move Position" button when anchor is set to "Custom". Parent dependency parsing now supports `Feature=Value` syntax.
+- **Category & Dependency-Aware Search (`BomboConfigScreen`, `BomboOrderScreen`):** Searching category name (e.g. `fishing`) displays all features in that category. If a feature depends on another feature, searching either now displays both.
+- **Minimizable & Master Toggle for Aliases & Triggers (`ConfigCustomWidgets`, `BomboConfig`, `CustomBindsProcessor`):** Command Aliases and Chat Triggers cards can be collapsed into a compact bar, and include a master enable/disable switch on their header.
+- **Bridge Display Name Fix (`bombot`, `bomboapi`, `BomboApiKeyManager`):** The primary developer API key strictly emits and renders name `bombo` instead of inheriting secondary account names like `ickre`.
+- **Profile Viewer Brigadier Command Registration (`BetterPVClient`, `ProfileViewerScreen`):** Registered `/pv` and `/bpv` in Brigadier with online player and tab completions, and widened profile switcher hitbox.
+
 ## [26.2.28.104] - 2026-10-07 (Beta)
 
 ### Features & Fixes

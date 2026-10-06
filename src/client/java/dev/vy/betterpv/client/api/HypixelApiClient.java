@@ -231,6 +231,18 @@ public final class HypixelApiClient {
 				raw.addProperty("cute_name", json.get("profile").getAsString());
 			}
 			arr.add(raw);
+			if (json.has("all_profiles") && json.get("all_profiles").isJsonArray()) {
+				String rawId = raw.has("profile_id") ? raw.get("profile_id").getAsString() : "";
+				for (JsonElement el : json.getAsJsonArray("all_profiles")) {
+					if (el.isJsonObject()) {
+						JsonObject p = el.getAsJsonObject();
+						String pId = p.has("profile_id") ? p.get("profile_id").getAsString() : "";
+						if (!pId.equalsIgnoreCase(rawId)) {
+							arr.add(p);
+						}
+					}
+				}
+			}
 			root.add("profiles", arr);
 			return Optional.of(root);
 		}

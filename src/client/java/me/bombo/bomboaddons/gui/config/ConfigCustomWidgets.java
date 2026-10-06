@@ -1314,16 +1314,49 @@ public class ConfigCustomWidgets {
 
     public static int getChatTriggersCardHeight() {
         BomboConfig.Settings s = BomboConfig.get();
-        List<BomboConfig.ChatTrigger> list = s.profileChatTriggers != null ? s.profileChatTriggers.get(s.activeProfile) : null;
+        if (s != null && s.chatTriggersCollapsed) {
+            return 30;
+        }
+        List<BomboConfig.ChatTrigger> list = s != null && s.profileChatTriggers != null ? s.profileChatTriggers.get(s.activeProfile) : null;
         int count = list != null ? list.size() : 0;
-        return 110 + count * 24 + 40;
+        return 136 + count * 24 + 40;
     }
 
     public static void renderChatTriggersCard(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
         BomboConfig.Settings s = BomboConfig.get();
         ConfigUITheme.drawCard(g, x, y, w, h, false);
 
-        int curY = y + 10;
+        List<BomboConfig.ChatTrigger> list = s.profileChatTriggers != null ? s.profileChatTriggers.get(s.activeProfile) : null;
+        int count = list != null ? list.size() : 0;
+
+        // Top Header Bar with Collapse Toggle & Master Switch
+        int headerH = 26;
+        boolean headerHover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + headerH;
+        if (headerHover) {
+            g.fill(x + 2, y + 2, x + w - 2, y + headerH, 0x1AFFFFFF);
+        }
+
+        String arrow = s.chatTriggersCollapsed ? "§6▶ " : "§6▼ ";
+        String countBadge = " §8(" + count + (count == 1 ? " trigger)" : " triggers)");
+        g.text(font, arrow + "§eChat Triggers Manager" + countBadge, x + 10, y + 8, 0xFFFFAA00, false);
+
+        // Master Enable / Disable Toggle Switch
+        int togW = 34;
+        int togH = 18;
+        int togX = x + w - togW - 12;
+        int togY = y + 4;
+        boolean togHover = mouseX >= togX && mouseX <= togX + togW && mouseY >= togY && mouseY <= togY + togH;
+        String statusLabel = s.chatTriggersEnabled ? "§aEnabled" : "§7Disabled";
+        g.text(font, statusLabel, togX - font.width(statusLabel) - 6, y + 8, s.chatTriggersEnabled ? 0xFF86EFAC : 0xFF64748B, false);
+        ConfigUITheme.drawToggleSwitch(g, togX, togY, togW, togH, s.chatTriggersEnabled, togHover);
+
+        if (s.chatTriggersCollapsed) {
+            return;
+        }
+
+        g.fill(x + 10, y + 27, x + w - 10, y + 28, 0x22FFFFFF);
+
+        int curY = y + 34;
         int colW = (w - 36) / 2;
 
         renderCleanInputField(g, font, "Trigger Message / Regex", triggerTextInput, "trigText", x + 12, curY, colW, mouseX, mouseY);
@@ -1347,7 +1380,7 @@ public class ConfigCustomWidgets {
         g.fill(x + 12, curY, x + w - 12, curY + 1, 0x33FFFFFF);
         curY += 6;
 
-        List<BomboConfig.ChatTrigger> list = s.profileChatTriggers != null ? s.profileChatTriggers.get(s.activeProfile) : null;
+        list = s.profileChatTriggers != null ? s.profileChatTriggers.get(s.activeProfile) : null;
         if (list == null || list.isEmpty()) {
             g.text(font, "§8No triggers in active profile [" + s.activeProfile + "]. Add one above!", x + 16, curY + 4, 0xFF94A3B8, false);
         } else {
@@ -1376,7 +1409,29 @@ public class ConfigCustomWidgets {
 
     public static boolean handleChatTriggersCardClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
         BomboConfig.Settings s = BomboConfig.get();
-        int curY = y + 10;
+        if (s == null) return false;
+
+        // Toggle Switch click
+        int togW = 34;
+        int togH = 18;
+        int togX = x + w - togW - 12;
+        int togY = y + 4;
+        if (mouseX >= togX && mouseX <= togX + togW && mouseY >= togY && mouseY <= togY + togH) {
+            s.chatTriggersEnabled = !s.chatTriggersEnabled;
+            BomboConfig.save();
+            return true;
+        }
+
+        // Header click to collapse/expand
+        if (mouseY >= y && mouseY <= y + 26) {
+            s.chatTriggersCollapsed = !s.chatTriggersCollapsed;
+            BomboConfig.save();
+            return true;
+        }
+
+        if (s.chatTriggersCollapsed) return false;
+
+        int curY = y + 34;
         int colW = (w - 36) / 2;
 
         if (checkFieldClick(x + 12, curY, colW, 18, "trigText", mouseX, mouseY)) return true;
@@ -1919,15 +1974,47 @@ public class ConfigCustomWidgets {
 
     public static int getAliasesCardHeight() {
         BomboConfig.Settings s = BomboConfig.get();
-        int count = s.commandAliases != null ? s.commandAliases.size() : 0;
-        return 85 + count * 24 + 40;
+        if (s != null && s.commandAliasesCollapsed) {
+            return 30;
+        }
+        int count = (s != null && s.commandAliases != null) ? s.commandAliases.size() : 0;
+        return 110 + count * 24 + 40;
     }
 
     public static void renderAliasesCard(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
         BomboConfig.Settings s = BomboConfig.get();
         ConfigUITheme.drawCard(g, x, y, w, h, false);
 
-        int curY = y + 10;
+        int count = s.commandAliases != null ? s.commandAliases.size() : 0;
+
+        // Top Header Bar with Collapse Toggle & Master Switch
+        int headerH = 26;
+        boolean headerHover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + headerH;
+        if (headerHover) {
+            g.fill(x + 2, y + 2, x + w - 2, y + headerH, 0x1AFFFFFF);
+        }
+
+        String arrow = s.commandAliasesCollapsed ? "§6▶ " : "§6▼ ";
+        String countBadge = " §8(" + count + (count == 1 ? " alias)" : " aliases)");
+        g.text(font, arrow + "§eCommand Aliases Manager" + countBadge, x + 10, y + 8, 0xFFFFAA00, false);
+
+        // Master Enable / Disable Toggle Switch
+        int togW = 34;
+        int togH = 18;
+        int togX = x + w - togW - 12;
+        int togY = y + 4;
+        boolean togHover = mouseX >= togX && mouseX <= togX + togW && mouseY >= togY && mouseY <= togY + togH;
+        String statusLabel = s.commandAliasesEnabled ? "§aEnabled" : "§7Disabled";
+        g.text(font, statusLabel, togX - font.width(statusLabel) - 6, y + 8, s.commandAliasesEnabled ? 0xFF86EFAC : 0xFF64748B, false);
+        ConfigUITheme.drawToggleSwitch(g, togX, togY, togW, togH, s.commandAliasesEnabled, togHover);
+
+        if (s.commandAliasesCollapsed) {
+            return;
+        }
+
+        g.fill(x + 10, y + 27, x + w - 10, y + 28, 0x22FFFFFF);
+
+        int curY = y + 34;
         int colW = (w - 36) / 2;
 
         renderCleanInputField(g, font, "Alias (e.g. v)", aliasCommandInput, "aliasCmd", x + 12, curY, colW, mouseX, mouseY);
@@ -1975,7 +2062,29 @@ public class ConfigCustomWidgets {
 
     public static boolean handleAliasesCardClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
         BomboConfig.Settings s = BomboConfig.get();
-        int curY = y + 10;
+        if (s == null) return false;
+
+        // Toggle Switch click
+        int togW = 34;
+        int togH = 18;
+        int togX = x + w - togW - 12;
+        int togY = y + 4;
+        if (mouseX >= togX && mouseX <= togX + togW && mouseY >= togY && mouseY <= togY + togH) {
+            s.commandAliasesEnabled = !s.commandAliasesEnabled;
+            BomboConfig.save();
+            return true;
+        }
+
+        // Header click to collapse/expand
+        if (mouseY >= y && mouseY <= y + 26) {
+            s.commandAliasesCollapsed = !s.commandAliasesCollapsed;
+            BomboConfig.save();
+            return true;
+        }
+
+        if (s.commandAliasesCollapsed) return false;
+
+        int curY = y + 34;
         int colW = (w - 36) / 2;
 
         if (checkFieldClick(x + 12, curY, colW, 18, "aliasCmd", mouseX, mouseY)) return true;
