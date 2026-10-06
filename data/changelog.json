@@ -1,5 +1,13 @@
 [
   {
+    "version": "26.2.28.101",
+    "date": "2026-10-06",
+    "changes": [
+      "~ Fixed Crash on /calendar & Hotkeys - Resolved infinite recursion StackOverflowError when executing /calendar or pressing calendar keybinds",
+      "~ Fixed Screen Tooltip Rendering Crash - Fixed UnsupportedOperationException when rendering item tooltips by ensuring a mutable list copy"
+    ]
+  },
+  {
     "version": "26.2.28.100",
     "date": "2026-10-06",
     "changes": [

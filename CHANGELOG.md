@@ -1,5 +1,11 @@
 # BomboAddons Changelog
  
+## [26.2.28.101] - 2026-10-06 (Beta)
+
+### Fixes
+- **Fixed Crash on `/calendar` & Hotkey (`BomboaddonsClient`):** Fixed `StackOverflowError` caused by recursive command dispatch when executing `/calendar` or `/calendar gui`. The command now directly dispatches a `ServerboundChatCommandPacket` to the server rather than triggering the client-side command dispatcher recursively.
+- **Fixed Screen Tooltip Rendering Crash (`ItemStackMixin`, `SupercraftHelper`):** Resolved `UnsupportedOperationException: ImmutableCollections` when rendering item tooltips. Tooltip lines are now guaranteed to be copied to a mutable `ArrayList` before applying custom names, lore additions, price tooltips, and search highlights.
+
 ## [26.2.28.100] - 2026-10-06 (Beta)
 
 ### Features & Fixes

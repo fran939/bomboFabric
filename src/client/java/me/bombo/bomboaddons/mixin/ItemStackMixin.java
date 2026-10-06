@@ -1,5 +1,6 @@
 package me.bombo.bomboaddons.mixin;
 
+import java.util.ArrayList;
 import java.util.List;
 import me.bombo.bomboaddons.BitsManager;
 import me.bombo.bomboaddons.BomboConfig;
@@ -65,8 +66,15 @@ public abstract class ItemStackMixin {
          cir.setReturnValue(java.util.Collections.emptyList());
          return;
       }
-      List<Component> lines = (List)cir.getReturnValue();
-      if (lines == null) return;
+      List<Component> orig = (List)cir.getReturnValue();
+      if (orig == null) return;
+      List<Component> lines;
+      try {
+         lines = new ArrayList<>(orig);
+         cir.setReturnValue(lines);
+      } catch (Throwable t) {
+         return;
+      }
 
       try {
          String uuid = me.bombo.bomboaddons.ItemCustomizeScreen.extractItemUuid(currentStack);

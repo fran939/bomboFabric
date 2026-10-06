@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.100` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.101` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,15 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.100`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.101`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.101 (Ready for In-Game Testing)
+>
+> 1. **Fixed Crash on `/calendar` & Keybinds (`BomboaddonsClient`):** Fixed `StackOverflowError` caused by recursive command dispatch when executing `/calendar` or `/calendar gui`. The command now correctly transmits a `ServerboundChatCommandPacket` directly to the server rather than triggering the client-side command dispatcher via `ClientPacketListener.sendCommand`.
+> 2. **Fixed Screen Tooltip Rendering Crash (`ItemStackMixin`, `SupercraftHelper`):** Resolved `UnsupportedOperationException: ImmutableCollections` when rendering item tooltips across containers and inventories. The tooltip lines list is now guaranteed to be copied to a mutable `ArrayList` and set on `CallbackInfoReturnable` before modifying lines or executing Supercraft, lore addition, and price lookup injectors.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.100 (Ready for In-Game Testing)
 >
 > 1. **Collapsible Subcategories & Bulk Toggle (`BomboConfigScreen`, `ConfigItem`, `ConfigRegistry`):** Subcategories in `/b config` (such as Dungeon Map) render as collapsible headers with toggle arrows (`▼` / `▶`) and item count badges. Clicking anywhere on the header smoothly expands/collapses contained settings. Each subcategory header includes a bulk toggle switch to enable or disable all contained features with a single click.

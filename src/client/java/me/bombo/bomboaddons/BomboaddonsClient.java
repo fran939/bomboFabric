@@ -3328,15 +3328,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                      return 1;
                   }))).then(ClientCommands.literal("gui").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
-                     if (mc.player != null && mc.player.connection != null) {
-                        mc.player.connection.sendCommand("calendar");
+                     if (mc.player != null && mc.getConnection() != null) {
+                        mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket("calendar"));
                      }
 
                      return 1;
                   }))).executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
-                     if (mc.player != null && mc.player.connection != null) {
-                        mc.player.connection.sendCommand("calendar");
+                     if (mc.player != null && mc.getConnection() != null) {
+                        mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundChatCommandPacket("calendar"));
                      }
 
                      return 1;
