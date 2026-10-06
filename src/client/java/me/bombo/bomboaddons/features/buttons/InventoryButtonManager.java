@@ -190,7 +190,7 @@ public class InventoryButtonManager {
         }
 
         if (profileButtons.isEmpty()) {
-            profileButtons.put("default", new ArrayList<>());
+            profileButtons.put("default", createDefaultButtons());
             save();
         }
     }

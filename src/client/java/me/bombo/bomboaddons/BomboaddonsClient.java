@@ -1091,6 +1091,41 @@ public class BomboaddonsClient implements ClientModInitializer {
                              Minecraft mc = Minecraft.getInstance();
                              mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonMoveScreen(null)));
                              return 1;
+                          }))
+                          .then(ClientCommands.literal("toggle").executes((context) -> {
+                             BomboConfig.Settings s = BomboConfig.get();
+                             s.inventoryButtons = !s.inventoryButtons;
+                             BomboConfig.save();
+                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §r" + (s.inventoryButtons ? "§aInventory Buttons enabled!" : "§cInventory Buttons disabled!")));
+                             return 1;
+                          }))
+                          .then(ClientCommands.literal("on").executes((context) -> {
+                             BomboConfig.Settings s = BomboConfig.get();
+                             s.inventoryButtons = true;
+                             BomboConfig.save();
+                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aInventory Buttons enabled!"));
+                             return 1;
+                          }))
+                          .then(ClientCommands.literal("enable").executes((context) -> {
+                             BomboConfig.Settings s = BomboConfig.get();
+                             s.inventoryButtons = true;
+                             BomboConfig.save();
+                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aInventory Buttons enabled!"));
+                             return 1;
+                          }))
+                          .then(ClientCommands.literal("off").executes((context) -> {
+                             BomboConfig.Settings s = BomboConfig.get();
+                             s.inventoryButtons = false;
+                             BomboConfig.save();
+                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cInventory Buttons disabled!"));
+                             return 1;
+                          }))
+                          .then(ClientCommands.literal("disable").executes((context) -> {
+                             BomboConfig.Settings s = BomboConfig.get();
+                             s.inventoryButtons = false;
+                             BomboConfig.save();
+                             ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cInventory Buttons disabled!"));
+                             return 1;
                           })));
                   builder.then(ClientCommands.literal("backup")
                           .executes((context) -> {
@@ -5018,6 +5053,41 @@ public class BomboaddonsClient implements ClientModInitializer {
                        .then(ClientCommands.literal("move").executes((context) -> {
                           Minecraft mc = Minecraft.getInstance();
                           mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonMoveScreen(null)));
+                          return 1;
+                       }))
+                       .then(ClientCommands.literal("toggle").executes((context) -> {
+                          BomboConfig.Settings s = BomboConfig.get();
+                          s.inventoryButtons = !s.inventoryButtons;
+                          BomboConfig.save();
+                          ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §r" + (s.inventoryButtons ? "§aInventory Buttons enabled!" : "§cInventory Buttons disabled!")));
+                          return 1;
+                       }))
+                       .then(ClientCommands.literal("on").executes((context) -> {
+                          BomboConfig.Settings s = BomboConfig.get();
+                          s.inventoryButtons = true;
+                          BomboConfig.save();
+                          ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aInventory Buttons enabled!"));
+                          return 1;
+                       }))
+                       .then(ClientCommands.literal("enable").executes((context) -> {
+                          BomboConfig.Settings s = BomboConfig.get();
+                          s.inventoryButtons = true;
+                          BomboConfig.save();
+                          ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aInventory Buttons enabled!"));
+                          return 1;
+                       }))
+                       .then(ClientCommands.literal("off").executes((context) -> {
+                          BomboConfig.Settings s = BomboConfig.get();
+                          s.inventoryButtons = false;
+                          BomboConfig.save();
+                          ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cInventory Buttons disabled!"));
+                          return 1;
+                       }))
+                       .then(ClientCommands.literal("disable").executes((context) -> {
+                          BomboConfig.Settings s = BomboConfig.get();
+                          s.inventoryButtons = false;
+                          BomboConfig.save();
+                          ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §cInventory Buttons disabled!"));
                           return 1;
                        })));
                 dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("lyrics").executes((context) -> {

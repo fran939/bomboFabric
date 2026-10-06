@@ -1424,6 +1424,21 @@ public class ConfigRegistry {
                         () -> (int) Math.round((s.pvBackgroundAlpha > 0.0F ? s.pvBackgroundAlpha : 0.45F) * 100.0F),
                         v -> s.pvBackgroundAlpha = v / 100.0F));
 
+                items.add(ConfigItem.header("Inventory Buttons (/b buttons)", category));
+                items.add(ConfigItem.toggle("Inventory Buttons", "Display custom clickable command and macro buttons inside player inventory and container screens (/b buttons).", category, () -> s.inventoryButtons, v -> s.inventoryButtons = v));
+                items.add(ConfigItem.cycle("Button Tooltip Mode", "How much information to display when hovering over inventory buttons.", category,
+                        List.of("FULL", "NAME_ONLY", "CLICKS_ONLY", "NONE"),
+                        () -> s.inventoryButtonTooltipMode != null ? s.inventoryButtonTooltipMode.toUpperCase(java.util.Locale.ROOT) : "FULL",
+                        v -> s.inventoryButtonTooltipMode = v));
+                items.add(ConfigItem.button("Configure Inventory Buttons", "Open Editor", "Open the visual inventory buttons editor and manager (/b buttons).", category, () -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonsScreen(null)));
+                }));
+                items.add(ConfigItem.button("Move Inventory Buttons (GUI)", "Move Position", "Interactively drag and place inventory buttons on container canvas (/b buttons move).", category, () -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonMoveScreen(null)));
+                }));
+
                 items.add(ConfigItem.header("Theme & Color Scheme", category));
                 items.add(ConfigItem.cycle("Theme Mode", "Select overall GUI aesthetic (Dark Mode, Light Mode, Transparent, Zamasu).", category,
                         List.of("Dark Mode", "Light Mode", "Transparent", "Zamasu"),

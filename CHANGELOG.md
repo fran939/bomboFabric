@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.106] - 2026-10-07 (Beta)
+
+### Features & Fixes
+- **Inventory Buttons Master Enable Switch (`InventoryButtonsScreen`, `BomboConfig`, `ConfigRegistry`, `BomboaddonsClient`):** Added a prominent master enable/disable switch (`[✔ Buttons: ON]` / `[✖ Buttons: OFF]`) directly on the header of the inventory buttons editor (`/b buttons`). Added an on-screen warning when buttons are globally disabled.
+- **Auto-Enable on Add & Import (`InventoryButtonsScreen`, `InventoryButtonManager`):** Adding a button or importing buttons from Firmament/JSON now automatically enables the inventory buttons feature globally so buttons are immediately visible without manual toggling. Initialized default buttons if no profiles exist.
+- **Config GUI Integration (`ConfigRegistry`):** Added "Inventory Buttons" settings card under `GUI Settings` (and searchable in `/b config`), with master toggle, tooltip mode selector, and quick shortcut buttons to open the editor or move buttons.
+- **Command Subcommands (`BomboaddonsClient`):** Added `/b buttons on`, `/b buttons off`, and `/b buttons toggle` (also on root `/buttons`) to easily control the feature from chat.
+
 ## [26.2.28.105] - 2026-10-07 (Beta)
 
 ### Features & Fixes

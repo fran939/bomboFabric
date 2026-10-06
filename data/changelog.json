@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.106",
+    "date": "2026-10-07",
+    "changes": [
+      "+ Inventory Buttons Master Switch - Added prominent master ON/OFF button and warning banner in /b buttons editor header",
+      "+ Auto-Enable Inventory Buttons - Adding, importing, or toggling individual buttons automatically enables the master inventory buttons toggle",
+      "+ Inventory Buttons Config Registration - Registered Inventory Buttons with master toggle, tooltip mode, and GUI shortcuts in /b config under GUI Settings",
+      "+ Inventory Buttons Subcommands - Added /b buttons on, /b buttons off, and /b buttons toggle (with root /buttons support)",
+      "+ Default Buttons Population - Newly initialized button profiles now load sensible default inventory buttons"
+    ]
+  },
+  {
     "version": "26.2.28.105",
     "date": "2026-10-07",
     "changes": [

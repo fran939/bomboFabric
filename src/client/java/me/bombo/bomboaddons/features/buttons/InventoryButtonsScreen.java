@@ -383,8 +383,11 @@ public class InventoryButtonsScreen extends Screen {
         g.text(this.font, "§d§lBOMBOADDONS §8| §bButtons", winX + 16, winY + 14, 0xFFFFFFFF, false);
         g.text(this.font, "§7Profile: §e" + activeProf, winX + 220, winY + 14, 0xFFFFFFFF, false);
 
+        boolean masterEnabled = me.bombo.bomboaddons.BomboConfig.get().inventoryButtons;
         if (statusBanner != null && !statusBanner.isEmpty() && System.currentTimeMillis() - statusBannerTime < 5000L) {
-            g.text(this.font, statusBanner, winX + 340, winY + 14, 0xFFFFFFFF, false);
+            g.text(this.font, statusBanner, winX + 310, winY + 14, 0xFFFFFFFF, false);
+        } else if (!masterEnabled) {
+            g.text(this.font, "§c⚠ Buttons are OFF! Click [✔ Buttons: ON] to show them in inventory.", winX + 220, winY + 28, 0xFFFFAA00, false);
         }
 
         // Close button
@@ -421,6 +424,16 @@ public class InventoryButtonsScreen extends Screen {
         boolean ttHover = mouseX >= ttBtnX && mouseX <= ttBtnX + 105 && mouseY >= ttBtnY && mouseY <= ttBtnY + 22;
         ConfigUITheme.drawPillButton(g, this.font, ttLabel, ttBtnX, ttBtnY, 105, 22, ttHover,
                 0xFFF59E0B, ttHover ? 0x44D97706 : 0x22D97706, 0xFFD97706);
+
+        // Master Enable / Disable Toggle Button
+        int masterBtnX = winX + winW - 465;
+        int masterBtnY = winY + 9;
+        String masterLabel = masterEnabled ? "✔ Buttons: ON" : "✖ Buttons: OFF";
+        boolean masterHover = mouseX >= masterBtnX && mouseX <= masterBtnX + 125 && mouseY >= masterBtnY && mouseY <= masterBtnY + 22;
+        ConfigUITheme.drawPillButton(g, this.font, masterLabel, masterBtnX, masterBtnY, 125, 22, masterHover,
+                masterEnabled ? 0xFF10B981 : 0xFFEF4444,
+                masterHover ? (masterEnabled ? 0x44059669 : 0x44DC2626) : (masterEnabled ? 0x22059669 : 0x22DC2626),
+                masterEnabled ? 0xFF059669 : 0xFFDC2626);
 
         // Sidebar / Left Panel (Buttons List)
         int panelY = winY + headerH + 1;
@@ -986,6 +999,17 @@ public class InventoryButtonsScreen extends Screen {
             return true;
         }
 
+        // Master Enable / Disable Toggle Button Click
+        int masterBtnX = winX + winW - 465;
+        int masterBtnY = winY + 9;
+        if (mouseX >= masterBtnX && mouseX <= masterBtnX + 125 && mouseY >= masterBtnY && mouseY <= masterBtnY + 22) {
+            me.bombo.bomboaddons.BomboConfig.get().inventoryButtons = !me.bombo.bomboaddons.BomboConfig.get().inventoryButtons;
+            me.bombo.bomboaddons.BomboConfig.save();
+            statusBanner = me.bombo.bomboaddons.BomboConfig.get().inventoryButtons ? "§aInventory Buttons enabled!" : "§cInventory Buttons disabled!";
+            statusBannerTime = System.currentTimeMillis();
+            return true;
+        }
+
         // Left Panel Clicks
         int panelY = winY + headerH + 1;
         int panelH = winH - headerH - 1;
@@ -1022,6 +1046,8 @@ public class InventoryButtonsScreen extends Screen {
                 List<InventoryButton> list = InventoryButtonManager.getButtonsForActiveProfile();
                 InventoryButton newBtn = new InventoryButton("New Button", "/help", "minecraft:compass", InventoryButton.Anchor.PLAYER_INV_RIGHT, 4, 0, 18, true, false);
                 list.add(newBtn);
+                me.bombo.bomboaddons.BomboConfig.get().inventoryButtons = true;
+                me.bombo.bomboaddons.BomboConfig.save();
                 InventoryButtonManager.save();
                 selectButton(newBtn);
                 return true;
@@ -1066,6 +1092,10 @@ public class InventoryButtonsScreen extends Screen {
                     if (mouseX >= indX - 2 && mouseX <= indX + indW + 2 && mouseY >= indY - 2 && mouseY <= indY + indH + 2) {
                         pushUndoState();
                         b.enabled = !b.enabled;
+                        if (b.enabled && !me.bombo.bomboaddons.BomboConfig.get().inventoryButtons) {
+                            me.bombo.bomboaddons.BomboConfig.get().inventoryButtons = true;
+                            me.bombo.bomboaddons.BomboConfig.save();
+                        }
                         if (selectedButton == b) {
                             editEnabled = b.enabled;
                         }
@@ -1847,7 +1877,9 @@ public class InventoryButtonsScreen extends Screen {
         if (json != null) {
             int count = InventoryButtonManager.importFirmamentButtons(json, InventoryButtonManager.getActiveProfile(), append);
             if (count > 0) {
-                statusBanner = "§aImported " + count + " buttons from Firmament!";
+                me.bombo.bomboaddons.BomboConfig.get().inventoryButtons = true;
+                me.bombo.bomboaddons.BomboConfig.save();
+                statusBanner = "§aImported " + count + " buttons! (Buttons enabled)";
                 statusBannerTime = System.currentTimeMillis();
                 List<InventoryButton> list = InventoryButtonManager.getButtonsForActiveProfile();
                 if (!list.isEmpty()) {

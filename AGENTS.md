@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.105` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.106` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.105`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.106`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.106 (Ready for In-Game Testing)
+>
+> 1. **Inventory Buttons Master Toggle & Header Switch (`InventoryButtonsScreen`):** Added a prominent `[✔ Buttons: ON]` / `[✖ Buttons: OFF]` toggle button in the header of `/b buttons`. If buttons are globally toggled off, a red warning banner appears above the buttons list notifying the player with instructions to click the master button.
+> 2. **Auto-Enable Inventory Buttons on Actions (`InventoryButtonsScreen`):** Adding a new button, importing a profile/preset, or turning on an individual button in `/b buttons` now automatically flips `inventoryButtons` to `true` so imported or newly created buttons are immediately visible without hidden steps.
+> 3. **Config Registration & GUI Settings Integration (`ConfigRegistry`):** Registered "Inventory Buttons (/b buttons)" under `GUI Settings` with the master toggle, button tooltip mode selector (`Full (Name + Action)`, `Action Only`, `Name Only`, `Hidden`), and shortcut buttons to configure and reposition buttons.
+> 4. **Command Subcommands (`BomboaddonsClient`):** Added `/b buttons on`, `/b buttons off`, `/b buttons toggle` (and root `/buttons` equivalents) to quickly turn the overlay on and off from chat or keybinds.
+> 5. **Default Button Presets Initialization (`InventoryButtonManager`):** Fresh profiles or empty button configurations initialize with default helpful buttons rather than an empty list.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.105 (Ready for In-Game Testing)
 >
 > 1. **Picture-in-Picture Media Overlay (`PipManager`, `HudMoveScreen`, `BomboConfig`, `ConfigRegistry`, `BomboaddonsClient`):** Added in-game media player & video stream overlay (`/b pip <link>` and `/pip <link>`). Fully repositionable and resizable in `/b gui` (`PIP_OVERLAY` target) with corner resizing, mousewheel scaling, snapping, Ctrl+Z undo, and reset. Supports transparency/opacity adjustment (`/b pip opacity <0-100>` and slider in `/b config`), clean 16:9 YouTube video canvas stripped of all ads, like/subscribe UI, and banners, as well as direct web images (PNG, JPG, WEBP, GIF). Subcommands: `off`, `on`, `toggle`, `opacity`, `scale`, `clean`, `reset`, `gui`.
