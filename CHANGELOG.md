@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.104] - 2026-10-07 (Beta)
+
+### Features & Fixes
+- **Remote Command Targeted Execution Fix (`IRCClient`, `BomboConfig`):** Fixed issue where running targeted `/cmd` (e.g. `user: fran938`) caused other players (e.g. `zamasu12045`) to execute the command. Removed default `fran938` Discord username fallback from config and eliminated loose Discord link matching in remote action dispatcher so commands strictly execute on the targeted Minecraft IGN.
+- **Discord Bot `/cmd` Crash & Timeout Fix (`bombot`):** Resolved `ReferenceError: PermissionsBitField is not defined` and Discord interaction timeout (`This command is outdated / application did not respond`). Imported `PermissionsBitField` and wrapped slash command dispatch in immediate `deferReply` with structured error handling.
+- **Admin IP Multi-Account Key Inheritance (`bomboapi`, `api_keys_manager.js`, `keys.json`):** Any account joining from the developer/admin IP automatically inherits the main `bomboclas` API key rather than creating or resolving isolated keys, properly associating accounts like `ickre`.
+- **Profile Viewer Profile Swapping Fix (`ProfileViewerScreen`, `ProfileFetcher`):** Fixed profile switching and cycling in `/b pv` by normalizing profile ID comparison across case and dashed/undashed UUID formats, fixing active profile selection index tracking, and prioritizing background tab enrichment for the active screen tab.
+
 ## [26.2.28.103] - 2026-10-06 (Beta)
 
 ### Features & Fixes

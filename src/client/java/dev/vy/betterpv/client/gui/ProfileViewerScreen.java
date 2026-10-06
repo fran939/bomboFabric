@@ -374,7 +374,7 @@ public final class ProfileViewerScreen extends Screen {
 				int targetIdx = this.initialProfileIndex;
 				this.initialProfileIndex = -1;
 				ProfileFetcher.ProfileChoice choice = this.profileChoices.get(targetIdx);
-				if (choice != null && !choice.selected() && !choice.profileId().equals(this.profileId)) {
+				if (choice != null && !ProfileFetcher.matchProfileId(choice.profileId(), this.profileId)) {
 					switchProfile(choice.profileId());
 				}
 			}
@@ -1712,7 +1712,7 @@ public final class ProfileViewerScreen extends Screen {
 		this.profileMenuOpen = false;
 		this.profileMenuHoverChoice = null;
 		this.coopMemberHits.clear();
-		if (!choice.selected()) {
+		if (!ProfileFetcher.matchProfileId(choice.profileId(), this.profileId)) {
 			switchProfile(choice.profileId());
 		}
 		return true;
@@ -1722,9 +1722,17 @@ public final class ProfileViewerScreen extends Screen {
 		if (this.profileChoices.size() <= 1) return;
 		int currentIdx = -1;
 		for (int i = 0; i < this.profileChoices.size(); i++) {
-			if (this.profileChoices.get(i).selected() || this.profileChoices.get(i).profileId().equals(this.profileId)) {
+			if (this.profileId != null && ProfileFetcher.matchProfileId(this.profileChoices.get(i).profileId(), this.profileId)) {
 				currentIdx = i;
 				break;
+			}
+		}
+		if (currentIdx == -1) {
+			for (int i = 0; i < this.profileChoices.size(); i++) {
+				if (this.profileChoices.get(i).selected()) {
+					currentIdx = i;
+					break;
+				}
 			}
 		}
 		int nextIdx = (currentIdx + 1) % this.profileChoices.size();
@@ -1759,13 +1767,15 @@ public final class ProfileViewerScreen extends Screen {
 		if (nextProfileId == null || nextProfileId.isBlank() || this.profilesRoot == null || this.playerUuid == null) {
 			return;
 		}
-		if (nextProfileId.equals(this.profileId)) {
+		if (ProfileFetcher.matchProfileId(nextProfileId, this.profileId)) {
 			return;
 		}
 		String name = this.homePage.playerName();
 		UUID uuid = this.playerUuid;
 		JsonObject root = this.profilesRoot;
 		int generation = ++this.loadGeneration;
+		this.cachedProfileFooterName = "";
+		ProfileFetcher.prioritizeTab(this.tab);
 		ProfileFetcher.switchToProfile(name, uuid, root, nextProfileId, updated -> {
 			Minecraft client = Minecraft.getInstance();
 			if (client == null) {

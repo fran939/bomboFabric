@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.103` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.104` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,17 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.103`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.104`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.104 (Ready for In-Game Testing)
+>
+> 1. **Remote Command Targeted Execution Fix (`IRCClient`, `BomboConfig`):** Fixed issue where running targeted `/cmd` (e.g. `user: fran938`) caused unintended players (`zamasu12045`) to execute the command. Removed default `fran938` Discord fallback from `BomboConfig` and eliminated loose Discord link matching in remote action dispatcher so commands strictly execute on the targeted Minecraft IGN.
+> 2. **Discord Bot `/cmd` Crash & Timeout Fix (`bombot`):** Resolved `ReferenceError: PermissionsBitField is not defined` and Discord interaction timeout (`This command is outdated / application did not respond`). Imported `PermissionsBitField` and wrapped slash command dispatch in immediate `deferReply` with structured error handling.
+> 3. **Admin IP Multi-Account Key Inheritance (`bomboapi`, `api_keys_manager.js`, `keys.json`):** Any account joining from the developer/admin IP automatically inherits the main `bomboclas` API key rather than creating or resolving isolated keys, properly associating accounts like `ickre`.
+> 4. **Profile Viewer Profile Swapping Fix (`ProfileViewerScreen`, `ProfileFetcher`):** Fixed profile switching and cycling in `/b pv` by normalizing profile ID comparison across case and dashed/undashed UUID formats, fixing active profile selection index tracking, and prioritizing background tab enrichment for the active screen tab.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.103 (Ready for In-Game Testing)
 >
 > 1. **Networth Command Aliases (`BomboaddonsClient`, `SBECommands`):** Added `/networth` and `/patrimonioneto` as root and subcommand aliases for `/nw`, and coop variants `/networthcoop` and `/patrimonionetocoop` for `/nwc`.

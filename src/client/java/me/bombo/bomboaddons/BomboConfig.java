@@ -495,7 +495,7 @@ public class BomboConfig {
       public float fbWarnTimerScale = 1.0F;
       public int fbWarnSeconds = 28;
       public String ircNameColor = "";
-      public String ircDiscordUser = "fran938";
+      public String ircDiscordUser = "";
       public boolean cameraSettingsEnabled = false;
       public float cameraDistance = 4.0F;
       public boolean cameraPassThroughWalls = false;

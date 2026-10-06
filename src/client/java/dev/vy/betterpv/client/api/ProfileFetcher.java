@@ -1326,6 +1326,14 @@ public final class ProfileFetcher {
 		}
 	}
 
+	public static boolean matchProfileId(String a, String b) {
+		if (a == null || b == null) return false;
+		if (a.equalsIgnoreCase(b)) return true;
+		String cleanA = a.replace("-", "").trim();
+		String cleanB = b.replace("-", "").trim();
+		return !cleanA.isEmpty() && cleanA.equalsIgnoreCase(cleanB);
+	}
+
 	/** Prefer {@code preferredProfileId}, else Hypixel-selected, else first usable profile. */
 	private static JsonObject pickProfile(JsonArray profiles, String preferredProfileId) {
 		if (profiles == null) {
@@ -1343,7 +1351,7 @@ public final class ProfileFetcher {
 				first = profile;
 			}
 			String id = profile.has("profile_id") ? profile.get("profile_id").getAsString() : null;
-			if (preferredProfileId != null && preferredProfileId.equals(id)) {
+			if (preferredProfileId != null && matchProfileId(preferredProfileId, id)) {
 				preferred = profile;
 			}
 			if (profile.has("selected") && profile.get("selected").getAsBoolean()) {
@@ -1375,7 +1383,7 @@ public final class ProfileFetcher {
 			String cute = profile.has("cute_name") ? profile.get("cute_name").getAsString() : "Unknown";
 			boolean hypixelSelected = profile.has("selected") && profile.get("selected").getAsBoolean();
 			boolean selected = activeProfileId != null && !activeProfileId.isBlank()
-				? activeProfileId.equals(id)
+				? matchProfileId(activeProfileId, id)
 				: hypixelSelected;
 			String mode = "";
 			if (profile.has("game_mode") && profile.get("game_mode").isJsonPrimitive()
