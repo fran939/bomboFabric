@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.99",
+    "date": "2026-10-06",
+    "changes": [
+      "+ Auto API Key Provisioning - New users automatically generate and link an API key with their UUID, and multiple instances on the same IP automatically sync the same key",
+      "+ Hypixel API Call Metrics on /keys - The /keys dashboard and API now track outbound Hypixel API requests separately from standard Bombo API calls",
+      "+ Admin 1-Minute Live Cache Bypass - Running /b api as an admin clears caches and enforces fresh Hypixel API data lookups (such as /lb) for 60 seconds",
+      "~ Fixed /b api Showing /bits - Removed unintentional Bits profit response when checking API status",
+      "+ API Relative Timestamps - /b api status now displays human-friendly relative age (e.g. 15s ago, 2m ago) for Prices, Bazaar, NPC, and Bits"
+    ]
+  },
+  {
     "version": "26.2.28.98",
     "date": "2026-10-06",
     "changes": [

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.98` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.99` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.98`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.99`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.99 (Ready for In-Game Testing)
+>
+> 1. **Auto API Key Generation & IP Match Reuse (`BomboApiKeyManager`, `BomboaddonsClient`, `bomboapi`):** Users downloading the mod automatically generate an API key tied to their Minecraft UUID on launch/world-join without needing to run `/b apikey`. Users running additional accounts/instances on the same IP automatically reuse the existing key via IP matching.
+> 2. **Hypixel API Call Tracking on `/keys` (`bomboapi`, `api_keys_manager.js`, `keys.html`):** The `/keys` web interface and API now track and display both total Bombo API requests and outbound Hypixel API requests made per key.
+> 3. **Admin 1-Minute Cache Bypass (`BomboApiKeyManager`, `BomboApiUrl`, `LF`, `bomboapi`):** Running `/b api` with an admin key triggers a 60-second live cache bypass across both server and client (`X-Bypass-Cache`). Subsequent profile lookups (e.g. `/lb`) immediately fetch fresh data from Hypixel.
+> 4. **Fixed `/b api` Showing `/bits` Response (`BomboaddonsClient`):** Removed the unintentional `/bits` execution and chat output from the `/b api` command.
+> 5. **API Relative Timestamps (`LowestBinManager`, `BitsManager`):** `/b api` status displays human-readable relative timestamps (`12s ago`, `2m 14s ago`, `Never`) showing when Prices, Bazaar, NPC, and Bits were last fetched.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.98 (Ready for In-Game Testing)
 >
 > 1. **Dungeon Key Complete Body Glow Elimination (`ArmorStandRendererMixin`, `ArmorStandRenderStateMixin`, `HeadOnlyRenderState`):** Replaced model part manipulation with direct outline render type suppression in `ArmorStandRenderer.getRenderType`. Implemented `HeadOnlyRenderState` interface on `ArmorStandRenderState` to flag head-only key armor stands, returning `null` in `getRenderType` to completely bypass body model (`ArmorStandArmorModel`) submission to the outline and solid render buffers. The glowing outline is now strictly rendered around the skull head via `CustomHeadLayer` with zero body sticks, spine, or baseplate artifacts.

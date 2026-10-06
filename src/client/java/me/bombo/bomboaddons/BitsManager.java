@@ -25,6 +25,10 @@ public class BitsManager {
    private static long lastFetchTime;
    private static long lastAttemptTime;
 
+   public static long getLastFetchTime() {
+      return lastFetchTime;
+   }
+
    public static CompletableFuture<Boolean> ensureLoaded() {
       long now = System.currentTimeMillis();
       if (!bitCostCache.isEmpty() && now - lastFetchTime < 300000L) {

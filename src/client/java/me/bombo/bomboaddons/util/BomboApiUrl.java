@@ -53,6 +53,9 @@ public class BomboApiUrl {
          builder.header("Api-Key", key);
          builder.header("X-Api-Key", key);
       }
+      if (me.bombo.bomboaddons.features.auth.BomboApiKeyManager.isAdminBypassActive()) {
+         builder.header("X-Bypass-Cache", "true");
+      }
       boolean debug = false;
       try {
          me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();

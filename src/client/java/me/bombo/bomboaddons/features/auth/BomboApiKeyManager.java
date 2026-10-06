@@ -41,6 +41,59 @@ public class BomboApiKeyManager {
         return !getApiKey().isEmpty();
     }
 
+    private static final java.util.concurrent.atomic.AtomicBoolean autoFetchInProgress = new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static volatile long adminBypassUntil = 0L;
+
+    public static boolean isAdminBypassActive() {
+        return System.currentTimeMillis() < adminBypassUntil;
+    }
+
+    public static void autoEnsureApiKey() {
+        if (hasApiKey() || !autoFetchInProgress.compareAndSet(false, true)) {
+            return;
+        }
+        fetchOrGenerateKey().thenAccept(key -> {
+            autoFetchInProgress.set(false);
+            if (key != null && !key.isEmpty()) {
+                System.out.println("[BomboAPI] Auto-acquired API key: " + key);
+            }
+        }).exceptionally(ex -> {
+            autoFetchInProgress.set(false);
+            System.err.println("[BomboAPI] Auto-acquire API key failed: " + ex.getMessage());
+            return null;
+        });
+    }
+
+    public static CompletableFuture<Boolean> requestAdminCacheBypass() {
+        String key = getApiKey();
+        if (key.isEmpty()) {
+            return CompletableFuture.completedFuture(false);
+        }
+
+        String url = BomboApiUrl.MAIN_API_BASE + "/api/keys/bypass-cache";
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .header("Api-Key", key)
+                .header("X-Api-Key", key)
+                .timeout(Duration.ofSeconds(10))
+                .POST(HttpRequest.BodyPublishers.noBody());
+
+        return HTTP_CLIENT.sendAsync(builder.build(), HttpResponse.BodyHandlers.ofString())
+                .thenApply(resp -> {
+                    if (resp.statusCode() == 200 && resp.body() != null) {
+                        try {
+                            JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
+                            if (json.has("success") && json.get("success").getAsBoolean() && json.has("isAdmin") && json.get("isAdmin").getAsBoolean()) {
+                                adminBypassUntil = System.currentTimeMillis() + 60000L;
+                                return true;
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                    return false;
+                }).exceptionally(ex -> false);
+    }
+
     public static boolean checkApiKeyAndWarn(String actionName) {
         if (!hasApiKey()) {
             Minecraft mc = Minecraft.getInstance();

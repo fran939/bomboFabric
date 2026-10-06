@@ -72,6 +72,14 @@ public class LF {
    private static volatile String cachedJson;
    private static volatile long cacheTime;
 
+   public static void clearCache() {
+      cachedUsername = null;
+      cachedUuid = null;
+      cachedJson = null;
+      cacheTime = 0L;
+      NAME_CACHE.clear();
+   }
+
    public static void searchLocal(String query) {
       if (Minecraft.getInstance().player != null) {
          String name = Minecraft.getInstance().player.getName().getString();
@@ -81,7 +89,7 @@ public class LF {
    }
 
    public static void show(String username, String query, boolean coopMode) {
-      if (username.equalsIgnoreCase(cachedUsername) && cachedJson != null && cachedUuid != null && !cachedUuid.isEmpty() && System.currentTimeMillis() - cacheTime < 60000L) {
+      if (!me.bombo.bomboaddons.features.auth.BomboApiKeyManager.isAdminBypassActive() && username.equalsIgnoreCase(cachedUsername) && cachedJson != null && cachedUuid != null && !cachedUuid.isEmpty() && System.currentTimeMillis() - cacheTime < 60000L) {
          sendMessage("&7Looking up &b" + username + (coopMode ? " &d(Coop Mode)" : "") + "&7 (Cached)...");
          SearchContext ctx = new SearchContext(cachedJson, cachedUuid, username, coopMode);
          Minecraft.getInstance().execute(() -> handleResponse(username, query, ctx));
@@ -125,7 +133,7 @@ public class LF {
       if (mc.player != null) {
          String username = removeColors(mc.player.getName().getString());
          if (username != null && !username.isEmpty()) {
-            if (!username.equalsIgnoreCase(cachedUsername) || cachedJson == null || System.currentTimeMillis() - cacheTime >= 60000L) {
+            if (me.bombo.bomboaddons.features.auth.BomboApiKeyManager.isAdminBypassActive() || !username.equalsIgnoreCase(cachedUsername) || cachedJson == null || System.currentTimeMillis() - cacheTime >= 60000L) {
                String lowerName = username.toLowerCase();
                if (pendingPreFetches.add(lowerName)) {
                   getUuid(username).thenCompose((uuid) -> {

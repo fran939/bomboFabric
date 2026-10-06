@@ -88,15 +88,47 @@ public class LowestBinManager {
       BitsManager.ensureLoaded();
    }
 
+   public static String formatRelativeTime(long timestamp) {
+      if (timestamp <= 0L) {
+         return "Never";
+      }
+      long diffMs = System.currentTimeMillis() - timestamp;
+      if (diffMs < 0L) diffMs = 0L;
+      long seconds = diffMs / 1000L;
+      if (seconds < 60L) {
+         return seconds + "s ago";
+      }
+      long minutes = seconds / 60L;
+      long remSeconds = seconds % 60L;
+      if (minutes < 60L) {
+         return minutes + "m " + remSeconds + "s ago";
+      }
+      long hours = minutes / 60L;
+      long remMinutes = minutes % 60L;
+      return hours + "h " + remMinutes + "m ago";
+   }
+
    public static String getStatus() {
       long now = System.currentTimeMillis();
       boolean bazaarFresh = now - lastBazaarFetch < 300000L;
       boolean pricesFresh = now - lastFetchTime < 300000L;
+      boolean npcFresh = !npcCache.isEmpty() && now - lastNpcFetch < 300000L;
+      long bitsFetch = BitsManager.getLastFetchTime();
+      boolean bitsFresh = !BitsManager.bitCostCache.isEmpty() && now - bitsFetch < 300000L;
+
       StringBuilder sb = new StringBuilder("§6API Status:\n");
-      sb.append("§7- Prices: ").append(pricesFresh ? "§aFresh" : "§cStale").append(" §8(").append(priceCache.size()).append(" ids)\n");
-      sb.append("§7- Bazaar: ").append(bazaarFresh ? "§aFresh" : "§cStale").append(" §8(").append(bazaarCache.size()).append(" ids)\n");
-      sb.append("§7- NPC: ").append(!npcCache.isEmpty() && now - lastNpcFetch < 300000L ? "§aFresh" : "§cStale").append(" §8(").append(npcCache.size()).append(" ids)\n");
-      sb.append("§7- Bits: §aLoaded §8(").append(BitsManager.bitCostCache.size()).append(" ids)");
+      sb.append("§7- Prices: ").append(pricesFresh ? "§aFresh" : "§cStale")
+        .append(" §8(").append(priceCache.size()).append(" ids, ")
+        .append("§7").append(formatRelativeTime(lastFetchTime)).append("§8)\n");
+      sb.append("§7- Bazaar: ").append(bazaarFresh ? "§aFresh" : "§cStale")
+        .append(" §8(").append(bazaarCache.size()).append(" ids, ")
+        .append("§7").append(formatRelativeTime(lastBazaarFetch)).append("§8)\n");
+      sb.append("§7- NPC: ").append(npcFresh ? "§aFresh" : "§cStale")
+        .append(" §8(").append(npcCache.size()).append(" ids, ")
+        .append("§7").append(formatRelativeTime(lastNpcFetch)).append("§8)\n");
+      sb.append("§7- Bits: ").append(bitsFresh ? "§aLoaded" : (!BitsManager.bitCostCache.isEmpty() ? "§eLoaded" : "§cNot loaded"))
+        .append(" §8(").append(BitsManager.bitCostCache.size()).append(" ids, ")
+        .append("§7").append(formatRelativeTime(bitsFetch)).append("§8)");
       return sb.toString();
    }
 

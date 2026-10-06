@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.99] - 2026-10-06 (Beta)
+
+### Features & Fixes
+- **Automatic User API Key Provisioning (`BomboApiKeyManager`, `BomboaddonsClient`, `bomboapi`):** New users downloading the mod now automatically generate and link an API key upon launch/join without needing to run `/b apikey`. Users running on different instances on the same IP automatically reuse and sync their existing API key.
+- **Hypixel API Call Tracking & `/keys` Dashboard (`bomboapi`, `api_keys_manager.js`, `keys.html`):** The `/keys` web interface and API now track and display both total Bombo API requests and outbound Hypixel API calls made per key/user.
+- **Admin 1-Minute Cache Bypass (`BomboApiKeyManager`, `BomboApiUrl`, `LF`, `bomboapi`):** Admins executing `/b api` activate a 1-minute live cache bypass across both server and client. Subsequent profile lookups (e.g. `/lb`) immediately query fresh Hypixel data upstream rather than returning cached responses.
+- **Removed Unintentional `/bits` Output in `/b api` (`BomboaddonsClient`):** Fixed `/b api` displaying top bits profit lines in chat by eliminating the chained `/bits` call.
+- **API Cache Relative Age Indicators (`LowestBinManager`, `BitsManager`):** `/b api` now displays human-readable relative timestamps (`12s ago`, `2m 15s ago`, `Never`) showing exactly when Prices, Bazaar, NPC, and Bits data were last fetched.
+
 ## [26.2.28.98] - 2026-10-06 (Beta)
 
 ### Features & Fixes

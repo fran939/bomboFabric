@@ -564,6 +564,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          System.setProperty("java.awt.headless", "false");
       } catch (Throwable ignored) {}
       BomboConfig.load();
+      me.bombo.bomboaddons.features.auth.BomboApiKeyManager.autoEnsureApiKey();
       ChatModifier.load();
       loadCommandHistory();
       WaypointManager.init();
@@ -2029,20 +2030,18 @@ public class BomboaddonsClient implements ClientModInitializer {
                      return 1;
                   }));
                   builder.then(ClientCommands.literal("api").executes((context) -> {
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §eChecking and Reloading APIs..."));
+                     FabricClientCommandSource source = (FabricClientCommandSource)context.getSource();
+                     source.sendFeedback(Component.literal("§8[§3Bombo§8]§r §eChecking and Reloading APIs..."));
                      LowestBinManager.reload();
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal(LowestBinManager.getStatus()));
-                     BitsManager.fetchTopBits(3).thenAccept((lines) -> {
-                        Minecraft mc = Minecraft.getInstance();
-                        if (mc.player != null) {
-                           mc.execute(() -> {
-                              for(String l : lines) {
-                                 mc.player.sendSystemMessage(Component.literal(l));
-                              }
-
-                           });
+                     LF.clearCache();
+                     source.sendFeedback(Component.literal(LowestBinManager.getStatus()));
+                     me.bombo.bomboaddons.features.auth.BomboApiKeyManager.requestAdminCacheBypass().thenAccept((bypassed) -> {
+                        if (bypassed) {
+                           Minecraft mc = Minecraft.getInstance();
+                           if (mc != null && mc.player != null) {
+                              mc.execute(() -> mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §a[Admin] Server cache bypass active for 1 minute! Fresh Hypixel data will be requested.")));
+                           }
                         }
-
                      });
                      return 1;
                   }));
@@ -5812,6 +5811,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
 
             LowestBinManager.reload();
+            me.bombo.bomboaddons.features.auth.BomboApiKeyManager.autoEnsureApiKey();
             AutoExperiments.reset();
             ModUpdater.checkAndUpdate(true);
 
