@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.100",
+    "date": "2026-10-06",
+    "changes": [
+      "+ Collapsible Subcategories & Bulk Switch - Click subcategory headers in /b config to expand/collapse items, with an ALL ON/OFF bulk toggle",
+      "+ Universal Undo & Redo - Ctrl+Z and Ctrl+Y now undo and redo setting toggles, bulk actions, and category reorganization across the GUI",
+      "+ Developer Category Role Gating - The Dev category is hidden by default and only visible to users granted developer status on /keys or via Discord !role add <user> dev",
+      "+ Manual Account Mapping on /keys - Admins can manually set Minecraft IGN and Discord usernames on /keys with automatic Discord ID resolution",
+      "+ Quick Subcategory Removal - Added a one-click unassign button and modal clear button in /b order to easily remove features from subcategories",
+      "+ Subcategory Name Search - Searching for a subcategory name now matches and displays all features inside it",
+      "~ Clarified & Recategorized Orphan Settings - Corrected Item Highlights and AH vs Craft descriptions and placed them into proper categories"
+    ]
+  },
+  {
     "version": "26.2.28.99",
     "date": "2026-10-06",
     "changes": [

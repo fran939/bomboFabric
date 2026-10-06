@@ -85,6 +85,12 @@ public class ConfigItem {
     public CustomCardRenderer customRenderer;
     public CustomCardClickHandler customClickHandler;
 
+    // Subcategory & hierarchy metadata
+    public boolean isSubcategoryHeader = false;
+    public String subCategoryName = "";
+    public final List<ConfigItem> childItems = new java.util.ArrayList<>();
+    public ConfigItem parentHeader = null;
+
     public ConfigItem(Type type, String name, String description, String category) {
         this.type = type;
         this.name = name;
@@ -96,7 +102,7 @@ public class ConfigItem {
         if (dynamicHeightSupplier != null) {
             return dynamicHeightSupplier.get();
         }
-        if (type == Type.HEADER) return 24;
+        if (type == Type.HEADER) return isSubcategoryHeader ? 26 : 24;
         if (type == Type.CUSTOM_CARD) return cardHeight;
         return 38;
     }
@@ -104,6 +110,13 @@ public class ConfigItem {
     // Static builders for clean definition
     public static ConfigItem header(String title, String category) {
         return new ConfigItem(Type.HEADER, title, null, category);
+    }
+
+    public static ConfigItem subcategoryHeader(String subcatName, String category) {
+        ConfigItem item = new ConfigItem(Type.HEADER, subcatName, null, category);
+        item.isSubcategoryHeader = true;
+        item.subCategoryName = subcatName;
+        return item;
     }
 
     public static ConfigItem toggle(String name, String description, String category, Supplier<Boolean> getter, Consumer<Boolean> setter) {
@@ -314,6 +327,9 @@ public class ConfigItem {
         copy.dynamicHeightSupplier = this.dynamicHeightSupplier;
         copy.customRenderer = this.customRenderer;
         copy.customClickHandler = this.customClickHandler;
+        copy.isSubcategoryHeader = this.isSubcategoryHeader;
+        copy.subCategoryName = this.subCategoryName;
+        copy.parentHeader = this.parentHeader;
         return copy;
     }
 }

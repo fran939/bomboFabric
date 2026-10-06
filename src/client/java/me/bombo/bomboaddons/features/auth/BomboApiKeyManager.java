@@ -43,19 +43,37 @@ public class BomboApiKeyManager {
 
     private static final java.util.concurrent.atomic.AtomicBoolean autoFetchInProgress = new java.util.concurrent.atomic.AtomicBoolean(false);
     private static volatile long adminBypassUntil = 0L;
+    private static volatile boolean isDeveloper = false;
+    private static volatile boolean isAdmin = false;
+
+    public static boolean isDeveloper() {
+        return isDeveloper || isAdmin;
+    }
+
+    public static boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public static void setDeveloper(boolean dev) {
+        isDeveloper = dev;
+    }
+
+    public static void setAdmin(boolean admin) {
+        isAdmin = admin;
+    }
 
     public static boolean isAdminBypassActive() {
         return System.currentTimeMillis() < adminBypassUntil;
     }
 
     public static void autoEnsureApiKey() {
-        if (hasApiKey() || !autoFetchInProgress.compareAndSet(false, true)) {
+        if (!autoFetchInProgress.compareAndSet(false, true)) {
             return;
         }
         fetchOrGenerateKey().thenAccept(key -> {
             autoFetchInProgress.set(false);
             if (key != null && !key.isEmpty()) {
-                System.out.println("[BomboAPI] Auto-acquired API key: " + key);
+                System.out.println("[BomboAPI] Auto-acquired/refreshed API key: " + key + " (isDeveloper=" + isDeveloper() + ")");
             }
         }).exceptionally(ex -> {
             autoFetchInProgress.set(false);
@@ -140,6 +158,12 @@ public class BomboApiKeyManager {
                             JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
                             if (resp.statusCode() == 200 && json.has("success") && json.get("success").getAsBoolean() && json.has("key")) {
                                 String key = json.get("key").getAsString();
+                                if (json.has("is_developer")) {
+                                    isDeveloper = json.get("is_developer").getAsBoolean();
+                                }
+                                if (json.has("is_admin")) {
+                                    isAdmin = json.get("is_admin").getAsBoolean();
+                                }
                                 BomboConfig.Settings s = BomboConfig.get();
                                 if (s != null) {
                                     s.apiKey = key;

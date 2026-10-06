@@ -134,6 +134,9 @@ public class ConfigRegistry {
                     && (!me.bombo.bomboaddons.flavor.Flavor.get().isCheat() || s.hideCheats)) {
                 continue;
             }
+            if (!BomboConfig.isDev() && ("Dev".equalsIgnoreCase(cat) || "Developer".equalsIgnoreCase(cat))) {
+                continue;
+            }
             list.add(cat);
         }
         // At the bottom: GUI Settings right on top of Debug
@@ -1034,8 +1037,8 @@ public class ConfigRegistry {
             }
 
             case "Item Highlights" -> {
-                items.add(ConfigItem.header("Ground Item Drop ESP", category));
-                items.add(ConfigItem.toggle("Item Highlights Enabled", "Highlights rare dropped items on the ground.", category, () -> s.itemHighlightsEnabled, v -> s.itemHighlightsEnabled = v));
+                items.add(ConfigItem.header("Slot & Container Item Highlights", category));
+                items.add(ConfigItem.toggle("Item Highlights Enabled", "Highlights configured items in inventory and container slots.", category, () -> s.itemHighlightsEnabled, v -> s.itemHighlightsEnabled = v));
             }
 
             case "Keybinds" -> {
@@ -1635,23 +1638,20 @@ public class ConfigRegistry {
 
             // Group 2: Items for each defined subcategory
             for (String subCat : subcats) {
-                boolean subCatAddedHeader = false;
+                ConfigItem subCatHeader = ConfigItem.subcategoryHeader(subCat, category);
+                assignedItems.add(subCatHeader);
                 for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
                     FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
                     if (meta.belongsToCategory(category) && subCat.equalsIgnoreCase(meta.subCategory)) {
-                        if (!subCatAddedHeader) {
-                            assignedItems.add(ConfigItem.header(subCat, category));
-                            subCatAddedHeader = true;
-                        }
                         ConfigItem baseItem = masterMap.get(entry.getKey());
                         if (baseItem != null) {
-                            assignedItems.add(baseItem.cloneWithCategory(category));
+                            ConfigItem cloned = baseItem.cloneWithCategory(category);
+                            cloned.subCategoryName = subCat;
+                            cloned.parentHeader = subCatHeader;
+                            subCatHeader.childItems.add(cloned);
+                            assignedItems.add(cloned);
                         }
                     }
-                }
-                if (!subCatAddedHeader) {
-                    // Empty subcategory separator
-                    assignedItems.add(ConfigItem.header(subCat, category));
                 }
             }
         } else {

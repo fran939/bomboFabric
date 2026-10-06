@@ -201,6 +201,21 @@ public class FeatureOrganizerManager {
             }
         }
 
+        // Rescue features that belong to proper categories
+        FeatureMeta fmItem = features.get("Item Highlights Enabled");
+        if (fmItem != null && ("Uncategorized".equalsIgnoreCase(fmItem.category) || "Item Highlights".equalsIgnoreCase(fmItem.category))) {
+            fmItem.category = "Inventory";
+            fmItem.subCategory = "Highlights";
+            fmItem.description = "Highlights configured items in inventory and container slots.";
+            if (!customCategories.contains("Inventory")) customCategories.add("Inventory");
+        }
+        FeatureMeta fmCraft = features.get("Prefer Cheapest (AH vs Craft)");
+        if (fmCraft != null && "Uncategorized".equalsIgnoreCase(fmCraft.category)) {
+            fmCraft.category = "Lore Additions";
+            fmCraft.subCategory = "Estimated Value";
+            if (!customCategories.contains("Lore Additions")) customCategories.add("Lore Additions");
+        }
+
         // Re-home features whose saved category no longer exists in this build.
         Set<String> knownCategories = new HashSet<>(customCategories);
         boolean hasUncategorized = false;

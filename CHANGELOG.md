@@ -1,5 +1,16 @@
 # BomboAddons Changelog
  
+## [26.2.28.100] - 2026-10-06 (Beta)
+
+### Features & Fixes
+- **Collapsible Subcategories & Bulk Toggle (`BomboConfigScreen`, `ConfigItem`, `ConfigRegistry`):** Subcategories in `/b config` (such as Dungeon Map) are now interactive cards with collapse arrows (`▼` / `▶`) and item count badges. Clicking anywhere on the header smoothly expands or collapses all child items. Each subcategory header includes a bulk toggle switch to enable or disable all contained features at once.
+- **Universal Undo & Redo (`Ctrl + Z` & `Ctrl + Y`) (`BomboConfigScreen`, `BomboOrderScreen`):** Full undo and redo support across configuration and organizer menus. Toggle switches, bulk changes, category reordering, moves, and deletions can be immediately undone (`Ctrl + Z`) or reapplied (`Ctrl + Y` or `Ctrl + Shift + Z`).
+- **Developer Category Gating & Bridge Commands (`BomboApiKeyManager`, `BomboConfig`, `ConfigRegistry`, `BomboOrderScreen`, `bombot`, `bomboapi`):** The `Dev` category is strictly hidden by default. Only users with the Developer role configured on the `/keys` dashboard or granted via Discord bridge command (`!role add <user> dev`) can view and configure developer features.
+- **Manual Account Mapping & Discord ID Resolution on `/keys` (`bomboapi`, `api_keys_manager.js`, `keys.html`):** The `/keys` web interface now features an Edit modal allowing administrators to modify Minecraft IGN and Discord user for any key. Entering a Discord username automatically queries Discord's API and resolves the snowflake ID.
+- **Subcategory Removal & Quick Unassign (`BomboOrderScreen`):** Added a one-click `⮌` (Remove from Subcategory) button next to each child feature in `/b order`, a `[✕ Clear]` subcategory button in the feature edit modal, and automatic subcategory clearing when dragging features to other tabs.
+- **Subcategory-Aware Feature Search (`BomboConfigScreen`, `BomboOrderScreen`):** Searching for a subcategory name (e.g. `Dungeon Map`) now automatically matches and displays all child features belonging to that subcategory.
+- **Recategorized & Clarified Orphan Features (`FeatureOrganizerManager`, `ConfigRegistry`, `SlotHighlight`, `LowestBinManager`):** Resolved "Item Highlights Enabled" (clarified that it highlights inventory/container slots, not dropped floor items; moved to Inventory / Highlights) and "Prefer Cheapest (AH vs Craft)" (clarified that item networth estimation chooses craft recipe cost over AH lowest BIN when cheaper; moved to Lore Additions / SkyBlock).
+
 ## [26.2.28.99] - 2026-10-06 (Beta)
 
 ### Features & Fixes

@@ -431,12 +431,7 @@ public class BomboConfig {
    }
 
    public static boolean isDev() {
-      net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-      if (mc == null || mc.getUser() == null) return false;
-      String name = mc.getUser().getName();
-      if (name == null) return false;
-      String lower = name.toLowerCase();
-      return lower.equals("zamasu12045") || lower.equals("bomboclas") || lower.equals("fran938") || lower.equals("fran939") || lower.equals("fran");
+      return me.bombo.bomboaddons.features.auth.BomboApiKeyManager.isDeveloper();
    }
 
    public static Settings get() {

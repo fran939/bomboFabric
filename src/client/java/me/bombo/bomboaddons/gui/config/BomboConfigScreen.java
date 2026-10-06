@@ -82,6 +82,64 @@ public class BomboConfigScreen extends Screen {
     private int hoveredConflictX = 0;
     private int hoveredConflictY = 0;
 
+    public static class ConfigUndoManager {
+        public interface Action {
+            void undo();
+            void redo();
+        }
+
+        private static final java.util.Deque<Action> undoStack = new java.util.ArrayDeque<>();
+        private static final java.util.Deque<Action> redoStack = new java.util.ArrayDeque<>();
+
+        public static void push(Action action) {
+            if (action == null) return;
+            undoStack.push(action);
+            if (undoStack.size() > 100) {
+                undoStack.removeLast();
+            }
+            redoStack.clear();
+        }
+
+        public static boolean undo() {
+            if (undoStack.isEmpty()) return false;
+            Action act = undoStack.pop();
+            act.undo();
+            redoStack.push(act);
+            BomboConfig.save();
+            return true;
+        }
+
+        public static boolean redo() {
+            if (redoStack.isEmpty()) return false;
+            Action act = redoStack.pop();
+            act.redo();
+            undoStack.push(act);
+            BomboConfig.save();
+            return true;
+        }
+    }
+
+    private static final java.util.Set<String> collapsedSubcategories = new java.util.HashSet<>();
+
+    private static String getSubcatCollapseKey(String category, String subCat) {
+        return (category != null ? category.toLowerCase(java.util.Locale.ROOT) : "") + "::" + (subCat != null ? subCat.toLowerCase(java.util.Locale.ROOT) : "");
+    }
+
+    public static boolean isSubcategoryCollapsed(String category, String subCat) {
+        if (subCat == null || subCat.trim().isEmpty()) return false;
+        return collapsedSubcategories.contains(getSubcatCollapseKey(category, subCat.trim()));
+    }
+
+    public static void toggleSubcategoryCollapsed(String category, String subCat) {
+        if (subCat == null || subCat.trim().isEmpty()) return;
+        String key = getSubcatCollapseKey(category, subCat.trim());
+        if (collapsedSubcategories.contains(key)) {
+            collapsedSubcategories.remove(key);
+        } else {
+            collapsedSubcategories.add(key);
+        }
+    }
+
     private static boolean isSameItem(ConfigItem a, ConfigItem b) {
         if (a == b) return true;
         if (a == null || b == null) return false;
@@ -273,7 +331,9 @@ public class BomboConfigScreen extends Screen {
                     filtered.add(cat);
                 } else {
                     for (ConfigItem it : ConfigRegistry.getItemsForCategory(cat)) {
-                        if ((it.name != null && it.name.toLowerCase().contains(q)) || (it.description != null && it.description.toLowerCase().contains(q))) {
+                        if ((it.name != null && it.name.toLowerCase().contains(q))
+                                || (it.description != null && it.description.toLowerCase().contains(q))
+                                || (it.subCategoryName != null && it.subCategoryName.toLowerCase().contains(q))) {
                             filtered.add(cat);
                             break;
                         }
@@ -340,6 +400,10 @@ public class BomboConfigScreen extends Screen {
 
         for (ConfigItem item : items) {
             if (isItemParentDisabled(item)) continue;
+            if (!item.isSubcategoryHeader && item.subCategoryName != null && !item.subCategoryName.isEmpty()
+                    && isSubcategoryCollapsed(item.category, item.subCategoryName)) {
+                continue;
+            }
 
             int cardH = item.getEffectiveCardHeight();
 
@@ -384,6 +448,45 @@ public class BomboConfigScreen extends Screen {
 
     private void renderConfigItemCard(GuiGraphicsExtractor g, ConfigItem item, int x, int y, int w, int h, int mouseX, int mouseY) {
         if (item.type == ConfigItem.Type.HEADER) {
+            if (item.isSubcategoryHeader) {
+                boolean collapsed = isSubcategoryCollapsed(item.category, item.subCategoryName);
+                boolean headerHover = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
+                if (headerHover) {
+                    g.fill(x, y, x + w, y + h, 0x1AFFFFFF);
+                }
+                String arrow = collapsed ? "§6▶ " : "§6▼ ";
+                int childCount = item.childItems.size();
+                String countBadge = " §8(" + childCount + (childCount == 1 ? " feature" : " features") + ")";
+                g.text(this.font, ConfigUITheme.formatFont(arrow + "§e" + item.name + countBadge), x + 6, y + 7, ConfigUITheme.ACCENT_GOLD, true);
+
+                // Bulk Toggle Switch for this subcategory on the right
+                List<ConfigItem> toggles = new ArrayList<>();
+                for (ConfigItem child : item.childItems) {
+                    if (child.type == ConfigItem.Type.TOGGLE && child.boolGetter != null && child.boolSetter != null) {
+                        toggles.add(child);
+                    }
+                }
+                if (!toggles.isEmpty()) {
+                    boolean allOn = true;
+                    for (ConfigItem c : toggles) {
+                        if (!Boolean.TRUE.equals(c.boolGetter.get())) {
+                            allOn = false;
+                            break;
+                        }
+                    }
+                    int toggleW = 34;
+                    int toggleH = 18;
+                    int toggleX = x + w - toggleW - 10;
+                    int toggleY = y + 4;
+                    boolean toggleHover = mouseX >= toggleX && mouseX <= toggleX + toggleW && mouseY >= toggleY && mouseY <= toggleY + toggleH;
+                    String statusLabel = allOn ? "§aAll ON" : "§7All OFF";
+                    g.text(this.font, statusLabel, toggleX - this.font.width(statusLabel) - 6, y + 8, allOn ? 0xFF86EFAC : 0xFF64748B, false);
+                    ConfigUITheme.drawToggleSwitch(g, toggleX, toggleY, toggleW, toggleH, allOn, toggleHover);
+                }
+
+                g.fill(x + 4, y + h - 1, x + w - 8, y + h, 0x22FFAA00);
+                return;
+            }
             g.text(this.font, ConfigUITheme.formatFont("§6§l" + item.name.toUpperCase()), x + 4, y + 6, ConfigUITheme.ACCENT_GOLD, true);
             g.fill(x + 4, y + 18, x + w - 8, y + 19, 0x22FFAA00);
             return;
@@ -1584,6 +1687,10 @@ public class BomboConfigScreen extends Screen {
 
             for (ConfigItem item : items) {
                 if (isItemParentDisabled(item)) continue;
+                if (!item.isSubcategoryHeader && item.subCategoryName != null && !item.subCategoryName.isEmpty()
+                        && isSubcategoryCollapsed(item.category, item.subCategoryName)) {
+                    continue;
+                }
 
                 int cardH = item.getEffectiveCardHeight();
 
@@ -1657,6 +1764,58 @@ public class BomboConfigScreen extends Screen {
         int ctrlRightX = x + w - 10;
         int ctrlY = y + 10;
 
+        if (item.type == ConfigItem.Type.HEADER) {
+            if (item.isSubcategoryHeader) {
+                int toggleW = 34;
+                int toggleH = 18;
+                int toggleX = x + w - toggleW - 10;
+                int toggleY = y + 4;
+                if (mouseX >= toggleX && mouseX <= toggleX + toggleW && mouseY >= toggleY && mouseY <= toggleY + toggleH) {
+                    List<ConfigItem> toggles = new ArrayList<>();
+                    for (ConfigItem child : item.childItems) {
+                        if (child.type == ConfigItem.Type.TOGGLE && child.boolGetter != null && child.boolSetter != null) {
+                            toggles.add(child);
+                        }
+                    }
+                    if (!toggles.isEmpty()) {
+                        boolean allOn = true;
+                        for (ConfigItem c : toggles) {
+                            if (!Boolean.TRUE.equals(c.boolGetter.get())) {
+                                allOn = false;
+                                break;
+                            }
+                        }
+                        boolean targetState = !allOn;
+                        Map<ConfigItem, Boolean> prev = new LinkedHashMap<>();
+                        for (ConfigItem c : toggles) {
+                            prev.put(c, c.boolGetter.get());
+                        }
+                        ConfigUndoManager.push(new ConfigUndoManager.Action() {
+                            public void undo() {
+                                for (Map.Entry<ConfigItem, Boolean> e : prev.entrySet()) {
+                                    e.getKey().boolSetter.accept(e.getValue());
+                                }
+                                BomboConfig.save();
+                            }
+                            public void redo() {
+                                for (ConfigItem c : prev.keySet()) {
+                                    c.boolSetter.accept(targetState);
+                                }
+                                BomboConfig.save();
+                            }
+                        });
+                        for (ConfigItem c : toggles) {
+                            c.boolSetter.accept(targetState);
+                        }
+                        BomboConfig.save();
+                        return;
+                    }
+                }
+                toggleSubcategoryCollapsed(item.category, item.subCategoryName);
+            }
+            return;
+        }
+
         if (item.type == ConfigItem.Type.CUSTOM_CARD && item.customClickHandler != null) {
             item.customClickHandler.onClick(x, y, w, h, mouseX, mouseY, button);
             return;
@@ -1680,7 +1839,18 @@ public class BomboConfigScreen extends Screen {
                     }
                 }
                 if (item.boolSetter != null && item.boolGetter != null) {
-                    boolean nextVal = !item.boolGetter.get();
+                    boolean prevVal = item.boolGetter.get();
+                    boolean nextVal = !prevVal;
+                    ConfigUndoManager.push(new ConfigUndoManager.Action() {
+                        public void undo() {
+                            item.boolSetter.accept(prevVal);
+                            BomboConfig.save();
+                        }
+                        public void redo() {
+                            item.boolSetter.accept(nextVal);
+                            BomboConfig.save();
+                        }
+                    });
                     item.boolSetter.accept(nextVal);
                     BomboConfig.save();
                 }
@@ -1904,7 +2074,8 @@ public class BomboConfigScreen extends Screen {
             for (ConfigItem item : ConfigRegistry.getItemsForCategory(cat)) {
                 if (item.type == ConfigItem.Type.HEADER) continue;
                 if ((item.name != null && item.name.toLowerCase().contains(q))
-                        || (item.description != null && item.description.toLowerCase().contains(q))) {
+                        || (item.description != null && item.description.toLowerCase().contains(q))
+                        || (item.subCategoryName != null && item.subCategoryName.toLowerCase().contains(q))) {
                     catMatches.add(item);
                 }
             }
@@ -2194,8 +2365,14 @@ public class BomboConfigScreen extends Screen {
                 || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
                 || GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
 
-        // Ctrl + Z Undo for highlights and widgets (prioritize lightweight stack for zero lag)
-        if (isCtrl && event.key() == GLFW.GLFW_KEY_Z) {
+        // Ctrl + Z Undo for config settings, highlights, and widgets
+        if (isCtrl && event.key() == GLFW.GLFW_KEY_Z && !event.hasShiftDown()) {
+            if (ConfigUndoManager.undo()) {
+                if (Minecraft.getInstance().player != null) {
+                    Minecraft.getInstance().player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aReverted last change (Undo)."));
+                }
+                return true;
+            }
             if (!ConfigCustomWidgets.undoStack.isEmpty()) {
                 ConfigCustomWidgets.undoStack.pop().run();
                 BomboConfig.save();
@@ -2206,6 +2383,16 @@ public class BomboConfigScreen extends Screen {
             }
             if (me.bombo.bomboaddons.BomboConfigGUI.undoHighlight()) {
                 BomboConfig.save();
+                return true;
+            }
+        }
+
+        // Ctrl + Y (or Ctrl + Shift + Z) Redo
+        if (isCtrl && (event.key() == GLFW.GLFW_KEY_Y || (event.key() == GLFW.GLFW_KEY_Z && event.hasShiftDown()))) {
+            if (ConfigUndoManager.redo()) {
+                if (Minecraft.getInstance().player != null) {
+                    Minecraft.getInstance().player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aReapplied change (Redo)."));
+                }
                 return true;
             }
         }
