@@ -532,6 +532,12 @@ public final class ProfileViewerScreen extends Screen {
 				this.profileFooterX, this.profileFooterY,
 				footerColor
 			);
+			if (footerHover && this.profileChoices.size() > 1) {
+				graphics.setTooltipForNextFrame(this.font, List.of(
+					Component.literal("§eClick §7to choose profile"),
+					Component.literal("§7Right-click to cycle to next profile")
+				), java.util.Optional.empty(), mouseX, mouseY);
+			}
 			int footerX = this.profileFooterX + footerTextW;
 			if (!footerBadge.isEmpty()) {
 				footerX += 2;
@@ -1278,6 +1284,12 @@ public final class ProfileViewerScreen extends Screen {
 		int menuH = this.profileChoices.size() * lineH + 4;
 		int menuX = this.profileFooterX;
 		int menuY = this.profileFooterY + this.profileFooterH + 2;
+		if (menuY + menuH > this.height - 2) {
+			menuY = this.profileFooterY - menuH - 2;
+		}
+		if (menuY < 2) {
+			menuY = 2;
+		}
 		return new ProfileMenuLayout(menuX, menuY, menuW, menuH, lineH);
 	}
 
@@ -1360,9 +1372,13 @@ public final class ProfileViewerScreen extends Screen {
 		}
 		ProfileMenuLayout layout = profileMenuLayout();
 		int flyoutX = profileCoopFlyoutX(layout);
+		int contentH = profileCoopFlyoutHeight(choice);
 		int flyoutY = layout.menuY();
+		if (flyoutY + contentH > this.height - 4) {
+			flyoutY = Math.max(2, this.height - 4 - contentH);
+		}
 		int flyoutW = PROFILE_COOP_FLYOUT_W;
-		int flyoutH = Math.min(profileCoopFlyoutHeight(choice), this.height - flyoutY - 4);
+		int flyoutH = Math.min(contentH, this.height - flyoutY - 4);
 		return mouseX >= flyoutX && mouseX < flyoutX + flyoutW + PROFILE_COOP_FLYOUT_BRIDGE
 			&& mouseY >= flyoutY && mouseY < flyoutY + flyoutH;
 	}
@@ -1457,9 +1473,12 @@ public final class ProfileViewerScreen extends Screen {
 		}
 		ProfileMenuLayout layout = profileMenuLayout();
 		int flyoutX = profileCoopFlyoutX(layout) + PROFILE_COOP_FLYOUT_BRIDGE;
-		int flyoutY = layout.menuY();
-		int flyoutW = PROFILE_COOP_FLYOUT_W;
 		int contentH = profileCoopFlyoutHeight(choice);
+		int flyoutY = layout.menuY();
+		if (flyoutY + contentH > this.height - 4) {
+			flyoutY = Math.max(2, this.height - 4 - contentH);
+		}
+		int flyoutW = PROFILE_COOP_FLYOUT_W;
 		int flyoutH = Math.min(contentH, this.height - flyoutY - 4);
 		PvDraw.fill(g, flyoutX, flyoutY, flyoutW, flyoutH, 0xF0101018);
 		g.outline(flyoutX, flyoutY, flyoutW, flyoutH, PvDraw.COLOR_BORDER);
@@ -1661,12 +1680,16 @@ public final class ProfileViewerScreen extends Screen {
 		return lines;
 	}
 
-	private boolean clickProfileFooter(double mx, double my) {
+	private boolean clickProfileFooter(double mx, double my, int button) {
 		if (this.profileChoices.size() <= 1) {
 			return false;
 		}
 		if (mx >= this.profileFooterX && mx < this.profileFooterX + this.profileFooterW
 			&& my >= this.profileFooterY && my < this.profileFooterY + this.profileFooterH) {
+			if (button == 1) {
+				cycleNextProfile();
+				return true;
+			}
 			this.profileMenuOpen = !this.profileMenuOpen;
 			if (!this.profileMenuOpen) {
 				this.profileMenuHoverChoice = null;
@@ -1693,6 +1716,19 @@ public final class ProfileViewerScreen extends Screen {
 			switchProfile(choice.profileId());
 		}
 		return true;
+	}
+
+	private void cycleNextProfile() {
+		if (this.profileChoices.size() <= 1) return;
+		int currentIdx = -1;
+		for (int i = 0; i < this.profileChoices.size(); i++) {
+			if (this.profileChoices.get(i).selected() || this.profileChoices.get(i).profileId().equals(this.profileId)) {
+				currentIdx = i;
+				break;
+			}
+		}
+		int nextIdx = (currentIdx + 1) % this.profileChoices.size();
+		switchProfile(this.profileChoices.get(nextIdx).profileId());
 	}
 
 	private boolean clickCoopFlyoutMember(double mx, double my) {
@@ -1833,7 +1869,7 @@ public final class ProfileViewerScreen extends Screen {
 			mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboConfigScreen(this, "Profile Viewer")));
 			return true;
 		}
-		if (clickProfileFooter(mx, my)) {
+		if (clickProfileFooter(mx, my, click.button())) {
 			return true;
 		}
 		if (routePageClick(mx, my)) {

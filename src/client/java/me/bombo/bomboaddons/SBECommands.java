@@ -43,7 +43,16 @@ public class SBECommands {
       if (!me.bombo.bomboaddons.features.auth.BomboApiKeyManager.checkApiKeyAndWarn(command)) {
          return;
       }
-      String apiCmd = command.equals("skills") ? "skill" : command;
+      String apiCmd;
+      if (command.equalsIgnoreCase("networth") || command.equalsIgnoreCase("patrimonioneto")) {
+         apiCmd = "nw";
+      } else if (command.equalsIgnoreCase("networthcoop") || command.equalsIgnoreCase("patrimonionetocoop")) {
+         apiCmd = "nwc";
+      } else if (command.equalsIgnoreCase("skills")) {
+         apiCmd = "skill";
+      } else {
+         apiCmd = command;
+      }
       String subPath = apiCmd + "/" + name;
       if (profile != null && !profile.equalsIgnoreCase("selected")) {
          subPath = subPath + "/" + profile;
@@ -123,7 +132,7 @@ public class SBECommands {
 
          JsonObject data = json.getAsJsonObject("data");
          String cmd = command.toLowerCase();
-         if (cmd.equals("nw") || cmd.equals("nwc")) {
+         if (cmd.equals("nw") || cmd.equals("nwc") || cmd.equals("networth") || cmd.equals("patrimonioneto") || cmd.equals("networthcoop") || cmd.equals("patrimonionetocoop")) {
             renderNetworth(data);
          } else if (cmd.equals("cata")) {
             renderCata(data);

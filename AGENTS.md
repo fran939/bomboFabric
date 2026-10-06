@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.102` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.103` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,18 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.102`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.103`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.103 (Ready for In-Game Testing)
+>
+> 1. **Networth Command Aliases (`BomboaddonsClient`, `SBECommands`):** Added `/networth` and `/patrimonioneto` as root and subcommand aliases for `/nw`, and coop variants `/networthcoop` and `/patrimonionetocoop` for `/nwc`.
+> 2. **Discord Voice Overlay Mute Volume Preservation (`DiscordIpcManager`):** Muting a user via the Discord Voice HUD now strictly toggles Discord's mute state without overriding or resetting the user's volume to 0 or 100, exactly matching native right-click mute in Discord.
+> 3. **Profile Viewer `/pv` Alias & Bottom-Left Profile Switcher (`ProfileViewerScreen`, `BomboConfig`, `ConfigRegistry`, `ProfileViewerOpener`, `CommandMixin`, `BomboaddonsClient`):** Added "Enable /pv Alias" setting in `/b config` (GUI Settings) to allow running `/pv` directly to open the profile viewer. Fixed the bottom-left `Profile: (profile)` dropdown menu opening offscreen by dynamically flipping it upwards above the footer, added click-to-choose profile support, and enabled right-click to instantly cycle through profiles.
+> 4. **Discord Startup Authorization Suppression & Chat Link Flow (`DiscordIpcManager`):** Prevented automatic Discord authorization modal popups on mod launch. Discord voice control now only prompts when running `/b discord auth` or clicking the interactive `§e[Click here to link]` chat prompt shown when unlinked.
+> 5. **Discord `/mc cmd` Fallback to Player Client (`bombot`):** Resolved `ECONNREFUSED 127.0.0.1:6670` error when executing `/mc cmd` while the background Mineflayer AFK bot is offline. It now gracefully dispatches the command directly to the player's active Minecraft client via BomboChat if linked, providing immediate execution feedback.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.102 (Ready for In-Game Testing)
 >
 > 1. **Croesus Profit Tracker Proximity Gating (`CroesusProfitTrackerHud`, `ConfigRegistry`):** The Croesus Profit Tracker HUD now only renders when the player is within a 10-block radius of Croesus at `(-28, 119, 35)` in the Dungeon Hub (or viewing the Croesus container GUI), completely preventing it from displaying persistently across unrelated worlds and hubs.

@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.103] - 2026-10-06 (Beta)
+
+### Features & Fixes
+- **Networth Command Aliases (`BomboaddonsClient`, `SBECommands`):** Added `/networth` and `/patrimonioneto` as root and subcommand aliases for `/nw`, and coop variants `/networthcoop` and `/patrimonionetocoop` for `/nwc`.
+- **Discord Voice Overlay Mute Volume Preservation (`DiscordIpcManager`):** Muting a user via the Discord Voice HUD now strictly toggles Discord's mute state without overriding or resetting the user's volume to 0 or 100, exactly matching native right-click mute in Discord.
+- **Profile Viewer `/pv` Alias & Bottom-Left Profile Switcher (`ProfileViewerScreen`, `BomboConfig`, `ConfigRegistry`, `ProfileViewerOpener`, `CommandMixin`, `BomboaddonsClient`):** Added "Enable /pv Alias" setting in `/b config` (GUI Settings) to allow running `/pv` directly to open the profile viewer. Fixed the bottom-left `Profile: (profile)` dropdown menu opening offscreen by dynamically flipping it upwards above the footer, added click-to-choose profile support, and enabled right-click to instantly cycle through profiles.
+- **Discord Startup Authorization Suppression & Chat Link Flow (`DiscordIpcManager`):** Prevented automatic Discord authorization modal popups on mod launch. Discord voice control now only prompts when running `/b discord auth` or clicking the interactive `§e[Click here to link]` chat prompt shown when unlinked.
+- **Discord `/mc cmd` Fallback to Player Client (`bombot`):** Resolved `ECONNREFUSED 127.0.0.1:6670` error when executing `/mc cmd` while the background Mineflayer AFK bot is offline. It now gracefully dispatches the command directly to the player's active Minecraft client via BomboChat if linked, providing immediate execution feedback.
+
 ## [26.2.28.102] - 2026-10-06 (Beta)
 
 ### Features & Fixes

@@ -1243,7 +1243,7 @@ public class BomboConfig {
       // Outbound API/WebSocket history (/b apihistory).
       public boolean apiHistoryEnabled = true;
       public int apiHistoryMaxEntries = 500;
-      // BetterPV profile viewer window.
+      public boolean overridePvCommand = false; // /pv alias redirects to mod Profile Viewer
       public float pvScale = 1.15F; // /b pv window size multiplier (1.0 - 1.8)
       public float pvBackgroundAlpha = 0.45F; // backdrop dim behind /b pv
       public String backpackPreviewTrigger = "ALWAYS"; // ALWAYS, ON_KEY

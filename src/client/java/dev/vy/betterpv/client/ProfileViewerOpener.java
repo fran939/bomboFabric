@@ -28,7 +28,8 @@ public final class ProfileViewerOpener {
 			trimmed = trimmed.substring(1);
 		}
 		String lower = trimmed.toLowerCase(Locale.ROOT);
-		if (lower.equals("b pv") || lower.equals("bombo pv")) {
+		boolean overridePv = me.bombo.bomboaddons.BomboConfig.get() != null && me.bombo.bomboaddons.BomboConfig.get().overridePvCommand;
+		if (lower.equals("b pv") || lower.equals("bombo pv") || (overridePv && lower.equals("pv"))) {
 			openSelfOr(null);
 			return true;
 		}
@@ -38,6 +39,10 @@ public final class ProfileViewerOpener {
 		}
 		if (lower.startsWith("bombo pv ")) {
 			handleTypedArg(trimmed.substring("bombo pv ".length()).trim());
+			return true;
+		}
+		if (overridePv && lower.startsWith("pv ")) {
+			handleTypedArg(trimmed.substring("pv ".length()).trim());
 			return true;
 		}
 		// Hypixel name clicks stay on the original Component (keeps chat colors).

@@ -187,13 +187,12 @@ public class DiscordIpcManager {
                     synchronized (PIPE_LOCK) {
                         RandomAccessFile pipe = currentPipe;
                         if (pipe != null && connected) {
-                            if (authenticatedAccessToken.isEmpty() && !authCancelled) {
-                                try { sendAuthorize(pipe); } catch (Throwable ignored) {}
+                            if (authenticatedAccessToken.isEmpty()) {
+                                promptAuthIfNeeded(null);
                             }
                             JsonObject args = new JsonObject();
                             args.addProperty("user_id", userId);
                             args.addProperty("mute", targetMute);
-                            args.addProperty("volume", targetMute ? 0 : 100);
                             JsonObject rpc = new JsonObject();
                             rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
                             rpc.add("args", args);
@@ -277,11 +276,11 @@ public class DiscordIpcManager {
 
     public static void promptAuthIfNeeded(Consumer<Component> feedback) {
         if (!hasAuthorizedThisSession && (authenticatedAccessToken == null || authenticatedAccessToken.isEmpty())) {
-            Component prompt = Component.literal("§8[§9Discord§8] §cDiscord voice controls require one-time authorization: ")
-                    .append(Component.literal("§e§n[Click to Authorize Voice]§r")
+            Component prompt = Component.literal("§8[§9Discord§8] §cDiscord not linked! ")
+                    .append(Component.literal("§e§n[Click here to link]§r")
                             .withStyle(style -> style
                                      .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/b discord auth"))
-                                     .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick to authorize Discord voice control with your desktop app")))));
+                                     .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick here to link and authorize with your Discord desktop app")))));
             if (feedback != null) {
                 feedback.accept(prompt);
             } else {
@@ -373,7 +372,6 @@ public class DiscordIpcManager {
                             JsonObject args = new JsonObject();
                             args.addProperty("user_id", resolvedId);
                             args.addProperty("mute", mute);
-                            args.addProperty("volume", mute ? 0 : 100);
                             JsonObject rpc = new JsonObject();
                             rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
                             rpc.add("args", args);
@@ -416,7 +414,6 @@ public class DiscordIpcManager {
                             JsonObject args = new JsonObject();
                             args.addProperty("user_id", resolvedId);
                             args.addProperty("mute", deafen);
-                            args.addProperty("volume", deafen ? 0 : 100);
                             JsonObject rpc = new JsonObject();
                             rpc.addProperty("cmd", "SET_USER_VOICE_SETTINGS");
                             rpc.add("args", args);
@@ -1329,11 +1326,6 @@ public class DiscordIpcManager {
                 if (errCode == 4001 || errCode == 4003) {
                     authenticatedAccessToken = "";
                     try { Files.deleteIfExists(TOKEN_FILE); } catch (Throwable ignored) {}
-                    if (pipe != null && connected && !authCancelled) {
-                        try {
-                            sendAuthorize(pipe);
-                        } catch (Throwable ignored) {}
-                    }
                 }
                 lastError = "Discord Error (" + errCode + "): " + errMsg;
                 return;
@@ -1380,10 +1372,6 @@ public class DiscordIpcManager {
                             authReq.add("args", authArgs);
                             authReq.addProperty("nonce", UUID.randomUUID().toString());
                             writePacket(pipe, 1, authReq.toString());
-                        } catch (Throwable ignored) {}
-                    } else if (!authCancelled) {
-                        try {
-                            sendAuthorize(pipe);
                         } catch (Throwable ignored) {}
                     }
 
@@ -1698,6 +1686,15 @@ public class DiscordIpcManager {
         if (!connected) {
             feedback.accept(Component.literal("§9[Discord] §cDiscord Desktop app is not connected. Make sure Discord is open on your PC!"));
             dumpDebugInfo(feedback);
+            return;
+        }
+
+        if (authenticatedAccessToken == null || authenticatedAccessToken.isEmpty()) {
+            feedback.accept(Component.literal("§8[§9Discord§8] §cDiscord not linked! ")
+                    .append(Component.literal("§e§n[Click here to link]§r")
+                            .withStyle(style -> style
+                                    .withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand("/b discord auth"))
+                                    .withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(Component.literal("§eClick here to link and authorize with your Discord desktop app"))))));
             return;
         }
 

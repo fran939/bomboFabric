@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.103",
+    "date": "2026-10-06",
+    "changes": [
+      "+ Networth Command Aliases - Added /networth and /patrimonioneto for /nw, and /networthcoop and /patrimonionetocoop for /nwc",
+      "~ Discord Voice Mute Volume Preservation - Muting someone from the Discord overlay now keeps their original volume setting intact",
+      "+ Profile Viewer /pv Setting & Profile Switcher - Added Enable /pv Alias setting, and made bottom-left Profile: (profile) clickable to change or cycle profiles",
+      "~ Discord Auth Startup Suppression - Mod startup no longer triggers Discord authorization popups; only prompts when clicking link or running /b discord auth",
+      "~ Discord /mc cmd Fallback - /mc cmd now falls back to executing commands on your active Minecraft client when Mineflayer is offline"
+    ]
+  },
+  {
     "version": "26.2.28.102",
     "date": "2026-10-06",
     "changes": [

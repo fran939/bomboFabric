@@ -900,7 +900,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   LF.show(user, query, true);
                   return 1;
                }))));
-               String[] sbeSubs = new String[]{"nw", "cata", "skills", "slayer", "trophyfish", "crimson", "crimsom"};
+               String[] sbeSubs = new String[]{"nw", "networth", "patrimonioneto", "nwc", "networthcoop", "patrimonionetocoop", "cata", "skills", "slayer", "trophyfish", "crimson", "crimsom"};
 
                for(String s : sbeSubs) {
                   String commandName = s.equals("crimsom") ? "crimson" : s;
@@ -2066,7 +2066,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   // below, so it does not exist at all in the legit bomboaddons build.
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("look").executes((context) -> LookCommand.execute((String)null, false))).then(ClientCommands.argument("subcmd", StringArgumentType.greedyString()).executes((context) -> LookCommand.execute(StringArgumentType.getString(context, "subcmd"), false))));
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("looks").executes((context) -> LookCommand.execute((String)null, true))).then(ClientCommands.argument("subcmd", StringArgumentType.greedyString()).executes((context) -> LookCommand.execute(StringArgumentType.getString(context, "subcmd"), true))));
-                  String[] sbeSubs = new String[]{"nw", "nwc", "cata", "skills", "slayer", "trophyfish", "crimson"};
+                  String[] sbeSubs = new String[]{"nw", "networth", "patrimonioneto", "nwc", "networthcoop", "patrimonionetocoop", "cata", "skills", "slayer", "trophyfish", "crimson"};
 
                   for(String s : sbeSubs) {
                      builder.then(((LiteralArgumentBuilder)ClientCommands.literal(s).executes((context) -> {
@@ -5178,7 +5178,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
 
             try {
-               String[] sbeRoots = new String[]{"nw", "nwc", "cata", "skills", "slayer", "trophyfish", "crimson"};
+               String[] sbeRoots = new String[]{"nw", "networth", "patrimonioneto", "nwc", "networthcoop", "patrimonionetocoop", "cata", "skills", "slayer", "trophyfish", "crimson"};
 
                for(String s : sbeRoots) {
                   dispatcher.register((LiteralArgumentBuilder)((LiteralArgumentBuilder)ClientCommands.literal(s).executes((context) -> {
@@ -6981,9 +6981,12 @@ public class BomboaddonsClient implements ClientModInitializer {
 
          java.util.Set<String> bomboCommands = new java.util.HashSet<>(java.util.Arrays.asList(
             "b", "bomboaddons", "bombo", "tp", "w", "tell", "msg", "p", "party", "f", "friend", "v", "visit",
-            "bc", "bombochat", "lf", "lfc", "lb", "nw", "nwc", "cata", "skills", "slayer", "trophyfish", "crimson", "crimsom",
+            "bc", "bombochat", "lf", "lfc", "lb", "nw", "nwc", "networth", "patrimonioneto", "networthcoop", "patrimonionetocoop", "cata", "skills", "slayer", "trophyfish", "crimson", "crimsom",
             "bombo_highlight_slot", "bombo_museum_click"
          ));
+         if (BomboConfig.get() != null && BomboConfig.get().overridePvCommand) {
+            bomboCommands.add("pv");
+         }
          if (BomboConfig.get() != null && BomboConfig.get().commandAliases != null) {
             bomboCommands.addAll(BomboConfig.get().commandAliases.keySet());
          }

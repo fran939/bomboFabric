@@ -93,8 +93,10 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      boolean overridePv = me.bombo.bomboaddons.BomboConfig.get() != null && me.bombo.bomboaddons.BomboConfig.get().overridePvCommand;
       if (trimmed.equalsIgnoreCase("b pv") || trimmed.equalsIgnoreCase("bombo pv")
-            || trimmed.toLowerCase().startsWith("b pv ") || trimmed.toLowerCase().startsWith("bombo pv ")) {
+            || trimmed.toLowerCase().startsWith("b pv ") || trimmed.toLowerCase().startsWith("bombo pv ")
+            || (overridePv && (trimmed.equalsIgnoreCase("pv") || trimmed.toLowerCase().startsWith("pv ")))) {
          String arg = "";
          int idx = trimmed.indexOf("pv");
          if (idx != -1 && idx + 2 < trimmed.length()) {
@@ -589,8 +591,10 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      boolean overridePv = me.bombo.bomboaddons.BomboConfig.get() != null && me.bombo.bomboaddons.BomboConfig.get().overridePvCommand;
       if (trimmed.equalsIgnoreCase("/b pv") || trimmed.equalsIgnoreCase("/bombo pv")
-            || trimmed.toLowerCase().startsWith("/b pv ") || trimmed.toLowerCase().startsWith("/bombo pv ")) {
+            || trimmed.toLowerCase().startsWith("/b pv ") || trimmed.toLowerCase().startsWith("/bombo pv ")
+            || (overridePv && (trimmed.equalsIgnoreCase("/pv") || trimmed.toLowerCase().startsWith("/pv ")))) {
          String arg = "";
          int idx = trimmed.indexOf("pv");
          if (idx != -1 && idx + 2 < trimmed.length()) {
