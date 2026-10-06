@@ -390,7 +390,7 @@ public class ConfigRegistry {
                         () -> s.autoCroesusHud, v -> s.autoCroesusHud = v, HudTarget.AUTO_CROESUS));
                 items.add(ConfigItem.hudToggle("Croesus Chest Values", "Every chest in the open overview with contents and profit.", category,
                         () -> s.croesusHelper, v -> s.croesusHelper = v, HudTarget.CROESUS_PROFIT));
-                items.add(ConfigItem.hudToggle("Croesus Profit Tracker", "Cumulative profit, runs and a per-floor breakdown.", category,
+                items.add(ConfigItem.hudToggle("Croesus Profit Tracker", "Cumulative profit, runs and a per-floor breakdown (shown when within 10 blocks of Croesus at -28 119 35).", category,
                         () -> s.croesusProfitTracker, v -> s.croesusProfitTracker = v, HudTarget.CROESUS_TRACKER));
                 items.add(ConfigItem.toggle("Debug Highlight Mode", "Simulation: highlights the slot it would click instead of clicking it.", category,
                         () -> me.bombo.bomboaddons.cheat.automation.AutoCroesus.debugHighlightMode,

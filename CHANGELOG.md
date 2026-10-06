@@ -1,5 +1,11 @@
 # BomboAddons Changelog
  
+## [26.2.28.102] - 2026-10-06 (Beta)
+
+### Features & Fixes
+- **Croesus Profit Tracker Proximity Gating (`CroesusProfitTrackerHud`, `ConfigRegistry`):** The Croesus Profit Tracker HUD now only renders when the player is within a 10-block radius of Croesus at `(-28, 119, 35)` in the Dungeon Hub (or viewing the Croesus container GUI), preventing it from displaying persistently across unrelated worlds and hubs.
+- **Discord `/cmd` Self-Execution for Linked Players (`bombot`):** Players with their Minecraft accounts linked to Discord (such as `zamasu12045`) can now run `/cmd (command)` without admin privileges to execute remote commands directly on their own active client. Administrators retain full capability to specify any target player or run commands on themselves.
+
 ## [26.2.28.101] - 2026-10-06 (Beta)
 
 ### Fixes

@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.101` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.102` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,15 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.101`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.102`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.102 (Ready for In-Game Testing)
+>
+> 1. **Croesus Profit Tracker Proximity Gating (`CroesusProfitTrackerHud`, `ConfigRegistry`):** The Croesus Profit Tracker HUD now only renders when the player is within a 10-block radius of Croesus at `(-28, 119, 35)` in the Dungeon Hub (or viewing the Croesus container GUI), completely preventing it from displaying persistently across unrelated worlds and hubs.
+> 2. **Discord `/cmd` Self-Execution for Linked Players (`bombot`):** Players with their Minecraft accounts linked to Discord (such as `zamasu12045`) can now run `/cmd (command)` without admin privileges to execute remote commands directly on their own active client. Administrators retain full capability to specify any target player or run commands on themselves.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.101 (Ready for In-Game Testing)
 >
 > 1. **Fixed Crash on `/calendar` & Keybinds (`BomboaddonsClient`):** Fixed `StackOverflowError` caused by recursive command dispatch when executing `/calendar` or `/calendar gui`. The command now correctly transmits a `ServerboundChatCommandPacket` directly to the server rather than triggering the client-side command dispatcher via `ClientPacketListener.sendCommand`.

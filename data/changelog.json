@@ -1,5 +1,13 @@
 [
   {
+    "version": "26.2.28.102",
+    "date": "2026-10-06",
+    "changes": [
+      "+ Croesus Profit Tracker Proximity Gating - Tracker HUD now only appears when within a 10-block radius of Croesus (-28 119 35) or in Croesus chests",
+      "+ Discord /cmd Self-Execution - Linked players (e.g. zamasu12045) can now execute /cmd on themselves from Discord without admin roles"
+    ]
+  },
+  {
     "version": "26.2.28.101",
     "date": "2026-10-06",
     "changes": [

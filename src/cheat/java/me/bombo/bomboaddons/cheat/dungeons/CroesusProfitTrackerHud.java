@@ -27,6 +27,12 @@ public class CroesusProfitTrackerHud {
     public static final int LINE_HEIGHT = 10;
     public static final int BASE_W = 150;
 
+    public static final double CROESUS_X = -28.0;
+    public static final double CROESUS_Y = 119.0;
+    public static final double CROESUS_Z = 35.0;
+    public static final double RADIUS = 10.0;
+    public static final double RADIUS_SQ = RADIUS * RADIUS;
+
     private static AutoCroesus.ProfitRecord cached = null;
     private static long cachedAt = 0L;
     private static final long CACHE_MS = 2000L;
@@ -51,12 +57,27 @@ public class CroesusProfitTrackerHud {
         return cached;
     }
 
+    public static boolean isNearCroesus(Minecraft mc) {
+        if (mc == null || mc.player == null) return false;
+        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> container) {
+            String title = container.getTitle().getString();
+            if (title != null && title.contains("Croesus")) {
+                return true;
+            }
+        }
+        double dx = mc.player.getX() - CROESUS_X;
+        double dy = mc.player.getY() - CROESUS_Y;
+        double dz = mc.player.getZ() - CROESUS_Z;
+        return (dx * dx + dy * dy + dz * dz) <= RADIUS_SQ;
+    }
+
     private static void render(GuiGraphicsExtractor g, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         if (mc.gui.screen() instanceof me.bombo.bomboaddons.HudMoveScreen) return;
         BomboConfig.Settings s = BomboConfig.get();
         if (!s.croesusProfitTracker) return;
+        if (!isNearCroesus(mc)) return;
         draw(g, s.croesusTrackerHudX, s.croesusTrackerHudY, s.croesusTrackerHudScale);
     }
 
@@ -66,6 +87,7 @@ public class CroesusProfitTrackerHud {
         if (mc.gui.screen() instanceof me.bombo.bomboaddons.HudMoveScreen) return;
         BomboConfig.Settings s = BomboConfig.get();
         if (!s.croesusProfitTracker) return;
+        if (!isNearCroesus(mc)) return;
         draw(g, s.croesusTrackerHudX, s.croesusTrackerHudY, s.croesusTrackerHudScale);
     }
 

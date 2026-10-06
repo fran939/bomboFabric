@@ -2184,9 +2184,9 @@
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/ConfigRegistry.java": {
-    "mtime": 1791250445.2296677,
-    "seen": 1791250730.3273654,
-    "ast_hash": "e1127e61e138ceae39f19cc5b14c47da",
+    "mtime": 1791323273.1915624,
+    "seen": 1791323579.3177123,
+    "ast_hash": "c1ed6d0f7f6be169c789ee1fdc5b9f7b",
     "semantic_hash": ""
   },
   "src/client/java/me/bombo/bomboaddons/gui/config/FeatureOrganizerManager.java": {
@@ -3294,9 +3294,9 @@
     "semantic_hash": "39f11507b037879e09a2b31afbe5526f"
   },
   "data/changelog.json": {
-    "mtime": 1791322466.2939596,
-    "seen": 1791322675.1502423,
-    "ast_hash": "25f5f6ae52b20c69e39e9d3458423d42",
+    "mtime": 1791323485.2161021,
+    "seen": 1791323579.2514718,
+    "ast_hash": "6969055dba3a8957a5437ae2d5e60b03",
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCombine.java": {
@@ -3360,9 +3360,9 @@
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/dungeons/CroesusProfitTrackerHud.java": {
-    "mtime": 1790224761.6972115,
-    "seen": 1791079643.2053525,
-    "ast_hash": "52d4a67b51857cc43f729875360e4e8e",
+    "mtime": 1791323261.989321,
+    "seen": 1791323579.25409,
+    "ast_hash": "cf583c9669fa0296e90cef6a1b6d7352",
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/dungeons/DungeonChestProfitHud.java": {
@@ -3786,15 +3786,15 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791322488.3359487,
-    "seen": 1791322675.3035924,
-    "ast_hash": "5f57ef01c91396bb706620dac1d5cee4",
+    "mtime": 1791323511.9781225,
+    "seen": 1791323579.3427927,
+    "ast_hash": "9db4910402ec7a048942e31cc0c93052",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1791322459.2805264,
-    "seen": 1791322675.3035972,
-    "ast_hash": "3a0e6afddbef80f1b3419bb87c1fe773",
+    "mtime": 1791323476.7408864,
+    "seen": 1791323579.3427954,
+    "ast_hash": "f78fda252b914ae4bdcc9af9e8255daf",
     "semantic_hash": ""
   },
   "README.md": {
