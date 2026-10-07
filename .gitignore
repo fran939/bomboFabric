@@ -39,3 +39,8 @@ libs/
 update_bestiary.py
 .env*
 scratch/
+AGENTS.md
+continue.md
+.freebuff/
+graphify-out/
+
