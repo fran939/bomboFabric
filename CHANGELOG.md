@@ -1,5 +1,11 @@
 # BomboAddons Changelog
  
+## [26.2.28.107] - 2026-10-07 (Beta)
+
+### Features & Fixes
+- **Complete BetterPV API Decoupling (`BetterPvSessionAuth`, `HypixelApiClient`, `CosmeticsContentManager`, `BetterPVClient`):** Completely removed all network calls and connections to third-party server `api.vyriv.dev`. Eliminated background Mojang `joinServer` session authentication, startup session proof requests, and remote cosmetic lookups. All profile, museum, player, and skyblock data are routed exclusively through BomboAddons's own API infrastructure (`api.bombo.dpdns.org`) or official Hypixel/Mojang public endpoints.
+- **Open-Source License Attributions & Compliance (`LICENSES.md`):** Added a comprehensive `LICENSES.md` file formally documenting all third-party open-source components, confirming full compliance under Mozilla Public License 2.0 (MPL-2.0 for BetterPV), GNU Lesser General Public License Version 3 (LGPL-3.0 for Skyblocker and NEU), and community open data endpoints.
+
 ## [26.2.28.106] - 2026-10-07 (Beta)
 
 ### Features & Fixes

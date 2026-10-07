@@ -7,6 +7,6 @@ public final class BetterPVConfig {
 	}
 
 	public static void load() {
-		BetterPV.LOGGER.info("Hypixel: api.vyriv.dev via Minecraft session JWT");
+		BetterPV.LOGGER.info("Hypixel: api.bombo.dpdns.org & official Hypixel API");
 	}
 }

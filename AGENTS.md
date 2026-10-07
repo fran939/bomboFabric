@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.106` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.107` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,15 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.106`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.107`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.107 (Ready for In-Game Testing)
+>
+> 1. **Complete Third-Party API Decoupling (`BetterPvSessionAuth`, `HypixelApiClient`, `CosmeticsContentManager`, `BetterPVClient`):** Completely removed all network calls and background connections to `api.vyriv.dev`. Eliminated background Mojang `joinServer` session authentication, startup session proof requests, and remote cosmetic lookups. All profile, museum, player, and skyblock data are routed exclusively through BomboAddons's own API infrastructure (`api.bombo.dpdns.org`) or official Hypixel/Mojang public endpoints.
+> 2. **Open-Source License Attributions & Compliance (`LICENSES.md`):** Added a comprehensive `LICENSES.md` file formally documenting all third-party open-source components, confirming full compliance under Mozilla Public License 2.0 (MPL-2.0 for BetterPV), GNU Lesser General Public License Version 3 (LGPL-3.0 for Skyblocker and NEU), and community open data endpoints.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.106 (Ready for In-Game Testing)
 >
 > 1. **Inventory Buttons Master Toggle & Header Switch (`InventoryButtonsScreen`):** Added a prominent `[✔ Buttons: ON]` / `[✖ Buttons: OFF]` toggle button in the header of `/b buttons`. If buttons are globally toggled off, a red warning banner appears above the buttons list notifying the player with instructions to click the master button.

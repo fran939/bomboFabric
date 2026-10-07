@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class HypixelApiClient {
-	private static final String WORKER_BASE = "https://api.vyriv.dev";
+	private static final String BOMBO_BASE = "https://api.bombo.dpdns.org";
 	private static final URI MOJANG_PROFILE = URI.create("https://api.mojang.com/users/profiles/minecraft/");
 	private static final URI MOJANG_SESSION = URI.create("https://sessionserver.mojang.com/session/minecraft/profile/");
 	private static final Duration TIMEOUT = Duration.ofSeconds(12);
@@ -263,26 +263,30 @@ public final class HypixelApiClient {
 
 	public static CompletableFuture<Optional<JsonObject>> skyblockMuseum(UUID uuid, String profileId) {
 		String id = undashed(uuid);
-		String workerUrl = WORKER_BASE + "/hypixel/skyblock/museum/" + id;
-		if (profileId != null && !profileId.isBlank()) {
-			String profile = profileId.trim().replace("-", "").toLowerCase(Locale.ROOT);
-			String encoded = URLEncoder.encode(profile, StandardCharsets.UTF_8);
-			workerUrl += "?profile=" + encoded;
-		}
-		String finalWorkerUrl = workerUrl;
-		return CompletableFuture.supplyAsync(
-			() -> fetchVyrivApi(finalWorkerUrl, "skyblock/museum"),
-			EXECUTOR
-		);
+		return CompletableFuture.supplyAsync(() -> {
+			waitForSlot();
+			// 1. Try bombo museum endpoint
+			String bomboUrl = BOMBO_BASE + "/museum/" + id;
+			Optional<JsonObject> bomboRes = getJson(bomboUrl);
+			if (bomboRes.isPresent()) return bomboRes;
+
+			// 2. Fallback to official Hypixel museum
+			if (profileId != null && !profileId.isBlank()) {
+				String profile = profileId.trim().replace("-", "").toLowerCase(Locale.ROOT);
+				String hypixelUrl = "https://api.hypixel.net/v2/skyblock/museum?profile=" + URLEncoder.encode(profile, StandardCharsets.UTF_8);
+				return getJson(hypixelUrl);
+			}
+			return Optional.empty();
+		}, EXECUTOR);
 	}
 
 	public static CompletableFuture<Optional<JsonObject>> skyblockAuction(UUID uuid) {
 		String id = undashed(uuid);
 		return CompletableFuture.supplyAsync(
-			() -> fetchVyrivApi(
-				WORKER_BASE + "/hypixel/skyblock/auction/" + id,
-				"skyblock/auction"
-			),
+			() -> {
+				waitForSlot();
+				return getJson("https://api.hypixel.net/v2/skyblock/auction?player=" + id);
+			},
 			EXECUTOR
 		);
 	}
@@ -295,10 +299,8 @@ public final class HypixelApiClient {
 		String encoded = URLEncoder.encode(id, StandardCharsets.UTF_8);
 		return CompletableFuture.supplyAsync(
 			() -> {
-				Optional<JsonObject> root = fetchVyrivApi(
-					WORKER_BASE + "/hypixel/skyblock/garden/" + encoded,
-					"skyblock/garden"
-				);
+				waitForSlot();
+				Optional<JsonObject> root = getJson("https://api.hypixel.net/v2/skyblock/garden?profile=" + encoded);
 				if (root.isEmpty()) {
 					return Optional.empty();
 				}
@@ -320,10 +322,11 @@ public final class HypixelApiClient {
 		}
 		return CompletableFuture.supplyAsync(
 			() -> {
-				Optional<JsonObject> root = fetchVyrivApi(
-					WORKER_BASE + "/hypixel/player/" + id,
-					"player"
-				);
+				waitForSlot();
+				Optional<JsonObject> root = getJson("https://api.hypixel.net/v2/player?uuid=" + id);
+				if (root.isEmpty()) {
+					root = getJson(BOMBO_BASE + "/data/" + id);
+				}
 				if (root.isEmpty()) {
 					return Optional.empty();
 				}
@@ -341,10 +344,10 @@ public final class HypixelApiClient {
 	public static CompletableFuture<Optional<JsonObject>> guild(UUID uuid) {
 		String id = undashed(uuid);
 		return CompletableFuture.supplyAsync(
-			() -> fetchVyrivApi(
-				WORKER_BASE + "/hypixel/guild/" + id,
-				"guild"
-			),
+			() -> {
+				waitForSlot();
+				return getJson("https://api.hypixel.net/v2/guild?player=" + id);
+			},
 			EXECUTOR
 		);
 	}
@@ -366,59 +369,24 @@ public final class HypixelApiClient {
 	public static CompletableFuture<Optional<JsonObject>> skyblockBingo(UUID uuid) {
 		String id = undashed(uuid);
 		return CompletableFuture.supplyAsync(
-			() -> fetchVyrivApi(
-				WORKER_BASE + "/hypixel/skyblock/bingo/" + id,
-				"skyblock/bingo"
-			),
+			() -> {
+				waitForSlot();
+				return getJson("https://api.hypixel.net/v2/skyblock/bingo?uuid=" + id);
+			},
 			EXECUTOR
 		);
 	}
 
-	private static Optional<JsonObject> fetchVyrivApi(String workerUrl, String routeName) {
-		waitForSlot();
-		Optional<JsonObject> viaWorker = getJson(workerUrl);
-		if (viaWorker.isPresent()) {
-			return viaWorker;
-		}
-		BetterPV.LOGGER.warn("Vyriv Hypixel API unavailable for {}", routeName);
-		return Optional.empty();
-	}
-
 	private static Optional<JsonObject> getJson(String url) {
-		return getJson(url, true);
-	}
-
-	private static Optional<JsonObject> getJson(String url, boolean allowReauth) {
 		long started = System.currentTimeMillis();
 		try {
 			HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url))
 				.header("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.Constants.myVersion())
 				.timeout(TIMEOUT)
 				.GET();
-			boolean needsProxyAuth = url != null && url.startsWith(WORKER_BASE) && url.contains("/hypixel/");
-			if (needsProxyAuth && !BetterPvSessionAuth.applyAuthHeaders(builder)) {
-				BetterPV.LOGGER.warn(
-					"Hypixel GET {} skipped: {}",
-					url,
-					BetterPvSessionAuth.userFacingFailure().orElse("missing BetterPV credentials")
-				);
-				BetterPvSessionAuth.notifyPlayerIfNeeded();
-				return Optional.empty();
-			}
+			BetterPvSessionAuth.applyAuthHeaders(builder);
 			HttpResponse<String> response = HTTP.send(builder.build(), HttpResponse.BodyHandlers.ofString());
 			me.bombo.bomboaddons.util.ApiHistory.http("GET", url, response.statusCode(), System.currentTimeMillis() - started);
-			if (response.statusCode() == 401 && needsProxyAuth) {
-				BetterPvSessionAuth.invalidate();
-				if (allowReauth) {
-					return getJson(url, false);
-				}
-				BetterPV.LOGGER.warn("Hypixel GET {} unauthorized after re-auth", url);
-				return Optional.empty();
-			}
-			if (response.statusCode() == 503 && needsProxyAuth) {
-				BetterPV.LOGGER.warn("Hypixel GET {} session auth unavailable (503)", url);
-				return Optional.empty();
-			}
 			if (response.statusCode() < 200 || response.statusCode() >= 300 || response.body() == null || response.body().isBlank()) {
 				BetterPV.LOGGER.warn("Hypixel GET {} failed status={}", url, response.statusCode());
 				return Optional.empty();
@@ -481,7 +449,7 @@ public final class HypixelApiClient {
 		String id = undashed(uuid);
 		return CompletableFuture.supplyAsync(() -> {
 			waitForSlot();
-			return getJson(WORKER_BASE + "/hypixel/status/" + id);
+			return getJson("https://api.hypixel.net/v2/status?uuid=" + id);
 		}, EXECUTOR);
 	}
 

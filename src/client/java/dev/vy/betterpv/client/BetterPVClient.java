@@ -67,30 +67,7 @@ public final class BetterPVClient implements ClientModInitializer {
 		PartyJoinPvNotifier.register();
 		ClientTickEvents.END_CLIENT_TICK.register(ProfileViewerOpener::tick);
 		ClientTickEvents.END_CLIENT_TICK.register(LoadingEggFinale::tick);
-		ClientTickEvents.END_CLIENT_TICK.register(BetterPVClient::prefetchSessionAuthOnce);
 		BetterPV.LOGGER.info("BetterPV client ready - /pv");
-	}
-
-	/**
-	 * After Minecraft exposes a real user session, warm the BetterPV JWT off-thread
-	 * so cold {@code /pv} is less likely to pay joinServer + /hypixel/auth on the critical path.
-	 */
-	private static void prefetchSessionAuthOnce(net.minecraft.client.Minecraft client) {
-		if (SESSION_AUTH_PREFETCHED.get() || client == null) {
-			return;
-		}
-		User user = client.getUser();
-		if (user == null) {
-			return;
-		}
-		String accessToken = user.getAccessToken();
-		if (accessToken == null || accessToken.isBlank() || user.getProfileId() == null) {
-			return;
-		}
-		if (!SESSION_AUTH_PREFETCHED.compareAndSet(false, true)) {
-			return;
-		}
-		BetterPvSessionAuth.prefetchAsync();
 	}
 
 	private static com.mojang.brigadier.builder.LiteralArgumentBuilder<FabricClientCommandSource> buildPvCommand(
