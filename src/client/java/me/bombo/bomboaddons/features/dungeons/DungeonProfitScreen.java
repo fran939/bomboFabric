@@ -208,28 +208,25 @@ public class DungeonProfitScreen extends Screen {
         }
 
         if (hoveredRun != null) {
-            List<dev.vy.betterpv.client.gui.PvTooltip.Line> lines = new ArrayList<>();
-            lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.title(hoveredRun.floor + " - " + hoveredRun.chest + (hoveredRun.kismetUsed ? " [Kismet]" : ""), 0xFFFFAA00));
-            lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.divider());
-            lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.row("Cost:", 0xFF94A3B8, LowestBinManager.formatPrice(hoveredRun.cost), 0xFFFFAA00));
-            lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.row("Contents Value:", 0xFF94A3B8, LowestBinManager.formatPrice(hoveredRun.contentsValue), 0xFFE2E8F0));
-            int hProfitColor = hoveredRun.netProfit >= 0 ? 0xFF10B981 : 0xFFEF4444;
-            String sign = hoveredRun.netProfit >= 0 ? "+" : "";
-            lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.row("Net Profit:", 0xFF94A3B8, sign + LowestBinManager.formatPrice(hoveredRun.netProfit), hProfitColor));
+            List<net.minecraft.network.chat.Component> tooltip = new ArrayList<>();
+            tooltip.add(net.minecraft.network.chat.Component.literal("§6§l" + hoveredRun.floor + " - " + hoveredRun.chest + (hoveredRun.kismetUsed ? " [Kismet]" : "")));
+            tooltip.add(net.minecraft.network.chat.Component.literal("§7Cost: §6" + LowestBinManager.formatPrice(hoveredRun.cost)));
+            tooltip.add(net.minecraft.network.chat.Component.literal("§7Contents Value: §f" + LowestBinManager.formatPrice(hoveredRun.contentsValue)));
+            String sign = hoveredRun.netProfit >= 0 ? "§a+" : "§c";
+            tooltip.add(net.minecraft.network.chat.Component.literal("§7Net Profit: " + sign + LowestBinManager.formatPrice(hoveredRun.netProfit)));
             if (hoveredRun.durationMs > 0) {
-                lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.meta("Duration: " + (hoveredRun.durationMs / 1000) + "s | Source: " + hoveredRun.source));
+                tooltip.add(net.minecraft.network.chat.Component.literal("§8Duration: " + (hoveredRun.durationMs / 1000) + "s | Source: " + hoveredRun.source));
             }
-            lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.divider());
             if (hoveredRun.items == null || hoveredRun.items.isEmpty()) {
-                lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.meta("No items recorded"));
+                tooltip.add(net.minecraft.network.chat.Component.literal("§8No items recorded"));
             } else {
                 for (DungeonProfitLog.ItemLine item : hoveredRun.items) {
                     String countStr = item.quantity > 1 ? " x" + item.quantity : "";
                     String itemVal = LowestBinManager.formatPrice(item.totalValue);
-                    lines.add(dev.vy.betterpv.client.gui.PvTooltip.Line.row(item.name + countStr, 0xFFE2E8F0, itemVal, 0xFF86EFAC));
+                    tooltip.add(net.minecraft.network.chat.Component.literal("§7" + item.name + countStr + ": §a" + itemVal));
                 }
             }
-            dev.vy.betterpv.client.gui.PvTooltip.drawStyled(g, font, lines, mouseX, mouseY, this.width, this.height);
+            g.setTooltipForNextFrame(font, tooltip, java.util.Optional.empty(), mouseX, mouseY);
         }
     }
 

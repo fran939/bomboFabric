@@ -1413,17 +1413,6 @@ public class ConfigRegistry {
             }
 
             case "GUI Settings" -> {
-                items.add(ConfigItem.header("Profile Viewer (/b pv)", category));
-                items.add(ConfigItem.toggle("Enable /pv Alias", "Allows running /pv directly (instead of /b pv) to open the Profile Viewer.", category,
-                        () -> s.overridePvCommand, v -> s.overridePvCommand = v));
-                items.add(ConfigItem.sliderFloat("Window Scale", "Size multiplier for the /b pv window (1.0 - 1.8).", category,
-                        1.0f, 1.8f, 0.05f, "x",
-                        () -> s.pvScale > 0.0F ? s.pvScale : 1.15F, v -> s.pvScale = v));
-                items.add(ConfigItem.sliderInt("Backdrop Dim", "How dark the world gets behind the /b pv window. Lower is more transparent.", category,
-                        0, 100, 5, "%",
-                        () -> (int) Math.round((s.pvBackgroundAlpha > 0.0F ? s.pvBackgroundAlpha : 0.45F) * 100.0F),
-                        v -> s.pvBackgroundAlpha = v / 100.0F));
-
                 items.add(ConfigItem.header("Inventory Buttons (/b buttons)", category));
                 items.add(ConfigItem.toggle("Inventory Buttons", "Display custom clickable command and macro buttons inside player inventory and container screens (/b buttons).", category, () -> s.inventoryButtons, v -> s.inventoryButtons = v));
                 items.add(ConfigItem.cycle("Button Tooltip Mode", "How much information to display when hovering over inventory buttons.", category,

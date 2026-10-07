@@ -4,14 +4,9 @@ BomboAddons incorporates and builds upon several open-source community projects.
 
 ---
 
-## 1. BetterPV (Profile Viewer)
-* **Package:** `dev.vy.betterpv`
-* **Original Project:** Better Skyblock Profile Viewer (BetterPV)
-* **License:** [Mozilla Public License Version 2.0 (MPL-2.0)](https://www.mozilla.org/en-US/MPL/2.0/)
-* **Compliance Notes:**
-  * Incorporated under MPL-2.0 Section 3.3 (*Distribution of a Larger Work*).
-  * In accordance with Section 3.1 and 3.2, all source code for covered software and modifications is publicly available in this repository.
-  * All third-party proprietary API endpoints (`api.vyriv.dev`) have been decoupled; network requests are routed via BomboAddons's own API services (`api.bombo.dpdns.org`) or official Hypixel endpoints.
+## 1. Project License
+* **License:** [GNU Lesser General Public License Version 3 (LGPL-3.0)](https://www.gnu.org/licenses/lgpl-3.0.en.html)
+* **Summary:** BomboAddons is distributed under the GNU Lesser General Public License Version 3 (LGPL-3.0). All source code is publicly accessible, allowing users and developers to review, fork, build, and modify the software freely.
 
 ---
 
@@ -44,4 +39,4 @@ BomboAddons incorporates and builds upon several open-source community projects.
 ---
 
 ## 5. Summary of Rights & Fair Use
-All covered software is distributed in full compliance with their respective open-source licenses (MPL-2.0, LGPL-3.0, and MIT). No private third-party infrastructure or services are utilized without authorization.
+All covered software is distributed in full compliance with their respective open-source licenses (LGPL-3.0 and MIT). No private third-party infrastructure or services are utilized without authorization. BetterPV code has been completely removed from the project.

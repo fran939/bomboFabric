@@ -24,9 +24,9 @@
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/BetterPVClient.java": {
-    "mtime": 1791329912.4810715,
-    "seen": 1791330103.9690645,
-    "ast_hash": "a662134fab765403c686f87eb833d4d1",
+    "mtime": 1791396413.8874037,
+    "seen": 1791396777.8081546,
+    "ast_hash": "13a9fdaf90ef7c14df4aa1b19918f337",
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/ChatClickProcessor.java": {
@@ -60,15 +60,15 @@
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/api/BetterPVConfig.java": {
-    "mtime": 1790224572.5646656,
-    "seen": 1791079643.205395,
-    "ast_hash": "2950c06b865d77dd08765fd4a37f8b7b",
+    "mtime": 1791396504.7197492,
+    "seen": 1791396777.808722,
+    "ast_hash": "a5d17cc8de54f8a7052f9da6077767a4",
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/api/BetterPvSessionAuth.java": {
-    "mtime": 1790224572.6341348,
-    "seen": 1791079643.2053964,
-    "ast_hash": "7b0f64ce89c89e20eea6bfa4e8f1ab8d",
+    "mtime": 1791396402.1621294,
+    "seen": 1791396777.8087234,
+    "ast_hash": "ffb0288d76f34be83ede113dd6868071",
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/api/CoflnetApiClient.java": {
@@ -84,9 +84,9 @@
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/api/HypixelApiClient.java": {
-    "mtime": 1791328218.9355693,
-    "seen": 1791330103.9701083,
-    "ast_hash": "4cf56732935a19ba041d9c4697f60c5d",
+    "mtime": 1791396578.753416,
+    "seen": 1791396777.808949,
+    "ast_hash": "5ce0ae9e2f3ba025d4852950e30b7c84",
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/api/ProfileEnrichmentSession.java": {
@@ -114,9 +114,9 @@
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/cosmetics/CosmeticsContentManager.java": {
-    "mtime": 1790224573.0871468,
-    "seen": 1791079643.2054074,
-    "ast_hash": "1ca5ed3b303f04b551d79aca0b1c91a8",
+    "mtime": 1791396428.2345428,
+    "seen": 1791396777.8094003,
+    "ast_hash": "c076260224791dd52315717eb55e29da",
     "semantic_hash": ""
   },
   "src/client/java/dev/vy/betterpv/client/cosmetics/GradientColors.java": {
@@ -3294,9 +3294,9 @@
     "semantic_hash": "39f11507b037879e09a2b31afbe5526f"
   },
   "data/changelog.json": {
-    "mtime": 1791330570.6624146,
-    "seen": 1791330641.1900568,
-    "ast_hash": "1dabc9c03afc7f60d617ea4def554d2b",
+    "mtime": 1791396702.118742,
+    "seen": 1791396777.8041494,
+    "ast_hash": "f3c421802ec7e0f233281060937f2a5e",
     "semantic_hash": ""
   },
   "src/cheat/java/me/bombo/bomboaddons/cheat/automation/AutoCombine.java": {
@@ -3786,15 +3786,15 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791330596.6540751,
-    "seen": 1791330641.2676058,
-    "ast_hash": "a22bc84f9f01475d8c59db4a5d8f676d",
+    "mtime": 1791396730.5001593,
+    "seen": 1791396777.8764303,
+    "ast_hash": "704a2fd5ba421c5e1df06c443dd26529",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
-    "mtime": 1791330543.4552035,
-    "seen": 1791330641.2676091,
-    "ast_hash": "e5f3c3a92e821860149e9c2c075aa70f",
+    "mtime": 1791396678.4623837,
+    "seen": 1791396777.8764324,
+    "ast_hash": "8a6b2c1fd582efacd420e4f3972e2de8",
     "semantic_hash": ""
   },
   "README.md": {
@@ -3879,6 +3879,12 @@
     "mtime": 1791329949.902454,
     "seen": 1791330104.0101435,
     "ast_hash": "832ecaa37209eaa4f8268d244655b2cb",
+    "semantic_hash": ""
+  },
+  "LICENSES.md": {
+    "mtime": 1791396548.1587317,
+    "seen": 1791396777.8764338,
+    "ast_hash": "11401cb0f8bc789e58d7e5f9185b0da8",
     "semantic_hash": ""
   }
 }

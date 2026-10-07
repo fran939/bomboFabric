@@ -93,19 +93,6 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      boolean overridePv = me.bombo.bomboaddons.BomboConfig.get() != null && me.bombo.bomboaddons.BomboConfig.get().overridePvCommand;
-      if (trimmed.equalsIgnoreCase("b pv") || trimmed.equalsIgnoreCase("bombo pv")
-            || trimmed.toLowerCase().startsWith("b pv ") || trimmed.toLowerCase().startsWith("bombo pv ")
-            || (overridePv && (trimmed.equalsIgnoreCase("pv") || trimmed.toLowerCase().startsWith("pv ")))) {
-         String arg = "";
-         int idx = trimmed.indexOf("pv");
-         if (idx != -1 && idx + 2 < trimmed.length()) {
-            arg = trimmed.substring(idx + 2).trim();
-         }
-         dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(arg.isEmpty() ? null : arg);
-         ci.cancel();
-         return;
-      }
       if (trimmed.equalsIgnoreCase("b subarea") || trimmed.equalsIgnoreCase("bombo subarea") || trimmed.equalsIgnoreCase("bomboaddons subarea")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea();
@@ -588,19 +575,6 @@ public class CommandMixin {
       if (trimmed.equalsIgnoreCase("/b undeafen") || trimmed.equalsIgnoreCase("/bombo undeafen") || trimmed.equalsIgnoreCase("/undeafen")
             || trimmed.equalsIgnoreCase("b undeafen") || trimmed.equalsIgnoreCase("undeafen")) {
          me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, (msg) -> {});
-         ci.cancel();
-         return;
-      }
-      boolean overridePv = me.bombo.bomboaddons.BomboConfig.get() != null && me.bombo.bomboaddons.BomboConfig.get().overridePvCommand;
-      if (trimmed.equalsIgnoreCase("/b pv") || trimmed.equalsIgnoreCase("/bombo pv")
-            || trimmed.toLowerCase().startsWith("/b pv ") || trimmed.toLowerCase().startsWith("/bombo pv ")
-            || (overridePv && (trimmed.equalsIgnoreCase("/pv") || trimmed.toLowerCase().startsWith("/pv ")))) {
-         String arg = "";
-         int idx = trimmed.indexOf("pv");
-         if (idx != -1 && idx + 2 < trimmed.length()) {
-            arg = trimmed.substring(idx + 2).trim();
-         }
-         dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(arg.isEmpty() ? null : arg);
          ci.cancel();
          return;
       }

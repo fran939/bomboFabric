@@ -17,7 +17,7 @@
 | **Loom Version** | `1.17.11` |
 | **Fabric API Version** | `0.152.1+26.2` |
 | **Java Toolchain** | `Java 25` (source/client bytecode compatibility target Java 21/25) |
-| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.107` |
+| **Mod ID & Current Version** | `bomboaddons` (legit) + `bomboclient` (cheat), both v`26.2.28.108` |
 | **Build Flavors** | `bomboaddons` (legit) and `bomboclient` (cheat), built together — see Section 2.B |
 | **Git Target Branch** | `26.2` (`origin/26.2`) |
 
@@ -113,10 +113,15 @@ The backend API running on the server (`ssh.bombo.dpdns.org:3000` via PM2 `bombo
 
 ## 4. Current Implementation State & Untested Features
 
-The mod is currently on version **`26.2.28.107`** (ready for in-game testing).
+The mod is currently on version **`26.2.28.108`** (ready for in-game testing).
 For detailed architecture, design decisions, and backend documentation, refer to [`docs/HANDOFF_KNOWLEDGE.md`](file:///e:/Users/frand/Documents/bomboaddons-26.2/docs/HANDOFF_KNOWLEDGE.md).
 
 > [!NOTE]
+> ### ✅ COMPLETED & COMPILED IN v26.2.28.108 (Ready for In-Game Testing)
+>
+> 1. **Complete Elimination of BetterPV Code (`dev.vy.betterpv` & `/pv`):** Completely removed the entire `dev.vy.betterpv` package, commands (`/b pv`, `/b bpv`, `/pv`, `/pv1`, `/pv2`, `/pvconfig`), config items, and assets (`assets/betterpv`) from the codebase. Replaced tooltip rendering in `DungeonProfitScreen` with vanilla Minecraft component tooltips.
+> 2. **Project License Standardized to LGPL-3.0 (`fabric.mod.json`, `LICENSES.md`):** Formally set the mod's declared license to GNU Lesser General Public License Version 3 (LGPL-3.0), harmonizing the codebase with incorporated Skyblocker and NEU libraries and ensuring complete legal clarity and immunity from third-party claims.
+>
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.107 (Ready for In-Game Testing)
 >
 > 1. **Complete Third-Party API Decoupling (`BetterPvSessionAuth`, `HypixelApiClient`, `CosmeticsContentManager`, `BetterPVClient`):** Completely removed all network calls and background connections to `api.vyriv.dev`. Eliminated background Mojang `joinServer` session authentication, startup session proof requests, and remote cosmetic lookups. All profile, museum, player, and skyblock data are routed exclusively through BomboAddons's own API infrastructure (`api.bombo.dpdns.org`) or official Hypixel/Mojang public endpoints.

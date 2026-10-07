@@ -411,10 +411,6 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
    }
 
-   private static void openProfileViewer(String username) {
-      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(username);
-   }
-
    public static void openMagicFindOptimizer(FabricClientCommandSource src, String username) {
       openMagicFindOptimizer(src, username, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.GENERAL);
    }
@@ -595,11 +591,6 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.setup();
       me.bombo.bomboaddons.flavor.Flavor.get().init();
       me.bombo.bomboaddons.flavor.FlavorMigration.run();
-      try {
-         new dev.vy.betterpv.client.BetterPVClient().onInitializeClient();
-      } catch (Throwable t) {
-         Bomboaddons.LOGGER.error("[BomboAddons] Failed to initialize BetterPV:", t);
-      }
       checkResourcePackStartup();
       UseBlockCallback.EVENT.register((UseBlockCallback)(player, world, hand, hitResult) -> {
          BlockPos pos = hitResult.getBlockPos();
@@ -4356,43 +4347,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                       }
                       return 1;
                    }));
-                   builder.then(ClientCommands.literal("pv").executes((context) -> {
-                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(null);
-                      return 1;
-                   }).then(ClientCommands.argument("player", StringArgumentType.word()).suggests((context, b) -> {
-                      // Lobby (tab list) + friends/guild/party, filtered so the Hypixel scoreboard
-                      // placeholders (!A-a, !A-b) never show up as completion tokens.
-                      return TabCompletionManager.suggestPlayerNames(b);
-                   }).executes((context) -> {
-                      String target = StringArgumentType.getString(context, "player");
-                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(target);
-                      return 1;
-                   })));
-                   builder.then(ClientCommands.literal("pv1").executes((context) -> {
-                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(null);
-                      return 1;
-                   }).then(ClientCommands.argument("player", StringArgumentType.word()).suggests((context, b) -> {
-                      return TabCompletionManager.suggestPlayerNames(b);
-                   }).executes((context) -> {
-                      String target = StringArgumentType.getString(context, "player");
-                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(target);
-                      return 1;
-                   })));
-                   builder.then(ClientCommands.literal("pv2").executes((context) -> {
-                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(null);
-                      return 1;
-                   }).then(ClientCommands.argument("player", StringArgumentType.word()).suggests((context, b) -> {
-                      return TabCompletionManager.suggestPlayerNames(b);
-                   }).executes((context) -> {
-                      String target = StringArgumentType.getString(context, "player");
-                      dev.vy.betterpv.client.ProfileViewerOpener.openSelfOr(target);
-                      return 1;
-                   })));
-                   builder.then(ClientCommands.literal("pvconfig").executes((context) -> {
-                      Minecraft mc = Minecraft.getInstance();
-                      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboConfigScreen(mc.gui.screen(), "Profile Viewer")));
-                      return 1;
-                   }));
                    builder.then(ClientCommands.literal("online").executes((context) -> {
                       FabricClientCommandSource source = (FabricClientCommandSource) context.getSource();
                       source.sendFeedback(Component.literal("§8[§3Bombo§8] §7Fetching online bridge users from server..."));
@@ -7059,9 +7013,6 @@ public class BomboaddonsClient implements ClientModInitializer {
             "bc", "bombochat", "lf", "lfc", "lb", "nw", "nwc", "networth", "patrimonioneto", "networthcoop", "patrimonionetocoop", "cata", "skills", "slayer", "trophyfish", "crimson", "crimsom",
             "bombo_highlight_slot", "bombo_museum_click"
          ));
-         if (BomboConfig.get() != null && BomboConfig.get().overridePvCommand) {
-            bomboCommands.add("pv");
-         }
          if (BomboConfig.get() != null && BomboConfig.get().commandAliases != null) {
             bomboCommands.addAll(BomboConfig.get().commandAliases.keySet());
          }

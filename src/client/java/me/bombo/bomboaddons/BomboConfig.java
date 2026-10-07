@@ -166,13 +166,6 @@ public class BomboConfig {
       if (instance.priceSourceMode == null) {
          instance.priceSourceMode = "INSTANT_BUY";
       }
-      if (instance.pvScale <= 0.0F) {
-         instance.pvScale = 1.15F;
-      }
-      if (instance.pvBackgroundAlpha <= 0.0F || instance.pvBackgroundAlpha > 1.0F) {
-         instance.pvBackgroundAlpha = 0.45F;
-      }
-
       if (instance.customWaypoints == null) {
          instance.customWaypoints = new HashMap();
       }
@@ -1260,9 +1253,6 @@ public class BomboConfig {
       // Outbound API/WebSocket history (/b apihistory).
       public boolean apiHistoryEnabled = true;
       public int apiHistoryMaxEntries = 500;
-      public boolean overridePvCommand = false; // /pv alias redirects to mod Profile Viewer
-      public float pvScale = 1.15F; // /b pv window size multiplier (1.0 - 1.8)
-      public float pvBackgroundAlpha = 0.45F; // backdrop dim behind /b pv
       public String backpackPreviewTrigger = "ALWAYS"; // ALWAYS, ON_KEY
       public String backpackPreviewKey = "LEFT_SHIFT";
       public boolean inventoryItemRarityBg = false; // Rarity colors on normal inventory slots & HUDs

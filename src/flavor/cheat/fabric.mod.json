@@ -11,7 +11,7 @@
 		"homepage": "https://github.com/fran939/bombofabric",
 		"sources": "https://github.com/fran939/bombofabric"
 	},
-	"license": "CC0-1.0",
+	"license": "LGPL-3.0",
 	"icon": "assets/bomboaddons/icon.png",
 	"environment": "client",
 	"entrypoints": {

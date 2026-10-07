@@ -1,5 +1,13 @@
 [
   {
+    "version": "26.2.28.108",
+    "date": "2026-10-07",
+    "changes": [
+      "- Complete BetterPV Removal - Fully purged dev.vy.betterpv package, commands (/pv, /b pv, /pvconfig), and assets from codebase",
+      "+ Project License Standardized - Set formal mod license to GNU Lesser General Public License Version 3 (LGPL-3.0)"
+    ]
+  },
+  {
     "version": "26.2.28.107",
     "date": "2026-10-07",
     "changes": [
