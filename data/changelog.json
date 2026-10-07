@@ -4,7 +4,8 @@
     "date": "2026-10-07",
     "changes": [
       "- Complete BetterPV Removal - Fully purged dev.vy.betterpv package, commands (/pv, /b pv, /pvconfig), and assets from codebase",
-      "+ Project License Standardized - Set formal mod license to GNU Lesser General Public License Version 3 (LGPL-3.0)"
+      "+ Project License Standardized - Set formal mod license to GNU Lesser General Public License Version 3 (LGPL-3.0)",
+      "+ Full Legal License Texts - Added complete unabridged texts for LGPL-3.0, GPL-3.0, and MIT to LICENSES.md and root LICENSE"
     ]
   },
   {

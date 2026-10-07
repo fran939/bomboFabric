@@ -120,7 +120,7 @@ For detailed architecture, design decisions, and backend documentation, refer to
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.108 (Ready for In-Game Testing)
 >
 > 1. **Complete Elimination of BetterPV Code (`dev.vy.betterpv` & `/pv`):** Completely removed the entire `dev.vy.betterpv` package, commands (`/b pv`, `/b bpv`, `/pv`, `/pv1`, `/pv2`, `/pvconfig`), config items, and assets (`assets/betterpv`) from the codebase. Replaced tooltip rendering in `DungeonProfitScreen` with vanilla Minecraft component tooltips.
-> 2. **Project License Standardized to LGPL-3.0 (`fabric.mod.json`, `LICENSES.md`):** Formally set the mod's declared license to GNU Lesser General Public License Version 3 (LGPL-3.0), harmonizing the codebase with incorporated Skyblocker and NEU libraries and ensuring complete legal clarity and immunity from third-party claims.
+> 2. **Project License Standardized to LGPL-3.0 & Full Legal Texts (`fabric.mod.json`, `LICENSES.md`, `LICENSE`):** Formally set the mod's declared license to GNU Lesser General Public License Version 3 (LGPL-3.0), harmonizing the codebase with incorporated Skyblocker and NEU libraries and providing complete unabridged texts for LGPL-3.0, GPL-3.0, and MIT to guarantee complete legal clarity and immunity from third-party claims.
 >
 > ### ✅ COMPLETED & COMPILED IN v26.2.28.107 (Ready for In-Game Testing)
 >
