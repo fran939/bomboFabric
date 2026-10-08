@@ -304,6 +304,43 @@ public class LyricsManager {
         return activeIdx;
     }
 
+    /**
+     * Whether a line's word timings actually cover the whole line text.
+     *
+     * <p>Providers occasionally return word timings for only the first few words while the line
+     * text keeps going. Rendering the word wipe alone would then hide the rest of the line, which
+     * looks like the karaoke "stopping" part-way. In that case the callers fall back to the
+     * line-progress reveal so the full line is always visible.
+     */
+    public static boolean wordsCoverLine(LyricsLine line) {
+        if (line == null) return false;
+        List<WordTime> words = line.words();
+        if (words == null || words.isEmpty()) return false;
+        String text = line.text() == null ? "" : line.text();
+        String normalizedText = normalizeForCoverage(text);
+        if (normalizedText.isEmpty()) return true;
+
+        StringBuilder sb = new StringBuilder();
+        for (WordTime w : words) {
+            if (w.word() != null) sb.append(w.word());
+        }
+        String normalizedWords = normalizeForCoverage(sb.toString());
+        if (normalizedWords.isEmpty()) return false;
+        return normalizedWords.equals(normalizedText) || normalizedWords.contains(normalizedText);
+    }
+
+    private static String normalizeForCoverage(String value) {
+        if (value == null) return "";
+        StringBuilder sb = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            if (Character.isLetterOrDigit(ch)) {
+                sb.append(Character.toLowerCase(ch));
+            }
+        }
+        return sb.toString();
+    }
+
     public static void updateTrack(String track, String artist, int posSec) {
         if (track == null || track.isEmpty()) {
             activeTrack = "";

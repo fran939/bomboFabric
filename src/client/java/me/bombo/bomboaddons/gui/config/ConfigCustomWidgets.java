@@ -173,11 +173,17 @@ public class ConfigCustomWidgets {
                 int[] size = CrosshairRenderer.getImagePreviewSize(110);
                 int iw = size[0];
                 int ih = size[1];
+                int pTint = (crosshair.imageTint || crosshair.chroma)
+                        ? CrosshairRenderer.getColorValue(crosshair.color, crosshair.chroma) : 0xFFFFFFFF;
                 g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
                         CrosshairRenderer.getImageTextureId(),
-                        pcX - iw / 2, pcY - ih / 2, 0.0f, 0.0f, iw, ih, iw, ih, 0xFFFFFFFF);
+                        pcX - iw / 2, pcY - ih / 2, 0.0f, 0.0f, iw, ih, iw, ih, pTint);
+            } else if (CrosshairRenderer.isImageLoading()) {
+                String hint = "§eDownloading image...";
+                g.text(font, hint, prevX + (prevW - font.width(hint)) / 2, pcY - 4, 0xFFE5E7EB, false);
             } else {
-                String hint = "§7Set image path above (+ Browse)";
+                String err = CrosshairRenderer.getImageError();
+                String hint = (err != null && !err.isEmpty()) ? ("§cImage failed: " + err) : "§7Set image path / URL above (+ Browse)";
                 g.text(font, hint, prevX + (prevW - font.width(hint)) / 2, pcY - 4, 0xFF94A3B8, false);
             }
         } else {
@@ -1709,13 +1715,14 @@ public class ConfigCustomWidgets {
     public static int getBlockedSlotsCardHeight() {
         BomboConfig.Settings s = BomboConfig.get();
         int count = s.blockedSlots != null ? s.blockedSlots.size() : 0;
-        return 85 + Math.max(1, count) * 24 + 40 + 16;
+        return 103 + Math.max(1, count) * 24 + 40 + 16;
     }
 
     public static void renderBlockedSlotsCard(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
         BomboConfig.Settings s = BomboConfig.get();
         ConfigUITheme.drawCard(g, x, y, w, h, false);
-        int curY = y + 10;
+        g.text(font, "§6§lBLOCKED SLOT RULES", x + 12, y + 8, ConfigUITheme.ACCENT_GOLD, false);
+        int curY = y + 26;
         int colW = (w - 36) / 3;
 
         renderCleanInputField(g, font, "Item name / Skyblock ID", blockedItemInput, "bsItem", x + 12, curY, colW + 20, mouseX, mouseY);
@@ -1783,7 +1790,7 @@ public class ConfigCustomWidgets {
         BomboConfig.Settings s = BomboConfig.get();
         if (s.blockedSlots == null) s.blockedSlots = new ArrayList<>();
 
-        int curY = y + 10;
+        int curY = y + 26;
         int colW = (w - 36) / 3;
         if (checkFieldClick(x + 12, curY, colW + 20, 18, "bsItem", mouseX, mouseY)) return true;
         if (checkFieldClick(x + 12 + colW + 30, curY, colW - 6, 18, "bsGui", mouseX, mouseY)) return true;

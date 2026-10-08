@@ -213,7 +213,7 @@ public class SpotifyHud {
                 g.pose().scale(fontScale, fontScale);
 
                 java.util.List<LyricsManager.WordTime> words = activeLine != null ? activeLine.words() : null;
-                if (words != null && !words.isEmpty()) {
+                if (words != null && !words.isEmpty() && LyricsManager.wordsCoverLine(activeLine)) {
                     // Syllable / word-by-word karaoke wipe
                     int curX = 0;
                     if (cachedSpaceW < 0) cachedSpaceW = font.width(" ");

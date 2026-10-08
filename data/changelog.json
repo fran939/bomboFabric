@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.110",
+    "date": "2026-10-08",
+    "changes": [
+      "~ Profile Keybinds No Longer Leak - Per-profile key overrides are no longer written into options.txt, so switching to a profile without overrides restores the real vanilla keys instead of the previously overridden ones after a restart",
+      "~ Speedometer Max Window - The min/avg/max line no longer discards fast movement; the max climbs to the real peak of the last 5 seconds and only drops once that peak leaves the window",
+      "~ Image Crosshair URLs & Color Tint - The crosshair image field now accepts an http(s) URL (like a Discord CDN link) and downloads it in the background; changing the crosshair color now actually tints the image, and the preview shows downloading and failed states",
+      "~ Lyrics Karaoke Stops Early - When word timings only cover part of a line, the rest of the line no longer vanishes; it falls back to the smooth line-progress reveal so the full line stays visible",
+      "+ Screenshares in Picture-in-Picture - /b pip now accepts a Bombo screenshare link and polls the live frame endpoint so an active stream can be watched in the PiP overlay",
+      "~ Blocked Slot Rules Title - The Blocked Slot Rules card now shows its section title like the other cards"
+    ]
+  },
+  {
     "version": "26.2.28.109",
     "date": "2026-10-08",
     "changes": [

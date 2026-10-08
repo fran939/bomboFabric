@@ -1,5 +1,17 @@
 # BomboAddons Changelog
  
+## [26.2.28.110] - 2026-10-08 (Beta)
+
+### Fixes
+- **Profile Controls No Longer Leak Across Profiles (`ProfileKeybindManager`):** Per-profile key overrides are no longer written into `options.txt`. Previously the overrides were saved as if they were vanilla keys, so the next launch snapshotted the overridden keys as the "vanilla" baseline and switching to a profile without overrides restored the wrong keys. Overrides now live only in the Bombo config and are re-applied every tick.
+- **Speedometer Max Window (`SpeedometerHud`):** The min/avg/max line no longer discards genuinely fast movement. Teleport filtering is now distance-based only, so the max climbs to the real peak of the last 5 seconds and only drops once that peak leaves the window.
+- **Image Crosshair Loading & Color (`CrosshairRenderer`, `BomboConfig`, `ConfigCustomWidgets`, `ConfigRegistry`):** The crosshair image field now accepts an `http(s)` image URL (e.g. a Discord CDN link) as well as a local path, downloaded off-thread. Changing the crosshair color now actually tints the image (hex and named colors are parsed, chroma always tints), image tint defaults on, and the preview shows clear downloading / failed states.
+- **Lyrics Karaoke Stops Early (`LyricsManager`, `LyricsHud`, `LyricsScreen`, `SpotifyHud`):** When a provider returns word timings that only cover part of a line, the active line used to render only those words, so the rest of the line vanished and the highlight jumped to the next line. The line now falls back to the smooth line-progress reveal whenever the word timings don't cover the full text, so the whole line always stays visible.
+- **Blocked Slot Rules Title (`ConfigCustomWidgets`):** The Blocked Slot Rules card now renders its section title like the other custom cards.
+
+### Features
+- **Screenshares in Picture-in-Picture (`PipManager`):** `/b pip` now accepts a Bombo screenshare link (e.g. `https://bombo.dpdns.org/screenshare?user=<name>`), polling the live frame endpoint so an active stream can be watched in the PiP overlay instead of being rejected as "a web page, not an image".
+
 ## [26.2.28.109] - 2026-10-08 (Beta)
 
 ### Features & Fixes

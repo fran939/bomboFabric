@@ -53,6 +53,13 @@ public class PipManager {
     private static int mediaWidth = 0;
     private static int mediaHeight = 0;
 
+    // Bombo live screenshare (/b stream) support: the public frame endpoint is polled so a
+    // screenshare link can be shown in PiP.
+    private static boolean isStream = false;
+    private static String streamUser = "";
+    private static long lastStreamPoll = 0L;
+    private static boolean streamInFlight = false;
+
     public static void init() {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "pip_hud"), PipManager::renderHud);
     }
@@ -103,6 +110,20 @@ public class PipManager {
         textureLoaded = false;
         mediaWidth = 0;
         mediaHeight = 0;
+
+        String screenshareUser = extractScreenshareUser(loadedUrl);
+        if (screenshareUser != null) {
+            isYouTube = false;
+            isStream = true;
+            streamUser = screenshareUser;
+            mediaTitle = "Live Stream (" + screenshareUser + ")";
+            mediaAuthor = "";
+            lastStreamPoll = 0L;
+            streamInFlight = false;
+            fetchStreamFrame(screenshareUser);
+            return;
+        }
+        isStream = false;
 
         String videoId = extractYouTubeId(loadedUrl);
         if (videoId != null) {
@@ -273,6 +294,95 @@ public class PipManager {
         return null;
     }
 
+    /** Extracts the player name from any Bombo screenshare URL, or null when it is not one. */
+    public static String extractScreenshareUser(String url) {
+        if (url == null) return null;
+        String u = url.trim();
+        String lower = u.toLowerCase(Locale.ROOT);
+        if (!lower.contains("screenshare")) return null;
+
+        Matcher m = Pattern.compile("[?&]user=([^&\\s/#]+)").matcher(u);
+        if (m.find()) {
+            String user = decodeUrlComponent(m.group(1));
+            if (!user.isEmpty()) return user;
+        }
+        m = Pattern.compile("screenshare/(?:stream/|frame/|ws/)?([^?&#/\\s]+)").matcher(u);
+        if (m.find()) {
+            String user = decodeUrlComponent(m.group(1));
+            if (!user.isEmpty() && !user.equalsIgnoreCase("list") && !user.equalsIgnoreCase("ws")
+                    && !user.equalsIgnoreCase("frame") && !user.equalsIgnoreCase("stream")) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    private static String decodeUrlComponent(String value) {
+        if (value == null) return "";
+        try {
+            return java.net.URLDecoder.decode(value, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Throwable ignored) {
+            return value;
+        }
+    }
+
+    /** Uploads raw image bytes as the PiP texture on the render thread. */
+    private static void applyImageData(byte[] data) {
+        NativeImage nativeImg = decodeImage(data);
+        if (nativeImg == null) {
+            loading = false;
+            errorMessage = "Not a supported image";
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        int w = nativeImg.getWidth();
+        int h = nativeImg.getHeight();
+        mc.execute(() -> {
+            try {
+                if (activeTexture != null) {
+                    activeTexture.close();
+                }
+                activeTexture = new DynamicTexture(() -> "pip_media_" + System.currentTimeMillis(), nativeImg);
+                mc.getTextureManager().register(PIP_TEXTURE_ID, activeTexture);
+                mediaWidth = w;
+                mediaHeight = h;
+                textureLoaded = true;
+                loading = false;
+                errorMessage = null;
+            } catch (Exception e) {
+                loading = false;
+                errorMessage = "Texture upload failed";
+            }
+        });
+    }
+
+    /** Polls the public screenshare frame endpoint once and updates the PiP texture. */
+    public static void fetchStreamFrame(String user) {
+        if (user == null || user.isEmpty() || streamInFlight) return;
+        streamInFlight = true;
+        CompletableFuture.runAsync(() -> {
+            try {
+                String encoded = java.net.URLEncoder.encode(user, java.nio.charset.StandardCharsets.UTF_8);
+                String frameUrl = "https://api.bombo.dpdns.org/api/screenshare/frame?user=" + encoded
+                        + "&t=" + System.currentTimeMillis();
+                DownloadResult result = download(frameUrl);
+                if (result != null && isUsableImage(result)) {
+                    applyImageData(result.data);
+                } else if (!textureLoaded) {
+                    loading = false;
+                    errorMessage = result == null ? "Stream offline" : "Stream unavailable";
+                }
+            } catch (Throwable t) {
+                if (!textureLoaded) {
+                    loading = false;
+                    errorMessage = "Stream error";
+                }
+            } finally {
+                streamInFlight = false;
+            }
+        });
+    }
+
     private static DownloadResult download(String url) {
         try {
             HttpRequest req = HttpRequest.newBuilder()
@@ -302,6 +412,15 @@ public class PipManager {
         // Auto reload if the configured URL changed
         if (!s.pipUrl.trim().equals(loadedUrl) && !loading) {
             loadMedia(s.pipUrl.trim());
+        }
+
+        // Live screenshare: keep polling fresh frames while the overlay is visible.
+        if (isStream && !streamInFlight) {
+            long now = System.currentTimeMillis();
+            if (now - lastStreamPoll >= 120L) {
+                lastStreamPoll = now;
+                fetchStreamFrame(streamUser);
+            }
         }
 
         renderPipBox(g, mc.font, s.pipX, s.pipY, (int) (s.pipW * s.pipScale), (int) (s.pipH * s.pipScale),

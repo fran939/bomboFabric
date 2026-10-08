@@ -126,7 +126,10 @@ public class SpeedometerHud {
     * so a single 300 bps spike cannot poison the maximum for the next five seconds.
     */
    private static void updateStatistics(long now, double dist, double instantBps) {
-      if (dist < 8.0 && instantBps < 60.0) {
+      // Only genuine teleports (a huge per-tick jump, e.g. AOTV / /warp / world change) are
+      // dropped. A pure speed threshold must NOT be used here: legitimate fast movement
+      // (elytra, falls, max speed) would be discarded and the max would never climb.
+      if (dist < 8.0) {
          STAT_SAMPLES.addLast(new SpeedSample(now, dist, instantBps));
       }
 

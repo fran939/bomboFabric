@@ -145,7 +145,7 @@ public class LyricsHud {
             if (isActive) {
                 // Progressive letter-by-letter karaoke wipe
                 List<LyricsManager.WordTime> words = line.words();
-                if (words != null && !words.isEmpty()) {
+                if (words != null && !words.isEmpty() && LyricsManager.wordsCoverLine(line)) {
                     int curX = lineX;
                     int spaceW = font.width(" ");
                     for (int w = 0; w < words.size(); w++) {

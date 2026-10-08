@@ -242,7 +242,7 @@ public class LyricsScreen extends Screen {
                     g.fill(pillX, lineIntY - 4, pillX + pillW, lineIntY + pillH, pillBg);
                     g.outline(pillX, lineIntY - 4, pillW, pillH, pillBorder);
 
-                    if (words != null && !words.isEmpty()) {
+                    if (words != null && !words.isEmpty() && LyricsManager.wordsCoverLine(line)) {
                         // Letter-by-letter karaoke animation across words
                         int curX = (this.width - totalLineW) / 2;
                         for (int w = 0; w < words.size(); w++) {
