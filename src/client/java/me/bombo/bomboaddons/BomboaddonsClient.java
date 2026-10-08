@@ -8504,7 +8504,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          })
          .then(ClientCommands.argument("query", StringArgumentType.greedyString())
             .suggests((c, b) -> {
-               String[] subs = new String[]{"off", "close", "on", "toggle", "opacity", "scale", "clean", "reset", "gui", "move"};
+               String[] subs = new String[]{"off", "close", "on", "toggle", "opacity", "scale", "clean", "reset", "gui", "move", "controls", "pause", "play", "resume", "seek", "forward", "back", "skip"};
                String remaining = b.getRemaining().toLowerCase(java.util.Locale.ROOT);
                for (String s : subs) {
                   if (s.startsWith(remaining)) {
@@ -8540,7 +8540,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             BomboConfig.save();
             feedback.accept(Component.literal("§8[§bBombo§8] §r" + (s.pipEnabled ? "§aPiP enabled." : "§cPiP hidden.")));
          } else {
-            feedback.accept(Component.literal("§8[§bBombo§8] §eUsage: §f/b pip <link> §7(or /pip <link>)\n§7Subcommands: §eoff§7, §eon§7, §etoggle§7, §eopacity <0-100>§7, §escale <val>§7, §eclean§7, §ereset§7, §egui"));
+            feedback.accept(Component.literal("§8[§bBombo§8] §eUsage: §f/b pip <link> §7(or /pip <link>)\n§7Subcommands: §eoff§7, §eon§7, §etoggle§7, §eopacity <0-100>§7, §escale <val>§7, §eclean§7, §ereset§7, §egui\n§7Video: §epause§7, §eplay§7, §eseek <seconds>§7, §eback [s]§7, §efwd [s]"));
          }
          return;
       }
@@ -8613,9 +8613,54 @@ public class BomboaddonsClient implements ClientModInitializer {
             BomboConfig.save();
             feedback.accept(Component.literal("§8[§bBombo§8] §aReset PiP position, size, and opacity to defaults."));
          }
-         case "gui", "move" -> {
+         case "gui", "move", "controls" -> {
             openHudMoveNextTick = true;
-            feedback.accept(Component.literal("§8[§bBombo§8] §aOpening HUD editor. Drag Picture-in-Picture or resize via bottom-right corner."));
+            feedback.accept(Component.literal("§8[§bBombo§8] §aOpening HUD editor. Drag Picture-in-Picture or resize via bottom-right corner.\n§7Video controls appear along the bottom of the PiP box: §f-5s§7, §fPause/Play§7, §f+5s§7, §cClose§7."));
+         }
+         case "pause" -> {
+            if (!me.bombo.bomboaddons.features.pip.PipManager.isVideo()) {
+               feedback.accept(Component.literal("§8[§bBombo§8] §cNo video playing. Use /pip <YouTube link> first."));
+            } else {
+               me.bombo.bomboaddons.features.pip.PipManager.setVideoPaused(true);
+               feedback.accept(Component.literal("§8[§bBombo§8] §eVideo paused."));
+            }
+         }
+         case "play", "resume" -> {
+            if (!me.bombo.bomboaddons.features.pip.PipManager.isVideo()) {
+               feedback.accept(Component.literal("§8[§bBombo§8] §cNo video playing. Use /pip <YouTube link> first."));
+            } else {
+               me.bombo.bomboaddons.features.pip.PipManager.setVideoPaused(false);
+               feedback.accept(Component.literal("§8[§bBombo§8] §aVideo resumed."));
+            }
+         }
+         case "seek" -> {
+            if (args.length < 2) {
+               feedback.accept(Component.literal("§8[§bBombo§8] §eUsage: §f/pip seek <seconds>§7 (or §f+pip seek +5§7 / §f-pip seek -5§7)"));
+               return;
+            }
+            try {
+               String raw = args[1].trim();
+               float value = Float.parseFloat(raw.charAt(0) == '+' ? raw.substring(1) : raw);
+               long seconds = (long) value;
+               if (raw.startsWith("+")) {
+                  me.bombo.bomboaddons.features.pip.PipManager.seekVideoRelative(seconds);
+               } else if (raw.startsWith("-")) {
+                  me.bombo.bomboaddons.features.pip.PipManager.seekVideoRelative(-seconds);
+               } else {
+                  me.bombo.bomboaddons.features.pip.PipManager.seekVideo(seconds);
+               }
+               feedback.accept(Component.literal("§8[§bBombo§8] §aSeeking §b" + raw + "s§a..."));
+            } catch (Exception e) {
+               feedback.accept(Component.literal("§8[§bBombo§8] §cInvalid seek value: " + args[1]));
+            }
+         }
+         case "forward", "fwd" -> {
+            me.bombo.bomboaddons.features.pip.PipManager.seekVideoRelative(5);
+            feedback.accept(Component.literal("§8[§bBombo§8] §a+5 seconds."));
+         }
+         case "back", "rewind" -> {
+            me.bombo.bomboaddons.features.pip.PipManager.seekVideoRelative(-5);
+            feedback.accept(Component.literal("§8[§bBombo§8] §a-5 seconds."));
          }
          default -> {
             // Treat entire string as media URL

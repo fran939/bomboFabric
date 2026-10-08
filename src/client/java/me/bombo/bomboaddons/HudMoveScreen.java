@@ -1034,6 +1034,24 @@ public class HudMoveScreen extends Screen {
             return true;
         }
 
+        // Media controls on the video PiP overlay (bottom bar: -5s / pause / +5s / close)
+        if (me.bombo.bomboaddons.features.pip.PipManager.isVideo()) {
+            int[] pb = this.lastRenderedBounds.get(HudTarget.PIP_OVERLAY);
+            if (pb != null && me.bombo.bomboaddons.features.pip.PipManager.handleMoveScreenControlsClick(
+                    mouseX, mouseY, pb[0], pb[1], pb[2], pb[3], button)) {
+                return true;
+            }
+        }
+
+        // Media controls on the video PiP overlay (bottom bar: -5s / pause / +5s / close)
+        if (me.bombo.bomboaddons.features.pip.PipManager.isVideo()) {
+            int[] pb = this.lastRenderedBounds.get(HudTarget.PIP_OVERLAY);
+            if (pb != null && me.bombo.bomboaddons.features.pip.PipManager.handleMoveScreenControlsClick(
+                    mouseX, mouseY, pb[0], pb[1], pb[2], pb[3], button)) {
+                return true;
+            }
+        }
+
         // 1. Check corner resize on currently selected target first
         if (this.selectedTarget != null) {
             int[] b = this.lastRenderedBounds.get(this.selectedTarget);

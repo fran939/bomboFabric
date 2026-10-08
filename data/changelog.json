@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.112",
+    "date": "2026-10-08",
+    "changes": [
+      "+ Video Playback in Picture-in-Picture - /b pip now really plays a YouTube link: the Bombo API resolves it with yt-dlp and frames it with ffmpeg in real time while the overlay polls the latest frame, so no video decoder is needed on the client",
+      "+ PiP Media Controls - The PiP box has a transport bar in the HUD editor (/b pip gui) with rewind 5s, pause/play, forward 5s and close, plus a live playback clock and a paused marker",
+      "+ PiP Video Commands - /b pip pause, /b pip play, /b pip seek <seconds> (or +5 / -5), /b pip fwd and /b pip back control playback straight from chat or a key bind",
+      "~ Paused Playback Position - Pausing no longer reports 0:00, and a seek made while paused steps from the real position instead of jumping to the start of the video",
+      "~ Seek While Paused - Seeking while paused now waits for the first frame of the new position, so the overlay shows the seeked frame instead of a blank box"
+    ]
+  },
+  {
     "version": "26.2.28.111",
     "date": "2026-10-08",
     "changes": [

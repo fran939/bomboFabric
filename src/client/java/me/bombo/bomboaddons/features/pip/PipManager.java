@@ -60,6 +60,16 @@ public class PipManager {
     private static long lastStreamPoll = 0L;
     private static boolean streamInFlight = false;
 
+    // Server-transcoded video playback (YouTube etc.) via bomboapi /api/media/*.
+    private static boolean isVideo = false;
+    private static String videoSessionId = "";
+    private static boolean videoPaused = false;
+    private static long lastVideoPoll = 0L;
+    private static boolean videoFrameInFlight = false;
+    private static long videoPositionSeconds = 0L;
+    private static long lastVideoStatusPoll = 0L;
+    private static final String MEDIA_API = "https://api.bombo.dpdns.org/api/media";
+
     public static void init() {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "pip_hud"), PipManager::renderHud);
     }
@@ -84,6 +94,163 @@ public class PipManager {
             s.pipEnabled = false;
             BomboConfig.save();
         }
+        closeVideoSession();
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Server-transcoded video sessions
+    // ---------------------------------------------------------------------------------------------
+
+    /** True when the current PiP source is a server-transcoded video (YouTube et al). */
+    public static boolean isVideo() {
+        return isVideo;
+    }
+
+    public static boolean isVideoPaused() {
+        return videoPaused;
+    }
+
+    /** Opens a transcode session on bomboapi; falls back to the thumbnail if it cannot start. */
+    private static void startVideoSession(String url, String videoId) {
+        closeVideoSession();
+        isVideo = true;
+        loading = true;
+        textureLoaded = false;
+        mediaWidth = 0;
+        mediaHeight = 0;
+        errorMessage = null;
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                String body = "{\"url\":\"" + url.replace("\\", "\\\\").replace("\"", "\\\"") + "\"}";
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(MEDIA_API + "/open"))
+                        .header("Content-Type", "application/json")
+                        .timeout(Duration.ofSeconds(10))
+                        .POST(HttpRequest.BodyPublishers.ofString(body))
+                        .build();
+                HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+                if (resp.statusCode() >= 200 && resp.statusCode() < 300 && resp.body() != null) {
+                    JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    if (json.has("id")) {
+                        videoSessionId = json.get("id").getAsString();
+                        return;
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+            // Server unavailable: degrade to the thumbnail instead of a blank box.
+            isVideo = false;
+            videoSessionId = "";
+            fetchAndApplyImage(
+                    "https://i.ytimg.com/vi/" + videoId + "/maxresdefault.jpg",
+                    "https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg");
+        });
+    }
+
+    private static void postMedia(String path, String jsonBody) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(MEDIA_API + path))
+                        .header("Content-Type", "application/json")
+                        .timeout(Duration.ofSeconds(8))
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                        .build();
+                HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.discarding());
+            } catch (Throwable ignored) {
+            }
+        });
+    }
+
+    /** Pauses or resumes server-side playback (freezes the frame while paused). */
+    public static void setVideoPaused(boolean paused) {
+        if (videoSessionId.isEmpty()) return;
+        videoPaused = paused;
+        postMedia("/pause", "{\"id\":\"" + videoSessionId + "\",\"paused\":" + paused + "}");
+    }
+
+    public static void toggleVideoPaused() {
+        setVideoPaused(!videoPaused);
+    }
+
+    /** Seeks the server-side video to an absolute position. */
+    public static void seekVideo(long seconds) {
+        if (videoSessionId.isEmpty()) return;
+        long target = Math.max(0L, seconds);
+        textureLoaded = false;
+        postMedia("/seek", "{\"id\":\"" + videoSessionId + "\",\"seconds\":" + target + "}");
+    }
+
+    public static void seekVideoRelative(long deltaSeconds) {
+        if (videoSessionId.isEmpty()) return;
+        pollVideoStatus(seconds -> seekVideo(Math.max(0L, seconds + deltaSeconds)));
+    }
+
+    /** Refreshes the cached playback position at most once per second. */
+    private static void pollVideoPosition() {
+        if (!isVideo || videoSessionId.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        if (now - lastVideoStatusPoll < 1000L) return;
+        lastVideoStatusPoll = now;
+        pollVideoStatus(seconds -> videoPositionSeconds = seconds);
+    }
+
+    /** Human readable playback position, e.g. {@code 1:23}. */
+    private static String formatPosition(long seconds) {
+        long s = Math.max(0L, seconds);
+        return (s / 60) + ":" + String.format(Locale.ROOT, "%02d", s % 60);
+    }
+
+    private static void pollVideoStatus(java.util.function.LongConsumer onPosition) {
+        final String id = videoSessionId;
+        if (id.isEmpty()) return;
+        CompletableFuture.runAsync(() -> {
+            try {
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(MEDIA_API + "/status?id=" + id))
+                        .timeout(Duration.ofSeconds(6))
+                        .GET()
+                        .build();
+                HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+                if (resp.statusCode() == 200 && resp.body() != null) {
+                    JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    if (json.has("positionSeconds")) {
+                        onPosition.accept((long) json.get("positionSeconds").getAsDouble());
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        });
+    }
+
+    public static void closeVideoSession() {
+        if (!videoSessionId.isEmpty()) {
+            postMedia("/close", "{\"id\":\"" + videoSessionId + "\"}");
+        }
+        videoSessionId = "";
+        isVideo = false;
+        videoPaused = false;
+        videoFrameInFlight = false;
+        videoPositionSeconds = 0L;
+    }
+
+    private static void pollVideoFrame() {
+        if (videoFrameInFlight) return;
+        final String id = videoSessionId;
+        if (id.isEmpty()) return;
+        videoFrameInFlight = true;
+        CompletableFuture.runAsync(() -> {
+            try {
+                DownloadResult result = download(MEDIA_API + "/frame?id=" + id + "&t=" + System.currentTimeMillis());
+                if (result != null && isUsableImage(result)) {
+                    applyImageData(result.data);
+                }
+            } catch (Throwable ignored) {
+            } finally {
+                videoFrameInFlight = false;
+            }
+        });
     }
 
     public static void setOpacity(float opacity) {
@@ -110,10 +277,12 @@ public class PipManager {
         textureLoaded = false;
         mediaWidth = 0;
         mediaHeight = 0;
+        closeVideoSession();
 
         String screenshareUser = extractScreenshareUser(loadedUrl);
         if (screenshareUser != null) {
             isYouTube = false;
+            isVideo = false;
             isStream = true;
             streamUser = screenshareUser;
             mediaTitle = "Live Stream (" + screenshareUser + ")";
@@ -131,12 +300,10 @@ public class PipManager {
             mediaTitle = "YouTube (" + videoId + ")";
             mediaAuthor = "";
             fetchYouTubeMetadata(videoId);
-            // maxresdefault is 404 for many videos; hqdefault is a reliable fallback.
-            fetchAndApplyImage(
-                    "https://i.ytimg.com/vi/" + videoId + "/maxresdefault.jpg",
-                    "https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg");
+            startVideoSession(loadedUrl, videoId);
         } else {
             isYouTube = false;
+            isVideo = false;
             mediaTitle = getFilenameFromUrl(loadedUrl);
             mediaAuthor = "";
             fetchAndApplyImage(loadedUrl, null);
@@ -423,6 +590,16 @@ public class PipManager {
             }
         }
 
+        // Server-transcoded video: poll frames while playing.
+        if (isVideo && !videoSessionId.isEmpty() && !videoPaused && !videoFrameInFlight) {
+            long now = System.currentTimeMillis();
+            if (now - lastVideoPoll >= 80L) {
+                lastVideoPoll = now;
+                pollVideoFrame();
+            }
+        }
+        pollVideoPosition();
+
         renderPipBox(g, mc.font, s.pipX, s.pipY, (int) (s.pipW * s.pipScale), (int) (s.pipH * s.pipScale),
                 s.pipOpacity, s.pipShowBorder, false);
     }
@@ -433,6 +610,75 @@ public class PipManager {
         float opacity = s != null ? s.pipOpacity : 0.9f;
         boolean border = s != null ? s.pipShowBorder : true;
         renderPipBox(g, mc.font, x, y, w, h, opacity, border, true);
+        if (isVideo) {
+            pollVideoPosition();
+            drawVideoControls(g, mc.font, x, y, w, h);
+        }
+    }
+
+    /** Media control bar drawn over the video in the HUD editor. */
+    private static void drawVideoControls(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h) {
+        int barH = 18;
+        int barY = y + h - barH - 4;
+        if (barY < y) return;
+        g.fill(x + 2, barY - 2, x + w - 2, barY + barH + 2, 0xCC0B0F19);
+
+        int bw = Math.min(52, Math.max(34, (w - 120) / 3));
+        int bx = x + 6;
+        drawPill(g, font, "§f⏪ 5s", bx, barY, bw, barH);
+        bx += bw + 4;
+        drawPill(g, font, (videoPaused ? "§a▶ Play" : "§e⏸ Pause"), bx, barY, bw, barH);
+        bx += bw + 4;
+        drawPill(g, font, "§f5s ⏩", bx, barY, bw, barH);
+
+        int closeW = 22;
+        int closeX = x + w - closeW - 6;
+        drawPill(g, font, "§c✕", closeX, barY, closeW, barH);
+
+        // Playback clock sits between the transport buttons and the close pill.
+        String pos = "§7⏱ §f" + formatPosition(videoPositionSeconds) + (videoPaused ? " §8(§epaused§8)" : "");
+        int posW = font.width(pos);
+        int posX = closeX - posW - 8;
+        if (posX > bx + bw + 4) {
+            g.text(font, pos, posX, barY + (barH - 8) / 2, 0xFFFFFFFF, false);
+        }
+    }
+
+    private static void drawPill(GuiGraphicsExtractor g, Font font, String label, int x, int y, int w, int h) {
+        g.fill(x, y, x + w, y + h, 0xEE1E293B);
+        g.outline(x, y, w, h, 0x6638BDF8);
+        g.centeredText(font, label, x + w / 2, y + (h - 8) / 2, -1);
+    }
+
+    /** Returns true when a click landed on one of the video control buttons. */
+    public static boolean handleMoveScreenControlsClick(double mx, double my, int x, int y, int w, int h, int button) {
+        if (!isVideo) return false;
+        int barH = 18;
+        int barY = y + h - barH - 4;
+        if (barY < y) return false;
+        int bw = Math.min(52, Math.max(34, (w - 120) / 3));
+        int bx = x + 6;
+        if (mx >= bx && mx <= bx + bw && my >= barY && my <= barY + barH) {
+            seekVideoRelative(-5);
+            return true;
+        }
+        bx += bw + 4;
+        if (mx >= bx && mx <= bx + bw && my >= barY && my <= barY + barH) {
+            toggleVideoPaused();
+            return true;
+        }
+        bx += bw + 4;
+        if (mx >= bx && mx <= bx + bw && my >= barY && my <= barY + barH) {
+            seekVideoRelative(5);
+            return true;
+        }
+        int closeW = 22;
+        int cx = x + w - closeW - 6;
+        if (mx >= cx && mx <= cx + closeW && my >= barY && my <= barY + barH) {
+            closePip();
+            return true;
+        }
+        return false;
     }
 
     private static void renderPipBox(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h,
