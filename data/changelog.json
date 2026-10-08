@@ -1,5 +1,12 @@
 [
   {
+    "version": "26.2.28.114",
+    "date": "2026-10-08",
+    "changes": [
+      "~ PiP Video Falls Back to the Thumbnail - When every automatic restart has been spent and no frame ever arrives, the overlay now shows the video thumbnail instead of staying on 'Loading media...' forever, on top of the chat message explaining the reason"
+    ]
+  },
+  {
     "version": "26.2.28.113",
     "date": "2026-10-08",
     "changes": [
