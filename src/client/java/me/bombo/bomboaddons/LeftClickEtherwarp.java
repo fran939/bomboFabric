@@ -50,11 +50,7 @@ public class LeftClickEtherwarp {
       // Letting go of left click releases the sneak a held etherwarp pressed for us.
       if (holdingSneak && (mc.options == null || !mc.options.keyAttack.isDown())) {
          holdingSneak = false;
-         if (sneakForcedByHold) {
-            sneakForcedByHold = false;
-            getSneakMapping(mc).setDown(false);
-            sendSneakPacket(mc, false);
-         }
+         releaseForcedSneak(mc);
       }
 
       BomboConfig.Settings s = BomboConfig.get();
@@ -267,6 +263,7 @@ public class LeftClickEtherwarp {
             } else {
                getSneakMapping(mc).setDown(true);
                sendSneakPacket(mc, true);
+               sneakForcedByHold = true;
                state = 1;
             }
          }
@@ -291,6 +288,14 @@ public class LeftClickEtherwarp {
          Vec3 endPos = eyePos.add(lookVec.scale(maxDist));
          BlockHitResult hit = mc.level.clip(new ClipContext(eyePos, endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
          boolean canEtherwarp = (hit.getType() == HitResult.Type.BLOCK) && isValidEtherwarpTarget(mc.level, hit.getBlockPos(), hit.getDirection());
+
+         if (!canEtherwarp) {
+            // Aim drifted onto the sky or onto a block that cannot be etherwarped: the sneak this hold
+            // pressed has to come back up straight away, otherwise the player keeps crouching while the
+            // item is used normally.
+            holdingSneak = false;
+            releaseForcedSneak(mc);
+         }
 
          if (canEtherwarp) {
             // Holding left click on a valid target acts like holding sneak + right click: sneak is
@@ -324,6 +329,14 @@ public class LeftClickEtherwarp {
             }
          }
       }
+   }
+
+   /** Releases a sneak that a held left click pressed, so the player never keeps crouching. */
+   private static void releaseForcedSneak(Minecraft mc) {
+      if (!sneakForcedByHold) return;
+      sneakForcedByHold = false;
+      getSneakMapping(mc).setDown(false);
+      sendSneakPacket(mc, false);
    }
 
    private static KeyMapping getSneakMapping(Minecraft mc) {

@@ -27,14 +27,20 @@ public class SpeedometerHud {
 
    /** A single tick cannot move this far, so anything above it is a teleport rather than speed. */
    private static final double IMPOSSIBLE_JUMP_BLOCKS = 40.0;
-   /** A large jump followed by normal movement is treated as a teleport spike and retracted. */
-   private static final double TELEPORT_SPIKE_BLOCKS = 6.0;
+   /**
+    * The highest speed observed stays on screen for at least this long (the configured statistics
+    * window when that is longer), so a real burst stays readable instead of dropping away instantly.
+    */
+   private static final long PEAK_HOLD_MS = 5000L;
 
    // Rolling min / avg / max statistics window (default 5 seconds).
    private static final Deque<SpeedSample> STAT_SAMPLES = new ArrayDeque<>();
    private static double statMin = 0.0;
    private static double statAvg = 0.0;
    private static double statMax = 0.0;
+   /** Peak hold: the highest speed seen and the moment it may start following the window down. */
+   private static double peakHoldBps = 0.0;
+   private static long peakHoldUntil = 0L;
    private static String cachedStatsText = "§7min §f0.0 §8| §7avg §f0.0 §8| §7max §f0.0";
 
    private static class SpeedSample {
@@ -68,6 +74,8 @@ public class SpeedometerHud {
          statMin = 0.0;
          statAvg = 0.0;
          statMax = 0.0;
+         peakHoldBps = 0.0;
+         peakHoldUntil = 0L;
          return;
       }
 
@@ -134,18 +142,10 @@ public class SpeedometerHud {
       // A teleport cannot be told apart from fast movement by distance alone: a Garden player
       // legitimately crosses 20+ blocks in a tick (400-500 bps), which the old 8-block cutoff threw
       // away, so the max never climbed above ~18 bps. Only physically impossible jumps are dropped
-      // here, and a one-off spike is retracted as soon as ordinary movement resumes - which is
-      // exactly the shape of an AOTV / etherwarp / /warp teleport.
+      // here, and every real sample is kept: retracting a spike as soon as ordinary movement resumed
+      // is exactly what made the maximum flick to a genuine peak for one tick and snap straight back.
       if (dist < IMPOSSIBLE_JUMP_BLOCKS) {
          STAT_SAMPLES.addLast(new SpeedSample(now, dist, instantBps));
-         if (STAT_SAMPLES.size() >= 2) {
-            java.util.Iterator<SpeedSample> it = STAT_SAMPLES.descendingIterator();
-            SpeedSample last = it.next();
-            SpeedSample previous = it.next();
-            if (previous.distance >= TELEPORT_SPIKE_BLOCKS && last.distance < 1.5) {
-               it.remove();
-            }
-         }
       }
 
       long windowMs = statWindowMs();
@@ -157,6 +157,8 @@ public class SpeedometerHud {
          statMin = 0.0;
          statAvg = 0.0;
          statMax = 0.0;
+         peakHoldBps = 0.0;
+         peakHoldUntil = 0L;
          return;
       }
 
@@ -170,8 +172,23 @@ public class SpeedometerHud {
          sum += value;
       }
       statMin = min == Double.MAX_VALUE ? 0.0 : min;
-      statMax = max;
       statAvg = sum / (double) STAT_SAMPLES.size();
+
+      // Peak hold: a faster sample raises the bar and restarts the hold, and the bar only follows the
+      // ordinary window maximum back down once the hold (five seconds, or the configured window when
+      // that is longer) has expired. That is what keeps the real maximum on screen instead of the
+      // displayed peak collapsing the moment the next tick is slower.
+      long holdMs = Math.max(PEAK_HOLD_MS, windowMs);
+      if (max >= peakHoldBps) {
+         peakHoldBps = max;
+         peakHoldUntil = now + holdMs;
+         statMax = max;
+      } else if (now <= peakHoldUntil) {
+         statMax = peakHoldBps;
+      } else {
+         peakHoldBps = max;
+         statMax = max;
+      }
    }
 
    /** Lowest speed seen in the statistics window, in blocks per second. */
@@ -308,5 +325,7 @@ public class SpeedometerHud {
       statMin = 0.0;
       statAvg = 0.0;
       statMax = 0.0;
+      peakHoldBps = 0.0;
+      peakHoldUntil = 0L;
    }
 }
