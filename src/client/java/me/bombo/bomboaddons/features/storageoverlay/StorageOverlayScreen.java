@@ -251,8 +251,8 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 		BomboConfig.Settings s = BomboConfig.get();
 		if (s == null) return;
-		if (s.storageOverlayButtons == null || s.storageOverlayButtons.isEmpty()) {
-			s.storageOverlayButtons = new ArrayList<>(BomboConfig.StorageOverlayButton.defaults());
+		if (s.storageOverlayButtons == null) {
+			s.storageOverlayButtons = new ArrayList<>();
 		}
 
 		int tx = s.storageToolbarX >= 0 ? s.storageToolbarX : getToolbarDefaultX(this.width);

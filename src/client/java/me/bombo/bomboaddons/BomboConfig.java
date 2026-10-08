@@ -226,10 +226,14 @@ public class BomboConfig {
          instance.storageOverlayButtons = new ArrayList();
       }
 
-      if (instance.storageOverlayButtons.isEmpty()) {
-         for (StorageOverlayButton def : StorageOverlayButton.defaults()) {
-            instance.storageOverlayButtons.add(def);
+      if (!instance.storageToolbarSeeded) {
+         if (instance.storageOverlayButtons.isEmpty()) {
+            for (StorageOverlayButton def : StorageOverlayButton.defaults()) {
+               instance.storageOverlayButtons.add(def);
+            }
          }
+         instance.storageToolbarSeeded = true;
+         save();
       }
 
       if (instance.profileKeyOverrides == null) {
@@ -1183,6 +1187,9 @@ public class BomboConfig {
 
       // Storage Overlay toolbar (fully customizable + movable via /b gui)
       public List<StorageOverlayButton> storageOverlayButtons = new ArrayList();
+      // True once the toolbar defaults have been seeded. Lets a user delete every button without
+      // the defaults reappearing on the next launch.
+      public boolean storageToolbarSeeded = false;
       public int storageToolbarX = -1;
       public int storageToolbarY = -1;
       public float storageToolbarScale = 1.0f;
@@ -1191,6 +1198,7 @@ public class BomboConfig {
       // Profile Controls: per-profile vanilla key bindings (profile -> mapping name -> key name)
       public Map<String, Map<String, String>> profileKeyOverrides = new HashMap();
       public boolean profileKeyControlsEnabled = true;
+      public boolean autoClassKeybinds = true;
       public Map<String, CustomTracerInfo> customTracers = new HashMap();
       public boolean ircChatEnabled = false;
       public boolean ircDefaultChat = false;

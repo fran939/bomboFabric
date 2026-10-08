@@ -1,5 +1,11 @@
 # BomboAddons Changelog
  
+## [26.2.28.111] - 2026-10-08 (Beta)
+
+### Features
+- **Auto Per-Class Key Binds (`ProfileKeybindManager`, `ProfileKeybindsScreen`, `BomboConfig`, `ConfigRegistry`):** Key binds can now be set per dungeon class. Inside a dungeon the mod detects your class (Berserk / Mage / Archer / Tank / Healer) and automatically applies that class's key binds instead of the active profile. The `/b keymaps` header now has a **Scope** selector that cycles Auto → active profile → General → each class, so you can set a class's keys without being that class, and shows which scope is applied right now. Toggle in `/b config` → `Profiles` → `Auto Per-Class Key Binds`.
+- **Removable Storage Toolbar Defaults (`BomboConfig`, `StorageOverlayScreen`):** The Storage Overlay toolbar defaults (Hide Overlay, Ender Chest, Backpacks, Storage Menu) are now seeded only once. Deleting every button sticks instead of the defaults reappearing on the next launch; the toolbar still moves as a group from `/b gui`.
+
 ## [26.2.28.110] - 2026-10-08 (Beta)
 
 ### Fixes

@@ -1,5 +1,13 @@
 [
   {
+    "version": "26.2.28.111",
+    "date": "2026-10-08",
+    "changes": [
+      "+ Auto Per-Class Key Binds - Inside a dungeon the mod now detects your class (Berserk / Mage / Archer / Tank / Healer) and automatically applies that class's key binds; /b keymaps has a Scope selector to set each class's keys without being that class",
+      "+ Removable Storage Toolbar Defaults - Deleting every Storage Overlay toolbar button now sticks instead of the defaults reappearing on the next launch"
+    ]
+  },
+  {
     "version": "26.2.28.110",
     "date": "2026-10-08",
     "changes": [
