@@ -84,6 +84,8 @@ public class PipManager {
     private static String reportedVideoError = null;
     /** Video id the current session was opened for, needed to reload after a failure. */
     private static String currentVideoId = "";
+    /** Set once the overlay has degraded to the thumbnail so it is not retried forever. */
+    private static boolean videoFallbackDone = false;
 
     public static void init() {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "pip_hud"), PipManager::renderHud);
@@ -155,6 +157,7 @@ public class PipManager {
         mediaHeight = 0;
         errorMessage = null;
         videoFrameCount = 0;
+        videoFallbackDone = false;
         videoSessionStartedAt = System.currentTimeMillis();
 
         CompletableFuture.runAsync(() -> {
@@ -263,6 +266,32 @@ public class PipManager {
             return;
         }
         notifyChat("§8[§bBombo§8] §cPiP: " + reason);
+        fallBackToThumbnail();
+    }
+
+    /**
+     * Last-resort degradation once every restart has been spent: show the video's thumbnail rather
+     * than leaving the player staring at an empty box that will never fill.
+     */
+    private static void fallBackToThumbnail() {
+        if (videoFallbackDone) return;
+        videoFallbackDone = true;
+        String id = currentVideoId;
+        String sourceUrl = loadedUrl;
+        closeVideoSession();
+        loading = true;
+        errorMessage = null;
+        if (id == null || id.isEmpty()) {
+            if (sourceUrl != null && !sourceUrl.isEmpty()) {
+                fetchAndApplyImage(sourceUrl, null);
+            } else {
+                loading = false;
+            }
+            return;
+        }
+        fetchAndApplyImage(
+                "https://i.ytimg.com/vi/" + id + "/maxresdefault.jpg",
+                "https://i.ytimg.com/vi/" + id + "/hqdefault.jpg");
     }
 
     /** Pauses or resumes server-side playback (freezes the frame while paused). */
@@ -708,9 +737,12 @@ public class PipManager {
         // A session that never produced a frame (dead link, yt-dlp hiccup, resolver timeout) is
         // restarted instead of sitting on "Loading media..." forever.
         if (isVideo && !videoSessionId.isEmpty() && videoFrameCount == 0
-                && videoSessionRetries < MAX_VIDEO_RETRIES
                 && System.currentTimeMillis() - videoSessionStartedAt > 15000L) {
-            retryVideoSession();
+            if (videoSessionRetries < MAX_VIDEO_RETRIES) {
+                retryVideoSession();
+            } else {
+                fallBackToThumbnail();
+            }
         }
         pollVideoPosition();
 

@@ -1,5 +1,10 @@
 # BomboAddons Changelog
  
+## [26.2.28.114] - 2026-10-08 (Beta)
+
+### Fixes
+- **PiP Video Falls Back to the Thumbnail (`PipManager`):** When every automatic restart has been spent and no frame ever arrives (a bot-walled or unplayable video), the overlay now shows the video thumbnail instead of sitting on "Loading media..." forever - alongside the chat message that explains why the stream could not start.
+
 ## [26.2.28.113] - 2026-10-08 (Beta)
 
 ### Features
