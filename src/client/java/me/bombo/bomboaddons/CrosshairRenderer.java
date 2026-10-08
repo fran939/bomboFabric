@@ -31,6 +31,14 @@ public class CrosshairRenderer {
    private static int imageWidth = 0;
    private static int imageHeight = 0;
 
+   // Remote (http/https) image downloads land here on a worker thread; the render thread picks
+   // them up on the next frame so we never block rendering on the network.
+   private static volatile byte[] pendingImageBytes = null;
+   private static volatile String pendingImageUrl = "";
+   private static volatile String downloadStartedUrl = "";
+   private static volatile String downloadError = "";
+   private static volatile boolean downloading = false;
+
    public static void render(GuiGraphicsExtractor graphics) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.options.keyToggleGui.isDown()) {
@@ -112,7 +120,9 @@ public class CrosshairRenderer {
       int drawH = Math.max(1, imageHeight * factor);
       int x = (screenWidth - drawW) / 2;
       int y = (screenHeight - drawH) / 2;
-      int tint = settings.imageTint ? getColorValue(settings.color, settings.chroma) : 0xFFFFFFFF;
+      // Chroma always tints (a static image would otherwise never animate), and the color tint
+      // follows the setting so changing the crosshair color visibly affects the image.
+      int tint = (settings.imageTint || settings.chroma) ? getColorValue(settings.color, settings.chroma) : 0xFFFFFFFF;
 
       graphics.blit(RenderPipelines.GUI_TEXTURED, IMAGE_TEXTURE_ID,
             x, y, 0.0F, 0.0F, drawW, drawH, drawW, drawH, tint);
@@ -123,6 +133,30 @@ public class CrosshairRenderer {
       if (path.isEmpty()) {
          return false;
       }
+
+      // A remote URL: download once on a worker thread, then decode the bytes on the render thread.
+      if (isRemoteUrl(path)) {
+         if (!path.equals(loadedImagePath)) {
+            loadedImagePath = path;
+            unloadImage();
+            downloadStartedUrl = "";
+            downloadError = "";
+            downloading = false;
+            pendingImageBytes = null;
+            pendingImageUrl = "";
+         }
+         if (imageTexture == null) {
+            byte[] ready = pendingImageBytes;
+            if (ready != null && ready.length > 0 && path.equals(pendingImageUrl)) {
+               pendingImageBytes = null;
+               uploadImageBytes(ready);
+            } else if (ready == null && !path.equals(downloadStartedUrl)) {
+               startRemoteImageDownload(path);
+            }
+         }
+         return imageTexture != null;
+      }
+
       if (!path.equals(loadedImagePath)) {
          loadedImagePath = path;
          unloadImage();
@@ -130,21 +164,68 @@ public class CrosshairRenderer {
             Path resolved = resolveImagePath(path);
             if (resolved != null && Files.exists(resolved)) {
                byte[] bytes = Files.readAllBytes(resolved);
-               try (InputStream in = new ByteArrayInputStream(bytes)) {
-                  NativeImage img = NativeImage.read(in);
-                  if (img != null && img.getWidth() > 0 && img.getHeight() > 0) {
-                     imageWidth = img.getWidth();
-                     imageHeight = img.getHeight();
-                     imageTexture = new DynamicTexture(() -> "bombo_crosshair_image", img);
-                     Minecraft.getInstance().getTextureManager().register(IMAGE_TEXTURE_ID, imageTexture);
-                  }
-               }
+               uploadImageBytes(bytes);
             }
          } catch (Throwable ignored) {
             unloadImage();
          }
       }
       return imageTexture != null;
+   }
+
+   /** Returns true for http(s) image links (e.g. a Discord CDN attachment). */
+   public static boolean isRemoteUrl(String path) {
+      if (path == null) return false;
+      String p = path.trim().toLowerCase(java.util.Locale.ROOT);
+      return p.startsWith("http://") || p.startsWith("https://");
+   }
+
+   private static void uploadImageBytes(byte[] bytes) {
+      if (bytes == null || bytes.length == 0) return;
+      try (InputStream in = new ByteArrayInputStream(bytes)) {
+         NativeImage img = NativeImage.read(in);
+         if (img != null && img.getWidth() > 0 && img.getHeight() > 0) {
+            imageWidth = img.getWidth();
+            imageHeight = img.getHeight();
+            imageTexture = new DynamicTexture(() -> "bombo_crosshair_image", img);
+            Minecraft.getInstance().getTextureManager().register(IMAGE_TEXTURE_ID, imageTexture);
+         }
+      } catch (Throwable ignored) {
+         unloadImage();
+      }
+   }
+
+   private static void startRemoteImageDownload(String url) {
+      downloadStartedUrl = url;
+      downloading = true;
+      downloadError = "";
+      Thread worker = new Thread(() -> {
+         try {
+            java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
+                  .connectTimeout(java.time.Duration.ofSeconds(10))
+                  .followRedirects(java.net.http.HttpClient.Redirect.ALWAYS)
+                  .build();
+            java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+                  .uri(java.net.URI.create(url))
+                  .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                  .timeout(java.time.Duration.ofSeconds(15))
+                  .GET()
+                  .build();
+            java.net.http.HttpResponse<byte[]> resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+            if (resp.statusCode() >= 200 && resp.statusCode() < 300 && resp.body() != null && resp.body().length > 0) {
+               pendingImageUrl = url;
+               pendingImageBytes = resp.body();
+            } else {
+               downloadError = "HTTP " + resp.statusCode();
+            }
+         } catch (Throwable t) {
+            downloadError = t.getMessage();
+         } finally {
+            downloading = false;
+         }
+      }, "bombo-crosshair-image-download");
+      worker.setDaemon(true);
+      worker.start();
    }
 
    private static void unloadImage() {
@@ -159,9 +240,23 @@ public class CrosshairRenderer {
       imageHeight = 0;
    }
 
+   /** True once a remote image has been requested but has not finished downloading. */
+   public static boolean isImageLoading() {
+      return downloading && imageTexture == null;
+   }
+
+   public static String getImageError() {
+      return downloadError;
+   }
+
    /** Force a reload on the next render (e.g. after the path or file changed). */
    public static void invalidateImageCache() {
       loadedImagePath = "";
+      downloadStartedUrl = "";
+      downloadError = "";
+      downloading = false;
+      pendingImageBytes = null;
+      pendingImageUrl = "";
       unloadImage();
    }
 
@@ -286,7 +381,14 @@ public class CrosshairRenderer {
                return -11184811;
             }
             default -> {
-               return -1;
+               // Fall back to the shared color parser so hex codes ("#RRGGBB") and the full
+               // named palette (Amethyst, Ruby, ...) actually tint the crosshair instead of
+               // silently staying white.
+               try {
+                  return me.bombo.bomboaddons.features.spotify.LyricsHud.parseColor(colorName, -1);
+               } catch (Throwable ignored) {
+                  return -1;
+               }
             }
          }
       }

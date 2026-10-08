@@ -340,7 +340,7 @@ public class ConfigRegistry {
 
                 items.add(ConfigItem.header("Image Crosshair", category));
                 items.add(ConfigItem.toggle("Use Image Crosshair", "Render a PNG/JPG image as the crosshair instead of the pixel grid.", category, () -> s.customCrosshair.useImage, v -> s.customCrosshair.useImage = v));
-                ConfigItem crosshairImagePath = ConfigItem.text("Crosshair Image Path", "Absolute path, or a file name inside config/bomboaddons/crosshairs/.", category, () -> s.customCrosshair.imagePath != null ? s.customCrosshair.imagePath : "", v -> {
+                ConfigItem crosshairImagePath = ConfigItem.text("Crosshair Image Path / URL", "An http(s) image URL, an absolute path, or a file name inside config/bomboaddons/crosshairs/.", category, () -> s.customCrosshair.imagePath != null ? s.customCrosshair.imagePath : "", v -> {
                     s.customCrosshair.imagePath = v;
                     me.bombo.bomboaddons.CrosshairRenderer.invalidateImageCache();
                 });

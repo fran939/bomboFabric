@@ -202,7 +202,10 @@ public final class ProfileKeybindManager {
 
         if (changed) {
             KeyMapping.resetMapping();
-            mc.options.save();
+            // Deliberately NOT mc.options.save(): persisting a profile's overrides into options.txt
+            // would make the next launch snapshot the overridden keys as "vanilla", so switching
+            // to a profile without overrides would restore the wrong keys. The overrides live in the
+            // Bombo config and are re-applied every tick instead.
         }
         appliedProfile = (s.profileKeyControlsEnabled ? "on:" : "off:") + profile;
     }

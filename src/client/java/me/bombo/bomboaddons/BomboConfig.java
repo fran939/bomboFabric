@@ -461,7 +461,7 @@ public class BomboConfig {
       public boolean useImage = false;
       public String imagePath = "";
       public float imageScale = 1.0F;
-      public boolean imageTint = false;
+      public boolean imageTint = true;
    }
 
    public static class CustomTimerDef {
