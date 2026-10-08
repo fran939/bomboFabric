@@ -433,7 +433,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 
                      if (itemMatch && guiMatch && islandMatch && (!im.isEmpty() || !gm.isEmpty() || !ism.isEmpty())) {
                         if (Minecraft.getInstance().player != null) {
-                           Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§cBlocked Slot§8] §7Click blocked! Hold §e" + s.blockedSlotsBypassKey + " §7to bypass."));
+                           Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§bBombo§8] §7Slot locked. Hold §e" + s.blockedSlotsBypassKey + " §7to bypass."));
                         }
                         cir.setReturnValue(true);
                         return;

@@ -1,5 +1,23 @@
 # BomboAddons Changelog
  
+## [26.2.28.109] - 2026-10-08 (Beta)
+
+### Features & Fixes
+- **Storage Overlay Custom Toolbar (`StorageOverlayScreen`, `HudMoveScreen`, `BomboConfig`, `ConfigRegistry`):** The Storage Overlay's fixed button column is now a fully customizable toolbar. Add, rename, reorder (`▲`/`▼`), disable or delete any button in `/b config` → `Misc` → `Storage Overlay Toolbar`, each running any command (`ec`, `bp`, `/storage`, …) or `hide` to close the overlay. The toolbar is repositionable and resizable from the HUD editor (`/b gui`, `Ctrl+Click` the toolbar) with undo/redo support, and defaults are seeded for fresh configs.
+- **Profile Controls - Per-Profile Vanilla Key Binds (`ProfileKeybindManager`, `ProfileKeybindsScreen`):** New `/b keymaps` screen that re-maps *any* vanilla Minecraft key binding for the currently active profile. Left-click a key to re-bind, right-click or `✕` to reset a single bind, `Delete` to unbind, and `Reset Profile` to clear them all. Vanilla keys are snapshotted on first use, so switching profiles restores vanilla behaviour instead of leaking overrides. Includes live search, a scrollable list, `Copy Overrides` for sharing a profile's layout, and a master toggle in `/b config` → `Profiles`.
+- **Speedometer Min / Avg / Max Stats (`SpeedometerHud`, `BomboConfig`, `ConfigRegistry`):** Added a second HUD line showing the lowest, average and highest speed over a configurable stats window (default 5 seconds, 1-20s slider). Teleport-sized jumps (AOTW, `/warp`) are filtered out so a single spike cannot poison the maximum, and the HUD now auto-sizes to the widest line it draws.
+- **Storage Overlay Toolbar Editor (`ConfigCustomWidgets`):** New card in `/b config` to build the Storage Overlay toolbar with label + command inputs, per-button enable switches, move up/down ordering, and delete with undo.
+
+### Improvements
+- **Crosshair Pixel Rendering & Image Crosshairs (`CrosshairRenderer`, `BomboConfig`, `ConfigRegistry`, `ConfigCustomWidgets`):** Crosshair pixels now render seam-free without gaps at any scale, and custom crosshairs can be loaded from an image file in addition to the pixel grid editor.
+- **Entry List Titles (`ConfigCustomWidgets`):** Block highlight, coordinate bind, blocked slot, alias, trigger, sound and keybind lists now render a consistent little section title above their rows.
+- **Coord Binds Card Height (`ConfigCustomWidgets`, `ConfigRegistry`):** The Coord Binds card now grows with its contents so long coordinate lists no longer overflow the card border.
+- **Blocked Slots Rule Editor (`ConfigCustomWidgets`, `ConfigRegistry`, `AbstractContainerScreenMixin`):** Full add / edit / enable / delete rule editor for blocked slots in the new config GUI, with `[Bombo]` wording used consistently in the block messages.
+- **Silent `/b` (`BomboaddonsClient`, `CommandMixin`):** Running `/b` on its own no longer prints feedback or relays to the bridge.
+- **Picture-in-Picture Polish (`PipManager`, `BomboaddonsClient`):** YouTube links are detected in every URL shape (`youtu.be`, `shorts`, `watch?v=`, `embed`, `live`), the overlay respects the source aspect ratio at native resolution instead of forcing 16:9, and the filename header is no longer drawn over images.
+- **Keybind Capture Upgrades (`CustomBindsProcessor`, `ConfigCustomWidgets`, `BomboConfigScreen`, `MouseMixin`):** Modifier-only binds (`Shift`, `Ctrl`, `Alt`), function-key combinations (`Ctrl+F5`), non-ASCII layout keys and mouse buttons now capture and match correctly, and mouse button codes no longer mismatch between capture and execution.
+- **Lyrics Robustness (`LyricsManager`, `SpotifyManager`):** LRC parsing is tolerant of malformed timestamps, duplicate tags, multiple timestamped words per line and `[mm:ss]` shorthand, and lyrics automatically re-sync after pausing or seeking instead of drifting.
+
 ## [26.2.28.108] - 2026-10-07 (Beta)
 
 ### Features & Fixes

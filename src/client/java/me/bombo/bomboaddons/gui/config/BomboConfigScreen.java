@@ -1316,11 +1316,11 @@ public class BomboConfigScreen extends Screen {
             int mouseCode = 1000 + event.button();
             String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
             if (event.button() >= 2 && prefix.isEmpty()) {
-                if (activeKeybindItem.stringSetter != null) {
-                    activeKeybindItem.stringSetter.accept("mouse" + (event.button() + 1));
-                    BomboConfig.save();
-                }
-                activeKeybindItem = null;
+                // Extra mouse button starts a combo: release commits mouseN alone, or a following
+                // key press makes mouseN+key (e.g. mouse4+a).
+                ConfigCustomWidgets.capturePrefixOpen = true;
+                ConfigCustomWidgets.captureStillListening = true;
+                ConfigCustomWidgets.capturePendingMouse = mouseCode;
                 return true;
             }
             String comboStr = ConfigCustomWidgets.buildFullComboString(mouseCode);
@@ -1335,8 +1335,9 @@ public class BomboConfigScreen extends Screen {
             int mouseCode = 1000 + event.button();
             String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
             if (event.button() >= 2 && prefix.isEmpty()) {
-                ConfigCustomWidgets.clickKeyInput = "mouse" + (event.button() + 1);
-                ConfigCustomWidgets.clickKeyIsListening = false;
+                ConfigCustomWidgets.capturePrefixOpen = true;
+                ConfigCustomWidgets.captureStillListening = true;
+                ConfigCustomWidgets.capturePendingMouse = mouseCode;
                 return true;
             }
             ConfigCustomWidgets.clickKeyInput = ConfigCustomWidgets.buildFullComboString(mouseCode);
@@ -1347,8 +1348,9 @@ public class BomboConfigScreen extends Screen {
             int mouseCode = 1000 + event.button();
             String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
             if (event.button() >= 2 && prefix.isEmpty()) {
-                ConfigCustomWidgets.autoSeqKeyInput = "mouse" + (event.button() + 1);
-                ConfigCustomWidgets.autoSeqKeyIsListening = false;
+                ConfigCustomWidgets.capturePrefixOpen = true;
+                ConfigCustomWidgets.captureStillListening = true;
+                ConfigCustomWidgets.capturePendingMouse = mouseCode;
                 return true;
             }
             ConfigCustomWidgets.autoSeqKeyInput = ConfigCustomWidgets.buildFullComboString(mouseCode);
@@ -1359,8 +1361,9 @@ public class BomboConfigScreen extends Screen {
             int mouseCode = 1000 + event.button();
             String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
             if (event.button() >= 2 && prefix.isEmpty()) {
-                ConfigCustomWidgets.kbKeyInput = "mouse" + (event.button() + 1);
-                ConfigCustomWidgets.kbIsListening = false;
+                ConfigCustomWidgets.capturePrefixOpen = true;
+                ConfigCustomWidgets.captureStillListening = true;
+                ConfigCustomWidgets.capturePendingMouse = mouseCode;
                 return true;
             }
             ConfigCustomWidgets.kbKeyInput = ConfigCustomWidgets.buildFullComboString(mouseCode);
@@ -1371,8 +1374,9 @@ public class BomboConfigScreen extends Screen {
             int mouseCode = 1000 + event.button();
             String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
             if (event.button() >= 2 && prefix.isEmpty()) {
-                ConfigCustomWidgets.guiKbKeyInput = "mouse" + (event.button() + 1);
-                ConfigCustomWidgets.guiKbIsListening = false;
+                ConfigCustomWidgets.capturePrefixOpen = true;
+                ConfigCustomWidgets.captureStillListening = true;
+                ConfigCustomWidgets.capturePendingMouse = mouseCode;
                 return true;
             }
             ConfigCustomWidgets.guiKbKeyInput = ConfigCustomWidgets.buildFullComboString(mouseCode);
@@ -1721,6 +1725,25 @@ public class BomboConfigScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
+        // Commit an extra mouse button (mouse3+) released on its own after opening a combo.
+        if (event.button() >= 2 && ConfigCustomWidgets.capturePendingMouse == (1000 + event.button())) {
+            int mouseCode = 1000 + event.button();
+            if (activeKeybindItem != null) {
+                String committed = ConfigCustomWidgets.captureReleasedMouseSingleKey(mouseCode);
+                if (committed != null) {
+                    if (activeKeybindItem.stringSetter != null && !committed.isEmpty()) {
+                        activeKeybindItem.stringSetter.accept(committed);
+                        BomboConfig.save();
+                    }
+                    activeKeybindItem = null;
+                    return true;
+                }
+            } else if (ConfigCustomWidgets.handleWidgetMouseReleased(mouseCode)) {
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         this.draggingSliderItem = null;
         isDraggingWheel = false;
         isDraggingVal = false;
@@ -2222,6 +2245,29 @@ public class BomboConfigScreen extends Screen {
             return true;
         }
         return super.charTyped(event);
+    }
+
+    @Override
+    public boolean keyReleased(KeyEvent event) {
+        int keyCode = event.key();
+        // Commit a lone starter key (Ctrl alone, Shift alone, an F-key, a mouse button...) when it
+        // is released without a following main key, so plain modifiers are bindable.
+        if (activeKeybindItem != null) {
+            String committed = ConfigCustomWidgets.captureReleasedSingleKey(keyCode);
+            if (committed != null) {
+                if (activeKeybindItem.stringSetter != null && !committed.isEmpty()) {
+                    activeKeybindItem.stringSetter.accept(committed);
+                    BomboConfig.save();
+                }
+                activeKeybindItem = null;
+                return true;
+            }
+        }
+        if (ConfigCustomWidgets.handleWidgetKeyReleased(keyCode)) {
+            BomboConfig.save();
+            return true;
+        }
+        return super.keyReleased(event);
     }
 
     @Override

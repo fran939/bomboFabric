@@ -222,6 +222,20 @@ public class BomboConfig {
          instance.customCrosshair.grid = new boolean[225];
       }
 
+      if (instance.storageOverlayButtons == null) {
+         instance.storageOverlayButtons = new ArrayList();
+      }
+
+      if (instance.storageOverlayButtons.isEmpty()) {
+         for (StorageOverlayButton def : StorageOverlayButton.defaults()) {
+            instance.storageOverlayButtons.add(def);
+         }
+      }
+
+      if (instance.profileKeyOverrides == null) {
+         instance.profileKeyOverrides = new HashMap();
+      }
+
       if (instance.profileChatTriggers == null) {
          instance.profileChatTriggers = new HashMap();
       }
@@ -443,6 +457,11 @@ public class BomboConfig {
       public boolean outline = true;
       public String outlineColor = "BLACK";
       public float scale = 1.0F;
+      // Image crosshair support
+      public boolean useImage = false;
+      public String imagePath = "";
+      public float imageScale = 1.0F;
+      public boolean imageTint = false;
    }
 
    public static class CustomTimerDef {
@@ -835,6 +854,9 @@ public class BomboConfig {
       public int speedometerY = 120;
       public float speedometerScale = 1.0F;
       public String speedometerUnit = "bps";
+      public boolean speedometerStats = true;
+      /** Seconds of history kept for the min / avg / max speed statistics line. */
+      public int speedometerStatsWindow = 5;
       public int diceHudX = 10;
       public int diceHudY = 50;
       public boolean composterHelper = false;
@@ -1158,6 +1180,17 @@ public class BomboConfig {
       public boolean pipCleanVideo = true;
       public boolean pipShowBorder = true;
       public boolean pipAutoSkipAds = true;
+
+      // Storage Overlay toolbar (fully customizable + movable via /b gui)
+      public List<StorageOverlayButton> storageOverlayButtons = new ArrayList();
+      public int storageToolbarX = -1;
+      public int storageToolbarY = -1;
+      public float storageToolbarScale = 1.0f;
+      public boolean storageToolbarShowLabels = true;
+
+      // Profile Controls: per-profile vanilla key bindings (profile -> mapping name -> key name)
+      public Map<String, Map<String, String>> profileKeyOverrides = new HashMap();
+      public boolean profileKeyControlsEnabled = true;
       public Map<String, CustomTracerInfo> customTracers = new HashMap();
       public boolean ircChatEnabled = false;
       public boolean ircDefaultChat = false;
@@ -1557,6 +1590,39 @@ public class BomboConfig {
          this.titleToShow = titleToShow;
          this.soundToPlay = soundToPlay;
          this.soundTimes = soundTimes;
+      }
+   }
+
+   /**
+    * A single customizable toolbar button shown on top of the Storage Overlay screen.
+    * A command of {@code hide} (or {@code close}/{@code exit}) closes the overlay instead
+    * of running a chat command.
+    */
+   public static class StorageOverlayButton {
+      public String label;
+      public String command;
+      public boolean enabled = true;
+
+      public StorageOverlayButton() {
+      }
+
+      public StorageOverlayButton(String label, String command) {
+         this.label = label;
+         this.command = command;
+      }
+
+      public boolean isHide() {
+         String c = this.command == null ? "" : this.command.trim().toLowerCase();
+         return c.equals("hide") || c.equals("close") || c.equals("exit");
+      }
+
+      public static List<StorageOverlayButton> defaults() {
+         List<StorageOverlayButton> list = new ArrayList();
+         list.add(new StorageOverlayButton("Hide Overlay", "hide"));
+         list.add(new StorageOverlayButton("Ender Chest", "ec"));
+         list.add(new StorageOverlayButton("Backpacks", "bp"));
+         list.add(new StorageOverlayButton("Storage Menu", "storage"));
+         return list;
       }
    }
 

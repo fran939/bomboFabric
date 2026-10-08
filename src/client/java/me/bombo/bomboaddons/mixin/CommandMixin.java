@@ -37,6 +37,13 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("b keymaps") || trimmed.equalsIgnoreCase("bombo keymaps") || trimmed.equalsIgnoreCase("bomboaddons keymaps")
+            || trimmed.equalsIgnoreCase("b profile keys") || trimmed.equalsIgnoreCase("keymaps")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.ProfileKeybindsScreen(null)));
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b mute") || trimmed.equalsIgnoreCase("bombo mute") || trimmed.equalsIgnoreCase("b discord mute") || trimmed.equalsIgnoreCase("mute")) {
          me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfMute((msg) -> {});
          ci.cancel();

@@ -42,7 +42,10 @@ public class LyricsManager {
             .connectTimeout(Duration.ofSeconds(5))
             .build();
 
-    private static final Pattern LINE_PATTERN = Pattern.compile("^\\[(\\d{1,2}):(\\d{2})(?:\\.|:)(\\d{2,3})\\](.*)$");
+    // Accepts [mm:ss], [mm:ss.x], [mm:ss.xx], [mm:ss.xxx] and the [mm:ss:xx] variant. Many
+    // providers (regional LRCs, Kugou, plain exports) omit the milliseconds entirely — rejecting
+    // those dropped most of the song, which looked like "lyrics cut short".
+    private static final Pattern LINE_PATTERN = Pattern.compile("^\\[(\\d{1,2}):(\\d{2})(?:[.:](\\d{1,3}))?\\]\\s*(.*)$");
     private static final Pattern WORD_PATTERN = Pattern.compile("[<\\(](\\d{1,2}):(\\d{2})(?:\\.|:)(\\d{2,3})[>\\)]\\s*([^<\\(\\r\\n]+)");
     private static final Pattern BETTER_WORD_PATTERN = Pattern.compile("<([^:>|]+):(\\d+(?:\\.\\d+)?):(\\d+(?:\\.\\d+)?)>");
 
@@ -1395,12 +1398,16 @@ public class LyricsManager {
             if (m.matches()) {
                 long min = Long.parseLong(m.group(1));
                 long sec = Long.parseLong(m.group(2));
-                long sub = Long.parseLong(m.group(3));
-                long ms = sub;
-                if (m.group(3).length() == 2) ms *= 10;
+                String subGroup = m.group(3);
+                long ms = 0L;
+                if (subGroup != null && !subGroup.isEmpty()) {
+                    ms = Long.parseLong(subGroup);
+                    if (subGroup.length() == 1) ms *= 100L;
+                    else if (subGroup.length() == 2) ms *= 10L;
+                }
                 long startMs = (min * 60 + sec) * 1000 + ms;
 
-                String content = m.group(4).trim();
+                String content = m.group(4) != null ? m.group(4).trim() : "";
                 // Strip metadata tags like {agent:v1}
                 content = content.replaceAll("\\{[^}]+\\}", "").trim();
                 lines.add(new LyricsLine(startMs, startMs + 4000L, content, null, null));

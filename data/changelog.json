@@ -1,5 +1,24 @@
 [
   {
+    "version": "26.2.28.109",
+    "date": "2026-10-08",
+    "changes": [
+      "+ Storage Overlay Custom Toolbar - The overlay button column is now fully customizable: add, rename, reorder, disable or delete buttons in /b config, each running any command or 'hide' to close the overlay",
+      "+ Profile Controls (/b keymaps) - Re-map any vanilla Minecraft key binding for the active profile, with left-click rebinding, right-click reset, Delete to unbind, live search and Copy Overrides. Vanilla keys are snapshotted so switching profiles restores vanilla behaviour",
+      "+ Speedometer Min/Avg/Max Stats - Second HUD line showing lowest, average and highest speed over a configurable 1-20 second window, ignoring teleport-sized jumps so a single spike cannot poison the maximum",
+      "+ Movable Storage Toolbar - Reposition, resize and reset the Storage Overlay toolbar from the HUD editor (/b gui) with full undo support",
+      "+ Storage Toolbar Editor Card - Build the overlay toolbar in /b config with label and command inputs, per-button enable switches, move up/down ordering and delete with undo",
+      "+ Image Crosshairs & Seam-Free Pixels - Custom crosshairs can now be loaded from an image file, and crosshair pixels render without gaps at any scale",
+      "+ Entry List Titles - Block highlight, coordinate bind, blocked slot, alias, trigger, sound and keybind lists now show a consistent section title above their rows",
+      "~ Coord Binds Card Height - The card now grows with its contents so long coordinate lists no longer overflow the border",
+      "+ Blocked Slots Rule Editor - Full add, edit, enable and delete rule editor in the new config GUI, with consistent [Bombo] wording in the block messages",
+      "~ Silent /b - Running /b on its own no longer prints chat feedback or relays to the bridge",
+      "~ Picture-in-Picture Polish - YouTube links detected in every URL shape, native source aspect ratio instead of forced 16:9, and the filename header no longer drawn over images",
+      "~ Keybind Capture Upgrades - Modifier-only binds, function-key combinations, non-ASCII layout keys and mouse buttons now capture and match correctly with no mouse code mismatches",
+      "~ Lyrics Robustness - Tolerant LRC parsing for malformed timestamps, duplicate tags and multiple timestamped words per line, plus automatic re-sync after pausing or seeking"
+    ]
+  },
+  {
     "version": "26.2.28.108",
     "date": "2026-10-07",
     "changes": [
