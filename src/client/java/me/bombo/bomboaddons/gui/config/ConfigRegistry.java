@@ -219,6 +219,12 @@ public class ConfigRegistry {
                 items.add(ConfigItem.header("Inventory Slot Protection", category));
                 items.add(ConfigItem.keybind("Bypass Keybind", "Keybind held to temporarily bypass slot protection.", category, () -> s.blockedSlotsBypassKey != null ? s.blockedSlotsBypassKey : "LSHIFT", v -> s.blockedSlotsBypassKey = v));
                 items.add(ConfigItem.toggle("Prevent Slot Swap on Gui Keybind", "Blocks hotbar number swapping into protected slots.", category, () -> s.preventSlotSwapOnGuiKeybind, v -> s.preventSlotSwapOnGuiKeybind = v));
+
+                // Blocked Slot Rules Editor
+                items.add(ConfigItem.dynamicCustomCard("Blocked Slot Rules", "Add, edit, enable or delete the items and slots that should be protected from clicking.", category,
+                        ConfigCustomWidgets::getBlockedSlotsCardHeight,
+                        ConfigCustomWidgets::renderBlockedSlotsCard,
+                        ConfigCustomWidgets::handleBlockedSlotsClick));
                 items.add(ConfigItem.header("Inventory Slot Swapping", category));
                 items.add(ConfigItem.toggle("Inventory Slot Swapper", "Enables holding hotkey to link inventory slots to hotbar slots, and Shift-clicking to swap.", category, () -> s.inventorySlotSwapEnabled, v -> s.inventorySlotSwapEnabled = v));
                 items.add(ConfigItem.keybind("Slot Swapper Hotkey", "Keybind held inside containers to bind/unbind inventory slots.", category, () -> s.inventorySlotSwapKey != null ? s.inventorySlotSwapKey : "X", v -> s.inventorySlotSwapKey = v));
@@ -282,8 +288,8 @@ public class ConfigRegistry {
                         v -> s.activeProfile = v));
 
                 // Dedicated Coordinate Command Binds Card
-                items.add(ConfigItem.customCard("Coordinate Command Binds", "Execute preset commands automatically when your player walks into specified world coordinate bounding boxes.", category,
-                        ConfigCustomWidgets.getCoordBindsCardHeight(),
+                items.add(ConfigItem.dynamicCustomCard("Coordinate Command Binds", "Execute preset commands automatically when your player walks into specified world coordinate bounding boxes.", category,
+                        ConfigCustomWidgets::getCoordBindsCardHeight,
                         ConfigCustomWidgets::renderCoordBindsManager,
                         ConfigCustomWidgets::handleCoordBindsClick));
             }
@@ -331,6 +337,29 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Smooth Chroma Animation", "Cycle RGB colors dynamically across the crosshair.", category, () -> s.customCrosshair.chroma, v -> s.customCrosshair.chroma = v));
                 items.add(ConfigItem.color("Crosshair Color", "Static tint color when Chroma is disabled.", category, () -> s.customCrosshair.color != null ? s.customCrosshair.color : "WHITE", v -> s.customCrosshair.color = v));
                 items.add(ConfigItem.sliderFloat("Crosshair Scale", "Render size multiplier.", category, 0.5f, 3.0f, 0.1f, "x", () -> s.customCrosshair.scale > 0 ? s.customCrosshair.scale : 1.0f, v -> s.customCrosshair.scale = v));
+
+                items.add(ConfigItem.header("Image Crosshair", category));
+                items.add(ConfigItem.toggle("Use Image Crosshair", "Render a PNG/JPG image as the crosshair instead of the pixel grid.", category, () -> s.customCrosshair.useImage, v -> s.customCrosshair.useImage = v));
+                ConfigItem crosshairImagePath = ConfigItem.text("Crosshair Image Path", "Absolute path, or a file name inside config/bomboaddons/crosshairs/.", category, () -> s.customCrosshair.imagePath != null ? s.customCrosshair.imagePath : "", v -> {
+                    s.customCrosshair.imagePath = v;
+                    me.bombo.bomboaddons.CrosshairRenderer.invalidateImageCache();
+                });
+                crosshairImagePath.visibleCondition = () -> s.customCrosshair.useImage;
+                items.add(crosshairImagePath);
+                ConfigItem crosshairBrowse = ConfigItem.button("Crosshair Image File", "Browse...", "Open a file picker and copy the selected image into the mod's crosshairs folder.", category, () -> me.bombo.bomboaddons.CrosshairRenderer.browseForCrosshairImage(path -> {
+                    s.customCrosshair.imagePath = path;
+                    s.customCrosshair.useImage = true;
+                    me.bombo.bomboaddons.CrosshairRenderer.invalidateImageCache();
+                    BomboConfig.save();
+                }));
+                crosshairBrowse.visibleCondition = () -> s.customCrosshair.useImage;
+                items.add(crosshairBrowse);
+                ConfigItem crosshairImageScale = ConfigItem.sliderFloat("Image Scale", "Integer size multiplier. The image is never stretched and never blurred.", category, 1.0f, 6.0f, 1.0f, "x", () -> s.customCrosshair.imageScale > 0 ? s.customCrosshair.imageScale : 1.0f, v -> s.customCrosshair.imageScale = v);
+                crosshairImageScale.visibleCondition = () -> s.customCrosshair.useImage;
+                items.add(crosshairImageScale);
+                ConfigItem crosshairImageTint = ConfigItem.toggle("Tint Image With Crosshair Color", "Apply the crosshair color (or chroma cycle) as a tint over the image.", category, () -> s.customCrosshair.imageTint, v -> s.customCrosshair.imageTint = v);
+                crosshairImageTint.visibleCondition = () -> s.customCrosshair.useImage;
+                items.add(crosshairImageTint);
 
                 // Interactive 15x15 Canvas Card Widget
                 items.add(ConfigItem.customCard("Interactive Canvas & Presets", "Interactive 15x15 pixel designer to draw custom HUD crosshairs with custom colors, shapes, and preset imports.", category, 265,
@@ -1041,6 +1070,10 @@ public class ConfigRegistry {
                 if (s.speedometer) {
                     items.add(ConfigItem.cycle("Speedometer Unit", "Unit of measurement for velocity.", category, List.of("bps", "m/s", "%"), () -> s.speedometerUnit != null ? s.speedometerUnit : "bps", v -> s.speedometerUnit = v));
                     items.add(ConfigItem.sliderFloat("Speedometer Scale", "Size multiplier for speedometer overlay.", category, 0.5f, 2.5f, 0.1f, "x", () -> s.speedometerScale > 0 ? s.speedometerScale : 1.0f, v -> s.speedometerScale = v));
+                    items.add(ConfigItem.toggle("Speedometer Min/Avg/Max Stats", "Adds a second line showing the lowest, average and highest speed over the stats window.", category, () -> s.speedometerStats, v -> s.speedometerStats = v));
+                    if (s.speedometerStats) {
+                        items.add(ConfigItem.sliderInt("  Stats Window", "Seconds of history used for the min / avg / max speed line.", category, 1, 20, 1, "s", () -> s.speedometerStatsWindow > 0 ? s.speedometerStatsWindow : 5, v -> s.speedometerStatsWindow = v));
+                    }
                 }
                 items.add(ConfigItem.hudToggle("Auto Rejoin HUD", "On-screen countdown display for auto rejoin.", category, () -> s.autoRejoinHud, v -> s.autoRejoinHud = v, HudTarget.AUTO_REJOIN));
                 items.add(ConfigItem.hudToggle("Item Value Breakdown HUD", "Displays item estimated value breakdown when hovering over items.", category, () -> s.itemValueBreakdownHud, v -> s.itemValueBreakdownHud = v, HudTarget.ITEM_VALUE_BREAKDOWN));
@@ -1213,6 +1246,20 @@ public class ConfigRegistry {
                     items.add(ConfigItem.toggle("  Remember Search", "Remembers your search query across opening the storage overlay.", category, () -> s.storageOverlayRememberSearch, v -> s.storageOverlayRememberSearch = v));
                     items.add(ConfigItem.toggle("  Remember Opened", "Re-opens your previously selected backpack when using /storage.", category, () -> s.storageOverlayRememberOpened, v -> s.storageOverlayRememberOpened = v));
                     items.add(ConfigItem.toggle("  Preserve Cursor Position", "Prevents the mouse cursor from resetting to screen center when switching between storages.", category, () -> s.storageOverlayDoNotResetCursor, v -> s.storageOverlayDoNotResetCursor = v));
+
+                    items.add(ConfigItem.header("Storage Overlay Toolbar", category));
+                    items.add(ConfigItem.button("Toolbar Position & Scale", "Move Toolbar", "Opens the HUD editor to reposition and resize the buttons shown on top of the Storage Overlay.", category, () -> Minecraft.getInstance().setScreenAndShow(new HudMoveScreen(HudTarget.STORAGE_TOOLBAR))));
+                    items.add(ConfigItem.sliderFloat("Toolbar Scale", "Size of the Storage Overlay toolbar buttons.", category, 0.5f, 1.5f, 0.05f, 1.0f, "x", () -> s.storageToolbarScale > 0 ? s.storageToolbarScale : 1.0f, v -> s.storageToolbarScale = v));
+                    items.add(ConfigItem.button("Reset Toolbar Position", "Reset", "Restores the Storage Overlay toolbar to its default position and full size.", category, () -> {
+                        s.storageToolbarX = -1;
+                        s.storageToolbarY = -1;
+                        s.storageToolbarScale = 1.0f;
+                        BomboConfig.save();
+                    }));
+                    items.add(ConfigItem.dynamicCustomCard("Toolbar Buttons", "Add, edit, reorder, and remove the buttons shown on the Storage Overlay toolbar. A command of 'hide' closes the overlay.", category,
+                            ConfigCustomWidgets::getStorageToolbarCardHeight,
+                            ConfigCustomWidgets::renderStorageToolbarCard,
+                            ConfigCustomWidgets::handleStorageToolbarClick));
                 }
 
                 items.add(ConfigItem.header("Diana Ritual & Lootshare Ready Alerts", category));
@@ -1334,6 +1381,13 @@ public class ConfigRegistry {
                 items.add(ConfigItem.customCard("Profile Management & Binds", "Manage mod configuration profiles (create, clone, reset) and bind active profiles to custom keyboard hotkeys.", category, 210,
                         ConfigCustomWidgets::renderProfilesManager,
                         ConfigCustomWidgets::handleProfilesManagerClick));
+
+                items.add(ConfigItem.header("Profile Controls (Vanilla Key Binds)", category));
+                items.add(ConfigItem.toggle("Profile Controls Enabled", "Lets each profile override vanilla Minecraft key bindings, restored automatically when you switch profiles.", category, () -> s.profileKeyControlsEnabled, v -> s.profileKeyControlsEnabled = v));
+                items.add(ConfigItem.button("Edit Profile Key Binds", "Open (/b keymaps)", "Remap any vanilla key binding just for the active profile.", category, () -> Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.gui.ProfileKeybindsScreen(BomboConfigScreen.create()))));
+                items.add(ConfigItem.button("Clear Key Binds For This Profile", "Clear", "Removes every vanilla key override stored for the active profile.", category, () -> {
+                    me.bombo.bomboaddons.features.profile.ProfileKeybindManager.clearAllForActiveProfile();
+                }));
 
                 items.add(ConfigItem.header("Auto Profile Swapping (Rules & Triggers)", category));
                 items.add(ConfigItem.toggle("Auto Swap Profiles Enabled", "Automatically switches configuration profile when matching island, class, armor or chat rules.", category, () -> s.autoSwapProfiles, v -> s.autoSwapProfiles = v));

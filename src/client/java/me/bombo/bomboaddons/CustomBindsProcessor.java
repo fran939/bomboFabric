@@ -270,6 +270,9 @@ public class CustomBindsProcessor {
       return false;
    }
 
+   /** Cache for non-ASCII layout glyphs resolved via {@link GLFW#glfwGetKeyName}. */
+   private static final java.util.Map<String, Integer> REVERSE_KEY_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
    public static String getKeyNameForGlfwCode(int code) {
       if (code >= 1000 && code <= 1007) {
          return "mouse" + (code - 1000 + 1);
@@ -442,6 +445,29 @@ public class CustomBindsProcessor {
          if (direct >= 32) return direct;
       } catch (Exception ignored) {}
 
+      // Layout-aware reverse lookup. Captured binds on non-US layouts are glyphs such as ´, ç or ñ
+      // which have no entry above; resolve them by asking GLFW which physical key produces the name.
+      Integer cached = REVERSE_KEY_CACHE.get(clean);
+      if (cached != null) {
+         return cached;
+      }
+      for (int code = 32; code <= 348; code++) {
+         if (code >= 1000) break;
+         String keyName = null;
+         try {
+            keyName = GLFW.glfwGetKeyName(code, 0);
+         } catch (Throwable ignored) {
+         }
+         if (keyName == null || keyName.isEmpty()) {
+            continue;
+         }
+         if (keyName.trim().toLowerCase().equals(clean)) {
+            REVERSE_KEY_CACHE.put(clean, code);
+            return code;
+         }
+      }
+      // Misses are not cached: GLFW may not be ready during early startup, and a bind can be
+      // resolved later once the window exists.
       return -1;
    }
 

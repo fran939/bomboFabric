@@ -14,7 +14,6 @@ import net.minecraft.client.gui.components.AbstractScrollArea;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -56,6 +55,11 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	private static final int EDGE_PADDING = 7;
 
 	private static final int NOT_MATCHED_COLOR = 0x99000000;
+
+	// Toolbar metrics (unscaled). The whole toolbar is scaled by storageToolbarScale.
+	public static final int TOOLBAR_BASE_W = 104;
+	public static final int TOOLBAR_BASE_H = 16;
+	public static final int TOOLBAR_GAP = 4;
 
 	public static int openStorage;
 	private static double savedScroll = 0;
@@ -245,24 +249,113 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		}
 		this.addRenderableWidget(grid);
 
-		LinearLayout extraButtons = new LinearLayout(width - 90, height - 84, LinearLayout.Orientation.VERTICAL);
-		extraButtons.spacing(5);
+		BomboConfig.Settings s = BomboConfig.get();
+		if (s == null) return;
+		if (s.storageOverlayButtons == null || s.storageOverlayButtons.isEmpty()) {
+			s.storageOverlayButtons = new ArrayList<>(BomboConfig.StorageOverlayButton.defaults());
+		}
 
-		extraButtons.addChild(Button.builder(Component.literal("Farming Toolkit"), this::toolkit)
-				.size(80, 16)
-				.build());
-		extraButtons.addChild(Button.builder(Component.literal("Hunting Toolkit"), this::huntingToolkit)
-				.size(80, 16)
-				.build());
-		extraButtons.addChild(Button.builder(Component.literal("Storage Home"), this::home)
-				.size(80, 16)
-				.build());
-		extraButtons.addChild(Button.builder(Component.literal("Hide Overlay"), this::hide)
-				.size(80, 16)
-				.build());
+		int tx = s.storageToolbarX >= 0 ? s.storageToolbarX : getToolbarDefaultX(this.width);
+		int ty = s.storageToolbarY >= 0 ? s.storageToolbarY : getToolbarDefaultY(this.height);
+		int buttonW = getToolbarWidth();
+		int buttonH = toolbarButtonHeight();
+		int gap = toolbarGap();
+		int y = ty;
+		for (BomboConfig.StorageOverlayButton entry : new ArrayList<>(s.storageOverlayButtons)) {
+			if (entry == null || !entry.enabled) continue;
+			String label = entry.label == null || entry.label.isEmpty()
+					? (entry.command == null || entry.command.isEmpty() ? "Button" : entry.command)
+					: entry.label;
+			final BomboConfig.StorageOverlayButton target = entry;
+			this.addRenderableWidget(Button.builder(Component.literal(label), b -> runToolbarAction(target))
+					.bounds(tx, y, buttonW, buttonH)
+					.build());
+			y += buttonH + gap;
+		}
+	}
 
-		extraButtons.arrangeElements();
-		extraButtons.visitWidgets(this::addRenderableWidget);
+	/** Runs a configured toolbar button: {@code hide}/{@code close}/{@code exit} closes the overlay, anything else is sent as a command. */
+	private void runToolbarAction(BomboConfig.StorageOverlayButton entry) {
+		if (entry == null) return;
+		if (entry.isHide()) {
+			hide(null);
+			return;
+		}
+		String cmd = entry.command == null ? "" : entry.command.trim();
+		if (cmd.isEmpty()) return;
+		if (!cmd.startsWith("/")) cmd = "/" + cmd;
+		MessageScheduler.INSTANCE.sendMessageAfterCooldown(cmd, true);
+	}
+
+	public static int getToolbarButtonCount() {
+		BomboConfig.Settings s = BomboConfig.get();
+		if (s == null || s.storageOverlayButtons == null) return 0;
+		int count = 0;
+		for (BomboConfig.StorageOverlayButton entry : s.storageOverlayButtons) {
+			if (entry != null && entry.enabled) count++;
+		}
+		return count;
+	}
+
+	private static float toolbarScale() {
+		BomboConfig.Settings s = BomboConfig.get();
+		float scale = s == null ? 1.0f : s.storageToolbarScale;
+		return scale > 0.1f ? scale : 1.0f;
+	}
+
+	private static int toolbarButtonHeight() {
+		return Math.max(9, Math.round(TOOLBAR_BASE_H * toolbarScale()));
+	}
+
+	private static int toolbarGap() {
+		return Math.max(1, Math.round(TOOLBAR_GAP * toolbarScale()));
+	}
+
+	public static int getToolbarWidth() {
+		return Math.max(40, Math.round(TOOLBAR_BASE_W * toolbarScale()));
+	}
+
+	public static int getToolbarHeight() {
+		int count = Math.max(1, getToolbarButtonCount());
+		int buttonH = toolbarButtonHeight();
+		return count * buttonH + (count - 1) * toolbarGap();
+	}
+
+	public static int getToolbarDefaultX(int screenWidth) {
+		return Math.max(2, screenWidth - getToolbarWidth() - 6);
+	}
+
+	public static int getToolbarDefaultY(int screenHeight) {
+		return Math.max(20, (screenHeight - getToolbarHeight()) / 2);
+	}
+
+	/** Preview used by the HUD edit screen so the toolbar can be positioned and scaled with /b gui. */
+	public static void drawToolbarPreview(GuiGraphicsExtractor graphics, Font font, int x, int y) {
+		BomboConfig.Settings s = BomboConfig.get();
+		if (s == null) return;
+		int width = getToolbarWidth();
+		int buttonH = toolbarButtonHeight();
+		int gap = toolbarGap();
+		int cursor = y;
+		boolean any = false;
+		if (s.storageOverlayButtons != null) {
+			for (BomboConfig.StorageOverlayButton entry : s.storageOverlayButtons) {
+				if (entry == null || !entry.enabled) continue;
+				any = true;
+				String label = entry.label == null || entry.label.isEmpty()
+						? (entry.command == null || entry.command.isEmpty() ? "Button" : entry.command)
+						: entry.label;
+				graphics.fill(x, cursor, x + width, cursor + buttonH, 0xEE0B0F19);
+				graphics.fill(x, cursor, x + width, cursor + 1, 0xFF38BDF8);
+				graphics.centeredText(font, "§f" + label, x + width / 2, cursor + (buttonH - 8) / 2, -1);
+				cursor += buttonH + gap;
+			}
+		}
+		if (!any) {
+			int h = toolbarButtonHeight();
+			graphics.fill(x, y, x + width, y + h, 0xEE0B0F19);
+			graphics.centeredText(font, "§7No Buttons", x + width / 2, y + (h - 8) / 2, -1);
+		}
 	}
 
 	@Override

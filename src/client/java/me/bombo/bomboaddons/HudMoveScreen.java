@@ -754,6 +754,22 @@ public class HudMoveScreen extends Screen {
             me.bombo.bomboaddons.features.pip.PipManager.renderPipInMoveScreen(g, s.pipX, s.pipY, pipW, pipH);
         }
 
+        // 32. STORAGE_TOOLBAR
+        if (isTargetVisible(HudTarget.STORAGE_TOOLBAR, s.storageOverlay)) {
+            int stW = me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarWidth();
+            int stH = me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarHeight();
+            this.updateDragPosition(mouseX, mouseY, stW, stH, HudTarget.STORAGE_TOOLBAR, (nx, ny) -> {
+                s.storageToolbarX = nx;
+                s.storageToolbarY = ny;
+            });
+            int stX = s.storageToolbarX >= 0 ? s.storageToolbarX
+                    : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultX(this.width);
+            int stY = s.storageToolbarY >= 0 ? s.storageToolbarY
+                    : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultY(this.height);
+            this.renderTargetBox(g, mouseX, mouseY, stX, stY, stW, stH, HudTarget.STORAGE_TOOLBAR, s.storageToolbarScale);
+            me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.drawToolbarPreview(g, this.font, stX, stY);
+        }
+
         // Snap Guide Lines (Cyan/Teal)
         if (this.snapGuideX != null) {
             g.fill(this.snapGuideX - 1, 0, this.snapGuideX + 1, this.height, 0xDD00E5FF);
@@ -828,6 +844,13 @@ public class HudMoveScreen extends Screen {
             list.add(new HudRect(s.lyricsHudX, s.lyricsHudY, (int)(me.bombo.bomboaddons.features.spotify.LyricsHud.getHudWidth() * s.lyricsHudScale), (int)(me.bombo.bomboaddons.features.spotify.LyricsHud.getHudHeight() * s.lyricsHudScale), HudTarget.LYRICS_HUD));
         if (current != HudTarget.PIP_OVERLAY && (!s.showOnlyActiveHuds || s.pipEnabled))
             list.add(new HudRect(s.pipX, s.pipY, (int)((float)s.pipW * s.pipScale), (int)((float)s.pipH * s.pipScale), HudTarget.PIP_OVERLAY));
+        if (current != HudTarget.STORAGE_TOOLBAR)
+            list.add(new HudRect(
+                    s.storageToolbarX >= 0 ? s.storageToolbarX : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultX(this.width),
+                    s.storageToolbarY >= 0 ? s.storageToolbarY : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultY(this.height),
+                    me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarWidth(),
+                    me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarHeight(),
+                    HudTarget.STORAGE_TOOLBAR));
 
         list.removeIf(r -> r.target != null && shouldSkipForFilter(r.target));
         return list;
@@ -987,6 +1010,7 @@ public class HudMoveScreen extends Screen {
             case SPOTIFY_HUD -> "Spotify HUD";
             case LYRICS_HUD -> "Lyrics HUD";
             case PIP_OVERLAY -> "Picture-in-Picture";
+            case STORAGE_TOOLBAR -> "Storage Overlay Toolbar";
             default -> "HUD Element";
         };
     }
@@ -1531,6 +1555,21 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // STORAGE_TOOLBAR
+        if (!s.showOnlyActiveHuds || s.storageOverlay) {
+            int stW = me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarWidth();
+            int stH = me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarHeight();
+            int stX = s.storageToolbarX >= 0 ? s.storageToolbarX
+                    : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultX(this.width);
+            int stY = s.storageToolbarY >= 0 ? s.storageToolbarY
+                    : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultY(this.height);
+            if (this.startCornerResize(mouseX, mouseY, stX, stY, stW, stH, HudTarget.STORAGE_TOOLBAR, s.storageToolbarScale)) return true;
+            if (this.checkHit(mouseX, mouseY, stX, stY, stW, stH)) {
+                this.selectAndDrag(HudTarget.STORAGE_TOOLBAR, (int) mouseX - stX, (int) mouseY - stY);
+                return true;
+            }
+        }
+
         return super.mouseClicked(event, handled);
     }
 
@@ -1558,6 +1597,7 @@ public class HudMoveScreen extends Screen {
         int eqX = s.equipmentHudX, eqY = s.equipmentHudY; float eqS = s.equipmentHudScale;
         int invHX = s.inventoryHudX, invHY = s.inventoryHudY; float invHS = s.inventoryHudScale;
         int pipX = s.pipX, pipY = s.pipY; float pipS = s.pipScale;
+        int stbX = s.storageToolbarX, stbY = s.storageToolbarY; float stbS = s.storageToolbarScale;
 
         return () -> {
             s.diceHudX = diceX; s.diceHudY = diceY; s.diceHudScale = diceS;
@@ -1580,6 +1620,7 @@ public class HudMoveScreen extends Screen {
             s.equipmentHudX = eqX; s.equipmentHudY = eqY; s.equipmentHudScale = eqS;
             s.inventoryHudX = invHX; s.inventoryHudY = invHY; s.inventoryHudScale = invHS;
             s.pipX = pipX; s.pipY = pipY; s.pipScale = pipS;
+            s.storageToolbarX = stbX; s.storageToolbarY = stbY; s.storageToolbarScale = stbS;
             BomboConfig.save();
         };
     }
@@ -1669,6 +1710,8 @@ public class HudMoveScreen extends Screen {
                 s.lyricsHudScale = (float) newScale;
             } else if (this.resizingTarget == HudTarget.PIP_OVERLAY) {
                 s.pipScale = (float) newScale;
+            } else if (this.resizingTarget == HudTarget.STORAGE_TOOLBAR) {
+                s.storageToolbarScale = (float) newScale;
             }
             return true;
         }
@@ -2113,6 +2156,22 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // STORAGE_TOOLBAR
+        if (!s.showOnlyActiveHuds || s.storageOverlay) {
+            int stW = me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarWidth();
+            int stH = me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarHeight();
+            int stX = s.storageToolbarX >= 0 ? s.storageToolbarX
+                    : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultX(this.width);
+            int stY = s.storageToolbarY >= 0 ? s.storageToolbarY
+                    : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultY(this.height);
+            if (this.checkHit(mouseX, mouseY, stX, stY, stW, stH)) {
+                s.storageToolbarScale = clampScale(s.storageToolbarScale + delta);
+                this.selectedTarget = HudTarget.STORAGE_TOOLBAR;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -2191,6 +2250,7 @@ public class HudMoveScreen extends Screen {
             case DISCORD_HUD -> "Discord";
             case SPOTIFY_HUD, LYRICS_HUD -> "Spotify";
             case PIP_OVERLAY -> "HUDs";
+            case STORAGE_TOOLBAR -> "Misc";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -2256,6 +2316,7 @@ public class HudMoveScreen extends Screen {
                     case SPOTIFY_HUD -> { s.spotifyHudX = 10; s.spotifyHudY = 80; s.spotifyHudScale = 1.0f; }
                     case LYRICS_HUD -> { s.lyricsHudX = 10; s.lyricsHudY = 160; s.lyricsHudScale = 1.0f; }
                     case PIP_OVERLAY -> { s.pipX = centerX - 160; s.pipY = centerY - 90; s.pipScale = 1.0f; }
+                    case STORAGE_TOOLBAR -> { s.storageToolbarX = -1; s.storageToolbarY = -1; s.storageToolbarScale = 1.0f; }
                 }
                 BomboConfig.save();
                 return true;
@@ -2310,6 +2371,7 @@ public class HudMoveScreen extends Screen {
         DISCORD_HUD,
         SPOTIFY_HUD,
         LYRICS_HUD,
-        PIP_OVERLAY;
+        PIP_OVERLAY,
+        STORAGE_TOOLBAR;
     }
 }

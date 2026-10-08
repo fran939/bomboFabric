@@ -25,13 +25,26 @@ public class SpeedometerHud {
    private static long lastDisplayRefreshTime = 0L;
    private static String cachedDisplayText = "§bSpeed: §f0.0 §7(0.0) bps";
 
+   // Rolling min / avg / max statistics window (default 5 seconds).
+   private static final Deque<SpeedSample> STAT_SAMPLES = new ArrayDeque<>();
+   private static double statMin = 0.0;
+   private static double statAvg = 0.0;
+   private static double statMax = 0.0;
+   private static String cachedStatsText = "§7min §f0.0 §8| §7avg §f0.0 §8| §7max §f0.0";
+
    private static class SpeedSample {
       final long timestamp;
       final double distance;
+      final double instantBps;
 
       SpeedSample(long timestamp, double distance) {
+         this(timestamp, distance, 0.0);
+      }
+
+      SpeedSample(long timestamp, double distance, double instantBps) {
          this.timestamp = timestamp;
          this.distance = distance;
+         this.instantBps = instantBps;
       }
    }
 
@@ -46,6 +59,10 @@ public class SpeedometerHud {
          displayBps = 0.0;
          displayAvgBps = 0.0;
          SAMPLES.clear();
+         STAT_SAMPLES.clear();
+         statMin = 0.0;
+         statAvg = 0.0;
+         statMax = 0.0;
          return;
       }
 
@@ -89,10 +106,69 @@ public class SpeedometerHud {
          currentBps = currentBps * 0.65 + instantBps * 0.35;
       }
 
+      updateStatistics(now, dist, instantBps);
+
       lastX = px;
       lastY = py;
       lastZ = pz;
       lastUpdateTime = now;
+   }
+
+   /** Milliseconds retained by the min/avg/max statistics window. */
+   private static long statWindowMs() {
+      BomboConfig.Settings s = BomboConfig.get();
+      int seconds = s != null && s.speedometerStatsWindow > 0 ? s.speedometerStatsWindow : 5;
+      return seconds * 1000L;
+   }
+
+   /**
+    * Feeds the min/avg/max window. Teleport-sized jumps (AOTV, /warp, world changes) are ignored
+    * so a single 300 bps spike cannot poison the maximum for the next five seconds.
+    */
+   private static void updateStatistics(long now, double dist, double instantBps) {
+      if (dist < 8.0 && instantBps < 60.0) {
+         STAT_SAMPLES.addLast(new SpeedSample(now, dist, instantBps));
+      }
+
+      long windowMs = statWindowMs();
+      while (!STAT_SAMPLES.isEmpty() && now - STAT_SAMPLES.peekFirst().timestamp > windowMs) {
+         STAT_SAMPLES.pollFirst();
+      }
+
+      if (STAT_SAMPLES.isEmpty()) {
+         statMin = 0.0;
+         statAvg = 0.0;
+         statMax = 0.0;
+         return;
+      }
+
+      double min = Double.MAX_VALUE;
+      double max = 0.0;
+      double sum = 0.0;
+      for (SpeedSample sample : STAT_SAMPLES) {
+         double value = sample.instantBps;
+         if (value < min) min = value;
+         if (value > max) max = value;
+         sum += value;
+      }
+      statMin = min == Double.MAX_VALUE ? 0.0 : min;
+      statMax = max;
+      statAvg = sum / (double) STAT_SAMPLES.size();
+   }
+
+   /** Lowest speed seen in the statistics window, in blocks per second. */
+   public static double getStatMinBps() {
+      return statMin;
+   }
+
+   /** Mean speed over the statistics window, in blocks per second. */
+   public static double getStatAvgBps() {
+      return statAvg;
+   }
+
+   /** Highest speed seen in the statistics window, in blocks per second. */
+   public static double getStatMaxBps() {
+      return statMax;
    }
 
    public static double getOneSecondAverageBps() {
@@ -148,8 +224,11 @@ public class SpeedometerHud {
       if (displayAvgBps < 0.05) displayAvgBps = 0.0;
 
       // Update text every 80ms for clean readability without rapid flickering
+      boolean showStats = s == null || s.speedometerStats;
+
       if (preview) {
          cachedDisplayText = "§bSpeed: §f43.5 §7(38.2) bps";
+         cachedStatsText = "§7min §f12.0 §8| §7avg §f43.5 §8| §7max §f61.2";
       } else if (now - lastDisplayRefreshTime >= 80L || cachedDisplayText == null) {
          lastDisplayRefreshTime = now;
          String unit = (s != null && s.speedometerUnit != null && !s.speedometerUnit.isEmpty()) ? s.speedometerUnit : "bps";
@@ -158,29 +237,46 @@ public class SpeedometerHud {
             int currentPct = (int) Math.round((displayBps / 4.317) * 100.0);
             int avgPct = (int) Math.round((displayAvgBps / 4.317) * 100.0);
             cachedDisplayText = "§bSpeed: §f" + currentPct + "% §7(" + avgPct + "%)";
+            cachedStatsText = String.format("§7min §f%d%% §8| §7avg §f%d%% §8| §7max §f%d%%",
+                    Math.round((statMin / 4.317) * 100.0), Math.round((statAvg / 4.317) * 100.0), Math.round((statMax / 4.317) * 100.0));
          } else if ("m/s".equalsIgnoreCase(unit)) {
             cachedDisplayText = String.format("§bSpeed: §f%.1f §7(%.1f) m/s", displayBps, displayAvgBps);
+            cachedStatsText = String.format("§7min §f%.1f §8| §7avg §f%.1f §8| §7max §f%.1f m/s", statMin, statAvg, statMax);
          } else {
             cachedDisplayText = String.format("§bSpeed: §f%.1f §7(%.1f) bps", displayBps, displayAvgBps);
+            cachedStatsText = String.format("§7min §f%.1f §8| §7avg §f%.1f §8| §7max §f%.1f bps", statMin, statAvg, statMax);
          }
       }
 
       g.pose().pushMatrix();
       if (scale != 1.0F && scale > 0.0F) {
          g.pose().scale(scale, scale);
-         g.text(mc.font, cachedDisplayText, (int)((float)x / scale), (int)((float)y / scale), -1, true);
+         int ix = (int)((float)x / scale);
+         int iy = (int)((float)y / scale);
+         g.text(mc.font, cachedDisplayText, ix, iy, -1, true);
+         if (showStats) g.text(mc.font, cachedStatsText, ix, iy + 11, -1, true);
       } else {
          g.text(mc.font, cachedDisplayText, x, y, -1, true);
+         if (showStats) g.text(mc.font, cachedStatsText, x, y + 11, -1, true);
       }
       g.pose().popMatrix();
    }
 
+   /** Text width of the widest line the speedometer draws, used for HUD sizing. */
    public static int getWidth(Minecraft mc, float scale) {
-      return (int)(110.0F * scale);
+      if (mc == null || mc.font == null) return (int)(110.0F * scale);
+      BomboConfig.Settings s = BomboConfig.get();
+      int w = mc.font.width(cachedDisplayText);
+      if (s == null || s.speedometerStats) {
+         w = Math.max(w, mc.font.width(cachedStatsText));
+      }
+      return (int)((float)Math.max(60, w) * scale);
    }
 
    public static int getHeight(Minecraft mc, float scale) {
-      return (int)(12.0F * scale);
+      BomboConfig.Settings s = BomboConfig.get();
+      boolean stats = s == null || s.speedometerStats;
+      return (int)((stats ? 23.0F : 12.0F) * scale);
    }
 
    public static void reset() {
@@ -190,5 +286,9 @@ public class SpeedometerHud {
       displayAvgBps = 0.0;
       lastUpdateTime = 0L;
       SAMPLES.clear();
+      STAT_SAMPLES.clear();
+      statMin = 0.0;
+      statAvg = 0.0;
+      statMax = 0.0;
    }
 }

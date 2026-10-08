@@ -113,11 +113,14 @@ public class ConfigCustomWidgets {
         }
 
         // Canvas backdrop card
-        g.fill(gridStartX - 3, gridStartY - 3, gridStartX + 15 * gridSize + 3, gridStartY + 15 * gridSize + 3, 0xDD0D1117);
-        g.outline(gridStartX - 3, gridStartY - 3, 15 * gridSize + 6, 15 * gridSize + 6, ConfigUITheme.getAccentColor());
+        int canvasW = 15 * gridSize;
+        int canvasH = 15 * gridSize;
+        g.fill(gridStartX - 3, gridStartY - 3, gridStartX + canvasW + 3, gridStartY + canvasH + 3, 0xDD0D1117);
+        g.outline(gridStartX - 3, gridStartY - 3, canvasW + 6, canvasH + 6, ConfigUITheme.getAccentColor());
 
         int crosshairColor = CrosshairRenderer.getColorValue(crosshair.color, crosshair.chroma);
 
+        // Background cells (full size, no inner gap) so committed pixels read as one solid shape.
         for (int r = 0; r < 15; r++) {
             for (int c = 0; c < 15; c++) {
                 int idx = r * 15 + c;
@@ -127,23 +130,30 @@ public class ConfigCustomWidgets {
                 boolean isCenter = (r == 7 && c == 7);
                 boolean hover = mouseX >= px && mouseX < px + gridSize && mouseY >= py && mouseY < py + gridSize;
 
-                // Background / grid line
                 int cellBg = isPixelOn ? crosshairColor : (isCenter ? 0x44FFFFFF : (hover ? 0x22FFFFFF : 0x111E293B));
-                g.fill(px, py, px + gridSize - 1, py + gridSize - 1, cellBg);
-
-                // Outline around pixels if outline is enabled
-                if (isPixelOn && crosshair.outline) {
-                    g.outline(px, py, gridSize - 1, gridSize - 1, 0x88000000);
-                } else if (hover) {
-                    g.outline(px, py, gridSize - 1, gridSize - 1, 0x88FFFFFF);
-                } else if (isCenter && !isPixelOn) {
-                    g.outline(px, py, gridSize - 1, gridSize - 1, 0x4400E5FF);
-                }
+                g.fill(px, py, px + gridSize, py + gridSize, cellBg);
             }
         }
 
+        // Thin overlay grid lines (kept for aiming) + hover outline, drawn on top.
+        for (int i = 0; i <= 15; i++) {
+            int lx = gridStartX + i * gridSize;
+            int ly = gridStartY + i * gridSize;
+            g.fill(lx, gridStartY, lx + 1, gridStartY + canvasH, 0x33000000);
+            g.fill(gridStartX, ly, gridStartX + canvasW, ly + 1, 0x33000000);
+        }
+        int hovCol = (mouseX - gridStartX) / gridSize;
+        int hovRow = (mouseY - gridStartY) / gridSize;
+        if (hovCol >= 0 && hovCol < 15 && hovRow >= 0 && hovRow < 15
+                && mouseX >= gridStartX && mouseX < gridStartX + canvasW
+                && mouseY >= gridStartY && mouseY < gridStartY + canvasH) {
+            int px = gridStartX + hovCol * gridSize;
+            int py = gridStartY + hovRow * gridSize;
+            g.outline(px, py, gridSize, gridSize, 0x88FFFFFF);
+        }
+
         // Live In-Game Preview Window
-        int prevX = gridStartX + 15 * gridSize + 35;
+        int prevX = gridStartX + canvasW + 35;
         int prevY = gridStartY + 10;
         int prevW = 120;
         int prevH = 120;
@@ -158,23 +168,42 @@ public class ConfigCustomWidgets {
         g.fill(pcX - 15, pcY, pcX + 16, pcY + 1, 0x22FFFFFF);
         g.fill(pcX, pcY - 15, pcX + 1, pcY + 16, 0x22FFFFFF);
 
-        // Render scaled custom crosshair inside preview
-        float pScale = 2.5f;
-        for (int r = 0; r < 15; r++) {
-            for (int c = 0; c < 15; c++) {
-                int idx = r * 15 + c;
-                if (crosshair.grid[idx]) {
-                    float px = (c - 7) * pScale;
-                    float py = (r - 7) * pScale;
-                    int x1 = (int) (pcX + px);
-                    int y1 = (int) (pcY + py);
-                    int x2 = (int) (pcX + px + pScale);
-                    int y2 = (int) (pcY + py + pScale);
-                    if (crosshair.outline) {
-                        int ox = Math.max(1, (int) (pScale * 0.25f));
-                        g.fill(x1 - ox, y1 - ox, x2 + ox, y2 + ox, 0xFF000000);
+        if (crosshair.useImage) {
+            if (CrosshairRenderer.hasLoadedImage()) {
+                int[] size = CrosshairRenderer.getImagePreviewSize(110);
+                int iw = size[0];
+                int ih = size[1];
+                g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
+                        CrosshairRenderer.getImageTextureId(),
+                        pcX - iw / 2, pcY - ih / 2, 0.0f, 0.0f, iw, ih, iw, ih, 0xFFFFFFFF);
+            } else {
+                String hint = "§7Set image path above (+ Browse)";
+                g.text(font, hint, prevX + (prevW - font.width(hint)) / 2, pcY - 4, 0xFF94A3B8, false);
+            }
+        } else {
+            // Integer scale keeps every pixel crisp and contiguous in the preview too.
+            int pScale = 6;
+            int gridPx = 15 * pScale;
+            int pOriginX = pcX - gridPx / 2;
+            int pOriginY = pcY - gridPx / 2;
+            int pOutline = crosshair.outline ? Math.max(1, Math.round(pScale * 0.28f)) : 0;
+            int previewColor = crosshairColor;
+            if (pOutline > 0) {
+                for (int r = 0; r < 15; r++) {
+                    for (int c = 0; c < 15; c++) {
+                        if (!crosshair.grid[r * 15 + c]) continue;
+                        int x1 = pOriginX + c * pScale;
+                        int y1 = pOriginY + r * pScale;
+                        g.fill(x1 - pOutline, y1 - pOutline, x1 + pScale + pOutline, y1 + pScale + pOutline, 0xFF000000);
                     }
-                    g.fill(x1, y1, x2, y2, crosshairColor);
+                }
+            }
+            for (int r = 0; r < 15; r++) {
+                for (int c = 0; c < 15; c++) {
+                    if (!crosshair.grid[r * 15 + c]) continue;
+                    int x1 = pOriginX + c * pScale;
+                    int y1 = pOriginY + r * pScale;
+                    g.fill(x1, y1, x1 + pScale, y1 + pScale, previewColor);
                 }
             }
         }
@@ -1526,7 +1555,8 @@ public class ConfigCustomWidgets {
     public static int getBlockHighlightCardHeight() {
         BomboConfig.Settings s = BomboConfig.get();
         int count = s.blockHighlights != null ? s.blockHighlights.size() : 0;
-        return 85 + count * 24 + 40;
+        // inputs row + add button + divider + "Block Highlights (n)" header + rows + padding
+        return 85 + Math.max(1, count) * 24 + 40 + 16;
     }
 
     public static void renderBlockHighlightsCard(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -1547,6 +1577,10 @@ public class ConfigCustomWidgets {
         curY += 26;
         g.fill(x + 12, curY, x + w - 12, curY + 1, 0x33FFFFFF);
         curY += 6;
+
+        int blkCount = s.blockHighlights != null ? s.blockHighlights.size() : 0;
+        g.text(font, "§6§lBlock Highlights §7(" + blkCount + ")", x + 16, curY + 2, -1, false);
+        curY += 16;
 
         if (s.blockHighlights == null || s.blockHighlights.isEmpty()) {
             g.text(font, "§8No blocks highlighted yet. Add one above!", x + 16, curY + 4, 0xFF94A3B8, false);
@@ -1615,7 +1649,8 @@ public class ConfigCustomWidgets {
             }
         }
 
-        curY += 32;
+        // Match the render pass: divider + the "Block Highlights (n)" list header.
+        curY += 48;
         if (s.blockHighlights != null) {
             List<String> blocks = new ArrayList<>(s.blockHighlights.keySet());
             Collections.sort(blocks);
@@ -1657,6 +1692,355 @@ public class ConfigCustomWidgets {
 
                 curY += 24;
             }
+        }
+
+        activeFocusedField = null;
+        return false;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // 6b. BLOCKED SLOTS RULE EDITOR
+    // ---------------------------------------------------------------------------------------------
+    public static String blockedItemInput = "";
+    public static String blockedGuiInput = "";
+    public static String blockedIslandInput = "";
+    public static int editingBlockedIndex = -1;
+
+    public static int getBlockedSlotsCardHeight() {
+        BomboConfig.Settings s = BomboConfig.get();
+        int count = s.blockedSlots != null ? s.blockedSlots.size() : 0;
+        return 85 + Math.max(1, count) * 24 + 40 + 16;
+    }
+
+    public static void renderBlockedSlotsCard(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
+        BomboConfig.Settings s = BomboConfig.get();
+        ConfigUITheme.drawCard(g, x, y, w, h, false);
+        int curY = y + 10;
+        int colW = (w - 36) / 3;
+
+        renderCleanInputField(g, font, "Item name / Skyblock ID", blockedItemInput, "bsItem", x + 12, curY, colW + 20, mouseX, mouseY);
+        renderCleanInputField(g, font, "GUI title filter (blank = any)", blockedGuiInput, "bsGui", x + 12 + colW + 30, curY, colW - 6, mouseX, mouseY);
+        renderCleanInputField(g, font, "Island filter (blank = any)", blockedIslandInput, "bsIsland", x + 12 + colW * 2 + 24, curY, colW - 6, mouseX, mouseY);
+
+        curY += 24;
+        String addText = editingBlockedIndex >= 0 ? "§a✔ Save Blocked Slot" : "§a+ Add Blocked Slot";
+        boolean addHover = mouseX >= x + 12 && mouseX <= x + 180 && mouseY >= curY && mouseY <= curY + 18;
+        ConfigUITheme.drawPillButton(g, font, addText, x + 12, curY, 168, 18, addHover, -1, 0x2210B981, 0x6610B981);
+        if (editingBlockedIndex >= 0) {
+            boolean cancelHover = mouseX >= x + 186 && mouseX <= x + 250 && mouseY >= curY && mouseY <= curY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§cCancel", x + 186, curY, 64, 18, cancelHover, -1, 0x33EF4444, 0x66EF4444);
+        }
+
+        curY += 26;
+        g.fill(x + 12, curY, x + w - 12, curY + 1, 0x33FFFFFF);
+        curY += 6;
+
+        int count = s.blockedSlots != null ? s.blockedSlots.size() : 0;
+        g.text(font, "§6§lBlocked Slots §7(" + count + ")", x + 16, curY + 2, -1, false);
+        curY += 16;
+
+        if (s.blockedSlots == null || s.blockedSlots.isEmpty()) {
+            g.text(font, "§8No blocked slots yet. Add one above!", x + 16, curY + 4, 0xFF94A3B8, false);
+            return;
+        }
+
+        for (int i = 0; i < s.blockedSlots.size(); i++) {
+            BomboConfig.BlockedSlotDef def = s.blockedSlots.get(i);
+            if (def == null) continue;
+            int rowY = curY;
+            g.fill(x + 12, rowY, x + w - 12, rowY + 20, 0x221E293B);
+
+            String item = def.itemMatcher != null ? def.itemMatcher : "";
+            StringBuilder label = new StringBuilder(item.isEmpty() ? "§7(any item)" : item);
+            if (def.guiMatcher != null && !def.guiMatcher.isEmpty()) label.append(" §8@ ").append(def.guiMatcher);
+            if (def.islandMatcher != null && !def.islandMatcher.isEmpty()) label.append(" §8[").append(def.islandMatcher).append("]");
+            int col = def.enabled ? 0xFFFFAA00 : 0xFFEF4444;
+            g.text(font, label.toString(), x + 18, rowY + 6, col, false);
+            if (!def.enabled && !item.isEmpty()) {
+                int bW = font.width(item);
+                g.fill(x + 18, rowY + 10, x + 18 + bW, rowY + 11, 0xFFFF5555);
+            }
+
+            int rightX = x + w - 18;
+            int delX = rightX - 26;
+            boolean delHover = mouseX >= delX && mouseX <= delX + 26 && mouseY >= rowY + 2 && mouseY <= rowY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§cDEL", delX, rowY + 2, 26, 16, delHover, 0xFFFF5555, 0x22EF4444, 0x44EF4444);
+
+            int editX = delX - 44;
+            boolean editHover = mouseX >= editX && mouseX <= editX + 40 && mouseY >= rowY + 2 && mouseY <= rowY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§eEDIT", editX, rowY + 2, 40, 16, editHover, -1, 0x22FFAA00, 0x44FFAA00);
+
+            int onX = editX - 38;
+            boolean onHover = mouseX >= onX && mouseX <= onX + 34 && mouseY >= rowY + 2 && mouseY <= rowY + 18;
+            ConfigUITheme.drawPillButton(g, font, def.enabled ? "§aON" : "§cOFF", onX, rowY + 2, 34, 16, onHover,
+                    def.enabled ? 0xFF10B981 : 0xFF94A3B8, def.enabled ? 0x2210B981 : 0x1AFFFFFF, 0x44FFFFFF);
+
+            curY += 24;
+        }
+    }
+
+    public static boolean handleBlockedSlotsClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s.blockedSlots == null) s.blockedSlots = new ArrayList<>();
+
+        int curY = y + 10;
+        int colW = (w - 36) / 3;
+        if (checkFieldClick(x + 12, curY, colW + 20, 18, "bsItem", mouseX, mouseY)) return true;
+        if (checkFieldClick(x + 12 + colW + 30, curY, colW - 6, 18, "bsGui", mouseX, mouseY)) return true;
+        if (checkFieldClick(x + 12 + colW * 2 + 24, curY, colW - 6, 18, "bsIsland", mouseX, mouseY)) return true;
+
+        curY += 24;
+        if (mouseX >= x + 12 && mouseX <= x + 180 && mouseY >= curY && mouseY <= curY + 18) {
+            boolean any = !blockedItemInput.trim().isEmpty() || !blockedGuiInput.trim().isEmpty() || !blockedIslandInput.trim().isEmpty();
+            if (any) {
+                BomboConfig.BlockedSlotDef def = new BomboConfig.BlockedSlotDef(
+                        blockedItemInput.trim(), blockedGuiInput.trim(), blockedIslandInput.trim());
+                if (editingBlockedIndex >= 0 && editingBlockedIndex < s.blockedSlots.size()) {
+                    s.blockedSlots.set(editingBlockedIndex, def);
+                    editingBlockedIndex = -1;
+                } else {
+                    s.blockedSlots.add(def);
+                }
+                blockedItemInput = "";
+                blockedGuiInput = "";
+                blockedIslandInput = "";
+                activeFocusedField = null;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
+        if (editingBlockedIndex >= 0 && mouseX >= x + 186 && mouseX <= x + 250 && mouseY >= curY && mouseY <= curY + 18) {
+            editingBlockedIndex = -1;
+            blockedItemInput = "";
+            blockedGuiInput = "";
+            blockedIslandInput = "";
+            return true;
+        }
+
+        // Match the render pass: divider + the "Blocked Slots (n)" list header.
+        curY += 48;
+
+        for (int i = 0; i < s.blockedSlots.size(); i++) {
+            BomboConfig.BlockedSlotDef def = s.blockedSlots.get(i);
+            if (def == null) continue;
+            int rowY = curY;
+            int rightX = x + w - 18;
+            int delX = rightX - 26;
+            int editX = delX - 44;
+            int onX = editX - 38;
+            int finalI = i;
+
+            if (mouseX >= onX && mouseX <= onX + 34 && mouseY >= rowY + 2 && mouseY <= rowY + 18) {
+                def.enabled = !def.enabled;
+                BomboConfig.save();
+                return true;
+            }
+
+            if (mouseX >= editX && mouseX <= editX + 40 && mouseY >= rowY + 2 && mouseY <= rowY + 18) {
+                editingBlockedIndex = finalI;
+                blockedItemInput = def.itemMatcher != null ? def.itemMatcher : "";
+                blockedGuiInput = def.guiMatcher != null ? def.guiMatcher : "";
+                blockedIslandInput = def.islandMatcher != null ? def.islandMatcher : "";
+                return true;
+            }
+
+            if (mouseX >= delX && mouseX <= delX + 26 && mouseY >= rowY + 2 && mouseY <= rowY + 18) {
+                BomboConfig.BlockedSlotDef removed = s.blockedSlots.remove(finalI);
+                undoStack.push(() -> {
+                    s.blockedSlots.add(Math.min(finalI, s.blockedSlots.size()), removed);
+                    BomboConfig.save();
+                });
+                if (editingBlockedIndex == finalI) editingBlockedIndex = -1;
+                BomboConfig.save();
+                return true;
+            }
+
+            curY += 24;
+        }
+
+        activeFocusedField = null;
+        return false;
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // 6c. STORAGE OVERLAY TOOLBAR BUTTON EDITOR
+    // ---------------------------------------------------------------------------------------------
+    public static String storageBtnLabelInput = "";
+    public static String storageBtnCommandInput = "";
+    public static int editingStorageBtnIndex = -1;
+
+    public static int getStorageToolbarCardHeight() {
+        BomboConfig.Settings s = BomboConfig.get();
+        int count = s != null && s.storageOverlayButtons != null ? s.storageOverlayButtons.size() : 0;
+        return 85 + Math.max(1, count) * 24 + 40 + 16;
+    }
+
+    public static void renderStorageToolbarCard(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
+        BomboConfig.Settings s = BomboConfig.get();
+        ConfigUITheme.drawCard(g, x, y, w, h, false);
+        int curY = y + 10;
+        int colW = (w - 36) / 2;
+
+        renderCleanInputField(g, font, "Button label", storageBtnLabelInput, "stbLabel", x + 12, curY, colW, mouseX, mouseY);
+        renderCleanInputField(g, font, "Command (ec, bp, /storage) or 'hide'", storageBtnCommandInput, "stbCmd", x + 12 + colW + 12, curY, colW, mouseX, mouseY);
+
+        curY += 24;
+        String addText = editingStorageBtnIndex >= 0 ? "§a✔ Save Button" : "§a+ Add Button";
+        boolean addHover = mouseX >= x + 12 && mouseX <= x + 180 && mouseY >= curY && mouseY <= curY + 18;
+        ConfigUITheme.drawPillButton(g, font, addText, x + 12, curY, 168, 18, addHover, -1, 0x2210B981, 0x6610B981);
+        if (editingStorageBtnIndex >= 0) {
+            boolean cancelHover = mouseX >= x + 186 && mouseX <= x + 250 && mouseY >= curY && mouseY <= curY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§cCancel", x + 186, curY, 64, 18, cancelHover, -1, 0x33EF4444, 0x66EF4444);
+        }
+
+        curY += 26;
+        g.fill(x + 12, curY, x + w - 12, curY + 1, 0x33FFFFFF);
+        curY += 6;
+
+        int count = s.storageOverlayButtons != null ? s.storageOverlayButtons.size() : 0;
+        g.text(font, "§6§lToolbar Buttons §7(" + count + ")", x + 16, curY + 2, -1, false);
+        curY += 16;
+
+        if (s.storageOverlayButtons == null || s.storageOverlayButtons.isEmpty()) {
+            g.text(font, "§8No toolbar buttons yet. Add one above!", x + 16, curY + 4, 0xFF94A3B8, false);
+            return;
+        }
+
+        for (int i = 0; i < s.storageOverlayButtons.size(); i++) {
+            BomboConfig.StorageOverlayButton entry = s.storageOverlayButtons.get(i);
+            if (entry == null) continue;
+            int rowY = curY;
+            g.fill(x + 12, rowY, x + w - 12, rowY + 20, 0x221E293B);
+
+            String label = entry.label != null && !entry.label.isEmpty() ? entry.label : "§7(no label)";
+            int col = entry.enabled ? 0xFFFFAA00 : 0xFFEF4444;
+            g.text(font, label, x + 18, rowY + 6, col, false);
+            if (entry.command != null && !entry.command.isEmpty()) {
+                String cmd = "§8" + entry.command;
+                g.text(font, cmd, x + 18 + font.width(label) + 8, rowY + 6, 0xFF64748B, false);
+            }
+
+            int rightX = x + w - 18;
+            int delX = rightX - 26;
+            boolean delHover = mouseX >= delX && mouseX <= delX + 26 && mouseY >= rowY + 2 && mouseY <= rowY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§cDEL", delX, rowY + 2, 26, 16, delHover, 0xFFFF5555, 0x22EF4444, 0x44EF4444);
+
+            int downX = delX - 26;
+            boolean downHover = mouseX >= downX && mouseX <= downX + 24 && mouseY >= rowY + 2 && mouseY <= rowY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§7\u25bc", downX, rowY + 2, 24, 16, downHover, -1, 0x1AFFFFFF, 0x33FFFFFF);
+
+            int upX = downX - 24;
+            boolean upHover = mouseX >= upX && mouseX <= upX + 22 && mouseY >= rowY + 2 && mouseY <= rowY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§7\u25b2", upX, rowY + 2, 22, 16, upHover, -1, 0x1AFFFFFF, 0x33FFFFFF);
+
+            int editX = upX - 44;
+            boolean editHover = mouseX >= editX && mouseX <= editX + 40 && mouseY >= rowY + 2 && mouseY <= rowY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§eEDIT", editX, rowY + 2, 40, 16, editHover, -1, 0x22FFAA00, 0x44FFAA00);
+
+            int onX = editX - 38;
+            boolean onHover = mouseX >= onX && mouseX <= onX + 34 && mouseY >= rowY + 2 && mouseY <= rowY + 18;
+            ConfigUITheme.drawPillButton(g, font, entry.enabled ? "§aON" : "§cOFF", onX, rowY + 2, 34, 16, onHover,
+                    entry.enabled ? 0xFF10B981 : 0xFF94A3B8, entry.enabled ? 0x2210B981 : 0x1AFFFFFF, 0x44FFFFFF);
+
+            curY += 24;
+        }
+    }
+
+    public static boolean handleStorageToolbarClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s.storageOverlayButtons == null) s.storageOverlayButtons = new ArrayList<>();
+
+        int curY = y + 10;
+        int colW = (w - 36) / 2;
+        if (checkFieldClick(x + 12, curY, colW, 18, "stbLabel", mouseX, mouseY)) return true;
+        if (checkFieldClick(x + 12 + colW + 12, curY, colW, 18, "stbCmd", mouseX, mouseY)) return true;
+
+        curY += 24;
+        if (mouseX >= x + 12 && mouseX <= x + 180 && mouseY >= curY && mouseY <= curY + 18) {
+            if (!storageBtnCommandInput.trim().isEmpty()) {
+                BomboConfig.StorageOverlayButton entry = new BomboConfig.StorageOverlayButton(
+                        storageBtnLabelInput.trim(), storageBtnCommandInput.trim());
+                if (editingStorageBtnIndex >= 0 && editingStorageBtnIndex < s.storageOverlayButtons.size()) {
+                    entry.enabled = s.storageOverlayButtons.get(editingStorageBtnIndex).enabled;
+                    s.storageOverlayButtons.set(editingStorageBtnIndex, entry);
+                    editingStorageBtnIndex = -1;
+                } else {
+                    s.storageOverlayButtons.add(entry);
+                }
+                storageBtnLabelInput = "";
+                storageBtnCommandInput = "";
+                activeFocusedField = null;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
+        if (editingStorageBtnIndex >= 0 && mouseX >= x + 186 && mouseX <= x + 250 && mouseY >= curY && mouseY <= curY + 18) {
+            editingStorageBtnIndex = -1;
+            storageBtnLabelInput = "";
+            storageBtnCommandInput = "";
+            return true;
+        }
+
+        // Match the render pass: divider + the "Toolbar Buttons (n)" list header.
+        curY += 48;
+
+        for (int i = 0; i < s.storageOverlayButtons.size(); i++) {
+            BomboConfig.StorageOverlayButton entry = s.storageOverlayButtons.get(i);
+            if (entry == null) continue;
+            int rowY = curY;
+            int rightX = x + w - 18;
+            int delX = rightX - 26;
+            int downX = delX - 26;
+            int upX = downX - 24;
+            int editX = upX - 44;
+            int onX = editX - 38;
+            int finalI = i;
+
+            if (mouseX >= onX && mouseX <= onX + 34 && mouseY >= rowY + 2 && mouseY <= rowY + 18) {
+                entry.enabled = !entry.enabled;
+                BomboConfig.save();
+                return true;
+            }
+
+            if (mouseX >= editX && mouseX <= editX + 40 && mouseY >= rowY + 2 && mouseY <= rowY + 18) {
+                editingStorageBtnIndex = finalI;
+                storageBtnLabelInput = entry.label != null ? entry.label : "";
+                storageBtnCommandInput = entry.command != null ? entry.command : "";
+                return true;
+            }
+
+            if (mouseX >= upX && mouseX <= upX + 22 && mouseY >= rowY + 2 && mouseY <= rowY + 18) {
+                if (finalI > 0) {
+                    BomboConfig.StorageOverlayButton moved = s.storageOverlayButtons.remove(finalI);
+                    s.storageOverlayButtons.add(finalI - 1, moved);
+                    BomboConfig.save();
+                }
+                return true;
+            }
+
+            if (mouseX >= downX && mouseX <= downX + 24 && mouseY >= rowY + 2 && mouseY <= rowY + 18) {
+                if (finalI < s.storageOverlayButtons.size() - 1) {
+                    BomboConfig.StorageOverlayButton moved = s.storageOverlayButtons.remove(finalI);
+                    s.storageOverlayButtons.add(finalI + 1, moved);
+                    BomboConfig.save();
+                }
+                return true;
+            }
+
+            if (mouseX >= delX && mouseX <= delX + 26 && mouseY >= rowY + 2 && mouseY <= rowY + 18) {
+                BomboConfig.StorageOverlayButton removed = s.storageOverlayButtons.remove(finalI);
+                undoStack.push(() -> {
+                    s.storageOverlayButtons.add(Math.min(finalI, s.storageOverlayButtons.size()), removed);
+                    BomboConfig.save();
+                });
+                if (editingStorageBtnIndex == finalI) editingStorageBtnIndex = -1;
+                BomboConfig.save();
+                return true;
+            }
+
+            curY += 24;
         }
 
         activeFocusedField = null;
@@ -3138,7 +3522,9 @@ public class ConfigCustomWidgets {
         BomboConfig.Settings s = BomboConfig.get();
         List<BomboConfig.CoordBind> list = s.coordBinds != null ? s.coordBinds.get(s.activeProfile) : null;
         int count = list != null ? list.size() : 0;
-        return 125 + Math.max(1, count) * 26;
+        // header(26) + command row(24) + filter row(24) + add button row(26) + divider(6)
+        // + list header(16) + one 24px row per bind + bottom padding.
+        return 122 + Math.max(1, count) * 24 + 14;
     }
 
     public static void renderCoordBindsManager(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -3184,6 +3570,10 @@ public class ConfigCustomWidgets {
 
         BomboConfig.Settings s = BomboConfig.get();
         List<BomboConfig.CoordBind> list = s.coordBinds != null ? s.coordBinds.get(s.activeProfile) : null;
+        int cbCount = list != null ? list.size() : 0;
+        g.text(font, "§6§lCoord Binds §7(" + cbCount + ")", x + 16, curY + 2, -1, false);
+        curY += 16;
+
         if (list == null || list.isEmpty()) {
             g.text(font, "§8No coordinate binds configured for profile '" + s.activeProfile + "'. Add one above!", x + 16, curY + 4, ConfigUITheme.getTextMuted(), false);
             return;
@@ -3328,7 +3718,8 @@ public class ConfigCustomWidgets {
             return true;
         }
 
-        curY += 32;
+        // Match the render pass: divider + the new "Coord Binds (n)" list header.
+        curY += 48;
 
         for (int i = 0; i < list.size(); i++) {
             BomboConfig.CoordBind cb = list.get(i);
@@ -3438,6 +3829,11 @@ public class ConfigCustomWidgets {
             case "cbMinDelay" -> cbMinDelayInput;
             case "cbMaxDelay" -> cbMaxDelayInput;
             case "cbCooldown" -> cbCooldownInput;
+            case "bsItem" -> blockedItemInput;
+            case "bsGui" -> blockedGuiInput;
+            case "bsIsland" -> blockedIslandInput;
+            case "stbLabel" -> storageBtnLabelInput;
+            case "stbCmd" -> storageBtnCommandInput;
             case "entMatcher" -> entMatcherInput;
             case "entIsland" -> entIslandInput;
             case "entSubarea" -> entSubareaInput;
@@ -3512,6 +3908,11 @@ public class ConfigCustomWidgets {
             case "cbMinDelay" -> cbMinDelayInput = nonNull;
             case "cbMaxDelay" -> cbMaxDelayInput = nonNull;
             case "cbCooldown" -> cbCooldownInput = nonNull;
+            case "bsItem" -> blockedItemInput = nonNull;
+            case "bsGui" -> blockedGuiInput = nonNull;
+            case "bsIsland" -> blockedIslandInput = nonNull;
+            case "stbLabel" -> storageBtnLabelInput = nonNull;
+            case "stbCmd" -> storageBtnCommandInput = nonNull;
             case "entMatcher" -> entMatcherInput = nonNull;
             case "entIsland" -> entIslandInput = nonNull;
             case "entSubarea" -> entSubareaInput = nonNull;
@@ -3951,13 +4352,117 @@ public class ConfigCustomWidgets {
     public static boolean captureStillListening = false;
     /** True while a modifier has opened a combo but no main key has been pressed yet. */
     public static boolean capturePrefixOpen = false;
+    /** Extra mouse button (mouse3+) that opened a combo and awaits its release or a following key. */
+    public static int capturePendingMouse = -1;
 
-    /** Is this key a modifier/starter that should open a combo rather than commit alone? */
+    /**
+     * Is this key a starter that should open/extend a combo rather than commit on its own?
+     *
+     * <p>Every key except plain letters (A-Z) and top-row numbers (0-9) is a starter, so holding
+     * a modifier, an F-key, a mouse button, an arrow, a keypad key or any punctuation key builds a
+     * combo like {@code f5+3} or {@code mouse4+a}. Releasing a starter without a second key commits
+     * it alone (see {@link #captureReleasedSingleKey}).
+     */
     private static boolean isStarterKey(int keyCode) {
-        return keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT
-                || keyCode == GLFW.GLFW_KEY_LEFT_CONTROL || keyCode == GLFW.GLFW_KEY_RIGHT_CONTROL
-                || keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT
-                || keyCode == GLFW.GLFW_KEY_LEFT_SUPER || keyCode == GLFW.GLFW_KEY_RIGHT_SUPER;
+        if (keyCode >= GLFW.GLFW_KEY_A && keyCode <= GLFW.GLFW_KEY_Z) return false;
+        if (keyCode >= GLFW.GLFW_KEY_0 && keyCode <= GLFW.GLFW_KEY_9) return false;
+        if (keyCode >= 1000 && keyCode <= 1007) return true; // mouse buttons
+        return keyCode > 0;
+    }
+
+    /**
+     * Commits a starter key (Ctrl/Shift/Alt/F-key/mouse/…) on its own when it is released and no
+     * other key is still held, so "click, tap Ctrl" binds plain Ctrl.
+     *
+     * @return the binding string to store, or {@code null} if nothing should be committed.
+     */
+    public static String captureReleasedSingleKey(int keyCode) {
+        if (!capturePrefixOpen || keyCode <= 0) {
+            return null;
+        }
+        // If anything else is still held, the combo is not finished (wait for its main key).
+        if (!getCurrentlyHeldComboPrefix(-1).isEmpty()) {
+            return null;
+        }
+        String name = me.bombo.bomboaddons.CustomBindsProcessor.getKeyNameForGlfwCode(keyCode);
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        name = switch (name) {
+            case "left_control", "left_ctrl" -> "lctrl";
+            case "right_control", "right_ctrl" -> "rctrl";
+            case "left_shift" -> "lshift";
+            case "right_shift" -> "rshift";
+            case "left_alt" -> "lalt";
+            case "right_alt" -> "ralt";
+            default -> name;
+        };
+        capturePrefixOpen = false;
+        captureStillListening = false;
+        return name;
+    }
+
+    /**
+     * Commits an extra mouse button (mouse3+) on its own when released without a following key.
+     *
+     * @return the binding string to store, or {@code null}.
+     */
+    public static String captureReleasedMouseSingleKey(int mouseCode) {
+        if (!capturePrefixOpen || capturePendingMouse != mouseCode) {
+            return null;
+        }
+        capturePrefixOpen = false;
+        captureStillListening = false;
+        capturePendingMouse = -1;
+        return me.bombo.bomboaddons.CustomBindsProcessor.getKeyNameForGlfwCode(mouseCode);
+    }
+
+    /** Mouse-release handling for the four shared capture widgets. */
+    public static boolean handleWidgetMouseReleased(int mouseCode) {
+        String committed = captureReleasedMouseSingleKey(mouseCode);
+        if (committed == null) {
+            return false;
+        }
+        if (clickKeyIsListening) {
+            clickKeyInput = committed;
+            clickKeyIsListening = false;
+        } else if (autoSeqKeyIsListening) {
+            autoSeqKeyInput = committed;
+            autoSeqKeyIsListening = false;
+        } else if (kbIsListening) {
+            kbKeyInput = committed;
+            kbIsListening = false;
+        } else if (guiKbIsListening) {
+            guiKbKeyInput = committed;
+            guiKbIsListening = false;
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    /** Key-release handling for the four shared capture widgets. */
+    public static boolean handleWidgetKeyReleased(int keyCode) {
+        if (!capturePrefixOpen) return false;
+        if (clickKeyIsListening || autoSeqKeyIsListening || kbIsListening || guiKbIsListening) {
+            String committed = captureReleasedSingleKey(keyCode);
+            if (committed == null) return false;
+            if (clickKeyIsListening) {
+                clickKeyInput = committed;
+                clickKeyIsListening = false;
+            } else if (autoSeqKeyIsListening) {
+                autoSeqKeyInput = committed;
+                autoSeqKeyIsListening = false;
+            } else if (kbIsListening) {
+                kbKeyInput = committed;
+                kbIsListening = false;
+            } else {
+                guiKbKeyInput = committed;
+                guiKbIsListening = false;
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -3977,6 +4482,7 @@ public class ConfigCustomWidgets {
         captureStillListening = false;
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             capturePrefixOpen = false;
+            capturePendingMouse = -1;
             return "";
         }
         String prefix = getCurrentlyHeldComboPrefix(keyCode);
@@ -3987,6 +4493,7 @@ public class ConfigCustomWidgets {
             return me.bombo.bomboaddons.CustomBindsProcessor.getKeyNameForGlfwCode(keyCode);
         }
         capturePrefixOpen = false;
+        capturePendingMouse = -1;
         return buildFullComboString(keyCode);
     }
 
@@ -4102,7 +4609,7 @@ public class ConfigCustomWidgets {
         if (s == null) return 140;
         List<BomboConfig.CommandBind> list = s.keybindBinds != null ? s.keybindBinds.get(s.activeProfile) : null;
         int count = list != null ? list.size() : 0;
-        return 125 + Math.max(1, count) * 26;
+        return 112 + Math.max(1, count) * 24;
     }
 
     public static void renderKeybindsManager(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -4118,7 +4625,7 @@ public class ConfigCustomWidgets {
 
         int keyX = x + 12 + colW * 2 + 6;
         int keyW = colW - 6;
-        String keyDisplay = kbIsListening ? "§e[PRESS KEY]" : (kbKeyInput.isEmpty() ? "§8Keybind (Click)" : "§b" + kbKeyInput);
+        String keyDisplay = captureButtonLabel(kbIsListening, kbKeyInput, "§8Keybind (Click)");
         boolean keyHover = mouseX >= keyX && mouseX <= keyX + keyW && mouseY >= curY && mouseY <= curY + 18;
         ConfigUITheme.drawPillButton(g, font, keyDisplay, keyX, curY, keyW, 18, keyHover, -1, kbIsListening ? 0x44FFAA00 : 0x221E293B, 0x55FFFFFF);
 
@@ -4141,6 +4648,10 @@ public class ConfigCustomWidgets {
 
         BomboConfig.Settings s = BomboConfig.get();
         List<BomboConfig.CommandBind> list = s.keybindBinds != null ? s.keybindBinds.get(s.activeProfile) : null;
+        int kbCount = list != null ? list.size() : 0;
+        g.text(font, "§6§lCommand Keybinds §7(" + kbCount + ")", x + 16, curY + 2, -1, false);
+        curY += 16;
+
         if (list == null || list.isEmpty()) {
             g.text(font, "§8No command keybinds configured for profile '" + s.activeProfile + "'. Add one above!", x + 16, curY + 4, ConfigUITheme.getTextMuted(), false);
             return;
@@ -4243,7 +4754,8 @@ public class ConfigCustomWidgets {
             return true;
         }
 
-        curY += 32;
+        // Match the render pass: divider + the "Command Keybinds (n)" list header.
+        curY += 48;
 
         for (int i = 0; i < list.size(); i++) {
             BomboConfig.CommandBind cb = list.get(i);

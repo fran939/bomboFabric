@@ -368,18 +368,28 @@ public class SpotifyManager {
                                         monotonicProgressMs = posMs;
                                         lastStateUpdate = now;
                                     } else if (nowPlaying) {
-                                        if (posMs > monotonicProgressMs) {
+                                        if (!wasPlaying) {
+                                            // Resuming from pause: re-anchor the clock to Spotify's own
+                                            // position so the paused time is never injected into the lyrics.
+                                            baseProgressMs = posMs;
+                                            monotonicProgressMs = posMs;
+                                            lastStateUpdate = now;
+                                        } else if (posMs > monotonicProgressMs) {
                                             // GSMTC caught up or track jumped forward
                                             baseProgressMs = posMs;
                                             monotonicProgressMs = posMs;
                                             lastStateUpdate = now;
-                                        } else if (monotonicProgressMs - posMs > 7500L) {
-                                            // Deliberate user seek backwards by > 7.5 seconds
+                                        } else if (monotonicProgressMs - posMs > 1500L) {
+                                            // User seeked backwards: re-anchor so lyrics follow immediately.
                                             baseProgressMs = posMs;
                                             monotonicProgressMs = posMs;
                                             lastStateUpdate = now;
+                                        } else if (Math.abs((baseProgressMs + (now - lastStateUpdate)) - posMs) > 1000L) {
+                                            // Re-anchor the extrapolation origin so the clock can never
+                                            // drift more than ~1s away from Spotify's reported position.
+                                            baseProgressMs = posMs;
+                                            lastStateUpdate = now;
                                         }
-                                        // Small lag behind current monotonic time (< 7.5s) is ignored so time never stutters backward
                                     } else {
                                         if (Math.abs(posMs - monotonicProgressMs) > 1000L) {
                                             baseProgressMs = posMs;

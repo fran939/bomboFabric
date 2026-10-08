@@ -1,37 +1,38 @@
 package me.bombo.bomboaddons.features.pip;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.imageio.ImageIO;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.HudMoveScreen;
-import me.bombo.bomboaddons.gui.config.ConfigUITheme;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.ChatScreen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 /**
  * Picture-in-Picture (PiP) In-Game Media Overlay.
- * Supports web images, GIFs, and YouTube clean-canvas video previews without ads or UI clutter.
- * Fully repositionable via /b gui and customizable via /b pip or /b config.
+ *
+ * <p>Supports direct image links and YouTube thumbnails. Images are always drawn at their true
+ * aspect ratio and never upscaled past their native resolution. The media filename / opacity bar
+ * is only shown inside the HUD editor ({@code /b gui}).
  */
 public class PipManager {
 
@@ -41,10 +42,6 @@ public class PipManager {
             .followRedirects(HttpClient.Redirect.ALWAYS)
             .build();
 
-    private static final Pattern YT_REGEX = Pattern.compile(
-            "(?:https?:\\/\\/)?(?:www\\.|m\\.)?(?:youtube\\.com\\/(?:watch\\?v=|embed\\/|v\\/|shorts\\/)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})"
-    );
-
     private static DynamicTexture activeTexture = null;
     private static boolean textureLoaded = false;
     private static boolean loading = false;
@@ -53,6 +50,8 @@ public class PipManager {
     private static String mediaAuthor = "";
     private static boolean isYouTube = false;
     private static String errorMessage = null;
+    private static int mediaWidth = 0;
+    private static int mediaHeight = 0;
 
     public static void init() {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "pip_hud"), PipManager::renderHud);
@@ -102,22 +101,41 @@ public class PipManager {
         errorMessage = null;
         loading = true;
         textureLoaded = false;
+        mediaWidth = 0;
+        mediaHeight = 0;
 
-        Matcher ytMatcher = YT_REGEX.matcher(loadedUrl);
-        if (ytMatcher.find()) {
+        String videoId = extractYouTubeId(loadedUrl);
+        if (videoId != null) {
             isYouTube = true;
-            String videoId = ytMatcher.group(1);
             mediaTitle = "YouTube (" + videoId + ")";
             mediaAuthor = "";
             fetchYouTubeMetadata(videoId);
-            fetchAndApplyImage("https://img.youtube.com/vi/" + videoId + "/maxresdefault.jpg",
-                    "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg");
+            // maxresdefault is 404 for many videos; hqdefault is a reliable fallback.
+            fetchAndApplyImage(
+                    "https://i.ytimg.com/vi/" + videoId + "/maxresdefault.jpg",
+                    "https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg");
         } else {
             isYouTube = false;
             mediaTitle = getFilenameFromUrl(loadedUrl);
             mediaAuthor = "";
             fetchAndApplyImage(loadedUrl, null);
         }
+    }
+
+    /** Extracts an 11-char YouTube video id from every common URL shape, or null. */
+    public static String extractYouTubeId(String url) {
+        if (url == null) return null;
+        String u = url.trim();
+        String lower = u.toLowerCase(Locale.ROOT);
+        if (!lower.contains("youtube.com") && !lower.contains("youtu.be")) return null;
+
+        Matcher m = Pattern.compile("youtu\\.be/([A-Za-z0-9_-]{11})").matcher(u);
+        if (m.find()) return m.group(1);
+        m = Pattern.compile("[?&]v=([A-Za-z0-9_-]{11})").matcher(u);
+        if (m.find()) return m.group(1);
+        m = Pattern.compile("(?:/live/|/embed/|/shorts/|/v/)([A-Za-z0-9_-]{11})").matcher(u);
+        if (m.find()) return m.group(1);
+        return null;
     }
 
     private static String getFilenameFromUrl(String url) {
@@ -155,38 +173,63 @@ public class PipManager {
         });
     }
 
+    /** Result of a media download, including the content type so we can reject web pages. */
+    private static class DownloadResult {
+        final String contentType;
+        final byte[] data;
+
+        DownloadResult(String contentType, byte[] data) {
+            this.contentType = contentType;
+            this.data = data;
+        }
+    }
+
     private static void fetchAndApplyImage(String primaryUrl, String fallbackUrl) {
         CompletableFuture.runAsync(() -> {
             try {
-                byte[] imgBytes = downloadBytes(primaryUrl);
-                if ((imgBytes == null || imgBytes.length == 0) && fallbackUrl != null) {
-                    imgBytes = downloadBytes(fallbackUrl);
+                DownloadResult result = download(primaryUrl);
+                if (!isUsableImage(result) && fallbackUrl != null) {
+                    result = download(fallbackUrl);
                 }
-                if (imgBytes == null || imgBytes.length == 0) {
+                if (!isUsableImage(result)) {
                     loading = false;
-                    errorMessage = "Failed to load media";
+                    if (result == null || result.data == null || result.data.length == 0) {
+                        errorMessage = "Failed to load media";
+                    } else if (result.contentType != null && result.contentType.toLowerCase(Locale.ROOT).contains("text/html")) {
+                        errorMessage = "That link is a web page, not an image";
+                    } else {
+                        errorMessage = "Not a supported image";
+                    }
                     return;
                 }
 
-                try (InputStream in = new ByteArrayInputStream(imgBytes)) {
-                    NativeImage nativeImg = NativeImage.read(in);
-                    Minecraft mc = Minecraft.getInstance();
-                    mc.execute(() -> {
-                        try {
-                            if (activeTexture != null) {
-                                activeTexture.close();
-                            }
-                            activeTexture = new DynamicTexture(() -> "pip_media_" + System.currentTimeMillis(), nativeImg);
-                            mc.getTextureManager().register(PIP_TEXTURE_ID, activeTexture);
-                            textureLoaded = true;
-                            loading = false;
-                            errorMessage = null;
-                        } catch (Exception e) {
-                            loading = false;
-                            errorMessage = "Texture upload failed";
-                        }
-                    });
+                NativeImage nativeImg = decodeImage(result.data);
+                if (nativeImg == null) {
+                    loading = false;
+                    errorMessage = "Not a supported image";
+                    return;
                 }
+
+                Minecraft mc = Minecraft.getInstance();
+                int w = nativeImg.getWidth();
+                int h = nativeImg.getHeight();
+                mc.execute(() -> {
+                    try {
+                        if (activeTexture != null) {
+                            activeTexture.close();
+                        }
+                        activeTexture = new DynamicTexture(() -> "pip_media_" + System.currentTimeMillis(), nativeImg);
+                        mc.getTextureManager().register(PIP_TEXTURE_ID, activeTexture);
+                        mediaWidth = w;
+                        mediaHeight = h;
+                        textureLoaded = true;
+                        loading = false;
+                        errorMessage = null;
+                    } catch (Exception e) {
+                        loading = false;
+                        errorMessage = "Texture upload failed";
+                    }
+                });
             } catch (Exception e) {
                 loading = false;
                 errorMessage = "Network error: " + e.getMessage();
@@ -194,7 +237,43 @@ public class PipManager {
         });
     }
 
-    private static byte[] downloadBytes(String url) {
+    private static boolean isUsableImage(DownloadResult result) {
+        if (result == null || result.data == null || result.data.length < 8) return false;
+        String ct = result.contentType != null ? result.contentType.toLowerCase(Locale.ROOT) : "";
+        if (ct.contains("text/html") || ct.contains("application/json") || ct.contains("text/plain")) return false;
+
+        byte[] d = result.data;
+        if ((d[0] & 0xFF) == 0x89 && d[1] == 'P' && d[2] == 'N' && d[3] == 'G') return true;
+        if ((d[0] & 0xFF) == 0xFF && (d[1] & 0xFF) == 0xD8) return true;
+        if (d[0] == 'G' && d[1] == 'I' && d[2] == 'F') return true;
+        if (d[0] == 'R' && d[1] == 'I' && d[2] == 'F' && d[3] == 'F' && d.length > 11
+                && d[8] == 'W' && d[9] == 'E' && d[10] == 'B' && d[11] == 'P') return true;
+        if (d[0] == 'B' && d[1] == 'M') return true;
+        // A leading '<' means the server returned an HTML page (redirects, consent walls, 404s).
+        if (d[0] == '<') return false;
+        return true;
+    }
+
+    private static NativeImage decodeImage(byte[] bytes) {
+        try (InputStream in = new ByteArrayInputStream(bytes)) {
+            return NativeImage.read(in);
+        } catch (Throwable ignored) {
+        }
+        try (InputStream in = new ByteArrayInputStream(bytes)) {
+            BufferedImage bimg = ImageIO.read(in);
+            if (bimg != null) {
+                ByteArrayOutputStream pngOut = new ByteArrayOutputStream();
+                ImageIO.write(bimg, "png", pngOut);
+                try (InputStream in2 = new ByteArrayInputStream(pngOut.toByteArray())) {
+                    return NativeImage.read(in2);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
+    private static DownloadResult download(String url) {
         try {
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -204,7 +283,8 @@ public class PipManager {
                     .build();
             HttpResponse<byte[]> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofByteArray());
             if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
-                return resp.body();
+                String ct = resp.headers().firstValue("Content-Type").orElse("");
+                return new DownloadResult(ct, resp.body());
             }
         } catch (Exception ignored) {}
         return null;
@@ -219,12 +299,13 @@ public class PipManager {
         BomboConfig.Settings s = BomboConfig.get();
         if (s == null || !s.pipEnabled || s.pipUrl == null || s.pipUrl.trim().isEmpty()) return;
 
-        // Auto reload if URL changed
+        // Auto reload if the configured URL changed
         if (!s.pipUrl.trim().equals(loadedUrl) && !loading) {
             loadMedia(s.pipUrl.trim());
         }
 
-        renderPipBox(g, mc.font, s.pipX, s.pipY, (int) (s.pipW * s.pipScale), (int) (s.pipH * s.pipScale), s.pipOpacity, s.pipShowBorder, s.pipCleanVideo, false);
+        renderPipBox(g, mc.font, s.pipX, s.pipY, (int) (s.pipW * s.pipScale), (int) (s.pipH * s.pipScale),
+                s.pipOpacity, s.pipShowBorder, false);
     }
 
     public static void renderPipInMoveScreen(GuiGraphicsExtractor g, int x, int y, int w, int h) {
@@ -232,11 +313,11 @@ public class PipManager {
         BomboConfig.Settings s = BomboConfig.get();
         float opacity = s != null ? s.pipOpacity : 0.9f;
         boolean border = s != null ? s.pipShowBorder : true;
-        boolean clean = s != null ? s.pipCleanVideo : true;
-        renderPipBox(g, mc.font, x, y, w, h, opacity, border, clean, true);
+        renderPipBox(g, mc.font, x, y, w, h, opacity, border, true);
     }
 
-    private static void renderPipBox(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, float opacity, boolean showBorder, boolean cleanVideo, boolean isMoveScreen) {
+    private static void renderPipBox(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h,
+            float opacity, boolean showBorder, boolean isMoveScreen) {
         float alpha = Math.max(0.05f, Math.min(1.0f, opacity));
         int alphaInt = (int) (alpha * 255.0f);
         int bgCol = (alphaInt << 24) | 0x000F172A;
@@ -244,11 +325,18 @@ public class PipManager {
         // Background card
         g.fill(x, y, x + w, y + h, bgCol);
 
-        if (textureLoaded && activeTexture != null) {
-            // Clean 16:9 video canvas - render direct texture
-            g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, PIP_TEXTURE_ID, x, y, 0.0f, 0.0f, w, h, w, h, (alphaInt << 24) | 0x00FFFFFF);
+        if (textureLoaded && activeTexture != null && mediaWidth > 0 && mediaHeight > 0) {
+            // Aspect-preserving fit inside the frame, never upscaled past native resolution.
+            double fit = Math.min(w / (double) mediaWidth, h / (double) mediaHeight);
+            double factor = Math.min(1.0, fit);
+            int drawW = Math.max(1, (int) Math.round(mediaWidth * factor));
+            int drawH = Math.max(1, (int) Math.round(mediaHeight * factor));
+            int dx = x + (w - drawW) / 2;
+            int dy = y + (h - drawH) / 2;
+            g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, PIP_TEXTURE_ID,
+                    dx, dy, 0.0f, 0.0f, drawW, drawH, drawW, drawH, (alphaInt << 24) | 0x00FFFFFF);
         } else if (loading) {
-            String loadStr = "§e⏳ Loading PiP media...";
+            String loadStr = "§e⏳ Loading media...";
             g.text(font, loadStr, x + (w - font.width(loadStr)) / 2, y + (h - font.lineHeight) / 2, 0xFFFFFFFF, true);
         } else if (errorMessage != null) {
             String errStr = "§c✖ " + errorMessage;
@@ -258,8 +346,9 @@ public class PipManager {
             g.text(font, hintStr, x + (w - font.width(hintStr)) / 2, y + (h - font.lineHeight) / 2, 0xFF94A3B8, true);
         }
 
-        // Header / Badge overlay when not in clean video mode or when hovered in Move Screen
-        if (!cleanVideo || isMoveScreen) {
+        // The filename / opacity bar is only visible inside the HUD editor so it never covers the
+        // media during normal play.
+        if (isMoveScreen) {
             int headerH = 18;
             g.fill(x, y, x + w, y + headerH, (Math.min(220, alphaInt) << 24) | 0x00020617);
             String titleDisp = mediaTitle;
@@ -270,11 +359,11 @@ public class PipManager {
             String prefix = isYouTube ? "§c▶ §f" : "§b🖼 §f";
             g.text(font, prefix + titleDisp, x + 6, y + 5, 0xFFFFFFFF, false);
 
-            String opBadge = "§8" + (int)(alpha * 100) + "%";
+            String opBadge = "§8" + (int) (alpha * 100) + "%";
             g.text(font, opBadge, x + w - font.width(opBadge) - 6, y + 5, 0xFF94A3B8, false);
         }
 
-        // Clean border
+        // Subtle border
         if (showBorder || isMoveScreen) {
             int borderCol = (alphaInt << 24) | (isMoveScreen ? 0x0038BDF8 : 0x00FFAA00);
             g.outline(x, y, w, h, borderCol);
