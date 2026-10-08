@@ -240,10 +240,40 @@ public final class ProfileKeybindManager {
         }
     }
 
-    /** The vanilla key the mapping had before Bombo changed it, for the reference column. */
-    public static String vanillaKeyName(String mappingName) {
-        InputConstants.Key key = VANILLA_KEYS.get(mappingName);
+    /**
+     * The key a mapping falls back to when this scope has no override.
+     *
+     * <p>{@link KeyMapping#getDefaultKey()} is the binding baked into the game, so it is used as the
+     * baseline instead of whatever happens to sit in {@code options.txt}. An earlier version wrote
+     * overrides into {@code options.txt}, which made the next launch snapshot the overridden keys as
+     * "vanilla" and then restore the wrong keys for every other scope.
+     */
+    private static InputConstants.Key baselineKey(KeyMapping mapping) {
+        if (mapping == null) return null;
+        try {
+            InputConstants.Key def = mapping.getDefaultKey();
+            if (def != null) return def;
+        } catch (Throwable ignored) {
+        }
+        return mapping.getName() == null ? null : VANILLA_KEYS.get(mapping.getName());
+    }
+
+    /** The key a mapping falls back to ("Space", "Left Shift"), for the reference column. */
+    public static String defaultKeyName(KeyMapping mapping) {
+        InputConstants.Key key = baselineKey(mapping);
         return key == null ? null : friendlyName(key);
+    }
+
+    /** Puts a single mapping back on the game's own default key. */
+    public static void resetToDefault(KeyMapping mapping) {
+        if (mapping == null) return;
+        InputConstants.Key def = baselineKey(mapping);
+        if (def == null) return;
+        try {
+            mapping.setKey(def);
+            KeyMapping.resetMapping();
+        } catch (Throwable ignored) {
+        }
     }
 
     private static void apply(Minecraft mc, BomboConfig.Settings s, String scope) {
@@ -270,7 +300,7 @@ public final class ProfileKeybindManager {
             if (override != null && !override.isEmpty()) {
                 target = keyFromName(override);
             }
-            if (target == null) target = VANILLA_KEYS.get(name);
+            if (target == null) target = baselineKey(mapping);
             if (target == null) continue;
 
             InputConstants.Key current = readKey(mapping);
@@ -321,15 +351,31 @@ public final class ProfileKeybindManager {
         }
     }
 
-    /** Reads the private {@code key} field of a {@link KeyMapping} the same way the conflict checker does. */
+    /**
+     * Reads the <em>current</em> key of a mapping.
+     *
+     * <p>The field must be looked up by name: {@link KeyMapping} declares {@code defaultKey} before
+     * {@code key}, and taking "the first field of type Key" therefore returned the default, which
+     * made the apply loop believe every mapping was already correct and silently skip the override.
+     */
     private static InputConstants.Key readKey(KeyMapping mapping) {
         try {
             Class<?> type = mapping.getClass();
             while (type != null) {
-                for (Field field : type.getDeclaredFields()) {
-                    if (InputConstants.Key.class.isAssignableFrom(field.getType())) {
-                        field.setAccessible(true);
-                        return (InputConstants.Key) field.get(mapping);
+                Field field = null;
+                try {
+                    field = type.getDeclaredField("key");
+                } catch (NoSuchFieldException ignored) {
+                }
+                if (field != null && InputConstants.Key.class.isAssignableFrom(field.getType())) {
+                    field.setAccessible(true);
+                    return (InputConstants.Key) field.get(mapping);
+                }
+                for (Field candidate : type.getDeclaredFields()) {
+                    if (InputConstants.Key.class.isAssignableFrom(candidate.getType())
+                            && !candidate.getName().toLowerCase(Locale.ROOT).contains("default")) {
+                        candidate.setAccessible(true);
+                        return (InputConstants.Key) candidate.get(mapping);
                     }
                 }
                 type = type.getSuperclass();

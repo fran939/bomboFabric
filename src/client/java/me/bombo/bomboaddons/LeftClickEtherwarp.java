@@ -23,6 +23,11 @@ public class LeftClickEtherwarp {
    private static long lastHoldFallbackTime = 0L;
    private static long lastFastAotvTime = 0L;
    private static long lastFastHypTime = 0L;
+   private static long lastHoldEtherwarpTime = 0L;
+   /** True while a held left click is keeping sneak down for us. */
+   private static boolean holdingSneak = false;
+   /** True when the sneak currently down was pressed by us and has to be released again. */
+   private static boolean sneakForcedByHold = false;
 
    public static boolean isBusy() {
       BomboConfig.Settings s = BomboConfig.get();
@@ -40,6 +45,16 @@ public class LeftClickEtherwarp {
       if (mc.player == null) {
          reset();
          return;
+      }
+
+      // Letting go of left click releases the sneak a held etherwarp pressed for us.
+      if (holdingSneak && (mc.options == null || !mc.options.keyAttack.isDown())) {
+         holdingSneak = false;
+         if (sneakForcedByHold) {
+            sneakForcedByHold = false;
+            getSneakMapping(mc).setDown(false);
+            sendSneakPacket(mc, false);
+         }
       }
 
       BomboConfig.Settings s = BomboConfig.get();
@@ -125,6 +140,8 @@ public class LeftClickEtherwarp {
 
    private static void reset() {
       state = 0;
+      holdingSneak = false;
+      sneakForcedByHold = false;
    }
 
    public static boolean isHoldingEtherwarp() {
@@ -266,23 +283,43 @@ public class LeftClickEtherwarp {
       if (isHoldingEtherwarp()) {
          if (mc.player == null || mc.level == null) return;
          BomboConfig.Settings s = BomboConfig.get();
-         if (s.etherwarpBlockOnly && s.etherwarpFallbackRightClick) {
-            ItemStack heldItem = mc.player.getMainHandItem();
-            double maxDist = getEtherwarpMaxDistance(heldItem);
-            Vec3 eyePos = mc.player.getEyePosition();
-            Vec3 lookVec = mc.player.getViewVector(1.0F);
-            Vec3 endPos = eyePos.add(lookVec.scale(maxDist));
-            BlockHitResult hit = mc.level.clip(new ClipContext(eyePos, endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
-            boolean canEtherwarp = (hit.getType() == HitResult.Type.BLOCK) && isValidEtherwarpTarget(mc.level, hit.getBlockPos(), hit.getDirection());
 
-            if (!canEtherwarp) {
-               long now = System.currentTimeMillis();
-               if (now - lastHoldFallbackTime >= 200L) {
-                  lastHoldFallbackTime = now;
-                  if (mc.gameMode != null) {
-                     mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                     GardenMacroDetector.recordWeaponUse();
-                  }
+         ItemStack heldItem = mc.player.getMainHandItem();
+         double maxDist = getEtherwarpMaxDistance(heldItem);
+         Vec3 eyePos = mc.player.getEyePosition();
+         Vec3 lookVec = mc.player.getViewVector(1.0F);
+         Vec3 endPos = eyePos.add(lookVec.scale(maxDist));
+         BlockHitResult hit = mc.level.clip(new ClipContext(eyePos, endPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
+         boolean canEtherwarp = (hit.getType() == HitResult.Type.BLOCK) && isValidEtherwarpTarget(mc.level, hit.getBlockPos(), hit.getDirection());
+
+         if (canEtherwarp) {
+            // Holding left click on a valid target acts like holding sneak + right click: sneak is
+            // kept down (the packet is only sent when the player was not already sneaking) and the
+            // item keeps being used, so etherwarping repeats for as long as the button is held.
+            holdingSneak = true;
+            if (!mc.options.keyShift.isDown()) {
+               getSneakMapping(mc).setDown(true);
+               sendSneakPacket(mc, true);
+               sneakForcedByHold = true;
+            }
+            long now = System.currentTimeMillis();
+            if (now - lastHoldEtherwarpTime >= 200L) {
+               lastHoldEtherwarpTime = now;
+               if (mc.gameMode != null) {
+                  mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                  GardenMacroDetector.recordWeaponUse();
+               }
+            }
+            return;
+         }
+
+         if (s.etherwarpBlockOnly && s.etherwarpFallbackRightClick) {
+            long now = System.currentTimeMillis();
+            if (now - lastHoldFallbackTime >= 200L) {
+               lastHoldFallbackTime = now;
+               if (mc.gameMode != null) {
+                  mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                  GardenMacroDetector.recordWeaponUse();
                }
             }
          }

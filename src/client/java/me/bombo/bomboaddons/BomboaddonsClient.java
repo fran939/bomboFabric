@@ -1488,8 +1488,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                      printProfilesList((FabricClientCommandSource)context.getSource());
                      return 1;
                   }))).then(ClientCommands.argument("name", StringArgumentType.string()).executes((context) -> {
-                     String name = StringArgumentType.getString(context, "name");
+                     String requested = StringArgumentType.getString(context, "name");
                      BomboConfig.Settings s = BomboConfig.get();
+                     String name = BomboConfig.resolveProfileName(requested);
+                     if (!name.equals(requested)) {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Matched existing profile §e" + name + "§7 (names ignore capitalisation)."));
+                     }
                      if (!s.profileBinds.containsKey(name) && !name.equals("default")) {
                         s.profileBinds.put(name, new ArrayList());
                         ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §aCreated new config profile: §e" + name));

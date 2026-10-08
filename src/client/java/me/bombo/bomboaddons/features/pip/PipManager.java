@@ -25,6 +25,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -69,6 +70,20 @@ public class PipManager {
     private static long videoPositionSeconds = 0L;
     private static long lastVideoStatusPoll = 0L;
     private static final String MEDIA_API = "https://api.bombo.dpdns.org/api/media";
+    /** /open attempts before giving up and showing the thumbnail. */
+    private static final int OPEN_ATTEMPTS = 3;
+    /** Automatic session restarts allowed per URL, so a dead link cannot loop. */
+    private static final int MAX_VIDEO_RETRIES = 2;
+    /** Frames decoded by the current session (0 = nothing received yet). */
+    private static int videoFrameCount = 0;
+    /** When the current session was (re)started, for the no-frame watchdog. */
+    private static long videoSessionStartedAt = 0L;
+    /** Automatic restarts already spent on the current URL. */
+    private static int videoSessionRetries = 0;
+    /** Last session problem already reported, so chat is not spammed. */
+    private static String reportedVideoError = null;
+    /** Video id the current session was opened for, needed to reload after a failure. */
+    private static String currentVideoId = "";
 
     public static void init() {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "pip_hud"), PipManager::renderHud);
@@ -110,8 +125,28 @@ public class PipManager {
         return videoPaused;
     }
 
-    /** Opens a transcode session on bomboapi; falls back to the thumbnail if it cannot start. */
+    /** Opens a transcode session for a new URL, resetting the restart budget. */
     private static void startVideoSession(String url, String videoId) {
+        currentVideoId = videoId == null ? "" : videoId;
+        videoSessionRetries = 0;
+        openVideoSession(url, currentVideoId);
+    }
+
+    /** Re-opens the current URL after a failure, spending one restart. */
+    private static void retryVideoSession() {
+        String url = loadedUrl;
+        if (url == null || url.isEmpty() || currentVideoId.isEmpty()) return;
+        videoSessionRetries++;
+        openVideoSession(url, currentVideoId);
+    }
+
+    /**
+     * Asks bomboapi to open a transcode session and keeps the id. The call goes out as a plain GET
+     * (the server mirrors every parameter in the query string) because that is the request shape
+     * already proven to survive in-game; if it cannot start, the failure is reported in chat instead
+     * of silently swapping in the thumbnail.
+     */
+    private static void openVideoSession(String url, String videoId) {
         closeVideoSession();
         isVideo = true;
         loading = true;
@@ -119,27 +154,32 @@ public class PipManager {
         mediaWidth = 0;
         mediaHeight = 0;
         errorMessage = null;
+        videoFrameCount = 0;
+        videoSessionStartedAt = System.currentTimeMillis();
 
         CompletableFuture.runAsync(() -> {
-            try {
-                String body = "{\"url\":\"" + url.replace("\\", "\\\\").replace("\"", "\\\"") + "\"}";
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create(MEDIA_API + "/open"))
-                        .header("Content-Type", "application/json")
-                        .timeout(Duration.ofSeconds(10))
-                        .POST(HttpRequest.BodyPublishers.ofString(body))
-                        .build();
-                HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
-                if (resp.statusCode() >= 200 && resp.statusCode() < 300 && resp.body() != null) {
-                    JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
-                    if (json.has("id")) {
-                        videoSessionId = json.get("id").getAsString();
-                        return;
+            String failure = null;
+            for (int attempt = 1; attempt <= OPEN_ATTEMPTS; attempt++) {
+                MediaResponse resp = mediaGet("/open", "url=" + urlEncode(url));
+                if (resp.status() >= 200 && resp.status() < 300) {
+                    try {
+                        JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
+                        if (json.has("id")) {
+                            videoSessionId = json.get("id").getAsString();
+                            return;
+                        }
+                        failure = "no session id (" + brief(resp.body()) + ")";
+                    } catch (Throwable t) {
+                        failure = "bad reply (" + brief(resp.body()) + ")";
                     }
+                } else {
+                    failure = "HTTP " + resp.status() + " " + brief(resp.body());
                 }
-            } catch (Throwable ignored) {
+                if (attempt < OPEN_ATTEMPTS) sleep(1200L);
             }
-            // Server unavailable: degrade to the thumbnail instead of a blank box.
+
+            // The server refused the session: say why, then degrade to the thumbnail.
+            notifyChat("§8[§bBombo§8] §cPiP video could not start: " + failure + "§7 - showing the thumbnail.");
             isVideo = false;
             videoSessionId = "";
             fetchAndApplyImage(
@@ -148,26 +188,88 @@ public class PipManager {
         });
     }
 
-    private static void postMedia(String path, String jsonBody) {
-        CompletableFuture.runAsync(() -> {
+    /** Response of a media API call (HTTP status plus the raw body, or -1 on a transport error). */
+    private record MediaResponse(int status, String body) {
+    }
+
+    private static MediaResponse mediaGet(String path, String query) {
+        try {
+            String url = MEDIA_API + path + (query == null || query.isEmpty() ? "" : "?" + query);
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("User-Agent", "BomboAddons/1.0")
+                    .timeout(Duration.ofSeconds(12))
+                    .GET()
+                    .build();
+            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+            return new MediaResponse(resp.statusCode(), resp.body() == null ? "" : resp.body());
+        } catch (Throwable t) {
+            String msg = t.getMessage();
+            return new MediaResponse(-1, t.getClass().getSimpleName() + (msg == null ? "" : ": " + msg));
+        }
+    }
+
+    /** Fire-and-forget media command (pause / seek / close); failures are not worth interrupting play. */
+    private static void mediaCommand(String path, String query) {
+        CompletableFuture.runAsync(() -> mediaGet(path, query));
+    }
+
+    private static String urlEncode(String value) {
+        return java.net.URLEncoder.encode(value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private static String brief(String body) {
+        if (body == null) return "empty";
+        String clean = body.replace('\n', ' ').replace('\r', ' ').trim();
+        return clean.length() <= 120 ? clean : clean.substring(0, 120) + "...";
+    }
+
+    private static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /** Sends a chat line from any thread. */
+    private static void notifyChat(String message) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) return;
+        mc.execute(() -> {
             try {
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create(MEDIA_API + path))
-                        .header("Content-Type", "application/json")
-                        .timeout(Duration.ofSeconds(8))
-                        .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                        .build();
-                HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.discarding());
+                if (mc.player != null) {
+                    mc.player.sendSystemMessage(Component.literal(message));
+                }
             } catch (Throwable ignored) {
             }
         });
+    }
+
+    /** Reports a session problem once and spends a restart before giving up for good. */
+    private static void handleVideoFailure(String reason) {
+        if (reason == null || reason.isEmpty()) return;
+        String key = videoSessionId + "|" + reason;
+        if (key.equals(reportedVideoError)) return;
+        reportedVideoError = key;
+
+        if (reason.equals("Stream ended")) {
+            notifyChat("§8[§bBombo§8] §7PiP: the video reached the end.");
+            return;
+        }
+        if (videoSessionRetries < MAX_VIDEO_RETRIES) {
+            notifyChat("§8[§bBombo§8] §ePiP: " + reason + "§7 - restarting the stream...");
+            retryVideoSession();
+            return;
+        }
+        notifyChat("§8[§bBombo§8] §cPiP: " + reason);
     }
 
     /** Pauses or resumes server-side playback (freezes the frame while paused). */
     public static void setVideoPaused(boolean paused) {
         if (videoSessionId.isEmpty()) return;
         videoPaused = paused;
-        postMedia("/pause", "{\"id\":\"" + videoSessionId + "\",\"paused\":" + paused + "}");
+        mediaCommand("/pause", "id=" + urlEncode(videoSessionId) + "&paused=" + paused);
     }
 
     public static void toggleVideoPaused() {
@@ -178,8 +280,10 @@ public class PipManager {
     public static void seekVideo(long seconds) {
         if (videoSessionId.isEmpty()) return;
         long target = Math.max(0L, seconds);
-        textureLoaded = false;
-        postMedia("/seek", "{\"id\":\"" + videoSessionId + "\",\"seconds\":" + target + "}");
+        // The previous frame stays on screen until the seeked one arrives, so the box never flashes
+        // empty while the server re-opens ffmpeg at the new position.
+        videoPositionSeconds = target;
+        mediaCommand("/seek", "id=" + urlEncode(videoSessionId) + "&seconds=" + target);
     }
 
     public static void seekVideoRelative(long deltaSeconds) {
@@ -207,17 +311,18 @@ public class PipManager {
         if (id.isEmpty()) return;
         CompletableFuture.runAsync(() -> {
             try {
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create(MEDIA_API + "/status?id=" + id))
-                        .timeout(Duration.ofSeconds(6))
-                        .GET()
-                        .build();
-                HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
-                if (resp.statusCode() == 200 && resp.body() != null) {
-                    JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
-                    if (json.has("positionSeconds")) {
-                        onPosition.accept((long) json.get("positionSeconds").getAsDouble());
-                    }
+                MediaResponse resp = mediaGet("/status", "id=" + urlEncode(id));
+                if (resp.status() != 200) return;
+                JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
+                if (json.has("positionSeconds")) {
+                    onPosition.accept((long) json.get("positionSeconds").getAsDouble());
+                }
+                if (json.has("frames")) {
+                    videoFrameCount = json.get("frames").getAsInt();
+                }
+                if (json.has("error") && !json.get("error").isJsonNull()) {
+                    String err = json.get("error").getAsString();
+                    if (err != null && !err.isEmpty()) handleVideoFailure(err);
                 }
             } catch (Throwable ignored) {
             }
@@ -226,13 +331,14 @@ public class PipManager {
 
     public static void closeVideoSession() {
         if (!videoSessionId.isEmpty()) {
-            postMedia("/close", "{\"id\":\"" + videoSessionId + "\"}");
+            mediaCommand("/close", "id=" + urlEncode(videoSessionId));
         }
         videoSessionId = "";
         isVideo = false;
         videoPaused = false;
         videoFrameInFlight = false;
         videoPositionSeconds = 0L;
+        videoFrameCount = 0;
     }
 
     private static void pollVideoFrame() {
@@ -244,6 +350,7 @@ public class PipManager {
             try {
                 DownloadResult result = download(MEDIA_API + "/frame?id=" + id + "&t=" + System.currentTimeMillis());
                 if (result != null && isUsableImage(result)) {
+                    videoFrameCount++;
                     applyImageData(result.data);
                 }
             } catch (Throwable ignored) {
@@ -597,6 +704,13 @@ public class PipManager {
                 lastVideoPoll = now;
                 pollVideoFrame();
             }
+        }
+        // A session that never produced a frame (dead link, yt-dlp hiccup, resolver timeout) is
+        // restarted instead of sitting on "Loading media..." forever.
+        if (isVideo && !videoSessionId.isEmpty() && videoFrameCount == 0
+                && videoSessionRetries < MAX_VIDEO_RETRIES
+                && System.currentTimeMillis() - videoSessionStartedAt > 15000L) {
+            retryVideoSession();
         }
         pollVideoPosition();
 

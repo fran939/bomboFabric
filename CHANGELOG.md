@@ -1,5 +1,21 @@
 # BomboAddons Changelog
  
+## [26.2.28.113] - 2026-10-08 (Beta)
+
+### Features
+- **PiP Video Starts Reliably & Explains Itself (`PipManager`, `bomboapi`):** Opening a video now retries three times, restarts the session automatically when no frame arrives within 15 seconds, and reports the real reason a link cannot be played instead of quietly showing the video thumbnail. The transcoder captures yt-dlp and ffmpeg output, so `/b pip` now says "YouTube blocked this server (bot check)" and names the cookies file that fixes it, rather than leaving a blank or frozen box. Media calls also use the request shape already proven to work in-game.
+- **Key Binds Actually Apply (`ProfileKeybindManager`, `ProfileKeybindsScreen`):** Re-binding a key now binds the key you pressed. The manager used to read the first `Key` field of a mapping - which is the mapping's *default* key - so every override was silently skipped: the pill kept showing the old key, the vanilla Controls screen never changed, and switching profiles appeared to restore nothing. The reference column now shows the binding's real default (`default: Space`) and every row has a reset button (`↺` back to default, `✕` to drop the override).
+- **Storage Overlay Toolbar Fixed to Three Buttons (`StorageOverlayScreen`, `ConfigRegistry`):** Hide Overlay, Farming Toolkit and Hunting Toolkit - and nothing else. The button editor is gone; the toolbar is still movable and resizable from `/b gui`.
+- **Image Crosshair Sized Like a Crosshair (`CrosshairRenderer`):** Scale 1.0 is now the footprint of a normal 15-pixel crosshair instead of the image's own pixel size, so a large PNG no longer covers the screen.
+- **Hold Left Click to Etherwarp (`LeftClickEtherwarp`):** Holding left click on a valid etherwarp target keeps sneak down (only sending the sneak packet when you were not already sneaking) and keeps using the item - exactly like holding sneak + right click - and releases the sneak when you let go.
+- **Profile Names Ignore Capitalisation (`BomboConfig`, `BomboaddonsClient`):** `/b prof general` now switches to the existing `General` profile instead of creating a second profile that also reported itself as active.
+
+### Fixes
+- **Speedometer Max (`SpeedometerHud`):** A Garden player crossing 20+ blocks per tick (400-500 bps) was discarded as a teleport, so the maximum stayed around 18 bps. Teleport detection now only drops physically impossible jumps and retracts a spike once normal movement resumes.
+- **Lyrics Word Highlight Freezing (`LyricsManager`):** When a provider stamps only the first words of a line - or gives every word the same timestamp - the wipe lit a couple of words and then looked frozen. Those timings are now rejected and the line uses the smooth progress reveal instead.
+- **`/b cover` Syncs Lyrics Too (`LyricsManager`):** The command now clears the cached lyrics, so the artwork and the lyrics are both refetched instead of the same lines being served from cache.
+- **Blocked Slot Highlight While Bypassing (`AbstractContainerScreenMixin`):** Holding the bypass key removes the red locked-slot overlay immediately, so a slot you are allowed to click is never drawn as locked.
+
 ## [26.2.28.112] - 2026-10-08 (Beta)
 
 ### Features
@@ -10,6 +26,7 @@
 ### Fixes
 - **Paused Playback Position (`bomboapi` media service):** Pausing used to report the position as `0:00` and a seek made while paused jumped to the start of the video instead of stepping from where it was. The clock now freezes at the real position, and a paused seek stays paused on the seeked frame instead of silently resuming.
 - **Playback Frame on Paused Seek (`bomboapi` media service):** Seeking while paused now waits for the first frame of the new position before freezing, so the overlay shows the seeked frame instead of a blank box.
+
 ## [26.2.28.111] - 2026-10-08 (Beta)
 
 ### Features

@@ -1248,7 +1248,7 @@ public class ConfigRegistry {
                     items.add(ConfigItem.toggle("  Preserve Cursor Position", "Prevents the mouse cursor from resetting to screen center when switching between storages.", category, () -> s.storageOverlayDoNotResetCursor, v -> s.storageOverlayDoNotResetCursor = v));
 
                     items.add(ConfigItem.header("Storage Overlay Toolbar", category));
-                    items.add(ConfigItem.button("Toolbar Position & Scale", "Move Toolbar", "Opens the HUD editor to reposition and resize the buttons shown on top of the Storage Overlay.", category, () -> Minecraft.getInstance().setScreenAndShow(new HudMoveScreen(HudTarget.STORAGE_TOOLBAR))));
+                    items.add(ConfigItem.button("Toolbar Position & Scale", "Move Toolbar", "Opens the HUD editor to reposition and resize the fixed Storage Overlay buttons (Hide Overlay, Farming Toolkit, Hunting Toolkit).", category, () -> Minecraft.getInstance().setScreenAndShow(new HudMoveScreen(HudTarget.STORAGE_TOOLBAR))));
                     items.add(ConfigItem.sliderFloat("Toolbar Scale", "Size of the Storage Overlay toolbar buttons.", category, 0.5f, 1.5f, 0.05f, 1.0f, "x", () -> s.storageToolbarScale > 0 ? s.storageToolbarScale : 1.0f, v -> s.storageToolbarScale = v));
                     items.add(ConfigItem.button("Reset Toolbar Position", "Reset", "Restores the Storage Overlay toolbar to its default position and full size.", category, () -> {
                         s.storageToolbarX = -1;
@@ -1256,10 +1256,6 @@ public class ConfigRegistry {
                         s.storageToolbarScale = 1.0f;
                         BomboConfig.save();
                     }));
-                    items.add(ConfigItem.dynamicCustomCard("Toolbar Buttons", "Add, edit, reorder, and remove the buttons shown on the Storage Overlay toolbar. A command of 'hide' closes the overlay.", category,
-                            ConfigCustomWidgets::getStorageToolbarCardHeight,
-                            ConfigCustomWidgets::renderStorageToolbarCard,
-                            ConfigCustomWidgets::handleStorageToolbarClick));
                 }
 
                 items.add(ConfigItem.header("Diana Ritual & Lootshare Ready Alerts", category));

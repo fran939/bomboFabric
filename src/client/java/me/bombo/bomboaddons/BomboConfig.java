@@ -449,6 +449,24 @@ public class BomboConfig {
       return instance;
    }
 
+   /**
+    * Finds an existing config profile whose name matches the request ignoring case, so
+    * {@code /b prof general} switches to the existing {@code General} profile instead of silently
+    * creating a near-duplicate that both claim to be active.
+    */
+   public static String resolveProfileName(String requested) {
+      if (requested == null || requested.trim().isEmpty()) return "default";
+      String clean = requested.trim();
+      if (clean.equalsIgnoreCase("default")) return "default";
+      Settings s = instance;
+      if (s != null && s.profileBinds != null) {
+         for (String existing : s.profileBinds.keySet()) {
+            if (existing != null && existing.equalsIgnoreCase(clean)) return existing;
+         }
+      }
+      return clean;
+   }
+
    static {
       load();
    }
