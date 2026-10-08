@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.112] - 2026-10-08 (Beta)
+
+### Features
+- **Video Playback in Picture-in-Picture (`PipManager`, `BomboaddonsClient`):** `/b pip <YouTube link>` now actually plays the video. The mod opens a transcode session on the Bombo API, which resolves the link with `yt-dlp` and frames it with `ffmpeg` at real time, and the overlay polls the latest frame. No video decoder is needed on the client, and if the API is unreachable it still falls back to the video thumbnail.
+- **PiP Media Controls (`PipManager`, `HudMoveScreen`):** The PiP box shows a transport bar while you are in the HUD editor (`/b pip gui`): rewind 5s, pause/play, forward 5s and close. The bar also shows the live playback clock and a `paused` marker.
+- **PiP Video Commands (`BomboaddonsClient`):** `/b pip pause`, `/b pip play`, `/b pip seek <seconds>` (`+5` / `-5` for relative), `/b pip fwd` and `/b pip back` let you drive playback from chat or a key bind without opening a menu.
+
+### Fixes
+- **Paused Playback Position (`bomboapi` media service):** Pausing used to report the position as `0:00` and a seek made while paused jumped to the start of the video instead of stepping from where it was. The clock now freezes at the real position, and a paused seek stays paused on the seeked frame instead of silently resuming.
+- **Playback Frame on Paused Seek (`bomboapi` media service):** Seeking while paused now waits for the first frame of the new position before freezing, so the overlay shows the seeked frame instead of a blank box.
 ## [26.2.28.111] - 2026-10-08 (Beta)
 
 ### Features
