@@ -1,5 +1,23 @@
 [
   {
+    "version": "26.2.28.113",
+    "date": "2026-10-08",
+    "changes": [
+      "+ PiP Video Failures Explained - Opening a video is retried three times, the session restarts by itself when no frame arrives within 15 seconds, and the overlay tells you why a link cannot be played instead of quietly showing the video thumbnail",
+      "+ YouTube Bot-Wall Message & Cookies - The transcoder now reads ffmpeg and yt-dlp errors, so /b pip reports \"YouTube blocked this server (bot check)\" and points at the cookies file that fixes it",
+      "~ Key Binds Now Really Apply - Re-binding a key binds the key you pressed; overrides used to be skipped silently (the pill kept the old key, the vanilla Controls screen never changed and switching profiles restored nothing)",
+      "+ Key Bind Reference & Reset - Rows show the binding's real default (default: Space) and every row has a reset button, ↺ back to default or ✕ to drop the override",
+      "~ Profile Names Ignore Capitalisation - /b prof general now switches to the existing General profile instead of creating a second profile that also claimed to be active",
+      "~ Storage Overlay Toolbar - Locked to the three buttons it should always have (Hide Overlay, Farming Toolkit, Hunting Toolkit); the editor is gone and the toolbar is still movable and resizable from /b gui",
+      "~ Image Crosshair Size - Scale 1.0 is now the size of a normal crosshair instead of the image's own pixel size, so a large PNG no longer covers the screen",
+      "~ Speedometer Max - Fast movement (400-500 bps) was being discarded as a teleport and the max stayed around 18 bps; the max now climbs to the real peak",
+      "+ Hold Left Click to Etherwarp - Holding left click on a valid target keeps sneak down and keeps using the item, just like holding sneak + right click, and releases it when you let go",
+      "~ Lyrics Highlight Freezing - Providers that stamp only the first words of a line (or give every word the same time) made the karaoke stop part-way; those timings are now rejected for the smooth full-line reveal",
+      "~ /b cover Syncs Lyrics Too - The command now clears the cached lyrics so artwork and lyrics are both refetched",
+      "~ Blocked Slot Highlight - Holding the bypass key now removes the red locked-slot overlay straight away"
+    ]
+  },
+  {
     "version": "26.2.28.112",
     "date": "2026-10-08",
     "changes": [

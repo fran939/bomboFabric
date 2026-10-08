@@ -152,7 +152,7 @@ public class ProfileKeybindsScreen extends Screen {
         boolean doneHover = this.inRect(mouseX, mouseY, doneX, fy, doneW, 18);
         ConfigUITheme.drawPillButton(g, this.font, "§aDone", doneX, fy, doneW, 18, doneHover, -1, 0x2210B981, 0x6610B981);
 
-        g.text(this.font, "§7Left-click a key to re-bind §8| §7Right-click to reset one §8| §7Esc cancels", winX + 14, winY + winH - 40, 0xFF94A3B8, false);
+        g.text(this.font, "§7Left-click a key to re-bind §8| §7✕ right-click/↺ resets one §8| §7Esc cancels", winX + 14, winY + winH - 40, 0xFF94A3B8, false);
 
         if (this.captureTarget != null) {
             g.fill(winX, winY + winH - 58, winX + winW, winY + winH - 44, 0xEE78350F);
@@ -177,11 +177,11 @@ public class ProfileKeybindsScreen extends Screen {
         int keyW = 104;
         int keyX = clearX - 4 - keyW;
 
-        String vanilla = ProfileKeybindManager.vanillaKeyName(mapping.getName());
+        String fallback = ProfileKeybindManager.defaultKeyName(mapping);
         String current = ProfileKeybindManager.displayKey(mapping);
         if (overridden) {
-            g.text(this.font, "§8vanilla: §7" + (vanilla == null ? current : vanilla), keyX - 8 - this.font.width("§8vanilla: §7" + (vanilla == null ? current : vanilla)),
-                    rowY + 7, 0xFF64748B, false);
+            String ref = "§8default: §7" + (fallback == null ? current : fallback);
+            g.text(this.font, ref, keyX - 8 - this.font.width(ref), rowY + 7, 0xFF64748B, false);
         }
 
         boolean capturing = this.captureTarget == mapping;
@@ -192,10 +192,13 @@ public class ProfileKeybindsScreen extends Screen {
                 capturing ? 0x55FFAA00 : (overridden ? 0x33FFAA00 : 0x1AFFFFFF),
                 capturing ? 0xFFFFAA00 : (overridden ? 0x88FFAA00 : 0x44FFFFFF));
 
-        if (overridden) {
-            boolean clearHover = this.inRect(mouseX, mouseY, clearX, rowY + 3, clearW, 16);
-            ConfigUITheme.drawPillButton(g, this.font, "§c✕", clearX, rowY + 3, clearW, 16, clearHover, 0xFFFF5555, 0x22EF4444, 0x55EF4444);
-        }
+        // Every row keeps a reset button: an override is cleared back to the previous binding, and a
+        // row without one is reset to the game's own default key.
+        boolean clearHover = this.inRect(mouseX, mouseY, clearX, rowY + 3, clearW, 16);
+        ConfigUITheme.drawPillButton(g, this.font, overridden ? "§c✕" : "§8↺", clearX, rowY + 3, clearW, 16,
+                clearHover, overridden ? 0xFFFF5555 : 0xFF64748B,
+                overridden ? 0x22EF4444 : 0x0FFFFFFF,
+                overridden ? 0x55EF4444 : 0x22FFFFFF);
     }
 
     @Override
@@ -262,7 +265,12 @@ public class ProfileKeybindsScreen extends Screen {
                     return true;
                 }
                 if (this.inRect(event.x(), event.y(), clearX, rowY + 3, clearW, 16)) {
-                    ProfileKeybindManager.clearOverride(mapping.getName());
+                    if (ProfileKeybindManager.hasOverride(mapping.getName())) {
+                        ProfileKeybindManager.clearOverride(mapping.getName());
+                    } else {
+                        ProfileKeybindManager.resetToDefault(mapping);
+                    }
+                    this.captureTarget = null;
                     return true;
                 }
                 if (this.inRect(event.x(), event.y(), keyX, rowY + 3, keyW, 16)) {

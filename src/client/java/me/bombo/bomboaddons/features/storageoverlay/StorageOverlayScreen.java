@@ -56,6 +56,15 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	private static final int NOT_MATCHED_COLOR = 0x99000000;
 
+	//
+	// The toolbar is a fixed set of three buttons - the player can move and resize it from the HUD
+	// editor (/b gui) but not add, rename, disable or remove buttons.
+	public static final String[][] FIXED_TOOLBAR = {
+			{ "Hide Overlay", "hide" },
+			{ "Farming Toolkit", "/farmingtoolkit" },
+			{ "Hunting Toolkit", "/huntingtoolkit" }
+	};
+
 	// Toolbar metrics (unscaled). The whole toolbar is scaled by storageToolbarScale.
 	public static final int TOOLBAR_BASE_W = 104;
 	public static final int TOOLBAR_BASE_H = 16;
@@ -261,40 +270,31 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		int buttonH = toolbarButtonHeight();
 		int gap = toolbarGap();
 		int y = ty;
-		for (BomboConfig.StorageOverlayButton entry : new ArrayList<>(s.storageOverlayButtons)) {
-			if (entry == null || !entry.enabled) continue;
-			String label = entry.label == null || entry.label.isEmpty()
-					? (entry.command == null || entry.command.isEmpty() ? "Button" : entry.command)
-					: entry.label;
-			final BomboConfig.StorageOverlayButton target = entry;
-			this.addRenderableWidget(Button.builder(Component.literal(label), b -> runToolbarAction(target))
+		for (String[] entry : FIXED_TOOLBAR) {
+			final String label = entry[0];
+			final String command = entry[1];
+			this.addRenderableWidget(Button.builder(Component.literal(label), b -> runToolbarAction(command))
 					.bounds(tx, y, buttonW, buttonH)
 					.build());
 			y += buttonH + gap;
 		}
 	}
 
-	/** Runs a configured toolbar button: {@code hide}/{@code close}/{@code exit} closes the overlay, anything else is sent as a command. */
-	private void runToolbarAction(BomboConfig.StorageOverlayButton entry) {
-		if (entry == null) return;
-		if (entry.isHide()) {
+	/** Runs a fixed toolbar button: {@code hide}/{@code close}/{@code exit} closes the overlay, anything else is sent as a command. */
+	private void runToolbarAction(String command) {
+		if (command == null) return;
+		String cmd = command.trim();
+		if (cmd.isEmpty()) return;
+		if (cmd.equalsIgnoreCase("hide") || cmd.equalsIgnoreCase("close") || cmd.equalsIgnoreCase("exit")) {
 			hide(null);
 			return;
 		}
-		String cmd = entry.command == null ? "" : entry.command.trim();
-		if (cmd.isEmpty()) return;
 		if (!cmd.startsWith("/")) cmd = "/" + cmd;
 		MessageScheduler.INSTANCE.sendMessageAfterCooldown(cmd, true);
 	}
 
 	public static int getToolbarButtonCount() {
-		BomboConfig.Settings s = BomboConfig.get();
-		if (s == null || s.storageOverlayButtons == null) return 0;
-		int count = 0;
-		for (BomboConfig.StorageOverlayButton entry : s.storageOverlayButtons) {
-			if (entry != null && entry.enabled) count++;
-		}
-		return count;
+		return FIXED_TOOLBAR.length;
 	}
 
 	private static float toolbarScale() {

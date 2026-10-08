@@ -326,7 +326,25 @@ public class LyricsManager {
         }
         String normalizedWords = normalizeForCoverage(sb.toString());
         if (normalizedWords.isEmpty()) return false;
-        return normalizedWords.equals(normalizedText) || normalizedWords.contains(normalizedText);
+        if (!(normalizedWords.equals(normalizedText) || normalizedWords.contains(normalizedText))) return false;
+
+        // The timings have to span the line as well. Providers sometimes stamp only the first words
+        // (or hand every word the same timestamp), which lit up two or three words and then looked
+        // frozen for the rest of the line - the wipe stopped although the vocal kept going. In that
+        // case the callers use the smooth line-progress reveal instead.
+        long lineStart = line.startMs();
+        long lineEnd = Math.max(line.endMs(), lineStart + 1L);
+        long span = lineEnd - lineStart;
+        long firstStart = words.get(0).startMs();
+        long lastEnd = words.get(words.size() - 1).endMs();
+        if (firstStart > lineStart + Math.max(1500L, span / 3L)) return false;
+        if (lastEnd + Math.max(1200L, span / 4L) < lineEnd) return false;
+        for (int i = 1; i < words.size(); i++) {
+            if (words.get(i).startMs() < words.get(i - 1).startMs()) return false;
+        }
+        // Degenerate durations (every word lasting ~0ms) also produce a frozen wipe.
+        long totalWordTime = Math.max(0L, lastEnd - firstStart);
+        return totalWordTime >= Math.max(600L, span / 4L);
     }
 
     private static String normalizeForCoverage(String value) {
@@ -567,6 +585,10 @@ public class LyricsManager {
     public static void refetchArtwork() {
         lastArtworkUrl = "";
         albumArtTexture = null;
+        // A cover refetch is a full resync: drop the cached lyrics for this track as well, otherwise
+        // the same stale (or mismatched) lines are served straight back from the cache and only the
+        // artwork appears to change.
+        CACHE.clear();
         String track = SpotifyManager.getCurrentTrack();
         String artist = SpotifyManager.getCurrentArtist();
         if (track != null && !track.isEmpty()) {

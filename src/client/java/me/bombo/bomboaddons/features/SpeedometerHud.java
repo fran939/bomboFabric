@@ -25,6 +25,11 @@ public class SpeedometerHud {
    private static long lastDisplayRefreshTime = 0L;
    private static String cachedDisplayText = "§bSpeed: §f0.0 §7(0.0) bps";
 
+   /** A single tick cannot move this far, so anything above it is a teleport rather than speed. */
+   private static final double IMPOSSIBLE_JUMP_BLOCKS = 40.0;
+   /** A large jump followed by normal movement is treated as a teleport spike and retracted. */
+   private static final double TELEPORT_SPIKE_BLOCKS = 6.0;
+
    // Rolling min / avg / max statistics window (default 5 seconds).
    private static final Deque<SpeedSample> STAT_SAMPLES = new ArrayDeque<>();
    private static double statMin = 0.0;
@@ -126,11 +131,21 @@ public class SpeedometerHud {
     * so a single 300 bps spike cannot poison the maximum for the next five seconds.
     */
    private static void updateStatistics(long now, double dist, double instantBps) {
-      // Only genuine teleports (a huge per-tick jump, e.g. AOTV / /warp / world change) are
-      // dropped. A pure speed threshold must NOT be used here: legitimate fast movement
-      // (elytra, falls, max speed) would be discarded and the max would never climb.
-      if (dist < 8.0) {
+      // A teleport cannot be told apart from fast movement by distance alone: a Garden player
+      // legitimately crosses 20+ blocks in a tick (400-500 bps), which the old 8-block cutoff threw
+      // away, so the max never climbed above ~18 bps. Only physically impossible jumps are dropped
+      // here, and a one-off spike is retracted as soon as ordinary movement resumes - which is
+      // exactly the shape of an AOTV / etherwarp / /warp teleport.
+      if (dist < IMPOSSIBLE_JUMP_BLOCKS) {
          STAT_SAMPLES.addLast(new SpeedSample(now, dist, instantBps));
+         if (STAT_SAMPLES.size() >= 2) {
+            java.util.Iterator<SpeedSample> it = STAT_SAMPLES.descendingIterator();
+            SpeedSample last = it.next();
+            SpeedSample previous = it.next();
+            if (previous.distance >= TELEPORT_SPIKE_BLOCKS && last.distance < 1.5) {
+               it.remove();
+            }
+         }
       }
 
       long windowMs = statWindowMs();

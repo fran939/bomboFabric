@@ -264,11 +264,20 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 
        if (slot.hasItem()) {
           BomboConfig.Settings s = BomboConfig.get();
-          boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden();
+          // Holding the bypass key removes the locked-slot tint immediately, so the red overlay is
+          // never shown on a slot the player is allowed to click right now.
+          boolean bypassHeld = false;
+          if (s != null && s.blockedSlots != null && !s.blockedSlots.isEmpty()) {
+             int bypassKey = ClickLogic.getKeyCode(s.blockedSlotsBypassKey);
+             if (bypassKey != -1 && org.lwjgl.glfw.GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), bypassKey) == 1) {
+                bypassHeld = true;
+             }
+          }
+          boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden() && !bypassHeld;
           if (isGardenMoving) {
              guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, 0x771E293B);
              guiGraphics.outline(slot.x, slot.y, 16, 16, 0xAA64748B);
-          } else if (s != null && s.blockedSlots != null && !s.blockedSlots.isEmpty()) {
+          } else if (s != null && s.blockedSlots != null && !s.blockedSlots.isEmpty() && !bypassHeld) {
              String currentGui = net.minecraft.ChatFormatting.stripFormatting(this.getTitle().getString()).toLowerCase();
              String currentArea = me.bombo.bomboaddons.BomboaddonsClient.currentArea != null ? me.bombo.bomboaddons.BomboaddonsClient.currentArea.toLowerCase() : "";
              ItemStack stack = slot.getItem();

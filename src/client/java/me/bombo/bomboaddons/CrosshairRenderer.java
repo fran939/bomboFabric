@@ -26,6 +26,9 @@ public class CrosshairRenderer {
    private static final Identifier IMAGE_TEXTURE_ID =
          Identifier.fromNamespaceAndPath("bomboaddons", "custom_crosshair_image");
 
+   /** Footprint (in GUI pixels) an image crosshair has at scale 1.0 - the vanilla crosshair size. */
+   public static final float REFERENCE_CROSSHAIR_PX = 15.0F;
+
    private static DynamicTexture imageTexture = null;
    private static String loadedImagePath = "";
    private static int imageWidth = 0;
@@ -115,9 +118,12 @@ public class CrosshairRenderer {
    private static void renderImage(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight,
          BomboConfig.CrosshairSettings settings) {
       float scale = settings.imageScale > 0.0F ? settings.imageScale : 1.0F;
-      int factor = Math.max(1, Math.round(scale));
-      int drawW = Math.max(1, imageWidth * factor);
-      int drawH = Math.max(1, imageHeight * factor);
+      // Scale is relative to a normal crosshair, not to the image's own pixel grid: a 512x512 PNG at
+      // 1.0 has to look like the default 15-pixel crosshair instead of covering the whole screen.
+      int reference = Math.max(1, Math.max(imageWidth, imageHeight));
+      float factor = (REFERENCE_CROSSHAIR_PX / (float) reference) * scale;
+      int drawW = Math.max(1, Math.round(imageWidth * factor));
+      int drawH = Math.max(1, Math.round(imageHeight * factor));
       int x = (screenWidth - drawW) / 2;
       int y = (screenHeight - drawH) / 2;
       // Chroma always tints (a static image would otherwise never animate), and the color tint
