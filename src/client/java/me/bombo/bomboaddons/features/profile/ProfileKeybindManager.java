@@ -3,11 +3,14 @@ package me.bombo.bomboaddons.features.profile;
 import com.mojang.blaze3d.platform.InputConstants;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.CustomBindsProcessor;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -42,8 +45,14 @@ public final class ProfileKeybindManager {
 
     private static final long CLASS_CACHE_MS = 1000L;
 
-    /** Vanilla key each mapping had before Bombo touched anything, captured on first apply. */
+    /**
+     * The player's own key for each mapping, captured on the first apply before anything of ours is
+     * written. This is the baseline every scope falls back to, so a profile only ever changes the
+     * keys it actually overrides.
+     */
     private static final Map<String, InputConstants.Key> VANILLA_KEYS = new LinkedHashMap<>();
+    /** Mappings this feature currently holds on an override key, so they can be put back later. */
+    private static final Map<String, InputConstants.Key> APPLIED_KEYS = new LinkedHashMap<>();
     private static String appliedScope = null;
     private static boolean captured = false;
 
@@ -177,7 +186,24 @@ public final class ProfileKeybindManager {
         if (mappingName == null || keyName == null || keyName.trim().isEmpty()) return;
         Map<String, String> overrides = overridesFor(editScope(), true);
         if (overrides == null) return;
-        overrides.put(mappingName, keyName.trim().toLowerCase(Locale.ROOT));
+        String wanted = keyName.trim().toLowerCase(Locale.ROOT);
+
+        // Picking the key the mapping already uses is not an override. Storing it would flag the row
+        // as "different from default" and count towards the override total while changing nothing.
+        InputConstants.Key baseline = baselineKey(mappingByName(mappingName));
+        InputConstants.Key target = keyFromName(wanted);
+        if (baseline != null && target != null && baseline.equals(target)) {
+            overrides.remove(mappingName);
+            BomboConfig.Settings settings = BomboConfig.get();
+            if (settings != null && settings.profileKeyOverrides != null && overrides.isEmpty()) {
+                settings.profileKeyOverrides.remove(editScope());
+            }
+            BomboConfig.save();
+            refresh();
+            return;
+        }
+
+        overrides.put(mappingName, wanted);
         BomboConfig.save();
         refresh();
     }
@@ -241,21 +267,24 @@ public final class ProfileKeybindManager {
     }
 
     /**
-     * The key a mapping falls back to when this scope has no override.
+     * The key a mapping falls back to when this scope has no override: the key the player actually
+     * has, captured on the first apply.
      *
-     * <p>{@link KeyMapping#getDefaultKey()} is the binding baked into the game, so it is used as the
-     * baseline instead of whatever happens to sit in {@code options.txt}. An earlier version wrote
-     * overrides into {@code options.txt}, which made the next launch snapshot the overridden keys as
-     * "vanilla" and then restore the wrong keys for every other scope.
+     * <p>This must be the captured live key and not {@link KeyMapping#getDefaultKey()}. Using the
+     * game's built-in default rewrote every binding the player had customised themselves - chat on
+     * {@code /}, a rebound inventory key, and so on - back to stock, which is what made applying a
+     * profile look like the whole control scheme had been reset. The overrides are never written to
+     * {@code options.txt}, so the captured values stay the player's own.
      */
     private static InputConstants.Key baselineKey(KeyMapping mapping) {
         if (mapping == null) return null;
+        InputConstants.Key captured = mapping.getName() == null ? null : VANILLA_KEYS.get(mapping.getName());
+        if (captured != null) return captured;
         try {
-            InputConstants.Key def = mapping.getDefaultKey();
-            if (def != null) return def;
+            return mapping.getDefaultKey();
         } catch (Throwable ignored) {
+            return null;
         }
-        return mapping.getName() == null ? null : VANILLA_KEYS.get(mapping.getName());
     }
 
     /** The key a mapping falls back to ("Space", "Left Shift"), for the reference column. */
@@ -294,30 +323,114 @@ public final class ProfileKeybindManager {
         for (KeyMapping mapping : mappings) {
             if (mapping == null || mapping.getName() == null) continue;
             String name = mapping.getName();
+            InputConstants.Key current = readKey(mapping);
 
             InputConstants.Key target = null;
+            boolean restoring = false;
             String override = overrides == null ? null : overrides.get(name);
             if (override != null && !override.isEmpty()) {
                 target = keyFromName(override);
+            } else {
+                // No override in this scope. Only a key this feature changed itself is put back; every
+                // other mapping is left exactly as the player has it, which is what keeps the rest of
+                // the control scheme (chat on '/', ...) untouched while two keys change.
+                InputConstants.Key mine = APPLIED_KEYS.get(name);
+                if (mine == null) continue;
+                if (current != null && !current.equals(mine)) {
+                    // The player re-bound it themselves after we touched it: adopt that as the new
+                    // baseline instead of fighting them back to the old key.
+                    VANILLA_KEYS.put(name, current);
+                    APPLIED_KEYS.remove(name);
+                    continue;
+                }
+                target = VANILLA_KEYS.get(name);
+                restoring = true;
             }
-            if (target == null) target = baselineKey(mapping);
             if (target == null) continue;
 
-            InputConstants.Key current = readKey(mapping);
-            if (current != null && current.equals(target)) continue;
+            if (current != null && current.equals(target)) {
+                if (restoring) APPLIED_KEYS.remove(name);
+                continue;
+            }
 
             mapping.setKey(target);
+            if (restoring) {
+                APPLIED_KEYS.remove(name);
+            } else {
+                APPLIED_KEYS.put(name, target);
+            }
             changed = true;
         }
 
         if (changed) {
             KeyMapping.resetMapping();
             // Deliberately NOT mc.options.save(): persisting a scope's overrides into options.txt
-            // would make the next launch snapshot the overridden keys as "vanilla", so switching
+            // would make the next launch capture the overridden keys as the baseline, so switching
             // to a scope without overrides would restore the wrong keys. The overrides live in the
-            // Bombo config and are re-applied every tick instead.
+            // Bombo config and are re-applied every tick instead; the full options layout for the
+            // active scope is kept as its own file (see writeScopeSnapshot).
         }
         appliedScope = (s.profileKeyControlsEnabled ? "on:" : "off:") + scope;
+        writeScopeSnapshot(scope, mappings);
+    }
+
+    /**
+     * Writes the complete {@code options.txt} layout for a scope to
+     * {@code config/bomboaddons/keys/options_&lt;scope&gt;.txt}.
+     *
+     * <p>This is the "one options file per profile" model: the whole file is copied, only the keys
+     * this scope overrides differ, and the result is kept next to the mod's config so a profile can
+     * be inspected, backed up or restored by hand.
+     */
+    private static void writeScopeSnapshot(String scope, KeyMapping[] mappings) {
+        try {
+            Path folder = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons").resolve("keys");
+            Files.createDirectories(folder);
+            List<String> lines = new ArrayList<>();
+            Path live = FabricLoader.getInstance().getConfigDir().resolve("options.txt");
+            if (Files.exists(live)) {
+                lines.addAll(Files.readAllLines(live));
+            }
+            for (KeyMapping mapping : mappings) {
+                if (mapping == null || mapping.getName() == null) continue;
+                InputConstants.Key key = readKey(mapping);
+                if (key == null) continue;
+                String prefix = "key_" + mapping.getName() + ":";
+                String entry = prefix + key.getName();
+                int index = -1;
+                for (int i = 0; i < lines.size(); i++) {
+                    if (lines.get(i).startsWith(prefix)) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index >= 0) {
+                    lines.set(index, entry);
+                } else {
+                    lines.add(entry);
+                }
+            }
+            Files.write(folder.resolve("options_" + safeScopeName(scope) + ".txt"), lines);
+        } catch (Throwable ignored) {
+            // A read-only or missing config folder must never break key handling in game.
+        }
+    }
+
+    /** Filesystem-safe form of a scope name ("General" -> "General", "Dungeon Mage" -> "Dungeon_Mage"). */
+    private static String safeScopeName(String scope) {
+        String clean = scope == null || scope.isEmpty() ? "default" : scope.trim();
+        return clean.replaceAll("[^A-Za-z0-9._-]", "_");
+    }
+
+    /** Looks up a live mapping by its translation key name. */
+    private static KeyMapping mappingByName(String name) {
+        if (name == null) return null;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.options == null || mc.options.keyMappings == null) return null;
+        for (KeyMapping mapping : mc.options.keyMappings) {
+            if (mapping != null && name.equals(mapping.getName())) return mapping;
+        }
+        return null;
     }
 
     /** Converts a stored friendly key name into an {@link InputConstants.Key}. */

@@ -57,13 +57,34 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	private static final int NOT_MATCHED_COLOR = 0x99000000;
 
 	//
-	// The toolbar is a fixed set of three buttons - the player can move and resize it from the HUD
-	// editor (/b gui) but not add, rename, disable or remove buttons.
+	// The toolbar buttons are configured with the Toolbar Buttons card in /b config. This built-in
+	// set is only the fallback used before the player's list has been seeded, so the HUD editor
+	// preview and the live overlay always render exactly the same buttons.
 	public static final String[][] FIXED_TOOLBAR = {
 			{ "Hide Overlay", "hide" },
 			{ "Farming Toolkit", "/farmingtoolkit" },
 			{ "Hunting Toolkit", "/huntingtoolkit" }
 	};
+
+	/**
+	 * The buttons the toolbar actually shows: the player's enabled buttons from /b config, or the
+	 * built-in fallback before the list has ever been seeded. The live overlay and the /b gui preview
+	 * both call this, so the two can never disagree about what the toolbar contains.
+	 */
+	public static java.util.List<String[]> getToolbarEntries() {
+		java.util.List<String[]> out = new java.util.ArrayList<>();
+		BomboConfig.Settings s = BomboConfig.get();
+		if (s == null || s.storageOverlayButtons == null || !s.storageToolbarSeeded) {
+			for (String[] fixed : FIXED_TOOLBAR) out.add(fixed);
+			return out;
+		}
+		for (BomboConfig.StorageOverlayButton entry : s.storageOverlayButtons) {
+			if (entry == null || !entry.enabled) continue;
+			String label = entry.label == null || entry.label.isEmpty() ? "Button" : entry.label;
+			out.add(new String[] { label, entry.command == null ? "" : entry.command });
+		}
+		return out;
+	}
 
 	// Toolbar metrics (unscaled). The whole toolbar is scaled by storageToolbarScale.
 	public static final int TOOLBAR_BASE_W = 104;
@@ -270,7 +291,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 		int buttonH = toolbarButtonHeight();
 		int gap = toolbarGap();
 		int y = ty;
-		for (String[] entry : FIXED_TOOLBAR) {
+		for (String[] entry : getToolbarEntries()) {
 			final String label = entry[0];
 			final String command = entry[1];
 			this.addRenderableWidget(Button.builder(Component.literal(label), b -> runToolbarAction(command))
@@ -294,7 +315,7 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 	}
 
 	public static int getToolbarButtonCount() {
-		return FIXED_TOOLBAR.length;
+		return getToolbarEntries().size();
 	}
 
 	private static float toolbarScale() {
@@ -331,27 +352,20 @@ public class StorageOverlayScreen extends AbstractContainerScreen<StorageOverlay
 
 	/** Preview used by the HUD edit screen so the toolbar can be positioned and scaled with /b gui. */
 	public static void drawToolbarPreview(GuiGraphicsExtractor graphics, Font font, int x, int y) {
-		BomboConfig.Settings s = BomboConfig.get();
-		if (s == null) return;
 		int width = getToolbarWidth();
 		int buttonH = toolbarButtonHeight();
 		int gap = toolbarGap();
 		int cursor = y;
-		boolean any = false;
-		if (s.storageOverlayButtons != null) {
-			for (BomboConfig.StorageOverlayButton entry : s.storageOverlayButtons) {
-				if (entry == null || !entry.enabled) continue;
-				any = true;
-				String label = entry.label == null || entry.label.isEmpty()
-						? (entry.command == null || entry.command.isEmpty() ? "Button" : entry.command)
-						: entry.label;
-				graphics.fill(x, cursor, x + width, cursor + buttonH, 0xEE0B0F19);
-				graphics.fill(x, cursor, x + width, cursor + 1, 0xFF38BDF8);
-				graphics.centeredText(font, "§f" + label, x + width / 2, cursor + (buttonH - 8) / 2, -1);
-				cursor += buttonH + gap;
-			}
+		int drawn = 0;
+		for (String[] entry : getToolbarEntries()) {
+			String label = entry[0] == null || entry[0].isEmpty() ? "Button" : entry[0];
+			graphics.fill(x, cursor, x + width, cursor + buttonH, 0xEE0B0F19);
+			graphics.fill(x, cursor, x + width, cursor + 1, 0xFF38BDF8);
+			graphics.centeredText(font, "§f" + label, x + width / 2, cursor + (buttonH - 8) / 2, -1);
+			cursor += buttonH + gap;
+			drawn++;
 		}
-		if (!any) {
+		if (drawn == 0) {
 			int h = toolbarButtonHeight();
 			graphics.fill(x, y, x + width, y + h, 0xEE0B0F19);
 			graphics.centeredText(font, "§7No Buttons", x + width / 2, y + (h - 8) / 2, -1);

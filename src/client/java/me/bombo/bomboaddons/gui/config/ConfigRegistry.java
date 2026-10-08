@@ -1040,8 +1040,8 @@ public class ConfigRegistry {
                 items.add(ConfigItem.sliderFloat("Preview Scale", "Scaling multiplier for preview images (0.5x to 2.0x).", category, 0.5f, 2.0f, 0.05f, "x", () -> s.chatImagePreviewScale, v -> s.chatImagePreviewScale = v));
 
                 items.add(ConfigItem.header("Picture-in-Picture (PiP) Overlay", category));
-                items.add(ConfigItem.hudToggle("Picture-in-Picture Media HUD", "In-game media player & video stream overlay. Supports YouTube videos and direct image links (/b pip <url>).", category, () -> s.pipEnabled, v -> s.pipEnabled = v, HudTarget.PIP_OVERLAY));
-                items.add(ConfigItem.text("PiP Media URL", "Direct media or YouTube URL currently loaded into the PiP display.", category, () -> s.pipUrl != null ? s.pipUrl : "", v -> {
+                items.add(ConfigItem.hudToggle("Picture-in-Picture Media HUD", "In-game media overlay. Shows a direct image link or a live Bombo stream link (/b pip <url>).", category, () -> s.pipEnabled, v -> s.pipEnabled = v, HudTarget.PIP_OVERLAY));
+                items.add(ConfigItem.text("PiP Media URL", "Direct image or Bombo stream URL currently loaded into the PiP display.", category, () -> s.pipUrl != null ? s.pipUrl : "", v -> {
                     s.pipUrl = v;
                     if (v != null && !v.trim().isEmpty()) {
                         me.bombo.bomboaddons.features.pip.PipManager.loadMedia(v.trim());
@@ -1049,7 +1049,6 @@ public class ConfigRegistry {
                 }));
                 items.add(ConfigItem.sliderFloat("PiP Transparency / Opacity", "Visual opacity of the picture-in-picture media frame (5% to 100%).", category, 0.05f, 1.0f, 0.05f, "", () -> s.pipOpacity, v -> s.pipOpacity = v));
                 items.add(ConfigItem.sliderFloat("PiP Scale", "Size multiplier for the PiP window (0.2x to 5.0x).", category, 0.2f, 5.0f, 0.1f, "x", () -> s.pipScale, v -> s.pipScale = v));
-                items.add(ConfigItem.toggle("PiP Clean Video Canvas", "For YouTube videos, strip out all interface elements, likes, and subscription banners, showing only a clean 16:9 canvas.", category, () -> s.pipCleanVideo, v -> s.pipCleanVideo = v));
                 items.add(ConfigItem.toggle("PiP Show Border", "Render a subtle outer border around the picture-in-picture window.", category, () -> s.pipShowBorder, v -> s.pipShowBorder = v));
 
                 items.add(ConfigItem.header("Gameplay Trackers & HUDs", category));

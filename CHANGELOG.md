@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.115] - 2026-10-09 (Beta)
+
+### Features
+- **PiP Is Images And Bombo Streams Only (`PipManager`, `BomboaddonsClient`, `ConfigRegistry`, `HudMoveScreen`):** YouTube playback is gone. Playing it needed the server to resolve and re-encode the video frame by frame, the overlay's poll rate kept tripping that into `HTTP 429`, and what you actually got was a thumbnail plus an error. `/b pip <link>` now takes a direct image URL or a Bombo screenshare link, which load instantly and never rate-limit. The `pause`/`play`/`seek`/`fwd`/`back` subcommands, the clean-video-canvas toggle and the move-screen transport bar went with it.
+- **Profile Controls Copy Your Whole Options Layout (`ProfileKeybindManager`):** Setting Jump to Shift and Sneak to Space now changes exactly those two keys. The apply loop used to fall back to Minecraft's built-in default for every mapping a profile did not override, so keys you had set yourself - chat on `/`, a rebound inventory key - were forced back to stock and the profile looked like it had reset the whole control scheme. The baseline is now the key you actually have, captured once before anything of ours is applied, and only keys this feature changed are ever put back. Each scope keeps its full snapshot at `config/bomboaddons/keys/options_<scope>.txt`, which is your own `options.txt` layout with just that profile's keys changed.
+
+### Fixes
+- **No More Phantom Key Changes (`ProfileKeybindManager`):** Picking the key a mapping already uses is no longer stored as an override - it used to show a "different from default" marker and count towards the override total while changing nothing.
+- **Speedometer Max Holds (`SpeedometerHud`):** The maximum now stays on the real highest speed for at least five seconds (or your configured window when that is longer) instead of flicking to a genuine peak for one tick and snapping back. The old spike retraction was deleting the peak as soon as ordinary movement resumed.
+- **Etherwarp Stops Sneaking (`LeftClickEtherwarp`):** Letting go of the click, looking at the sky or aiming at a block that cannot be etherwarped now releases the sneak straight away, so you stop crouching and keep teleporting normally.
+- **Spotify HUD While Lyrics Load (`SpotifyHud`):** While the lyrics are still being fetched the card shows `Song - Artist` instead of a bare loading line.
+- **Storage Overlay Toolbar Matches `/b gui` (`StorageOverlayScreen`, `BomboConfig`):** The overlay still drew a hardcoded button column while `/b gui` previewed the buttons from `/b config`, so the two never agreed. Both now render the same list, the built-in buttons are only a fallback before the list is seeded, and the old untouched defaults are migrated so nothing changes on screen.
+
+ 
 ## [26.2.28.114] - 2026-10-08 (Beta)
 
 ### Fixes

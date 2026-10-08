@@ -236,6 +236,28 @@ public class BomboConfig {
          save();
       }
 
+      // The toolbar used to be a fixed built-in set that ignored this list, so every profile still
+      // carries the old self-seeded defaults while the overlay showed something else. Swap that exact
+      // untouched default set for the real buttons, so /b gui and the overlay finally agree.
+      if (instance.storageOverlayButtons.size() == 4) {
+         String[] legacy = { "Hide Overlay", "Ender Chest", "Backpacks", "Storage Menu" };
+         boolean isLegacy = true;
+         for (int i = 0; i < legacy.length; i++) {
+            StorageOverlayButton b = instance.storageOverlayButtons.get(i);
+            if (b == null || b.label == null || !b.label.equals(legacy[i])) {
+               isLegacy = false;
+               break;
+            }
+         }
+         if (isLegacy) {
+            instance.storageOverlayButtons.clear();
+            for (StorageOverlayButton def : StorageOverlayButton.defaults()) {
+               instance.storageOverlayButtons.add(def);
+            }
+            save();
+         }
+      }
+
       if (instance.profileKeyOverrides == null) {
          instance.profileKeyOverrides = new HashMap();
       }
@@ -1645,9 +1667,8 @@ public class BomboConfig {
       public static List<StorageOverlayButton> defaults() {
          List<StorageOverlayButton> list = new ArrayList();
          list.add(new StorageOverlayButton("Hide Overlay", "hide"));
-         list.add(new StorageOverlayButton("Ender Chest", "ec"));
-         list.add(new StorageOverlayButton("Backpacks", "bp"));
-         list.add(new StorageOverlayButton("Storage Menu", "storage"));
+         list.add(new StorageOverlayButton("Farming Toolkit", "/farmingtoolkit"));
+         list.add(new StorageOverlayButton("Hunting Toolkit", "/huntingtoolkit"));
          return list;
       }
    }

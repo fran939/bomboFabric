@@ -201,7 +201,15 @@ public class SpotifyHud {
                 LyricsLine activeLine = (activeIdx >= 0 && activeIdx < lines.size()) ? lines.get(activeIdx) : null;
                 String currentLineText = activeLine != null ? activeLine.text() : "";
                 if (currentLineText.isEmpty()) {
-                    currentLineText = isDummy ? "Sé que te gusta el calentón" : (LyricsManager.isLoading() ? "Loading lyrics..." : track);
+                    if (isDummy) {
+                        currentLineText = "Sé que te gusta el calentón";
+                    } else if (LyricsManager.isLoading()) {
+                        // While the lyrics are still being fetched, keep showing what is playing so the
+                        // card reads "Song - Artist" instead of a bare loading placeholder.
+                        currentLineText = (artist == null || artist.isEmpty()) ? track : track + " §8- §7" + artist;
+                    } else {
+                        currentLineText = track;
+                    }
                 }
 
                 // Scale font proportionally so all lyrics words fit within textMaxW without clipping

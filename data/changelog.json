@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.115",
+    "date": "2026-10-09",
+    "changes": [
+      "+ PiP Without YouTube - /b pip takes a direct image link or a Bombo screenshare link now. The YouTube path needed the server to re-encode the video frame by frame, kept hitting HTTP 429, and only ever ended up showing a thumbnail",
+      "~ Your Own Keys Stay Put - Setting Jump to Shift and Sneak to Space now changes only those two. Any key you set yourself (chat on /, a rebound inventory key) used to be forced back to default, which looked like the whole control scheme had been reset. Each profile also keeps a full options snapshot in config/bomboaddons/keys",
+      "~ Picking the Key You Already Use - Choosing the same key no longer shows up as a change or counts as an override",
+      "~ Speedometer Max - The maximum now holds the real highest speed for 5 seconds instead of flicking up for a single tick and falling back",
+      "~ Etherwarp Stops Sneaking - Releasing the click, looking at the sky or aiming at a bad block now un-sneaks you right away and keeps teleporting normally",
+      "~ Spotify HUD - While the lyrics are loading the card shows the song title and artist instead of a loading line",
+      "~ Storage Overlay Toolbar - The overlay and /b gui now show the same buttons, so what you configure is what you see"
+    ]
+  },
+  {
     "version": "26.2.28.114",
     "date": "2026-10-08",
     "changes": [
