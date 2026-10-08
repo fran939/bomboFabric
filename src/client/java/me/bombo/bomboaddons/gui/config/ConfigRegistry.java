@@ -1384,7 +1384,8 @@ public class ConfigRegistry {
 
                 items.add(ConfigItem.header("Profile Controls (Vanilla Key Binds)", category));
                 items.add(ConfigItem.toggle("Profile Controls Enabled", "Lets each profile override vanilla Minecraft key bindings, restored automatically when you switch profiles.", category, () -> s.profileKeyControlsEnabled, v -> s.profileKeyControlsEnabled = v));
-                items.add(ConfigItem.button("Edit Profile Key Binds", "Open (/b keymaps)", "Remap any vanilla key binding just for the active profile.", category, () -> Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.gui.ProfileKeybindsScreen(BomboConfigScreen.create()))));
+                items.add(ConfigItem.toggle("Auto Per-Class Key Binds", "Inside a dungeon, automatically apply the key binds set for your detected class (Berserk / Mage / Archer / Tank / Healer) instead of the active profile.", category, () -> s.autoClassKeybinds, v -> s.autoClassKeybinds = v));
+                items.add(ConfigItem.button("Edit Profile Key Binds", "Open (/b keymaps)", "Remap any vanilla key binding for a profile or dungeon class.", category, () -> Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.gui.ProfileKeybindsScreen(BomboConfigScreen.create()))));
                 items.add(ConfigItem.button("Clear Key Binds For This Profile", "Clear", "Removes every vanilla key override stored for the active profile.", category, () -> {
                     me.bombo.bomboaddons.features.profile.ProfileKeybindManager.clearAllForActiveProfile();
                 }));

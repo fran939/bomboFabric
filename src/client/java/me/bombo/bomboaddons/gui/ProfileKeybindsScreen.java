@@ -80,9 +80,18 @@ public class ProfileKeybindsScreen extends Screen {
         g.outline(winX, winY, winW, winH, ConfigUITheme.getAccentColor());
         g.fill(winX, winY, winX + winW, winY + 26, 0xEE1E293B);
 
-        String profile = ProfileKeybindManager.activeProfile();
-        g.text(this.font, "§b§lPROFILE CONTROLS §8| §7Profile: §e" + profile
-                + " §8| §7" + ProfileKeybindManager.overrideCount() + " override(s)", winX + 14, winY + 9, 0xFFFFFFFF, false);
+        String scope = ProfileKeybindManager.editScope();
+        String appliedScope = ProfileKeybindManager.activeScope();
+        String applied = scope.equals(appliedScope) ? "" : " §8| §7Applied now: §a" + appliedScope;
+        g.text(this.font, "§b§lPROFILE CONTROLS §8| §7Editing: §e" + scope
+                + " §8| §7" + ProfileKeybindManager.overrideCount() + " override(s)" + applied, winX + 14, winY + 9, 0xFFFFFFFF, false);
+
+        // Scope selector (profiles + dungeon classes, or Auto to follow the applied scope)
+        int scopeBtnW = 150;
+        int scopeBtnX = winX + winW - 14 - scopeBtnW;
+        boolean scopeHover = this.inRect(mouseX, mouseY, scopeBtnX, winY + 4, scopeBtnW, 18);
+        String scopeLabel = "§bScope: §f" + (ProfileKeybindManager.isEditScopePinned() ? scope : scope + " §8(auto)");
+        ConfigUITheme.drawPillButton(g, this.font, scopeLabel, scopeBtnX, winY + 4, scopeBtnW, 18, scopeHover, -1, 0x1A00E5FF, 0x5500E5FF);
 
         // Search field
         int searchY = winY + 32;
@@ -195,6 +204,13 @@ public class ProfileKeybindsScreen extends Screen {
         int winH = Math.min(460, this.height - 40);
         int winX = (this.width - winW) / 2;
         int winY = (this.height - winH) / 2;
+
+        int scopeBtnW = 150;
+        int scopeBtnX = winX + winW - 14 - scopeBtnW;
+        if (this.inRect(event.x(), event.y(), scopeBtnX, winY + 4, scopeBtnW, 18)) {
+            cycleScope();
+            return true;
+        }
 
         int searchY = winY + 32;
         if (this.inRect(event.x(), event.y(), winX + 14, searchY, winW - 28, 18)) {
@@ -366,6 +382,25 @@ public class ProfileKeybindsScreen extends Screen {
 
     private boolean inRect(double mx, double my, int x, int y, int w, int h) {
         return mx >= x && mx <= x + w && my >= y && my <= y + h;
+    }
+
+    /** Cycles Auto -> profile -> General -> each dungeon class -> Auto. */
+    private void cycleScope() {
+        List<String> options = new ArrayList<>();
+        options.add("Auto");
+        options.addAll(ProfileKeybindManager.editableScopes());
+
+        String current = ProfileKeybindManager.isEditScopePinned() ? ProfileKeybindManager.editScope() : "Auto";
+        int idx = options.indexOf(current);
+        if (idx < 0) idx = 0;
+        int next = (idx + 1) % options.size();
+        String chosen = options.get(next);
+        if ("Auto".equals(chosen)) {
+            ProfileKeybindManager.clearEditScope();
+        } else {
+            ProfileKeybindManager.setEditScope(chosen);
+        }
+        this.scrollAmount = 0.0D;
     }
 
     /** Copies the active profile's overrides as a shareable list. */
