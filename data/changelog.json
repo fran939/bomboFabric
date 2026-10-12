@@ -1,5 +1,21 @@
 [
   {
+    "version": "26.2.28.116",
+    "date": "2026-10-12",
+    "changes": [
+      "~ Discord Console Spam - Increased voice channel polling interval to 15s, stopping the GET_SELECTED_VOICE_CHANNEL console flood",
+      "~ Fast Chat Paste - Clipboard text pasting now fast-paths instantly without freezing the client on Windows COM clipboard calls",
+      "~ Lore Additions Quality & Starts In - Restored dungeon item quality, drop floor Roman numeral detection, and Starts In formatted local timestamps",
+      "~ Recipe GUI Protection - Storage overlay no longer hijacks recipe screens like /recipe backpack or Jumbo Backpack",
+      "~ Web Tickets UI Route - Fixed https://bombo.dpdns.org/tickets returning 404 by routing tickets and Next.js assets to bomboweb",
+      "~ Tick-Based Auto Sell - /b sell price now counts delays in client ticks with 160-tick timeouts, surviving Hypixel network lag",
+      "~ Enchant Tier Colors - Fixed compatibility with SkyHanni/Firmament enchant recoloring via in-place tooltip mutation and priority 2000",
+      "~ Config Hotkey Search - Searching commands like 'b ks' in /b config now surfaces the keybind card",
+      "~ Lyrics HUD Extrapolation - Fixed lyrics freezing and snapping back by computing live track progress and widening resync threshold",
+      "~ Left-Click Etherwarp Sneak - Single clicking or releasing held etherwarp now immediately stops sneaking without getting stuck"
+    ]
+  },
+  {
     "version": "26.2.28.115",
     "date": "2026-10-09",
     "changes": [

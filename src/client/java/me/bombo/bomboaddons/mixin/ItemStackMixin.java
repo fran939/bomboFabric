@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Environment(EnvType.CLIENT)
-@Mixin({ItemStack.class})
+@Mixin(value = {ItemStack.class}, priority = 2000)
 public abstract class ItemStackMixin {
 
    @Inject(
@@ -68,12 +68,15 @@ public abstract class ItemStackMixin {
       }
       List<Component> orig = (List)cir.getReturnValue();
       if (orig == null) return;
-      List<Component> lines;
-      try {
-         lines = new ArrayList<>(orig);
-         cir.setReturnValue(lines);
-      } catch (Throwable t) {
-         return;
+      List<Component> lines = orig;
+      // If the list is not already a mutable ArrayList, wrap it to avoid UnsupportedOperationException
+      if (!(orig instanceof ArrayList)) {
+         try {
+            lines = new ArrayList<>(orig);
+            cir.setReturnValue(lines);
+         } catch (Throwable t) {
+            return;
+         }
       }
 
       try {

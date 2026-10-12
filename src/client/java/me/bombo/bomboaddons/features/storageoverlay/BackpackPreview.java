@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 public class BackpackPreview {
     private static final Pattern ECHEST_PATTERN = Pattern.compile(".*?(?:Ender Chest|Cofre de Ender).*?(?:\\((\\d{1,2})/(\\d{1,2})\\)|Page\\s*(\\d{1,2})|#?\\s*(\\d{1,2}))", Pattern.CASE_INSENSITIVE);
     private static final Pattern ECHEST_PAGE_PATTERN = Pattern.compile(".*?(?:Ender Chest|Cofre de Ender).*?Page\\s*(\\d{1,2})", Pattern.CASE_INSENSITIVE);
-    private static final Pattern BACKPACK_PATTERN = Pattern.compile(".*?(?:Backpack|Mochila).*?(?:\\((?:Slot|Ranura)\\s*#?\\(?(\\d{1,2})\\)?\\)|#?\\s*(\\d{1,2}))", Pattern.CASE_INSENSITIVE);
+    private static final Pattern BACKPACK_PATTERN = Pattern.compile(".*?(?:Backpack|Mochila).*?(?:\\((?:Slot|Ranura)\\s*#?\\(?(\\d{1,2})\\)?\\)|(?:Slot|Ranura)\\s*#?\\s*(\\d{1,2}))", Pattern.CASE_INSENSITIVE);
     private static final Pattern BACKPACK_SIZE_PATTERN = Pattern.compile("(?:has|tiene)\\s+(\\d+)\\s+(?:slots|ranuras)", Pattern.CASE_INSENSITIVE);
 
     public static final int STORAGE_SIZE = 27;
@@ -69,6 +69,10 @@ public class BackpackPreview {
         if (rawTitle == null) return -1;
         String title = ChatFormatting.stripFormatting(rawTitle).trim();
         String lower = title.toLowerCase(Locale.ROOT);
+
+        if (lower.contains("recipe") || lower.contains("receta") || lower.contains("craft")) {
+            return -1;
+        }
 
         Matcher echest = ECHEST_PATTERN.matcher(title);
         if (echest.find()) {

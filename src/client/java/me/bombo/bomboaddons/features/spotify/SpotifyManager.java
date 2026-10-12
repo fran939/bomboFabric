@@ -369,25 +369,13 @@ public class SpotifyManager {
                                         lastStateUpdate = now;
                                     } else if (nowPlaying) {
                                         if (!wasPlaying) {
-                                            // Resuming from pause: re-anchor the clock to Spotify's own
-                                            // position so the paused time is never injected into the lyrics.
                                             baseProgressMs = posMs;
                                             monotonicProgressMs = posMs;
                                             lastStateUpdate = now;
-                                        } else if (posMs > monotonicProgressMs) {
-                                            // GSMTC caught up or track jumped forward
+                                        } else if (Math.abs(monotonicProgressMs - posMs) > 2500L) {
+                                            // User jumped or seeked: re-anchor so lyrics update immediately
                                             baseProgressMs = posMs;
                                             monotonicProgressMs = posMs;
-                                            lastStateUpdate = now;
-                                        } else if (monotonicProgressMs - posMs > 1500L) {
-                                            // User seeked backwards: re-anchor so lyrics follow immediately.
-                                            baseProgressMs = posMs;
-                                            monotonicProgressMs = posMs;
-                                            lastStateUpdate = now;
-                                        } else if (Math.abs((baseProgressMs + (now - lastStateUpdate)) - posMs) > 1000L) {
-                                            // Re-anchor the extrapolation origin so the clock can never
-                                            // drift more than ~1s away from Spotify's reported position.
-                                            baseProgressMs = posMs;
                                             lastStateUpdate = now;
                                         }
                                     } else {
@@ -493,9 +481,16 @@ public class SpotifyManager {
                     + "            $tl = $session.GetTimelineProperties()\r\n"
                     + "            $propsOp = $session.TryGetMediaPropertiesAsync()\r\n"
                     + "            $props = Await $propsOp ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])\r\n"
-                    + "            $posMs = [math]::Round($tl.Position.TotalMilliseconds)\r\n"
-                    + "            $durMs = [math]::Round($tl.EndTime.TotalMilliseconds)\r\n"
                     + "            $stat = $session.GetPlaybackInfo().PlaybackStatus\r\n"
+                    + "            $pos = $tl.Position\r\n"
+                    + "            if ($stat -eq 'Playing' -and $tl.LastUpdatedTime -and $tl.LastUpdatedTime.Year -gt 2000) {\r\n"
+                    + "                $elapsed = [DateTimeOffset]::UtcNow - $tl.LastUpdatedTime\r\n"
+                    + "                if ($elapsed.TotalMilliseconds -gt 0 -and $elapsed.TotalMilliseconds -lt 600000) {\r\n"
+                    + "                    $pos = $pos + $elapsed\r\n"
+                    + "                }\r\n"
+                    + "            }\r\n"
+                    + "            $posMs = [math]::Round($pos.TotalMilliseconds)\r\n"
+                    + "            $durMs = [math]::Round($tl.EndTime.TotalMilliseconds)\r\n"
                     + "            [Console]::WriteLine(\"STATE|\" + $props.Title + \"|\" + $props.Artist + \"|\" + $posMs + \"|\" + $durMs + \"|\" + $stat)\r\n"
                     + "        } else {\r\n"
                     + "            $spProc = Get-Process spotify -ErrorAction SilentlyContinue\r\n"

@@ -188,9 +188,37 @@ public class SupercraftHelper {
          }
 
          // Hypixel ExtraAttributes tags
+         net.minecraft.nbt.CompoundTag ea = SkyblockUtils.getExtraAttributes(stack);
          net.minecraft.world.item.component.CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
          net.minecraft.nbt.CompoundTag tag = customData != null ? customData.copyTag() : null;
-         net.minecraft.nbt.CompoundTag ea = tag != null && tag.contains("ExtraAttributes") ? tag.getCompound("ExtraAttributes").orElse(null) : null;
+         if (ea == null && tag != null && tag.contains("ExtraAttributes")) {
+            ea = tag.getCompound("ExtraAttributes").orElse(tag);
+         }
+
+         // Starts In Absolute Time
+         if (s.startsInAbsoluteTime) {
+            ItemLore loreComp = stack.get(DataComponents.LORE);
+            if (loreComp != null) {
+               for (Component l : loreComp.lines()) {
+                  String clean = l.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+                  String lower = clean.toLowerCase(Locale.ROOT);
+                  if (lower.startsWith("starts in:") || lower.startsWith("starts in ") || lower.startsWith("ends in:") || lower.startsWith("ends in ")) {
+                     boolean isStarts = lower.startsWith("starts");
+                     long durationMs = parseDurationMs(clean);
+                     if (durationMs > 0) {
+                        long targetEpoch = System.currentTimeMillis() + durationMs;
+                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+                        SimpleDateFormat dayFmt = new SimpleDateFormat("MMM d, HH:mm", Locale.getDefault());
+                        boolean isDifferentDay = !isSameDay(System.currentTimeMillis(), targetEpoch);
+                        String timeStr = isDifferentDay ? dayFmt.format(new Date(targetEpoch)) : sdf.format(new Date(targetEpoch));
+                        String label = isStarts ? ("§7Starts at: §e" + timeStr) : ("§7Ends at: §e" + timeStr);
+                        additions.add(new LoreAddition("startsIn", Component.literal(label), s.getLorePos("startsIn", "BOTTOM"), s.getLoreOrder("startsIn", 3)));
+                        break;
+                     }
+                  }
+               }
+            }
+         }
 
          // 3. Chocolate Factory Rabbit Rarity
          if (s.showRabbitRarity && ea != null) {
@@ -222,39 +250,56 @@ public class SupercraftHelper {
          }
 
          // 4. Dungeon Item Quality / Drop Floor
-         if (s.showDungeonQuality && ea != null) {
-            int baseQuality = ea.getInt("baseStatBoostPercentage").orElse(tag != null ? tag.getInt("baseStatBoostPercentage").orElse(-1) : -1);
-            int itemTier = ea.getInt("item_tier").orElse(tag != null ? tag.getInt("item_tier").orElse(-1) : -1);
-            int quality = baseQuality >= 0 ? baseQuality : (itemTier >= 0 ? itemTier : -1);
+         if (s.showDungeonQuality) {
+            int quality = -1;
+            if (ea != null) {
+               net.minecraft.nbt.Tag qTag = ea.get("baseStatBoostPercentage");
+               if (qTag instanceof net.minecraft.nbt.NumericTag num) {
+                  quality = (int) Math.round(num.doubleValue());
+               }
+            }
 
             if (quality >= 0) {
-               int reqNum = 0;
+               String floor = null;
+               int tier = -1;
+               if (ea != null) {
+                  net.minecraft.nbt.Tag tTag = ea.get("item_tier");
+                  if (tTag instanceof net.minecraft.nbt.NumericTag num) {
+                     tier = num.intValue();
+                  }
+               }
+
                ItemLore loreComp = stack.get(DataComponents.LORE);
+               boolean isMasterMode = false;
                if (loreComp != null) {
                   for (Component l : loreComp.lines()) {
                      String sClean = l.getString().replaceAll("(?i)§[0-9a-fk-or]", "").trim();
-                     if (sClean.startsWith("Requires Catacombs Floor") || sClean.startsWith("Requires Master Mode Catacombs Floor")) {
-                        String numStr = sClean.replaceAll("[^0-9]", "");
-                        if (!numStr.isEmpty()) {
-                           try {
-                              reqNum = Integer.parseInt(numStr);
-                           } catch (NumberFormatException ignored) {}
-                        }
-                        break;
+                     if (sClean.contains("Master Mode")) {
+                        isMasterMode = true;
+                     }
+                     if (sClean.contains("Catacombs Floor") || sClean.contains("Floor ")) {
+                        String up = sClean.toUpperCase(Locale.ROOT);
+                        if (up.contains("FLOOR VII") || up.contains("FLOOR 7")) floor = "7";
+                        else if (up.contains("FLOOR VI") || up.contains("FLOOR 6")) floor = "6";
+                        else if (up.contains("FLOOR V") || up.contains("FLOOR 5")) floor = "5";
+                        else if (up.contains("FLOOR IV") || up.contains("FLOOR 4")) floor = "4";
+                        else if (up.contains("FLOOR III") || up.contains("FLOOR 3")) floor = "3";
+                        else if (up.contains("FLOOR II") || up.contains("FLOOR 2")) floor = "2";
+                        else if (up.contains("FLOOR I") || up.contains("FLOOR 1")) floor = "1";
                      }
                   }
                }
 
-               String floor = null;
-               if (reqNum >= 24) floor = "F7";
-               else if (reqNum >= 19) floor = "F6";
-               else if (reqNum >= 14) floor = "F5";
-               else if (reqNum >= 9) floor = "F4";
-               else if (reqNum >= 5) floor = "F3";
-               else if (reqNum >= 3) floor = "F2";
-               else if (reqNum >= 1) floor = "F1";
+               if (floor == null && tier >= 1 && tier <= 7) {
+                  floor = String.valueOf(tier);
+               }
 
-               String qText = floor != null ? "§7Quality §6" + quality + "% §8(§c" + floor + "§8)" : "§7Quality §6" + quality + "%";
+               String floorPrefix = isMasterMode ? "M" : "F";
+               String floorStr = floor != null ? (floorPrefix + floor) : null;
+               String color = quality >= 50 ? "§6§l" : (quality >= 40 ? "§e" : "§7");
+               String qText = floorStr != null
+                     ? ("§7Quality: " + color + quality + "% §8(§c" + floorStr + "§8)")
+                     : ("§7Quality: " + color + quality + "%");
                additions.add(new LoreAddition("dungeonQuality", Component.literal(qText), s.getLorePos("dungeonQuality", "BOTTOM"), s.getLoreOrder("dungeonQuality", 4)));
             }
          }
@@ -384,5 +429,32 @@ public class SupercraftHelper {
       }
 
       return false;
+   }
+
+   private static long parseDurationMs(String text) {
+      long totalMs = 0;
+      java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s*([dhms])", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(text);
+      while (m.find()) {
+         try {
+            long val = Long.parseLong(m.group(1));
+            String unit = m.group(2).toLowerCase(Locale.ROOT);
+            switch (unit) {
+               case "d" -> totalMs += val * 86_400_000L;
+               case "h" -> totalMs += val * 3_600_000L;
+               case "m" -> totalMs += val * 60_000L;
+               case "s" -> totalMs += val * 1_000L;
+            }
+         } catch (Exception ignored) {}
+      }
+      return totalMs;
+   }
+
+   private static boolean isSameDay(long t1, long t2) {
+      java.util.Calendar c1 = java.util.Calendar.getInstance();
+      c1.setTimeInMillis(t1);
+      java.util.Calendar c2 = java.util.Calendar.getInstance();
+      c2.setTimeInMillis(t2);
+      return c1.get(java.util.Calendar.YEAR) == c2.get(java.util.Calendar.YEAR)
+            && c1.get(java.util.Calendar.DAY_OF_YEAR) == c2.get(java.util.Calendar.DAY_OF_YEAR);
    }
 }

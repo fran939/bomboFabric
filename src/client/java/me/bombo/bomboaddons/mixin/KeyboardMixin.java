@@ -116,25 +116,7 @@ public abstract class KeyboardMixin {
 
       if (action == 1) {
          int key = event.key();
-         boolean isCtrl = event.hasControlDown() || Minecraft.getInstance().hasControlDown() || com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 341) || com.mojang.blaze3d.platform.InputConstants.isKeyDown(mc.getWindow(), 345);
-         if (key == 86 && isCtrl && mc.gui.screen() instanceof ChatScreen chatScreen) {
-            if (me.bombo.bomboaddons.util.ClipboardImageUploader.hasClipboardImage()) {
-               net.minecraft.client.gui.components.EditBox input = null;
-               try {
-                  for (java.lang.reflect.Field f : ChatScreen.class.getDeclaredFields()) {
-                     if (net.minecraft.client.gui.components.EditBox.class.isAssignableFrom(f.getType())) {
-                        f.setAccessible(true);
-                        input = (net.minecraft.client.gui.components.EditBox) f.get(chatScreen);
-                        break;
-                     }
-                  }
-               } catch (Throwable ignored) {}
-               if (input != null && me.bombo.bomboaddons.util.ClipboardImageUploader.tryUploadClipboardImage(input)) {
-                  ci.cancel();
-                  return;
-               }
-            }
-         }
+
 
          if (BomboConfig.get().debugKeys) {
             String keyStr = CustomBindsProcessor.getKeyNameForGlfwCode(key);

@@ -733,7 +733,7 @@ public class DiscordIpcManager {
             pollThread = new Thread(() -> {
                 while (RUNNING.get() && connected) {
                     try {
-                        Thread.sleep(400L);
+                        Thread.sleep(15000L); // 15 seconds instead of 400ms to prevent console spam
                     } catch (InterruptedException e) {
                         break;
                     }

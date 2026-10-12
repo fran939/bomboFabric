@@ -37,7 +37,9 @@ public class LeftClickEtherwarp {
             return true;
          }
       }
-      return state != 0;
+      Minecraft mc = Minecraft.getInstance();
+      boolean attackDown = mc.options != null && mc.options.keyAttack.isDown() && isHoldingEtherwarp();
+      return state != 0 || holdingSneak || sneakForcedByHold || attackDown;
    }
 
    public static void onTick() {
@@ -47,9 +49,8 @@ public class LeftClickEtherwarp {
          return;
       }
 
-      // Letting go of left click releases the sneak a held etherwarp pressed for us.
-      if (holdingSneak && (mc.options == null || !mc.options.keyAttack.isDown())) {
-         holdingSneak = false;
+      boolean attackDown = mc.options != null && mc.options.keyAttack.isDown();
+      if (!attackDown && (holdingSneak || sneakForcedByHold)) {
          releaseForcedSneak(mc);
       }
 
@@ -100,12 +101,15 @@ public class LeftClickEtherwarp {
                mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                GardenMacroDetector.recordWeaponUse();
             }
-
-            state = 2;
+            if (!attackDown) {
+               releaseForcedSneak(mc);
+            } else {
+               state = 2;
+            }
          } else if (state == 2) {
-            sendSneakPacket(mc, false);
-            getSneakMapping(mc).setDown(false);
-            reset();
+            if (!attackDown) {
+               releaseForcedSneak(mc);
+            }
          }
       }
    }
@@ -333,10 +337,17 @@ public class LeftClickEtherwarp {
 
    /** Releases a sneak that a held left click pressed, so the player never keeps crouching. */
    private static void releaseForcedSneak(Minecraft mc) {
-      if (!sneakForcedByHold) return;
+      if (!sneakForcedByHold && !holdingSneak) return;
       sneakForcedByHold = false;
-      getSneakMapping(mc).setDown(false);
-      sendSneakPacket(mc, false);
+      holdingSneak = false;
+      state = 0;
+      if (mc.options != null && mc.options.keyShift != null) {
+         mc.options.keyShift.setDown(false);
+         if (mc.player != null) {
+            mc.player.setShiftKeyDown(false);
+         }
+         sendSneakPacket(mc, false);
+      }
    }
 
    private static KeyMapping getSneakMapping(Minecraft mc) {

@@ -2142,6 +2142,111 @@ public class BomboConfigScreen extends Screen {
             }
         }
 
+        // Command / Keybind search matching:
+        String cleanQ = q.startsWith("/") ? q.substring(1).trim() : q;
+        if (!cleanQ.isEmpty()) {
+            BomboConfig.Settings s = BomboConfig.get();
+            String lowerName = item.name != null ? item.name.toLowerCase() : "";
+
+            // Check keybinds card
+            if (lowerName.contains("keybind") || lowerName.contains("hotkey")) {
+                if (s.keybindBinds != null) {
+                    for (List<BomboConfig.CommandBind> binds : s.keybindBinds.values()) {
+                        if (binds == null) continue;
+                        for (BomboConfig.CommandBind b : binds) {
+                            if (b == null) continue;
+                            if (b.command != null) {
+                                String cleanCmd = b.command.toLowerCase().trim();
+                                if (cleanCmd.startsWith("/")) cleanCmd = cleanCmd.substring(1).trim();
+                                if (cleanCmd.contains(cleanQ) || cleanCmd.contains(q)) return true;
+                            }
+                            if (b.keyName != null && b.keyName.toLowerCase().contains(cleanQ)) return true;
+                        }
+                    }
+                }
+            }
+
+            // Check GUI container binds card
+            if (lowerName.contains("profile bind") || lowerName.contains("gui container")) {
+                if (s.profileBinds != null) {
+                    for (List<BomboConfig.CommandBind> binds : s.profileBinds.values()) {
+                        if (binds == null) continue;
+                        for (BomboConfig.CommandBind pb : binds) {
+                            if (pb == null) continue;
+                            if (pb.command != null) {
+                                String cleanCmd = pb.command.toLowerCase().trim();
+                                if (cleanCmd.startsWith("/")) cleanCmd = cleanCmd.substring(1).trim();
+                                if (cleanCmd.contains(cleanQ) || cleanCmd.contains(q)) return true;
+                            }
+                            if (pb.keyName != null && pb.keyName.toLowerCase().contains(cleanQ)) return true;
+                        }
+                    }
+                }
+            }
+
+            // Check chat triggers card
+            if (lowerName.contains("chat trigger")) {
+                if (s.chatTriggers != null) {
+                    for (BomboConfig.ChatTrigger ct : s.chatTriggers) {
+                        if (ct == null) continue;
+                        if (ct.triggerText != null && ct.triggerText.toLowerCase().contains(cleanQ)) return true;
+                        if (ct.commandToRun != null) {
+                            String cleanCmd = ct.commandToRun.toLowerCase().trim();
+                            if (cleanCmd.startsWith("/")) cleanCmd = cleanCmd.substring(1).trim();
+                            if (cleanCmd.contains(cleanQ) || cleanCmd.contains(q)) return true;
+                        }
+                    }
+                }
+                if (s.profileChatTriggers != null) {
+                    for (List<BomboConfig.ChatTrigger> pTriggers : s.profileChatTriggers.values()) {
+                        if (pTriggers == null) continue;
+                        for (BomboConfig.ChatTrigger ct : pTriggers) {
+                            if (ct == null) continue;
+                            if (ct.triggerText != null && ct.triggerText.toLowerCase().contains(cleanQ)) return true;
+                            if (ct.commandToRun != null) {
+                                String cleanCmd = ct.commandToRun.toLowerCase().trim();
+                                if (cleanCmd.startsWith("/")) cleanCmd = cleanCmd.substring(1).trim();
+                                if (cleanCmd.contains(cleanQ) || cleanCmd.contains(q)) return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check command aliases card
+            if (lowerName.contains("alias")) {
+                if (s.commandAliases != null) {
+                    for (Map.Entry<String, String> entry : s.commandAliases.entrySet()) {
+                        if (entry == null) continue;
+                        String a = entry.getKey();
+                        String c = entry.getValue();
+                        if (a != null) {
+                            String cleanA = a.toLowerCase().trim();
+                            if (cleanA.startsWith("/")) cleanA = cleanA.substring(1).trim();
+                            if (cleanA.contains(cleanQ) || cleanA.contains(q)) return true;
+                        }
+                        if (c != null) {
+                            String cleanCmd = c.toLowerCase().trim();
+                            if (cleanCmd.startsWith("/")) cleanCmd = cleanCmd.substring(1).trim();
+                            if (cleanCmd.contains(cleanQ) || cleanCmd.contains(q)) return true;
+                        }
+                    }
+                }
+            }
+
+            // Check text field values
+            if (item.type == ConfigItem.Type.TEXT && item.stringGetter != null) {
+                try {
+                    String val = item.stringGetter.get();
+                    if (val != null) {
+                        String cleanVal = val.toLowerCase().trim();
+                        if (cleanVal.startsWith("/")) cleanVal = cleanVal.substring(1).trim();
+                        if (cleanVal.contains(cleanQ) || cleanVal.contains(q)) return true;
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+
         return false;
     }
 

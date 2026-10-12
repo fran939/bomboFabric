@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.116] - 2026-10-12 (Beta)
+
+### Fixes
+- **Discord Console Spam Silenced (`DiscordIpcManager`):** Discord developer console was flooded with `GET_SELECTED_VOICE_CHANNEL` IPC packets every 400ms. Increased background channel polling interval to 15 seconds, completely ending the IPC console spam.
+- **Fast Chat Paste & Image Upload Fast-Path (`ClipboardImageUploader`, `KeyboardMixin`):** Pasting plain text into Minecraft chat caused multi-second client freezes waiting on slow blocking Windows COM clipboard APIs. Added an instant fast-path check for clipboard text, bypassing COM calls unless an image is explicitly pasted.
+- **Dungeon Item Quality, Floor & Starts-In Display (`SupercraftHelper`, `SkyblockUtils`):** Fixed item quality lore parsing by properly extracting `item_tier` / Roman numerals from lore and supporting `NumericTag` numeric values from NBT. Added formatted local time display for auctions/events displaying "Starts in".
+- **Storage Overlay Excluded From Recipe Menus (`StorageOverlayScreen`, `BackpackPreview`):** Opening `/recipe backpack` or clicking Jumbo Backpack inside recipe menus no longer hijacks the vanilla recipe screen with the custom storage overlay. Storage overlay now strictly triggers on actual storage menus and backpacks (`Ender Chest`, `Slot #`).
+- **Web Tickets Endpoint Route Restored (`bomboapi`, Nginx):** Restored missing Nginx reverse proxy routing for `https://bombo.dpdns.org/tickets`, `api/tickets`, and Next.js static assets `/_next/` forwarding to the `bomboweb` web service on port 3005.
+- **Tick-Based Auto Sell & Lag Protection (`AutoAhSell`):** Converted `/b sell price` auto-sell state machine delays from milliseconds to Minecraft client ticks and widened timeouts to 160 ticks (~8s), preventing stalls and failures during Hypixel server lag.
+- **Enchantment Tier Color Compatibility (`ItemStackMixin`):** Fixed compatibility with other client mods (SkyHanni, Firmament) recoloring enchantment lore. Increased mixin priority and mutate tooltip collections in-place without overwriting with new list instances.
+- **Hotkey & Command Search in Config (`BomboConfigScreen`):** Searching command names or aliases (e.g. `b ks`) in `/b config` now properly matches and displays corresponding keybind, profile bind, and chat trigger cards.
+- **Spotify Lyrics Extrapolation & Stutter Fix (`SpotifyManager`):** Fixed lyrics playback stuttering and snapping back by computing elapsed playback progress live in PowerShell from track timestamp and widening Java resync thresholds to 2500ms.
+- **Left-Click Etherwarp Sneak Release (`LeftClickEtherwarp`):** Fixed etherwarp left-click causing players to get stuck crouching. Holding sneak now reliably releases on click release or single-click completion.
+ 
 ## [26.2.28.115] - 2026-10-09 (Beta)
 
 ### Features

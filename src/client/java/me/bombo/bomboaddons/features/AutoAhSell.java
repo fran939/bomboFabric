@@ -27,7 +27,7 @@ public class AutoAhSell {
    private static boolean awaitingConfirmBypass = false;
 
    private static Step currentStep = Step.IDLE;
-   private static long lastActionTime = 0L;
+   private static int waitTicks = 0;
    private static int actionAttempts = 0;
 
    private enum Step {
@@ -97,7 +97,7 @@ public class AutoAhSell {
       targetPriceFormatted = LowestBinManager.formatPrice(parsed);
       running = true;
       currentStep = Step.OPEN_AH;
-      lastActionTime = 0L;
+      waitTicks = 0;
       actionAttempts = 0;
 
       mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aStarting Auto Sell for §f" + targetDisplayName + " §7(ID: §e" + targetSkyblockId + "§7) at §6" + targetPriceFormatted + " coins§a..."));
@@ -111,7 +111,7 @@ public class AutoAhSell {
          mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aPrice warning bypassed for this session. Continuing sale..."));
       }
       if (running && currentStep == Step.CHECK_SAFETY_AND_CONFIRM) {
-         lastActionTime = 0L;
+         waitTicks = 0;
       }
    }
 
@@ -162,9 +162,11 @@ public class AutoAhSell {
          return;
       }
 
-      int delay = Math.max(80, BomboConfig.get().autoAhSellDelayMs);
-      long now = System.currentTimeMillis();
-      if (now - lastActionTime < delay) return;
+      if (waitTicks > 0) {
+         waitTicks--;
+         return;
+      }
+      int stepDelay = Math.max(3, (BomboConfig.get().autoAhSellDelayMs + 49) / 50);
 
       Screen screen = mc.gui.screen();
 
@@ -172,7 +174,7 @@ public class AutoAhSell {
          case OPEN_AH -> {
             mc.player.connection.sendCommand("ah");
             currentStep = Step.WAIT_AH_OPEN;
-            lastActionTime = now;
+            waitTicks = stepDelay;
             actionAttempts = 0;
          }
          case WAIT_AH_OPEN -> {
@@ -180,11 +182,11 @@ public class AutoAhSell {
                String title = containerScreen.getTitle().getString();
                if (title.contains("Co-op Auction House") || title.contains("Auction House")) {
                   currentStep = Step.CLICK_CREATE_AUCTION;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   return;
                }
             }
-            if (++actionAttempts > 40) { // 40 * delay timeout
+            if (++actionAttempts > 160) { // 40 * delay timeout
                mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §cTimed out waiting for Auction House to open."));
                stop();
             }
@@ -196,7 +198,7 @@ public class AutoAhSell {
                if (createSlot != -1) {
                   clickSlot(containerScreen, createSlot);
                   currentStep = Step.WAIT_AUCTION_CREATE_GUI;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   actionAttempts = 0;
                   return;
                }
@@ -209,7 +211,7 @@ public class AutoAhSell {
                if (manageSlot != -1) {
                   clickSlot(containerScreen, manageSlot);
                   currentStep = Step.WAIT_MANAGE_AUCTIONS_GUI;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   actionAttempts = 0;
                   return;
                }
@@ -227,13 +229,13 @@ public class AutoAhSell {
                   if (createSlot != -1) {
                      clickSlot(containerScreen, createSlot);
                      currentStep = Step.WAIT_AUCTION_CREATE_GUI;
-                     lastActionTime = now;
+                     waitTicks = stepDelay;
                      actionAttempts = 0;
                      return;
                   }
                }
             }
-            if (++actionAttempts > 40) {
+            if (++actionAttempts > 160) {
                stop();
             }
          }
@@ -242,11 +244,11 @@ public class AutoAhSell {
                String title = containerScreen.getTitle().getString();
                if (title.contains("Create Auction") || title.contains("Create BIN Auction")) {
                   currentStep = Step.CLICK_ITEM_SLOT;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   return;
                }
             }
-            if (++actionAttempts > 40) {
+            if (++actionAttempts > 160) {
                stop();
             }
          }
@@ -263,12 +265,12 @@ public class AutoAhSell {
                // Click item in player inventory into auction slot (or click item slot directly)
                clickSlot(containerScreen, matchingPlayerSlot);
                currentStep = Step.WAIT_AFTER_ITEM_PUT;
-               lastActionTime = now;
+               waitTicks = stepDelay;
             }
          }
          case WAIT_AFTER_ITEM_PUT -> {
             currentStep = Step.CLICK_DURATION_CLOCK_1;
-            lastActionTime = now;
+            waitTicks = stepDelay;
          }
          case CLICK_DURATION_CLOCK_1 -> {
             if (screen instanceof AbstractContainerScreen<?> containerScreen) {
@@ -276,7 +278,7 @@ public class AutoAhSell {
                if (clockSlot != -1) {
                   clickSlot(containerScreen, clockSlot);
                   currentStep = Step.WAIT_DURATION_GUI;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   actionAttempts = 0;
                }
             }
@@ -286,11 +288,11 @@ public class AutoAhSell {
                String title = containerScreen.getTitle().getString();
                if (title.contains("Auction Duration") || title.contains("Duration")) {
                   currentStep = Step.CLICK_DURATION_CUSTOM_CLOCK_2;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   return;
                }
             }
-            if (++actionAttempts > 40) {
+            if (++actionAttempts > 160) {
                stop();
             }
          }
@@ -303,7 +305,7 @@ public class AutoAhSell {
                if (customSlot != -1) {
                   clickSlot(containerScreen, customSlot);
                   currentStep = Step.WAIT_SIGN_DURATION;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   actionAttempts = 0;
                }
             }
@@ -311,10 +313,10 @@ public class AutoAhSell {
          case WAIT_SIGN_DURATION -> {
             if (screen instanceof AbstractSignEditScreen) {
                currentStep = Step.SUBMIT_SIGN_DURATION;
-               lastActionTime = now;
+               waitTicks = stepDelay;
                return;
             }
-            if (++actionAttempts > 40) {
+            if (++actionAttempts > 160) {
                stop();
             }
          }
@@ -323,7 +325,7 @@ public class AutoAhSell {
                // Fill "9999" (minutes / hours) for max duration and close
                setSignTextAndClose(signScreen, "9999");
                currentStep = Step.WAIT_AFTER_DURATION_SIGN;
-               lastActionTime = now;
+               waitTicks = stepDelay;
             }
          }
          case WAIT_AFTER_DURATION_SIGN -> {
@@ -331,7 +333,7 @@ public class AutoAhSell {
                String title = containerScreen.getTitle().getString();
                if (title.contains("Create Auction") || title.contains("Create BIN Auction")) {
                   currentStep = Step.CLICK_ITEM_PRICE_OR_BIN;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                }
             }
          }
@@ -347,29 +349,29 @@ public class AutoAhSell {
                if (switchBinSlot != -1) {
                   clickSlot(containerScreen, switchBinSlot);
                   currentStep = Step.WAIT_AFTER_PRICE_OR_BIN_CLICK;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   return;
                }
 
                if (priceSlot != -1) {
                   clickSlot(containerScreen, priceSlot);
                   currentStep = Step.WAIT_SIGN_PRICE;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   actionAttempts = 0;
                }
             }
          }
          case WAIT_AFTER_PRICE_OR_BIN_CLICK -> {
             currentStep = Step.CLICK_ITEM_PRICE_OR_BIN;
-            lastActionTime = now;
+            waitTicks = stepDelay;
          }
          case WAIT_SIGN_PRICE -> {
             if (screen instanceof AbstractSignEditScreen) {
                currentStep = Step.SUBMIT_SIGN_PRICE;
-               lastActionTime = now;
+               waitTicks = stepDelay;
                return;
             }
-            if (++actionAttempts > 40) {
+            if (++actionAttempts > 160) {
                stop();
             }
          }
@@ -377,7 +379,7 @@ public class AutoAhSell {
             if (screen instanceof AbstractSignEditScreen signScreen) {
                setSignTextAndClose(signScreen, String.valueOf(targetPrice));
                currentStep = Step.WAIT_AFTER_PRICE_SIGN;
-               lastActionTime = now;
+               waitTicks = stepDelay;
             }
          }
          case WAIT_AFTER_PRICE_SIGN -> {
@@ -385,7 +387,7 @@ public class AutoAhSell {
                String title = containerScreen.getTitle().getString();
                if (title.contains("Create Auction") || title.contains("Create BIN Auction")) {
                   currentStep = Step.CLICK_CREATE_BIN_AUCTION;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                }
             }
          }
@@ -398,7 +400,7 @@ public class AutoAhSell {
                if (createBinSlot != -1) {
                   clickSlot(containerScreen, createBinSlot);
                   currentStep = Step.WAIT_CONFIRM_GUI;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   actionAttempts = 0;
                }
             }
@@ -408,11 +410,11 @@ public class AutoAhSell {
                String title = containerScreen.getTitle().getString();
                if (title.contains("Confirm BIN Auction") || title.contains("Confirm Auction")) {
                   currentStep = Step.CHECK_SAFETY_AND_CONFIRM;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   return;
                }
             }
-            if (++actionAttempts > 40) {
+            if (++actionAttempts > 160) {
                stop();
             }
          }
@@ -437,7 +439,7 @@ public class AutoAhSell {
                if (confirmSlot != -1) {
                   clickSlot(containerScreen, confirmSlot);
                   currentStep = Step.WAIT_AFTER_CONFIRM;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   actionAttempts = 0;
                }
             }
@@ -454,21 +456,21 @@ public class AutoAhSell {
                if (backSlot != -1) {
                   clickSlot(containerScreen, backSlot);
                   currentStep = Step.CHECK_NEXT_ITEM;
-                  lastActionTime = now;
+                  waitTicks = stepDelay;
                   actionAttempts = 0;
                   return;
                }
             } else if (screen == null) {
                // If screen closed, reopen /ah
                currentStep = Step.OPEN_AH;
-               lastActionTime = now;
+               waitTicks = stepDelay;
                return;
             }
-            if (++actionAttempts > 25) {
+            if (++actionAttempts > 80) {
                // Fallback: reopen /ah directly
                mc.player.connection.sendCommand("ah");
                currentStep = Step.WAIT_AH_OPEN;
-               lastActionTime = now;
+               waitTicks = stepDelay;
                actionAttempts = 0;
             }
          }
@@ -481,11 +483,11 @@ public class AutoAhSell {
                   if (createSlot != -1) {
                      clickSlot(containerScreen, createSlot);
                      currentStep = Step.WAIT_AUCTION_CREATE_GUI;
-                     lastActionTime = now;
+                     waitTicks = stepDelay;
                      actionAttempts = 0;
                   } else {
                      currentStep = Step.OPEN_AH;
-                     lastActionTime = now;
+                     waitTicks = stepDelay;
                   }
                } else {
                   mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAll matching items sold successfully!"));
@@ -495,7 +497,7 @@ public class AutoAhSell {
             } else {
                mc.player.connection.sendCommand("ah");
                currentStep = Step.WAIT_AH_OPEN;
-               lastActionTime = now;
+               waitTicks = stepDelay;
             }
          }
       }

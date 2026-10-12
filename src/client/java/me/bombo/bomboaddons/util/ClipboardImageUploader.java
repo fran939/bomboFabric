@@ -39,6 +39,17 @@ public class ClipboardImageUploader {
    private static volatile String latestImageHash = null;
 
    public static boolean hasClipboardImage() {
+      try {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.keyboardHandler != null) {
+            String clipText = mc.keyboardHandler.getClipboard();
+            if (clipText != null && !clipText.trim().isEmpty()) {
+               // Normal text is present in the clipboard; do not touch slow AWT subsystem!
+               return false;
+            }
+         }
+      } catch (Throwable ignored) {}
+
       for (int attempt = 0; attempt < 3; attempt++) {
          try {
             java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
