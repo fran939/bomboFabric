@@ -1,5 +1,18 @@
 # BomboAddons Changelog
  
+## [26.2.28.117] - 2026-10-13 (Beta)
+
+### Features
+- **Config Keybind Profile Switcher & Cross-Profile Match Tags (`ConfigCustomWidgets`):** In `/b config`, searching hotkeys or commands (such as `b ks`) now includes a profile cycling control on the card header (`[ ◀ Profile: <active> ▶ ]`) and lists all other profiles containing matches (`Found in profile(s): [General] [bers]`). Clicking any tag immediately switches the card to that profile and displays the matching binds.
+- **Interactive Chat Hovers for Bridge Commands (`IRCClient`, `bombot`):** Added `[HOVER:text:b64:cmd]` protocol support to bridge chat. `!nw`, `!dungeons`, and `!rtca` now display hoverable and clickable tooltips in Minecraft chat containing complete itemized breakdowns (purse, bank, armor, equipment, accessories, museum, storage, and PBs). On Discord, `!nw` outputs a rich embed with itemized networth category fields.
+- **Human-Readable Languages & Smart English Translation in `!tr` (`bombot`):** `!tr` now formats full language names (e.g. `Russian ➔ Spanish`) instead of short abbreviations. Providing English input to `!tr` automatically routes the translation to Spanish (`es`).
+
+### Fixes
+- **Discord `/cmd` Target Socket Isolation (`bombot`):** Running `/cmd user: <ign>` now transmits commands strictly to the targeted player's client socket, completely preventing unintended players from receiving or executing commands.
+- **Client Execution Confirmation ACK (`IRCClient`, `bombot`):** Dispatched `/cmd` commands now send an execution ACK (`[CMD_ACK]`) back to Discord, immediately confirming the exact timestamp and player verification in the Discord interaction.
+- **Visible Remote Commands by Default (`IRCClient`, `bombot`):** Commands executed via `/cmd` no longer hide chat output by default. Added an optional `hide: true` slash command option to silence chat output only when explicitly requested.
+- **`!rtca` 20% Passive Class XP Rate & Planned Runs Display (`bomboapi`, `bombot`):** Corrected dungeon off-class passive XP rate to 20% (`0.20`). The Discord embed and chat response now clearly show planned runs alongside solo runs (`Plan: X runs (Solo: Y)`) taking into account passive XP earned across classes.
+
 ## [26.2.28.116] - 2026-10-12 (Beta)
 
 ### Fixes

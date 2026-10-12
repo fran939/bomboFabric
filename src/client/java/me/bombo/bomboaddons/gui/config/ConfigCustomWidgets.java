@@ -4611,12 +4611,59 @@ public class ConfigCustomWidgets {
     public static boolean kbIsListening = false;
     public static int editingKbIndex = -1;
 
+    public static List<String> getMatchingProfilesForKeybinds(String query) {
+        if (query == null || query.trim().isEmpty()) return Collections.emptyList();
+        String q = query.trim().toLowerCase(Locale.ROOT);
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s.keybindBinds == null) return Collections.emptyList();
+        List<String> matches = new ArrayList<>();
+        for (Map.Entry<String, List<BomboConfig.CommandBind>> entry : s.keybindBinds.entrySet()) {
+            if (entry.getValue() == null) continue;
+            for (BomboConfig.CommandBind cb : entry.getValue()) {
+                if (cb == null) continue;
+                if ((cb.command != null && cb.command.toLowerCase(Locale.ROOT).contains(q))
+                        || (cb.keyName != null && cb.keyName.toLowerCase(Locale.ROOT).contains(q))
+                        || (cb.requiredIsland != null && cb.requiredIsland.toLowerCase(Locale.ROOT).contains(q))) {
+                    matches.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return matches;
+    }
+
+    public static List<String> getMatchingProfilesForGuiBinds(String query) {
+        if (query == null || query.trim().isEmpty()) return Collections.emptyList();
+        String q = query.trim().toLowerCase(Locale.ROOT);
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s.profileBinds == null) return Collections.emptyList();
+        List<String> matches = new ArrayList<>();
+        for (Map.Entry<String, List<BomboConfig.CommandBind>> entry : s.profileBinds.entrySet()) {
+            if (entry.getValue() == null) continue;
+            for (BomboConfig.CommandBind cb : entry.getValue()) {
+                if (cb == null) continue;
+                if ((cb.command != null && cb.command.toLowerCase(Locale.ROOT).contains(q))
+                        || (cb.keyName != null && cb.keyName.toLowerCase(Locale.ROOT).contains(q))
+                        || (cb.requiredIsland != null && cb.requiredIsland.toLowerCase(Locale.ROOT).contains(q))) {
+                    matches.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return matches;
+    }
+
     public static int getKeybindsCardHeight() {
         BomboConfig.Settings s = BomboConfig.get();
         if (s == null) return 140;
         List<BomboConfig.CommandBind> list = s.keybindBinds != null ? s.keybindBinds.get(s.activeProfile) : null;
         int count = list != null ? list.size() : 0;
-        return 112 + Math.max(1, count) * 24;
+        int extra = 0;
+        if (BomboConfigScreen.searchQuery != null && !BomboConfigScreen.searchQuery.trim().isEmpty()) {
+            List<String> matches = getMatchingProfilesForKeybinds(BomboConfigScreen.searchQuery);
+            if (!matches.isEmpty()) extra = 22;
+        }
+        return 112 + extra + Math.max(1, count) * 24;
     }
 
     public static void renderKeybindsManager(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -4624,7 +4671,16 @@ public class ConfigCustomWidgets {
         ConfigUITheme.drawCard(g, x, y, w, h, hovered);
 
         int curY = y + 8;
-        g.text(font, "§6§lPROFILE COMMAND KEYBINDS (" + BomboConfig.get().activeProfile + ")", x + 12, curY, ConfigUITheme.ACCENT_GOLD, false);
+        String curProf = BomboConfig.get().activeProfile != null ? BomboConfig.get().activeProfile : "default";
+        g.text(font, "§6§lPROFILE COMMAND KEYBINDS (" + curProf + ")", x + 12, curY, ConfigUITheme.ACCENT_GOLD, false);
+
+        // Profile cycle button in header
+        int profBtnW = 120;
+        int profBtnX = x + w - profBtnW - 12;
+        int profBtnY = y + 6;
+        boolean profHover = mouseX >= profBtnX && mouseX <= profBtnX + profBtnW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
+        ConfigUITheme.drawPillButton(g, font, "§7◀ §b" + curProf + " §7▶", profBtnX, profBtnY, profBtnW, 18, profHover, -1, 0x221E293B, 0x55FFFFFF);
+
         curY += 18;
 
         int colW = (w - 36) / 4;
@@ -4654,6 +4710,22 @@ public class ConfigCustomWidgets {
         curY += 6;
 
         BomboConfig.Settings s = BomboConfig.get();
+        List<String> matchKbProfs = getMatchingProfilesForKeybinds(BomboConfigScreen.searchQuery);
+        if (!matchKbProfs.isEmpty()) {
+            g.text(font, "§eFound in profile(s):", x + 16, curY + 2, 0xFFFFAA00, false);
+            int tagX = x + 16 + font.width("§eFound in profile(s):") + 8;
+            for (String mp : matchKbProfs) {
+                boolean isCurrent = mp.equalsIgnoreCase(s.activeProfile);
+                int tagW = font.width(mp) + 14;
+                boolean tagHover = mouseX >= tagX && mouseX <= tagX + tagW && mouseY >= curY && mouseY <= curY + 16;
+                int bg = isCurrent ? 0x4400E5FF : 0x221E293B;
+                int border = isCurrent ? 0x8800E5FF : 0x44FFFFFF;
+                ConfigUITheme.drawPillButton(g, font, (isCurrent ? "§b✔ " : "§7") + mp, tagX, curY, tagW, 16, tagHover, -1, bg, border);
+                tagX += tagW + 6;
+            }
+            curY += 22;
+        }
+
         List<BomboConfig.CommandBind> list = s.keybindBinds != null ? s.keybindBinds.get(s.activeProfile) : null;
         int kbCount = list != null ? list.size() : 0;
         g.text(font, "§6§lCommand Keybinds §7(" + kbCount + ")", x + 16, curY + 2, -1, false);
@@ -4707,6 +4779,31 @@ public class ConfigCustomWidgets {
     }
 
     public static boolean handleKeybindsClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
+        // Profile switcher in header
+        int profBtnW = 120;
+        int profBtnX = x + w - profBtnW - 12;
+        int profBtnY = y + 6;
+        if (mouseX >= profBtnX && mouseX <= profBtnX + profBtnW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+            List<String> profs = ConfigRegistry.getAllProfileNames();
+            if (!profs.isEmpty()) {
+                BomboConfig.Settings s = BomboConfig.get();
+                String cur = s.activeProfile != null ? s.activeProfile : "default";
+                int idx = -1;
+                for (int p = 0; p < profs.size(); p++) {
+                    if (profs.get(p).equalsIgnoreCase(cur)) { idx = p; break; }
+                }
+                int nextIdx;
+                if (button == 1 || mouseX < profBtnX + 22) {
+                    nextIdx = (idx <= 0) ? profs.size() - 1 : idx - 1;
+                } else {
+                    nextIdx = (idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1;
+                }
+                s.activeProfile = profs.get(nextIdx);
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         int curY = y + 26;
         int colW = (w - 36) / 4;
 
@@ -4759,6 +4856,22 @@ public class ConfigCustomWidgets {
             kbKeyInput = "";
             kbIslandInput = "";
             return true;
+        }
+
+        List<String> matchKbProfs = getMatchingProfilesForKeybinds(BomboConfigScreen.searchQuery);
+        if (!matchKbProfs.isEmpty()) {
+            int matchTagY = curY + 32;
+            int tagX = x + 16 + 120;
+            for (String mp : matchKbProfs) {
+                int tagW = mp.length() * 7 + 14;
+                if (mouseX >= tagX && mouseX <= tagX + tagW && mouseY >= matchTagY && mouseY <= matchTagY + 18) {
+                    s.activeProfile = mp;
+                    BomboConfig.save();
+                    return true;
+                }
+                tagX += tagW + 6;
+            }
+            curY += 22;
         }
 
         // Match the render pass: divider + the "Command Keybinds (n)" list header.
@@ -4822,7 +4935,12 @@ public class ConfigCustomWidgets {
         if (s == null) return 140;
         List<BomboConfig.CommandBind> list = s.profileBinds != null ? s.profileBinds.get(s.activeProfile) : null;
         int count = list != null ? list.size() : 0;
-        return 125 + Math.max(1, count) * 26;
+        int extra = 0;
+        if (BomboConfigScreen.searchQuery != null && !BomboConfigScreen.searchQuery.trim().isEmpty()) {
+            List<String> matches = getMatchingProfilesForGuiBinds(BomboConfigScreen.searchQuery);
+            if (!matches.isEmpty()) extra = 22;
+        }
+        return 125 + extra + Math.max(1, count) * 26;
     }
 
     public static void renderGuiBindsManager(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -4830,7 +4948,16 @@ public class ConfigCustomWidgets {
         ConfigUITheme.drawCard(g, x, y, w, h, hovered);
 
         int curY = y + 8;
-        g.text(font, "§b§lGUI CONTAINER KEYBINDS (" + BomboConfig.get().activeProfile + ") §7- Executed while inside a container/GUI", x + 12, curY, ConfigUITheme.getAccentColor(), false);
+        String curProf = BomboConfig.get().activeProfile != null ? BomboConfig.get().activeProfile : "default";
+        g.text(font, "§b§lGUI CONTAINER KEYBINDS (" + curProf + ") §7- Executed while inside a container/GUI", x + 12, curY, ConfigUITheme.getAccentColor(), false);
+
+        // Profile cycle button in header
+        int profBtnW = 120;
+        int profBtnX = x + w - profBtnW - 12;
+        int profBtnY = y + 6;
+        boolean profHover = mouseX >= profBtnX && mouseX <= profBtnX + profBtnW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
+        ConfigUITheme.drawPillButton(g, font, "§7◀ §b" + curProf + " §7▶", profBtnX, profBtnY, profBtnW, 18, profHover, -1, 0x221E293B, 0x55FFFFFF);
+
         curY += 18;
 
         int colW = (w - 36) / 4;
@@ -4860,6 +4987,22 @@ public class ConfigCustomWidgets {
         curY += 6;
 
         BomboConfig.Settings s = BomboConfig.get();
+        List<String> matchGuiProfs = getMatchingProfilesForGuiBinds(BomboConfigScreen.searchQuery);
+        if (!matchGuiProfs.isEmpty()) {
+            g.text(font, "§eFound in profile(s):", x + 16, curY + 2, 0xFFFFAA00, false);
+            int tagX = x + 16 + font.width("§eFound in profile(s):") + 8;
+            for (String mp : matchGuiProfs) {
+                boolean isCurrent = mp.equalsIgnoreCase(s.activeProfile);
+                int tagW = font.width(mp) + 14;
+                boolean tagHover = mouseX >= tagX && mouseX <= tagX + tagW && mouseY >= curY && mouseY <= curY + 16;
+                int bg = isCurrent ? 0x4400E5FF : 0x221E293B;
+                int border = isCurrent ? 0x8800E5FF : 0x44FFFFFF;
+                ConfigUITheme.drawPillButton(g, font, (isCurrent ? "§b✔ " : "§7") + mp, tagX, curY, tagW, 16, tagHover, -1, bg, border);
+                tagX += tagW + 6;
+            }
+            curY += 22;
+        }
+
         List<BomboConfig.CommandBind> list = s.profileBinds != null ? s.profileBinds.get(s.activeProfile) : null;
         if (list == null || list.isEmpty()) {
             g.text(font, "§8No GUI container keybinds configured for profile '" + s.activeProfile + "'. Add one above!", x + 16, curY + 4, ConfigUITheme.getTextMuted(), false);
@@ -4909,6 +5052,31 @@ public class ConfigCustomWidgets {
     }
 
     public static boolean handleGuiBindsClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
+        // Profile switcher in header
+        int profBtnW = 120;
+        int profBtnX = x + w - profBtnW - 12;
+        int profBtnY = y + 6;
+        if (mouseX >= profBtnX && mouseX <= profBtnX + profBtnW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+            List<String> profs = ConfigRegistry.getAllProfileNames();
+            if (!profs.isEmpty()) {
+                BomboConfig.Settings s = BomboConfig.get();
+                String cur = s.activeProfile != null ? s.activeProfile : "default";
+                int idx = -1;
+                for (int p = 0; p < profs.size(); p++) {
+                    if (profs.get(p).equalsIgnoreCase(cur)) { idx = p; break; }
+                }
+                int nextIdx;
+                if (button == 1 || mouseX < profBtnX + 22) {
+                    nextIdx = (idx <= 0) ? profs.size() - 1 : idx - 1;
+                } else {
+                    nextIdx = (idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1;
+                }
+                s.activeProfile = profs.get(nextIdx);
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         int curY = y + 26;
         int colW = (w - 36) / 4;
 
@@ -4961,6 +5129,22 @@ public class ConfigCustomWidgets {
             guiKbKeyInput = "";
             guiKbIslandInput = "";
             return true;
+        }
+
+        List<String> matchGuiProfs = getMatchingProfilesForGuiBinds(BomboConfigScreen.searchQuery);
+        if (!matchGuiProfs.isEmpty()) {
+            int matchTagY = curY + 32;
+            int tagX = x + 16 + 120;
+            for (String mp : matchGuiProfs) {
+                int tagW = mp.length() * 7 + 14;
+                if (mouseX >= tagX && mouseX <= tagX + tagW && mouseY >= matchTagY && mouseY <= matchTagY + 18) {
+                    s.activeProfile = mp;
+                    BomboConfig.save();
+                    return true;
+                }
+                tagX += tagW + 6;
+            }
+            curY += 22;
         }
 
         curY += 32;

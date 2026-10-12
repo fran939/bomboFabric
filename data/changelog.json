@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.117",
+    "date": "2026-10-13",
+    "changes": [
+      "+ Config Hotkey Profile Switcher - Profile cycling button on card header and clickable tags to jump between profiles with matching binds",
+      "+ Interactive Chat Hovers - Added [HOVER:...] token support for !nw, !dungeons, and !rtca with full itemized breakdown tooltips in Minecraft chat",
+      "+ Smart Translation & Readable Languages - !tr displays full language names (e.g. Russian ➔ Spanish) and auto-routes English to Spanish",
+      "~ Discord /cmd Target Isolation - Commands target only the specified player's connected socket, preventing broadcast to unintended clients",
+      "~ Discord /cmd Execution Confirmation - Mod sends [CMD_ACK] to confirm exact execution timestamp on Discord",
+      "~ Visible Commands by Default - Remote commands no longer hide chat unless explicit hide: true is passed",
+      "~ RTCA 20% Passive Class XP - Corrected passive XP to 20% and added clear Plan vs Solo run breakdowns"
+    ]
+  },
+  {
     "version": "26.2.28.116",
     "date": "2026-10-12",
     "changes": [
