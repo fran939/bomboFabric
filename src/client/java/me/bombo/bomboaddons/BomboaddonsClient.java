@@ -644,6 +644,15 @@ public class BomboaddonsClient implements ClientModInitializer {
          try { me.bombo.bomboaddons.IRCClient.stop(); } catch (Throwable ignored) {}
       });
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+         Thread cleanExitGuard = new Thread(() -> {
+            try {
+               Thread.sleep(1500);
+               Runtime.getRuntime().halt(0);
+            } catch (Throwable ignored) {}
+         }, "Bombo-CleanExitGuard");
+         cleanExitGuard.setDaemon(true);
+         cleanExitGuard.start();
+
          try { me.bombo.bomboaddons.features.spotify.SpotifyManager.stop(); } catch (Throwable ignored) {}
          try { me.bombo.bomboaddons.features.discord.DiscordIpcManager.stop(); } catch (Throwable ignored) {}
          try { me.bombo.bomboaddons.features.screenshare.ScreenshareManager.stopStreaming(); } catch (Throwable ignored) {}

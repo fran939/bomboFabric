@@ -4659,9 +4659,11 @@ public class ConfigCustomWidgets {
         List<BomboConfig.CommandBind> list = s.keybindBinds != null ? s.keybindBinds.get(s.activeProfile) : null;
         int count = list != null ? list.size() : 0;
         int extra = 0;
+        List<String> allProfs = ConfigRegistry.getAllProfileNames();
+        if (allProfs.size() > 1) extra += 22;
         if (BomboConfigScreen.searchQuery != null && !BomboConfigScreen.searchQuery.trim().isEmpty()) {
             List<String> matches = getMatchingProfilesForKeybinds(BomboConfigScreen.searchQuery);
-            if (!matches.isEmpty()) extra = 22;
+            if (!matches.isEmpty()) extra += 22;
         }
         return 112 + extra + Math.max(1, count) * 24;
     }
@@ -4674,12 +4676,22 @@ public class ConfigCustomWidgets {
         String curProf = BomboConfig.get().activeProfile != null ? BomboConfig.get().activeProfile : "default";
         g.text(font, "§6§lPROFILE COMMAND KEYBINDS (" + curProf + ")", x + 12, curY, ConfigUITheme.ACCENT_GOLD, false);
 
-        // Profile cycle button in header
-        int profBtnW = 120;
-        int profBtnX = x + w - profBtnW - 12;
+        // Profile switcher in header: [◀] [ Profile: <name> ] [▶]
+        int arrowW = 18;
+        int profLabelW = Math.max(76, font.width("Profile: " + curProf) + 16);
+        int totalProfControlsW = arrowW + 4 + profLabelW + 4 + arrowW;
+        int prevBtnX = x + w - totalProfControlsW - 12;
+        int curProfBtnX = prevBtnX + arrowW + 4;
+        int nextBtnX = curProfBtnX + profLabelW + 4;
         int profBtnY = y + 6;
-        boolean profHover = mouseX >= profBtnX && mouseX <= profBtnX + profBtnW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
-        ConfigUITheme.drawPillButton(g, font, "§7◀ §b" + curProf + " §7▶", profBtnX, profBtnY, profBtnW, 18, profHover, -1, 0x221E293B, 0x55FFFFFF);
+
+        boolean prevHover = mouseX >= prevBtnX && mouseX <= prevBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
+        boolean curProfHover = mouseX >= curProfBtnX && mouseX <= curProfBtnX + profLabelW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
+        boolean nextHover = mouseX >= nextBtnX && mouseX <= nextBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
+
+        ConfigUITheme.drawPillButton(g, font, "§e◀", prevBtnX, profBtnY, arrowW, 18, prevHover, -1, 0x221E293B, 0x55FFFFFF);
+        ConfigUITheme.drawPillButton(g, font, "§b" + curProf, curProfBtnX, profBtnY, profLabelW, 18, curProfHover, -1, 0x221E293B, 0x55FFFFFF);
+        ConfigUITheme.drawPillButton(g, font, "§e▶", nextBtnX, profBtnY, arrowW, 18, nextHover, -1, 0x221E293B, 0x55FFFFFF);
 
         curY += 18;
 
@@ -4710,6 +4722,22 @@ public class ConfigCustomWidgets {
         curY += 6;
 
         BomboConfig.Settings s = BomboConfig.get();
+        List<String> allProfs = ConfigRegistry.getAllProfileNames();
+        if (allProfs.size() > 1) {
+            g.text(font, "§7Profiles:", x + 16, curY + 2, 0xFFAAAAAA, false);
+            int pTagX = x + 16 + font.width("§7Profiles:") + 8;
+            for (String pName : allProfs) {
+                boolean isCurrent = pName.equalsIgnoreCase(s.activeProfile);
+                int pTagW = font.width(pName) + (isCurrent ? 20 : 14);
+                boolean pTagHover = mouseX >= pTagX && mouseX <= pTagX + pTagW && mouseY >= curY && mouseY <= curY + 16;
+                int bg = isCurrent ? 0x4400E5FF : 0x221E293B;
+                int border = isCurrent ? 0xAA00E5FF : (pTagHover ? 0x66FFFFFF : 0x33FFFFFF);
+                ConfigUITheme.drawPillButton(g, font, (isCurrent ? "§b✔ " : "§7") + pName, pTagX, curY, pTagW, 16, pTagHover, -1, bg, border);
+                pTagX += pTagW + 6;
+            }
+            curY += 22;
+        }
+
         List<String> matchKbProfs = getMatchingProfilesForKeybinds(BomboConfigScreen.searchQuery);
         if (!matchKbProfs.isEmpty()) {
             g.text(font, "§eFound in profile(s):", x + 16, curY + 2, 0xFFFFAA00, false);
@@ -4779,25 +4807,40 @@ public class ConfigCustomWidgets {
     }
 
     public static boolean handleKeybindsClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
-        // Profile switcher in header
-        int profBtnW = 120;
-        int profBtnX = x + w - profBtnW - 12;
-        int profBtnY = y + 6;
-        if (mouseX >= profBtnX && mouseX <= profBtnX + profBtnW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
-            List<String> profs = ConfigRegistry.getAllProfileNames();
-            if (!profs.isEmpty()) {
-                BomboConfig.Settings s = BomboConfig.get();
-                String cur = s.activeProfile != null ? s.activeProfile : "default";
-                int idx = -1;
-                for (int p = 0; p < profs.size(); p++) {
-                    if (profs.get(p).equalsIgnoreCase(cur)) { idx = p; break; }
-                }
-                int nextIdx;
-                if (button == 1 || mouseX < profBtnX + 22) {
-                    nextIdx = (idx <= 0) ? profs.size() - 1 : idx - 1;
-                } else {
-                    nextIdx = (idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1;
-                }
+        // Profile switcher in header: [◀] [ Profile: <name> ] [▶]
+        List<String> profs = ConfigRegistry.getAllProfileNames();
+        if (!profs.isEmpty()) {
+            BomboConfig.Settings s = BomboConfig.get();
+            String cur = s.activeProfile != null ? s.activeProfile : "default";
+            int idx = -1;
+            for (int p = 0; p < profs.size(); p++) {
+                if (profs.get(p).equalsIgnoreCase(cur)) { idx = p; break; }
+            }
+            int arrowW = 18;
+            int profLabelW = Math.max(76, Minecraft.getInstance().font.width("Profile: " + cur) + 16);
+            int totalProfControlsW = arrowW + 4 + profLabelW + 4 + arrowW;
+            int prevBtnX = x + w - totalProfControlsW - 12;
+            int curProfBtnX = prevBtnX + arrowW + 4;
+            int nextBtnX = curProfBtnX + profLabelW + 4;
+            int profBtnY = y + 6;
+
+            // [◀] Previous profile
+            if (mouseX >= prevBtnX && mouseX <= prevBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+                int nextIdx = (idx <= 0) ? profs.size() - 1 : idx - 1;
+                s.activeProfile = profs.get(nextIdx);
+                BomboConfig.save();
+                return true;
+            }
+            // [▶] Next profile
+            if (mouseX >= nextBtnX && mouseX <= nextBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+                int nextIdx = (idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1;
+                s.activeProfile = profs.get(nextIdx);
+                BomboConfig.save();
+                return true;
+            }
+            // Center Profile Button (Left click = next, Right click = prev)
+            if (mouseX >= curProfBtnX && mouseX <= curProfBtnX + profLabelW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+                int nextIdx = (button == 1) ? ((idx <= 0) ? profs.size() - 1 : idx - 1) : ((idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1);
                 s.activeProfile = profs.get(nextIdx);
                 BomboConfig.save();
                 return true;
@@ -4858,13 +4901,31 @@ public class ConfigCustomWidgets {
             return true;
         }
 
+        curY += 26 + 6;
+
+        // Click on full Profiles pill row
+        List<String> allProfs = ConfigRegistry.getAllProfileNames();
+        if (allProfs.size() > 1) {
+            int pTagX = x + 16 + Minecraft.getInstance().font.width("§7Profiles:") + 8;
+            for (String pName : allProfs) {
+                boolean isCurrent = pName.equalsIgnoreCase(s.activeProfile);
+                int pTagW = Minecraft.getInstance().font.width(pName) + (isCurrent ? 20 : 14);
+                if (mouseX >= pTagX && mouseX <= pTagX + pTagW && mouseY >= curY && mouseY <= curY + 16) {
+                    s.activeProfile = pName;
+                    BomboConfig.save();
+                    return true;
+                }
+                pTagX += pTagW + 6;
+            }
+            curY += 22;
+        }
+
         List<String> matchKbProfs = getMatchingProfilesForKeybinds(BomboConfigScreen.searchQuery);
         if (!matchKbProfs.isEmpty()) {
-            int matchTagY = curY + 32;
-            int tagX = x + 16 + 120;
+            int tagX = x + 16 + Minecraft.getInstance().font.width("§eFound in profile(s):") + 8;
             for (String mp : matchKbProfs) {
-                int tagW = mp.length() * 7 + 14;
-                if (mouseX >= tagX && mouseX <= tagX + tagW && mouseY >= matchTagY && mouseY <= matchTagY + 18) {
+                int tagW = Minecraft.getInstance().font.width(mp) + 14;
+                if (mouseX >= tagX && mouseX <= tagX + tagW && mouseY >= curY && mouseY <= curY + 16) {
                     s.activeProfile = mp;
                     BomboConfig.save();
                     return true;
@@ -4874,8 +4935,7 @@ public class ConfigCustomWidgets {
             curY += 22;
         }
 
-        // Match the render pass: divider + the "Command Keybinds (n)" list header.
-        curY += 48;
+        curY += 16;
 
         for (int i = 0; i < list.size(); i++) {
             BomboConfig.CommandBind cb = list.get(i);
@@ -4936,9 +4996,11 @@ public class ConfigCustomWidgets {
         List<BomboConfig.CommandBind> list = s.profileBinds != null ? s.profileBinds.get(s.activeProfile) : null;
         int count = list != null ? list.size() : 0;
         int extra = 0;
+        List<String> allProfs = ConfigRegistry.getAllProfileNames();
+        if (allProfs.size() > 1) extra += 22;
         if (BomboConfigScreen.searchQuery != null && !BomboConfigScreen.searchQuery.trim().isEmpty()) {
             List<String> matches = getMatchingProfilesForGuiBinds(BomboConfigScreen.searchQuery);
-            if (!matches.isEmpty()) extra = 22;
+            if (!matches.isEmpty()) extra += 22;
         }
         return 125 + extra + Math.max(1, count) * 26;
     }
@@ -4951,12 +5013,22 @@ public class ConfigCustomWidgets {
         String curProf = BomboConfig.get().activeProfile != null ? BomboConfig.get().activeProfile : "default";
         g.text(font, "§b§lGUI CONTAINER KEYBINDS (" + curProf + ") §7- Executed while inside a container/GUI", x + 12, curY, ConfigUITheme.getAccentColor(), false);
 
-        // Profile cycle button in header
-        int profBtnW = 120;
-        int profBtnX = x + w - profBtnW - 12;
+        // Profile switcher in header: [◀] [ Profile: <name> ] [▶]
+        int arrowW = 18;
+        int profLabelW = Math.max(76, font.width("Profile: " + curProf) + 16);
+        int totalProfControlsW = arrowW + 4 + profLabelW + 4 + arrowW;
+        int prevBtnX = x + w - totalProfControlsW - 12;
+        int curProfBtnX = prevBtnX + arrowW + 4;
+        int nextBtnX = curProfBtnX + profLabelW + 4;
         int profBtnY = y + 6;
-        boolean profHover = mouseX >= profBtnX && mouseX <= profBtnX + profBtnW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
-        ConfigUITheme.drawPillButton(g, font, "§7◀ §b" + curProf + " §7▶", profBtnX, profBtnY, profBtnW, 18, profHover, -1, 0x221E293B, 0x55FFFFFF);
+
+        boolean prevHover = mouseX >= prevBtnX && mouseX <= prevBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
+        boolean curProfHover = mouseX >= curProfBtnX && mouseX <= curProfBtnX + profLabelW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
+        boolean nextHover = mouseX >= nextBtnX && mouseX <= nextBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
+
+        ConfigUITheme.drawPillButton(g, font, "§e◀", prevBtnX, profBtnY, arrowW, 18, prevHover, -1, 0x221E293B, 0x55FFFFFF);
+        ConfigUITheme.drawPillButton(g, font, "§b" + curProf, curProfBtnX, profBtnY, profLabelW, 18, curProfHover, -1, 0x221E293B, 0x55FFFFFF);
+        ConfigUITheme.drawPillButton(g, font, "§e▶", nextBtnX, profBtnY, arrowW, 18, nextHover, -1, 0x221E293B, 0x55FFFFFF);
 
         curY += 18;
 
@@ -4987,6 +5059,22 @@ public class ConfigCustomWidgets {
         curY += 6;
 
         BomboConfig.Settings s = BomboConfig.get();
+        List<String> allProfs = ConfigRegistry.getAllProfileNames();
+        if (allProfs.size() > 1) {
+            g.text(font, "§7Profiles:", x + 16, curY + 2, 0xFFAAAAAA, false);
+            int pTagX = x + 16 + font.width("§7Profiles:") + 8;
+            for (String pName : allProfs) {
+                boolean isCurrent = pName.equalsIgnoreCase(s.activeProfile);
+                int pTagW = font.width(pName) + (isCurrent ? 20 : 14);
+                boolean pTagHover = mouseX >= pTagX && mouseX <= pTagX + pTagW && mouseY >= curY && mouseY <= curY + 16;
+                int bg = isCurrent ? 0x4400E5FF : 0x221E293B;
+                int border = isCurrent ? 0xAA00E5FF : (pTagHover ? 0x66FFFFFF : 0x33FFFFFF);
+                ConfigUITheme.drawPillButton(g, font, (isCurrent ? "§b✔ " : "§7") + pName, pTagX, curY, pTagW, 16, pTagHover, -1, bg, border);
+                pTagX += pTagW + 6;
+            }
+            curY += 22;
+        }
+
         List<String> matchGuiProfs = getMatchingProfilesForGuiBinds(BomboConfigScreen.searchQuery);
         if (!matchGuiProfs.isEmpty()) {
             g.text(font, "§eFound in profile(s):", x + 16, curY + 2, 0xFFFFAA00, false);
@@ -5052,25 +5140,40 @@ public class ConfigCustomWidgets {
     }
 
     public static boolean handleGuiBindsClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
-        // Profile switcher in header
-        int profBtnW = 120;
-        int profBtnX = x + w - profBtnW - 12;
-        int profBtnY = y + 6;
-        if (mouseX >= profBtnX && mouseX <= profBtnX + profBtnW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
-            List<String> profs = ConfigRegistry.getAllProfileNames();
-            if (!profs.isEmpty()) {
-                BomboConfig.Settings s = BomboConfig.get();
-                String cur = s.activeProfile != null ? s.activeProfile : "default";
-                int idx = -1;
-                for (int p = 0; p < profs.size(); p++) {
-                    if (profs.get(p).equalsIgnoreCase(cur)) { idx = p; break; }
-                }
-                int nextIdx;
-                if (button == 1 || mouseX < profBtnX + 22) {
-                    nextIdx = (idx <= 0) ? profs.size() - 1 : idx - 1;
-                } else {
-                    nextIdx = (idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1;
-                }
+        // Profile switcher in header: [◀] [ Profile: <name> ] [▶]
+        List<String> profs = ConfigRegistry.getAllProfileNames();
+        if (!profs.isEmpty()) {
+            BomboConfig.Settings s = BomboConfig.get();
+            String cur = s.activeProfile != null ? s.activeProfile : "default";
+            int idx = -1;
+            for (int p = 0; p < profs.size(); p++) {
+                if (profs.get(p).equalsIgnoreCase(cur)) { idx = p; break; }
+            }
+            int arrowW = 18;
+            int profLabelW = Math.max(76, Minecraft.getInstance().font.width("Profile: " + cur) + 16);
+            int totalProfControlsW = arrowW + 4 + profLabelW + 4 + arrowW;
+            int prevBtnX = x + w - totalProfControlsW - 12;
+            int curProfBtnX = prevBtnX + arrowW + 4;
+            int nextBtnX = curProfBtnX + profLabelW + 4;
+            int profBtnY = y + 6;
+
+            // [◀] Previous profile
+            if (mouseX >= prevBtnX && mouseX <= prevBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+                int nextIdx = (idx <= 0) ? profs.size() - 1 : idx - 1;
+                s.activeProfile = profs.get(nextIdx);
+                BomboConfig.save();
+                return true;
+            }
+            // [▶] Next profile
+            if (mouseX >= nextBtnX && mouseX <= nextBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+                int nextIdx = (idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1;
+                s.activeProfile = profs.get(nextIdx);
+                BomboConfig.save();
+                return true;
+            }
+            // Center Profile Button (Left click = next, Right click = prev)
+            if (mouseX >= curProfBtnX && mouseX <= curProfBtnX + profLabelW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+                int nextIdx = (button == 1) ? ((idx <= 0) ? profs.size() - 1 : idx - 1) : ((idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1);
                 s.activeProfile = profs.get(nextIdx);
                 BomboConfig.save();
                 return true;
@@ -5131,13 +5234,31 @@ public class ConfigCustomWidgets {
             return true;
         }
 
+        curY += 26 + 6;
+
+        // Click on full Profiles pill row
+        List<String> allProfs = ConfigRegistry.getAllProfileNames();
+        if (allProfs.size() > 1) {
+            int pTagX = x + 16 + Minecraft.getInstance().font.width("§7Profiles:") + 8;
+            for (String pName : allProfs) {
+                boolean isCurrent = pName.equalsIgnoreCase(s.activeProfile);
+                int pTagW = Minecraft.getInstance().font.width(pName) + (isCurrent ? 20 : 14);
+                if (mouseX >= pTagX && mouseX <= pTagX + pTagW && mouseY >= curY && mouseY <= curY + 16) {
+                    s.activeProfile = pName;
+                    BomboConfig.save();
+                    return true;
+                }
+                pTagX += pTagW + 6;
+            }
+            curY += 22;
+        }
+
         List<String> matchGuiProfs = getMatchingProfilesForGuiBinds(BomboConfigScreen.searchQuery);
         if (!matchGuiProfs.isEmpty()) {
-            int matchTagY = curY + 32;
-            int tagX = x + 16 + 120;
+            int tagX = x + 16 + Minecraft.getInstance().font.width("§eFound in profile(s):") + 8;
             for (String mp : matchGuiProfs) {
-                int tagW = mp.length() * 7 + 14;
-                if (mouseX >= tagX && mouseX <= tagX + tagW && mouseY >= matchTagY && mouseY <= matchTagY + 18) {
+                int tagW = Minecraft.getInstance().font.width(mp) + 14;
+                if (mouseX >= tagX && mouseX <= tagX + tagW && mouseY >= curY && mouseY <= curY + 16) {
                     s.activeProfile = mp;
                     BomboConfig.save();
                     return true;
@@ -5146,8 +5267,6 @@ public class ConfigCustomWidgets {
             }
             curY += 22;
         }
-
-        curY += 32;
 
         for (int i = 0; i < list.size(); i++) {
             BomboConfig.CommandBind cb = list.get(i);

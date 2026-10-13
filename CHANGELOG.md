@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.118] - 2026-10-13 (Beta)
+
+### Features
+- **Config Keybind Profile Switcher & Direct Selection (`ConfigCustomWidgets`):** Replaced the single cycling button with dedicated `[◀]`, `[Profile: <name>]`, and `[▶]` buttons on card headers for both Command Keybinds and GUI Container Keybinds. Added a clickable pills row displaying all available profiles (`Profiles: [✔ General] [bers] [mage]...`), enabling 1-click switching to any profile directly.
+
+### Fixes
+- **Clean Game Exit Guard (`BomboaddonsClient`):** Added a background JVM exit watchdog guard that halts cleanly after 1500ms during shutdown. Prevents the game from freezing or crashing with `Client shutdown from post-main` caused by third-party mod background threads hanging on blocking network requests (such as Secret Routes `APIUtils.addMember`).
+- **Adjectils Parity for `!rtca` / `/rtca` (`bomboapi`):** Synchronized the Catacombs 50 planner formula with https://adjectils.com/dungeon.html by adopting the 25% (`/ 4`) non-played class passive XP rate and standard M7 Catacombs Graduate 20% bonus (yielding 420,000 XP/run base). `bomboclas` now accurately calculates exactly 1,061 M7 runs (37 Archer, 171 Berserk, 397 Healer, 0 Mage, 456 Tank) matching Adjectils to the exact single run.
+- **Discord Bot Embeds for Bridge Commands (`bombot`):** In `bombot`, resolved `ReferenceError: Cannot access 'per' before initialization` in `!rtca`. Commands executed in-game (`!rtca`, `!dungeons`, `!nw`) now dispatch the bot's rich embed directly to linked Discord channels instead of sending raw Minecraft formatting strings (`[HOVER:...]`, `§`) through webhooks.
+
 ## [26.2.28.117] - 2026-10-13 (Beta)
 
 ### Features
