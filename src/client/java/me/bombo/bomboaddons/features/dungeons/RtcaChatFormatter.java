@@ -49,11 +49,11 @@ public final class RtcaChatFormatter {
 
    /** Matches the bot's RTCA line and captures the player and profile it was printed for. */
    private static final Pattern RTCA_PATTERN = Pattern.compile(
-      "\\[RTCA50]\\s+(\\S+)\\s+on\\s+(\\S+?)\\s*\\(CA\\s*([\\d.]+)\\)?:",
+      "\\[RTCA(?:50)?]\\s+(\\S+)\\s+on\\s+(\\S+?)\\s*\\(CA\\s*([\\d.]+)\\)?:",
       Pattern.CASE_INSENSITIVE);
 
-   /** Fallback that just pulls the player out of any "[RTCA50] <name>" occurrence. */
-   private static final Pattern PLAYER_PATTERN = Pattern.compile("\\[RTCA50]\\s+(\\S+)");
+   /** Fallback that just pulls the player out of any "[RTCA] <name>" or "[RTCA50] <name>" occurrence. */
+   private static final Pattern PLAYER_PATTERN = Pattern.compile("\\[RTCA(?:50)?]\\s+(\\S+)", Pattern.CASE_INSENSITIVE);
 
    private static final String[] CLASS_ORDER = {"archer", "berserk", "healer", "mage", "tank"};
 
@@ -113,7 +113,7 @@ public final class RtcaChatFormatter {
     * @return true when {@code raw} is a BomboBot RTCA line we own and should replace.
     */
    public static boolean isRtcaMessage(String raw) {
-      return raw != null && raw.contains("[RTCA50]");
+      return raw != null && (raw.contains("[RTCA50]") || raw.contains("[RTCA]"));
    }
 
    /**
@@ -186,7 +186,7 @@ public final class RtcaChatFormatter {
                         net.minecraft.client.multiplayer.chat.GuiMessage msg = messages.get(i);
                         if (msg != null && msg.content() != null) {
                            String text = msg.content().getString();
-                           if (text.contains("[RTCA50]") && text.toLowerCase(Locale.ROOT).contains(lowerPlayer)) {
+                           if ((text.contains("[RTCA50]") || text.contains("[RTCA]")) && text.toLowerCase(Locale.ROOT).contains(lowerPlayer)) {
                               messages.set(i, new net.minecraft.client.multiplayer.chat.GuiMessage(
                                  msg.addedTime(), component, msg.signature(), msg.source(), msg.tag()));
                               acc.invokeRefreshTrimmedMessages();
@@ -210,7 +210,7 @@ public final class RtcaChatFormatter {
       String profile = data.profile() != null ? data.profile() : profileFromLine;
 
       MutableComponent root = Component.empty();
-      root.append(Component.literal("§6[Bombo] §e[RTCA50] §b" + (data.player() == null ? "" : data.player()) + " "));
+      root.append(Component.literal("§6[Bombo] §e[RTCA] §b" + (data.player() == null ? "" : data.player()) + " "));
       if (profile != null && !profile.isEmpty()) {
          root.append(Component.literal("§7on §a" + profile + " "));
       }

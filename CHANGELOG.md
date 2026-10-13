@@ -1,5 +1,12 @@
 # BomboAddons Changelog
  
+## [26.2.28.126] - 2026-10-13 (Beta)
+
+### Fixes
+- **RTCA Client Loop Elimination (`bombot`, `RtcaChatFormatter`):** Resolved critical recursive chat loop where older mod clients intercepting BomboBot's `[RTCA50]` broadcast re-emitted `sendSystemMessage` containing `[RTCA50]`, triggering self-perpetuating infinite loops of thousands of requests. Updated BomboBot to broadcast `[RTCA]` with direct base64 `[HOVER:...]` tooltips, breaking the trigger regex on all older clients.
+- **Server Global IP Rate Limiter (`bomboapi`, `server.js`):** Enforced strict IP flood protection (max 120 requests/minute per client IP across all API routes), immediately returning HTTP 429 to stop rogue loops before upstream Cloudflare edge limits can be reached.
+- **Client Tag Compatibility (`RtcaChatFormatter`):** Updated in-game RTCA parser to recognize both `[RTCA]` and `[RTCA50]` tags, allowing enriched interactive class hover chips on both new and legacy lines.
+
 ## [26.2.28.125] - 2026-10-13 (Beta)
 
 ### Fixes
