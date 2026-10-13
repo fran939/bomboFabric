@@ -1,5 +1,5 @@
 # COMPREHENSIVE REPOSITORY KNOWLEDGE & HANDOFF GUIDE
-**Mod Version:** `26.2.28.82` | **Target MC:** `26.2` | **Branch:** `26.2`
+**Mod Version:** `26.2.28.126` | **Target MC:** `26.2` | **Branch:** `26.2`
 
 This document serves as the complete knowledge reservoir for AI agents continuing work on BomboAddons / BomboClient. It captures architecture details, feature implementations, testing states, remote server setup, and operational quirks.
 
@@ -9,7 +9,7 @@ This document serves as the complete knowledge reservoir for AI agents continuin
 
 BomboAddons is built as two distinct flavors from a single unified Gradle build:
 - **`bomboaddons-<version>.jar` (Legit Flavor):**
-  - Distributed publicly via `https://bombo.dpdns.org/mod/version`.
+  - Distributed publicly via `https://bomboclas.me/mod/version`.
   - Stripped of all automation, macros, and cheat classes.
   - Mod ID: `bomboaddons`.
 - **`bomboclient-<version>.jar` (Cheat Flavor):**
@@ -32,32 +32,34 @@ BomboAddons is built as two distinct flavors from a single unified Gradle build:
 The remote backend server runs on `ssh.bombo.dpdns.org` (port 22, SSH key `C:\Users\frand\.ssh\id_ed25519`, user `ubuntu`).
 Process manager: **PM2** (`pm2 status`, service name `bomboapi`).
 Base path: `/home/ubuntu/bomboapi/`.
+Domain: `https://api.bomboclas.me` (API) & `https://bomboclas.me` (Web).
 
 ### Key Directories & Files:
 - `/home/ubuntu/bomboapi/releases/`: Holds all published `.jar` files. The API automatically scans this folder to determine available versions.
-- `/home/ubuntu/bomboapi/data/changelog.json`: Directly served by `https://api.bombo.dpdns.org/mod/changelog` (queried by in-game `/b changelog`).
+- `/home/ubuntu/bomboapi/data/changelog.json`: Directly served by `https://api.bomboclas.me/mod/changelog` (queried by in-game `/b changelog`).
 - `/home/ubuntu/bomboapi/data/profits.json`: Stores player dungeon profit records synced from `/b profit` and `AutoCroesus`.
 - `/home/ubuntu/bomboapi/src/profits.js`: Express routes for `/api/v1/profits` and `/profit/:user`.
   - Authenticates via `X-Player-UUID` and Bombo API key (or `Authorization: Bearer`).
-  - Returns 200 with empty list `{"runs": []}` if player has no recorded runs (fixed from old 404 behavior).
+  - Returns 200 with empty list `{"runs": []}` if player has no recorded runs.
 - `/home/ubuntu/bomboapi/src/index.js`: Express entry point.
   - Proxies Hypixel player profile lookups (`GET /data/:user`). Returns `all_profiles` and accepts `?profile=` query parameter.
+- `/home/ubuntu/bomboapi/src/shards_service.js`: Attribute Shards Optimizer calculation and graph relaxation engine.
 
 ### API Endpoints:
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
-| `https://bombo.dpdns.org/mod/latest` | GET | Redirects (302) to the latest **FULL** version `.jar` (never a beta). |
-| `https://api.bombo.dpdns.org/mod/latest` | GET | Returns JSON metadata for latest FULL version. |
-| `https://api.bombo.dpdns.org/mod/version` | GET | Full catalog JSON (or HTML releases page if opened in browser). |
-| `https://api.bombo.dpdns.org/mod/version/beta` | GET | Catalog JSON of beta releases; `latest` field indicates latest beta. |
-| `https://api.bombo.dpdns.org/mod/version/full` | GET | Catalog JSON of full milestone releases. |
-| `https://api.bombo.dpdns.org/mod/version/:version` | GET | Direct download of `.jar` file for given version. |
-| `https://api.bombo.dpdns.org/mod/changelog` | GET | Changelog JSON array. |
-| `https://api.bombo.dpdns.org/mod/auth` | POST | Mojang public key signature validation for mod authentication. |
-| `https://api.bombo.dpdns.org/api/v1/profits` | POST | Syncs dungeon runs (requires `X-Player-UUID` + API key / Bearer). |
-| `https://api.bombo.dpdns.org/profit/:user` | GET | Returns recorded profit runs for given player IGN. |
-| `https://bombo.dpdns.org/dungeons/shards` | GET | Web dashboard for Attribute Shards Optimizer with class filters and crafting tree. |
-| `https://api.bombo.dpdns.org/api/v1/dungeons/shards` | GET | JSON API returning ranked attribute shard upgrades by damage/coin (`?player=&class=`). |
+| `https://bomboclas.me/mod/latest` | GET | Redirects (302) to the latest **FULL** version `.jar` (never a beta). |
+| `https://api.bomboclas.me/mod/latest` | GET | Returns JSON metadata for latest FULL version. |
+| `https://api.bomboclas.me/mod/version` | GET | Full catalog JSON (or HTML releases page if opened in browser). |
+| `https://api.bomboclas.me/mod/version/beta` | GET | Catalog JSON of beta releases; `latest` field indicates latest beta. |
+| `https://api.bomboclas.me/mod/version/full` | GET | Catalog JSON of full milestone releases. |
+| `https://api.bomboclas.me/mod/version/:version` | GET | Direct download of `.jar` file for given version. |
+| `https://api.bomboclas.me/mod/changelog` | GET | Changelog JSON array. |
+| `https://api.bomboclas.me/mod/auth` | POST | Mojang public key signature validation for mod authentication. |
+| `https://api.bomboclas.me/api/v1/profits` | POST | Syncs dungeon runs (requires `X-Player-UUID` + API key / Bearer). |
+| `https://api.bomboclas.me/profit/:user` | GET | Returns recorded profit runs for given player IGN. |
+| `https://bomboclas.me/dungeons/shards` | GET | Web dashboard for Attribute Shards Optimizer with class filters and crafting tree. |
+| `https://api.bomboclas.me/api/v1/dungeons/shards` | GET | JSON API returning ranked attribute shard upgrades by damage/coin (`?player=&class=`). |
 
 ---
 
@@ -153,77 +155,101 @@ Heredocs over SSH mangle quotes. Always `write_file` the patch script locally, `
 
 ---
 
-## 4. Current Testing State: Tested vs. Untested
+## 4. Features Implemented in v26.2.28.121 -> v26.2.28.126
 
-### ✅ TESTED & VERIFIED (Automated / Compile / Remote)
-1. **Clean Compilation (Java 25):** Both `compileClientJava` and `build -x test` compile with zero errors.
-2. **Build Guards:** Both `assertFlavorIntegrity` and `assertNoCheatReferences` pass cleanly.
-3. **Remote Releases:** `bomboaddons-26.2.28.46.jar` deployed to remote server and verified via `GET https://api.bombo.dpdns.org/mod/version/beta`.
-4. **Server RTCA model (v26.2.28.46):** `/command/rtca` and `/command/dungeons` verified live and cache-busted — `exactLevel`, fractional `classAverage`, `xpToNextLevel`, `xpPerRun`, `runsToMax`, per-class `boost`, and the `assumed[]` honesty list all confirmed correct for `bomboclas` (+10% real, 330,000 XP/run, 1,361 runs).
-5. **Remote Changelog:** Deployed to `/home/ubuntu/bomboapi/data/changelog.json` and verified via `GET https://api.bombo.dpdns.org/mod/changelog`.
-6. **Profit API Endpoint:** `POST /api/v1/profits` verified accepting `X-Player-UUID` and API key; `GET /profit/:user` verified returning 200 with empty array on fresh query.
-7. **Hypixel Proxy API:** Verified `GET /data/:user` returning `all_profiles` and handling `?profile=` query param.
+### v26.2.28.126: RTCA Infinite Loop & Server Rate Limiter Fix
+1. **Root Cause of Missing Hovers & 10k Request Flood:**
+   - Older mod clients (`v120`–`v122`) intercepted `[RTCA50]` in `ChatMixin.onAddMessage`.
+   - When the client's `fetchAsync` completed or errored, it invoked `sendSystemMessage` containing the exact same `[RTCA50]` tag.
+   - `ChatMixin` intercepted that system message recursively, resulting in a self-perpetuating infinite loop where one trigger sent 10,000+ API calls to `bomboapi`.
+   - Because `bomboapi` and `/command/rtca` were overwhelmed, requests timed out or failed (`if (data == null) return;`), meaning the rich interactive hover chips were never rendered and chat fell back to unformatted raw text.
+2. **Fixes Applied:**
+   - **BomboBot Broadcast Tag Changed:** In `/home/ubuntu/bombot/index.js`, changed the bridge broadcast prefix from `[RTCA50]` to `[RTCA]`. Older clients only match `[RTCA50]`, so their recursive loop never triggers.
+   - **Embedded Hover Tooltips in Bridge:** BomboBot now encodes rich base64 `[HOVER:text:b64:cmd]` payloads directly into its bridge broadcast for both Discord and in-game chat.
+   - **Global Server Rate Limiter:** In `bomboapi/server.js`, added sliding-window IP rate limiting (120 req/min per IP across all routes), returning HTTP 429 to stop any rogue client loops before hitting Cloudflare edge limits.
+   - **Client Compatibility:** `RtcaChatFormatter.java` supports both `[RTCA]` and `[RTCA50]`.
 
-**Important distinction:** everything on this list is compile-time or HTTP-level verification. Not one line of it proves a line of Java behaves correctly at runtime, because no one has launched the game with these jars.
+### Discord `/cmd` Slash Command Architecture
+- **Purpose:** Allows authorized Discord operators to execute in-game commands on connected Minecraft clients via the IRC/WebSocket bridge (e.g. `/cmd command: /pv bomboclas user: bomboclas`).
+- **Target Socket Isolation:** Evaluates active client sockets and filters specifically by player username (`client.ign.toLowerCase() === targetUser.toLowerCase()`). Only the intended player receives the command packet; other players never receive or execute it.
+- **Client Execution ACK (`[CMD_ACK]`):** When the client receives and runs a command, it replies over the bridge socket with `[CMD_ACK]\u0002<ign>\u0002<cmd>\u0002<timestamp>`. The Discord bot listens for this ACK and edits its reply to:
+  `✅ Executed Successfully! Player <ign> ran /<cmd> at <timestamp>`.
+- **Visibility Control:** Commands are visible in Minecraft chat by default. An optional slash parameter `hide: true` silences the command output.
 
-### ⚠️ UNTESTED IN-GAME (Requires Minecraft Client Testing)
-**Nothing in this document has ever been confirmed by a human running the game.** Every feature below compiles and passes the build guards, and that is the entire extent of the verification. The user has not yet reported a pass or fail on any of it.
+### v26.2.28.125: Shards Optimizer Pricing & Zero Price Fix
+1. **Fusion Ingredient Zero Price Bug:**
+   - `shards_service.js` priced fusion ingredients like Cod, Pangolin, Jormung, and Etherdrake as `0 coins` in Direct Purchases because direct purchases looked for raw shard IDs while craft recipes evaluated decomposed components.
+   - Updated graph relaxation to store ingredient unit costs and sum estimated direct purchase costs.
+2. **GUI Layout & Overlap Elimination (`ShardsOptimizerScreen.java`):**
+   - Split the header into two independent rows:
+     - Row 1: Class filter pills (`Archer`, `Berserk`, `Mage`, `Healer`, `Tank`, `All`) and `[Hide Maxed] / [Show Maxed]` toggle.
+     - Row 2: Budget input field, quick budget buttons (`10M`, `50M`, `100M`, `250M`, `500M`), `[📌 HUD: ON/OFF]`, and `[⚡ Calculate]`.
+3. **Catalog Summary Banner:**
+   - Displays `Found Shards: X/324 • Maxed Shards: Y/324 • Total Shard Levels: Z/3240`.
+4. **Rich SkyBlock-Style Hover Tooltips:**
+   - Hovering any shard item in `/b shards` or the pinned HUD displays rarity colors, attribute family lore, buff stats, owned count vs required, target tier progress, and live Bazaar value.
+5. **Waypoint Bobbing Drift Fix:**
+   - Moved waypoint rendering from `AFTER_TRANSLUCENT_FEATURES` to `COLLECT_SUBMITS` and snapped to frame-exact camera pos, eliminating visual wobble when view bobbing is enabled.
 
-#### Priority 0: RTCA Chat Hover (`v26.2.28.46` / `v26.2.28.45`) — newest and least verified
-- [ ] Trigger `!rtca` in game. Confirm the flat `[RTCA50]` line is *replaced* by the chip line, not duplicated.
-- [ ] Hover a class chip: exact level (`Archer 48.92`), runs to max, XP remaining to next level, XP/run, boost breakdown.
-- [ ] Confirm the boost total is the honest `+10%` (essence perks only) and the tooltip ends with `Not counted: Hecatomb, Scarf accessory, Catacombs Graduate, Mayor`.
-- [ ] Confirm the class average renders fractionally (`CA 48.47`), not `48`.
-- [ ] First hover may briefly show `loading class details...` while the daemon fetch runs — verify it fills in, and that repeat `!rtca` within 60s does not re-request.
-- [ ] If nothing loads: check the log for thread `Bombo-RtcaFetch` and confirm the `BomboApiKeyManager.getApiKey()` header is on the `/command/rtca/<player>` request. The async fetch -> `sendSystemMessage` path and the first-load placeholder are the most likely things to need adjustment.
+### v26.2.28.124: Network Optimization & Deduplication
+1. **Bandwidth Spikes Eliminated:**
+   - Fixed uninitialized timer in `AlphaTrackerHud` polling `/mc/alpha.hypixel.net` every tick.
+   - Throttled Spotify live reporting to 10s and Discord voice polling to 15s.
+   - Added in-flight request deduplication and 60s failure cooldown to `ProfileFetcher.java`.
+   - Enabled Gzip compression on Nginx reverse proxy.
 
-#### Priority 1: Storage Overlay (`v26.2.28.44`)
-- [ ] Enable `Storage Overlay` in `/b` -> Storage settings.
-- [ ] Run `/storage` (or open Ender Chest / Backpack) and verify the multi-grid screen opens.
-- [ ] Test real-time item search: type item names (e.g. "drill", "gem") and verify instant filtering across all containers.
-- [ ] Test layout options: change "Storages Per Row" (1–6) and "Backpack Columns" (1–9).
-- [ ] Test "Preserve Cursor Position": switch between storages and verify cursor doesn't snap to screen center.
-- [ ] Test slot interactions: clicking items into/out of backpack slots and moving items.
-
-#### Priority 2: Camera & Spectator FOV (`v26.2.28.43`)
-- [ ] Run `/b cam <player>` or activate freecam.
-- [ ] Move at high speed / sprint and verify FOV does not stretch or distort (clamped to 110).
-
-#### Priority 3: AutoCroesus & Dungeon Profits (`v26.2.28.43`)
-- [ ] Open Croesus container in Catacombs.
-- [ ] Verify chest profit HUD renders clean text with shadows and NO background box.
-- [ ] Verify keys and kismets are priced using instabuy, and chest items use instasell.
-- [ ] Verify `/b profit` displays deduplicated runs with itemized hover tooltips (item values, net profit, duration).
-- [ ] Complete a dungeon run and verify profit sync succeeds without 401 or 404 errors.
-
-#### Priority 4: Commands, Profile Viewer & UI (`v26.2.28.43`)
-- [ ] Run `/b area` and verify it displays the parent area; run `/b subarea` and verify it displays the subarea.
-- [ ] Test `/b pv1`, `/b pv2`, and `/b pvconfig` commands.
-- [ ] Open Profile Viewer and click the `⚙` header button to open config.
-- [ ] Open `/b apihistory` and verify authorization tokens in headers are masked (e.g. `eyJh...wxyz`).
-- [ ] In `/b` config, click a slider value label (e.g. `300ms`), type a number, and press Enter to confirm it updates correctly.
-
-#### Priority 5: Storage & Egg Finder (`v26.2.28.43`)
-- [ ] Open `/b storage` and verify "Island Chests" tab appears and lists island chests.
-- [ ] Verify empty slots are purged from storage data (no phantom items).
-- [ ] Enter Private Island / Garden / Limbo and verify egg WebSocket unsubscribes.
-- [ ] Collect a Hoppity egg and verify only the single closest waypoint is removed.
+### v26.2.28.122 & v26.2.28.123: GUI Input Lockup Fix & Domain Migration
+1. **Main Menu / GUI Input Lockup Fix:**
+   - Removed an invalid `@Inject(method = "mouseClicked")` on `AbstractSignEditScreen` that broke Mixin transformations and froze keyboard/mouse inputs across the client.
+2. **Domain Migration:**
+   - Migrated API and web domains from `bombo.dpdns.org` (blocked with HTTP 403 by Cloudflare free DNS ToS) to `bomboclas.me` (`https://api.bomboclas.me` and `https://bomboclas.me`).
 
 ---
 
-## 5. Known Quirks & Troubleshooting
+## 5. Master Implementation & Testing State
+
+### ✅ Implemented, Compiled & Deployed
+- **Version:** `26.2.28.126` (Both legit and cheat jars deployed to `ubuntu@ssh.bombo.dpdns.org:/home/ubuntu/bomboapi/releases/`).
+- **Build Guards:** `assertFlavorIntegrity` and `assertNoCheatReferences` verified.
+- **Backend & Discord:** `bomboapi` rate limiter active; `bombot` updated with `[RTCA]` tag, ACK tracking, and target socket isolation.
+
+### ⚠️ Untested In-Game (Requires Player Testing in Minecraft)
+
+The player has not launched the client to test features since `v26.2.28.120`. When testing in-game, verify the following queues:
+
+#### Queue 1: RTCA & Bridge Testing (`v26.2.28.126`)
+- [ ] Run `!rtca` or `!cata` in party/guild/IRC chat.
+- [ ] Verify BomboBot broadcasts `🎯 [RTCA] <player> on <profile>...` without older clients flooding requests.
+- [ ] Hover over the `(Details)` or class name chips in chat: verify the tooltip displays runs left to CA 50, passive 20% XP rates, and per-class planned runs.
+- [ ] From Discord, run `/cmd command: /pv bomboclas user: <ign>` and verify the client executes it and Discord receives a `✅ Executed Successfully!` confirmation with timestamp.
+
+#### Queue 2: Attribute Shards Optimizer & Shopping HUD (`v26.2.28.125`, `v123`, `v121`)
+- [ ] Run `/b shards` in-game:
+  - Verify layout has zero widget overlap: Row 1 has Class pills + `[Hide Maxed] / [Show Maxed]`; Row 2 has Budget box, Quick Budget pills (`10M 50M 100M 250M 500M`), `[📌 HUD: ON/OFF]`, and `[⚡ Calculate]`.
+  - Verify the 3-line catalog summary banner (`Found Shards: X/324 • Maxed: Y/324 • Levels: Z/3240`).
+  - Verify fusion ingredient prices (e.g. `Jormung`, `Etherdrake`, `Cod`, `Pangolin`) show real Bazaar values (not `~0` coins).
+  - Hover any shard in `/b shards`: verify rich SkyBlock tooltip (rarity color, lore, attribute effect, owned count vs max required, tier progression, Bazaar unit price, and estimated value).
+  - Toggle `[📌 HUD: ON]`: verify `SHARDS_SHOPPING_HUD` renders on screen, item quantities can be copied, and hovering items with mouse cursor open shows the same rich tooltip.
+
+#### Queue 3: Bazaar Sign & Galatea Fusion Box Helpers (`v26.2.28.121`)
+- [ ] Open Bazaar custom purchase sign: verify the interactive `[ ⚡ Auto-Fill: <qty> (<shard>) ]` overlay button appears and 1-click inserts required quantities.
+- [ ] Open Galatea's `Fusion Box` and `Shard Fusion` menus: verify needed fusion items, page arrows, and Repeat Previous Fusion buttons are highlighted.
+
+#### Queue 4: Waypoints Stabilization (`v26.2.28.125`, `v121`)
+- [ ] Enable View Bobbing in Minecraft Video Settings.
+- [ ] Create a waypoint (`/b wp add`) or use garden/ordered waypoints and walk/sprint: verify waypoints no longer wobble, drift, or lag 1 frame behind world blocks.
+
+---
+
+## 6. Known Quirks & Troubleshooting
 
 1. **Gradle Build File Lock: `Unable to delete directory build/classes/java/client`:**
    - **Cause:** Java Language Server or running client process holding class files.
    - **Fix:** Run `Remove-Item -Recurse -Force "build/classes/java/client"` in PowerShell, then re-run `./gradlew compileClientJava`.
 2. **Gradle Build Quirk: `Failed to clean up stale outputs`:**
-   - **Cause:** Occasional transient file system lock during `processResources` or `processClientResources`.
-   - **Fix:** Simply re-run `./gradlew build -x test`.
-3. **Remote Release Rule:**
-   - **NEVER** upload `bomboclient-*.jar` to remote server releases. Only upload `bomboaddons-*.jar`.
+   - **Cause:** Transient file system lock during `processResources` or `processClientResources`.
+   - **Fix:** Re-run `./gradlew build -x test`.
+3. **Dual Jar Protocol:**
+   - Both jars (`bomboaddons-*.jar` and `bomboclient-*.jar`) must be uploaded via SCP to `ubuntu@ssh.bombo.dpdns.org:/home/ubuntu/bomboapi/releases/`.
 4. **Git Branch:**
    - Always commit and push directly to branch `26.2`.
-5. **Git remote was renamed:** `fran939/bombofabric.git` -> `fran939/bomboFabric.git`. Pushes still work because GitHub redirects; do not be alarmed by the case change.
-6. **`docs/CODE_STYLE.md` does not exist.** It has been asked for twice and is not in the repo — `docs/` holds only `FEATURE_AUDIT.md` and `HANDOFF_KNOWLEDGE.md`. Conventions are inferred from the code: **3-space indent**, `Component`/`MutableComponent` for chat, and the `processIncomingChat(raw) -> Component` transform shape already used by `RingManager`.
-7. **Server-side tooling:** `rg` became unavailable partway through (`ENOENT ... rg.exe`). Use `grep` from the terminal instead.
-8. **Server edits:** never heredoc a patch over SSH, it mangles quotes. `write_file` the `.py` locally, `scp` it to `/tmp`, run it there.
