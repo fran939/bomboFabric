@@ -111,6 +111,27 @@ public abstract class MouseMixin {
          }
 
          if (mc.gui.screen() != null && mc.player != null) {
+            if (mc.gui.screen() instanceof AbstractSignEditScreen signScreen) {
+               if (button == 0 && me.bombo.bomboaddons.features.shards.ShardsShoppingManager.hasPendingQuantity()) {
+                  double mouseX = mc.mouseHandler.xpos() * (double)mc.getWindow().getGuiScaledWidth() / (double)mc.getWindow().getScreenWidth();
+                  double mouseY = mc.mouseHandler.ypos() * (double)mc.getWindow().getGuiScaledHeight() / (double)mc.getWindow().getScreenHeight();
+                  int screenWidth = mc.getWindow().getGuiScaledWidth();
+                  int btnW = 200;
+                  int btnH = 26;
+                  int btnX = screenWidth / 2 - btnW / 2;
+                  int btnY = 35;
+                  if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
+                     int qty = me.bombo.bomboaddons.features.shards.ShardsShoppingManager.pendingSignQuantity;
+                     me.bombo.bomboaddons.features.shards.ShardsShoppingManager.clearPendingQuantity();
+                     if (signScreen instanceof me.bombo.bomboaddons.features.shards.SignEditAccessor accessor) {
+                        accessor.bombo$applyAutoFill(qty);
+                     }
+                     ci.cancel();
+                     return;
+                  }
+               }
+            }
+
             if (button == 0 && BomboConfig.get().shardsShoppingHud && me.bombo.bomboaddons.features.shards.ShardsShoppingManager.hasPlan()) {
                double mouseX = mc.mouseHandler.xpos() * (double)mc.getWindow().getGuiScaledWidth() / (double)mc.getWindow().getScreenWidth();
                double mouseY = mc.mouseHandler.ypos() * (double)mc.getWindow().getGuiScaledHeight() / (double)mc.getWindow().getScreenHeight();

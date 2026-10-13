@@ -1,5 +1,13 @@
 [
   {
+    "version": "26.2.28.122",
+    "date": "2026-10-13",
+    "changes": [
+      "~ Fix Main Menu & GUI Click Lockup - Removed invalid mouseClicked mixin on AbstractSignEditScreen and moved sign auto-fill click processing to MouseMixin",
+      "~ Switch API Domain to bomboclas.me - Migrated from Cloudflare-blocked bombo.dpdns.org domain to https://api.bomboclas.me to fix HTTP 403 errors"
+    ]
+  },
+  {
     "version": "26.2.28.121",
     "date": "2026-10-13",
     "changes": [

@@ -1,5 +1,11 @@
 # BomboAddons Changelog
  
+## [26.2.28.122] - 2026-10-13 (Beta)
+
+### Fixes
+- **Fix Main Menu & In-Game Click Lockup (`SignEditMixin`, `MouseMixin`, `SignEditAccessor`):** Removed invalid `@Inject` targeting `mouseClicked` on `AbstractSignEditScreen` which triggered Mixin transformation failures and blocked all UI clicks and keystrokes. Implemented `SignEditAccessor` and moved sign auto-fill click interception to `MouseMixin`.
+- **Switch API & Web Base to `bomboclas.me` (`BomboApiUrl`, `ShardsShoppingManager`, `ShardsOptimizerScreen`):** Migrated mod API and web endpoints from the Cloudflare-blocked `bombo.dpdns.org` domain to the operational `bomboclas.me` domain (`https://api.bomboclas.me`), eliminating HTTP 403 errors on mod requests.
+
 ## [26.2.28.121] - 2026-10-13 (Beta)
 
 ### Features

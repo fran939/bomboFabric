@@ -141,7 +141,7 @@ public class ShardsOptimizerScreen extends Screen {
         int webBtnY = modalY + 8;
         if (mouseX >= webBtnX && mouseX <= webBtnX + 110 && mouseY >= webBtnY && mouseY <= webBtnY + 14) {
             String p = Minecraft.getInstance().player != null ? Minecraft.getInstance().player.getScoreboardName() : "me";
-            String url = "https://bombo.dpdns.org/dungeons/shards?player=" + p + "&class=" + selectedClass;
+            String url = "https://bomboclas.me/dungeons/shards?player=" + p + "&class=" + selectedClass;
             Util.getPlatform().openUri(URI.create(url));
             return true;
         }

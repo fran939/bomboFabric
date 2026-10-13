@@ -181,16 +181,17 @@ public class ShardsShoppingManager {
                 String cls = targetClass != null && !targetClass.trim().isEmpty() ? targetClass.trim().toLowerCase() : "archer";
                 String bg = budget != null && !budget.trim().isEmpty() ? budget.trim() : "100m";
 
-                String url = String.format("https://api.bombo.dpdns.org/api/v1/dungeons/shards?player=%s&class=%s&budget=%s",
+                String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl(String.format("/api/v1/dungeons/shards?player=%s&class=%s&budget=%s",
                         URLEncoder.encode(p, StandardCharsets.UTF_8),
                         URLEncoder.encode(cls, StandardCharsets.UTF_8),
-                        URLEncoder.encode(bg, StandardCharsets.UTF_8));
+                        URLEncoder.encode(bg, StandardCharsets.UTF_8)));
 
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .header("Accept", "application/json")
-                        .GET()
-                        .build();
+                HttpRequest request = me.bombo.bomboaddons.util.BomboApiUrl.attachApiKey(
+                        HttpRequest.newBuilder()
+                                .uri(URI.create(url))
+                                .header("Accept", "application/json")
+                                .GET()
+                ).build();
 
                 HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
                 if (response.statusCode() != 200) {
