@@ -285,11 +285,14 @@ public class UpdateVersionsScreen extends Screen {
 
                 // Version text
                 int textX = badgeX + 52;
-                g.text(font, (isCurrent ? "§a§l" : "§f§l") + "v" + v.version, textX, curY + 8, isCurrent ? 0xFF10B981 : 0xFFFFFFFF, true);
+                String verStr = "v" + v.version;
+                g.text(font, (isCurrent ? "§a§l" : "§f§l") + verStr, textX, curY + 8, isCurrent ? 0xFF10B981 : 0xFFFFFFFF, true);
                 if (isCurrent) {
-                    g.text(font, "§2[Currently Active]", textX + font.width("v" + v.version) + 10, curY + 8, 0xFF10B981, false);
+                    int vWidth = font.width("§l" + verStr);
+                    g.text(font, "§2[Currently Active]", textX + vWidth + 8, curY + 8, 0xFF10B981, false);
                 }
-                g.text(font, "§e📅 " + v.releaseDate + " §8| " + (v.filename.isEmpty() ? "bomboaddons-" + v.version + ".jar" : v.filename), textX, curY + 20, 0xFF94A3B8, false);
+                String dateDisplay = formatRelativeDate(v.releaseDate);
+                g.text(font, "§e📅 " + dateDisplay + " §8| " + (v.filename.isEmpty() ? "bomboaddons-" + v.version + ".jar" : v.filename), textX, curY + 20, 0xFF94A3B8, false);
 
                 // Action Button on Right
                 int btnW = 86;
@@ -447,5 +450,23 @@ public class UpdateVersionsScreen extends Screen {
     @Override
     public void onClose() {
         Minecraft.getInstance().setScreenAndShow(this.parent);
+    }
+
+    private static String formatRelativeDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) return "Unknown";
+        try {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            String clean = dateStr.trim();
+            if (clean.length() >= 10) clean = clean.substring(0, 10);
+            java.time.LocalDate release = java.time.LocalDate.parse(clean);
+            long days = java.time.temporal.ChronoUnit.DAYS.between(release, today);
+            if (days <= 0) return dateStr + " §7(today)";
+            if (days == 1) return dateStr + " §7(1d ago)";
+            if (days < 30) return dateStr + " §7(" + days + "d ago)";
+            long months = days / 30;
+            return dateStr + " §7(" + months + "mo ago)";
+        } catch (Throwable t) {
+            return dateStr;
+        }
     }
 }

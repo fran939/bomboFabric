@@ -262,6 +262,8 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, color);
       }
 
+      me.bombo.bomboaddons.features.shards.FusionHelper.onRenderSlot(guiGraphics, slot, this.getTitle().getString());
+
        if (slot.hasItem()) {
           BomboConfig.Settings s = BomboConfig.get();
           // Holding the bypass key removes the locked-slot tint immediately, so the red overlay is

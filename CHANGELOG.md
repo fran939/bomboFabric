@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.121] - 2026-10-13 (Beta)
+
+### Features
+- **In-Game Shard Budget Planner & Shopping HUD (`bomboaddons`):** In-game `/b shards` modal allows entering a coin budget (e.g. `100m`), choosing class, calculating cheapest purchases and fusion paths, and pinning a draggable HUD (`SHARDS_SHOPPING_HUD` in `/b gui`). Features 1-click `/bz <shard>` triggers and automatic clipboard quantity copying.
+- **Bazaar Custom Sign Auto-Fill Overlay (`bomboaddons`):** When entering custom purchase amounts on a Bazaar sign, an interactive `[ ⚡ Auto-Fill: <qty> (<shard>) ]` button appears above the sign, allowing instant 1-click insertion and submission.
+- **Galatea Fusion Box In-Game Helper (`bomboaddons`):** Highlights needed fusion shards directly inside Galatea's `(x/x) Fusion Box`, navigation arrows (Previous/Next Page), Repeat Previous Fusion button (Slot 48), and guided item placement in `Shard Fusion`.
+- **Shards Optimizer Budget Engine & Strict Priority (`bomboapi`):** Fixed attribute mapping (Kraken, End Stone Protector now properly recognized), cleaned URL query strings, enforced strict priority sorting (5★ down to 1★), and added budget allocation endpoint calculating direct buys and fusion savings.
+- **Versions Screen Relative Timestamps & Spacing (`UpdateVersionsScreen`):** Fixed bold version title overlapping the `[Currently Active]` badge in `/b versions` and added relative release dates (`(today)`, `(1d ago)`, `(3d ago)`).
+
+### Fixes
+- **Discord Bot & Bridge `!rtca` Restored (`bombot`):** Restored `!rtca`, `!cata`, `!dungeons`, and `!shards` in the bridge command router so they work reliably from both Discord and Minecraft chat.
+- **Waypoint View Bobbing Drift & Snapping (`WaypointManager`, `GardenWaypoints`):** Eliminated camera translation skew and near-plane scaling that caused waypoints to shake and drift while walking with view bobbing. Snapped `/b wp` waypoints to integer block coordinates.
+- **Coord Bind Cooldown Respected (`BomboaddonsClient`):** Fixed location binds ignoring cooldown intervals when players walk through triggering coordinate zones.
+
 ## [26.2.28.120] - 2026-10-13 (Beta)
 
 ### Features

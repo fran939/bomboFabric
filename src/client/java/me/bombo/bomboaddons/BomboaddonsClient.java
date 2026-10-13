@@ -413,25 +413,19 @@ public class BomboaddonsClient implements ClientModInitializer {
 
    public static void openShardsOptimizer(FabricClientCommandSource src, String username, String dungeonClass) {
       Minecraft mc = Minecraft.getInstance();
-      String target = (username != null && !username.trim().isEmpty()) ? username.trim() : (mc.getUser() != null ? mc.getUser().getName() : "Player");
       String cls = (dungeonClass != null && !dungeonClass.trim().isEmpty()) ? dungeonClass.trim().toLowerCase(java.util.Locale.ROOT) : "archer";
-      String url = "https://bombo.dpdns.org/dungeons/shards?player=" + java.net.URLEncoder.encode(target, java.nio.charset.StandardCharsets.UTF_8) + "&class=" + java.net.URLEncoder.encode(cls, java.nio.charset.StandardCharsets.UTF_8);
-      try {
-         Util.getPlatform().openUri(new java.net.URI(url));
-         Component feedback = Component.literal("§8[§bBomboAddons§8] §aOpening Shards Optimizer for §e" + target + " §7(§d" + cls + "§7): §b" + url);
-         if (src != null) {
-            src.sendFeedback(feedback);
-         } else if (mc.player != null) {
-            mc.player.sendSystemMessage(feedback);
-         }
-      } catch (Exception e) {
-         Component err = Component.literal("§8[§bBomboAddons§8] §cFailed to open browser URL: " + e.getMessage());
-         if (src != null) {
-            src.sendError(err);
-         } else if (mc.player != null) {
-            mc.player.sendSystemMessage(err);
-         }
+      if ("web".equalsIgnoreCase(username) || "browser".equalsIgnoreCase(username)) {
+         String target = (mc.getUser() != null ? mc.getUser().getName() : "Player");
+         String url = "https://bombo.dpdns.org/dungeons/shards?player=" + java.net.URLEncoder.encode(target, java.nio.charset.StandardCharsets.UTF_8) + "&class=" + java.net.URLEncoder.encode(cls, java.nio.charset.StandardCharsets.UTF_8);
+         try {
+            Util.getPlatform().openUri(new java.net.URI(url));
+            Component feedback = Component.literal("§8[§bBomboAddons§8] §aOpening Web Optimizer: §b" + url);
+            if (src != null) src.sendFeedback(feedback);
+            else if (mc.player != null) mc.player.sendSystemMessage(feedback);
+         } catch (Exception ignored) {}
+         return;
       }
+      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.shards.ShardsOptimizerScreen(cls, "100m")));
    }
 
    public static LiteralArgumentBuilder<FabricClientCommandSource> buildShardsCommand(String name) {
@@ -2728,10 +2722,13 @@ public class BomboaddonsClient implements ClientModInitializer {
                               z = Double.parseDouble(zStr);
                            }
 
-                           Vec3 targetPos = new Vec3(x, y, z);
+                           int bx = (int)Math.floor(x);
+                           int by = (int)Math.floor(y);
+                           int bz = (int)Math.floor(z);
+                           Vec3 targetPos = new Vec3(bx, by, bz);
                            GardenWaypoints.addWaypoint(targetPos, name);
-                           WaypointManager.addWaypoint(x, y, z, name);
-                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aAdded waypoint '§e" + name + "§a' at " + String.format("%.1f, %.1f, %.1f", x, y, z)));
+                           WaypointManager.addWaypoint(bx, by, bz, name);
+                           ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aAdded waypoint '§e" + name + "§a' at §f" + bx + " " + by + " " + bz));
                            return 1;
                         }
                      } catch (NumberFormatException var14) {
@@ -5715,6 +5712,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          CorpseHighlight.init();
          me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.init();
          me.bombo.bomboaddons.features.DojoUtilities.init();
+         me.bombo.bomboaddons.features.shards.ShardsShoppingHud.init();
          HighlightESP.fetchOnlineAliasesAsync();
          IRCClient.start();
          LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register((LevelRenderEvents.AfterTranslucentFeatures)(context) -> {
@@ -6629,17 +6627,21 @@ public class BomboaddonsClient implements ClientModInitializer {
                         double dist = playerPos.distanceTo(new Vec3(bind.x, bind.y, bind.z));
                         double r = bind.radius <= (double)0.0F ? (double)3.0F : bind.radius;
                         if (dist <= r) {
+                           long now = System.currentTimeMillis();
+                           long cdMs = (long) (Math.max(1.0, bind.cooldownSeconds) * 1000.0);
                            if (!bind.wasInside) {
-                              double minD = bind.minDelay;
-                              double maxD = bind.maxDelay;
-                              if (maxD > minD && maxD > (double)0.0F) {
-                                 double delaySec = minD + Math.random() * (maxD - minD);
-                                 long triggerTime = System.currentTimeMillis() + (long)(delaySec * (double)1000.0F);
-                                 pendingCommands.add(new PendingCommand(bind.command, triggerTime));
-                              } else {
-                                 executeTracked(bind.command);
+                              if (now - bind.lastTriggeredTime >= cdMs) {
+                                 bind.lastTriggeredTime = now;
+                                 double minD = bind.minDelay;
+                                 double maxD = bind.maxDelay;
+                                 if (maxD > minD && maxD > (double)0.0F) {
+                                    double delaySec = minD + Math.random() * (maxD - minD);
+                                    long triggerTime = now + (long)(delaySec * (double)1000.0F);
+                                    pendingCommands.add(new PendingCommand(bind.command, triggerTime));
+                                 } else {
+                                    executeTracked(bind.command);
+                                 }
                               }
-
                               bind.wasInside = true;
                            }
                         } else if (dist > r + (double)1.5F) {

@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.121",
+    "date": "2026-10-13",
+    "changes": [
+      "+ Shard Budget Planner & Shopping HUD - In-game modal to plan shard upgrades within coin budget, pinning a draggable shopping HUD with quick /bz and auto-copied quantities",
+      "+ Bazaar Sign Auto-Fill Overlay - Interactive button on Bazaar custom amount signs to 1-click insert and submit needed shard quantities",
+      "+ Galatea Fusion Box Helper - Highlights needed fusion items, page navigation, and repeat fusion button in Fusion Box and Shard Fusion menus",
+      "+ Shards Optimizer Budget Engine - Attribute mapping fixes for Kraken/End Stone, strict priority ordering, and budget optimizer with fusion paths",
+      "~ Discord/Bridge !rtca Restored - Restored !rtca/!cata/!dungeons/!shards commands on Discord and in Minecraft bridge chat",
+      "~ Versions Screen Polish - Fixed [Currently Active] badge text overlap and added relative release timestamps (today, 1d ago)",
+      "~ Waypoint Drift & Snapping - Removed camera skew and near-plane scaling to eliminate view bobbing drift and snapped /b wp to integer blocks",
+      "~ Coord Bind Cooldown - Fixed location binds ignoring configured cooldown intervals"
+    ]
+  },
+  {
     "version": "26.2.28.120",
     "date": "2026-10-13",
     "changes": [

@@ -766,8 +766,19 @@ public class HudMoveScreen extends Screen {
                     : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultX(this.width);
             int stY = s.storageToolbarY >= 0 ? s.storageToolbarY
                     : me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarDefaultY(this.height);
-            this.renderTargetBox(g, mouseX, mouseY, stX, stY, stW, stH, HudTarget.STORAGE_TOOLBAR, s.storageToolbarScale);
             me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.drawToolbarPreview(g, this.font, stX, stY);
+        }
+
+        // 33. SHARDS_SHOPPING_HUD
+        if (isTargetVisible(HudTarget.SHARDS_SHOPPING_HUD, s.shardsShoppingHud)) {
+            int[] dims = me.bombo.bomboaddons.features.shards.ShardsShoppingManager.renderHud(g, s.shardsShoppingHudX, s.shardsShoppingHudY, s.shardsShoppingHudScale, this.draggingTarget == HudTarget.SHARDS_SHOPPING_HUD);
+            int shW = dims[0];
+            int shH = dims[1];
+            this.updateDragPosition(mouseX, mouseY, shW, shH, HudTarget.SHARDS_SHOPPING_HUD, (nx, ny) -> {
+                s.shardsShoppingHudX = nx;
+                s.shardsShoppingHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.shardsShoppingHudX, s.shardsShoppingHudY, shW, shH, HudTarget.SHARDS_SHOPPING_HUD, s.shardsShoppingHudScale);
         }
 
         // Snap Guide Lines (Cyan/Teal)
@@ -1011,6 +1022,7 @@ public class HudMoveScreen extends Screen {
             case LYRICS_HUD -> "Lyrics HUD";
             case PIP_OVERLAY -> "Picture-in-Picture";
             case STORAGE_TOOLBAR -> "Storage Overlay Toolbar";
+            case SHARDS_SHOPPING_HUD -> "Shard Shopping List HUD";
             default -> "HUD Element";
         };
     }
@@ -1570,6 +1582,19 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // SHARDS_SHOPPING_HUD
+        if (!s.showOnlyActiveHuds || s.shardsShoppingHud) {
+            int shX = s.shardsShoppingHudX;
+            int shY = s.shardsShoppingHudY;
+            int shW = (int)(220 * s.shardsShoppingHudScale);
+            int shH = (int)(100 * s.shardsShoppingHudScale);
+            if (this.startCornerResize(mouseX, mouseY, shX, shY, shW, shH, HudTarget.SHARDS_SHOPPING_HUD, s.shardsShoppingHudScale)) return true;
+            if (this.checkHit(mouseX, mouseY, shX, shY, shW, shH)) {
+                this.selectAndDrag(HudTarget.SHARDS_SHOPPING_HUD, (int) mouseX - shX, (int) mouseY - shY);
+                return true;
+            }
+        }
+
         return super.mouseClicked(event, handled);
     }
 
@@ -1712,6 +1737,8 @@ public class HudMoveScreen extends Screen {
                 s.pipScale = (float) newScale;
             } else if (this.resizingTarget == HudTarget.STORAGE_TOOLBAR) {
                 s.storageToolbarScale = (float) newScale;
+            } else if (this.resizingTarget == HudTarget.SHARDS_SHOPPING_HUD) {
+                s.shardsShoppingHudScale = (float) newScale;
             }
             return true;
         }
@@ -2172,6 +2199,20 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // SHARDS_SHOPPING_HUD
+        if (!s.showOnlyActiveHuds || s.shardsShoppingHud) {
+            int shX = s.shardsShoppingHudX;
+            int shY = s.shardsShoppingHudY;
+            int shW = (int)(220 * s.shardsShoppingHudScale);
+            int shH = (int)(100 * s.shardsShoppingHudScale);
+            if (this.checkHit(mouseX, mouseY, shX, shY, shW, shH)) {
+                s.shardsShoppingHudScale = clampScale(s.shardsShoppingHudScale + delta);
+                this.selectedTarget = HudTarget.SHARDS_SHOPPING_HUD;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -2251,6 +2292,7 @@ public class HudMoveScreen extends Screen {
             case SPOTIFY_HUD, LYRICS_HUD -> "Spotify";
             case PIP_OVERLAY -> "HUDs";
             case STORAGE_TOOLBAR -> "Misc";
+            case SHARDS_SHOPPING_HUD -> "Dungeons";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -2317,6 +2359,7 @@ public class HudMoveScreen extends Screen {
                     case LYRICS_HUD -> { s.lyricsHudX = 10; s.lyricsHudY = 160; s.lyricsHudScale = 1.0f; }
                     case PIP_OVERLAY -> { s.pipX = centerX - 160; s.pipY = centerY - 90; s.pipScale = 1.0f; }
                     case STORAGE_TOOLBAR -> { s.storageToolbarX = -1; s.storageToolbarY = -1; s.storageToolbarScale = 1.0f; }
+                    case SHARDS_SHOPPING_HUD -> { s.shardsShoppingHudX = 10; s.shardsShoppingHudY = 120; s.shardsShoppingHudScale = 1.0f; }
                 }
                 BomboConfig.save();
                 return true;
@@ -2372,6 +2415,7 @@ public class HudMoveScreen extends Screen {
         SPOTIFY_HUD,
         LYRICS_HUD,
         PIP_OVERLAY,
-        STORAGE_TOOLBAR;
+        STORAGE_TOOLBAR,
+        SHARDS_SHOPPING_HUD;
     }
 }

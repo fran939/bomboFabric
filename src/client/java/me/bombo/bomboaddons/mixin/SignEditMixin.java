@@ -98,5 +98,52 @@ public abstract class SignEditMixin {
          }
          guiGraphics.pose().popMatrix();
       }
+
+      if (me.bombo.bomboaddons.features.shards.ShardsShoppingManager.hasPendingQuantity()) {
+         Minecraft mc = Minecraft.getInstance();
+         int screenWidth = mc.getWindow().getGuiScaledWidth();
+         int btnW = 200;
+         int btnH = 26;
+         int btnX = screenWidth / 2 - btnW / 2;
+         int btnY = 35;
+         boolean isHovered = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
+         int qty = me.bombo.bomboaddons.features.shards.ShardsShoppingManager.pendingSignQuantity;
+         String shard = me.bombo.bomboaddons.features.shards.ShardsShoppingManager.pendingSignShard != null
+                 ? me.bombo.bomboaddons.features.shards.ShardsShoppingManager.pendingSignShard : "Shard";
+
+         guiGraphics.fill(btnX, btnY, btnX + btnW, btnY + btnH, isHovered ? 0xF0238636 : 0xEE161B22);
+         guiGraphics.outline(btnX, btnY, btnW, btnH, isHovered ? 0xFF00FF88 : 0xFF30363D);
+         guiGraphics.fill(btnX, btnY, btnX + btnW, btnY + 2, 0xFFF59E0B);
+
+         String label = "§6⚡ Auto-Fill: §f" + qty + " §a(" + shard + ")";
+         int textW = mc.font.width(label);
+         guiGraphics.text(mc.font, label, btnX + (btnW - textW) / 2, btnY + 5, 0xFFFFFF, true);
+         String sub = "§7[Click to insert & submit]";
+         int subW = mc.font.width(sub);
+         guiGraphics.text(mc.font, sub, btnX + (btnW - subW) / 2, btnY + 15, 0xAAAAAA, true);
+      }
+   }
+
+   @Inject(
+      method = {"mouseClicked"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onSignMouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean handled, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+      if (me.bombo.bomboaddons.features.shards.ShardsShoppingManager.hasPendingQuantity()) {
+         Minecraft mc = Minecraft.getInstance();
+         int screenWidth = mc.getWindow().getGuiScaledWidth();
+         int btnW = 200;
+         int btnH = 26;
+         int btnX = screenWidth / 2 - btnW / 2;
+         int btnY = 35;
+         if (event.x() >= btnX && event.x() <= btnX + btnW && event.y() >= btnY && event.y() <= btnY + btnH) {
+            int qty = me.bombo.bomboaddons.features.shards.ShardsShoppingManager.pendingSignQuantity;
+            this.messages[0] = String.valueOf(qty);
+            me.bombo.bomboaddons.features.shards.ShardsShoppingManager.clearPendingQuantity();
+            ((AbstractSignEditScreen)(Object)this).onClose();
+            cir.setReturnValue(true);
+         }
+      }
    }
 }

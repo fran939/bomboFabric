@@ -688,6 +688,11 @@ public class ConfigRegistry {
 
             case "Dungeons" -> {
                 items.add(ConfigItem.header("Dungeons Solvers & Features", category));
+                items.add(ConfigItem.hudToggle("Shard Shopping List HUD", "Displays active budget shards shopping list and fusions on screen.", category, () -> s.shardsShoppingHud, v -> s.shardsShoppingHud = v, HudTarget.SHARDS_SHOPPING_HUD));
+                items.add(ConfigItem.button("Open Shards Optimizer", "Configure & Calculate", "Opens the in-game Attribute Shards Optimizer to plan upgrades by budget.", category, () -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.shards.ShardsOptimizerScreen("archer", "100m")));
+                }));
                 items.add(ConfigItem.hudToggle("Croesus Helper", "Displays unlooted chests and profit in Croesus GUI.", category, () -> s.croesusHelper, v -> s.croesusHelper = v, HudTarget.AUTO_CROESUS));
                 items.add(ConfigItem.toggle("Auto Croesus Dungeons", "Automatically claims profitable dungeon chests with /b ac.", category, () -> s.autoCroesusDungeons, v -> s.autoCroesusDungeons = v));
                 items.add(ConfigItem.toggle("Dungeon Secrets Tracker", "Tracks all secrets of your party on a dungeon", category, () -> s.dungeonSecretsTracker, v -> s.dungeonSecretsTracker = v));

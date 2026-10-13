@@ -41,40 +41,47 @@ public class WaypointManager {
          Vec3 camPos = mc.gameRenderer.mainCamera().position();
          Vec3 playerPos = mc.player.getEyePosition();
          PoseStack poseStack = context.poseStack();
-         poseStack.pushPose();
-         poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
-          new OrderedSubmitNodeCollector(context.submitNodeCollector()).submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, lineBuffer) -> {
-             synchronized(activeWaypoints) {
-                for(CustomNavWaypoint wp : activeWaypoints) {
-               if (wp.isNavPath) {
-                  if (currentPath != null && !currentPath.isEmpty()) {
-                     Vec3 pPos = new Vec3(playerPos.x, playerPos.y, playerPos.z);
-                     Vec3 firstNode = (Vec3)currentPath.get(0);
-                      BomboRenderUtils.drawLine(pose.pose(), lineBuffer, (float)pPos.x, (float)pPos.y + 1.0F, (float)pPos.z, (float)firstNode.x, (float)firstNode.y, (float)firstNode.z, 0.0F, 1.0F, 0.0F, 0.5F, 2.0F);
-                     Vec3 prev = firstNode;
+         new OrderedSubmitNodeCollector(context.submitNodeCollector()).submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, lineBuffer) -> {
+            synchronized(activeWaypoints) {
+               for(CustomNavWaypoint wp : activeWaypoints) {
+                  if (wp.isNavPath) {
+                     if (currentPath != null && !currentPath.isEmpty()) {
+                        Vec3 firstNode = (Vec3)currentPath.get(0);
+                        BomboRenderUtils.drawLine(pose.pose(), lineBuffer,
+                                (float)(playerPos.x - camPos.x), (float)(playerPos.y + 1.0F - camPos.y), (float)(playerPos.z - camPos.z),
+                                (float)(firstNode.x - camPos.x), (float)(firstNode.y - camPos.y), (float)(firstNode.z - camPos.z),
+                                0.0F, 1.0F, 0.0F, 0.5F, 2.0F);
+                        Vec3 prev = firstNode;
 
-                     for(int i = 1; i < currentPath.size(); ++i) {
-                        Vec3 curr = (Vec3)currentPath.get(i);
-                         BomboRenderUtils.drawLine(pose.pose(), lineBuffer, (float)prev.x, (float)prev.y, (float)prev.z, (float)curr.x, (float)curr.y, (float)curr.z, 0.0F, 1.0F, 0.0F, 1.0F, 3.0F);
-                        prev = curr;
+                        for(int i = 1; i < currentPath.size(); ++i) {
+                           Vec3 curr = (Vec3)currentPath.get(i);
+                           BomboRenderUtils.drawLine(pose.pose(), lineBuffer,
+                                   (float)(prev.x - camPos.x), (float)(prev.y - camPos.y), (float)(prev.z - camPos.z),
+                                   (float)(curr.x - camPos.x), (float)(curr.y - camPos.y), (float)(curr.z - camPos.z),
+                                   0.0F, 1.0F, 0.0F, 1.0F, 3.0F);
+                           prev = curr;
+                        }
+                     } else if (isCalculatingPath) {
+                        BomboRenderUtils.drawLine(pose.pose(), lineBuffer,
+                                (float)(playerPos.x - camPos.x), (float)(playerPos.y - 0.5F - camPos.y), (float)(playerPos.z - camPos.z),
+                                (float)(wp.x - camPos.x), (float)(wp.y - camPos.y), (float)(wp.z - camPos.z),
+                                0.5F, 0.5F, 0.5F, 1.0F, 2.0F);
+                     } else {
+                        BomboRenderUtils.drawLine(pose.pose(), lineBuffer,
+                                (float)(playerPos.x - camPos.x), (float)(playerPos.y - 0.5F - camPos.y), (float)(playerPos.z - camPos.z),
+                                (float)(wp.x - camPos.x), (float)(wp.y - camPos.y), (float)(wp.z - camPos.z),
+                                0.0F, 1.0F, 0.0F, 1.0F, 5.0F);
                      }
-                  } else if (isCalculatingPath) {
-                      BomboRenderUtils.drawLine(pose.pose(), lineBuffer, (float)playerPos.x, (float)playerPos.y - 0.5F, (float)playerPos.z, (float)wp.x, (float)wp.y, (float)wp.z, 0.5F, 0.5F, 0.5F, 1.0F, 2.0F);
-                  } else {
-                      BomboRenderUtils.drawLine(pose.pose(), lineBuffer, (float)playerPos.x, (float)playerPos.y - 0.5F, (float)playerPos.z, (float)wp.x, (float)wp.y, (float)wp.z, 0.0F, 1.0F, 0.0F, 1.0F, 5.0F);
                   }
+
+                  double bx = Math.floor(wp.x) - camPos.x;
+                  double by = Math.floor(wp.y) - camPos.y;
+                  double bz = Math.floor(wp.z) - camPos.z;
+                  AABB box = new AABB(bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0);
+                  BomboRenderUtils.drawBox(pose.pose(), lineBuffer, box, wp.isNavPath ? 0.0F : 1.0F, wp.isNavPath ? 1.0F : 0.5F, 0.0F, 1.0F, 3.0F);
                }
-
-               double bx = Math.floor(wp.x);
-               double by = Math.floor(wp.y);
-               double bz = Math.floor(wp.z);
-               AABB box = new AABB(bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0);
-                   BomboRenderUtils.drawBox(poseStack, lineBuffer, box, wp.isNavPath ? 0.0F : 1.0F, wp.isNavPath ? 1.0F : 0.5F, 0.0F, 1.0F, 3.0F);
-                }
-             }
-          });
-
-         poseStack.popPose();
+            }
+         });
       }
    }
 

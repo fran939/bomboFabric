@@ -35,6 +35,12 @@ public abstract class ScreenMixin {
          if (s.autoCroesusHud) {
             AutoCroesusHud.renderInContainer(g);
          }
+         if (s.shardsShoppingHud && me.bombo.bomboaddons.features.shards.ShardsShoppingManager.hasPlan()) {
+            Minecraft mc = Minecraft.getInstance();
+            if (!(mc.gui.screen() instanceof me.bombo.bomboaddons.HudMoveScreen) && !(mc.gui.screen() instanceof me.bombo.bomboaddons.features.shards.ShardsOptimizerScreen)) {
+               me.bombo.bomboaddons.features.shards.ShardsShoppingManager.renderHud(g, s.shardsShoppingHudX, s.shardsShoppingHudY, s.shardsShoppingHudScale, false);
+            }
+         }
       }
    }
 

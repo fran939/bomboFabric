@@ -1093,6 +1093,10 @@ public class BomboConfig {
       public int signCalculatorX = -1;
       public int signCalculatorY = 40;
       public float signCalculatorScale = 1.0F;
+      public boolean shardsShoppingHud = true;
+      public int shardsShoppingHudX = 10;
+      public int shardsShoppingHudY = 120;
+      public float shardsShoppingHudScale = 1.0F;
       public boolean corpseEspStyleTracer = false;
       public String customSlotPrefillKey = "";
       public String freelookKey = "";

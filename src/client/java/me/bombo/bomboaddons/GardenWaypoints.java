@@ -281,30 +281,27 @@ public class GardenWaypoints {
                float lineWidth = 2.0F;
 
                for(Waypoint wp : activeWaypoints) {
-                  double x = wp.position.x - camPos.x;
-                  double y = wp.position.y - camPos.y;
-                  double z = wp.position.z - camPos.z;
-                  float dist = (float)Math.sqrt(x * x + y * y + z * z);
-                  float scale = 1.0F;
-                  if (!s.hideCheats && dist > 0.2F) {
-                     scale = 0.2F / dist;
-                  }
+                  double bx = Math.floor(wp.position.x) - camPos.x;
+                  double by = Math.floor(wp.position.y) - camPos.y;
+                  double bz = Math.floor(wp.position.z) - camPos.z;
+                  double dx = wp.position.x - camPos.x;
+                  double dy = wp.position.y - camPos.y;
+                  double dz = wp.position.z - camPos.z;
+                  float dist = (float)Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-                  float boxWidth = 0.5F * scale;
-                  float boxHeight = 0.5F * scale;
-                  float scaledX = (float)x * scale;
-                  float scaledY = (float)y * scale;
-                  float scaledZ = (float)z * scale;
-                  AABB box = new AABB((double)(scaledX - boxWidth), (double)(scaledY - boxHeight), (double)(scaledZ - boxWidth), (double)(scaledX + boxWidth), (double)(scaledY + boxHeight), (double)(scaledZ + boxWidth));
+                  AABB box = new AABB(bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0);
                   collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, lineWidth));
+                  if (s.waypointShowFill) {
+                     float fillAlpha = Math.max(0.05f, Math.min(1.0f, (float) s.waypointFillOpacity / 100.0f));
+                     collector.submitCustomGeometry(poseStack, RenderTypes.debugQuads(), (pose, vertexConsumer) -> BomboRenderUtils.drawFilledBox(pose.pose(), vertexConsumer, (float)bx, (float)by, (float)bz, (float)(bx + 1.0), (float)(by + 1.0), (float)(bz + 1.0), r, g, b, fillAlpha));
+                  }
                   if (s.pestWaypointBeacon) {
-                     float beaconWidth = 0.15F * scale;
-                     AABB beaconBox = new AABB((double)(scaledX - beaconWidth), (double)scaledY, (double)(scaledZ - beaconWidth), (double)(scaledX + beaconWidth), (double)(scaledY + 256.0F * scale), (double)(scaledZ + beaconWidth));
-                     collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, beaconBox, r, g, b, 0.4F, lineWidth));
+                     int colorArgb = 0xFF000000 | ((int) (r * 255) << 16) | ((int) (g * 255) << 8) | (int) (b * 255);
+                     BomboRenderUtils.drawBeaconBeam(poseStack, collector, bx, by, bz, colorArgb, mc.level.getGameTime());
                   }
 
                   String text = wp.label + " §7(" + (int)dist + "m)";
-                  BomboRenderUtils.drawText(poseStack, collector, text, (float)x, (float)y + 0.8F, (float)z, 16777215, 0.03F, true, true);
+                  BomboRenderUtils.drawText(poseStack, collector, text, (float)(bx + 0.5), (float)(by + 1.3), (float)(bz + 0.5), 16777215, 0.03F, true, true);
                }
             }
 

@@ -111,6 +111,14 @@ public abstract class MouseMixin {
          }
 
          if (mc.gui.screen() != null && mc.player != null) {
+            if (button == 0 && BomboConfig.get().shardsShoppingHud && me.bombo.bomboaddons.features.shards.ShardsShoppingManager.hasPlan()) {
+               double mouseX = mc.mouseHandler.xpos() * (double)mc.getWindow().getGuiScaledWidth() / (double)mc.getWindow().getScreenWidth();
+               double mouseY = mc.mouseHandler.ypos() * (double)mc.getWindow().getGuiScaledHeight() / (double)mc.getWindow().getScreenHeight();
+               if (me.bombo.bomboaddons.features.shards.ShardsShoppingManager.handleHudClick(mouseX, mouseY)) {
+                  ci.cancel();
+                  return;
+               }
+            }
             try {
                Screen var9 = mc.gui.screen();
                if (var9 instanceof AbstractContainerScreen) {
