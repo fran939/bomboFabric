@@ -31,6 +31,30 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.equals("shards") || lower.startsWith("shards ") || lower.equals("b shards") || lower.startsWith("b shards ")
+            || lower.equals("bombo shards") || lower.startsWith("bombo shards ") || lower.equals("bomboaddons shards") || lower.startsWith("bomboaddons shards ")) {
+         String sub = "";
+         if (lower.startsWith("bomboaddons shards")) sub = trimmed.substring(18).trim();
+         else if (lower.startsWith("bombo shards")) sub = trimmed.substring(12).trim();
+         else if (lower.startsWith("b shards")) sub = trimmed.substring(8).trim();
+         else if (lower.startsWith("shards")) sub = trimmed.substring(6).trim();
+         String[] parts = sub.isEmpty() ? new String[0] : sub.split("\\s+");
+         String ign = null;
+         String cls = "archer";
+         if (parts.length >= 1) {
+            String p0 = parts[0].toLowerCase(java.util.Locale.ROOT);
+            if (p0.equals("archer") || p0.equals("berserk") || p0.equals("mage") || p0.equals("healer") || p0.equals("tank") || p0.equals("all")) {
+               cls = p0;
+               if (parts.length >= 2) ign = parts[1];
+            } else {
+               ign = parts[0];
+               if (parts.length >= 2) cls = parts[1].toLowerCase(java.util.Locale.ROOT);
+            }
+         }
+         me.bombo.bomboaddons.BomboaddonsClient.openShardsOptimizer(null, ign, cls);
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b order") || trimmed.equalsIgnoreCase("bombo order") || trimmed.equalsIgnoreCase("bomboaddons order") || trimmed.equalsIgnoreCase("order")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));

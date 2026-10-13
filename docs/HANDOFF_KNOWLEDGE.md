@@ -56,6 +56,8 @@ Base path: `/home/ubuntu/bomboapi/`.
 | `https://api.bombo.dpdns.org/mod/auth` | POST | Mojang public key signature validation for mod authentication. |
 | `https://api.bombo.dpdns.org/api/v1/profits` | POST | Syncs dungeon runs (requires `X-Player-UUID` + API key / Bearer). |
 | `https://api.bombo.dpdns.org/profit/:user` | GET | Returns recorded profit runs for given player IGN. |
+| `https://bombo.dpdns.org/dungeons/shards` | GET | Web dashboard for Attribute Shards Optimizer with class filters and crafting tree. |
+| `https://api.bombo.dpdns.org/api/v1/dungeons/shards` | GET | JSON API returning ranked attribute shard upgrades by damage/coin (`?player=&class=`). |
 
 ---
 

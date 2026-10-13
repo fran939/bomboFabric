@@ -411,6 +411,57 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
    }
 
+   public static void openShardsOptimizer(FabricClientCommandSource src, String username, String dungeonClass) {
+      Minecraft mc = Minecraft.getInstance();
+      String target = (username != null && !username.trim().isEmpty()) ? username.trim() : (mc.getUser() != null ? mc.getUser().getName() : "Player");
+      String cls = (dungeonClass != null && !dungeonClass.trim().isEmpty()) ? dungeonClass.trim().toLowerCase(java.util.Locale.ROOT) : "archer";
+      String url = "https://bombo.dpdns.org/dungeons/shards?player=" + java.net.URLEncoder.encode(target, java.nio.charset.StandardCharsets.UTF_8) + "&class=" + java.net.URLEncoder.encode(cls, java.nio.charset.StandardCharsets.UTF_8);
+      try {
+         Util.getPlatform().openUri(new java.net.URI(url));
+         Component feedback = Component.literal("§8[§bBomboAddons§8] §aOpening Shards Optimizer for §e" + target + " §7(§d" + cls + "§7): §b" + url);
+         if (src != null) {
+            src.sendFeedback(feedback);
+         } else if (mc.player != null) {
+            mc.player.sendSystemMessage(feedback);
+         }
+      } catch (Exception e) {
+         Component err = Component.literal("§8[§bBomboAddons§8] §cFailed to open browser URL: " + e.getMessage());
+         if (src != null) {
+            src.sendError(err);
+         } else if (mc.player != null) {
+            mc.player.sendSystemMessage(err);
+         }
+      }
+   }
+
+   public static LiteralArgumentBuilder<FabricClientCommandSource> buildShardsCommand(String name) {
+      return (LiteralArgumentBuilder<FabricClientCommandSource>) ClientCommands.literal(name)
+         .then(ClientCommands.argument("class", StringArgumentType.word()).suggests((ctx, b) -> {
+            b.suggest("archer");
+            b.suggest("berserk");
+            b.suggest("mage");
+            b.suggest("healer");
+            b.suggest("tank");
+            b.suggest("all");
+            return b.buildFuture();
+         }).executes((ctx) -> {
+            String cls = StringArgumentType.getString(ctx, "class");
+            openShardsOptimizer((FabricClientCommandSource)ctx.getSource(), null, cls);
+            return 1;
+         }).then(ClientCommands.argument("player", StringArgumentType.word()).suggests((ctx, b) -> {
+            return TabCompletionManager.suggestPlayerNames(b);
+         }).executes((ctx) -> {
+            String cls = StringArgumentType.getString(ctx, "class");
+            String player = StringArgumentType.getString(ctx, "player");
+            openShardsOptimizer((FabricClientCommandSource)ctx.getSource(), player, cls);
+            return 1;
+         })))
+         .executes((ctx) -> {
+            openShardsOptimizer((FabricClientCommandSource)ctx.getSource(), null, "archer");
+            return 1;
+         });
+   }
+
    public static void openMagicFindOptimizer(FabricClientCommandSource src, String username) {
       openMagicFindOptimizer(src, username, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.GENERAL);
    }
@@ -1244,6 +1295,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                   builder.then(createAutoCommands("sequence"));
                   builder.then(createAutoCommands("sequences"));
                   builder.then(createAutoCommands("studio"));
+                   builder.then(buildShardsCommand("shards"));
+                   builder.then(buildShardsCommand("skyshards"));
                   me.bombo.bomboaddons.flavor.Flavor.get().registerCommands(builder);
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("behighlight").then(ClientCommands.literal("add").then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
                      String mob = StringArgumentType.getString(context, "mob").trim();
@@ -5006,6 +5059,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(createAutoCommands("autosequence"));
                dispatcher.register(createAutoCommands("autosequences"));
                dispatcher.register(createAutoCommands("studio"));
+                dispatcher.register(buildShardsCommand("shards"));
+                dispatcher.register(buildShardsCommand("skyshards"));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("buttons")
                        .executes((context) -> {
                           Minecraft mc = Minecraft.getInstance();

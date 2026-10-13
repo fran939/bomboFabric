@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.120] - 2026-10-13 (Beta)
+
+### Features
+- **Attribute Shards Optimizer Web Dashboard & API (`bomboapi`, `/dungeons/shards`):** Added a dedicated Attribute Shards Optimizer on the web (`https://bombo.dpdns.org/dungeons/shards`, `/dungeons/:player?tab=shards`, and `/dungeons/user`). Combines the M7 Dungeon spreadsheet's class-specific priority ratings (0 to 5 for Archer, Berserk, Mage, Healer, Tank) with SkyShards fusion crafting recipes and live Hypixel Bazaar pricing. Evaluates non-maxed shards and orders upgrades strictly by damage/stat gain per coin (damage/coin).
+- **Multi-Tier Stepping & Level 8 Sweet Spot (`shards_service.js`):** Optimizer does not force maxing to Level 10; it evaluates incremental level steps and highlights the Level 8 breakpoint (where marginal cost per tier remains cost-effective before steep exponential Level 9–10 thresholds), mapping cumulative shard requirements across all rarities (Common 96, Uncommon 64, Rare 48, Epic 32, Legendary 24).
+- **SkyShards Fusion Crafting Engine (`bomboapi`):** Integrated full graph-relaxation algorithm across 314 fusion recipes and 325 shards to calculate cheapest craft paths vs direct Bazaar purchase. Displays exact input ingredients, fusion quantities, and coins saved (up to 37% savings on shards like Tenebris, Cascade, Tide, Flash).
+- **Discord Bot `/shards` & Bridge `!shards` (`bombot`):** Added `/shards [player] [class]` slash command and `!shards` bridge command. Broadcasts rich embeds on Discord and hoverable summary lines in Minecraft chat with unlocked counts, maxed counts, cost to Level 8, crafting savings, and top 5 ranked upgrades.
+- **In-Game Commands (`BomboaddonsClient`, `CommandMixin`):** Registered `/b shards [class] [player]` and root `/shards` with class tab completion (`archer`, `berserk`, `mage`, `healer`, `tank`, `all`), opening the optimizer directly in the default browser.
+
 ## [26.2.28.119] - 2026-10-13 (Beta)
 
 ### Features

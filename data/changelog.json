@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.120",
+    "date": "2026-10-13",
+    "changes": [
+      "+ Attribute Shards Optimizer Web & API - Added web dashboard and API (/dungeons/shards) ranking upgrades by damage/coin combining M7 spreadsheet priorities, wiki tiers, and live Bazaar prices",
+      "+ Multi-Tier & Level 8 Sweet Spot - Incremental level step evaluation highlighting cost-effective Level 8 breakpoints before steep Level 9-10 costs across all rarities",
+      "+ SkyShards Fusion Crafting Engine - SPFA graph-relaxation on 314 fusion recipes calculating cheapest craft vs buy paths with up to 37% coin savings",
+      "+ Discord Bot & Bridge !shards - Added /shards Discord slash command and !shards bridge command with rich embeds and in-game tooltips",
+      "+ In-Game /b shards Command - Added /b shards [class] [player] with auto-tab completion opening the web optimizer"
+    ]
+  },
+  {
     "version": "26.2.28.119",
     "date": "2026-10-13",
     "changes": [
