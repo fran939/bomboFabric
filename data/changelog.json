@@ -1,5 +1,14 @@
 [
   {
+    "version": "26.2.28.123",
+    "date": "2026-10-13",
+    "changes": [
+      "~ Fix Shards Optimizer GUI Blank Display - Fixed modal background rendering over widgets, added full 0xFF alpha to all text colors, and added auto-fetch on open and filter clicks",
+      "~ Web Shards Optimizer Budget Plan & Multi-Tier - Displays 3-column budget shopping list with direct Bazaar buys, fusions, and targets Level 8 sweet spot upgrades",
+      "~ Suppress Discord/Bridge !rtca Chat Spam - Silenced placeholder loading class details message and removed duplicate chat fallback"
+    ]
+  },
+  {
     "version": "26.2.28.122",
     "date": "2026-10-13",
     "changes": [

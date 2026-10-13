@@ -88,6 +88,12 @@ public class ShardsOptimizerScreen extends Screen {
             b.setMessage(Component.literal(s.shardsShoppingHud ? "§a§l📌 HUD: ON" : "§7📌 HUD: OFF"));
         }).bounds(modalX + modalW - 250, modalY + 53, 115, 20).build();
         this.addRenderableWidget(this.pinHudButton);
+
+        // Initial fetch if no active plan
+        if (!ShardsShoppingManager.hasPlan() && !ShardsShoppingManager.isLoading()) {
+            String p = Minecraft.getInstance().player != null ? Minecraft.getInstance().player.getScoreboardName() : "me";
+            ShardsShoppingManager.fetchPlanAsync(p, selectedClass, currentBudgetText, null);
+        }
     }
 
     @Override
@@ -118,6 +124,9 @@ public class ShardsOptimizerScreen extends Screen {
             int pW = this.font.width(capitalize(c)) + 12;
             if (mouseX >= pillX && mouseX <= pillX + pW && mouseY >= pillY && mouseY <= pillY + 16) {
                 selectedClass = c;
+                String bVal = budgetBox != null ? budgetBox.getValue().trim() : "100m";
+                String player = Minecraft.getInstance().player != null ? Minecraft.getInstance().player.getScoreboardName() : "me";
+                ShardsShoppingManager.fetchPlanAsync(player, selectedClass, bVal, null);
                 return true;
             }
             pillX += pW + 6;
@@ -130,7 +139,9 @@ public class ShardsOptimizerScreen extends Screen {
         for (String qb : quickBudgets) {
             int qW = this.font.width(qb.toUpperCase()) + 8;
             if (mouseX >= qX && mouseX <= qX + qW && mouseY >= qY && mouseY <= qY + 15) {
-                budgetBox.setValue(qb);
+                if (budgetBox != null) budgetBox.setValue(qb);
+                String player = Minecraft.getInstance().player != null ? Minecraft.getInstance().player.getScoreboardName() : "me";
+                ShardsShoppingManager.fetchPlanAsync(player, selectedClass, qb, null);
                 return true;
             }
             qX += qW + 4;
@@ -161,14 +172,12 @@ public class ShardsOptimizerScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
-        super.extractRenderState(g, mouseX, mouseY, partialTick);
-
         int modalW = Math.min(520, this.width - 20);
         int modalH = Math.min(360, this.height - 20);
         int modalX = (this.width - modalW) / 2;
         int modalY = (this.height - modalH) / 2;
 
-        // Modal backdrop and border
+        // Modal backdrop and border (drawn BEFORE widgets so widgets are on top)
         g.fill(modalX, modalY, modalX + modalW, modalY + modalH, 0xF00D1117);
         g.outline(modalX, modalY, modalW, modalH, 0xFF30363D);
 
@@ -177,7 +186,7 @@ public class ShardsOptimizerScreen extends Screen {
 
         // Title and Subtitle
         g.text(this.font, "§6§lAttribute Shards Optimizer", modalX + 12, modalY + 10, -1, true);
-        g.text(this.font, "§7[🌐 Open Web]", modalX + modalW - 95, modalY + 10, 0x00D4FF, false);
+        g.text(this.font, "§7[🌐 Open Web]", modalX + modalW - 95, modalY + 10, 0xFF00D4FF, false);
 
         // Class Selection Pills row
         String[] classes = {"archer", "berserk", "mage", "healer", "tank", "all"};
@@ -188,7 +197,7 @@ public class ShardsOptimizerScreen extends Screen {
             String title = capitalize(c);
             int pW = this.font.width(title) + 12;
             int bgCol = active ? 0xFFF59E0B : 0xFF21262D;
-            int textCol = active ? 0x000000 : 0xC9D1D9;
+            int textCol = active ? 0xFF000000 : 0xFFC9D1D9;
             g.fill(pillX, pillY, pillX + pW, pillY + 16, bgCol);
             g.text(this.font, (active ? "§l" : "") + title, pillX + 6, pillY + 4, textCol, false);
             pillX += pW + 6;
@@ -205,12 +214,15 @@ public class ShardsOptimizerScreen extends Screen {
             int qW = this.font.width(qb.toUpperCase()) + 8;
             g.fill(qX, qY, qX + qW, qY + 15, 0xFF161B22);
             g.outline(qX, qY, qW, 15, 0xFF30363D);
-            g.text(this.font, qb.toUpperCase(), qX + 4, qY + 4, 0x58A6FF, false);
+            g.text(this.font, qb.toUpperCase(), qX + 4, qY + 4, 0xFF58A6FF, false);
             qX += qW + 4;
         }
 
         // Separator Line
         g.fill(modalX + 10, modalY + 79, modalX + modalW - 10, modalY + 80, 0xFF30363D);
+
+        // Render widgets (EditBox, Buttons) on top of the background & headers
+        super.extractRenderState(g, mouseX, mouseY, partialTick);
 
         // Content Area with Scrolling
         int contentX = modalX + 10;
@@ -231,14 +243,14 @@ public class ShardsOptimizerScreen extends Screen {
         }
 
         if (ShardsShoppingManager.getLastError() != null) {
-            g.text(this.font, "§cError: " + ShardsShoppingManager.getLastError(), contentX + 10, contentY + 30, 0xFF5555, true);
+            g.text(this.font, "§cError: " + ShardsShoppingManager.getLastError(), contentX + 10, contentY + 30, 0xFFFF5555, true);
             g.disableScissor();
             return;
         }
 
         PlanData plan = ShardsShoppingManager.getActivePlan();
         if (plan == null) {
-            g.text(this.font, "§7Enter your budget and click §eCalculate§7 to view the optimal upgrade list.", contentX + 10, contentY + 30, 0x8B949E, false);
+            g.text(this.font, "§7Enter your budget and click §eCalculate§7 to view the optimal upgrade list.", contentX + 10, contentY + 30, 0xFF8B949E, false);
             g.disableScissor();
             return;
         }
@@ -254,12 +266,12 @@ public class ShardsOptimizerScreen extends Screen {
         String remainStr = ShardsShoppingManager.formatCoins(plan.remaining);
 
         g.text(this.font, "§6Spent: §f" + spentStr + " §8/ §e" + budgetTotalStr + " §7(Remaining: §a" + remainStr + "§7)", contentX + 8, currY + 6, -1, true);
-        g.text(this.font, "§a" + plan.upgrades.size() + " Upgrades Planned §7• §b" + plan.directBuys.size() + " Direct Buys §7• §d" + plan.fusions.size() + " Fusions", contentX + 8, currY + 17, 0x8B949E, false);
+        g.text(this.font, "§a" + plan.upgrades.size() + " Upgrades Planned §7• §b" + plan.directBuys.size() + " Direct Buys §7• §d" + plan.fusions.size() + " Fusions", contentX + 8, currY + 17, 0xFF8B949E, false);
         currY += 34;
 
         // 1. Direct Buys Shopping List
         if (!plan.directBuys.isEmpty()) {
-            g.text(this.font, "§a§lDIRECT BUYS §7(Click Buy to open Bazaar with Auto-Fill):", contentX + 2, currY, 0x2EA043, true);
+            g.text(this.font, "§a§lDIRECT BUYS §7(Click Buy to open Bazaar with Auto-Fill):", contentX + 2, currY, 0xFF2EA043, true);
             currY += 14;
 
             for (DirectBuyItem item : plan.directBuys) {
@@ -268,7 +280,7 @@ public class ShardsOptimizerScreen extends Screen {
 
                 String fusionTag = item.forFusion != null ? " §8(" + item.forFusion + ")" : "";
                 g.text(this.font, "§f• §b" + item.name + " §ax" + item.quantity + fusionTag, contentX + 6, currY + 6, -1, true);
-                g.text(this.font, "§7~" + ShardsShoppingManager.formatCoins(item.estimatedCost), contentX + contentW - 140, currY + 6, 0x8B949E, false);
+                g.text(this.font, "§7~" + ShardsShoppingManager.formatCoins(item.estimatedCost), contentX + contentW - 140, currY + 6, 0xFF8B949E, false);
 
                 // Buy Button [ 🛒 BUY ]
                 int btnX = contentX + contentW - 65;
@@ -294,7 +306,7 @@ public class ShardsOptimizerScreen extends Screen {
 
         // 2. Fusions Needed
         if (!plan.fusions.isEmpty()) {
-            g.text(this.font, "§d§lFUSION CRAFTS §7(Galatea Shards Fusion Helper):", contentX + 2, currY, 0xBC8CFF, true);
+            g.text(this.font, "§d§lFUSION CRAFTS §7(Galatea Shards Fusion Helper):", contentX + 2, currY, 0xFFBC8CFF, true);
             currY += 14;
 
             for (FusionItem f : plan.fusions) {
@@ -303,7 +315,7 @@ public class ShardsOptimizerScreen extends Screen {
 
                 String saveTag = f.savingsPercent > 0 ? String.format(Locale.US, " §a(Save %.1f%%)", f.savingsPercent) : "";
                 g.text(this.font, "§6" + f.name + " §fx" + f.quantity + " §7(" + f.craftsCount + " crafts)" + saveTag, contentX + 6, currY + 5, -1, true);
-                g.text(this.font, "§7Recipe: §f" + f.input1Qty + " " + f.input1Name + " §8+ §f" + f.input2Qty + " " + f.input2Name, contentX + 6, currY + 16, 0x8B949E, false);
+                g.text(this.font, "§7Recipe: §f" + f.input1Qty + " " + f.input1Name + " §8+ §f" + f.input2Qty + " " + f.input2Name, contentX + 6, currY + 16, 0xFF8B949E, false);
 
                 currY += 32;
             }
@@ -312,7 +324,7 @@ public class ShardsOptimizerScreen extends Screen {
 
         // 3. Upgrades Breakdown
         if (!plan.upgrades.isEmpty()) {
-            g.text(this.font, "§e§lTARGET STAT UPGRADES §7(Strict Priority Descending):", contentX + 2, currY, 0xF59E0B, true);
+            g.text(this.font, "§e§lTARGET STAT UPGRADES §7(Strict Priority Descending):", contentX + 2, currY, 0xFFF59E0B, true);
             currY += 14;
 
             for (int i = 0; i < plan.upgrades.size(); i++) {
@@ -322,8 +334,8 @@ public class ShardsOptimizerScreen extends Screen {
 
                 String starStr = "★".repeat(Math.max(1, Math.min(5, u.priority)));
                 g.text(this.font, "#" + (i + 1) + " §e" + starStr + " §f" + u.name + " §7(" + u.attrName + ")", contentX + 6, currY + 7, -1, true);
-                g.text(this.font, "§bTier " + u.fromTier + " ➔ " + u.toTier + " §7(+" + u.shardsNeeded + ")", contentX + contentW - 200, currY + 7, 0x58A6FF, false);
-                g.text(this.font, "§6" + ShardsShoppingManager.formatCoins(u.cost), contentX + contentW - 75, currY + 7, 0xF59E0B, true);
+                g.text(this.font, "§bTier " + u.fromTier + " ➔ " + u.toTier + " §7(+" + u.shardsNeeded + ")", contentX + contentW - 200, currY + 7, 0xFF58A6FF, false);
+                g.text(this.font, "§6" + ShardsShoppingManager.formatCoins(u.cost), contentX + contentW - 75, currY + 7, 0xFFF59E0B, true);
 
                 currY += 26;
             }

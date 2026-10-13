@@ -142,18 +142,11 @@ public final class RtcaChatFormatter {
          return build(cached.data(), profileFromLine);
       }
 
-      // Kick off (or join) the fetch and show a compact "loading" line straight away.
+      // Kick off (or join) the fetch silently without printing loading placeholder
       if (IN_FLIGHT.putIfAbsent(key, Boolean.TRUE) == null) {
          fetchAsync(key, player, profileFromLine);
       }
-      return Component.literal("§6[Bombo] §e[RTCA50] §b" + player + " §8loading class details...");
-   }
-
-   /** Message sent back to the player when the API could not be reached. */
-   private static Component buildFallback(String player, String profile) {
-      return Component.literal("§6[Bombo] §e[RTCA50] §b" + player
-         + (profile != null ? " §7on §a" + profile : "")
-         + " §8(class details unavailable)");
+      return null;
    }
 
    private static void fetchAsync(String key, String player, String profileFromLine) {
@@ -168,7 +161,6 @@ public final class RtcaChatFormatter {
          }
 
          if (data == null) {
-            updateChatOnMainThread(player, buildFallback(player, profileFromLine));
             return;
          }
 
@@ -206,10 +198,6 @@ public final class RtcaChatFormatter {
                }
             }
          } catch (Exception ignored) {
-         }
-
-         if (mc.player != null) {
-            mc.player.sendSystemMessage(component);
          }
       });
    }

@@ -1,5 +1,12 @@
 # BomboAddons Changelog
  
+## [26.2.28.123] - 2026-10-13 (Beta)
+
+### Fixes
+- **Fix Shards Optimizer GUI Blank Display (`ShardsOptimizerScreen`):** Fixed modal background rendering over widgets by drawing the background before widgets, added full alpha channel (`0xFF`) to all font colors (fixing invisible 0x00 alpha text), and added automatic initial plan fetch and reactive recalculation on class/budget pill clicks.
+- **Web Shards Optimizer Budget Plan & Multi-Tier Upgrades (`shards_service.js`):** Web optimizer now passes budget parameter into calculation, displays the complete 3-column budget shopping list (Direct Bazaar purchases with `/bz` copy buttons, Galatea fusion recipes with coin savings, and multi-tier target upgrades), and targets the Level 8 breakpoint instead of only single-tier stepping.
+- **Suppress Discord/Bridge `!rtca` Chat Spam (`RtcaChatFormatter`):** Silenced the `[RTCA50] ... loading class details...` placeholder message and removed duplicate system message fallbacks from spamming Minecraft chat.
+
 ## [26.2.28.122] - 2026-10-13 (Beta)
 
 ### Fixes
