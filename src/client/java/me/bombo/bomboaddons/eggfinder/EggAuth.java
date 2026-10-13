@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 public class EggAuth {
    private static final Logger LOGGER = LoggerFactory.getLogger("bomboaddons-eggauth");
    private static final String AUTH_URL = "https://hysky.de/api/aaron/authenticate";
-   private static final String BOMBO_AUTH_URL = "https://api.bombo.dpdns.org/mod/auth";
+   private static final String BOMBO_AUTH_URL = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/auth");
    private static final String ALGORITHM = "SHA256withRSA";
    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(10L)).build();
    private static final Gson GSON = new Gson();

@@ -75,7 +75,7 @@ public class UpdateVersionsScreen extends Screen {
                 // First fetch changelog dates map
                 java.util.Map<String, String> dateMap = new java.util.HashMap<>();
                 try {
-                    HttpURLConnection clConn = (HttpURLConnection) (new URL("https://api.bombo.dpdns.org/mod/changelog")).openConnection();
+                    HttpURLConnection clConn = (HttpURLConnection) (new URL(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/changelog"))).openConnection();
                     clConn.setRequestProperty("User-Agent", "Mozilla/5.0");
                     clConn.setRequestProperty("Accept", "application/json");
                     clConn.setConnectTimeout(3000);
@@ -94,7 +94,7 @@ public class UpdateVersionsScreen extends Screen {
                     }
                 } catch (Throwable ignored) {}
 
-                String apiUrl = "https://api.bombo.dpdns.org/mod/version";
+                String apiUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/version");
                 HttpURLConnection conn = (HttpURLConnection) (new URL(apiUrl)).openConnection();
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
                 conn.setRequestProperty("Accept", "application/json");

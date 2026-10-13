@@ -479,7 +479,7 @@ public class DiscordIpcManager {
     public static void muteUserViaBotAsync(String userId, boolean mute, Consumer<String> onResult) {
         CompletableFuture.runAsync(() -> {
             try {
-                String url = "https://api.bombo.dpdns.org/api/bot/voice/mute?userId=" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "&mute=" + mute;
+                String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/bot/voice/mute?userId=") + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "&mute=" + mute;
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .timeout(Duration.ofSeconds(4))
@@ -509,7 +509,7 @@ public class DiscordIpcManager {
     public static void deafenUserViaBotAsync(String userId, boolean deafen, Consumer<String> onResult) {
         CompletableFuture.runAsync(() -> {
             try {
-                String url = "https://api.bombo.dpdns.org/api/bot/voice/deafen?userId=" + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "&deafen=" + deafen;
+                String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/bot/voice/deafen?userId=") + java.net.URLEncoder.encode(userId, StandardCharsets.UTF_8) + "&deafen=" + deafen;
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .timeout(Duration.ofSeconds(4))
@@ -765,7 +765,7 @@ public class DiscordIpcManager {
             lastLogScanTime = now;
             scanDiscordLogForVoice();
         }
-        if (now - lastBotFetchTime > 3000L && (inVoice || !myUserId.isEmpty() || !currentChannelId.isEmpty())) {
+        if (now - lastBotFetchTime > 15000L && (inVoice || !myUserId.isEmpty() || !currentChannelId.isEmpty())) {
             lastBotFetchTime = now;
             syncChannelWithBotAsync(currentChannelId);
         }
@@ -814,7 +814,7 @@ public class DiscordIpcManager {
                 String query = cParam + uParam;
                 if (query.isEmpty()) return;
 
-                String url = "https://api.bombo.dpdns.org/api/bot/voice/channel?" + query;
+                String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/bot/voice/channel?") + query;
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .timeout(Duration.ofSeconds(3))
@@ -930,7 +930,7 @@ public class DiscordIpcManager {
         CompletableFuture.runAsync(() -> {
             try {
                 String idsParam = String.join(",", toFetch);
-                String url = "https://api.bombo.dpdns.org/api/bot/users?ids=" + idsParam;
+                String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/bot/users?ids=") + idsParam;
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .timeout(Duration.ofSeconds(3))

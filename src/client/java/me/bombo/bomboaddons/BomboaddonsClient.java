@@ -4580,7 +4580,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                       ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Fetching info for server §e" + serverIp + "§7..."));
                       (new Thread(() -> {
                          try {
-                            java.net.URI uri = java.net.URI.create("https://api.bombo.dpdns.org/mc/" + java.net.URLEncoder.encode(serverIp, java.nio.charset.StandardCharsets.UTF_8));
+                            java.net.URI uri = java.net.URI.create(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mc/") + java.net.URLEncoder.encode(serverIp, java.nio.charset.StandardCharsets.UTF_8));
                             java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
                             java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder(uri).timeout(java.time.Duration.ofSeconds(6)).build();
                             java.net.http.HttpResponse<String> resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
@@ -9133,7 +9133,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       if (mc.player != null) {
          mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §eTesting BomboAPI Endpoints..."));
          (new Thread(() -> {
-            String[] endpoints = new String[]{"https://api.bombo.dpdns.org/prices", "https://api.bombo.dpdns.org/prices2", "https://api.bombo.dpdns.org/bazaar", "https://api.bombo.dpdns.org/calendar"};
+            String[] endpoints = new String[]{me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/prices"), me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/prices2"), me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/bazaar"), me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/calendar")};
 
             for(String urlStr : endpoints) {
                long start = System.currentTimeMillis();
@@ -9239,7 +9239,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       source.sendFeedback(Component.literal("§8[§bBomboAddons§8] §eFetching SkyBlock Calendar API data..."));
       (new Thread(() -> {
          try {
-            URL url = new URL("https://api.bombo.dpdns.org/calendar");
+            URL url = new URL(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/calendar"));
             HttpURLConnection conn = (HttpURLConnection)url.openConnection();
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);

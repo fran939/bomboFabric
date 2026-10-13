@@ -132,7 +132,7 @@ public class ModUpdater {
 
                // 1. Try server API /mod/version
                try {
-                  String updateApiUrl = "https://api.bombo.dpdns.org/mod/version";
+                  String updateApiUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/version");
                   Bomboaddons.logApiRequest(updateApiUrl);
                   long updateStartedAt = System.currentTimeMillis();
                   HttpURLConnection conn = (HttpURLConnection) (new URL(updateApiUrl)).openConnection();
@@ -191,7 +191,7 @@ public class ModUpdater {
                // 2. Specific endpoint fallbacks if /mod/version didn't provide it
                if (latestVersion == null || downloadUrl == null) {
                   try {
-                     String endpoint = includeBetas ? "https://api.bombo.dpdns.org/mod/version/beta" : "https://api.bombo.dpdns.org/mod/version/full";
+                     String endpoint = includeBetas ? me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/version/beta") : me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/version/full");
                      HttpURLConnection conn = (HttpURLConnection) (new URL(endpoint)).openConnection();
                      conn.setRequestProperty("User-Agent", "Mozilla/5.0");
                      conn.setRequestProperty("Accept", "application/json");
@@ -473,7 +473,7 @@ public class ModUpdater {
             try {
                String flavorParam = me.bombo.bomboaddons.flavor.Flavor.get().isCheat() ? "?flavor=cheat" : "";
                String artifactTarget = Constants.artifactFilePrefix() + cleanTarget + ".jar";
-               String apiUrl = "https://api.bombo.dpdns.org/mod/version/" + artifactTarget + flavorParam;
+               String apiUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/version/") + artifactTarget + flavorParam;
                HttpURLConnection conn = (HttpURLConnection)(new URL(apiUrl)).openConnection();
                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
                conn.setConnectTimeout(5000);
@@ -502,7 +502,7 @@ public class ModUpdater {
             if (downloadUrl == null) {
                try {
                   String flavorParam = me.bombo.bomboaddons.flavor.Flavor.get().isCheat() ? "?flavor=cheat" : "";
-                  String apiUrl = "https://api.bombo.dpdns.org/mod/version/" + cleanTarget + flavorParam;
+                  String apiUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/version/") + cleanTarget + flavorParam;
                   HttpURLConnection conn = (HttpURLConnection)(new URL(apiUrl)).openConnection();
                   conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BomboAddons");
                   conn.setConnectTimeout(5000);

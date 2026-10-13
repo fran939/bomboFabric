@@ -153,7 +153,7 @@ public class KuudraSummaryOverlay {
          if (username != null && !username.isEmpty() && !"Player".equalsIgnoreCase(username)) {
             try {
                String encodedUser = URLEncoder.encode(username, StandardCharsets.UTF_8);
-               String urlStr = "https://api.bombo.dpdns.org/data/" + encodedUser;
+               String urlStr = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/data/") + encodedUser;
                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(urlStr)).timeout(Duration.ofSeconds(10L)).header("User-Agent", "BomboAddons/1.0").GET().build();
                HTTP.sendAsync(request, BodyHandlers.ofString()).thenAccept((response) -> {
                   if (response.statusCode() == 200) {
@@ -385,8 +385,8 @@ public class KuudraSummaryOverlay {
       CompletableFuture.runAsync(() -> {
          try {
             String encodedUser = URLEncoder.encode(name, StandardCharsets.UTF_8);
-            String urlData = "https://api.bombo.dpdns.org/data/" + encodedUser;
-            String urlShards = "https://api.bombo.dpdns.org/shards/" + encodedUser;
+            String urlData = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/data/") + encodedUser;
+            String urlShards = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/shards/") + encodedUser;
             JsonObject rootData = null;
             JsonObject rootShards = null;
 
@@ -469,8 +469,8 @@ public class KuudraSummaryOverlay {
       CompletableFuture.runAsync(() -> {
          try {
             String encodedUser = URLEncoder.encode(name, StandardCharsets.UTF_8);
-            String urlData = "https://api.bombo.dpdns.org/data/" + encodedUser;
-            String urlShards = "https://api.bombo.dpdns.org/shards/" + encodedUser;
+            String urlData = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/data/") + encodedUser;
+            String urlShards = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/shards/") + encodedUser;
             JsonObject rootData = null;
             JsonObject rootShards = null;
 

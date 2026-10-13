@@ -151,7 +151,7 @@ public class ScreenshareManager {
                         JsonObject obj = new JsonObject();
                         obj.addProperty("user", myIgn);
                         HttpRequest req = HttpRequest.newBuilder()
-                                .uri(URI.create("https://api.bombo.dpdns.org/api/screenshare/stop"))
+                                .uri(URI.create(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/screenshare/stop")))
                                 .header("Content-Type", "application/json")
                                 .timeout(Duration.ofSeconds(2))
                                 .POST(HttpRequest.BodyPublishers.ofString(obj.toString(), StandardCharsets.UTF_8))
@@ -341,7 +341,7 @@ public class ScreenshareManager {
             payload.addProperty("height", targetH);
 
             HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.bombo.dpdns.org/api/screenshare/frame"))
+                    .uri(URI.create(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/screenshare/frame")))
                     .header("Content-Type", "application/json")
                     .timeout(Duration.ofMillis(1200))
                     .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))

@@ -327,7 +327,7 @@ public class PipManager {
         CompletableFuture.runAsync(() -> {
             try {
                 String encoded = java.net.URLEncoder.encode(user, java.nio.charset.StandardCharsets.UTF_8);
-                String frameUrl = "https://api.bombo.dpdns.org/api/screenshare/frame?user=" + encoded
+                String frameUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/screenshare/frame?user=") + encoded
                         + "&t=" + System.currentTimeMillis();
                 DownloadResult result = download(frameUrl);
                 if (result != null && isUsableImage(result)) {

@@ -719,7 +719,7 @@ public class IRCClient {
                     }
 
                     // Trigger background networth update for the real Minecraft account
-                    me.bombo.bomboaddons.features.profile.ProfileFetcher.silentFetchProfile(cleanIgn);
+                    // me.bombo.bomboaddons.features.profile.ProfileFetcher.silentFetchProfile(cleanIgn);
 
                     net.minecraft.network.chat.MutableComponent playerComp = buildHoverablePlayerComponent(senderName, senderColor, cleanIgn);
                     Component msgBodyComp = formatWithLinks(rawMsg);

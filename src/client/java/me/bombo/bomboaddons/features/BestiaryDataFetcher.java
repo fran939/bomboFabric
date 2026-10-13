@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BestiaryDataFetcher {
-   public static final String API_URL = "https://api.bombo.dpdns.org/mod/bestiary";
+   public static final String API_URL = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/bestiary");
    private static final Map<String, List<BestiaryMobRule>> islandRules = new ConcurrentHashMap<>();
    private static final Map<String, BestiaryMobRule> allRulesByNameAndIsland = new ConcurrentHashMap<>();
    private static final Map<String, List<BestiaryMobRule>> headLookup = new ConcurrentHashMap<>();

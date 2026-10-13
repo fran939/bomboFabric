@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.124] - 2026-10-13 (Beta)
+
+### Fixes
+- **Eliminate API Request Loops & Bandwidth Spikes (`AlphaTrackerHud`, `ProfileFetcher`, `SpotifyManager`, `DiscordIpcManager`):** Fixed uninitialized timer in `AlphaTrackerHud` that triggered `/mc/alpha.hypixel.net` continuous polling every tick (~10k requests). Throttled Spotify live reporting from 2s to 10s and Discord voice polling from 3s to 15s. Removed aggressive automatic profile downloads on every IRC chat message.
+- **In-Flight Request Deduplication & Failure Cooldown (`ProfileFetcher`):** Added concurrent in-flight deduplication to `ProfileFetcher` to prevent duplicate parallel downloads of 18 MB profile trees, added 60-second negative cache cooldown on failed queries, and silenced chat spam messages.
+- **Server-Side Gzip & Payload Compression (`bomboapi`, Nginx):** Enabled Nginx `gzip_proxied any` and JSON compression (reducing 18.6 MB profile payloads by ~90% over the wire) and removed redundant indentation formatting.
+- **Migrate Remaining Endpoints to `BomboApiUrl` (`StoragePreviewManager`, `KuudraSummaryOverlay`, `ModUpdater`, etc.):** Centralized all hardcoded legacy `api.bombo.dpdns.org` references across client features to use `BomboApiUrl.getApiUrl(...)`.
+
 ## [26.2.28.123] - 2026-10-13 (Beta)
 
 ### Fixes

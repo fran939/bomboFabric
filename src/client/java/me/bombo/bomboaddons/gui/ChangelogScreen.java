@@ -151,7 +151,7 @@ public class ChangelogScreen extends Screen {
     private void fetchChangelogAsync() {
         new Thread(() -> {
             try {
-                String changelogUrl = "https://api.bombo.dpdns.org/mod/changelog";
+                String changelogUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/changelog");
                 HttpURLConnection conn = (HttpURLConnection) (new URL(changelogUrl)).openConnection();
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0");
                 conn.setConnectTimeout(4000);

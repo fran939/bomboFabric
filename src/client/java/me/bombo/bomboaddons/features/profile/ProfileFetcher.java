@@ -45,6 +45,8 @@ public class ProfileFetcher {
    private static final Map<String, CachedProfile> CACHE = new ConcurrentHashMap();
    private static final Map<String, String> UUID_CACHE = new ConcurrentHashMap();
    private static final Set<String> PENDING_SILENT_FETCHES = ConcurrentHashMap.newKeySet();
+   private static final Map<String, CompletableFuture<ProfileData>> IN_FLIGHT_PROFILES = new ConcurrentHashMap<>();
+   private static final Map<String, Long> FAILED_COOLDOWNS = new ConcurrentHashMap<>();
    private static final File DISK_CACHE_FILE = new File(Minecraft.getInstance().gameDirectory, "config/bomboaddons/profile_cache.json");
    private static String pvApiKey = null;
 
@@ -169,26 +171,32 @@ public class ProfileFetcher {
       if (CACHE.containsKey(lowerName)) {
          CachedProfile cached = (CachedProfile)CACHE.get(lowerName);
          if (System.currentTimeMillis() - cached.timestamp < 300000L) {
-            Bomboaddons.sendMessage("§8[§3Bombo PV§8] §7Loaded profile for §b" + username + " §7from local cache.");
             return CompletableFuture.completedFuture(cached.data);
          }
       }
 
+      Long lastFail = FAILED_COOLDOWNS.get(lowerName);
+      if (lastFail != null && System.currentTimeMillis() - lastFail < 60000L) {
+         return CompletableFuture.completedFuture(null);
+      }
+
+      CompletableFuture<ProfileData> inFlight = IN_FLIGHT_PROFILES.get(lowerName);
+      if (inFlight != null) {
+         return inFlight;
+      }
+
+      CompletableFuture<ProfileData> future;
       if (UUID_CACHE.containsKey(lowerName)) {
          String uuid = (String)UUID_CACHE.get(lowerName);
-         Bomboaddons.sendMessage("§8[§3Bombo PV§8] §eRequesting profile data for §b" + username + " §efrom §6https://api.bombo.dpdns.org/data/" + uuid);
-         return fetchFromBomboAPI(uuid, username).thenCompose((bomboData) -> {
+         Bomboaddons.logApiRequest(BomboApiUrl.getApiUrl("/data/" + uuid));
+         future = fetchFromBomboAPI(uuid, username).thenCompose((bomboData) -> {
             if (bomboData != null) {
-               Bomboaddons.sendMessage("§8[§3Bombo PV§8] §aData received from §6Bombo API §afor §b" + username);
                return CompletableFuture.completedFuture(bomboData);
             }
-            Bomboaddons.sendMessage("§8[§3Bombo PV§8] §eRequesting fallback data from §6SkyBlock-PV API§e...");
             return fetchFromPvApi(uuid, username).thenCompose((pvData) -> {
                if (pvData != null) {
-                  Bomboaddons.sendMessage("§8[§3Bombo PV§8] §aData received from §6SkyBlock-PV API §afor §b" + username);
                   return CompletableFuture.completedFuture(pvData);
                }
-               Bomboaddons.sendMessage("§8[§3Bombo PV§8] §eRequesting fallback data from §6Snailify API§e...");
                return fetchFromSnailifyAPI(uuid, username);
             });
          }).thenApply((profileData) -> {
@@ -201,33 +209,29 @@ public class ProfileFetcher {
       } else {
          String mojangUrl = "https://api.mojang.com/users/profiles/minecraft/" + username;
          Bomboaddons.logApiRequest(mojangUrl);
-         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(mojangUrl)).timeout(Duration.ofSeconds(30L)).GET().build();
-         return CLIENT.sendAsync(request, BodyHandlers.ofString()).thenCompose((res) -> {
+         HttpRequest request = HttpRequest.newBuilder().uri(URI.create(mojangUrl)).timeout(Duration.ofSeconds(15L)).GET().build();
+         future = CLIENT.sendAsync(request, BodyHandlers.ofString()).thenCompose((res) -> {
             if (res.statusCode() != 200) {
-               Bomboaddons.sendMessage("§8[§3Bombo PV§8] §eRequesting profile data for §b" + username + " §efrom §6https://api.bombo.dpdns.org/data/" + username);
+               Bomboaddons.logApiRequest(BomboApiUrl.getApiUrl("/data/" + username));
                return fetchFromBomboAPI(username, username);
             } else {
                try {
                   JsonObject json = JsonParser.parseString((String)res.body()).getAsJsonObject();
                   if (!json.has("id")) {
-                     Bomboaddons.sendMessage("§8[§3Bombo PV§8] §eRequesting profile data for §b" + username + " §efrom §6https://api.bombo.dpdns.org/data/" + username);
+                     Bomboaddons.logApiRequest(BomboApiUrl.getApiUrl("/data/" + username));
                      return fetchFromBomboAPI(username, username);
                   } else {
                      String uuid = json.get("id").getAsString();
                      UUID_CACHE.put(lowerName, uuid);
-                     Bomboaddons.sendMessage("§8[§3Bombo PV§8] §eRequesting profile data for §b" + username + " §efrom §6https://api.bombo.dpdns.org/data/" + uuid);
+                     Bomboaddons.logApiRequest(BomboApiUrl.getApiUrl("/data/" + uuid));
                      return fetchFromBomboAPI(uuid, username).thenCompose((bomboData) -> {
                         if (bomboData != null) {
-                           Bomboaddons.sendMessage("§8[§3Bombo PV§8] §aData received from §6Bombo API §afor §b" + username);
                            return CompletableFuture.completedFuture(bomboData);
                         }
-                        Bomboaddons.sendMessage("§8[§3Bombo PV§8] §eRequesting fallback data from §6SkyBlock-PV API§e...");
                         return fetchFromPvApi(uuid, username).thenCompose((pvData) -> {
                            if (pvData != null) {
-                              Bomboaddons.sendMessage("§8[§3Bombo PV§8] §aData received from §6SkyBlock-PV API §afor §b" + username);
                               return CompletableFuture.completedFuture(pvData);
                            }
-                           Bomboaddons.sendMessage("§8[§3Bombo PV§8] §eRequesting fallback data from §6Snailify API§e...");
                            return fetchFromSnailifyAPI(uuid, username);
                         });
                      }).thenApply((profileData) -> {
@@ -243,13 +247,27 @@ public class ProfileFetcher {
                }
             }
          }).exceptionally((e) -> {
-            e.printStackTrace();
             return null;
          });
       }
+
+      IN_FLIGHT_PROFILES.put(lowerName, future);
+      future.whenComplete((res, err) -> {
+         IN_FLIGHT_PROFILES.remove(lowerName);
+         if (res == null || err != null) {
+            FAILED_COOLDOWNS.put(lowerName, System.currentTimeMillis());
+         } else {
+            FAILED_COOLDOWNS.remove(lowerName);
+         }
+      });
+      return future;
    }
 
    public static CompletableFuture<ProfileData> silentFetchProfile(String username) {
+      return fetchProfile(username);
+   }
+
+   private static CompletableFuture<ProfileData> _legacySilentFetchProfile(String username) {
       if (username == null || username.isEmpty()) return CompletableFuture.completedFuture(null);
       String lowerName = username.toLowerCase();
       if (CACHE.containsKey(lowerName)) {

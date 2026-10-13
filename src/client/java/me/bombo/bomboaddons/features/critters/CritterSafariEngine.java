@@ -92,8 +92,8 @@ public class CritterSafariEngine {
             try {
                 HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(4)).build();
                 String[] endpoints = new String[]{
-                    "https://api.bombo.dpdns.org/mod/bestiary",
-                    "https://api.bombo.dpdns.org/bestiary",
+                    me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/bestiary"),
+                    me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/bestiary"),
                     "https://bombo.dpdns.org/api/bestiary"
                 };
                 for (String url : endpoints) {

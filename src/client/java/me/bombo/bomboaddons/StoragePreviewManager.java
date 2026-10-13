@@ -155,7 +155,7 @@ public class StoragePreviewManager {
                   logDebugToFile(msg);
                }
 
-               URL url = new URL("https://api.bombo.dpdns.org/data/" + ign);
+               URL url = new URL(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/data/") + ign);
                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                conn.setRequestMethod("GET");
                conn.setConnectTimeout(10000);

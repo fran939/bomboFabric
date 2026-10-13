@@ -154,8 +154,8 @@ public class SpotifyManager {
             String nativeUri = "spotify:search:" + URLEncoder.encode(query, StandardCharsets.UTF_8).replace("+", "%20");
             String webFallback = "https://open.spotify.com/search/" + URLEncoder.encode(query, StandardCharsets.UTF_8).replace("+", "%20") + "/tracks";
             try {
-                String apiUrl = "https://api.bombo.dpdns.org/api/spotify/resolve?track=" + URLEncoder.encode(track, StandardCharsets.UTF_8)
-                        + "&artist=" + URLEncoder.encode(artist, StandardCharsets.UTF_8);
+                String apiUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/spotify/resolve?track=" + URLEncoder.encode(track, StandardCharsets.UTF_8)
+                        + "&artist=" + URLEncoder.encode(artist, StandardCharsets.UTF_8));
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(apiUrl))
                         .timeout(Duration.ofSeconds(2))
@@ -192,7 +192,7 @@ public class SpotifyManager {
     private static volatile long lastReportTime = 0L;
     private static void reportNowPlayingToServer(String title, String artist, long posMs, long durMs, boolean playing) {
         long now = System.currentTimeMillis();
-        if (now - lastReportTime < 2000L && title.equals(currentTrack)) {
+        if (now - lastReportTime < 10000L && title.equals(currentTrack)) {
             return;
         }
         lastReportTime = now;
@@ -205,7 +205,7 @@ public class SpotifyManager {
                 payload.addProperty("durationMs", durMs);
                 payload.addProperty("isPlaying", playing);
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
-                        .uri(URI.create("https://api.bombo.dpdns.org/api/spotify/now-playing"))
+                        .uri(URI.create(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/spotify/now-playing")))
                         .header("Content-Type", "application/json")
                         .timeout(Duration.ofSeconds(2))
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
@@ -233,7 +233,7 @@ public class SpotifyManager {
             String webUrl = "https://open.spotify.com/search/" + URLEncoder.encode(artist, StandardCharsets.UTF_8).replace("+", "%20") + "/artists";
             String nativeUri = "spotify:search:" + URLEncoder.encode(artist, StandardCharsets.UTF_8).replace("+", "%20");
             try {
-                String apiUrl = "https://api.bombo.dpdns.org/api/spotify/resolve?artist=" + URLEncoder.encode(artist, StandardCharsets.UTF_8);
+                String apiUrl = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/api/spotify/resolve?artist=" + URLEncoder.encode(artist, StandardCharsets.UTF_8));
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
                         .uri(URI.create(apiUrl))
                         .timeout(Duration.ofSeconds(2))

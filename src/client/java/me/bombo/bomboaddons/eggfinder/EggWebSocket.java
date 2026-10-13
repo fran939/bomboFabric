@@ -174,7 +174,7 @@ public class EggWebSocket {
       if (activeSubscription == null) return;
       try {
          String loc = activeSubscription.replace(" ", "%20");
-         String url = "https://api.bombo.dpdns.org/mod/hoppity?area=" + loc;
+         String url = me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/hoppity?area=") + loc;
          java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
             .uri(URI.create(url))
             .header("User-Agent", "BomboAddons/1.0")
@@ -249,7 +249,7 @@ public class EggWebSocket {
          postPayload.addProperty("y", pos.getY());
          postPayload.addProperty("z", pos.getZ());
          java.net.http.HttpRequest.Builder reqBuilder = java.net.http.HttpRequest.newBuilder()
-            .uri(URI.create("https://api.bombo.dpdns.org/mod/hoppity"))
+            .uri(URI.create(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mod/hoppity")))
             .header("Content-Type", "application/json")
             .header("User-Agent", "BomboAddons/" + me.bombo.bomboaddons.BomboaddonsClient.getModVersion())
             .timeout(Duration.ofSeconds(5L))

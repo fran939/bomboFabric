@@ -37,7 +37,7 @@ public class AlphaTrackerHud {
       HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "alpha_tracker_hud"), AlphaTrackerHud::render);
       ClientTickEvents.END_CLIENT_TICK.register(client -> {
          long now = System.currentTimeMillis();
-         if (now - lastCheckTime > 30000L && !checking) {
+         if (now - lastCheckTime > 60000L && !checking) {
             checkServerStatusAsync();
          }
       });
@@ -47,6 +47,7 @@ public class AlphaTrackerHud {
    public static void checkServerStatusAsync() {
       if (!checking) {
          checking = true;
+         lastCheckTime = System.currentTimeMillis();
          CompletableFuture.runAsync(() -> {
             HttpURLConnection conn = null;
             boolean detectedOpen = false;
@@ -55,7 +56,7 @@ public class AlphaTrackerHud {
             boolean querySuccess = false;
 
             try {
-               URL url = new URL("https://api.bombo.dpdns.org/mc/alpha.hypixel.net");
+               URL url = new URL(me.bombo.bomboaddons.util.BomboApiUrl.getApiUrl("/mc/alpha.hypixel.net"));
                conn = (HttpURLConnection)url.openConnection();
                conn.setRequestMethod("GET");
                conn.setConnectTimeout(5000);
