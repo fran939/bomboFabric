@@ -5715,7 +5715,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          me.bombo.bomboaddons.features.shards.ShardsShoppingHud.init();
          HighlightESP.fetchOnlineAliasesAsync();
          IRCClient.start();
-         LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register((LevelRenderEvents.AfterTranslucentFeatures)(context) -> {
+         LevelRenderEvents.COLLECT_SUBMITS.register((LevelRenderEvents.CollectSubmits)(context) -> {
             BomboConfig.Settings s = BomboConfig.get();
             if (s == null) return;
 

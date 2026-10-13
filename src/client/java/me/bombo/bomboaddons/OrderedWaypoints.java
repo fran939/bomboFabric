@@ -701,7 +701,9 @@ public class OrderedWaypoints {
          boolean throughWalls = s == null || s.orderedWaypointsThroughWalls;
          int visibleAhead = (s != null && s.orderedWaypointsVisibleCount > 0) ? s.orderedWaypointsVisibleCount : 999;
 
-         Vec3 camPos = mc.gameRenderer.mainCamera().position();
+         Vec3 camPos = (context.levelState() != null && context.levelState().cameraRenderState != null && context.levelState().cameraRenderState.pos != null)
+                 ? context.levelState().cameraRenderState.pos
+                 : mc.gameRenderer.mainCamera().position();
          PoseStack poseStack = context.poseStack();
          OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
 

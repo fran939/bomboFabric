@@ -38,7 +38,9 @@ public class WaypointManager {
       }
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null && mc.player != null) {
-         Vec3 camPos = mc.gameRenderer.mainCamera().position();
+         Vec3 camPos = (context.levelState() != null && context.levelState().cameraRenderState != null && context.levelState().cameraRenderState.pos != null)
+                 ? context.levelState().cameraRenderState.pos
+                 : mc.gameRenderer.mainCamera().position();
          Vec3 playerPos = mc.player.getEyePosition();
          PoseStack poseStack = context.poseStack();
          new OrderedSubmitNodeCollector(context.submitNodeCollector()).submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, lineBuffer) -> {

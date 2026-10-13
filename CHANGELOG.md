@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.125] - 2026-10-13 (Beta)
+
+### Fixes
+- **Shards Optimizer Zero Price Fix (`shards_service.js`, `ShardsShoppingManager`):** Resolved bug where fusion ingredients (Cod, Pangolin, Jormung, Etherdrake, etc.) showed ~0 coins in Direct Buys despite having real Bazaar prices by computing ingredient unit costs in the graph relaxation and accumulating total estimated cost for all direct purchases.
+- **GUI Layout & Overlap Elimination (`ShardsOptimizerScreen`):** Re-architected `/b shards` header into two clean rows. Row 1 features Class selection pills alongside the new `[Hide Maxed] / [Show Maxed]` toggle. Row 2 holds the Budget input, Quick Budget pills (`10M`, `50M`, `100M`, `250M`, `500M`), `[📌 HUD: ON/OFF]`, and `[⚡ Calculate]` with zero text or widget overlap.
+- **Show/Hide Maxed Shards & Catalog Summary (`ShardsOptimizerScreen`, `shards_service.js`):** Added a `[Show Maxed] / [Hide Maxed]` toggle button and catalog summary banner displaying `Found Shards: X/324`, `Maxed Shards: Y/324`, and `Total Shard Levels: Z/3240`. When toggled, displays the complete catalog of all attribute shards with owned levels and tiers.
+- **Rich SkyBlock-Style Hover Tooltips (`ShardsShoppingManager`, `ShardsOptimizerScreen`):** Hovering any shard in the optimizer GUI or the pinned HUD renders a full SkyBlock-styled tooltip with rarity color header, flavor lore, attribute name/family, exact buff effect, owned count vs max required, current tier ➔ target tier progress, unit Bazaar price, and total estimated value.
+- **Waypoint Bobbing Drift Fix (`BomboaddonsClient`, `WaypointManager`, `GardenWaypoints`, `OrderedWaypoints`):** Switched waypoint rendering pass from `LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES` to `LevelRenderEvents.COLLECT_SUBMITS` and bound camera coordinates to frame-exact camera render state pos, completely eliminating visual wobble and drift during player walking with view bobbing enabled.
+
 ## [26.2.28.124] - 2026-10-13 (Beta)
 
 ### Fixes

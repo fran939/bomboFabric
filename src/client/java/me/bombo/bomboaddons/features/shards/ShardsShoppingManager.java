@@ -32,6 +32,15 @@ public class ShardsShoppingManager {
     public static class DirectBuyItem {
         public String id;
         public String name;
+        public String rarity;
+        public String family;
+        public String effect;
+        public String explanation;
+        public String attrName;
+        public int currentStacks;
+        public int maxStacks;
+        public int currentTier;
+        public long unitCost;
         public int quantity;
         public long estimatedCost;
         public String forFusion; // e.g. "Quake craft"
@@ -49,6 +58,11 @@ public class ShardsShoppingManager {
         public String id;
         public String name;
         public String rarity;
+        public String family;
+        public String effect;
+        public String explanation;
+        public int currentStacks;
+        public int maxStacks;
         public int quantity;
         public int craftsCount;
         public long estimatedCost;
@@ -68,13 +82,36 @@ public class ShardsShoppingManager {
         public String name;
         public String attrName;
         public String rarity;
+        public String family;
+        public String effect;
+        public String explanation;
+        public int currentStacks;
+        public int maxStacks;
         public int priority;
         public int fromTier;
         public int toTier;
         public int shardsNeeded;
         public long cost;
+        public long unitCost;
+        public long directPrice;
         public String method;
         public double savingsPercent;
+    }
+
+    public static class FullShardEntry {
+        public String id;
+        public String name;
+        public String rarity;
+        public String family;
+        public String attrName;
+        public String effect;
+        public String explanation;
+        public int currentTier;
+        public boolean isMaxed;
+        public int currentStacks;
+        public int maxStacks;
+        public long unitCost;
+        public long costToMax;
     }
 
     public static class PlanData {
@@ -83,9 +120,14 @@ public class ShardsShoppingManager {
         public long budget;
         public long spent;
         public long remaining;
+        public int totalCatalogShards = 324;
+        public int totalUnlocked = 0;
+        public int totalMaxed = 0;
+        public int totalLevels = 0;
         public List<PlannedUpgrade> upgrades = new ArrayList<>();
         public List<DirectBuyItem> directBuys = new ArrayList<>();
         public List<FusionItem> fusions = new ArrayList<>();
+        public List<FullShardEntry> allShards = new ArrayList<>();
     }
 
     private static PlanData activePlan = null;
@@ -97,19 +139,23 @@ public class ShardsShoppingManager {
     public static String pendingSignShard = null;
     public static long pendingSignTimestamp = 0L;
 
-    // HUD Hitboxes for click interactions
+    // HUD Hitboxes for click interactions and hover tooltips
     public static class ClickableItemArea {
         public int minX, minY, maxX, maxY;
         public String shardName;
         public int quantity;
+        public DirectBuyItem directBuyItem;
+        public FusionItem fusionItem;
 
-        public ClickableItemArea(int minX, int minY, int maxX, int maxY, String shardName, int quantity) {
+        public ClickableItemArea(int minX, int minY, int maxX, int maxY, String shardName, int quantity, DirectBuyItem directBuyItem, FusionItem fusionItem) {
             this.minX = minX;
             this.minY = minY;
             this.maxX = maxX;
             this.maxY = maxY;
             this.shardName = shardName;
             this.quantity = quantity;
+            this.directBuyItem = directBuyItem;
+            this.fusionItem = fusionItem;
         }
     }
     private static final List<ClickableItemArea> activeClickables = new ArrayList<>();
@@ -220,6 +266,15 @@ public class ShardsShoppingManager {
                     plan.spent = bp.has("spent") ? bp.get("spent").getAsLong() : 0L;
                     plan.remaining = bp.has("remaining") ? bp.get("remaining").getAsLong() : 0L;
 
+                    JsonObject summaryObj = bp.has("summary") && bp.get("summary").isJsonObject() ? bp.getAsJsonObject("summary") :
+                            (json.has("summary") && json.get("summary").isJsonObject() ? json.getAsJsonObject("summary") : null);
+                    if (summaryObj != null) {
+                        plan.totalCatalogShards = summaryObj.has("totalCatalogShards") ? summaryObj.get("totalCatalogShards").getAsInt() : 324;
+                        plan.totalUnlocked = summaryObj.has("totalUnlocked") ? summaryObj.get("totalUnlocked").getAsInt() : 0;
+                        plan.totalMaxed = summaryObj.has("totalMaxed") ? summaryObj.get("totalMaxed").getAsInt() : 0;
+                        plan.totalLevels = summaryObj.has("totalLevels") ? summaryObj.get("totalLevels").getAsInt() : 0;
+                    }
+
                     if (bp.has("upgrades") && bp.get("upgrades").isJsonArray()) {
                         for (JsonElement el : bp.getAsJsonArray("upgrades")) {
                             JsonObject uObj = el.getAsJsonObject();
@@ -228,11 +283,18 @@ public class ShardsShoppingManager {
                             u.name = uObj.has("name") ? uObj.get("name").getAsString() : "";
                             u.attrName = uObj.has("attrName") ? uObj.get("attrName").getAsString() : "";
                             u.rarity = uObj.has("rarity") ? uObj.get("rarity").getAsString() : "";
+                            u.family = uObj.has("family") ? uObj.get("family").getAsString() : "";
+                            u.effect = uObj.has("effect") ? uObj.get("effect").getAsString() : "";
+                            u.explanation = uObj.has("explanation") ? uObj.get("explanation").getAsString() : "";
+                            u.currentStacks = uObj.has("currentStacks") ? uObj.get("currentStacks").getAsInt() : 0;
+                            u.maxStacks = uObj.has("maxStacks") ? uObj.get("maxStacks").getAsInt() : 96;
                             u.priority = uObj.has("priority") ? uObj.get("priority").getAsInt() : 0;
                             u.fromTier = uObj.has("fromTier") ? uObj.get("fromTier").getAsInt() : 0;
                             u.toTier = uObj.has("toTier") ? uObj.get("toTier").getAsInt() : 0;
                             u.shardsNeeded = uObj.has("shardsNeeded") ? uObj.get("shardsNeeded").getAsInt() : 0;
                             u.cost = uObj.has("cost") ? uObj.get("cost").getAsLong() : 0L;
+                            u.unitCost = uObj.has("unitCost") ? uObj.get("unitCost").getAsLong() : 0L;
+                            u.directPrice = uObj.has("directPrice") ? uObj.get("directPrice").getAsLong() : 0L;
                             u.method = uObj.has("method") ? uObj.get("method").getAsString() : "buy";
                             u.savingsPercent = uObj.has("savingsPercent") ? uObj.get("savingsPercent").getAsDouble() : 0.0;
                             plan.upgrades.add(u);
@@ -246,6 +308,11 @@ public class ShardsShoppingManager {
                             f.id = fObj.has("id") ? fObj.get("id").getAsString() : "";
                             f.name = fObj.has("name") ? fObj.get("name").getAsString() : "";
                             f.rarity = fObj.has("rarity") ? fObj.get("rarity").getAsString() : "";
+                            f.family = fObj.has("family") ? fObj.get("family").getAsString() : "";
+                            f.effect = fObj.has("effect") ? fObj.get("effect").getAsString() : "";
+                            f.explanation = fObj.has("explanation") ? fObj.get("explanation").getAsString() : "";
+                            f.currentStacks = fObj.has("currentStacks") ? fObj.get("currentStacks").getAsInt() : 0;
+                            f.maxStacks = fObj.has("maxStacks") ? fObj.get("maxStacks").getAsInt() : 96;
                             f.quantity = fObj.has("quantity") ? fObj.get("quantity").getAsInt() : 0;
                             f.craftsCount = fObj.has("craftsCount") ? fObj.get("craftsCount").getAsInt() : 0;
                             f.estimatedCost = fObj.has("estimatedCost") ? fObj.get("estimatedCost").getAsLong() : 0L;
@@ -276,14 +343,50 @@ public class ShardsShoppingManager {
                             int qty = bObj.has("quantity") ? bObj.get("quantity").getAsInt() : 0;
                             long cost = bObj.has("estimatedCost") ? bObj.get("estimatedCost").getAsLong() : 0L;
 
-                            String forFusion = null;
-                            for (FusionItem f : plan.fusions) {
-                                if (f.input1Name.equalsIgnoreCase(name) || f.input2Name.equalsIgnoreCase(name)) {
-                                    forFusion = "for " + f.name;
-                                    break;
+                            String forFusion = bObj.has("forFusion") ? bObj.get("forFusion").getAsString() : null;
+                            if (forFusion == null) {
+                                for (FusionItem f : plan.fusions) {
+                                    if (f.input1Name.equalsIgnoreCase(name) || f.input2Name.equalsIgnoreCase(name)) {
+                                        forFusion = f.name;
+                                        break;
+                                    }
                                 }
                             }
-                            plan.directBuys.add(new DirectBuyItem(id, name, qty, cost, forFusion));
+
+                            DirectBuyItem item = new DirectBuyItem(id, name, qty, cost, forFusion);
+                            item.rarity = bObj.has("rarity") ? bObj.get("rarity").getAsString() : "common";
+                            item.family = bObj.has("family") ? bObj.get("family").getAsString() : "";
+                            item.effect = bObj.has("effect") ? bObj.get("effect").getAsString() : "";
+                            item.explanation = bObj.has("explanation") ? bObj.get("explanation").getAsString() : "";
+                            item.attrName = bObj.has("attrName") ? bObj.get("attrName").getAsString() : "";
+                            item.currentStacks = bObj.has("currentStacks") ? bObj.get("currentStacks").getAsInt() : 0;
+                            item.maxStacks = bObj.has("maxStacks") ? bObj.get("maxStacks").getAsInt() : 96;
+                            item.currentTier = bObj.has("currentTier") ? bObj.get("currentTier").getAsInt() : 0;
+                            item.unitCost = bObj.has("unitCost") ? bObj.get("unitCost").getAsLong() : (qty > 0 ? cost / qty : 0L);
+                            plan.directBuys.add(item);
+                        }
+                    }
+
+                    JsonArray allShardsArr = bp.has("allShards") && bp.get("allShards").isJsonArray() ? bp.getAsJsonArray("allShards") :
+                            (json.has("allShards") && json.get("allShards").isJsonArray() ? json.getAsJsonArray("allShards") : null);
+                    if (allShardsArr != null) {
+                        for (JsonElement el : allShardsArr) {
+                            JsonObject sObj = el.getAsJsonObject();
+                            FullShardEntry entry = new FullShardEntry();
+                            entry.id = sObj.has("id") ? sObj.get("id").getAsString() : "";
+                            entry.name = sObj.has("name") ? sObj.get("name").getAsString() : "";
+                            entry.rarity = sObj.has("rarity") ? sObj.get("rarity").getAsString() : "common";
+                            entry.family = sObj.has("family") ? sObj.get("family").getAsString() : "";
+                            entry.attrName = sObj.has("attrName") ? sObj.get("attrName").getAsString() : "";
+                            entry.effect = sObj.has("effect") ? sObj.get("effect").getAsString() : "";
+                            entry.explanation = sObj.has("explanation") ? sObj.get("explanation").getAsString() : "";
+                            entry.currentTier = sObj.has("currentTier") ? sObj.get("currentTier").getAsInt() : 0;
+                            entry.isMaxed = sObj.has("isMaxed") ? sObj.get("isMaxed").getAsBoolean() : false;
+                            entry.currentStacks = sObj.has("currentStacks") ? sObj.get("currentStacks").getAsInt() : 0;
+                            entry.maxStacks = sObj.has("maxStacks") ? sObj.get("maxStacks").getAsInt() : 96;
+                            entry.unitCost = sObj.has("unitCost") ? sObj.get("unitCost").getAsLong() : 0L;
+                            entry.costToMax = sObj.has("costToMax") ? sObj.get("costToMax").getAsLong() : 0L;
+                            plan.allShards.add(entry);
                         }
                     }
                 }
@@ -356,13 +459,14 @@ public class ShardsShoppingManager {
                 final int lineY = lineIdx * 11 + 6;
                 final String sName = item.name;
                 final int sQty = item.quantity;
+                final DirectBuyItem dRef = item;
                 clickRegistrations.add(() -> {
                     int textW = font.width(lineText);
                     int minX = (int)(x + 4 * scale);
                     int minY = (int)(y + (lineY - 1) * scale);
                     int maxX = (int)(x + (textW + 10) * scale);
                     int maxY = (int)(y + (lineY + 10) * scale);
-                    activeClickables.add(new ClickableItemArea(minX, minY, maxX, maxY, sName, sQty));
+                    activeClickables.add(new ClickableItemArea(minX, minY, maxX, maxY, sName, sQty, dRef, null));
                 });
 
                 lineIdx++;
@@ -381,6 +485,17 @@ public class ShardsShoppingManager {
                 String saveStr = f.savingsPercent > 0 ? String.format(Locale.US, " §a(-%.0f%%)", f.savingsPercent) : "";
                 String lineText = " §f• §b" + f.name + " §fx" + f.quantity + saveStr;
                 renderLines.add(lineText);
+
+                final int lineY = lineIdx * 11 + 6;
+                final FusionItem fRef = f;
+                clickRegistrations.add(() -> {
+                    int textW = font.width(lineText);
+                    int minX = (int)(x + 4 * scale);
+                    int minY = (int)(y + (lineY - 1) * scale);
+                    int maxX = (int)(x + (textW + 10) * scale);
+                    int maxY = (int)(y + (lineY + 10) * scale);
+                    activeClickables.add(new ClickableItemArea(minX, minY, maxX, maxY, fRef.name, fRef.quantity, null, fRef));
+                });
                 lineIdx++;
 
                 String ingText = "   §8" + f.input1Qty + " " + f.input1Name + " + " + f.input2Qty + " " + f.input2Name;
@@ -418,7 +533,161 @@ public class ShardsShoppingManager {
         }
 
         g.pose().popMatrix();
+
+        // Check if mouse hovers over any HUD item to display rich tooltip
+        if (mc.gui.screen() != null || !mc.mouseHandler.isMouseGrabbed()) {
+            double mx = mc.mouseHandler.xpos() * (double) mc.getWindow().getGuiScaledWidth() / (double) mc.getWindow().getScreenWidth();
+            double my = mc.mouseHandler.ypos() * (double) mc.getWindow().getGuiScaledHeight() / (double) mc.getWindow().getScreenHeight();
+            synchronized (activeClickables) {
+                for (ClickableItemArea area : activeClickables) {
+                    if (mx >= area.minX && mx <= area.maxX && my >= area.minY && my <= area.maxY) {
+                        if (area.directBuyItem != null) {
+                            DirectBuyItem d = area.directBuyItem;
+                            renderShardTooltip(g, font, (int)mx, (int)my, d.name, d.rarity, d.attrName, d.family, d.effect, d.explanation, d.currentTier, d.currentTier, d.currentStacks, d.maxStacks, 0, d.unitCost, d.estimatedCost);
+                        } else if (area.fusionItem != null) {
+                            FusionItem f = area.fusionItem;
+                            renderShardTooltip(g, font, (int)mx, (int)my, f.name, f.rarity, "", f.family, f.effect, f.explanation, 0, 0, f.currentStacks, f.maxStacks, 0, 0, f.estimatedCost);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         return new int[]{ (int)(width * scale), (int)(height * scale) };
+    }
+
+    public static String getRarityColorCode(String rarity) {
+        if (rarity == null) return "§f";
+        switch (rarity.toLowerCase()) {
+            case "uncommon": return "§a";
+            case "rare": return "§9";
+            case "epic": return "§5";
+            case "legendary": return "§6";
+            case "mythic": return "§d";
+            case "divine": return "§b";
+            case "special":
+            case "very_special": return "§c";
+            default: return "§f";
+        }
+    }
+
+    public static void renderShardTooltip(GuiGraphicsExtractor g, Font font, int mouseX, int mouseY,
+                                          String name, String rarity, String attrName, String family,
+                                          String effect, String explanation,
+                                          int currentTier, int targetTier, int currentStacks, int maxStacks, int shardsNeeded,
+                                          long unitCost, long totalCost) {
+        Minecraft mc = Minecraft.getInstance();
+        int screenW = mc.getWindow().getGuiScaledWidth();
+        int screenH = mc.getWindow().getGuiScaledHeight();
+
+        List<String> lines = new ArrayList<>();
+        String rCode = getRarityColorCode(rarity);
+        lines.add(rCode + "§l" + name + " Shard");
+
+        if (explanation != null && !explanation.trim().isEmpty()) {
+            for (String part : wrapText(font, "§7§o" + explanation.trim(), 210)) {
+                lines.add(part);
+            }
+        }
+
+        lines.add("");
+
+        String fam = (family != null && !family.trim().isEmpty()) ? family : "Global";
+        if (attrName != null && !attrName.trim().isEmpty()) {
+            lines.add("§6§l" + attrName + " §8(" + fam + ")");
+        } else {
+            lines.add("§6§lShard Ability §8(" + fam + ")");
+        }
+
+        if (effect != null && !effect.trim().isEmpty()) {
+            for (String part : wrapText(font, "§f" + effect.trim(), 210)) {
+                lines.add(part);
+            }
+        }
+
+        lines.add("");
+
+        int max = maxStacks > 0 ? maxStacks : 96;
+        lines.add("§7Owned: §b" + currentStacks + " §7/ §f" + max + " Shards");
+
+        if (currentTier >= 10 || currentStacks >= max) {
+            lines.add("§a§l✔ Maxed (Tier 10)");
+        } else if (targetTier > currentTier) {
+            lines.add("§eTier " + currentTier + " §7➔ §aTier " + targetTier + (shardsNeeded > 0 ? " §7(+" + shardsNeeded + " needed)" : ""));
+        } else {
+            lines.add("§eTier " + currentTier + "/10 §7(Syphon more to level up!)");
+        }
+
+        if (unitCost > 0) {
+            lines.add("§6BZ: §f" + formatCoins(unitCost));
+        }
+        if (totalCost > 0) {
+            lines.add("§eEstimated Value: §f" + formatCoins(totalCost));
+        }
+
+        int maxW = 140;
+        for (String ln : lines) {
+            int w = font.width(ln);
+            if (w > maxW) maxW = w;
+        }
+        int boxW = maxW + 16;
+        int boxH = lines.size() * 11 + 14;
+
+        int boxX = mouseX + 12;
+        int boxY = mouseY - 12;
+
+        if (boxX + boxW > screenW - 6) {
+            boxX = mouseX - boxW - 8;
+        }
+        if (boxX < 6) boxX = 6;
+
+        if (boxY + boxH > screenH - 6) {
+            boxY = screenH - boxH - 6;
+        }
+        if (boxY < 6) boxY = 6;
+
+        g.pose().pushMatrix();
+        g.pose().translate(0, 0);
+
+        // SkyBlock styled tooltip background
+        g.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xF210081C);
+        g.outline(boxX, boxY, boxW, boxH, 0xFF3D2E5C);
+        g.fill(boxX + 1, boxY + 1, boxX + boxW - 1, boxY + 2, 0xFFF59E0B);
+
+        int textY = boxY + 6;
+        for (String ln : lines) {
+            if (!ln.isEmpty()) {
+                g.text(font, ln, boxX + 8, textY, -1, true);
+            }
+            textY += 11;
+        }
+
+        g.pose().popMatrix();
+    }
+
+    private static List<String> wrapText(Font font, String text, int maxPixelWidth) {
+        List<String> result = new ArrayList<>();
+        if (text == null || text.isEmpty()) return result;
+        String[] words = text.split(" ");
+        StringBuilder current = new StringBuilder();
+        for (String w : words) {
+            if (current.length() == 0) {
+                current.append(w);
+            } else {
+                String candidate = current + " " + w;
+                if (font.width(candidate) > maxPixelWidth) {
+                    result.add(current.toString());
+                    current = new StringBuilder(w);
+                } else {
+                    current.append(" ").append(w);
+                }
+            }
+        }
+        if (current.length() > 0) {
+            result.add(current.toString());
+        }
+        return result;
     }
 
     public static String formatCoins(long coins) {

@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.125",
+    "date": "2026-10-13",
+    "changes": [
+      "~ Shards Optimizer Zero Price Fix - Fixed fusion direct buys showing ~0 coins by computing ingredient unit costs in recipe relaxation and accumulating total cost",
+      "~ Shards GUI Layout & Overlap Elimination - Cleaned header into two rows, separated class pills, budget input, quick pills, HUD toggle, and calculate button",
+      "+ Show/Hide Maxed Shards & Catalog Summary - Added toggle for maxed shards and summary banner displaying Found Shards, Maxed Shards, and Total Shard Levels",
+      "+ Rich SkyBlock Hover Tooltips - Displays SkyBlock-styled tooltips on GUI and HUD with rarity colors, lore, effect descriptions, tier progress, and BZ unit/total values",
+      "~ Waypoint Bobbing Drift Fix - Switched rendering to COLLECT_SUBMITS and bound coordinates to exact camera render state pos, eliminating view bobbing wobble"
+    ]
+  },
+  {
     "version": "26.2.28.124",
     "date": "2026-10-13",
     "changes": [
