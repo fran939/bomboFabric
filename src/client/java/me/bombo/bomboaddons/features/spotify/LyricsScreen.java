@@ -151,8 +151,8 @@ public class LyricsScreen extends Screen {
         long currentMs = SpotifyManager.getProgressMs() + BomboConfig.get().lyricsOffsetMs;
         String curTrack = SpotifyManager.getCurrentTrack();
 
-        // Reset if song changed
-        if (!curTrack.equals(lastSeenTrack)) {
+        // Reset if song changed (ignore transient empty track)
+        if (!curTrack.isEmpty() && !curTrack.equals(lastSeenTrack)) {
             lastSeenTrack = curTrack;
             lastActiveLineIdx = -1;
             lastSeenCurrentMs = 0L;
@@ -162,16 +162,19 @@ public class LyricsScreen extends Screen {
         int rawActiveIdx = LyricsManager.getCurrentLineIndex(currentMs);
 
         // Strictly monotonic forward progression: NEVER jump backwards on micro-jitter!
-        // Only jump backwards if user explicitly rewound by > 2.5 seconds, or forward seek > 8.0s
-        if (currentMs < lastSeenCurrentMs - 2500L || currentMs > lastSeenCurrentMs + 8000L) {
+        // Only jump backwards if user explicitly rewound by > 6.0 seconds
+        if (currentMs < lastSeenCurrentMs - 6000L || currentMs > lastSeenCurrentMs + 10000L) {
             lastActiveLineIdx = rawActiveIdx;
             maxActiveWordIdx = -1;
+            lastSeenCurrentMs = currentMs;
         } else if (rawActiveIdx > lastActiveLineIdx) {
             lastActiveLineIdx = rawActiveIdx;
             maxActiveWordIdx = -1;
+            lastSeenCurrentMs = currentMs;
+        } else {
+            lastSeenCurrentMs = Math.max(lastSeenCurrentMs, currentMs);
         }
         int activeIdx = lastActiveLineIdx;
-        lastSeenCurrentMs = currentMs;
 
         // Per-frame debug logging if enabled via /b lyrics debug
         if (LyricsManager.lyricsDebugActive) {

@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.119] - 2026-10-13 (Beta)
+
+### Features
+- **Config Keybind Profile Dropdown Menu (`ConfigCustomWidgets`):** Clicking the center profile button (e.g. `[ archer ▾ ]`) on Command Keybinds and GUI Container Keybinds cards now opens an interactive dropdown menu listing all available profiles. Players can click any profile in the list to switch immediately. Side arrows (`◀` / `▶`) continue to cycle profiles smoothly.
+
+### Fixes
+- **Adjectils Exact Parity for `!rtca` & Catacombs Graduate 20% (`bomboapi`):** Synchronized milestone Catacombs Graduate level to X (+20%) for CA50 planning, bringing total M7 boost to +40% (420,000 XP/run base). `bomboclas` now precisely calculates exactly 1,061 M7 runs (37 Archer, 171 Berserk, 397 Healer, 0 Mage, 456 Tank) matching Adjectils to the exact single run.
+- **Discord Bridge Embeds for In-Game `!rtca` / `/rtca` (`bombot`):** Fixed conditional check where embeds were previously only constructed if initiated from Discord. Running `!rtca`, `!dungeons`, or `!nw` in-game now broadcasts rich embeds to Discord channels and webhooks while simultaneously displaying hoverable and clickable tooltips in Minecraft chat.
+- **Spotify Lyrics Snapping & Micro-Jitter Eliminated (`SpotifyManager`, `LyricsScreen`):** Fixed lyrics abruptly snapping back to the top/beginning of the song. Eliminated double-extrapolation clock skew between PowerShell GSMTC and Java, guarded against transient 0ms reads during active playback, widened seek re-anchor threshold to >6s, and prevented background window title scraping from resetting playback progress.
+
 ## [26.2.28.118] - 2026-10-13 (Beta)
 
 ### Features

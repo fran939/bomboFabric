@@ -348,6 +348,8 @@ public class SpotifyManager {
                                 if (parts.length >= 6) {
                                     String title = parts[1].trim();
                                     String artist = parts[2].trim();
+                                    if (title.isEmpty()) continue;
+
                                     long posMs = parseSafeLong(parts[3]);
                                     long durMs = parseSafeLong(parts[4]);
                                     String stat = parts[5].trim();
@@ -368,22 +370,32 @@ public class SpotifyManager {
                                         monotonicProgressMs = posMs;
                                         lastStateUpdate = now;
                                     } else if (nowPlaying) {
-                                        if (!wasPlaying) {
+                                        if (posMs <= 0 && monotonicProgressMs > 3000L) {
+                                            // Transient 0ms read from GSMTC: ignore to avoid snapping to beginning
+                                        } else if (!wasPlaying) {
                                             baseProgressMs = posMs;
                                             monotonicProgressMs = posMs;
                                             lastStateUpdate = now;
-                                        } else if (Math.abs(monotonicProgressMs - posMs) > 2500L) {
-                                            // User jumped or seeked: re-anchor so lyrics update immediately
+                                        } else if (posMs > 0 && (monotonicProgressMs - posMs) > 6000L) {
+                                            // Explicit backward seek > 6s
+                                            baseProgressMs = posMs;
+                                            monotonicProgressMs = posMs;
+                                            lastStateUpdate = now;
+                                        } else if ((posMs - monotonicProgressMs) > 6000L) {
+                                            // Forward seek > 6s
+                                            baseProgressMs = posMs;
+                                            monotonicProgressMs = posMs;
+                                            lastStateUpdate = now;
+                                        } else if (posMs >= monotonicProgressMs) {
+                                            // Forward sync without backward snap
                                             baseProgressMs = posMs;
                                             monotonicProgressMs = posMs;
                                             lastStateUpdate = now;
                                         }
                                     } else {
-                                        if (Math.abs(posMs - monotonicProgressMs) > 1000L) {
-                                            baseProgressMs = posMs;
-                                            monotonicProgressMs = posMs;
-                                            lastStateUpdate = now;
-                                        }
+                                        baseProgressMs = posMs;
+                                        monotonicProgressMs = posMs;
+                                        lastStateUpdate = now;
                                     }
 
                                     // Notify LyricsManager of track update
@@ -478,20 +490,16 @@ public class SpotifyManager {
                     + "            } catch {}\r\n"
                     + "        }\r\n"
                     + "        if ($session) {\r\n"
-                    + "            $tl = $session.GetTimelineProperties()\r\n"
                     + "            $propsOp = $session.TryGetMediaPropertiesAsync()\r\n"
                     + "            $props = Await $propsOp ([Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties])\r\n"
-                    + "            $stat = $session.GetPlaybackInfo().PlaybackStatus\r\n"
-                    + "            $pos = $tl.Position\r\n"
-                    + "            if ($stat -eq 'Playing' -and $tl.LastUpdatedTime -and $tl.LastUpdatedTime.Year -gt 2000) {\r\n"
-                    + "                $elapsed = [DateTimeOffset]::UtcNow - $tl.LastUpdatedTime\r\n"
-                    + "                if ($elapsed.TotalMilliseconds -gt 0 -and $elapsed.TotalMilliseconds -lt 600000) {\r\n"
-                    + "                    $pos = $pos + $elapsed\r\n"
-                    + "                }\r\n"
+                    + "            if ($props -and $props.Title -and $props.Title.Trim().Length -gt 0) {\r\n"
+                    + "                $tl = $session.GetTimelineProperties()\r\n"
+                    + "                $stat = $session.GetPlaybackInfo().PlaybackStatus\r\n"
+                    + "                $pos = $tl.Position\r\n"
+                    + "                $posMs = [math]::Round($pos.TotalMilliseconds)\r\n"
+                    + "                $durMs = [math]::Round($tl.EndTime.TotalMilliseconds)\r\n"
+                    + "                [Console]::WriteLine(\"STATE|\" + $props.Title.Trim() + \"|\" + $props.Artist.Trim() + \"|\" + $posMs + \"|\" + $durMs + \"|\" + $stat)\r\n"
                     + "            }\r\n"
-                    + "            $posMs = [math]::Round($pos.TotalMilliseconds)\r\n"
-                    + "            $durMs = [math]::Round($tl.EndTime.TotalMilliseconds)\r\n"
-                    + "            [Console]::WriteLine(\"STATE|\" + $props.Title + \"|\" + $props.Artist + \"|\" + $posMs + \"|\" + $durMs + \"|\" + $stat)\r\n"
                     + "        } else {\r\n"
                     + "            $spProc = Get-Process spotify -ErrorAction SilentlyContinue\r\n"
                     + "            if ($spProc) {\r\n"
@@ -521,6 +529,9 @@ public class SpotifyManager {
     }
 
     private static void fallbackToWindowInspection() {
+        if (gsmtcProcess != null && gsmtcProcess.isAlive()) {
+            return; // GSMTC is active; don't let window title scraping wipe playback progress!
+        }
         final boolean[] foundSpotify = {false};
         final String[] rawTitle = {""};
 

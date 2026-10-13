@@ -4610,6 +4610,7 @@ public class ConfigCustomWidgets {
     public static String kbIslandInput = "";
     public static boolean kbIsListening = false;
     public static int editingKbIndex = -1;
+    public static boolean kbProfileDropdownOpen = false;
 
     public static List<String> getMatchingProfilesForKeybinds(String query) {
         if (query == null || query.trim().isEmpty()) return Collections.emptyList();
@@ -4676,9 +4677,9 @@ public class ConfigCustomWidgets {
         String curProf = BomboConfig.get().activeProfile != null ? BomboConfig.get().activeProfile : "default";
         g.text(font, "§6§lPROFILE COMMAND KEYBINDS (" + curProf + ")", x + 12, curY, ConfigUITheme.ACCENT_GOLD, false);
 
-        // Profile switcher in header: [◀] [ Profile: <name> ] [▶]
+        // Profile switcher in header: [◀] [ Profile: <name> ▾ ] [▶]
         int arrowW = 18;
-        int profLabelW = Math.max(76, font.width("Profile: " + curProf) + 16);
+        int profLabelW = Math.max(86, font.width("Profile: " + curProf) + 24);
         int totalProfControlsW = arrowW + 4 + profLabelW + 4 + arrowW;
         int prevBtnX = x + w - totalProfControlsW - 12;
         int curProfBtnX = prevBtnX + arrowW + 4;
@@ -4690,7 +4691,7 @@ public class ConfigCustomWidgets {
         boolean nextHover = mouseX >= nextBtnX && mouseX <= nextBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
 
         ConfigUITheme.drawPillButton(g, font, "§e◀", prevBtnX, profBtnY, arrowW, 18, prevHover, -1, 0x221E293B, 0x55FFFFFF);
-        ConfigUITheme.drawPillButton(g, font, "§b" + curProf, curProfBtnX, profBtnY, profLabelW, 18, curProfHover, -1, 0x221E293B, 0x55FFFFFF);
+        ConfigUITheme.drawPillButton(g, font, "§b" + curProf + " §7▾", curProfBtnX, profBtnY, profLabelW, 18, curProfHover, -1, kbProfileDropdownOpen ? 0x4400E5FF : 0x221E293B, kbProfileDropdownOpen ? 0xAA00E5FF : 0x55FFFFFF);
         ConfigUITheme.drawPillButton(g, font, "§e▶", nextBtnX, profBtnY, arrowW, 18, nextHover, -1, 0x221E293B, 0x55FFFFFF);
 
         curY += 18;
@@ -4804,10 +4805,33 @@ public class ConfigCustomWidgets {
 
             curY += 24;
         }
+
+        // Floating dropdown popup menu for direct profile selection
+        if (kbProfileDropdownOpen && !allProfs.isEmpty()) {
+            int dropW = Math.max(profLabelW + 24, 120);
+            int dropX = curProfBtnX;
+            int dropY = profBtnY + 22;
+            int dropH = allProfs.size() * 19 + 6;
+            g.fill(dropX, dropY, dropX + dropW, dropY + dropH, 0xFA0B132B);
+            g.outline(dropX, dropY, dropW, dropH, ConfigUITheme.getAccentColor());
+            for (int p = 0; p < allProfs.size(); p++) {
+                String pName = allProfs.get(p);
+                boolean isCurrent = pName.equalsIgnoreCase(s.activeProfile);
+                int itemY = dropY + 3 + p * 19;
+                boolean itemHover = mouseX >= dropX && mouseX <= dropX + dropW && mouseY >= itemY && mouseY <= itemY + 18;
+                if (itemHover) {
+                    g.fill(dropX + 2, itemY, dropX + dropW - 2, itemY + 18, 0x4400E5FF);
+                } else if (isCurrent) {
+                    g.fill(dropX + 2, itemY, dropX + dropW - 2, itemY + 18, 0x2200E5FF);
+                }
+                String label = (isCurrent ? "§b✔ " : "§7  ") + pName;
+                g.text(font, label, dropX + 8, itemY + 5, isCurrent ? 0xFF00E5FF : (itemHover ? 0xFFFFFFFF : 0xFFCBD5E1), false);
+            }
+        }
     }
 
     public static boolean handleKeybindsClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
-        // Profile switcher in header: [◀] [ Profile: <name> ] [▶]
+        // Profile switcher in header: [◀] [ Profile: <name> ▾ ] [▶]
         List<String> profs = ConfigRegistry.getAllProfileNames();
         if (!profs.isEmpty()) {
             BomboConfig.Settings s = BomboConfig.get();
@@ -4817,12 +4841,33 @@ public class ConfigCustomWidgets {
                 if (profs.get(p).equalsIgnoreCase(cur)) { idx = p; break; }
             }
             int arrowW = 18;
-            int profLabelW = Math.max(76, Minecraft.getInstance().font.width("Profile: " + cur) + 16);
+            int profLabelW = Math.max(86, Minecraft.getInstance().font.width("Profile: " + cur) + 24);
             int totalProfControlsW = arrowW + 4 + profLabelW + 4 + arrowW;
             int prevBtnX = x + w - totalProfControlsW - 12;
             int curProfBtnX = prevBtnX + arrowW + 4;
             int nextBtnX = curProfBtnX + profLabelW + 4;
             int profBtnY = y + 6;
+
+            if (kbProfileDropdownOpen) {
+                int dropW = Math.max(profLabelW + 24, 120);
+                int dropX = curProfBtnX;
+                int dropY = profBtnY + 22;
+                int dropH = profs.size() * 19 + 6;
+                if (mouseX >= dropX && mouseX <= dropX + dropW && mouseY >= dropY && mouseY <= dropY + dropH) {
+                    int clickedIdx = (mouseY - dropY - 3) / 19;
+                    if (clickedIdx >= 0 && clickedIdx < profs.size()) {
+                        s.activeProfile = profs.get(clickedIdx);
+                        BomboConfig.save();
+                    }
+                    kbProfileDropdownOpen = false;
+                    return true;
+                } else {
+                    kbProfileDropdownOpen = false;
+                    if (mouseX >= curProfBtnX && mouseX <= curProfBtnX + profLabelW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+                        return true;
+                    }
+                }
+            }
 
             // [◀] Previous profile
             if (mouseX >= prevBtnX && mouseX <= prevBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
@@ -4838,11 +4883,9 @@ public class ConfigCustomWidgets {
                 BomboConfig.save();
                 return true;
             }
-            // Center Profile Button (Left click = next, Right click = prev)
+            // Center Profile Button -> Toggle profile dropdown list
             if (mouseX >= curProfBtnX && mouseX <= curProfBtnX + profLabelW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
-                int nextIdx = (button == 1) ? ((idx <= 0) ? profs.size() - 1 : idx - 1) : ((idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1);
-                s.activeProfile = profs.get(nextIdx);
-                BomboConfig.save();
+                kbProfileDropdownOpen = !kbProfileDropdownOpen;
                 return true;
             }
         }
@@ -4989,6 +5032,7 @@ public class ConfigCustomWidgets {
     public static String guiKbIslandInput = "";
     public static boolean guiKbIsListening = false;
     public static int editingGuiKbIndex = -1;
+    public static boolean guiProfileDropdownOpen = false;
 
     public static int getGuiBindsCardHeight() {
         BomboConfig.Settings s = BomboConfig.get();
@@ -5013,9 +5057,9 @@ public class ConfigCustomWidgets {
         String curProf = BomboConfig.get().activeProfile != null ? BomboConfig.get().activeProfile : "default";
         g.text(font, "§b§lGUI CONTAINER KEYBINDS (" + curProf + ") §7- Executed while inside a container/GUI", x + 12, curY, ConfigUITheme.getAccentColor(), false);
 
-        // Profile switcher in header: [◀] [ Profile: <name> ] [▶]
+        // Profile switcher in header: [◀] [ Profile: <name> ▾ ] [▶]
         int arrowW = 18;
-        int profLabelW = Math.max(76, font.width("Profile: " + curProf) + 16);
+        int profLabelW = Math.max(86, font.width("Profile: " + curProf) + 24);
         int totalProfControlsW = arrowW + 4 + profLabelW + 4 + arrowW;
         int prevBtnX = x + w - totalProfControlsW - 12;
         int curProfBtnX = prevBtnX + arrowW + 4;
@@ -5027,7 +5071,7 @@ public class ConfigCustomWidgets {
         boolean nextHover = mouseX >= nextBtnX && mouseX <= nextBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18;
 
         ConfigUITheme.drawPillButton(g, font, "§e◀", prevBtnX, profBtnY, arrowW, 18, prevHover, -1, 0x221E293B, 0x55FFFFFF);
-        ConfigUITheme.drawPillButton(g, font, "§b" + curProf, curProfBtnX, profBtnY, profLabelW, 18, curProfHover, -1, 0x221E293B, 0x55FFFFFF);
+        ConfigUITheme.drawPillButton(g, font, "§b" + curProf + " §7▾", curProfBtnX, profBtnY, profLabelW, 18, curProfHover, -1, guiProfileDropdownOpen ? 0x4400E5FF : 0x221E293B, guiProfileDropdownOpen ? 0xAA00E5FF : 0x55FFFFFF);
         ConfigUITheme.drawPillButton(g, font, "§e▶", nextBtnX, profBtnY, arrowW, 18, nextHover, -1, 0x221E293B, 0x55FFFFFF);
 
         curY += 18;
@@ -5137,10 +5181,33 @@ public class ConfigCustomWidgets {
 
             curY += 24;
         }
+
+        // Floating dropdown popup menu for direct profile selection
+        if (guiProfileDropdownOpen && !allProfs.isEmpty()) {
+            int dropW = Math.max(profLabelW + 24, 120);
+            int dropX = curProfBtnX;
+            int dropY = profBtnY + 22;
+            int dropH = allProfs.size() * 19 + 6;
+            g.fill(dropX, dropY, dropX + dropW, dropY + dropH, 0xFA0B132B);
+            g.outline(dropX, dropY, dropW, dropH, ConfigUITheme.getAccentColor());
+            for (int p = 0; p < allProfs.size(); p++) {
+                String pName = allProfs.get(p);
+                boolean isCurrent = pName.equalsIgnoreCase(s.activeProfile);
+                int itemY = dropY + 3 + p * 19;
+                boolean itemHover = mouseX >= dropX && mouseX <= dropX + dropW && mouseY >= itemY && mouseY <= itemY + 18;
+                if (itemHover) {
+                    g.fill(dropX + 2, itemY, dropX + dropW - 2, itemY + 18, 0x4400E5FF);
+                } else if (isCurrent) {
+                    g.fill(dropX + 2, itemY, dropX + dropW - 2, itemY + 18, 0x2200E5FF);
+                }
+                String label = (isCurrent ? "§b✔ " : "§7  ") + pName;
+                g.text(font, label, dropX + 8, itemY + 5, isCurrent ? 0xFF00E5FF : (itemHover ? 0xFFFFFFFF : 0xFFCBD5E1), false);
+            }
+        }
     }
 
     public static boolean handleGuiBindsClick(int x, int y, int w, int h, int mouseX, int mouseY, int button) {
-        // Profile switcher in header: [◀] [ Profile: <name> ] [▶]
+        // Profile switcher in header: [◀] [ Profile: <name> ▾ ] [▶]
         List<String> profs = ConfigRegistry.getAllProfileNames();
         if (!profs.isEmpty()) {
             BomboConfig.Settings s = BomboConfig.get();
@@ -5150,12 +5217,33 @@ public class ConfigCustomWidgets {
                 if (profs.get(p).equalsIgnoreCase(cur)) { idx = p; break; }
             }
             int arrowW = 18;
-            int profLabelW = Math.max(76, Minecraft.getInstance().font.width("Profile: " + cur) + 16);
+            int profLabelW = Math.max(86, Minecraft.getInstance().font.width("Profile: " + cur) + 24);
             int totalProfControlsW = arrowW + 4 + profLabelW + 4 + arrowW;
             int prevBtnX = x + w - totalProfControlsW - 12;
             int curProfBtnX = prevBtnX + arrowW + 4;
             int nextBtnX = curProfBtnX + profLabelW + 4;
             int profBtnY = y + 6;
+
+            if (guiProfileDropdownOpen) {
+                int dropW = Math.max(profLabelW + 24, 120);
+                int dropX = curProfBtnX;
+                int dropY = profBtnY + 22;
+                int dropH = profs.size() * 19 + 6;
+                if (mouseX >= dropX && mouseX <= dropX + dropW && mouseY >= dropY && mouseY <= dropY + dropH) {
+                    int clickedIdx = (mouseY - dropY - 3) / 19;
+                    if (clickedIdx >= 0 && clickedIdx < profs.size()) {
+                        s.activeProfile = profs.get(clickedIdx);
+                        BomboConfig.save();
+                    }
+                    guiProfileDropdownOpen = false;
+                    return true;
+                } else {
+                    guiProfileDropdownOpen = false;
+                    if (mouseX >= curProfBtnX && mouseX <= curProfBtnX + profLabelW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
+                        return true;
+                    }
+                }
+            }
 
             // [◀] Previous profile
             if (mouseX >= prevBtnX && mouseX <= prevBtnX + arrowW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
@@ -5171,11 +5259,9 @@ public class ConfigCustomWidgets {
                 BomboConfig.save();
                 return true;
             }
-            // Center Profile Button (Left click = next, Right click = prev)
+            // Center Profile Button -> Toggle profile dropdown list
             if (mouseX >= curProfBtnX && mouseX <= curProfBtnX + profLabelW && mouseY >= profBtnY && mouseY <= profBtnY + 18) {
-                int nextIdx = (button == 1) ? ((idx <= 0) ? profs.size() - 1 : idx - 1) : ((idx < 0 || idx >= profs.size() - 1) ? 0 : idx + 1);
-                s.activeProfile = profs.get(nextIdx);
-                BomboConfig.save();
+                guiProfileDropdownOpen = !guiProfileDropdownOpen;
                 return true;
             }
         }

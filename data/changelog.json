@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.119",
+    "date": "2026-10-13",
+    "changes": [
+      "+ Config Keybind Profile Dropdown - Clicking center profile button opens interactive dropdown menu listing all profiles for 1-click switching",
+      "~ RTCA Adjectils 100% Parity - Catacombs Graduate set to 20% (+40% M7 boost, 420k XP/run), calculating exactly 1,061 runs matching Adjectils",
+      "~ Discord Bridge Embeds for In-Game RTCA - In-game !rtca/!dungeons/!nw commands now broadcast rich embeds to Discord and webhooks",
+      "~ Spotify Lyrics Snapping & Jitter Fix - Guarded against transient 0ms reads, fixed clock drift, and widened seek re-anchor threshold"
+    ]
+  },
+  {
     "version": "26.2.28.118",
     "date": "2026-10-13",
     "changes": [
