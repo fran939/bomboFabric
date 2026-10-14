@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.129",
+    "date": "2026-10-14",
+    "changes": [
+      "+ In-Game MP GUI Polish - Added active power detection, marked 2,184/2,184 as MAXED, and replaced /bz buttons with context actions (/ah, /bz, Craft, Kuudra, DA, Quest)",
+      "~ Authentic Vanilla Containers - Mapped items strictly by slot index to preserve empty slots; paginated Ender Chest (45/page) and 1-indexed backpacks (1-18)",
+      "~ Web Profile Armor Layout - Enforced Helmet, Chestplate, Leggings, Boots vertical order with slot backgrounds, fixing heads/masks sorting into Other",
+      "~ Dynamic Shards Sweet Spot & Recipes - Replaced static Level 8 cost with smart per-shard sweet-spot budget and added interactive fusion recipe breakdown panels",
+      "+ RTCA Class Hover & Run Breakdown - Formatted bridge output with per-class runs breakdown and interactive [HOVER:...] tooltips displaying XP and boost %",
+      "~ Web Home Polish & Stream Fix - Removed developer commands, added SkyBlock Calendar, and resolved Hypixel request stream termination errors"
+    ]
+  },
+  {
     "version": "26.2.28.128",
     "date": "2026-10-14",
     "changes": [

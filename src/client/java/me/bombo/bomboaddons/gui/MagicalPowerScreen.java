@@ -75,8 +75,10 @@ public class MagicalPowerScreen extends Screen {
         public final int mpGain;
         public final double coinsPerMp;
         public final boolean purchasable;
+        public final String source;
+        public final String recipeText;
 
-        public UpgradeEntry(int rank, String name, String rarity, String kind, String from, long cost, int mpGain, double coinsPerMp, boolean purchasable) {
+        public UpgradeEntry(int rank, String name, String rarity, String kind, String from, long cost, int mpGain, double coinsPerMp, boolean purchasable, String source, String recipeText) {
             this.rank = rank;
             this.name = name;
             this.rarity = rarity != null ? rarity.toUpperCase(Locale.ROOT) : "COMMON";
@@ -86,6 +88,8 @@ public class MagicalPowerScreen extends Screen {
             this.mpGain = mpGain;
             this.coinsPerMp = coinsPerMp;
             this.purchasable = purchasable;
+            this.source = source != null ? source : "ah";
+            this.recipeText = recipeText != null ? recipeText : "";
         }
     }
 
@@ -208,10 +212,18 @@ public class MagicalPowerScreen extends Screen {
         // Ceiling & MP
         if (root.has("ceiling") && root.get("ceiling").isJsonObject()) {
             JsonObject c = root.getAsJsonObject("ceiling");
-            this.currentMp = c.has("current") ? c.get("current").getAsInt() : 0;
+            this.currentMp = c.has("current") ? c.get("current").getAsInt() : (c.has("reported") ? c.get("reported").getAsInt() : 0);
             this.maxMp = c.has("max") ? c.get("max").getAsInt() : 2248;
+        } else if (root.has("mp") && root.get("mp").isJsonObject()) {
+            JsonObject mpo = root.getAsJsonObject("mp");
+            this.currentMp = mpo.has("reported") ? mpo.get("reported").getAsInt() : (mpo.has("computed") ? mpo.get("computed").getAsInt() : 0);
         } else if (root.has("total_magical_power")) {
             this.currentMp = root.get("total_magical_power").getAsInt();
+        }
+
+        // If player has max obtainable MP (2184) or higher
+        if (this.currentMp >= 2184) {
+            this.maxMp = this.currentMp;
         }
 
         // Selected Power & Tuning
@@ -219,11 +231,19 @@ public class MagicalPowerScreen extends Screen {
             JsonObject t = root.getAsJsonObject("tuning");
             this.tuningPoints = t.has("points") ? t.get("points").getAsInt() : 0;
         }
-        if (root.has("accessories") && root.get("accessories").isJsonObject()) {
-            JsonObject acc = root.getAsJsonObject("accessories");
-            this.selectedPower = acc.has("selectedPower") ? acc.get("selectedPower").getAsString() : "None";
-        } else if (root.has("selected_power")) {
+        if (root.has("selectedPower") && !root.get("selectedPower").isJsonNull()) {
+            this.selectedPower = root.get("selectedPower").getAsString();
+        } else if (root.has("selected_power") && !root.get("selected_power").isJsonNull()) {
             this.selectedPower = root.get("selected_power").getAsString();
+        } else if (root.has("bag") && root.get("bag").isJsonObject() && root.getAsJsonObject("bag").has("selectedPower") && !root.getAsJsonObject("bag").get("selectedPower").isJsonNull()) {
+            this.selectedPower = root.getAsJsonObject("bag").get("selectedPower").getAsString();
+        } else if (root.has("accessories") && root.get("accessories").isJsonObject()) {
+            JsonObject acc = root.getAsJsonObject("accessories");
+            this.selectedPower = acc.has("selectedPower") && !acc.get("selectedPower").isJsonNull() ? acc.get("selectedPower").getAsString() : "None";
+        }
+
+        if (this.selectedPower == null || this.selectedPower.trim().isEmpty() || this.selectedPower.equalsIgnoreCase("none")) {
+            this.selectedPower = "Fortuitous";
         }
 
         // Slots
@@ -249,7 +269,18 @@ public class MagicalPowerScreen extends Screen {
                 double coinsPerMp = o.has("coinsPerMp") ? o.get("coinsPerMp").getAsDouble() : (gain > 0 ? (double) cost / gain : 0);
                 boolean purchasable = !o.has("purchasable") || o.get("purchasable").getAsBoolean();
 
-                upgrades.add(new UpgradeEntry(rank++, name, rarity, kind, from, cost, gain, coinsPerMp, purchasable));
+                String source = o.has("source") ? o.get("source").getAsString() : "ah";
+                String uName = name.toUpperCase(Locale.ROOT);
+                if (source.equals("ah")) {
+                    if (uName.contains("KUUDRA") || uName.contains("BURNING")) source = "kuudra";
+                    else if (uName.contains("HEGEMONY") || uName.contains("ENDER ARTIFACT") || uName.contains("DARK AUCTION")) source = "dark_auction";
+                    else if (uName.contains("RIFT") || uName.contains("PRISM")) source = "rift";
+                    else if (uName.contains("CAMPFIRE") || uName.contains("ROMERO") || uName.contains("SEAL OF")) source = "quest";
+                    else if (o.has("recipe") && !o.get("recipe").isJsonNull()) source = "craft";
+                }
+                String recipeText = o.has("craftText") ? o.get("craftText").getAsString() : "";
+
+                upgrades.add(new UpgradeEntry(rank++, name, rarity, kind, from, cost, gain, coinsPerMp, purchasable, source, recipeText));
             }
         }
 
@@ -264,7 +295,17 @@ public class MagicalPowerScreen extends Screen {
                 String rarity = o.has("rarity") ? o.get("rarity").getAsString() : "COMMON";
                 long cost = o.has("cost") ? o.get("cost").getAsLong() : 0L;
                 int gain = o.has("ap") ? o.get("ap").getAsInt() : 0;
-                missing.add(new UpgradeEntry(rank++, name, rarity, "missing", "", cost, gain, 0, true));
+                String source = o.has("source") ? o.get("source").getAsString() : "ah";
+                String uName = name.toUpperCase(Locale.ROOT);
+                if (source.equals("ah")) {
+                    if (uName.contains("KUUDRA") || uName.contains("BURNING")) source = "kuudra";
+                    else if (uName.contains("HEGEMONY") || uName.contains("ENDER ARTIFACT") || uName.contains("DARK AUCTION")) source = "dark_auction";
+                    else if (uName.contains("RIFT") || uName.contains("PRISM")) source = "rift";
+                    else if (uName.contains("CAMPFIRE") || uName.contains("ROMERO") || uName.contains("SEAL OF")) source = "quest";
+                    else if (o.has("recipe") && !o.get("recipe").isJsonNull()) source = "craft";
+                }
+                String recipeText = o.has("craftText") ? o.get("craftText").getAsString() : "";
+                missing.add(new UpgradeEntry(rank++, name, rarity, "missing", "", cost, gain, 0, true, source, recipeText));
             }
         }
 
@@ -459,21 +500,74 @@ public class MagicalPowerScreen extends Screen {
                 String costStr = "§6" + formatCoins(u.cost);
                 g.text(font, costStr, x + w - 125, curY + 9, 0xFFFBBF24, true);
 
-                // Buy button [ ⚡ /bz ]
-                int btnW = 48;
+                // Action Button (context-aware: /ah, /bz, Craft, Kuudra, Quest)
+                int btnW = 52;
                 int btnH = 18;
-                int btnX = x + w - 66;
+                int btnX = x + w - 70;
                 int btnY = curY + 4;
                 boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
-                g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xFF10B981 : 0xFF065F46);
-                g.outline(btnX, btnY, btnW, btnH, 0xFF047857);
-                g.centeredText(font, "§f⚡ /bz", btnX + btnW / 2, btnY + 5, 0xFFFFFFFF);
+
+                String btnText;
+                int btnBg;
+                int btnBorder;
+                Runnable action;
+                String actionTitle;
 
                 final String itemName = u.name;
+                final String recipe = u.recipeText;
+
+                if ("craft".equalsIgnoreCase(u.source)) {
+                    btnText = "§e🔨 Craft";
+                    btnBg = btnHov ? 0xFFB45309 : 0xFF78350F;
+                    btnBorder = 0xFFD97706;
+                    action = () -> {
+                        Minecraft.getInstance().keyboardHandler.setClipboard("/recipe " + itemName);
+                        if (Minecraft.getInstance().player != null) {
+                            Minecraft.getInstance().player.connection.sendCommand("recipe " + itemName);
+                            Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §eRecipe: §f" + itemName + (recipe.isEmpty() ? "" : " §7(" + recipe + ")")));
+                        }
+                    };
+                    actionTitle = "View Craft Recipe for " + itemName;
+                } else if ("bz".equalsIgnoreCase(u.source)) {
+                    btnText = "§f⚡ /bz";
+                    btnBg = btnHov ? 0xFF10B981 : 0xFF065F46;
+                    btnBorder = 0xFF047857;
+                    action = () -> triggerBazaarSearch(itemName);
+                    actionTitle = "Open Bazaar for " + itemName;
+                } else if ("kuudra".equalsIgnoreCase(u.source)) {
+                    btnText = "§6🔥 Kuudra";
+                    btnBg = btnHov ? 0xFFEA580C : 0xFF9A3412;
+                    btnBorder = 0xFFF97316;
+                    action = () -> triggerAhSearch(itemName);
+                    actionTitle = "Kuudra Drop — Search AH for " + itemName;
+                } else if ("dark_auction".equalsIgnoreCase(u.source)) {
+                    btnText = "§d👑 DA/AH";
+                    btnBg = btnHov ? 0xFF9333EA : 0xFF6B21A8;
+                    btnBorder = 0xFFA855F7;
+                    action = () -> triggerAhSearch(itemName);
+                    actionTitle = "Dark Auction — Search AH for " + itemName;
+                } else if ("quest".equalsIgnoreCase(u.source) || "rift".equalsIgnoreCase(u.source)) {
+                    btnText = "§b📍 Quest";
+                    btnBg = btnHov ? 0xFF0284C7 : 0xFF075985;
+                    btnBorder = 0xFF0EA5E9;
+                    action = () -> {
+                        Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + itemName.replace(" ", "_"));
+                    };
+                    actionTitle = "Special Item — Open Wiki Guide for " + itemName;
+                } else {
+                    btnText = "§b⚡ /ah";
+                    btnBg = btnHov ? 0xFF2563EB : 0xFF1E40AF;
+                    btnBorder = 0xFF3B82F6;
+                    action = () -> triggerAhSearch(itemName);
+                    actionTitle = "Open Auction House for " + itemName;
+                }
+
+                g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnBg);
+                g.outline(btnX, btnY, btnW, btnH, btnBorder);
+                g.centeredText(font, btnText, btnX + btnW / 2, btnY + 5, 0xFFFFFFFF);
+
                 synchronized (clickActions) {
-                    clickActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, () -> {
-                        triggerBazaarSearch(itemName);
-                    }, "Open Bazaar for " + itemName));
+                    clickActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, action, actionTitle));
                 }
             }
             curY += itemH + 4;
@@ -515,21 +609,74 @@ public class MagicalPowerScreen extends Screen {
                     g.text(font, "§d+" + u.mpGain + " MP", x + w - 180, curY + 7, 0xFFF472B6, false);
                 }
 
-                // Buy button
-                int btnW = 48;
+                // Action Button (context-aware: /ah, /bz, Craft, Kuudra, Quest)
+                int btnW = 52;
                 int btnH = 16;
-                int btnX = x + w - 66;
+                int btnX = x + w - 70;
                 int btnY = curY + 4;
                 boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
-                g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xFF10B981 : 0xFF065F46);
-                g.outline(btnX, btnY, btnW, btnH, 0xFF047857);
-                g.centeredText(font, "§f⚡ /bz", btnX + btnW / 2, btnY + 4, 0xFFFFFFFF);
+
+                String btnText;
+                int btnBg;
+                int btnBorder;
+                Runnable action;
+                String actionTitle;
 
                 final String itemName = u.name;
+                final String recipe = u.recipeText;
+
+                if ("craft".equalsIgnoreCase(u.source)) {
+                    btnText = "§e🔨 Craft";
+                    btnBg = btnHov ? 0xFFB45309 : 0xFF78350F;
+                    btnBorder = 0xFFD97706;
+                    action = () -> {
+                        Minecraft.getInstance().keyboardHandler.setClipboard("/recipe " + itemName);
+                        if (Minecraft.getInstance().player != null) {
+                            Minecraft.getInstance().player.connection.sendCommand("recipe " + itemName);
+                            Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §eRecipe: §f" + itemName + (recipe.isEmpty() ? "" : " §7(" + recipe + ")")));
+                        }
+                    };
+                    actionTitle = "View Craft Recipe for " + itemName;
+                } else if ("bz".equalsIgnoreCase(u.source)) {
+                    btnText = "§f⚡ /bz";
+                    btnBg = btnHov ? 0xFF10B981 : 0xFF065F46;
+                    btnBorder = 0xFF047857;
+                    action = () -> triggerBazaarSearch(itemName);
+                    actionTitle = "Open Bazaar for " + itemName;
+                } else if ("kuudra".equalsIgnoreCase(u.source)) {
+                    btnText = "§6🔥 Kuudra";
+                    btnBg = btnHov ? 0xFFEA580C : 0xFF9A3412;
+                    btnBorder = 0xFFF97316;
+                    action = () -> triggerAhSearch(itemName);
+                    actionTitle = "Kuudra Drop — Search AH for " + itemName;
+                } else if ("dark_auction".equalsIgnoreCase(u.source)) {
+                    btnText = "§d👑 DA/AH";
+                    btnBg = btnHov ? 0xFF9333EA : 0xFF6B21A8;
+                    btnBorder = 0xFFA855F7;
+                    action = () -> triggerAhSearch(itemName);
+                    actionTitle = "Dark Auction — Search AH for " + itemName;
+                } else if ("quest".equalsIgnoreCase(u.source) || "rift".equalsIgnoreCase(u.source)) {
+                    btnText = "§b📍 Quest";
+                    btnBg = btnHov ? 0xFF0284C7 : 0xFF075985;
+                    btnBorder = 0xFF0EA5E9;
+                    action = () -> {
+                        Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + itemName.replace(" ", "_"));
+                    };
+                    actionTitle = "Special Item — Open Wiki Guide for " + itemName;
+                } else {
+                    btnText = "§b⚡ /ah";
+                    btnBg = btnHov ? 0xFF2563EB : 0xFF1E40AF;
+                    btnBorder = 0xFF3B82F6;
+                    action = () -> triggerAhSearch(itemName);
+                    actionTitle = "Open Auction House for " + itemName;
+                }
+
+                g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnBg);
+                g.outline(btnX, btnY, btnW, btnH, btnBorder);
+                g.centeredText(font, btnText, btnX + btnW / 2, btnY + 4, 0xFFFFFFFF);
+
                 synchronized (clickActions) {
-                    clickActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, () -> {
-                        triggerBazaarSearch(itemName);
-                    }, "Open Bazaar for " + itemName));
+                    clickActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, action, actionTitle));
                 }
             }
             curY += itemH + 4;
@@ -706,6 +853,20 @@ public class MagicalPowerScreen extends Screen {
 
         mc.player.connection.sendCommand("bz " + itemName);
         mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aBazaar: §e" + itemName + " §7(Copied name to clipboard)"));
+    }
+
+    private void triggerAhSearch(String itemName) {
+        if (itemName == null || itemName.isEmpty()) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) return;
+
+        try {
+            mc.keyboardHandler.setClipboard(itemName);
+        } catch (Exception ignored) {}
+
+        mc.player.connection.sendCommand("ah " + itemName);
+        mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §bAuction House: §e" + itemName + " §7(Copied name to clipboard)"));
+        this.onClose();
     }
 
     private int getRarityColor(String rarity) {

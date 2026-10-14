@@ -247,7 +247,7 @@ public abstract class ChatMixin implements IChatComponent {
 
             me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, false, me.bombo.bomboaddons.features.chat.ChatHistoryTracker.detectCategory(raw));
 
-            if (raw.contains("[SHOW:")) {
+            if (raw.contains("[SHOW:") || raw.contains("[HOVER:")) {
                String formattedRaw = me.bombo.bomboaddons.SkyblockUtils.getFormattedComponentText(message);
                Component formatted = me.bombo.bomboaddons.IRCClient.formatWithLinks(formattedRaw);
                if (formatted != null && !formatted.getString().equals(raw)) {

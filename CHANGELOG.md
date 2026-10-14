@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.129] - 2026-10-14 (Beta)
+
+### Features & Fixes
+- **In-Game Magical Power GUI Polish (`MagicalPowerScreen`, `accessories.js`):** Properly recognizes player's active power (e.g. `Fortuitous`), marks maxed MP cleanly as `2,184 / 2,184 (MAX)`, and replaces uniform `/bz` buttons with context-aware triggers (`⚡ /ah`, `⚡ /bz`, `🔨 Craft`, `🔥 Kuudra`, `👑 DA/AH`, `📍 Quest`) with direct in-game execution.
+- **Authentic Vanilla Containers & Slot Respect (`pv_service.js`):** Completely refactored player inventory, wardrobe, and chests to map strictly by NBT `slot` index so empty/unoccupied slots are accurately preserved. Paginated Ender Chest into 45-slot tabs and 1-indexed backpacks (`Backpack 1` to `Backpack 18`).
+- **Web Profile Armor Layout Restored (`pv_service.js`, `accessories.js`):** Armor is strictly ordered into Helmet, Chestplate, Leggings, Boots with empty slot backgrounds. Fixed heads/masks/crowns erroneously categorizing under Other.
+- **Dynamic Shards Sweet Spot & Interactive Crafting (`shards_service.js`, `ShardsShoppingManager`):** Replaced static "Cost to Level 8" with dynamic class sweet-spot budget, added collapsible `🔨 Craft` recipe panels showing exact ingredient quantities, unit costs, and coin savings, and synchronized calculation logic directly with the in-game shards optimizer.
+- **RTCA Class Hover Tooltips & Runs Breakdown (`bombot`, `ChatMixin`):** Fixed chat parser to render interactive `[HOVER:...]` tooltips in Minecraft chat. Bridge output now displays total runs with class breakdown `1,061 runs until CA 50 (37 archer, 171 berserk, 397 healer, 0 mage, 456 tank)` and rich hover stats (runs needed, current XP, next level XP, max XP, boost %).
+- **Web UX Polish & Stream Error Fix (`index.html`, `bomboapi_server.js`):** Cleaned developer commands and raw CLI code from homepage, added interactive SkyBlock Calendar, and resolved `Hypixel request failed (terminated)` errors by caching buffered profile responses.
+
 ## [26.2.28.128] - 2026-10-14 (Beta)
 
 ### Features & Overhaul
