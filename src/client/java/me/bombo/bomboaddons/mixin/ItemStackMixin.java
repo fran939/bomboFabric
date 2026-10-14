@@ -399,7 +399,7 @@ public abstract class ItemStackMixin {
             }
 
             try {
-               if (s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
+               if (s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && (s.gardenBindsEverywhere || me.bombo.bomboaddons.SkyblockUtils.isInGarden())) {
                   priceAdditions.add(new me.bombo.bomboaddons.features.SupercraftHelper.LoreAddition("gardenBlocked", Component.literal("§cBlocked by Garden Movement"), "BOTTOM", 999));
                }
 

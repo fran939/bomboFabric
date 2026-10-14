@@ -72,7 +72,7 @@ public class GardenMovement {
          }
       }
 
-      if (s.cropBreakWarning && SkyblockUtils.isInGarden() && mc.player != null && mc.level != null) {
+      if (s.cropBreakWarning && (s.gardenBindsEverywhere || SkyblockUtils.isInGarden()) && mc.player != null && mc.level != null) {
          boolean isAttacking = breaking || mc.options.keyAttack.isDown();
          if (isAttacking) {
             if (attackStartedTime == 0L) {
@@ -134,7 +134,7 @@ public class GardenMovement {
 
    public static void handleKey(int keyCode) {
       BomboConfig.Settings s = BomboConfig.get();
-      if (s.gardenMovement && SkyblockUtils.isInGarden()) {
+      if (s.gardenMovement && (s.gardenBindsEverywhere || SkyblockUtils.isInGarden())) {
          Minecraft mc = Minecraft.getInstance();
          // Allow toggling on no-screen or allowed GUI (player inventory, chat, etc.)
          // but NOT on server-side containers (chest, menus) — isAllowedScreen handles that.
@@ -430,10 +430,11 @@ public class GardenMovement {
    }
 
    public static boolean shouldLockMouse() {
-      if (!BomboConfig.get().lockMouseOnGarden || !(forward || backward || left || right)) {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (!s.lockMouseOnGarden || !(forward || backward || left || right)) {
          return false;
       }
-      return "The Garden".equalsIgnoreCase(BomboaddonsClient.currentArea) || SkyblockUtils.isInGarden();
+      return s.gardenBindsEverywhere || "The Garden".equalsIgnoreCase(BomboaddonsClient.currentArea) || SkyblockUtils.isInGarden();
    }
 
    public static void clearWasGoing() {

@@ -21,7 +21,9 @@ public class KeyboardInputMixin extends ClientInput {
         }
 
         Minecraft mc = Minecraft.getInstance();
-        if (GardenMovement.isActive() && SkyblockUtils.isInGarden() && GardenMovement.isAllowedScreen(mc.gui.screen())) {
+        me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
+        boolean allowGardenMove = s != null && (s.gardenBindsEverywhere || SkyblockUtils.isInGarden());
+        if (GardenMovement.isActive() && allowGardenMove && GardenMovement.isAllowedScreen(mc.gui.screen())) {
             boolean fwd = GardenMovement.isForward();
             boolean bwd = GardenMovement.isBackward();
             boolean lft = GardenMovement.isLeft();

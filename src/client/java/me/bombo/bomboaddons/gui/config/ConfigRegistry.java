@@ -820,6 +820,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.keybind("Garden Right", "Move right while Garden Movement is active.", category, () -> s.gardenRightKey != null ? s.gardenRightKey : "right", v -> s.gardenRightKey = v));
                 items.add(ConfigItem.keybind("Garden Break", "Toggle continuous breaking in Garden.", category, () -> s.gardenBreakKey != null ? s.gardenBreakKey : "b", v -> s.gardenBreakKey = v));
                 items.add(ConfigItem.keybind("Garden Use", "Toggle continuous using/placing in Garden.", category, () -> s.gardenUseKey != null ? s.gardenUseKey : "u", v -> s.gardenUseKey = v));
+                items.add(ConfigItem.toggle("Enable Everywhere", "Allows Garden Movement keybinds to activate in any area, not just in the Garden.", category, () -> s.gardenBindsEverywhere, v -> s.gardenBindsEverywhere = v));
 
                 items.add(ConfigItem.header("Pest ESP & Highlights", category));
                 items.add(ConfigItem.toggle("Pest Highlight", "Draws bounding box around spawned garden pests.", category, () -> s.pestEsp, v -> s.pestEsp = v));

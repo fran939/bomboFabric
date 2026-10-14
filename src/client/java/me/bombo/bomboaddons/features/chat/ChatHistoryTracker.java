@@ -195,7 +195,14 @@ public class ChatHistoryTracker {
         entry.isBombo = fromBombo;
 
         inspectCaller(entry, Thread.currentThread().getStackTrace());
-        if (fromBombo) {
+        if ("LOCRAW".equalsIgnoreCase(entry.category)) {
+            entry.isMod = false;
+            entry.isBombo = false;
+            entry.callerModId = null;
+            entry.callerModName = "Hypixel / Server";
+            entry.featureName = "Locraw Response";
+            entry.originFeature = "Locraw Tracker";
+        } else if (fromBombo) {
             // Our own feature message: attribute it to us regardless of what the stack says.
             entry.isMod = true;
             entry.isBombo = true;
@@ -329,6 +336,12 @@ public class ChatHistoryTracker {
         OUTGOING_TRIGGER.remove();
         OUTGOING_PLAYER_INPUT.remove();
 
+        if (commandOrMessage.equalsIgnoreCase("/locraw") || commandOrMessage.equalsIgnoreCase("locraw")) {
+            entry.category = "LOCRAW";
+            if (entry.featureName == null) entry.featureName = "Locraw Tracker";
+            if (entry.originFeature == null) entry.originFeature = "Locraw Tracker";
+        }
+
         addEntry(entry);
     }
 
@@ -355,7 +368,10 @@ public class ChatHistoryTracker {
 
         if (clean.contains("stashed away") || clean.contains("CLICK HERE to pick them up")) return "STASH_COMPACT";
         if (clean.contains("GEXP") || clean.contains("Guild >")) return "GUILD_EVENT_EXP";
-        if (clean.startsWith("{") && clean.endsWith("}")) return "OTHER_MOD";
+        if (clean.startsWith("{") && clean.endsWith("}")) {
+            if (clean.contains("\"server\"") || clean.contains("\"gametype\"")) return "LOCRAW";
+            return "OTHER_MOD";
+        }
         if (clean.contains("»") || clean.contains("[Odin]") || clean.contains("Odin »") || clean.contains("SkyHanni »") || clean.contains("NEU »")) return "OTHER_MOD";
         if (clean.startsWith("/")) return "COMMAND";
         if (clean.startsWith("Party >") || clean.contains("joined the party") || clean.contains("left the party")) return "PARTY";

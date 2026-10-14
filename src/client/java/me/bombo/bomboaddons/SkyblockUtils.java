@@ -428,12 +428,27 @@ public class SkyblockUtils {
 
    public static boolean isConnectedToHypixel() {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.getCurrentServer() == null) {
-         return false;
-      } else {
-         String ip = mc.getCurrentServer().ip.toLowerCase();
-         return ip.contains("hypixel.net") || ip.contains("hypixel.io");
+      if (mc.getCurrentServer() != null && mc.getCurrentServer().ip != null) {
+         String ip = mc.getCurrentServer().ip.toLowerCase(Locale.ROOT);
+         if (ip.contains("hypixel.net") || ip.contains("hypixel.io")) return true;
       }
+      if (BomboaddonsClient.lastServerData != null && BomboaddonsClient.lastServerData.ip != null) {
+         String ip = BomboaddonsClient.lastServerData.ip.toLowerCase(Locale.ROOT);
+         if (ip.contains("hypixel.net") || ip.contains("hypixel.io")) return true;
+      }
+      if (mc.level != null && mc.level.getScoreboard() != null) {
+         Objective obj = mc.level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
+         if (obj != null) {
+            String title = obj.getDisplayName().getString().toLowerCase(Locale.ROOT);
+            if (title.contains("hypixel") || title.contains("skyblock")) return true;
+         }
+         if (cachedSidebarLines != null) {
+            for (String line : cachedSidebarLines) {
+               if (line.toLowerCase(Locale.ROOT).contains("hypixel.net")) return true;
+            }
+         }
+      }
+      return false;
    }
 
    private static long lastCacheTime = 0L;
@@ -878,11 +893,11 @@ public class SkyblockUtils {
             }
          }
 
-         if (loc.equals("Unknown")) {
+         if (loc.equals("Unknown") || loc.equals("Private Island")) {
             String sub = internalGetSubArea();
             if (!sub.equals("None")) {
                String mapped = mapSubAreaToMainArea(sub);
-               if (!mapped.equals("Unknown")) {
+               if (!mapped.equals("Unknown") && (!loc.equals("Private Island") || mapped.equals("The Garden"))) {
                   loc = mapped;
                }
             }
@@ -1068,6 +1083,16 @@ public class SkyblockUtils {
    }
 
    private static String parseAreaFromLines(List<String> lines) {
+      // Prioritize Garden / Plot detection: on Garden plots the scoreboard often displays
+      // "Your Island" / "Private Island" alongside "Plot - XX". If any line indicates a Plot or Garden,
+      // the area MUST resolve to "The Garden".
+      for(String line : lines) {
+         String clean = line.replaceAll("(?i)§.", "").trim().toLowerCase(Locale.ROOT);
+         if (clean.matches(".*\\bplot\\s*-\\s*\\d+.*") || clean.contains("the garden") || clean.contains("garden")) {
+            return "The Garden";
+         }
+      }
+
       for(String line : lines) {
          String clean = line.replaceAll("(?i)§.", "").trim();
          if (!clean.contains("Area:") && !clean.contains("Zone:")) {
@@ -1228,11 +1253,15 @@ public class SkyblockUtils {
 
    public static boolean isInGarden() {
       String loc = getLocation();
-      if (loc.equalsIgnoreCase("The Garden") || loc.toLowerCase().contains("garden") || loc.toLowerCase().contains("plot")) {
+      if (loc.equalsIgnoreCase("The Garden") || loc.toLowerCase(Locale.ROOT).contains("garden") || loc.toLowerCase(Locale.ROOT).contains("plot")) {
          return true;
       }
       String current = BomboaddonsClient.currentArea;
-      if (current != null && (current.toLowerCase().contains("garden") || current.toLowerCase().contains("plot"))) {
+      if (current != null && (current.toLowerCase(Locale.ROOT).contains("garden") || current.toLowerCase(Locale.ROOT).contains("plot"))) {
+         return true;
+      }
+      String sub = getSubArea();
+      if (sub != null && (sub.toLowerCase(Locale.ROOT).contains("plot") || sub.toLowerCase(Locale.ROOT).contains("garden"))) {
          return true;
       }
       return false;

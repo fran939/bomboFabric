@@ -1142,6 +1142,9 @@ public class BomboConfigGUI
                     y1 = this.addKeyBindButton("Use", s.gardenUseKey, v -> {
                         s.gardenUseKey = v;
                     }, "gardenU", col1X, col1W, y1);
+                    y1 = this.addBoolOption("Enable Everywhere", s.gardenBindsEverywhere, v -> {
+                        s.gardenBindsEverywhere = v;
+                    }, col1X, col1W, y1);
                     int y2 = contentBaseY + 24 - (int) this.scrollAmount;
                     y2 = this.addBoolOption("Composter Helper", s.composterHelper, v -> {
                         s.composterHelper = v;

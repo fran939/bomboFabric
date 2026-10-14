@@ -2090,6 +2090,47 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8] §aSimulating area: §e" + area));
                      return 1;
                   })));
+                  builder.then(ClientCommands.literal("area")
+                     .executes((context) -> {
+                        String loc = SkyblockUtils.getLocation();
+                        String sub = SkyblockUtils.getSubArea();
+                        String sim = SkyblockUtils.getSimulatedArea();
+                        String displayArea = (loc != null ? loc : "Unknown");
+                        if (sub != null && !sub.isEmpty() && !sub.equalsIgnoreCase("None")) {
+                           displayArea += " (" + sub + ")";
+                        }
+                        if (sim != null) {
+                           displayArea += " §e[FORCED/SIMULATED]";
+                        }
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + displayArea));
+                        return 1;
+                     })
+                     .then(ClientCommands.argument("area", StringArgumentType.greedyString())
+                        .suggests((ctx, b) -> {
+                           b.suggest("reset");
+                           b.suggest("clear");
+                           b.suggest("The Garden");
+                           b.suggest("Private Island");
+                           b.suggest("The Hub");
+                           b.suggest("Dungeons");
+                           b.suggest("Crimson Isle");
+                           b.suggest("Crystal Hollows");
+                           b.suggest("Dwarven Mines");
+                           return b.buildFuture();
+                        })
+                        .executes((context) -> {
+                           String area = StringArgumentType.getString(context, "area");
+                           if (area.equalsIgnoreCase("clear") || area.equalsIgnoreCase("reset") || area.equalsIgnoreCase("off") || area.equalsIgnoreCase("none")) {
+                              SkyblockUtils.setSimulatedArea(null);
+                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Area override §cdisabled§7. Current real area: §a" + SkyblockUtils.getLocation()));
+                           } else {
+                              SkyblockUtils.setSimulatedArea(area);
+                              ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Area forced to: §a" + area + " §8(use '§b/b area reset§8' to restore auto-detection)"));
+                           }
+                           return 1;
+                        })
+                     )
+                  );
                   builder.then(ClientCommands.literal("subarea").executes((context) -> {
                      String sub = SkyblockUtils.getSubArea();
                      if (currentArea != null && currentArea.contains("Safari") && Minecraft.getInstance().player != null) {
@@ -5928,6 +5969,11 @@ public class BomboaddonsClient implements ClientModInitializer {
 
             pendingAreaSyncDelay = 30;
             pendingAreaSyncRetries = 3;
+            locrawServer = "";
+            locrawGametype = "";
+            locrawMode = "";
+            locrawMap = "";
+            locrawDelayTicks = 40;
 
          });
          ClientPlayConnectionEvents.DISCONNECT.register((ClientPlayConnectionEvents.Disconnect)(handler, client) -> {

@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.127] - 2026-10-14 (Beta)
+
+### Fixes & Improvements
+- **Garden Area Misidentification Fixed (`SkyblockUtils`):** Resolved bug where standing on Garden plots caused `/b area` to report `Private Island (Plot - X)` instead of `The Garden`. Scoreboard plot lines (`Plot - XX`) are now prioritized over generic island lines, and plot subareas correctly override `Private Island` to `The Garden`.
+- **Force Area Command (`/b area <area>` / `/b area reset`, `CommandMixin`, `BomboaddonsClient`):** Enhanced `/b area` to accept an area parameter to force a simulated area (e.g., `/b area The Garden`, `/b area Hub`) with tab completions, clear it with `/b area reset` (or `clear`/`off`), and display active forced status in `/b area`.
+- **Chat History `/locraw` Tracking (`ChatHistoryTracker`, `ChatHistoryScreen`, `BomboaddonsClient`, `SkyblockUtils`):** Fixed `/b chathistory` showing 0 results when searching `locraw` or `/locraw`. JSON responses from Hypixel's `/locraw` are now categorized as `LOCRAW` with `Locraw Tracker` provenance, `/locraw` is automatically queued on server join, search query normalization matches with or without leading slashes, and `isConnectedToHypixel()` checks proxies/direct connect.
+- **Garden Keybinds Everywhere Toggle (`BomboConfig`, `ConfigRegistry`, `BomboConfigGUI`, `GardenMovement`, `KeyboardInputMixin`, `AbstractContainerScreenMixin`):** Added `Enable Everywhere` toggle (`gardenBindsEverywhere`) in Garden Movement config settings, allowing garden movement hotkeys and slot protection to activate anywhere, not strictly in the Garden.
+
 ## [26.2.28.126] - 2026-10-13 (Beta)
 
 ### Fixes

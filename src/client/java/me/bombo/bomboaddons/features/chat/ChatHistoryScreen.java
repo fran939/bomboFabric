@@ -128,6 +128,7 @@ public class ChatHistoryScreen extends Screen {
         List<ChatHistoryTracker.Entry> filtered = new ArrayList<>();
 
         String q = searchQuery.toLowerCase(Locale.ROOT).trim();
+        String qNoSlash = q.startsWith("/") ? q.substring(1).trim() : "";
 
         for (ChatHistoryTracker.Entry e : all) {
             // Feature-event only mode (from /b chathistory auto or the Events chip).
@@ -157,15 +158,15 @@ public class ChatHistoryScreen extends Screen {
 
             if (!q.isEmpty()) {
                 boolean match = false;
-                if (e.rawText != null && e.rawText.toLowerCase(Locale.ROOT).contains(q)) match = true;
-                if (!match && e.category != null && e.category.toLowerCase(Locale.ROOT).contains(q)) match = true;
-                if (!match && e.callerModName != null && e.callerModName.toLowerCase(Locale.ROOT).contains(q)) match = true;
-                if (!match && e.callerModId != null && e.callerModId.toLowerCase(Locale.ROOT).contains(q)) match = true;
-                if (!match && e.callerFrame != null && e.callerFrame.toLowerCase(Locale.ROOT).contains(q)) match = true;
-                if (!match && e.featureName != null && e.featureName.toLowerCase(Locale.ROOT).contains(q)) match = true;
-                if (!match && e.originFeature != null && e.originFeature.toLowerCase(Locale.ROOT).contains(q)) match = true;
-                if (!match && e.triggerDesc != null && e.triggerDesc.toLowerCase(Locale.ROOT).contains(q)) match = true;
-                if (!match && e.clickAction != null && e.clickAction.toLowerCase(Locale.ROOT).contains(q)) match = true;
+                if (e.rawText != null && (e.rawText.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.rawText.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
+                if (!match && e.category != null && (e.category.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.category.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
+                if (!match && e.callerModName != null && (e.callerModName.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.callerModName.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
+                if (!match && e.callerModId != null && (e.callerModId.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.callerModId.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
+                if (!match && e.callerFrame != null && (e.callerFrame.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.callerFrame.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
+                if (!match && e.featureName != null && (e.featureName.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.featureName.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
+                if (!match && e.originFeature != null && (e.originFeature.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.originFeature.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
+                if (!match && e.triggerDesc != null && (e.triggerDesc.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.triggerDesc.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
+                if (!match && e.clickAction != null && (e.clickAction.toLowerCase(Locale.ROOT).contains(q) || (!qNoSlash.isEmpty() && e.clickAction.toLowerCase(Locale.ROOT).contains(qNoSlash)))) match = true;
                 if (!match) continue;
             }
 

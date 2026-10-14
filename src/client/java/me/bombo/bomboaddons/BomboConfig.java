@@ -955,6 +955,7 @@ public class BomboConfig {
        public String gardenRightKey = "right";
        public String gardenBreakKey = "b";
        public String gardenUseKey = "u";
+       public boolean gardenBindsEverywhere = false;
        public boolean pestEspDebug = false;
        public boolean autoSwapProfiles = false;
        public boolean autoSwapNotifyChat = false;

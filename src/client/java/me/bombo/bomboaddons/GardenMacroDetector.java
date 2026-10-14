@@ -34,7 +34,7 @@ public class GardenMacroDetector {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player != null) {
             BomboConfig.Settings s = BomboConfig.get();
-            if (s.gardenMacroCheckDetector && s.gardenMovement && SkyblockUtils.isInGarden()) {
+            if (s.gardenMacroCheckDetector && s.gardenMovement && (s.gardenBindsEverywhere || SkyblockUtils.isInGarden())) {
                long now = System.currentTimeMillis();
                boolean commandTp = expectingTeleport && now - lastWarpTpCommandTime < 10000L;
                boolean weaponTp = now - lastTeleportWeaponUseTime < 1500L;

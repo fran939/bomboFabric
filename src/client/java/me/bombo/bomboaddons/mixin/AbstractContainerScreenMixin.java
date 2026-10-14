@@ -275,7 +275,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
                 bypassHeld = true;
              }
           }
-          boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden() && !bypassHeld;
+          boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && (s.gardenBindsEverywhere || me.bombo.bomboaddons.SkyblockUtils.isInGarden()) && !bypassHeld;
           if (isGardenMoving) {
              guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, 0x771E293B);
              guiGraphics.outline(slot.x, slot.y, 16, 16, 0xAA64748B);
@@ -409,7 +409,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          cir.setReturnValue(true);
       } else {
          BomboConfig.Settings s = BomboConfig.get();
-         boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden();
+         boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && (s.gardenBindsEverywhere || me.bombo.bomboaddons.SkyblockUtils.isInGarden());
          if (isGardenMoving && this.hoveredSlot != null) {
             cir.setReturnValue(true);
             return;
@@ -567,7 +567,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       }
 
       BomboConfig.Settings s = BomboConfig.get();
-      boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden();
+      boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && (s.gardenBindsEverywhere || me.bombo.bomboaddons.SkyblockUtils.isInGarden());
       if (isGardenMoving && this.hoveredSlot != null) {
          Minecraft mc = Minecraft.getInstance();
          boolean isDrop = mc.options.keyDrop.matches(event);
@@ -813,7 +813,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
    )
    private void onMouseDragged(net.minecraft.client.input.MouseButtonEvent event, double deltaX, double deltaY, CallbackInfoReturnable<Boolean> cir) {
       BomboConfig.Settings s = BomboConfig.get();
-      boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && me.bombo.bomboaddons.SkyblockUtils.isInGarden();
+      boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && (s.gardenBindsEverywhere || me.bombo.bomboaddons.SkyblockUtils.isInGarden());
       if (isGardenMoving) {
          cir.setReturnValue(true);
       }
