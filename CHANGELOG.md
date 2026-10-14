@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.128] - 2026-10-14 (Beta)
+
+### Features & Overhaul
+- **In-Game Magical Power & Accessories GUI (`/b mp [user]`, `/mp [user]`, `MagicalPowerScreen`):** Added a comprehensive in-game GUI for viewing Magical Power, active power, tuning points, bag slots, rarity breakdown, and ranked cheapest missing upgrades with 1-click `/bz <item>` triggers and clipboard copying. Supports checking own stats or any target username with tab autocompletion.
+- **Magical Power Deduplication & Consumables Parity (`accessories.js`, `accessory_families.json`):** Linked the complete Powder line (`Powder of One` ➔ `Powder of the Few` ➔ `Powder of the Many` ➔ `Powder of the People`) to eliminate duplicate upgrade recommendations, recognized Jacquelle's Rift Prism (+11 MP) from member data, and matched exact Discord bot / in-game 2,184 MP parity.
+- **Vanilla Minecraft Container & Wardrobe Layouts (`pv_service.js`):** Redesigned the web wardrobe into an authentic 9-column in-game chest GUI matching vanilla SkyBlock layout (4 vertical armor rows: Helmet, Chestplate, Leggings, Boots with row 5 equip indicators and pagination), and converted Inventory, Ender Chest, and Backpacks to vanilla Minecraft textured slot containers.
+- **SkyBlock Attributes & Shards Engine Overhaul (`shards_service.js`, `shards_catalog.json`):** Scraped all 325 attribute shards from the official Hypixel SkyBlock Wiki with exact effects, stat categories (Damage, Mining, Farming, Foraging, Fishing, Survivability), and Starborn Shard (Echo of Elemental) family synergy multipliers (+2% to +20%). Switched recommendation sorting strictly by value/damage per coin to prioritize cheap high-value upgrades over 100M luxury items, and added category, rarity, and tier filters.
+- **Web Navigation & Responsiveness (`index.html`, `pv_service.js`):** Removed tagline, moved mod download and GitHub links to a clean footer, added account/login icon to top-right navbar, and optimized DOM updates to eliminate browser lag.
+
 ## [26.2.28.127] - 2026-10-14 (Beta)
 
 ### Fixes & Improvements

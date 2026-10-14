@@ -456,6 +456,26 @@ public class BomboaddonsClient implements ClientModInitializer {
          });
    }
 
+   public static void openMagicalPower(FabricClientCommandSource src, String username) {
+      Minecraft mc = Minecraft.getInstance();
+      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.MagicalPowerScreen(null, username)));
+   }
+
+   public static LiteralArgumentBuilder<FabricClientCommandSource> buildMpCommand(String name) {
+      return (LiteralArgumentBuilder<FabricClientCommandSource>) ClientCommands.literal(name)
+         .then(ClientCommands.argument("player", StringArgumentType.word()).suggests((ctx, b) -> {
+            return TabCompletionManager.suggestPlayerNames(b);
+         }).executes((ctx) -> {
+            String player = StringArgumentType.getString(ctx, "player");
+            openMagicalPower((FabricClientCommandSource)ctx.getSource(), player);
+            return 1;
+         }))
+         .executes((ctx) -> {
+            openMagicalPower((FabricClientCommandSource)ctx.getSource(), null);
+            return 1;
+         });
+   }
+
    public static void openMagicFindOptimizer(FabricClientCommandSource src, String username) {
       openMagicFindOptimizer(src, username, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.GENERAL);
    }
@@ -1291,6 +1311,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                   builder.then(createAutoCommands("studio"));
                    builder.then(buildShardsCommand("shards"));
                    builder.then(buildShardsCommand("skyshards"));
+                   builder.then(buildMpCommand("mp"));
+                   builder.then(buildMpCommand("magicalpower"));
                   me.bombo.bomboaddons.flavor.Flavor.get().registerCommands(builder);
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("behighlight").then(ClientCommands.literal("add").then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
                      String mob = StringArgumentType.getString(context, "mob").trim();
@@ -5099,6 +5121,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                dispatcher.register(createAutoCommands("studio"));
                 dispatcher.register(buildShardsCommand("shards"));
                 dispatcher.register(buildShardsCommand("skyshards"));
+                dispatcher.register(buildMpCommand("mp"));
+                dispatcher.register(buildMpCommand("magicalpower"));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("buttons")
                        .executes((context) -> {
                           Minecraft mc = Minecraft.getInstance();

@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.128",
+    "date": "2026-10-14",
+    "changes": [
+      "+ In-Game Magical Power GUI - Added /b mp [user] and /mp [user] showing total MP, active power, tuning points, bag slots, rarity breakdown, and ranked cheapest missing upgrades with 1-click /bz buttons",
+      "~ Magical Power Deduplication & Consumables - Linked complete Powder chain to eliminate duplicate upgrade recommendations and recognized Jacquelle's Rift Prism (+11 MP) for exact 2,184 MP parity",
+      "~ Authentic Vanilla Container Layouts - Rebuilt web wardrobe into authentic 9-column in-game chest GUI with 4 vertical armor rows and converted Inventory, Ender Chest, and Backpacks to textured slot grids",
+      "~ Attributes & Shards Engine Overhaul - Scraped all 325 wiki shards with stat categories, added Starborn Shard family synergy buffs (+2% to +20%), ranked strictly by damage/coin, and added live filter pills",
+      "~ Web Navigation & Smoothness - Removed platform tagline, relocated mod download and GitHub links to clean footer, added account login icon, and eliminated UI lag"
+    ]
+  },
+  {
     "version": "26.2.28.127",
     "date": "2026-10-14",
     "changes": [

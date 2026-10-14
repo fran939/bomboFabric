@@ -55,6 +55,23 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.equals("mp") || lower.startsWith("mp ") || lower.equals("b mp") || lower.startsWith("b mp ")
+            || lower.equals("bombo mp") || lower.startsWith("bombo mp ") || lower.equals("bomboaddons mp") || lower.startsWith("bomboaddons mp ")
+            || lower.equals("magicalpower") || lower.startsWith("magicalpower ") || lower.equals("b magicalpower") || lower.startsWith("b magicalpower ")) {
+         String sub = "";
+         if (lower.startsWith("bomboaddons magicalpower")) sub = trimmed.substring(24).trim();
+         else if (lower.startsWith("bombo magicalpower")) sub = trimmed.substring(18).trim();
+         else if (lower.startsWith("b magicalpower")) sub = trimmed.substring(14).trim();
+         else if (lower.startsWith("magicalpower")) sub = trimmed.substring(12).trim();
+         else if (lower.startsWith("bomboaddons mp")) sub = trimmed.substring(14).trim();
+         else if (lower.startsWith("bombo mp")) sub = trimmed.substring(8).trim();
+         else if (lower.startsWith("b mp")) sub = trimmed.substring(4).trim();
+         else if (lower.startsWith("mp")) sub = trimmed.substring(2).trim();
+         String ign = sub.isEmpty() ? null : sub.split("\\s+")[0];
+         me.bombo.bomboaddons.BomboaddonsClient.openMagicalPower(null, ign);
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b order") || trimmed.equalsIgnoreCase("bombo order") || trimmed.equalsIgnoreCase("bomboaddons order") || trimmed.equalsIgnoreCase("order")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));
