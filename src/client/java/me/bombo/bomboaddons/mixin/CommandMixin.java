@@ -67,8 +67,29 @@ public class CommandMixin {
          else if (lower.startsWith("bombo mp")) sub = trimmed.substring(8).trim();
          else if (lower.startsWith("b mp")) sub = trimmed.substring(4).trim();
          else if (lower.startsWith("mp")) sub = trimmed.substring(2).trim();
-         String ign = sub.isEmpty() ? null : sub.split("\\s+")[0];
-         me.bombo.bomboaddons.BomboaddonsClient.openMagicalPower(null, ign);
+         me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.UPGRADES;
+         String ign = null;
+         if (!sub.isEmpty()) {
+             String[] parts = sub.split("\\s+");
+             if (parts.length == 1) {
+                 if (parts[0].equalsIgnoreCase("talisman") || parts[0].equalsIgnoreCase("talismans")) {
+                     initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS;
+                 } else {
+                     ign = parts[0];
+                 }
+             } else if (parts.length >= 2) {
+                 if (parts[1].equalsIgnoreCase("talisman") || parts[1].equalsIgnoreCase("talismans")) {
+                     ign = parts[0];
+                     initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS;
+                 } else if (parts[0].equalsIgnoreCase("talisman") || parts[0].equalsIgnoreCase("talismans")) {
+                     ign = parts[1];
+                     initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS;
+                 } else {
+                     ign = parts[0];
+                 }
+             }
+         }
+         me.bombo.bomboaddons.BomboaddonsClient.openMagicalPower(null, ign, initialTab);
          ci.cancel();
          return;
       }

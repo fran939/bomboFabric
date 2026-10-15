@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.130",
+    "date": "2026-10-15",
+    "changes": [
+      "+ In-Game Talisman Progression Tree - Added 4th tab (/b mp talisman) displaying all 91 talisman lines with owned indicators, rarity colors, and interactive recipe/price inspection",
+      "+ Interactive 3x3 Recipe Modal & Buy Queue - Clicking craftable talismans opens full 3x3 grid, verifies inventory & sacks materials, and provides 1-click [Add to Queue / Buy Missing] via Bazaar",
+      "~ Accessory Filtering & 2,184 MP Parity - Filtered unreleased admin/test items (Talisman of Space, Compass, Luck, Old Boot) and recognized consumed Rift Prism (+11 MP) from member data",
+      "~ Account Identity & RTCA Tooltip Fixes - Resolved IGN retaining old account during hot-swaps and fixed CA50 tooltip property lookups for class XP and boosts",
+      "~ Web Networth Spacing & Authentic Wardrobe - Restored spacing between networth modifier names and coins, and converted wardrobe to 6-row container with slot textures"
+    ]
+  },
+  {
     "version": "26.2.28.129",
     "date": "2026-10-14",
     "changes": [

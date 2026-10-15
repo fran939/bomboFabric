@@ -1226,10 +1226,6 @@ public class IRCClient {
    }
 
    private static void loadDiscordLinks() {
-      // Default link for fran/fran938 -> bomboclas
-      discordLinks.put("fran", "bomboclas");
-      discordLinks.put("fran938", "bomboclas");
-      discordLinks.put("fran939", "bomboclas");
       try {
          if (DISCORD_LINKS_FILE.exists()) {
             String content = Files.readString(DISCORD_LINKS_FILE.toPath());
@@ -1269,9 +1265,15 @@ public class IRCClient {
    public static String getLinkedIgn(String dcSender) {
       if (dcSender == null) return null;
       String clean = cleanSenderName(dcSender).toLowerCase();
+      Minecraft mc = Minecraft.getInstance();
+      if (mc != null && mc.getUser() != null) {
+         String self = mc.getUser().getName();
+         if (self != null && clean.equalsIgnoreCase(self)) {
+            return self;
+         }
+      }
       BomboConfig.Settings s = BomboConfig.get();
       if (s != null && s.ircDiscordUser != null && !s.ircDiscordUser.isEmpty() && clean.equalsIgnoreCase(s.ircDiscordUser.trim())) {
-         Minecraft mc = Minecraft.getInstance();
          if (mc != null && mc.getUser() != null) {
             return mc.getUser().getName();
          }
@@ -1383,11 +1385,7 @@ public class IRCClient {
 
    public static net.minecraft.network.chat.MutableComponent buildHoverablePlayerComponent(String username, String colorCode, String linkedIgn) {
       String cleanName = cleanSenderName(username);
-      String lookupIgn = (linkedIgn != null && !linkedIgn.isEmpty()) ? cleanSenderName(linkedIgn) : getLinkedIgn(cleanName);
-      if (lookupIgn.equalsIgnoreCase(cleanName)) {
-         String alt = getLinkedIgn(cleanName);
-         if (alt != null && !alt.isEmpty()) lookupIgn = alt;
-      }
+      String lookupIgn = (linkedIgn != null && !linkedIgn.trim().isEmpty()) ? cleanSenderName(linkedIgn) : getLinkedIgn(cleanName);
       lookupIgn = cleanSenderName(lookupIgn);
       String formattedName = (username.contains("§") || username.contains("&"))
             ? username.replace('&', '§')
@@ -1501,9 +1499,8 @@ public class IRCClient {
       String username = (mc != null && mc.getUser() != null) ? mc.getUser().getName() : "";
       String uuid = (mc != null && mc.getUser() != null && mc.getUser().getProfileId() != null) ? mc.getUser().getProfileId().toString() : "";
       BomboConfig.Settings s = BomboConfig.get();
-      String customColor = s != null && s.ircNameColor != null && !s.ircNameColor.isEmpty() ? s.ircNameColor : "§b";
-      String keyOwner = s != null && s.keyOwnerName != null && !s.keyOwnerName.isEmpty() ? s.keyOwnerName : "";
-      String customBridgeName = !keyOwner.isEmpty() ? keyOwner : (s != null && s.ircDiscordUser != null && !s.ircDiscordUser.isEmpty() && !s.ircDiscordUser.equals("fran938") ? s.ircDiscordUser : username);
+      String customBridgeName = (s != null && s.ircDiscordUser != null && !s.ircDiscordUser.isEmpty() && !s.ircDiscordUser.equalsIgnoreCase("fran938") && !s.ircDiscordUser.equalsIgnoreCase("bomboclas")) ? s.ircDiscordUser : username;
+      String customColor = (s != null && s.ircNameColor != null && !s.ircNameColor.isEmpty()) ? s.ircNameColor : "§b";
       String apiKey = me.bombo.bomboaddons.features.auth.BomboApiKeyManager.getApiKey();
 
       String areaStr = "Unknown";

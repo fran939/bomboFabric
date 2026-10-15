@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.130] - 2026-10-15 (Beta)
+
+### Features & Fixes
+- **In-Game Talisman Progression Tree (`/b mp talisman`, `/b mp talismans`, `MagicalPowerScreen`):** Added a dedicated 4th tab (`Talismans`) showing every talisman progression line (e.g. `Potion Affinity Talisman` ➔ `Ring` ➔ `Artifact`, `Bat Talisman` ➔ `Ring` ➔ `Artifact`, `Bingo`, `Hegemony`) with owned indicators (`✔ OWNED` or unowned price badges), rarity colors, and interactive click triggers. Accessible directly via `/b mp talisman` or `/mp talisman`.
+- **Interactive 3x3 Crafting Recipe Modal & Buy Queue (`MagicalPowerScreen`):** Clicking any craftable talisman in the optimizer or progression tree opens an authentic 3x3 crafting recipe grid. Analyzes required materials against player's inventory and sacks to show owned vs needed quantities. Displays `✔ Already have enough mats in bags & sacks to craft!` when complete, or a 1-click `[ 🛒 Add to Queue / Buy Missing ]` button that opens Bazaar and copies missing quantities to clipboard.
+- **Accessory Filtering & Parity Cleanup (`accessories.js`):** Removed unreleased/admin test items (`TALISMAN_OF_SPACE`, `RING_OF_SPACE`, `ARTIFACT_OF_SPACE`, `RELIC_OF_SPACE`, `COMPASS_TALISMAN`, `LUCK_TALISMAN`, `OLD_BOOT`, `ARGOFAY_TRINKET`) from missing accessories, excluded accessories yielding `<= 0` net AP, and recognized consumed Rift Prism (`member.rift.access.consumed_prism == true`, +11 MP) for accurate 2,184 max MP parity.
+- **Account Identity & RTCA Hover Fixes (`bombot`, `IRCClient.java`):** Fixed account swapping bug where player hover in chat retained old account name due to hardcoded bridge mapping. Corrected RTCA hover statistics property lookups (`inf.boost.total`, `inf.xpToNextLevel`, `inf.xpTo50`).
+- **Web Networth Price Spacing & Authentic 6-Row Wardrobe (`pv_service.js`):** Fixed missing space between networth modifier names and coin amounts (`The One 5` / `144.49M`). Restored authentic 6-row wardrobe chest GUI with empty slot textures, row 5 equip buttons, and row 6 navigation bar.
+
 ## [26.2.28.129] - 2026-10-14 (Beta)
 
 ### Features & Fixes

@@ -9,7 +9,6 @@ import me.bombo.bomboaddons.util.BomboApiUrl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -26,8 +25,10 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class MagicalPowerScreen extends Screen {
@@ -46,20 +47,16 @@ public class MagicalPowerScreen extends Screen {
     private String playerName = "";
     private String profileName = "";
     private int currentMp = 0;
-    private int maxMp = 2248;
+    private int maxMp = 2184;
     private String selectedPower = "None";
     private int tuningPoints = 0;
     private int bagSlots = 0;
     private int maxBagSlots = 281;
 
-    // Bonus MP
-    private String abicaseBonus = null;
-    private String hegemonyBonus = null;
-    private String riftPrismBonus = null;
-
     public enum Tab {
         UPGRADES,
         MISSING,
+        TALISMANS,
         BREAKDOWN
     }
 
@@ -77,8 +74,12 @@ public class MagicalPowerScreen extends Screen {
         public final boolean purchasable;
         public final String source;
         public final String recipeText;
+        public final JsonObject recipe;
+        public final JsonObject craftDetails;
 
-        public UpgradeEntry(int rank, String name, String rarity, String kind, String from, long cost, int mpGain, double coinsPerMp, boolean purchasable, String source, String recipeText) {
+        public UpgradeEntry(int rank, String name, String rarity, String kind, String from, long cost, int mpGain,
+                            double coinsPerMp, boolean purchasable, String source, String recipeText,
+                            JsonObject recipe, JsonObject craftDetails) {
             this.rank = rank;
             this.name = name;
             this.rarity = rarity != null ? rarity.toUpperCase(Locale.ROOT) : "COMMON";
@@ -90,6 +91,8 @@ public class MagicalPowerScreen extends Screen {
             this.purchasable = purchasable;
             this.source = source != null ? source : "ah";
             this.recipeText = recipeText != null ? recipeText : "";
+            this.recipe = recipe;
+            this.craftDetails = craftDetails;
         }
     }
 
@@ -107,9 +110,81 @@ public class MagicalPowerScreen extends Screen {
         }
     }
 
+    public static class TalismanTier {
+        public final String id;
+        public final String name;
+        public final String rarity;
+        public final int ap;
+        public final long price;
+        public final boolean owned;
+        public final JsonObject recipe;
+        public final JsonObject craftDetails;
+        public final long craftCost;
+
+        public TalismanTier(String id, String name, String rarity, int ap, long price, boolean owned,
+                            JsonObject recipe, JsonObject craftDetails, long craftCost) {
+            this.id = id;
+            this.name = name;
+            this.rarity = rarity != null ? rarity.toUpperCase(Locale.ROOT) : "COMMON";
+            this.ap = ap;
+            this.price = price;
+            this.owned = owned;
+            this.recipe = recipe;
+            this.craftDetails = craftDetails;
+            this.craftCost = craftCost;
+        }
+    }
+
+    public static class TalismanChain {
+        public final String name;
+        public final String key;
+        public final String wiki;
+        public final List<TalismanTier> tiers;
+
+        public TalismanChain(String name, String key, String wiki, List<TalismanTier> tiers) {
+            this.name = name;
+            this.key = key;
+            this.wiki = wiki != null ? wiki : "";
+            this.tiers = tiers;
+        }
+    }
+
+    public static class CraftIngredient {
+        public final String id;
+        public final String name;
+        public final int needed;
+        public final int owned;
+        public final int missing;
+        public final long unitPrice;
+        public final boolean hasEnough;
+
+        public CraftIngredient(String id, String name, int needed, int owned, int missing, long unitPrice, boolean hasEnough) {
+            this.id = id;
+            this.name = name;
+            this.needed = needed;
+            this.owned = owned;
+            this.missing = missing;
+            this.unitPrice = unitPrice;
+            this.hasEnough = hasEnough;
+        }
+    }
+
+    public static class CraftModalState {
+        public String itemName;
+        public String rarity;
+        public JsonObject grid; // A1..C3
+        public List<CraftIngredient> ingredients = new ArrayList<>();
+        public boolean canCraftNow;
+        public List<CraftIngredient> missingToBuy = new ArrayList<>();
+        public long totalMissingCost;
+    }
+
     private final List<UpgradeEntry> upgrades = new ArrayList<>();
     private final List<UpgradeEntry> missing = new ArrayList<>();
+    private final List<TalismanChain> talismanChains = new ArrayList<>();
     private final List<RarityBreakdownEntry> breakdowns = new ArrayList<>();
+
+    private CraftModalState activeModal = null;
 
     private EditBox searchBox;
     private String searchFilter = "";
@@ -130,19 +205,27 @@ public class MagicalPowerScreen extends Screen {
     }
 
     private final List<ClickableAction> clickActions = new ArrayList<>();
+    private final List<ClickableAction> modalActions = new ArrayList<>();
 
     public MagicalPowerScreen(Screen parent, String username) {
+        this(parent, username, Tab.UPGRADES);
+    }
+
+    public MagicalPowerScreen(Screen parent, String username, Tab initialTab) {
         super(Component.literal("Magical Power & Accessories"));
         this.parent = parent;
         Minecraft mc = Minecraft.getInstance();
-        this.targetPlayer = (username != null && !username.trim().isEmpty()) ? username.trim() :
+        boolean isTalismanWord = username != null && (username.equalsIgnoreCase("talisman") || username.equalsIgnoreCase("talismans"));
+        this.targetPlayer = (!isTalismanWord && username != null && !username.trim().isEmpty()) ? username.trim() :
                 (mc.player != null ? mc.player.getScoreboardName() : (mc.getUser() != null ? mc.getUser().getName() : "me"));
+        this.currentTab = isTalismanWord ? Tab.TALISMANS : (initialTab != null ? initialTab : Tab.UPGRADES);
     }
 
     @Override
     protected void init() {
         super.init();
         clickActions.clear();
+        modalActions.clear();
 
         int winW = Math.min(this.width - 24, 720);
         int winH = Math.min(this.height - 24, 500);
@@ -197,6 +280,7 @@ public class MagicalPowerScreen extends Screen {
     private void parseData(JsonObject root) {
         upgrades.clear();
         missing.clear();
+        talismanChains.clear();
         breakdowns.clear();
 
         if (root.has("player") && root.get("player").isJsonObject()) {
@@ -213,7 +297,10 @@ public class MagicalPowerScreen extends Screen {
         if (root.has("ceiling") && root.get("ceiling").isJsonObject()) {
             JsonObject c = root.getAsJsonObject("ceiling");
             this.currentMp = c.has("current") ? c.get("current").getAsInt() : (c.has("reported") ? c.get("reported").getAsInt() : 0);
-            this.maxMp = c.has("max") ? c.get("max").getAsInt() : 2248;
+            this.maxMp = c.has("max") ? c.get("max").getAsInt() : 2184;
+        } else if (root.has("magicalPower") && root.get("magicalPower").isJsonObject()) {
+            JsonObject mpo = root.getAsJsonObject("magicalPower");
+            this.currentMp = mpo.has("reported") ? mpo.get("reported").getAsInt() : (mpo.has("computed") ? mpo.get("computed").getAsInt() : 0);
         } else if (root.has("mp") && root.get("mp").isJsonObject()) {
             JsonObject mpo = root.getAsJsonObject("mp");
             this.currentMp = mpo.has("reported") ? mpo.get("reported").getAsInt() : (mpo.has("computed") ? mpo.get("computed").getAsInt() : 0);
@@ -221,7 +308,7 @@ public class MagicalPowerScreen extends Screen {
             this.currentMp = root.get("total_magical_power").getAsInt();
         }
 
-        // If player has max obtainable MP (2184) or higher
+        // If player has max obtainable MP (2184)
         if (this.currentMp >= 2184) {
             this.maxMp = this.currentMp;
         }
@@ -271,16 +358,19 @@ public class MagicalPowerScreen extends Screen {
 
                 String source = o.has("source") ? o.get("source").getAsString() : "ah";
                 String uName = name.toUpperCase(Locale.ROOT);
+                JsonObject recipe = o.has("recipe") && o.get("recipe").isJsonObject() ? o.getAsJsonObject("recipe") : null;
+                JsonObject craftDetails = o.has("craftDetails") && o.get("craftDetails").isJsonObject() ? o.getAsJsonObject("craftDetails") : null;
+
                 if (source.equals("ah")) {
                     if (uName.contains("KUUDRA") || uName.contains("BURNING")) source = "kuudra";
                     else if (uName.contains("HEGEMONY") || uName.contains("ENDER ARTIFACT") || uName.contains("DARK AUCTION")) source = "dark_auction";
                     else if (uName.contains("RIFT") || uName.contains("PRISM")) source = "rift";
                     else if (uName.contains("CAMPFIRE") || uName.contains("ROMERO") || uName.contains("SEAL OF")) source = "quest";
-                    else if (o.has("recipe") && !o.get("recipe").isJsonNull()) source = "craft";
+                    else if (recipe != null) source = "craft";
                 }
                 String recipeText = o.has("craftText") ? o.get("craftText").getAsString() : "";
 
-                upgrades.add(new UpgradeEntry(rank++, name, rarity, kind, from, cost, gain, coinsPerMp, purchasable, source, recipeText));
+                upgrades.add(new UpgradeEntry(rank++, name, rarity, kind, from, cost, gain, coinsPerMp, purchasable, source, recipeText, recipe, craftDetails));
             }
         }
 
@@ -297,15 +387,50 @@ public class MagicalPowerScreen extends Screen {
                 int gain = o.has("ap") ? o.get("ap").getAsInt() : 0;
                 String source = o.has("source") ? o.get("source").getAsString() : "ah";
                 String uName = name.toUpperCase(Locale.ROOT);
+                JsonObject recipe = o.has("recipe") && o.get("recipe").isJsonObject() ? o.getAsJsonObject("recipe") : null;
+                JsonObject craftDetails = o.has("craftDetails") && o.get("craftDetails").isJsonObject() ? o.getAsJsonObject("craftDetails") : null;
+
                 if (source.equals("ah")) {
                     if (uName.contains("KUUDRA") || uName.contains("BURNING")) source = "kuudra";
                     else if (uName.contains("HEGEMONY") || uName.contains("ENDER ARTIFACT") || uName.contains("DARK AUCTION")) source = "dark_auction";
                     else if (uName.contains("RIFT") || uName.contains("PRISM")) source = "rift";
                     else if (uName.contains("CAMPFIRE") || uName.contains("ROMERO") || uName.contains("SEAL OF")) source = "quest";
-                    else if (o.has("recipe") && !o.get("recipe").isJsonNull()) source = "craft";
+                    else if (recipe != null) source = "craft";
                 }
                 String recipeText = o.has("craftText") ? o.get("craftText").getAsString() : "";
-                missing.add(new UpgradeEntry(rank++, name, rarity, "missing", "", cost, gain, 0, true, source, recipeText));
+                missing.add(new UpgradeEntry(rank++, name, rarity, "missing", "", cost, gain, 0, true, source, recipeText, recipe, craftDetails));
+            }
+        }
+
+        // Talisman Chains (Tree)
+        if (root.has("talismanChains") && root.get("talismanChains").isJsonArray()) {
+            JsonArray arr = root.getAsJsonArray("talismanChains");
+            for (JsonElement el : arr) {
+                if (!el.isJsonObject()) continue;
+                JsonObject co = el.getAsJsonObject();
+                String cName = co.has("name") ? co.get("name").getAsString() : "Unknown";
+                String cKey = co.has("key") ? co.get("key").getAsString() : "";
+                String cWiki = co.has("wiki") ? co.get("wiki").getAsString() : "";
+                List<TalismanTier> tiers = new ArrayList<>();
+                if (co.has("tiers") && co.get("tiers").isJsonArray()) {
+                    for (JsonElement tel : co.getAsJsonArray("tiers")) {
+                        if (!tel.isJsonObject()) continue;
+                        JsonObject to = tel.getAsJsonObject();
+                        String tid = to.has("id") ? to.get("id").getAsString() : "";
+                        String tname = to.has("name") ? to.get("name").getAsString() : tid;
+                        String trarity = to.has("rarity") ? to.get("rarity").getAsString() : (to.has("tier") ? to.get("tier").getAsString() : "COMMON");
+                        int tap = to.has("ap") ? to.get("ap").getAsInt() : 0;
+                        long tprice = to.has("price") ? to.get("price").getAsLong() : 0L;
+                        boolean towned = to.has("owned") && to.get("owned").getAsBoolean();
+                        JsonObject trecipe = to.has("recipe") && to.get("recipe").isJsonObject() ? to.getAsJsonObject("recipe") : null;
+                        JsonObject tcraftDetails = to.has("craftDetails") && to.get("craftDetails").isJsonObject() ? to.getAsJsonObject("craftDetails") : null;
+                        long tcraftCost = to.has("craftCost") ? to.get("craftCost").getAsLong() : 0L;
+                        tiers.add(new TalismanTier(tid, tname, trarity, tap, tprice, towned, trecipe, tcraftDetails, tcraftCost));
+                    }
+                }
+                if (!tiers.isEmpty()) {
+                    talismanChains.add(new TalismanChain(cName, cKey, cWiki, tiers));
+                }
             }
         }
 
@@ -327,6 +452,69 @@ public class MagicalPowerScreen extends Screen {
         }
     }
 
+    public void openCraftModal(String itemName, String rarity, JsonObject recipe, JsonObject craftDetails) {
+        if (recipe == null && craftDetails == null) return;
+        CraftModalState modal = new CraftModalState();
+        modal.itemName = itemName;
+        modal.rarity = rarity;
+        if (craftDetails != null && craftDetails.has("grid") && craftDetails.get("grid").isJsonObject()) {
+            modal.grid = craftDetails.getAsJsonObject("grid");
+        } else {
+            modal.grid = recipe;
+        }
+
+        if (craftDetails != null) {
+            modal.canCraftNow = craftDetails.has("canCraftNow") && craftDetails.get("canCraftNow").getAsBoolean();
+            modal.totalMissingCost = craftDetails.has("totalMissingCost") ? craftDetails.get("totalMissingCost").getAsLong() : 0L;
+
+            if (craftDetails.has("ingredients") && craftDetails.get("ingredients").isJsonArray()) {
+                for (JsonElement el : craftDetails.getAsJsonArray("ingredients")) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject io = el.getAsJsonObject();
+                    String id = io.has("id") ? io.get("id").getAsString() : "";
+                    String name = io.has("name") ? io.get("name").getAsString() : id;
+                    int needed = io.has("needed") ? io.get("needed").getAsInt() : 1;
+                    int owned = io.has("owned") ? io.get("owned").getAsInt() : 0;
+                    int missing = io.has("missing") ? io.get("missing").getAsInt() : 0;
+                    long unitPrice = io.has("unitPrice") ? io.get("unitPrice").getAsLong() : 0L;
+                    boolean hasEnough = io.has("hasEnough") && io.get("hasEnough").getAsBoolean();
+                    modal.ingredients.add(new CraftIngredient(id, name, needed, owned, missing, unitPrice, hasEnough));
+                }
+            }
+
+            if (craftDetails.has("missingToBuy") && craftDetails.get("missingToBuy").isJsonArray()) {
+                for (JsonElement el : craftDetails.getAsJsonArray("missingToBuy")) {
+                    if (!el.isJsonObject()) continue;
+                    JsonObject io = el.getAsJsonObject();
+                    String id = io.has("id") ? io.get("id").getAsString() : "";
+                    String name = io.has("name") ? io.get("name").getAsString() : id;
+                    int needed = io.has("needed") ? io.get("needed").getAsInt() : 1;
+                    long unitPrice = io.has("unitPrice") ? io.get("unitPrice").getAsLong() : 0L;
+                    modal.missingToBuy.add(new CraftIngredient(id, name, needed, 0, needed, unitPrice, false));
+                }
+            }
+        } else if (modal.grid != null) {
+            Map<String, Integer> counts = new LinkedHashMap<>();
+            for (String key : modal.grid.keySet()) {
+                JsonElement gel = modal.grid.get(key);
+                if (gel.isJsonObject()) {
+                    JsonObject go = gel.getAsJsonObject();
+                    String gid = go.has("id") ? go.get("id").getAsString() : "";
+                    int gcnt = go.has("count") ? go.get("count").getAsInt() : 1;
+                    if (!gid.isEmpty()) {
+                        counts.put(gid, counts.getOrDefault(gid, 0) + gcnt);
+                    }
+                }
+            }
+            for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+                modal.ingredients.add(new CraftIngredient(entry.getKey(), entry.getKey(), entry.getValue(), 0, entry.getValue(), 0L, false));
+            }
+            modal.canCraftNow = false;
+        }
+
+        this.activeModal = modal;
+    }
+
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         int winW = Math.min(this.width - 24, 720);
@@ -336,7 +524,7 @@ public class MagicalPowerScreen extends Screen {
 
         int bg = ConfigUITheme.getMainWindowBg();
         int border = ConfigUITheme.getBorderColor();
-        int accent = 0xFFC084FC; // Purple/magenta accent
+        int accent = 0xFFC084FC; // Purple accent
 
         // Background panel
         g.fill(winX, winY, winX + winW, winY + winH, bg);
@@ -372,7 +560,10 @@ public class MagicalPowerScreen extends Screen {
         int statW = (winW - 32 - 18) / 4;
 
         // 1. MP Card
-        drawStatCard(g, font, winX + 16, heroY, statW, 24, "MAGICAL POWER", "§d§l✨ " + formatInt(currentMp) + " §7/ " + formatInt(maxMp));
+        String mpVal = currentMp >= 2184
+                ? "§d§l✨ " + formatInt(currentMp) + " §a(MAX)"
+                : "§d§l✨ " + formatInt(currentMp) + " §7/ " + formatInt(maxMp);
+        drawStatCard(g, font, winX + 16, heroY, statW, 24, "MAGICAL POWER", mpVal);
         // 2. Power Card
         drawStatCard(g, font, winX + 16 + statW + 6, heroY, statW, 24, "SELECTED POWER", "§6" + (selectedPower.isEmpty() ? "NONE" : selectedPower.toUpperCase(Locale.ROOT)));
         // 3. Tuning Card
@@ -385,12 +576,15 @@ public class MagicalPowerScreen extends Screen {
         int tabX = winX + 16;
 
         drawTabPill(g, font, tabX, tabY, "Cheapest Upgrades (" + upgrades.size() + ")", currentTab == Tab.UPGRADES, mouseX, mouseY);
-        tabX += font.width("Cheapest Upgrades (" + upgrades.size() + ")") + 24;
+        tabX += font.width("Cheapest Upgrades (" + upgrades.size() + ")") + 20;
 
         drawTabPill(g, font, tabX, tabY, "Missing (" + missing.size() + ")", currentTab == Tab.MISSING, mouseX, mouseY);
-        tabX += font.width("Missing (" + missing.size() + ")") + 24;
+        tabX += font.width("Missing (" + missing.size() + ")") + 20;
 
-        drawTabPill(g, font, tabX, tabY, "Rarity Breakdown", currentTab == Tab.BREAKDOWN, mouseX, mouseY);
+        drawTabPill(g, font, tabX, tabY, "Talismans (" + talismanChains.size() + ")", currentTab == Tab.TALISMANS, mouseX, mouseY);
+        tabX += font.width("Talismans (" + talismanChains.size() + ")") + 20;
+
+        drawTabPill(g, font, tabX, tabY, "Breakdown", currentTab == Tab.BREAKDOWN, mouseX, mouseY);
 
         // Search label
         g.text(font, "§7Search:", winX + winW - 250, tabY + 4, 0xFF8B949E, false);
@@ -430,6 +624,8 @@ public class MagicalPowerScreen extends Screen {
             renderUpgradesList(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
         } else if (currentTab == Tab.MISSING) {
             renderMissingList(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
+        } else if (currentTab == Tab.TALISMANS) {
+            renderTalismansTab(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
         } else if (currentTab == Tab.BREAKDOWN) {
             renderBreakdownTab(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
         }
@@ -446,6 +642,11 @@ public class MagicalPowerScreen extends Screen {
 
             g.fill(sbX, contentY, sbX + sbW, contentY + sbH, 0x33000000);
             g.fill(sbX, thumbY, sbX + sbW, thumbY + thumbH, accent);
+        }
+
+        // Render Active Crafting Modal if opened
+        if (activeModal != null) {
+            renderCraftModal(g, font, mouseX, mouseY);
         }
     }
 
@@ -501,7 +702,7 @@ public class MagicalPowerScreen extends Screen {
                 g.text(font, costStr, x + w - 125, curY + 9, 0xFFFBBF24, true);
 
                 // Action Button (context-aware: /ah, /bz, Craft, Kuudra, Quest)
-                int btnW = 52;
+                int btnW = 54;
                 int btnH = 18;
                 int btnX = x + w - 70;
                 int btnY = curY + 4;
@@ -514,20 +715,16 @@ public class MagicalPowerScreen extends Screen {
                 String actionTitle;
 
                 final String itemName = u.name;
-                final String recipe = u.recipeText;
+                final String itemRarity = u.rarity;
+                final JsonObject rec = u.recipe;
+                final JsonObject cd = u.craftDetails;
 
-                if ("craft".equalsIgnoreCase(u.source)) {
+                if ("craft".equalsIgnoreCase(u.source) || rec != null || cd != null) {
                     btnText = "§e🔨 Craft";
                     btnBg = btnHov ? 0xFFB45309 : 0xFF78350F;
                     btnBorder = 0xFFD97706;
-                    action = () -> {
-                        Minecraft.getInstance().keyboardHandler.setClipboard("/recipe " + itemName);
-                        if (Minecraft.getInstance().player != null) {
-                            Minecraft.getInstance().player.connection.sendCommand("recipe " + itemName);
-                            Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §eRecipe: §f" + itemName + (recipe.isEmpty() ? "" : " §7(" + recipe + ")")));
-                        }
-                    };
-                    actionTitle = "View Craft Recipe for " + itemName;
+                    action = () -> openCraftModal(itemName, itemRarity, rec, cd);
+                    actionTitle = "View 3x3 Recipe & Crafting Queue for " + itemName;
                 } else if ("bz".equalsIgnoreCase(u.source)) {
                     btnText = "§f⚡ /bz";
                     btnBg = btnHov ? 0xFF10B981 : 0xFF065F46;
@@ -550,9 +747,7 @@ public class MagicalPowerScreen extends Screen {
                     btnText = "§b📍 Quest";
                     btnBg = btnHov ? 0xFF0284C7 : 0xFF075985;
                     btnBorder = 0xFF0EA5E9;
-                    action = () -> {
-                        Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + itemName.replace(" ", "_"));
-                    };
+                    action = () -> Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + itemName.replace(" ", "_"));
                     actionTitle = "Special Item — Open Wiki Guide for " + itemName;
                 } else {
                     btnText = "§b⚡ /ah";
@@ -609,8 +804,8 @@ public class MagicalPowerScreen extends Screen {
                     g.text(font, "§d+" + u.mpGain + " MP", x + w - 180, curY + 7, 0xFFF472B6, false);
                 }
 
-                // Action Button (context-aware: /ah, /bz, Craft, Kuudra, Quest)
-                int btnW = 52;
+                // Action Button
+                int btnW = 54;
                 int btnH = 16;
                 int btnX = x + w - 70;
                 int btnY = curY + 4;
@@ -623,19 +818,15 @@ public class MagicalPowerScreen extends Screen {
                 String actionTitle;
 
                 final String itemName = u.name;
-                final String recipe = u.recipeText;
+                final String itemRarity = u.rarity;
+                final JsonObject rec = u.recipe;
+                final JsonObject cd = u.craftDetails;
 
-                if ("craft".equalsIgnoreCase(u.source)) {
+                if ("craft".equalsIgnoreCase(u.source) || rec != null || cd != null) {
                     btnText = "§e🔨 Craft";
                     btnBg = btnHov ? 0xFFB45309 : 0xFF78350F;
                     btnBorder = 0xFFD97706;
-                    action = () -> {
-                        Minecraft.getInstance().keyboardHandler.setClipboard("/recipe " + itemName);
-                        if (Minecraft.getInstance().player != null) {
-                            Minecraft.getInstance().player.connection.sendCommand("recipe " + itemName);
-                            Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §eRecipe: §f" + itemName + (recipe.isEmpty() ? "" : " §7(" + recipe + ")")));
-                        }
-                    };
+                    action = () -> openCraftModal(itemName, itemRarity, rec, cd);
                     actionTitle = "View Craft Recipe for " + itemName;
                 } else if ("bz".equalsIgnoreCase(u.source)) {
                     btnText = "§f⚡ /bz";
@@ -659,9 +850,7 @@ public class MagicalPowerScreen extends Screen {
                     btnText = "§b📍 Quest";
                     btnBg = btnHov ? 0xFF0284C7 : 0xFF075985;
                     btnBorder = 0xFF0EA5E9;
-                    action = () -> {
-                        Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + itemName.replace(" ", "_"));
-                    };
+                    action = () -> Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + itemName.replace(" ", "_"));
                     actionTitle = "Special Item — Open Wiki Guide for " + itemName;
                 } else {
                     btnText = "§b⚡ /ah";
@@ -680,6 +869,98 @@ public class MagicalPowerScreen extends Screen {
                 }
             }
             curY += itemH + 4;
+        }
+    }
+
+    private void renderTalismansTab(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
+        List<TalismanChain> filtered = new ArrayList<>();
+        for (TalismanChain c : talismanChains) {
+            if (searchFilter.isEmpty() || c.name.toLowerCase(Locale.ROOT).contains(searchFilter)) {
+                filtered.add(c);
+            } else {
+                boolean matchTier = false;
+                for (TalismanTier t : c.tiers) {
+                    if (t.name.toLowerCase(Locale.ROOT).contains(searchFilter) || t.rarity.toLowerCase(Locale.ROOT).contains(searchFilter)) {
+                        matchTier = true;
+                        break;
+                    }
+                }
+                if (matchTier) filtered.add(c);
+            }
+        }
+
+        if (filtered.isEmpty()) {
+            g.centeredText(font, talismanChains.isEmpty() ? "§eLoading talisman progression tree..." : "§7No talisman chains matching '§f" + searchFilter + "§7'", x + w / 2, y + 40, 0xFFA0AEC0);
+            this.maxScroll = 0;
+            return;
+        }
+
+        int chainH = 34;
+        int totalH = filtered.size() * (chainH + 6);
+        this.maxScroll = Math.max(0, totalH - h);
+
+        int curY = y - (int) scrollAmount;
+        for (TalismanChain c : filtered) {
+            if (curY + chainH >= y && curY <= y + h) {
+                // Background row
+                g.fill(x, curY, x + w - 10, curY + chainH, 0xFF111827);
+                g.outline(x, curY, w - 10, chainH, 0xFF1F2937);
+
+                // Left: Chain name
+                g.text(font, c.name, x + 8, curY + 6, 0xFFFFFFFF, true);
+                g.text(font, "§8" + c.tiers.size() + " tiers", x + 8, curY + 18, 0xFF6B7280, false);
+
+                // Right: Tier pills connected by arrows
+                int pillX = x + 130;
+                for (int i = 0; i < c.tiers.size(); i++) {
+                    TalismanTier t = c.tiers.get(i);
+                    int pillW = Math.max(88, font.width(t.name) + 16);
+                    int pillH = 22;
+                    int pillY = curY + 6;
+
+                    boolean pillHov = mouseX >= pillX && mouseX <= pillX + pillW && mouseY >= pillY && mouseY <= pillY + pillH;
+                    int pBg = t.owned ? (pillHov ? 0xFF065F46 : 0xFF064E3B) : (pillHov ? 0xFF334155 : 0xFF1E293B);
+                    int pBorder = t.owned ? (pillHov ? 0xFF34D399 : 0xFF059669) : (pillHov ? 0xFF60A5FA : 0xFF334155);
+
+                    g.fill(pillX, pillY, pillX + pillW, pillY + pillH, pBg);
+                    g.outline(pillX, pillY, pillW, pillH, pBorder);
+
+                    int col = getRarityColor(t.rarity);
+                    String topLabel = (t.owned ? "§a✔ " : "§7") + t.name;
+                    g.text(font, topLabel, pillX + 6, pillY + 3, col, false);
+
+                    String botLabel = t.owned ? "§aOWNED §8(+" + t.ap + " MP)" : "§6" + formatCoins(t.price) + " §8(+" + t.ap + ")";
+                    g.text(font, botLabel, pillX + 6, pillY + 12, 0xFFD1D5DB, false);
+
+                    // Click action on pill: opens recipe modal if has recipe/craftDetails, else searches ah
+                    final String tierName = t.name;
+                    final String tierRarity = t.rarity;
+                    final JsonObject tierRec = t.recipe;
+                    final JsonObject tierCd = t.craftDetails;
+                    final long tierPrice = t.price;
+
+                    Runnable tierAction = () -> {
+                        if (tierRec != null || tierCd != null) {
+                            openCraftModal(tierName, tierRarity, tierRec, tierCd);
+                        } else if (tierPrice > 0) {
+                            triggerAhSearch(tierName);
+                        } else {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + tierName.replace(" ", "_"));
+                        }
+                    };
+
+                    synchronized (clickActions) {
+                        clickActions.add(new ClickableAction(pillX, pillY, pillX + pillW, pillY + pillH, tierAction, "Click to view " + tierName + " Recipe & Price"));
+                    }
+
+                    pillX += pillW + 4;
+                    if (i < c.tiers.size() - 1) {
+                        g.text(font, "§7➔", pillX, curY + 12, 0xFF6B7280, false);
+                        pillX += 14;
+                    }
+                }
+            }
+            curY += chainH + 6;
         }
     }
 
@@ -718,6 +999,157 @@ public class MagicalPowerScreen extends Screen {
         drawBonusRow(g, font, x + 10, curY, w - 20, "Rift Prism Imbuement", "+11 MP (Jacquelle's Rift Cats)", "§aACTIVE");
     }
 
+    private void renderCraftModal(GuiGraphicsExtractor g, Font font, int mouseX, int mouseY) {
+        synchronized (modalActions) {
+            modalActions.clear();
+        }
+
+        // Dark dim backdrop
+        g.fill(0, 0, this.width, this.height, 0xA0000000);
+
+        int mW = 400;
+        int mH = 265;
+        int mX = (this.width - mW) / 2;
+        int mY = (this.height - mH) / 2;
+
+        // Modal Frame
+        g.fill(mX, mY, mX + mW, mY + mH, 0xFF0F172A);
+        g.outline(mX, mY, mW, mH, 0xFF3B82F6);
+        g.fill(mX, mY, mX + mW, mY + 3, 0xFF60A5FA);
+
+        // Header Title
+        int rColor = getRarityColor(activeModal.rarity);
+        g.text(font, "§e🔨 Crafting Recipe: §r" + activeModal.itemName, mX + 14, mY + 12, rColor, true);
+
+        // Close button
+        int closeX = mX + mW - 24;
+        int closeY = mY + 10;
+        boolean closeHov = mouseX >= closeX && mouseX <= closeX + 16 && mouseY >= closeY && mouseY <= closeY + 14;
+        g.fill(closeX, closeY, closeX + 16, closeY + 14, closeHov ? 0xFFEF4444 : 0xFF334155);
+        g.outline(closeX, closeY, 16, 14, 0xFF64748B);
+        g.centeredText(font, "✕", closeX + 8, closeY + 3, 0xFFFFFFFF);
+        modalActions.add(new ClickableAction(closeX, closeY, closeX + 16, closeY + 14, () -> this.activeModal = null, "Close Recipe"));
+
+        // Left: 3x3 Crafting Grid
+        int gx = mX + 16;
+        int gy = mY + 34;
+        int slotSize = 28;
+        String[] rowKeys = {"A", "B", "C"};
+        String[] colKeys = {"1", "2", "3"};
+
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                int sx = gx + c * (slotSize + 3);
+                int sy = gy + r * (slotSize + 3);
+                String slotKey = rowKeys[r] + colKeys[c];
+
+                JsonObject slotItem = null;
+                if (activeModal.grid != null && activeModal.grid.has(slotKey) && activeModal.grid.get(slotKey).isJsonObject()) {
+                    slotItem = activeModal.grid.getAsJsonObject(slotKey);
+                }
+
+                boolean slotHov = mouseX >= sx && mouseX <= sx + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
+                g.fill(sx, sy, sx + slotSize, sy + slotSize, slotHov ? 0xFF1E293B : 0xFF090D16);
+                g.outline(sx, sy, slotSize, slotSize, slotHov ? 0xFF60A5FA : 0xFF334155);
+
+                if (slotItem != null) {
+                    String id = slotItem.has("id") ? slotItem.get("id").getAsString() : "";
+                    int count = slotItem.has("count") ? slotItem.get("count").getAsInt() : 1;
+                    String abbrev = id.length() > 4 ? id.substring(0, 4) : id;
+                    g.centeredText(font, "§f" + abbrev, sx + slotSize / 2, sy + 6, 0xFFFFFFFF);
+                    if (count > 1) {
+                        g.text(font, "§e" + count, sx + slotSize - font.width(String.valueOf(count)) - 2, sy + slotSize - 9, 0xFFFDE047, false);
+                    }
+                }
+            }
+        }
+
+        // Right: Required Ingredients List
+        int ix = mX + 120;
+        int iy = mY + 34;
+        int iw = mW - 136;
+
+        g.text(font, "§b§lRequired Ingredients:", ix, iy, 0xFF38BDF8, false);
+        iy += 14;
+
+        for (CraftIngredient ing : activeModal.ingredients) {
+            g.fill(ix, iy, ix + iw, iy + 22, 0xFF1E293B);
+            g.outline(ix, iy, iw, 22, ing.hasEnough ? 0xFF059669 : 0xFF475569);
+
+            g.text(font, "§f" + ing.name, ix + 6, iy + 3, 0xFFFFFFFF, false);
+            String qtyStr = "§7Need: §e" + ing.needed + " §8| §7Have: " + (ing.hasEnough ? "§a" : "§c") + ing.owned;
+            g.text(font, qtyStr, ix + 6, iy + 12, 0xFFCBD5E1, false);
+
+            if (ing.hasEnough) {
+                g.text(font, "§a✔ OK", ix + iw - 32, iy + 7, 0xFF10B981, true);
+            } else {
+                g.text(font, "§c-" + ing.missing, ix + iw - 32, iy + 7, 0xFFEF4444, true);
+            }
+            iy += 26;
+        }
+
+        // Status Banner
+        int bannerY = mY + 168;
+        if (activeModal.canCraftNow) {
+            g.fill(mX + 16, bannerY, mX + mW - 16, bannerY + 24, 0xFF064E3B);
+            g.outline(mX + 16, bannerY, mW - 32, 24, 0xFF10B981);
+            g.centeredText(font, "§a§l✔ Already have enough mats in bags & sacks to craft!", mX + mW / 2, bannerY + 8, 0xFFFFFFFF);
+        } else {
+            g.fill(mX + 16, bannerY, mX + mW - 16, bannerY + 24, 0xFF78350F);
+            g.outline(mX + 16, bannerY, mW - 32, 24, 0xFFD97706);
+            String missingBanner = "§eMissing materials! Est. Cost: §6" + formatCoins(activeModal.totalMissingCost);
+            g.centeredText(font, missingBanner, mX + mW / 2, bannerY + 8, 0xFFFFFFFF);
+        }
+
+        // Action Buttons
+        int btnY = mY + 204;
+        int btnW = 180;
+        int btnH = 22;
+        int btnX = mX + 16;
+        boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
+
+        if (activeModal.canCraftNow) {
+            g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xFF059669 : 0xFF047857);
+            g.outline(btnX, btnY, btnW, btnH, 0xFF10B981);
+            g.centeredText(font, "§f§l⚡ Open /recipe", btnX + btnW / 2, btnY + 7, 0xFFFFFFFF);
+
+            modalActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, () -> {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null) {
+                    mc.player.connection.sendCommand("recipe " + activeModal.itemName);
+                    mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aOpened recipe for §e" + activeModal.itemName));
+                }
+                this.activeModal = null;
+            }, "Open /recipe in-game"));
+        } else {
+            g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xFFB45309 : 0xFF78350F);
+            g.outline(btnX, btnY, btnW, btnH, 0xFFD97706);
+            g.centeredText(font, "§f§l🛒 Add to Queue / Buy Missing", btnX + btnW / 2, btnY + 7, 0xFFFFFFFF);
+
+            modalActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, () -> {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null && !activeModal.missingToBuy.isEmpty()) {
+                    CraftIngredient first = activeModal.missingToBuy.get(0);
+                    try {
+                        mc.keyboardHandler.setClipboard(String.valueOf(first.needed));
+                    } catch (Exception ignored) {}
+                    mc.player.connection.sendCommand("bz " + first.name);
+                    mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aOpened Bazaar for §e" + first.name + "§a. Copied quantity (§b" + first.needed + "§a) to clipboard!"));
+                }
+                this.activeModal = null;
+            }, "Open Bazaar for first missing ingredient and copy quantity"));
+        }
+
+        // Close Modal Button
+        int cBtnW = 80;
+        int cBtnX = mX + mW - cBtnW - 16;
+        boolean cBtnHov = mouseX >= cBtnX && mouseX <= cBtnX + cBtnW && mouseY >= btnY && mouseY <= btnY + btnH;
+        g.fill(cBtnX, btnY, cBtnX + cBtnW, btnY + btnH, cBtnHov ? 0xFF475569 : 0xFF334155);
+        g.outline(cBtnX, btnY, cBtnW, btnH, 0xFF64748B);
+        g.centeredText(font, "Close", cBtnX + cBtnW / 2, btnY + 7, 0xFFFFFFFF);
+        modalActions.add(new ClickableAction(cBtnX, btnY, cBtnX + cBtnW, btnY + btnH, () -> this.activeModal = null, "Close Modal"));
+    }
+
     private void drawBonusRow(GuiGraphicsExtractor g, Font font, int x, int y, int w, String title, String desc, String status) {
         g.fill(x, y, x + w, y + 20, 0xFF111827);
         g.outline(x, y, w, 20, 0xFF1F2937);
@@ -734,7 +1166,7 @@ public class MagicalPowerScreen extends Screen {
     }
 
     private void drawTabPill(GuiGraphicsExtractor g, Font font, int x, int y, String label, boolean active, int mouseX, int mouseY) {
-        int w = font.width(label) + 16;
+        int w = font.width(label) + 14;
         int h = 18;
         boolean hov = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
         int bg = active ? 0xFFC084FC : (hov ? 0xFF374151 : 0xFF1F2937);
@@ -749,6 +1181,26 @@ public class MagicalPowerScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         double mouseX = event.x();
         double mouseY = event.y();
+
+        // If Modal is active, intercept clicks exclusively
+        if (activeModal != null) {
+            synchronized (modalActions) {
+                for (ClickableAction action : modalActions) {
+                    if (mouseX >= action.minX && mouseX <= action.maxX && mouseY >= action.minY && mouseY <= action.maxY) {
+                        action.action.run();
+                        return true;
+                    }
+                }
+            }
+            int mW = 400;
+            int mH = 265;
+            int mX = (this.width - mW) / 2;
+            int mY = (this.height - mH) / 2;
+            if (mouseX < mX || mouseX > mX + mW || mouseY < mY || mouseY > mY + mH) {
+                this.activeModal = null;
+            }
+            return true;
+        }
 
         int winW = Math.min(this.width - 24, 720);
         int winH = Math.min(this.height - 24, 500);
@@ -777,28 +1229,35 @@ public class MagicalPowerScreen extends Screen {
         // Tab selection
         int tabY = winY + 68;
         int tabX = winX + 16;
-        int tab1W = font.width("Cheapest Upgrades (" + upgrades.size() + ")") + 16;
+        int tab1W = font.width("Cheapest Upgrades (" + upgrades.size() + ")") + 14;
         if (mouseX >= tabX && mouseX <= tabX + tab1W && mouseY >= tabY && mouseY <= tabY + 18) {
             currentTab = Tab.UPGRADES;
             scrollAmount = 0;
             return true;
         }
-        tabX += tab1W + 8;
-        int tab2W = font.width("Missing (" + missing.size() + ")") + 16;
+        tabX += tab1W + 6;
+        int tab2W = font.width("Missing (" + missing.size() + ")") + 14;
         if (mouseX >= tabX && mouseX <= tabX + tab2W && mouseY >= tabY && mouseY <= tabY + 18) {
             currentTab = Tab.MISSING;
             scrollAmount = 0;
             return true;
         }
-        tabX += tab2W + 8;
-        int tab3W = font.width("Rarity Breakdown") + 16;
+        tabX += tab2W + 6;
+        int tab3W = font.width("Talismans (" + talismanChains.size() + ")") + 14;
         if (mouseX >= tabX && mouseX <= tabX + tab3W && mouseY >= tabY && mouseY <= tabY + 18) {
+            currentTab = Tab.TALISMANS;
+            scrollAmount = 0;
+            return true;
+        }
+        tabX += tab3W + 6;
+        int tab4W = font.width("Breakdown") + 14;
+        if (mouseX >= tabX && mouseX <= tabX + tab4W && mouseY >= tabY && mouseY <= tabY + 18) {
             currentTab = Tab.BREAKDOWN;
             scrollAmount = 0;
             return true;
         }
 
-        // Clickable actions (e.g. /bz buttons)
+        // Clickable actions
         synchronized (clickActions) {
             for (ClickableAction action : clickActions) {
                 if (mouseX >= action.minX && mouseX <= action.maxX && mouseY >= action.minY && mouseY <= action.maxY) {
@@ -819,6 +1278,7 @@ public class MagicalPowerScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (activeModal != null) return true;
         if (this.maxScroll > 0) {
             this.scrollAmount -= verticalAmount * 24.0;
             if (this.scrollAmount < 0) this.scrollAmount = 0;
@@ -831,6 +1291,10 @@ public class MagicalPowerScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+            if (this.activeModal != null) {
+                this.activeModal = null;
+                return true;
+            }
             this.onClose();
             return true;
         }

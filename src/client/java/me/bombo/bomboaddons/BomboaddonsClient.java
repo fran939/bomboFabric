@@ -457,21 +457,47 @@ public class BomboaddonsClient implements ClientModInitializer {
    }
 
    public static void openMagicalPower(FabricClientCommandSource src, String username) {
+      openMagicalPower(src, username, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.UPGRADES);
+   }
+
+   public static void openMagicalPower(FabricClientCommandSource src, String username, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab initialTab) {
       Minecraft mc = Minecraft.getInstance();
-      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.MagicalPowerScreen(null, username)));
+      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.MagicalPowerScreen(null, username, initialTab)));
    }
 
    public static LiteralArgumentBuilder<FabricClientCommandSource> buildMpCommand(String name) {
       return (LiteralArgumentBuilder<FabricClientCommandSource>) ClientCommands.literal(name)
+         .then(ClientCommands.literal("talisman").executes((ctx) -> {
+            openMagicalPower((FabricClientCommandSource)ctx.getSource(), null, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS);
+            return 1;
+         }))
+         .then(ClientCommands.literal("talismans").executes((ctx) -> {
+            openMagicalPower((FabricClientCommandSource)ctx.getSource(), null, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS);
+            return 1;
+         }))
          .then(ClientCommands.argument("player", StringArgumentType.word()).suggests((ctx, b) -> {
+            b.suggest("talisman");
+            b.suggest("talismans");
             return TabCompletionManager.suggestPlayerNames(b);
-         }).executes((ctx) -> {
+         }).then(ClientCommands.literal("talisman").executes((ctx) -> {
             String player = StringArgumentType.getString(ctx, "player");
-            openMagicalPower((FabricClientCommandSource)ctx.getSource(), player);
+            openMagicalPower((FabricClientCommandSource)ctx.getSource(), player, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS);
+            return 1;
+         })).then(ClientCommands.literal("talismans").executes((ctx) -> {
+            String player = StringArgumentType.getString(ctx, "player");
+            openMagicalPower((FabricClientCommandSource)ctx.getSource(), player, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS);
+            return 1;
+         })).executes((ctx) -> {
+            String player = StringArgumentType.getString(ctx, "player");
+            if (player.equalsIgnoreCase("talisman") || player.equalsIgnoreCase("talismans")) {
+               openMagicalPower((FabricClientCommandSource)ctx.getSource(), null, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS);
+            } else {
+               openMagicalPower((FabricClientCommandSource)ctx.getSource(), player, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.UPGRADES);
+            }
             return 1;
          }))
          .executes((ctx) -> {
-            openMagicalPower((FabricClientCommandSource)ctx.getSource(), null);
+            openMagicalPower((FabricClientCommandSource)ctx.getSource(), null, me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.UPGRADES);
             return 1;
          });
    }
