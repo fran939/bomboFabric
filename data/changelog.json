@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.131",
+    "date": "2026-10-15",
+    "changes": [
+      "+ Magical Power GUI Null-Safety - Implemented optString/optInt/optLong helpers across parsing to eliminate JsonNull crashes on null prices, recipes, and craft costs",
+      "+ /b mp talisman Routing Fix - Cleanly defaults target player to self and selects the 4th Talisman Progression tab without treating 'talisman' as a player IGN",
+      "~ Authentic 18-Set Wardrobe & Silhouettes - Fixed 1-based indexing restoring Sets 1-18, mapped equipped active armor directly into slot 17, and added vanilla armor silhouettes to empty slots",
+      "~ Pet Lore Evaluator & In-Game Held Item - Replaced all template tokens ({STRENGTH}, {MAGIC_FIND}, {0}..{4}) with level-accurate values, and formatted held items directly into lore with authentic SkyBlock styling",
+      "~ Equipment Paper Icon Fallback Fix - Stripped star and dungeon prefixes in icon URLs so custom accessories and armors resolve authentic 3D textures from SkyCrypt",
+      "+ Dungeons Personal Bests & Floor Stats - Added S+ PB, S PB, and Best Score displays across Catacombs and Master Mode floors alongside completion counts"
+    ]
+  },
+  {
     "version": "26.2.28.130",
     "date": "2026-10-15",
     "changes": [

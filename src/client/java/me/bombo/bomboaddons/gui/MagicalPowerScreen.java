@@ -277,35 +277,109 @@ public class MagicalPowerScreen extends Screen {
         });
     }
 
+    private static String optString(JsonObject obj, String key, String def) {
+        if (obj == null || !obj.has(key)) return def;
+        JsonElement el = obj.get(key);
+        if (el == null || el.isJsonNull() || !el.isJsonPrimitive()) return def;
+        try {
+            return el.getAsString();
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    private static int optInt(JsonObject obj, String key, int def) {
+        if (obj == null || !obj.has(key)) return def;
+        JsonElement el = obj.get(key);
+        if (el == null || el.isJsonNull() || !el.isJsonPrimitive()) return def;
+        try {
+            return el.getAsInt();
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    private static long optLong(JsonObject obj, String key, long def) {
+        if (obj == null || !obj.has(key)) return def;
+        JsonElement el = obj.get(key);
+        if (el == null || el.isJsonNull() || !el.isJsonPrimitive()) return def;
+        try {
+            return el.getAsLong();
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    private static double optDouble(JsonObject obj, String key, double def) {
+        if (obj == null || !obj.has(key)) return def;
+        JsonElement el = obj.get(key);
+        if (el == null || el.isJsonNull() || !el.isJsonPrimitive()) return def;
+        try {
+            return el.getAsDouble();
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    private static boolean optBoolean(JsonObject obj, String key, boolean def) {
+        if (obj == null || !obj.has(key)) return def;
+        JsonElement el = obj.get(key);
+        if (el == null || el.isJsonNull() || !el.isJsonPrimitive()) return def;
+        try {
+            return el.getAsBoolean();
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    private static JsonObject optObject(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key)) return null;
+        JsonElement el = obj.get(key);
+        return (el != null && el.isJsonObject()) ? el.getAsJsonObject() : null;
+    }
+
+    private static JsonArray optArray(JsonObject obj, String key) {
+        if (obj == null || !obj.has(key)) return null;
+        JsonElement el = obj.get(key);
+        return (el != null && el.isJsonArray()) ? el.getAsJsonArray() : null;
+    }
+
     private void parseData(JsonObject root) {
         upgrades.clear();
         missing.clear();
         talismanChains.clear();
         breakdowns.clear();
 
-        if (root.has("player") && root.get("player").isJsonObject()) {
-            JsonObject pl = root.getAsJsonObject("player");
-            this.playerName = pl.has("name") ? pl.get("name").getAsString() : targetPlayer;
-            if (pl.has("profile") && pl.get("profile").isJsonObject()) {
-                this.profileName = pl.getAsJsonObject("profile").has("name") ? pl.getAsJsonObject("profile").get("name").getAsString() : "";
+        JsonObject pl = optObject(root, "player");
+        if (pl != null) {
+            this.playerName = optString(pl, "name", targetPlayer);
+            if (pl.has("profile")) {
+                JsonElement profEl = pl.get("profile");
+                if (profEl != null && profEl.isJsonObject()) {
+                    this.profileName = optString(profEl.getAsJsonObject(), "name", "");
+                } else if (profEl != null && profEl.isJsonPrimitive()) {
+                    this.profileName = profEl.getAsString();
+                } else {
+                    this.profileName = "";
+                }
             }
         } else {
             this.playerName = targetPlayer;
         }
 
         // Ceiling & MP
-        if (root.has("ceiling") && root.get("ceiling").isJsonObject()) {
-            JsonObject c = root.getAsJsonObject("ceiling");
-            this.currentMp = c.has("current") ? c.get("current").getAsInt() : (c.has("reported") ? c.get("reported").getAsInt() : 0);
-            this.maxMp = c.has("max") ? c.get("max").getAsInt() : 2184;
-        } else if (root.has("magicalPower") && root.get("magicalPower").isJsonObject()) {
-            JsonObject mpo = root.getAsJsonObject("magicalPower");
-            this.currentMp = mpo.has("reported") ? mpo.get("reported").getAsInt() : (mpo.has("computed") ? mpo.get("computed").getAsInt() : 0);
-        } else if (root.has("mp") && root.get("mp").isJsonObject()) {
-            JsonObject mpo = root.getAsJsonObject("mp");
-            this.currentMp = mpo.has("reported") ? mpo.get("reported").getAsInt() : (mpo.has("computed") ? mpo.get("computed").getAsInt() : 0);
+        JsonObject c = optObject(root, "ceiling");
+        JsonObject mpo = optObject(root, "magicalPower");
+        JsonObject mpObj = optObject(root, "mp");
+        if (c != null) {
+            this.currentMp = optInt(c, "current", optInt(c, "reported", 0));
+            this.maxMp = optInt(c, "max", 2184);
+        } else if (mpo != null) {
+            this.currentMp = optInt(mpo, "reported", optInt(mpo, "computed", 0));
+        } else if (mpObj != null) {
+            this.currentMp = optInt(mpObj, "reported", optInt(mpObj, "computed", 0));
         } else if (root.has("total_magical_power")) {
-            this.currentMp = root.get("total_magical_power").getAsInt();
+            this.currentMp = optInt(root, "total_magical_power", 0);
         }
 
         // If player has max obtainable MP (2184)
@@ -314,52 +388,49 @@ public class MagicalPowerScreen extends Screen {
         }
 
         // Selected Power & Tuning
-        if (root.has("tuning") && root.get("tuning").isJsonObject()) {
-            JsonObject t = root.getAsJsonObject("tuning");
-            this.tuningPoints = t.has("points") ? t.get("points").getAsInt() : 0;
+        JsonObject t = optObject(root, "tuning");
+        if (t != null) {
+            this.tuningPoints = optInt(t, "points", 0);
         }
-        if (root.has("selectedPower") && !root.get("selectedPower").isJsonNull()) {
-            this.selectedPower = root.get("selectedPower").getAsString();
-        } else if (root.has("selected_power") && !root.get("selected_power").isJsonNull()) {
-            this.selectedPower = root.get("selected_power").getAsString();
-        } else if (root.has("bag") && root.get("bag").isJsonObject() && root.getAsJsonObject("bag").has("selectedPower") && !root.getAsJsonObject("bag").get("selectedPower").isJsonNull()) {
-            this.selectedPower = root.getAsJsonObject("bag").get("selectedPower").getAsString();
-        } else if (root.has("accessories") && root.get("accessories").isJsonObject()) {
-            JsonObject acc = root.getAsJsonObject("accessories");
-            this.selectedPower = acc.has("selectedPower") && !acc.get("selectedPower").isJsonNull() ? acc.get("selectedPower").getAsString() : "None";
+        String p1 = optString(root, "selectedPower", null);
+        if (p1 == null) p1 = optString(root, "selected_power", null);
+        if (p1 == null) {
+            JsonObject bg = optObject(root, "bag");
+            if (bg != null) p1 = optString(bg, "selectedPower", null);
         }
-
-        if (this.selectedPower == null || this.selectedPower.trim().isEmpty() || this.selectedPower.equalsIgnoreCase("none")) {
-            this.selectedPower = "Fortuitous";
+        if (p1 == null) {
+            JsonObject acc = optObject(root, "accessories");
+            if (acc != null) p1 = optString(acc, "selectedPower", null);
         }
+        this.selectedPower = (p1 != null && !p1.trim().isEmpty() && !p1.equalsIgnoreCase("none")) ? p1 : "Fortuitous";
 
         // Slots
-        if (root.has("slots") && root.get("slots").isJsonObject()) {
-            JsonObject sl = root.getAsJsonObject("slots");
-            this.bagSlots = sl.has("floor") ? sl.get("floor").getAsInt() : (sl.has("confirmed") ? sl.get("confirmed").getAsInt() : 0);
-            this.maxBagSlots = sl.has("possibleMax") ? sl.get("possibleMax").getAsInt() : 281;
+        JsonObject sl = optObject(root, "slots");
+        if (sl != null) {
+            this.bagSlots = optInt(sl, "floor", optInt(sl, "confirmed", 0));
+            this.maxBagSlots = optInt(sl, "possibleMax", 281);
         }
 
         // Upgrades (buyOrder)
-        if (root.has("buyOrder") && root.get("buyOrder").isJsonArray()) {
-            JsonArray arr = root.getAsJsonArray("buyOrder");
+        JsonArray buyArr = optArray(root, "buyOrder");
+        if (buyArr != null) {
             int rank = 1;
-            for (JsonElement el : arr) {
-                if (!el.isJsonObject()) continue;
+            for (JsonElement el : buyArr) {
+                if (el == null || !el.isJsonObject()) continue;
                 JsonObject o = el.getAsJsonObject();
-                String name = o.has("name") ? o.get("name").getAsString() : "Unknown";
-                String rarity = o.has("rarity") ? o.get("rarity").getAsString() : "COMMON";
-                String kind = o.has("kind") ? o.get("kind").getAsString() : "buy";
-                String from = o.has("from") ? o.get("from").getAsString() : "";
-                long cost = o.has("cost") ? o.get("cost").getAsLong() : 0L;
-                int gain = o.has("mpGain") ? o.get("mpGain").getAsInt() : (o.has("gain") ? o.get("gain").getAsInt() : 0);
-                double coinsPerMp = o.has("coinsPerMp") ? o.get("coinsPerMp").getAsDouble() : (gain > 0 ? (double) cost / gain : 0);
-                boolean purchasable = !o.has("purchasable") || o.get("purchasable").getAsBoolean();
+                String name = optString(o, "name", "Unknown");
+                String rarity = optString(o, "rarity", "COMMON");
+                String kind = optString(o, "kind", "buy");
+                String from = optString(o, "from", "");
+                long cost = optLong(o, "cost", 0L);
+                int gain = optInt(o, "mpGain", optInt(o, "gain", 0));
+                double coinsPerMp = optDouble(o, "coinsPerMp", gain > 0 ? (double) cost / gain : 0);
+                boolean purchasable = optBoolean(o, "purchasable", true);
 
-                String source = o.has("source") ? o.get("source").getAsString() : "ah";
+                String source = optString(o, "source", "ah");
                 String uName = name.toUpperCase(Locale.ROOT);
-                JsonObject recipe = o.has("recipe") && o.get("recipe").isJsonObject() ? o.getAsJsonObject("recipe") : null;
-                JsonObject craftDetails = o.has("craftDetails") && o.get("craftDetails").isJsonObject() ? o.getAsJsonObject("craftDetails") : null;
+                JsonObject recipe = optObject(o, "recipe");
+                JsonObject craftDetails = optObject(o, "craftDetails");
 
                 if (source.equals("ah")) {
                     if (uName.contains("KUUDRA") || uName.contains("BURNING")) source = "kuudra";
@@ -368,27 +439,27 @@ public class MagicalPowerScreen extends Screen {
                     else if (uName.contains("CAMPFIRE") || uName.contains("ROMERO") || uName.contains("SEAL OF")) source = "quest";
                     else if (recipe != null) source = "craft";
                 }
-                String recipeText = o.has("craftText") ? o.get("craftText").getAsString() : "";
+                String recipeText = optString(o, "craftText", "");
 
                 upgrades.add(new UpgradeEntry(rank++, name, rarity, kind, from, cost, gain, coinsPerMp, purchasable, source, recipeText, recipe, craftDetails));
             }
         }
 
         // Missing Accessories
-        if (root.has("missingAccessories") && root.get("missingAccessories").isJsonArray()) {
-            JsonArray arr = root.getAsJsonArray("missingAccessories");
+        JsonArray missArr = optArray(root, "missingAccessories");
+        if (missArr != null) {
             int rank = 1;
-            for (JsonElement el : arr) {
-                if (!el.isJsonObject()) continue;
+            for (JsonElement el : missArr) {
+                if (el == null || !el.isJsonObject()) continue;
                 JsonObject o = el.getAsJsonObject();
-                String name = o.has("name") ? o.get("name").getAsString() : "Unknown";
-                String rarity = o.has("rarity") ? o.get("rarity").getAsString() : "COMMON";
-                long cost = o.has("cost") ? o.get("cost").getAsLong() : 0L;
-                int gain = o.has("ap") ? o.get("ap").getAsInt() : 0;
-                String source = o.has("source") ? o.get("source").getAsString() : "ah";
+                String name = optString(o, "name", "Unknown");
+                String rarity = optString(o, "rarity", "COMMON");
+                long cost = optLong(o, "cost", 0L);
+                int gain = optInt(o, "ap", 0);
+                String source = optString(o, "source", "ah");
                 String uName = name.toUpperCase(Locale.ROOT);
-                JsonObject recipe = o.has("recipe") && o.get("recipe").isJsonObject() ? o.getAsJsonObject("recipe") : null;
-                JsonObject craftDetails = o.has("craftDetails") && o.get("craftDetails").isJsonObject() ? o.getAsJsonObject("craftDetails") : null;
+                JsonObject recipe = optObject(o, "recipe");
+                JsonObject craftDetails = optObject(o, "craftDetails");
 
                 if (source.equals("ah")) {
                     if (uName.contains("KUUDRA") || uName.contains("BURNING")) source = "kuudra";
@@ -397,34 +468,35 @@ public class MagicalPowerScreen extends Screen {
                     else if (uName.contains("CAMPFIRE") || uName.contains("ROMERO") || uName.contains("SEAL OF")) source = "quest";
                     else if (recipe != null) source = "craft";
                 }
-                String recipeText = o.has("craftText") ? o.get("craftText").getAsString() : "";
+                String recipeText = optString(o, "craftText", "");
                 missing.add(new UpgradeEntry(rank++, name, rarity, "missing", "", cost, gain, 0, true, source, recipeText, recipe, craftDetails));
             }
         }
 
         // Talisman Chains (Tree)
-        if (root.has("talismanChains") && root.get("talismanChains").isJsonArray()) {
-            JsonArray arr = root.getAsJsonArray("talismanChains");
-            for (JsonElement el : arr) {
-                if (!el.isJsonObject()) continue;
+        JsonArray chainArr = optArray(root, "talismanChains");
+        if (chainArr != null) {
+            for (JsonElement el : chainArr) {
+                if (el == null || !el.isJsonObject()) continue;
                 JsonObject co = el.getAsJsonObject();
-                String cName = co.has("name") ? co.get("name").getAsString() : "Unknown";
-                String cKey = co.has("key") ? co.get("key").getAsString() : "";
-                String cWiki = co.has("wiki") ? co.get("wiki").getAsString() : "";
+                String cName = optString(co, "name", "Unknown");
+                String cKey = optString(co, "key", "");
+                String cWiki = optString(co, "wiki", "");
                 List<TalismanTier> tiers = new ArrayList<>();
-                if (co.has("tiers") && co.get("tiers").isJsonArray()) {
-                    for (JsonElement tel : co.getAsJsonArray("tiers")) {
-                        if (!tel.isJsonObject()) continue;
+                JsonArray tiersArr = optArray(co, "tiers");
+                if (tiersArr != null) {
+                    for (JsonElement tel : tiersArr) {
+                        if (tel == null || !tel.isJsonObject()) continue;
                         JsonObject to = tel.getAsJsonObject();
-                        String tid = to.has("id") ? to.get("id").getAsString() : "";
-                        String tname = to.has("name") ? to.get("name").getAsString() : tid;
-                        String trarity = to.has("rarity") ? to.get("rarity").getAsString() : (to.has("tier") ? to.get("tier").getAsString() : "COMMON");
-                        int tap = to.has("ap") ? to.get("ap").getAsInt() : 0;
-                        long tprice = to.has("price") ? to.get("price").getAsLong() : 0L;
-                        boolean towned = to.has("owned") && to.get("owned").getAsBoolean();
-                        JsonObject trecipe = to.has("recipe") && to.get("recipe").isJsonObject() ? to.getAsJsonObject("recipe") : null;
-                        JsonObject tcraftDetails = to.has("craftDetails") && to.get("craftDetails").isJsonObject() ? to.getAsJsonObject("craftDetails") : null;
-                        long tcraftCost = to.has("craftCost") ? to.get("craftCost").getAsLong() : 0L;
+                        String tid = optString(to, "id", "");
+                        String tname = optString(to, "name", tid);
+                        String trarity = optString(to, "rarity", optString(to, "tier", "COMMON"));
+                        int tap = optInt(to, "ap", 0);
+                        long tprice = optLong(to, "price", 0L);
+                        boolean towned = optBoolean(to, "owned", false);
+                        JsonObject trecipe = optObject(to, "recipe");
+                        JsonObject tcraftDetails = optObject(to, "craftDetails");
+                        long tcraftCost = optLong(to, "craftCost", 0L);
                         tiers.add(new TalismanTier(tid, tname, trarity, tap, tprice, towned, trecipe, tcraftDetails, tcraftCost));
                     }
                 }
@@ -435,15 +507,15 @@ public class MagicalPowerScreen extends Screen {
         }
 
         // Bag Breakdown
-        if (root.has("bagBreakdown") && root.get("bagBreakdown").isJsonObject()) {
-            JsonObject bb = root.getAsJsonObject("bagBreakdown");
+        JsonObject bb = optObject(root, "bagBreakdown");
+        if (bb != null) {
             String[] rarities = {"VERY_SPECIAL", "SPECIAL", "MYTHIC", "LEGENDARY", "EPIC", "RARE", "UNCOMMON", "COMMON"};
             for (String r : rarities) {
-                if (bb.has(r) && bb.get(r).isJsonObject()) {
-                    JsonObject ro = bb.getAsJsonObject(r);
-                    int count = ro.has("count") ? ro.get("count").getAsInt() : 0;
-                    int mpEach = ro.has("mpEach") ? ro.get("mpEach").getAsInt() : 0;
-                    int tot = ro.has("totalMp") ? ro.get("totalMp").getAsInt() : count * mpEach;
+                JsonObject ro = optObject(bb, r);
+                if (ro != null) {
+                    int count = optInt(ro, "count", 0);
+                    int mpEach = optInt(ro, "mpEach", 0);
+                    int tot = optInt(ro, "totalMp", count * mpEach);
                     if (count > 0) {
                         breakdowns.add(new RarityBreakdownEntry(r, count, mpEach, tot));
                     }
@@ -457,39 +529,42 @@ public class MagicalPowerScreen extends Screen {
         CraftModalState modal = new CraftModalState();
         modal.itemName = itemName;
         modal.rarity = rarity;
-        if (craftDetails != null && craftDetails.has("grid") && craftDetails.get("grid").isJsonObject()) {
-            modal.grid = craftDetails.getAsJsonObject("grid");
+        JsonObject gObj = optObject(craftDetails, "grid");
+        if (gObj != null) {
+            modal.grid = gObj;
         } else {
             modal.grid = recipe;
         }
 
         if (craftDetails != null) {
-            modal.canCraftNow = craftDetails.has("canCraftNow") && craftDetails.get("canCraftNow").getAsBoolean();
-            modal.totalMissingCost = craftDetails.has("totalMissingCost") ? craftDetails.get("totalMissingCost").getAsLong() : 0L;
+            modal.canCraftNow = optBoolean(craftDetails, "canCraftNow", false);
+            modal.totalMissingCost = optLong(craftDetails, "totalMissingCost", 0L);
 
-            if (craftDetails.has("ingredients") && craftDetails.get("ingredients").isJsonArray()) {
-                for (JsonElement el : craftDetails.getAsJsonArray("ingredients")) {
-                    if (!el.isJsonObject()) continue;
+            JsonArray ingArr = optArray(craftDetails, "ingredients");
+            if (ingArr != null) {
+                for (JsonElement el : ingArr) {
+                    if (el == null || !el.isJsonObject()) continue;
                     JsonObject io = el.getAsJsonObject();
-                    String id = io.has("id") ? io.get("id").getAsString() : "";
-                    String name = io.has("name") ? io.get("name").getAsString() : id;
-                    int needed = io.has("needed") ? io.get("needed").getAsInt() : 1;
-                    int owned = io.has("owned") ? io.get("owned").getAsInt() : 0;
-                    int missing = io.has("missing") ? io.get("missing").getAsInt() : 0;
-                    long unitPrice = io.has("unitPrice") ? io.get("unitPrice").getAsLong() : 0L;
-                    boolean hasEnough = io.has("hasEnough") && io.get("hasEnough").getAsBoolean();
+                    String id = optString(io, "id", "");
+                    String name = optString(io, "name", id);
+                    int needed = optInt(io, "needed", 1);
+                    int owned = optInt(io, "owned", 0);
+                    int missing = optInt(io, "missing", 0);
+                    long unitPrice = optLong(io, "unitPrice", 0L);
+                    boolean hasEnough = optBoolean(io, "hasEnough", false);
                     modal.ingredients.add(new CraftIngredient(id, name, needed, owned, missing, unitPrice, hasEnough));
                 }
             }
 
-            if (craftDetails.has("missingToBuy") && craftDetails.get("missingToBuy").isJsonArray()) {
-                for (JsonElement el : craftDetails.getAsJsonArray("missingToBuy")) {
-                    if (!el.isJsonObject()) continue;
+            JsonArray missArr = optArray(craftDetails, "missingToBuy");
+            if (missArr != null) {
+                for (JsonElement el : missArr) {
+                    if (el == null || !el.isJsonObject()) continue;
                     JsonObject io = el.getAsJsonObject();
-                    String id = io.has("id") ? io.get("id").getAsString() : "";
-                    String name = io.has("name") ? io.get("name").getAsString() : id;
-                    int needed = io.has("needed") ? io.get("needed").getAsInt() : 1;
-                    long unitPrice = io.has("unitPrice") ? io.get("unitPrice").getAsLong() : 0L;
+                    String id = optString(io, "id", "");
+                    String name = optString(io, "name", id);
+                    int needed = optInt(io, "needed", 1);
+                    long unitPrice = optLong(io, "unitPrice", 0L);
                     modal.missingToBuy.add(new CraftIngredient(id, name, needed, 0, needed, unitPrice, false));
                 }
             }
@@ -497,10 +572,10 @@ public class MagicalPowerScreen extends Screen {
             Map<String, Integer> counts = new LinkedHashMap<>();
             for (String key : modal.grid.keySet()) {
                 JsonElement gel = modal.grid.get(key);
-                if (gel.isJsonObject()) {
+                if (gel != null && gel.isJsonObject()) {
                     JsonObject go = gel.getAsJsonObject();
-                    String gid = go.has("id") ? go.get("id").getAsString() : "";
-                    int gcnt = go.has("count") ? go.get("count").getAsInt() : 1;
+                    String gid = optString(go, "id", "");
+                    int gcnt = optInt(go, "count", 1);
                     if (!gid.isEmpty()) {
                         counts.put(gid, counts.getOrDefault(gid, 0) + gcnt);
                     }

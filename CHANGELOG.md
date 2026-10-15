@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.131] - 2026-10-15 (Beta)
+
+### Features & Fixes
+- **Magical Power GUI Null-Safety & `/b mp talisman` Routing (`MagicalPowerScreen`):** Implemented safe helper methods (`optString`, `optInt`, `optLong`, `optDouble`, `optBoolean`, `optObject`, `optArray`) across all JSON parsing, preventing `JsonNull` crashes on null fields (`craftCost`, `price`, `recipe`, `craftDetails`). Corrected `/b mp talisman` command to reliably open the dedicated Talisman progression tree for the active player.
+- **Authentic 18-Set Wardrobe & Empty Armor Silhouettes (`pv_service.js`):** Restored all 18 wardrobe sets (Page 1: Sets 1–9, Page 2: Sets 10–18) by correcting 1-based indexing. Equipped armor sets (such as Set 17) now cleanly display the player's active worn armor pieces, and empty armor slots render pixelated vanilla silhouettes for helmets, chestplates, leggings, and boots.
+- **Dynamic Pet Lore & In-Game Held Item Format (`neu_pets.js`, `pv_service.js`):** Evaluated all raw template tokens (`{STRENGTH}`, `{BONUS_ATTACK_SPEED}`, `{MAGIC_FIND}`, `{0}`..`{4}`) in pet lore according to pet type and level (e.g. Level 200 Golden Dragon matching authentic in-game tooltips). Formatted held items directly inside lore with authentic SkyBlock styling (`Held Item: <Name>` and effect lore) followed by the Max Level and XP counter.
+- **SkyCrypt Equipment Icon Paper Fallback Fix (`pv_service.js`):** Stripped item prefixes (`STARRED_`, `DUNGEON_`, `VERY_`, `HOT_`, `BURNING_`, `FIERY_`, `INFERNAL_`) in `itemIconUrl` to ensure CDNs return authentic 3D item textures instead of the generic paper icon.
+- **Dungeons Personal Bests & Floor Stats (`pv_service.js`):** Enriched the Dungeons section with S+ PB, S PB, and Best Score stats across all normal and Master mode floors alongside completion counts.
+
 ## [26.2.28.130] - 2026-10-15 (Beta)
 
 ### Features & Fixes
