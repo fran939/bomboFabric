@@ -14,6 +14,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import me.bombo.bomboaddons.SkyblockItemManager;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.util.Util;
 import org.lwjgl.glfw.GLFW;
 
@@ -43,6 +49,8 @@ public class MagicalPowerScreen extends Screen {
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(6))
             .build();
+
+    private static final Identifier CHEST_GUI_TEXTURE = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
 
     // Parsed Data
     private String playerName = "";
@@ -205,12 +213,14 @@ public class MagicalPowerScreen extends Screen {
 
     public static class CraftModalState {
         public String itemName;
+        public String itemId = "";
         public String rarity;
         public JsonObject grid; // A1..C3
         public List<CraftIngredient> ingredients = new ArrayList<>();
         public boolean canCraftNow;
         public List<CraftIngredient> missingToBuy = new ArrayList<>();
         public long totalMissingCost;
+        public long craftCost;
     }
 
     private final List<UpgradeEntry> upgrades = new ArrayList<>();
@@ -284,7 +294,7 @@ public class MagicalPowerScreen extends Screen {
         int winY = (this.height - winH) / 2;
 
         String oldSearch = searchBox != null ? searchBox.getValue() : "";
-        this.searchBox = new EditBox(this.font, winX + winW - 200, winY + 68, 90, 16, Component.literal("Search"));
+        this.searchBox = new EditBox(this.font, winX + winW - 225, winY + 10, 85, 16, Component.literal("Search"));
         this.searchBox.setValue(oldSearch);
         this.searchBox.setResponder(val -> {
             this.searchFilter = val.trim().toLowerCase(Locale.ROOT);
@@ -483,7 +493,11 @@ public class MagicalPowerScreen extends Screen {
                 JsonObject recipe = optObject(o, "recipe");
                 JsonObject craftDetails = optObject(o, "craftDetails");
 
-                if (source.equals("ah")) {
+                if (uName.contains("PANDORA")) {
+                    source = "ah";
+                    recipe = null;
+                    craftDetails = null;
+                } else if (source.equals("ah")) {
                     if (uName.contains("KUUDRA") || uName.contains("BURNING")) source = "kuudra";
                     else if (uName.contains("HEGEMONY") || uName.contains("ENDER ARTIFACT") || uName.contains("DARK AUCTION")) source = "dark_auction";
                     else if (uName.contains("RIFT") || uName.contains("PRISM")) source = "rift";
@@ -513,7 +527,11 @@ public class MagicalPowerScreen extends Screen {
                 JsonObject recipe = optObject(o, "recipe");
                 JsonObject craftDetails = optObject(o, "craftDetails");
 
-                if (source.equals("ah")) {
+                if (uName.contains("PANDORA")) {
+                    source = "ah";
+                    recipe = null;
+                    craftDetails = null;
+                } else if (source.equals("ah")) {
                     if (uName.contains("KUUDRA") || uName.contains("BURNING")) source = "kuudra";
                     else if (uName.contains("HEGEMONY") || uName.contains("ENDER ARTIFACT") || uName.contains("DARK AUCTION")) source = "dark_auction";
                     else if (uName.contains("RIFT") || uName.contains("PRISM")) source = "rift";
@@ -624,10 +642,16 @@ public class MagicalPowerScreen extends Screen {
     }
 
     public void openCraftModal(String itemName, String rarity, JsonObject recipe, JsonObject craftDetails) {
+        openCraftModal(itemName, itemName, rarity, recipe, craftDetails, 0L);
+    }
+
+    public void openCraftModal(String itemId, String itemName, String rarity, JsonObject recipe, JsonObject craftDetails, long craftCost) {
         if (recipe == null && craftDetails == null) return;
         CraftModalState modal = new CraftModalState();
-        modal.itemName = itemName;
+        modal.itemId = itemId != null ? itemId : "";
+        modal.itemName = itemName != null ? itemName : itemId;
         modal.rarity = rarity;
+        modal.craftCost = craftCost;
         JsonObject gObj = optObject(craftDetails, "grid");
         if (gObj != null) {
             modal.grid = gObj;
@@ -763,8 +787,8 @@ public class MagicalPowerScreen extends Screen {
 
         drawTabPill(g, font, tabX, tabY, "Breakdown", currentTab == Tab.BREAKDOWN, mouseX, mouseY);
 
-        // Search label
-        g.text(font, "§7Search:", winX + winW - 250, tabY + 4, 0xFF8B949E, false);
+        // Search label (in top header bar next to searchBox)
+        g.text(font, "§7Search:", winX + winW - 270, winY + 14, 0xFF8B949E, false);
 
         // Divider
         g.fill(winX + 12, winY + 88, winX + winW - 12, winY + 89, border);
@@ -1409,15 +1433,16 @@ public class MagicalPowerScreen extends Screen {
                 g.text(font, m.name, x + 10, curY + 7, nameColor, true);
                 g.text(font, "§8[" + m.rarity + "]", x + 10 + font.width(m.name) + 8, curY + 7, 0xFF64748B, false);
 
-                String needStr = "§7Needs Enrichment · Est. §6" + formatCoins(enrichmentMinCost);
-                g.text(font, needStr, x + w - 210, curY + 7, 0xFFCBD5E1, false);
-
                 // Action Button: Buy Enrichment on Bazaar
-                int btnW = 86;
+                int btnW = 96;
                 int btnH = 16;
-                int btnX = x + w - 100;
+                int btnX = x + w - 110;
                 int btnY = curY + 4;
                 boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
+
+                String needStr = "§7Needs Enrichment · Est. §6" + formatCoins(enrichmentMinCost);
+                int needW = font.width(needStr);
+                g.text(font, needStr, btnX - 10 - needW, curY + 7, 0xFFCBD5E1, false);
 
                 g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xCC059669 : 0x99065F46);
                 g.outline(btnX, btnY, btnW, btnH, 0xFF10B981);
@@ -1489,147 +1514,220 @@ public class MagicalPowerScreen extends Screen {
         // Dark dim backdrop
         g.fill(0, 0, this.width, this.height, 0xB0000000);
 
-        int mW = 400;
-        int mH = 265;
-        int mX = (this.width - mW) / 2;
-        int mY = (this.height - mH) / 2;
+        int chestW = 176;
+        int chestH = 222;
+        int chestX = (this.width - chestW) / 2;
+        int chestY = (this.height - chestH) / 2;
 
-        // Modal Frame: Liquid Glass Obsidian
-        g.fill(mX, mY, mX + mW, mY + mH, 0xFA090D16);
-        g.outline(mX, mY, mW, mH, 0x8038BDF8);
-        g.fill(mX, mY, mX + mW, mY + 3, 0xFF38BDF8);
+        // Render standard vanilla 54-slot chest container background
+        g.blit(CHEST_GUI_TEXTURE, chestX, chestY, chestX + chestW, chestY + chestH, 0.0F, 0.6875F, 0.0F, 0.8671875F);
 
-        // Header Title
-        int rColor = getRarityColor(activeModal.rarity);
-        g.text(font, "§e🔨 Crafting Recipe: §r" + activeModal.itemName, mX + 14, mY + 12, rColor, true);
+        // Header Title in authentic container font color (4210752 = 0x404040 dark gray)
+        String titleStr = activeModal.itemName;
+        g.text(font, titleStr, chestX + 8, chestY + 6, 4210752, false);
 
-        // Close button
-        int closeX = mX + mW - 24;
-        int closeY = mY + 10;
-        boolean closeHov = mouseX >= closeX && mouseX <= closeX + 16 && mouseY >= closeY && mouseY <= closeY + 14;
-        g.fill(closeX, closeY, closeX + 16, closeY + 14, closeHov ? 0xFFEF4444 : 0x40334155);
-        g.outline(closeX, closeY, 16, 14, 0xFF64748B);
-        g.centeredText(font, "✕", closeX + 8, closeY + 3, 0xFFFFFFFF);
-        modalActions.add(new ClickableAction(closeX, closeY, closeX + 16, closeY + 14, () -> this.activeModal = null, "Close Recipe"));
+        int startX = chestX + 8;
+        int startY = chestY + 18;
+        ItemStack hoveredSlotStack = null;
 
-        // Left: 3x3 Crafting Grid
-        int gx = mX + 16;
-        int gy = mY + 34;
-        int slotSize = 28;
-        String[] rowKeys = {"A", "B", "C"};
-        String[] colKeys = {"1", "2", "3"};
+        // Pre-create standard gray pane for empty/border slots
+        ItemStack grayPane = new ItemStack(Items.STAINED_GLASS_PANE.pick(net.minecraft.world.item.DyeColor.GRAY));
+        grayPane.set(DataComponents.CUSTOM_NAME, Component.literal(" "));
 
-        for (int r = 0; r < 3; r++) {
-            for (int c = 0; c < 3; c++) {
-                int sx = gx + c * (slotSize + 3);
-                int sy = gy + r * (slotSize + 3);
-                String slotKey = rowKeys[r] + colKeys[c];
+        // Map crafting grid coordinates:
+        // Row 1: slots 10, 11, 12 -> A1, A2, A3
+        // Row 2: slots 19, 20, 21 -> B1, B2, B3
+        // Row 3: slots 28, 29, 30 -> C1, C2, C3
+        Map<Integer, String> gridSlotMap = new LinkedHashMap<>();
+        gridSlotMap.put(10, "A1");
+        gridSlotMap.put(11, "A2");
+        gridSlotMap.put(12, "A3");
+        gridSlotMap.put(19, "B1");
+        gridSlotMap.put(20, "B2");
+        gridSlotMap.put(21, "B3");
+        gridSlotMap.put(28, "C1");
+        gridSlotMap.put(29, "C2");
+        gridSlotMap.put(30, "C3");
 
-                JsonObject slotItem = null;
-                if (activeModal.grid != null && activeModal.grid.has(slotKey) && activeModal.grid.get(slotKey).isJsonObject()) {
-                    slotItem = activeModal.grid.getAsJsonObject(slotKey);
+        for (int i = 0; i < 54; i++) {
+            int row = i / 9;
+            int col = i % 9;
+            int slotX = startX + col * 18;
+            int slotY = startY + row * 18;
+
+            ItemStack slotStack = null;
+            Consumer<Integer> slotClickAction = null;
+
+            if (gridSlotMap.containsKey(i)) {
+                String gridKey = gridSlotMap.get(i);
+                if (activeModal.grid != null && activeModal.grid.has(gridKey) && activeModal.grid.get(gridKey).isJsonObject()) {
+                    JsonObject cell = activeModal.grid.getAsJsonObject(gridKey);
+                    String id = optString(cell, "id", "");
+                    int count = optInt(cell, "count", 1);
+                    ItemStack st = SkyblockItemManager.createSkyblockItem(id);
+                    if (st == null || st.isEmpty()) st = new ItemStack(Items.STONE);
+                    st = st.copy();
+                    st.setCount(Math.max(1, count));
+
+                    // Add need/have info to item lore
+                    CraftIngredient matchIng = null;
+                    for (CraftIngredient ing : activeModal.ingredients) {
+                        if (ing.id.equalsIgnoreCase(id) || ing.name.equalsIgnoreCase(id)) {
+                            matchIng = ing;
+                            break;
+                        }
+                    }
+
+                    List<Component> extraLore = new ArrayList<>();
+                    ItemLore existingLore = st.get(DataComponents.LORE);
+                    if (existingLore != null) {
+                        extraLore.addAll(existingLore.lines());
+                    }
+                    extraLore.add(Component.literal(""));
+                    if (matchIng != null) {
+                        extraLore.add(Component.literal("§7Need: §e" + matchIng.needed + " §8| §7Have: " + (matchIng.hasEnough ? "§a" : "§c") + matchIng.owned));
+                        if (!matchIng.hasEnough) {
+                            extraLore.add(Component.literal("§cMissing: " + matchIng.missing + " §7(Est. §6" + formatCoins(matchIng.unitPrice * matchIng.missing) + "§7)"));
+                        }
+                    }
+                    extraLore.add(Component.literal("§eLeft-Click: §f/bz " + (matchIng != null ? matchIng.name : id)));
+                    extraLore.add(Component.literal("§bRight-Click: §fOpen Wiki"));
+                    st.set(DataComponents.LORE, new ItemLore(extraLore));
+
+                    slotStack = st;
+                    final String ingName = matchIng != null ? matchIng.name : id;
+                    slotClickAction = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + ingName.replace(" ", "_"));
+                        } else {
+                            triggerBazaarSearch(ingName);
+                        }
+                    };
                 }
+            } else if (i == 23) {
+                // Slot 23: Crafting Table
+                ItemStack table = new ItemStack(Items.CRAFTING_TABLE);
+                table.set(DataComponents.CUSTOM_NAME, Component.literal("§aCrafting Table"));
+                List<Component> tLore = new ArrayList<>();
+                tLore.add(Component.literal("§7Crafting recipe for: §f" + activeModal.itemName));
+                table.set(DataComponents.LORE, new ItemLore(tLore));
+                slotStack = table;
+            } else if (i == 25) {
+                // Slot 25: Output Crafted Item
+                String lookup = activeModal.itemId != null && !activeModal.itemId.isEmpty() ? activeModal.itemId : activeModal.itemName;
+                ItemStack out = SkyblockItemManager.createSkyblockItem(lookup);
+                if (out == null || out.isEmpty()) {
+                    String cleanId = activeModal.itemName.toUpperCase(Locale.ROOT).replace(" ", "_").replace("'", "");
+                    out = SkyblockItemManager.createSkyblockItem(cleanId);
+                }
+                if (out == null || out.isEmpty()) {
+                    out = new ItemStack(Items.PLAYER_HEAD);
+                }
+                out = out.copy();
 
-                boolean slotHov = mouseX >= sx && mouseX <= sx + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
-                g.fill(sx, sy, sx + slotSize, sy + slotSize, slotHov ? 0x4038BDF8 : 0x1A1E293B);
-                g.outline(sx, sy, slotSize, slotSize, slotHov ? 0xFF38BDF8 : 0x40334155);
+                int rColor = getRarityColor(activeModal.rarity);
+                out.set(DataComponents.CUSTOM_NAME, Component.literal(activeModal.itemName).withStyle(s -> s.withColor(rColor)));
 
-                if (slotItem != null) {
-                    String id = slotItem.has("id") ? slotItem.get("id").getAsString() : "";
-                    int count = slotItem.has("count") ? slotItem.get("count").getAsInt() : 1;
-                    String abbrev = id.length() > 4 ? id.substring(0, 4) : id;
-                    g.centeredText(font, "§f" + abbrev, sx + slotSize / 2, sy + 6, 0xFFFFFFFF);
-                    if (count > 1) {
-                        g.text(font, "§e" + count, sx + slotSize - font.width(String.valueOf(count)) - 2, sy + slotSize - 9, 0xFFFDE047, false);
+                List<Component> outLore = new ArrayList<>();
+                ItemLore baseLore = out.get(DataComponents.LORE);
+                if (baseLore != null) {
+                    outLore.addAll(baseLore.lines());
+                }
+                outLore.add(Component.literal(""));
+                outLore.add(Component.literal("§eClick to view recipe!"));
+                if (activeModal.totalMissingCost > 0) {
+                    outLore.add(Component.literal("§6Raw Craft Cost: §e" + formatCoins(activeModal.totalMissingCost)));
+                }
+                outLore.add(Component.literal("§bRight-Click: §fOpen SkyBlock Wiki"));
+                out.set(DataComponents.LORE, new ItemLore(outLore));
+
+                slotStack = out;
+                slotClickAction = (btn) -> {
+                    if (btn == 1) {
+                        Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + activeModal.itemName.replace(" ", "_"));
+                    } else {
+                        triggerAhSearch(activeModal.itemName);
+                    }
+                };
+            } else if (i == 48) {
+                // Slot 48: Go Back
+                ItemStack arrow = new ItemStack(Items.ARROW);
+                arrow.set(DataComponents.CUSTOM_NAME, Component.literal("§aGo Back"));
+                List<Component> aLore = new ArrayList<>();
+                aLore.add(Component.literal("§7To previous screen"));
+                arrow.set(DataComponents.LORE, new ItemLore(aLore));
+                slotStack = arrow;
+                slotClickAction = (btn) -> this.activeModal = null;
+            } else if (i == 49) {
+                // Slot 49: Close
+                ItemStack barrier = new ItemStack(Items.BARRIER);
+                barrier.set(DataComponents.CUSTOM_NAME, Component.literal("§cClose"));
+                slotStack = barrier;
+                slotClickAction = (btn) -> this.activeModal = null;
+            } else if (i == 50) {
+                // Slot 50: Buy Missing / Add to Queue
+                ItemStack queueItem = new ItemStack(activeModal.canCraftNow ? Items.EMERALD : Items.HOPPER);
+                queueItem.set(DataComponents.CUSTOM_NAME, Component.literal(activeModal.canCraftNow ? "§a✔ Ready to Craft!" : "§e🛒 Buy Missing Ingredients"));
+                List<Component> qLore = new ArrayList<>();
+                if (activeModal.canCraftNow) {
+                    qLore.add(Component.literal("§7You have all ingredients in bags & sacks!"));
+                    qLore.add(Component.literal("§eClick to run /recipe " + activeModal.itemName));
+                } else {
+                    qLore.add(Component.literal("§7Missing ingredients:"));
+                    for (CraftIngredient mi : activeModal.missingToBuy) {
+                        qLore.add(Component.literal("§c- " + mi.needed + "x §f" + mi.name));
+                    }
+                    qLore.add(Component.literal(""));
+                    qLore.add(Component.literal("§6Total Est. Cost: §e" + formatCoins(activeModal.totalMissingCost)));
+                    qLore.add(Component.literal("§eClick to open Bazaar & copy quantity to clipboard!"));
+                }
+                queueItem.set(DataComponents.LORE, new ItemLore(qLore));
+                slotStack = queueItem;
+                slotClickAction = (btn) -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null) {
+                        if (activeModal.canCraftNow) {
+                            mc.player.connection.sendCommand("recipe " + activeModal.itemName);
+                            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aOpened recipe for §e" + activeModal.itemName));
+                        } else if (!activeModal.missingToBuy.isEmpty()) {
+                            CraftIngredient first = activeModal.missingToBuy.get(0);
+                            try {
+                                mc.keyboardHandler.setClipboard(String.valueOf(first.needed));
+                            } catch (Exception ignored) {}
+                            mc.player.connection.sendCommand("bz " + first.name);
+                            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aOpened Bazaar for §e" + first.name + "§a. Copied quantity (§b" + first.needed + "§a) to clipboard!"));
+                        }
+                    }
+                    this.activeModal = null;
+                };
+            } else {
+                // Border glass pane
+                slotStack = grayPane;
+            }
+
+            if (slotStack != null && !slotStack.isEmpty()) {
+                g.item(slotStack, slotX, slotY);
+                g.itemDecorations(font, slotStack, slotX, slotY);
+
+                if (mouseX >= slotX && mouseX < slotX + 16 && mouseY >= slotY && mouseY < slotY + 16) {
+                    g.fill(slotX, slotY, slotX + 16, slotY + 16, -2130706433);
+                    if (slotStack != grayPane) {
+                        hoveredSlotStack = slotStack;
                     }
                 }
+
+                if (slotClickAction != null) {
+                    modalActions.add(new ClickableAction(slotX, slotY, slotX + 16, slotY + 16, slotClickAction, null, null));
+                }
             }
         }
 
-        // Right: Required Ingredients List
-        int ix = mX + 120;
-        int iy = mY + 34;
-        int iw = mW - 136;
-
-        g.text(font, "§b§lRequired Ingredients:", ix, iy, 0xFF38BDF8, false);
-        iy += 14;
-
-        for (CraftIngredient ing : activeModal.ingredients) {
-            g.fill(ix, iy, ix + iw, iy + 22, 0x1A1E293B);
-            g.outline(ix, iy, iw, 22, ing.hasEnough ? 0xFF059669 : 0x60475569);
-
-            g.text(font, "§f" + ing.name, ix + 6, iy + 3, 0xFFFFFFFF, false);
-            String qtyStr = "§7Need: §e" + ing.needed + " §8| §7Have: " + (ing.hasEnough ? "§a" : "§c") + ing.owned;
-            g.text(font, qtyStr, ix + 6, iy + 12, 0xFFCBD5E1, false);
-
-            if (ing.hasEnough) {
-                g.text(font, "§a✔ OK", ix + iw - 32, iy + 7, 0xFF10B981, true);
-            } else {
-                g.text(font, "§c-" + ing.missing, ix + iw - 32, iy + 7, 0xFFEF4444, true);
-            }
-            iy += 26;
+        // Render hovered slot tooltip
+        if (hoveredSlotStack != null) {
+            try {
+                g.setTooltipForNextFrame(font, hoveredSlotStack, mouseX, mouseY);
+            } catch (Throwable ignored) {}
         }
-
-        // Status Banner
-        int bannerY = mY + 168;
-        if (activeModal.canCraftNow) {
-            g.fill(mX + 16, bannerY, mX + mW - 16, bannerY + 24, 0xCC064E3B);
-            g.outline(mX + 16, bannerY, mW - 32, 24, 0xFF10B981);
-            g.centeredText(font, "§a§l✔ Already have enough mats in bags & sacks to craft!", mX + mW / 2, bannerY + 8, 0xFFFFFFFF);
-        } else {
-            g.fill(mX + 16, bannerY, mX + mW - 16, bannerY + 24, 0xCC78350F);
-            g.outline(mX + 16, bannerY, mW - 32, 24, 0xFFD97706);
-            String missingBanner = "§eMissing materials! Est. Cost: §6" + formatCoins(activeModal.totalMissingCost);
-            g.centeredText(font, missingBanner, mX + mW / 2, bannerY + 8, 0xFFFFFFFF);
-        }
-
-        // Action Buttons
-        int btnY = mY + 204;
-        int btnW = 180;
-        int btnH = 22;
-        int btnX = mX + 16;
-        boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
-
-        if (activeModal.canCraftNow) {
-            g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xCC059669 : 0x99047857);
-            g.outline(btnX, btnY, btnW, btnH, 0xFF10B981);
-            g.centeredText(font, "§f§l⚡ Open /recipe", btnX + btnW / 2, btnY + 7, 0xFFFFFFFF);
-
-            modalActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, () -> {
-                Minecraft mc = Minecraft.getInstance();
-                if (mc.player != null) {
-                    mc.player.connection.sendCommand("recipe " + activeModal.itemName);
-                    mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aOpened recipe for §e" + activeModal.itemName));
-                }
-                this.activeModal = null;
-            }, "Open /recipe in-game"));
-        } else {
-            g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xCCB45309 : 0x9978350F);
-            g.outline(btnX, btnY, btnW, btnH, 0xFFD97706);
-            g.centeredText(font, "§f§l🛒 Add to Queue / Buy Missing", btnX + btnW / 2, btnY + 7, 0xFFFFFFFF);
-
-            modalActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, () -> {
-                Minecraft mc = Minecraft.getInstance();
-                if (mc.player != null && !activeModal.missingToBuy.isEmpty()) {
-                    CraftIngredient first = activeModal.missingToBuy.get(0);
-                    try {
-                        mc.keyboardHandler.setClipboard(String.valueOf(first.needed));
-                    } catch (Exception ignored) {}
-                    mc.player.connection.sendCommand("bz " + first.name);
-                    mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aOpened Bazaar for §e" + first.name + "§a. Copied quantity (§b" + first.needed + "§a) to clipboard!"));
-                }
-                this.activeModal = null;
-            }, "Open Bazaar for first missing ingredient and copy quantity"));
-        }
-
-        // Close Modal Button
-        int cBtnW = 80;
-        int cBtnX = mX + mW - cBtnW - 16;
-        boolean cBtnHov = mouseX >= cBtnX && mouseX <= cBtnX + cBtnW && mouseY >= btnY && mouseY <= btnY + btnH;
-        g.fill(cBtnX, btnY, cBtnX + cBtnW, btnY + btnH, cBtnHov ? 0xCC475569 : 0x99334155);
-        g.outline(cBtnX, btnY, cBtnW, btnH, 0xFF64748B);
-        g.centeredText(font, "Close", cBtnX + cBtnW / 2, btnY + 7, 0xFFFFFFFF);
-        modalActions.add(new ClickableAction(cBtnX, btnY, cBtnX + cBtnW, btnY + btnH, () -> this.activeModal = null, "Close Modal"));
     }
 
     private void drawBonusRow(GuiGraphicsExtractor g, Font font, int x, int y, int w, String title, String desc, String status) {
@@ -1676,8 +1774,8 @@ public class MagicalPowerScreen extends Screen {
                     }
                 }
             }
-            int mW = 400;
-            int mH = 265;
+            int mW = 176;
+            int mH = 222;
             int mX = (this.width - mW) / 2;
             int mY = (this.height - mH) / 2;
             if (mouseX < mX || mouseX > mX + mW || mouseY < mY || mouseY > mY + mH) {

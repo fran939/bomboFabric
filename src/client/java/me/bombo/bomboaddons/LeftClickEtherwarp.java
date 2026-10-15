@@ -28,17 +28,26 @@ public class LeftClickEtherwarp {
    private static boolean holdingSneak = false;
    /** True when the sneak currently down was pressed by us and has to be released again. */
    private static boolean sneakForcedByHold = false;
+   private static boolean wasUseDown = false;
+   private static long usePressStartTime = 0L;
+   private static long leftClickAttackStartTime = 0L;
 
    public static boolean isBusy() {
       BomboConfig.Settings s = BomboConfig.get();
-      if (s != null && (s.fastAotv || s.fastHyp || s.fastUseEnabled)) {
-         Minecraft mc = Minecraft.getInstance();
-         if (mc.options != null && mc.options.keyUse.isDown()) {
-            return true;
+      if (s == null) return false;
+      boolean anyEnabled = s.leftClickEtherwarp || s.fastAotv || s.fastHyp || s.fastUseEnabled;
+      if (!anyEnabled) {
+         if (state != 0 || holdingSneak || sneakForcedByHold) {
+            reset();
          }
+         return false;
       }
       Minecraft mc = Minecraft.getInstance();
-      boolean attackDown = mc.options != null && mc.options.keyAttack.isDown() && isHoldingEtherwarp();
+      if (mc.options == null) return false;
+      if ((s.fastAotv || s.fastHyp || s.fastUseEnabled) && mc.options.keyUse.isDown()) {
+         return true;
+      }
+      boolean attackDown = mc.options.keyAttack.isDown() && s.leftClickEtherwarp && isHoldingEtherwarp();
       return state != 0 || holdingSneak || sneakForcedByHold || attackDown;
    }
 
@@ -49,49 +58,72 @@ public class LeftClickEtherwarp {
          return;
       }
 
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null) {
+         reset();
+         return;
+      }
+
       boolean attackDown = mc.options != null && mc.options.keyAttack.isDown();
       if (!attackDown && (holdingSneak || sneakForcedByHold)) {
          releaseForcedSneak(mc);
       }
 
-      BomboConfig.Settings s = BomboConfig.get();
-      if (s != null && mc.options != null && mc.options.keyUse.isDown()) {
-         ItemStack held = mc.player.getMainHandItem();
-         if (!held.isEmpty()) {
-            String name = held.getHoverName().getString();
-            long now = System.currentTimeMillis();
+      long now = System.currentTimeMillis();
 
-            if (s.fastUseEnabled && matchesFastUseTarget(held, s)) {
-               int speed = Math.max(1, Math.min(4, s.fastUseSpeed));
-               long delay = (5 - speed) * 50L;
-               if (now - lastFastHypTime >= delay) {
-                  lastFastHypTime = now;
-                  if (mc.gameMode != null) {
-                     mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                     GardenMacroDetector.recordWeaponUse();
-                  }
-               }
-            } else if (s.fastAotv && (name.contains("Aspect of the Void") || name.contains("Aspect of the End"))) {
-               int speed = Math.max(1, Math.min(4, s.fastAotvSpeed));
-               long delay = (5 - speed) * 50L;
-               if (now - lastFastAotvTime >= delay) {
-                  lastFastAotvTime = now;
-                  if (mc.gameMode != null) {
-                     mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                     GardenMacroDetector.recordWeaponUse();
-                  }
-               }
-            } else if (s.fastHyp && (name.contains("Hyperion") || name.contains("Valkyrie") || name.contains("Scylla") || name.contains("Astraea") || name.contains("Necron's Blade"))) {
-               int speed = Math.max(1, Math.min(4, s.fastHypSpeed));
-               long delay = (5 - speed) * 50L;
-               if (now - lastFastHypTime >= delay) {
-                  lastFastHypTime = now;
-                  if (mc.gameMode != null) {
-                     mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
-                     GardenMacroDetector.recordWeaponUse();
+      // Handle Fast Use / Fast AOTV / Fast Hyp
+      if (mc.options != null) {
+         boolean isUseDown = mc.options.keyUse.isDown();
+         if (isUseDown) {
+            if (!wasUseDown) {
+               // Initial press tick: Minecraft natively calls useItem() for single clicks!
+               // Do NOT execute here so single clicks never double-fire.
+               wasUseDown = true;
+               usePressStartTime = now;
+            } else {
+               // Player is deliberately holding the use button down (>= 200ms)
+               if (now - usePressStartTime >= 200L) {
+                  ItemStack held = mc.player.getMainHandItem();
+                  if (!held.isEmpty()) {
+                     String name = held.getHoverName().getString();
+
+                     if (s.fastUseEnabled && matchesFastUseTarget(held, s)) {
+                        int speed = Math.max(1, Math.min(4, s.fastUseSpeed));
+                        long delay = (5 - speed) * 50L;
+                        if (now - lastFastHypTime >= delay) {
+                           lastFastHypTime = now;
+                           if (mc.gameMode != null) {
+                              mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                              GardenMacroDetector.recordWeaponUse();
+                           }
+                        }
+                     } else if (s.fastAotv && (name.contains("Aspect of the Void") || name.contains("Aspect of the End"))) {
+                        int speed = Math.max(1, Math.min(4, s.fastAotvSpeed));
+                        long delay = (5 - speed) * 50L;
+                        if (now - lastFastAotvTime >= delay) {
+                           lastFastAotvTime = now;
+                           if (mc.gameMode != null) {
+                              mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                              GardenMacroDetector.recordWeaponUse();
+                           }
+                        }
+                     } else if (s.fastHyp && (name.contains("Hyperion") || name.contains("Valkyrie") || name.contains("Scylla") || name.contains("Astraea") || name.contains("Necron's Blade"))) {
+                        int speed = Math.max(1, Math.min(4, s.fastHypSpeed));
+                        long delay = (5 - speed) * 50L;
+                        if (now - lastFastHypTime >= delay) {
+                           lastFastHypTime = now;
+                           if (mc.gameMode != null) {
+                              mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
+                              GardenMacroDetector.recordWeaponUse();
+                           }
+                        }
+                     }
                   }
                }
             }
+         } else {
+            wasUseDown = false;
+            usePressStartTime = 0L;
          }
       }
 
@@ -100,11 +132,11 @@ public class LeftClickEtherwarp {
             if (mc.gameMode != null) {
                mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                GardenMacroDetector.recordWeaponUse();
+               lastHoldEtherwarpTime = now;
             }
+            state = 2;
             if (!attackDown) {
                releaseForcedSneak(mc);
-            } else {
-               state = 2;
             }
          } else if (state == 2) {
             if (!attackDown) {
@@ -223,11 +255,15 @@ public class LeftClickEtherwarp {
    }
 
    public static boolean onLeftClick() {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null || !s.leftClickEtherwarp) return false;
       if (isHoldingEtherwarp()) {
          Minecraft mc = Minecraft.getInstance();
          if (mc.player == null || mc.level == null) return false;
 
-         BomboConfig.Settings s = BomboConfig.get();
+         long now = System.currentTimeMillis();
+         leftClickAttackStartTime = now;
+
          ItemStack heldItem = mc.player.getMainHandItem();
          double maxDist = getEtherwarpMaxDistance(heldItem);
 
@@ -247,7 +283,7 @@ public class LeftClickEtherwarp {
                   if (mc.gameMode != null) {
                      mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                      GardenMacroDetector.recordWeaponUse();
-                     lastHoldFallbackTime = System.currentTimeMillis();
+                     lastHoldFallbackTime = now;
                   }
                   return true;
                } else {
@@ -263,6 +299,8 @@ public class LeftClickEtherwarp {
                if (mc.gameMode != null) {
                   mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                   GardenMacroDetector.recordWeaponUse();
+                  lastHoldEtherwarpTime = now;
+                  state = 2; // completed for this click
                }
             } else {
                getSneakMapping(mc).setDown(true);
@@ -279,11 +317,16 @@ public class LeftClickEtherwarp {
    }
 
    public static void onContinueAttack() {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null || !s.leftClickEtherwarp) return;
       Minecraft mc = Minecraft.getInstance();
       if (mc.options == null || !mc.options.keyAttack.isDown()) return;
       if (isHoldingEtherwarp()) {
          if (mc.player == null || mc.level == null) return;
-         BomboConfig.Settings s = BomboConfig.get();
+
+         long now = System.currentTimeMillis();
+         // Do NOT fire onContinueAttack on the initial click frame! Only when held for >= 250ms!
+         if (now - leftClickAttackStartTime < 250L) return;
 
          ItemStack heldItem = mc.player.getMainHandItem();
          double maxDist = getEtherwarpMaxDistance(heldItem);
@@ -294,24 +337,17 @@ public class LeftClickEtherwarp {
          boolean canEtherwarp = (hit.getType() == HitResult.Type.BLOCK) && isValidEtherwarpTarget(mc.level, hit.getBlockPos(), hit.getDirection());
 
          if (!canEtherwarp) {
-            // Aim drifted onto the sky or onto a block that cannot be etherwarped: the sneak this hold
-            // pressed has to come back up straight away, otherwise the player keeps crouching while the
-            // item is used normally.
             holdingSneak = false;
             releaseForcedSneak(mc);
          }
 
          if (canEtherwarp) {
-            // Holding left click on a valid target acts like holding sneak + right click: sneak is
-            // kept down (the packet is only sent when the player was not already sneaking) and the
-            // item keeps being used, so etherwarping repeats for as long as the button is held.
             holdingSneak = true;
             if (!mc.options.keyShift.isDown()) {
                getSneakMapping(mc).setDown(true);
                sendSneakPacket(mc, true);
                sneakForcedByHold = true;
             }
-            long now = System.currentTimeMillis();
             if (now - lastHoldEtherwarpTime >= 200L) {
                lastHoldEtherwarpTime = now;
                if (mc.gameMode != null) {
@@ -323,7 +359,6 @@ public class LeftClickEtherwarp {
          }
 
          if (s.etherwarpBlockOnly && s.etherwarpFallbackRightClick) {
-            long now = System.currentTimeMillis();
             if (now - lastHoldFallbackTime >= 200L) {
                lastHoldFallbackTime = now;
                if (mc.gameMode != null) {
@@ -342,11 +377,22 @@ public class LeftClickEtherwarp {
       holdingSneak = false;
       state = 0;
       if (mc.options != null && mc.options.keyShift != null) {
-         mc.options.keyShift.setDown(false);
-         if (mc.player != null) {
-            mc.player.setShiftKeyDown(false);
+         boolean physicallyPressed = false;
+         try {
+            long handle = mc.getWindow().handle();
+            if (org.lwjgl.glfw.GLFW.glfwGetKey(handle, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS ||
+                org.lwjgl.glfw.GLFW.glfwGetKey(handle, org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS) {
+               physicallyPressed = true;
+            }
+         } catch (Throwable ignored) {}
+
+         if (!physicallyPressed) {
+            mc.options.keyShift.setDown(false);
+            if (mc.player != null) {
+               mc.player.setShiftKeyDown(false);
+            }
+            sendSneakPacket(mc, false);
          }
-         sendSneakPacket(mc, false);
       }
    }
 

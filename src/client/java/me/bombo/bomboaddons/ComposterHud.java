@@ -159,32 +159,29 @@ public class ComposterHud {
    }
 
    private static void render(GuiGraphicsExtractor g, DeltaTracker tickDelta) {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null || (!s.composterHud && !s.composterTimerHud)) return;
+      Minecraft client = Minecraft.getInstance();
+      if (client.options.keyToggleGui.isDown()) return;
+      if (client.gui.screen() != null && !(client.gui.screen() instanceof HudMoveScreen) && !(client.gui.screen() instanceof AbstractContainerScreen)) return;
+
       try (me.bombo.bomboaddons.PerformanceProfiler.Scope p = me.bombo.bomboaddons.PerformanceProfiler.scope("HUD: Composter")) {
-         BomboConfig.Settings s = BomboConfig.get();
-         if (s.composterHud || s.composterTimerHud) {
-            Minecraft client = Minecraft.getInstance();
-            if (!client.options.keyToggleGui.isDown()) {
-               if (client.gui.screen() == null || client.gui.screen() instanceof HudMoveScreen || client.gui.screen() instanceof AbstractContainerScreen) {
-                  Screen var5 = client.gui.screen();
-                  if (var5 instanceof AbstractContainerScreen) {
-                     long now = System.currentTimeMillis();
-                     if (now - lastContainerCheckTime > 500L) {
-                        lastContainerCheckTime = now;
-                        AbstractContainerScreen<?> containerScreen = (AbstractContainerScreen)var5;
-                        onContainerTick(containerScreen);
-                     }
-                  }
-
-                  if (s.composterHud && (s.composterLastOrganic >= (double)0.0F || s.composterLastFuel >= (double)0.0F)) {
-                     drawComposterInfo(g, s.composterHudX, s.composterHudY, false);
-                  }
-
-                  if (s.composterTimerHud && (s.composterLastOrganic >= (double)0.0F || s.composterLastFuel >= (double)0.0F)) {
-                     drawComposterTimerInfo(g, s.composterTimerHudX, s.composterTimerHudY, false);
-                  }
-
-               }
+         Screen var5 = client.gui.screen();
+         if (var5 instanceof AbstractContainerScreen) {
+            long now = System.currentTimeMillis();
+            if (now - lastContainerCheckTime > 500L) {
+               lastContainerCheckTime = now;
+               AbstractContainerScreen<?> containerScreen = (AbstractContainerScreen)var5;
+               onContainerTick(containerScreen);
             }
+         }
+
+         if (s.composterHud && (s.composterLastOrganic >= (double)0.0F || s.composterLastFuel >= (double)0.0F)) {
+            drawComposterInfo(g, s.composterHudX, s.composterHudY, false);
+         }
+
+         if (s.composterTimerHud && (s.composterLastOrganic >= (double)0.0F || s.composterLastFuel >= (double)0.0F)) {
+            drawComposterTimerInfo(g, s.composterTimerHudX, s.composterTimerHudY, false);
          }
       }
    }

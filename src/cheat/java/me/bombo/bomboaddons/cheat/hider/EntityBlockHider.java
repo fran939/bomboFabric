@@ -115,7 +115,7 @@ public class EntityBlockHider {
 
       int id = entity.getId();
       long now = System.currentTimeMillis();
-      if (now - lastEntityCacheClear > 1000L) {
+      if (now - lastEntityCacheClear > 30000L) {
          ENTITY_HIDE_CACHE.clear();
          lastEntityCacheClear = now;
       }

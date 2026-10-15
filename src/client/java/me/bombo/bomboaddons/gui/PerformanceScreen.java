@@ -77,11 +77,11 @@ public class PerformanceScreen extends Screen {
     }
 
     private int getHeaderH() { return 56; }
-    private int getWinW() { return Math.min(860, this.width - 40); }
+    private int getWinW() { return Math.min(940, this.width - 24); }
     private int getWinH() {
         int streamCardH = ScreenshareManager.isStreaming() ? 38 : 0;
         int estimatedH = getHeaderH() + streamCardH + Math.max(1, cachedSnapshots.size()) * 36 + 24;
-        return Math.min(Math.max(estimatedH, 200), Math.min(560, this.height - 24));
+        return Math.min(Math.max(estimatedH, 240), Math.min(760, this.height - 24));
     }
     private int getWinX() { return (this.width - getWinW()) / 2; }
     private int getWinY() { return (this.height - getWinH()) / 2; }
@@ -232,7 +232,7 @@ public class PerformanceScreen extends Screen {
         maxScroll = Math.max(0, totalContentHeight - contentH);
         scrollAmount = Math.max(0, Math.min(scrollAmount, maxScroll));
 
-        g.enableScissor(contentX, contentY, contentW, contentH);
+        g.enableScissor(contentX, contentY, contentX + contentW, contentY + contentH);
 
         int curY = contentY - (int) scrollAmount;
 

@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.133",
+    "date": "2026-10-16",
+    "changes": [
+      "~ Etherwarp / Fast Use Click Debounce - Fixed double-click firing on single clicks with fast use / fast AOTV / left-click etherwarp; 100% idle with zero hooks when disabled",
+      "~ Discord HUD & Profiler Zero Overhead - DiscordIpcManager halts all pipe polling and background worker threads when disabled; EntityBlockHider cache TTL increased to 30s",
+      "+ Authentic 54-Slot Chest Crafting GUI - Transformed Magical Power crafting recipe modal into authentic vanilla/Hypixel 54-slot chest container with interactive 3x3 grid, quick-return arrow, and 1-click buy hopper",
+      "~ Pandora's Box & Upgrade Deduplication - Cleaned up duplicate talisman upgrade suggestions, routed Pandora's Box strictly to /ahs with no recipe, and fixed search bar collision in Enrichments tab",
+      "~ Performance HUD Scissor Bounds - Fixed scissor clipping cutting off the bottom of /b perf and widened metrics display"
+    ]
+  },
+  {
     "version": "26.2.28.132",
     "date": "2026-10-15",
     "changes": [

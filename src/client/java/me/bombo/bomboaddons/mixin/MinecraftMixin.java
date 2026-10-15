@@ -33,11 +33,11 @@ public class MinecraftMixin {
          cir.setReturnValue(false);
          cir.cancel();
       } else {
-         if (LeftClickEtherwarp.onLeftClick()) {
+         me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
+         if (s != null && s.leftClickEtherwarp && LeftClickEtherwarp.onLeftClick()) {
             cir.setReturnValue(false);
             cir.cancel();
          }
-
       }
    }
 
@@ -47,7 +47,8 @@ public class MinecraftMixin {
       cancellable = true
    )
    private void onContinueAttack(boolean breaking, CallbackInfo ci) {
-      if (LeftClickEtherwarp.isHoldingEtherwarp()) {
+      me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
+      if (s != null && s.leftClickEtherwarp && LeftClickEtherwarp.isHoldingEtherwarp()) {
          LeftClickEtherwarp.onContinueAttack();
          ci.cancel();
       } else if (KuudraPerkClicker.shouldBlockAttack()) {

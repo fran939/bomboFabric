@@ -557,10 +557,18 @@ public class DiscordIpcManager {
     }
 
     public static void init() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s == null || !s.discordHudEnabled) {
+            return;
+        }
         start();
     }
 
     public static void start() {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s == null || !s.discordHudEnabled) {
+            return;
+        }
         if (RUNNING.compareAndSet(false, true)) {
             workerThread = new Thread(DiscordIpcManager::runLoop, "Bombo-DiscordIPC");
             workerThread.setDaemon(true);
@@ -608,6 +616,11 @@ public class DiscordIpcManager {
 
     private static void runLoop() {
         while (RUNNING.get()) {
+            BomboConfig.Settings s = BomboConfig.get();
+            if (s == null || !s.discordHudEnabled) {
+                stop();
+                break;
+            }
             RandomAccessFile pipe = null;
             try {
                 pipe = findAndOpenPipe();

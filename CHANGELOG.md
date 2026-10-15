@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.133] - 2026-10-16 (Beta)
+
+### Features & Polish
+- **Etherwarp / Fast Use Click Debounce (`LeftClickEtherwarp.java`, `MinecraftMixin.java`):** Fixed double-click firing on single clicks with fast use / fast AOTV / left-click etherwarp. Enforced 100% idle with zero hooks, packet leaks, or tick overhead when features are toggled off.
+- **Discord HUD & Profiler Zero Overhead (`DiscordIpcManager.java`, `EntityBlockHider.java`):** Completely halts all pipe polling, socket writes, and background worker threads when Discord HUD is disabled. Increased EntityBlockHider cache TTL to 30s to eliminate redundant string regex checks.
+- **Authentic 54-Slot Chest Crafting GUI (`MagicalPowerScreen.java`):** Transformed Magical Power crafting recipe modal into an authentic vanilla/Hypixel 54-slot chest container with interactive 3x3 crafting grid, table icon, output result, quick-return arrow (slot 48), close barrier (slot 49), and 1-click buy hopper (slot 50).
+- **Pandora's Box & Upgrade Deduplication (`accessories.js`, `MagicalPowerScreen.java`):** Cleaned up duplicate talisman upgrade suggestions, routed Pandora's Box strictly to `/ahs` with no recipe, and fixed search bar collision in the Enrichments tab.
+- **Performance HUD Scissor Bounds (`PerformanceScreen.java`):** Fixed scissor clipping cutting off the bottom half of `/b perf` and widened window dimensions for high-resolution profiler tables.
+
 ## [26.2.28.132] - 2026-10-15 (Beta)
 
 ### Features & Polish
