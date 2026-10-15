@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.132] - 2026-10-15 (Beta)
+
+### Features & Polish
+- **Liquid Glass Aesthetic (`MagicalPowerScreen`, `ShardsOptimizerScreen`):** Upgraded custom GUIs to modern translucent liquid glass styling with obsidian acrylic backdrops (`0xFA090D16`), glowing neon cyan borders (`0x6038BDF8`), and styled interactive pills and cards.
+- **Accessory Progression & Recombobulator 3000 Engine (`accessories.js`, `MagicalPowerScreen`):** Deduplicated upgrade suggestions by removing redundant `accessory-recomb` duplicates, constrained chain progression to immediate next tiers, integrated `Recombobulate <Owned Item>` into ranked upgrades by coins/MP, and corrected Beastmaster Crest order, Bingo Relic termination, and Rift-exclusive Crux talisman filtering.
+- **Multi-Row Wrapped Talisman Tree & Inactive Status (`MagicalPowerScreen`):** Dynamic multi-row tier wrapping contains long progression lines (such as Campfire Cult Badge's 29 tiers) cleanly on screen. Unequipped or duplicate accessories held in bags or stash are marked with an orange badge (`§6⚠ INACTIVE (Bag)`).
+- **Rich SkyBlock Hover Tooltips & Dual-Click Navigation (`MagicalPowerScreen`):** Hovering any talisman tier displays full item lore, stats, and craft costs. Left-click executes contextual action (3x3 craft recipe modal, `/bz`, or direct `/ahs <item>`), while right-click immediately opens the item's official Hypixel SkyBlock wiki page.
+- **Dedicated Enrichments Tab (`MagicalPowerScreen`):** Added a dedicated tab tracking total applied vs eligible enrichments (Legendary, Mythic, Special), warnings for multi-hatcessory duplicates and lower-tier active mismatches, and 1-click `/bz Enrichment` triggers.
+- **Account API Key Isolation (`BomboApiKeyManager`):** Prevented personal API keys from being overwritten during test account hot-swaps.
+
 ## [26.2.28.131] - 2026-10-15 (Beta)
 
 ### Features & Fixes

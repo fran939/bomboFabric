@@ -219,18 +219,18 @@ public class ShardsOptimizerScreen extends Screen {
         int modalX = (this.width - modalW) / 2;
         int modalY = (this.height - modalH) / 2;
 
-        // Modal backdrop and border (drawn BEFORE widgets so widgets are on top)
-        g.fill(modalX, modalY, modalX + modalW, modalY + modalH, 0xF00D1117);
-        g.outline(modalX, modalY, modalW, modalH, 0xFF30363D);
+        // Modal backdrop and border (liquid glass obsidian aesthetic)
+        g.fill(modalX, modalY, modalX + modalW, modalY + modalH, 0xFA090D16);
+        g.outline(modalX, modalY, modalW, modalH, 0x6038BDF8);
 
-        // Header accent bar
-        g.fill(modalX, modalY, modalX + modalW, modalY + 3, 0xFFF59E0B);
+        // Header accent bar (cyan glowing accent)
+        g.fill(modalX, modalY, modalX + modalW, modalY + 3, 0xFF38BDF8);
 
         // Title and Subtitle
         g.text(this.font, "§6§lAttribute Shards Optimizer", modalX + 12, modalY + 10, -1, true);
-        g.text(this.font, "§7[🌐 Open Web]", modalX + modalW - 95, modalY + 10, 0xFF00D4FF, false);
+        g.text(this.font, "§7[🌐 Open Web]", modalX + modalW - 95, modalY + 10, 0xFF38BDF8, false);
 
-        // Class Selection Pills row
+        // Class Selection Pills row (liquid glass style)
         String[] classes = {"archer", "berserk", "mage", "healer", "tank", "all"};
         int pillX = modalX + 12;
         int pillY = modalY + 28;
@@ -238,9 +238,11 @@ public class ShardsOptimizerScreen extends Screen {
             boolean active = c.equalsIgnoreCase(selectedClass);
             String title = capitalize(c);
             int pW = this.font.width(title) + 12;
-            int bgCol = active ? 0xFFF59E0B : 0xFF21262D;
-            int textCol = active ? 0xFF000000 : 0xFFC9D1D9;
+            int bgCol = active ? 0xDD38BDF8 : 0x250F172A;
+            int borderCol = active ? 0xFFE0F2FE : 0x4038BDF8;
+            int textCol = active ? 0xFF090D16 : 0xFFCBD5E1;
             g.fill(pillX, pillY, pillX + pW, pillY + 16, bgCol);
+            g.outline(pillX, pillY, pW, 16, borderCol);
             g.text(this.font, (active ? "§l" : "") + title, pillX + 6, pillY + 4, textCol, false);
             pillX += pW + 6;
         }
@@ -254,14 +256,14 @@ public class ShardsOptimizerScreen extends Screen {
         int qY = modalY + 53;
         for (String qb : quickBudgets) {
             int qW = this.font.width(qb.toUpperCase()) + 8;
-            g.fill(qX, qY, qX + qW, qY + 16, 0xFF161B22);
-            g.outline(qX, qY, qW, 16, 0xFF30363D);
-            g.text(this.font, qb.toUpperCase(), qX + 4, qY + 4, 0xFF58A6FF, false);
+            g.fill(qX, qY, qX + qW, qY + 16, 0x250F172A);
+            g.outline(qX, qY, qW, 16, 0x4038BDF8);
+            g.text(this.font, qb.toUpperCase(), qX + 4, qY + 4, 0xFF38BDF8, false);
             qX += qW + 4;
         }
 
         // Separator Line
-        g.fill(modalX + 10, modalY + 77, modalX + modalW - 10, modalY + 78, 0xFF30363D);
+        g.fill(modalX + 10, modalY + 77, modalX + modalW - 10, modalY + 78, 0x3038BDF8);
 
         // Render widgets (EditBox, Buttons) on top of the background & headers
         super.extractRenderState(g, mouseX, mouseY, partialTick);
@@ -302,9 +304,9 @@ public class ShardsOptimizerScreen extends Screen {
 
         int currY = contentY + 6 - scrollOffset;
 
-        // Plan Summary Banner (Matches Image 3 stats)
-        g.fill(contentX, currY, contentX + contentW, currY + 40, 0xFF161B22);
-        g.outline(contentX, currY, contentW, 40, 0xFF30363D);
+        // Plan Summary Banner (Liquid Glass style)
+        g.fill(contentX, currY, contentX + contentW, currY + 40, 0x250F172A);
+        g.outline(contentX, currY, contentW, 40, 0x5038BDF8);
 
         String spentStr = ShardsShoppingManager.formatCoins(plan.spent);
         String budgetTotalStr = ShardsShoppingManager.formatCoins(plan.budget);
@@ -313,23 +315,23 @@ public class ShardsOptimizerScreen extends Screen {
         g.text(this.font, "§6Spent: §f" + spentStr + " §8/ §e" + budgetTotalStr + " §7(Remaining: §a" + remainStr + "§7)", contentX + 8, currY + 5, -1, true);
         g.text(this.font, "§eFound Shards: §a" + plan.totalUnlocked + "§8/§f" + plan.totalCatalogShards +
                 " §7• §eMaxed Shards: §a" + plan.totalMaxed + "§8/§f" + plan.totalCatalogShards +
-                " §7• §eTotal Levels: §a" + plan.totalLevels + "§8/§f" + (plan.totalCatalogShards * 10), contentX + 8, currY + 16, 0xFFC9D1D9, false);
-        g.text(this.font, "§a" + plan.upgrades.size() + " Upgrades Planned §7• §b" + plan.directBuys.size() + " Direct Buys §7• §d" + plan.fusions.size() + " Fusions", contentX + 8, currY + 27, 0xFF8B949E, false);
+                " §7• §eTotal Levels: §a" + plan.totalLevels + "§8/§f" + (plan.totalCatalogShards * 10), contentX + 8, currY + 16, 0xFFCBD5E1, false);
+        g.text(this.font, "§a" + plan.upgrades.size() + " Upgrades Planned §7• §b" + plan.directBuys.size() + " Direct Buys §7• §d" + plan.fusions.size() + " Fusions", contentX + 8, currY + 27, 0xFF94A3B8, false);
         currY += 46;
 
         // 1. Direct Buys Shopping List
         if (!plan.directBuys.isEmpty()) {
-            g.text(this.font, "§a§lDIRECT BUYS §7(Click Buy to open Bazaar with Auto-Fill):", contentX + 2, currY, 0xFF2EA043, true);
+            g.text(this.font, "§a§lDIRECT BUYS §7(Click Buy to open Bazaar with Auto-Fill):", contentX + 2, currY, 0xFF34D399, true);
             currY += 14;
 
             for (DirectBuyItem item : plan.directBuys) {
-                g.fill(contentX, currY, contentX + contentW, currY + 20, 0xFF161B22);
-                g.outline(contentX, currY, contentW, 20, 0xFF21262D);
+                g.fill(contentX, currY, contentX + contentW, currY + 20, 0x1A0F172A);
+                g.outline(contentX, currY, contentW, 20, 0x3038BDF8);
 
                 String fusionTag = item.forFusion != null ? " §8(" + item.forFusion + ")" : "";
                 String rColor = ShardsShoppingManager.getRarityColorCode(item.rarity);
                 g.text(this.font, "§f• " + rColor + item.name + " §ax" + item.quantity + fusionTag, contentX + 6, currY + 6, -1, true);
-                g.text(this.font, "§7~" + ShardsShoppingManager.formatCoins(item.estimatedCost), contentX + contentW - 140, currY + 6, 0xFF8B949E, false);
+                g.text(this.font, "§7~" + ShardsShoppingManager.formatCoins(item.estimatedCost), contentX + contentW - 140, currY + 6, 0xFF94A3B8, false);
 
                 // Buy Button [ 🛒 BUY ]
                 int btnX = contentX + contentW - 65;
@@ -337,7 +339,8 @@ public class ShardsOptimizerScreen extends Screen {
                 int btnW = 60;
                 int btnH = 16;
                 boolean isHover = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
-                g.fill(btnX, btnY, btnX + btnW, btnY + btnH, isHover ? 0xFF2EA043 : 0xFF238636);
+                g.fill(btnX, btnY, btnX + btnW, btnY + btnH, isHover ? 0xCC059669 : 0x99047857);
+                g.outline(btnX, btnY, btnW, btnH, 0xFF10B981);
                 g.text(this.font, "🛒 BUY", btnX + 14, btnY + 4, -1, true);
 
                 final String sName = item.name;
@@ -362,17 +365,17 @@ public class ShardsOptimizerScreen extends Screen {
 
         // 2. Fusions Needed
         if (!plan.fusions.isEmpty()) {
-            g.text(this.font, "§d§lFUSION CRAFTS §7(Galatea Shards Fusion Helper):", contentX + 2, currY, 0xFFBC8CFF, true);
+            g.text(this.font, "§d§lFUSION CRAFTS §7(Galatea Shards Fusion Helper):", contentX + 2, currY, 0xFFC084FC, true);
             currY += 14;
 
             for (FusionItem f : plan.fusions) {
-                g.fill(contentX, currY, contentX + contentW, currY + 28, 0xFF161B22);
-                g.outline(contentX, currY, contentW, 28, 0xFF30363D);
+                g.fill(contentX, currY, contentX + contentW, currY + 28, 0x1A0F172A);
+                g.outline(contentX, currY, contentW, 28, 0x3038BDF8);
 
                 String saveTag = f.savingsPercent > 0 ? String.format(Locale.US, " §a(Save %.1f%%)", f.savingsPercent) : "";
                 String rColor = ShardsShoppingManager.getRarityColorCode(f.rarity);
                 g.text(this.font, rColor + f.name + " §fx" + f.quantity + " §7(" + f.craftsCount + " crafts)" + saveTag, contentX + 6, currY + 5, -1, true);
-                g.text(this.font, "§7Recipe: §f" + f.input1Qty + " " + f.input1Name + " §8+ §f" + f.input2Qty + " " + f.input2Name, contentX + 6, currY + 16, 0xFF8B949E, false);
+                g.text(this.font, "§7Recipe: §f" + f.input1Qty + " " + f.input1Name + " §8+ §f" + f.input2Qty + " " + f.input2Name, contentX + 6, currY + 16, 0xFF94A3B8, false);
 
                 synchronized (hoverTargets) {
                     hoverTargets.add(new HoverTooltipTarget(contentX, currY, contentX + contentW, currY + 28,
@@ -388,19 +391,19 @@ public class ShardsOptimizerScreen extends Screen {
 
         // 3. Upgrades Breakdown
         if (!plan.upgrades.isEmpty()) {
-            g.text(this.font, "§e§lTARGET STAT UPGRADES §7(Strict Priority Descending):", contentX + 2, currY, 0xFFF59E0B, true);
+            g.text(this.font, "§e§lTARGET STAT UPGRADES §7(Strict Priority Descending):", contentX + 2, currY, 0xFFFBBF24, true);
             currY += 14;
 
             for (int i = 0; i < plan.upgrades.size(); i++) {
                 PlannedUpgrade u = plan.upgrades.get(i);
-                g.fill(contentX, currY, contentX + contentW, currY + 22, 0xFF161B22);
-                g.outline(contentX, currY, contentW, 22, 0xFF21262D);
+                g.fill(contentX, currY, contentX + contentW, currY + 22, 0x1A0F172A);
+                g.outline(contentX, currY, contentW, 22, 0x3038BDF8);
 
                 String starStr = "★".repeat(Math.max(1, Math.min(5, u.priority)));
                 String rColor = ShardsShoppingManager.getRarityColorCode(u.rarity);
                 g.text(this.font, "#" + (i + 1) + " §e" + starStr + " " + rColor + u.name + " §7(" + u.attrName + ")", contentX + 6, currY + 7, -1, true);
-                g.text(this.font, "§bTier " + u.fromTier + " ➔ " + u.toTier + " §7(+" + u.shardsNeeded + ")", contentX + contentW - 200, currY + 7, 0xFF58A6FF, false);
-                g.text(this.font, "§6" + ShardsShoppingManager.formatCoins(u.cost), contentX + contentW - 75, currY + 7, 0xFFF59E0B, true);
+                g.text(this.font, "§bTier " + u.fromTier + " ➔ " + u.toTier + " §7(+" + u.shardsNeeded + ")", contentX + contentW - 200, currY + 7, 0xFF38BDF8, false);
+                g.text(this.font, "§6" + ShardsShoppingManager.formatCoins(u.cost), contentX + contentW - 75, currY + 7, 0xFFFBBF24, true);
 
                 synchronized (hoverTargets) {
                     hoverTargets.add(new HoverTooltipTarget(contentX, currY, contentX + contentW, currY + 22,
@@ -416,12 +419,12 @@ public class ShardsOptimizerScreen extends Screen {
 
         // 4. All Shards Catalog / Maxed Section (Matches Image 3)
         if (showMaxed && plan.allShards != null && !plan.allShards.isEmpty()) {
-            g.text(this.font, "§b§lALL ATTRIBUTE SHARDS §7(Showing All Unlocked & Maxed):", contentX + 2, currY, 0xFF58A6FF, true);
+            g.text(this.font, "§b§lALL ATTRIBUTE SHARDS §7(Showing All Unlocked & Maxed):", contentX + 2, currY, 0xFF38BDF8, true);
             currY += 14;
 
             for (ShardsShoppingManager.FullShardEntry shard : plan.allShards) {
-                g.fill(contentX, currY, contentX + contentW, currY + 18, 0xFF161B22);
-                g.outline(contentX, currY, contentW, 18, 0xFF21262D);
+                g.fill(contentX, currY, contentX + contentW, currY + 18, 0x1A0F172A);
+                g.outline(contentX, currY, contentW, 18, 0x3038BDF8);
 
                 String status = shard.isMaxed ? "§a10 Maxed" : (shard.currentTier > 0 ? "§eTier " + shard.currentTier + "/10" : "§7Not Unlocked");
                 String rColor = ShardsShoppingManager.getRarityColorCode(shard.rarity);

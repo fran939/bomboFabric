@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class MagicalPowerScreen extends Screen {
     private final Screen parent;
@@ -57,6 +58,7 @@ public class MagicalPowerScreen extends Screen {
         UPGRADES,
         MISSING,
         TALISMANS,
+        ENRICHMENTS,
         BREAKDOWN
     }
 
@@ -66,7 +68,7 @@ public class MagicalPowerScreen extends Screen {
         public final int rank;
         public final String name;
         public final String rarity;
-        public final String kind; // "buy" or "upgrade"
+        public final String kind; // "buy", "upgrade", or "recomb"
         public final String from;
         public final long cost;
         public final int mpGain;
@@ -76,10 +78,11 @@ public class MagicalPowerScreen extends Screen {
         public final String recipeText;
         public final JsonObject recipe;
         public final JsonObject craftDetails;
+        public final String targetItem;
 
         public UpgradeEntry(int rank, String name, String rarity, String kind, String from, long cost, int mpGain,
                             double coinsPerMp, boolean purchasable, String source, String recipeText,
-                            JsonObject recipe, JsonObject craftDetails) {
+                            JsonObject recipe, JsonObject craftDetails, String targetItem) {
             this.rank = rank;
             this.name = name;
             this.rarity = rarity != null ? rarity.toUpperCase(Locale.ROOT) : "COMMON";
@@ -93,6 +96,7 @@ public class MagicalPowerScreen extends Screen {
             this.recipeText = recipeText != null ? recipeText : "";
             this.recipe = recipe;
             this.craftDetails = craftDetails;
+            this.targetItem = targetItem != null ? targetItem : name;
         }
     }
 
@@ -117,18 +121,22 @@ public class MagicalPowerScreen extends Screen {
         public final int ap;
         public final long price;
         public final boolean owned;
+        public final String status; // "ACTIVE", "INACTIVE", "UNOWNED"
+        public final List<String> lore;
         public final JsonObject recipe;
         public final JsonObject craftDetails;
         public final long craftCost;
 
         public TalismanTier(String id, String name, String rarity, int ap, long price, boolean owned,
-                            JsonObject recipe, JsonObject craftDetails, long craftCost) {
+                            String status, List<String> lore, JsonObject recipe, JsonObject craftDetails, long craftCost) {
             this.id = id;
             this.name = name;
             this.rarity = rarity != null ? rarity.toUpperCase(Locale.ROOT) : "COMMON";
             this.ap = ap;
             this.price = price;
             this.owned = owned;
+            this.status = status != null ? status : (owned ? "ACTIVE" : "UNOWNED");
+            this.lore = lore != null ? lore : new ArrayList<>();
             this.recipe = recipe;
             this.craftDetails = craftDetails;
             this.craftCost = craftCost;
@@ -146,6 +154,32 @@ public class MagicalPowerScreen extends Screen {
             this.key = key;
             this.wiki = wiki != null ? wiki : "";
             this.tiers = tiers;
+        }
+    }
+
+    public static class EnrichmentWarning {
+        public final String type;
+        public final String title;
+        public final String description;
+
+        public EnrichmentWarning(String type, String title, String description) {
+            this.type = type;
+            this.title = title;
+            this.description = description;
+        }
+    }
+
+    public static class MissingEnrichmentEntry {
+        public final String id;
+        public final String name;
+        public final String rarity;
+        public final long price;
+
+        public MissingEnrichmentEntry(String id, String name, String rarity, long price) {
+            this.id = id;
+            this.name = name;
+            this.rarity = rarity != null ? rarity.toUpperCase(Locale.ROOT) : "LEGENDARY";
+            this.price = price;
         }
     }
 
@@ -183,24 +217,41 @@ public class MagicalPowerScreen extends Screen {
     private final List<UpgradeEntry> missing = new ArrayList<>();
     private final List<TalismanChain> talismanChains = new ArrayList<>();
     private final List<RarityBreakdownEntry> breakdowns = new ArrayList<>();
+    private final List<EnrichmentWarning> enrichmentWarnings = new ArrayList<>();
+    private final List<MissingEnrichmentEntry> missingEnrichments = new ArrayList<>();
+    private int enrichedCount = 0;
+    private int eligibleEnrichmentsCount = 0;
+    private long enrichmentMinCost = 0L;
 
     private CraftModalState activeModal = null;
 
     private EditBox searchBox;
     private String searchFilter = "";
 
-    private static class ClickableAction {
+    public static class ClickableAction {
         int minX, minY, maxX, maxY;
-        Runnable action;
+        java.util.function.Consumer<Integer> clickAction;
         String tooltip;
+        List<Component> richTooltip;
 
         ClickableAction(int minX, int minY, int maxX, int maxY, Runnable action, String tooltip) {
             this.minX = minX;
             this.minY = minY;
             this.maxX = maxX;
             this.maxY = maxY;
-            this.action = action;
+            this.clickAction = (btn) -> { if (btn == 0 && action != null) action.run(); };
             this.tooltip = tooltip;
+            this.richTooltip = null;
+        }
+
+        ClickableAction(int minX, int minY, int maxX, int maxY, java.util.function.Consumer<Integer> action, String tooltip, List<Component> richTooltip) {
+            this.minX = minX;
+            this.minY = minY;
+            this.maxX = maxX;
+            this.maxY = maxY;
+            this.clickAction = action;
+            this.tooltip = tooltip;
+            this.richTooltip = richTooltip;
         }
     }
 
@@ -441,7 +492,8 @@ public class MagicalPowerScreen extends Screen {
                 }
                 String recipeText = optString(o, "craftText", "");
 
-                upgrades.add(new UpgradeEntry(rank++, name, rarity, kind, from, cost, gain, coinsPerMp, purchasable, source, recipeText, recipe, craftDetails));
+                String targetItem = optString(o, "targetItem", name);
+                upgrades.add(new UpgradeEntry(rank++, name, rarity, kind, from, cost, gain, coinsPerMp, purchasable, source, recipeText, recipe, craftDetails, targetItem));
             }
         }
 
@@ -469,7 +521,7 @@ public class MagicalPowerScreen extends Screen {
                     else if (recipe != null) source = "craft";
                 }
                 String recipeText = optString(o, "craftText", "");
-                missing.add(new UpgradeEntry(rank++, name, rarity, "missing", "", cost, gain, 0, true, source, recipeText, recipe, craftDetails));
+                missing.add(new UpgradeEntry(rank++, name, rarity, "missing", "", cost, gain, 0, true, source, recipeText, recipe, craftDetails, name));
             }
         }
 
@@ -494,15 +546,62 @@ public class MagicalPowerScreen extends Screen {
                         int tap = optInt(to, "ap", 0);
                         long tprice = optLong(to, "price", 0L);
                         boolean towned = optBoolean(to, "owned", false);
+                        String tstatus = optString(to, "status", towned ? "ACTIVE" : "UNOWNED");
+                        List<String> tlore = new ArrayList<>();
+                        JsonArray loreArr = optArray(to, "lore");
+                        if (loreArr != null) {
+                            for (JsonElement le : loreArr) {
+                                if (le != null && le.isJsonPrimitive()) tlore.add(le.getAsString());
+                            }
+                        }
                         JsonObject trecipe = optObject(to, "recipe");
                         JsonObject tcraftDetails = optObject(to, "craftDetails");
                         long tcraftCost = optLong(to, "craftCost", 0L);
-                        tiers.add(new TalismanTier(tid, tname, trarity, tap, tprice, towned, trecipe, tcraftDetails, tcraftCost));
+                        tiers.add(new TalismanTier(tid, tname, trarity, tap, tprice, towned, tstatus, tlore, trecipe, tcraftDetails, tcraftCost));
                     }
                 }
                 if (!tiers.isEmpty()) {
                     talismanChains.add(new TalismanChain(cName, cKey, cWiki, tiers));
                 }
+            }
+        }
+
+        // Enrichments
+        this.enrichedCount = optInt(root, "enrichedCount", 0);
+        this.eligibleEnrichmentsCount = optInt(root, "eligibleEnrichmentsCount", 0);
+        JsonObject enrichObj = optObject(root, "enrichments");
+        if (enrichObj != null) {
+            this.enrichmentMinCost = optLong(enrichObj, "cost", 0L);
+            if (this.enrichedCount == 0) this.enrichedCount = optInt(enrichObj, "enrichedCount", 0);
+            if (this.eligibleEnrichmentsCount == 0) this.eligibleEnrichmentsCount = optInt(enrichObj, "eligibleCount", 0);
+        }
+
+        missingEnrichments.clear();
+        JsonArray meArr = optArray(root, "missingEnrichments");
+        if (meArr == null && enrichObj != null) meArr = optArray(enrichObj, "missing");
+        if (meArr != null) {
+            for (JsonElement el : meArr) {
+                if (el == null || !el.isJsonObject()) continue;
+                JsonObject eo = el.getAsJsonObject();
+                String eid = optString(eo, "id", "");
+                String ename = optString(eo, "name", eid);
+                String erarity = optString(eo, "rarity", "LEGENDARY");
+                long eprice = optLong(eo, "cheapest", enrichmentMinCost);
+                missingEnrichments.add(new MissingEnrichmentEntry(eid, ename, erarity, eprice));
+            }
+        }
+
+        enrichmentWarnings.clear();
+        JsonArray ewArr = optArray(root, "enrichmentWarnings");
+        if (ewArr == null && enrichObj != null) ewArr = optArray(enrichObj, "warnings");
+        if (ewArr != null) {
+            for (JsonElement el : ewArr) {
+                if (el == null || !el.isJsonObject()) continue;
+                JsonObject wo = el.getAsJsonObject();
+                String wtype = optString(wo, "type", "WARNING");
+                String wtitle = optString(wo, "title", "Enrichment Warning");
+                String wdesc = optString(wo, "description", "");
+                enrichmentWarnings.add(new EnrichmentWarning(wtype, wtitle, wdesc));
             }
         }
 
@@ -659,6 +758,9 @@ public class MagicalPowerScreen extends Screen {
         drawTabPill(g, font, tabX, tabY, "Talismans (" + talismanChains.size() + ")", currentTab == Tab.TALISMANS, mouseX, mouseY);
         tabX += font.width("Talismans (" + talismanChains.size() + ")") + 20;
 
+        drawTabPill(g, font, tabX, tabY, "Enrichments (" + missingEnrichments.size() + ")", currentTab == Tab.ENRICHMENTS, mouseX, mouseY);
+        tabX += font.width("Enrichments (" + missingEnrichments.size() + ")") + 20;
+
         drawTabPill(g, font, tabX, tabY, "Breakdown", currentTab == Tab.BREAKDOWN, mouseX, mouseY);
 
         // Search label
@@ -701,6 +803,8 @@ public class MagicalPowerScreen extends Screen {
             renderMissingList(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
         } else if (currentTab == Tab.TALISMANS) {
             renderTalismansTab(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
+        } else if (currentTab == Tab.ENRICHMENTS) {
+            renderEnrichmentsTab(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
         } else if (currentTab == Tab.BREAKDOWN) {
             renderBreakdownTab(g, font, contentX, contentY, contentW, contentH, mouseX, mouseY);
         }
@@ -722,6 +826,22 @@ public class MagicalPowerScreen extends Screen {
         // Render Active Crafting Modal if opened
         if (activeModal != null) {
             renderCraftModal(g, font, mouseX, mouseY);
+        }
+
+        // Render rich hover tooltip if any hovered action has one
+        if (activeModal == null) {
+            synchronized (clickActions) {
+                for (ClickableAction action : clickActions) {
+                    if (mouseX >= action.minX && mouseX <= action.maxX && mouseY >= action.minY && mouseY <= action.maxY) {
+                        if (action.richTooltip != null && !action.richTooltip.isEmpty()) {
+                            g.setTooltipForNextFrame(font, action.richTooltip, java.util.Optional.empty(), mouseX, mouseY);
+                        } else if (action.tooltip != null && !action.tooltip.isEmpty()) {
+                            g.setTooltipForNextFrame(font, java.util.List.of(Component.literal(action.tooltip)), java.util.Optional.empty(), mouseX, mouseY);
+                        }
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -747,23 +867,31 @@ public class MagicalPowerScreen extends Screen {
         for (UpgradeEntry u : filtered) {
             if (curY + itemH >= y && curY <= y + h) {
                 boolean hovered = mouseX >= x && mouseX <= x + w - 10 && mouseY >= curY && mouseY <= curY + itemH;
-                int rowBg = hovered ? 0xFF1F2937 : 0xFF111827;
-                int rowBorder = hovered ? 0xFF4B5563 : 0xFF1F2937;
+                int rowBg = hovered ? 0x301E293B : 0x1A0F172A;
+                int rowBorder = hovered ? 0x8038BDF8 : 0x3038BDF8;
 
                 g.fill(x, curY, x + w - 10, curY + itemH, rowBg);
                 g.outline(x, curY, w - 10, itemH, rowBorder);
 
                 // Rank badge
-                g.fill(x + 4, curY + 4, x + 26, curY + itemH - 4, 0xFF374151);
-                g.centeredText(font, "§7#" + u.rank, x + 15, curY + 9, 0xFFE5E7EB);
+                g.fill(x + 4, curY + 4, x + 26, curY + itemH - 4, 0x4038BDF8);
+                g.outline(x + 4, curY + 4, 22, itemH - 8, 0x6038BDF8);
+                g.centeredText(font, "§b#" + u.rank, x + 15, curY + 9, 0xFFE0F2FE);
 
                 // Rarity color & Name
                 int nameColor = getRarityColor(u.rarity);
                 g.text(font, u.name, x + 32, curY + 5, nameColor, true);
 
                 // Subtitle: Kind & From
-                String kindLabel = u.kind.equalsIgnoreCase("upgrade") ? "§eUpgrade from " + (u.from.isEmpty() ? "previous" : u.from) : "§aDirect Buy / Craft";
-                g.text(font, kindLabel, x + 32, curY + 15, 0xFF9CA3AF, false);
+                String kindLabel;
+                if ("recomb".equalsIgnoreCase(u.kind)) {
+                    kindLabel = "§dRecombobulate §8(+" + u.mpGain + " MP) · Upgrade Rarity";
+                } else if (u.kind.equalsIgnoreCase("upgrade")) {
+                    kindLabel = "§eUpgrade from " + (u.from.isEmpty() ? "previous" : u.from);
+                } else {
+                    kindLabel = "§aDirect Buy / Craft";
+                }
+                g.text(font, kindLabel, x + 32, curY + 15, 0xFF94A3B8, false);
 
                 // Gain & Cost Per MP
                 String gainStr = "§d+" + u.mpGain + " MP";
@@ -776,68 +904,118 @@ public class MagicalPowerScreen extends Screen {
                 String costStr = "§6" + formatCoins(u.cost);
                 g.text(font, costStr, x + w - 125, curY + 9, 0xFFFBBF24, true);
 
-                // Action Button (context-aware: /ah, /bz, Craft, Kuudra, Quest)
-                int btnW = 54;
+                // Action Button (context-aware: /ahs, /bz, Craft, Kuudra, Quest)
+                int btnW = 56;
                 int btnH = 18;
-                int btnX = x + w - 70;
+                int btnX = x + w - 72;
                 int btnY = curY + 4;
                 boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
 
                 String btnText;
                 int btnBg;
                 int btnBorder;
-                Runnable action;
+                Consumer<Integer> action;
                 String actionTitle;
 
                 final String itemName = u.name;
                 final String itemRarity = u.rarity;
                 final JsonObject rec = u.recipe;
                 final JsonObject cd = u.craftDetails;
+                final String target = u.targetItem != null && !u.targetItem.isEmpty() ? u.targetItem : itemName;
 
-                if ("craft".equalsIgnoreCase(u.source) || rec != null || cd != null) {
+                if ("recomb".equalsIgnoreCase(u.kind)) {
+                    btnText = "§d⚡ /bz";
+                    btnBg = btnHov ? 0xCC7E22CE : 0x99581C87;
+                    btnBorder = 0xFFA855F7;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/Recombobulator_3000");
+                        } else {
+                            triggerBazaarSearch("Recombobulator 3000");
+                        }
+                    };
+                    actionTitle = "Recombobulate: Buy Recombobulator 3000 on Bazaar";
+                } else if ("craft".equalsIgnoreCase(u.source) || rec != null || cd != null) {
                     btnText = "§e🔨 Craft";
-                    btnBg = btnHov ? 0xFFB45309 : 0xFF78350F;
-                    btnBorder = 0xFFD97706;
-                    action = () -> openCraftModal(itemName, itemRarity, rec, cd);
+                    btnBg = btnHov ? 0xCCB45309 : 0x9978350F;
+                    btnBorder = 0xFFF59E0B;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            openCraftModal(itemName, itemRarity, rec, cd);
+                        }
+                    };
                     actionTitle = "View 3x3 Recipe & Crafting Queue for " + itemName;
                 } else if ("bz".equalsIgnoreCase(u.source)) {
                     btnText = "§f⚡ /bz";
-                    btnBg = btnHov ? 0xFF10B981 : 0xFF065F46;
-                    btnBorder = 0xFF047857;
-                    action = () -> triggerBazaarSearch(itemName);
-                    actionTitle = "Open Bazaar for " + itemName;
+                    btnBg = btnHov ? 0xCC059669 : 0x99065F46;
+                    btnBorder = 0xFF10B981;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            triggerBazaarSearch(target);
+                        }
+                    };
+                    actionTitle = "Open Bazaar for " + target;
                 } else if ("kuudra".equalsIgnoreCase(u.source)) {
                     btnText = "§6🔥 Kuudra";
-                    btnBg = btnHov ? 0xFFEA580C : 0xFF9A3412;
+                    btnBg = btnHov ? 0xCCEA580C : 0x999A3412;
                     btnBorder = 0xFFF97316;
-                    action = () -> triggerAhSearch(itemName);
-                    actionTitle = "Kuudra Drop — Search AH for " + itemName;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            triggerAhSearch(target);
+                        }
+                    };
+                    actionTitle = "Kuudra Drop — Search AH for " + target;
                 } else if ("dark_auction".equalsIgnoreCase(u.source)) {
                     btnText = "§d👑 DA/AH";
-                    btnBg = btnHov ? 0xFF9333EA : 0xFF6B21A8;
+                    btnBg = btnHov ? 0xCC9333EA : 0x996B21A8;
                     btnBorder = 0xFFA855F7;
-                    action = () -> triggerAhSearch(itemName);
-                    actionTitle = "Dark Auction — Search AH for " + itemName;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            triggerAhSearch(target);
+                        }
+                    };
+                    actionTitle = "Dark Auction — Search AH for " + target;
                 } else if ("quest".equalsIgnoreCase(u.source) || "rift".equalsIgnoreCase(u.source)) {
                     btnText = "§b📍 Quest";
-                    btnBg = btnHov ? 0xFF0284C7 : 0xFF075985;
+                    btnBg = btnHov ? 0xCC0284C7 : 0x99075985;
                     btnBorder = 0xFF0EA5E9;
-                    action = () -> Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + itemName.replace(" ", "_"));
-                    actionTitle = "Special Item — Open Wiki Guide for " + itemName;
+                    action = (btn) -> Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                    actionTitle = "Special Item — Open Wiki Guide for " + target;
                 } else {
-                    btnText = "§b⚡ /ah";
-                    btnBg = btnHov ? 0xFF2563EB : 0xFF1E40AF;
-                    btnBorder = 0xFF3B82F6;
-                    action = () -> triggerAhSearch(itemName);
-                    actionTitle = "Open Auction House for " + itemName;
+                    btnText = "§b⚡ /ahs";
+                    btnBg = btnHov ? 0xCC2563EB : 0x991E40AF;
+                    btnBorder = 0xFF38BDF8;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            triggerAhSearch(target);
+                        }
+                    };
+                    actionTitle = "Search Auction House for " + target;
                 }
 
                 g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnBg);
                 g.outline(btnX, btnY, btnW, btnH, btnBorder);
                 g.centeredText(font, btnText, btnX + btnW / 2, btnY + 5, 0xFFFFFFFF);
 
+                List<Component> tip = new ArrayList<>();
+                tip.add(Component.literal("§f§l" + itemName));
+                tip.add(Component.literal("§7" + actionTitle));
+                tip.add(Component.literal(""));
+                tip.add(Component.literal("§eLeft-Click: §fExecute"));
+                tip.add(Component.literal("§bRight-Click: §fOpen SkyBlock Wiki"));
+
                 synchronized (clickActions) {
-                    clickActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, action, actionTitle));
+                    clickActions.add(new ClickableAction(x, curY, x + w - 10, curY + itemH, action, actionTitle, tip));
                 }
             }
             curY += itemH + 4;
@@ -866,10 +1044,11 @@ public class MagicalPowerScreen extends Screen {
         for (UpgradeEntry u : filtered) {
             if (curY + itemH >= y && curY <= y + h) {
                 boolean hovered = mouseX >= x && mouseX <= x + w - 10 && mouseY >= curY && mouseY <= curY + itemH;
-                int rowBg = hovered ? 0xFF1F2937 : 0xFF111827;
+                int rowBg = hovered ? 0x301E293B : 0x1A0F172A;
+                int rowBorder = hovered ? 0x8038BDF8 : 0x3038BDF8;
 
                 g.fill(x, curY, x + w - 10, curY + itemH, rowBg);
-                g.outline(x, curY, w - 10, itemH, hovered ? 0xFF4B5563 : 0xFF1F2937);
+                g.outline(x, curY, w - 10, itemH, rowBorder);
 
                 int nameColor = getRarityColor(u.rarity);
                 g.text(font, u.name, x + 12, curY + 7, nameColor, true);
@@ -880,71 +1059,126 @@ public class MagicalPowerScreen extends Screen {
                 }
 
                 // Action Button
-                int btnW = 54;
+                int btnW = 56;
                 int btnH = 16;
-                int btnX = x + w - 70;
+                int btnX = x + w - 72;
                 int btnY = curY + 4;
                 boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
 
                 String btnText;
                 int btnBg;
                 int btnBorder;
-                Runnable action;
+                Consumer<Integer> action;
                 String actionTitle;
 
                 final String itemName = u.name;
                 final String itemRarity = u.rarity;
                 final JsonObject rec = u.recipe;
                 final JsonObject cd = u.craftDetails;
+                final String target = u.targetItem != null && !u.targetItem.isEmpty() ? u.targetItem : itemName;
 
                 if ("craft".equalsIgnoreCase(u.source) || rec != null || cd != null) {
                     btnText = "§e🔨 Craft";
-                    btnBg = btnHov ? 0xFFB45309 : 0xFF78350F;
-                    btnBorder = 0xFFD97706;
-                    action = () -> openCraftModal(itemName, itemRarity, rec, cd);
+                    btnBg = btnHov ? 0xCCB45309 : 0x9978350F;
+                    btnBorder = 0xFFF59E0B;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            openCraftModal(itemName, itemRarity, rec, cd);
+                        }
+                    };
                     actionTitle = "View Craft Recipe for " + itemName;
                 } else if ("bz".equalsIgnoreCase(u.source)) {
                     btnText = "§f⚡ /bz";
-                    btnBg = btnHov ? 0xFF10B981 : 0xFF065F46;
-                    btnBorder = 0xFF047857;
-                    action = () -> triggerBazaarSearch(itemName);
-                    actionTitle = "Open Bazaar for " + itemName;
+                    btnBg = btnHov ? 0xCC059669 : 0x99065F46;
+                    btnBorder = 0xFF10B981;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            triggerBazaarSearch(target);
+                        }
+                    };
+                    actionTitle = "Open Bazaar for " + target;
                 } else if ("kuudra".equalsIgnoreCase(u.source)) {
                     btnText = "§6🔥 Kuudra";
-                    btnBg = btnHov ? 0xFFEA580C : 0xFF9A3412;
+                    btnBg = btnHov ? 0xCCEA580C : 0x999A3412;
                     btnBorder = 0xFFF97316;
-                    action = () -> triggerAhSearch(itemName);
-                    actionTitle = "Kuudra Drop — Search AH for " + itemName;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            triggerAhSearch(target);
+                        }
+                    };
+                    actionTitle = "Kuudra Drop — Search AH for " + target;
                 } else if ("dark_auction".equalsIgnoreCase(u.source)) {
                     btnText = "§d👑 DA/AH";
-                    btnBg = btnHov ? 0xFF9333EA : 0xFF6B21A8;
+                    btnBg = btnHov ? 0xCC9333EA : 0x996B21A8;
                     btnBorder = 0xFFA855F7;
-                    action = () -> triggerAhSearch(itemName);
-                    actionTitle = "Dark Auction — Search AH for " + itemName;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            triggerAhSearch(target);
+                        }
+                    };
+                    actionTitle = "Dark Auction — Search AH for " + target;
                 } else if ("quest".equalsIgnoreCase(u.source) || "rift".equalsIgnoreCase(u.source)) {
                     btnText = "§b📍 Quest";
-                    btnBg = btnHov ? 0xFF0284C7 : 0xFF075985;
+                    btnBg = btnHov ? 0xCC0284C7 : 0x99075985;
                     btnBorder = 0xFF0EA5E9;
-                    action = () -> Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + itemName.replace(" ", "_"));
-                    actionTitle = "Special Item — Open Wiki Guide for " + itemName;
+                    action = (btn) -> Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                    actionTitle = "Special Item — Open Wiki Guide for " + target;
                 } else {
-                    btnText = "§b⚡ /ah";
-                    btnBg = btnHov ? 0xFF2563EB : 0xFF1E40AF;
-                    btnBorder = 0xFF3B82F6;
-                    action = () -> triggerAhSearch(itemName);
-                    actionTitle = "Open Auction House for " + itemName;
+                    btnText = "§b⚡ /ahs";
+                    btnBg = btnHov ? 0xCC2563EB : 0x991E40AF;
+                    btnBorder = 0xFF38BDF8;
+                    action = (btn) -> {
+                        if (btn == 1) {
+                            Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + target.replace(" ", "_"));
+                        } else {
+                            triggerAhSearch(target);
+                        }
+                    };
+                    actionTitle = "Search Auction House for " + target;
                 }
 
                 g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnBg);
                 g.outline(btnX, btnY, btnW, btnH, btnBorder);
                 g.centeredText(font, btnText, btnX + btnW / 2, btnY + 4, 0xFFFFFFFF);
 
+                List<Component> tip = new ArrayList<>();
+                tip.add(Component.literal("§f§l" + itemName));
+                tip.add(Component.literal("§7" + actionTitle));
+                tip.add(Component.literal(""));
+                tip.add(Component.literal("§eLeft-Click: §fExecute"));
+                tip.add(Component.literal("§bRight-Click: §fOpen SkyBlock Wiki"));
+
                 synchronized (clickActions) {
-                    clickActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, action, actionTitle));
+                    clickActions.add(new ClickableAction(x, curY, x + w - 10, curY + itemH, action, actionTitle, tip));
                 }
             }
             curY += itemH + 4;
         }
+    }
+
+    private int getChainCardHeight(Font font, TalismanChain c, int availableW) {
+        int startX = 120;
+        int curX = startX;
+        int rows = 1;
+        for (int i = 0; i < c.tiers.size(); i++) {
+            TalismanTier t = c.tiers.get(i);
+            int pillW = Math.max(80, font.width(t.name) + 14);
+            int neededW = pillW + (i < c.tiers.size() - 1 ? 14 : 0);
+            if (curX + pillW > availableW && curX > startX) {
+                rows++;
+                curX = startX;
+            }
+            curX += neededW + 4;
+        }
+        return Math.max(34, rows * 26 + 8);
     }
 
     private void renderTalismansTab(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -970,72 +1204,245 @@ public class MagicalPowerScreen extends Screen {
             return;
         }
 
-        int chainH = 34;
-        int totalH = filtered.size() * (chainH + 6);
+        int availableW = w - 16;
+        int totalH = 0;
+        for (TalismanChain c : filtered) {
+            totalH += getChainCardHeight(font, c, availableW) + 6;
+        }
         this.maxScroll = Math.max(0, totalH - h);
 
         int curY = y - (int) scrollAmount;
         for (TalismanChain c : filtered) {
-            if (curY + chainH >= y && curY <= y + h) {
-                // Background row
-                g.fill(x, curY, x + w - 10, curY + chainH, 0xFF111827);
-                g.outline(x, curY, w - 10, chainH, 0xFF1F2937);
+            int cardH = getChainCardHeight(font, c, availableW);
+            if (curY + cardH >= y && curY <= y + h) {
+                // Background card with liquid-glass aesthetic
+                g.fill(x, curY, x + w - 10, curY + cardH, 0x1A0F172A);
+                g.outline(x, curY, w - 10, cardH, 0x3038BDF8);
 
-                // Left: Chain name
+                // Left: Chain name & wiki link
                 g.text(font, c.name, x + 8, curY + 6, 0xFFFFFFFF, true);
-                g.text(font, "§8" + c.tiers.size() + " tiers", x + 8, curY + 18, 0xFF6B7280, false);
+                g.text(font, "§8" + c.tiers.size() + " tiers", x + 8, curY + 18, 0xFF64748B, false);
 
-                // Right: Tier pills connected by arrows
-                int pillX = x + 130;
+                // Right: Wrapped tier pills
+                int startX = x + 120;
+                int pillX = startX;
+                int pillY = curY + 6;
+
                 for (int i = 0; i < c.tiers.size(); i++) {
                     TalismanTier t = c.tiers.get(i);
-                    int pillW = Math.max(88, font.width(t.name) + 16);
+                    int pillW = Math.max(80, font.width(t.name) + 14);
                     int pillH = 22;
-                    int pillY = curY + 6;
+
+                    if (pillX + pillW > x + availableW && pillX > startX) {
+                        pillX = startX;
+                        pillY += 26;
+                    }
 
                     boolean pillHov = mouseX >= pillX && mouseX <= pillX + pillW && mouseY >= pillY && mouseY <= pillY + pillH;
-                    int pBg = t.owned ? (pillHov ? 0xFF065F46 : 0xFF064E3B) : (pillHov ? 0xFF334155 : 0xFF1E293B);
-                    int pBorder = t.owned ? (pillHov ? 0xFF34D399 : 0xFF059669) : (pillHov ? 0xFF60A5FA : 0xFF334155);
+
+                    int pBg;
+                    int pBorder;
+                    if ("INACTIVE".equalsIgnoreCase(t.status)) {
+                        pBg = pillHov ? 0xCC9A3412 : 0x997C2D12;
+                        pBorder = pillHov ? 0xFFFBBF24 : 0xFFF59E0B;
+                    } else if (t.owned) {
+                        pBg = pillHov ? 0xCC065F46 : 0x99064E3B;
+                        pBorder = pillHov ? 0xFF34D399 : 0xFF059669;
+                    } else {
+                        pBg = pillHov ? 0xCC334155 : 0x991E293B;
+                        pBorder = pillHov ? 0xFF60A5FA : 0xFF334155;
+                    }
 
                     g.fill(pillX, pillY, pillX + pillW, pillY + pillH, pBg);
                     g.outline(pillX, pillY, pillW, pillH, pBorder);
 
                     int col = getRarityColor(t.rarity);
-                    String topLabel = (t.owned ? "§a✔ " : "§7") + t.name;
-                    g.text(font, topLabel, pillX + 6, pillY + 3, col, false);
+                    String topLabel;
+                    if ("INACTIVE".equalsIgnoreCase(t.status)) {
+                        topLabel = "§6⚠ " + t.name;
+                    } else if (t.owned) {
+                        topLabel = "§a✔ " + t.name;
+                    } else {
+                        topLabel = "§7" + t.name;
+                    }
+                    g.text(font, topLabel, pillX + 5, pillY + 3, col, false);
 
-                    String botLabel = t.owned ? "§aOWNED §8(+" + t.ap + " MP)" : "§6" + formatCoins(t.price) + " §8(+" + t.ap + ")";
-                    g.text(font, botLabel, pillX + 6, pillY + 12, 0xFFD1D5DB, false);
+                    String botLabel;
+                    if ("INACTIVE".equalsIgnoreCase(t.status)) {
+                        botLabel = "§6INACTIVE §8(+" + t.ap + ")";
+                    } else if (t.owned) {
+                        botLabel = "§aOWNED §8(+" + t.ap + " MP)";
+                    } else if (t.price > 0) {
+                        botLabel = "§6" + formatCoins(t.price) + " §8(+" + t.ap + ")";
+                    } else {
+                        botLabel = "§7Unowned §8(+" + t.ap + ")";
+                    }
+                    g.text(font, botLabel, pillX + 5, pillY + 12, 0xFFCBD5E1, false);
 
-                    // Click action on pill: opens recipe modal if has recipe/craftDetails, else searches ah
+                    // Build rich lore tooltip
+                    List<Component> richTip = new ArrayList<>();
+                    if (t.lore != null && !t.lore.isEmpty()) {
+                        for (String l : t.lore) {
+                            richTip.add(Component.literal(l));
+                        }
+                    } else {
+                        richTip.add(Component.literal(topLabel));
+                        richTip.add(Component.literal("§7Rarity: §f" + t.rarity));
+                        richTip.add(Component.literal("§dMagical Power: +" + t.ap + " MP"));
+                        if (t.craftCost > 0) {
+                            richTip.add(Component.literal("§eCraft Cost: §6" + formatCoins(t.craftCost)));
+                        }
+                        if (t.price > 0) {
+                            richTip.add(Component.literal("§bAH / BZ Price: §6" + formatCoins(t.price)));
+                        }
+                    }
+
+                    richTip.add(Component.literal(""));
+                    if (t.recipe != null || t.craftDetails != null) {
+                        richTip.add(Component.literal("§eLeft-Click: §fView 3x3 Recipe & Crafting Queue"));
+                    } else if (t.price > 0) {
+                        richTip.add(Component.literal("§eLeft-Click: §fSearch /ahs " + t.name));
+                    } else {
+                        richTip.add(Component.literal("§eLeft-Click: §fOpen SkyBlock Wiki"));
+                    }
+                    richTip.add(Component.literal("§bRight-Click: §fOpen SkyBlock Wiki"));
+
+                    // Click action
                     final String tierName = t.name;
                     final String tierRarity = t.rarity;
                     final JsonObject tierRec = t.recipe;
                     final JsonObject tierCd = t.craftDetails;
                     final long tierPrice = t.price;
 
-                    Runnable tierAction = () -> {
-                        if (tierRec != null || tierCd != null) {
-                            openCraftModal(tierName, tierRarity, tierRec, tierCd);
-                        } else if (tierPrice > 0) {
-                            triggerAhSearch(tierName);
-                        } else {
+                    Consumer<Integer> tierAction = (btn) -> {
+                        if (btn == 1) {
                             Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + tierName.replace(" ", "_"));
+                        } else {
+                            if (tierRec != null || tierCd != null) {
+                                openCraftModal(tierName, tierRarity, tierRec, tierCd);
+                            } else if (tierPrice > 0) {
+                                triggerAhSearch(tierName);
+                            } else {
+                                Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/" + tierName.replace(" ", "_"));
+                            }
                         }
                     };
 
                     synchronized (clickActions) {
-                        clickActions.add(new ClickableAction(pillX, pillY, pillX + pillW, pillY + pillH, tierAction, "Click to view " + tierName + " Recipe & Price"));
+                        clickActions.add(new ClickableAction(pillX, pillY, pillX + pillW, pillY + pillH, tierAction, "Talisman: " + tierName, richTip));
                     }
 
                     pillX += pillW + 4;
-                    if (i < c.tiers.size() - 1) {
-                        g.text(font, "§7➔", pillX, curY + 12, 0xFF6B7280, false);
+                    if (i < c.tiers.size() - 1 && pillX + 14 < x + availableW) {
+                        g.text(font, "§7➔", pillX, pillY + 6, 0xFF64748B, false);
                         pillX += 14;
                     }
                 }
             }
-            curY += chainH + 6;
+            curY += cardH + 6;
+        }
+    }
+
+    private void renderEnrichmentsTab(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
+        int statW = (w - 18) / 4;
+        int heroY = y;
+
+        // 4 Hero Stat Cards
+        drawStatCard(g, font, x, heroY, statW, 26, "APPLIED ENRICHMENTS", "§a" + enrichedCount + " §7/ " + eligibleEnrichmentsCount);
+        drawStatCard(g, font, x + statW + 6, heroY, statW, 26, "ELIGIBLE TALISMANS", "§e" + eligibleEnrichmentsCount + " §7(LEG+/SPEC)");
+        drawStatCard(g, font, x + (statW + 6) * 2, heroY, statW, 26, "MISSING ENRICHMENTS", (missingEnrichments.isEmpty() ? "§a0" : "§c" + missingEnrichments.size()));
+        drawStatCard(g, font, x + (statW + 6) * 3, heroY, statW, 26, "EST. COST TO MAX", "§6" + formatCoins(missingEnrichments.size() * enrichmentMinCost));
+
+        int curY = heroY + 34;
+
+        // Warnings Section (e.g. multi-hatcessory duplicates, unenriched higher-tier accessories)
+        if (!enrichmentWarnings.isEmpty()) {
+            for (EnrichmentWarning warn : enrichmentWarnings) {
+                int warnH = 28;
+                g.fill(x, curY, x + w - 10, curY + warnH, 0x2A78350F);
+                g.outline(x, curY, w - 10, warnH, 0xFFF59E0B);
+
+                g.text(font, "§6⚠ §l" + warn.title, x + 8, curY + 4, 0xFFFBBF24, true);
+                g.text(font, "§e" + warn.description, x + 8, curY + 16, 0xFFFEF08A, false);
+
+                curY += warnH + 6;
+            }
+            curY += 4;
+        }
+
+        // Missing Enrichments List
+        List<MissingEnrichmentEntry> filtered = new ArrayList<>();
+        for (MissingEnrichmentEntry m : missingEnrichments) {
+            if (searchFilter.isEmpty() || m.name.toLowerCase(Locale.ROOT).contains(searchFilter) || m.rarity.toLowerCase(Locale.ROOT).contains(searchFilter)) {
+                filtered.add(m);
+            }
+        }
+
+        int itemH = 24;
+        int listH = h - (curY - y);
+        int totalH = (curY - y) + filtered.size() * (itemH + 4);
+        this.maxScroll = Math.max(0, totalH - h);
+
+        curY -= (int) scrollAmount;
+
+        if (filtered.isEmpty()) {
+            int emptyY = heroY + 50;
+            if (missingEnrichments.isEmpty()) {
+                g.centeredText(font, "§a🎉 Perfect! All eligible accessories have active enrichments applied!", x + w / 2, emptyY, 0xFF34D399);
+                g.centeredText(font, "§7No missing enrichments found across your talisman bag.", x + w / 2, emptyY + 14, 0xFF94A3B8);
+            } else {
+                g.centeredText(font, "§7No items matching filter '§f" + searchFilter + "§7'", x + w / 2, emptyY, 0xFFA0AEC0);
+            }
+            return;
+        }
+
+        for (MissingEnrichmentEntry m : filtered) {
+            if (curY + itemH >= y + 34 && curY <= y + h) {
+                boolean hovered = mouseX >= x && mouseX <= x + w - 10 && mouseY >= curY && mouseY <= curY + itemH;
+                int rowBg = hovered ? 0x301E293B : 0x1A0F172A;
+                int rowBorder = hovered ? 0x8038BDF8 : 0x3038BDF8;
+
+                g.fill(x, curY, x + w - 10, curY + itemH, rowBg);
+                g.outline(x, curY, w - 10, itemH, rowBorder);
+
+                int nameColor = getRarityColor(m.rarity);
+                g.text(font, m.name, x + 10, curY + 7, nameColor, true);
+                g.text(font, "§8[" + m.rarity + "]", x + 10 + font.width(m.name) + 8, curY + 7, 0xFF64748B, false);
+
+                String needStr = "§7Needs Enrichment · Est. §6" + formatCoins(enrichmentMinCost);
+                g.text(font, needStr, x + w - 210, curY + 7, 0xFFCBD5E1, false);
+
+                // Action Button: Buy Enrichment on Bazaar
+                int btnW = 86;
+                int btnH = 16;
+                int btnX = x + w - 100;
+                int btnY = curY + 4;
+                boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
+
+                g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xCC059669 : 0x99065F46);
+                g.outline(btnX, btnY, btnW, btnH, 0xFF10B981);
+                g.centeredText(font, "§f⚡ /bz Enrichment", btnX + btnW / 2, btnY + 4, 0xFFFFFFFF);
+
+                final String itemName = m.name;
+                Consumer<Integer> buyAction = (btn) -> {
+                    if (btn == 1) {
+                        Util.getPlatform().openUri("https://hypixelskyblock.minecraft.wiki/w/Accessory_Enrichment");
+                    } else {
+                        triggerBazaarSearch("Magic Find Enrichment");
+                    }
+                };
+
+                List<Component> tip = new ArrayList<>();
+                tip.add(Component.literal("§f§l" + itemName));
+                tip.add(Component.literal("§7Eligible for stat enrichment (+1% stat per talisman)."));
+                tip.add(Component.literal("§eLeft-Click: §fOpen Bazaar for Enrichment"));
+                tip.add(Component.literal("§bRight-Click: §fOpen Wiki Guide"));
+
+                synchronized (clickActions) {
+                    clickActions.add(new ClickableAction(btnX, btnY, btnX + btnW, btnY + btnH, buyAction, "Buy Enrichment for " + itemName, tip));
+                }
+            }
+            curY += itemH + 4;
         }
     }
 
@@ -1051,8 +1458,8 @@ public class MagicalPowerScreen extends Screen {
             int cardH = 22;
             int color = getRarityColor(b.rarity);
 
-            g.fill(x + 10, curY, x + 10 + cardW, curY + cardH, 0xFF111827);
-            g.outline(x + 10, curY, cardW, cardH, 0xFF1F2937);
+            g.fill(x + 10, curY, x + 10 + cardW, curY + cardH, 0x1A0F172A);
+            g.outline(x + 10, curY, cardW, cardH, 0x3038BDF8);
 
             // Rarity pill
             g.text(font, b.rarity, x + 20, curY + 6, color, true);
@@ -1080,17 +1487,17 @@ public class MagicalPowerScreen extends Screen {
         }
 
         // Dark dim backdrop
-        g.fill(0, 0, this.width, this.height, 0xA0000000);
+        g.fill(0, 0, this.width, this.height, 0xB0000000);
 
         int mW = 400;
         int mH = 265;
         int mX = (this.width - mW) / 2;
         int mY = (this.height - mH) / 2;
 
-        // Modal Frame
-        g.fill(mX, mY, mX + mW, mY + mH, 0xFF0F172A);
-        g.outline(mX, mY, mW, mH, 0xFF3B82F6);
-        g.fill(mX, mY, mX + mW, mY + 3, 0xFF60A5FA);
+        // Modal Frame: Liquid Glass Obsidian
+        g.fill(mX, mY, mX + mW, mY + mH, 0xFA090D16);
+        g.outline(mX, mY, mW, mH, 0x8038BDF8);
+        g.fill(mX, mY, mX + mW, mY + 3, 0xFF38BDF8);
 
         // Header Title
         int rColor = getRarityColor(activeModal.rarity);
@@ -1100,7 +1507,7 @@ public class MagicalPowerScreen extends Screen {
         int closeX = mX + mW - 24;
         int closeY = mY + 10;
         boolean closeHov = mouseX >= closeX && mouseX <= closeX + 16 && mouseY >= closeY && mouseY <= closeY + 14;
-        g.fill(closeX, closeY, closeX + 16, closeY + 14, closeHov ? 0xFFEF4444 : 0xFF334155);
+        g.fill(closeX, closeY, closeX + 16, closeY + 14, closeHov ? 0xFFEF4444 : 0x40334155);
         g.outline(closeX, closeY, 16, 14, 0xFF64748B);
         g.centeredText(font, "✕", closeX + 8, closeY + 3, 0xFFFFFFFF);
         modalActions.add(new ClickableAction(closeX, closeY, closeX + 16, closeY + 14, () -> this.activeModal = null, "Close Recipe"));
@@ -1124,8 +1531,8 @@ public class MagicalPowerScreen extends Screen {
                 }
 
                 boolean slotHov = mouseX >= sx && mouseX <= sx + slotSize && mouseY >= sy && mouseY <= sy + slotSize;
-                g.fill(sx, sy, sx + slotSize, sy + slotSize, slotHov ? 0xFF1E293B : 0xFF090D16);
-                g.outline(sx, sy, slotSize, slotSize, slotHov ? 0xFF60A5FA : 0xFF334155);
+                g.fill(sx, sy, sx + slotSize, sy + slotSize, slotHov ? 0x4038BDF8 : 0x1A1E293B);
+                g.outline(sx, sy, slotSize, slotSize, slotHov ? 0xFF38BDF8 : 0x40334155);
 
                 if (slotItem != null) {
                     String id = slotItem.has("id") ? slotItem.get("id").getAsString() : "";
@@ -1148,8 +1555,8 @@ public class MagicalPowerScreen extends Screen {
         iy += 14;
 
         for (CraftIngredient ing : activeModal.ingredients) {
-            g.fill(ix, iy, ix + iw, iy + 22, 0xFF1E293B);
-            g.outline(ix, iy, iw, 22, ing.hasEnough ? 0xFF059669 : 0xFF475569);
+            g.fill(ix, iy, ix + iw, iy + 22, 0x1A1E293B);
+            g.outline(ix, iy, iw, 22, ing.hasEnough ? 0xFF059669 : 0x60475569);
 
             g.text(font, "§f" + ing.name, ix + 6, iy + 3, 0xFFFFFFFF, false);
             String qtyStr = "§7Need: §e" + ing.needed + " §8| §7Have: " + (ing.hasEnough ? "§a" : "§c") + ing.owned;
@@ -1166,11 +1573,11 @@ public class MagicalPowerScreen extends Screen {
         // Status Banner
         int bannerY = mY + 168;
         if (activeModal.canCraftNow) {
-            g.fill(mX + 16, bannerY, mX + mW - 16, bannerY + 24, 0xFF064E3B);
+            g.fill(mX + 16, bannerY, mX + mW - 16, bannerY + 24, 0xCC064E3B);
             g.outline(mX + 16, bannerY, mW - 32, 24, 0xFF10B981);
             g.centeredText(font, "§a§l✔ Already have enough mats in bags & sacks to craft!", mX + mW / 2, bannerY + 8, 0xFFFFFFFF);
         } else {
-            g.fill(mX + 16, bannerY, mX + mW - 16, bannerY + 24, 0xFF78350F);
+            g.fill(mX + 16, bannerY, mX + mW - 16, bannerY + 24, 0xCC78350F);
             g.outline(mX + 16, bannerY, mW - 32, 24, 0xFFD97706);
             String missingBanner = "§eMissing materials! Est. Cost: §6" + formatCoins(activeModal.totalMissingCost);
             g.centeredText(font, missingBanner, mX + mW / 2, bannerY + 8, 0xFFFFFFFF);
@@ -1184,7 +1591,7 @@ public class MagicalPowerScreen extends Screen {
         boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH;
 
         if (activeModal.canCraftNow) {
-            g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xFF059669 : 0xFF047857);
+            g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xCC059669 : 0x99047857);
             g.outline(btnX, btnY, btnW, btnH, 0xFF10B981);
             g.centeredText(font, "§f§l⚡ Open /recipe", btnX + btnW / 2, btnY + 7, 0xFFFFFFFF);
 
@@ -1197,7 +1604,7 @@ public class MagicalPowerScreen extends Screen {
                 this.activeModal = null;
             }, "Open /recipe in-game"));
         } else {
-            g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xFFB45309 : 0xFF78350F);
+            g.fill(btnX, btnY, btnX + btnW, btnY + btnH, btnHov ? 0xCCB45309 : 0x9978350F);
             g.outline(btnX, btnY, btnW, btnH, 0xFFD97706);
             g.centeredText(font, "§f§l🛒 Add to Queue / Buy Missing", btnX + btnW / 2, btnY + 7, 0xFFFFFFFF);
 
@@ -1219,24 +1626,24 @@ public class MagicalPowerScreen extends Screen {
         int cBtnW = 80;
         int cBtnX = mX + mW - cBtnW - 16;
         boolean cBtnHov = mouseX >= cBtnX && mouseX <= cBtnX + cBtnW && mouseY >= btnY && mouseY <= btnY + btnH;
-        g.fill(cBtnX, btnY, cBtnX + cBtnW, btnY + btnH, cBtnHov ? 0xFF475569 : 0xFF334155);
+        g.fill(cBtnX, btnY, cBtnX + cBtnW, btnY + btnH, cBtnHov ? 0xCC475569 : 0x99334155);
         g.outline(cBtnX, btnY, cBtnW, btnH, 0xFF64748B);
         g.centeredText(font, "Close", cBtnX + cBtnW / 2, btnY + 7, 0xFFFFFFFF);
         modalActions.add(new ClickableAction(cBtnX, btnY, cBtnX + cBtnW, btnY + btnH, () -> this.activeModal = null, "Close Modal"));
     }
 
     private void drawBonusRow(GuiGraphicsExtractor g, Font font, int x, int y, int w, String title, String desc, String status) {
-        g.fill(x, y, x + w, y + 20, 0xFF111827);
-        g.outline(x, y, w, 20, 0xFF1F2937);
+        g.fill(x, y, x + w, y + 20, 0x1A0F172A);
+        g.outline(x, y, w, 20, 0x3038BDF8);
         g.text(font, "§b" + title, x + 10, y + 6, 0xFF38BDF8, true);
         g.text(font, "§7" + desc, x + 180, y + 6, 0xFF9CA3AF, false);
         g.text(font, status, x + w - 60, y + 6, 0xFF10B981, true);
     }
 
     private void drawStatCard(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, String label, String value) {
-        g.fill(x, y, x + w, y + h, 0xFF111827);
-        g.outline(x, y, w, h, 0xFF1F2937);
-        g.centeredText(font, "§7" + label, x + w / 2, y + 3, 0xFF9CA3AF);
+        g.fill(x, y, x + w, y + h, 0x250F172A);
+        g.outline(x, y, w, h, 0x4038BDF8);
+        g.centeredText(font, "§7" + label, x + w / 2, y + 3, 0xFF94A3B8);
         g.centeredText(font, value, x + w / 2, y + 13, 0xFFFFFFFF);
     }
 
@@ -1244,11 +1651,12 @@ public class MagicalPowerScreen extends Screen {
         int w = font.width(label) + 14;
         int h = 18;
         boolean hov = mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h;
-        int bg = active ? 0xFFC084FC : (hov ? 0xFF374151 : 0xFF1F2937);
-        int textCol = active ? 0xFF000000 : 0xFFE5E7EB;
+        int bg = active ? 0xDD38BDF8 : (hov ? 0x4038BDF8 : 0x200F172A);
+        int border = active ? 0xFFE0F2FE : (hov ? 0x8038BDF8 : 0x3038BDF8);
+        int textCol = active ? 0xFF090D16 : (hov ? 0xFFFFFFFF : 0xFFCBD5E1);
 
         g.fill(x, y, x + w, y + h, bg);
-        g.outline(x, y, w, h, active ? 0xFFE9D5FF : 0xFF374151);
+        g.outline(x, y, w, h, border);
         g.centeredText(font, (active ? "§l" : "") + label, x + w / 2, y + 5, textCol);
     }
 
@@ -1256,13 +1664,14 @@ public class MagicalPowerScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         double mouseX = event.x();
         double mouseY = event.y();
+        int button = event.button();
 
         // If Modal is active, intercept clicks exclusively
         if (activeModal != null) {
             synchronized (modalActions) {
                 for (ClickableAction action : modalActions) {
                     if (mouseX >= action.minX && mouseX <= action.maxX && mouseY >= action.minY && mouseY <= action.maxY) {
-                        action.action.run();
+                        if (action.clickAction != null) action.clickAction.accept(button);
                         return true;
                     }
                 }
@@ -1304,29 +1713,36 @@ public class MagicalPowerScreen extends Screen {
         // Tab selection
         int tabY = winY + 68;
         int tabX = winX + 16;
-        int tab1W = font.width("Cheapest Upgrades (" + upgrades.size() + ")") + 14;
+        int tab1W = font.width("Cheapest Upgrades (" + upgrades.size() + ")") + 20;
         if (mouseX >= tabX && mouseX <= tabX + tab1W && mouseY >= tabY && mouseY <= tabY + 18) {
             currentTab = Tab.UPGRADES;
             scrollAmount = 0;
             return true;
         }
-        tabX += tab1W + 6;
-        int tab2W = font.width("Missing (" + missing.size() + ")") + 14;
+        tabX += tab1W;
+        int tab2W = font.width("Missing (" + missing.size() + ")") + 20;
         if (mouseX >= tabX && mouseX <= tabX + tab2W && mouseY >= tabY && mouseY <= tabY + 18) {
             currentTab = Tab.MISSING;
             scrollAmount = 0;
             return true;
         }
-        tabX += tab2W + 6;
-        int tab3W = font.width("Talismans (" + talismanChains.size() + ")") + 14;
+        tabX += tab2W;
+        int tab3W = font.width("Talismans (" + talismanChains.size() + ")") + 20;
         if (mouseX >= tabX && mouseX <= tabX + tab3W && mouseY >= tabY && mouseY <= tabY + 18) {
             currentTab = Tab.TALISMANS;
             scrollAmount = 0;
             return true;
         }
-        tabX += tab3W + 6;
-        int tab4W = font.width("Breakdown") + 14;
+        tabX += tab3W;
+        int tab4W = font.width("Enrichments (" + missingEnrichments.size() + ")") + 20;
         if (mouseX >= tabX && mouseX <= tabX + tab4W && mouseY >= tabY && mouseY <= tabY + 18) {
+            currentTab = Tab.ENRICHMENTS;
+            scrollAmount = 0;
+            return true;
+        }
+        tabX += tab4W;
+        int tab5W = font.width("Breakdown") + 20;
+        if (mouseX >= tabX && mouseX <= tabX + tab5W && mouseY >= tabY && mouseY <= tabY + 18) {
             currentTab = Tab.BREAKDOWN;
             scrollAmount = 0;
             return true;
@@ -1336,8 +1752,10 @@ public class MagicalPowerScreen extends Screen {
         synchronized (clickActions) {
             for (ClickableAction action : clickActions) {
                 if (mouseX >= action.minX && mouseX <= action.maxX && mouseY >= action.minY && mouseY <= action.maxY) {
-                    action.action.run();
-                    return true;
+                    if (action.clickAction != null) {
+                        action.clickAction.accept(button);
+                        return true;
+                    }
                 }
             }
         }
@@ -1403,8 +1821,8 @@ public class MagicalPowerScreen extends Screen {
             mc.keyboardHandler.setClipboard(itemName);
         } catch (Exception ignored) {}
 
-        mc.player.connection.sendCommand("ah " + itemName);
-        mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §bAuction House: §e" + itemName + " §7(Copied name to clipboard)"));
+        mc.player.connection.sendCommand("ahs " + itemName);
+        mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §bAuction House Search: §e" + itemName + " §7(Copied name to clipboard)"));
         this.onClose();
     }
 

@@ -74,6 +74,8 @@ public class CommandMixin {
              if (parts.length == 1) {
                  if (parts[0].equalsIgnoreCase("talisman") || parts[0].equalsIgnoreCase("talismans")) {
                      initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS;
+                 } else if (parts[0].equalsIgnoreCase("enrich") || parts[0].equalsIgnoreCase("enrichment") || parts[0].equalsIgnoreCase("enrichments")) {
+                     initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.ENRICHMENTS;
                  } else {
                      ign = parts[0];
                  }
@@ -84,6 +86,12 @@ public class CommandMixin {
                  } else if (parts[0].equalsIgnoreCase("talisman") || parts[0].equalsIgnoreCase("talismans")) {
                      ign = parts[1];
                      initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.TALISMANS;
+                 } else if (parts[1].equalsIgnoreCase("enrich") || parts[1].equalsIgnoreCase("enrichment") || parts[1].equalsIgnoreCase("enrichments")) {
+                     ign = parts[0];
+                     initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.ENRICHMENTS;
+                 } else if (parts[0].equalsIgnoreCase("enrich") || parts[0].equalsIgnoreCase("enrichment") || parts[0].equalsIgnoreCase("enrichments")) {
+                     ign = parts[1];
+                     initialTab = me.bombo.bomboaddons.gui.MagicalPowerScreen.Tab.ENRICHMENTS;
                  } else {
                      ign = parts[0];
                  }

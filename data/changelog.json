@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.132",
+    "date": "2026-10-15",
+    "changes": [
+      "+ Liquid Glass GUI Modernization - Upgraded Magical Power and Shards Optimizer GUIs to translucent liquid-glass obsidian styling with glowing borders and styled pills",
+      "~ Accessory Upgrades & Recomb Deduplication - Removed redundant recomb duplicates, integrated Recombobulate <Owned Item> into ranked upgrades by coin efficiency, and constrained chain suggestions to immediate next tiers",
+      "~ Multi-Row Wrapped Talisman Tree - Added dynamic multi-row wrapping so all 29 tiers of Campfire Cult Badge and long chains fit cleanly on screen",
+      "~ Inactive Accessory Status - Flagged unequipped duplicate accessories stored in backpacks or inventory as [INACTIVE (Bag)] in amber/orange",
+      "+ Rich Hover Tooltips & Dual-Click Navigation - Added full item lore tooltips with stats; left-click executes craft modal / /bz / /ahs, right-click opens the official SkyBlock wiki",
+      "+ Dedicated Enrichments Tab - Added tab tracking applied vs eligible enrichments, multi-hatcessory duplicate warnings, and 1-click /bz Enrichment buttons"
+    ]
+  },
+  {
     "version": "26.2.28.131",
     "date": "2026-10-15",
     "changes": [

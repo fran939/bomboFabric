@@ -67,6 +67,9 @@ public class BomboApiKeyManager {
     }
 
     public static void autoEnsureApiKey() {
+        if (hasApiKey()) {
+            return;
+        }
         if (!autoFetchInProgress.compareAndSet(false, true)) {
             return;
         }
