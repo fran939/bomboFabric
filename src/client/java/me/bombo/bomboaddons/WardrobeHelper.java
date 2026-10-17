@@ -19,6 +19,10 @@ public class WardrobeHelper {
       suppressReopenUntil = System.currentTimeMillis() + durationMs;
    }
 
+   public static void clearSuppression() {
+      suppressReopenUntil = -1L;
+   }
+
    public static boolean shouldSuppressScreenOpen(String title) {
       if (System.currentTimeMillis() > suppressReopenUntil) {
          return false;
@@ -172,14 +176,14 @@ public class WardrobeHelper {
                         }
 
                         BomboConfig.Settings s = BomboConfig.get();
-                        suppressReopen(1200L);
+                        suppressReopen(250L);
                         if (s != null && s.autoCloseWardrobe) {
                            (new Thread(() -> {
                               try {
-                                 Thread.sleep(150L);
+                                 Thread.sleep(120L);
                               } catch (InterruptedException ignored) {}
                               mc.submit(() -> {
-                                 if (mc.player != null) {
+                                 if (mc.gui.screen() == screen && mc.player != null) {
                                     mc.player.closeContainer();
                                  }
                               });

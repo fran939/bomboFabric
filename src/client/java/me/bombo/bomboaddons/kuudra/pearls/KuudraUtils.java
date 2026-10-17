@@ -168,11 +168,12 @@ public class KuudraUtils {
          if (matchedSpot != -1) {
             processSupply(matchedSpot, name);
          }
-      } else if (entity instanceof MagmaCube) {
-         MagmaCube magmaCube = (MagmaCube)entity;
+      } else if (entity instanceof MagmaCube magmaCube) {
          magmaCubes.add(magmaCube);
          if (isKuudraEntity(magmaCube)) {
-            kuudraEntity = magmaCube;
+            if (kuudraEntity == null || magmaCube.getId() < kuudraEntity.getId()) {
+               kuudraEntity = magmaCube;
+            }
          }
       } else if (entity instanceof Giant && entity.getY() < 67.0) {
          float yawRad = (float)((double)(entity.getYRot() + 130.0F) * (Math.PI / 180D));
@@ -186,7 +187,7 @@ public class KuudraUtils {
             myBobberPos = hook.position();
          }
       } else if (entity instanceof Zombie zombie) {
-         if (zombie.isInvisible() && zombie.getY() >= 72.0 && zombie.getY() <= 78.0) {
+         if (zombie.isAlive()) {
             zombies.add(zombie);
          }
       }
@@ -327,7 +328,12 @@ public class KuudraUtils {
    }
 
    private static boolean isKuudraEntity(MagmaCube magmaCube) {
-      return magmaCube != null && (magmaCube.getSize() == 30 || magmaCube.getBbWidth() > 14.0F);
+      if (magmaCube == null || magmaCube.getSize() != 30) return false;
+      try {
+         double maxHp = magmaCube.getAttributeBaseValue(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+         if (Math.abs(maxHp - 100000.0) < 1.0) return true;
+      } catch (Exception ignored) {}
+      return Math.abs(magmaCube.getMaxHealth() - 100000.0F) < 1.0F;
    }
 
    private static void resetSupplies() {

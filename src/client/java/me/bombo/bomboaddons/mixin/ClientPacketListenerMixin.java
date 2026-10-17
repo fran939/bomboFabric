@@ -40,8 +40,11 @@ public class ClientPacketListenerMixin {
             mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundContainerClosePacket(packet.getContainerId()));
          }
          mc.execute(() -> {
-            if (mc.gui.screen() != null && !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) {
-               mc.setScreenAndShow(null);
+            if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> acs) {
+               String curTitle = acs.getTitle().getString();
+               if (me.bombo.bomboaddons.WardrobeHelper.shouldSuppressScreenOpen(curTitle)) {
+                  mc.setScreenAndShow(null);
+               }
             }
          });
          return;

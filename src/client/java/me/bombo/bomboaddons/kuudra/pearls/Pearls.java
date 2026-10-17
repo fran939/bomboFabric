@@ -29,7 +29,7 @@ public class Pearls {
    public static float timerOffset = 1.0F;
    private static final List<PearlRenderData> pearlSolutions = new ArrayList<>();
    private static final List<Vec3> currentSupplies = new ArrayList<>();
-   private static final Pattern progressPattern = Pattern.compile("\\[(.*)]\\s*(\\d+)%");
+   private static final Pattern progressPattern = Pattern.compile("\\[[|\\s:]+\\]\\s*(\\d+)%");
    private static long progressStartTime = -1L;
    private static boolean trackingPickup = false;
    private static Vec3 mySupply = null;
@@ -64,6 +64,9 @@ public class Pearls {
 
       Vec3 eyePos = mc.player.getEyePosition();
 
+      org.joml.Matrix4f modelView = new org.joml.Matrix4f(poseStack.last().pose());
+      org.joml.Matrix4f projection = new org.joml.Matrix4f(context.levelState().cameraRenderState.projectionMatrix);
+
       for (PearlRenderData data : pearlSolutions) {
          boolean isMySupply = mySupply != null && vecEquals(mySupply, data.target);
          boolean isDouble = data.isDouble;
@@ -73,13 +76,13 @@ public class Pearls {
          float b = 0.0F;
          float a = 1.0F;
 
-         double dist = data.isSky ? 20.0 : 10.0;
+         double dist = data.isSky ? 25.0 : 12.0;
          Vec3 point = VecUtil.pointFromYawPitch(eyePos, data.yaw, data.pitch, dist);
 
          double relX = point.x - camPos.x;
          double relY = point.y - camPos.y;
          double relZ = point.z - camPos.z;
-         float hs = 0.18F;
+         float hs = data.isSky ? 0.25F : 0.18F;
          AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
          final AABB finalBox = box;
          final float finalR = r;
@@ -90,18 +93,20 @@ public class Pearls {
 
          if (s.showTimer || s.kuudraPearlTimer) {
             int textColor = isReady ? 0xFF00FF00 : 0xFFFF5555;
-            Vector4f screenPos = new Vector4f((float) relX, (float) (relY + 0.35F), (float) relZ, 1.0F);
-            screenPos.mul(poseStack.last().pose());
-            screenPos.mul(context.levelState().cameraRenderState.projectionMatrix);
-            if (screenPos.w > 0.0F) {
-               float ndcX = screenPos.x / screenPos.w;
-               float ndcY = screenPos.y / screenPos.w;
-               int screenWidth = mc.getWindow().getGuiScaledWidth();
-               int screenHeight = mc.getWindow().getGuiScaledHeight();
-               float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
-               float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
-               String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
-               HUD_TEXTS.add(new PearlHUDText(disp, screenX, screenY, textColor));
+            Vector4f clip = new Vector4f((float) relX, (float) (relY + 0.35F), (float) relZ, 1.0F);
+            modelView.transform(clip);
+            projection.transform(clip);
+            if (clip.w > 0.05F) {
+               float ndcX = clip.x / clip.w;
+               float ndcY = clip.y / clip.w;
+               if (ndcX >= -1.2F && ndcX <= 1.2F && ndcY >= -1.2F && ndcY <= 1.2F) {
+                  int screenWidth = mc.getWindow().getGuiScaledWidth();
+                  int screenHeight = mc.getWindow().getGuiScaledHeight();
+                  float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
+                  float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
+                  String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
+                  HUD_TEXTS.add(new PearlHUDText(disp, screenX, screenY, textColor));
+               }
             }
          }
       }
@@ -133,17 +138,19 @@ public class Pearls {
                int percent = supply.getProgress();
                String label = supply.getStatus() == SupplyStatus.NOTHING ? "§cBring Supply" : (percent > 0 ? "§e" + percent + "%" : "§6Supply Spot");
                int textColor = supply.getStatus() == SupplyStatus.NOTHING ? 0xFFFF5555 : 0xFFFFAA00;
-               Vector4f screenPos = new Vector4f((float) rx, (float) (ry + 1.4F), (float) rz, 1.0F);
-               screenPos.mul(poseStack.last().pose());
-               screenPos.mul(context.levelState().cameraRenderState.projectionMatrix);
-               if (screenPos.w > 0.0F) {
-                  float ndcX = screenPos.x / screenPos.w;
-                  float ndcY = screenPos.y / screenPos.w;
-                  int screenWidth = mc.getWindow().getGuiScaledWidth();
-                  int screenHeight = mc.getWindow().getGuiScaledHeight();
-                  float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
-                  float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
-                  HUD_TEXTS.add(new PearlHUDText(label, screenX, screenY, textColor));
+               Vector4f clip = new Vector4f((float) rx, (float) (ry + 1.4F), (float) rz, 1.0F);
+               modelView.transform(clip);
+               projection.transform(clip);
+               if (clip.w > 0.05F) {
+                  float ndcX = clip.x / clip.w;
+                  float ndcY = clip.y / clip.w;
+                  if (ndcX >= -1.2F && ndcX <= 1.2F && ndcY >= -1.2F && ndcY <= 1.2F) {
+                     int screenWidth = mc.getWindow().getGuiScaledWidth();
+                     int screenHeight = mc.getWindow().getGuiScaledHeight();
+                     float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
+                     float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
+                     HUD_TEXTS.add(new PearlHUDText(label, screenX, screenY, textColor));
+                  }
                }
             }
          }
@@ -165,31 +172,21 @@ public class Pearls {
                   BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, 0.16F, 0.98F, 0.99F, 0.8F));
             }
 
-            // Individual zombie hitboxes
-            if (s.kuudraSupplyHitbox) {
-               if (!hitbox.zombies().isEmpty()) {
-                  for (AABB zBox : hitbox.zombies()) {
-                     boolean inReach = eyePos != null && eyePos.distanceToSqr(
-                        Math.max(zBox.minX, Math.min(eyePos.x, zBox.maxX)),
-                        Math.max(zBox.minY, Math.min(eyePos.y, zBox.maxY)),
-                        Math.max(zBox.minZ, Math.min(eyePos.z, zBox.maxZ))
-                     ) <= 9.0;
-                     float zr = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.16F;
-                     float zg = (inReach && s.kuudraSupplyPickupRange) ? 1.0F : 0.98F;
-                     float zb = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.99F;
-                     AABB relZBox = new AABB(zBox.minX - camPos.x, zBox.minY - camPos.y, zBox.minZ - camPos.z,
-                                             zBox.maxX - camPos.x, zBox.maxY - camPos.y, zBox.maxZ - camPos.z);
-                     collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                        BomboRenderUtils.drawBox(pose.pose(), vc, relZBox, zr, zg, zb, 1.0F, 1.5F));
-                  }
-               } else {
-                  boolean inReach = mc.player != null && mc.player.position().distanceTo(crate) <= 3.2;
+            // Individual zombie hitboxes (wireframe, strictly around actual zombies)
+            if (s.kuudraSupplyHitbox && !hitbox.zombies().isEmpty()) {
+               for (AABB zBox : hitbox.zombies()) {
+                  boolean inReach = eyePos != null && eyePos.distanceToSqr(
+                     Math.max(zBox.minX, Math.min(eyePos.x, zBox.maxX)),
+                     Math.max(zBox.minY, Math.min(eyePos.y, zBox.maxY)),
+                     Math.max(zBox.minZ, Math.min(eyePos.z, zBox.maxZ))
+                  ) <= 9.0;
                   float zr = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.16F;
                   float zg = (inReach && s.kuudraSupplyPickupRange) ? 1.0F : 0.98F;
                   float zb = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.99F;
-                  AABB crateBox = new AABB(rx - 0.6, ry, rz - 0.6, rx + 0.6, ry + 1.8, rz + 0.6);
+                  AABB relZBox = new AABB(zBox.minX - camPos.x, zBox.minY - camPos.y, zBox.minZ - camPos.z,
+                                          zBox.maxX - camPos.x, zBox.maxY - camPos.y, zBox.maxZ - camPos.z);
                   collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                     BomboRenderUtils.drawBox(pose.pose(), vc, crateBox, zr, zg, zb, 1.0F, 1.5F));
+                     BomboRenderUtils.drawBox(pose.pose(), vc, relZBox, zr, zg, zb, 1.0F, 1.5F));
                }
             }
 
@@ -225,6 +222,10 @@ public class Pearls {
             onWorldUnload();
          }
          return;
+      }
+
+      if (lastTitleEvent != -1L && System.currentTimeMillis() - lastTitleEvent > 750L) {
+         resetTracking();
       }
 
       ++tickCounter;
@@ -302,13 +303,18 @@ public class Pearls {
       Matcher matcher = progressPattern.matcher(clean);
       if (matcher.find()) {
          try {
-            int percent = Integer.parseInt(matcher.group(2));
+            int percent = Integer.parseInt(matcher.group(1));
             long now = System.currentTimeMillis();
             lastTitleEvent = now;
-            if (percent >= 0 && percent < 100) {
+            if (percent == 0) {
                trackingPickup = true;
-               progressStartTime = now - (long) percent * 30L;
-            } else if (percent == 100) {
+               progressStartTime = now;
+            } else if (percent > 0 && percent < 100) {
+               trackingPickup = true;
+               if (progressStartTime == -1L) {
+                  progressStartTime = now - (long) percent * 30L;
+               }
+            } else if (percent >= 100) {
                resetTracking();
             }
          } catch (NumberFormatException ignored) {}
@@ -340,7 +346,7 @@ public class Pearls {
          noPreIsNothing = noPreSupply != null && noPreSupply.getStatus() == SupplyStatus.NOTHING;
       }
 
-      Vec3 fallback = noPreIsNothing ? noPre.getLocation() : vector;
+      Vec3 fallback = noPreIsNothing ? noPre.getLocation() : new Vec3(-101.5, 79.0, -106.0);
       if (pickUpSpot == PickupSpot.SQUARE && noPreIsNothing) {
          return noPre.getLocation();
       } else {
@@ -354,8 +360,27 @@ public class Pearls {
             case TRIANGLE -> supply = getSupply(supplies, 5);
             default -> {}
          }
-         return supply != null && supply.getStatus() == SupplyStatus.NOTHING ? supply.getSpot().getLocation() : fallback;
+         return supply != null && supply.getStatus() == SupplyStatus.NOTHING ? supply.getSpot().getLocation() : getClosestSupply(vector).orElse(fallback);
       }
+   }
+
+   private static Optional<Vec3> getClosestSupply(Vec3 vector) {
+      double minDistSq = Double.MAX_VALUE;
+      Vec3 closest = null;
+      Supply[] supplies = KuudraUtils.getSupplies();
+      if (supplies != null) {
+         for (Supply supply : supplies) {
+            if (supply != null && supply.getStatus() == SupplyStatus.NOTHING) {
+               Vec3 loc = supply.getSpot().getLocation();
+               double distSq = vector.distanceToSqr(loc);
+               if (distSq < minDistSq) {
+                  minDistSq = distSq;
+                  closest = loc;
+               }
+            }
+         }
+      }
+      return Optional.ofNullable(closest);
    }
 
    private static Supply getSupply(Supply[] supplies, int index) {

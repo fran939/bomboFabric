@@ -1,5 +1,26 @@
 # BomboAddons Changelog
  
+## [26.2.28.142] - 2026-10-17 (Beta)
+
+### Dynamic Pearls & Supplies Waypoints Parity
+- **Pearl Countdown Timer (`PearlRenderData.java`, `Pearls.java`):** Restored authentic dynamic countdown timer calculating `(delay - flightTimeMs - elapsed)`. Counts down smoothly from pickup start to `0ms -> THROW`, and displays `§a§lTHROW` when supplies are held.
+- **Supply Drop Spot & Waypoint Alignment (`Pearls.java`):** Resolved waypoint offset bug where completed or non-empty spots returned player eye position, placing waypoints 50 blocks away that moved with the player. Now uses `getClosestSupply(vector).orElse(fallback)` matching KIC.
+- **Matrix 3D Screen Projection Fix (`Pearls.java`, `KuudraStunKillHelper.java`):** Fixed JOML vector-matrix transformation order (`modelView.transform(clip)` and `projection.transform(clip)`), rendering 2D labels and countdown timers with exact sub-pixel screen alignment.
+- **Wireframe Zombie Hitboxes (`Pearls.java`):** Removed fallback 1x1 solid crate block box. Strictly renders wireframe boxes around actual individual supply zombies without fill.
+
+### /kuudra Interactive Overview & API History
+- **Direct `/hypixel/info/{player}?type=KUUDRA` Endpoint (`KuudraUserInfoCommand.java`):** Connected `/kuudra` to the server's dedicated KIC-compatible proxy endpoint.
+- **Outbound Request Tracking (`KuudraUserInfoCommand.java`, `ApiHistory.java`):** Logs duration and HTTP status codes to `/b apihistory`.
+- **Full Schema Parsing & Interactive Card:** Parses complete KIC schema (`playerInfo`, `stats`, `items`, `extra`, `rend`, `armor`, `equipment`, `pets`), rendering full hover lore cards and clickable `/pv` shortcut.
+
+### Wardrobe Auto-Close & Container Reopening Fix
+- **Safe Container Auto-Close (`WardrobeHelper.java`):** Verified `mc.gui.screen() == screen` before issuing container close, preventing chat or newly opened screens from being closed.
+- **Shortened Reopen Suppression (`WardrobeHelper.java`, `ClientPacketListenerMixin.java`, `CommandMixin.java`):** Reduced suppression window to 250ms and added `clearSuppression()` upon executing commands like `/ld` or opening screens.
+
+### Profit Tracker Slot Synchronization
+- **Deferred Evaluation (`KuudraEndManager.java`):** Waits for container packet items in slots 9..17 and slot 31 to load before computing chest value and key cost, eliminating 0-value premature evaluation.
+- **Slot Click & Opened Tracking (`KuudraEndManager.java`, `AbstractContainerScreenMixin.java`):** Accurately attributes and accumulates session profit when chests are bought, clicked, or previously opened.
+
 ## [26.2.28.141] - 2026-10-17 (Beta)
 
 ### Dynamic Stun Waypoint Parity & KIC Fix

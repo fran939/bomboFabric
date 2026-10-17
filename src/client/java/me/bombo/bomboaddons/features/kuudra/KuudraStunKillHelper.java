@@ -206,17 +206,21 @@ public class KuudraStunKillHelper {
 
             // 2D Text Label
             String label = inBelly ? ("§b" + pod.display) : ("§b" + pod.display + " Stun Aim");
-            Vector4f screenPos = new Vector4f((float) rx, (float) (ry + 1.4), (float) rz, 1.0F);
-            screenPos.mul(poseStack.last().pose());
-            screenPos.mul(context.levelState().cameraRenderState.projectionMatrix);
-            if (screenPos.w > 0.0F) {
-                float ndcX = screenPos.x / screenPos.w;
-                float ndcY = screenPos.y / screenPos.w;
-                int screenWidth = mc.getWindow().getGuiScaledWidth();
-                int screenHeight = mc.getWindow().getGuiScaledHeight();
-                float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
-                float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
-                HUD_TEXTS.add(new StunHUDText(label, screenX, screenY, colorInt));
+            org.joml.Matrix4f modelView = new org.joml.Matrix4f(poseStack.last().pose());
+            org.joml.Matrix4f projection = new org.joml.Matrix4f(context.levelState().cameraRenderState.projectionMatrix);
+            Vector4f clip = new Vector4f((float) rx, (float) (ry + 1.4), (float) rz, 1.0F);
+            modelView.transform(clip);
+            projection.transform(clip);
+            if (clip.w > 0.05F) {
+                float ndcX = clip.x / clip.w;
+                float ndcY = clip.y / clip.w;
+                if (ndcX >= -1.2F && ndcX <= 1.2F && ndcY >= -1.2F && ndcY <= 1.2F) {
+                    int screenWidth = mc.getWindow().getGuiScaledWidth();
+                    int screenHeight = mc.getWindow().getGuiScaledHeight();
+                    float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
+                    float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
+                    HUD_TEXTS.add(new StunHUDText(label, screenX, screenY, colorInt));
+                }
             }
         }
     }

@@ -87,7 +87,37 @@ public class KuudraEndManager {
             return;
         }
 
+        if (screen.getMenu().slots.size() < 54) return;
+
+        // Ensure reward items in slots 9..17 have loaded before evaluating
+        boolean hasLoadedLoot = false;
+        for (int i = 9; i <= 17; i++) {
+            Slot slot = screen.getMenu().slots.get(i);
+            if (slot.hasItem()) {
+                ItemStack st = slot.getItem();
+                String key = st.getItem().toString().toLowerCase(Locale.ROOT);
+                if (st.getItem() != Items.AIR && !key.contains("glass") && st.getItem() != Items.BARRIER && st.getItem() != Items.CHEST) {
+                    hasLoadedLoot = true;
+                    break;
+                }
+            }
+        }
+        if (!hasLoadedLoot) {
+            return; // Do not scan empty slots on tick 0
+        }
+
         evaluateChestLoot(screen, title);
+    }
+
+    public static void onSlotClicked(Slot slot, AbstractContainerScreen<?> screen) {
+        if (slot == null || screen == null) return;
+        String title = screen.getTitle().getString();
+        if (!title.contains("Paid Chest") && !title.contains("Free Chest") && !title.contains("Kuudra Chest")) {
+            return;
+        }
+        if (slot.index == 31) {
+            evaluateChestLoot(screen, title);
+        }
     }
 
     private static void evaluateChestLoot(AbstractContainerScreen<?> screen, String title) {
@@ -105,7 +135,7 @@ public class KuudraEndManager {
             if (slot.index >= 9 && slot.index <= 17 && slot.hasItem()) {
                 ItemStack stack = slot.getItem();
                 String itemKey = stack.getItem().toString().toLowerCase(Locale.ROOT);
-                if (itemKey.contains("glass") || stack.getItem() == Items.BARRIER || stack.getItem() == Items.CHEST) {
+                if (itemKey.contains("glass") || stack.getItem() == Items.BARRIER || stack.getItem() == Items.CHEST || stack.getItem() == Items.AIR) {
                     continue;
                 }
 
@@ -184,7 +214,7 @@ public class KuudraEndManager {
         }
 
         // Record to session if not yet recorded for this run
-        if (!recordedChestsThisRun.contains(title)) {
+        if (!recordedChestsThisRun.contains(title) && (isFree || alreadyOpened)) {
             recordedChestsThisRun.add(title);
             sessionChests++;
             sessionProfitCoins += netProfit;

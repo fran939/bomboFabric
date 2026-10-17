@@ -23,6 +23,9 @@ public class CommandMixin {
       me.bombo.bomboaddons.BomboaddonsClient.recordCommand(command);
       String trimmed = command.trim();
       String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+      if (!lower.startsWith("wd ") && !lower.equals("loadout")) {
+         me.bombo.bomboaddons.WardrobeHelper.clearSuppression();
+      }
       if (lower.startsWith("b s ") || lower.startsWith("bombo s ") || lower.startsWith("bomboaddons s ")) {
          int sIdx = trimmed.indexOf(" s ");
          String inner = trimmed.substring(sIdx + 3).trim();

@@ -936,6 +936,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          if ((Object) this instanceof AbstractContainerScreen<?> containerScreen && containerScreen.getMenu() instanceof net.minecraft.world.inventory.ChestMenu chestMenu) {
             String title = containerScreen.getTitle().getString();
             me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.updateFromContainer(title, chestMenu.getContainer());
+            me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onSlotClicked(slot, containerScreen);
          }
       } catch (Throwable ignored) {}
    }

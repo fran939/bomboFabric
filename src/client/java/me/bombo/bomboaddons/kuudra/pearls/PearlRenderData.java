@@ -20,17 +20,14 @@ public class PearlRenderData {
    }
 
    private long getTimeUntilThrow(long progressStart, boolean tracking) {
-      if (!tracking) {
-         return this.flightTimeMs;
-      } else {
-         int base = Pearls.getPearlDelay(BomboConfig.get().kuudraTalisman, KuudraUtils.getKuudraTier());
-         int delay = base + Pearls.cachedInitialDelay;
-         if (this.isDouble) {
-            delay += Pearls.cachedDoubleDelay;
-         }
-
-         return (long)delay - this.flightTimeMs - (System.currentTimeMillis() - progressStart);
+      int base = Pearls.getPearlDelay(BomboConfig.get().kuudraTalisman, KuudraUtils.getKuudraTier());
+      int delay = base + Pearls.cachedInitialDelay;
+      if (this.isDouble) {
+         delay += Pearls.cachedDoubleDelay;
       }
+
+      long elapsed = (tracking && progressStart > 0L) ? (System.currentTimeMillis() - progressStart) : 0L;
+      return (long) delay - this.flightTimeMs - elapsed;
    }
 
    public PearlRenderData(PearlSolution sol, Vec3 target, boolean isDouble, boolean isSky, boolean hasSupply, long progressStart, boolean tracking) {

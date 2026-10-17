@@ -67,6 +67,9 @@ public class KuudraBossTracker {
             float hp = kuudra.getHealth();
             int tier = KuudraUtils.getKuudraTier();
             boolean t5Final = tier == 5 && hp <= 25000.0F;
+            if (!t5Final && hp > 100000.0F) {
+                hp = 100000.0F;
+            }
             int maxHp = t5Final ? 25000 : 100000;
             String color = hpColor(hp);
 
