@@ -1177,6 +1177,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                         src.sendFeedback(Component.literal("§8[§dSpotify§8] §aRefetching album cover & lyrics for " + label + "§a..."));
                         return 1;
                      })));
+                  builder.then(ClientCommands.literal("hotbar").executes((context) -> {
+                     Minecraft mc = Minecraft.getInstance();
+                     mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
+                     return 1;
+                  }));
+                  builder.then(ClientCommands.literal("swap").executes((context) -> {
+                     Minecraft mc = Minecraft.getInstance();
+                     mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
+                     return 1;
+                  }));
                   builder.then(ClientCommands.literal("buttons")
                           .executes((context) -> {
                              Minecraft mc = Minecraft.getInstance();
@@ -1395,11 +1405,23 @@ public class BomboaddonsClient implements ClientModInitializer {
                      openMagicFindOptimizer((FabricClientCommandSource)ctx.getSource(), null);
                      return 1;
                   })));
-                  builder.then(ClientCommands.literal("help").executes((context) -> {
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8----------------- §b[BomboAddons Help] §8-----------------"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Hover over any command to see what it does! Click to suggest it.\n"));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b", "/b", "Opens the main config GUI.").append(Component.literal(" §7- Opens the main config GUI")));
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b help", "/b help", "Shows this help menu.").append(Component.literal(" §7- Shows this help menu")));
+                  builder.then(ClientCommands.literal("help")
+                     .then(ClientCommands.literal("gui").executes((context) -> {
+                        Minecraft mc = Minecraft.getInstance();
+                        mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.HelpGuiScreen(null)));
+                        return 1;
+                     }))
+                     .executes((context) -> {
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8----------------- §b[BomboAddons Help] §8-----------------"));
+                        MutableComponent openGuiComp = Component.literal("  §e▶ §b[Click to open Interactive Help & Features GUI] §e◀\n");
+                        openGuiComp.setStyle(openGuiComp.getStyle()
+                           .withClickEvent(new ClickEvent.RunCommand("/b help gui"))
+                           .withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to open the interactive Liquid Glass Help GUI!"))));
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(openGuiComp);
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§7Hover over any command to see what it does! Click to suggest it.\n"));
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b", "/b", "Opens the main config GUI.").append(Component.literal(" §7- Opens the main config GUI")));
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b help", "/b help", "Shows this help menu.").append(Component.literal(" §7- Shows this help menu")));
+                        ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b help gui", "/b help gui", "Opens the Interactive Help GUI.").append(Component.literal(" §7- Opens the Interactive Help GUI")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b prof", "/b prof", "Opens config GUI directly to Profile Binds.").append(Component.literal(" §7- Opens Profile Binds config")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b bw", "/b bw", "Opens config GUI directly to Bedwars settings.").append(Component.literal(" §7- Opens Bedwars ESP settings")));
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(createHelpLine("/b gui", "/b gui", "Opens the HUD Editor to reposition overlays.").append(Component.literal(" §7- Opens the HUD Editor")));
@@ -1588,27 +1610,85 @@ public class BomboaddonsClient implements ClientModInitializer {
                      ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§3Bombo§8]§r §aSuccessfully reloaded bomboaddons.json!"));
                      return 1;
                   }));
-                  builder.then(((LiteralArgumentBuilder)ClientCommands.literal("prof").then(ClientCommands.literal("list").executes((context) -> {
-                     printProfilesList((FabricClientCommandSource)context.getSource());
-                     return 1;
-                  }))).then(ClientCommands.argument("name", StringArgumentType.string()).executes((context) -> {
-                     String requested = StringArgumentType.getString(context, "name");
-                     BomboConfig.Settings s = BomboConfig.get();
-                     String name = BomboConfig.resolveProfileName(requested);
-                     if (!name.equals(requested)) {
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Matched existing profile §e" + name + "§7 (names ignore capitalisation)."));
-                     }
-                     if (!s.profileBinds.containsKey(name) && !name.equals("default")) {
-                        s.profileBinds.put(name, new ArrayList());
-                        ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §aCreated new config profile: §e" + name));
-                     }
+                  LiteralArgumentBuilder<FabricClientCommandSource> profCmd = ClientCommands.literal("prof")
+                     .executes(context -> {
+                        printProfilesList((FabricClientCommandSource)context.getSource());
+                        return 1;
+                     })
+                     .then(ClientCommands.literal("list").executes((context) -> {
+                        printProfilesList((FabricClientCommandSource)context.getSource());
+                        return 1;
+                     }))
+                     .then(ClientCommands.literal("delete")
+                        .then(ClientCommands.argument("target", StringArgumentType.string())
+                           .suggests((ctx, suggestionsBuilder) -> {
+                              BomboConfig.Settings s = BomboConfig.get();
+                              if (s != null && s.profileBinds != null) {
+                                 for (String p : s.profileBinds.keySet()) {
+                                    if (!p.equalsIgnoreCase("default") && !p.equalsIgnoreCase("General")) {
+                                       suggestionsBuilder.suggest(p);
+                                    }
+                                 }
+                              }
+                              return suggestionsBuilder.buildFuture();
+                           })
+                           .executes((context) -> {
+                              String target = StringArgumentType.getString(context, "target");
+                              FabricClientCommandSource src = (FabricClientCommandSource)context.getSource();
+                              if (target.equalsIgnoreCase("default") || target.equalsIgnoreCase("General")) {
+                                 src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cCannot delete protected '" + target + "' profile!"));
+                                 return 0;
+                              }
+                              boolean removed = BomboConfig.deleteProfile(target);
+                              if (removed) {
+                                 src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §aSuccessfully deleted profile: §e" + target));
+                              } else {
+                                 src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cProfile not found: §e" + target));
+                              }
+                              printProfilesList(src);
+                              return 1;
+                           })
+                        )
+                     )
+                     .then(ClientCommands.argument("name", StringArgumentType.string())
+                        .suggests((ctx, suggestionsBuilder) -> {
+                           BomboConfig.Settings s = BomboConfig.get();
+                           if (s != null && s.profileBinds != null) {
+                              for (String p : s.profileBinds.keySet()) {
+                                 suggestionsBuilder.suggest(p);
+                              }
+                           }
+                           return suggestionsBuilder.buildFuture();
+                        })
+                        .executes((context) -> {
+                           String requested = StringArgumentType.getString(context, "name");
+                           FabricClientCommandSource src = (FabricClientCommandSource)context.getSource();
+                           if (requested.equalsIgnoreCase("delete")) {
+                              src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cUsage: /b prof delete <profile_name>"));
+                              return 0;
+                           }
+                           if (requested.equalsIgnoreCase("list")) {
+                              printProfilesList(src);
+                              return 1;
+                           }
+                           BomboConfig.Settings s = BomboConfig.get();
+                           String name = BomboConfig.resolveProfileName(requested);
+                           if (!name.equals(requested)) {
+                              src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Matched existing profile §e" + name + "§7 (names ignore capitalisation)."));
+                           }
+                           if (!s.profileBinds.containsKey(name) && !name.equals("default")) {
+                              s.profileBinds.put(name, new ArrayList());
+                              src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §aCreated new config profile: §e" + name));
+                           }
 
-                     s.activeProfile = name;
-                     BomboConfig.save();
-                     ((FabricClientCommandSource)context.getSource()).sendFeedback(Component.literal("§8[§bBomboAddons§8] §aSwitched to config profile: §e" + name));
-                     printProfilesList((FabricClientCommandSource)context.getSource());
-                     return 1;
-                  })));
+                           s.activeProfile = name;
+                           BomboConfig.save();
+                           src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §aSwitched to config profile: §e" + name));
+                           printProfilesList(src);
+                           return 1;
+                        })
+                     );
+                  builder.then(profCmd);
                   builder.then(ClientCommands.literal("sounds").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
                      mc.execute(() -> mc.setScreenAndShow(new CustomSoundsScreen((Screen)null)));
@@ -5149,6 +5229,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                 dispatcher.register(buildShardsCommand("skyshards"));
                 dispatcher.register(buildMpCommand("mp"));
                 dispatcher.register(buildMpCommand("magicalpower"));
+                dispatcher.register(ClientCommands.literal("hotbar").executes((context) -> {
+                   Minecraft mc = Minecraft.getInstance();
+                   mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
+                   return 1;
+                }));
+                dispatcher.register(ClientCommands.literal("swap").executes((context) -> {
+                   Minecraft mc = Minecraft.getInstance();
+                   mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
+                   return 1;
+                }));
                dispatcher.register((LiteralArgumentBuilder)ClientCommands.literal("buttons")
                        .executes((context) -> {
                           Minecraft mc = Minecraft.getInstance();
@@ -9442,12 +9532,9 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
 
       BomboConfig.Settings s = BomboConfig.get();
-      Set<String> set = new LinkedHashSet();
-      String[] defaultProfs = new String[]{"default", "healer", "archer", "mage", "archerm6", "mining", "farming", "rend", "rendd", "fishing", "General", "foraging"};
-
-      for(String dp : defaultProfs) {
-         set.add(dp);
-      }
+      Set<String> set = new LinkedHashSet<>();
+      set.add("default");
+      set.add("General");
 
       if (s.profileBinds != null) {
          set.addAll(s.profileBinds.keySet());
@@ -9469,6 +9556,13 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
 
          lineComp.setStyle(lineComp.getStyle().withClickEvent(new ClickEvent.RunCommand("/b prof " + p)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to switch to profile §b" + p))));
+
+         if (!p.equalsIgnoreCase("default") && !p.equalsIgnoreCase("General")) {
+            MutableComponent delComp = Component.literal(" §8[§c✕ Delete§8]");
+            delComp.setStyle(delComp.getStyle().withClickEvent(new ClickEvent.RunCommand("/b prof delete " + p)).withHoverEvent(new HoverEvent.ShowText(Component.literal("§cClick to delete profile §e" + p))));
+            lineComp.append(delComp);
+         }
+
          source.sendFeedback(lineComp);
       }
 

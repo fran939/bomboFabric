@@ -1365,13 +1365,7 @@ public class BomboConfigGUI
                         this.addRenderableWidget(
                                 Button.builder((Component) Component.literal((String) delText), btn -> {
                                     if (confirmProfileDelete) {
-                                        s.profileBinds.remove(s.activeProfile);
-                                        s.keybindBinds.remove(s.activeProfile);
-                                        s.customWaypoints.remove(s.activeProfile);
-                                        s.profileChatTriggers.remove(s.activeProfile);
-                                        s.coordBinds.remove(s.activeProfile);
-                                        s.activeProfile = "default";
-                                        BomboConfig.save();
+                                        BomboConfig.deleteProfile(s.activeProfile);
                                         confirmProfileDelete = false;
                                         this.init();
                                     } else {

@@ -350,12 +350,10 @@ public class BomboConfig {
          instance.keybindBinds = new HashMap();
       }
 
-      String[] defaultProfs = new String[]{"default", "healer", "archer", "mage", "archerm6", "mining", "farming", "rend", "rendd", "fishing", "General", "foraging"};
-
-      for(String p : defaultProfs) {
-         instance.profileBinds.putIfAbsent(p, new ArrayList());
-         instance.keybindBinds.putIfAbsent(p, new ArrayList());
-      }
+      instance.profileBinds.putIfAbsent("default", new ArrayList());
+      instance.keybindBinds.putIfAbsent("default", new ArrayList());
+      instance.profileBinds.putIfAbsent("General", new ArrayList());
+      instance.keybindBinds.putIfAbsent("General", new ArrayList());
 
       // Version upgrade automatic backup
       try {
@@ -487,6 +485,56 @@ public class BomboConfig {
          }
       }
       return clean;
+   }
+
+   public static boolean deleteProfile(String name) {
+      if (name == null) return false;
+      String trimmed = name.trim();
+      if (trimmed.isEmpty() || trimmed.equalsIgnoreCase("default") || trimmed.equalsIgnoreCase("General")) {
+         return false;
+      }
+      Settings s = instance;
+      if (s == null) return false;
+
+      String targetKey = null;
+      if (s.profileBinds != null) {
+         for (String k : s.profileBinds.keySet()) {
+            if (k != null && k.equalsIgnoreCase(trimmed)) {
+               targetKey = k;
+               break;
+            }
+         }
+      }
+      if (targetKey == null && s.keybindBinds != null) {
+         for (String k : s.keybindBinds.keySet()) {
+            if (k != null && k.equalsIgnoreCase(trimmed)) {
+               targetKey = k;
+               break;
+            }
+         }
+      }
+      if (targetKey == null) {
+         targetKey = trimmed;
+      }
+
+      boolean removed = false;
+      if (s.profileBinds != null) removed |= (s.profileBinds.remove(targetKey) != null);
+      if (s.keybindBinds != null) removed |= (s.keybindBinds.remove(targetKey) != null);
+      if (s.coordBinds != null) removed |= (s.coordBinds.remove(targetKey) != null);
+      if (s.customWaypoints != null) removed |= (s.customWaypoints.remove(targetKey) != null);
+      if (s.profileChatTriggers != null) removed |= (s.profileChatTriggers.remove(targetKey) != null);
+      if (s.profileKeyOverrides != null) removed |= (s.profileKeyOverrides.remove(targetKey) != null);
+      if (s.autoProfileRules != null) {
+         final String finalKey = targetKey;
+         removed |= s.autoProfileRules.removeIf(r -> r != null && r.targetProfile != null && r.targetProfile.equalsIgnoreCase(finalKey));
+      }
+
+      if (targetKey.equalsIgnoreCase(s.activeProfile) || trimmed.equalsIgnoreCase(s.activeProfile)) {
+         s.activeProfile = "default";
+      }
+
+      save();
+      return removed;
    }
 
    static {

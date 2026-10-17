@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.134",
+    "date": "2026-10-17",
+    "changes": [
+      "+ Interactive Help & Feature Explorer - Added Liquid Glass GUI (/b help gui) exploring all commands, sub-options with 1-click execution ([Run] and [Paste]), and live feature status badges",
+      "~ Left-Click Etherwarp Sneak Fix - Resolved internal state lock where sneaking and left-clicking stranded LCEW until right-click reset",
+      "+ Persistent Profile Deletion - Added /b prof delete <profile>, added delete button to new GUI, and prevented default profile resurrection on restart",
+      "~ Bridge Command Privacy - Silenced [CMD_ACK] and protocol frames from broadcasting to public game chat or Discord channels",
+      "~ No Blindness & Darkness Suppression - Suppressed BLINDNESS and DARKNESS status effects and fog blending when disableBlindness is enabled",
+      "+ Restored /b hotbar Command - Added /b hotbar, /hotbar, /b swap, and /swap command aliases opening the inventory swapper"
+    ]
+  },
+  {
     "version": "26.2.28.133",
     "date": "2026-10-16",
     "changes": [

@@ -134,11 +134,12 @@ public class LeftClickEtherwarp {
                GardenMacroDetector.recordWeaponUse();
                lastHoldEtherwarpTime = now;
             }
-            state = 2;
+            state = 0;
             if (!attackDown) {
                releaseForcedSneak(mc);
             }
          } else if (state == 2) {
+            state = 0;
             if (!attackDown) {
                releaseForcedSneak(mc);
             }
@@ -300,7 +301,7 @@ public class LeftClickEtherwarp {
                   mc.gameMode.useItem(mc.player, InteractionHand.MAIN_HAND);
                   GardenMacroDetector.recordWeaponUse();
                   lastHoldEtherwarpTime = now;
-                  state = 2; // completed for this click
+                  state = 0; // Already sneaking naturally; cycle completes immediately
                }
             } else {
                getSneakMapping(mc).setDown(true);
@@ -372,10 +373,10 @@ public class LeftClickEtherwarp {
 
    /** Releases a sneak that a held left click pressed, so the player never keeps crouching. */
    private static void releaseForcedSneak(Minecraft mc) {
+      state = 0;
       if (!sneakForcedByHold && !holdingSneak) return;
       sneakForcedByHold = false;
       holdingSneak = false;
-      state = 0;
       if (mc.options != null && mc.options.keyShift != null) {
          boolean physicallyPressed = false;
          try {

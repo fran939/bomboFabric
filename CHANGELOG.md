@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.134] - 2026-10-17 (Beta)
+
+### Features & Fixes
+- **Interactive Help & Feature Explorer (`/b help gui`, `HelpGuiScreen.java`):** Added a full-featured Liquid Glass screen exploring all commands and features. Features search filtering, detailed parameter explanations, all sub-options with 1-click execution (`[⚡ Run]` and `[📋 Paste]`), and live feature status badges with direct `[⚙ Configure]` shortcuts.
+- **Left-Click Etherwarp Sneak Fix (`LeftClickEtherwarp.java`):** Fixed sneak-lock bug where sneaking and left-clicking stranded the internal click state, preventing subsequent LCEW activations until manually right-clicking.
+- **Persistent Profile Deletion & Management (`BomboConfig.java`, `BomboaddonsClient.java`, `ConfigCustomWidgets.java`):** Added `/b prof delete <profile>` with tab autocompletion, added `[🗑 Delete Active]` button to the new config GUI, and removed default profile resurrection on restart so deleted profiles stay deleted.
+- **Bridge Command Privacy & Silent Acknowledgment (`bombot_index.js`):** Silenced bridge `[CMD_ACK]` and protocol control frames so remote commands like `/b cmd ...` no longer broadcast player responses to public game chat or Discord chat channels; routed acknowledgments privately to admin logs.
+- **No Blindness & Darkness Elimination (`PlayerMixin.java`):** Injected into entity effect checks to fully suppress both `BLINDNESS` and `DARKNESS` status effects and fog blending when `disableBlindness` is enabled.
+- **Restored `/b hotbar` Command (`CommandMixin.java`, `BomboaddonsClient.java`):** Added `/b hotbar`, `/hotbar`, `/b swap`, and `/swap` command routing directly to the hotbar swap configuration screen.
+
 ## [26.2.28.133] - 2026-10-16 (Beta)
 
 ### Features & Polish

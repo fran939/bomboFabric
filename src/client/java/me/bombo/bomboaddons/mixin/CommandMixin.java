@@ -146,6 +146,12 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (trimmed.equalsIgnoreCase("b help gui") || trimmed.equalsIgnoreCase("bombo help gui") || trimmed.equalsIgnoreCase("bomboaddons help gui") || trimmed.equalsIgnoreCase("help gui")) {
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.HelpGuiScreen(null)));
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("buttons move") || trimmed.equalsIgnoreCase("b buttons move") || trimmed.equalsIgnoreCase("bombo buttons move") || trimmed.equalsIgnoreCase("bomboaddons buttons move")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.buttons.InventoryButtonMoveScreen(null)));
@@ -164,7 +170,10 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("b swap") || trimmed.equalsIgnoreCase("bombo swap") || trimmed.equalsIgnoreCase("bomboaddons swap")) {
+      if (trimmed.equalsIgnoreCase("b swap") || trimmed.equalsIgnoreCase("bombo swap") || trimmed.equalsIgnoreCase("bomboaddons swap")
+            || trimmed.equalsIgnoreCase("swap")
+            || trimmed.equalsIgnoreCase("b hotbar") || trimmed.equalsIgnoreCase("bombo hotbar") || trimmed.equalsIgnoreCase("bomboaddons hotbar")
+            || trimmed.equalsIgnoreCase("hotbar")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
          ci.cancel();

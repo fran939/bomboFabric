@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import net.minecraft.world.effect.MobEffectInstance;
+
 @Mixin({LivingEntity.class})
 public class PlayerMixin {
    @Inject(
@@ -33,11 +35,40 @@ public class PlayerMixin {
       cancellable = true
    )
    private void onHasEffect(Holder<MobEffect> effect, CallbackInfoReturnable<Boolean> cir) {
-      if ((Object)this == Minecraft.getInstance().player) {
-         if (effect.is(MobEffects.BLINDNESS) && BomboConfig.get().disableBlindness) {
+      Minecraft mc = Minecraft.getInstance();
+      if ((Object)this == mc.player || (Object)this == mc.getCameraEntity()) {
+         if ((effect.is(MobEffects.BLINDNESS) || effect.is(MobEffects.DARKNESS)) && BomboConfig.get().disableBlindness) {
             cir.setReturnValue(false);
          } else if (effect.is(MobEffects.INVISIBILITY) && BomboConfig.get().removeSelfInvisibility) {
             cir.setReturnValue(false);
+         }
+      }
+   }
+
+   @Inject(
+      method = {"getEffect"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onGetEffect(Holder<MobEffect> effect, CallbackInfoReturnable<MobEffectInstance> cir) {
+      Minecraft mc = Minecraft.getInstance();
+      if ((Object)this == mc.player || (Object)this == mc.getCameraEntity()) {
+         if ((effect.is(MobEffects.BLINDNESS) || effect.is(MobEffects.DARKNESS)) && BomboConfig.get().disableBlindness) {
+            cir.setReturnValue(null);
+         }
+      }
+   }
+
+   @Inject(
+      method = {"getEffectBlendFactor"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onGetEffectBlendFactor(Holder<MobEffect> effect, float partialTicks, CallbackInfoReturnable<Float> cir) {
+      Minecraft mc = Minecraft.getInstance();
+      if ((Object)this == mc.player || (Object)this == mc.getCameraEntity()) {
+         if ((effect.is(MobEffects.BLINDNESS) || effect.is(MobEffects.DARKNESS)) && BomboConfig.get().disableBlindness) {
+            cir.setReturnValue(0.0f);
          }
       }
    }

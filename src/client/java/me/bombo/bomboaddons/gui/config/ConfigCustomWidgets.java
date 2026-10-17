@@ -2073,11 +2073,16 @@ public class ConfigCustomWidgets {
 
         renderCleanInputField(g, font, "New Profile Name", newProfileInput, "newProfile", x + 12, curY, colW, mouseX, mouseY);
 
-        boolean addHover = mouseX >= x + 12 + colW + 6 && mouseX <= x + 12 + colW + 6 + 110 && mouseY >= curY && mouseY <= curY + 18;
-        ConfigUITheme.drawPillButton(g, font, "§a+ Create Profile", x + 12 + colW + 6, curY, 110, 18, addHover, -1, 0x2210B981, 0x6610B981);
+        boolean addHover = mouseX >= x + 12 + colW + 6 && mouseX <= x + 12 + colW + 6 + 105 && mouseY >= curY && mouseY <= curY + 18;
+        ConfigUITheme.drawPillButton(g, font, "§a+ Create Profile", x + 12 + colW + 6, curY, 105, 18, addHover, -1, 0x2210B981, 0x6610B981);
 
-        boolean dupHover = mouseX >= x + 12 + colW + 122 && mouseX <= x + 12 + colW + 122 + 110 && mouseY >= curY && mouseY <= curY + 18;
-        ConfigUITheme.drawPillButton(g, font, "§e📋 Clone Active", x + 12 + colW + 122, curY, 110, 18, dupHover, -1, 0x22FFAA00, 0x44FFAA00);
+        boolean dupHover = mouseX >= x + 12 + colW + 116 && mouseX <= x + 12 + colW + 116 + 105 && mouseY >= curY && mouseY <= curY + 18;
+        ConfigUITheme.drawPillButton(g, font, "§e📋 Clone Active", x + 12 + colW + 116, curY, 105, 18, dupHover, -1, 0x22FFAA00, 0x44FFAA00);
+
+        if (!"default".equalsIgnoreCase(activeProf) && !"General".equalsIgnoreCase(activeProf)) {
+            boolean delActiveHover = mouseX >= x + 12 + colW + 226 && mouseX <= x + 12 + colW + 226 + 105 && mouseY >= curY && mouseY <= curY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§c🗑 Delete Active", x + 12 + colW + 226, curY, 105, 18, delActiveHover, -1, 0x22EF4444, 0x66EF4444);
+        }
 
         curY += 26;
         g.fill(x + 12, curY, x + w - 12, curY + 1, ConfigUITheme.getDividerColor());
@@ -2106,12 +2111,10 @@ public class ConfigCustomWidgets {
             ConfigUITheme.drawPillButton(g, font, title, bx, by, btnW, btnH, bHover, isActive ? 0xFF00E5FF : -1, bgCol, borderCol);
 
             if (!"default".equalsIgnoreCase(pName) && !"General".equalsIgnoreCase(pName)) {
-                int delX = bx + btnW - 14;
+                int delX = bx + btnW - 16;
                 int delY = by + 2;
-                boolean delHover = mouseX >= delX && mouseX <= delX + 12 && mouseY >= delY && mouseY <= delY + 12;
-                if (bHover) {
-                    g.text(font, "§c✕", delX, delY + 2, delHover ? 0xFFFF5555 : 0xFF888888, false);
-                }
+                boolean delHover = mouseX >= delX && mouseX <= delX + 14 && mouseY >= delY && mouseY <= delY + 14;
+                g.text(font, "§c✕", delX + 2, delY + 3, delHover ? 0xFFFF3333 : (bHover ? 0xFFFFAAAA : 0x88FF5555), false);
             }
         }
     }
@@ -2163,6 +2166,14 @@ public class ConfigCustomWidgets {
             return true;
         }
 
+        // Delete Active Profile
+        if (!"default".equalsIgnoreCase(s.activeProfile) && !"General".equalsIgnoreCase(s.activeProfile)) {
+            if (mouseX >= x + 12 + colW + 226 && mouseX <= x + 12 + colW + 226 + 105 && mouseY >= curY && mouseY <= curY + 18) {
+                BomboConfig.deleteProfile(s.activeProfile);
+                return true;
+            }
+        }
+
         curY += 34;
         List<String> allProfiles = ConfigRegistry.getAllProfileNames();
         int btnW = (w - 36) / 4;
@@ -2178,16 +2189,10 @@ public class ConfigCustomWidgets {
             if (by + btnH > y + h - 10) break;
 
             if (!"default".equalsIgnoreCase(pName) && !"General".equalsIgnoreCase(pName)) {
-                int delX = bx + btnW - 14;
+                int delX = bx + btnW - 16;
                 int delY = by + 2;
-                if (mouseX >= delX && mouseX <= delX + 14 && mouseY >= delY && mouseY <= delY + 14) {
-                    if (s.profileBinds != null) s.profileBinds.remove(pName);
-                    if (s.keybindBinds != null) s.keybindBinds.remove(pName);
-                    if (s.coordBinds != null) s.coordBinds.remove(pName);
-                    if (s.customWaypoints != null) s.customWaypoints.remove(pName);
-                    if (s.profileChatTriggers != null) s.profileChatTriggers.remove(pName);
-                    if (pName.equalsIgnoreCase(s.activeProfile)) s.activeProfile = "default";
-                    BomboConfig.save();
+                if (mouseX >= delX && mouseX <= delX + 16 && mouseY >= delY && mouseY <= delY + 16) {
+                    BomboConfig.deleteProfile(pName);
                     return true;
                 }
             }
