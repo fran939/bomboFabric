@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.137",
+    "date": "2026-10-17",
+    "changes": [
+      "- Disabled All KIC Features by Default - All ported KuudraIsCool settings now default to false",
+      "~ Command Disambiguation - /b hotbar now handles slot & item switching; GUI swapper is strictly on /b swap",
+      "+ Wardrobe Search in Config GUI - Added all 18 wardrobe hotkey slots to Hotkeys category and search indexing",
+      "~ Kuudra Boss KIC Parity - Restored accurate Kuudra health scaling and restricted direction alerts to T5 retreat banners",
+      "+ Dynamic Pearl 3D Waypoints - Registered pearl trajectories in Fabric world renderer and fixed crate detection in slot 8",
+      "~ HUD Move Screen Container Fix - Hidden dummy inventory preview when Filter: In-Game is active",
+      "+ Kuudra Splits & Supply Times HUD - Integrated clean real-time splits, supply times, and pace HUD overlay"
+    ]
+  },
+  {
     "version": "26.2.28.136",
     "date": "2026-10-17",
     "changes": [

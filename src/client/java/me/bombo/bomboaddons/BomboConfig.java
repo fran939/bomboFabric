@@ -1186,107 +1186,107 @@ public class BomboConfig {
       public int autoGfsTwilightCount = 2;
 
       // Kuudra General
-      public boolean blockUselessPerks = true;
-      public boolean blockSkyblockMenu = true;
-      public boolean hideMobNametags = true;
-      public boolean hideUselessArmorStands = true;
-      public boolean hideDeathAnimation = true;
+      public boolean blockUselessPerks = false;
+      public boolean blockSkyblockMenu = false;
+      public boolean hideMobNametags = false;
+      public boolean hideUselessArmorStands = false;
+      public boolean hideDeathAnimation = false;
       public boolean scaleKuudraMobs = false;
       public float kuudraMobsSize = 0.6F;
 
       // Splits & Pace
-      public boolean kuudraSplits = true;
-      public boolean kuudraSupplyTimes = true;
-      public boolean kuudraFreshTimes = true;
+      public boolean kuudraSplits = false;
+      public boolean kuudraSupplyTimes = false;
+      public boolean kuudraFreshTimes = false;
       public boolean kuudraShowLag = false;
-      public boolean kuudraShowDetailedOverview = true;
-      public boolean kuudraPace = true;
-      public boolean kuudraEstimatedPace = true;
+      public boolean kuudraShowDetailedOverview = false;
+      public boolean kuudraPace = false;
+      public boolean kuudraEstimatedPace = false;
 
       // Notifications
-      public boolean kuudraNotifications = true;
-      public boolean kuudraNotifSound = true;
-      public boolean kuudraNotifNoPre = true;
-      public boolean kuudraNotifCratePrio = true;
-      public boolean kuudraNotifDropped = true;
-      public boolean kuudraNotifGrabbing = true;
-      public boolean kuudraNotifGrabbed = true;
-      public boolean kuudraNotifPlaced = true;
-      public boolean kuudraNotifFresh = true;
-      public boolean kuudraNotifAllPlaced = true;
-      public boolean kuudraNotifBuildFinished = true;
+      public boolean kuudraNotifications = false;
+      public boolean kuudraNotifSound = false;
+      public boolean kuudraNotifNoPre = false;
+      public boolean kuudraNotifCratePrio = false;
+      public boolean kuudraNotifDropped = false;
+      public boolean kuudraNotifGrabbing = false;
+      public boolean kuudraNotifGrabbed = false;
+      public boolean kuudraNotifPlaced = false;
+      public boolean kuudraNotifFresh = false;
+      public boolean kuudraNotifAllPlaced = false;
+      public boolean kuudraNotifBuildFinished = false;
 
       // Kuudra Boss
-      public boolean kuudraHighlight = true;
+      public boolean kuudraHighlight = false;
       public String kuudraHighlightColor = "#FF0018";
-      public boolean kuudraHealth = true;
-      public boolean kuudraHealthHud = true;
-      public boolean kuudraDirection = true;
+      public boolean kuudraHealth = false;
+      public boolean kuudraHealthHud = false;
+      public boolean kuudraDirection = false;
 
       // Supplies
-      public boolean kuudraSupplyWaypoints = true;
+      public boolean kuudraSupplyWaypoints = false;
       public String kuudraSupplyColor = "#28F9FE";
-      public boolean kuudraSupplyHitbox = true;
-      public boolean kuudraSupplyBestAim = true;
-      public boolean kuudraSupplyPickupRange = true;
-      public boolean kuudraDragHitbox = true;
+      public boolean kuudraSupplyHitbox = false;
+      public boolean kuudraSupplyBestAim = false;
+      public boolean kuudraSupplyPickupRange = false;
+      public boolean kuudraDragHitbox = false;
 
       // Dynamic Pearls
-      public boolean kuudraDynamicPearls = true;
+      public boolean kuudraDynamicPearls = false;
       public boolean kuudraPearlShowSky = false;
-      public boolean kuudraPearlShowFlat = true;
-      public boolean kuudraPearlShowDouble = true;
-      public boolean kuudraPearlSecondSupply = true;
-      public boolean kuudraPearlTimer = true;
+      public boolean kuudraPearlShowFlat = false;
+      public boolean kuudraPearlShowDouble = false;
+      public boolean kuudraPearlSecondSupply = false;
+      public boolean kuudraPearlTimer = false;
 
       // Build
-      public boolean kuudraAnnounceFresh = true;
-      public boolean kuudraTeammateFreshTimer = true;
-      public boolean kuudraBuildTimer = true;
-      public boolean kuudraBuildProgressBox = true;
-      public boolean kuudraBuildProgressBeacon = true;
-      public boolean kuudraBuildProgressPercent = true;
+      public boolean kuudraAnnounceFresh = false;
+      public boolean kuudraTeammateFreshTimer = false;
+      public boolean kuudraBuildTimer = false;
+      public boolean kuudraBuildProgressBox = false;
+      public boolean kuudraBuildProgressBeacon = false;
+      public boolean kuudraBuildProgressPercent = false;
 
       // Stun & Kill
-      public boolean kuudraCloseCannon = true;
-      public boolean kuudraStunWaypoint = true;
+      public boolean kuudraCloseCannon = false;
+      public boolean kuudraStunWaypoint = false;
       public String kuudraStunWaypointColor = "#00FFFF";
-      public boolean kuudraHollowHelper = true;
-      public boolean kuudraRendDamage = true;
-      public boolean kuudraBackboneHit = true;
-      public boolean kuudraBackboneSound = true;
+      public boolean kuudraHollowHelper = false;
+      public boolean kuudraRendDamage = false;
+      public boolean kuudraBackboneHit = false;
+      public boolean kuudraBackboneSound = false;
 
       // Profit Tracker & Requeue
-      public boolean kuudraProfitTracker = true;
-      public boolean kuudraProfitCroesus = true;
-      public boolean kuudraProfitHideInRun = true;
+      public boolean kuudraProfitTracker = false;
+      public boolean kuudraProfitCroesus = false;
+      public boolean kuudraProfitHideInRun = false;
       public boolean kuudraAutoRequeue = false;
-      public boolean kuudraRequeuePartyCheck = true;
+      public boolean kuudraRequeuePartyCheck = false;
 
       // Party Chat Commands
-      public boolean kuudraChatCommands = true;
-      public boolean kuudraCmdStart = true;
-      public boolean kuudraCmdProfit = true;
-      public boolean kuudraCmdChests = true;
-      public boolean kuudraCmdPb = true;
-      public boolean kuudraCmdRuns = true;
+      public boolean kuudraChatCommands = false;
+      public boolean kuudraCmdStart = false;
+      public boolean kuudraCmdProfit = false;
+      public boolean kuudraCmdChests = false;
+      public boolean kuudraCmdPb = false;
+      public boolean kuudraCmdRuns = false;
 
       // Misc / Visuals
       public boolean damageTrackerEnabled = false;
-      public boolean damageTrackerOnlyIsland = true;
+      public boolean damageTrackerOnlyIsland = false;
       public boolean damageTrackerOnlyCrits = false;
       public double damageTrackerThreshold = 0.0;
 
       public boolean scalePlayers = false;
       public float playerSize = 0.6F;
-      public boolean playerIgnoreNPC = true;
-      public boolean scaleNameTag = true;
+      public boolean playerIgnoreNPC = false;
+      public boolean scaleNameTag = false;
 
       public boolean entityReplaceEnabled = false;
-      public boolean entityReplaceIgnoreNPC = true;
+      public boolean entityReplaceIgnoreNPC = false;
 
-      public boolean backboneOnIsland = true;
-      public boolean backboneOnIslandFront = true;
+      public boolean backboneOnIsland = false;
+      public boolean backboneOnIslandFront = false;
       public int blockScanRadius = 20;
       public boolean pearlCalculator = false;
       public boolean showTimer = false;

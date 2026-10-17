@@ -1001,6 +1001,18 @@ public class ConfigRegistry {
                     items.add(ConfigItem.keybindWithMode("Freelook", "Rotate 360 camera freely without changing player facing direction.", category, () -> s.freelookKey, v -> s.freelookKey = v, () -> s.freelookToggle, v -> s.freelookToggle = v));
                     items.add(ConfigItem.keybindWithMode("Freecam", "Detached free-flying camera view with flight controls.", category, () -> s.freecamKey, v -> s.freecamKey = v, () -> s.freecamToggle, v -> s.freecamToggle = v));
                 }
+
+                items.add(ConfigItem.header("Wardrobe Fast Swapping", category));
+                items.add(ConfigItem.toggle("Disable Unequip Armor", "Prevents clicking active armor pieces in wardrobe to unequip them.", category, () -> s.disableUnequipWardrobe, v -> s.disableUnequipWardrobe = v));
+                for (int i = 0; i < 18; i++) {
+                    int slotIdx = i;
+                    items.add(ConfigItem.keybind("Wardrobe Slot " + (slotIdx + 1), "Keybind to equip wardrobe armor set " + (slotIdx + 1), category,
+                            () -> slotIdx < s.wardrobeKeys.size() ? s.wardrobeKeys.get(slotIdx) : "",
+                            key -> {
+                                while (s.wardrobeKeys.size() <= slotIdx) s.wardrobeKeys.add("");
+                                s.wardrobeKeys.set(slotIdx, key);
+                            }));
+                }
             }
 
             case "HUDs", "HUD" -> {
@@ -1519,7 +1531,7 @@ public class ConfigRegistry {
             case "Wardrobe" -> {
                 items.add(ConfigItem.header("Wardrobe Fast Swapping", category));
                 items.add(ConfigItem.toggle("Disable Unequip Armor", "Prevents clicking active armor pieces in wardrobe to unequip them.", category, () -> s.disableUnequipWardrobe, v -> s.disableUnequipWardrobe = v));
-                for (int i = 0; i < 12; i++) {
+                for (int i = 0; i < 18; i++) {
                     int slotIdx = i;
                     items.add(ConfigItem.keybind("Wardrobe Slot " + (slotIdx + 1), "Keybind to equip wardrobe armor set " + (slotIdx + 1), category,
                             () -> slotIdx < s.wardrobeKeys.size() ? s.wardrobeKeys.get(slotIdx) : "",
@@ -1801,6 +1813,7 @@ public class ConfigRegistry {
             if (!allCatsToCache.contains("GUI Settings")) allCatsToCache.add("GUI Settings");
             if (!allCatsToCache.contains("Debug")) allCatsToCache.add("Debug");
             if (!allCatsToCache.contains("Dev")) allCatsToCache.add("Dev");
+            if (!allCatsToCache.contains("Wardrobe")) allCatsToCache.add("Wardrobe");
             for (String baseCat : allCatsToCache) {
                 if ("Uncategorized".equalsIgnoreCase(baseCat)) continue;
                 List<ConfigItem> baseItems = getRegisteredItemsForCategory(baseCat);

@@ -211,7 +211,7 @@ public class KuudraUtils {
    }
 
    private static boolean isKuudraEntity(MagmaCube magmaCube) {
-      return magmaCube.getBbWidth() > 14.0F && magmaCube.getHealth() <= 100000.0F;
+      return magmaCube != null && (magmaCube.getSize() == 30 || magmaCube.getBbWidth() > 14.0F);
    }
 
    private static void resetSupplies() {

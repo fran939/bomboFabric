@@ -43,5 +43,8 @@ public class KuudraHudManager {
 
         // 4. Kuudra Profit Tracker HUD
         KuudraEndManager.renderHUD(g, font, winW, winH);
+
+        // 5. Kuudra Splits, Supply Times, Fresh Times & Pace HUD
+        KuudraSplitsManager.renderHUD(g, font, winW, winH);
     }
 }

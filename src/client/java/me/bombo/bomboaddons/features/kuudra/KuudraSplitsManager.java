@@ -189,7 +189,83 @@ public class KuudraSplitsManager {
         return suppliesPlaced;
     }
 
-    public static long getAccumulatedServerLagMs() {
-        return accumulatedServerLagMs;
+    public static void renderHUD(GuiGraphicsExtractor g, Font font, int screenW, int screenH) {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s == null) return;
+        if (!SkyblockUtils.isInKuudra()) return;
+
+        boolean showSplits = s.kuudraSplits && (currentPhase != Phase.NONE);
+        boolean showSupplyTimes = s.kuudraSupplyTimes && (!supplyTimes.isEmpty());
+        boolean showFreshTimes = s.kuudraFreshTimes && (!freshTimes.isEmpty());
+
+        if (!showSplits && !showSupplyTimes && !showFreshTimes) return;
+
+        int hudX = 16;
+        int hudY = 60;
+        int lineHeight = 10;
+        long now = System.currentTimeMillis();
+
+        List<String> lines = new ArrayList<>();
+
+        if (showSplits) {
+            long p1 = suppliesEndTime > 0 ? (suppliesEndTime - runStartTime) : (runStartTime > 0 ? (now - runStartTime) : 0);
+            long p2 = buildEndTime > 0 ? (buildEndTime - suppliesEndTime) : (suppliesEndTime > 0 ? (now - suppliesEndTime) : 0);
+            long p3 = stunEndTime > 0 ? (stunEndTime - buildEndTime) : (buildEndTime > 0 ? (now - buildEndTime) : 0);
+            long p4 = killEndTime > 0 ? (killEndTime - stunEndTime) : (stunEndTime > 0 ? (now - stunEndTime) : 0);
+
+            lines.add("§bSupplies: §f" + formatTime(p1));
+            if (currentPhase.ordinal() >= Phase.BUILD.ordinal()) {
+                lines.add("§6Build: §f" + formatTime(p2));
+            }
+            if (currentPhase.ordinal() >= Phase.STUN.ordinal()) {
+                lines.add("§eFuel / Stun: §f" + formatTime(p3));
+            }
+            if (currentPhase.ordinal() >= Phase.KILL.ordinal()) {
+                lines.add("§cKill: §f" + formatTime(p4));
+            }
+            if (s.kuudraPace && runStartTime > 0) {
+                long totalElapsed = (killEndTime > 0 ? killEndTime : now) - runStartTime;
+                lines.add("§dPace: §f" + formatTime(totalElapsed));
+            }
+            if (s.kuudraShowLag && accumulatedServerLagMs > 0) {
+                lines.add("§cLag: §f" + String.format(Locale.ROOT, "%.2fs", accumulatedServerLagMs / 1000.0));
+            }
+        }
+
+        if (showSupplyTimes) {
+            if (!lines.isEmpty()) lines.add("");
+            lines.add("§b§lSupply Times [§a" + Math.min(6, supplyTimes.size()) + "§8/§a6§b§l]");
+            for (int i = 0; i < supplyTimes.size() && i < 6; i++) {
+                lines.add("§8(" + (i + 1) + "/6) §f" + formatTime(supplyTimes.get(i)));
+            }
+        }
+
+        if (showFreshTimes) {
+            if (!lines.isEmpty()) lines.add("");
+            lines.add("§b§lFresh Times [§2§l" + freshTimes.size() + "§b§l]");
+            for (int i = 0; i < freshTimes.size(); i++) {
+                lines.add("§8#" + (i + 1) + " §d" + formatTime(freshTimes.get(i)));
+            }
+        }
+
+        if (lines.isEmpty()) return;
+
+        int maxW = 0;
+        for (String l : lines) {
+            maxW = Math.max(maxW, font.width(l));
+        }
+
+        int totalH = lines.size() * lineHeight + 4;
+        if (!s.hudNoBackground) {
+            g.fill(hudX - 4, hudY - 2, hudX + maxW + 4, hudY + totalH, 0x90000000);
+        }
+
+        int curY = hudY;
+        for (String l : lines) {
+            if (!l.isEmpty()) {
+                g.text(font, l, hudX, curY, 0xFFFFFFFF, true);
+            }
+            curY += lineHeight;
+        }
     }
 }

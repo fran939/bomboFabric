@@ -152,13 +152,15 @@ public class HudMoveScreen extends Screen {
         // Dark background overlay
         g.fill(0, 0, this.width, this.height, 0x90000000);
 
-        // Render dummy container background in the center for reference
-        Identifier invTex = Identifier.withDefaultNamespace("textures/gui/container/inventory.png");
-        int dummyInvW = 176;
-        int dummyInvH = 166;
-        int invX = (this.width - dummyInvW) / 2;
-        int invY = (this.height - dummyInvH) / 2;
-        g.blit(invTex, invX, invY, invX + dummyInvW, invY + dummyInvH, 0.0F, 0.6875F, 0.0F, 0.6484375F);
+        // Render dummy container background in the center for reference (only in In-GUI or Both filter modes)
+        if (hudTypeFilter != 2) {
+            Identifier invTex = Identifier.withDefaultNamespace("textures/gui/container/inventory.png");
+            int dummyInvW = 176;
+            int dummyInvH = 166;
+            int invX = (this.width - dummyInvW) / 2;
+            int invY = (this.height - dummyInvH) / 2;
+            g.blit(invTex, invX, invY, invX + dummyInvW, invY + dummyInvH, 0.0F, 0.6875F, 0.0F, 0.6484375F);
+        }
 
         // Render simulated chat preview when chat tabs or chat search are relevant
         BomboConfig.Settings s = BomboConfig.get();

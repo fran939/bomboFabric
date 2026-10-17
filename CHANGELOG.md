@@ -1,5 +1,16 @@
 # BomboAddons Changelog
  
+## [26.2.28.137] - 2026-10-17 (Beta)
+
+### KuudraIsCool (KIC) Parity, Fixes & HUD Polish
+- **All KIC Features Disabled by Default (`BomboConfig.java`):** Every ported KuudraIsCool setting (General, Splits, Pace, Notifications, Boss Tracker, Supplies, Build, Stun, Kill, Profit, Chat Commands, Dynamic Pearls, Damage Tracker, Player Sizing, Entity Replace) defaults to `false`.
+- **Command Disambiguation (`/b hotbar` vs `/b swap`, `BomboaddonsClient.java`):** Unbound visual slot swapper GUI from `/b hotbar` and `/hotbar` (now exclusively opened via `/b swap` and `/swap`); fixed Brigadier command registration so `/b hotbar <1-9>`, `/b hotbar <name>`, `/b hotbar l:<lore>`, and `/b hotbar back` execute cleanly without GUI interruption.
+- **Wardrobe Search in Config GUI (`ConfigRegistry.java`):** Added all 18 wardrobe hotkey slots and "Disable Unequip Armor" to `Hotkeys` category and `allCatsToCache`, resolving missing search results when searching "wardr" in `/b` config.
+- **Kuudra Boss Parity with KIC (`KuudraBossTracker.java`):** Restored authentic health formatting (`color + comma(hp) + "/100,000❤"` and T5 final phase `shorthand(hp * 9600) + "/240M❤"`), removed permanent compass arrow, and restricted Direction alerts strictly to T5 retreat banners (`RIGHT →`, `← LEFT`, `FRONT ↑`, `BACK ↓`).
+- **Dynamic Pearl Waypoints & 3D Rendering (`Pearls.java`, `BomboaddonsClient.java`):** Registered Kuudra pearl trajectory calculations and waypoints in Fabric's `COLLECT_SUBMITS` world renderer; fixed `isHoldingSupplies()` to detect crate items in hotbar slot 8 and held item; aligned all dynamic pearl options (`showSky`, `showFlat`, `showDouble`, `showTimer`).
+- **HUD Move Screen Container Fix (`HudMoveScreen.java`):** Suppressed rendering of the dummy container inventory graphic in the center of the screen when "Filter: In-Game" is selected.
+- **Kuudra Splits & Supply Times HUD (`KuudraSplitsManager.java`, `KuudraHudManager.java`):** Integrated lightweight real-time splits, supply times, and fresh times text HUD overlay matching authentic KIC styling.
+
 ## [26.2.28.136] - 2026-10-17 (Beta)
 
 ### KuudraIsCool (KIC) Modular Integration & Feature Expansion

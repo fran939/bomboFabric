@@ -1178,11 +1178,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                         src.sendFeedback(Component.literal("§8[§dSpotify§8] §aRefetching album cover & lyrics for " + label + "§a..."));
                         return 1;
                      })));
-                  builder.then(ClientCommands.literal("hotbar").executes((context) -> {
-                     Minecraft mc = Minecraft.getInstance();
-                     mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
-                     return 1;
-                  }));
+                  builder.then(ClientCommands.literal("hotbar")
+                     .executes((context) -> {
+                        me.bombo.bomboaddons.features.hotbar.HotbarSlotManager.execute("", (msg) -> ((FabricClientCommandSource)context.getSource()).sendFeedback(msg));
+                        return 1;
+                     })
+                     .then(ClientCommands.argument("query", StringArgumentType.greedyString()).executes((context) -> {
+                        String query = StringArgumentType.getString(context, "query");
+                        me.bombo.bomboaddons.features.hotbar.HotbarSlotManager.execute(query, (msg) -> ((FabricClientCommandSource)context.getSource()).sendFeedback(msg));
+                        return 1;
+                     })));
                   builder.then(ClientCommands.literal("swap").executes((context) -> {
                      Minecraft mc = Minecraft.getInstance();
                      mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
@@ -5230,11 +5235,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                 dispatcher.register(buildShardsCommand("skyshards"));
                 dispatcher.register(buildMpCommand("mp"));
                 dispatcher.register(buildMpCommand("magicalpower"));
-                dispatcher.register(ClientCommands.literal("hotbar").executes((context) -> {
-                   Minecraft mc = Minecraft.getInstance();
-                   mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
-                   return 1;
-                }));
+                dispatcher.register(ClientCommands.literal("hotbar")
+                   .executes((context) -> {
+                      me.bombo.bomboaddons.features.hotbar.HotbarSlotManager.execute("", (msg) -> ((FabricClientCommandSource)context.getSource()).sendFeedback(msg));
+                      return 1;
+                   })
+                   .then(ClientCommands.argument("query", StringArgumentType.greedyString()).executes((context) -> {
+                      String query = StringArgumentType.getString(context, "query");
+                      me.bombo.bomboaddons.features.hotbar.HotbarSlotManager.execute(query, (msg) -> ((FabricClientCommandSource)context.getSource()).sendFeedback(msg));
+                      return 1;
+                   })));
                 dispatcher.register(ClientCommands.literal("swap").executes((context) -> {
                    Minecraft mc = Minecraft.getInstance();
                    mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
@@ -5994,6 +6004,15 @@ public class BomboaddonsClient implements ClientModInitializer {
              if (s.critterCapsuleTrajectory && me.bombo.bomboaddons.features.critters.SafariLocation.inSafari()) {
                 try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: CritterCapsuleArc")) {
                    me.bombo.bomboaddons.features.critters.CritterCapsuleArc.render(context);
+                } catch (Throwable ignored) {}
+             }
+
+             if (KuudraUtils.inKuudra()) {
+                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraPearls")) {
+                   Pearls.render(context);
+                } catch (Throwable ignored) {}
+                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraBossTracker")) {
+                   me.bombo.bomboaddons.features.kuudra.KuudraBossTracker.renderWorld(context);
                 } catch (Throwable ignored) {}
              }
          });
