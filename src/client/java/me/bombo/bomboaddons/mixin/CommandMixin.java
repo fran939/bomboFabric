@@ -196,6 +196,22 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lowerTrimmed.equals("kuudra") || lowerTrimmed.startsWith("kuudra ")
+            || lowerTrimmed.equals("b kuudra") || lowerTrimmed.startsWith("b kuudra ")
+            || lowerTrimmed.equals("bombo kuudra") || lowerTrimmed.startsWith("bombo kuudra ")
+            || lowerTrimmed.equals("bomboaddons kuudra") || lowerTrimmed.startsWith("bomboaddons kuudra ")) {
+         String targetPlayer = "";
+         if (lowerTrimmed.startsWith("bomboaddons kuudra")) targetPlayer = trimmed.substring(18).trim();
+         else if (lowerTrimmed.startsWith("bombo kuudra")) targetPlayer = trimmed.substring(12).trim();
+         else if (lowerTrimmed.startsWith("b kuudra")) targetPlayer = trimmed.substring(8).trim();
+         else if (lowerTrimmed.startsWith("kuudra")) targetPlayer = trimmed.substring(6).trim();
+
+         final String finalTarget = targetPlayer;
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         mc.execute(() -> me.bombo.bomboaddons.features.kuudra.KuudraUserInfoCommand.showKuudraInfo(finalTarget));
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b subarea") || trimmed.equalsIgnoreCase("bombo subarea") || trimmed.equalsIgnoreCase("bomboaddons subarea")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea();

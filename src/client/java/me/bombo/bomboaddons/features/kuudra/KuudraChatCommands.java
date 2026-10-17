@@ -41,7 +41,8 @@ public class KuudraChatCommands {
         if (s.kuudraCmdProfit && (msg.equals("!profit") || msg.equals("!rate"))) {
             long profit = KuudraEndManager.getSessionProfitCoins();
             int runs = KuudraEndManager.getSessionRuns();
-            mc.player.connection.sendCommand("pc [Bombo] Session: " + runs + " runs | Profit: " + profit + " coins");
+            int chests = KuudraEndManager.getSessionChests();
+            mc.player.connection.sendCommand("pc [Bombo] Session: " + runs + " runs | " + chests + " chests | Profit: " + KuudraEndManager.formatCoins(profit) + " coins");
             return;
         }
 

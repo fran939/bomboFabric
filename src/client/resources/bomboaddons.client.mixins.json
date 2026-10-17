@@ -73,6 +73,7 @@
 		"PlayerTabOverlayAccessor",
 		"PostPassMixin",
 		"PropertyMixin",
+		"RangedAttributeMixin",
 		"RngScrollMixin",
 		"ScreenAccessor",
 		"ScreenEffectRendererMixin",

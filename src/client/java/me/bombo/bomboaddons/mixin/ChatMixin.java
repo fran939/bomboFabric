@@ -210,8 +210,10 @@ public abstract class ChatMixin implements IChatComponent {
                if (start != -1 && slash != -1 && slash > start) {
                   try {
                      int count = Integer.parseInt(raw.substring(start + 1, slash).trim());
+                     int recIdx = raw.indexOf("recovered one of Elle's supplies!");
+                     String playerPart = recIdx > 0 ? raw.substring(0, recIdx).trim() : "";
                      me.bombo.bomboaddons.features.kuudra.KuudraNotifications.notifyPlaced(count);
-                     me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onSupplyPlaced(count);
+                     me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onSupplyPlaced(count, playerPart);
                   } catch (NumberFormatException ignored) {}
                }
             } else if (raw.contains("Fresh Tools Perk bonus has been activated!")) {

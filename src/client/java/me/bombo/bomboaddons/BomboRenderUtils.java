@@ -334,4 +334,29 @@ public class BomboRenderUtils {
         .setLight(15728880)
         .setNormal(pose, 0.0F, 1.0F, 0.0F);
    }
+
+   public static void drawBeaconBeam(PoseStack poseStack, VertexConsumer buffer, double x, double y, double z, float r, float g, float b, float a) {
+      float minX = (float) (x - 0.2);
+      float maxX = (float) (x + 0.2);
+      float minZ = (float) (z - 0.2);
+      float maxZ = (float) (z + 0.2);
+      float minY = (float) y;
+      float maxY = 256.0F;
+      drawFilledBox(poseStack.last().pose(), buffer, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a * 0.35F);
+      drawBox(poseStack.last().pose(), buffer, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a, 1.0F);
+   }
+
+   public static void drawCircle(PoseStack poseStack, VertexConsumer buffer, double cx, double cy, double cz, float radius, int segments, float r, float g, float b, float a, float lineWidth) {
+      org.joml.Matrix4f matrix = poseStack.last().pose();
+      double angleStep = 2.0 * Math.PI / segments;
+      for (int i = 0; i < segments; i++) {
+         double a1 = i * angleStep;
+         double a2 = (i + 1) * angleStep;
+         float x1 = (float) (cx + Math.cos(a1) * radius);
+         float z1 = (float) (cz + Math.sin(a1) * radius);
+         float x2 = (float) (cx + Math.cos(a2) * radius);
+         float z2 = (float) (cz + Math.sin(a2) * radius);
+         drawLine(matrix, buffer, x1, (float) cy, z1, x2, (float) cy, z2, r, g, b, a, lineWidth);
+      }
+   }
 }

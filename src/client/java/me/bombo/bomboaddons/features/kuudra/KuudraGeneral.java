@@ -4,6 +4,7 @@ import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.SkyblockUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -164,5 +165,98 @@ public class KuudraGeneral {
     private static boolean isRoman(char c) {
         char upper = Character.toUpperCase(c);
         return upper == 'I' || upper == 'V' || upper == 'X';
+    }
+
+    /**
+     * Handles keypress or mouse click in Kuudra Perk Menu or Confirm menu.
+     */
+    public static boolean handlePerkKeybind(AbstractContainerScreen<?> screen, int keyOrButton, boolean isMouse) {
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s == null || !s.perkMenuClicker) return false;
+        if (!SkyblockUtils.isInKuudra()) return false;
+        if (screen == null) return false;
+
+        String title = screen.getTitle().getString().trim();
+        String lowerTitle = title.toLowerCase(java.util.Locale.ROOT);
+        boolean isPerkMenu = lowerTitle.contains("perk") || lowerTitle.contains("upgrade");
+        boolean isConfirmMenu = lowerTitle.contains("are you sure") || lowerTitle.contains("confirm");
+
+        if (!isPerkMenu && !isConfirmMenu) return false;
+
+        boolean matchesBallista = isKeyOrButtonMatch(s.perkBallistaKey, keyOrButton, isMouse);
+        boolean matchesCannonball = isKeyOrButtonMatch(s.perkCannonballKey, keyOrButton, isMouse);
+
+        if (!matchesBallista && !matchesCannonball) return false;
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.gameMode == null) return false;
+
+        if (isConfirmMenu && matchesBallista) {
+            int confirmSlot = findSlotWithTextOrItem(screen, "confirm", 11);
+            if (confirmSlot != -1) {
+                mc.gameMode.handleContainerInput(screen.getMenu().containerId, confirmSlot, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, mc.player);
+                return true;
+            }
+        }
+
+        if (isPerkMenu) {
+            if (matchesBallista) {
+                int ballistaSlot = findSlotWithTextOrItem(screen, "ballista", 13);
+                if (ballistaSlot == -1) ballistaSlot = findSlotWithTextOrItem(screen, "specialist", 13);
+                if (ballistaSlot != -1) {
+                    mc.gameMode.handleContainerInput(screen.getMenu().containerId, ballistaSlot, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, mc.player);
+                    return true;
+                }
+            } else if (matchesCannonball) {
+                int cannonSlot = findSlotWithTextOrItem(screen, "cannonball", 25);
+                if (cannonSlot == -1) cannonSlot = findSlotWithTextOrItem(screen, "human", 25);
+                if (cannonSlot != -1) {
+                    mc.gameMode.handleContainerInput(screen.getMenu().containerId, cannonSlot, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, mc.player);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static int findSlotWithTextOrItem(AbstractContainerScreen<?> screen, String keyword, int defaultSlot) {
+        String kw = keyword.toLowerCase(java.util.Locale.ROOT);
+        for (Slot slot : screen.getMenu().slots) {
+            if (slot.hasItem()) {
+                String name = slot.getItem().getHoverName().getString().toLowerCase(java.util.Locale.ROOT);
+                if (name.contains(kw)) {
+                    return slot.index;
+                }
+            }
+        }
+        if (defaultSlot >= 0 && defaultSlot < screen.getMenu().slots.size() && screen.getMenu().slots.get(defaultSlot).hasItem()) {
+            return defaultSlot;
+        }
+        return -1;
+    }
+
+    public static boolean isKeyOrButtonMatch(String keyDef, int keyOrButton, boolean isMouse) {
+        if (keyDef == null || keyDef.trim().isEmpty() || keyDef.equalsIgnoreCase("none")) return false;
+        String clean = keyDef.trim().toLowerCase(java.util.Locale.ROOT);
+        if (isMouse) {
+            if (clean.equals("mouse1") || clean.equals("button1") || clean.equals("left_click")) return keyOrButton == 0;
+            if (clean.equals("mouse2") || clean.equals("button2") || clean.equals("right_click")) return keyOrButton == 1;
+            if (clean.equals("mouse3") || clean.equals("button3") || clean.equals("middle_click")) return keyOrButton == 2;
+            if (clean.equals("mouse4") || clean.equals("button4")) return keyOrButton == 3;
+            if (clean.equals("mouse5") || clean.equals("button5")) return keyOrButton == 4;
+            if (clean.startsWith("mouse") || clean.startsWith("button")) {
+                try {
+                    int num = Integer.parseInt(clean.replaceAll("[^0-9]", ""));
+                    if (num >= 1 && num <= 8) return (num - 1) == keyOrButton;
+                } catch (Exception ignored) {}
+            }
+            return false;
+        } else {
+            if (clean.startsWith("mouse") || clean.startsWith("button")) return false;
+            int code = me.bombo.bomboaddons.CustomBindsProcessor.getGlfwCodeForName(clean);
+            if (code == -1) code = me.bombo.bomboaddons.ClickLogic.getKeyCode(clean);
+            return code == keyOrButton;
+        }
     }
 }

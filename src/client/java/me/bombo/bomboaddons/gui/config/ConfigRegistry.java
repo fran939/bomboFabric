@@ -1004,6 +1004,11 @@ public class ConfigRegistry {
 
                 items.add(ConfigItem.header("Wardrobe Fast Swapping", category));
                 items.add(ConfigItem.toggle("Disable Unequip Armor", "Prevents clicking active armor pieces in wardrobe to unequip them.", category, () -> s.disableUnequipWardrobe, v -> s.disableUnequipWardrobe = v));
+                items.add(ConfigItem.toggle("Auto Close Wardrobe", "Automatically closes the wardrobe GUI after equipping an armor set.", category, () -> s.autoCloseWardrobe, v -> s.autoCloseWardrobe = v));
+                items.add(ConfigItem.toggle("Wardrobe Equip Sound", "Plays an audio chime when an armor set is successfully equipped.", category, () -> s.wardrobeEquipSound, v -> s.wardrobeEquipSound = v));
+                items.add(ConfigItem.text("Wardrobe Equip Sound Name", "Resource location of sound to play on equip (e.g. entity.experience_orb.pickup).", category, () -> s.wardrobeEquipSoundName, v -> s.wardrobeEquipSoundName = v));
+                items.add(ConfigItem.sliderFloat("Wardrobe Sound Volume", "Volume of equip sound.", category, 0.0F, 2.0F, 0.1F, "x", () -> s.wardrobeEquipVolume, v -> s.wardrobeEquipVolume = v));
+                items.add(ConfigItem.sliderFloat("Wardrobe Sound Pitch", "Pitch of equip sound.", category, 0.5F, 2.0F, 0.1F, "x", () -> s.wardrobeEquipPitch, v -> s.wardrobeEquipPitch = v));
                 for (int i = 0; i < 18; i++) {
                     int slotIdx = i;
                     items.add(ConfigItem.keybind("Wardrobe Slot " + (slotIdx + 1), "Keybind to equip wardrobe armor set " + (slotIdx + 1), category,
@@ -1152,7 +1157,11 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Scale Kuudra Mobs", "Enables custom scale size for Kuudra combat mobs.", category, () -> s.scaleKuudraMobs, v -> s.scaleKuudraMobs = v));
                 items.add(ConfigItem.sliderFloat("Kuudra Mob Size", "Sets the render scale of Kuudra mobs.", category, 0.1f, 2.0f, 0.1f, "x", () -> s.kuudraMobsSize, v -> s.kuudraMobsSize = v));
                 items.add(ConfigItem.hudToggle("Blindness Timer HUD", "Timer countdown for Kuudra blindness phase overlay.", category, () -> s.kuudraBlindnessTimer, v -> s.kuudraBlindnessTimer = v, HudTarget.KUUDRA));
-                items.add(ConfigItem.toggle("Perk Menu Clicker", "Auto clicks perk menu upgrade options.", category, () -> s.perkMenuClicker, v -> s.perkMenuClicker = v));
+                items.add(ConfigItem.toggle("Perk Menu Clicker", "Click keybinds in perk menu for fast purchases.", category, () -> s.perkMenuClicker, v -> s.perkMenuClicker = v));
+                if (s.perkMenuClicker) {
+                    items.add(ConfigItem.keybind("  Ballista Mechanic Keybind", "Keybind to buy Ballista Mechanic / Specialist Route and click Confirm in shop (supports mouse1/2 and keys).", category, () -> s.perkBallistaKey, v -> s.perkBallistaKey = v));
+                    items.add(ConfigItem.keybind("  Human Cannonball Keybind", "Keybind to buy Human Cannonball in shop (supports mouse1/2 and keys).", category, () -> s.perkCannonballKey, v -> s.perkCannonballKey = v));
+                }
                 items.add(ConfigItem.toggle("Auto GFS Toxic", "Auto refills Toxic Arrow Poison from sacks.", category, () -> s.autoGfsToxic, v -> s.autoGfsToxic = v));
                 items.add(ConfigItem.sliderInt("Toxic Refill Count", "Target count of Toxic Arrow Poison to keep.", category, 1, 64, 1, "", () -> s.autoGfsToxicCount, v -> s.autoGfsToxicCount = v));
                 items.add(ConfigItem.toggle("Auto GFS Twilight", "Auto refills Twilight Arrow Poison from sacks.", category, () -> s.autoGfsTwilight, v -> s.autoGfsTwilight = v));
@@ -1531,6 +1540,11 @@ public class ConfigRegistry {
             case "Wardrobe" -> {
                 items.add(ConfigItem.header("Wardrobe Fast Swapping", category));
                 items.add(ConfigItem.toggle("Disable Unequip Armor", "Prevents clicking active armor pieces in wardrobe to unequip them.", category, () -> s.disableUnequipWardrobe, v -> s.disableUnequipWardrobe = v));
+                items.add(ConfigItem.toggle("Auto Close Wardrobe", "Automatically closes the wardrobe GUI after equipping an armor set.", category, () -> s.autoCloseWardrobe, v -> s.autoCloseWardrobe = v));
+                items.add(ConfigItem.toggle("Wardrobe Equip Sound", "Plays an audio chime when an armor set is successfully equipped.", category, () -> s.wardrobeEquipSound, v -> s.wardrobeEquipSound = v));
+                items.add(ConfigItem.text("Wardrobe Equip Sound Name", "Resource location of sound to play on equip (e.g. entity.experience_orb.pickup).", category, () -> s.wardrobeEquipSoundName, v -> s.wardrobeEquipSoundName = v));
+                items.add(ConfigItem.sliderFloat("Wardrobe Sound Volume", "Volume of equip sound.", category, 0.0F, 2.0F, 0.1F, "x", () -> s.wardrobeEquipVolume, v -> s.wardrobeEquipVolume = v));
+                items.add(ConfigItem.sliderFloat("Wardrobe Sound Pitch", "Pitch of equip sound.", category, 0.5F, 2.0F, 0.1F, "x", () -> s.wardrobeEquipPitch, v -> s.wardrobeEquipPitch = v));
                 for (int i = 0; i < 18; i++) {
                     int slotIdx = i;
                     items.add(ConfigItem.keybind("Wardrobe Slot " + (slotIdx + 1), "Keybind to equip wardrobe armor set " + (slotIdx + 1), category,

@@ -502,6 +502,20 @@ public class BomboaddonsClient implements ClientModInitializer {
          });
    }
 
+   public static LiteralArgumentBuilder<FabricClientCommandSource> buildKuudraCommand(String name) {
+      return (LiteralArgumentBuilder<FabricClientCommandSource>) ClientCommands.literal(name)
+         .then(ClientCommands.argument("player", StringArgumentType.word()).suggests((ctx, b) -> TabCompletionManager.suggestPlayerNames(b))
+            .executes((ctx) -> {
+               String player = StringArgumentType.getString(ctx, "player");
+               me.bombo.bomboaddons.features.kuudra.KuudraUserInfoCommand.showKuudraInfo(player);
+               return 1;
+            }))
+         .executes((ctx) -> {
+            me.bombo.bomboaddons.features.kuudra.KuudraUserInfoCommand.showKuudraInfo(null);
+            return 1;
+         });
+   }
+
    public static void openMagicFindOptimizer(FabricClientCommandSource src, String username) {
       openMagicFindOptimizer(src, username, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.GENERAL);
    }
@@ -1355,6 +1369,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                    builder.then(buildShardsCommand("skyshards"));
                    builder.then(buildMpCommand("mp"));
                    builder.then(buildMpCommand("magicalpower"));
+                   builder.then(buildKuudraCommand("kuudra"));
                   me.bombo.bomboaddons.flavor.Flavor.get().registerCommands(builder);
                   builder.then(((LiteralArgumentBuilder)ClientCommands.literal("behighlight").then(ClientCommands.literal("add").then(ClientCommands.argument("mob", StringArgumentType.greedyString()).executes((context) -> {
                      String mob = StringArgumentType.getString(context, "mob").trim();
@@ -5235,6 +5250,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                 dispatcher.register(buildShardsCommand("skyshards"));
                 dispatcher.register(buildMpCommand("mp"));
                 dispatcher.register(buildMpCommand("magicalpower"));
+                dispatcher.register(buildKuudraCommand("kuudra"));
                 dispatcher.register(ClientCommands.literal("hotbar")
                    .executes((context) -> {
                       me.bombo.bomboaddons.features.hotbar.HotbarSlotManager.execute("", (msg) -> ((FabricClientCommandSource)context.getSource()).sendFeedback(msg));

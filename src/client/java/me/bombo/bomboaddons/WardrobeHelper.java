@@ -164,11 +164,19 @@ public class WardrobeHelper {
 
                         if (!isEquipped && mc.gameMode != null && mc.player != null) {
                            mc.gameMode.handleContainerInput(screen.getMenu().containerId, slot.index, 0, ContainerInput.PICKUP, mc.player);
+                           BomboConfig.Settings s = BomboConfig.get();
+                           if (s != null && s.wardrobeEquipSound) {
+                              String snd = s.wardrobeEquipSoundName != null && !s.wardrobeEquipSoundName.isEmpty() ? s.wardrobeEquipSoundName : "entity.experience_orb.pickup";
+                              me.bombo.bomboaddons.features.sounds.CustomSoundManager.playCustomOrVanillaSound(snd, s.wardrobeEquipVolume, s.wardrobeEquipPitch);
+                           }
                         }
 
-                        if (mc.player != null) {
+                        BomboConfig.Settings s = BomboConfig.get();
+                        if (s != null && s.autoCloseWardrobe && mc.player != null) {
                            suppressReopen(1200L);
                            mc.player.closeContainer();
+                        } else {
+                           suppressReopen(1200L);
                         }
 
                         return true;

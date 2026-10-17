@@ -75,6 +75,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
    private void onInitTail(CallbackInfo ci) {
       CroesusHelper.onContainerTick((AbstractContainerScreen)(Object)this);
       me.bombo.bomboaddons.features.garden.GreenhouseTracker.onContainerTick((AbstractContainerScreen)(Object)this);
+      me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onContainerTick((AbstractContainerScreen)(Object)this);
       ItemListOverlay.updateLayout(this.leftPos, this.imageWidth, this.topPos, this.width, this.height);
       if (BomboConfig.get().itemListEnabled && ItemListOverlay.sidebarW >= 120) {
          int searchX = ItemListOverlay.sidebarX + 5;
@@ -377,6 +378,11 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          return;
       }
 
+      if (me.bombo.bomboaddons.features.kuudra.KuudraGeneral.handlePerkKeybind((AbstractContainerScreen<?>)(Object)this, event.button(), true)) {
+         cir.setReturnValue(true);
+         return;
+      }
+
       if (me.bombo.bomboaddons.features.hud.EquipmentHud.onMouseClick(event.x(), event.y(), event.button())) {
          cir.setReturnValue(true);
          return;
@@ -532,6 +538,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       cancellable = true
    )
    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+      if (me.bombo.bomboaddons.features.kuudra.KuudraGeneral.handlePerkKeybind((AbstractContainerScreen<?>)(Object)this, event.key(), false)) {
+         cir.setReturnValue(true);
+         return;
+      }
 
       int focusKey = ClickLogic.getKeyCode(BomboConfig.get().itemListFocusKey);
       if (focusKey != -1 && event.key() == focusKey) {
@@ -783,6 +793,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          lastCroesusTickTime = now;
          AutoCroesus.onContainerTick((AbstractContainerScreen)(Object)this);
          AutoCroesus.onCheckGuiTick((AbstractContainerScreen)(Object)this);
+         me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onContainerTick((AbstractContainerScreen)(Object)this);
       }
       AutoCroesusHud.renderInContainer(graphics);
       me.bombo.bomboaddons.cheat.dungeons.DungeonChestProfitHud.onScreenRender(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY);

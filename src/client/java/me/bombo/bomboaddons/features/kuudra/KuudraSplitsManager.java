@@ -41,8 +41,21 @@ public class KuudraSplitsManager {
     private static long stunEndTime = -1L;
     private static long killEndTime = -1L;
 
+    public static class SupplyRecord {
+        public final int number;
+        public final String playerDisplay;
+        public final long timeMs;
+
+        public SupplyRecord(int number, String playerDisplay, long timeMs) {
+            this.number = number;
+            this.playerDisplay = playerDisplay;
+            this.timeMs = timeMs;
+        }
+    }
+
     private static int suppliesPlaced = 0;
     private static final List<Long> supplyTimes = new ArrayList<>();
+    private static final List<SupplyRecord> supplyRecords = new ArrayList<>();
     private static final List<Long> freshTimes = new ArrayList<>();
 
     private static long lastServerTickTime = 0L;
@@ -57,15 +70,21 @@ public class KuudraSplitsManager {
         killEndTime = -1L;
         suppliesPlaced = 0;
         supplyTimes.clear();
+        supplyRecords.clear();
         freshTimes.clear();
         accumulatedServerLagMs = 0L;
         lastServerTickTime = System.currentTimeMillis();
     }
 
     public static void onSupplyPlaced(int count) {
+        onSupplyPlaced(count, "");
+    }
+
+    public static void onSupplyPlaced(int count, String playerDisplay) {
         suppliesPlaced = count;
         long elapsed = System.currentTimeMillis() - runStartTime;
         supplyTimes.add(elapsed);
+        supplyRecords.add(new SupplyRecord(count, playerDisplay, elapsed));
 
         if (count >= 6 && currentPhase == Phase.SUPPLIES) {
             suppliesEndTime = System.currentTimeMillis();
@@ -234,9 +253,10 @@ public class KuudraSplitsManager {
 
         if (showSupplyTimes) {
             if (!lines.isEmpty()) lines.add("");
-            lines.add("§b§lSupply Times [§a" + Math.min(6, supplyTimes.size()) + "§8/§a6§b§l]");
-            for (int i = 0; i < supplyTimes.size() && i < 6; i++) {
-                lines.add("§8(" + (i + 1) + "/6) §f" + formatTime(supplyTimes.get(i)));
+            lines.add("§b§lSupply Times [§a" + Math.min(6, supplyRecords.size()) + "§8/§a6§b§l]");
+            for (SupplyRecord rec : supplyRecords) {
+                String p = (rec.playerDisplay != null && !rec.playerDisplay.isEmpty()) ? rec.playerDisplay + " " : "";
+                lines.add(p + "§8(" + rec.number + "/6) §f" + formatTime(rec.timeMs));
             }
         }
 

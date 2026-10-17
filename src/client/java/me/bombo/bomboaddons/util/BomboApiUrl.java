@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class BomboApiUrl {
-   public static final String MAIN_API_BASE = "https://api.bomboclas.me";
-   public static final String MAIN_WEB_BASE = "https://bomboclas.me";
+   public static final String MAIN_API_BASE = "https://api.bombo.dpdns.org";
+   public static final String MAIN_WEB_BASE = "https://bombo.dpdns.org";
    public static final String BACKUP_API_BASE = "https://bomboapi.frandl938.workers.dev";
    private static final AtomicBoolean useMainDomain = new AtomicBoolean(true);
    private static final AtomicLong lastCheckTime = new AtomicLong(0L);
@@ -81,9 +81,9 @@ public class BomboApiUrl {
       if (now - lastCheckTime.get() >= 60000L) {
          lastCheckTime.set(now);
          (new Thread(() -> {
-            boolean ok = testUrl("https://api.bomboclas.me/") || testUrl("https://bomboclas.me/");
+            boolean ok = testUrl("https://api.bombo.dpdns.org/") || testUrl("https://bombo.dpdns.org/");
             useMainDomain.set(ok);
-            System.out.println("[BomboAddons] Main domain health check: " + (ok ? "ONLINE (using api.bomboclas.me)" : "OFFLINE (falling back to workers.dev)"));
+            System.out.println("[BomboAddons] Main domain health check: " + (ok ? "ONLINE (using api.bombo.dpdns.org)" : "OFFLINE (falling back to workers.dev)"));
          }, "BomboApi-HealthCheck")).start();
       }
    }

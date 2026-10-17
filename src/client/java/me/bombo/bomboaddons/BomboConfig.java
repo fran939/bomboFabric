@@ -1077,6 +1077,10 @@ public class BomboConfig {
       public boolean hitbox = false;
       public boolean autoCloseWardrobe = false;
       public boolean disableUnequipWardrobe = false;
+      public boolean wardrobeEquipSound = true;
+      public String wardrobeEquipSoundName = "entity.experience_orb.pickup";
+      public float wardrobeEquipVolume = 1.0F;
+      public float wardrobeEquipPitch = 1.0F;
       public List<String> wardrobeKeys = new ArrayList(Arrays.asList("", "", "", "", "", "", "", "", "", "", "", ""));
       public Map<String, Integer> anvilAutoCombine = new HashMap();
       public boolean anvilAutoCombineEnabled = false;
@@ -1180,6 +1184,8 @@ public class BomboConfig {
       public float kuudraBlindnessTimerScale = 1.0F;
       public boolean perkMenuClicker = false;
       public boolean kuudraPerkSwapControls = false;
+      public String perkBallistaKey = "mouse2";
+      public String perkCannonballKey = "mouse1";
       public boolean autoGfsToxic = false;
       public int autoGfsToxicCount = 21;
       public boolean autoGfsTwilight = false;

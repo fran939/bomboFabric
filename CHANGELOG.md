@@ -1,5 +1,23 @@
 # BomboAddons Changelog
  
+## [26.2.28.138] - 2026-10-17 (Beta)
+
+### Kuudra End & Profit Tracker Parity
+- **Real-Time Chest Profit Evaluator (`KuudraEndManager.java`):** Automatically calculates chest value and net profit upon opening Kuudra reward chests (Paid & Free chests) using live bazaar and lowest BIN prices minus key cost.
+- **Authentic KIC Profit Tracker HUD (`KuudraEndManager.java`):** Restored authentic KuudraIsCool HUD styling showing Session Profit, Runs, Chests (with key costs), Average/chest, Rate/hr, Essence, and Time.
+- **KIC Server API Fallbacks (`bomboapi_server.js`):** Implemented `/key` (status & roles), `/crimson/prices` (batch bazaar/auction/key quotes), and fixed `/playtime` endpoint on remote server.
+- **`/kuudra [player]` Overview Card (`KuudraUserInfoCommand.java`, `CommandMixin.java`):** Added player overview card displaying Kuudra runs breakdown, weapons check (Hyp, Term, Rag), Magical Power, and 1-click `/pv` shortcut.
+
+### Supplies Helper, Dynamic Pearls & Splits
+- **3D Supply Beams & Hitboxes (`Pearls.java`, `BomboRenderUtils.java`):** Renders vertical beacon beams rising to y=256, crate reach indicators (green <=3.2m), 5.75m drag limit circles, and best aim points.
+- **Dynamic Pearls 3D Projection (`Pearls.java`, `VecUtil.java`):** Projects waypoints in true 3D camera space with countdown timers (`THROW` / ms) and color coding.
+- **Supply Times Player Attribution (`KuudraSplitsManager.java`, `ChatMixin.java`):** Formats recovered supplies as `Player (x/6): time` extracted from party notifications.
+
+### Controls, GUI & Wardrobe
+- **Perk Menu Clicker Keybinds (`KuudraGeneral.java`, `BomboConfig.java`):** Added mouse button (`mouse1`, `mouse2`) and custom key bindings for Ballista Mechanic (with Specialist & confirm dialogue clicks) and Human Cannonball.
+- **Wardrobe Auto-Close & Custom Sound (`WardrobeHelper.java`, `BomboConfig.java`):** Added optional auto-close on equip and customizable equip sound effect, volume, and pitch.
+- **Boss Health Clamp Unlocked (`RangedAttributeMixin.java`):** Removed client 1024 HP clamp so Kuudra health scales to 100,000 / 240M accurately.
+
 ## [26.2.28.137] - 2026-10-17 (Beta)
 
 ### KuudraIsCool (KIC) Parity, Fixes & HUD Polish

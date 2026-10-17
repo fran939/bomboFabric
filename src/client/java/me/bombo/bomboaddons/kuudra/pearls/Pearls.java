@@ -62,42 +62,36 @@ public class Pearls {
 
       boolean hasSupplies = isHoldingSupplies();
 
+      Vec3 eyePos = mc.player.getEyePosition();
+
       for (PearlRenderData data : pearlSolutions) {
          boolean isMySupply = mySupply != null && vecEquals(mySupply, data.target);
          boolean isDouble = data.isDouble;
          boolean isReady = (data.time <= 0L || hasSupplies) && (isMySupply || isDouble);
-         float r = isReady ? 0.0F : 1.0F;
-         float g = isReady ? 1.0F : 0.0F;
+         float r = (isMySupply || isDouble) ? 0.0F : 1.0F;
+         float g = (isMySupply || isDouble) ? 1.0F : 0.0F;
          float b = 0.0F;
          float a = 1.0F;
-         if (!isMySupply && !isDouble) {
-            boolean isOtherReady = data.time <= 0L || hasSupplies;
-            r = isOtherReady ? 0.0F : 1.0F;
-            g = isOtherReady ? 1.0F : 0.0F;
-         }
 
-         Vec3 pos = data.solution;
-         float waypointSize = data.isSky ? waypointSizeSky : waypointSizeFlat;
-         double hs = (double) waypointSize / 2.0;
-         double relX = pos.x - camPos.x;
-         double relY = pos.y - camPos.y;
-         double relZ = pos.z - camPos.z;
-         float dist = (float) Math.sqrt(relX * relX + relY * relY + relZ * relZ);
-         float scale = dist > 0.2F ? 0.2F / dist : 1.0F;
+         double dist = data.isSky ? 20.0 : 10.0;
+         Vec3 point = VecUtil.pointFromYawPitch(eyePos, data.yaw, data.pitch, dist);
 
-         double scaledX = relX * (double) scale;
-         double scaledY = relY * (double) scale;
-         double scaledZ = relZ * (double) scale;
-         double scaledHs = hs * (double) scale;
-         AABB box = new AABB(scaledX - scaledHs, scaledY - scaledHs, scaledZ - scaledHs, scaledX + scaledHs, scaledY + scaledHs, scaledZ + scaledHs);
+         double relX = point.x - camPos.x;
+         double relY = point.y - camPos.y;
+         double relZ = point.z - camPos.z;
+         float hs = 0.18F;
+         AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
          final AABB finalBox = box;
          final float finalR = r;
          final float finalG = g;
-         collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, finalBox, finalR, finalG, b, a, 1.5F));
+         collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+            BomboRenderUtils.drawFilledBox(pose.pose(), vertexConsumer, finalBox, finalR, finalG, b, 0.45F);
+            BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, finalBox, finalR, finalG, b, a, 1.5F);
+         });
 
          if (s.showTimer || s.kuudraPearlTimer) {
-            int textColor = isReady ? 0xFF00FF00 : 0xFFFF0000;
-            Vector4f screenPos = new Vector4f((float) pos.x, (float) (pos.y + (double) (data.isSky ? 1.5F : 1.0F)), (float) pos.z, 1.0F);
+            int textColor = isReady ? 0xFF00FF00 : 0xFFFF5555;
+            Vector4f screenPos = new Vector4f((float) relX, (float) (relY + 0.35F), (float) relZ, 1.0F);
             screenPos.mul(poseStack.last().pose());
             screenPos.mul(context.levelState().cameraRenderState.projectionMatrix);
             if (screenPos.w > 0.0F) {
@@ -107,7 +101,58 @@ public class Pearls {
                int screenHeight = mc.getWindow().getGuiScaledHeight();
                float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
                float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
-               HUD_TEXTS.add(new PearlHUDText(data.cachedDisplay, screenX, screenY, textColor));
+               String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
+               HUD_TEXTS.add(new PearlHUDText(disp, screenX, screenY, textColor));
+            }
+         }
+      }
+
+      // Render Supply drop spots and crates
+      if (s.kuudraSupplyWaypoints || s.kuudraSupplyHitbox || s.kuudraDragHitbox) {
+         for (Vec3 supply : currentSupplies) {
+            double rx = supply.x - camPos.x;
+            double ry = supply.y - camPos.y;
+            double rz = supply.z - camPos.z;
+            if (s.kuudraSupplyWaypoints) {
+               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                  BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, 0.16F, 0.98F, 0.99F, 0.8F));
+            }
+            AABB dropBox = new AABB(rx - 0.5, ry, rz - 0.5, rx + 0.5, ry + 1.0, rz + 0.5);
+            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+               BomboRenderUtils.drawBox(pose.pose(), vc, dropBox, 0.16F, 0.98F, 0.99F, 1.0F, 1.5F));
+         }
+
+         for (Vec3 crate : KuudraUtils.getCrates()) {
+            double rx = crate.x - camPos.x;
+            double ry = crate.y - camPos.y;
+            double rz = crate.z - camPos.z;
+            boolean inReach = mc.player.position().distanceTo(crate) <= 3.2;
+
+            if (s.kuudraSupplyWaypoints) {
+               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                  BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, 0.16F, 0.98F, 0.99F, 0.8F));
+            }
+
+            if (s.kuudraSupplyHitbox) {
+               float hr = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.16F;
+               float hg = (inReach && s.kuudraSupplyPickupRange) ? 1.0F : 0.98F;
+               float hb = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.99F;
+               AABB crateBox = new AABB(rx - 0.6, ry, rz - 0.6, rx + 0.6, ry + 1.8, rz + 0.6);
+               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) -> {
+                  BomboRenderUtils.drawFilledBox(pose.pose(), vc, crateBox, hr, hg, hb, 0.25F);
+                  BomboRenderUtils.drawBox(pose.pose(), vc, crateBox, hr, hg, hb, 1.0F, 1.5F);
+               });
+            }
+
+            if (s.kuudraDragHitbox) {
+               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                  BomboRenderUtils.drawCircle(poseStack, vc, rx, ry + 0.05, rz, 5.75F, 32, 0.0F, 1.0F, 0.0F, 0.8F, 2.0F));
+            }
+
+            if (s.kuudraSupplyBestAim) {
+               AABB aimBox = new AABB(rx - 0.15, ry + 0.85, rz - 0.15, rx + 0.15, ry + 1.15, rz + 0.15);
+               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                  BomboRenderUtils.drawFilledBox(pose.pose(), vc, aimBox, 0.0F, 1.0F, 0.0F, 0.8F));
             }
          }
       }
