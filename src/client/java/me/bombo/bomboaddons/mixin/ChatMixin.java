@@ -192,6 +192,37 @@ public abstract class ChatMixin implements IChatComponent {
             me.bombo.bomboaddons.SkyblockUtils.onChatMessage(raw);
             me.bombo.bomboaddons.features.dungeons.DungeonBossManager.onChatMessage(raw);
 
+            if (raw.contains("Party >")) {
+               int colonIdx = raw.indexOf(':');
+               if (colonIdx != -1) {
+                  String sender = raw.substring(0, colonIdx);
+                  String chat = raw.substring(colonIdx + 1).trim();
+                  me.bombo.bomboaddons.features.kuudra.KuudraChatCommands.onPartyChatMessage(sender, chat);
+               }
+            }
+
+            if (raw.contains("[NPC] Elle: Talk to me when you're ready!") || raw.contains("[NPC] Elle: Okay adventurers, I will go and fish up Kuudra!")) {
+               me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onRunStart();
+               me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onRunStart(null);
+            } else if (raw.contains("recovered one of Elle's supplies! (")) {
+               int start = raw.lastIndexOf('(');
+               int slash = raw.lastIndexOf('/');
+               if (start != -1 && slash != -1 && slash > start) {
+                  try {
+                     int count = Integer.parseInt(raw.substring(start + 1, slash).trim());
+                     me.bombo.bomboaddons.features.kuudra.KuudraNotifications.notifyPlaced(count);
+                     me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onSupplyPlaced(count);
+                  } catch (NumberFormatException ignored) {}
+               }
+            } else if (raw.contains("Fresh Tools Perk bonus has been activated!")) {
+               me.bombo.bomboaddons.features.kuudra.KuudraNotifications.notifyFresh();
+               me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onFresh();
+               me.bombo.bomboaddons.features.kuudra.KuudraBuildHelper.onFreshTriggered();
+            } else if (raw.contains("DEFEAT KUUDRA") || raw.contains("KUUDRA DOWN!")) {
+               me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onKuudraDefeated();
+               me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onRunEnd(1_500_000L);
+            }
+
             if (me.bombo.bomboaddons.features.ring.RingManager.shouldSuppressMessage(raw)) {
                me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, "RING_SUPPRESS");
                ci.cancel();

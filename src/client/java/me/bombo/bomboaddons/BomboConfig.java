@@ -1183,7 +1183,110 @@ public class BomboConfig {
       public boolean autoGfsToxic = false;
       public int autoGfsToxicCount = 21;
       public boolean autoGfsTwilight = false;
-      public int autoGfsTwilightCount = 21;
+      public int autoGfsTwilightCount = 2;
+
+      // Kuudra General
+      public boolean blockUselessPerks = true;
+      public boolean blockSkyblockMenu = true;
+      public boolean hideMobNametags = true;
+      public boolean hideUselessArmorStands = true;
+      public boolean hideDeathAnimation = true;
+      public boolean scaleKuudraMobs = false;
+      public float kuudraMobsSize = 0.6F;
+
+      // Splits & Pace
+      public boolean kuudraSplits = true;
+      public boolean kuudraSupplyTimes = true;
+      public boolean kuudraFreshTimes = true;
+      public boolean kuudraShowLag = false;
+      public boolean kuudraShowDetailedOverview = true;
+      public boolean kuudraPace = true;
+      public boolean kuudraEstimatedPace = true;
+
+      // Notifications
+      public boolean kuudraNotifications = true;
+      public boolean kuudraNotifSound = true;
+      public boolean kuudraNotifNoPre = true;
+      public boolean kuudraNotifCratePrio = true;
+      public boolean kuudraNotifDropped = true;
+      public boolean kuudraNotifGrabbing = true;
+      public boolean kuudraNotifGrabbed = true;
+      public boolean kuudraNotifPlaced = true;
+      public boolean kuudraNotifFresh = true;
+      public boolean kuudraNotifAllPlaced = true;
+      public boolean kuudraNotifBuildFinished = true;
+
+      // Kuudra Boss
+      public boolean kuudraHighlight = true;
+      public String kuudraHighlightColor = "#FF0018";
+      public boolean kuudraHealth = true;
+      public boolean kuudraHealthHud = true;
+      public boolean kuudraDirection = true;
+
+      // Supplies
+      public boolean kuudraSupplyWaypoints = true;
+      public String kuudraSupplyColor = "#28F9FE";
+      public boolean kuudraSupplyHitbox = true;
+      public boolean kuudraSupplyBestAim = true;
+      public boolean kuudraSupplyPickupRange = true;
+      public boolean kuudraDragHitbox = true;
+
+      // Dynamic Pearls
+      public boolean kuudraDynamicPearls = true;
+      public boolean kuudraPearlShowSky = false;
+      public boolean kuudraPearlShowFlat = true;
+      public boolean kuudraPearlShowDouble = true;
+      public boolean kuudraPearlSecondSupply = true;
+      public boolean kuudraPearlTimer = true;
+
+      // Build
+      public boolean kuudraAnnounceFresh = true;
+      public boolean kuudraTeammateFreshTimer = true;
+      public boolean kuudraBuildTimer = true;
+      public boolean kuudraBuildProgressBox = true;
+      public boolean kuudraBuildProgressBeacon = true;
+      public boolean kuudraBuildProgressPercent = true;
+
+      // Stun & Kill
+      public boolean kuudraCloseCannon = true;
+      public boolean kuudraStunWaypoint = true;
+      public String kuudraStunWaypointColor = "#00FFFF";
+      public boolean kuudraHollowHelper = true;
+      public boolean kuudraRendDamage = true;
+      public boolean kuudraBackboneHit = true;
+      public boolean kuudraBackboneSound = true;
+
+      // Profit Tracker & Requeue
+      public boolean kuudraProfitTracker = true;
+      public boolean kuudraProfitCroesus = true;
+      public boolean kuudraProfitHideInRun = true;
+      public boolean kuudraAutoRequeue = false;
+      public boolean kuudraRequeuePartyCheck = true;
+
+      // Party Chat Commands
+      public boolean kuudraChatCommands = true;
+      public boolean kuudraCmdStart = true;
+      public boolean kuudraCmdProfit = true;
+      public boolean kuudraCmdChests = true;
+      public boolean kuudraCmdPb = true;
+      public boolean kuudraCmdRuns = true;
+
+      // Misc / Visuals
+      public boolean damageTrackerEnabled = false;
+      public boolean damageTrackerOnlyIsland = true;
+      public boolean damageTrackerOnlyCrits = false;
+      public double damageTrackerThreshold = 0.0;
+
+      public boolean scalePlayers = false;
+      public float playerSize = 0.6F;
+      public boolean playerIgnoreNPC = true;
+      public boolean scaleNameTag = true;
+
+      public boolean entityReplaceEnabled = false;
+      public boolean entityReplaceIgnoreNPC = true;
+
+      public boolean backboneOnIsland = true;
+      public boolean backboneOnIslandFront = true;
       public int blockScanRadius = 20;
       public boolean pearlCalculator = false;
       public boolean showTimer = false;

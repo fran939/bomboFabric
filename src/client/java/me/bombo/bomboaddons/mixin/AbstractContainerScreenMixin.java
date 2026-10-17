@@ -900,6 +900,24 @@ public abstract class AbstractContainerScreenMixin extends Screen {
 
    @Inject(
       method = {"slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onSlotClickedHead(Slot slot, int slotId, int mouseButton, net.minecraft.world.inventory.ContainerInput type, CallbackInfo ci) {
+      if (me.bombo.bomboaddons.features.kuudra.KuudraGeneral.shouldBlockSlotClick(this, slot)) {
+         ci.cancel();
+         return;
+      }
+      if (slot != null && !slot.getItem().isEmpty()) {
+         String name = slot.getItem().getHoverName().getString();
+         if (name.contains("Human Cannonball")) {
+            me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onHumanCannonballPurchased();
+         }
+      }
+   }
+
+   @Inject(
+      method = {"slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V"},
       at = {@At("RETURN")}
    )
    private void onSlotClickedReturn(Slot slot, int slotId, int mouseButton, net.minecraft.world.inventory.ContainerInput type, CallbackInfo ci) {

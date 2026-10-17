@@ -1131,12 +1131,97 @@ public class ConfigRegistry {
             }
 
             case "Kuudra" -> {
-                items.add(ConfigItem.header("Kuudra Mandible & Phase Tools", category));
+                items.add(ConfigItem.header("§e§lKuudra General", category));
+                items.add(ConfigItem.toggle("Block Useless Perks", "Prevents clicking useless perks in perk menu. Hold Ctrl to bypass.", category, () -> s.blockUselessPerks, v -> s.blockUselessPerks = v));
+                items.add(ConfigItem.toggle("Block SkyBlock Menu", "Prevents accidentally clicking slot 8 / SkyBlock menu in Kuudra.", category, () -> s.blockSkyblockMenu, v -> s.blockSkyblockMenu = v));
+                items.add(ConfigItem.toggle("Hide Mob Nametags", "Hides [Lv...] nametags above Kuudra mobs to reduce visual clutter.", category, () -> s.hideMobNametags, v -> s.hideMobNametags = v));
+                items.add(ConfigItem.toggle("Hide Useless Armor Stands", "Hides dead, invisible, or nameless armor stands in Kuudra.", category, () -> s.hideUselessArmorStands, v -> s.hideUselessArmorStands = v));
+                items.add(ConfigItem.toggle("Hide Death Animation", "Instantly hides dead or dying mobs.", category, () -> s.hideDeathAnimation, v -> s.hideDeathAnimation = v));
+                items.add(ConfigItem.toggle("Scale Kuudra Mobs", "Enables custom scale size for Kuudra combat mobs.", category, () -> s.scaleKuudraMobs, v -> s.scaleKuudraMobs = v));
+                items.add(ConfigItem.sliderFloat("Kuudra Mob Size", "Sets the render scale of Kuudra mobs.", category, 0.1f, 2.0f, 0.1f, "x", () -> s.kuudraMobsSize, v -> s.kuudraMobsSize = v));
                 items.add(ConfigItem.hudToggle("Blindness Timer HUD", "Timer countdown for Kuudra blindness phase overlay.", category, () -> s.kuudraBlindnessTimer, v -> s.kuudraBlindnessTimer = v, HudTarget.KUUDRA));
                 items.add(ConfigItem.toggle("Perk Menu Clicker", "Auto clicks perk menu upgrade options.", category, () -> s.perkMenuClicker, v -> s.perkMenuClicker = v));
                 items.add(ConfigItem.toggle("Auto GFS Toxic", "Auto refills Toxic Arrow Poison from sacks.", category, () -> s.autoGfsToxic, v -> s.autoGfsToxic = v));
                 items.add(ConfigItem.sliderInt("Toxic Refill Count", "Target count of Toxic Arrow Poison to keep.", category, 1, 64, 1, "", () -> s.autoGfsToxicCount, v -> s.autoGfsToxicCount = v));
                 items.add(ConfigItem.toggle("Auto GFS Twilight", "Auto refills Twilight Arrow Poison from sacks.", category, () -> s.autoGfsTwilight, v -> s.autoGfsTwilight = v));
+                items.add(ConfigItem.sliderInt("Twilight Refill Count", "Target count of Twilight Arrow Poison to keep.", category, 1, 64, 1, "", () -> s.autoGfsTwilightCount, v -> s.autoGfsTwilightCount = v));
+
+                items.add(ConfigItem.header("§e§lSplits & Pace", category));
+                items.add(ConfigItem.toggle("Kuudra Splits", "Shows split times for each Kuudra phase.", category, () -> s.kuudraSplits, v -> s.kuudraSplits = v));
+                items.add(ConfigItem.toggle("Supply Times", "Shows supply placed split times.", category, () -> s.kuudraSupplyTimes, v -> s.kuudraSupplyTimes = v));
+                items.add(ConfigItem.toggle("Fresh Times", "Shows fresh times in splits.", category, () -> s.kuudraFreshTimes, v -> s.kuudraFreshTimes = v));
+                items.add(ConfigItem.toggle("Show Server Lag", "Displays detected server lag duration.", category, () -> s.kuudraShowLag, v -> s.kuudraShowLag = v));
+                items.add(ConfigItem.toggle("Detailed Split Overview", "Prints detailed split report in chat after run.", category, () -> s.kuudraShowDetailedOverview, v -> s.kuudraShowDetailedOverview = v));
+                items.add(ConfigItem.toggle("Pace HUD", "Shows current run pace and phase timer.", category, () -> s.kuudraPace, v -> s.kuudraPace = v));
+                items.add(ConfigItem.toggle("Estimated Final Pace", "Shows estimated final run completion time.", category, () -> s.kuudraEstimatedPace, v -> s.kuudraEstimatedPace = v));
+
+                items.add(ConfigItem.header("§e§lNotifications", category));
+                items.add(ConfigItem.toggle("Kuudra Notifications", "Master toggle for on-screen Kuudra alert banners.", category, () -> s.kuudraNotifications, v -> s.kuudraNotifications = v));
+                items.add(ConfigItem.toggle("Play Notification Sounds", "Plays audio chime for enabled notifications.", category, () -> s.kuudraNotifSound, v -> s.kuudraNotifSound = v));
+                items.add(ConfigItem.toggle("No Pre Alert", "Warns when a teammate's pre didn't spawn.", category, () -> s.kuudraNotifNoPre, v -> s.kuudraNotifNoPre = v));
+                items.add(ConfigItem.toggle("Crate Priority Alert", "Suggests optimal next crate to grab.", category, () -> s.kuudraNotifCratePrio, v -> s.kuudraNotifCratePrio = v));
+                items.add(ConfigItem.toggle("Dropped Chest Warning", "Alerts when a supply chest is dropped.", category, () -> s.kuudraNotifDropped, v -> s.kuudraNotifDropped = v));
+                items.add(ConfigItem.toggle("Grabbing Chest Alert", "Alerts when a crate is being pulled.", category, () -> s.kuudraNotifGrabbing, v -> s.kuudraNotifGrabbing = v));
+                items.add(ConfigItem.toggle("Grabbed Chest Alert", "Alerts when a crate has been picked up.", category, () -> s.kuudraNotifGrabbed, v -> s.kuudraNotifGrabbed = v));
+                items.add(ConfigItem.toggle("Placed Supply Alert", "Confirms when a supply is placed.", category, () -> s.kuudraNotifPlaced, v -> s.kuudraNotifPlaced = v));
+                items.add(ConfigItem.toggle("Fresh Alert", "Alerts when someone fresh triggers.", category, () -> s.kuudraNotifFresh, v -> s.kuudraNotifFresh = v));
+                items.add(ConfigItem.toggle("All Supplies Placed", "Alerts when 6/6 supplies are placed.", category, () -> s.kuudraNotifAllPlaced, v -> s.kuudraNotifAllPlaced = v));
+                items.add(ConfigItem.toggle("Build Finished Alert", "Alerts when ballista build reaches 100%.", category, () -> s.kuudraNotifBuildFinished, v -> s.kuudraNotifBuildFinished = v));
+
+                items.add(ConfigItem.header("§e§lKuudra Boss", category));
+                items.add(ConfigItem.toggle("Kuudra Highlight", "Highlights Kuudra boss body.", category, () -> s.kuudraHighlight, v -> s.kuudraHighlight = v));
+                items.add(ConfigItem.color("Kuudra Highlight Color", "Color for Kuudra boss highlight.", category, () -> s.kuudraHighlightColor != null ? s.kuudraHighlightColor : "#FF0018", v -> s.kuudraHighlightColor = v));
+                items.add(ConfigItem.toggle("Kuudra Health", "Displays Kuudra's current health value.", category, () -> s.kuudraHealth, v -> s.kuudraHealth = v));
+                items.add(ConfigItem.toggle("Kuudra Health HUD", "Displays dedicated Kuudra boss health bar HUD.", category, () -> s.kuudraHealthHud, v -> s.kuudraHealthHud = v));
+                items.add(ConfigItem.toggle("Kuudra Direction Arrow", "Displays direction arrow pointing towards Kuudra.", category, () -> s.kuudraDirection, v -> s.kuudraDirection = v));
+
+                items.add(ConfigItem.header("§e§lSupplies", category));
+                items.add(ConfigItem.toggle("Supply Waypoints", "Shows 3D waypoints for supply locations.", category, () -> s.kuudraSupplyWaypoints, v -> s.kuudraSupplyWaypoints = v));
+                items.add(ConfigItem.color("Supply Waypoints Color", "Color for supply waypoints.", category, () -> s.kuudraSupplyColor != null ? s.kuudraSupplyColor : "#28F9FE", v -> s.kuudraSupplyColor = v));
+                items.add(ConfigItem.toggle("Supply Hitbox", "Shows hitboxes for supply crates.", category, () -> s.kuudraSupplyHitbox, v -> s.kuudraSupplyHitbox = v));
+                items.add(ConfigItem.toggle("Best Aim Point", "Shows the optimal click point on supply zombies.", category, () -> s.kuudraSupplyBestAim, v -> s.kuudraSupplyBestAim = v));
+                items.add(ConfigItem.toggle("Highlight Pickup Range", "Highlights green when close enough to pick up crate.", category, () -> s.kuudraSupplyPickupRange, v -> s.kuudraSupplyPickupRange = v));
+                items.add(ConfigItem.toggle("Drag Hitbox Circle", "Draws 5-block radius circle showing drag tether range.", category, () -> s.kuudraDragHitbox, v -> s.kuudraDragHitbox = v));
+
+                items.add(ConfigItem.header("§e§lDynamic Pearls", category));
+                items.add(ConfigItem.toggle("Dynamic Pearls", "Enables dynamic Kuudra pearl trajectories and waypoints.", category, () -> s.kuudraDynamicPearls, v -> s.kuudraDynamicPearls = v));
+                items.add(ConfigItem.toggle("Show Sky Pearls", "Shows waypoints for sky pearls.", category, () -> s.kuudraPearlShowSky, v -> s.kuudraPearlShowSky = v));
+                items.add(ConfigItem.toggle("Show Flat Pearls", "Shows waypoints for flat pearls.", category, () -> s.kuudraPearlShowFlat, v -> s.kuudraPearlShowFlat = v));
+                items.add(ConfigItem.toggle("Show Double Pearls", "Shows waypoints for double pearls.", category, () -> s.kuudraPearlShowDouble, v -> s.kuudraPearlShowDouble = v));
+                items.add(ConfigItem.toggle("Second Supply Awareness", "Adjusts pearl visibility based on second supply.", category, () -> s.kuudraPearlSecondSupply, v -> s.kuudraPearlSecondSupply = v));
+                items.add(ConfigItem.toggle("Pearl Throw Timer", "Displays countdown timer for optimal pearl throw.", category, () -> s.kuudraPearlTimer, v -> s.kuudraPearlTimer = v));
+
+                items.add(ConfigItem.header("§e§lBuild Phase", category));
+                items.add(ConfigItem.toggle("Announce Fresh in Party", "Automatically says 'Fresh!' in party chat.", category, () -> s.kuudraAnnounceFresh, v -> s.kuudraAnnounceFresh = v));
+                items.add(ConfigItem.toggle("Teammate Fresh Timer", "Shows duration timer above teammates when they fresh.", category, () -> s.kuudraTeammateFreshTimer, v -> s.kuudraTeammateFreshTimer = v));
+                items.add(ConfigItem.toggle("Build Timer HUD", "Shows time remaining until build phase begins.", category, () -> s.kuudraBuildTimer, v -> s.kuudraBuildTimer = v));
+                items.add(ConfigItem.toggle("Build Progress Box", "Renders 3D box around ballista build.", category, () -> s.kuudraBuildProgressBox, v -> s.kuudraBuildProgressBox = v));
+                items.add(ConfigItem.toggle("Build Progress Beacon", "Renders beacon beam above building ballista.", category, () -> s.kuudraBuildProgressBeacon, v -> s.kuudraBuildProgressBeacon = v));
+                items.add(ConfigItem.toggle("Build Progress %", "Displays build progress percentage HUD.", category, () -> s.kuudraBuildProgressPercent, v -> s.kuudraBuildProgressPercent = v));
+
+                items.add(ConfigItem.header("§e§lStun & Kill", category));
+                items.add(ConfigItem.toggle("Auto Close Shop on Cannonball", "Automatically closes shop after buying Human Cannonball.", category, () -> s.kuudraCloseCannon, v -> s.kuudraCloseCannon = v));
+                items.add(ConfigItem.toggle("Stun Waypoints", "Highlights Left Pod and Right Pod for instant stun.", category, () -> s.kuudraStunWaypoint, v -> s.kuudraStunWaypoint = v));
+                items.add(ConfigItem.color("Stun Waypoint Color", "Color for stun pod waypoints.", category, () -> s.kuudraStunWaypointColor != null ? s.kuudraStunWaypointColor : "#00FFFF", v -> s.kuudraStunWaypointColor = v));
+                items.add(ConfigItem.toggle("Hollow Helper (Ichor Range)", "Outlines Ichor danger boundary.", category, () -> s.kuudraHollowHelper, v -> s.kuudraHollowHelper = v));
+                items.add(ConfigItem.toggle("Rend Damage Indicator", "Displays Rend arrow damage pulls.", category, () -> s.kuudraRendDamage, v -> s.kuudraRendDamage = v));
+                items.add(ConfigItem.toggle("Backbone Hit Message", "Notifies when bone hits, including held weapon and armor.", category, () -> s.kuudraBackboneHit, v -> s.kuudraBackboneHit = v));
+                items.add(ConfigItem.toggle("Backbone Sound", "Plays sound when backbone hits.", category, () -> s.kuudraBackboneSound, v -> s.kuudraBackboneSound = v));
+
+                items.add(ConfigItem.header("§e§lProfit Tracker & Auto Requeue", category));
+                items.add(ConfigItem.toggle("Profit Tracker HUD", "Displays Kuudra profit, runs, and hourly rates.", category, () -> s.kuudraProfitTracker, v -> s.kuudraProfitTracker = v));
+                items.add(ConfigItem.toggle("Show Near Croesus", "Displays profit tracker when near Croesus NPC.", category, () -> s.kuudraProfitCroesus, v -> s.kuudraProfitCroesus = v));
+                items.add(ConfigItem.toggle("Hide During Run", "Hides profit tracker HUD during active run.", category, () -> s.kuudraProfitHideInRun, v -> s.kuudraProfitHideInRun = v));
+                items.add(ConfigItem.toggle("Auto Requeue", "Instantly requeues when Kuudra run completes.", category, () -> s.kuudraAutoRequeue, v -> s.kuudraAutoRequeue = v));
+                items.add(ConfigItem.toggle("Requeue Party Check", "Only auto-requeues if party has not changed.", category, () -> s.kuudraRequeuePartyCheck, v -> s.kuudraRequeuePartyCheck = v));
+
+                items.add(ConfigItem.header("§e§lParty Chat Commands", category));
+                items.add(ConfigItem.toggle("Party Chat Commands", "Enables party chat command listener.", category, () -> s.kuudraChatCommands, v -> s.kuudraChatCommands = v));
+                items.add(ConfigItem.toggle("Start Command (!t1-!t5)", "Allows party members to start Kuudra tier.", category, () -> s.kuudraCmdStart, v -> s.kuudraCmdStart = v));
+                items.add(ConfigItem.toggle("Profit Command (!profit)", "Reports session profit to party chat.", category, () -> s.kuudraCmdProfit, v -> s.kuudraCmdProfit = v));
+                items.add(ConfigItem.toggle("Chests Command (!chests)", "Reports unopened Croesus chests.", category, () -> s.kuudraCmdChests, v -> s.kuudraCmdChests = v));
+                items.add(ConfigItem.toggle("Personal Best Command (!pb)", "Reports best Kuudra run time.", category, () -> s.kuudraCmdPb, v -> s.kuudraCmdPb = v));
+                items.add(ConfigItem.toggle("Runs Command (!runs)", "Reports total runs completed.", category, () -> s.kuudraCmdRuns, v -> s.kuudraCmdRuns = v));
             }
 
             case "Lore Additions", "Tooltip" -> {
@@ -1314,6 +1399,26 @@ public class ConfigRegistry {
                     items.add(ConfigItem.toggle("  AFK Timer On Screen", "Renders timer countdown on screen.", category, () -> s.fbWarnTimerOnScreen, v -> s.fbWarnTimerOnScreen = v));
                     items.add(ConfigItem.toggle("  Require Fishing Rod", "Only alerts when holding a fishing rod.", category, () -> s.fbWarnRequireRod, v -> s.fbWarnRequireRod = v));
                 }
+
+                items.add(ConfigItem.header("§b§lDamage Tracker", category));
+                items.add(ConfigItem.toggle("Damage Tracker", "Tracks SkyBlock damage indicators and displays them in chat.", category, () -> s.damageTrackerEnabled, v -> s.damageTrackerEnabled = v));
+                items.add(ConfigItem.toggle("Only on Private Island", "Only tracks damage indicators while on Private Island.", category, () -> s.damageTrackerOnlyIsland, v -> s.damageTrackerOnlyIsland = v));
+                items.add(ConfigItem.toggle("Only Crits", "Only displays critical damage hits.", category, () -> s.damageTrackerOnlyCrits, v -> s.damageTrackerOnlyCrits = v));
+                items.add(ConfigItem.sliderFloat("Damage Threshold", "Only displays damage values above this threshold.", category, 0.0f, 10_000_000f, 100_000f, "", () -> (float) s.damageTrackerThreshold, v -> s.damageTrackerThreshold = v));
+
+                items.add(ConfigItem.header("§b§lPlayer Sizing", category));
+                items.add(ConfigItem.toggle("Scale Players", "Changes the scale of player models.", category, () -> s.scalePlayers, v -> s.scalePlayers = v));
+                items.add(ConfigItem.sliderFloat("Player Size", "Sets player model render scale.", category, 0.1f, 2.0f, 0.1f, "x", () -> s.playerSize, v -> s.playerSize = v));
+                items.add(ConfigItem.toggle("Ignore NPCs", "Prevents NPCs from being scaled.", category, () -> s.playerIgnoreNPC, v -> s.playerIgnoreNPC = v));
+                items.add(ConfigItem.toggle("Scale Nametag", "Scales the nametag with the player.", category, () -> s.scaleNameTag, v -> s.scaleNameTag = v));
+
+                items.add(ConfigItem.header("§b§lEntity Replace", category));
+                items.add(ConfigItem.toggle("Replace Entities", "Main toggle for client-side visual entity replacement.", category, () -> s.entityReplaceEnabled, v -> s.entityReplaceEnabled = v));
+                items.add(ConfigItem.toggle("Entity Replace Ignore NPCs", "Prevents NPCs from being replaced.", category, () -> s.entityReplaceIgnoreNPC, v -> s.entityReplaceIgnoreNPC = v));
+
+                items.add(ConfigItem.header("§b§lBackbone on Island", category));
+                items.add(ConfigItem.toggle("Backbone on Island", "Enables backbone hit tracking while on Private Island.", category, () -> s.backboneOnIsland, v -> s.backboneOnIsland = v));
+                items.add(ConfigItem.toggle("Backbone on Island Front", "Shows frontbone on your Private Island.", category, () -> s.backboneOnIslandFront, v -> s.backboneOnIslandFront = v));
             }
 
             case "Ordered Waypoints" -> {

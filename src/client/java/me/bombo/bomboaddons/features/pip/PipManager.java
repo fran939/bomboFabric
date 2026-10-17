@@ -407,7 +407,10 @@ public class PipManager {
         int bgCol = (alphaInt << 24) | 0x000F172A;
 
         // Background card
-        g.fill(x, y, x + w, y + h, bgCol);
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s == null || !s.hudNoBackground) {
+            g.fill(x, y, x + w, y + h, bgCol);
+        }
 
         if (textureLoaded && activeTexture != null && mediaWidth > 0 && mediaHeight > 0) {
             // Aspect-preserving fit inside the frame, never upscaled past native resolution.

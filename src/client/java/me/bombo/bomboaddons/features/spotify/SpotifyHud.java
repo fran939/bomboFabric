@@ -155,12 +155,14 @@ public class SpotifyHud {
                 : (s != null ? LyricsHud.parseColor(s.lyricsHudColor, titleColor) : titleColor);
 
         // Background card
-        g.fill(0, 0, hudW, hudH, bgColor);
-        // Container border
-        g.fill(0, 0, hudW, 1, borderColor);
-        g.fill(0, hudH - 1, hudW, hudH, borderColor);
-        g.fill(0, 0, 1, hudH, borderColor);
-        g.fill(hudW - 1, 0, hudW, hudH, borderColor);
+        if (s == null || !s.hudNoBackground) {
+            g.fill(0, 0, hudW, hudH, bgColor);
+            // Container border
+            g.fill(0, 0, hudW, 1, borderColor);
+            g.fill(0, hudH - 1, hudW, hudH, borderColor);
+            g.fill(0, 0, 1, hudH, borderColor);
+            g.fill(hudW - 1, 0, hudW, hudH, borderColor);
+        }
 
         // Spotify Logo or Album Artwork on the left
         int iconSize = 20;

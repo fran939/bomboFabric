@@ -29,6 +29,11 @@ public class MinecraftMixin {
          }
       }
       me.bombo.bomboaddons.features.DojoUtilities.onPreAttack(mc);
+      if (me.bombo.bomboaddons.features.kuudra.KuudraGeneral.shouldBlockSkyblockMenu()) {
+         cir.setReturnValue(false);
+         cir.cancel();
+         return;
+      }
       if (KuudraPerkClicker.shouldBlockAttack()) {
          cir.setReturnValue(false);
          cir.cancel();
@@ -89,6 +94,19 @@ public class MinecraftMixin {
       me.bombo.bomboaddons.features.TotemAnimationManager.onClientTick();
       me.bombo.bomboaddons.features.AutoExpCapsule.onTick(mc);
       me.bombo.bomboaddons.util.ClipboardCommandManager.pollClipboard();
+      me.bombo.bomboaddons.features.kuudra.KuudraBossTracker.onClientTick();
+      me.bombo.bomboaddons.features.misc.DamageTracker.onClientTick();
+   }
+
+   @Inject(
+      method = {"startUseItem"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onStartUseItem(CallbackInfo ci) {
+      if (me.bombo.bomboaddons.features.kuudra.KuudraGeneral.shouldBlockSkyblockMenu()) {
+         ci.cancel();
+      }
    }
 
    @Inject(

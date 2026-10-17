@@ -171,11 +171,28 @@ public class CommandMixin {
          return;
       }
       if (trimmed.equalsIgnoreCase("b swap") || trimmed.equalsIgnoreCase("bombo swap") || trimmed.equalsIgnoreCase("bomboaddons swap")
-            || trimmed.equalsIgnoreCase("swap")
-            || trimmed.equalsIgnoreCase("b hotbar") || trimmed.equalsIgnoreCase("bombo hotbar") || trimmed.equalsIgnoreCase("bomboaddons hotbar")
-            || trimmed.equalsIgnoreCase("hotbar")) {
+            || trimmed.equalsIgnoreCase("swap")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.swapper.InventorySwapScreen(null)));
+         ci.cancel();
+         return;
+      }
+      String lowerTrimmed = trimmed.toLowerCase(java.util.Locale.ROOT);
+      if (lowerTrimmed.equals("b hotbar") || lowerTrimmed.startsWith("b hotbar ")
+            || lowerTrimmed.equals("hotbar") || lowerTrimmed.startsWith("hotbar ")
+            || lowerTrimmed.equals("bombo hotbar") || lowerTrimmed.startsWith("bombo hotbar ")
+            || lowerTrimmed.equals("bomboaddons hotbar") || lowerTrimmed.startsWith("bomboaddons hotbar ")) {
+         String arg = "";
+         if (lowerTrimmed.startsWith("bomboaddons hotbar")) arg = trimmed.substring(18).trim();
+         else if (lowerTrimmed.startsWith("bombo hotbar")) arg = trimmed.substring(12).trim();
+         else if (lowerTrimmed.startsWith("b hotbar")) arg = trimmed.substring(8).trim();
+         else if (lowerTrimmed.startsWith("hotbar")) arg = trimmed.substring(6).trim();
+
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         final String finalArg = arg;
+         mc.execute(() -> me.bombo.bomboaddons.features.hotbar.HotbarSlotManager.execute(finalArg, msg -> {
+            if (mc.player != null) mc.player.sendSystemMessage(msg);
+         }));
          ci.cancel();
          return;
       }

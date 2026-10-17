@@ -1,5 +1,26 @@
 # BomboAddons Changelog
  
+## [26.2.28.136] - 2026-10-17 (Beta)
+
+### KuudraIsCool (KIC) Modular Integration & Feature Expansion
+- **Kuudra General (`KuudraGeneral.java`):** Added Block Useless Perks (with Ctrl bypass), Block SkyBlock Menu in hotbar slot 8, Hide Mob Nametags (`[Lv...]`), Hide Useless Armor Stands, Hide Death Animation, and Scale Kuudra Mobs.
+- **Splits & Pace (`KuudraSplitsManager.java`):** Added phase splits (Supplies, Build, Fuel/Stun, Kill), Supply and Fresh timers, Server Lag Tracker, Detailed Chat Overview, and real-time Pace HUD.
+- **Kuudra Notifications (`KuudraNotifications.java`):** Visual onscreen banners and chime sounds for No Pre, Crate Priority, Dropped, Grabbing, Placed, Fresh, All Placed, and Build Finished.
+- **Kuudra Boss Tracker (`KuudraBossTracker.java`):** Boss 3D Box/Glow Highlight, Health Display HUD, and 2D Direction Arrow pointing towards Kuudra.
+- **Supplies Helper (`KuudraSuppliesHelper.java`):** 3D Waypoints & dynamic colors, Supply Hitboxes, Best Aim Point, Pickup Range Highlight (<= 3.2m), and Drag Hitbox Limit Circle (5m).
+- **Build Phase Helper (`KuudraBuildHelper.java`):** Party chat Fresh announcements, Teammate overhead Fresh timers, Build Timer HUD, and progress beacon.
+- **Stun & Kill Helper (`KuudraStunKillHelper.java`):** Auto-close shop on Human Cannonball purchase, Stun Pod Waypoints (Left/Right Pods), Hollow Helper, Rend Damage Indicator, and Backbone Hit Tracker with sound, held item, and armor breakdown.
+- **End & Profit Tracker (`KuudraEndManager.java`):** Run profit calculations, hourly rate, and Auto Requeue with Party Check.
+- **Party Chat Commands (`KuudraChatCommands.java`):** Integrated party chat commands `!start`, `!t1`-`!t5`, `!profit`, `!chests`, `!pb`, and `!runs`.
+- **Misc Additions:** Backbone on Island (`backboneOnIsland`), Damage Tracker (`DamageTracker.java`), Player Sizing (`PlayerSizing.java`), and Entity Replace (`EntityReplace.java`).
+
+### Help GUI, Commands & Quality of Life
+- **Help GUI Feature Categories (`HelpGuiScreen.java`):** Organized 300+ features into interactive category tabs (`All`, `General`, `Kuudra`, `Dungeons`, `Slayer`, `Mining`, `HUD`, `Chat`, `Dev`, `Misc`) with live search count badges and smooth independent scrolling.
+- **Hotbar Slot & Item Switcher (`/b hotbar`, `HotbarManager.java`):** Added `/b hotbar <1-9>` (switch slot), `/b hotbar <name>` (switch by item name), `/b hotbar l:<lore>` (switch by item lore), and `/b hotbar back` (toggle between previous and current slot).
+- **Auto GFS Twilight Poison Fix (`BomboConfig.java`):** Fixed default Twilight Poison amount to 2 (was 21) and exposed slider in config.
+- **Wardrobe Double-Open Glitch (`WardrobeHelper.java`):** Suppressed reopening glitch during wardrobe and loadout hotkey clicks.
+- **Master HUD Background Toggle:** Verified and enforced 100% transparent backdrops across all HUD overlays when `hudNoBackground` is active.
+
 ## [26.2.28.135] - 2026-10-17 (Beta)
 
 ### Features, Polish & UX

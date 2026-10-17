@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.136",
+    "date": "2026-10-17",
+    "changes": [
+      "+ KuudraIsCool (KIC) Integration - Modular port of Kuudra General, Splits & Pace, Notifications, Boss Tracker, Supplies, Build, Stun & Kill, Profit Tracker, and Party Chat Commands",
+      "+ Help GUI Feature Categories - Structured 300+ features into interactive category tabs with search badges and independent sidebar scrolling",
+      "+ Hotbar Slot Switcher - Added /b hotbar <1-9>, /b hotbar <name>, /b hotbar l:<lore>, and /b hotbar back for fast slot toggling",
+      "~ Auto GFS Twilight Poison Fix - Fixed default Twilight Poison amount to 2 (was 21) and exposed slider in config",
+      "~ Wardrobe Double-Open Glitch Fix - Suppressed screen reopen glitch during wardrobe and loadout hotkey swaps",
+      "~ Master HUD Background Enforcement - Ensured all HUD widgets render 100% transparent backgrounds when hudNoBackground is enabled"
+    ]
+  },
+  {
     "version": "26.2.28.135",
     "date": "2026-10-17",
     "changes": [

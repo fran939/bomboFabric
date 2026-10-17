@@ -16,6 +16,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class BomboGuiMixin {
    @Inject(
       method = {"setScreenAndShow"},
+      at = {@At("HEAD")},
+      cancellable = true
+   )
+   private void onSetScreenHead(Screen screen, CallbackInfo ci) {
+      if (screen instanceof AbstractContainerScreen<?> containerScreen) {
+         String title = containerScreen.getTitle().getString();
+         if (me.bombo.bomboaddons.WardrobeHelper.shouldSuppressScreenOpen(title)) {
+            ci.cancel();
+         }
+      }
+   }
+
+   @Inject(
+      method = {"setScreenAndShow"},
       at = {@At("RETURN")}
    )
    private void onSetScreen(Screen screen, CallbackInfo ci) {

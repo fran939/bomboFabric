@@ -428,11 +428,14 @@ public class ShardsShoppingManager {
             activeClickables.clear();
         }
 
+        BomboConfig.Settings s = BomboConfig.get();
         if (activePlan == null || (activePlan.directBuys.isEmpty() && activePlan.fusions.isEmpty())) {
             width = 190;
             height = 36;
-            g.fill(0, 0, width, height, 0xDD0D1117);
-            g.outline(0, 0, width, height, isHovered ? 0xFF00FFCC : 0xAA30363D);
+            if (s == null || !s.hudNoBackground) {
+                g.fill(0, 0, width, height, 0xDD0D1117);
+                g.outline(0, 0, width, height, isHovered ? 0xFF00FFCC : 0xAA30363D);
+            }
             g.text(font, "§6§lShard Shopping List", 6, 6, -1, true);
             g.text(font, "§7Run §e/b shards§7 to calculate!", 6, 20, -1, true);
             g.pose().popMatrix();
@@ -513,11 +516,12 @@ public class ShardsShoppingManager {
         width = maxW;
 
         // Background
-        g.fill(0, 0, width, height, 0xEE0B0E14);
-        g.outline(0, 0, width, height, isHovered ? 0xFF00FFCC : 0xAA2B3245);
-
-        // Header accent line
-        g.fill(0, 0, width, 2, 0xFFF59E0B);
+        if (s == null || !s.hudNoBackground) {
+            g.fill(0, 0, width, height, 0xEE0B0E14);
+            g.outline(0, 0, width, height, isHovered ? 0xFF00FFCC : 0xAA2B3245);
+            // Header accent line
+            g.fill(0, 0, width, 2, 0xFFF59E0B);
+        }
 
         int drawY = 6;
         for (String ln : renderLines) {

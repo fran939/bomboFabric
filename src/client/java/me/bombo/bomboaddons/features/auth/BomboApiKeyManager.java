@@ -147,10 +147,17 @@ public class BomboApiKeyManager {
 
         String url = BomboApiUrl.MAIN_API_BASE + "/api/keys/player";
 
+        BomboConfig.Settings activeSettings = BomboConfig.get();
+        String currentKey = activeSettings != null && activeSettings.apiKey != null ? activeSettings.apiKey.trim() : "";
+        if (!currentKey.isEmpty()) {
+            reqBody.addProperty("current_key", currentKey);
+        }
+
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
                 .header("User-Agent", "BomboAddons/" + mcUuid)
+                .header("X-Bombo-Current-Key", currentKey)
                 .timeout(Duration.ofSeconds(15))
                 .POST(HttpRequest.BodyPublishers.ofString(reqBody.toString()));
 

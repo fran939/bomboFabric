@@ -32,10 +32,22 @@ public class ClientPacketListenerMixin {
    private void onHandleOpenScreen(ClientboundOpenScreenPacket packet, CallbackInfo ci) {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player == null) return;
-      if (!BomboConfig.get().storageOverlay) return;
-
       Component name = packet.getTitle();
       String rawTitle = name != null ? name.getString() : "";
+      if (me.bombo.bomboaddons.WardrobeHelper.shouldSuppressScreenOpen(rawTitle)) {
+         ci.cancel();
+         if (mc.getConnection() != null) {
+            mc.getConnection().send(new net.minecraft.network.protocol.game.ServerboundContainerClosePacket(packet.getContainerId()));
+         }
+         mc.execute(() -> {
+            if (mc.gui.screen() != null && !(mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen)) {
+               mc.setScreenAndShow(null);
+            }
+         });
+         return;
+      }
+
+      if (!BomboConfig.get().storageOverlay) return;
       if (me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.enabled(rawTitle)) {
          try {
             int id = packet.getContainerId();

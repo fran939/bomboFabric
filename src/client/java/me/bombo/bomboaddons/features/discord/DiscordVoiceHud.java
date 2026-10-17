@@ -236,7 +236,14 @@ public class DiscordVoiceHud {
         }
 
         // Render subtle translucent dark background
-        g.fill(0, 0, cachedMaxW, cachedTotalH, 0x88000000);
+        if (s == null || !s.hudNoBackground) {
+            int bg = s != null ? s.getHudBgColorArgb() : 0x88000000;
+            g.fill(0, 0, cachedMaxW, cachedTotalH, bg != 0 ? bg : 0x88000000);
+            int border = s != null ? s.getHudBorderColorArgb() : 0;
+            if (border != 0) {
+                g.outline(0, 0, cachedMaxW, cachedTotalH, border);
+            }
+        }
 
         int y = 3;
         for (int i = 0; i < cachedLines.size(); i++) {

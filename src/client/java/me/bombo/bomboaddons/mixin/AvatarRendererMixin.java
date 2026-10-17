@@ -13,4 +13,17 @@ public class AvatarRendererMixin {
     private void bombo$alwaysRenderLayers(AvatarRenderState state, CallbackInfoReturnable<Boolean> cir) {
         cir.setReturnValue(Boolean.TRUE);
     }
+
+    @Inject(
+        method = "scale(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V",
+        at = @At("TAIL")
+    )
+    private void bombo$scalePlayer(AvatarRenderState state, com.mojang.blaze3d.vertex.PoseStack poseStack, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        if (me.bombo.bomboaddons.features.misc.PlayerSizing.shouldScalePlayer()) {
+            float s = me.bombo.bomboaddons.features.misc.PlayerSizing.getPlayerScale();
+            if (s != 1.0F) {
+                poseStack.scale(s, s, s);
+            }
+        }
+    }
 }

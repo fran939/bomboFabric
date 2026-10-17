@@ -13,6 +13,20 @@ public class WardrobeHelper {
    private static int pendingArmorNumber = -1;
    private static boolean isLoadoutMode = false;
    private static int loadoutStep = 0;
+   private static long suppressReopenUntil = -1L;
+
+   public static void suppressReopen(long durationMs) {
+      suppressReopenUntil = System.currentTimeMillis() + durationMs;
+   }
+
+   public static boolean shouldSuppressScreenOpen(String title) {
+      if (System.currentTimeMillis() > suppressReopenUntil) {
+         return false;
+      }
+      if (title == null || title.isEmpty()) return false;
+      String lower = title.toLowerCase(java.util.Locale.ROOT);
+      return lower.contains("wardrobe") || lower.contains("armor sets") || lower.contains("equipment sets") || lower.contains("loadouts");
+   }
 
    public static void equip(int armorNumber) {
       equip(armorNumber, false);
@@ -153,6 +167,7 @@ public class WardrobeHelper {
                         }
 
                         if (mc.player != null) {
+                           suppressReopen(1200L);
                            mc.player.closeContainer();
                         }
 

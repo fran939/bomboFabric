@@ -1283,6 +1283,34 @@ public class SkyblockUtils {
       return false;
    }
 
+   public static boolean isInKuudra() {
+      String loc = getLocation();
+      if (loc.equalsIgnoreCase("Kuudra's Hollow") || loc.toLowerCase(Locale.ROOT).contains("kuudra")) {
+         return true;
+      }
+      String current = BomboaddonsClient.currentArea;
+      if (current != null && (current.toLowerCase(Locale.ROOT).contains("kuudra") || current.matches("^(?i)(t[1-5])$"))) {
+         return true;
+      }
+      String sub = getSubArea();
+      if (sub != null && (sub.toLowerCase(Locale.ROOT).contains("kuudra") || sub.matches("^(?i)(t[1-5])$"))) {
+         return true;
+      }
+      return false;
+   }
+
+   public static boolean isInPrivateIsland() {
+      String loc = getLocation();
+      if (loc.equalsIgnoreCase("Private Island") || loc.toLowerCase(Locale.ROOT).contains("island")) {
+         return true;
+      }
+      String current = BomboaddonsClient.currentArea;
+      if (current != null && current.toLowerCase(Locale.ROOT).contains("island")) {
+         return true;
+      }
+      return false;
+   }
+
    public static String getCurrentLocation() {
       return getLocation();
    }

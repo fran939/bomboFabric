@@ -125,7 +125,7 @@ public class LyricsHud {
         cachedHudHeight = totalH;
 
         // Translucent backdrop card (can be toggled in /b config)
-        boolean showBg = s == null || s.lyricsHudShowBackground;
+        boolean showBg = (s == null || s.lyricsHudShowBackground) && (s == null || !s.hudNoBackground);
         if (showBg) {
             int padX = 8;
             int padY = 5;

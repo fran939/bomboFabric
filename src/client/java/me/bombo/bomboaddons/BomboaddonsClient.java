@@ -678,6 +678,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       me.bombo.bomboaddons.features.spotify.SpotifyHud.init();
       me.bombo.bomboaddons.features.spotify.LyricsHud.init();
       me.bombo.bomboaddons.features.pip.PipManager.init();
+      me.bombo.bomboaddons.features.kuudra.KuudraHudManager.init();
       me.bombo.bomboaddons.features.auto.AutoSequenceManager.load();
       me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.setup();
       me.bombo.bomboaddons.flavor.Flavor.get().init();

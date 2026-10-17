@@ -506,6 +506,7 @@ public class ClickLogic {
                if (!isEquipped && mc.gameMode != null && mc.player != null) {
                   mc.gameMode.handleContainerInput(screen.getMenu().containerId, slot.index, 0, ContainerInput.PICKUP, mc.player);
                   if (!BomboConfig.get().hideCheats && BomboConfig.get().autoCloseWardrobe) {
+                     WardrobeHelper.suppressReopen(1200L);
                      mc.player.closeContainer();
                   }
                }

@@ -16,9 +16,11 @@ import net.minecraft.util.FormattedCharSequence;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Modern Liquid Glass Help & Feature Explorer GUI for BomboAddons.
@@ -91,6 +93,10 @@ public class HelpGuiScreen extends Screen {
 
     private int selectedCommandIndex = 0;
 
+    private final List<String> featureCategories = new ArrayList<>();
+    private String selectedFeatureCategory = "All";
+    private int featureCategoryScroll = 0;
+
     // Scrolling states
     private int commandListScroll = 0;
     private int commandDetailScroll = 0;
@@ -110,15 +116,16 @@ public class HelpGuiScreen extends Screen {
         // COMMANDS CATALOG (Separated cleanly by top-level command)
         // -------------------------------------------------------------
 
-        // 1. /ac (Auto Croesus)
-        allCommands.add(new CommandDoc("/ac", "Dungeons", "Auto Croesus chest selector & claimer.",
+        // 1. /b ac (Auto Croesus)
+        allCommands.add(new CommandDoc("/b ac", "Dungeons", "Auto Croesus chest selector & claimer.",
                 "Automates interaction with the Dungeon Croesus chest menu, calculating profits and auto-claiming optimal reward chests based on current Bazaar and Lowest BIN auction prices.",
                 List.of(
-                        new SubOption("/ac", "Toggles Auto Croesus feature on or off.", "/ac"),
-                        new SubOption("/ac auto", "Toggles fully automatic 1-click chest buying mode.", "/ac auto"),
-                        new SubOption("/ac clear", "Clears current Croesus chest selection queue and ignores remaining chests.", "/ac clear"),
-                        new SubOption("/ac list", "Lists all pending unopened Croesus chests with estimated profit values.", "/ac list"),
-                        new SubOption("/ac chest <name>", "Forces target chest selection by floor name (e.g. /ac chest M7).", "/ac chest ")
+                        new SubOption("/b ac", "Toggles Auto Croesus feature on or off.", "/b ac"),
+                        new SubOption("/b ac auto", "Toggles fully automatic 1-click chest buying mode.", "/b ac auto"),
+                        new SubOption("/b ac clear", "Clears current Croesus chest selection queue and ignores remaining chests.", "/b ac clear"),
+                        new SubOption("/b ac list", "Lists all pending unopened Croesus chests with estimated profit values.", "/b ac list"),
+                        new SubOption("/b ac chest <name>", "Forces target chest selection by floor name (e.g. /b ac chest M7).", "/b ac chest "),
+                        new SubOption("/ac", "Standalone alias for /b ac.", "/ac")
                 )));
 
         // 2. /b accept (Chat Confirmations & Prompts)
@@ -182,14 +189,16 @@ public class HelpGuiScreen extends Screen {
                         new SubOption("/b prof delete <name>", "Permanently deletes a profile across all keybinds, waypoints, and configs.", "/b prof delete ")
                 )));
 
-        // 8. /b hotbar (Hotbar Slot Swapper)
-        allCommands.add(new CommandDoc("/b hotbar", "Inventory", "Inventory & Hotbar slot swapper.",
-                "Opens the visual slot swapper screen to configure item swaps between inventory and hotbar slots.",
+        // 8. /b hotbar (Hotbar Slot Selector & Swapper)
+        allCommands.add(new CommandDoc("/b hotbar", "Inventory", "Hotbar slot selector & swapper.",
+                "Instantly selects held hotbar slots (1-9), searches items by name or lore, returns to previous slots, or opens the visual swapper GUI.",
                 List.of(
-                        new SubOption("/b hotbar", "Opens the visual inventory slot swapper screen.", "/b hotbar"),
-                        new SubOption("/b swap", "Alias for /b hotbar.", "/b swap"),
-                        new SubOption("/hotbar", "Standalone shortcut for /b hotbar.", "/hotbar"),
-                        new SubOption("/swap", "Standalone shortcut for /b swap.", "/swap")
+                        new SubOption("/b hotbar <1-9>", "Directly selects hotbar slot 1 to 9 (e.g. /b hotbar 3).", "/b hotbar 3"),
+                        new SubOption("/b hotbar <name>", "Finds item by name or SkyBlock ID on hotbar and holds it.", "/b hotbar Bonemerang"),
+                        new SubOption("/b hotbar l:<lore>", "Finds hotbar item matching lore text (e.g. /b hotbar l:Shortbow).", "/b hotbar l:Shortbow"),
+                        new SubOption("/b hotbar back", "Toggles back and forth between current and previously held slot.", "/b hotbar back"),
+                        new SubOption("/b hotbar gui", "Opens the visual inventory slot swapper GUI.", "/b hotbar gui"),
+                        new SubOption("/hotbar", "Standalone alias for /b hotbar.", "/hotbar")
                 )));
 
         // 9. /b buttons (Custom Inventory Buttons)
@@ -431,6 +440,24 @@ public class HelpGuiScreen extends Screen {
 
             allFeatures.add(new FeatureDoc(featName, category, desc, statusSupplier, configureAction));
         }
+
+        // Build unique categories for feature explorer
+        featureCategories.clear();
+        featureCategories.add("All");
+        Set<String> uniqueCats = new LinkedHashSet<>();
+        List<String> priorityOrder = List.of("General", "Dungeons", "Kuudra", "Slayer", "Mining", "HUD", "Chat", "Dev", "Misc");
+        for (String prio : priorityOrder) {
+            for (FeatureDoc f : allFeatures) {
+                if (f.category.equalsIgnoreCase(prio)) {
+                    uniqueCats.add(f.category);
+                    break;
+                }
+            }
+        }
+        for (FeatureDoc f : allFeatures) {
+            uniqueCats.add(f.category);
+        }
+        featureCategories.addAll(uniqueCats);
     }
 
     @Override
@@ -626,6 +653,57 @@ public class HelpGuiScreen extends Screen {
     }
 
     private void renderFeaturesTab(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
+        int catW = 126;
+        int listX = x + catW + 10;
+        int listW = w - catW - 10;
+
+        // 1. Categories Sidebar on Left
+        g.fill(x, y, x + catW, y + h, 0x220F172A);
+        g.outline(x, y, catW, h, 0x3338BDF8);
+
+        int catItemH = 26;
+        int totalCatH = featureCategories.size() * catItemH;
+        int maxCatScroll = Math.max(0, totalCatH - (h - 8));
+        featureCategoryScroll = Math.max(0, Math.min(maxCatScroll, featureCategoryScroll));
+
+        g.enableScissor(x, y + 2, x + catW, y + h - 2);
+        int curCatY = y + 4 - featureCategoryScroll;
+
+        String q = searchQuery.toLowerCase(Locale.ROOT);
+
+        for (String cat : featureCategories) {
+            if (curCatY + catItemH > y - 4 && curCatY < y + h + 4) {
+                boolean isSelected = cat.equalsIgnoreCase(selectedFeatureCategory);
+                boolean isHov = mouseX >= x + 3 && mouseX <= x + catW - 3 && mouseY >= curCatY && mouseY <= curCatY + catItemH - 2 && mouseY >= y && mouseY <= y + h;
+
+                // Category Count
+                int count = 0;
+                for (FeatureDoc f : allFeatures) {
+                    if (cat.equalsIgnoreCase("All") || f.category.equalsIgnoreCase(cat)) {
+                        if (q.isEmpty() || f.name.toLowerCase(Locale.ROOT).contains(q) || f.category.toLowerCase(Locale.ROOT).contains(q) || f.description.toLowerCase(Locale.ROOT).contains(q)) {
+                            count++;
+                        }
+                    }
+                }
+
+                int bgCol = isSelected ? 0xFF0284C7 : (isHov ? 0x3338BDF8 : 0x00000000);
+                g.fill(x + 3, curCatY, x + catW - 3, curCatY + catItemH - 2, bgCol);
+                if (isSelected) {
+                    g.outline(x + 3, curCatY, catW - 6, catItemH - 2, 0xFF38BDF8);
+                }
+
+                String displayCat = font.plainSubstrByWidth(cat, catW - 44);
+                g.text(font, (isSelected ? "§f§l" : "§7") + displayCat, x + 8, curCatY + 6, 0xFFFFFFFF, false);
+
+                String countStr = "§8(" + (isSelected ? "§b" : "§7") + count + "§8)";
+                int countW = font.width(countStr);
+                g.text(font, countStr, x + catW - countW - 8, curCatY + 6, 0xFF94A3B8, false);
+            }
+            curCatY += catItemH;
+        }
+        g.disableScissor();
+
+        // 2. Filtered Features on Right
         List<FeatureDoc> filtered = getFilteredFeatures();
 
         int cardH = 46;
@@ -635,26 +713,26 @@ public class HelpGuiScreen extends Screen {
 
         int curY = y + 4 - featureListScroll;
 
-        g.enableScissor(x, y + 2, x + w, y + h - 2);
+        g.enableScissor(listX, y + 2, listX + listW, y + h - 2);
         for (FeatureDoc feat : filtered) {
             if (curY + cardH > y - 10 && curY < y + h + 10) {
-                boolean hov = mouseX >= x && mouseX <= x + w && mouseY >= curY && mouseY <= curY + cardH && mouseY >= y && mouseY <= y + h;
+                boolean hov = mouseX >= listX && mouseX <= listX + listW && mouseY >= curY && mouseY <= curY + cardH && mouseY >= y && mouseY <= y + h;
 
-                g.fill(x, curY, x + w, curY + cardH, hov ? 0x2238BDF8 : 0x111E293B);
-                g.outline(x, curY, w, cardH, hov ? 0x6638BDF8 : 0x22475569);
+                g.fill(listX, curY, listX + listW, curY + cardH, hov ? 0x2238BDF8 : 0x111E293B);
+                g.outline(listX, curY, listW, cardH, hov ? 0x6638BDF8 : 0x22475569);
 
                 // Feature Name & Category
-                g.text(font, "§f§l" + feat.name + " §8| §3" + feat.category, x + 12, curY + 6, 0xFFFFFFFF, false);
+                g.text(font, "§f§l" + feat.name + " §8| §3" + feat.category, listX + 12, curY + 6, 0xFFFFFFFF, false);
 
                 // Description trimmed so it never touches the badge or configure button
-                int maxDescW = w - 210;
+                int maxDescW = listW - 200;
                 String desc = font.plainSubstrByWidth(feat.description, maxDescW);
-                g.text(font, "§7" + desc, x + 12, curY + 20, 0xFF94A3B8, false);
+                g.text(font, "§7" + desc, listX + 12, curY + 20, 0xFF94A3B8, false);
 
                 // Status Badge
                 String st = feat.statusSupplier.get();
                 int stW = font.width(st) + 12;
-                int stX = x + w - stW - 96;
+                int stX = listX + listW - stW - 96;
                 int stY = curY + 6;
                 g.fill(stX, stY, stX + stW, stY + 16, 0x33000000);
                 g.outline(stX, stY, stW, 16, 0x44FFFFFF);
@@ -662,7 +740,7 @@ public class HelpGuiScreen extends Screen {
 
                 // Configure / Toggle Button
                 int btnW = 80;
-                int btnX = x + w - btnW - 10;
+                int btnX = listX + listW - btnW - 10;
                 int btnY = curY + 6;
                 boolean btnHov = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + 16 && mouseY >= y && mouseY <= y + h;
 
@@ -697,11 +775,13 @@ public class HelpGuiScreen extends Screen {
     }
 
     private List<FeatureDoc> getFilteredFeatures() {
-        if (searchQuery.isEmpty()) return allFeatures;
         String q = searchQuery.toLowerCase(Locale.ROOT);
         List<FeatureDoc> res = new ArrayList<>();
         for (FeatureDoc f : allFeatures) {
-            if (f.name.toLowerCase(Locale.ROOT).contains(q)
+            if (!selectedFeatureCategory.equalsIgnoreCase("All") && !f.category.equalsIgnoreCase(selectedFeatureCategory)) {
+                continue;
+            }
+            if (q.isEmpty() || f.name.toLowerCase(Locale.ROOT).contains(q)
                     || f.category.toLowerCase(Locale.ROOT).contains(q)
                     || f.description.toLowerCase(Locale.ROOT).contains(q)) {
                 res.add(f);
@@ -815,6 +895,25 @@ public class HelpGuiScreen extends Screen {
             }
         } else {
             // Features tab click
+            int catW = 126;
+            int listX = winX + 16 + catW + 10;
+            int listW = winW - 32 - catW - 10;
+
+            // Category sidebar click
+            if (mouseX >= winX + 16 && mouseX <= winX + 16 + catW && mouseY >= contentY && mouseY <= contentY + contentH) {
+                int catItemH = 26;
+                int curCatY = contentY + 4 - featureCategoryScroll;
+                for (String cat : featureCategories) {
+                    if (mouseY >= curCatY && mouseY <= curCatY + catItemH - 2) {
+                        selectedFeatureCategory = cat;
+                        featureListScroll = 0;
+                        return true;
+                    }
+                    curCatY += catItemH;
+                }
+            }
+
+            // Right feature cards click
             List<FeatureDoc> filtered = getFilteredFeatures();
             int cardH = 46;
             int curY = contentY + 4 - featureListScroll;
@@ -822,7 +921,7 @@ public class HelpGuiScreen extends Screen {
             for (FeatureDoc feat : filtered) {
                 if (curY + cardH > contentY && curY < contentY + contentH) {
                     int btnW = 80;
-                    int btnX = winX + 16 + (winW - 32) - btnW - 10;
+                    int btnX = listX + listW - btnW - 10;
                     int btnY = curY + 6;
 
                     if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + 16) {
@@ -884,11 +983,20 @@ public class HelpGuiScreen extends Screen {
                     }
                 }
             } else {
-                List<FeatureDoc> filtered = getFilteredFeatures();
-                int cardH = 46;
-                int totalH = filtered.size() * (cardH + 4);
-                int maxFeatScroll = Math.max(0, totalH - (contentH - 8));
-                featureListScroll = Math.max(0, Math.min(maxFeatScroll, featureListScroll - (int) (verticalAmount * 25)));
+                int catW = 126;
+                int sidebarRight = (this.width - winW) / 2 + 16 + catW;
+                if (mouseX <= sidebarRight) {
+                    int catItemH = 26;
+                    int totalCatH = featureCategories.size() * catItemH;
+                    int maxCatScroll = Math.max(0, totalCatH - (contentH - 8));
+                    featureCategoryScroll = Math.max(0, Math.min(maxCatScroll, featureCategoryScroll - (int) (verticalAmount * 20)));
+                } else {
+                    List<FeatureDoc> filtered = getFilteredFeatures();
+                    int cardH = 46;
+                    int totalH = filtered.size() * (cardH + 4);
+                    int maxFeatScroll = Math.max(0, totalH - (contentH - 8));
+                    featureListScroll = Math.max(0, Math.min(maxFeatScroll, featureListScroll - (int) (verticalAmount * 25)));
+                }
             }
             return true;
         }
