@@ -4,10 +4,12 @@ public class Supply {
    private final SupplySpot spot;
    private SupplyStatus status;
    private float[] progressColor;
+   private int progressPercent = 0;
 
    public Supply(SupplySpot spot) {
       this.status = SupplyStatus.NOTHING;
       this.progressColor = new float[]{1.0F, 0.0F};
+      this.progressPercent = 0;
       this.spot = spot;
    }
 
@@ -31,8 +33,17 @@ public class Supply {
       this.progressColor = progressColor;
    }
 
+   public int getProgress() {
+      return this.progressPercent;
+   }
+
+   public void setProgress(int percent) {
+      this.progressPercent = percent;
+   }
+
    public void reset() {
       this.status = SupplyStatus.NOTHING;
       this.progressColor = new float[]{1.0F, 0.0F};
+      this.progressPercent = 0;
    }
 }

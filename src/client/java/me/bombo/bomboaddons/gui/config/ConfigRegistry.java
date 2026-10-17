@@ -1158,10 +1158,8 @@ public class ConfigRegistry {
                 items.add(ConfigItem.sliderFloat("Kuudra Mob Size", "Sets the render scale of Kuudra mobs.", category, 0.1f, 2.0f, 0.1f, "x", () -> s.kuudraMobsSize, v -> s.kuudraMobsSize = v));
                 items.add(ConfigItem.hudToggle("Blindness Timer HUD", "Timer countdown for Kuudra blindness phase overlay.", category, () -> s.kuudraBlindnessTimer, v -> s.kuudraBlindnessTimer = v, HudTarget.KUUDRA));
                 items.add(ConfigItem.toggle("Perk Menu Clicker", "Click keybinds in perk menu for fast purchases.", category, () -> s.perkMenuClicker, v -> s.perkMenuClicker = v));
-                if (s.perkMenuClicker) {
-                    items.add(ConfigItem.keybind("  Ballista Mechanic Keybind", "Keybind to buy Ballista Mechanic / Specialist Route and click Confirm in shop (supports mouse1/2 and keys).", category, () -> s.perkBallistaKey, v -> s.perkBallistaKey = v));
-                    items.add(ConfigItem.keybind("  Human Cannonball Keybind", "Keybind to buy Human Cannonball in shop (supports mouse1/2 and keys).", category, () -> s.perkCannonballKey, v -> s.perkCannonballKey = v));
-                }
+                items.add(ConfigItem.keybind("  Ballista Mechanic Keybind", "Keybind to buy Ballista Mechanic / Specialist Route and click Confirm in shop (supports mouse1/2 and keys).", category, () -> s.perkBallistaKey, v -> s.perkBallistaKey = v).when(() -> s.perkMenuClicker));
+                items.add(ConfigItem.keybind("  Human Cannonball Keybind", "Keybind to buy Human Cannonball and click Confirm in shop (supports mouse1/2 and keys).", category, () -> s.perkCannonballKey, v -> s.perkCannonballKey = v).when(() -> s.perkMenuClicker));
                 items.add(ConfigItem.toggle("Auto GFS Toxic", "Auto refills Toxic Arrow Poison from sacks.", category, () -> s.autoGfsToxic, v -> s.autoGfsToxic = v));
                 items.add(ConfigItem.sliderInt("Toxic Refill Count", "Target count of Toxic Arrow Poison to keep.", category, 1, 64, 1, "", () -> s.autoGfsToxicCount, v -> s.autoGfsToxicCount = v));
                 items.add(ConfigItem.toggle("Auto GFS Twilight", "Auto refills Twilight Arrow Poison from sacks.", category, () -> s.autoGfsTwilight, v -> s.autoGfsTwilight = v));

@@ -1803,7 +1803,7 @@ public class MagicalPowerScreen extends Screen {
         int webBtnY = winY + 10;
         if (mouseX >= webBtnX && mouseX <= webBtnX + webBtnW && mouseY >= webBtnY && mouseY <= webBtnY + 16) {
             String p = playerName.isEmpty() ? targetPlayer : playerName;
-            String url = "https://bomboclas.me/pv/" + URLEncoder.encode(p, StandardCharsets.UTF_8);
+            String url = me.bombo.bomboaddons.util.BomboApiUrl.getWebUrl("/pv/" + URLEncoder.encode(p, StandardCharsets.UTF_8));
             Util.getPlatform().openUri(URI.create(url));
             return true;
         }

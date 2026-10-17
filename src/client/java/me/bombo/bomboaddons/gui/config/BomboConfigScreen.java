@@ -55,6 +55,7 @@ public class BomboConfigScreen extends Screen {
     // State for Color Picker, Keybinds, and Text Inputs
     private static ConfigItem activeColorItem = null;
     private static ConfigItem activeKeybindItem = null;
+    private static long activeKeybindItemOpenTime = 0L;
     public static ConfigItem activeTextItem = null;
     public static int activeTextCursor = -1;
     public static int activeTextScroll = 0;
@@ -1336,25 +1337,28 @@ public class BomboConfigScreen extends Screen {
         double mouseX = event.x();
         double mouseY = event.y();
 
-        // 0. Keybind Card / GUI Keybind Card / Config Item Keybind Mouse Button Capture (for buttons like Middle Click mouse3, mouse4, mouse5, right click, etc.)
-        if (activeKeybindItem != null && event.button() > 0) {
-            int mouseCode = 1000 + event.button();
-            String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
-            if (event.button() >= 2 && prefix.isEmpty()) {
-                // Extra mouse button starts a combo: release commits mouseN alone, or a following
-                // key press makes mouseN+key (e.g. mouse4+a).
-                ConfigCustomWidgets.capturePrefixOpen = true;
-                ConfigCustomWidgets.captureStillListening = true;
-                ConfigCustomWidgets.capturePendingMouse = mouseCode;
+        // 0. Keybind Card / GUI Keybind Card / Config Item Keybind Mouse Button Capture (for buttons like Left Click mouse1, Right Click mouse2, Middle Click mouse3, etc.)
+        if (activeKeybindItem != null) {
+            long now = System.currentTimeMillis();
+            if (event.button() > 0 || (event.button() == 0 && now - activeKeybindItemOpenTime > 180L)) {
+                int mouseCode = 1000 + event.button();
+                String prefix = ConfigCustomWidgets.getCurrentlyHeldComboPrefix(mouseCode);
+                if (event.button() >= 2 && prefix.isEmpty()) {
+                    // Extra mouse button starts a combo: release commits mouseN alone, or a following
+                    // key press makes mouseN+key (e.g. mouse4+a).
+                    ConfigCustomWidgets.capturePrefixOpen = true;
+                    ConfigCustomWidgets.captureStillListening = true;
+                    ConfigCustomWidgets.capturePendingMouse = mouseCode;
+                    return true;
+                }
+                String comboStr = ConfigCustomWidgets.buildFullComboString(mouseCode);
+                if (activeKeybindItem.stringSetter != null) {
+                    activeKeybindItem.stringSetter.accept(comboStr);
+                    BomboConfig.save();
+                }
+                activeKeybindItem = null;
                 return true;
             }
-            String comboStr = ConfigCustomWidgets.buildFullComboString(mouseCode);
-            if (activeKeybindItem.stringSetter != null) {
-                activeKeybindItem.stringSetter.accept(comboStr);
-                BomboConfig.save();
-            }
-            activeKeybindItem = null;
-            return true;
         }
         if (ConfigCustomWidgets.clickKeyIsListening && event.button() > 0) {
             int mouseCode = 1000 + event.button();
@@ -2101,6 +2105,7 @@ public class BomboConfigScreen extends Screen {
                     if (searchBox != null) searchBox.setFocused(false);
                     activeTextItem = null;
                     activeKeybindItem = item;
+                    activeKeybindItemOpenTime = System.currentTimeMillis();
                 }
             }
 

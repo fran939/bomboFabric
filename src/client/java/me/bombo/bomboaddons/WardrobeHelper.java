@@ -172,11 +172,18 @@ public class WardrobeHelper {
                         }
 
                         BomboConfig.Settings s = BomboConfig.get();
-                        if (s != null && s.autoCloseWardrobe && mc.player != null) {
-                           suppressReopen(1200L);
-                           mc.player.closeContainer();
-                        } else {
-                           suppressReopen(1200L);
+                        suppressReopen(1200L);
+                        if (s != null && s.autoCloseWardrobe) {
+                           (new Thread(() -> {
+                              try {
+                                 Thread.sleep(150L);
+                              } catch (InterruptedException ignored) {}
+                              mc.submit(() -> {
+                                 if (mc.player != null) {
+                                    mc.player.closeContainer();
+                                 }
+                              });
+                           })).start();
                         }
 
                         return true;

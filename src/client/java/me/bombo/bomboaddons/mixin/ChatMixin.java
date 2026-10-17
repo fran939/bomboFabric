@@ -212,8 +212,9 @@ public abstract class ChatMixin implements IChatComponent {
                      int count = Integer.parseInt(raw.substring(start + 1, slash).trim());
                      int recIdx = raw.indexOf("recovered one of Elle's supplies!");
                      String playerPart = recIdx > 0 ? raw.substring(0, recIdx).trim() : "";
+                     String ign = playerPart.replaceAll("\\[[^\\]]+\\]\\s*", "").trim();
                      me.bombo.bomboaddons.features.kuudra.KuudraNotifications.notifyPlaced(count);
-                     me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onSupplyPlaced(count, playerPart);
+                     me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onSupplyPlaced(count, ign);
                   } catch (NumberFormatException ignored) {}
                }
             } else if (raw.contains("Fresh Tools Perk bonus has been activated!")) {
@@ -222,7 +223,7 @@ public abstract class ChatMixin implements IChatComponent {
                me.bombo.bomboaddons.features.kuudra.KuudraBuildHelper.onFreshTriggered();
             } else if (raw.contains("DEFEAT KUUDRA") || raw.contains("KUUDRA DOWN!")) {
                me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onKuudraDefeated();
-               me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onRunEnd(1_500_000L);
+               me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onRunEnd(0L);
             }
 
             if (me.bombo.bomboaddons.features.ring.RingManager.shouldSuppressMessage(raw)) {

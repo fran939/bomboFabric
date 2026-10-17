@@ -520,7 +520,7 @@ public class LowestBinManager {
    }
 
    private static CompletableFuture<Boolean> fetchFromPrices() {
-      return !isFetchingPrices.compareAndSet(false, true) ? CompletableFuture.completedFuture(false) : fetchFromUrl("https://api.eliteskyblock.com/resources/auctions/neu").thenCompose((success) -> success ? CompletableFuture.completedFuture(true) : fetchFromUrl("https://api.odtheking.com/lb/lowestbins")).thenCompose((success) -> success ? CompletableFuture.completedFuture(true) : fetchFromUrl("https://maro.skyblockextras.com/api/auctions/all")).thenCompose((success) -> success ? CompletableFuture.completedFuture(true) : fetchFromUrl(BomboApiUrl.getApiUrl("/prices2"))).thenCompose((success) -> success ? CompletableFuture.completedFuture(true) : fetchFromUrl(BomboApiUrl.getApiUrl("/prices"))).whenComplete((res, ex) -> isFetchingPrices.set(false));
+      return !isFetchingPrices.compareAndSet(false, true) ? CompletableFuture.completedFuture(false) : fetchFromUrl(BomboApiUrl.getApiUrl("/prices")).thenCompose((success) -> success ? CompletableFuture.completedFuture(true) : fetchFromUrl(BomboApiUrl.getApiUrl("/prices2"))).thenCompose((success) -> success ? CompletableFuture.completedFuture(true) : fetchFromUrl("https://api.eliteskyblock.com/resources/auctions/neu")).thenCompose((success) -> success ? CompletableFuture.completedFuture(true) : fetchFromUrl("https://api.odtheking.com/lb/lowestbins")).thenCompose((success) -> success ? CompletableFuture.completedFuture(true) : fetchFromUrl("https://maro.skyblockextras.com/api/auctions/all")).whenComplete((res, ex) -> isFetchingPrices.set(false));
    }
 
    private static CompletableFuture<Boolean> fetchFromNpc() {

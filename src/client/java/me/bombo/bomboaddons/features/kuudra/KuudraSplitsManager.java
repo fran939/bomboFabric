@@ -255,8 +255,8 @@ public class KuudraSplitsManager {
             if (!lines.isEmpty()) lines.add("");
             lines.add("§b§lSupply Times [§a" + Math.min(6, supplyRecords.size()) + "§8/§a6§b§l]");
             for (SupplyRecord rec : supplyRecords) {
-                String p = (rec.playerDisplay != null && !rec.playerDisplay.isEmpty()) ? rec.playerDisplay + " " : "";
-                lines.add(p + "§8(" + rec.number + "/6) §f" + formatTime(rec.timeMs));
+                String p = (rec.playerDisplay != null && !rec.playerDisplay.isEmpty()) ? "§b" + rec.playerDisplay + " " : "";
+                lines.add(p + "§8(" + rec.number + "/6): §f" + formatTime(rec.timeMs));
             }
         }
 

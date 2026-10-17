@@ -2112,6 +2112,14 @@ public class BomboConfigGUI
                     curY = this.addBoolOption("Disable Unequip", s.disableUnequipWardrobe, v -> {
                         s.disableUnequipWardrobe = v;
                     }, contentX, contentWidth, curY);
+                    curY = this.addBoolOption("Wardrobe Equip Sound", s.wardrobeEquipSound, v -> {
+                        s.wardrobeEquipSound = v;
+                        this.init();
+                    }, contentX, contentWidth, curY);
+                    if (s.wardrobeEquipSound) {
+                        curY = this.addFloatLabelSlider("Sound Volume", s.wardrobeEquipVolume, 0.0f, 2.0f, 0.05f, 1.0f, v -> s.wardrobeEquipVolume = v, contentX, contentWidth, curY);
+                        curY = this.addFloatLabelSlider("Sound Pitch", s.wardrobeEquipPitch, 0.5f, 2.0f, 0.05f, 1.0f, v -> s.wardrobeEquipPitch = v, contentX, contentWidth, curY);
+                    }
                     for (int i = 0; i < s.wardrobeKeys.size(); ++i) {
                         int index = i;
                         int slotY = curY;

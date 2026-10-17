@@ -179,7 +179,7 @@ public class KuudraGeneral {
         String title = screen.getTitle().getString().trim();
         String lowerTitle = title.toLowerCase(java.util.Locale.ROOT);
         boolean isPerkMenu = lowerTitle.contains("perk") || lowerTitle.contains("upgrade");
-        boolean isConfirmMenu = lowerTitle.contains("are you sure") || lowerTitle.contains("confirm");
+        boolean isConfirmMenu = lowerTitle.contains("are you sure") || lowerTitle.contains("confirm") || lowerTitle.contains("purchase") || lowerTitle.contains("buy");
 
         if (!isPerkMenu && !isConfirmMenu) return false;
 
@@ -191,7 +191,7 @@ public class KuudraGeneral {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gameMode == null) return false;
 
-        if (isConfirmMenu && matchesBallista) {
+        if (isConfirmMenu && (matchesBallista || matchesCannonball)) {
             int confirmSlot = findSlotWithTextOrItem(screen, "confirm", 11);
             if (confirmSlot != -1) {
                 mc.gameMode.handleContainerInput(screen.getMenu().containerId, confirmSlot, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, mc.player);
@@ -226,6 +226,10 @@ public class KuudraGeneral {
             if (slot.hasItem()) {
                 String name = slot.getItem().getHoverName().getString().toLowerCase(java.util.Locale.ROOT);
                 if (name.contains(kw)) {
+                    return slot.index;
+                }
+                String itemKey = slot.getItem().getItem().toString().toLowerCase(java.util.Locale.ROOT);
+                if (kw.equals("confirm") && (name.contains("confirm") || name.contains("yes") || itemKey.contains("lime") || itemKey.contains("emerald") || itemKey.contains("green_stained"))) {
                     return slot.index;
                 }
             }

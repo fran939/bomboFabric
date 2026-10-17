@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.140",
+    "date": "2026-10-17",
+    "changes": [
+      "+ Kuudra Supplies Parity - 6 dynamic drop spot beacon beams, individual zombie hitboxes, 5.75m drag circle, and best aim point",
+      "+ Supply Splits Player Attribution - Displays player IGN for each recovered supply in splits HUD",
+      "+ Interactive /kuudra Overview - Runs breakdown, weapon checks, MP breakdown, hover lore cards, and /pv shortcut",
+      "+ Profit Tracker & Prices API - Prioritized api.bombo.dpdns.org/prices and accurate opened chest profit tracking",
+      "+ Wardrobe Auto-Close & Equip Sound - Debounced auto-close and customizable equip sound, volume, and pitch",
+      "+ Perk Menu Clicker Keybinds - Support mouse buttons and all keys for Ballista and Cannonball with Specialist/Confirm routing",
+      "+ Domain Cleanup - Eliminated bomboclas.me references in favor of api.bombo.dpdns.org to avoid ISP football blocks"
+    ]
+  },
+  {
     "version": "26.2.28.139",
     "date": "2026-10-17",
     "changes": [

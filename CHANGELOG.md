@@ -1,5 +1,24 @@
 # BomboAddons Changelog
  
+## [26.2.28.140] - 2026-10-17 (Beta)
+
+### Kuudra Supplies Helper, Dynamic Drop Spots & Crate Hitboxes
+- **Dynamic 6 Drop Spots (`Pearls.java`, `KuudraUtils.java`, `Supply.java`):** Renders vertical beacon beams rising to y=256 for all 6 drop spots with dynamic progression colors (Red -> Yellow -> Green), base wireframe box, and floating percentage/status tags.
+- **Individual Zombie Hitboxes & Aim Point (`Pearls.java`, `CrateHitbox.java`):** Identifies and groups invisible supply zombies (`y=72..78`) into discrete crates, rendering individual hitboxes (turning Green within 3.0m eye reach), optimal 0.2m aim point boxes, and 5.75m drag circles (turning Green when hooked by fishing rod bobber).
+- **Line Geometry Buffer Crash Fix (`Pearls.java`):** Enforced strictly line primitives (`BomboRenderUtils.drawBox`, `drawCircle`, `drawLine`) into Fabric's `linesTranslucent()` pipeline, eliminating `Missing elements in vertex` crash upon entering Kuudra.
+
+### Splits & Attribution
+- **Supply Recovery Player Attribution (`ChatMixin.java`, `KuudraSplitsManager.java`):** Parses party recovery messages to attribute each supply to the player who retrieved it (`<ign> (x/6): <time>`).
+
+### /kuudra Interactive Overview & Prices API
+- **Interactive `/kuudra [player]` Card (`KuudraUserInfoCommand.java`):** Full interactive hover cards with runs breakdown, user info, MP breakdown, weapon checks (Hyp, Term, Rag), rend/extra/pets lore, and clickable `/pv` shortcut with 25s timeout and API key attachment.
+- **Prices API & Opened Chest Profit (`LowestBinManager.java`, `KuudraEndManager.java`):** Prioritized `https://api.bombo.dpdns.org/prices` before external fallbacks; fixed chest tracking and profit accumulation to accurately track opened chest loot without duplicates.
+- **Domain Blocking Defense:** Purged `bomboclas.me` references in favor of `api.bombo.dpdns.org` and `bombo.dpdns.org` to avoid ISP blocks during Spanish football matches.
+
+### Controls, GUI & Wardrobe
+- **Perk Menu Clicker Keybinds (`BomboConfigScreen.java`, `ConfigRegistry.java`, `KuudraGeneral.java`):** Dynamically exposed Ballista Mechanic and Human Cannonball keybinds; supports mouse buttons (`mouse1`, `mouse2`, `mouse3`) and all keys; maps Ballista keybind to Specialist route purchase and confirmation dialogs.
+- **Wardrobe Auto-Close & Equip Sound (`WardrobeHelper.java`, `BomboConfigGUI.java`, `ConfigRegistry.java`):** Added debounced auto-close on equip and customizable equip sound effect, volume, and pitch.
+
 ## [26.2.28.139] - 2026-10-17 (Beta)
 
 ### Discord Bot Remote Command Privacy & Bridge Fix

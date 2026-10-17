@@ -20,4 +20,15 @@ public class RangedAttributeMixin {
         }
         return maxValue;
     }
+
+    @org.spongepowered.asm.mixin.injection.Inject(
+        method = "sanitizeValue(D)D",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void bombo$bypassClamp(double value, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Double> cir) {
+        if (value > 1024.0) {
+            cir.setReturnValue(value);
+        }
+    }
 }

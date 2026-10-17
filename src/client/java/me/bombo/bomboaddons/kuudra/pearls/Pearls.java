@@ -85,7 +85,6 @@ public class Pearls {
          final float finalR = r;
          final float finalG = g;
          collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
-            BomboRenderUtils.drawFilledBox(pose.pose(), vertexConsumer, finalBox, finalR, finalG, b, 0.45F);
             BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, finalBox, finalR, finalG, b, a, 1.5F);
          });
 
@@ -107,52 +106,111 @@ public class Pearls {
          }
       }
 
-      // Render Supply drop spots and crates
-      if (s.kuudraSupplyWaypoints || s.kuudraSupplyHitbox || s.kuudraDragHitbox) {
-         for (Vec3 supply : currentSupplies) {
-            double rx = supply.x - camPos.x;
-            double ry = supply.y - camPos.y;
-            double rz = supply.z - camPos.z;
-            if (s.kuudraSupplyWaypoints) {
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                  BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, 0.16F, 0.98F, 0.99F, 0.8F));
-            }
-            AABB dropBox = new AABB(rx - 0.5, ry, rz - 0.5, rx + 0.5, ry + 1.0, rz + 0.5);
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-               BomboRenderUtils.drawBox(pose.pose(), vc, dropBox, 0.16F, 0.98F, 0.99F, 1.0F, 1.5F));
-         }
+      // Render Supply drop spots (all 6 spots with dynamic beacon color + progress box + text)
+      if (s.kuudraSupplyWaypoints) {
+         Supply[] allSupplies = KuudraUtils.getSupplies();
+         if (allSupplies != null) {
+            for (Supply supply : allSupplies) {
+               if (supply == null || supply.getStatus() == SupplyStatus.COMPLETED) continue;
+               Vec3 loc = supply.getSpot().getLocation();
+               double rx = loc.x - camPos.x;
+               double ry = loc.y - camPos.y;
+               double rz = loc.z - camPos.z;
 
-         for (Vec3 crate : KuudraUtils.getCrates()) {
+               float[] pc = supply.getProgressColor();
+               float sr = pc != null && pc.length > 0 ? pc[0] : 1.0F;
+               float sg = pc != null && pc.length > 1 ? pc[1] : 0.0F;
+               float sb = 0.0F;
+
+               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                  BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, sr, sg, sb, 0.8F));
+
+               AABB dropBox = new AABB(rx - 0.5, ry, rz - 0.5, rx + 0.5, ry + 1.0, rz + 0.5);
+               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                  BomboRenderUtils.drawBox(pose.pose(), vc, dropBox, sr, sg, sb, 1.0F, 1.5F));
+
+               // Floating text above drop spot
+               int percent = supply.getProgress();
+               String label = supply.getStatus() == SupplyStatus.NOTHING ? "§cBring Supply" : (percent > 0 ? "§e" + percent + "%" : "§6Supply Spot");
+               int textColor = supply.getStatus() == SupplyStatus.NOTHING ? 0xFFFF5555 : 0xFFFFAA00;
+               Vector4f screenPos = new Vector4f((float) rx, (float) (ry + 1.4F), (float) rz, 1.0F);
+               screenPos.mul(poseStack.last().pose());
+               screenPos.mul(context.levelState().cameraRenderState.projectionMatrix);
+               if (screenPos.w > 0.0F) {
+                  float ndcX = screenPos.x / screenPos.w;
+                  float ndcY = screenPos.y / screenPos.w;
+                  int screenWidth = mc.getWindow().getGuiScaledWidth();
+                  int screenHeight = mc.getWindow().getGuiScaledHeight();
+                  float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
+                  float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
+                  HUD_TEXTS.add(new PearlHUDText(label, screenX, screenY, textColor));
+               }
+            }
+         }
+      }
+
+      // Render Supply crates with individual zombie hitboxes, 5.75m drag circle, and aim point
+      if (s.kuudraSupplyWaypoints || s.kuudraSupplyHitbox || s.kuudraDragHitbox || s.kuudraSupplyBestAim) {
+         List<CrateHitbox> crateHitboxes = KuudraUtils.getCrateHitboxes();
+
+         for (CrateHitbox hitbox : crateHitboxes) {
+            Vec3 crate = hitbox.crateCenter();
             double rx = crate.x - camPos.x;
             double ry = crate.y - camPos.y;
             double rz = crate.z - camPos.z;
-            boolean inReach = mc.player.position().distanceTo(crate) <= 3.2;
 
+            // Beacon beam to sky for crate
             if (s.kuudraSupplyWaypoints) {
                collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
                   BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, 0.16F, 0.98F, 0.99F, 0.8F));
             }
 
+            // Individual zombie hitboxes
             if (s.kuudraSupplyHitbox) {
-               float hr = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.16F;
-               float hg = (inReach && s.kuudraSupplyPickupRange) ? 1.0F : 0.98F;
-               float hb = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.99F;
-               AABB crateBox = new AABB(rx - 0.6, ry, rz - 0.6, rx + 0.6, ry + 1.8, rz + 0.6);
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) -> {
-                  BomboRenderUtils.drawFilledBox(pose.pose(), vc, crateBox, hr, hg, hb, 0.25F);
-                  BomboRenderUtils.drawBox(pose.pose(), vc, crateBox, hr, hg, hb, 1.0F, 1.5F);
-               });
+               if (!hitbox.zombies().isEmpty()) {
+                  for (AABB zBox : hitbox.zombies()) {
+                     boolean inReach = eyePos != null && eyePos.distanceToSqr(
+                        Math.max(zBox.minX, Math.min(eyePos.x, zBox.maxX)),
+                        Math.max(zBox.minY, Math.min(eyePos.y, zBox.maxY)),
+                        Math.max(zBox.minZ, Math.min(eyePos.z, zBox.maxZ))
+                     ) <= 9.0;
+                     float zr = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.16F;
+                     float zg = (inReach && s.kuudraSupplyPickupRange) ? 1.0F : 0.98F;
+                     float zb = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.99F;
+                     AABB relZBox = new AABB(zBox.minX - camPos.x, zBox.minY - camPos.y, zBox.minZ - camPos.z,
+                                             zBox.maxX - camPos.x, zBox.maxY - camPos.y, zBox.maxZ - camPos.z);
+                     collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                        BomboRenderUtils.drawBox(pose.pose(), vc, relZBox, zr, zg, zb, 1.0F, 1.5F));
+                  }
+               } else {
+                  boolean inReach = mc.player != null && mc.player.position().distanceTo(crate) <= 3.2;
+                  float zr = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.16F;
+                  float zg = (inReach && s.kuudraSupplyPickupRange) ? 1.0F : 0.98F;
+                  float zb = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.99F;
+                  AABB crateBox = new AABB(rx - 0.6, ry, rz - 0.6, rx + 0.6, ry + 1.8, rz + 0.6);
+                  collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                     BomboRenderUtils.drawBox(pose.pose(), vc, crateBox, zr, zg, zb, 1.0F, 1.5F));
+               }
             }
 
+            // Drag hitbox circle: Green if hooked/draggable (bobber <= 5.75m), Red if not
             if (s.kuudraDragHitbox) {
+               float dr = hitbox.draggable() ? 0.0F : 1.0F;
+               float dg = hitbox.draggable() ? 1.0F : 0.0F;
                collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                  BomboRenderUtils.drawCircle(poseStack, vc, rx, ry + 0.05, rz, 5.75F, 32, 0.0F, 1.0F, 0.0F, 0.8F, 2.0F));
+                  BomboRenderUtils.drawCircle(poseStack, vc, rx, ry + 0.05, rz, 5.75F, 32, dr, dg, 0.0F, 0.8F, 2.0F));
             }
 
-            if (s.kuudraSupplyBestAim) {
-               AABB aimBox = new AABB(rx - 0.15, ry + 0.85, rz - 0.15, rx + 0.15, ry + 1.15, rz + 0.15);
+            // Best aim point: Green small box at optimal click point
+            if (s.kuudraSupplyBestAim && hitbox.aimPoint() != null) {
+               Vec3 ap = hitbox.aimPoint();
+               double ax = ap.x - camPos.x;
+               double ay = ap.y - camPos.y;
+               double az = ap.z - camPos.z;
+               float hs = 0.1F;
+               AABB aimBox = new AABB(ax - hs, ay - hs, az - hs, ax + hs, ay + hs, az + hs);
                collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                  BomboRenderUtils.drawFilledBox(pose.pose(), vc, aimBox, 0.0F, 1.0F, 0.0F, 0.8F));
+                  BomboRenderUtils.drawBox(pose.pose(), vc, aimBox, 0.0F, 1.0F, 0.0F, 1.0F, 1.5F));
             }
          }
       }

@@ -517,8 +517,13 @@ public class PlaytimeTracker {
                // Java's default UA ("Java/xx.x") is intermittently blocked by edge/CDN
                // rules; identify as the mod instead.
                conn.setRequestProperty("User-Agent", "BomboAddons/" + BomboaddonsClient.getModVersion());
-               conn.setConnectTimeout(10000);
-               conn.setReadTimeout(15000);
+               String apiKey = me.bombo.bomboaddons.features.auth.BomboApiKeyManager.getApiKey();
+               if (apiKey != null && !apiKey.isEmpty()) {
+                  conn.setRequestProperty("Api-Key", apiKey);
+                  conn.setRequestProperty("X-Api-Key", apiKey);
+               }
+               conn.setConnectTimeout(25000);
+               conn.setReadTimeout(25000);
                conn.setDoOutput(true);
                OutputStream os = conn.getOutputStream();
 
@@ -566,16 +571,17 @@ public class PlaytimeTracker {
                }
             } catch (Exception e) {
                DebugUtils.debug("playtime", "Cloud sync failed: " + e.getMessage());
-               mc.execute(() -> {
-                  if (mc.player != null) {
-                     net.minecraft.network.chat.MutableComponent comp = Component.literal(
-                           "§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getClass().getSimpleName() + " §7[?]");
-                     comp.setStyle(comp.getStyle().withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
-                           Component.literal("§c" + e.getMessage() + "\n§7Check server connection to api.bombo.dpdns.org"))));
-                     mc.player.sendSystemMessage(comp);
-                  }
-
-               });
+               if (!async || (BomboConfig.get() != null && BomboConfig.get().debugMode)) {
+                  mc.execute(() -> {
+                     if (mc.player != null) {
+                        net.minecraft.network.chat.MutableComponent comp = Component.literal(
+                              "§8[§bBomboAddons§8] §cError syncing playtime data: " + e.getClass().getSimpleName() + " §7[?]");
+                        comp.setStyle(comp.getStyle().withHoverEvent(new net.minecraft.network.chat.HoverEvent.ShowText(
+                              Component.literal("§c" + e.getMessage() + "\n§7Check server connection to api.bombo.dpdns.org"))));
+                        mc.player.sendSystemMessage(comp);
+                     }
+                  });
+               }
             }
 
          };

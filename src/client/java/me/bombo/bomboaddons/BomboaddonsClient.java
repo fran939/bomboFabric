@@ -664,6 +664,13 @@ public class BomboaddonsClient implements ClientModInitializer {
       try {
          System.setProperty("java.awt.headless", "false");
       } catch (Throwable ignored) {}
+      try {
+         if (net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH.value() instanceof net.minecraft.world.entity.ai.attributes.RangedAttribute ranged) {
+            java.lang.reflect.Field f = net.minecraft.world.entity.ai.attributes.RangedAttribute.class.getDeclaredField("maxValue");
+            f.setAccessible(true);
+            f.setDouble(ranged, 1_000_000_000.0);
+         }
+      } catch (Throwable ignored) {}
       BomboConfig.load();
       me.bombo.bomboaddons.features.auth.BomboApiKeyManager.autoEnsureApiKey();
       ChatModifier.load();

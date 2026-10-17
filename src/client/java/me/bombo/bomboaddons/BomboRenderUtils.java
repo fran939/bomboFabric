@@ -342,8 +342,13 @@ public class BomboRenderUtils {
       float maxZ = (float) (z + 0.2);
       float minY = (float) y;
       float maxY = 256.0F;
-      drawFilledBox(poseStack.last().pose(), buffer, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a * 0.35F);
-      drawBox(poseStack.last().pose(), buffer, minX, minY, minZ, maxX, maxY, maxZ, r, g, b, a, 1.0F);
+      org.joml.Matrix4f matrix = poseStack.last().pose();
+      drawLine(matrix, buffer, minX, minY, minZ, minX, maxY, minZ, r, g, b, a, 1.5F);
+      drawLine(matrix, buffer, maxX, minY, minZ, maxX, maxY, minZ, r, g, b, a, 1.5F);
+      drawLine(matrix, buffer, minX, minY, maxZ, minX, maxY, maxZ, r, g, b, a, 1.5F);
+      drawLine(matrix, buffer, maxX, minY, maxZ, maxX, maxY, maxZ, r, g, b, a, 1.5F);
+      // Base bounding box
+      drawBox(matrix, buffer, minX, minY, minZ, maxX, minY + 0.5F, maxZ, r, g, b, a, 1.0F);
    }
 
    public static void drawCircle(PoseStack poseStack, VertexConsumer buffer, double cx, double cy, double cz, float radius, int segments, float r, float g, float b, float a, float lineWidth) {

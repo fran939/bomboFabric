@@ -41,6 +41,7 @@ public class KuudraEndManager {
     private static long sessionStartTime = System.currentTimeMillis();
 
     private static final Set<String> initialPartyMembers = new HashSet<>();
+    private static final Set<String> recordedChestsThisRun = new HashSet<>();
     private static boolean runActive = false;
     private static String lastScannedChestTitle = "";
     private static long lastChestScanTime = 0L;
@@ -48,6 +49,7 @@ public class KuudraEndManager {
     public static void onRunStart(Set<String> partyMembers) {
         runActive = true;
         initialPartyMembers.clear();
+        recordedChestsThisRun.clear();
         if (partyMembers != null) {
             initialPartyMembers.addAll(partyMembers);
         }
@@ -181,8 +183,9 @@ public class KuudraEndManager {
             mc.player.sendSystemMessage(Component.literal(msg));
         }
 
-        // Record to session if not yet recorded
-        if (alreadyOpened) {
+        // Record to session if not yet recorded for this run
+        if (!recordedChestsThisRun.contains(title)) {
+            recordedChestsThisRun.add(title);
             sessionChests++;
             sessionProfitCoins += netProfit;
             sessionChestCosts += keyCost;
