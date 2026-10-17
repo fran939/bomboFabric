@@ -1,5 +1,12 @@
 # BomboAddons Changelog
  
+## [26.2.28.139] - 2026-10-17 (Beta)
+
+### Discord Bot Remote Command Privacy & Bridge Fix
+- **Silent Remote Execution (`bombot/index.js`, `IRCClient.java`):** Synchronized and deployed live Discord bot script (`/home/ubuntu/bombot/index.js`) on PM2. Replaced public IRC command broadcast with `EXEC_SILENT` protocol frames.
+- **Ephemeral Command Confirmation (`bombot/index.js`):** Intercepts `[CMD_ACK]` and `[CMD]` protocol packets immediately in `handleIncomingMessage`, preventing them from ever leaking onto public Minecraft chat or Discord bridge channels. Updates the executor's ephemeral interaction reply (`✅ Command Executed: /<cmd> for <user>`) privately.
+- **Robust User Matching (`IRCClient.java`):** Evaluates incoming remote actions against both active scoreboard IGN and local user profile name, and sanitizes ACK sender names.
+
 ## [26.2.28.138] - 2026-10-17 (Beta)
 
 ### Kuudra End & Profit Tracker Parity

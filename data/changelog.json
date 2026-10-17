@@ -1,5 +1,14 @@
 [
   {
+    "version": "26.2.28.139",
+    "date": "2026-10-17",
+    "changes": [
+      "+ Discord Remote Command Privacy - Deployed live PM2 bombot handler with EXEC_SILENT protocol frames",
+      "+ Ephemeral Command Acknowledgment - Prevented [CMD_ACK] and [CMD] leaks to bridge and chat, returning private Discord feedback",
+      "+ Robust Remote Account Matching - Verified against active scoreboard IGN and player profile"
+    ]
+  },
+  {
     "version": "26.2.28.138",
     "date": "2026-10-17",
     "changes": [
