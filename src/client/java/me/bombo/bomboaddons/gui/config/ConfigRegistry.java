@@ -1220,8 +1220,9 @@ public class ConfigRegistry {
 
                 items.add(ConfigItem.header("§e§lStun & Kill", category));
                 items.add(ConfigItem.toggle("Auto Close Shop on Cannonball", "Automatically closes shop after buying Human Cannonball.", category, () -> s.kuudraCloseCannon, v -> s.kuudraCloseCannon = v));
-                items.add(ConfigItem.toggle("Stun Waypoints", "Highlights Left Pod and Right Pod for instant stun.", category, () -> s.kuudraStunWaypoint, v -> s.kuudraStunWaypoint = v));
-                items.add(ConfigItem.color("Stun Waypoint Color", "Color for stun pod waypoints.", category, () -> s.kuudraStunWaypointColor != null ? s.kuudraStunWaypointColor : "#00FFFF", v -> s.kuudraStunWaypointColor = v));
+                items.add(ConfigItem.toggle("Stun Waypoints", "Shows dynamic waypoint where to look for instant stun, and highlights pods inside belly.", category, () -> s.kuudraStunWaypoint, v -> s.kuudraStunWaypoint = v));
+                items.add(ConfigItem.cycle("Stun Pod Target", "Select which pod waypoint to display for instant stun.", category, List.of("Left Pod", "Right Pod", "Middle Pod", "All Pods"), () -> s.kuudraStunPod != null ? s.kuudraStunPod : "Left Pod", v -> s.kuudraStunPod = v).when(() -> s.kuudraStunWaypoint));
+                items.add(ConfigItem.color("Stun Waypoint Color", "Color for stun pod waypoints and beacon beams.", category, () -> s.kuudraStunWaypointColor != null ? s.kuudraStunWaypointColor : "#00FFFF", v -> s.kuudraStunWaypointColor = v).when(() -> s.kuudraStunWaypoint));
                 items.add(ConfigItem.toggle("Hollow Helper (Ichor Range)", "Outlines Ichor danger boundary.", category, () -> s.kuudraHollowHelper, v -> s.kuudraHollowHelper = v));
                 items.add(ConfigItem.toggle("Rend Damage Indicator", "Displays Rend arrow damage pulls.", category, () -> s.kuudraRendDamage, v -> s.kuudraRendDamage = v));
                 items.add(ConfigItem.toggle("Backbone Hit Message", "Notifies when bone hits, including held weapon and armor.", category, () -> s.kuudraBackboneHit, v -> s.kuudraBackboneHit = v));

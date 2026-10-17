@@ -204,6 +204,7 @@ public abstract class ChatMixin implements IChatComponent {
             if (raw.contains("[NPC] Elle: Talk to me when you're ready!") || raw.contains("[NPC] Elle: Okay adventurers, I will go and fish up Kuudra!")) {
                me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onRunStart();
                me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onRunStart(null);
+               me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onRunStart();
             } else if (raw.contains("recovered one of Elle's supplies! (")) {
                int start = raw.lastIndexOf('(');
                int slash = raw.lastIndexOf('/');
@@ -217,6 +218,15 @@ public abstract class ChatMixin implements IChatComponent {
                      me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onSupplyPlaced(count, ign);
                   } catch (NumberFormatException ignored) {}
                }
+            } else if (raw.contains("The Ballista is finally ready!")) {
+               me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onBuildComplete();
+               me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onBallistaReady();
+            } else if (raw.contains("Human Cannonball")) {
+               me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onHumanCannonballPurchased();
+            } else if (raw.contains("has been eaten by Kuudra!")) {
+               me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onPlayerEaten(raw);
+            } else if (raw.contains("destroyed one of Kuudra's pods!") || raw.contains("POW! SURELY THAT'S IT!")) {
+               me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onStunFinished();
             } else if (raw.contains("Fresh Tools Perk bonus has been activated!")) {
                me.bombo.bomboaddons.features.kuudra.KuudraNotifications.notifyFresh();
                me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onFresh();
@@ -224,6 +234,7 @@ public abstract class ChatMixin implements IChatComponent {
             } else if (raw.contains("DEFEAT KUUDRA") || raw.contains("KUUDRA DOWN!")) {
                me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onKuudraDefeated();
                me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onRunEnd(0L);
+               me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onStunFinished();
             }
 
             if (me.bombo.bomboaddons.features.ring.RingManager.shouldSuppressMessage(raw)) {

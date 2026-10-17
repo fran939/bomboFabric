@@ -6037,6 +6037,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                 try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraBossTracker")) {
                    me.bombo.bomboaddons.features.kuudra.KuudraBossTracker.renderWorld(context);
                 } catch (Throwable ignored) {}
+                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraStunWaypoint")) {
+                   me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.renderWorld(context);
+                } catch (Throwable ignored) {}
              }
          });
          HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("bomboaddons", "main_hud"), (graphics, deltaTracker) -> {
@@ -6063,6 +6066,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                   int var10004 = (int)t.y;
                   graphics.centeredText(Minecraft.getInstance().font, t.text, var10003, var10004, t.color);
                }
+
+                for(me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.StunHUDText t : me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.HUD_TEXTS) {
+                   int var10003 = (int)t.x;
+                   int var10004 = (int)t.y;
+                   graphics.centeredText(Minecraft.getInstance().font, t.text, var10003, var10004, t.color);
+                }
             } catch (Throwable var6) {
             }
 

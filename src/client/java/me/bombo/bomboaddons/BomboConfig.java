@@ -1257,6 +1257,7 @@ public class BomboConfig {
       public boolean kuudraCloseCannon = false;
       public boolean kuudraStunWaypoint = false;
       public String kuudraStunWaypointColor = "#00FFFF";
+      public String kuudraStunPod = "Left Pod";
       public boolean kuudraHollowHelper = false;
       public boolean kuudraRendDamage = false;
       public boolean kuudraBackboneHit = false;

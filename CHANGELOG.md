@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.141] - 2026-10-17 (Beta)
+
+### Dynamic Stun Waypoint Parity & KIC Fix
+- **Dynamic Aim Calculation (`KuudraStunKillHelper.java`):** Restored the authentic KuudraIsCool dynamic aim calculation. Outside the belly, calculates dynamic offset `(pod - ENTER)` anchored to the player, allowing the crosshair to pre-align with the pod before being eaten for an instant stun.
+- **Belly Pod Highlights (`KuudraStunKillHelper.java`):** Inside the belly, highlights target pods at authentic coordinates (`Left: (-153, 27, -173)`, `Right: (-168, 27, -169)`, `Middle: (-156, 28, -157)`) with 3D wireframe boxes, vertical beacon beams, and 2D status tags.
+- **Stun Pod Target Selector (`ConfigRegistry.java`, `BomboConfig.java`):** Added configurable target selection (`Left Pod`, `Right Pod`, `Middle Pod`, `All Pods`) and customizable highlight color.
+- **KIC-26.2 Lifecycle Fix (`StunHelper.java`):** Fixed bug in KIC's original code where `onPhase` prematurely set `inp3 = false` upon entering `KuudraPhase.STUN`, and broadened position check for reliable belly entry detection.
+
 ## [26.2.28.140] - 2026-10-17 (Beta)
 
 ### Kuudra Supplies Helper, Dynamic Drop Spots & Crate Hitboxes
