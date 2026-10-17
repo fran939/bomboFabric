@@ -236,64 +236,80 @@ public class FeatureOrganizerManager {
         }
     }
 
+    public static void applyOrganizerData(OrganizerData loaded) {
+        if (loaded == null) return;
+        if (loaded.categories != null && !loaded.categories.isEmpty()) {
+            customCategories.clear();
+            customCategories.addAll(loaded.categories);
+        }
+        if (loaded.subcategories != null) {
+            subcategoriesMap.clear();
+            subcategoriesMap.putAll(loaded.subcategories);
+        }
+        if (loaded.categoryTags != null) {
+            categoryTagsMap.clear();
+            categoryTagsMap.putAll(loaded.categoryTags);
+        }
+        if (loaded.features != null) {
+            for (Map.Entry<String, FeatureMeta> e : loaded.features.entrySet()) {
+                if (features.containsKey(e.getKey()) && e.getValue() != null) {
+                    FeatureMeta fm = features.get(e.getKey());
+                    if (e.getValue().category != null && !e.getValue().category.isEmpty()) {
+                        fm.category = e.getValue().category;
+                    }
+                    if (e.getValue().subCategory != null) {
+                        fm.subCategory = e.getValue().subCategory;
+                    }
+                    fm.isCheat = e.getValue().isCheat;
+                    if (e.getValue().description != null && !e.getValue().description.trim().isEmpty()) {
+                        fm.description = e.getValue().description;
+                    }
+                    if (e.getValue().parentDependency != null) {
+                        fm.parentDependency = e.getValue().parentDependency;
+                    }
+                    if (e.getValue().tags != null) {
+                        fm.tags = new ArrayList<>(e.getValue().tags);
+                    }
+                    if (e.getValue().linkedCategories != null) {
+                        fm.linkedCategories = new ArrayList<>(e.getValue().linkedCategories);
+                    }
+                } else if (e.getValue() != null) {
+                    features.put(e.getKey(), e.getValue());
+                }
+            }
+        }
+        // Populate default descriptions for any feature that has an empty description
+        for (FeatureMeta fm : features.values()) {
+            if (fm != null && (fm.description == null || fm.description.trim().isEmpty())) {
+                ConfigItem ci = ConfigRegistry.getMasterItemsMap().get(fm.name);
+                if (ci != null && ci.description != null && !ci.description.trim().isEmpty()) {
+                    fm.description = ci.description;
+                }
+            }
+        }
+        // Cleanup deprecated or duplicate feature names
+        features.remove("Test Totem (Rare Drop)");
+        features.remove("Test Totem Animation");
+    }
+
     public static void load() {
-        if (!Files.exists(FILE_PATH)) return;
+        if (!Files.exists(FILE_PATH)) {
+            try (java.io.InputStream is = FeatureOrganizerManager.class.getClassLoader().getResourceAsStream("default_feature_organization.json")) {
+                if (is != null) {
+                    try (Reader reader = new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8)) {
+                        Type type = new TypeToken<OrganizerData>(){}.getType();
+                        OrganizerData loaded = GSON.fromJson(reader, type);
+                        applyOrganizerData(loaded);
+                    }
+                }
+            } catch (Exception ignored) {}
+            return;
+        }
         try (Reader reader = Files.newBufferedReader(FILE_PATH)) {
             Type type = new TypeToken<OrganizerData>(){}.getType();
             OrganizerData loaded = GSON.fromJson(reader, type);
             if (loaded != null) {
-                if (loaded.categories != null && !loaded.categories.isEmpty()) {
-                    customCategories.clear();
-                    customCategories.addAll(loaded.categories);
-                }
-                if (loaded.subcategories != null) {
-                    subcategoriesMap.clear();
-                    subcategoriesMap.putAll(loaded.subcategories);
-                }
-                if (loaded.categoryTags != null) {
-                    categoryTagsMap.clear();
-                    categoryTagsMap.putAll(loaded.categoryTags);
-                }
-                if (loaded.features != null) {
-                    for (Map.Entry<String, FeatureMeta> e : loaded.features.entrySet()) {
-                        if (features.containsKey(e.getKey()) && e.getValue() != null) {
-                            FeatureMeta fm = features.get(e.getKey());
-                            if (e.getValue().category != null && !e.getValue().category.isEmpty()) {
-                                fm.category = e.getValue().category;
-                            }
-                            if (e.getValue().subCategory != null) {
-                                fm.subCategory = e.getValue().subCategory;
-                            }
-                            fm.isCheat = e.getValue().isCheat;
-                            if (e.getValue().description != null && !e.getValue().description.trim().isEmpty()) {
-                                fm.description = e.getValue().description;
-                            }
-                            if (e.getValue().parentDependency != null) {
-                                fm.parentDependency = e.getValue().parentDependency;
-                            }
-                            if (e.getValue().tags != null) {
-                                fm.tags = new ArrayList<>(e.getValue().tags);
-                            }
-                            if (e.getValue().linkedCategories != null) {
-                                fm.linkedCategories = new ArrayList<>(e.getValue().linkedCategories);
-                            }
-                        } else if (e.getValue() != null) {
-                            features.put(e.getKey(), e.getValue());
-                        }
-                    }
-                }
-                // Populate default descriptions for any feature that has an empty description
-                for (FeatureMeta fm : features.values()) {
-                    if (fm != null && (fm.description == null || fm.description.trim().isEmpty())) {
-                        ConfigItem ci = ConfigRegistry.getMasterItemsMap().get(fm.name);
-                        if (ci != null && ci.description != null && !ci.description.trim().isEmpty()) {
-                            fm.description = ci.description;
-                        }
-                    }
-                }
-                // Cleanup deprecated or duplicate feature names
-                features.remove("Test Totem (Rare Drop)");
-                features.remove("Test Totem Animation");
+                applyOrganizerData(loaded);
             } else {
                 // Backward compatibility: old format was Map<String, FeatureMeta>
                 try (Reader reader2 = Files.newBufferedReader(FILE_PATH)) {

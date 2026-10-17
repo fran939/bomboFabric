@@ -16,8 +16,10 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -326,18 +328,41 @@ public class BomboConfigScreen extends Screen {
         if (!searchQuery.isEmpty()) {
             String q = searchQuery.toLowerCase().trim();
             List<String> filtered = new ArrayList<>();
+            Set<String> seenItems = new HashSet<>();
+
+            // Pass 1: Normal categories (excluding Uncategorized)
             for (String cat : categories) {
+                if ("Uncategorized".equalsIgnoreCase(cat)) continue;
                 if (cat.toLowerCase().contains(q)) {
                     filtered.add(cat);
-                } else {
                     for (ConfigItem it : ConfigRegistry.getItemsForCategory(cat)) {
-                        if ((it.name != null && it.name.toLowerCase().contains(q))
-                                || (it.description != null && it.description.toLowerCase().contains(q))
-                                || (it.subCategoryName != null && it.subCategoryName.toLowerCase().contains(q))) {
-                            filtered.add(cat);
-                            break;
+                        if (it.name != null) seenItems.add(it.name.toLowerCase(Locale.ROOT).trim());
+                    }
+                } else {
+                    boolean found = false;
+                    for (ConfigItem it : ConfigRegistry.getItemsForCategory(cat)) {
+                        if (itemMatchesQuery(it, cat, q)) {
+                            found = true;
+                            if (it.name != null) seenItems.add(it.name.toLowerCase(Locale.ROOT).trim());
                         }
                     }
+                    if (found) filtered.add(cat);
+                }
+            }
+
+            // Pass 2: Uncategorized only if it has matching items not already seen in other categories
+            if (categories.contains("Uncategorized")) {
+                boolean hasUnique = false;
+                for (ConfigItem it : ConfigRegistry.getItemsForCategory("Uncategorized")) {
+                    String key = it.name != null ? it.name.toLowerCase(Locale.ROOT).trim() : "";
+                    if (!key.isEmpty() && seenItems.contains(key)) continue;
+                    if (itemMatchesQuery(it, "Uncategorized", q)) {
+                        hasUnique = true;
+                        break;
+                    }
+                }
+                if (hasUnique) {
+                    filtered.add("Uncategorized");
                 }
             }
             return filtered;
@@ -1645,13 +1670,25 @@ public class BomboConfigScreen extends Screen {
             return true;
         }
 
-        // 3. Sidebar Categories Click (From sorted available categories list)
+        // 3. Check scrollbar clicks on sidebar first
         int sideX = winX;
         int sideY = winY + headerH + 1;
         int sideH = winH - headerH - 1;
         int listH = sideH - 8;
 
-        if (mouseX >= sideX && mouseX <= sideX + sidebarW && mouseY >= sideY && mouseY <= sideY + listH) {
+        if (this.maxSidebarScroll > 0) {
+            int sideTrackX = sideX + sidebarW - 4;
+            if (mouseX >= sideTrackX - 6 && mouseX <= sideTrackX + 10 && mouseY >= sideY && mouseY <= sideY + listH) {
+                double thumbH = Math.max(16, (double) listH * listH / (double) (this.maxSidebarScroll + listH));
+                double fraction = (mouseY - sideY - thumbH / 2.0) / Math.max(1.0, (double) (listH - thumbH));
+                this.sidebarScrollAmount = Math.max(0, Math.min(this.maxSidebarScroll, fraction * this.maxSidebarScroll));
+                this.isDraggingSidebarScrollbar = true;
+                return true;
+            }
+        }
+
+        // 3.5 Sidebar Categories Click (From sorted available categories list)
+        if (mouseX >= sideX && mouseX <= sideX + sidebarW - 10 && mouseY >= sideY && mouseY <= sideY + listH) {
             int curY = sideY + 8 - (int) this.sidebarScrollAmount;
             List<String> categories = getVisibleCategories();
 
@@ -1663,18 +1700,6 @@ public class BomboConfigScreen extends Screen {
                     return true;
                 }
                 curY += 22;
-            }
-        }
-
-        // 3.5 Check scrollbar clicks on sidebar and content
-        if (this.maxSidebarScroll > 0) {
-            int sideTrackX = sideX + sidebarW - 4;
-            if (mouseX >= sideTrackX - 6 && mouseX <= sideTrackX + 10 && mouseY >= sideY && mouseY <= sideY + listH) {
-                double thumbH = Math.max(16, (double) listH * listH / (double) (this.maxSidebarScroll + listH));
-                double fraction = (mouseY - sideY - thumbH / 2.0) / Math.max(1.0, (double) (listH - thumbH));
-                this.sidebarScrollAmount = Math.max(0, Math.min(this.maxSidebarScroll, fraction * this.maxSidebarScroll));
-                this.isDraggingSidebarScrollbar = true;
-                return true;
             }
         }
 
@@ -2253,12 +2278,21 @@ public class BomboConfigScreen extends Screen {
     private List<ConfigItem> searchMatchingItems() {
         List<ConfigItem> list = new ArrayList<>();
         String q = searchQuery.toLowerCase().trim();
-        for (String cat : ConfigRegistry.getAvailableCategories()) {
+        Set<String> seenItemNames = new HashSet<>();
+        List<String> categories = ConfigRegistry.getAvailableCategories();
+
+        // Pass 1: Normal categories (excluding Uncategorized)
+        for (String cat : categories) {
+            if ("Uncategorized".equalsIgnoreCase(cat)) continue;
             List<ConfigItem> catMatches = new ArrayList<>();
             for (ConfigItem item : ConfigRegistry.getItemsForCategory(cat)) {
                 if (item.type == ConfigItem.Type.HEADER) continue;
+                String key = (item.name != null ? item.name.toLowerCase(Locale.ROOT).trim() : "");
+                if (!key.isEmpty() && seenItemNames.contains(key)) continue;
+
                 if (itemMatchesQuery(item, cat, q)) {
                     catMatches.add(item);
+                    if (!key.isEmpty()) seenItemNames.add(key);
                 }
             }
             if (!catMatches.isEmpty()) {
@@ -2266,6 +2300,26 @@ public class BomboConfigScreen extends Screen {
                 list.addAll(catMatches);
             }
         }
+
+        // Pass 2: Uncategorized ONLY for items not already matched anywhere else
+        if (categories.contains("Uncategorized")) {
+            List<ConfigItem> uncatMatches = new ArrayList<>();
+            for (ConfigItem item : ConfigRegistry.getItemsForCategory("Uncategorized")) {
+                if (item.type == ConfigItem.Type.HEADER) continue;
+                String key = (item.name != null ? item.name.toLowerCase(Locale.ROOT).trim() : "");
+                if (!key.isEmpty() && seenItemNames.contains(key)) continue;
+
+                if (itemMatchesQuery(item, "Uncategorized", q)) {
+                    uncatMatches.add(item);
+                    if (!key.isEmpty()) seenItemNames.add(key);
+                }
+            }
+            if (!uncatMatches.isEmpty()) {
+                list.add(ConfigItem.header("-------------- Uncategorized --------------", "Uncategorized"));
+                list.addAll(uncatMatches);
+            }
+        }
+
         return list;
     }
 

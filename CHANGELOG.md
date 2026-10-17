@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.135] - 2026-10-17 (Beta)
+
+### Features, Polish & UX
+- **Help GUI Bounds & Text Wrapping (`HelpGuiScreen.java`):** Wrapped detailed command descriptions using `font.split()` and constrained sub-option text and cards within scissor clipping bounds. Text never overflows the window borders or overlaps action buttons.
+- **Top-Level Command Separation (`HelpGuiScreen.java`):** Completely separated `/ac` (Auto Croesus) from `/b accept` (silent chat confirmation runner). Populated full 30-command catalogue with all sub-options, parameters, and 1-click execution.
+- **Dynamic 300+ Features Explorer (`HelpGuiScreen.java`, `ConfigRegistry.java`):** Dynamically populates all 300+ real mod features from `ConfigRegistry.getMasterItemsMap()`, displaying live status badges (`ENABLED`, `DISABLED`, integer/float values, or bound keys) and direct `[⚙ Configure]` shortcuts to the corresponding config tab.
+- **Scroll Clamping & Zero Freeze (`HelpGuiScreen.java`, `BomboConfigScreen.java`):** Strictly clamped scroll offsets to content heights on both tabs and the config sidebar. Prevents unbounded scroll accumulation so scrolling back up from the bottom of lists responds immediately.
+- **Master HUD Background Toggle (`BomboConfig.java`, `ConfigRegistry.java`):** Added a global toggle `"Disable All HUD Backgrounds"` (`hudNoBackground`) under HUD settings, rendering all HUD overlays and widgets with 100% transparent backgrounds.
+- **Search Deduplication & Clean Uncategorized Group (`BomboConfigScreen.java`, `ConfigRegistry.java`):** Deduplicated search query matches by item name so each setting only appears once under its primary category. Excluded `"Uncategorized"` group from search results unless a match is genuinely uncategorized.
+- **Always Visible Dev Category (`ConfigRegistry.java`):** Removed developer session gating from `getAvailableCategories()` so custom `Dev` categories configured via `/b order` are always visible.
+- **Registered Disable Blindness (`ConfigRegistry.java`):** Exposed the `Disable Blindness` toggle under `General` Quality of Life settings so users can easily toggle blindness, darkness, and fog removal in the GUI and search.
+- **Admin API Key Matching Priority (`api_keys_manager.js`):** Prioritized master admin IP match over foreign Minecraft accounts during Discord key sync, ensuring test account hot-swaps receive the admin key.
+- **Bundled Default Feature Organization (`default_feature_organization.json`, `FeatureOrganizerManager.java`):** Bundled the user's customized `/b order` category and feature layout directly into the mod as default for fresh installations.
+
 ## [26.2.28.134] - 2026-10-17 (Beta)
 
 ### Features & Fixes

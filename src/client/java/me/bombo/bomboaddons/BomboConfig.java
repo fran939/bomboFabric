@@ -1496,6 +1496,7 @@ public class BomboConfig {
       public boolean inventoryHudVertical = false; // false = 9x3 horizontal, true = 3x9 vertical
       public boolean inventoryHudShowInInventory = false;
       public boolean inventoryHudShowTooltip = false;
+      public boolean hudNoBackground = false; // Master toggle: when true, all HUD overlays have no background (100% transparent)
       public String hudBgColor = "#0F172A";
       public int hudBgAlpha = 170; // 0-255
       public String hudBorderColor = "#00E5FF";
@@ -1528,15 +1529,19 @@ public class BomboConfig {
       public boolean hideSecondHand = false;
 
       public int getHudBgColorArgb() {
+         if (hudNoBackground) return 0;
          return BomboRenderUtils.parseHexColorWithAlpha(hudBgColor, hudBgAlpha, 0xAA0F172A);
       }
       public int getHudBorderColorArgb() {
+         if (hudNoBackground) return 0;
          return BomboRenderUtils.parseHexColorWithAlpha(hudBorderColor, hudBorderAlpha, 0x4400E5FF);
       }
       public int getHudSlotBgColorArgb() {
+         if (hudNoBackground) return 0;
          return BomboRenderUtils.parseHexColorWithAlpha(hudSlotBgColor, hudSlotBgAlpha, 0x441E293B);
       }
       public int getHudSlotBorderColorArgb() {
+         if (hudNoBackground) return 0;
          return BomboRenderUtils.parseHexColorWithAlpha(hudSlotBorderColor, hudSlotBorderAlpha, 0x33FFFFFF);
       }
       public boolean fixSkyblockF3Day = false;

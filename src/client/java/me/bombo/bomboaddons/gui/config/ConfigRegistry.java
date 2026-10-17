@@ -38,61 +38,50 @@ public class ConfigRegistry {
             "Auto Croesus"
     );
 
-    // List of standard categories ordered alphabetically (excluding GUI Settings and Debug which sit at the bottom)
+    // List of standard categories ordered by user preference / default organizer order
     public static final List<String> BASE_CATEGORIES = List.of(
-            "Aliases",
-            "Anvil",
-            "Auto",
-            "Auto Croesus",
-            // Display alias so the category reads "Sequences" in the GUI. The internal id,
-            // /b auto commands and config schema all keep using "Auto".
-            // (see CATEGORY_DISPLAY_NAMES)
-            "Bedwars",
-            "Block Highlights",
-            "Blocked Slots",
-            "Chat Modifier",
-            "Chat Triggers",
-            "Clicker",
-            "Coord Binds",
-            "Critters",
-            "Custom Crosshair",
-            "Custom Slots",
-            "Custom Tracers",
-            "Discord",
-            "Dungeons",
-            "Entity & Block Hider",
-            "Experiments",
-            "Fishing",
-            "Garden",
-            "General",
-            "Highlights",
-            "Hotkeys",
-            "HUDs",
-            "Item Highlights",
-            "Keybinds",
-            "Kuudra",
-            "Lore Additions",
-            "Mining",
-            "Misc",
-            "Ordered Waypoints",
-            "Particle Highlights",
-            "Pets",
-            "Profiles",
-            "Sounds",
-            "Spotify",
-            "Timers",
             "Uncategorized",
-            "Wardrobe",
+            "General",
+            "Chat",
+            "GUI",
+            "HUD",
+            "Dungeons",
+            "Debug",
+            "Non-Skyblock",
+            "Highlight",
+            "Profiles",
+            "Safari",
+            "Crosshair",
+            "Discord",
+            "Hider",
+            "Fishing",
+            "Farming",
+            "Hotkeys",
+            "Events",
+            "Misc",
+            "Kuudra",
+            "Sequences",
+            "Tooltip",
+            "Mining",
+            "Fixes",
             "Waypoints",
-            "Widgets"
+            "Sounds",
+            "Dev",
+            "Custom Crosshair",
+            "GUI Settings",
+            "Config"
     );
 
     /**
-     * GUI display names for internal category ids. The organizer file, /b order and the
-     * config schema keep using the internal id; only what the user reads changes.
+     * GUI display names for internal category ids.
      */
     public static final Map<String, String> CATEGORY_DISPLAY_NAMES = Map.of(
-            "Auto", "Sequences"
+            "Auto", "Sequences",
+            "HUDs", "HUD",
+            "Highlights", "Highlight",
+            "Entity & Block Hider", "Hider",
+            "Garden", "Farming",
+            "Lore Additions", "Tooltip"
     );
 
     /** Inverse of {@link #CATEGORY_DISPLAY_NAMES}: display name to internal id. */
@@ -134,17 +123,12 @@ public class ConfigRegistry {
                     && (!me.bombo.bomboaddons.flavor.Flavor.get().isCheat() || s.hideCheats)) {
                 continue;
             }
-            if (!BomboConfig.isDev() && ("Dev".equalsIgnoreCase(cat) || "Developer".equalsIgnoreCase(cat))) {
-                continue;
-            }
             list.add(cat);
         }
-        // At the bottom: GUI Settings right on top of Debug
+        // At the bottom: GUI Settings right on top of Debug and Dev
+        if (!list.contains("Dev")) list.add("Dev");
         if (!list.contains("GUI Settings")) list.add("GUI Settings");
         if (!list.contains("Debug")) list.add("Debug");
-        if (BomboConfig.isDev() && !list.contains("Dev")) {
-            list.add("Dev");
-        }
         return list;
     }
 
@@ -175,7 +159,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Require Keybind to Combine", "Only runs auto anvil when the designated keybind is held.", category, () -> s.anvilAutoCombineRequireKey, v -> s.anvilAutoCombineRequireKey = v));
             }
 
-            case "Auto" -> {
+            case "Auto", "Sequences" -> {
                 // Available in both flavors: creating, editing and keybinding sequences is
                 // shared data. Running one needs the sequence runtime, which only the cheat
                 // build ships - the card says so instead of pretending otherwise.
@@ -330,7 +314,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.sliderFloat("Minimap Scale", "Scale multiplier for Safari Minimap overlay.", category, 0.5f, 2.5f, 0.1f, "x", () -> s.critterMapScale > 0 ? s.critterMapScale : 1.0f, v -> s.critterMapScale = v));
             }
 
-            case "Custom Crosshair" -> {
+            case "Custom Crosshair", "Crosshair" -> {
                 items.add(ConfigItem.header("Custom 15x15 Crosshair Designer", category));
                 items.add(ConfigItem.toggle("Custom Crosshair Enabled", "Render custom designed pixel crosshair instead of vanilla.", category, () -> s.customCrosshair.enabled, v -> s.customCrosshair.enabled = v));
                 items.add(ConfigItem.toggle("Black Pixel Outline", "Draw crisp black border around each active pixel.", category, () -> s.customCrosshair.outline, v -> s.customCrosshair.outline = v));
@@ -722,7 +706,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.color("Starred Mob Color", "Highlight color for starred mobs.", category, () -> s.dungeonStarredMobColor != null ? s.dungeonStarredMobColor : "GOLD", v -> s.dungeonStarredMobColor = v));
             }
 
-            case "Entity & Block Hider" -> {
+            case "Entity & Block Hider", "Hider" -> {
                 items.add(ConfigItem.header("Entity & Block Hider (Anti-Lag & Custom Model Rendering)", category));
                 items.add(ConfigItem.toggle("Hider Master Toggle", "Enable hiding entities by hash/name and custom block replacements.", category, () -> s.hiderEnabled, v -> s.hiderEnabled = v));
                 items.add(ConfigItem.dynamicCustomCard("Entity Hider Rules", "Hide specific entities, armor stands, or player models in the world by entity name, UUID, or skin texture hash.", category,
@@ -784,7 +768,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.text("Stop Chat Trigger", "Stops auto fishing automation if this message appears in chat.", category, () -> s.autoFishingStopChatMessage, v -> s.autoFishingStopChatMessage = v));
             }
 
-            case "Garden" -> {
+            case "Garden", "Farming" -> {
                 items.add(ConfigItem.header("Garden Movement & Farming Helpers", category));
                 items.add(ConfigItem.toggle("Garden Movement Master", "Enables smart lane navigation and auto turnaround.", category, () -> s.gardenMovement, v -> {
                     s.gardenMovement = v;
@@ -944,6 +928,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Daily Reward Helper", "Automatically grabs daily reward token from Hypixel reward links.", category, () -> s.dailyRewardHelper, v -> s.dailyRewardHelper = v));
                 items.add(ConfigItem.toggle("Fuck Diorite", "Mines / ignores unwanted stone and diorite blocks.", category, () -> s.fuckDiorite, v -> s.fuckDiorite = v));
                 items.add(ConfigItem.toggle("Hitbox Expansion", "Expands entity interaction hitboxes.", category, () -> s.hitbox, v -> s.hitbox = v));
+                items.add(ConfigItem.toggle("Disable Blindness", "Completely removes blindness, darkness effects, and fog obscuration.", category, () -> s.disableBlindness, v -> s.disableBlindness = v));
 
                 items.add(ConfigItem.header("Third Person Camera Settings", category));
                 items.add(ConfigItem.toggle("Custom Camera Settings", "Enable custom third-person camera distance and perspective tweaks.", category, () -> s.cameraSettingsEnabled, v -> s.cameraSettingsEnabled = v));
@@ -958,7 +943,7 @@ public class ConfigRegistry {
                 }
             }
 
-            case "Highlights" -> {
+            case "Highlights", "Highlight" -> {
                 items.add(ConfigItem.header("Entity & Bestiary Highlights", category));
                 items.add(ConfigItem.toggle("Highlights Master Toggle", "Enable 3D bounding box outlines on configured entities.", category, () -> s.highlightsEnabled, v -> s.highlightsEnabled = v));
                 items.add(ConfigItem.sliderFloat("Tracer Line Width", "Line thickness in pixels for highlight tracers.", category, 0.5f, 10.0f, 0.5f, "px", () -> s.tracerWidth > 0 ? s.tracerWidth : 2.0f, v -> s.tracerWidth = v));
@@ -1018,8 +1003,9 @@ public class ConfigRegistry {
                 }
             }
 
-            case "HUDs" -> {
+            case "HUDs", "HUD" -> {
                 items.add(ConfigItem.header("Heads-Up Display Overlays", category));
+                items.add(ConfigItem.toggle("Disable All HUD Backgrounds", "Renders all HUD panels, overlays, and widgets with 100% transparent backgrounds.", category, () -> s.hudNoBackground, v -> s.hudNoBackground = v));
                 items.add(ConfigItem.button("❖ Move All HUD Elements", "Open HUD Canvas", "Enter interactive drag-and-drop HUD repositioning screen.", category, () -> {
                     Minecraft.getInstance().setScreenAndShow(new HudMoveScreen());
                 }));
@@ -1153,7 +1139,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Auto GFS Twilight", "Auto refills Twilight Arrow Poison from sacks.", category, () -> s.autoGfsTwilight, v -> s.autoGfsTwilight = v));
             }
 
-            case "Lore Additions" -> {
+            case "Lore Additions", "Tooltip" -> {
                 items.add(ConfigItem.header("Lore Additions (Custom Tooltips)", category));
                 items.add(ConfigItem.toggle("Lore Additions Master Toggle", "Enable custom tooltip modifications, estimated values, and calculations.", category, () -> s.loreAdditionsEnabled, v -> s.loreAdditionsEnabled = v));
 
@@ -1468,7 +1454,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.hudToggle("Tab Widget HUD", "Compact player and server stats widget.", category, () -> s.tabWidgetHudEnabled, v -> s.tabWidgetHudEnabled = v, HudTarget.TAB_WIDGET));
             }
 
-            case "GUI Settings" -> {
+            case "GUI Settings", "Config", "GUI" -> {
                 items.add(ConfigItem.header("Inventory Buttons (/b buttons)", category));
                 items.add(ConfigItem.toggle("Inventory Buttons", "Display custom clickable command and macro buttons inside player inventory and container screens (/b buttons).", category, () -> s.inventoryButtons, v -> s.inventoryButtons = v));
                 items.add(ConfigItem.cycle("Button Tooltip Mode", "How much information to display when hovering over inventory buttons.", category,
@@ -1672,13 +1658,14 @@ public class ConfigRegistry {
             }
 
             case "Uncategorized" -> {
-                items.add(ConfigItem.header("★ All Features (Global Overview & Uncategorized)", category));
-                for (String cat : BASE_CATEGORIES) {
-                    if (!cat.equals("Uncategorized")) {
-                        List<ConfigItem> catItems = getItemsForCategory(cat);
-                        if (!catItems.isEmpty()) {
-                            items.add(ConfigItem.header("── " + cat + " ──", category));
-                            items.addAll(catItems);
+                items.add(ConfigItem.header("Uncategorized Features", category));
+                Map<String, ConfigItem> master = getMasterItemsMap();
+                for (Map.Entry<String, FeatureOrganizerManager.FeatureMeta> entry : FeatureOrganizerManager.features.entrySet()) {
+                    FeatureOrganizerManager.FeatureMeta meta = entry.getValue();
+                    if (meta != null && "Uncategorized".equalsIgnoreCase(meta.category)) {
+                        ConfigItem ci = master.get(entry.getKey());
+                        if (ci != null) {
+                            items.add(ci.cloneWithCategory("Uncategorized"));
                         }
                     }
                 }

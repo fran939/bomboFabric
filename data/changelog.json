@@ -1,5 +1,21 @@
 [
   {
+    "version": "26.2.28.135",
+    "date": "2026-10-17",
+    "changes": [
+      "~ Help GUI Bounds & Text Wrapping - Fixed command and sub-option descriptions overflowing borders using font wrapping and scissor bounds",
+      "~ Command Catalog Separation - Separated /ac (Auto Croesus) from /b accept (silent chat prompt runner) and populated complete command catalogue",
+      "~ Dynamic 300+ Features in Help GUI - Dynamically loaded all mod configuration items with live status badges and 1-click [Configure] shortcuts",
+      "~ Category & Sub-Option Scroll Clamping - Fixed scroll freeze when reaching bottom of lists by enforcing strict upper and lower scroll clamping",
+      "+ Master HUD Background Toggle - Added 'Disable All HUD Backgrounds' setting to render all HUD overlays with 100% transparent backdrops",
+      "+ Config GUI Search Deduplication - Filtered duplicate search matches across categories and hid Uncategorized group unless matching unique items",
+      "+ Persistent Dev Category Visibility - Removed developer gating so custom Dev category from /b order is always visible in config",
+      "+ Registered Disable Blindness in Config - Added 'Disable Blindness' toggle under General Quality of Life settings",
+      "~ Admin API Key Matching Priority - Prioritized admin IP matching over guest Minecraft IGNs during Discord key sync",
+      "+ Bundled Default Feature Organization - Set user's customized /b order layout as default for new installations"
+    ]
+  },
+  {
     "version": "26.2.28.134",
     "date": "2026-10-17",
     "changes": [
