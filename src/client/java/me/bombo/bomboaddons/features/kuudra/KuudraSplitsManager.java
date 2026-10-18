@@ -99,10 +99,10 @@ public class KuudraSplitsManager {
     }
 
     public static void onBuildComplete() {
-        if (currentPhase == Phase.BUILD) {
+        if (buildEndTime <= 0L) {
             buildEndTime = System.currentTimeMillis();
-            currentPhase = Phase.STUN;
         }
+        currentPhase = Phase.STUN;
     }
 
     public static void onKuudraStunned() {

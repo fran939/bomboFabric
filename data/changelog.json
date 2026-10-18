@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.150",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Instant Stun Waypoint on Ballista - Stun aim waypoint activates immediately when Elle announces the Ballista is ready without requiring manual cannonball purchase",
+      "+ Full-Block Stun & Pearl Waypoints - Restored full-block box size (hs=0.50F) for Kuudra stun and pearl waypoints while maintaining compact /b wp custom waypoints",
+      "+ Destination Block Countdown Timer - Pearl timer and highlight now render directly on top of the target destination block (data.target) through walls",
+      "+ Fluid Stun Aim Interpolation - Standardized dynamic aim math matching IQ/KIC with sub-frame camera partial ticks for zero-jitter tracking",
+      "+ Fixed Window Resize on Disconnect - Preserved maximized/fullscreen window geometry when disconnecting or opening TitleScreen",
+      "+ Instant Game Shutdown - Made cloud playtime sync asynchronous with short timeouts on Minecraft close, eliminating the 10-second exit freeze"
+    ]
+  },
+  {
     "version": "26.2.28.149",
     "date": "2026-10-18",
     "changes": [

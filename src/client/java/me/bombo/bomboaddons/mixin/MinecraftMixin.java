@@ -114,6 +114,6 @@ public class MinecraftMixin {
       at = {@At("HEAD")}
    )
    private void onClose(CallbackInfo ci) {
-      PlaytimeTracker.sendPlaytimeDataToCloud(false);
+      PlaytimeTracker.sendPlaytimeDataToCloud(true);
    }
 }

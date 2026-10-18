@@ -218,7 +218,7 @@ public abstract class ChatMixin implements IChatComponent {
                      me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onSupplyPlaced(count, ign);
                   } catch (NumberFormatException ignored) {}
                }
-            } else if (raw.contains("The Ballista is finally ready!")) {
+            } else if (raw.contains("The Ballista is finally ready") || raw.contains("Phew! The Ballista")) {
                me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onBuildComplete();
                me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onBallistaReady();
             } else if (raw.contains("Human Cannonball")) {

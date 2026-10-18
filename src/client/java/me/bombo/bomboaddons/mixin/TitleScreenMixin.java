@@ -64,12 +64,5 @@ public abstract class TitleScreenMixin extends Screen {
 
       AccountSwitcherWidget accountSwitcher = new AccountSwitcherWidget(5, 5, this);
       this.addRenderableWidget(accountSwitcher);
-
-      try {
-         long handle = this.minecraft.getWindow().handle();
-         if (handle != 0L) {
-            me.bombo.bomboaddons.util.WindowsDesktopHelper.registerWindow(handle);
-         }
-      } catch (Throwable ignored) {}
    }
 }

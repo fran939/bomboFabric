@@ -100,6 +100,7 @@ public class KuudraStunKillHelper {
 
     public static void onBallistaReady() {
         inPhase3 = true;
+        stunner = true;
     }
 
     public static void onHumanCannonballPurchased() {
@@ -145,10 +146,10 @@ public class KuudraStunKillHelper {
         inBelly = inStomach;
 
         boolean isStunPhase = inPhase3 || KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.STUN;
-        boolean isEarlyPhase = KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.SUPPLIES ||
-                               KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.BUILD;
+        boolean isEarlyPhase = (KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.SUPPLIES ||
+                               KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.BUILD) && !inPhase3;
 
-        boolean active = testMode || inStomach || (!isEarlyPhase && (stunner || isStunPhase));
+        boolean active = testMode || inStomach || inPhase3 || isStunPhase || stunner;
 
         if (!active) return;
 
@@ -188,7 +189,7 @@ public class KuudraStunKillHelper {
 
         for (StunPod pod : pods) {
             double rx, ry, rz;
-            float hs = 0.15F;
+            float hs = 0.50F; // Full block size outline (1.0 x 1.0 x 1.0)
             if (testMode && !me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.inKuudra()) {
                 // Testing outside Kuudra: place test box 4 blocks directly in front of player's crosshair
                 Vec3 look = mc.player.getLookAngle();
@@ -208,19 +209,15 @@ public class KuudraStunKillHelper {
                 ry = (pod.y + 0.5) - camPos.y;
                 rz = (pod.z + 0.5) - camPos.z;
             } else {
-                // Dynamic waypoint outside belly: offset vector (pod - ENTER)
-                double offX = (pod.x + 0.5) - ENTER_X;
-                double offY = (pod.y + 0.5) - ENTER_Y;
-                double offZ = (pod.z + 0.5) - ENTER_Z;
-                if (mc.options.getCameraType().isFirstPerson()) {
-                    rx = offX;
-                    ry = offY;
-                    rz = offZ;
-                } else {
-                    rx = px - camPos.x + offX;
-                    ry = py - camPos.y + offY;
-                    rz = pz - camPos.z + offZ;
-                }
+                // Dynamic waypoint outside belly: selected.add(playerPos - ENTER_POS) - camPos
+                // Interpolated with partial ticks for 100% fluid movement without jitter
+                Vec3 selected = new Vec3(pod.x + 0.5, pod.y + 0.5, pod.z + 0.5);
+                Vec3 playerPos = new Vec3(px, py, pz);
+                Vec3 enterPos = new Vec3(ENTER_X, ENTER_Y, ENTER_Z);
+                Vec3 aimWorld = selected.add(playerPos.subtract(enterPos));
+                rx = aimWorld.x - camPos.x;
+                ry = aimWorld.y - camPos.y;
+                rz = aimWorld.z - camPos.z;
             }
 
             AABB relBox = new AABB(rx - hs, ry - hs, rz - hs, rx + hs, ry + hs, rz + hs);

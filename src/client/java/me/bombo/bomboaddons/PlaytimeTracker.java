@@ -522,8 +522,8 @@ public class PlaytimeTracker {
                   conn.setRequestProperty("Api-Key", apiKey);
                   conn.setRequestProperty("X-Api-Key", apiKey);
                }
-               conn.setConnectTimeout(25000);
-               conn.setReadTimeout(25000);
+               conn.setConnectTimeout(2000);
+               conn.setReadTimeout(2000);
                conn.setDoOutput(true);
                OutputStream os = conn.getOutputStream();
 
@@ -586,7 +586,9 @@ public class PlaytimeTracker {
 
          };
          if (async) {
-            (new Thread(r)).start();
+            Thread t = new Thread(r, "Bombo-Playtime-Sync");
+            t.setDaemon(true);
+            t.start();
          } else {
             r.run();
          }

@@ -1,5 +1,20 @@
 # BomboAddons Changelog
  
+## [26.2.28.150] - 2026-10-18 (Beta)
+
+### Kuudra Stun Waypoints & Instant Phase 3 Activation (`KuudraStunKillHelper.java`, `KuudraSplitsManager.java`, `ChatMixin.java`)
+- **Instant Stun Waypoint on Ballista Ready:** Added immediate Phase 3 and stunner activation when Elle announces the Ballista is ready (`"The Ballista is finally ready"` / `"Phew! The Ballista"`). Removed blocking early-phase guards so the stun waypoint displays immediately without waiting for human cannonball purchase or split phase lag.
+- **Full-Block Stun Waypoint Size:** Increased stun aim box size to authentic full-block dimensions (`1.0 x 1.0 x 1.0`, `hs = 0.50F`) while keeping custom `/b wp` waypoints at their compact highlight size.
+- **IQ & KIC Math Alignment & Fluid Interpolation:** Standardized aim offset math with `selected.add(playerPos.subtract(ENTER_POS))` interpolated with partial ticks (`getGameTimeDeltaPartialTick`), completely eliminating jitter when the player moves, jumps, or sprints.
+
+### Dynamic Pearl Waypoints & Destination Block Timer (`Pearls.java`)
+- **Full-Block Pearl Aim Box:** Scaled pearl aim waypoint to full-block size (`1.0 x 1.0 x 1.0`, `hs = 0.50F`).
+- **Target Destination Block Countdown Timer:** The countdown timer (`§c...ms` / `§a§lTHROW`) is now rendered directly on top of the target destination block (`data.target`) where the pearl lands (`ty + 1.25`) through walls, alongside a full-block destination highlight box.
+
+### Window Geometry & Instant Shutdown Fix (`WindowsDesktopHelper.java`, `TitleScreenMixin.java`, `MinecraftMixin.java`, `PlaytimeTracker.java`)
+- **Fixed Window Downsizing on Disconnect:** Removed Win32 `SW_RESTORE` call and prevented repeated window registration on TitleScreen initialization. Maximize and full-size window geometry are now perfectly preserved when disconnecting from servers or switching worlds.
+- **Eliminated 10-Second Shutdown Delay:** Changed `PlaytimeTracker.sendPlaytimeDataToCloud` during `Minecraft.close()` to run asynchronously on a daemon thread with shortened 2000ms socket timeouts, allowing the game to close cleanly and instantly.
+
 ## [26.2.28.149] - 2026-10-18 (Beta)
 
 ### Seamless Waypoint Rendering & Fluid Tracking (`GardenWaypoints.java`, `WaypointManager.java`, `Pearls.java`, `KuudraStunKillHelper.java`)

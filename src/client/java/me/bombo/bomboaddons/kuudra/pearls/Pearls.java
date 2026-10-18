@@ -90,7 +90,7 @@ public class Pearls {
             relY = point.y - camPos.y;
             relZ = point.z - camPos.z;
          }
-         float hs = 0.10F;
+         float hs = 0.50F; // Full block size (1.0 x 1.0 x 1.0)
          AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
          final AABB finalBox = box;
          final float finalR = r;
@@ -102,10 +102,31 @@ public class Pearls {
             BomboRenderUtils.drawFilledBox(pose.pose(), vc, (float)finalBox.minX, (float)finalBox.minY, (float)finalBox.minZ, (float)finalBox.maxX, (float)finalBox.maxY, (float)finalBox.maxZ, finalR, finalG, b, 0.20F);
          });
 
+         String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
+         int textColor = isReady ? 0xFF00FF00 : 0xFFFF5555;
+
+         // Also render full block highlight and countdown timer directly on top of target destination block
+         if (data.target != null) {
+            double tx = data.target.x - camPos.x;
+            double ty = data.target.y - camPos.y;
+            double tz = data.target.z - camPos.z;
+
+            AABB targetBox = new AABB(tx - 0.5, ty, tz - 0.5, tx + 0.5, ty + 1.0, tz + 0.5);
+            collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) -> {
+               BomboRenderUtils.drawBox(pose.pose(), vc, targetBox, finalR, finalG, b, a, 1.5F);
+            });
+            collector.submitCustomGeometry(poseStack, RenderTypes.debugFilledBox(), (pose, vc) -> {
+               BomboRenderUtils.drawFilledBox(pose.pose(), vc, (float)targetBox.minX, (float)targetBox.minY, (float)targetBox.minZ, (float)targetBox.maxX, (float)targetBox.maxY, (float)targetBox.maxZ, finalR, finalG, b, 0.20F);
+            });
+
+            if (s.showTimer || s.kuudraPearlTimer) {
+               float targetTextY = (float) (ty + 1.25);
+               BomboRenderUtils.drawText(poseStack, collector, disp, (float) tx, targetTextY, (float) tz, textColor, 0.035F, true, true);
+            }
+         }
+
          if (s.showTimer || s.kuudraPearlTimer) {
-            int textColor = isReady ? 0xFF00FF00 : 0xFFFF5555;
-            String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
-            float textY = (float) (relY + hs + 0.12F);
+            float textY = (float) (relY + hs + 0.15F);
             BomboRenderUtils.drawText(poseStack, collector, disp, (float) relX, textY, (float) relZ, textColor, 0.035F, true, true);
 
             Vector4f clip = new Vector4f((float) relX, textY, (float) relZ, 1.0F);

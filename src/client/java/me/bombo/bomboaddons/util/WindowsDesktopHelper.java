@@ -41,7 +41,7 @@ public class WindowsDesktopHelper {
     }
 
     public static void registerWindow(long glfwHandle) {
-        if (!isWindows() || glfwHandle == 0L) return;
+        if (!isWindows() || glfwHandle == 0L || registered) return;
         try {
             long win32Hwnd = GLFWNativeWin32.glfwGetWin32Window(glfwHandle);
             if (win32Hwnd == 0L) return;
@@ -57,8 +57,7 @@ public class WindowsDesktopHelper {
                 u32.SetWindowPos(hwndObj, null, 0, 0, 0, 0, 0x0027); // SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER
             }
 
-            // Force window visibility and bring to top
-            u32.ShowWindow(hwndObj, 9); // SW_RESTORE
+            // Show window and bring to top without un-maximizing (avoid SW_RESTORE which shrinks maximized window)
             u32.ShowWindow(hwndObj, 5); // SW_SHOW
             u32.SetForegroundWindow(hwndObj);
 
@@ -66,10 +65,8 @@ public class WindowsDesktopHelper {
             GLFW.glfwShowWindow(glfwHandle);
             GLFW.glfwFocusWindow(glfwHandle);
 
-            if (!registered) {
-                registered = true;
-                Bomboaddons.LOGGER.info("[BomboAddons] Successfully registered Minecraft window (0x{}) on Default desktop & taskbar", Long.toHexString(win32Hwnd));
-            }
+            registered = true;
+            Bomboaddons.LOGGER.info("[BomboAddons] Successfully registered Minecraft window (0x{}) on Default desktop & taskbar", Long.toHexString(win32Hwnd));
         } catch (Throwable t) {
             Bomboaddons.LOGGER.debug("[BomboAddons] registerWindow skipped: {}", t.getMessage());
         }
