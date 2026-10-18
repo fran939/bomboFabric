@@ -15,6 +15,10 @@ public class WardrobeHelper {
    private static int loadoutStep = 0;
    private static long suppressReopenUntil = -1L;
 
+   public static int getPendingArmorNumber() {
+      return pendingArmorNumber;
+   }
+
    public static void suppressReopen(long durationMs) {
       suppressReopenUntil = System.currentTimeMillis() + durationMs;
    }
@@ -24,6 +28,10 @@ public class WardrobeHelper {
    }
 
    public static boolean shouldSuppressScreenOpen(String title) {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null || !s.autoCloseWardrobe) {
+         return false;
+      }
       if (System.currentTimeMillis() > suppressReopenUntil) {
          return false;
       }
@@ -176,8 +184,8 @@ public class WardrobeHelper {
                         }
 
                         BomboConfig.Settings s = BomboConfig.get();
-                        suppressReopen(250L);
                         if (s != null && s.autoCloseWardrobe) {
+                           suppressReopen(200L);
                            (new Thread(() -> {
                               try {
                                  Thread.sleep(120L);

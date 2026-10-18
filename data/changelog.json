@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.143",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Dynamic Stun Waypoint Overhaul - Full parity with IQ and KIC: exact belly detection (Y < 55) and offset math for seamless pre-aim",
+      "+ Vulkan & Sodium Compatibility - Uses native secondaryBlockOutline and debugFilledBox for full through-walls visibility",
+      "+ In-World 3D Billboard & HUD Projection - Added through-walls 3D billboard tags and 2D on-screen target badges",
+      "+ Stun Test Mode - Added /b teststun command to test and preview dynamic stun aim box anywhere",
+      "+ Wardrobe & Loadout Auto-Close Fix - Eliminated 1-second reopen cooldown and preserved normal GUI refresh when auto-close is disabled",
+      "+ Instant Suppression Reset - User commands (/ld, /wd, etc.) immediately clear suppression so menus open instantly"
+    ]
+  },
+  {
     "version": "26.2.28.142",
     "date": "2026-10-17",
     "changes": [

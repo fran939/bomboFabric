@@ -6030,13 +6030,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                 } catch (Throwable ignored) {}
              }
 
-             if (KuudraUtils.inKuudra()) {
-                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraPearls")) {
-                   Pearls.render(context);
-                } catch (Throwable ignored) {}
-                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraBossTracker")) {
-                   me.bombo.bomboaddons.features.kuudra.KuudraBossTracker.renderWorld(context);
-                } catch (Throwable ignored) {}
+             if (KuudraUtils.inKuudra() || me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.testMode) {
+                if (KuudraUtils.inKuudra()) {
+                   try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraPearls")) {
+                      Pearls.render(context);
+                   } catch (Throwable ignored) {}
+                   try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraBossTracker")) {
+                      me.bombo.bomboaddons.features.kuudra.KuudraBossTracker.renderWorld(context);
+                   } catch (Throwable ignored) {}
+                }
                 try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: KuudraStunWaypoint")) {
                    me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.renderWorld(context);
                 } catch (Throwable ignored) {}

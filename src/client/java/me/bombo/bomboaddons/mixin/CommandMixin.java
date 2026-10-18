@@ -2,7 +2,9 @@ package me.bombo.bomboaddons.mixin;
 
 import me.bombo.bomboaddons.CommandTracker;
 import me.bombo.bomboaddons.CustomBindsProcessor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,8 +25,17 @@ public class CommandMixin {
       me.bombo.bomboaddons.BomboaddonsClient.recordCommand(command);
       String trimmed = command.trim();
       String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
-      if (!lower.startsWith("wd ") && !lower.equals("loadout")) {
+      if (me.bombo.bomboaddons.WardrobeHelper.getPendingArmorNumber() == -1) {
          me.bombo.bomboaddons.WardrobeHelper.clearSuppression();
+      }
+      if (lower.equals("b teststun") || lower.equals("b stuntest") || lower.equals("bombo teststun") || lower.equals("bomboaddons teststun")) {
+         boolean enabled = me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.toggleTestMode();
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §aStun Waypoint Test Mode: " + (enabled ? "§a§lENABLED §7(Rendering stun aim box at current position)" : "§c§lDISABLED")));
+         }
+         ci.cancel();
+         return;
       }
       if (lower.startsWith("b s ") || lower.startsWith("bombo s ") || lower.startsWith("bomboaddons s ")) {
          int sIdx = trimmed.indexOf(" s ");

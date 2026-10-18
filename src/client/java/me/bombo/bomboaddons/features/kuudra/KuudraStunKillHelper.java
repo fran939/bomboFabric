@@ -53,9 +53,23 @@ public class KuudraStunKillHelper {
     public static final double ENTER_Y = 49.0;
     public static final double ENTER_Z = -186.0;
 
+    public static boolean testMode = false;
     private static boolean stunner = false;
     private static boolean inPhase3 = false;
     private static boolean inBelly = false;
+
+    public static boolean toggleTestMode() {
+        testMode = !testMode;
+        return testMode;
+    }
+
+    public static boolean isInStomach(Player player) {
+        if (player == null) return false;
+        if (player.getY() >= 55.0) return false;
+        double dx = player.getX() - ENTER_X;
+        double dz = player.getZ() - ENTER_Z;
+        return (dx * dx + dz * dz) <= (40.0 * 40.0);
+    }
 
     public static class StunHUDText {
         public final String text;
@@ -115,30 +129,27 @@ public class KuudraStunKillHelper {
     public static void onStunFinished() {
         inPhase3 = false;
         inBelly = false;
+        stunner = false;
     }
 
     public static void renderWorld(LevelRenderContext context) {
         HUD_TEXTS.clear();
         BomboConfig.Settings s = BomboConfig.get();
-        if (s == null || !s.kuudraStunWaypoint) return;
-        if (!KuudraUtils.inKuudra()) return;
+        if (s == null || (!s.kuudraStunWaypoint && !testMode)) return;
+        if (!KuudraUtils.inKuudra() && !testMode) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        // Position check for belly
-        double px = mc.player.getX();
-        double pz = mc.player.getZ();
-        if (px < -140.0 && pz < -150.0) {
-            inBelly = true;
-        } else if (px > -140.0 && pz > -150.0) {
-            inBelly = false;
-        }
+        boolean inStomach = isInStomach(mc.player);
+        inBelly = inStomach;
 
-        boolean phase3Active = inPhase3 || inBelly || stunner ||
-                KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.STUN;
+        boolean active = testMode || inStomach || stunner || inPhase3 ||
+                KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.STUN ||
+                KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.BUILD ||
+                KuudraUtils.inKuudra();
 
-        if (!phase3Active) return;
+        if (!active) return;
 
         // Pods to render based on config
         List<StunPod> pods = new ArrayList<>();
@@ -171,12 +182,12 @@ public class KuudraStunKillHelper {
 
         for (StunPod pod : pods) {
             AABB worldBox;
-            if (inBelly) {
+            if (inStomach) {
                 // True pod block coordinates inside Kuudra's belly
                 worldBox = new AABB(pod.x, pod.y, pod.z, pod.x + 1.0, pod.y + 1.0, pod.z + 1.0);
             } else {
-                // Dynamic waypoint: offsets from player by (pod - ENTER) so looking at it outside matches
-                // the exact yaw and pitch needed when spawning inside the belly at ENTER_X/Y/Z
+                // Dynamic waypoint: offsets from player by (pod - ENTER) so looking directly at it outside
+                // aligns the crosshair with the exact yaw and pitch needed when spawning inside the belly at ENTER_X/Y/Z
                 double offsetX = mc.player.getX() - ENTER_X;
                 double offsetY = mc.player.getY() - ENTER_Y;
                 double offsetZ = mc.player.getZ() - ENTER_Z;
@@ -196,16 +207,26 @@ public class KuudraStunKillHelper {
             final float finalB = b;
             final float finalA = a;
 
-            // Wireframe 3D Box
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                BomboRenderUtils.drawBox(pose.pose(), vc, relBox, finalR, finalG, finalB, finalA, 2.0F));
+            // Wireframe 3D Box (rendered through walls with secondaryBlockOutline)
+            collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
+                BomboRenderUtils.drawBox(pose.pose(), vc, relBox, finalR, finalG, finalB, finalA, 3.0F));
 
-            // Beacon beam
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+            // Translucent Filled Box (rendered through walls with debugFilledBox)
+            collector.submitCustomGeometry(poseStack, RenderTypes.debugFilledBox(), (pose, vc) ->
+                BomboRenderUtils.drawFilledBox(pose.pose(), vc,
+                    (float) relBox.minX, (float) relBox.minY, (float) relBox.minZ,
+                    (float) relBox.maxX, (float) relBox.maxY, (float) relBox.maxZ,
+                    finalR, finalG, finalB, 0.20F));
+
+            // Beacon beam rising into the sky
+            collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
                 BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, finalR, finalG, finalB, 0.7F));
 
-            // 2D Text Label
-            String label = inBelly ? ("§b" + pod.display) : ("§b" + pod.display + " Stun Aim");
+            // In-world 3D billboard text (rendered through walls)
+            String label = inStomach ? ("§b" + pod.display) : ("§b" + pod.display + " Stun Aim");
+            BomboRenderUtils.drawText(poseStack, collector, label, (float) rx, (float) (ry + 1.3), (float) rz, colorInt, 0.035f, true, true);
+
+            // 2D Screen Projection HUD tag
             org.joml.Matrix4f modelView = new org.joml.Matrix4f(poseStack.last().pose());
             org.joml.Matrix4f projection = new org.joml.Matrix4f(context.levelState().cameraRenderState.projectionMatrix);
             Vector4f clip = new Vector4f((float) rx, (float) (ry + 1.4), (float) rz, 1.0F);

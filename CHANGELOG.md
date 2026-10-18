@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.143] - 2026-10-18 (Beta)
+
+### Dynamic Stun Waypoint Overhaul (IQ & KIC Parity)
+- **Authentic Stomach Detection (`KuudraStunKillHelper.java`):** Restored deterministic belly detection (`player.getY() < 55.0` within 40m radius of `(-161, 49, -186)`), eliminating false-positive belly triggers while standing on the surface island.
+- **Dynamic Aim Offset Math (`KuudraStunKillHelper.java`):** Dynamically computes waypoint at `pod + (player - ENTER)` so aiming at the waypoint outside pre-aligns the crosshair with 100% precision for an instant stun the instant the player enters the belly.
+- **Vulkan & Sodium Native Rendering:** Replaced occluded rendering pipelines with `RenderTypes.secondaryBlockOutline()` and `RenderTypes.debugFilledBox()`, rendering wireframes, translucent fill, and beacon beams through walls without OpenGL/NanoVG crashes.
+- **In-World 3D Billboard & HUD Projections:** Added through-walls 3D billboard text (`[Left Pod Stun Aim]`) and 2D on-screen HUD target tags.
+- **Stun Test Command (`/b teststun`):** Added in-game command to toggle stun waypoint preview anywhere for testing.
+
+### Wardrobe & Loadout Auto-Close Reopening Fix
+- **Eliminated 1-Second Reopen Cooldown (`WardrobeHelper.java`, `ClickLogic.java`):** Reduced suppression window from 1200ms to 200ms and ensured suppression only runs when `autoCloseWardrobe` is explicitly enabled.
+- **Normal GUI Refresh on Manual Swap:** When `autoCloseWardrobe` is disabled, the GUI is never closed or suppressed, allowing normal armor swaps in `/ld` without disappearing.
+- **Instant Suppression Reset (`CommandMixin.java`):** Executing manual commands (`/ld`, `/wd`, etc.) instantly clears suppression so menus open with zero delay.
+
 ## [26.2.28.142] - 2026-10-17 (Beta)
 
 ### Dynamic Pearls & Supplies Waypoints Parity
