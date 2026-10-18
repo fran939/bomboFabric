@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.149",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Universal Through-Walls Waypoints - Custom waypoints (/b wp) and categories now render with zero depth occlusion through all walls and terrain",
+      "+ Compact Centered Waypoint Highlights - Custom /b wp and pearl waypoints centered on blocks with compact bounding boxes (hs=0.20F / hs=0.10F)",
+      "+ Zero-Jitter Movement Tracking - Dynamic stun aim and pearl waypoints remain perfectly stable during player walking and sprinting without lag or jumping",
+      "+ Seamless Resource Pack Loading - Suppressed intrusive full-screen red Mojang overlay in-world, replaced by background gameplay and sleek bottom progress pill"
+    ]
+  },
+  {
     "version": "26.2.28.148",
     "date": "2026-10-18",
     "changes": [

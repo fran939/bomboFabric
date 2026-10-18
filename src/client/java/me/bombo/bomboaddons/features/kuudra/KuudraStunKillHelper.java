@@ -187,30 +187,43 @@ public class KuudraStunKillHelper {
         double pz = net.minecraft.util.Mth.lerp((double)pt, mc.player.zo, mc.player.getZ());
 
         for (StunPod pod : pods) {
-            AABB worldBox;
+            double rx, ry, rz;
+            float hs = 0.15F;
             if (testMode && !me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.inKuudra()) {
-                // Testing outside Kuudra: place test box 4 blocks directly in front of player's eyes
+                // Testing outside Kuudra: place test box 4 blocks directly in front of player's crosshair
                 Vec3 look = mc.player.getLookAngle();
-                Vec3 front = new Vec3(px + look.x * 4.0, py + mc.player.getEyeHeight() - 0.5 + look.y * 4.0, pz + look.z * 4.0);
-                worldBox = new AABB(front.x - 0.5, front.y - 0.5, front.z - 0.5, front.x + 0.5, front.y + 0.5, front.z + 0.5);
+                if (mc.options.getCameraType().isFirstPerson()) {
+                    rx = look.x * 4.0;
+                    ry = look.y * 4.0;
+                    rz = look.z * 4.0;
+                } else {
+                    Vec3 front = new Vec3(px + look.x * 4.0, py + mc.player.getEyeHeight() - 0.5 + look.y * 4.0, pz + look.z * 4.0);
+                    rx = front.x - camPos.x;
+                    ry = front.y - camPos.y;
+                    rz = front.z - camPos.z;
+                }
             } else if (inStomach) {
-                // True pod block coordinates inside Kuudra's belly
-                worldBox = new AABB(pod.x, pod.y, pod.z, pod.x + 1.0, pod.y + 1.0, pod.z + 1.0);
+                // True pod block coordinates inside Kuudra's belly (centered in pod block)
+                rx = (pod.x + 0.5) - camPos.x;
+                ry = (pod.y + 0.5) - camPos.y;
+                rz = (pod.z + 0.5) - camPos.z;
             } else {
-                // Dynamic waypoint: offsets from player by (pod - ENTER) matching KIC and IQ
-                double offsetX = px - ENTER_X;
-                double offsetY = py - ENTER_Y;
-                double offsetZ = pz - ENTER_Z;
-                worldBox = new AABB(pod.x + offsetX, pod.y + offsetY, pod.z + offsetZ,
-                                    pod.x + 1.0 + offsetX, pod.y + 1.0 + offsetY, pod.z + 1.0 + offsetZ);
+                // Dynamic waypoint outside belly: offset vector (pod - ENTER)
+                double offX = (pod.x + 0.5) - ENTER_X;
+                double offY = (pod.y + 0.5) - ENTER_Y;
+                double offZ = (pod.z + 0.5) - ENTER_Z;
+                if (mc.options.getCameraType().isFirstPerson()) {
+                    rx = offX;
+                    ry = offY;
+                    rz = offZ;
+                } else {
+                    rx = px - camPos.x + offX;
+                    ry = py - camPos.y + offY;
+                    rz = pz - camPos.z + offZ;
+                }
             }
 
-            double rx = (worldBox.minX + worldBox.maxX) * 0.5 - camPos.x;
-            double ry = worldBox.minY - camPos.y;
-            double rz = (worldBox.minZ + worldBox.maxZ) * 0.5 - camPos.z;
-
-            AABB relBox = new AABB(worldBox.minX - camPos.x, worldBox.minY - camPos.y, worldBox.minZ - camPos.z,
-                                   worldBox.maxX - camPos.x, worldBox.maxY - camPos.y, worldBox.maxZ - camPos.z);
+            AABB relBox = new AABB(rx - hs, ry - hs, rz - hs, rx + hs, ry + hs, rz + hs);
 
             final float finalR = r;
             final float finalG = g;

@@ -15,6 +15,7 @@ import me.bombo.bomboaddons.Bomboaddons;
 import net.minecraft.client.Minecraft;
 
 public class ResourcePackHelper {
+   public static volatile boolean silentReload = false;
 
    public static void cleanTempFiles(File packsDir) {
       if (packsDir == null || !packsDir.isDirectory()) return;
@@ -112,7 +113,19 @@ public class ResourcePackHelper {
             if (added) {
                repo.setSelected(selected);
                mc.options.updateResourcePacks(repo);
-               mc.reloadResourcePacks();
+               mc.options.save();
+               silentReload = true;
+               try {
+                  mc.reloadResourcePacks();
+               } finally {
+                  // Keep silentReload active for a short window while reload is in progress
+                  (new Thread(() -> {
+                     try {
+                        Thread.sleep(4000L);
+                     } catch (InterruptedException ignored) {}
+                     silentReload = false;
+                  })).start();
+               }
                Bomboaddons.sendMessage("§a[Bombo] Hypixel Skyblock resource pack automatically enabled!");
             }
          } catch (Throwable t) {

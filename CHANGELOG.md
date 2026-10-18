@@ -1,5 +1,17 @@
 # BomboAddons Changelog
  
+## [26.2.28.149] - 2026-10-18 (Beta)
+
+### Seamless Waypoint Rendering & Fluid Tracking (`GardenWaypoints.java`, `WaypointManager.java`, `Pearls.java`, `KuudraStunKillHelper.java`)
+- **Universal Through-Walls `/b wp` Waypoints:** Converted custom waypoints (`WaypointManager.java` & `GardenWaypoints.java`) to `CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH` and `PRIMITIVE_QUADS_NO_DEPTH`. All `/b wp` and custom category waypoints now render 100% through walls and terrain with no depth occlusion.
+- **Centered Small Waypoint Boxes:** Centered custom `/b wp` highlights at `(x + 0.5, y + 0.5, z + 0.5)` with compact half-size `hs = 0.20F`, replacing oversized full-block outlines.
+- **Zero-Jitter Smooth Movement Tracking:** Fixed violent movement lag and jitter in first-person camera mode when walking or sprinting. Relative aim vectors for pearl waypoints and dynamic stun waypoints are calculated directly from camera aim and pod offset vectors without oscillating camera-subtraction discrepancies.
+- **Compact Pearl & Stun Highlights:** Scaled pearl waypoint box to `hs = 0.10F` and stun aim box to `hs = 0.15F`, perfectly matching KIC's clean, minimal highlight style.
+
+### Seamless Resource Pack Loading & Mojang Screen Suppression (`LoadingOverlayMixin.java`, `ResourcePackHelper.java`)
+- **Mojang Red Screen Suppressed:** Implemented `LoadingOverlayMixin` intercepting `LoadingOverlay.extractRenderState()`. When connected to a server/world or during silent pack activation, the invasive full-screen red Mojang loading screen is replaced by seamless background gameplay with a sleek, non-intrusive bottom HUD loading pill (`§7Loading Textures §bX%`).
+- **Persistent Resource Pack Options:** Automatically saves options (`mc.options.save()`) and guards against repeated reloads upon world entry.
+
 ## [26.2.28.148] - 2026-10-18 (Beta)
 
 ### Shader Pipeline Compilation & Input Freeze Fix (`CustomRenderPipelines.java`, `WindowMixin.java`)

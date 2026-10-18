@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import me.bombo.bomboaddons.render.CustomRenderLayer;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -43,7 +44,7 @@ public class WaypointManager {
                  : mc.gameRenderer.mainCamera().position();
          Vec3 playerPos = mc.player.getEyePosition();
          PoseStack poseStack = context.poseStack();
-         new OrderedSubmitNodeCollector(context.submitNodeCollector()).submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, lineBuffer) -> {
+         new OrderedSubmitNodeCollector(context.submitNodeCollector()).submitCustomGeometry(poseStack, CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, lineBuffer) -> {
             synchronized(activeWaypoints) {
                for(CustomNavWaypoint wp : activeWaypoints) {
                   if (wp.isNavPath) {
@@ -76,10 +77,11 @@ public class WaypointManager {
                      }
                   }
 
-                  double bx = Math.floor(wp.x) - camPos.x;
-                  double by = Math.floor(wp.y) - camPos.y;
-                  double bz = Math.floor(wp.z) - camPos.z;
-                  AABB box = new AABB(bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0);
+                  double cx = (Math.floor(wp.x) + 0.5) - camPos.x;
+                  double cy = (Math.floor(wp.y) + 0.5) - camPos.y;
+                  double cz = (Math.floor(wp.z) + 0.5) - camPos.z;
+                  float hs = 0.20F;
+                  AABB box = new AABB(cx - hs, cy - hs, cz - hs, cx + hs, cy + hs, cz + hs);
                   BomboRenderUtils.drawBox(pose.pose(), lineBuffer, box, wp.isNavPath ? 0.0F : 1.0F, wp.isNavPath ? 1.0F : 0.5F, 0.0F, 1.0F, 3.0F);
                }
             }

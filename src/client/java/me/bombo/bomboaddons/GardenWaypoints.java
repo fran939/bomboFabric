@@ -287,24 +287,28 @@ public class GardenWaypoints {
                   double bx = Math.floor(wp.position.x) - camPos.x;
                   double by = Math.floor(wp.position.y) - camPos.y;
                   double bz = Math.floor(wp.position.z) - camPos.z;
+                  double cx = bx + 0.5;
+                  double cy = by + 0.5;
+                  double cz = bz + 0.5;
+                  float hs = 0.20F;
                   double dx = wp.position.x - camPos.x;
                   double dy = wp.position.y - camPos.y;
                   double dz = wp.position.z - camPos.z;
                   float dist = (float)Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-                  AABB box = new AABB(bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0);
-                  collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, lineWidth));
+                  AABB box = new AABB(cx - hs, cy - hs, cz - hs, cx + hs, cy + hs, cz + hs);
+                  collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, lineWidth));
                   if (s.waypointShowFill) {
                      float fillAlpha = Math.max(0.05f, Math.min(1.0f, (float) s.waypointFillOpacity / 100.0f));
-                     collector.submitCustomGeometry(poseStack, RenderTypes.debugQuads(), (pose, vertexConsumer) -> BomboRenderUtils.drawFilledBox(pose.pose(), vertexConsumer, (float)bx, (float)by, (float)bz, (float)(bx + 1.0), (float)(by + 1.0), (float)(bz + 1.0), r, g, b, fillAlpha));
+                     collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_QUADS_NO_DEPTH, (pose, vertexConsumer) -> BomboRenderUtils.drawFilledBox(pose.pose(), vertexConsumer, (float)box.minX, (float)box.minY, (float)box.minZ, (float)box.maxX, (float)box.maxY, (float)box.maxZ, r, g, b, fillAlpha));
                   }
                   if (s.pestWaypointBeacon) {
                      int colorArgb = 0xFF000000 | ((int) (r * 255) << 16) | ((int) (g * 255) << 8) | (int) (b * 255);
-                     BomboRenderUtils.drawBeaconBeam(poseStack, collector, bx, by, bz, colorArgb, mc.level.getGameTime());
+                     BomboRenderUtils.drawBeaconBeamBlock(poseStack, collector, bx, by, bz, colorArgb, mc.level.getGameTime(), true);
                   }
 
                   String text = wp.label + " §7(" + (int)dist + "m)";
-                  BomboRenderUtils.drawText(poseStack, collector, text, (float)(bx + 0.5), (float)(by + 1.3), (float)(bz + 0.5), 16777215, 0.03F, true, true);
+                  BomboRenderUtils.drawText(poseStack, collector, text, (float)cx, (float)(cy + hs + 0.25F), (float)cz, 16777215, 0.03F, true, false);
                }
             }
 
@@ -411,13 +415,17 @@ public class GardenWaypoints {
                   double bx = Math.floor(wp.x) - camPos.x;
                   double by = Math.floor(wp.y) - camPos.y;
                   double bz = Math.floor(wp.z) - camPos.z;
+                  double cx = bx + 0.5;
+                  double cy = by + 0.5;
+                  double cz = bz + 0.5;
+                  float hs = 0.20F;
                   int colorHex = BomboRenderUtils.colorNameToHex(wp.color != null ? wp.color.toLowerCase() : "aqua");
                   float r = (float)(colorHex >> 16 & 255) / 255.0F;
                   float g = (float)(colorHex >> 8 & 255) / 255.0F;
                   float b = (float)(colorHex & 255) / 255.0F;
                   float a = 1.0F;
                   float lineWidth = s.waypointBorderWidth > 0 ? s.waypointBorderWidth : 2.0F;
-                  AABB box = new AABB(bx, by, bz, bx + 1.0, by + 1.0, bz + 1.0);
+                  AABB box = new AABB(cx - hs, cy - hs, cz - hs, cx + hs, cy + hs, cz + hs);
                   boolean throughWalls = wp.showThroughWalls || s.orderedWaypointsThroughWalls;
                   RenderType lineType = throughWalls ? me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH : RenderTypes.linesTranslucent();
                   RenderType fillType = throughWalls ? me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_QUADS_NO_DEPTH : RenderTypes.debugQuads();
@@ -426,7 +434,7 @@ public class GardenWaypoints {
 
                   if (s.waypointShowFill) {
                      float fillAlpha = Math.max(0.05f, Math.min(1.0f, (float) s.waypointFillOpacity / 100.0f));
-                     collector.submitCustomGeometry(poseStack, fillType, (pose, vertexConsumer) -> BomboRenderUtils.drawFilledBox(pose.pose(), vertexConsumer, (float)bx, (float)by, (float)bz, (float)(bx + 1.0), (float)(by + 1.0), (float)(bz + 1.0), r, g, b, fillAlpha));
+                     collector.submitCustomGeometry(poseStack, fillType, (pose, vertexConsumer) -> BomboRenderUtils.drawFilledBox(pose.pose(), vertexConsumer, (float)box.minX, (float)box.minY, (float)box.minZ, (float)box.maxX, (float)box.maxY, (float)box.maxZ, r, g, b, fillAlpha));
                   }
 
                   if (wp.showBeacon && (!wp.ordered || isCurrent)) {
@@ -435,7 +443,7 @@ public class GardenWaypoints {
                   }
 
                   String text = wp.name + " §7(" + (int)dist + "m)";
-                  BomboRenderUtils.drawText(poseStack, collector, text, (float)(bx + 0.5), (float)(by + 1.3), (float)(bz + 0.5), 16777215, 0.03F, true, throughWalls);
+                  BomboRenderUtils.drawText(poseStack, collector, text, (float)cx, (float)(cy + hs + 0.25F), (float)cz, 16777215, 0.03F, true, !throughWalls);
                   if (isCurrent) {
                      collector.submitCustomGeometry(poseStack, lineType, (pose, vertexConsumer) -> {
                         Vector3fc look = mc.gameRenderer.mainCamera().forwardVector();

@@ -78,12 +78,19 @@ public class Pearls {
          float a = 1.0F;
 
          double dist = data.isSky ? 25.0 : 12.0;
-         Vec3 point = VecUtil.pointFromYawPitch(eyePos, data.yaw, data.pitch, dist);
-
-         double relX = point.x - camPos.x;
-         double relY = point.y - camPos.y;
-         double relZ = point.z - camPos.z;
-         float hs = 0.20F;
+         Vec3 dir = VecUtil.directionFromYawPitch(data.yaw, data.pitch);
+         double relX, relY, relZ;
+         if (mc.options.getCameraType().isFirstPerson()) {
+            relX = dir.x * dist;
+            relY = dir.y * dist;
+            relZ = dir.z * dist;
+         } else {
+            Vec3 point = eyePos.add(dir.scale(dist));
+            relX = point.x - camPos.x;
+            relY = point.y - camPos.y;
+            relZ = point.z - camPos.z;
+         }
+         float hs = 0.10F;
          AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
          final AABB finalBox = box;
          final float finalR = r;

@@ -60,6 +60,7 @@
 		"LevelMixin",
 		"LeverBlockMixin",
 		"LivingEntityRendererMixin",
+		"LoadingOverlayMixin",
 		"MenuScreensConstructorMixin",
 		"MinecraftMixin",
 		"MouseMixin",
