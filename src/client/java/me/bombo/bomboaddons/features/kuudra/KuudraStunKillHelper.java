@@ -189,7 +189,7 @@ public class KuudraStunKillHelper {
 
         for (StunPod pod : pods) {
             double rx, ry, rz;
-            float hs = 0.50F; // Full block size outline (1.0 x 1.0 x 1.0)
+            float hs = 0.15F; // Small aim highlight box (authentic KIC size)
             if (testMode && !me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.inKuudra()) {
                 // Testing outside Kuudra: place test box 4 blocks directly in front of player's crosshair
                 Vec3 look = mc.player.getLookAngle();

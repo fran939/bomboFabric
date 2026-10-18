@@ -290,7 +290,7 @@ public class GardenWaypoints {
                   double cx = bx + 0.5;
                   double cy = by + 0.5;
                   double cz = bz + 0.5;
-                  float hs = 0.20F;
+                  float hs = 0.50F; // Full block size (1.0 x 1.0 x 1.0)
                   double dx = wp.position.x - camPos.x;
                   double dy = wp.position.y - camPos.y;
                   double dz = wp.position.z - camPos.z;
@@ -418,7 +418,7 @@ public class GardenWaypoints {
                   double cx = bx + 0.5;
                   double cy = by + 0.5;
                   double cz = bz + 0.5;
-                  float hs = 0.20F;
+                  float hs = 0.50F; // Full block size (1.0 x 1.0 x 1.0)
                   int colorHex = BomboRenderUtils.colorNameToHex(wp.color != null ? wp.color.toLowerCase() : "aqua");
                   float r = (float)(colorHex >> 16 & 255) / 255.0F;
                   float g = (float)(colorHex >> 8 & 255) / 255.0F;

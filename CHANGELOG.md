@@ -1,5 +1,16 @@
 # BomboAddons Changelog
  
+## [26.2.28.151] - 2026-10-18 (Beta)
+
+### Waypoint Sizing & Pearl Timer Alignment (`GardenWaypoints.java`, `Pearls.java`, `KuudraStunKillHelper.java`)
+- **Full-Block Custom Waypoints:** Custom waypoints created with `/b wp` and category waypoints now render at full block size (`1.0 x 1.0 x 1.0`, `hs = 0.50F`) through walls.
+- **Compact Stun & Pearl Waypoints:** Scaled pearl aim waypoint (`hs = 0.12F`) and stun aim waypoint (`hs = 0.15F`) to compact sizes matching KIC.
+- **Pearl Timer on Pearl Waypoint:** Positioned the countdown billboard timer (`§c...ms` / `§a§lTHROW`) directly on top of the pearl aim waypoint in the sky (`data.solution`), remaining static in the world and eliminating ground-box displacement.
+
+### Event & Area Simulation Commands (`SimCommandHelper.java`, `ChatMixin.java`, `CommandMixin.java`, `SkyblockUtils.java`)
+- **Chat & Title Simulation (`/b sim`):** Added `/b sim <message>` and `/b sim title:<text>` to dispatch simulated chat and title packets through `ChatMixin`, triggering all event listeners, splits, and alerts.
+- **Kuudra Area & SubArea Simulation (`/b area`):** Added `/b area` to inspect current area/tier/subarea (`p1`..`p5`), `/b area <area>` to simulate any location, and `/b area [tier] [p1..p5]` (e.g. `/b area t5 p1`) to simulate Kuudra phases (Supplies, Build, Stun, Kill, Ended) and test Kuudra features.
+
 ## [26.2.28.150] - 2026-10-18 (Beta)
 
 ### Kuudra Stun Waypoints & Instant Phase 3 Activation (`KuudraStunKillHelper.java`, `KuudraSplitsManager.java`, `ChatMixin.java`)

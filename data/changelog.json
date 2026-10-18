@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.151",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Full-Block Custom Waypoints - /b wp and category waypoints now render at full block size (hs=0.50F) through walls",
+      "+ Compact Pearl & Stun Waypoints - Pearl waypoint (hs=0.12F) and stun waypoint (hs=0.15F) scaled down to match KIC",
+      "+ Pearl Timer on Waypoint - Dynamic countdown timer billboard moved directly on top of pearl aim waypoint in the sky",
+      "+ Chat & Title Simulation - Added /b sim <message> and /b sim title:<text> triggering ChatMixin and mod event listeners",
+      "+ Kuudra Phase & Area Simulation - Added /b area with Kuudra subareas p1..p5 and phase simulation (/b area t5 p1)"
+    ]
+  },
+  {
     "version": "26.2.28.150",
     "date": "2026-10-18",
     "changes": [

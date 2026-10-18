@@ -64,6 +64,11 @@ public abstract class ChatMixin implements IChatComponent {
       this.refreshTrimmedMessages();
    }
 
+   @Unique
+   public void bombo$addMessage(Component message) {
+      this.addMessage(message, null, null, null);
+   }
+
    @Inject(method = "addClientSystemMessage", at = @At("HEAD"), cancellable = true)
    private void onAddClientSystemMessage(net.minecraft.network.chat.Component message, CallbackInfo ci) {
       if (me.bombo.bomboaddons.BomboaddonsClient.silentCommandExecution) {

@@ -267,39 +267,12 @@ public class CommandMixin {
       }
       if (trimmed.equalsIgnoreCase("b area") || trimmed.equalsIgnoreCase("bombo area") || trimmed.equalsIgnoreCase("bomboaddons area")
             || trimmed.toLowerCase().startsWith("b area ") || trimmed.toLowerCase().startsWith("bombo area ") || trimmed.toLowerCase().startsWith("bomboaddons area ")) {
-         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          String arg = "";
-         int idx = trimmed.indexOf("area ");
-         if (idx != -1 && idx + 5 < trimmed.length()) {
-            arg = trimmed.substring(idx + 5).trim();
+         int idx = trimmed.indexOf("area");
+         if (idx != -1 && idx + 4 < trimmed.length()) {
+            arg = trimmed.substring(idx + 4).trim();
          }
-         if (!arg.isEmpty()) {
-            if (arg.equalsIgnoreCase("clear") || arg.equalsIgnoreCase("reset") || arg.equalsIgnoreCase("off") || arg.equalsIgnoreCase("none")) {
-               me.bombo.bomboaddons.SkyblockUtils.setSimulatedArea(null);
-               if (mc.player != null) {
-                  mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Area override §cdisabled§7. Current real area: §a" + me.bombo.bomboaddons.SkyblockUtils.getLocation()));
-               }
-            } else {
-               me.bombo.bomboaddons.SkyblockUtils.setSimulatedArea(arg);
-               if (mc.player != null) {
-                  mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Area forced to: §a" + arg + " §8(use '§b/b area reset§8' to restore auto-detection)"));
-               }
-            }
-         } else {
-            String loc = me.bombo.bomboaddons.SkyblockUtils.getLocation();
-            String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea();
-            String sim = me.bombo.bomboaddons.SkyblockUtils.getSimulatedArea();
-            String displayArea = (loc != null ? loc : "Unknown");
-            if (sub != null && !sub.isEmpty() && !sub.equalsIgnoreCase("None")) {
-               displayArea += " (" + sub + ")";
-            }
-            if (sim != null) {
-               displayArea += " §e[FORCED/SIMULATED]";
-            }
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + displayArea));
-            }
-         }
+         me.bombo.bomboaddons.features.misc.SimCommandHelper.handleAreaCommand(arg);
          ci.cancel();
          return;
       }
@@ -582,23 +555,12 @@ public class CommandMixin {
       }
       if (trimmed.equalsIgnoreCase("b sim") || trimmed.equalsIgnoreCase("bombo sim") || trimmed.equalsIgnoreCase("bomboaddons sim")
             || trimmed.toLowerCase().startsWith("b sim ") || trimmed.toLowerCase().startsWith("bombo sim ") || trimmed.toLowerCase().startsWith("bomboaddons sim ")) {
-         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          String arg = "";
          int idx = trimmed.indexOf("sim");
          if (idx != -1 && idx + 3 < trimmed.length()) {
             arg = trimmed.substring(idx + 3).trim();
          }
-         if (arg.isEmpty() || arg.equalsIgnoreCase("clear") || arg.equalsIgnoreCase("reset") || arg.equalsIgnoreCase("off")) {
-            me.bombo.bomboaddons.SkyblockUtils.setSimulatedArea(null);
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§6BomboAddons§8] §7Area simulation §cdisabled§7. Current real area: §e" + me.bombo.bomboaddons.SkyblockUtils.getLocation()));
-            }
-         } else {
-            me.bombo.bomboaddons.SkyblockUtils.setSimulatedArea(arg);
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§6BomboAddons§8] §7Area simulation set to: §a" + arg));
-            }
-         }
+         me.bombo.bomboaddons.features.misc.SimCommandHelper.handleSimCommand(arg);
          ci.cancel();
          return;
       }
@@ -776,39 +738,12 @@ public class CommandMixin {
       }
       if (trimmed.equalsIgnoreCase("/b area") || trimmed.equalsIgnoreCase("/bombo area") || trimmed.equalsIgnoreCase("/bomboaddons area")
             || trimmed.toLowerCase().startsWith("/b area ") || trimmed.toLowerCase().startsWith("/bombo area ") || trimmed.toLowerCase().startsWith("/bomboaddons area ")) {
-         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          String arg = "";
-         int idx = trimmed.indexOf("area ");
-         if (idx != -1 && idx + 5 < trimmed.length()) {
-            arg = trimmed.substring(idx + 5).trim();
+         int idx = trimmed.indexOf("area");
+         if (idx != -1 && idx + 4 < trimmed.length()) {
+            arg = trimmed.substring(idx + 4).trim();
          }
-         if (!arg.isEmpty()) {
-            if (arg.equalsIgnoreCase("clear") || arg.equalsIgnoreCase("reset") || arg.equalsIgnoreCase("off") || arg.equalsIgnoreCase("none")) {
-               me.bombo.bomboaddons.SkyblockUtils.setSimulatedArea(null);
-               if (mc.player != null) {
-                  mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Area override §cdisabled§7. Current real area: §a" + me.bombo.bomboaddons.SkyblockUtils.getLocation()));
-               }
-            } else {
-               me.bombo.bomboaddons.SkyblockUtils.setSimulatedArea(arg);
-               if (mc.player != null) {
-                  mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Area forced to: §a" + arg + " §8(use '§b/b area reset§8' to restore auto-detection)"));
-               }
-            }
-         } else {
-            String loc = me.bombo.bomboaddons.SkyblockUtils.getLocation();
-            String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea();
-            String sim = me.bombo.bomboaddons.SkyblockUtils.getSimulatedArea();
-            String displayArea = (loc != null ? loc : "Unknown");
-            if (sub != null && !sub.isEmpty() && !sub.equalsIgnoreCase("None")) {
-               displayArea += " (" + sub + ")";
-            }
-            if (sim != null) {
-               displayArea += " §e[FORCED/SIMULATED]";
-            }
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + displayArea));
-            }
-         }
+         me.bombo.bomboaddons.features.misc.SimCommandHelper.handleAreaCommand(arg);
          ci.cancel();
          return;
       }
@@ -836,24 +771,15 @@ public class CommandMixin {
          return;
       }
       if (trimmed.equalsIgnoreCase("b sim") || trimmed.equalsIgnoreCase("bombo sim") || trimmed.equalsIgnoreCase("bomboaddons sim")
-            || trimmed.toLowerCase().startsWith("b sim ") || trimmed.toLowerCase().startsWith("bombo sim ") || trimmed.toLowerCase().startsWith("bomboaddons sim ")) {
-         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            || trimmed.toLowerCase().startsWith("b sim ") || trimmed.toLowerCase().startsWith("bombo sim ") || trimmed.toLowerCase().startsWith("bomboaddons sim ")
+            || trimmed.equalsIgnoreCase("/b sim") || trimmed.equalsIgnoreCase("/bombo sim") || trimmed.equalsIgnoreCase("/bomboaddons sim")
+            || trimmed.toLowerCase().startsWith("/b sim ") || trimmed.toLowerCase().startsWith("/bombo sim ") || trimmed.toLowerCase().startsWith("/bomboaddons sim ")) {
          String arg = "";
          int idx = trimmed.indexOf("sim");
          if (idx != -1 && idx + 3 < trimmed.length()) {
             arg = trimmed.substring(idx + 3).trim();
          }
-         if (arg.isEmpty() || arg.equalsIgnoreCase("clear") || arg.equalsIgnoreCase("reset") || arg.equalsIgnoreCase("off")) {
-            me.bombo.bomboaddons.SkyblockUtils.setSimulatedArea(null);
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§6BomboAddons§8] §7Area simulation §cdisabled§7. Current real area: §e" + me.bombo.bomboaddons.SkyblockUtils.getLocation()));
-            }
-         } else {
-            me.bombo.bomboaddons.SkyblockUtils.setSimulatedArea(arg);
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§6BomboAddons§8] §7Area simulation set to: §a" + arg));
-            }
-         }
+         me.bombo.bomboaddons.features.misc.SimCommandHelper.handleSimCommand(arg);
          ci.cancel();
          return;
       }

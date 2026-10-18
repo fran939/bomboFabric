@@ -21,6 +21,8 @@ public interface IChatComponent {
 
    void bombo$refreshTrimmedMessages();
 
+   void bombo$addMessage(net.minecraft.network.chat.Component message);
+
    static Style getStyleAt(Minecraft mc, GuiMessage.Line line, double mouseX, double scale) {
       double d = mouseX - (double)2.0F;
       d /= scale;

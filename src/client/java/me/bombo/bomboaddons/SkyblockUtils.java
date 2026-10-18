@@ -58,15 +58,32 @@ public class SkyblockUtils {
       }
    }
 
+   private static String simulatedSubArea = null;
+
    public static void setSimulatedArea(String area) {
       if (area == null || area.trim().isEmpty() || area.equalsIgnoreCase("clear") || area.equalsIgnoreCase("reset") || area.equalsIgnoreCase("none")) {
          simulatedArea = null;
+         simulatedSubArea = null;
       } else {
          simulatedArea = area.trim();
          BomboaddonsClient.currentArea = simulatedArea;
       }
       cachedLocation = null;
       lastCacheTime = 0L;
+   }
+
+   public static void setSimulatedSubArea(String sub) {
+      if (sub == null || sub.trim().isEmpty() || sub.equalsIgnoreCase("clear") || sub.equalsIgnoreCase("reset") || sub.equalsIgnoreCase("none")) {
+         simulatedSubArea = null;
+      } else {
+         simulatedSubArea = sub.trim().toLowerCase(java.util.Locale.ROOT);
+         BomboaddonsClient.currentSubArea = simulatedSubArea;
+      }
+      cachedSubArea = simulatedSubArea;
+   }
+
+   public static String getSimulatedSubArea() {
+      return simulatedSubArea;
    }
 
    public static String getSimulatedArea() {
@@ -913,6 +930,9 @@ public class SkyblockUtils {
    }
 
    private static String internalGetSubArea() {
+      if (simulatedSubArea != null) {
+         return simulatedSubArea;
+      }
       Minecraft mc = Minecraft.getInstance();
       if (mc.level == null) {
          if (mc.gui.screen() != null) {
@@ -928,6 +948,22 @@ public class SkyblockUtils {
 
          return "None";
       } else {
+         // Check for Kuudra phases (p1..p5)
+         if (me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.inKuudra() || "Kuudra".equalsIgnoreCase(cachedLocation)) {
+            me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.Phase phase = me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.getCurrentPhase();
+            if (phase != null) {
+               return switch (phase) {
+                  case SUPPLIES -> "p1";
+                  case BUILD -> "p2";
+                  case STUN -> "p3";
+                  case KILL -> "p4";
+                  case ENDED -> "p5";
+                  default -> "p1";
+               };
+            }
+            return "p1";
+         }
+
          Scoreboard scoreboard = mc.level.getScoreboard();
          Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
 
