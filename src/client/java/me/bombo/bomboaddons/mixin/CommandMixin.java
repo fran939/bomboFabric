@@ -240,6 +240,34 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lowerTrimmed.equals("bhb") || lowerTrimmed.startsWith("bhb ")
+            || lowerTrimmed.equals("/bhb") || lowerTrimmed.startsWith("/bhb ")
+            || lowerTrimmed.equals("bombohb") || lowerTrimmed.startsWith("bombohb ")
+            || lowerTrimmed.equals("/bombohb") || lowerTrimmed.startsWith("/bombohb ")) {
+         String arg = "";
+         if (lowerTrimmed.startsWith("/bombohb")) arg = trimmed.substring(8).trim();
+         else if (lowerTrimmed.startsWith("bombohb")) arg = trimmed.substring(7).trim();
+         else if (lowerTrimmed.startsWith("/bhb")) arg = trimmed.substring(4).trim();
+         else if (lowerTrimmed.startsWith("bhb")) arg = trimmed.substring(3).trim();
+
+         String[] tokens = arg.isEmpty() ? new String[0] : arg.split("\\s+");
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (tokens.length >= 2 && (tokens[0].equalsIgnoreCase("apply") || tokens[0].equalsIgnoreCase("a"))) {
+            String name = tokens[1];
+            if (me.bombo.bomboaddons.HotbarSwapper.exists(name)) {
+               me.bombo.bomboaddons.HotbarSwapper.apply(name);
+               if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aApplied hotbar snapshot: §e" + name));
+            } else {
+               if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSnapshot not found: §e" + name));
+            }
+         } else if (tokens.length == 1 && !tokens[0].equalsIgnoreCase("list") && me.bombo.bomboaddons.HotbarSwapper.exists(tokens[0])) {
+            String name = tokens[0];
+            me.bombo.bomboaddons.HotbarSwapper.apply(name);
+            if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aApplied hotbar snapshot: §e" + name));
+         }
+         ci.cancel();
+         return;
+      }
       if (lowerTrimmed.equals("kuudra") || lowerTrimmed.startsWith("kuudra ")
             || lowerTrimmed.equals("b kuudra") || lowerTrimmed.startsWith("b kuudra ")
             || lowerTrimmed.equals("bombo kuudra") || lowerTrimmed.startsWith("bombo kuudra ")
@@ -720,6 +748,37 @@ public class CommandMixin {
          }
          ci.cancel();
          return;
+      }
+      String lowerTrimmedCmd = trimmed.toLowerCase(java.util.Locale.ROOT);
+      if (lowerTrimmedCmd.equals("/bhb") || lowerTrimmedCmd.startsWith("/bhb ")
+            || lowerTrimmedCmd.equals("bhb") || lowerTrimmedCmd.startsWith("bhb ")
+            || lowerTrimmedCmd.equals("/bombohb") || lowerTrimmedCmd.startsWith("/bombohb ")
+            || lowerTrimmedCmd.equals("bombohb") || lowerTrimmedCmd.startsWith("bombohb ")) {
+         String arg = "";
+         if (lowerTrimmedCmd.startsWith("/bombohb")) arg = trimmed.substring(8).trim();
+         else if (lowerTrimmedCmd.startsWith("bombohb")) arg = trimmed.substring(7).trim();
+         else if (lowerTrimmedCmd.startsWith("/bhb")) arg = trimmed.substring(4).trim();
+         else if (lowerTrimmedCmd.startsWith("bhb")) arg = trimmed.substring(3).trim();
+
+         String[] tokens = arg.isEmpty() ? new String[0] : arg.split("\\s+");
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (tokens.length >= 2 && (tokens[0].equalsIgnoreCase("apply") || tokens[0].equalsIgnoreCase("a"))) {
+            String name = tokens[1];
+            if (me.bombo.bomboaddons.HotbarSwapper.exists(name)) {
+               me.bombo.bomboaddons.HotbarSwapper.apply(name);
+               if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aApplied hotbar snapshot: §e" + name));
+            } else {
+               if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSnapshot not found: §e" + name));
+            }
+            ci.cancel();
+            return;
+         } else if (tokens.length == 1 && !tokens[0].equalsIgnoreCase("list") && me.bombo.bomboaddons.HotbarSwapper.exists(tokens[0])) {
+            String name = tokens[0];
+            me.bombo.bomboaddons.HotbarSwapper.apply(name);
+            if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aApplied hotbar snapshot: §e" + name));
+            ci.cancel();
+            return;
+         }
       }
       if (trimmed.equalsIgnoreCase("/b undeafen") || trimmed.equalsIgnoreCase("/bombo undeafen") || trimmed.equalsIgnoreCase("/undeafen")
             || trimmed.equalsIgnoreCase("b undeafen") || trimmed.equalsIgnoreCase("undeafen")) {

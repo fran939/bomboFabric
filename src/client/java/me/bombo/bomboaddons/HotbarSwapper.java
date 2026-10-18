@@ -56,7 +56,50 @@ public class HotbarSwapper {
       return HotbarConfig.getSnapshots().keySet();
    }
 
+   private static String pendingApplyId = null;
+   private static int freezeTicks = 0;
+
+   public static void onClientTick() {
+      if (freezeTicks > 0) {
+         Minecraft client = Minecraft.getInstance();
+         LocalPlayer player = client.player;
+         if (player != null) {
+            // Keep player stationary during hotbar inventory packets
+            player.setDeltaMovement(0, player.getDeltaMovement().y > 0 ? 0 : player.getDeltaMovement().y, 0);
+         }
+         freezeTicks--;
+         if (freezeTicks == 0 && pendingApplyId != null) {
+            String idToApply = pendingApplyId;
+            pendingApplyId = null;
+            doApply(idToApply);
+         }
+      }
+   }
+
    public static void apply(String id) {
+      Minecraft client = Minecraft.getInstance();
+      LocalPlayer player = client.player;
+      if (player == null) return;
+
+      boolean isMoving = player.getDeltaMovement().horizontalDistanceSqr() > 1e-4
+         || (client.options != null && (client.options.keyUp.isDown() || client.options.keyDown.isDown() || client.options.keyLeft.isDown() || client.options.keyRight.isDown() || client.options.keyJump.isDown() || client.options.keySprint.isDown()));
+
+      if (isMoving) {
+         // Stop player motion for 1 tick so Hypixel does not kick to Limbo for inventory clicks while moving
+         player.setDeltaMovement(0, player.getDeltaMovement().y > 0 ? 0 : player.getDeltaMovement().y, 0);
+         if (client.getConnection() != null) {
+            client.getConnection().send(new net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot(
+               player.position(), player.getYRot(), player.getXRot(), player.onGround(), player.horizontalCollision
+            ));
+         }
+         pendingApplyId = id;
+         freezeTicks = 1;
+      } else {
+         doApply(id);
+      }
+   }
+
+   private static void doApply(String id) {
       Minecraft client = Minecraft.getInstance();
       LocalPlayer player = client.player;
       if (player != null) {

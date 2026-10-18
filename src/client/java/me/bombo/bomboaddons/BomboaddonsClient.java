@@ -766,6 +766,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.tick();
             handleSpotifyKeybinds();
             me.bombo.bomboaddons.features.SpeedometerHud.onClientTick(client);
+            HotbarSwapper.onClientTick();
          } catch (Throwable ignored) {
          }
       });
@@ -2855,57 +2856,35 @@ public class BomboaddonsClient implements ClientModInitializer {
                                  return 1;
                               })));
                         builder.then(ClientCommands.literal("sim").then(
-                              ClientCommands.argument("area", StringArgumentType.greedyString()).executes((context) -> {
-                                 String area = StringArgumentType.getString(context, "area");
-                                 SkyblockUtils.setSimulatedArea(area);
-                                 ((FabricClientCommandSource) context.getSource())
-                                       .sendFeedback(Component.literal("§8[§3Bombo§8] §aSimulating area: §e" + area));
+                              ClientCommands.argument("message", StringArgumentType.greedyString()).executes((context) -> {
+                                 String msg = StringArgumentType.getString(context, "message");
+                                 me.bombo.bomboaddons.features.misc.SimCommandHelper.handleSimCommand(msg);
                                  return 1;
                               })));
                         builder.then(ClientCommands.literal("area")
                               .executes((context) -> {
-                                 String loc = SkyblockUtils.getLocation();
-                                 String sub = SkyblockUtils.getSubArea();
-                                 String sim = SkyblockUtils.getSimulatedArea();
-                                 String displayArea = (loc != null ? loc : "Unknown");
-                                 if (sub != null && !sub.isEmpty() && !sub.equalsIgnoreCase("None")) {
-                                    displayArea += " (" + sub + ")";
-                                 }
-                                 if (sim != null) {
-                                    displayArea += " §e[FORCED/SIMULATED]";
-                                 }
-                                 ((FabricClientCommandSource) context.getSource()).sendFeedback(
-                                       Component.literal("§8[§3Bombo§8]§r §7Current Area: §a" + displayArea));
+                                 me.bombo.bomboaddons.features.misc.SimCommandHelper.handleAreaCommand("");
                                  return 1;
                               })
                               .then(ClientCommands.argument("area", StringArgumentType.greedyString())
                                     .suggests((ctx, b) -> {
                                        b.suggest("reset");
                                        b.suggest("clear");
+                                       b.suggest("t5 p1");
+                                       b.suggest("t5 p2");
+                                       b.suggest("t5 p3");
+                                       b.suggest("t5 p4");
+                                       b.suggest("t5 p5");
                                        b.suggest("The Garden");
                                        b.suggest("Private Island");
                                        b.suggest("The Hub");
                                        b.suggest("Dungeons");
                                        b.suggest("Crimson Isle");
-                                       b.suggest("Crystal Hollows");
-                                       b.suggest("Dwarven Mines");
                                        return b.buildFuture();
                                     })
                                     .executes((context) -> {
                                        String area = StringArgumentType.getString(context, "area");
-                                       if (area.equalsIgnoreCase("clear") || area.equalsIgnoreCase("reset")
-                                             || area.equalsIgnoreCase("off") || area.equalsIgnoreCase("none")) {
-                                          SkyblockUtils.setSimulatedArea(null);
-                                          ((FabricClientCommandSource) context.getSource())
-                                                .sendFeedback(Component.literal(
-                                                      "§8[§3Bombo§8]§r §7Area override §cdisabled§7. Current real area: §a"
-                                                            + SkyblockUtils.getLocation()));
-                                       } else {
-                                          SkyblockUtils.setSimulatedArea(area);
-                                          ((FabricClientCommandSource) context.getSource()).sendFeedback(
-                                                Component.literal("§8[§3Bombo§8]§r §7Area forced to: §a" + area
-                                                      + " §8(use '§b/b area reset§8' to restore auto-detection)"));
-                                       }
+                                       me.bombo.bomboaddons.features.misc.SimCommandHelper.handleAreaCommand(area);
                                        return 1;
                                     })));
                         builder.then(ClientCommands.literal("subarea").executes((context) -> {
@@ -3604,13 +3583,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                 .sendFeedback(Component.literal("§8[§3Bombo§8]§r §cPlayer not found!"));
                                           return 0;
                                        } else {
-                                          Vec3 pos = mc.player.position();
+                                          net.minecraft.core.BlockPos blockPos = mc.player.blockPosition();
+                                          int targetY = (mc.level != null && mc.level.getBlockState(blockPos).isAir()) ? blockPos.getY() - 1 : blockPos.getY();
+                                          Vec3 pos = new Vec3(blockPos.getX(), targetY, blockPos.getZ());
                                           String name = "Waypoint";
                                           GardenWaypoints.addWaypoint(pos, name);
                                           ((FabricClientCommandSource) context.getSource())
                                                 .sendFeedback(Component.literal("§8[§3Bombo§8]§r §aAdded waypoint '§e"
-                                                      + name + "§a' at your current position: "
-                                                      + String.format("%.1f, %.1f, %.1f", pos.x, pos.y, pos.z)));
+                                                      + name + "§a' at block: §f"
+                                                      + blockPos.getX() + " " + targetY + " " + blockPos.getZ()));
                                           return 1;
                                        }
                                     })).then(ClientCommands.literal("clear").executes((context) -> {
@@ -3705,8 +3686,6 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                                            int bz = (int) Math.floor(z);
                                                                            Vec3 targetPos = new Vec3(bx, by, bz);
                                                                            GardenWaypoints.addWaypoint(targetPos, name);
-                                                                           WaypointManager.addWaypoint(bx, by, bz,
-                                                                                 name);
                                                                            ((FabricClientCommandSource) context
                                                                                  .getSource())
                                                                                  .sendFeedback(Component.literal(

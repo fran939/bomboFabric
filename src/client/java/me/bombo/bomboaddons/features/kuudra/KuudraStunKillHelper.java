@@ -238,27 +238,11 @@ public class KuudraStunKillHelper {
                     (float) relBox.maxX, (float) relBox.maxY, (float) relBox.maxZ,
                     finalR, finalG, finalB, 0.20F));
 
-            // In-world 3D billboard text (rendered through walls)
+            // In-world 3D billboard text (rendered through walls directly above box)
             String label = inStomach ? ("§b" + pod.display) : ("§b" + pod.display + " Stun Aim");
-            BomboRenderUtils.drawText(poseStack, collector, label, (float) rx, (float) (ry + 1.3), (float) rz, colorInt, 0.035f, true, true);
-
-            // 2D Screen Projection HUD tag
-            org.joml.Matrix4f modelView = new org.joml.Matrix4f(poseStack.last().pose());
-            org.joml.Matrix4f projection = new org.joml.Matrix4f(context.levelState().cameraRenderState.projectionMatrix);
-            Vector4f clip = new Vector4f((float) rx, (float) (ry + 1.4), (float) rz, 1.0F);
-            modelView.transform(clip);
-            projection.transform(clip);
-            if (clip.w > 0.05F) {
-                float ndcX = clip.x / clip.w;
-                float ndcY = clip.y / clip.w;
-                if (ndcX >= -1.2F && ndcX <= 1.2F && ndcY >= -1.2F && ndcY <= 1.2F) {
-                    int screenWidth = mc.getWindow().getGuiScaledWidth();
-                    int screenHeight = mc.getWindow().getGuiScaledHeight();
-                    float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
-                    float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
-                    HUD_TEXTS.add(new StunHUDText(label, screenX, screenY, colorInt));
-                }
-            }
+            double distToCam = Math.sqrt(rx * rx + ry * ry + rz * rz);
+            float textScale = 0.025f * Math.max(1.0f, (float) distToCam / 8.0f);
+            BomboRenderUtils.drawText(poseStack, collector, label, (float) rx, (float) (ry + hs + 0.15f), (float) rz, colorInt, textScale, true, true);
         }
     }
 

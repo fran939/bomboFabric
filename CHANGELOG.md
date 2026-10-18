@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.152] - 2026-10-18 (Beta)
+
+### Hotbar Swapper Anti-Limbo Freeze (`HotbarSwapper.java`, `BomboaddonsClient.java`, `CommandMixin.java`)
+- **1-Tick Stationary Pause on Swap:** When applying hotbar layouts with `/bhb a <name>`, `/bhb apply <name>`, or keybinds while moving, the player's horizontal movement is momentarily halted for 1 tick and a stationary movement packet is sent before container swaps occur. This bypasses Hypixel Watchdog's inventory movement checks, completely eliminating Limbo kicks (`/limbo`).
+
+### Pure Chat Simulation & Kuudra Phase Testing (`SimCommandHelper.java`, `BomboaddonsClient.java`, `CommandMixin.java`)
+- **Clean `/b sim` Chat Output:** `/b sim <message>` now prints simulated messages directly to chat with full Minecraft color code support (`&` and `§`), without any `[Bombo]` prefix or simulation notice.
+- **Unified Brigadier Command Routing:** Synchronized Brigadier registration and Mixin dispatch for `/b sim` and `/b area`, ensuring subarea simulation (`/b area t5 p1`..`p5`) sets the phase and tier correctly without Brigadier interception conflicts.
+
+### Snapped Waypoints & Pinned Pearl Billboard (`Pearls.java`, `KuudraStunKillHelper.java`, `BomboaddonsClient.java`)
+- **Drop Spot Grid Snapping:** Snapped Kuudra supply drop spots and beacon beam centers to exact integer block boundaries `(Math.floor(x) + 0.5, Math.floor(z) + 0.5)`, eliminating visual grid offsets.
+- **Pearl Timer Strictly Above Sky Aim Box:** Rendered the countdown timer billboard (`§c...ms` / `§a§lTHROW`) in 3D directly above the sky pearl waypoint with distance-adaptive scaling, and removed drifting 2D HUD text projections.
+- **Solid Footing for Custom `/b wp` Waypoints:** Automatically snaps waypoint placement to the solid block below the player's feet if standing on half-slabs or floating.
+
 ## [26.2.28.151] - 2026-10-18 (Beta)
 
 ### Waypoint Sizing & Pearl Timer Alignment (`GardenWaypoints.java`, `Pearls.java`, `KuudraStunKillHelper.java`)

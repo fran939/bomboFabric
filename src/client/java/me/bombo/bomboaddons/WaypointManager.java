@@ -80,7 +80,7 @@ public class WaypointManager {
                   double cx = (Math.floor(wp.x) + 0.5) - camPos.x;
                   double cy = (Math.floor(wp.y) + 0.5) - camPos.y;
                   double cz = (Math.floor(wp.z) + 0.5) - camPos.z;
-                  float hs = 0.20F;
+                  float hs = 0.50F;
                   AABB box = new AABB(cx - hs, cy - hs, cz - hs, cx + hs, cy + hs, cz + hs);
                   BomboRenderUtils.drawBox(pose.pose(), lineBuffer, box, wp.isNavPath ? 0.0F : 1.0F, wp.isNavPath ? 1.0F : 0.5F, 0.0F, 1.0F, 3.0F);
                }

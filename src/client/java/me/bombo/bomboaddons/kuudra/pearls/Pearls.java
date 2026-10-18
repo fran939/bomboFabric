@@ -77,19 +77,13 @@ public class Pearls {
          float b = 0.0F;
          float a = 1.0F;
 
-         double relX, relY, relZ;
-         if (data.solution != null) {
-            relX = data.solution.x - camPos.x;
-            relY = data.solution.y - camPos.y;
-            relZ = data.solution.z - camPos.z;
-         } else {
-            double dist = data.isSky ? 25.0 : 12.0;
-            Vec3 dir = VecUtil.directionFromYawPitch(data.yaw, data.pitch);
-            Vec3 point = eyePos.add(dir.scale(dist));
-            relX = point.x - camPos.x;
-            relY = point.y - camPos.y;
-            relZ = point.z - camPos.z;
-         }
+         double dist = data.isSky ? 25.0 : 12.0;
+         Vec3 dir = VecUtil.directionFromYawPitch(data.yaw, data.pitch);
+         Vec3 point = eyePos.add(dir.scale(dist));
+         double relX = point.x - camPos.x;
+         double relY = point.y - camPos.y;
+         double relZ = point.z - camPos.z;
+
          float hs = 0.12F; // Small pearl waypoint highlight (authentic KIC size)
          AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
          final AABB finalBox = box;
@@ -106,23 +100,10 @@ public class Pearls {
          int textColor = isReady ? 0xFF00FF00 : 0xFFFF5555;
 
          if (s.showTimer || s.kuudraPearlTimer) {
-            float textY = (float) (relY + hs + 0.15F);
-            BomboRenderUtils.drawText(poseStack, collector, disp, (float) relX, textY, (float) relZ, textColor, 0.035F, true, true);
-
-            Vector4f clip = new Vector4f((float) relX, textY, (float) relZ, 1.0F);
-            modelView.transform(clip);
-            projection.transform(clip);
-            if (clip.w > 0.05F) {
-               float ndcX = clip.x / clip.w;
-               float ndcY = clip.y / clip.w;
-               if (ndcX >= -1.2F && ndcX <= 1.2F && ndcY >= -1.2F && ndcY <= 1.2F) {
-                  int screenWidth = mc.getWindow().getGuiScaledWidth();
-                  int screenHeight = mc.getWindow().getGuiScaledHeight();
-                  float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
-                  float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
-                  HUD_TEXTS.add(new PearlHUDText(disp, screenX, screenY, textColor));
-               }
-            }
+            float textY = (float) (relY + hs + 0.12F);
+            double distToCam = Math.sqrt(relX * relX + relY * relY + relZ * relZ);
+            float textScale = 0.025F * Math.max(1.0F, (float) distToCam / 8.0F);
+            BomboRenderUtils.drawText(poseStack, collector, disp, (float) relX, textY, (float) relZ, textColor, textScale, true, true);
          }
       }
 
@@ -133,9 +114,12 @@ public class Pearls {
             for (Supply supply : allSupplies) {
                if (supply == null || supply.getStatus() == SupplyStatus.COMPLETED) continue;
                Vec3 loc = supply.getSpot().getLocation();
-               double rx = loc.x - camPos.x;
-               double ry = loc.y - camPos.y;
-               double rz = loc.z - camPos.z;
+               double bx = Math.floor(loc.x);
+               double by = Math.floor(loc.y);
+               double bz = Math.floor(loc.z);
+               double cx = bx + 0.5 - camPos.x;
+               double cy = by - camPos.y;
+               double cz = bz + 0.5 - camPos.z;
 
                float sr = 0.16F;
                float sg = 0.98F;
@@ -151,16 +135,16 @@ public class Pearls {
                final float bG = sg;
                final float bB = sb;
 
-               // Real textured beacon beam through walls
+               // Real textured beacon beam through walls centered on block
                int dropSpotColor = 0xFF000000 | ((int)(sr * 255) << 16) | ((int)(sg * 255) << 8) | (int)(sb * 255);
-               BomboRenderUtils.drawBeaconBeam(poseStack, collector, rx, ry, rz, dropSpotColor, mc.level.getGameTime(), true);
+               BomboRenderUtils.drawBeaconBeam(poseStack, collector, cx, cy, cz, dropSpotColor, mc.level.getGameTime(), true);
 
-               // Wireframe half-box highlight through walls
-               AABB dropBox = new AABB(rx - 0.5, ry, rz - 0.5, rx + 0.5, ry + 0.5, rz + 0.5);
+               // Wireframe half-box highlight through walls snapped to block
+               AABB dropBox = new AABB(cx - 0.5, cy, cz - 0.5, cx + 0.5, cy + 0.5, cz + 0.5);
                collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
                   BomboRenderUtils.drawBox(pose.pose(), vc, dropBox, bR, bG, bB, 1.0F, 1.5F));
 
-               // Filled half-box through walls
+               // Filled half-box through walls snapped to block
                collector.submitCustomGeometry(poseStack, RenderTypes.debugFilledBox(), (pose, vc) ->
                   BomboRenderUtils.drawFilledBox(pose.pose(), vc, (float)dropBox.minX, (float)dropBox.minY, (float)dropBox.minZ, (float)dropBox.maxX, (float)dropBox.maxY, (float)dropBox.maxZ, bR, bG, bB, 0.18F));
 
@@ -169,7 +153,7 @@ public class Pearls {
                   int percent = supply.getProgress();
                   String label = "§e" + percent + "%";
                   int textColor = 0xFFFFAA00;
-                  BomboRenderUtils.drawText(poseStack, collector, label, (float) rx, (float) (ry + 0.8), (float) rz, textColor, 0.035F, true, true);
+                  BomboRenderUtils.drawText(poseStack, collector, label, (float) cx, (float) (cy + 0.8), (float) cz, textColor, 0.035F, true, true);
                }
             }
          }
