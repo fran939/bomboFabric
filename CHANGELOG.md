@@ -1,5 +1,16 @@
 # BomboAddons Changelog
  
+## [26.2.28.153] - 2026-10-18 (Beta)
+
+### Kuudra Blindness Timer HUD Fix (`KuudraTimer.java`, `HudMoveScreen.java`, `ChatMixin.java`, `CommandMixin.java`, `SimCommandHelper.java`)
+- **Direct Active Effect Access:** Bypassed `PlayerMixin` blindness suppression by querying `getActiveEffectsMap()` directly rather than `getEffect()`. This ensures the blindness timer functions accurately even when `disableBlindness` is active.
+- **Universal Kuudra & Local Area Support:** Integrated `SkyblockUtils.isInKuudra()` and `KuudraUtils.inKuudra()` into the area verification, ensuring the HUD timer operates across all tiers (T1..T5) and scoreboard states.
+- **HUD Move Screen Visibility:** Removed restrictive `KuudraTimer.isActive()` check in `HudMoveScreen`, making the Blindness Timer HUD element always visible, draggable, and resizable in the HUD layout editor whenever enabled.
+- **In-Game Test Command & Simulation:** Added `/b testblind`, `/b testblindness`, and `/b sim blindness` to test and preview the blindness countdown timer (`500ms -> NOW`) anywhere without entering a Kuudra boss fight.
+
+### Stun Waypoint Clean Aim Box (`KuudraStunKillHelper.java`)
+- **Removed Stun Billboard Text Clutter:** Completely removed the `[Middle Pod Stun Aim]` / `[Left Pod Stun Aim]` in-world 3D billboard text above stun waypoints, rendering strictly the clean target box and wireframe without text clutter. Countdown billboard text remains exclusive to ender pearl aim points.
+
 ## [26.2.28.152] - 2026-10-18 (Beta)
 
 ### Hotbar Swapper Anti-Limbo Freeze (`HotbarSwapper.java`, `BomboaddonsClient.java`, `CommandMixin.java`)

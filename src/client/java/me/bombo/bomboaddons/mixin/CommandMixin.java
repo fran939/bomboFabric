@@ -67,6 +67,15 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.equals("b testblind") || lower.equals("b testblindness") || lower.equals("b blindtest") || lower.equals("bombo testblind") || lower.equals("bomboaddons testblind")) {
+         me.bombo.bomboaddons.KuudraTimer.triggerTest(500L);
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §aKuudra Blindness Timer Test: §a§lTRIGGERED §7(Counting down 500ms -> NOW)"));
+         }
+         ci.cancel();
+         return;
+      }
       if (lower.startsWith("b s ") || lower.startsWith("bombo s ") || lower.startsWith("bomboaddons s ")) {
          int sIdx = trimmed.indexOf(" s ");
          String inner = trimmed.substring(sIdx + 3).trim();

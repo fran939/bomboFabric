@@ -2855,6 +2855,21 @@ public class BomboaddonsClient implements ClientModInitializer {
                                  me.bombo.bomboaddons.features.critters.CritterSafariEngine.printDebugReport();
                                  return 1;
                               })));
+                        builder.then(ClientCommands.literal("testblind").executes((context) -> {
+                           me.bombo.bomboaddons.KuudraTimer.triggerTest(500L);
+                           ((FabricClientCommandSource) context.getSource()).sendFeedback(Component.literal("§8[§bBombo§8] §aKuudra Blindness Timer Test: §a§lTRIGGERED §7(Counting down 500ms -> NOW)"));
+                           return 1;
+                        }));
+                        builder.then(ClientCommands.literal("testblindness").executes((context) -> {
+                           me.bombo.bomboaddons.KuudraTimer.triggerTest(500L);
+                           ((FabricClientCommandSource) context.getSource()).sendFeedback(Component.literal("§8[§bBombo§8] §aKuudra Blindness Timer Test: §a§lTRIGGERED §7(Counting down 500ms -> NOW)"));
+                           return 1;
+                        }));
+                        builder.then(ClientCommands.literal("teststun").executes((context) -> {
+                           boolean enabled = me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.toggleTestMode();
+                           ((FabricClientCommandSource) context.getSource()).sendFeedback(Component.literal("§8[§bBombo§8] §aStun Waypoint Test Mode: " + (enabled ? "§a§lENABLED §7(Rendering stun aim box at current position)" : "§c§lDISABLED")));
+                           return 1;
+                        }));
                         builder.then(ClientCommands.literal("sim").then(
                               ClientCommands.argument("message", StringArgumentType.greedyString()).executes((context) -> {
                                  String msg = StringArgumentType.getString(context, "message");

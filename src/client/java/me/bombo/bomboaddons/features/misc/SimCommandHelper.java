@@ -25,6 +25,12 @@ public class SimCommandHelper {
         }
 
         String raw = messageText.trim();
+        if (raw.equalsIgnoreCase("blindness") || raw.equalsIgnoreCase("blind")) {
+            me.bombo.bomboaddons.KuudraTimer.triggerTest(500L);
+            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §aSimulating Kuudra Blindness (500ms -> NOW)..."));
+            return;
+        }
+
         if (raw.toLowerCase(Locale.ROOT).startsWith("title:")) {
             String titleText = raw.substring(6).trim().replace('&', '§');
             Pearls.onTitleReceived(titleText);

@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.153",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Kuudra Blindness Timer HUD Fix - Reads active effects directly to bypass disableBlindness suppression, fixing timer activation",
+      "+ Universal Kuudra Area Detection - Uses isInKuudra() to ensure the Blindness Timer HUD operates on all tiers (T1..T5)",
+      "+ Always Visible in HUD Move Screen - Made the Blindness Timer HUD element visible and draggable in the layout editor",
+      "+ Blindness Timer Test Command - Added /b testblind and /b sim blindness to test the 500ms -> NOW countdown anywhere",
+      "+ Clean Stun Aim Waypoints - Completely removed in-world 3D billboard text from stun waypoints, leaving strictly the target box"
+    ]
+  },
+  {
     "version": "26.2.28.152",
     "date": "2026-10-18",
     "changes": [

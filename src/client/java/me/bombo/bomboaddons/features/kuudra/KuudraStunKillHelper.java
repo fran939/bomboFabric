@@ -237,12 +237,6 @@ public class KuudraStunKillHelper {
                     (float) relBox.minX, (float) relBox.minY, (float) relBox.minZ,
                     (float) relBox.maxX, (float) relBox.maxY, (float) relBox.maxZ,
                     finalR, finalG, finalB, 0.20F));
-
-            // In-world 3D billboard text (rendered through walls directly above box)
-            String label = inStomach ? ("§b" + pod.display) : ("§b" + pod.display + " Stun Aim");
-            double distToCam = Math.sqrt(rx * rx + ry * ry + rz * rz);
-            float textScale = 0.025f * Math.max(1.0f, (float) distToCam / 8.0f);
-            BomboRenderUtils.drawText(poseStack, collector, label, (float) rx, (float) (ry + hs + 0.15f), (float) rz, colorInt, textScale, true, true);
         }
     }
 

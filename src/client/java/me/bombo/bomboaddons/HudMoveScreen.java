@@ -237,7 +237,7 @@ public class HudMoveScreen extends Screen {
         }
 
         // 4. KUUDRA
-        if (isTargetVisible(HudTarget.KUUDRA, (s.kuudraBlindnessTimer && KuudraTimer.isActive()))) {
+        if (isTargetVisible(HudTarget.KUUDRA, s.kuudraBlindnessTimer)) {
             int w = (int) (80.0F * s.kuudraBlindnessTimerScale);
             int h = (int) (12.0F * s.kuudraBlindnessTimerScale);
             this.updateDragPosition(mouseX, mouseY, w, h, HudTarget.KUUDRA, (nx, ny) -> {
