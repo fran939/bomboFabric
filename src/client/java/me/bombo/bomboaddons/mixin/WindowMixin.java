@@ -15,6 +15,8 @@ public abstract class WindowMixin {
    @Shadow
    private boolean fullscreen;
    @Shadow
+   private boolean actuallyFullscreen;
+   @Shadow
    private long handle;
 
    @Inject(
@@ -23,9 +25,13 @@ public abstract class WindowMixin {
       cancellable = true
    )
    private void onUpdateFullscreen(CallbackInfo ci) {
+      if (this.fullscreen == this.actuallyFullscreen) {
+         return;
+      }
       if (BomboConfig.get().borderlessFullscreen) {
          if (this.fullscreen) {
-            GLFW.glfwSetWindowAttrib(this.handle, 131077, 0);
+            this.actuallyFullscreen = true;
+            GLFW.glfwSetWindowAttrib(this.handle, GLFW.GLFW_DECORATED, GLFW.GLFW_FALSE);
             long monitor = GLFW.glfwGetPrimaryMonitor();
             if (monitor != 0L) {
                GLFWVidMode vidMode = GLFW.glfwGetVideoMode(monitor);
@@ -36,14 +42,10 @@ public abstract class WindowMixin {
                   GLFW.glfwSetWindowMonitor(this.handle, 0L, xpos[0], ypos[0], vidMode.width(), vidMode.height(), vidMode.refreshRate());
                }
             }
-
             ci.cancel();
          } else {
-            GLFW.glfwSetWindowAttrib(this.handle, 131077, 1);
+            GLFW.glfwSetWindowAttrib(this.handle, GLFW.GLFW_DECORATED, GLFW.GLFW_TRUE);
          }
-      } else {
-         GLFW.glfwSetWindowAttrib(this.handle, 131077, 1);
       }
-
    }
 }

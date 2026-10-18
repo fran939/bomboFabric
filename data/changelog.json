@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.146",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Taskbar Window Registration Fix - Eliminated per-frame glfwSetWindowAttrib spam in WindowMixin that prevented Windows Explorer from displaying the game on the taskbar",
+      "+ Window State Guard - Restored proper fullscreen state change detection, preventing infinite DWM non-client invalidations",
+      "+ Immediate Window Focus - Explicitly shows and focuses GLFW window upon TitleScreen initialization",
+      "+ Dev Mode Dual Flavor Silence - Suppressed false positive dual-flavor warning during dev environment launches"
+    ]
+  },
+  {
     "version": "26.2.28.145",
     "date": "2026-10-18",
     "changes": [

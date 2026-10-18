@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.146] - 2026-10-18 (Beta)
+
+### Window Display & Taskbar Registration Fix (`WindowMixin.java`, `TitleScreenMixin.java`)
+- **Resolved RunClient Taskbar Visibility:** Fixed critical bug in `WindowMixin.java` where `updateFullscreenIfChanged()` was executing `GLFW.glfwSetWindowAttrib(this.handle, 131077, 1)` on every single render frame (up to 260 times/sec). This rapid non-client mutation (`SWP_FRAMECHANGED`) prevented Windows 11 DWM and Explorer from creating a taskbar tab for the Minecraft window.
+- **State Change Guard:** Added `this.fullscreen == this.actuallyFullscreen` early return guard to only modify GLFW window decorations when fullscreen is actually toggled.
+- **TitleScreen Window Presentation:** Explicitly invoke `glfwShowWindow()` and `glfwFocusWindow()` on TitleScreen initialization to guarantee immediate window display and focus.
+- **Dev Environment Dual Flavor False Warning:** Silenced the erroneous "Both flavors are installed" warning during Gradle `runClient` / IDE dev runs.
+
 ## [26.2.28.145] - 2026-10-18 (Beta)
 
 ### Custom Waypoints See-Through-Walls & Beacons (`/b wp` / Waypoints Category)

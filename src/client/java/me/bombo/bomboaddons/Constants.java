@@ -133,7 +133,11 @@ public final class Constants {
     /** True when the opposite flavor is also loaded (both jars installed). */
     public static boolean otherFlavorLoaded() {
         try {
-            return net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded(otherModId());
+            net.fabricmc.loader.api.FabricLoader loader = net.fabricmc.loader.api.FabricLoader.getInstance();
+            if (loader != null && loader.isDevelopmentEnvironment()) {
+                return false;
+            }
+            return loader != null && loader.isModLoaded(otherModId());
         } catch (Throwable t) {
             return false;
         }

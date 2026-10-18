@@ -64,5 +64,13 @@ public abstract class TitleScreenMixin extends Screen {
 
       AccountSwitcherWidget accountSwitcher = new AccountSwitcherWidget(5, 5, this);
       this.addRenderableWidget(accountSwitcher);
+
+      try {
+         long handle = this.minecraft.getWindow().handle();
+         if (handle != 0L) {
+            org.lwjgl.glfw.GLFW.glfwShowWindow(handle);
+            org.lwjgl.glfw.GLFW.glfwFocusWindow(handle);
+         }
+      } catch (Throwable ignored) {}
    }
 }
