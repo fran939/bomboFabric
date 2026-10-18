@@ -1,5 +1,13 @@
 [
   {
+    "version": "26.2.28.148",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Vulkan Shader Pipeline Fix - Added Sampler1 binding to ENTITY_TRANSLUCENT_ESP, preventing shader compilation failure and infinite resource pack reload freeze",
+      "+ Borderless Fullscreen Sizing Fix - Synchronized windowed geometry and framebuffer sizes across fullscreen toggles, restoring reliable fullscreen and click response"
+    ]
+  },
+  {
     "version": "26.2.28.147",
     "date": "2026-10-18",
     "changes": [

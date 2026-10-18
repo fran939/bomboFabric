@@ -1,5 +1,11 @@
 # BomboAddons Changelog
  
+## [26.2.28.148] - 2026-10-18 (Beta)
+
+### Shader Pipeline Compilation & Input Freeze Fix (`CustomRenderPipelines.java`, `WindowMixin.java`)
+- **Vulkan Shader Pipeline Sampler Binding:** Added `BindGroupLayouts.SAMPLER1` to `CustomRenderPipelines.ENTITY_TRANSLUCENT_ESP`, resolving the Vulkan shader precompilation failure (`Unable to find shader defined uniform (Sampler1)`). This eliminates the infinite resource pack reload error loop that trapped Minecraft in an unresponsive `LoadingOverlay` and caused lobby AFK timeouts and click freezes.
+- **Robust Borderless Fullscreen & Window Sizing:** Properly preserved windowed geometry (`windowedX`, `windowedY`, `windowedWidth`, `windowedHeight`) and synchronized viewport framebuffers via `eventHandler.framebufferSizeChanged()` during both enter and exit of borderless fullscreen. Normal fullscreen without borderless now cleanly delegates to vanilla Minecraft without state desync.
+
 ## [26.2.28.147] - 2026-10-18 (Beta)
 
 ### Windows Interactive Desktop & Taskbar Display Fix (`PreLaunch.java`, `WindowsDesktopHelper.java`, `WindowMixin.java`)

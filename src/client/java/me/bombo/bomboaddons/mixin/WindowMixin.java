@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.mojang.blaze3d.platform.WindowEventHandler;
+
 @Mixin({Window.class})
 public abstract class WindowMixin {
    @Shadow
@@ -21,6 +23,24 @@ public abstract class WindowMixin {
    private boolean actuallyFullscreen;
    @Shadow
    private long handle;
+   @Shadow
+   private int windowedX;
+   @Shadow
+   private int windowedY;
+   @Shadow
+   private int windowedWidth;
+   @Shadow
+   private int windowedHeight;
+   @Shadow
+   private int x;
+   @Shadow
+   private int y;
+   @Shadow
+   private int width;
+   @Shadow
+   private int height;
+   @Shadow
+   private WindowEventHandler eventHandler;
 
    @Inject(
       method = "createGlfwWindow",
@@ -51,8 +71,13 @@ public abstract class WindowMixin {
          return;
       }
       if (BomboConfig.get().borderlessFullscreen) {
+         this.actuallyFullscreen = this.fullscreen;
          if (this.fullscreen) {
-            this.actuallyFullscreen = true;
+            this.windowedX = this.x;
+            this.windowedY = this.y;
+            this.windowedWidth = this.width > 0 ? this.width : 854;
+            this.windowedHeight = this.height > 0 ? this.height : 480;
+
             GLFW.glfwSetWindowAttrib(this.handle, GLFW.GLFW_DECORATED, GLFW.GLFW_FALSE);
             long monitor = GLFW.glfwGetPrimaryMonitor();
             if (monitor != 0L) {
@@ -61,13 +86,23 @@ public abstract class WindowMixin {
                   int[] xpos = new int[1];
                   int[] ypos = new int[1];
                   GLFW.glfwGetMonitorPos(monitor, xpos, ypos);
-                  GLFW.glfwSetWindowMonitor(this.handle, 0L, xpos[0], ypos[0], vidMode.width(), vidMode.height(), vidMode.refreshRate());
+                  this.x = xpos[0];
+                  this.y = ypos[0];
+                  this.width = vidMode.width();
+                  this.height = vidMode.height();
+                  GLFW.glfwSetWindowMonitor(this.handle, 0L, this.x, this.y, this.width, this.height, vidMode.refreshRate());
                }
             }
-            ci.cancel();
          } else {
             GLFW.glfwSetWindowAttrib(this.handle, GLFW.GLFW_DECORATED, GLFW.GLFW_TRUE);
+            this.x = this.windowedX;
+            this.y = this.windowedY;
+            this.width = this.windowedWidth > 0 ? this.windowedWidth : 854;
+            this.height = this.windowedHeight > 0 ? this.windowedHeight : 480;
+            GLFW.glfwSetWindowMonitor(this.handle, 0L, this.x, this.y, this.width, this.height, -1);
          }
+         this.eventHandler.framebufferSizeChanged();
+         ci.cancel();
       }
    }
 }
