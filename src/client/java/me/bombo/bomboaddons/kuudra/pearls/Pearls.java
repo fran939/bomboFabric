@@ -87,12 +87,18 @@ public class Pearls {
          final AABB finalBox = box;
          final float finalR = r;
          final float finalG = g;
-         collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+         collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vertexConsumer) -> {
             BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, finalBox, finalR, finalG, b, a, 1.5F);
+         });
+         collector.submitCustomGeometry(poseStack, RenderTypes.debugFilledBox(), (pose, vc) -> {
+            BomboRenderUtils.drawFilledBox(pose.pose(), vc, (float)finalBox.minX, (float)finalBox.minY, (float)finalBox.minZ, (float)finalBox.maxX, (float)finalBox.maxY, (float)finalBox.maxZ, finalR, finalG, b, 0.20F);
          });
 
          if (s.showTimer || s.kuudraPearlTimer) {
             int textColor = isReady ? 0xFF00FF00 : 0xFFFF5555;
+            String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
+            BomboRenderUtils.drawText(poseStack, collector, disp, (float) relX, (float) (relY + 0.35F), (float) relZ, textColor, 0.035F, true, true);
+
             Vector4f clip = new Vector4f((float) relX, (float) (relY + 0.35F), (float) relZ, 1.0F);
             modelView.transform(clip);
             projection.transform(clip);
@@ -104,14 +110,13 @@ public class Pearls {
                   int screenHeight = mc.getWindow().getGuiScaledHeight();
                   float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
                   float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
-                  String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
                   HUD_TEXTS.add(new PearlHUDText(disp, screenX, screenY, textColor));
                }
             }
          }
       }
 
-      // Render Supply drop spots (all 6 spots with dynamic beacon color + progress box + text)
+      // Render Supply drop spots (all 6 spots with KIC cyan color + through walls)
       if (s.kuudraSupplyWaypoints) {
          Supply[] allSupplies = KuudraUtils.getSupplies();
          if (allSupplies != null) {
@@ -122,41 +127,45 @@ public class Pearls {
                double ry = loc.y - camPos.y;
                double rz = loc.z - camPos.z;
 
-               float[] pc = supply.getProgressColor();
-               float sr = pc != null && pc.length > 0 ? pc[0] : 1.0F;
-               float sg = pc != null && pc.length > 1 ? pc[1] : 0.0F;
-               float sb = 0.0F;
+               float sr = 0.16F;
+               float sg = 0.98F;
+               float sb = 0.99F;
+               if (supply.getStatus() == SupplyStatus.INPROGRESS) {
+                  float[] pc = supply.getProgressColor();
+                  if (pc != null && pc.length > 0) sr = pc[0];
+                  if (pc != null && pc.length > 1) sg = pc[1];
+                  sb = 0.0F;
+               }
 
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                  BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, sr, sg, sb, 0.8F));
+               final float bR = sr;
+               final float bG = sg;
+               final float bB = sb;
 
+               // Beacon beam through walls
+               collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
+                  BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, bR, bG, bB, 0.8F));
+
+               // Wireframe box through walls
                AABB dropBox = new AABB(rx - 0.5, ry, rz - 0.5, rx + 0.5, ry + 1.0, rz + 0.5);
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                  BomboRenderUtils.drawBox(pose.pose(), vc, dropBox, sr, sg, sb, 1.0F, 1.5F));
+               collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
+                  BomboRenderUtils.drawBox(pose.pose(), vc, dropBox, bR, bG, bB, 1.0F, 1.5F));
 
-               // Floating text above drop spot
-               int percent = supply.getProgress();
-               String label = supply.getStatus() == SupplyStatus.NOTHING ? "§cBring Supply" : (percent > 0 ? "§e" + percent + "%" : "§6Supply Spot");
-               int textColor = supply.getStatus() == SupplyStatus.NOTHING ? 0xFFFF5555 : 0xFFFFAA00;
-               Vector4f clip = new Vector4f((float) rx, (float) (ry + 1.4F), (float) rz, 1.0F);
-               modelView.transform(clip);
-               projection.transform(clip);
-               if (clip.w > 0.05F) {
-                  float ndcX = clip.x / clip.w;
-                  float ndcY = clip.y / clip.w;
-                  if (ndcX >= -1.2F && ndcX <= 1.2F && ndcY >= -1.2F && ndcY <= 1.2F) {
-                     int screenWidth = mc.getWindow().getGuiScaledWidth();
-                     int screenHeight = mc.getWindow().getGuiScaledHeight();
-                     float screenX = (ndcX + 1.0F) * 0.5F * (float) screenWidth;
-                     float screenY = (1.0F - ndcY) * 0.5F * (float) screenHeight;
-                     HUD_TEXTS.add(new PearlHUDText(label, screenX, screenY, textColor));
-                  }
+               // Filled box through walls
+               collector.submitCustomGeometry(poseStack, RenderTypes.debugFilledBox(), (pose, vc) ->
+                  BomboRenderUtils.drawFilledBox(pose.pose(), vc, (float)dropBox.minX, (float)dropBox.minY, (float)dropBox.minZ, (float)dropBox.maxX, (float)dropBox.maxY, (float)dropBox.maxZ, bR, bG, bB, 0.18F));
+
+               // Progress text above drop spot (only if in progress)
+               if (supply.getStatus() == SupplyStatus.INPROGRESS && supply.getProgress() > 0) {
+                  int percent = supply.getProgress();
+                  String label = "§e" + percent + "%";
+                  int textColor = 0xFFFFAA00;
+                  BomboRenderUtils.drawText(poseStack, collector, label, (float) rx, (float) (ry + 1.3), (float) rz, textColor, 0.035F, true, true);
                }
             }
          }
       }
 
-      // Render Supply crates with individual zombie hitboxes, 5.75m drag circle, and aim point
+      // Render Supply crates with individual zombie hitboxes, 5.75m drag circle, and aim point (all through walls)
       if (s.kuudraSupplyWaypoints || s.kuudraSupplyHitbox || s.kuudraDragHitbox || s.kuudraSupplyBestAim) {
          List<CrateHitbox> crateHitboxes = KuudraUtils.getCrateHitboxes();
 
@@ -166,13 +175,13 @@ public class Pearls {
             double ry = crate.y - camPos.y;
             double rz = crate.z - camPos.z;
 
-            // Beacon beam to sky for crate
+            // Beacon beam to sky for crate through walls
             if (s.kuudraSupplyWaypoints) {
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+               collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
                   BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, 0.16F, 0.98F, 0.99F, 0.8F));
             }
 
-            // Individual zombie hitboxes (wireframe, strictly around actual zombies)
+            // Individual zombie hitboxes (wireframe, strictly around actual zombies, through walls)
             if (s.kuudraSupplyHitbox && !hitbox.zombies().isEmpty()) {
                for (AABB zBox : hitbox.zombies()) {
                   boolean inReach = eyePos != null && eyePos.distanceToSqr(
@@ -185,20 +194,21 @@ public class Pearls {
                   float zb = (inReach && s.kuudraSupplyPickupRange) ? 0.0F : 0.99F;
                   AABB relZBox = new AABB(zBox.minX - camPos.x, zBox.minY - camPos.y, zBox.minZ - camPos.z,
                                           zBox.maxX - camPos.x, zBox.maxY - camPos.y, zBox.maxZ - camPos.z);
-                  collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+                  collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
                      BomboRenderUtils.drawBox(pose.pose(), vc, relZBox, zr, zg, zb, 1.0F, 1.5F));
                }
             }
 
-            // Drag hitbox circle: Green if hooked/draggable (bobber <= 5.75m), Red if not
+            // Drag hitbox circle: Green if hooked/draggable (bobber <= 5.75m), Red/Pink if not, through walls
             if (s.kuudraDragHitbox) {
-               float dr = hitbox.draggable() ? 0.0F : 1.0F;
-               float dg = hitbox.draggable() ? 1.0F : 0.0F;
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
-                  BomboRenderUtils.drawCircle(poseStack, vc, rx, ry + 0.05, rz, 5.75F, 32, dr, dg, 0.0F, 0.8F, 2.0F));
+               float dr = hitbox.draggable() ? 0.0F : 0.98F;
+               float dg = hitbox.draggable() ? 1.0F : 0.20F;
+               float db = hitbox.draggable() ? 0.0F : 0.70F;
+               collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
+                  BomboRenderUtils.drawCircle(poseStack, vc, rx, ry + 0.05, rz, 5.75F, 32, dr, dg, db, 0.8F, 2.0F));
             }
 
-            // Best aim point: Green small box at optimal click point
+            // Best aim point: Green small box at optimal click point through walls
             if (s.kuudraSupplyBestAim && hitbox.aimPoint() != null) {
                Vec3 ap = hitbox.aimPoint();
                double ax = ap.x - camPos.x;
@@ -206,7 +216,7 @@ public class Pearls {
                double az = ap.z - camPos.z;
                float hs = 0.1F;
                AABB aimBox = new AABB(ax - hs, ay - hs, az - hs, ax + hs, ay + hs, az + hs);
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vc) ->
+               collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
                   BomboRenderUtils.drawBox(pose.pose(), vc, aimBox, 0.0F, 1.0F, 0.0F, 1.0F, 1.5F));
             }
          }

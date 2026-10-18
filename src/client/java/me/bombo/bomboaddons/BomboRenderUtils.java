@@ -341,7 +341,8 @@ public class BomboRenderUtils {
       float minZ = (float) (z - 0.2);
       float maxZ = (float) (z + 0.2);
       float minY = (float) y;
-      float maxY = 256.0F;
+      double camY = Minecraft.getInstance().gameRenderer.mainCamera().position().y;
+      float maxY = (float) (256.0 - camY);
       org.joml.Matrix4f matrix = poseStack.last().pose();
       drawLine(matrix, buffer, minX, minY, minZ, minX, maxY, minZ, r, g, b, a, 1.5F);
       drawLine(matrix, buffer, maxX, minY, minZ, maxX, maxY, minZ, r, g, b, a, 1.5F);

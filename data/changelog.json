@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.144",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Universal See-Through-Walls - All Kuudra waypoints, drop spots, beacons, hitboxes, drag circles, and boss outlines render through walls with secondaryBlockOutline and debugFilledBox",
+      "+ KIC Cyan Drop Spots & Alignment - Clean Cyan beacons and wireframe boxes matching KIC, with rounded integer coordinates and zero clutter",
+      "+ In-World 3D Pearl Countdown - Dynamic countdown timer (ms / THROW) rendered directly above the pearl waypoint through walls in 3D",
+      "+ Beacon Height Math - Fixed drawBeaconBeam to correctly calculate camera-relative 256m height",
+      "+ Stun Waypoint Phase Isolation - Strictly isolated stun aim box to Phase 3 / belly entry / test mode, eliminating phantom boxes during Supplies and Build"
+    ]
+  },
+  {
     "version": "26.2.28.143",
     "date": "2026-10-18",
     "changes": [

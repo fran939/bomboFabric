@@ -144,10 +144,11 @@ public class KuudraStunKillHelper {
         boolean inStomach = isInStomach(mc.player);
         inBelly = inStomach;
 
-        boolean active = testMode || inStomach || stunner || inPhase3 ||
-                KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.STUN ||
-                KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.BUILD ||
-                KuudraUtils.inKuudra();
+        boolean isStunPhase = inPhase3 || KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.STUN;
+        boolean isEarlyPhase = KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.SUPPLIES ||
+                               KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.BUILD;
+
+        boolean active = testMode || inStomach || (!isEarlyPhase && (stunner || isStunPhase));
 
         if (!active) return;
 

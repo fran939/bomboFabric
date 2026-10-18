@@ -15,7 +15,7 @@ public enum SupplySpot {
 
    private SupplySpot(Vec3 location) {
       this.location = location;
-      this.intLocation = new int[]{(int)location.x, (int)location.y, (int)location.z};
+      this.intLocation = new int[]{(int)Math.round(location.x), (int)Math.round(location.y), (int)Math.round(location.z)};
    }
 
    public Vec3 getLocation() {

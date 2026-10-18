@@ -1,5 +1,16 @@
 # BomboAddons Changelog
  
+## [26.2.28.144] - 2026-10-18 (Beta)
+
+### Kuudra Supplies & Drop Spots Visuals Overhaul (KIC Parity)
+- **Universal See-Through-Walls (X-Ray Depth):** Replaced all occluded `linesTranslucent()` pipelines with native `RenderTypes.secondaryBlockOutline()` (lines, wireframes, circles, beacons) and `RenderTypes.debugFilledBox()` (filled boxes) across all Kuudra features (`Pearls.java`, `KuudraBossTracker.java`, `KuudraStunKillHelper.java`). Waypoints, drop spots, beacon beams, hitboxes, and boss outlines are now 100% visible through walls, terrain, and Kuudra's body.
+- **KIC Cyan Drop Spots & Alignment (`Pearls.java`, `SupplySpot.java`):** Restored clean Cyan (`#28F9FE`) drop spot beacons and filled wireframe boxes matching KIC. Fixed `intLocation` integer rounding in `SupplySpot.java`. Removed red clutter text and restricted beacons strictly to uncompleted drop spots (`status == NOTHING`).
+- **In-World 3D Pearl Countdown Billboard:** Added in-world 3D billboard text (`BomboRenderUtils.drawText`) for dynamic pearl countdown timers (`§c...ms`, `§a§lTHROW`) rendered directly above the pearl waypoint through walls.
+- **Beacon Height Math (`BomboRenderUtils.java`):** Fixed `drawBeaconBeam` to calculate `maxY` relative to camera Y position (`(256.0 - camY)`), producing clean vertical beams extending to the sky.
+
+### Stun Waypoint Phase Isolation Fix (`KuudraStunKillHelper.java`)
+- **Eliminated Phase 1 & 2 Phantom Boxes:** Fixed bug where `KuudraUtils.inKuudra()` enabled the stun aim waypoint during Supplies and Build phases. Stun waypoint is now strictly isolated to Stun/Eaten Phase 3, belly entry, or explicit `/b teststun` testing.
+
 ## [26.2.28.143] - 2026-10-18 (Beta)
 
 ### Dynamic Stun Waypoint Overhaul (IQ & KIC Parity)

@@ -198,7 +198,7 @@ public class KuudraBossTracker {
             float g = ((hexColor >> 8) & 0xFF) / 255.0F;
             float b = (hexColor & 0xFF) / 255.0F;
 
-            collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
+            collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(),
                     (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, relBox, r, g, b, 1.0F, 2.5F));
         }
     }
