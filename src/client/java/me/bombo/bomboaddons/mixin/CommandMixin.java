@@ -23,10 +23,40 @@ public class CommandMixin {
    private void onSendCommand(String command, CallbackInfo ci) {
       CommandTracker.onCommandSent(command);
       me.bombo.bomboaddons.BomboaddonsClient.recordCommand(command);
-      String trimmed = command.trim();
+      String raw = command.trim();
+      String trimmed = raw.startsWith("/") ? raw.substring(1).trim() : raw;
       String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
       if (me.bombo.bomboaddons.WardrobeHelper.getPendingArmorNumber() == -1) {
          me.bombo.bomboaddons.WardrobeHelper.clearSuppression();
+      }
+      if (lower.equals("ep") || lower.startsWith("ep ") || lower.equals("b ep") || lower.startsWith("b ep ")
+            || lower.equals("bombo ep") || lower.startsWith("bombo ep ") || lower.equals("bomboaddons ep") || lower.startsWith("bomboaddons ep ")) {
+         int amount = 16;
+         String[] parts = trimmed.split("\\s+");
+         if (parts.length >= 2) {
+            try {
+               amount = Math.max(1, Math.min(64, Integer.parseInt(parts[parts.length - 1])));
+            } catch (Exception ignored) {}
+         }
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (mc.player != null && mc.player.connection != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aGetting " + amount + " Ender Pearls from sacks..."));
+            mc.player.connection.sendCommand("getfromsacks ender_pearl " + amount);
+         }
+         ci.cancel();
+         return;
+      }
+      if (trimmed.matches("^(?i)t[1-5]$")) {
+         int tier = Integer.parseInt(trimmed.substring(1));
+         String[] kuudraTiers = {"normal", "hot", "burning", "fiery", "infernal"};
+         String[] kuudraDisplay = {"Basic/Normal", "Hot", "Burning", "Fiery", "Infernal"};
+         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+         if (mc.player != null && mc.player.connection != null) {
+            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Kuudra " + kuudraDisplay[tier - 1] + " (Tier " + tier + ")..."));
+            mc.player.connection.sendCommand("joininstance kuudra_" + kuudraTiers[tier - 1]);
+         }
+         ci.cancel();
+         return;
       }
       if (lower.equals("b teststun") || lower.equals("b stuntest") || lower.equals("bombo teststun") || lower.equals("bomboaddons teststun")) {
          boolean enabled = me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.toggleTestMode();
@@ -782,65 +812,31 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("/b mayor") || trimmed.equalsIgnoreCase("/bombo mayor") || trimmed.equalsIgnoreCase("/bomboaddons mayor") || trimmed.equalsIgnoreCase("/mayor")) {
+      if (trimmed.equalsIgnoreCase("b mayor") || trimmed.equalsIgnoreCase("bombo mayor") || trimmed.equalsIgnoreCase("bomboaddons mayor") || trimmed.equalsIgnoreCase("mayor")) {
          me.bombo.bomboaddons.features.misc.MayorChatFormatter.executeCommand();
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("/b") || trimmed.equalsIgnoreCase("/bombo") || trimmed.equalsIgnoreCase("/bomboaddons")) {
+      if (trimmed.equalsIgnoreCase("b") || trimmed.equalsIgnoreCase("bombo") || trimmed.equalsIgnoreCase("bomboaddons")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(me.bombo.bomboaddons.gui.config.BomboConfigScreen.create()));
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("/freecam") || trimmed.equalsIgnoreCase("/b freecam") || trimmed.equalsIgnoreCase("/bombo freecam")) {
-         me.bombo.bomboaddons.flavor.Flavor.get().freecamToggle();
-         ci.cancel();
-         return;
-      }
-      if (trimmed.matches("^/(?i)f[1-7]$")) {
-         int floor = Integer.parseInt(trimmed.substring(2));
-         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-         if (mc.player != null && mc.player.connection != null) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Catacombs Floor " + floor + "..."));
-            mc.player.connection.sendCommand("joininstance CATACOMBS_FLOOR_" + FLOOR_NAMES_UPPER[floor - 1]);
-         }
-         ci.cancel();
-         return;
-      }
-      if (trimmed.matches("^/(?i)m[1-7]$")) {
-         int floor = Integer.parseInt(trimmed.substring(2));
-         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-         if (mc.player != null && mc.player.connection != null) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Master Mode Floor " + floor + "..."));
-            mc.player.connection.sendCommand("joininstance MASTER_CATACOMBS_FLOOR_" + FLOOR_NAMES_UPPER[floor - 1]);
-         }
-         ci.cancel();
-         return;
-      }
-      if (trimmed.equalsIgnoreCase("/e") || trimmed.equalsIgnoreCase("/fe") || trimmed.equalsIgnoreCase("/f0")) {
-         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-         if (mc.player != null && mc.player.connection != null) {
-            mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§3Bombo§8] §aJoining Catacombs Entrance..."));
-            mc.player.connection.sendCommand("joininstance CATACOMBS_ENTRANCE");
-         }
-         ci.cancel();
-         return;
-      }
-      if (trimmed.equalsIgnoreCase("/gp") || trimmed.equalsIgnoreCase("/greenhouse") || trimmed.equalsIgnoreCase("/b gp") || trimmed.equalsIgnoreCase("/bombo gp")) {
+      if (trimmed.equalsIgnoreCase("gp") || trimmed.equalsIgnoreCase("greenhouse") || trimmed.equalsIgnoreCase("b gp") || trimmed.equalsIgnoreCase("bombo gp")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.features.garden.GreenhouseProfitScreen(null)));
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("/b gui") || trimmed.equalsIgnoreCase("/bombo gui")) {
+      if (trimmed.equalsIgnoreCase("b gui") || trimmed.equalsIgnoreCase("bombo gui")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.HudMoveScreen()));
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("/b sim") || trimmed.equalsIgnoreCase("/bombo sim") || trimmed.equalsIgnoreCase("/bomboaddons sim")
-            || trimmed.toLowerCase().startsWith("/b sim ") || trimmed.toLowerCase().startsWith("/bombo sim ") || trimmed.toLowerCase().startsWith("/bomboaddons sim ")) {
+      if (trimmed.equalsIgnoreCase("b sim") || trimmed.equalsIgnoreCase("bombo sim") || trimmed.equalsIgnoreCase("bomboaddons sim")
+            || trimmed.toLowerCase().startsWith("b sim ") || trimmed.toLowerCase().startsWith("bombo sim ") || trimmed.toLowerCase().startsWith("bomboaddons sim ")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          String arg = "";
          int idx = trimmed.indexOf("sim");
@@ -861,12 +857,12 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("/b history") || trimmed.equalsIgnoreCase("/bombo history") || trimmed.equalsIgnoreCase("/bomboaddons history")) {
+      if (trimmed.equalsIgnoreCase("b history") || trimmed.equalsIgnoreCase("bombo history") || trimmed.equalsIgnoreCase("bomboaddons history")) {
          me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, 25, null);
          ci.cancel();
          return;
       }
-      if (trimmed.toLowerCase().startsWith("/b history ") || trimmed.toLowerCase().startsWith("/bombo history ") || trimmed.toLowerCase().startsWith("/bomboaddons history ")) {
+      if (trimmed.toLowerCase().startsWith("b history ") || trimmed.toLowerCase().startsWith("bombo history ") || trimmed.toLowerCase().startsWith("bomboaddons history ")) {
          String q = trimmed.substring(trimmed.indexOf("history ") + 8).trim();
          if (q.equalsIgnoreCase("all") || q.equalsIgnoreCase("*")) {
             me.bombo.bomboaddons.BomboaddonsClient.showCommandHistory((net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource)(Object)null, Integer.MAX_VALUE, null);
@@ -881,7 +877,7 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.toLowerCase().startsWith("/b title ") || trimmed.toLowerCase().startsWith("/bombo title ")) {
+      if (trimmed.toLowerCase().startsWith("b title ") || trimmed.toLowerCase().startsWith("bombo title ")) {
          String rest = trimmed.substring(trimmed.indexOf("title ") + 6).trim();
          String[] parts = rest.split(" ", 2);
          if (parts.length == 1) {
@@ -892,7 +888,7 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.toLowerCase().startsWith("/b sound ") || trimmed.toLowerCase().startsWith("/bombo sound ")) {
+      if (trimmed.toLowerCase().startsWith("b sound ") || trimmed.toLowerCase().startsWith("bombo sound ")) {
          String rest = trimmed.substring(trimmed.indexOf("sound ") + 6).trim();
          String[] parts = rest.split(" ", 2);
          if (parts.length == 1) {
@@ -903,17 +899,17 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("/stat") || trimmed.equalsIgnoreCase("/stats") || trimmed.equalsIgnoreCase("/stat mf") || trimmed.equalsIgnoreCase("/stats mf") || trimmed.equalsIgnoreCase("/stat magicfind") || trimmed.equalsIgnoreCase("/stats magicfind") || trimmed.equalsIgnoreCase("/b stat") || trimmed.equalsIgnoreCase("/b stats") || trimmed.equalsIgnoreCase("/b stat mf") || trimmed.equalsIgnoreCase("/b stats mf") || trimmed.equalsIgnoreCase("/bombo stat mf") || trimmed.equalsIgnoreCase("/bombo stats mf")) {
+      if (trimmed.equalsIgnoreCase("stat") || trimmed.equalsIgnoreCase("stats") || trimmed.equalsIgnoreCase("stat mf") || trimmed.equalsIgnoreCase("stats mf") || trimmed.equalsIgnoreCase("stat magicfind") || trimmed.equalsIgnoreCase("stats magicfind") || trimmed.equalsIgnoreCase("b stat") || trimmed.equalsIgnoreCase("b stats") || trimmed.equalsIgnoreCase("b stat mf") || trimmed.equalsIgnoreCase("b stats mf") || trimmed.equalsIgnoreCase("bombo stat mf") || trimmed.equalsIgnoreCase("bombo stats mf")) {
          me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null);
          ci.cancel();
          return;
       }
-      if (trimmed.equalsIgnoreCase("/stat mf diana") || trimmed.equalsIgnoreCase("/stats mf diana") || trimmed.equalsIgnoreCase("/b stat mf diana") || trimmed.equalsIgnoreCase("/b stats mf diana") || trimmed.equalsIgnoreCase("/bombo stat mf diana") || trimmed.equalsIgnoreCase("/bombo stats mf diana")) {
+      if (trimmed.equalsIgnoreCase("stat mf diana") || trimmed.equalsIgnoreCase("stats mf diana") || trimmed.equalsIgnoreCase("b stat mf diana") || trimmed.equalsIgnoreCase("b stats mf diana") || trimmed.equalsIgnoreCase("bombo stat mf diana") || trimmed.equalsIgnoreCase("bombo stats mf diana")) {
          me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA);
          ci.cancel();
          return;
       }
-      if (trimmed.toLowerCase().startsWith("/stat mf ") || trimmed.toLowerCase().startsWith("/stats mf ") || trimmed.toLowerCase().startsWith("/stat magicfind ") || trimmed.toLowerCase().startsWith("/stats magicfind ") || trimmed.toLowerCase().startsWith("/b stat mf ") || trimmed.toLowerCase().startsWith("/b stats mf ")) {
+      if (trimmed.toLowerCase().startsWith("stat mf ") || trimmed.toLowerCase().startsWith("stats mf ") || trimmed.toLowerCase().startsWith("stat magicfind ") || trimmed.toLowerCase().startsWith("stats magicfind ") || trimmed.toLowerCase().startsWith("b stat mf ") || trimmed.toLowerCase().startsWith("b stats mf ")) {
          String targetUser = trimmed.substring(trimmed.lastIndexOf(" ") + 1).trim();
          if (targetUser.equalsIgnoreCase("diana")) {
             me.bombo.bomboaddons.BomboaddonsClient.openMagicFindOptimizer(null, null, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.DIANA);
@@ -923,7 +919,7 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.toLowerCase().startsWith("/bombochromatest")) {
+      if (trimmed.toLowerCase().startsWith("bombochromatest")) {
          String text = trimmed.contains(" ") ? trimmed.substring(trimmed.indexOf(" ") + 1).trim() : "&w(This is a test of animated chroma text! 12345)";
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          if (mc.player != null) {
@@ -934,8 +930,8 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (trimmed.toLowerCase().startsWith("/tp ") && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
-         String arg = trimmed.substring(4).trim();
+      if (trimmed.toLowerCase().startsWith("tp ") && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
+         String arg = trimmed.substring(3).trim();
          if (arg.equalsIgnoreCase("barn")) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null && mc.player.connection != null) {

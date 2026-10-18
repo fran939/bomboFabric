@@ -80,6 +80,13 @@ public class ResourcePackHelper {
       Minecraft mc = Minecraft.getInstance();
       mc.execute(() -> {
          try {
+            var repo = mc.getResourcePackRepository();
+            for (String id : repo.getSelectedIds()) {
+               if (id.toLowerCase().contains("hypixel_skyblock") || id.toLowerCase().contains("skyblock")) {
+                  return; // Already selected and loaded during normal game startup!
+               }
+            }
+
             File packsDir = new File(mc.gameDirectory, "resourcepacks");
             cleanTempFiles(packsDir);
             File packFile = new File(packsDir, "Hypixel_Skyblock.zip");
@@ -91,7 +98,6 @@ public class ResourcePackHelper {
                patchPackFormat(sbPack);
             }
 
-            var repo = mc.getResourcePackRepository();
             repo.reload();
             List<String> selected = new ArrayList<>(repo.getSelectedIds());
             boolean added = false;

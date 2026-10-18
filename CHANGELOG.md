@@ -1,5 +1,29 @@
 # BomboAddons Changelog
  
+## [26.2.28.145] - 2026-10-18 (Beta)
+
+### Custom Waypoints See-Through-Walls & Beacons (`/b wp` / Waypoints Category)
+- **True No-Depth Rendering:** Integrated `CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH` and `CustomRenderLayer.PRIMITIVE_QUADS_NO_DEPTH` with disabled depth stencil state, ensuring custom waypoints (`/b wp`) render fully through walls, blocks, and terrain.
+- **Authentic Vanilla Beacon Beams:** Implemented `drawBeaconBeam` using vanilla `BeaconRenderer.BEAM_LOCATION` texture with inner beam and outer glowing shell through walls, replacing the 4 plain wireframe lines.
+
+### Kuudra Drop Spots & Pearl Waypoint Parity (KIC Match)
+- **Smooth Pearl Waypoint Tracking:** Interpolated player eye position using `DeltaTracker.getGameTimeDeltaPartialTick(true)`, completely eliminating jitter, staggering, and teleporting when moving.
+- **Small Highlight Box & Text Alignment:** Adjusted pearl waypoint highlight to a small box (`0.20F`), with dynamic countdown timer billboard (`...ms` / `§a§lTHROW`) rendered directly on top (`+0.12F` above highlight).
+- **Exact Drop Spot Centering & Half-Block Highlights:** Centered beacon beams on exact supply spot coordinates and rendered base highlight as half-block boxes (`0.5F` height).
+
+### Stun Waypoint In-Game Preview (`/b teststun`)
+- **Direct Crosshair Preview:** In `/b teststun` mode outside Kuudra, dynamically renders the stun aim waypoint 4 blocks directly in front of the player's eye direction for immediate visual testing without digging underground.
+- **Smooth No-Depth Pod Aiming:** Dynamic offset math `pod + (player - ENTER)` now interpolates with partial ticks and renders cleanly through walls with custom no-depth pipelines.
+
+### Command Execution & Fixes
+- **Leading Slash Normalization (`CommandMixin.java`):** Normalized command input parsing to support commands with or without leading slashes, fixing `/t1`..`/t5`, `/m1`..`/m7`, `/f1`..`/f7`, `/gp`, `/b gui`, `/b sim`, etc.
+- **Ender Pearl Sack Shortcut (`/b ep` / `/ep`):** Added `/b ep [amount]` and `/ep [amount]` to automatically grab ender pearls from sacks (`/getfromsacks ender_pearl [amount]`).
+- **Kuudra Tier Shortcuts (`/t1` - `/t5`):** Instant party join instance commands for Kuudra tiers 1 through 5.
+
+### Performance & Client Lifecycle
+- **Instant Client Shutdown:** Fixed blocking retry loops in `IRCClient.java` on client close by checking running status and thread interruption across all reconnection attempts, terminating immediately upon quitting Minecraft.
+- **Startup Resource Pack Optimization:** Avoids unnecessary resource pack downloads if `Hypixel_Skyblock.zip` already exists (> 1MB) and skips pack reload if already active, eliminating redundant Mojang loading screens on startup.
+
 ## [26.2.28.144] - 2026-10-18 (Beta)
 
 ### Kuudra Supplies & Drop Spots Visuals Overhaul (KIC Parity)

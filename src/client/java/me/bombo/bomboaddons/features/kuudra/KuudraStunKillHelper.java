@@ -181,17 +181,26 @@ public class KuudraStunKillHelper {
         PoseStack poseStack = context.poseStack();
         OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
 
+        float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+        double px = net.minecraft.util.Mth.lerp((double)pt, mc.player.xo, mc.player.getX());
+        double py = net.minecraft.util.Mth.lerp((double)pt, mc.player.yo, mc.player.getY());
+        double pz = net.minecraft.util.Mth.lerp((double)pt, mc.player.zo, mc.player.getZ());
+
         for (StunPod pod : pods) {
             AABB worldBox;
-            if (inStomach) {
+            if (testMode && !me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.inKuudra()) {
+                // Testing outside Kuudra: place test box 4 blocks directly in front of player's eyes
+                Vec3 look = mc.player.getLookAngle();
+                Vec3 front = new Vec3(px + look.x * 4.0, py + mc.player.getEyeHeight() - 0.5 + look.y * 4.0, pz + look.z * 4.0);
+                worldBox = new AABB(front.x - 0.5, front.y - 0.5, front.z - 0.5, front.x + 0.5, front.y + 0.5, front.z + 0.5);
+            } else if (inStomach) {
                 // True pod block coordinates inside Kuudra's belly
                 worldBox = new AABB(pod.x, pod.y, pod.z, pod.x + 1.0, pod.y + 1.0, pod.z + 1.0);
             } else {
-                // Dynamic waypoint: offsets from player by (pod - ENTER) so looking directly at it outside
-                // aligns the crosshair with the exact yaw and pitch needed when spawning inside the belly at ENTER_X/Y/Z
-                double offsetX = mc.player.getX() - ENTER_X;
-                double offsetY = mc.player.getY() - ENTER_Y;
-                double offsetZ = mc.player.getZ() - ENTER_Z;
+                // Dynamic waypoint: offsets from player by (pod - ENTER) matching KIC and IQ
+                double offsetX = px - ENTER_X;
+                double offsetY = py - ENTER_Y;
+                double offsetZ = pz - ENTER_Z;
                 worldBox = new AABB(pod.x + offsetX, pod.y + offsetY, pod.z + offsetZ,
                                     pod.x + 1.0 + offsetX, pod.y + 1.0 + offsetY, pod.z + 1.0 + offsetZ);
             }
@@ -208,20 +217,16 @@ public class KuudraStunKillHelper {
             final float finalB = b;
             final float finalA = a;
 
-            // Wireframe 3D Box (rendered through walls with secondaryBlockOutline)
-            collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
+            // Wireframe 3D Box (rendered through walls with no depth)
+            collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, vc) ->
                 BomboRenderUtils.drawBox(pose.pose(), vc, relBox, finalR, finalG, finalB, finalA, 3.0F));
 
-            // Translucent Filled Box (rendered through walls with debugFilledBox)
-            collector.submitCustomGeometry(poseStack, RenderTypes.debugFilledBox(), (pose, vc) ->
+            // Translucent Filled Box (rendered through walls with no depth)
+            collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_QUADS_NO_DEPTH, (pose, vc) ->
                 BomboRenderUtils.drawFilledBox(pose.pose(), vc,
                     (float) relBox.minX, (float) relBox.minY, (float) relBox.minZ,
                     (float) relBox.maxX, (float) relBox.maxY, (float) relBox.maxZ,
                     finalR, finalG, finalB, 0.20F));
-
-            // Beacon beam rising into the sky
-            collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
-                BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, finalR, finalG, finalB, 0.7F));
 
             // In-world 3D billboard text (rendered through walls)
             String label = inStomach ? ("§b" + pod.display) : ("§b" + pod.display + " Stun Aim");

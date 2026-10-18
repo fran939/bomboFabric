@@ -287,6 +287,14 @@ public class BomboRenderUtils {
    }
 
    public static void drawBeaconBeam(PoseStack poseStack, OrderedSubmitNodeCollector collector, double x, double y, double z, int colorArgb, long gameTime) {
+      drawBeaconBeam(poseStack, collector, x, y, z, colorArgb, gameTime, false);
+   }
+
+   public static void drawBeaconBeamBlock(PoseStack poseStack, OrderedSubmitNodeCollector collector, double bx, double by, double bz, int colorArgb, long gameTime, boolean seeThrough) {
+      drawBeaconBeam(poseStack, collector, bx + 0.5, by, bz + 0.5, colorArgb, gameTime, seeThrough);
+   }
+
+   public static void drawBeaconBeam(PoseStack poseStack, OrderedSubmitNodeCollector collector, double x, double y, double z, int colorArgb, long gameTime, boolean seeThrough) {
       int yOffset = 0;
       int height = 256;
       float time = (float) Math.floorMod(gameTime, 40) + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
@@ -294,16 +302,24 @@ public class BomboRenderUtils {
       float v2 = (float) height * (0.5F / 0.2F) + v1;
 
       poseStack.pushPose();
-      poseStack.translate(x + 0.5, y, z + 0.5);
+      poseStack.translate(x, y, z);
+
+      net.minecraft.client.renderer.rendertype.RenderType innerType = seeThrough ?
+         me.bombo.bomboaddons.render.CustomRenderLayer.beaconBeamEsp(net.minecraft.client.renderer.blockentity.BeaconRenderer.BEAM_LOCATION) :
+         net.minecraft.client.renderer.rendertype.RenderTypes.beaconBeam(net.minecraft.client.renderer.blockentity.BeaconRenderer.BEAM_LOCATION, false);
+
+      net.minecraft.client.renderer.rendertype.RenderType outerType = seeThrough ?
+         me.bombo.bomboaddons.render.CustomRenderLayer.beaconBeamEsp(net.minecraft.client.renderer.blockentity.BeaconRenderer.BEAM_LOCATION) :
+         net.minecraft.client.renderer.rendertype.RenderTypes.beaconBeam(net.minecraft.client.renderer.blockentity.BeaconRenderer.BEAM_LOCATION, true);
 
       // Inner beam
-      collector.submitCustomGeometry(poseStack, net.minecraft.client.renderer.rendertype.RenderTypes.beaconBeam(net.minecraft.client.renderer.blockentity.BeaconRenderer.BEAM_LOCATION, false), (pose, vc) -> {
+      collector.submitCustomGeometry(poseStack, innerType, (pose, vc) -> {
          renderBeamSection(pose, vc, colorArgb, yOffset, height, 0.0F, 0.2F, 0.2F, 0.0F, -0.2F, 0.0F, 0.0F, -0.2F, 0.0F, 1.0F, v1, v2);
       });
 
       // Outer glow
       int glowColor = (colorArgb & 0x00FFFFFF) | 0x20000000;
-      collector.submitCustomGeometry(poseStack, net.minecraft.client.renderer.rendertype.RenderTypes.beaconBeam(net.minecraft.client.renderer.blockentity.BeaconRenderer.BEAM_LOCATION, true), (pose, vc) -> {
+      collector.submitCustomGeometry(poseStack, outerType, (pose, vc) -> {
          renderBeamSection(pose, vc, glowColor, yOffset, height, -0.25F, -0.25F, 0.25F, -0.25F, -0.25F, 0.25F, 0.25F, 0.25F, 0.0F, 1.0F, v1, v2);
       });
 

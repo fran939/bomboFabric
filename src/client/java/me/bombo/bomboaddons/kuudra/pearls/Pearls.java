@@ -62,7 +62,8 @@ public class Pearls {
 
       boolean hasSupplies = isHoldingSupplies();
 
-      Vec3 eyePos = mc.player.getEyePosition();
+      float pt = mc.getDeltaTracker().getGameTimeDeltaPartialTick(true);
+      Vec3 eyePos = mc.player.getEyePosition(pt);
 
       org.joml.Matrix4f modelView = new org.joml.Matrix4f(poseStack.last().pose());
       org.joml.Matrix4f projection = new org.joml.Matrix4f(context.levelState().cameraRenderState.projectionMatrix);
@@ -82,7 +83,7 @@ public class Pearls {
          double relX = point.x - camPos.x;
          double relY = point.y - camPos.y;
          double relZ = point.z - camPos.z;
-         float hs = data.isSky ? 0.25F : 0.18F;
+         float hs = 0.20F;
          AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
          final AABB finalBox = box;
          final float finalR = r;
@@ -97,9 +98,10 @@ public class Pearls {
          if (s.showTimer || s.kuudraPearlTimer) {
             int textColor = isReady ? 0xFF00FF00 : 0xFFFF5555;
             String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
-            BomboRenderUtils.drawText(poseStack, collector, disp, (float) relX, (float) (relY + 0.35F), (float) relZ, textColor, 0.035F, true, true);
+            float textY = (float) (relY + hs + 0.12F);
+            BomboRenderUtils.drawText(poseStack, collector, disp, (float) relX, textY, (float) relZ, textColor, 0.035F, true, true);
 
-            Vector4f clip = new Vector4f((float) relX, (float) (relY + 0.35F), (float) relZ, 1.0F);
+            Vector4f clip = new Vector4f((float) relX, textY, (float) relZ, 1.0F);
             modelView.transform(clip);
             projection.transform(clip);
             if (clip.w > 0.05F) {
@@ -116,7 +118,7 @@ public class Pearls {
          }
       }
 
-      // Render Supply drop spots (all 6 spots with KIC cyan color + through walls)
+      // Render Supply drop spots (all 6 spots with KIC cyan color + textured beacon beam through walls)
       if (s.kuudraSupplyWaypoints) {
          Supply[] allSupplies = KuudraUtils.getSupplies();
          if (allSupplies != null) {
@@ -141,16 +143,16 @@ public class Pearls {
                final float bG = sg;
                final float bB = sb;
 
-               // Beacon beam through walls
-               collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
-                  BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, bR, bG, bB, 0.8F));
+               // Real textured beacon beam through walls
+               int dropSpotColor = 0xFF000000 | ((int)(sr * 255) << 16) | ((int)(sg * 255) << 8) | (int)(sb * 255);
+               BomboRenderUtils.drawBeaconBeam(poseStack, collector, rx, ry, rz, dropSpotColor, mc.level.getGameTime(), true);
 
-               // Wireframe box through walls
-               AABB dropBox = new AABB(rx - 0.5, ry, rz - 0.5, rx + 0.5, ry + 1.0, rz + 0.5);
+               // Wireframe half-box highlight through walls
+               AABB dropBox = new AABB(rx - 0.5, ry, rz - 0.5, rx + 0.5, ry + 0.5, rz + 0.5);
                collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
                   BomboRenderUtils.drawBox(pose.pose(), vc, dropBox, bR, bG, bB, 1.0F, 1.5F));
 
-               // Filled box through walls
+               // Filled half-box through walls
                collector.submitCustomGeometry(poseStack, RenderTypes.debugFilledBox(), (pose, vc) ->
                   BomboRenderUtils.drawFilledBox(pose.pose(), vc, (float)dropBox.minX, (float)dropBox.minY, (float)dropBox.minZ, (float)dropBox.maxX, (float)dropBox.maxY, (float)dropBox.maxZ, bR, bG, bB, 0.18F));
 
@@ -159,7 +161,7 @@ public class Pearls {
                   int percent = supply.getProgress();
                   String label = "§e" + percent + "%";
                   int textColor = 0xFFFFAA00;
-                  BomboRenderUtils.drawText(poseStack, collector, label, (float) rx, (float) (ry + 1.3), (float) rz, textColor, 0.035F, true, true);
+                  BomboRenderUtils.drawText(poseStack, collector, label, (float) rx, (float) (ry + 0.8), (float) rz, textColor, 0.035F, true, true);
                }
             }
          }
@@ -177,8 +179,7 @@ public class Pearls {
 
             // Beacon beam to sky for crate through walls
             if (s.kuudraSupplyWaypoints) {
-               collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vc) ->
-                  BomboRenderUtils.drawBeaconBeam(poseStack, vc, rx, ry, rz, 0.16F, 0.98F, 0.99F, 0.8F));
+               BomboRenderUtils.drawBeaconBeam(poseStack, collector, rx, ry, rz, 0xFF28F9FE, mc.level.getGameTime(), true);
             }
 
             // Individual zombie hitboxes (wireframe, strictly around actual zombies, through walls)

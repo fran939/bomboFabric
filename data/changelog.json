@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.145",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Custom Waypoints See-Through-Walls - Fully depth-free lines and quads for custom waypoints (/b wp), visible through any terrain or structure",
+      "+ Authentic Beacon Beams - Vanilla textured beacon beams with inner core and outer glow visible through walls",
+      "+ Smooth Pearl Waypoints & Text Alignment - Interpolated movement eliminates teleporting/jitter; small 0.20F highlight box with countdown timer directly on top",
+      "+ Drop Spot Centering - Half-block base highlight and perfectly centered beacon beams matching KIC",
+      "+ Stun Test Preview - /b teststun renders target box 4 blocks directly in crosshair view outside Kuudra for instant previewing",
+      "+ Command Fixes - Normalized command handler supporting commands with or without slashes (/t1-/t5, /m1-/m7, /b ep)",
+      "+ Instant Shutdown - IRC client interruption checks eliminate 10s shutdown lag",
+      "+ Startup Optimization - Prevents redundant resource pack downloads and reloads"
+    ]
+  },
+  {
     "version": "26.2.28.144",
     "date": "2026-10-18",
     "changes": [

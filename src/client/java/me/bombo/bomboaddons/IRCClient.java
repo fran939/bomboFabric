@@ -266,10 +266,12 @@ public class IRCClient {
                   closeQuietly();
                   lastError = "WSS WebSocket failed: " + tWss.getMessage();
                   System.err.println("[BomboAddons-IRC] WSS WebSocket failed: " + tWss.getMessage());
+                  if (!running || Thread.currentThread().isInterrupted()) break;
 
                   // Attempt 2: WebSocket (WS port 6668)
                   CompletableFuture<WebSocket> wsFuture2 = null;
                   try {
+                     if (!running || Thread.currentThread().isInterrupted()) break;
                      System.out.println("[BomboAddons-IRC] Trying WS ws://chat.bombo.dpdns.org:6668 (Fallback WS)...");
                      var wsBuilder2 = client.newWebSocketBuilder();
                      if (!apiKey.isEmpty()) {
@@ -306,9 +308,11 @@ public class IRCClient {
                      closeQuietly();
                      lastError = "WS 6668 failed: " + tWs.getMessage();
                      System.err.println("[BomboAddons-IRC] WS 6668 failed: " + tWs.getMessage());
+                     if (!running || Thread.currentThread().isInterrupted()) break;
 
                      // Attempt 3: TCP Socket (chat.bombo.dpdns.org:6667)
                      try {
+                        if (!running || Thread.currentThread().isInterrupted()) break;
                         System.out.println("[BomboAddons-IRC] Trying TCP socket to chat.bombo.dpdns.org:6667 (Fallback TCP)...");
                         Socket sock = new Socket();
                         sock.connect(new InetSocketAddress("chat.bombo.dpdns.org", 6667), 4000);
@@ -340,9 +344,11 @@ public class IRCClient {
                         closeQuietly();
                         lastError = "TCP 6667 failed: " + tTcp1.getMessage();
                         System.err.println("[BomboAddons-IRC] TCP 6667 failed: " + tTcp1.getMessage());
+                        if (!running || Thread.currentThread().isInterrupted()) break;
 
                         // Attempt 4: Fallback TCP (chat.bombo.dpdns.org:6667)
                         try {
+                           if (!running || Thread.currentThread().isInterrupted()) break;
                            System.out.println("[BomboAddons-IRC] Trying fallback TCP chat.bombo.dpdns.org:6667 (Fallback TCP)...");
                            Socket sock = new Socket();
                            sock.connect(new InetSocketAddress("chat.bombo.dpdns.org", 6667), 4000);
@@ -382,6 +388,9 @@ public class IRCClient {
                closeQuietly();
             }
 
+            if (!running || Thread.currentThread().isInterrupted()) {
+               break;
+            }
             try {
                Thread.sleep(3000L);
             } catch (InterruptedException var9) {
