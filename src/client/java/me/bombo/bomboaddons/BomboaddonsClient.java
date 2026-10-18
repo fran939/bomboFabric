@@ -11754,7 +11754,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             }
 
             if (packFile.exists()) {
-               me.bombo.bomboaddons.util.ResourcePackHelper.enableSkyblockPack();
+               me.bombo.bomboaddons.util.ResourcePackHelper.patchPackFormat(packFile);
             }
          } catch (Throwable t) {
             t.printStackTrace();

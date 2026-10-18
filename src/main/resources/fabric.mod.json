@@ -15,6 +15,9 @@
 	"icon": "assets/bomboaddons/icon.png",
 	"environment": "client",
 	"entrypoints": {
+		"preLaunch": [
+			"me.bombo.bomboaddons.PreLaunch"
+		],
 		"client": [
 			"me.bombo.bomboaddons.BomboaddonsClient"
 		]

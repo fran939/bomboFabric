@@ -1,5 +1,12 @@
 # BomboAddons Changelog
  
+## [26.2.28.147] - 2026-10-18 (Beta)
+
+### Windows Interactive Desktop & Taskbar Display Fix (`PreLaunch.java`, `WindowsDesktopHelper.java`, `WindowMixin.java`)
+- **Default Desktop Auto-Attachment:** Implemented early `PreLaunchEntrypoint` utilizing Win32 `OpenDesktop("Default")` and `SetThreadDesktop()` before any AWT or GLFW initialization occurs. Ensures the render thread is attached directly to the user's interactive physical desktop (`WinSta0\Default`), resolving invisible window execution in virtual sandbox desktops (`exebox-*`).
+- **Guaranteed Taskbar Registration:** Applied `WS_EX_APPWINDOW` style bit and cleared `WS_EX_TOOLWINDOW` via `WindowsDesktopHelper.registerWindow()`, followed by Win32 `ShowWindow(SW_SHOW)` and `SetForegroundWindow()`. The game now reliably appears on the Windows taskbar and Alt+Tab immediately upon launch.
+- **Fast Clean Startup:** Suppressed redundant automatic reloading of `Hypixel_Skyblock.zip` during game initialization in `BomboaddonsClient.java` and `run/options.txt`, eliminating 60+ seconds of texture warnings and freeze.
+
 ## [26.2.28.146] - 2026-10-18 (Beta)
 
 ### Window Display & Taskbar Registration Fix (`WindowMixin.java`, `TitleScreenMixin.java`)

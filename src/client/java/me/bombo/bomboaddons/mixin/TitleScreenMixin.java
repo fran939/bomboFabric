@@ -68,8 +68,7 @@ public abstract class TitleScreenMixin extends Screen {
       try {
          long handle = this.minecraft.getWindow().handle();
          if (handle != 0L) {
-            org.lwjgl.glfw.GLFW.glfwShowWindow(handle);
-            org.lwjgl.glfw.GLFW.glfwFocusWindow(handle);
+            me.bombo.bomboaddons.util.WindowsDesktopHelper.registerWindow(handle);
          }
       } catch (Throwable ignored) {}
    }
