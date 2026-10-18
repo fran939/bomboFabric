@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.154",
+    "date": "2026-10-18",
+    "changes": [
+      "+ Configurable Pearl Waypoint Size - Added slider under Dynamic Pearls (0.05m to 2.0m, default 0.25m)",
+      "+ Configurable Stun Waypoint Size - Added slider under Stun & Kill (0.05m to 2.0m, default 0.30m)",
+      "+ Instant P3 Stun Waypoint - Displays immediately on Elle's Ballista ready dialogue without delay",
+      "+ Stun Removal on Elle Dialogue - Automatically removes stun waypoint on 'That looks like it hurt! Quickly, while Kuudra is distracted...'",
+      "+ Case-Insensitive Kuudra Detection - Robust area and tier parsing for simulated and live Kuudra instances"
+    ]
+  },
+  {
     "version": "26.2.28.153",
     "date": "2026-10-18",
     "changes": [

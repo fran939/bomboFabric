@@ -1244,6 +1244,7 @@ public class BomboConfig {
       public boolean kuudraPearlShowDouble = false;
       public boolean kuudraPearlSecondSupply = false;
       public boolean kuudraPearlTimer = false;
+      public float kuudraPearlWaypointSize = 0.25F;
 
       // Build
       public boolean kuudraAnnounceFresh = false;
@@ -1258,6 +1259,7 @@ public class BomboConfig {
       public boolean kuudraStunWaypoint = false;
       public String kuudraStunWaypointColor = "#00FFFF";
       public String kuudraStunPod = "Left Pod";
+      public float kuudraStunWaypointSize = 0.30F;
       public boolean kuudraHollowHelper = false;
       public boolean kuudraRendDamage = false;
       public boolean kuudraBackboneHit = false;

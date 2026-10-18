@@ -44,7 +44,7 @@ public class KuudraUtils {
       lastKuudraCheckTime = now;
 
       String area = BomboaddonsClient.currentArea;
-      if ("Kuudra".equalsIgnoreCase(area) || "Kuudra's Hollow".equalsIgnoreCase(area) || (area != null && area.matches("^T[1-5]$"))) {
+      if (area != null && (area.toLowerCase().contains("kuudra") || area.matches("(?i)^T[1-5]$"))) {
          cachedInKuudra = true;
          return true;
       }

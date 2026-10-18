@@ -137,7 +137,8 @@ public class KuudraStunKillHelper {
         HUD_TEXTS.clear();
         BomboConfig.Settings s = BomboConfig.get();
         if (s == null || (!s.kuudraStunWaypoint && !testMode)) return;
-        if (!KuudraUtils.inKuudra() && !testMode) return;
+        boolean inKuudra = me.bombo.bomboaddons.SkyblockUtils.isInKuudra() || KuudraUtils.inKuudra() || inPhase3 || testMode;
+        if (!inKuudra) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
@@ -189,7 +190,7 @@ public class KuudraStunKillHelper {
 
         for (StunPod pod : pods) {
             double rx, ry, rz;
-            float hs = 0.15F; // Small aim highlight box (authentic KIC size)
+            float hs = (s != null && s.kuudraStunWaypointSize > 0.0F ? s.kuudraStunWaypointSize : 0.30F) * 0.5F;
             if (testMode && !me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.inKuudra()) {
                 // Testing outside Kuudra: place test box 4 blocks directly in front of player's crosshair
                 Vec3 look = mc.player.getLookAngle();

@@ -84,7 +84,7 @@ public class Pearls {
          double relY = point.y - camPos.y;
          double relZ = point.z - camPos.z;
 
-         float hs = 0.12F; // Small pearl waypoint highlight (authentic KIC size)
+         float hs = (s != null && s.kuudraPearlWaypointSize > 0.0F ? s.kuudraPearlWaypointSize : 0.25F) * 0.5F;
          AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
          final AABB finalBox = box;
          final float finalR = r;

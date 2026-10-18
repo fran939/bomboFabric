@@ -1,5 +1,17 @@
 # BomboAddons Changelog
  
+## [26.2.28.154] - 2026-10-18 (Beta)
+
+### Configurable Pearl & Stun Waypoint Sizes (`BomboConfig.java`, `ConfigRegistry.java`, `Pearls.java`, `KuudraStunKillHelper.java`)
+- **Configurable Pearl Waypoint Size:** Added slider for Pearl Waypoint Size under Dynamic Pearls (`0.05m` to `2.0m`, default `0.25m`).
+- **Configurable Stun Waypoint Size:** Added slider for Stun Waypoint Size under Stun & Kill (`0.05m` to `2.0m`, default `0.30m`).
+- **Dynamic Render Scaling:** Pearl aim boxes and stun aim boxes dynamically resize based on user settings while retaining crisp outlines and translucent fills through walls.
+
+### Reliable Phase 3 Stun Trigger & Automatic Removal (`KuudraStunKillHelper.java`, `ChatMixin.java`, `KuudraUtils.java`)
+- **Instant Stun Waypoint Activation:** Stun waypoint rendering now displays immediately upon Elle's Ballista ready dialogue (`"Phew! The Ballista is finally ready! It should be strong enough to tank Kuudra's blows now!"`), bypassing area verification delays and working reliably during chat simulation and live runs.
+- **Automatic Stun Waypoint Cleanup:** Stun waypoint is automatically removed and stun split is recorded immediately upon Elle's stunned dialogue (`"That looks like it hurt! Quickly, while Kuudra is distracted, shoot him with the Ballista!"`).
+- **Case-Insensitive Area Parsing:** Improved Kuudra tier and area matching to handle case-insensitive tier strings and subarea variants.
+
 ## [26.2.28.153] - 2026-10-18 (Beta)
 
 ### Kuudra Blindness Timer HUD Fix (`KuudraTimer.java`, `HudMoveScreen.java`, `ChatMixin.java`, `CommandMixin.java`, `SimCommandHelper.java`)
