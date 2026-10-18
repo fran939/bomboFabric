@@ -24,11 +24,7 @@ public class KuudraTimer {
    }
 
    public static void onPlayerEaten() {
-      long now = System.currentTimeMillis();
-      if (now > nowEndTime) {
-         blindEndTime = now;
-         nowEndTime = now + 500L;
-      }
+      // No-op to prevent duplicate blindness timer trigger
    }
 
    public static void reset() {

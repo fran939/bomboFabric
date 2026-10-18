@@ -16,7 +16,7 @@ public class PearlRenderData {
 
    public void updateDisplay(boolean hasSupply, long progressStart, boolean tracking) {
       this.time = Math.max(0L, this.getTimeUntilThrow(progressStart, tracking) / 25L * 25L);
-      this.cachedDisplay = this.time > 0L && !hasSupply ? "§c" + this.time + "ms" : "§a§lTHROW";
+      this.cachedDisplay = this.time > 0L && !hasSupply ? "§c" + this.time + " ms" : "§a§lTHROW";
    }
 
    private long getTimeUntilThrow(long progressStart, boolean tracking) {

@@ -1,5 +1,22 @@
 # BomboAddons Changelog
  
+## [26.2.28.155] - 2026-10-18 (Beta)
+
+### KIC Pearl Trajectory & Waypoint Parity (`TrajectorySolver.java`, `Pearls.java`, `PearlRenderData.java`, `BomboConfig.java`, `ConfigRegistry.java`)
+- **Exact Analytic Trajectory Solver:** Replaced brute-force trajectory search with KIC's analytic trajectory algorithm (`Newton-Raphson` solver for flat pearls, trigonometric highest-angle solver for sky pearls, exact gravity and air drag derivatives).
+- **Show All Pearls Setting:** Added `Show All Pearls` toggle (`kuudraPearlShowAll`) under Dynamic Pearls. When enabled, renders aim waypoints for all active supply drop spots: player's assigned spot is highlighted in Green (`#00FF00`), and all other spots are highlighted in Red (`#FF0000`).
+- **Billboard Countdown Timers on All Pearls:** Renders countdown timer text (`§c... ms` / `§a§lTHROW`) in 3D through walls directly above each pearl aim waypoint with `0.03F` scale and `SEE_THROUGH` display mode.
+- **Fixed Aim Projection & Distance:** Aligned pearl aim waypoint projection distance (`30m` sky, `15m` flat) and direction with `VecUtil.pointFromYawPitch`, eliminating drifting and misplaced boxes.
+
+### Kuudra Phase 3 Stun Waypoint & Stun Tracer (`KuudraStunKillHelper.java`, `SimCommandHelper.java`, `KuudraUtils.java`, `ConfigRegistry.java`)
+- **Stun Waypoint Tracer Line:** Added `Stun Waypoint Tracer` setting (`kuudraStunTracer`) under Stun & Kill. Draws a crisp line from the crosshair directly to the target stun aim box through walls using `PRIMITIVE_LINES_NO_DEPTH`.
+- **Immediate P3 Subarea Recognition:** Stun waypoints now activate immediately on Phase 3 via `/b area t5 p3`, Elle's ballista announcement, or subarea detection.
+- **Universal No-Depth Rendering:** Rendered stun aim boxes with `PRIMITIVE_LINES_NO_DEPTH` and `PRIMITIVE_QUADS_NO_DEPTH` to ensure 100% visibility through terrain, platforms, and Kuudra's belly.
+- **Authentic KIC Pod Coordinates:** Synchronized pod enum coordinates with KIC: Middle Pod `(-156, 28, -157)`, Right Pod `(-168, 27, -169)`, Left Pod `(-153, 27, -173)`.
+
+### Blindness Timer Double-Trigger Fix (`ChatMixin.java`, `KuudraTimer.java`)
+- **Single Blindness Countdown:** Removed redundant `onPlayerEaten()` timer re-trigger on `[Player] has been eaten by Kuudra!`. The blindness timer now activates exclusively when the player receives the blindness potion effect before belly entry, eliminating the unwanted second countdown inside the stomach.
+
 ## [26.2.28.154] - 2026-10-18 (Beta)
 
 ### Configurable Pearl & Stun Waypoint Sizes (`BomboConfig.java`, `ConfigRegistry.java`, `Pearls.java`, `KuudraStunKillHelper.java`)

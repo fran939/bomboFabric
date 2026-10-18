@@ -1239,11 +1239,12 @@ public class BomboConfig {
 
       // Dynamic Pearls
       public boolean kuudraDynamicPearls = false;
+      public boolean kuudraPearlShowAll = true;
       public boolean kuudraPearlShowSky = false;
-      public boolean kuudraPearlShowFlat = false;
-      public boolean kuudraPearlShowDouble = false;
-      public boolean kuudraPearlSecondSupply = false;
-      public boolean kuudraPearlTimer = false;
+      public boolean kuudraPearlShowFlat = true;
+      public boolean kuudraPearlShowDouble = true;
+      public boolean kuudraPearlSecondSupply = true;
+      public boolean kuudraPearlTimer = true;
       public float kuudraPearlWaypointSize = 0.25F;
 
       // Build
@@ -1260,6 +1261,7 @@ public class BomboConfig {
       public String kuudraStunWaypointColor = "#00FFFF";
       public String kuudraStunPod = "Left Pod";
       public float kuudraStunWaypointSize = 0.30F;
+      public boolean kuudraStunTracer = false;
       public boolean kuudraHollowHelper = false;
       public boolean kuudraRendDamage = false;
       public boolean kuudraBackboneHit = false;

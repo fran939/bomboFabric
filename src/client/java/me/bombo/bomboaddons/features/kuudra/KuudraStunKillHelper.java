@@ -146,7 +146,8 @@ public class KuudraStunKillHelper {
         boolean inStomach = isInStomach(mc.player);
         inBelly = inStomach;
 
-        boolean isStunPhase = inPhase3 || KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.STUN;
+        boolean isStunPhase = inPhase3 || KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.STUN
+                || "p3".equalsIgnoreCase(SkyblockUtils.getSubArea()) || "p3".equalsIgnoreCase(SkyblockUtils.getSimulatedSubArea());
         boolean isEarlyPhase = (KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.SUPPLIES ||
                                KuudraSplitsManager.getCurrentPhase() == KuudraSplitsManager.Phase.BUILD) && !inPhase3;
 
@@ -238,6 +239,17 @@ public class KuudraStunKillHelper {
                     (float) relBox.minX, (float) relBox.minY, (float) relBox.minZ,
                     (float) relBox.maxX, (float) relBox.maxY, (float) relBox.maxZ,
                     finalR, finalG, finalB, 0.20F));
+
+            // Stun Waypoint Tracer Line (rendered through walls with no depth)
+            if (s.kuudraStunTracer) {
+                final double trTargetX = rx;
+                final double trTargetY = ry;
+                final double trTargetZ = rz;
+                collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, vc) -> {
+                    org.joml.Vector3fc look = mc.gameRenderer.mainCamera().forwardVector();
+                    BomboRenderUtils.drawLine(pose.pose(), vc, look.x(), look.y(), look.z(), (float) trTargetX, (float) trTargetY, (float) trTargetZ, finalR, finalG, finalB, 1.0F, 2.0F);
+                });
+            }
         }
     }
 

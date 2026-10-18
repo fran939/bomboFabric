@@ -1204,6 +1204,7 @@ public class ConfigRegistry {
 
                 items.add(ConfigItem.header("§e§lDynamic Pearls", category));
                 items.add(ConfigItem.toggle("Dynamic Pearls", "Enables dynamic Kuudra pearl trajectories and waypoints.", category, () -> s.kuudraDynamicPearls, v -> s.kuudraDynamicPearls = v));
+                items.add(ConfigItem.toggle("Show All Pearls", "Shows pearl waypoints for all active uncompleted supplies.", category, () -> s.kuudraPearlShowAll, v -> s.kuudraPearlShowAll = v).when(() -> s.kuudraDynamicPearls));
                 items.add(ConfigItem.toggle("Show Sky Pearls", "Shows waypoints for sky pearls.", category, () -> s.kuudraPearlShowSky, v -> s.kuudraPearlShowSky = v));
                 items.add(ConfigItem.toggle("Show Flat Pearls", "Shows waypoints for flat pearls.", category, () -> s.kuudraPearlShowFlat, v -> s.kuudraPearlShowFlat = v));
                 items.add(ConfigItem.toggle("Show Double Pearls", "Shows waypoints for double pearls.", category, () -> s.kuudraPearlShowDouble, v -> s.kuudraPearlShowDouble = v));
@@ -1225,6 +1226,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.cycle("Stun Pod Target", "Select which pod waypoint to display for instant stun.", category, List.of("Left Pod", "Right Pod", "Middle Pod", "All Pods"), () -> s.kuudraStunPod != null ? s.kuudraStunPod : "Left Pod", v -> s.kuudraStunPod = v).when(() -> s.kuudraStunWaypoint));
                 items.add(ConfigItem.color("Stun Waypoint Color", "Color for stun pod waypoints and beacon beams.", category, () -> s.kuudraStunWaypointColor != null ? s.kuudraStunWaypointColor : "#00FFFF", v -> s.kuudraStunWaypointColor = v).when(() -> s.kuudraStunWaypoint));
                 items.add(ConfigItem.sliderFloat("Stun Waypoint Size", "Render size of Kuudra stun aim waypoint in blocks.", category, 0.05f, 2.0f, 0.05f, 0.30f, "m", () -> s.kuudraStunWaypointSize > 0.0f ? s.kuudraStunWaypointSize : 0.30f, v -> s.kuudraStunWaypointSize = v).when(() -> s.kuudraStunWaypoint));
+                items.add(ConfigItem.toggle("Stun Waypoint Tracer", "Draws a tracer line to the stun waypoint in Phase 3.", category, () -> s.kuudraStunTracer, v -> s.kuudraStunTracer = v).when(() -> s.kuudraStunWaypoint));
                 items.add(ConfigItem.toggle("Hollow Helper (Ichor Range)", "Outlines Ichor danger boundary.", category, () -> s.kuudraHollowHelper, v -> s.kuudraHollowHelper = v));
                 items.add(ConfigItem.toggle("Rend Damage Indicator", "Displays Rend arrow damage pulls.", category, () -> s.kuudraRendDamage, v -> s.kuudraRendDamage = v));
                 items.add(ConfigItem.toggle("Backbone Hit Message", "Notifies when bone hits, including held weapon and armor.", category, () -> s.kuudraBackboneHit, v -> s.kuudraBackboneHit = v));

@@ -77,33 +77,31 @@ public class Pearls {
          float b = 0.0F;
          float a = 1.0F;
 
-         double dist = data.isSky ? 25.0 : 12.0;
+         double dist = data.isSky ? 30.0 : 15.0;
          Vec3 dir = VecUtil.directionFromYawPitch(data.yaw, data.pitch);
          Vec3 point = eyePos.add(dir.scale(dist));
          double relX = point.x - camPos.x;
          double relY = point.y - camPos.y;
          double relZ = point.z - camPos.z;
 
-         float hs = (s != null && s.kuudraPearlWaypointSize > 0.0F ? s.kuudraPearlWaypointSize : 0.25F) * 0.5F;
+         float hs = (s != null && s.kuudraPearlWaypointSize > 0.0F ? s.kuudraPearlWaypointSize : 0.20F) * 0.5F;
          AABB box = new AABB(relX - hs, relY - hs, relZ - hs, relX + hs, relY + hs, relZ + hs);
          final AABB finalBox = box;
          final float finalR = r;
          final float finalG = g;
-         collector.submitCustomGeometry(poseStack, RenderTypes.secondaryBlockOutline(), (pose, vertexConsumer) -> {
+         collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, vertexConsumer) -> {
             BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, finalBox, finalR, finalG, b, a, 1.5F);
          });
-         collector.submitCustomGeometry(poseStack, RenderTypes.debugFilledBox(), (pose, vc) -> {
+         collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_QUADS_NO_DEPTH, (pose, vc) -> {
             BomboRenderUtils.drawFilledBox(pose.pose(), vc, (float)finalBox.minX, (float)finalBox.minY, (float)finalBox.minZ, (float)finalBox.maxX, (float)finalBox.maxY, (float)finalBox.maxZ, finalR, finalG, b, 0.20F);
          });
 
-         String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + "ms");
-         int textColor = isReady ? 0xFF00FF00 : 0xFFFF5555;
+         String disp = data.cachedDisplay != null ? data.cachedDisplay : (isReady ? "§a§lTHROW" : "§c" + data.time + " ms");
+         int textColor = (isMySupply || isDouble) ? 0xFF00FF00 : 0xFFFF5555;
 
          if (s.showTimer || s.kuudraPearlTimer) {
-            float textY = (float) (relY + hs + 0.12F);
-            double distToCam = Math.sqrt(relX * relX + relY * relY + relZ * relZ);
-            float textScale = 0.025F * Math.max(1.0F, (float) distToCam / 8.0F);
-            BomboRenderUtils.drawText(poseStack, collector, disp, (float) relX, textY, (float) relZ, textColor, textScale, true, true);
+            float textY = (float) (relY + hs + 0.25F);
+            BomboRenderUtils.drawText(poseStack, collector, disp, (float) relX, textY, (float) relZ, textColor, 0.03F, true, true);
          }
       }
 
@@ -252,7 +250,7 @@ public class Pearls {
                boolean showFlat = s.showFlatPearls || s.kuudraPearlShowFlat;
                boolean showDouble = s.showDoublePearls || s.kuudraPearlShowDouble;
 
-               if (s.showAll) {
+               if (s.showAll || s.kuudraPearlShowAll) {
                   for (Vec3 targetSupply : currentSupplies) {
                      if (showSky) {
                         PearlSolution sky = TrajectorySolver.solvePearl(true, eyePos, targetSupply);

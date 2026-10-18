@@ -37,17 +37,22 @@ public class KuudraUtils {
       if (mc.level == null) {
          return false;
       }
-      long now = System.currentTimeMillis();
-      if (now - lastKuudraCheckTime < 1000L) {
-         return cachedInKuudra;
-      }
-      lastKuudraCheckTime = now;
-
       String area = BomboaddonsClient.currentArea;
       if (area != null && (area.toLowerCase().contains("kuudra") || area.matches("(?i)^T[1-5]$"))) {
          cachedInKuudra = true;
          return true;
       }
+      String simArea = SkyblockUtils.getSimulatedArea();
+      if (simArea != null && simArea.toLowerCase().contains("kuudra")) {
+         cachedInKuudra = true;
+         return true;
+      }
+
+      long now = System.currentTimeMillis();
+      if (now - lastKuudraCheckTime < 1000L) {
+         return cachedInKuudra;
+      }
+      lastKuudraCheckTime = now;
 
       Objective sidebar = mc.level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
       if (sidebar != null) {

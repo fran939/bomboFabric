@@ -230,7 +230,6 @@ public abstract class ChatMixin implements IChatComponent {
                me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onHumanCannonballPurchased();
             } else if (raw.contains("has been eaten by Kuudra!")) {
                me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onPlayerEaten(raw);
-               me.bombo.bomboaddons.KuudraTimer.onPlayerEaten();
             } else if (raw.contains("That looks like it hurt") || raw.contains("while Kuudra is distracted") || raw.contains("shoot him with the Ballista") || raw.contains("destroyed one of Kuudra's pods!") || raw.contains("POW! SURELY THAT'S IT!")) {
                me.bombo.bomboaddons.features.kuudra.KuudraSplitsManager.onKuudraStunned();
                me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onStunFinished();

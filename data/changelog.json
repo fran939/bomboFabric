@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.155",
+    "date": "2026-10-18",
+    "changes": [
+      "+ KIC Pearl Trajectory Parity - Exact Newton-Raphson analytic trajectory solver matching KIC-0.2.0",
+      "+ Show All Pearls - Added toggle under Dynamic Pearls displaying aim waypoints for all uncompleted supply drop spots",
+      "+ Multi-Color Drop Spot Pearl Aim - Player's assigned drop spot rendered in Green, all other drop spots rendered in Red",
+      "+ In-World Countdown Billboard - Rendered countdown timer text (§c... ms / §a§lTHROW) directly above all pearl waypoints through walls",
+      "+ Stun Waypoint Tracer Line - Added toggle under Stun & Kill drawing a line from crosshair directly to stun aim waypoint",
+      "+ Phase 3 Stun Activation & No-Depth - Guaranteed instant stun waypoint on /b area t5 p3 and Elle's Ballista dialogue through walls",
+      "+ Authentic KIC Pod Coords - Synchronized Middle (-156, 28, -157), Right (-168, 27, -169), and Left (-153, 27, -173) pod coordinates",
+      "+ Fixed Blindness Double Trigger - Removed redundant eaten event trigger so blindness timer activates strictly once before belly entry"
+    ]
+  },
+  {
     "version": "26.2.28.154",
     "date": "2026-10-18",
     "changes": [
