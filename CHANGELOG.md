@@ -1,5 +1,12 @@
 # BomboAddons Changelog
  
+## [26.2.28.156] - 2026-10-25 (Beta)
+
+### Hotbar Swapper Subcommand Fix (`CommandMixin.java`, `HotbarSwapper.java`, `HotbarConfig.java`, `BomboaddonsClient.java`)
+- **Fix `/bhb s` and `/bhb save` Hotbar Saving:** Resolved bug where `CommandMixin.java` unconditionally cancelled packet commands for `/bhb`, silently swallowing `s` and `save` subcommands before saving or reaching Fabric's client command dispatcher.
+- **Unified Command Handling (`HotbarSwapper.handleCommand`):** Consolidated command parsing for both `/bhb` and chat `bhb`, providing full support for `/bhb s <name>`, `/bhb save <name>`, `/bhb a <name>`, `/bhb apply <name>`, `/bhb <name>`, `/bhb list`, and `/bhb delete <name>`.
+- **Hotbar Config Auto-Initialization & Directory Creation:** Added explicit `HotbarConfig.load()` call on client initialization and ensured parent directory creation in `HotbarConfig.save()`, guaranteeing snapshots persist reliably across sessions.
+
 ## [26.2.28.155] - 2026-10-18 (Beta)
 
 ### KIC Pearl Trajectory & Waypoint Parity (`TrajectorySolver.java`, `Pearls.java`, `PearlRenderData.java`, `BomboConfig.java`, `ConfigRegistry.java`)

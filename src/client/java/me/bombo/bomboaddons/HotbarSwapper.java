@@ -56,6 +56,68 @@ public class HotbarSwapper {
       return HotbarConfig.getSnapshots().keySet();
    }
 
+   public static void handleCommand(String[] tokens) {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player == null) return;
+      if (tokens.length == 0) {
+         mc.player.sendSystemMessage(Component.literal("§6[Bombo] §eHotbar Swapper:"));
+         mc.player.sendSystemMessage(Component.literal(" §7- §b/bhb s <name> §7or §b/bhb save <name> §8(save current hotbar)"));
+         mc.player.sendSystemMessage(Component.literal(" §7- §b/bhb a <name> §7or §b/bhb apply <name> §8(apply hotbar)"));
+         mc.player.sendSystemMessage(Component.literal(" §7- §b/bhb <name> §8(direct apply)"));
+         mc.player.sendSystemMessage(Component.literal(" §7- §b/bhb list §8(list all snapshots)"));
+         mc.player.sendSystemMessage(Component.literal(" §7- §b/bhb delete <name> §8(delete snapshot)"));
+         return;
+      }
+
+      String sub = tokens[0].toLowerCase(java.util.Locale.ROOT);
+      if (sub.equals("save") || sub.equals("s")) {
+         if (tokens.length < 2) {
+            mc.player.sendSystemMessage(Component.literal("§cUsage: /bhb " + sub + " <name>"));
+            return;
+         }
+         String name = tokens[1];
+         if (saveSnapshot(name)) {
+            mc.player.sendSystemMessage(Component.literal("§aSaved hotbar snapshot: §e" + name));
+         } else {
+            mc.player.sendSystemMessage(Component.literal("§cFailed to save hotbar snapshot (player is null)."));
+         }
+      } else if (sub.equals("apply") || sub.equals("a")) {
+         if (tokens.length < 2) {
+            mc.player.sendSystemMessage(Component.literal("§cUsage: /bhb " + sub + " <name>"));
+            return;
+         }
+         String name = tokens[1];
+         if (exists(name)) {
+            apply(name);
+            mc.player.sendSystemMessage(Component.literal("§aApplied hotbar snapshot: §e" + name));
+         } else {
+            mc.player.sendSystemMessage(Component.literal("§cSnapshot not found: §e" + name));
+         }
+      } else if (sub.equals("delete") || sub.equals("del") || sub.equals("d")) {
+         if (tokens.length < 2) {
+            mc.player.sendSystemMessage(Component.literal("§cUsage: /bhb delete <name>"));
+            return;
+         }
+         String name = tokens[1];
+         if (deleteSnapshot(name)) {
+            mc.player.sendSystemMessage(Component.literal("§aDeleted hotbar snapshot: §e" + name));
+         } else {
+            mc.player.sendSystemMessage(Component.literal("§cSnapshot not found: §e" + name));
+         }
+      } else if (sub.equals("list")) {
+         mc.player.sendSystemMessage(Component.literal("§6--- Hotbar Snapshots ---"));
+         for (String id : list()) {
+            mc.player.sendSystemMessage(Component.literal("§7- §e" + id));
+         }
+      } else if (tokens.length == 1 && exists(tokens[0])) {
+         String name = tokens[0];
+         apply(name);
+         mc.player.sendSystemMessage(Component.literal("§aApplied hotbar snapshot: §e" + name));
+      } else {
+         mc.player.sendSystemMessage(Component.literal("§cUnknown subcommand. Use §e/bhb s <name>§c to save or §e/bhb a <name>§c to apply."));
+      }
+   }
+
    private static String pendingApplyId = null;
    private static int freezeTicks = 0;
 

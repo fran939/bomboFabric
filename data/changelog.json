@@ -1,5 +1,14 @@
 [
   {
+    "version": "26.2.28.156",
+    "date": "2026-10-25",
+    "changes": [
+      "+ Hotbar Swapper Subcommand Fix - Restored /bhb s and /bhb save commands for saving hotbar snapshots",
+      "+ Unified Hotbar Command Dispatcher - Full support for /bhb s, /bhb save, /bhb a, /bhb apply, /bhb delete, and /bhb list",
+      "+ Hotbar Config Directory Creation & Auto-Load - Ensures config directory is created and hotbars are loaded on client startup"
+    ]
+  },
+  {
     "version": "26.2.28.155",
     "date": "2026-10-18",
     "changes": [

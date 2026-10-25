@@ -755,6 +755,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       } catch (Throwable ignored) {
       }
       BomboConfig.load();
+      HotbarConfig.load();
       me.bombo.bomboaddons.features.auth.BomboApiKeyManager.autoEnsureApiKey();
       ChatModifier.load();
       loadCommandHistory();

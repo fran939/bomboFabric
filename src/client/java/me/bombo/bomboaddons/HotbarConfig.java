@@ -67,6 +67,9 @@ public class HotbarConfig {
 
    public static void save() {
       try {
+         if (CONFIG_FILE.getParentFile() != null && !CONFIG_FILE.getParentFile().exists()) {
+            CONFIG_FILE.getParentFile().mkdirs();
+         }
          FileWriter writer = new FileWriter(CONFIG_FILE);
 
          try {

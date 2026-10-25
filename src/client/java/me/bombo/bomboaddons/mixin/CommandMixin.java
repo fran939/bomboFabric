@@ -261,19 +261,7 @@ public class CommandMixin {
 
          String[] tokens = arg.isEmpty() ? new String[0] : arg.split("\\s+");
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-         if (tokens.length >= 2 && (tokens[0].equalsIgnoreCase("apply") || tokens[0].equalsIgnoreCase("a"))) {
-            String name = tokens[1];
-            if (me.bombo.bomboaddons.HotbarSwapper.exists(name)) {
-               me.bombo.bomboaddons.HotbarSwapper.apply(name);
-               if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aApplied hotbar snapshot: §e" + name));
-            } else {
-               if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSnapshot not found: §e" + name));
-            }
-         } else if (tokens.length == 1 && !tokens[0].equalsIgnoreCase("list") && me.bombo.bomboaddons.HotbarSwapper.exists(tokens[0])) {
-            String name = tokens[0];
-            me.bombo.bomboaddons.HotbarSwapper.apply(name);
-            if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aApplied hotbar snapshot: §e" + name));
-         }
+         mc.execute(() -> me.bombo.bomboaddons.HotbarSwapper.handleCommand(tokens));
          ci.cancel();
          return;
       }
@@ -771,23 +759,9 @@ public class CommandMixin {
 
          String[] tokens = arg.isEmpty() ? new String[0] : arg.split("\\s+");
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-         if (tokens.length >= 2 && (tokens[0].equalsIgnoreCase("apply") || tokens[0].equalsIgnoreCase("a"))) {
-            String name = tokens[1];
-            if (me.bombo.bomboaddons.HotbarSwapper.exists(name)) {
-               me.bombo.bomboaddons.HotbarSwapper.apply(name);
-               if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aApplied hotbar snapshot: §e" + name));
-            } else {
-               if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSnapshot not found: §e" + name));
-            }
-            ci.cancel();
-            return;
-         } else if (tokens.length == 1 && !tokens[0].equalsIgnoreCase("list") && me.bombo.bomboaddons.HotbarSwapper.exists(tokens[0])) {
-            String name = tokens[0];
-            me.bombo.bomboaddons.HotbarSwapper.apply(name);
-            if (mc.player != null) mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aApplied hotbar snapshot: §e" + name));
-            ci.cancel();
-            return;
-         }
+         mc.execute(() -> me.bombo.bomboaddons.HotbarSwapper.handleCommand(tokens));
+         ci.cancel();
+         return;
       }
       if (trimmed.equalsIgnoreCase("/b undeafen") || trimmed.equalsIgnoreCase("/bombo undeafen") || trimmed.equalsIgnoreCase("/undeafen")
             || trimmed.equalsIgnoreCase("b undeafen") || trimmed.equalsIgnoreCase("undeafen")) {
