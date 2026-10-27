@@ -885,9 +885,10 @@ public class InfernoMinionTracker {
         if (lower.contains("fuel gabagool")) return "FUEL_GABAGOOL";
         if (lower.contains("heavy gabagool")) return "HEAVY_GABAGOOL";
         if (lower.contains("chili pepper")) {
-            if (lower.contains("enchanted")) return "ENCHANTED_CHILI_PEPPER";
+            if (lower.contains("enchanted") || lower.contains("stuffed")) return "ENCHANTED_CHILI_PEPPER";
             return "CHILI_PEPPER";
         }
+        if (lower.contains("stuffed chili")) return "ENCHANTED_CHILI_PEPPER";
         if (lower.contains("inferno vertex") || lower.contains("vertex")) return "INFERNO_VERTEX";
         if (lower.contains("inferno apex") || lower.contains("apex")) return "INFERNO_APEX";
         if (lower.contains("reaper pepper")) return "REAPER_PEPPER";
@@ -1081,6 +1082,17 @@ public class InfernoMinionTracker {
     public static long getDropUnitPrice(String skyblockId) {
         if (skyblockId == null || skyblockId.isEmpty()) return 0L;
         long p = LowestBinManager.getCachedPrice(skyblockId);
+        if (p <= 0L && "ENCHANTED_CHILI_PEPPER".equals(skyblockId)) {
+            p = LowestBinManager.getCachedPrice("STUFFED_CHILI_PEPPER");
+        }
+        if ("CHILI_PEPPER".equals(skyblockId)) {
+            if (p <= 0L || p > 500_000L) return 140_000L;
+            return p;
+        }
+        if ("ENCHANTED_CHILI_PEPPER".equals(skyblockId) || "STUFFED_CHILI_PEPPER".equals(skyblockId)) {
+            if (p <= 0L || p > 50_000_000L) return 20_000_000L;
+            return p;
+        }
         if ("INFERNO_VERTEX".equals(skyblockId)) {
             if (p <= 0L || p > 1_500_000L) return 222199L;
             return p;
@@ -1099,12 +1111,13 @@ public class InfernoMinionTracker {
         }
         if (p <= 0L) {
             switch (skyblockId) {
-                case "CRUDE_GABAGOOL": return 402L;
-                case "VERY_CRUDE_GABAGOOL": return 1608L;
-                case "FUEL_GABAGOOL": return 14500L;
-                case "HEAVY_GABAGOOL": return 350000L;
-                case "CHILI_PEPPER": return 31500L;
-                case "ENCHANTED_CHILI_PEPPER": return 5040000L;
+                case "CRUDE_GABAGOOL": return 364L;
+                case "VERY_CRUDE_GABAGOOL": return 63100L;
+                case "FUEL_GABAGOOL": return 70000L;
+                case "HEAVY_GABAGOOL": return 2500000L;
+                case "CHILI_PEPPER": return 140000L;
+                case "ENCHANTED_CHILI_PEPPER":
+                case "STUFFED_CHILI_PEPPER": return 20000000L;
                 case "INFERNO_VERTEX": return 222199L;
                 case "INFERNO_APEX": return 8157176L;
                 case "REAPER_PEPPER": return 13619981L;
@@ -1140,7 +1153,8 @@ public class InfernoMinionTracker {
             case "HEAVY_GABAGOOL": return "Heavy Gabagool";
             case "HYPERGOLIC_GABAGOOL": return "Hypergolic Gabagool";
             case "CHILI_PEPPER": return "Chili Pepper";
-            case "ENCHANTED_CHILI_PEPPER": return "Enchanted Chili Pepper";
+            case "ENCHANTED_CHILI_PEPPER":
+            case "STUFFED_CHILI_PEPPER": return "Stuffed Chili Pepper";
             case "INFERNO_VERTEX": return "Inferno Vertex";
             case "INFERNO_APEX": return "Inferno Apex";
             case "REAPER_PEPPER": return "Reaper Pepper";

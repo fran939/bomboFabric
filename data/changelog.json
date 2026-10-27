@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.167",
+    "date": "2026-10-27",
+    "changes": [
+      "+ Updated Chili Pepper unit price from 31.5K to ~140K market price",
+      "+ Renamed Enchanted Chili Pepper to Stuffed Chili Pepper (~20M market value)",
+      "+ Exact drop valuation: strict item quantity * unit price formula across client & web",
+      "+ Updated Crude, Very Crude, Fuel, and Heavy Gabagool price fallbacks"
+    ]
+  },
+  {
     "version": "26.2.28.166",
     "date": "2026-10-27",
     "changes": [

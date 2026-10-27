@@ -1,6 +1,13 @@
 # BomboAddons Changelog
  
-## [26.2.28.166] - 2026-10-27 (Beta)
+## [26.2.28.167] - 2026-10-27 (Beta)
+
+### Real Market Unit Pricing, Stuffed Chili Pepper Sync & Exact Drop Valuation (`InfernoMinionTracker.java`, `keys.html`)
+- **Accurate Market Pricing for Chili Peppers:** Updated `CHILI_PEPPER` unit pricing from ~31.5K to current market valuation of ~140K coins (`140,000L`), reflecting real bazaar order prices.
+- **Stuffed Chili Pepper Synchronization:** Corrected "Enchanted Chili Pepper" to its actual SkyBlock item identity: `Stuffed Chili Pepper` (`STUFFED_CHILI_PEPPER`), valued at ~20M coins (`20,000,000L`).
+- **Exact Item Quantity Drop Valuation:** Realigned web dashboard (`/keys`) and client revenue calculations to strictly calculate coins using `x item price * x item quantity = total coins`, updating gross revenue and net profit across both web management and in-game tracker GUIs.
+- **Updated Gabagool Tier Pricing Fallbacks:** Synchronized Crude Gabagool (~364), Very Crude Gabagool (~63.1K), Fuel Gabagool (~70K), and Heavy Gabagool (~2.5M) across client valuation and server drop editor.
+
 
 ### Dynamic Revenue & 32-Fuel Recalculation, Sacks Subcommands Fix, Supercraft Pickaxe Only Guard & /b inferno hud (`BomboaddonsClient.java`, `AbstractContainerScreenMixin.java`, `InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `inferno_service.js`)
 - **Dynamic Live Revenue & Fuel Cost Recalculation:** Resolved a critical discrepancy where Gross Revenue displayed static cached figures (+48.91M) while Chili Peppers alone were worth +96.23M coins (+134.69M total). Implemented `recalculateFinances()` dynamically synchronizing Gross Revenue to the exact live sum of all tracked drops (Chili Pepper, Very Crude Gabagool, Crude Gabagool, Vertex, Apex) and Fuel Expenses directly to all 32 Hypergolic fuels consumed (32 x ~4.35M = -139.30M coins), synchronizing client and server figures.
