@@ -195,6 +195,12 @@ public class CommandMixin {
                      mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §cReset all Inferno Minion tracking data."));
                   }
                });
+            } else if (subCmd.equals("fixfuel") || subCmd.equals("resetfuel") || subCmd.equals("clearfuel")) {
+               me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.resetFuels(() -> {
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aReset all tracked fuels and fuel expense back to 0 (all drop records preserved)!"));
+                  }
+               });
             } else if (subCmd.equals("gui") || subCmd.equals("open")) {
                mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
             } else {

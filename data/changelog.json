@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.158",
+    "date": "2026-10-27",
+    "changes": [
+      "+ Fixed false fuel deduction when claiming drops or clicking Collect All in Inferno Minions",
+      "+ Added Sacks drop tracking by parsing hover text from [Sacks] +X items chat messages",
+      "+ Added deduplication window between container clicks and sack messages to avoid double counting",
+      "+ Added /b inferno fixfuel and /b inferno resetfuel commands to reset corrupted fuel expenses",
+      "+ Added Clear Fuels button to Fuel Tab in /b inferno GUI"
+    ]
+  },
+  {
     "version": "26.2.28.157",
     "date": "2026-10-27",
     "changes": [

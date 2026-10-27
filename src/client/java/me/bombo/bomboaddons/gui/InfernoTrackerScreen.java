@@ -279,7 +279,14 @@ public class InfernoTrackerScreen extends Screen {
 
         // History of tracked fuels
         g.text(font, "§7Unique Fuel Instances Tracked (" + s.seenFuelUuids.size() + " registered UUIDs):", x, curY, 0xFF9CA3AF, false);
-        curY += 14;
+        int resetBtnW = 76;
+        int resetBtnH = 16;
+        int resetBtnX = x + w - resetBtnW;
+        int resetBtnY = curY - 3;
+        g.fill(resetBtnX, resetBtnY, resetBtnX + resetBtnW, resetBtnY + resetBtnH, 0xFF7F1D1D);
+        g.outline(resetBtnX, resetBtnY, resetBtnW, resetBtnH, 0xFFEF4444);
+        g.centeredText(font, "§cClear Fuels", resetBtnX + resetBtnW / 2, resetBtnY + 4, 0xFFFFFFFF);
+        curY += 18;
 
         if (s.seenFuelUuids.isEmpty()) {
             g.centeredText(font, "§7No fuels placed yet. Insert Hypergolic Gabagool into slot 19 of an Inferno Minion!", x + w / 2, curY + 30, 0xFF9CA3AF);
@@ -530,6 +537,24 @@ public class InfernoTrackerScreen extends Screen {
             if (event.x() >= tX && event.x() <= tX + tabW - 4 && event.y() >= tabsY && event.y() <= tabsY + 22) {
                 this.currentTab = i;
                 this.scrollAmount = 0;
+                return true;
+            }
+        }
+
+        // Fuel Tab: Clear Fuels button click
+        if (this.currentTab == 1) {
+            int contentX = winX + 16;
+            int contentY = tabsY + 30;
+            int contentW = winW - 32;
+            int contentH = winH - (contentY - winY) - 16;
+            int fx = contentX + 8;
+            int fy = contentY + 8 - (int) this.scrollAmount;
+            int fw = contentW - 16;
+            int fBtnY = fy + 74 + 12 + 36 + 12 - 3;
+            int fBtnX = fx + fw - 76;
+            if (event.x() >= fBtnX && event.x() <= fBtnX + 76 && event.y() >= fBtnY && event.y() <= fBtnY + 16
+                    && event.y() >= contentY && event.y() <= contentY + contentH) {
+                InfernoMinionTracker.resetFuels(null);
                 return true;
             }
         }

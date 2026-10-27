@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.158] - 2026-10-27 (Beta)
+
+### Inferno Minion False Fuel Fix & Sacks Drop Tracking (`InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `ChatMixin.java`, `CommandMixin.java`)
+- **False Fuel Deduction Elimination:** Fixed a critical issue where claiming drops or clicking "Collect All" in an Inferno Minion erroneously detected running fuel in slot 19 as newly inserted fuel and deducted ~4.35M coins each time. Fuel checks are now strictly constrained to clicks specifically targeting slot 19 or quick-moving fuel items, and pre-existing fuels already running when the container opened are registered and ignored.
+- **Sacks Drop Tracking from Chat Hover:** When collecting drops from an Inferno Minion or clicking "Collect All", items frequently route directly into the player's sacks, generating chat alerts such as `[Sacks] +65 items. (Last 5s.)`. The mod now extracts and parses the component's hover tooltip (`+65 Crude Gabagool (Slayer Sack)`), resolves Inferno drops, and logs them accurately with Bazaar and Lowest BIN valuation.
+- **Drop Deduplication Window:** Added a 4-second synchronization and deduplication buffer between slot-click inventory claims and sack chat tooltips, ensuring items are never counted twice.
+- **Fuel Expense Reset Tooling:** Added `/b inferno fixfuel` / `/b inferno resetfuel` and an interactive `[Clear Fuels]` button on the Fuel Tab in `/b inferno` to allow players to reset corrupted fuel expenses back to 0 without losing any of their collected drop records.
+
 ## [26.2.28.157] - 2026-10-27 (Beta)
 
 ### Inferno Minion Profit & Fuel Tracker (`InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `CommandMixin.java`, `AbstractContainerScreenMixin.java`, `MinecraftMixin.java`)

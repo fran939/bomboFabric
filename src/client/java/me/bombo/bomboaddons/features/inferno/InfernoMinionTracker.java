@@ -18,17 +18,22 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.LowestBinManager;
 import me.bombo.bomboaddons.SkyblockUtils;
 import me.bombo.bomboaddons.util.BomboApiUrl;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.inventory.ChestMenu;
@@ -58,6 +63,7 @@ public class InfernoMinionTracker {
     );
 
     public static final String HYPERGOLIC_FUEL_ID = "INFERNO_HYPERGOLIC_CRUDE_GABAGOOL";
+    public static final Pattern SACKS_ADD_PATTERN = Pattern.compile("(?i)^\\+([\\d,]+)x?\\s+(.+?)(?:\\s*\\([^\\)]*\\))?$");
 
     // Data structures
     public static class MinionInfo {
@@ -105,8 +111,21 @@ public class InfernoMinionTracker {
     private static int activeMinionEntityId = 0;
     private static BlockPos activeMinionPos = null;
     private static String activeMinionName = "Inferno Minion";
-    private static String initialFuelUuid = null;
+
+    // Fuel guard: records existing fuel sitting in slot 19 so it is NEVER counted as placed
+    private static final Set<String> existingRunningFuelUuids = Collections.synchronizedSet(new HashSet<>());
+    private static boolean isInteractingWithFuelSlot = false;
+    private static String fuelUuidBeforeClick = null;
+
+    // Drops snapshot
     private static final Map<Integer, ItemStack> dropSlotSnapshot = new HashMap<>();
+
+    // Sliding deduplication window between container clicks and sack chat messages (item -> count, timestamp)
+    private static final Map<String, Long> recentClaimCounts = new ConcurrentHashMap<>();
+    private static long lastClaimTimestamp = 0L;
+
+    // Tracks if minion GUI was open recently
+    private static long lastMinionGuiTime = 0L;
 
     public static synchronized void ensureLoaded() {
         if (loaded) return;
@@ -329,6 +348,24 @@ public class InfernoMinionTracker {
         });
     }
 
+    /**
+     * Resets specifically fuel expenses and fuel counts without wiping collected drops.
+     */
+    public static void resetFuels(Runnable onComplete) {
+        state.totalCost = 0L;
+        state.netProfit = state.totalRevenue;
+        state.fuels.clear();
+        state.seenFuelUuids.clear();
+        state.actions.removeIf(a -> "FUEL".equalsIgnoreCase(a.type));
+        for (MinionInfo m : state.minions.values()) {
+            m.totalFuels = 0;
+        }
+        saveToDisk();
+        if (onComplete != null) {
+            Minecraft.getInstance().execute(onComplete);
+        }
+    }
+
     // Entity interaction hook
     public static void onEntityRightClicked(Entity entity) {
         if (!SkyblockUtils.isInPrivateIsland()) return;
@@ -345,12 +382,16 @@ public class InfernoMinionTracker {
         String title = screen.getTitle().getString();
         if (!isInfernoMinionGui(title)) return;
 
+        lastMinionGuiTime = System.currentTimeMillis();
+
         if (screen.getMenu() instanceof ChestMenu chestMenu) {
             resolveActiveMinion(title);
-            // Snapshot initial fuel in slot 19 if not already done
-            if (initialFuelUuid == null) {
-                ItemStack fuelStack = chestMenu.getSlot(19).getItem();
-                initialFuelUuid = extractFuelUuid(fuelStack);
+
+            // Register existing fuel currently sitting in slot 19 so it is NEVER counted as placed fuel
+            ItemStack fuelStack = chestMenu.getSlot(19).getItem();
+            String existingUuid = extractFuelUuid(fuelStack);
+            if (existingUuid != null) {
+                existingRunningFuelUuids.add(existingUuid);
             }
         }
     }
@@ -359,6 +400,14 @@ public class InfernoMinionTracker {
         if (title == null) return false;
         String clean = title.replaceAll("§.", "").trim();
         return clean.startsWith("Inferno Minion");
+    }
+
+    public static boolean isInfernoMinionGuiOpen() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gui.screen() instanceof AbstractContainerScreen<?> containerScreen) {
+            return isInfernoMinionGui(containerScreen.getTitle().getString());
+        }
+        return false;
     }
 
     private static void resolveActiveMinion(String title) {
@@ -402,8 +451,9 @@ public class InfernoMinionTracker {
     }
 
     public static void onContainerClosed() {
-        initialFuelUuid = null;
         dropSlotSnapshot.clear();
+        isInteractingWithFuelSlot = false;
+        fuelUuidBeforeClick = null;
     }
 
     // Slot click hook
@@ -413,15 +463,24 @@ public class InfernoMinionTracker {
         if (!isInfernoMinionGui(title)) return;
         if (!(screen.getMenu() instanceof ChestMenu chestMenu)) return;
 
+        lastMinionGuiTime = System.currentTimeMillis();
         resolveActiveMinion(title);
 
         if (!isReturn) {
             // HEAD: snapshot before click
             dropSlotSnapshot.clear();
+
+            // Check if player is actually interacting with the fuel slot
+            isInteractingWithFuelSlot = (slotId == 19) || (type == ContainerInput.QUICK_MOVE && slot != null && isFuelItem(slot.getItem()));
+            if (isInteractingWithFuelSlot) {
+                fuelUuidBeforeClick = extractFuelUuid(chestMenu.getSlot(19).getItem());
+            } else {
+                fuelUuidBeforeClick = null;
+            }
+
             if (slot != null && !slot.getItem().isEmpty()) {
                 String hoverName = slot.getItem().getHoverName().getString();
                 if (hoverName.contains("Collect All")) {
-                    // Snapshot all minion storage drop slots
                     for (int i = 0; i < 54; i++) {
                         ItemStack item = chestMenu.getSlot(i).getItem();
                         if (isFarmDrop(item)) {
@@ -433,15 +492,28 @@ public class InfernoMinionTracker {
                 }
             }
         } else {
-            // RETURN: verify slot updates
+            // RETURN: verify updates
             Minecraft mc = Minecraft.getInstance();
+            boolean checkFuel = isInteractingWithFuelSlot;
+            String beforeUuid = fuelUuidBeforeClick;
+            isInteractingWithFuelSlot = false;
+            fuelUuidBeforeClick = null;
+
             mc.execute(() -> {
                 try {
-                    // 1. Check if fuel was placed into slot 19
-                    ItemStack fuelSlotItem = chestMenu.getSlot(19).getItem();
-                    checkAndRecordFuelPlacement(fuelSlotItem);
+                    // 1. Only check fuel placement IF the user actually clicked slot 19 or shift-clicked fuel
+                    if (checkFuel) {
+                        ItemStack fuelSlotItem = chestMenu.getSlot(19).getItem();
+                        String afterUuid = extractFuelUuid(fuelSlotItem);
+                        if (afterUuid != null && !afterUuid.equals(beforeUuid)) {
+                            // Slot 19 changed to a new fuel UUID during this click
+                            if (!existingRunningFuelUuids.contains(afterUuid) && !state.seenFuelUuids.contains(afterUuid)) {
+                                checkAndRecordFuelPlacement(fuelSlotItem, afterUuid);
+                            }
+                        }
+                    }
 
-                    // 2. Check if drops were collected
+                    // 2. Check direct inventory drops collected
                     if (!dropSlotSnapshot.isEmpty()) {
                         Map<String, Integer> claimedDrops = new HashMap<>();
                         long claimRevenue = 0L;
@@ -469,6 +541,8 @@ public class InfernoMinionTracker {
                         }
 
                         if (!claimedDrops.isEmpty()) {
+                            // Register in recent claim window so sack messages don't double count
+                            registerRecentClaims(claimedDrops);
                             recordClaim(claimedDrops, claimRevenue);
                         }
                         dropSlotSnapshot.clear();
@@ -480,21 +554,17 @@ public class InfernoMinionTracker {
         }
     }
 
-    private static void checkAndRecordFuelPlacement(ItemStack fuelStack) {
-        if (fuelStack == null || fuelStack.isEmpty()) return;
-        String fuelUuid = extractFuelUuid(fuelStack);
-        if (fuelUuid == null || fuelUuid.isEmpty()) return;
-
-        // If this fuel was already inside the minion when opened, ignore
-        if (fuelUuid.equals(initialFuelUuid)) return;
+    private static void checkAndRecordFuelPlacement(ItemStack fuelStack, String fuelUuid) {
+        if (fuelStack == null || fuelStack.isEmpty() || fuelUuid == null || fuelUuid.isEmpty()) return;
 
         // Check if fuel is Hypergolic gabagool fuel
         String sbId = SkyblockUtils.getSkyblockId(fuelStack);
         boolean isHypergolic = HYPERGOLIC_FUEL_ID.equalsIgnoreCase(sbId) || isFuelItem(fuelStack);
         if (!isHypergolic) return;
 
-        // Check if fuel uuid already counted
+        // Double check deduplication
         if (state.seenFuelUuids.contains(fuelUuid)) return;
+        if (existingRunningFuelUuids.contains(fuelUuid)) return;
 
         // Calculate Craft Cost
         long craftCost = LowestBinManager.getCraftCostCached(HYPERGOLIC_FUEL_ID);
@@ -502,11 +572,12 @@ public class InfernoMinionTracker {
             craftCost = LowestBinManager.getCachedPrice(HYPERGOLIC_FUEL_ID);
         }
         if (craftCost <= 0) {
-            craftCost = 4_320_000L; // Safe fallback standard craft cost
+            craftCost = 4_350_000L;
         }
 
         // Record fuel
         state.seenFuelUuids.add(fuelUuid);
+        existingRunningFuelUuids.add(fuelUuid);
         state.totalCost += craftCost;
         state.netProfit = state.totalRevenue - state.totalCost;
         state.fuels.put(HYPERGOLIC_FUEL_ID, state.fuels.getOrDefault(HYPERGOLIC_FUEL_ID, 0L) + 1L);
@@ -532,11 +603,136 @@ public class InfernoMinionTracker {
         saveToDisk();
         pushActionToServer(action);
 
-        initialFuelUuid = fuelUuid;
-
         if (BomboConfig.get().infernoChatAlerts && mc.player != null) {
             mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aAdded 1x Hypergolic Fuel! §7(Craft Cost: §c-" + formatCoins(craftCost) + "§7) §8[Net: " + (state.netProfit >= 0 ? "§a+" : "§c") + formatCoins(state.netProfit) + "§8]"));
         }
+    }
+
+    /**
+     * Chat hook for [Sacks] +X items messages
+     */
+    public static void onChatMessage(Component message) {
+        if (message == null) return;
+        if (!SkyblockUtils.isInPrivateIsland()) return;
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s != null && !s.infernoTrackerEnabled) return;
+
+        String unformatted = ChatFormatting.stripFormatting(message.getString());
+        if (unformatted == null || !unformatted.contains("[Sacks]")) return;
+
+        // Player must have interacted with an Inferno minion recently (within last 10s) or have the GUI open
+        long now = System.currentTimeMillis();
+        boolean recentInferno = isInfernoMinionGuiOpen() || (now - lastMinionGuiTime <= 10000L) || (now - lastInteractTime <= 10000L);
+        if (!recentInferno) return;
+
+        List<String> hoverLines = extractAllHoverText(message);
+        if (hoverLines.isEmpty()) return;
+
+        Map<String, Integer> claimedFromSacks = new HashMap<>();
+        long claimRevenue = 0L;
+
+        for (String line : hoverLines) {
+            String clean = ChatFormatting.stripFormatting(line).trim();
+            Matcher matcher = SACKS_ADD_PATTERN.matcher(clean);
+            if (matcher.find()) {
+                int count = (int) parseLongSafe(matcher.group(1));
+                String rawName = matcher.group(2).trim();
+                String sbId = resolveInfernoDropId(rawName);
+                if (sbId != null && count > 0) {
+                    // Deduplicate against any recently claimed items from slot clicks
+                    int alreadyClaimed = getAndDeductRecentClaim(sbId, count);
+                    int actualNewCount = count - alreadyClaimed;
+                    if (actualNewCount > 0) {
+                        claimedFromSacks.put(sbId, claimedFromSacks.getOrDefault(sbId, 0) + actualNewCount);
+                        long unitPrice = getDropUnitPrice(sbId);
+                        claimRevenue += unitPrice * actualNewCount;
+                    }
+                }
+            }
+        }
+
+        if (!claimedFromSacks.isEmpty()) {
+            recordClaim(claimedFromSacks, claimRevenue);
+        }
+    }
+
+    public static String resolveInfernoDropId(String rawName) {
+        if (rawName == null) return null;
+        String lower = rawName.toLowerCase(Locale.ROOT).trim();
+        if (lower.contains("crude gabagool")) {
+            if (lower.contains("very crude")) return "VERY_CRUDE_GABAGOOL";
+            return "CRUDE_GABAGOOL";
+        }
+        if (lower.contains("fuel gabagool")) return "FUEL_GABAGOOL";
+        if (lower.contains("heavy gabagool")) return "HEAVY_GABAGOOL";
+        if (lower.contains("hypergolic gabagool")) return "HYPERGOLIC_GABAGOOL";
+        if (lower.contains("chili pepper")) {
+            if (lower.contains("enchanted")) return "ENCHANTED_CHILI_PEPPER";
+            return "CHILI_PEPPER";
+        }
+        if (lower.contains("inferno vertex") || lower.contains("vertex")) return "INFERNO_VERTEX";
+        if (lower.contains("inferno apex") || lower.contains("apex")) return "INFERNO_APEX";
+        if (lower.contains("reaper pepper")) return "REAPER_PEPPER";
+        if (lower.contains("gabagool the fish")) return "GABAGOOL_THE_FISH";
+        return null;
+    }
+
+    private static List<String> extractAllHoverText(Component component) {
+        List<String> lines = new ArrayList<>();
+        if (component == null) return lines;
+        Set<String> visitedTexts = new HashSet<>();
+        inspectComponentHover(component, lines, visitedTexts);
+        return lines;
+    }
+
+    private static void inspectComponentHover(Component comp, List<String> lines, Set<String> visitedTexts) {
+        if (comp == null) return;
+        Style style = comp.getStyle();
+        if (style != null && style.getHoverEvent() != null) {
+            HoverEvent hover = style.getHoverEvent();
+            if (hover instanceof HoverEvent.ShowText textHover) {
+                Component hoverComp = textHover.value();
+                if (hoverComp != null) {
+                    String fullText = hoverComp.getString();
+                    if (fullText != null && !fullText.trim().isEmpty() && visitedTexts.add(fullText.trim())) {
+                        for (String l : fullText.split("\\r?\\n")) {
+                            if (!l.trim().isEmpty()) {
+                                lines.add(l.trim());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (Component child : comp.getSiblings()) {
+            inspectComponentHover(child, lines, visitedTexts);
+        }
+    }
+
+    private static synchronized void registerRecentClaims(Map<String, Integer> drops) {
+        long now = System.currentTimeMillis();
+        lastClaimTimestamp = now;
+        for (Map.Entry<String, Integer> e : drops.entrySet()) {
+            recentClaimCounts.put(e.getKey(), recentClaimCounts.getOrDefault(e.getKey(), 0L) + e.getValue());
+        }
+    }
+
+    private static synchronized int getAndDeductRecentClaim(String sbId, int count) {
+        long now = System.currentTimeMillis();
+        if (now - lastClaimTimestamp > 4000L) {
+            recentClaimCounts.clear();
+            return 0;
+        }
+        long existing = recentClaimCounts.getOrDefault(sbId, 0L);
+        if (existing <= 0) return 0;
+        int deducted = (int) Math.min(existing, count);
+        long remaining = existing - deducted;
+        if (remaining > 0) {
+            recentClaimCounts.put(sbId, remaining);
+        } else {
+            recentClaimCounts.remove(sbId);
+        }
+        return deducted;
     }
 
     private static void recordClaim(Map<String, Integer> claimedDrops, long claimRevenue) {
@@ -674,7 +870,6 @@ public class InfernoMinionTracker {
         if (skyblockId == null || skyblockId.isEmpty()) return 0L;
         long p = LowestBinManager.getCachedPrice(skyblockId);
         if (p <= 0L) {
-            // Standard baseline fallbacks if offline / not loaded
             switch (skyblockId) {
                 case "CRUDE_GABAGOOL": return 450L;
                 case "VERY_CRUDE_GABAGOOL": return 7200L;
@@ -728,6 +923,15 @@ public class InfernoMinionTracker {
                     sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
                 }
                 return sb.toString();
+        }
+    }
+
+    private static long parseLongSafe(String s) {
+        if (s == null) return 0L;
+        try {
+            return Long.parseLong(s.replace(",", "").trim());
+        } catch (Exception e) {
+            return 0L;
         }
     }
 }

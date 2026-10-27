@@ -423,6 +423,7 @@ public abstract class ChatMixin implements IChatComponent {
             Pearls.onChatMessage(raw);
             me.bombo.bomboaddons.features.critters.CritterSafariEngine.onChatMessage(raw);
             me.bombo.bomboaddons.features.garden.GreenhouseTracker.onChatMessage(message);
+            me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onChatMessage(message);
             if (BomboConfig.get().debugDailyReward && this.minecraft != null && this.minecraft.player != null && (raw.contains("Reward") || raw.contains("rewards.hypixel.net") || raw.contains("Claim"))) {
                this.minecraft.player.sendSystemMessage(Component.literal("§8[§bDailyRewardDebug§8] §7Chat message: " + raw));
             }
