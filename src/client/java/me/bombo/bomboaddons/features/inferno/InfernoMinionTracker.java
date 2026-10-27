@@ -165,7 +165,44 @@ public class InfernoMinionTracker {
         return bestIdx;
     }
 
+    public static void recalculateFinances() {
+        // Calculate true Gross Revenue directly from drops count * current unit price
+        long calculatedRevenue = 0L;
+        if (state.drops != null) {
+            for (Map.Entry<String, Long> e : state.drops.entrySet()) {
+                if (e.getValue() != null && e.getValue() > 0) {
+                    calculatedRevenue += e.getValue() * getDropUnitPrice(e.getKey());
+                }
+            }
+        }
+        if (calculatedRevenue > 0) {
+            state.totalRevenue = calculatedRevenue;
+        }
+
+        // Calculate true Fuel Expenses for all fuels consumed
+        long fuelsCount = state.fuels.getOrDefault(HYPERGOLIC_FUEL_ID, 0L);
+        long craftCost = LowestBinManager.getCraftCostCached(HYPERGOLIC_FUEL_ID);
+        if (craftCost <= 0) craftCost = LowestBinManager.getCachedPrice(HYPERGOLIC_FUEL_ID);
+        if (craftCost <= 0) craftCost = 4_350_000L;
+
+        if (fuelsCount > 0) {
+            state.totalCost = fuelsCount * craftCost;
+        }
+
+        state.netProfit = state.totalRevenue - state.totalCost;
+    }
+
     public static void ensureAllMinionsInitialized() {
+        // Clean out any legacy or unknown keys that are not strictly minion_1 to minion_32
+        Iterator<Map.Entry<String, MinionInfo>> it = state.minions.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, MinionInfo> e = it.next();
+            String k = e.getKey();
+            if (k == null || !k.matches("^minion_(?:[1-9]|[12][0-9]|3[0-2])$")) {
+                it.remove();
+            }
+        }
+
         for (int i = 1; i <= 32; i++) {
             String key = "minion_" + i;
             final int idx = i;
@@ -183,6 +220,7 @@ public class InfernoMinionTracker {
                 return m;
             });
             info.index = idx;
+            info.uuid = key;
             info.tier = "Inferno Minion #" + idx;
             info.posX = getMinionTargetX(idx);
             info.posY = 103.0;
@@ -213,6 +251,7 @@ public class InfernoMinionTracker {
 
     public static TrackerState getState() {
         ensureLoaded();
+        recalculateFinances();
         return state;
     }
 
@@ -386,11 +425,32 @@ public class InfernoMinionTracker {
             JsonObject mObj = data.getAsJsonObject("minions");
             for (Map.Entry<String, JsonElement> entry : mObj.entrySet()) {
                 try {
+                    String key = entry.getKey();
+                    int idx = 1;
+                    if (key != null && key.startsWith("minion_")) {
+                        try {
+                            idx = Integer.parseInt(key.substring(7));
+                        } catch (Exception ignored) {}
+                    }
+                    if (idx < 1 || idx > 32) continue;
                     MinionInfo m = GSON.fromJson(entry.getValue(), MinionInfo.class);
-                    if (m != null) state.minions.put(entry.getKey(), m);
+                    if (m != null) {
+                        m.index = idx;
+                        m.uuid = "minion_" + idx;
+                        m.tier = "Inferno Minion #" + idx;
+                        m.posX = getMinionTargetX(idx);
+                        m.posY = 103.0;
+                        m.posZ = getMinionTargetZ(idx);
+                        m.x = (int) Math.floor(m.posX);
+                        m.y = 103;
+                        m.z = (int) Math.floor(m.posZ);
+                        state.minions.put("minion_" + idx, m);
+                    }
                 } catch (Exception ignored) {}
             }
         }
+        ensureAllMinionsInitialized();
+        recalculateFinances();
     }
 
     private static void pushActionToServer(ActionEntry action) {
@@ -404,6 +464,8 @@ public class InfernoMinionTracker {
                 payload.addProperty("player", action.player);
                 payload.addProperty("user", action.player);
                 payload.addProperty("minionUuid", action.minionUuid);
+                payload.addProperty("minionIndex", activeMinionIndex);
+                payload.addProperty("minionTier", "Inferno Minion #" + activeMinionIndex);
                 payload.addProperty("minionEntityId", action.minionEntityId);
                 payload.addProperty("minionPos", action.pos);
                 if (action.fuelUuid != null) payload.addProperty("fuelUuid", action.fuelUuid);
@@ -739,6 +801,7 @@ public class InfernoMinionTracker {
         state.totalCost += craftCost;
         state.netProfit = state.totalRevenue - state.totalCost;
         state.fuels.put(HYPERGOLIC_FUEL_ID, state.fuels.getOrDefault(HYPERGOLIC_FUEL_ID, 0L) + 1L);
+        recalculateFinances();
 
         // Update minion record
         updateMinionRecord(0, 1, null);
@@ -873,6 +936,7 @@ public class InfernoMinionTracker {
             state.drops.put(e.getKey(), state.drops.getOrDefault(e.getKey(), 0L) + e.getValue());
             totalCount += e.getValue();
         }
+        recalculateFinances();
 
         updateMinionRecord(totalCount, 0, claimedDrops);
 

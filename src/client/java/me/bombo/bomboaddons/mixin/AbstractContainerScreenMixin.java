@@ -309,6 +309,28 @@ public abstract class AbstractContainerScreenMixin extends Screen {
           }
        }
 
+       if (slot.hasItem()) {
+          String currentGui = net.minecraft.ChatFormatting.stripFormatting(this.getTitle().getString()).toLowerCase(java.util.Locale.ROOT);
+          if ((currentGui.contains("sulphuric coal") || currentGui.contains("sulphur coal")) && isChiliPepperSulphuricCoalRecipe()) {
+             ItemStack stack = slot.getItem();
+             String itemName = net.minecraft.ChatFormatting.stripFormatting(stack.getHoverName().getString()).toLowerCase(java.util.Locale.ROOT);
+             if (itemName.contains("supercraft") || stack.is(net.minecraft.world.item.Items.GOLDEN_PICKAXE)) {
+                boolean bypassHeldLocal = false;
+                BomboConfig.Settings s = BomboConfig.get();
+                if (s != null) {
+                   int bypassKey = ClickLogic.getKeyCode(s.blockedSlotsBypassKey);
+                   if (bypassKey != -1 && org.lwjgl.glfw.GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), bypassKey) == 1) {
+                      bypassHeldLocal = true;
+                   }
+                }
+                if (!bypassHeldLocal) {
+                   guiGraphics.fill(slot.x, slot.y, slot.x + 16, slot.y + 16, 0x66FF2222);
+                   guiGraphics.outline(slot.x, slot.y, 16, 16, 0xFFFF4444);
+                }
+             }
+          }
+       }
+
       if (ItemListOverlay.inventorySearchMode && ItemListOverlay.query != null && !ItemListOverlay.query.trim().isEmpty() && slot.hasItem()) {
          ItemStack stack = slot.getItem();
          String rawQuery = ItemListOverlay.query.toLowerCase(java.util.Locale.ROOT);
@@ -420,19 +442,23 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       if (ItemListOverlay.mouseClicked(event.x(), event.y(), event.button())) {
          cir.setReturnValue(true);
       } else {
-         // Guard against crafting Sulphuric Coal using expensive Chili Pepper recipe
-         if (this.hoveredSlot != null) {
+         // Guard against crafting Sulphuric Coal using expensive Chili Pepper recipe (block only Supercraft pickaxe)
+         if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
             String title = this.getTitle() != null ? this.getTitle().getString().toLowerCase(java.util.Locale.ROOT) : "";
             if (title.contains("sulphuric coal") || title.contains("sulphur coal")) {
-               int sIdx = this.hoveredSlot.index;
-               if (sIdx == 23 || sIdx == 25 || sIdx == 31) {
+               ItemStack stack = this.hoveredSlot.getItem();
+               String itemName = net.minecraft.ChatFormatting.stripFormatting(stack.getHoverName().getString()).toLowerCase(java.util.Locale.ROOT);
+               if (itemName.contains("supercraft") || stack.is(net.minecraft.world.item.Items.GOLDEN_PICKAXE)) {
                   if (isChiliPepperSulphuricCoalRecipe()) {
-                     boolean bypassed = event.hasControlDown() || event.hasShiftDown()
-                           || (Minecraft.getInstance() != null && (Minecraft.getInstance().hasControlDown() || Minecraft.getInstance().hasShiftDown()));
-                     if (!bypassed) {
-                        Minecraft mc = Minecraft.getInstance();
-                        if (mc.player != null) {
-                           mc.player.sendSystemMessage(Component.literal("§8[§6🔥 BomboAddons§8] §c⛔ BLOCKED Supercraft for Sulphuric Coal with Chili Peppers! §7(Recipe is not profitable. Hold §eCtrl§7 to craft anyway)"));
+                     BomboConfig.Settings s = BomboConfig.get();
+                     boolean isBypassed = false;
+                     int bypassKey = ClickLogic.getKeyCode(s != null ? s.blockedSlotsBypassKey : "lshift");
+                     if (bypassKey != -1 && org.lwjgl.glfw.GLFW.glfwGetKey(Minecraft.getInstance().getWindow().handle(), bypassKey) == 1) {
+                        isBypassed = true;
+                     }
+                     if (!isBypassed) {
+                        if (Minecraft.getInstance().player != null) {
+                           Minecraft.getInstance().player.sendSystemMessage(Component.literal("§8[§bBombo§8] §7Slot locked. Hold §e" + (s != null ? s.blockedSlotsBypassKey : "lshift") + " §7to bypass."));
                         }
                         cir.setReturnValue(true);
                         return;
@@ -845,20 +871,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          }
       } catch (Throwable ignored) {}
 
-      // In-Bazaar / In-Container Fuel Craft HUD Direct Render
+      // In-Container Fuel Craft HUD Direct Render (Visible on all inventories when enabled)
       try {
-         if (BomboConfig.get().infernoCraftHudEnabled && (me.bombo.bomboaddons.SkyblockUtils.isInBazaar() || !BomboConfig.get().infernoCraftHudOnlyIsland || me.bombo.bomboaddons.SkyblockUtils.isInPrivateIsland())) {
+         if (BomboConfig.get().infernoCraftHudEnabled) {
             me.bombo.bomboaddons.features.inferno.InfernoCraftHud.renderDirect(graphics, mouseX, mouseY);
-         }
-      } catch (Throwable ignored) {}
-
-      // Blocked Sulphuric Coal Supercraft Slot Highlight
-      try {
-         String title = this.getTitle() != null ? this.getTitle().getString().toLowerCase(java.util.Locale.ROOT) : "";
-         if (title.contains("sulphuric coal") || title.contains("sulphur coal")) {
-            if (isChiliPepperSulphuricCoalRecipe()) {
-               renderBlockedSupercraftSlots(graphics);
-            }
          }
       } catch (Throwable ignored) {}
 
@@ -1062,20 +1078,5 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       return false;
    }
 
-   private void renderBlockedSupercraftSlots(GuiGraphicsExtractor graphics) {
-      AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
-      if (screen.getMenu() == null) return;
-      int[] blockedSlots = {23, 25};
-      for (int slotIdx : blockedSlots) {
-         if (slotIdx < screen.getMenu().slots.size()) {
-            Slot s = screen.getMenu().getSlot(slotIdx);
-            if (s != null) {
-               int sx = this.leftPos + s.x;
-               int sy = this.topPos + s.y;
-               graphics.fill(sx, sy, sx + 16, sy + 16, 0x85EF4444);
-               graphics.outline(sx, sy, 16, 16, 0xFFFF0000);
-            }
-         }
-      }
-   }
+
 }

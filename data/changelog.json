@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.166",
+    "date": "2026-10-27",
+    "changes": [
+      "+ Dynamic Live Revenue & Fuel Cost Recalculation (+134.69M Gross Revenue matching drops table & -139.30M Fuel Expenses for 32 fuels)",
+      "+ Fixed /b sacks and /b debug sacks Brigadier command registration",
+      "+ Sulphuric Coal Chili Pepper Supercraft Guard: blocks ONLY Golden Pickaxe with standard slot locked message & bypass key",
+      "+ Fixed 32-minion island grid indexing: eliminated duplicate #1 Unknown and correctly displays minions #1 to #32",
+      "+ Added /b inferno hud & crafthud subcommand to toggle Fuel Craft HUD across all screens without passkey overwrite"
+    ]
+  },
+  {
     "version": "26.2.28.165",
     "date": "2026-10-27",
     "changes": [

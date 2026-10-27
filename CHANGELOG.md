@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.166] - 2026-10-27 (Beta)
+
+### Dynamic Revenue & 32-Fuel Recalculation, Sacks Subcommands Fix, Supercraft Pickaxe Only Guard & /b inferno hud (`BomboaddonsClient.java`, `AbstractContainerScreenMixin.java`, `InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `inferno_service.js`)
+- **Dynamic Live Revenue & Fuel Cost Recalculation:** Resolved a critical discrepancy where Gross Revenue displayed static cached figures (+48.91M) while Chili Peppers alone were worth +96.23M coins (+134.69M total). Implemented `recalculateFinances()` dynamically synchronizing Gross Revenue to the exact live sum of all tracked drops (Chili Pepper, Very Crude Gabagool, Crude Gabagool, Vertex, Apex) and Fuel Expenses directly to all 32 Hypergolic fuels consumed (32 x ~4.35M = -139.30M coins), synchronizing client and server figures.
+- **Sacks Subcommands Registration (`/b sacks`, `/b debug sacks`):** Fixed `Incorrect argument for command at position 8: b debug <--[HERE]` by registering `sacks` and `debug` -> `sacks` directly into the client-side Brigadier dispatcher on `/b`, `/bombo`, `/bomboaddons`, and top-level `/sacks`. Both opening the interactive chest-style Sacks Bag GUI and fetching categorized sack data now work immediately.
+- **Pickaxe-Only Supercraft Guard & Standard Slot Locked Message:** Replaced custom blocking on slots 23 & 25 with a strict guard applied ONLY to the Golden Pickaxe ("Supercraft" button) when the Sulphuric Coal recipe requires expensive Chili Peppers. Integrated standard locked slot behavior and bypass utility: renders the standard red slot outline/fill (which immediately clears when the bypass key is held) and prints `[Bombo] Slot locked. Hold <key> to bypass.` (default `lshift`).
+- **Clean 32-Minion Island Grid (#1 to #32):** Fixed an issue where legacy state keys loaded from server/disk caused every minion to render as `#1 Unknown (Row 1, Spot 1)`. Filtered out legacy keys, strictly keyed minions by `minion_1` to `minion_32`, and ensured all 32 minions render with their assigned number (#1..32), row (Row 1 for #1–16, Row 2 for #17–32), spot (Spot 1..16), and exact island coordinates.
+- **`/b inferno hud` Subcommand & Fuel Craft HUD Visibility:** Added `/b inferno hud` / `/b inferno crafthud` to toggle the on-screen Fuel Craft HUD with chat feedback without overwriting the coop passkey. Rendered the Fuel Craft HUD across all inventories and container screens with full mouse clickability.
+
 ## [26.2.28.165] - 2026-10-27 (Beta)
 
 ### In-Bazaar Fuel Craft HUD, Chili Pepper Supercraft Guard, Sacks Browser GUI & 32-Minion Island Grid (`InfernoCraftHud.java`, `SacksBrowserScreen.java`, `InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `AbstractContainerScreenMixin.java`, `CommandMixin.java`, `SacksHelper.java`, `InfernoFuelCraftHelper.java`)

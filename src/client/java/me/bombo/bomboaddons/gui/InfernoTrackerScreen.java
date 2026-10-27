@@ -377,9 +377,24 @@ public class InfernoTrackerScreen extends Screen {
 
         curY += sumH + 10;
 
-        // Sort minions by index 1 to 32
-        List<InfernoMinionTracker.MinionInfo> minionList = new ArrayList<>(s.minions.values());
-        minionList.sort(Comparator.comparingInt(m -> m.index));
+        // Strictly assemble minions sorted from #1 to #32 with zero legacy duplicates
+        List<InfernoMinionTracker.MinionInfo> minionList = new ArrayList<>();
+        for (int i = 1; i <= 32; i++) {
+            InfernoMinionTracker.MinionInfo m = s.minions.get("minion_" + i);
+            if (m == null) {
+                m = new InfernoMinionTracker.MinionInfo();
+                m.index = i;
+                m.uuid = "minion_" + i;
+                m.tier = "Inferno Minion #" + i;
+                m.posX = InfernoMinionTracker.getMinionTargetX(i);
+                m.posY = 103.0;
+                m.posZ = InfernoMinionTracker.getMinionTargetZ(i);
+                s.minions.put("minion_" + i, m);
+            }
+            m.index = i;
+            m.tier = "Inferno Minion #" + i;
+            minionList.add(m);
+        }
 
         int rowH = 44;
         for (InfernoMinionTracker.MinionInfo m : minionList) {

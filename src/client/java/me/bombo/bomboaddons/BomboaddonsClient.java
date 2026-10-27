@@ -630,6 +630,16 @@ public class BomboaddonsClient implements ClientModInitializer {
          return 1;
       }));
 
+      root.then(ClientCommands.literal("hud").executes(ctx -> {
+         toggleInfernoCraftHud();
+         return 1;
+      }));
+
+      root.then(ClientCommands.literal("crafthud").executes(ctx -> {
+         toggleInfernoCraftHud();
+         return 1;
+      }));
+
       root.then(ClientCommands.literal("key")
          .then(ClientCommands.argument("passkey", StringArgumentType.string())
             .suggests((ctx, b) -> suggestInfernoCoopMembers(b))
@@ -664,6 +674,35 @@ public class BomboaddonsClient implements ClientModInitializer {
       return root;
    }
 
+   public static void toggleInfernoCraftHud() {
+      BomboConfig.Settings s = BomboConfig.get();
+      s.infernoCraftHudEnabled = !s.infernoCraftHudEnabled;
+      BomboConfig.save();
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.player != null) {
+         mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §7Fuel Craft HUD: " + (s.infernoCraftHudEnabled ? "§aENABLED" : "§cDISABLED")));
+      }
+   }
+
+   public static LiteralArgumentBuilder<FabricClientCommandSource> buildSacksCommand(String name) {
+      LiteralArgumentBuilder<FabricClientCommandSource> root = ClientCommands.literal(name);
+      root.executes(ctx -> {
+         Minecraft mc = Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.SacksBrowserScreen("")));
+         return 1;
+      });
+      root.then(ClientCommands.argument("player", StringArgumentType.string())
+         .suggests((ctx, b) -> suggestInfernoCoopMembers(b))
+         .executes(ctx -> {
+            String p = StringArgumentType.getString(ctx, "player").trim();
+            Minecraft mc = Minecraft.getInstance();
+            mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.SacksBrowserScreen(p)));
+            return 1;
+         })
+      );
+      return root;
+   }
+
    public static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestInfernoCoopMembers(com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
       String remaining = builder.getRemaining() == null ? "" : builder.getRemaining().toLowerCase(java.util.Locale.ROOT);
       java.util.Set<String> candidates = new java.util.LinkedHashSet<>();
@@ -674,6 +713,8 @@ public class BomboaddonsClient implements ClientModInitializer {
       candidates.add("fixfuel");
       candidates.add("reset");
       candidates.add("key");
+      candidates.add("hud");
+      candidates.add("crafthud");
       candidates.add("craft");
       candidates.add("sacks");
 
@@ -719,6 +760,10 @@ public class BomboaddonsClient implements ClientModInitializer {
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
          return;
       }
+      if (lower.equals("hud") || lower.equals("crafthud")) {
+         toggleInfernoCraftHud();
+         return;
+      }
       if (lower.equals("craft") || lower.equals("fuelcraft") || lower.startsWith("craft ") || lower.startsWith("fuelcraft ")) {
          String[] parts = lower.split("\\s+");
          if (parts.length >= 2) {
@@ -737,6 +782,8 @@ public class BomboaddonsClient implements ClientModInitializer {
       if (lower.equals("sacks") || lower.startsWith("sacks ")) {
          String target = "";
          if (lower.startsWith("sacks ")) target = arg.substring(6).trim();
+         final String finalTarget = target;
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.SacksBrowserScreen(finalTarget)));
          me.bombo.bomboaddons.features.inferno.SacksHelper.displaySacksDebug(target);
          return;
       }
@@ -803,9 +850,8 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
       } else {
-         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(arg);
          if (mc.player != null) {
-            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCoop Passkey set to: §e" + arg + " §7(Syncing data...)"));
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §cUnknown argument: §e" + arg + "§7. Usage: §e/b inferno [gui|sync|hud|craft|fixfuel|reset|key <passkey>]"));
          }
       }
    }
@@ -1157,6 +1203,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                      } else if (isAllowedHudClickScreen && s.discordHudEnabled && button == 0
                            && me.bombo.bomboaddons.features.discord.DiscordVoiceHud.handleMouseClick(mouseX, mouseY)) {
                         return false;
+                      } else if (isAllowedHudClickScreen && s.infernoCraftHudEnabled
+                            && me.bombo.bomboaddons.features.inferno.InfernoCraftHud.onMouseClicked(mouseX, mouseY, button)) {
+                         return false;
                      } else {
                         if (s.diceTracker && DiceTracker.shouldShowHud()) {
                            int w = (int) (260.0F * s.diceHudScale);
@@ -7030,6 +7079,14 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                         // /b inferno -> Inferno Minion Tracker
                         builder.then(buildInfernoCommand("inferno"));
+                         // /b sacks / /b sack
+                         builder.then(buildSacksCommand("sacks"));
+                         builder.then(buildSacksCommand("sack"));
+
+                         // /b debug sacks / /b debug sack
+                         builder.then(ClientCommands.literal("debug")
+                               .then(buildSacksCommand("sacks"))
+                               .then(buildSacksCommand("sack")));
                      };
                      String[] mainCommandAliases = new String[] { "b", "B", "bombo", "Bombo", "BOMBO", "bomboaddons",
                            "ba", "BA" };
@@ -7056,6 +7113,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                      dispatcher.register(buildMpCommand("magicalpower"));
                      dispatcher.register(buildKuudraCommand("kuudra"));
                      dispatcher.register(buildInfernoCommand("inferno"));
+                      dispatcher.register(buildSacksCommand("sacks"));
+                      dispatcher.register(buildSacksCommand("sack"));
                      dispatcher.register(ClientCommands.literal("hotbar")
                            .executes((context) -> {
                               me.bombo.bomboaddons.features.hotbar.HotbarSlotManager.execute("",
