@@ -218,11 +218,63 @@ public class CommandMixin {
                }
             } else if (subCmd.equals("gui") || subCmd.equals("open")) {
                mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
+            } else if (subCmd.equals("craft") || subCmd.equals("fuelcraft") || subCmd.equals("helper")) {
+               if (tokens.length >= 2) {
+                  try {
+                     int amt = Integer.parseInt(tokens[1].trim());
+                     me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.setTargetFuels(amt);
+                  } catch (Exception ignored) {}
+               }
+               mc.execute(() -> {
+                  me.bombo.bomboaddons.gui.InfernoTrackerScreen scr = new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null);
+                  scr.setActiveTab(me.bombo.bomboaddons.gui.InfernoTrackerScreen.TAB_CRAFT);
+                  mc.setScreenAndShow(scr);
+               });
             } else {
                String pass = tokens[0].trim();
                me.bombo.bomboaddons.BomboaddonsClient.handleInfernoCommandArg(pass);
             }
          }
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("b debug sacks") || lower.startsWith("b debug sacks ")
+            || lower.equals("b debug sack") || lower.startsWith("b debug sack ")
+            || lower.equals("b sacks") || lower.startsWith("b sacks ")
+            || lower.equals("bombo debug sacks") || lower.startsWith("bombo debug sacks ")
+            || lower.equals("bomboaddons debug sacks") || lower.startsWith("bomboaddons debug sacks ")) {
+         String targetUser = "";
+         String[] tokens = trimmed.split("\\s+");
+         for (int i = 0; i < tokens.length; i++) {
+            if (tokens[i].equalsIgnoreCase("sacks") || tokens[i].equalsIgnoreCase("sack")) {
+               if (i + 1 < tokens.length) {
+                  targetUser = tokens[i + 1].trim();
+               }
+               break;
+            }
+         }
+         me.bombo.bomboaddons.features.inferno.SacksHelper.displaySacksDebug(targetUser);
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("b craft") || lower.startsWith("b craft ")
+            || lower.equals("b fuelcraft") || lower.startsWith("b fuelcraft ")
+            || lower.equals("bombo craft") || lower.startsWith("bombo craft ")
+            || lower.equals("bombo fuelcraft") || lower.startsWith("bombo fuelcraft ")
+            || lower.equals("bomboaddons craft") || lower.startsWith("bomboaddons craft ")) {
+         String[] tokens = trimmed.split("\\s+");
+         if (tokens.length >= 3) {
+            try {
+               int amt = Integer.parseInt(tokens[2].trim());
+               me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.setTargetFuels(amt);
+            } catch (Exception ignored) {}
+         }
+         Minecraft mc = Minecraft.getInstance();
+         mc.execute(() -> {
+            me.bombo.bomboaddons.gui.InfernoTrackerScreen scr = new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null);
+            scr.setActiveTab(me.bombo.bomboaddons.gui.InfernoTrackerScreen.TAB_CRAFT);
+            mc.setScreenAndShow(scr);
+         });
          ci.cancel();
          return;
       }

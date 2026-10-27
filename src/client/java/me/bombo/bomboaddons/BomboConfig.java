@@ -680,6 +680,13 @@ public class BomboConfig {
       public float infernoHudScale = 1.0f;
       public boolean infernoHudOnlyIsland = true;
 
+      public boolean infernoCraftHudEnabled = false;
+      public int infernoCraftHudX = 10;
+      public int infernoCraftHudY = 180;
+      public float infernoCraftHudScale = 1.0f;
+      public boolean infernoCraftHudOnlyIsland = false;
+      public int infernoTargetCraftFuels = 32;
+
       public boolean dianaLootshareEnabled = false;
       public boolean dianaLsInquisitor = false;
       public boolean dianaLsChampion = false;

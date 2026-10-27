@@ -822,6 +822,8 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Inferno Minion Tracker", "Tracks farmed drops and fuel craft costs for Inferno Minions on your Private Island.", category, () -> s.infernoTrackerEnabled, v -> s.infernoTrackerEnabled = v));
                 items.add(ConfigItem.hudToggle("Inferno Minion HUD", "Live on-screen HUD displaying net profit, revenue, fuel expense, and coop status.", category, () -> s.infernoHudEnabled, v -> s.infernoHudEnabled = v, HudTarget.INFERNO_HUD));
                 items.add(ConfigItem.toggle("HUD Only On Island", "Only render the Inferno Minion HUD when you are on your Private Island.", category, () -> s.infernoHudOnlyIsland, v -> s.infernoHudOnlyIsland = v));
+                items.add(ConfigItem.hudToggle("Fuel Craft HUD", "Live on-screen HUD displaying fuel craft raw materials to buy and progress.", category, () -> s.infernoCraftHudEnabled, v -> s.infernoCraftHudEnabled = v, HudTarget.INFERNO_CRAFT_HUD));
+                items.add(ConfigItem.toggle("Craft HUD Only On Island", "Only render the Fuel Craft HUD when you are on your Private Island.", category, () -> s.infernoCraftHudOnlyIsland, v -> s.infernoCraftHudOnlyIsland = v));
                 items.add(ConfigItem.toggle("Inferno Chat Alerts", "Sends a sleek chat summary when claiming drops or placing fuel.", category, () -> s.infernoChatAlerts, v -> s.infernoChatAlerts = v));
                 items.add(ConfigItem.text("Coop Passkey", "Passkey used to sync minion tracking data across coop members (or uses your Profile ID).", category, () -> s.infernoCoopPasskey != null ? s.infernoCoopPasskey : "default", v -> {
                     s.infernoCoopPasskey = v;

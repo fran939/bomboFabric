@@ -634,6 +634,15 @@ public class SkyblockUtils {
       return false;
    }
 
+   public static boolean isInBazaar() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.gui != null && mc.gui.screen() != null && mc.gui.screen().getTitle() != null) {
+         String t = mc.gui.screen().getTitle().getString().toLowerCase(java.util.Locale.ROOT);
+         return t.contains("bazaar");
+      }
+      return false;
+   }
+
    public static String mapLocrawToArea(String mode, String map) {
       if (map != null && !map.trim().isEmpty()) {
          return map.trim();

@@ -53,7 +53,6 @@ public class InfernoMinionTracker {
         "VERY_CRUDE_GABAGOOL",
         "FUEL_GABAGOOL",
         "HEAVY_GABAGOOL",
-        "HYPERGOLIC_GABAGOOL",
         "CHILI_PEPPER",
         "ENCHANTED_CHILI_PEPPER",
         "INFERNO_VERTEX",
@@ -67,7 +66,6 @@ public class InfernoMinionTracker {
         "VERY_CRUDE_GABAGOOL",
         "FUEL_GABAGOOL",
         "HEAVY_GABAGOOL",
-        "HYPERGOLIC_GABAGOOL",
         "INFERNO_VERTEX",
         "INFERNO_APEX",
         "REAPER_PEPPER",
@@ -132,6 +130,7 @@ public class InfernoMinionTracker {
     // Tracks if minion GUI was open recently
     private static long lastMinionGuiTime = 0L;
     private static long lastBulkClaimTime = 0L;
+    private static long lastMinionHarvestClickTime = 0L;
 
     public static synchronized void ensureLoaded() {
         if (loaded) return;
@@ -438,8 +437,10 @@ public class InfernoMinionTracker {
 
     public static boolean isInfernoMinionGui(String title) {
         if (title == null) return false;
-        String clean = title.replaceAll("§.", "").trim();
-        return clean.startsWith("Inferno Minion");
+        String clean = ChatFormatting.stripFormatting(title).trim();
+        String lower = clean.toLowerCase(Locale.ROOT);
+        if (lower.contains("recipe") || lower.contains("crafting") || lower.contains("bazaar") || lower.contains("order")) return false;
+        return clean.matches("(?i)^Inferno Minion(\\s+[IVXLCDM]+)?$");
     }
 
     public static boolean isInfernoMinionGuiOpen() {
@@ -511,10 +512,13 @@ public class InfernoMinionTracker {
             if (slot != null && slot.hasItem()) {
                 buttonName = ChatFormatting.stripFormatting(slot.getItem().getHoverName().getString()).toLowerCase(Locale.ROOT);
             }
-            boolean isPickupButton = (slotId == 53) || buttonName.contains("pickup minion") || buttonName.contains("pick up minion");
-            boolean isCollectAllButton = (slotId == 49) || buttonName.contains("collect all");
+            boolean isPickupButton = (slotId == 53 || buttonName.contains("pickup minion") || buttonName.contains("pick up minion"))
+                && (buttonName.contains("pickup") || buttonName.contains("pick up"));
+            boolean isCollectAllButton = (slotId == 49 || buttonName.contains("collect all"))
+                && buttonName.contains("collect all");
 
             if (isPickupButton || isCollectAllButton) {
+                lastMinionHarvestClickTime = System.currentTimeMillis();
                 lastBulkClaimTime = System.currentTimeMillis();
                 Map<String, Integer> claimed = new HashMap<>();
                 long revenue = 0L;
@@ -538,12 +542,14 @@ public class InfernoMinionTracker {
                     recordClaim(claimed, revenue);
                 }
             } else if (slotId >= 0 && slotId < 54 && slotId != 19) {
-                // Individual slot click on a minion storage slot
+                // Individual slot click on a minion storage slot (must be in minion chest rows, not slot 49/53 or player inv)
+                boolean isStorageSlot = (slotId >= 21 && slotId <= 25) || (slotId >= 30 && slotId <= 34) || (slotId >= 39 && slotId <= 43) || (slotId >= 18 && slotId < 45);
                 long now = System.currentTimeMillis();
-                if (now - lastBulkClaimTime > 800L && slot != null && slot.hasItem()) {
+                if (isStorageSlot && now - lastBulkClaimTime > 800L && slot != null && slot.hasItem()) {
                     ItemStack clickedItem = slot.getItem();
                     String id = SkyblockUtils.getSkyblockId(clickedItem);
                     if (NON_SACK_DROPS.contains(id)) {
+                        lastMinionHarvestClickTime = now;
                         int count = clickedItem.getCount();
                         if (type == ContainerInput.PICKUP && mouseButton == 1) {
                             count = (count + 1) / 2; // Right click picks up half
@@ -657,10 +663,11 @@ public class InfernoMinionTracker {
         String unformatted = ChatFormatting.stripFormatting(message.getString());
         if (unformatted == null || !unformatted.contains("[Sacks]")) return;
 
-        // Player must have interacted with an Inferno minion recently (within last 10s) or have the GUI open
+        // Player must have actively clicked a harvest action in an Inferno minion within the last 2 seconds
         long now = System.currentTimeMillis();
-        boolean recentInferno = isInfernoMinionGuiOpen() || (now - lastMinionGuiTime <= 10000L) || (now - lastInteractTime <= 10000L);
-        if (!recentInferno) return;
+        boolean recentHarvest = (now - lastMinionHarvestClickTime <= 2000L);
+        if (!recentHarvest) return;
+        if (SkyblockUtils.isInBazaar()) return;
 
         List<String> hoverLines = extractAllHoverText(message);
         if (hoverLines.isEmpty()) return;
@@ -697,7 +704,6 @@ public class InfernoMinionTracker {
         }
         if (lower.contains("fuel gabagool")) return "FUEL_GABAGOOL";
         if (lower.contains("heavy gabagool")) return "HEAVY_GABAGOOL";
-        if (lower.contains("hypergolic gabagool")) return "HYPERGOLIC_GABAGOOL";
         if (lower.contains("chili pepper")) {
             if (lower.contains("enchanted")) return "ENCHANTED_CHILI_PEPPER";
             return "CHILI_PEPPER";
@@ -705,7 +711,7 @@ public class InfernoMinionTracker {
         if (lower.contains("inferno vertex") || lower.contains("vertex")) return "INFERNO_VERTEX";
         if (lower.contains("inferno apex") || lower.contains("apex")) return "INFERNO_APEX";
         if (lower.contains("reaper pepper")) return "REAPER_PEPPER";
-        if (lower.contains("gabagool the fish")) return "GABAGOOL_THE_FISH";
+        if (lower.contains("gabagool the fish") || lower.contains("gabagool_the_fish") || (lower.contains("gabagool") && lower.contains("fish"))) return "GABAGOOL_THE_FISH";
         return null;
     }
 
@@ -883,15 +889,26 @@ public class InfernoMinionTracker {
             if (p <= 0L || p > 40_000_000L) return 8157176L;
             return p;
         }
+        if ("REAPER_PEPPER".equals(skyblockId)) {
+            if (p <= 0L || p > 30_000_000L) return 13619981L;
+            return p;
+        }
+        if ("GABAGOOL_THE_FISH".equals(skyblockId)) {
+            if (p <= 0L || p > 25_000_000L) return 7000000L;
+            return p;
+        }
         if (p <= 0L) {
             switch (skyblockId) {
                 case "CRUDE_GABAGOOL": return 402L;
                 case "VERY_CRUDE_GABAGOOL": return 1608L;
+                case "FUEL_GABAGOOL": return 14500L;
+                case "HEAVY_GABAGOOL": return 350000L;
                 case "CHILI_PEPPER": return 31500L;
                 case "ENCHANTED_CHILI_PEPPER": return 5040000L;
                 case "INFERNO_VERTEX": return 222199L;
                 case "INFERNO_APEX": return 8157176L;
-                case "REAPER_PEPPER": return 25000000L;
+                case "REAPER_PEPPER": return 13619981L;
+                case "GABAGOOL_THE_FISH": return 7000000L;
                 default: return 1000L;
             }
         }

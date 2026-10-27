@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.164",
+    "date": "2026-10-27",
+    "changes": [
+      "+ Added Inferno Fuel Craft Helper (Tab 5 in /b inferno) with material deductions, inventory/sack tracking & Bazaar integration",
+      "+ One-click /bz buy with quantity clipboard copy (capped at 71,680 Bazaar order limit with remaining notice)",
+      "+ In-container Craft Batch Overlay for Sulphuric Coal & Gabagool recipes calculating optimal crafts without inventory overflow",
+      "+ Added /b debug sacks [user] querying categorized Hypixel API sacks with co-op sharing",
+      "+ Reverted false drops from Bazaar order cancellations and recipe viewing, hardened harvest click detection",
+      "+ Real market pricing for Reaper Pepper (~13.62M) and Gabagool the Fish (~7.00M)"
+    ]
+  },
+  {
     "version": "26.2.28.163",
     "date": "2026-10-27",
     "changes": [

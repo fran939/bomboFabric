@@ -48,8 +48,13 @@ public class InfernoTrackerScreen extends Screen {
     private double detailModalScroll = 0.0;
     private double detailModalMaxScroll = 0.0;
     private static final SimpleDateFormat DETAIL_TIME_FMT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.ROOT);
+    public static final int TAB_DROPS = 0;
+    public static final int TAB_FUEL = 1;
+    public static final int TAB_MINIONS = 2;
+    public static final int TAB_ACTIVITY = 3;
+    public static final int TAB_CRAFT = 4;
 
-    private static final String[] TAB_NAMES = {"📦 Drops & Revenue", "⛽ Fuel & Costs", "🤖 Tracked Minions", "📜 Activity Log"};
+    private static final String[] TAB_NAMES = {"📦 Drops & Revenue", "⛽ Fuel & Costs", "🤖 Tracked Minions", "📜 Activity Log", "🔨 Fuel Craft"};
     private static final SimpleDateFormat TIME_FMT = new SimpleDateFormat("MM/dd HH:mm", Locale.ROOT);
 
     public InfernoTrackerScreen(Screen parent) {
@@ -57,11 +62,16 @@ public class InfernoTrackerScreen extends Screen {
         this.parent = parent;
     }
 
+    public void setActiveTab(int tab) {
+        this.currentTab = Math.max(0, Math.min(tab, TAB_NAMES.length - 1));
+    }
+
     @Override
     protected void init() {
         super.init();
         InfernoMinionTracker.ensureLoaded();
         InfernoMinionTracker.syncWithServer(null);
+        me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.refreshSacks();
 
         if (this.editingPasskey) {
             int winW = Math.min(this.width - 40, 680);
@@ -208,6 +218,7 @@ public class InfernoTrackerScreen extends Screen {
             case 1 -> totalH = renderFuelTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, s);
             case 2 -> totalH = renderMinionsTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, s);
             case 3 -> totalH = renderActivityTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, s, mouseX, mouseY);
+            case 4 -> totalH = renderFuelCraftTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, mouseX, mouseY);
         }
 
         g.disableScissor();
@@ -482,6 +493,147 @@ public class InfernoTrackerScreen extends Screen {
             }
 
             curY += rowH + 4;
+        }
+
+        return curY - y;
+    }
+
+    private int renderFuelCraftTab(GuiGraphicsExtractor g, Font font, int x, int y, int w, int mouseX, int mouseY) {
+        int curY = y;
+        me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.CraftPlan plan =
+                me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.computePlan();
+
+        // 1. Target Controls Header Card
+        int ctrlH = 34;
+        g.fill(x, curY, x + w, curY + ctrlH, 0xFF1F2937);
+        g.outline(x, curY, w, ctrlH, 0xFF374151);
+
+        g.text(font, "§6§lTarget Hypergolic Fuels: §e" + plan.targetFuels, x + 10, curY + 13, 0xFFFFFFFF, true);
+
+        // Stepper buttons [-] and [+]
+        int btnY = curY + 7;
+        int btnH = 20;
+
+        int minusX = x + 185;
+        int minusW = 22;
+        boolean minusHov = mouseX >= minusX && mouseX <= minusX + minusW && mouseY >= btnY && mouseY <= btnY + btnH;
+        g.fill(minusX, btnY, minusX + minusW, btnY + btnH, minusHov ? 0xFF374151 : 0xFF111827);
+        g.outline(minusX, btnY, minusW, btnH, 0xFF4B5563);
+        g.centeredText(font, "§f-", minusX + minusW / 2, btnY + 5, 0xFFFFFFFF);
+
+        int plusX = minusX + minusW + 4;
+        int plusW = 22;
+        boolean plusHov = mouseX >= plusX && mouseX <= plusX + plusW && mouseY >= btnY && mouseY <= btnY + btnH;
+        g.fill(plusX, btnY, plusX + plusW, btnY + btnH, plusHov ? 0xFF374151 : 0xFF111827);
+        g.outline(plusX, btnY, plusW, btnH, 0xFF4B5563);
+        g.centeredText(font, "§f+", plusX + plusW / 2, btnY + 5, 0xFFFFFFFF);
+
+        // Presets: [16] [32] [64] [128]
+        int[] presets = {16, 32, 64, 128};
+        int pX = plusX + plusW + 10;
+        int pW = 32;
+        for (int p : presets) {
+            boolean active = plan.targetFuels == p;
+            boolean pHov = mouseX >= pX && mouseX <= pX + pW && mouseY >= btnY && mouseY <= btnY + btnH;
+            g.fill(pX, btnY, pX + pW, btnY + btnH, active ? 0xFF2563EB : (pHov ? 0xFF374151 : 0xFF111827));
+            g.outline(pX, btnY, pW, btnH, active ? 0xFF60A5FA : 0xFF4B5563);
+            g.centeredText(font, (active ? "§f§l" : "§7") + p, pX + pW / 2, btnY + 5, 0xFFFFFFFF);
+            pX += pW + 4;
+        }
+
+        // Right side: Total estimated cost & ready count
+        String costStr = "§7Est. Buy Cost: §6" + InfernoMinionTracker.formatCoins(plan.totalEstimatedBuyCost) + " coins";
+        g.text(font, costStr, x + w - font.width(costStr) - 10, curY + 13, 0xFFFCD34D, false);
+
+        curY += ctrlH + 10;
+
+        // 2. Raw Materials Section Header
+        g.fill(x, curY, x + w, curY + 20, 0xFF1E293B);
+        g.outline(x, curY, w, 20, 0xFF334155);
+        g.text(font, "§b§l📦 RAW MATERIALS TO BUY (Click to copy & open /bz)", x + 10, curY + 5, 0xFF38BDF8, false);
+        g.text(font, "§7HAVE (INV+SACKS)", x + w - 310, curY + 5, 0xFF94A3B8, false);
+        g.text(font, "§7TO BUY", x + w - 190, curY + 5, 0xFF94A3B8, false);
+        g.text(font, "§7SUBTOTAL", x + w - 85, curY + 5, 0xFF94A3B8, false);
+        curY += 24;
+
+        int rowH = 34;
+        for (me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.CraftItem item : plan.rawMaterials) {
+            boolean hov = mouseX >= x && mouseX <= x + w && mouseY >= curY && mouseY <= curY + rowH;
+            int rowBg = item.toBuy == 0 ? 0x1510B981 : (hov ? 0x30374151 : 0x151F2937);
+            g.fill(x, curY, x + w, curY + rowH, rowBg);
+            g.outline(x, curY, w, rowH, item.toBuy == 0 ? 0x4010B981 : (hov ? 0xFF60A5FA : 0x30374151));
+
+            String iconAndName = item.icon + " " + (item.toBuy == 0 ? "§a" : "§f") + item.name + " §7(Need " + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(item.needed) + ")";
+            g.text(font, iconAndName, x + 10, curY + 6, 0xFFFFFFFF, false);
+
+            String haveDetail = "§8Inv: §7" + item.haveInv + " §8| Sacks: §7" + item.havePersonalSacks + (item.haveCoopSacks > 0 ? " §8| Coop: §b" + item.haveCoopSacks : "");
+            g.text(font, haveDetail, x + 10, curY + 19, 0xFF9CA3AF, false);
+
+            g.text(font, (item.getTotalHave() >= item.needed ? "§a" : "§e") + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(item.getTotalHave()), x + w - 310, curY + 12, 0xFFFFFFFF, false);
+
+            if (item.toBuy == 0) {
+                g.text(font, "§a✓ READY", x + w - 190, curY + 12, 0xFF10B981, true);
+            } else {
+                g.text(font, "§c" + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(item.toBuy), x + w - 190, curY + 12, 0xFFEF4444, true);
+            }
+
+            g.text(font, "§6" + (item.totalCost > 0 ? InfernoMinionTracker.formatCoins(item.totalCost) : "0"), x + w - 85, curY + 12, 0xFFFBBF24, false);
+
+            curY += rowH + 4;
+        }
+
+        curY += 8;
+
+        // 3. Crafting Stages / Intermediate Crafts Section Header
+        g.fill(x, curY, x + w, curY + 20, 0xFF1E293B);
+        g.outline(x, curY, w, 20, 0xFF334155);
+        g.text(font, "§e§l🔨 INTERMEDIATE CRAFTING STAGES", x + 10, curY + 5, 0xFFFCD34D, false);
+        g.text(font, "§7POSSESSED", x + w - 310, curY + 5, 0xFF94A3B8, false);
+        g.text(font, "§7TO CRAFT", x + w - 190, curY + 5, 0xFF94A3B8, false);
+        g.text(font, "§7STATUS", x + w - 85, curY + 5, 0xFF94A3B8, false);
+        curY += 24;
+
+        for (me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.CraftItem item : plan.intermediates) {
+            boolean hov = mouseX >= x && mouseX <= x + w && mouseY >= curY && mouseY <= curY + rowH;
+            int rowBg = item.toCraft == 0 ? 0x1510B981 : (hov ? 0x30374151 : 0x151F2937);
+            g.fill(x, curY, x + w, curY + rowH, rowBg);
+            g.outline(x, curY, w, rowH, item.toCraft == 0 ? 0x4010B981 : (hov ? 0xFFFBBF24 : 0x30374151));
+
+            String iconAndName = item.icon + " §f" + item.name + " §7(Total Needed: " + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(item.needed) + ")";
+            g.text(font, iconAndName, x + 10, curY + 6, 0xFFFFFFFF, false);
+
+            String haveDetail = "§8Inv: §7" + item.haveInv + " §8| Sacks: §7" + item.havePersonalSacks + (item.haveCoopSacks > 0 ? " §8| Coop: §b" + item.haveCoopSacks : "");
+            g.text(font, haveDetail, x + 10, curY + 19, 0xFF9CA3AF, false);
+
+            g.text(font, (item.getTotalHave() >= item.needed ? "§a" : "§e") + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(item.getTotalHave()), x + w - 310, curY + 12, 0xFFFFFFFF, false);
+
+            if (item.toCraft == 0) {
+                g.text(font, "§a0 (Sufficient)", x + w - 190, curY + 12, 0xFF10B981, false);
+                g.text(font, "§a✓ READY", x + w - 85, curY + 12, 0xFF10B981, true);
+            } else {
+                g.text(font, "§e" + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(item.toCraft), x + w - 190, curY + 12, 0xFFFCD34D, true);
+                g.text(font, "§6CRAFT", x + w - 85, curY + 12, 0xFFFB923C, false);
+            }
+
+            curY += rowH + 4;
+        }
+
+        curY += 8;
+
+        // 4. Co-op Members Sacks Breakdown Card
+        java.util.List<String> coopSacks = me.bombo.bomboaddons.features.inferno.SacksHelper.getCoopMembersWithSacks();
+        if (!coopSacks.isEmpty()) {
+            int coopH = 22 + coopSacks.size() * 16;
+            g.fill(x, curY, x + w, curY + coopH, 0x153B82F6);
+            g.outline(x, curY, w, coopH, 0x403B82F6);
+            g.text(font, "§b👥 Co-op Sacks Overview (Shared automatically across co-op)", x + 10, curY + 6, 0xFF60A5FA, false);
+            int cY = curY + 22;
+            for (String member : coopSacks) {
+                String summary = me.bombo.bomboaddons.features.inferno.SacksHelper.getUserFuelSacksSummary(member);
+                g.text(font, "§7• §e" + member + "§7: " + summary, x + 16, cY, 0xFFE2E8F0, false);
+                cY += 16;
+            }
+            curY += coopH + 6;
         }
 
         return curY - y;
@@ -870,6 +1022,75 @@ public class InfernoTrackerScreen extends Screen {
                     }
                     curY += rowH + 4;
                 }
+            }
+        }
+
+        // Fuel Craft Tab: Stepper, Presets & Item Card clicks
+        if (this.currentTab == 4) {
+            int contentX = winX + 16;
+            int contentY = tabsY + 30;
+            int contentW = winW - 32;
+            int contentH = winH - (contentY - winY) - 16;
+            int fx = contentX + 8;
+            int fy = contentY + 8 - (int) this.scrollAmount;
+            int fw = contentW - 16;
+
+            // Stepper & Presets
+            int stepY = fy + 7;
+            int stepH = 20;
+            int minusX = fx + 185;
+            int minusW = 22;
+            int plusX = minusX + minusW + 4;
+            int plusW = 22;
+
+            if (event.y() >= stepY && event.y() <= stepY + stepH && event.y() >= contentY && event.y() <= contentY + contentH) {
+                if (event.x() >= minusX && event.x() <= minusX + minusW) {
+                    int step = event.hasShiftDown() ? 8 : 1;
+                    me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.setTargetFuels(
+                            Math.max(1, me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.targetFuels - step));
+                    return true;
+                }
+                if (event.x() >= plusX && event.x() <= plusX + plusW) {
+                    int step = event.hasShiftDown() ? 8 : 1;
+                    me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.setTargetFuels(
+                            Math.min(1000, me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.targetFuels + step));
+                    return true;
+                }
+                int[] presets = {16, 32, 64, 128};
+                int pX = plusX + plusW + 10;
+                int pW = 32;
+                for (int p : presets) {
+                    if (event.x() >= pX && event.x() <= pX + pW) {
+                        me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.setTargetFuels(p);
+                        return true;
+                    }
+                    pX += pW + 4;
+                }
+            }
+
+            // Material cards clicks
+            int curY = fy + 34 + 10 + 24;
+            int rowH = 34;
+            me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.CraftPlan plan =
+                    me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.computePlan();
+
+            for (me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.CraftItem item : plan.rawMaterials) {
+                if (event.x() >= fx && event.x() <= fx + fw && event.y() >= curY && event.y() <= curY + rowH
+                        && event.y() >= contentY && event.y() <= contentY + contentH) {
+                    me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.executeBazaarAction(item);
+                    return true;
+                }
+                curY += rowH + 4;
+            }
+
+            curY += 8 + 24;
+            for (me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.CraftItem item : plan.intermediates) {
+                if (event.x() >= fx && event.x() <= fx + fw && event.y() >= curY && event.y() <= curY + rowH
+                        && event.y() >= contentY && event.y() <= contentY + contentH) {
+                    me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.executeBazaarAction(item);
+                    return true;
+                }
+                curY += rowH + 4;
             }
         }
 

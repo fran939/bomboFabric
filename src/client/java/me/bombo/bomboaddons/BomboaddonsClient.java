@@ -674,6 +674,8 @@ public class BomboaddonsClient implements ClientModInitializer {
       candidates.add("fixfuel");
       candidates.add("reset");
       candidates.add("key");
+      candidates.add("craft");
+      candidates.add("sacks");
 
       // Coop members from TabCompletionManager
       candidates.addAll(TabCompletionManager.coop);
@@ -715,6 +717,27 @@ public class BomboaddonsClient implements ClientModInitializer {
       String lower = arg.toLowerCase(java.util.Locale.ROOT);
       if (lower.equals("gui") || lower.equals("open")) {
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
+         return;
+      }
+      if (lower.equals("craft") || lower.equals("fuelcraft") || lower.startsWith("craft ") || lower.startsWith("fuelcraft ")) {
+         String[] parts = lower.split("\\s+");
+         if (parts.length >= 2) {
+            try {
+               int amt = Integer.parseInt(parts[1].trim());
+               me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.setTargetFuels(amt);
+            } catch (Exception ignored) {}
+         }
+         mc.execute(() -> {
+            me.bombo.bomboaddons.gui.InfernoTrackerScreen scr = new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null);
+            scr.setActiveTab(me.bombo.bomboaddons.gui.InfernoTrackerScreen.TAB_CRAFT);
+            mc.setScreenAndShow(scr);
+         });
+         return;
+      }
+      if (lower.equals("sacks") || lower.startsWith("sacks ")) {
+         String target = "";
+         if (lower.startsWith("sacks ")) target = arg.substring(6).trim();
+         me.bombo.bomboaddons.features.inferno.SacksHelper.displaySacksDebug(target);
          return;
       }
       if (lower.equals("sync")) {
@@ -1165,6 +1188,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       StopwatchManager.init();
       AlphaTrackerHud.init();
       me.bombo.bomboaddons.features.inferno.InfernoMinionHud.init();
+      me.bombo.bomboaddons.features.inferno.InfernoCraftHud.init();
       me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.init();
       me.bombo.bomboaddons.features.AutoRejoinHud.init();
       me.bombo.bomboaddons.features.ItemValueBreakdownHud.init();

@@ -808,6 +808,16 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          me.bombo.bomboaddons.features.buttons.InventoryButtonManager.renderButtons(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY, this.leftPos, this.topPos, this.imageWidth, this.imageHeight);
       }
 
+      // In-container Fuel Craft Batch Overlay (e.g. "Sulphuric Coal", "Fuel Gabagool")
+      try {
+         String title = this.getTitle() != null ? this.getTitle().getString() : null;
+         me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.InGuiBatchInfo batch =
+               me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.getContainerBatchInfo(title);
+         if (batch != null) {
+            renderCraftBatchOverlay(graphics, batch);
+         }
+      } catch (Throwable ignored) {}
+
       if (BomboConfig.get().storagePreview) {
          if (now - lastStoragePreviewTickTime >= 100L) {
             lastStoragePreviewTickTime = now;
@@ -956,5 +966,36 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          }
          me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onContainerClosed();
       } catch (Throwable ignored) {}
+   }
+
+   private void renderCraftBatchOverlay(GuiGraphicsExtractor graphics, me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.InGuiBatchInfo batch) {
+      net.minecraft.client.gui.Font font = Minecraft.getInstance().font;
+      int boxW = Math.max(this.imageWidth, 230);
+      int boxH = 46;
+      int boxX = this.leftPos + (this.imageWidth - boxW) / 2;
+      int boxY = Math.max(4, this.topPos - boxH - 4);
+
+      // Glassmorphic dark card with glowing inferno border
+      graphics.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xF00D1117);
+      graphics.outline(boxX, boxY, boxW, boxH, 0xFFF59E0B);
+
+      // Header row
+      String title = "§6§l🔥 " + batch.title + " Helper §8| §7Needed: §e" + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(batch.totalNeeded)
+            + (batch.remainingToCraft > 0 ? " §7(Rem: §c" + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(batch.remainingToCraft) + "§7)" : " §a(Ready!)");
+      graphics.text(font, title, boxX + 6, boxY + 5, 0xFFFFFFFF, false);
+
+      // Inventory capacity & optimal batch row
+      String batchRow = "§aBatch: §f" + batch.maxCraftsForInventory + " crafts §7(§a+" + me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(batch.totalOutputThisBatch) + "§7) "
+            + "§8[§b" + batch.emptySlots + " empty slots§8, §7holds " + (batch.emptySlots * 64) + "§8]";
+      graphics.text(font, batchRow, boxX + 6, boxY + 18, 0xFFFFFFFF, false);
+
+      // Ingredients row
+      StringBuilder ing = new StringBuilder("§7Requires: ");
+      int i = 0;
+      for (java.util.Map.Entry<String, Integer> e : batch.ingredientsNeeded.entrySet()) {
+         if (i++ > 0) ing.append("§8, ");
+         ing.append("§e").append(me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(e.getValue())).append(" §f").append(e.getKey());
+      }
+      graphics.text(font, ing.toString(), boxX + 6, boxY + 31, 0xFFCBD5E1, false);
    }
 }

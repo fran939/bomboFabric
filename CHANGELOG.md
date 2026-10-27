@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.164] - 2026-10-27 (Beta)
+
+### Inferno Fuel Craft Helper, Bazaar Auto-Copy, In-Container Batch Overlay & Co-op Sacks Sync (`InfernoFuelCraftHelper.java`, `InfernoCraftHud.java`, `SacksHelper.java`, `InfernoTrackerScreen.java`, `InfernoMinionTracker.java`, `AbstractContainerScreenMixin.java`, `CommandMixin.java`, `BomboaddonsClient.java`, `BomboConfig.java`)
+- **Inferno Fuel Craft Helper (Tab 5 in `/b inferno`):** Complete mathematical crafting solver for Hypergolic Inferno fuel. Supports setting any target fuel amount (e.g. 16, 32, 64, 128) with interactive steppers and presets. Automatically subtracts existing inventory, personal sacks, and co-op members' sacks for both intermediate crafts (Hypergolic Gabagool, Heavy Gabagool, Fuel Gabagool, Sulphuric Coal) and raw materials (Enchanted Coal, Enchanted Sulphur, Very Crude Gabagool, Distillate, Inferno Fuel Blocks).
+- **One-Click Bazaar Integration & Clipboard Copy:** Clicking any material card in the Fuel Craft tab runs `/bz <item>` and copies the exact quantity needed directly to clipboard. Automatically clamps copy amounts to the Bazaar buy order limit (71,680 items) and prints chat notifications indicating the copied amount and remaining items to order.
+- **In-Container Batch Craft Overlay:** When opening crafting containers titled "Sulphuric Coal" or Gabagool recipes, renders an aesthetic glassmorphic banner displaying total needed, remaining items, player's empty inventory slots, and the optimal batch craft size to prevent inventory overflow (taking into account that Sulphuric Coal yields 4 items per craft).
+- **Categorized Co-op Sacks Inspector (`/b debug sacks [user]`):** Fetches sacks from the Hypixel API and categorizes all items across Agronomy, Mining, Combat, Foraging, Fishing, Slayer, Nether, Gemstone, Dungeon, and Enchanting with item counts and interactive hover tooltips. Supports inspecting any co-op member or other player by appending their username.
+- **Elimination of False Drops from Bazaar Cancellations & Recipe Menus:** Hardened `onChatMessage` so that `[Sacks]` hover drops are only accepted if the player actively clicked a minion harvest action ("Collect All", "Pickup Minion", or storage slots) within 2.0 seconds and is not inside Bazaar. Excluded "recipe" and "crafting" containers from minion detection, removed Hypergolic Gabagool from minion drop tables, and cleaned past false drop entries from the database.
+- **Accurate Market Pricing for Rare Drops:** Synchronized real market valuation for Reaper Pepper (~13.62M coins) and Gabagool the Fish (~7.00M coins) across local client calculations, clamp ranges, and remote server drops editing tools.
+
 ## [26.2.28.163] - 2026-10-27 (Beta)
 
 ### Inferno Coop Tab Auto-Fill, Accurate Vertex/Apex Pricing, Session-Grouped Activity Log & Profile ID Default (`InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `BomboaddonsClient.java`, `CommandMixin.java`, `SkyblockUtils.java`, `TabCompletionManager.java`, `BomboConfig.java`)

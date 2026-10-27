@@ -799,6 +799,22 @@ public class HudMoveScreen extends Screen {
             g.pose().popMatrix();
         }
 
+        // 35. INFERNO_CRAFT_HUD
+        if (isTargetVisible(HudTarget.INFERNO_CRAFT_HUD, s.infernoCraftHudEnabled)) {
+            int craftW = (int) ((float) me.bombo.bomboaddons.features.inferno.InfernoCraftHud.getHudWidth() * s.infernoCraftHudScale);
+            int craftH = (int) ((float) me.bombo.bomboaddons.features.inferno.InfernoCraftHud.getHudHeight() * s.infernoCraftHudScale);
+            this.updateDragPosition(mouseX, mouseY, craftW, craftH, HudTarget.INFERNO_CRAFT_HUD, (nx, ny) -> {
+                s.infernoCraftHudX = nx;
+                s.infernoCraftHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.infernoCraftHudX, s.infernoCraftHudY, craftW, craftH, HudTarget.INFERNO_CRAFT_HUD, s.infernoCraftHudScale);
+            g.pose().pushMatrix();
+            g.pose().translate((float) s.infernoCraftHudX, (float) s.infernoCraftHudY);
+            g.pose().scale(s.infernoCraftHudScale, s.infernoCraftHudScale);
+            me.bombo.bomboaddons.features.inferno.InfernoCraftHud.drawHud(g, this.font, 0, 0);
+            g.pose().popMatrix();
+        }
+
         // Snap Guide Lines (Cyan/Teal)
         if (this.snapGuideX != null) {
             g.fill(this.snapGuideX - 1, 0, this.snapGuideX + 1, this.height, 0xDD00E5FF);
@@ -882,6 +898,8 @@ public class HudMoveScreen extends Screen {
                     HudTarget.STORAGE_TOOLBAR));
         if (current != HudTarget.INFERNO_HUD && (!s.showOnlyActiveHuds || s.infernoHudEnabled))
             list.add(new HudRect(s.infernoHudX, s.infernoHudY, (int)(me.bombo.bomboaddons.features.inferno.InfernoMinionHud.getHudWidth() * s.infernoHudScale), (int)(me.bombo.bomboaddons.features.inferno.InfernoMinionHud.getHudHeight() * s.infernoHudScale), HudTarget.INFERNO_HUD));
+        if (current != HudTarget.INFERNO_CRAFT_HUD && (!s.showOnlyActiveHuds || s.infernoCraftHudEnabled))
+            list.add(new HudRect(s.infernoCraftHudX, s.infernoCraftHudY, (int)(me.bombo.bomboaddons.features.inferno.InfernoCraftHud.getHudWidth() * s.infernoCraftHudScale), (int)(me.bombo.bomboaddons.features.inferno.InfernoCraftHud.getHudHeight() * s.infernoCraftHudScale), HudTarget.INFERNO_CRAFT_HUD));
 
         list.removeIf(r -> r.target != null && shouldSkipForFilter(r.target));
         return list;
@@ -2247,6 +2265,18 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // INFERNO_CRAFT_HUD
+        if (!s.showOnlyActiveHuds || s.infernoCraftHudEnabled) {
+            int craftW = (int) ((float) me.bombo.bomboaddons.features.inferno.InfernoCraftHud.getHudWidth() * s.infernoCraftHudScale);
+            int craftH = (int) ((float) me.bombo.bomboaddons.features.inferno.InfernoCraftHud.getHudHeight() * s.infernoCraftHudScale);
+            if (this.checkHit(mouseX, mouseY, s.infernoCraftHudX, s.infernoCraftHudY, craftW, craftH)) {
+                s.infernoCraftHudScale = clampScale(s.infernoCraftHudScale + delta);
+                this.selectedTarget = HudTarget.INFERNO_CRAFT_HUD;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -2327,7 +2357,7 @@ public class HudMoveScreen extends Screen {
             case PIP_OVERLAY -> "HUDs";
             case STORAGE_TOOLBAR -> "Misc";
             case SHARDS_SHOPPING_HUD -> "Dungeons";
-            case INFERNO_HUD -> "Profit Trackers";
+            case INFERNO_HUD, INFERNO_CRAFT_HUD -> "Profit Trackers";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -2396,6 +2426,7 @@ public class HudMoveScreen extends Screen {
                     case STORAGE_TOOLBAR -> { s.storageToolbarX = -1; s.storageToolbarY = -1; s.storageToolbarScale = 1.0f; }
                     case SHARDS_SHOPPING_HUD -> { s.shardsShoppingHudX = 10; s.shardsShoppingHudY = 120; s.shardsShoppingHudScale = 1.0f; }
                     case INFERNO_HUD -> { s.infernoHudX = 10; s.infernoHudY = 120; s.infernoHudScale = 1.0f; }
+                    case INFERNO_CRAFT_HUD -> { s.infernoCraftHudX = 10; s.infernoCraftHudY = 180; s.infernoCraftHudScale = 1.0f; }
                 }
                 BomboConfig.save();
                 return true;
@@ -2453,6 +2484,7 @@ public class HudMoveScreen extends Screen {
         PIP_OVERLAY,
         STORAGE_TOOLBAR,
         SHARDS_SHOPPING_HUD,
-        INFERNO_HUD;
+        INFERNO_HUD,
+        INFERNO_CRAFT_HUD;
     }
 }
