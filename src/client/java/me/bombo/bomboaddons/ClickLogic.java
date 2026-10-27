@@ -216,7 +216,7 @@ public class ClickLogic {
                                                                return "KP =";
                                                             }
 
-                                                            String glfwName = GLFW.glfwGetKeyName(code, 0);
+                                                            String glfwName = CustomBindsProcessor.safeGetKeyName(code);
                                                             if (glfwName != null && !glfwName.isEmpty()) {
                                                                String var11 = glfwName.substring(0, 1).toUpperCase();
                                                                return var11 + glfwName.substring(1);

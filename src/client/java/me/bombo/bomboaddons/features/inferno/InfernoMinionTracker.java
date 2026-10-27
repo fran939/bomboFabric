@@ -62,6 +62,18 @@ public class InfernoMinionTracker {
         "GABAGOOL_THE_FISH"
     );
 
+    // Drops that NEVER go to sacks and always enter player inventory directly
+    public static final Set<String> NON_SACK_DROPS = Set.of(
+        "VERY_CRUDE_GABAGOOL",
+        "FUEL_GABAGOOL",
+        "HEAVY_GABAGOOL",
+        "HYPERGOLIC_GABAGOOL",
+        "INFERNO_VERTEX",
+        "INFERNO_APEX",
+        "REAPER_PEPPER",
+        "GABAGOOL_THE_FISH"
+    );
+
     public static final String HYPERGOLIC_FUEL_ID = "INFERNO_HYPERGOLIC_CRUDE_GABAGOOL";
     public static final Pattern SACKS_ADD_PATTERN = Pattern.compile("(?i)^\\+([\\d,]+)x?\\s+(.+?)(?:\\s*\\([^\\)]*\\))?$");
 
@@ -119,6 +131,7 @@ public class InfernoMinionTracker {
 
     // Tracks if minion GUI was open recently
     private static long lastMinionGuiTime = 0L;
+    private static long lastBulkClaimTime = 0L;
 
     public static synchronized void ensureLoaded() {
         if (loaded) return;
@@ -490,6 +503,57 @@ public class InfernoMinionTracker {
         resolveActiveMinion(title);
 
         if (!isReturn) {
+            // Check if player clicked Pickup Minion (slot 53) or Collect All (slot 49)
+            String buttonName = "";
+            if (slot != null && slot.hasItem()) {
+                buttonName = ChatFormatting.stripFormatting(slot.getItem().getHoverName().getString()).toLowerCase(Locale.ROOT);
+            }
+            boolean isPickupButton = (slotId == 53) || buttonName.contains("pickup minion") || buttonName.contains("pick up minion");
+            boolean isCollectAllButton = (slotId == 49) || buttonName.contains("collect all");
+
+            if (isPickupButton || isCollectAllButton) {
+                lastBulkClaimTime = System.currentTimeMillis();
+                Map<String, Integer> claimed = new HashMap<>();
+                long revenue = 0L;
+                int containerSize = Math.min(chestMenu.slots.size(), 54);
+                for (int i = 0; i < containerSize; i++) {
+                    if (i == 19) continue; // Skip fuel slot
+                    Slot s = chestMenu.getSlot(i);
+                    if (s != null && s.hasItem()) {
+                        ItemStack item = s.getItem();
+                        String id = SkyblockUtils.getSkyblockId(item);
+                        if (NON_SACK_DROPS.contains(id)) {
+                            int count = item.getCount();
+                            if (count > 0) {
+                                claimed.put(id, claimed.getOrDefault(id, 0) + count);
+                                revenue += getDropUnitPrice(id) * count;
+                            }
+                        }
+                    }
+                }
+                if (!claimed.isEmpty()) {
+                    recordClaim(claimed, revenue);
+                }
+            } else if (slotId >= 0 && slotId < 54 && slotId != 19) {
+                // Individual slot click on a minion storage slot
+                long now = System.currentTimeMillis();
+                if (now - lastBulkClaimTime > 800L && slot != null && slot.hasItem()) {
+                    ItemStack clickedItem = slot.getItem();
+                    String id = SkyblockUtils.getSkyblockId(clickedItem);
+                    if (NON_SACK_DROPS.contains(id)) {
+                        int count = clickedItem.getCount();
+                        if (type == ContainerInput.PICKUP && mouseButton == 1) {
+                            count = (count + 1) / 2; // Right click picks up half
+                        }
+                        if (count > 0) {
+                            Map<String, Integer> single = Map.of(id, count);
+                            long revenue = getDropUnitPrice(id) * count;
+                            recordClaim(single, revenue);
+                        }
+                    }
+                }
+            }
+
             // Check if player is actually interacting with the fuel slot
             isInteractingWithFuelSlot = (slotId == 19) || (type == ContainerInput.QUICK_MOVE && slot != null && isFuelItem(slot.getItem()));
             if (isInteractingWithFuelSlot) {

@@ -2905,7 +2905,7 @@ public class BomboOrderScreen extends Screen {
                     BomboConfig.save();
                 }
             } else {
-                String keyName = (code > 0 && code != GLFW.GLFW_KEY_UNKNOWN) ? GLFW.glfwGetKeyName(code, 0) : null;
+                String keyName = me.bombo.bomboaddons.CustomBindsProcessor.safeGetKeyName(code);
                 if (keyName == null || keyName.isEmpty()) {
                     keyName = code <= 0 ? "NONE" : "KEY_" + code;
                 }

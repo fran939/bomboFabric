@@ -273,6 +273,21 @@ public class CustomBindsProcessor {
    /** Cache for non-ASCII layout glyphs resolved via {@link GLFW#glfwGetKeyName}. */
    private static final java.util.Map<String, Integer> REVERSE_KEY_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
+   public static String safeGetKeyName(int code) {
+      if (code <= 0 || code == org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
+         return null;
+      }
+      try {
+         int scancode = org.lwjgl.glfw.GLFW.glfwGetKeyScancode(code);
+         if (scancode <= 0) {
+            return null;
+         }
+         return org.lwjgl.glfw.GLFW.glfwGetKeyName(code, scancode);
+      } catch (Throwable ignored) {
+         return null;
+      }
+   }
+
    public static String getKeyNameForGlfwCode(int code) {
       if (code <= 0 || code == org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
          return "none";
@@ -336,7 +351,7 @@ public class CustomBindsProcessor {
       } else if (code == 32) {
          return "space";
       } else {
-         String glfwName = GLFW.glfwGetKeyName(code, 0);
+         String glfwName = safeGetKeyName(code);
          return glfwName != null && !glfwName.trim().isEmpty() ? glfwName.trim().toLowerCase() : "key_" + code;
       }
    }
@@ -346,6 +361,9 @@ public class CustomBindsProcessor {
          return -1;
       }
       String clean = name.trim().toLowerCase();
+      if (clean.equals("none") || clean.equals("unbound") || clean.equals("null") || clean.equals("false") || clean.equals("disabled") || clean.equals("-1") || clean.equals("key_-1") || clean.equals("key_0")) {
+         return -1;
+      }
 
       // Mouse mappings
       if (clean.startsWith("mouse") || clean.startsWith("button") || clean.equals("left_click") || clean.equals("right_click") || clean.equals("middle_click")) {
@@ -456,11 +474,7 @@ public class CustomBindsProcessor {
       }
       for (int code = 32; code <= 348; code++) {
          if (code >= 1000) break;
-         String keyName = null;
-         try {
-            keyName = GLFW.glfwGetKeyName(code, 0);
-         } catch (Throwable ignored) {
-         }
+         String keyName = safeGetKeyName(code);
          if (keyName == null || keyName.isEmpty()) {
             continue;
          }
@@ -469,8 +483,7 @@ public class CustomBindsProcessor {
             return code;
          }
       }
-      // Misses are not cached: GLFW may not be ready during early startup, and a bind can be
-      // resolved later once the window exists.
+      REVERSE_KEY_CACHE.put(clean, -1);
       return -1;
    }
 

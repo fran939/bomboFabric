@@ -1,5 +1,11 @@
 # BomboAddons Changelog
  
+## [26.2.28.162] - 2026-10-27 (Beta)
+
+### Non-Sack Minion Drops Tracking & Definitive GLFW Scancode Elimination (`InfernoMinionTracker.java`, `CustomBindsProcessor.java`, `ClickLogic.java`, `BomboOrderScreen.java`, `AutoSequenceManager.java`)
+- **Non-Sack Inferno Drops Tracking (Very Crude Gabagool, Vertex, Apex, etc.):** Items that never enter sacks (`VERY_CRUDE_GABAGOOL`, `FUEL_GABAGOOL`, `HEAVY_GABAGOOL`, `HYPERGOLIC_GABAGOOL`, `INFERNO_VERTEX`, `INFERNO_APEX`, `REAPER_PEPPER`, `GABAGOOL_THE_FISH`) are now accurately captured and tracked directly when clicking "Pickup Minion" (slot 53), "Collect All" (slot 49), or clicking/shift-clicking individual drop stacks in minion storage slots. Sack drops (`CRUDE_GABAGOOL`, `CHILI_PEPPER`) continue to be tracked exclusively via `[Sacks]` chat messages, completely preventing double-counting while guaranteeing non-sack drops are never missed.
+- **Definitive Fix for `65540: Invalid scancode -1` Spam:** Identified that GLFW on Windows emits error `65540: Invalid scancode -1` inside `_glfwGetKeyNameWin32` whenever `glfwGetKeyName` is called on any key code where `_glfw.win32.scancodes[key] <= 0`. Introduced `CustomBindsProcessor.safeGetKeyName(code)` which verifies `GLFW.glfwGetKeyScancode(code) > 0` before querying key names. Added immediate fast exits for unbound/empty keys (`"none"`, `"unbound"`, `"null"`, `"-1"`, etc.) in `getGlfwCodeForName` and cached reverse lookup misses, entirely eliminating GLFW error callbacks during render frames.
+
 ## [26.2.28.161] - 2026-10-27 (Beta)
 
 ### Thread-Safe Sound Debug & GLFW Invalid Scancode Fix (`SoundEngineMixin.java`, `ClientPacketListenerMixin.java`, `CustomBindsProcessor.java`, `ClickLogic.java`, `BomboOrderScreen.java`, `AutoSequenceManager.java`)
