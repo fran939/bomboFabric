@@ -783,6 +783,22 @@ public class HudMoveScreen extends Screen {
             this.renderTargetBox(g, mouseX, mouseY, s.shardsShoppingHudX, s.shardsShoppingHudY, shW, shH, HudTarget.SHARDS_SHOPPING_HUD, s.shardsShoppingHudScale);
         }
 
+        // 34. INFERNO_HUD
+        if (isTargetVisible(HudTarget.INFERNO_HUD, s.infernoHudEnabled)) {
+            int infW = (int) ((float) me.bombo.bomboaddons.features.inferno.InfernoMinionHud.getHudWidth() * s.infernoHudScale);
+            int infH = (int) ((float) me.bombo.bomboaddons.features.inferno.InfernoMinionHud.getHudHeight() * s.infernoHudScale);
+            this.updateDragPosition(mouseX, mouseY, infW, infH, HudTarget.INFERNO_HUD, (nx, ny) -> {
+                s.infernoHudX = nx;
+                s.infernoHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.infernoHudX, s.infernoHudY, infW, infH, HudTarget.INFERNO_HUD, s.infernoHudScale);
+            g.pose().pushMatrix();
+            g.pose().translate((float) s.infernoHudX, (float) s.infernoHudY);
+            g.pose().scale(s.infernoHudScale, s.infernoHudScale);
+            me.bombo.bomboaddons.features.inferno.InfernoMinionHud.drawHud(g, this.font, 0, 0);
+            g.pose().popMatrix();
+        }
+
         // Snap Guide Lines (Cyan/Teal)
         if (this.snapGuideX != null) {
             g.fill(this.snapGuideX - 1, 0, this.snapGuideX + 1, this.height, 0xDD00E5FF);
@@ -864,6 +880,8 @@ public class HudMoveScreen extends Screen {
                     me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarWidth(),
                     me.bombo.bomboaddons.features.storageoverlay.StorageOverlayScreen.getToolbarHeight(),
                     HudTarget.STORAGE_TOOLBAR));
+        if (current != HudTarget.INFERNO_HUD && (!s.showOnlyActiveHuds || s.infernoHudEnabled))
+            list.add(new HudRect(s.infernoHudX, s.infernoHudY, (int)(me.bombo.bomboaddons.features.inferno.InfernoMinionHud.getHudWidth() * s.infernoHudScale), (int)(me.bombo.bomboaddons.features.inferno.InfernoMinionHud.getHudHeight() * s.infernoHudScale), HudTarget.INFERNO_HUD));
 
         list.removeIf(r -> r.target != null && shouldSkipForFilter(r.target));
         return list;
@@ -1741,6 +1759,8 @@ public class HudMoveScreen extends Screen {
                 s.storageToolbarScale = (float) newScale;
             } else if (this.resizingTarget == HudTarget.SHARDS_SHOPPING_HUD) {
                 s.shardsShoppingHudScale = (float) newScale;
+            } else if (this.resizingTarget == HudTarget.INFERNO_HUD) {
+                s.infernoHudScale = (float) newScale;
             }
             return true;
         }
@@ -2215,6 +2235,18 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // INFERNO_HUD
+        if (!s.showOnlyActiveHuds || s.infernoHudEnabled) {
+            int infW = (int) ((float) me.bombo.bomboaddons.features.inferno.InfernoMinionHud.getHudWidth() * s.infernoHudScale);
+            int infH = (int) ((float) me.bombo.bomboaddons.features.inferno.InfernoMinionHud.getHudHeight() * s.infernoHudScale);
+            if (this.checkHit(mouseX, mouseY, s.infernoHudX, s.infernoHudY, infW, infH)) {
+                s.infernoHudScale = clampScale(s.infernoHudScale + delta);
+                this.selectedTarget = HudTarget.INFERNO_HUD;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -2295,6 +2327,7 @@ public class HudMoveScreen extends Screen {
             case PIP_OVERLAY -> "HUDs";
             case STORAGE_TOOLBAR -> "Misc";
             case SHARDS_SHOPPING_HUD -> "Dungeons";
+            case INFERNO_HUD -> "Profit Trackers";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -2362,6 +2395,7 @@ public class HudMoveScreen extends Screen {
                     case PIP_OVERLAY -> { s.pipX = centerX - 160; s.pipY = centerY - 90; s.pipScale = 1.0f; }
                     case STORAGE_TOOLBAR -> { s.storageToolbarX = -1; s.storageToolbarY = -1; s.storageToolbarScale = 1.0f; }
                     case SHARDS_SHOPPING_HUD -> { s.shardsShoppingHudX = 10; s.shardsShoppingHudY = 120; s.shardsShoppingHudScale = 1.0f; }
+                    case INFERNO_HUD -> { s.infernoHudX = 10; s.infernoHudY = 120; s.infernoHudScale = 1.0f; }
                 }
                 BomboConfig.save();
                 return true;
@@ -2418,6 +2452,7 @@ public class HudMoveScreen extends Screen {
         LYRICS_HUD,
         PIP_OVERLAY,
         STORAGE_TOOLBAR,
-        SHARDS_SHOPPING_HUD;
+        SHARDS_SHOPPING_HUD,
+        INFERNO_HUD;
     }
 }

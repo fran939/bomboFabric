@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.159",
+    "date": "2026-10-27",
+    "changes": [
+      "+ Strict Sacks-only drop collection for Inferno Minions, eliminating all double-counting",
+      "+ Added on-screen Inferno Minion HUD (/b hud or /b config -> Profit Trackers)",
+      "+ Automatic coop connection via Skyblock Profile ID (/b inferno profile or [⚡ Link Profile ID])",
+      "+ Live coop data modification and fuel adjustments on server dashboard (/keys)"
+    ]
+  },
+  {
     "version": "26.2.28.158",
     "date": "2026-10-27",
     "changes": [

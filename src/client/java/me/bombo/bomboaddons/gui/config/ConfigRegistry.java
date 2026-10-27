@@ -820,10 +820,20 @@ public class ConfigRegistry {
 
                 items.add(ConfigItem.header("Inferno Minion Tracker", category));
                 items.add(ConfigItem.toggle("Inferno Minion Tracker", "Tracks farmed drops and fuel craft costs for Inferno Minions on your Private Island.", category, () -> s.infernoTrackerEnabled, v -> s.infernoTrackerEnabled = v));
+                items.add(ConfigItem.hudToggle("Inferno Minion HUD", "Live on-screen HUD displaying net profit, revenue, fuel expense, and coop status.", category, () -> s.infernoHudEnabled, v -> s.infernoHudEnabled = v, HudTarget.INFERNO_HUD));
+                items.add(ConfigItem.toggle("HUD Only On Island", "Only render the Inferno Minion HUD when you are on your Private Island.", category, () -> s.infernoHudOnlyIsland, v -> s.infernoHudOnlyIsland = v));
                 items.add(ConfigItem.toggle("Inferno Chat Alerts", "Sends a sleek chat summary when claiming drops or placing fuel.", category, () -> s.infernoChatAlerts, v -> s.infernoChatAlerts = v));
-                items.add(ConfigItem.text("Coop Passkey", "Passkey used to sync minion tracking data across coop members.", category, () -> s.infernoCoopPasskey != null ? s.infernoCoopPasskey : "default", v -> {
+                items.add(ConfigItem.text("Coop Passkey", "Passkey used to sync minion tracking data across coop members (or uses your Profile ID).", category, () -> s.infernoCoopPasskey != null ? s.infernoCoopPasskey : "default", v -> {
                     s.infernoCoopPasskey = v;
                     me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(v);
+                }));
+                items.add(ConfigItem.button("Sync with Profile ID", "Link Coop Profile", "Automatically binds your coop passkey to your current Skyblock Profile ID.", category, () -> {
+                    if (me.bombo.bomboaddons.SkyblockUtils.currentProfileId != null && !me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim().isEmpty()) {
+                        me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim());
+                        if (Minecraft.getInstance().player != null) {
+                            Minecraft.getInstance().player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§8[§6🔥 Inferno§8] §aCoop linked to Profile ID: §e" + me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim()));
+                        }
+                    }
                 }));
                 items.add(ConfigItem.button("Open Inferno Tracker", "Open GUI", "Opens the dedicated Inferno Minion profit and analytics dashboard (/b inferno).", category, () -> {
                     Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(Minecraft.getInstance().gui.screen()));

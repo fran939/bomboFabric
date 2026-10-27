@@ -77,8 +77,24 @@ public class InfernoTrackerScreen extends Screen {
         g.outline(winX, winY, winW, winH, border);
 
         // Header
+        String curPass = InfernoMinionTracker.getPasskey();
+        String currentPid = me.bombo.bomboaddons.SkyblockUtils.currentProfileId != null ? me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim() : "";
+        boolean isLinkedToPid = !currentPid.isEmpty() && curPass.equalsIgnoreCase(currentPid);
+
         g.text(font, "§6§l🔥 INFERNO MINION TRACKER", winX + 16, winY + 14, 0xFFFFFFFF, true);
-        g.text(font, "§7Coop Passkey: §e" + InfernoMinionTracker.getPasskey() + " §8[Click to Edit]", winX + 16, winY + 27, 0xFFA0AEC0, false);
+        String subLabel = "§7Coop: " + (isLinkedToPid ? "§a[Profile Linked] §e" : "§e") + curPass + " §8[Click to Edit]";
+        g.text(font, subLabel, winX + 16, winY + 27, 0xFFA0AEC0, false);
+
+        int linkBtnX = winX + 16 + font.width(subLabel) + 6;
+        int linkBtnY = winY + 24;
+        int linkBtnW = 95;
+        int linkBtnH = 14;
+        if (!currentPid.isEmpty() && !isLinkedToPid) {
+            boolean linkHovered = mouseX >= linkBtnX && mouseX <= linkBtnX + linkBtnW && mouseY >= linkBtnY && mouseY <= linkBtnY + linkBtnH;
+            g.fill(linkBtnX, linkBtnY, linkBtnX + linkBtnW, linkBtnY + linkBtnH, linkHovered ? 0xFF0284C7 : 0xFF0369A1);
+            g.outline(linkBtnX, linkBtnY, linkBtnW, linkBtnH, 0xFF38BDF8);
+            g.centeredText(font, "§f⚡ Link Profile ID", linkBtnX + linkBtnW / 2, linkBtnY + 3, 0xFFFFFFFF);
+        }
 
         // Top Action Buttons
         int btnY = winY + 12;
@@ -478,6 +494,22 @@ public class InfernoTrackerScreen extends Screen {
                 this.passkeyEditBox.mouseClicked(event, handled);
             }
             return true;
+        }
+
+        // Profile ID link click
+        String curPass = InfernoMinionTracker.getPasskey();
+        String currentPid = me.bombo.bomboaddons.SkyblockUtils.currentProfileId != null ? me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim() : "";
+        boolean isLinkedToPid = !currentPid.isEmpty() && curPass.equalsIgnoreCase(currentPid);
+        String subLabel = "§7Coop: " + (isLinkedToPid ? "§a[Profile Linked] §e" : "§e") + curPass + " §8[Click to Edit]";
+        int linkBtnX = winX + 16 + this.font.width(subLabel) + 6;
+        int linkBtnY = winY + 24;
+        int linkBtnW = 95;
+        int linkBtnH = 14;
+        if (!currentPid.isEmpty() && !isLinkedToPid) {
+            if (event.x() >= linkBtnX && event.x() <= linkBtnX + linkBtnW && event.y() >= linkBtnY && event.y() <= linkBtnY + linkBtnH) {
+                InfernoMinionTracker.setPasskey(currentPid);
+                return true;
+            }
         }
 
         // Passkey click to edit

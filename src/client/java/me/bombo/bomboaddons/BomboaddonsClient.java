@@ -932,6 +932,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       TextureToggleManager.INSTANCE.init();
       StopwatchManager.init();
       AlphaTrackerHud.init();
+      me.bombo.bomboaddons.features.inferno.InfernoMinionHud.init();
       me.bombo.bomboaddons.cheat.dungeons.CroesusProfitTrackerHud.init();
       me.bombo.bomboaddons.features.AutoRejoinHud.init();
       me.bombo.bomboaddons.features.ItemValueBreakdownHud.init();

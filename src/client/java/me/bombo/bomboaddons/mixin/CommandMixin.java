@@ -201,6 +201,18 @@ public class CommandMixin {
                      mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aReset all tracked fuels and fuel expense back to 0 (all drop records preserved)!"));
                   }
                });
+            } else if (subCmd.equals("profile") || subCmd.equals("coop") || subCmd.equals("link")) {
+               if (me.bombo.bomboaddons.SkyblockUtils.currentProfileId != null && !me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim().isEmpty()) {
+                  String pid = me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim();
+                  me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(pid);
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCoop passkey linked to Profile ID: §e" + pid));
+                  }
+               } else {
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §cProfile ID not detected yet! Switch lobbies or open Skyblock menu to resolve."));
+                  }
+               }
             } else if (subCmd.equals("gui") || subCmd.equals("open")) {
                mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
             } else {

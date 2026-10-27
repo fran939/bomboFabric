@@ -55,6 +55,7 @@ public class SkyblockUtils {
       if (pid != null && !pid.isEmpty() && !pid.equalsIgnoreCase(currentProfileId)) {
          currentProfileId = pid;
          me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.onProfileChanged(pid);
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onProfileChanged(pid);
       }
    }
 

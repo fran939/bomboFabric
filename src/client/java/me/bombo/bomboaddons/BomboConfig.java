@@ -673,6 +673,11 @@ public class BomboConfig {
       public boolean infernoTrackerEnabled = true;
       public String infernoCoopPasskey = "default";
       public boolean infernoChatAlerts = true;
+      public boolean infernoHudEnabled = false;
+      public int infernoHudX = 10;
+      public int infernoHudY = 120;
+      public float infernoHudScale = 1.0f;
+      public boolean infernoHudOnlyIsland = true;
 
       public boolean dianaLootshareEnabled = false;
       public boolean dianaLsInquisitor = false;

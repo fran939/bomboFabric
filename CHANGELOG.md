@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.159] - 2026-10-27 (Beta)
+
+### Inferno Minion Sacks-Only Drop Tracking, On-Screen HUD & Coop Profile Link (`InfernoMinionTracker.java`, `InfernoMinionHud.java`, `InfernoTrackerScreen.java`, `HudMoveScreen.java`, `SkyblockUtils.java`, `CommandMixin.java`, `ConfigRegistry.java`)
+- **Strict Sacks-Only Drop Collection:** Eliminated double-counting drops by completely migrating drop collection to parse strictly from `[Sacks]` chat tooltips (`+65 Crude Gabagool (Slayer Sack)`). Direct slot clicks in minion inventories now exclusively monitor Hypergolic fuel placement in slot 19.
+- **On-Screen Inferno Minion HUD (`InfernoMinionHud.java`):** Added a draggable, scalable glassmorphic HUD displaying live Net Profit, Gross Revenue, Fuel Expenses, Fuels Used, and Coop Status. Configurable in `/b config` (Profit Trackers) and movable via `/b hud` or the "Move HUD" button.
+- **Automatic Coop Connection via Skyblock Profile ID:** Integrated with `SkyblockUtils.currentProfileId` so players automatically connect and sync minion drops and fuels with their coop members sharing the same profile ID without needing manual passkeys. Added `/b inferno profile` / `/b inferno coop` and an interactive `[⚡ Link Profile ID]` button in `/b inferno`.
+- **Live Coop Data Modification on Server (`/keys`):** Added manual editing modal to the "Inferno Minion Coops" dashboard on `https://bombo.dpdns.org/keys`, allowing real-time adjustment of Gross Revenue, Fuel Expenses, and Fuels count, alongside a one-click "Zero Out Fuels" button and full coop resets.
+
 ## [26.2.28.158] - 2026-10-27 (Beta)
 
 ### Inferno Minion False Fuel Fix & Sacks Drop Tracking (`InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `ChatMixin.java`, `CommandMixin.java`)

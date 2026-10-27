@@ -117,13 +117,6 @@ public class InfernoMinionTracker {
     private static boolean isInteractingWithFuelSlot = false;
     private static String fuelUuidBeforeClick = null;
 
-    // Drops snapshot
-    private static final Map<Integer, ItemStack> dropSlotSnapshot = new HashMap<>();
-
-    // Sliding deduplication window between container clicks and sack chat messages (item -> count, timestamp)
-    private static final Map<String, Long> recentClaimCounts = new ConcurrentHashMap<>();
-    private static long lastClaimTimestamp = 0L;
-
     // Tracks if minion GUI was open recently
     private static long lastMinionGuiTime = 0L;
 
@@ -142,10 +135,27 @@ public class InfernoMinionTracker {
     public static String getPasskey() {
         ensureLoaded();
         BomboConfig.Settings s = BomboConfig.get();
-        if (s != null && s.infernoCoopPasskey != null && !s.infernoCoopPasskey.trim().isEmpty()) {
+        if (s != null && s.infernoCoopPasskey != null && !s.infernoCoopPasskey.trim().isEmpty() && !s.infernoCoopPasskey.trim().equalsIgnoreCase("default")) {
             return s.infernoCoopPasskey.trim();
         }
-        return state.passkey != null ? state.passkey : "default";
+        if (state.passkey != null && !state.passkey.trim().isEmpty() && !state.passkey.trim().equalsIgnoreCase("default")) {
+            return state.passkey.trim();
+        }
+        if (SkyblockUtils.currentProfileId != null && !SkyblockUtils.currentProfileId.trim().isEmpty()) {
+            return SkyblockUtils.currentProfileId.trim();
+        }
+        return "default";
+    }
+
+    public static void onProfileChanged(String newProfileId) {
+        if (newProfileId == null || newProfileId.trim().isEmpty()) return;
+        newProfileId = newProfileId.trim().toLowerCase(Locale.ROOT);
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s != null && (s.infernoCoopPasskey == null || s.infernoCoopPasskey.trim().isEmpty() || s.infernoCoopPasskey.trim().equalsIgnoreCase("default"))) {
+            setPasskey(newProfileId);
+        } else if (state.passkey == null || state.passkey.trim().isEmpty() || state.passkey.trim().equalsIgnoreCase("default")) {
+            setPasskey(newProfileId);
+        }
     }
 
     public static void setPasskey(String key) {
@@ -451,7 +461,6 @@ public class InfernoMinionTracker {
     }
 
     public static void onContainerClosed() {
-        dropSlotSnapshot.clear();
         isInteractingWithFuelSlot = false;
         fuelUuidBeforeClick = null;
     }
@@ -467,9 +476,6 @@ public class InfernoMinionTracker {
         resolveActiveMinion(title);
 
         if (!isReturn) {
-            // HEAD: snapshot before click
-            dropSlotSnapshot.clear();
-
             // Check if player is actually interacting with the fuel slot
             isInteractingWithFuelSlot = (slotId == 19) || (type == ContainerInput.QUICK_MOVE && slot != null && isFuelItem(slot.getItem()));
             if (isInteractingWithFuelSlot) {
@@ -477,32 +483,17 @@ public class InfernoMinionTracker {
             } else {
                 fuelUuidBeforeClick = null;
             }
-
-            if (slot != null && !slot.getItem().isEmpty()) {
-                String hoverName = slot.getItem().getHoverName().getString();
-                if (hoverName.contains("Collect All")) {
-                    for (int i = 0; i < 54; i++) {
-                        ItemStack item = chestMenu.getSlot(i).getItem();
-                        if (isFarmDrop(item)) {
-                            dropSlotSnapshot.put(i, item.copy());
-                        }
-                    }
-                } else if (isFarmDrop(slot.getItem())) {
-                    dropSlotSnapshot.put(slotId, slot.getItem().copy());
-                }
-            }
         } else {
-            // RETURN: verify updates
+            // RETURN: verify fuel updates
             Minecraft mc = Minecraft.getInstance();
             boolean checkFuel = isInteractingWithFuelSlot;
             String beforeUuid = fuelUuidBeforeClick;
             isInteractingWithFuelSlot = false;
             fuelUuidBeforeClick = null;
 
-            mc.execute(() -> {
-                try {
-                    // 1. Only check fuel placement IF the user actually clicked slot 19 or shift-clicked fuel
-                    if (checkFuel) {
+            if (checkFuel) {
+                mc.execute(() -> {
+                    try {
                         ItemStack fuelSlotItem = chestMenu.getSlot(19).getItem();
                         String afterUuid = extractFuelUuid(fuelSlotItem);
                         if (afterUuid != null && !afterUuid.equals(beforeUuid)) {
@@ -511,46 +502,11 @@ public class InfernoMinionTracker {
                                 checkAndRecordFuelPlacement(fuelSlotItem, afterUuid);
                             }
                         }
+                    } catch (Throwable t) {
+                        t.printStackTrace();
                     }
-
-                    // 2. Check direct inventory drops collected
-                    if (!dropSlotSnapshot.isEmpty()) {
-                        Map<String, Integer> claimedDrops = new HashMap<>();
-                        long claimRevenue = 0L;
-
-                        for (Map.Entry<Integer, ItemStack> entry : dropSlotSnapshot.entrySet()) {
-                            int sId = entry.getKey();
-                            ItemStack before = entry.getValue();
-                            ItemStack after = chestMenu.getSlot(sId).getItem();
-
-                            int taken = 0;
-                            if (after.isEmpty() || !after.getItem().equals(before.getItem())) {
-                                taken = before.getCount();
-                            } else if (after.getCount() < before.getCount()) {
-                                taken = before.getCount() - after.getCount();
-                            }
-
-                            if (taken > 0) {
-                                String sbId = SkyblockUtils.getSkyblockId(before);
-                                if (sbId.isEmpty()) sbId = before.getHoverName().getString();
-                                claimedDrops.put(sbId, claimedDrops.getOrDefault(sbId, 0) + taken);
-
-                                long unitPrice = getDropUnitPrice(sbId);
-                                claimRevenue += unitPrice * taken;
-                            }
-                        }
-
-                        if (!claimedDrops.isEmpty()) {
-                            // Register in recent claim window so sack messages don't double count
-                            registerRecentClaims(claimedDrops);
-                            recordClaim(claimedDrops, claimRevenue);
-                        }
-                        dropSlotSnapshot.clear();
-                    }
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                }
-            });
+                });
+            }
         }
     }
 
@@ -639,14 +595,9 @@ public class InfernoMinionTracker {
                 String rawName = matcher.group(2).trim();
                 String sbId = resolveInfernoDropId(rawName);
                 if (sbId != null && count > 0) {
-                    // Deduplicate against any recently claimed items from slot clicks
-                    int alreadyClaimed = getAndDeductRecentClaim(sbId, count);
-                    int actualNewCount = count - alreadyClaimed;
-                    if (actualNewCount > 0) {
-                        claimedFromSacks.put(sbId, claimedFromSacks.getOrDefault(sbId, 0) + actualNewCount);
-                        long unitPrice = getDropUnitPrice(sbId);
-                        claimRevenue += unitPrice * actualNewCount;
-                    }
+                    claimedFromSacks.put(sbId, claimedFromSacks.getOrDefault(sbId, 0) + count);
+                    long unitPrice = getDropUnitPrice(sbId);
+                    claimRevenue += unitPrice * count;
                 }
             }
         }
@@ -707,32 +658,6 @@ public class InfernoMinionTracker {
         for (Component child : comp.getSiblings()) {
             inspectComponentHover(child, lines, visitedTexts);
         }
-    }
-
-    private static synchronized void registerRecentClaims(Map<String, Integer> drops) {
-        long now = System.currentTimeMillis();
-        lastClaimTimestamp = now;
-        for (Map.Entry<String, Integer> e : drops.entrySet()) {
-            recentClaimCounts.put(e.getKey(), recentClaimCounts.getOrDefault(e.getKey(), 0L) + e.getValue());
-        }
-    }
-
-    private static synchronized int getAndDeductRecentClaim(String sbId, int count) {
-        long now = System.currentTimeMillis();
-        if (now - lastClaimTimestamp > 4000L) {
-            recentClaimCounts.clear();
-            return 0;
-        }
-        long existing = recentClaimCounts.getOrDefault(sbId, 0L);
-        if (existing <= 0) return 0;
-        int deducted = (int) Math.min(existing, count);
-        long remaining = existing - deducted;
-        if (remaining > 0) {
-            recentClaimCounts.put(sbId, remaining);
-        } else {
-            recentClaimCounts.remove(sbId);
-        }
-        return deducted;
     }
 
     private static void recordClaim(Map<String, Integer> claimedDrops, long claimRevenue) {
