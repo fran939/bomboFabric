@@ -40,7 +40,10 @@ public class SkyblockUtils {
    public static String lastExecutedCommand = "";
    public static String simulatedArea = null;
 
-   private static final java.util.regex.Pattern PROFILE_ID_PATTERN = java.util.regex.Pattern.compile("Profile ID:\\s*([0-9a-fA-F-]+)", java.util.regex.Pattern.CASE_INSENSITIVE);
+   private static final java.util.regex.Pattern PROFILE_ID_PATTERN = java.util.regex.Pattern.compile(
+       "(?:Profile ID:\\s*|[\"']?profile_id[\"']?\\s*:\\s*[\"']?|profile id[:= ]+)([0-9a-fA-F-]{16,})",
+       java.util.regex.Pattern.CASE_INSENSITIVE
+   );
 
    public static void onChatMessage(String message) {
       if (message == null) return;

@@ -151,17 +151,28 @@ public class InfernoMinionTracker {
         if (newProfileId == null || newProfileId.trim().isEmpty()) return;
         newProfileId = newProfileId.trim().toLowerCase(Locale.ROOT);
         BomboConfig.Settings s = BomboConfig.get();
-        if (s != null && (s.infernoCoopPasskey == null || s.infernoCoopPasskey.trim().isEmpty() || s.infernoCoopPasskey.trim().equalsIgnoreCase("default"))) {
-            setPasskey(newProfileId);
-        } else if (state.passkey == null || state.passkey.trim().isEmpty() || state.passkey.trim().equalsIgnoreCase("default")) {
+        String currentKey = (s != null && s.infernoCoopPasskey != null) ? s.infernoCoopPasskey.trim() : state.passkey;
+        boolean isDefaultOrEmpty = currentKey == null || currentKey.isEmpty() || currentKey.equalsIgnoreCase("default");
+        boolean isProfileFormat = currentKey != null && currentKey.matches("^[0-9a-fA-F-]{16,}$");
+
+        if (isDefaultOrEmpty || isProfileFormat) {
             setPasskey(newProfileId);
         }
     }
 
     public static void setPasskey(String key) {
         if (key == null || key.trim().isEmpty()) key = "default";
-        key = key.trim();
-        state.passkey = key;
+        key = key.trim().toLowerCase(Locale.ROOT);
+        if (!key.equals(state.passkey)) {
+            state.passkey = key;
+            state.drops.clear();
+            state.fuels.clear();
+            state.totalRevenue = 0;
+            state.totalCost = 0;
+            state.netProfit = 0;
+            state.actions.clear();
+            state.minions.clear();
+        }
         BomboConfig.Settings s = BomboConfig.get();
         if (s != null) {
             s.infernoCoopPasskey = key;
@@ -240,6 +251,7 @@ public class InfernoMinionTracker {
         if (data.has("netProfit")) state.netProfit = data.get("netProfit").getAsLong();
 
         if (data.has("drops") && data.get("drops").isJsonObject()) {
+            state.drops.clear();
             JsonObject dObj = data.getAsJsonObject("drops");
             for (Map.Entry<String, JsonElement> entry : dObj.entrySet()) {
                 state.drops.put(entry.getKey(), entry.getValue().getAsLong());
@@ -247,6 +259,7 @@ public class InfernoMinionTracker {
         }
 
         if (data.has("fuels") && data.get("fuels").isJsonObject()) {
+            state.fuels.clear();
             JsonObject fObj = data.getAsJsonObject("fuels");
             for (Map.Entry<String, JsonElement> entry : fObj.entrySet()) {
                 state.fuels.put(entry.getKey(), entry.getValue().getAsLong());
@@ -298,6 +311,7 @@ public class InfernoMinionTracker {
             try {
                 String key = getPasskey();
                 JsonObject payload = new JsonObject();
+                payload.addProperty("key", key);
                 payload.addProperty("passkey", key);
                 payload.addProperty("type", action.type);
                 payload.addProperty("player", action.player);

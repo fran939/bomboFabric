@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.160",
+    "date": "2026-10-27",
+    "changes": [
+      "+ Fixed multi-instance sync discrepancy by aligning server passkey extraction with client payload",
+      "+ Authoritative state overwrite on client sync to eliminate lingering local drop discrepancies",
+      "+ Broadened Profile ID detection to support both chat formats and locraw JSON packets",
+      "+ Added comprehensive manual drop & fuel editor on server dashboard (/keys)",
+      "+ Added auto-sync on opening /b inferno and detailed chat feedback on manual sync"
+    ]
+  },
+  {
     "version": "26.2.28.159",
     "date": "2026-10-27",
     "changes": [

@@ -186,7 +186,10 @@ public class CommandMixin {
                }
                me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.syncWithServer(() -> {
                   if (mc.player != null) {
-                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCloud sync complete!"));
+                     me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.TrackerState cur = me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getState();
+                     long dropsTotal = cur.drops.values().stream().mapToLong(Long::longValue).sum();
+                     long fuelsCount = cur.fuels.getOrDefault(me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.HYPERGOLIC_FUEL_ID, 0L);
+                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCloud sync complete (§e" + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getPasskey() + "§a): §f" + dropsTotal + " drops§7, §e" + fuelsCount + " fuels§7, §aNet: " + (cur.netProfit >= 0 ? "§a+" : "§c") + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.formatCoins(cur.netProfit)));
                   }
                });
             } else if (subCmd.equals("reset")) {

@@ -42,6 +42,7 @@ public class InfernoTrackerScreen extends Screen {
     protected void init() {
         super.init();
         InfernoMinionTracker.ensureLoaded();
+        InfernoMinionTracker.syncWithServer(null);
 
         if (this.editingPasskey) {
             int winW = Math.min(this.width - 40, 680);
@@ -537,6 +538,14 @@ public class InfernoTrackerScreen extends Screen {
             this.isSyncing = true;
             InfernoMinionTracker.syncWithServer(() -> {
                 this.isSyncing = false;
+                if (net.minecraft.client.Minecraft.getInstance().player != null) {
+                    InfernoMinionTracker.TrackerState cur = InfernoMinionTracker.getState();
+                    long dropsTotal = cur.drops.values().stream().mapToLong(Long::longValue).sum();
+                    long fuelsCount = cur.fuels.getOrDefault(InfernoMinionTracker.HYPERGOLIC_FUEL_ID, 0L);
+                    net.minecraft.client.Minecraft.getInstance().player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§8[§6🔥 Inferno§8] §aCoop synchronized (§e" + InfernoMinionTracker.getPasskey() + "§a): §f" + dropsTotal + " drops§7, §e" + fuelsCount + " fuels§7, §aNet: " + (cur.netProfit >= 0 ? "§a+" : "§c") + InfernoMinionTracker.formatCoins(cur.netProfit)
+                    ));
+                }
             });
             return true;
         }

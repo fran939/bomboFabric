@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.160] - 2026-10-27 (Beta)
+
+### Inferno Minion Sync Discrepancy Fix & Full Drops Editor on Server (`InfernoMinionTracker.java`, `SkyblockUtils.java`, `InfernoTrackerScreen.java`, `CommandMixin.java`, `server.js`, `inferno_service.js`, `keys.html`)
+- **Resolved Multi-Instance Sync Discrepancy:** Fixed a backend parameter mismatch where minion claims and fuel placements were recording to `"default"` instead of the active Profile ID or coop passkey. Backend routes now consistently check `key` and `passkey` across query parameters and JSON payloads, and migrated previous session drop records to the user's active Profile ID.
+- **Authoritative Drop & Fuel State Overwrite:** On client sync, existing drops and fuels caches are now cleared before merging server data, eliminating lingering local drop counts and ensuring identical metrics across all client instances.
+- **Robust Profile ID Detection (`SkyblockUtils.java`):** Expanded `PROFILE_ID_PATTERN` to recognize both standard chat text formats (`Profile ID: ...`) and locraw JSON packets (`"profile_id":"..."`), ensuring Profile ID is captured even if other chat mods filter or format incoming chat lines.
+- **Manual Drops & Fuel Editor on Server (`https://bombo.dpdns.org/keys`):** Added a comprehensive modal on `/keys` allowing full manual editing of individual drop counts (Crude Gabagool, Very Crude Gabagool, Fuel Gabagool, Heavy Gabagool, Hypergolic Gabagool, Chili Pepper, Enchanted Chili Pepper, Inferno Vertex, Inferno Apex, Reaper Pepper, Gabagool the Fish), Hypergolic fuels count, Fuel expenses, and Gross revenue, complete with live Net Profit preview and auto-recalculation buttons.
+- **Interactive Sync Feedback & Auto-Sync:** Opening `/b inferno` now automatically pulls the latest numbers from the cloud, and clicking `[🔄 Sync]` or running `/b inferno sync` displays detailed chat feedback confirming coop passkey, drop totals, fuels, and net profit.
+
 ## [26.2.28.159] - 2026-10-27 (Beta)
 
 ### Inferno Minion Sacks-Only Drop Tracking, On-Screen HUD & Coop Profile Link (`InfernoMinionTracker.java`, `InfernoMinionHud.java`, `InfernoTrackerScreen.java`, `HudMoveScreen.java`, `SkyblockUtils.java`, `CommandMixin.java`, `ConfigRegistry.java`)
