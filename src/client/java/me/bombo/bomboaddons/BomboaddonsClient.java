@@ -570,6 +570,238 @@ public class BomboaddonsClient implements ClientModInitializer {
             });
    }
 
+   public static LiteralArgumentBuilder<FabricClientCommandSource> buildInfernoCommand(String name) {
+      LiteralArgumentBuilder<FabricClientCommandSource> root = ClientCommands.literal(name);
+      root.executes(ctx -> {
+         Minecraft mc = Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
+         return 1;
+      });
+
+      root.then(ClientCommands.literal("gui").executes(ctx -> {
+         Minecraft mc = Minecraft.getInstance();
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
+         return 1;
+      }));
+
+      root.then(ClientCommands.literal("sync").executes(ctx -> {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §7Syncing Inferno Minion data with cloud..."));
+         }
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.syncWithServer(() -> {
+            if (mc.player != null) {
+               var cur = me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getState();
+               long dropsTotal = cur.drops.values().stream().mapToLong(Long::longValue).sum();
+               long fuelsCount = cur.fuels.getOrDefault(me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.HYPERGOLIC_FUEL_ID, 0L);
+               mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCloud sync complete (§e" + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getPasskey() + "§a): §f" + dropsTotal + " drops§7, §e" + fuelsCount + " fuels§7, §aNet: " + (cur.netProfit >= 0 ? "§a+" : "§c") + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.formatCoins(cur.netProfit)));
+            }
+         });
+         return 1;
+      }));
+
+      root.then(ClientCommands.literal("reset").executes(ctx -> {
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.resetData(() -> {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §cReset all Inferno Minion tracking data."));
+            }
+         });
+         return 1;
+      }));
+
+      root.then(ClientCommands.literal("fixfuel").executes(ctx -> {
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.resetFuels(() -> {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aReset all tracked fuels and fuel expense back to 0 (all drops preserved)!"));
+            }
+         });
+         return 1;
+      }));
+
+      root.then(ClientCommands.literal("profile").executes(ctx -> {
+         linkInfernoProfile();
+         return 1;
+      }));
+
+      root.then(ClientCommands.literal("link").executes(ctx -> {
+         linkInfernoProfile();
+         return 1;
+      }));
+
+      root.then(ClientCommands.literal("key")
+         .then(ClientCommands.argument("passkey", StringArgumentType.string())
+            .suggests((ctx, b) -> suggestInfernoCoopMembers(b))
+            .executes(ctx -> {
+               String k = StringArgumentType.getString(ctx, "passkey").trim();
+               me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(k);
+               Minecraft mc = Minecraft.getInstance();
+               if (mc.player != null) {
+                  mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCoop Passkey set to: §e" + k + " §7(Syncing...)"));
+               }
+               return 1;
+            })
+         )
+         .executes(ctx -> {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §7Current Coop Passkey: §e" + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getPasskey()));
+            }
+            return 1;
+         })
+      );
+
+      root.then(ClientCommands.argument("param", StringArgumentType.string())
+         .suggests((ctx, b) -> suggestInfernoCoopMembers(b))
+         .executes(ctx -> {
+            String arg = StringArgumentType.getString(ctx, "param").trim();
+            handleInfernoCommandArg(arg);
+            return 1;
+         })
+      );
+
+      return root;
+   }
+
+   public static java.util.concurrent.CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestInfernoCoopMembers(com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
+      String remaining = builder.getRemaining() == null ? "" : builder.getRemaining().toLowerCase(java.util.Locale.ROOT);
+      java.util.Set<String> candidates = new java.util.LinkedHashSet<>();
+      candidates.add("gui");
+      candidates.add("sync");
+      candidates.add("profile");
+      candidates.add("link");
+      candidates.add("fixfuel");
+      candidates.add("reset");
+      candidates.add("key");
+
+      // Coop members from TabCompletionManager
+      candidates.addAll(TabCompletionManager.coop);
+
+      // Actors from active tracker state
+      try {
+         var s = me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getState();
+         if (s != null && s.actions != null) {
+            for (var a : s.actions) {
+               if (a.player != null && !a.player.isEmpty()) {
+                  candidates.add(a.player);
+               }
+            }
+         }
+      } catch (Throwable ignored) {}
+
+      // Current player and online players
+      try {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player != null) {
+            candidates.add(mc.player.getGameProfile().name());
+         }
+         for (String name : TabCompletionManager.collectPlayerNames()) {
+            candidates.add(name);
+         }
+      } catch (Throwable ignored) {}
+
+      for (String c : candidates) {
+         if (c.toLowerCase(java.util.Locale.ROOT).startsWith(remaining)) {
+            builder.suggest(c);
+         }
+      }
+      return builder.buildFuture();
+   }
+
+   public static void handleInfernoCommandArg(String arg) {
+      if (arg == null || arg.isEmpty()) return;
+      Minecraft mc = Minecraft.getInstance();
+      String lower = arg.toLowerCase(java.util.Locale.ROOT);
+      if (lower.equals("gui") || lower.equals("open")) {
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
+         return;
+      }
+      if (lower.equals("sync")) {
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §7Syncing Inferno Minion data with cloud..."));
+         }
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.syncWithServer(() -> {
+            if (mc.player != null) {
+               var cur = me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getState();
+               long dropsTotal = cur.drops.values().stream().mapToLong(Long::longValue).sum();
+               long fuelsCount = cur.fuels.getOrDefault(me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.HYPERGOLIC_FUEL_ID, 0L);
+               mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCloud sync complete (§e" + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getPasskey() + "§a): §f" + dropsTotal + " drops§7, §e" + fuelsCount + " fuels§7, §aNet: " + (cur.netProfit >= 0 ? "§a+" : "§c") + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.formatCoins(cur.netProfit)));
+            }
+         });
+         return;
+      }
+      if (lower.equals("reset")) {
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.resetData(() -> {
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §cReset all Inferno Minion tracking data."));
+            }
+         });
+         return;
+      }
+      if (lower.equals("fixfuel") || lower.equals("resetfuel")) {
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.resetFuels(() -> {
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aReset all tracked fuels and fuel expense back to 0!"));
+            }
+         });
+         return;
+      }
+      if (lower.equals("profile") || lower.equals("link") || lower.equals("coop")) {
+         linkInfernoProfile();
+         return;
+      }
+
+      // Check if arg is a known player in actions or coop
+      var state = me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getState();
+      int claimsCount = 0;
+      long dropCount = 0;
+      long revenue = 0;
+      boolean foundPlayer = false;
+
+      if (state != null && state.actions != null) {
+         for (var a : state.actions) {
+            if (a.player != null && a.player.equalsIgnoreCase(arg)) {
+               foundPlayer = true;
+               if ("CLAIM".equalsIgnoreCase(a.type)) {
+                  claimsCount++;
+                  revenue += a.revenue;
+                  if (a.drops != null) {
+                     for (int cnt : a.drops.values()) dropCount += cnt;
+                  }
+               }
+            }
+         }
+      }
+
+      if (foundPlayer) {
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §eCoop Member §b" + arg + "§7: §a" + claimsCount + " minion claims§7, §f" + dropCount + " drops§7, §6+" + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.formatCoins(revenue) + " coins"));
+         }
+         mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
+      } else {
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(arg);
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCoop Passkey set to: §e" + arg + " §7(Syncing data...)"));
+         }
+      }
+   }
+
+   public static void linkInfernoProfile() {
+      Minecraft mc = Minecraft.getInstance();
+      if (me.bombo.bomboaddons.SkyblockUtils.currentProfileId != null && !me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim().isEmpty()) {
+         String pid = me.bombo.bomboaddons.SkyblockUtils.currentProfileId.trim();
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(pid);
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCoop passkey linked to Profile ID: §e" + pid));
+         }
+      } else {
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §cProfile ID not detected yet! Switch lobbies or open Skyblock menu to resolve."));
+         }
+      }
+   }
+
    public static void openMagicFindOptimizer(FabricClientCommandSource src, String username) {
       openMagicFindOptimizer(src, username, me.bombo.bomboaddons.features.magicfind.MagicFindOptimizer.Mode.GENERAL);
    }
@@ -6771,6 +7003,9 @@ public class BomboaddonsClient implements ClientModInitializer {
 
                         // /b pip -> Picture-in-Picture media overlay
                         builder.then(buildPipCommand("pip"));
+
+                        // /b inferno -> Inferno Minion Tracker
+                        builder.then(buildInfernoCommand("inferno"));
                      };
                      String[] mainCommandAliases = new String[] { "b", "B", "bombo", "Bombo", "BOMBO", "bomboaddons",
                            "ba", "BA" };
@@ -6796,6 +7031,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      dispatcher.register(buildMpCommand("mp"));
                      dispatcher.register(buildMpCommand("magicalpower"));
                      dispatcher.register(buildKuudraCommand("kuudra"));
+                     dispatcher.register(buildInfernoCommand("inferno"));
                      dispatcher.register(ClientCommands.literal("hotbar")
                            .executes((context) -> {
                               me.bombo.bomboaddons.features.hotbar.HotbarSlotManager.execute("",
@@ -7938,6 +8174,8 @@ public class BomboaddonsClient implements ClientModInitializer {
          });
          ClientReceiveMessageEvents.ALLOW_GAME.register((ClientReceiveMessageEvents.AllowGame) (message, overlay) -> {
             String plain = message.getString().trim();
+            SkyblockUtils.onChatMessage(plain);
+            TabCompletionManager.onChatMessage(plain);
             if (!plain.contains("DailyRewardDebug") && !plain.contains("[BomboAddons]")) {
                if (!overlay) {
                   String cleanLine = plain.replaceAll("§.", "");
@@ -8240,12 +8478,16 @@ public class BomboaddonsClient implements ClientModInitializer {
                .register((ClientReceiveMessageEvents.GameCanceled) (message, overlay) -> {
                   if (!overlay && message != null) {
                      me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, null);
+                     SkyblockUtils.onChatMessage(message.getString());
+                     TabCompletionManager.onChatMessage(message.getString());
                   }
                });
          ClientReceiveMessageEvents.CHAT_CANCELED.register((ClientReceiveMessageEvents.ChatCanceled) (message,
                signedMessage, sender, params, receptionTimestamp) -> {
             if (message != null) {
                me.bombo.bomboaddons.features.chat.ChatHistoryTracker.recordIncoming(message, true, null);
+               SkyblockUtils.onChatMessage(message.getString());
+               TabCompletionManager.onChatMessage(message.getString());
             }
          });
          ClientReceiveMessageEvents.GAME.register((ClientReceiveMessageEvents.Game) (message, overlay) -> {
@@ -8253,6 +8495,8 @@ public class BomboaddonsClient implements ClientModInitializer {
             if (!overlay) {
                DebugUtils.debug("chat", clean);
             }
+            SkyblockUtils.onChatMessage(clean);
+            TabCompletionManager.onChatMessage(clean);
 
             DiceTracker.onChatMessage(clean);
             DungeonSecretsTracker.onChatMessage(clean);

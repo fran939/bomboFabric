@@ -671,7 +671,8 @@ public class BomboConfig {
       public int etherwarpMaxDistance = 61;
 
       public boolean infernoTrackerEnabled = true;
-      public String infernoCoopPasskey = "default";
+      public String infernoCoopPasskey = "82de315f-8acd-425d-b6ee-76e7fe96e0cd";
+      public String lastProfileId = "82de315f-8acd-425d-b6ee-76e7fe96e0cd";
       public boolean infernoChatAlerts = true;
       public boolean infernoHudEnabled = false;
       public int infernoHudX = 10;

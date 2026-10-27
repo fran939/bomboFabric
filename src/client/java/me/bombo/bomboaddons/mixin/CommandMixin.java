@@ -220,10 +220,7 @@ public class CommandMixin {
                mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
             } else {
                String pass = tokens[0].trim();
-               me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(pass);
-               if (mc.player != null) {
-                  mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCoop Passkey set to: §e" + pass + " §7(Syncing data...)"));
-               }
+               me.bombo.bomboaddons.BomboaddonsClient.handleInfernoCommandArg(pass);
             }
          }
          ci.cancel();

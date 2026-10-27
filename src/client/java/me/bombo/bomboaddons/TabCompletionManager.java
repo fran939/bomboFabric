@@ -26,6 +26,7 @@ public class TabCompletionManager {
    public static final Set<String> friends = Collections.newSetFromMap(new ConcurrentHashMap());
    public static final Set<String> guild = Collections.newSetFromMap(new ConcurrentHashMap());
    public static final Set<String> party = Collections.newSetFromMap(new ConcurrentHashMap());
+   public static final Set<String> coop = Collections.newSetFromMap(new ConcurrentHashMap());
    private static final Path FILE_PATH = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/autocomplete.json");
    private static final Gson GSON = (new GsonBuilder()).setPrettyPrinting().create();
 
@@ -43,6 +44,10 @@ public class TabCompletionManager {
 
                   if (data.guild != null) {
                      guild.addAll(data.guild);
+                  }
+
+                  if (data.coop != null) {
+                     coop.addAll(data.coop);
                   }
                }
             } catch (Throwable var4) {
@@ -76,6 +81,7 @@ public class TabCompletionManager {
          AutocompleteData data = new AutocompleteData();
          data.friends.addAll(friends);
          data.guild.addAll(guild);
+         data.coop.addAll(coop);
          Writer writer = Files.newBufferedWriter(FILE_PATH);
 
          try {
@@ -186,6 +192,14 @@ public class TabCompletionManager {
                         }
                      }
                   }
+
+                  Matcher mCoopChat = Pattern.compile("^(?:Co-op|Coop)\\s*>\\s*(?:\\[[^\\]]+\\]\\s*)?([a-zA-Z0-9_]{3,16})\\s*:", Pattern.CASE_INSENSITIVE).matcher(trimmed);
+                  if (mCoopChat.find()) {
+                     String name = mCoopChat.group(1);
+                     if (isValidPlayerName(name) && coop.add(name)) {
+                        save();
+                     }
+                  }
                }
             }
 
@@ -231,6 +245,9 @@ public class TabCompletionManager {
          if (isValidPlayerName(name)) names.add(name);
       }
       for(String name : party) {
+         if (isValidPlayerName(name)) names.add(name);
+      }
+      for(String name : coop) {
          if (isValidPlayerName(name)) names.add(name);
       }
       return names;
@@ -317,5 +334,6 @@ public class TabCompletionManager {
    public static class AutocompleteData {
       public Set<String> friends = new HashSet();
       public Set<String> guild = new HashSet();
+      public Set<String> coop = new HashSet();
    }
 }

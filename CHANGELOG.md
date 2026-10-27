@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.163] - 2026-10-27 (Beta)
+
+### Inferno Coop Tab Auto-Fill, Accurate Vertex/Apex Pricing, Session-Grouped Activity Log & Profile ID Default (`InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `BomboaddonsClient.java`, `CommandMixin.java`, `SkyblockUtils.java`, `TabCompletionManager.java`, `BomboConfig.java`)
+- **Tab Auto-Fill for Coop Members & Subcommands:** `/b inferno <tab>` now provides full tab-completion suggestions for subcommands (`gui`, `sync`, `profile`, `link`, `fixfuel`, `reset`, `key`) as well as coop members from chat co-op detection, past activity records, and online players.
+- **Accurate Inferno Vertex & Apex Valuations:** Corrected inflated fallback and cached prices for `INFERNO_VERTEX` (~222,199 coins instead of ~6.2M) and `INFERNO_APEX` (~8,157,176 coins instead of 1.15B+), realigning gross revenue and net profit calculations with real market value.
+- **Session-Grouped Activity Log & Interactive Drill-Down Modal:** Contiguous minion harvests within 3 minutes by the same player are now aggregated into clean session summaries: `"[CLAIM] {player} claimed X minions at HH:mm collecting Y items"`. Clicking any session opens a glassmorphic drill-down modal displaying the full itemized drop breakdown with unit prices and individual minion coordinates and timestamps.
+- **Profile ID Auto-Persistence & Defaulting:** Fixed an issue where the coop passkey fell back to `"default"` by stripping chat formatting codes from `Profile ID: <id>` messages and automatically persisting the active Profile ID across sessions and lobby switches.
+
 ## [26.2.28.162] - 2026-10-27 (Beta)
 
 ### Non-Sack Minion Drops Tracking & Definitive GLFW Scancode Elimination (`InfernoMinionTracker.java`, `CustomBindsProcessor.java`, `ClickLogic.java`, `BomboOrderScreen.java`, `AutoSequenceManager.java`)

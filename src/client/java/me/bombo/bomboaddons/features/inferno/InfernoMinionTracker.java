@@ -154,10 +154,13 @@ public class InfernoMinionTracker {
         if (state.passkey != null && !state.passkey.trim().isEmpty() && !state.passkey.trim().equalsIgnoreCase("default")) {
             return state.passkey.trim();
         }
-        if (SkyblockUtils.currentProfileId != null && !SkyblockUtils.currentProfileId.trim().isEmpty()) {
+        if (SkyblockUtils.currentProfileId != null && !SkyblockUtils.currentProfileId.trim().isEmpty() && !SkyblockUtils.currentProfileId.trim().equalsIgnoreCase("default")) {
             return SkyblockUtils.currentProfileId.trim();
         }
-        return "default";
+        if (s != null && s.lastProfileId != null && !s.lastProfileId.trim().isEmpty() && !s.lastProfileId.trim().equalsIgnoreCase("default")) {
+            return s.lastProfileId.trim();
+        }
+        return "82de315f-8acd-425d-b6ee-76e7fe96e0cd";
     }
 
     public static void onProfileChanged(String newProfileId) {
@@ -872,13 +875,22 @@ public class InfernoMinionTracker {
     public static long getDropUnitPrice(String skyblockId) {
         if (skyblockId == null || skyblockId.isEmpty()) return 0L;
         long p = LowestBinManager.getCachedPrice(skyblockId);
+        if ("INFERNO_VERTEX".equals(skyblockId)) {
+            if (p <= 0L || p > 1_500_000L) return 222199L;
+            return p;
+        }
+        if ("INFERNO_APEX".equals(skyblockId)) {
+            if (p <= 0L || p > 40_000_000L) return 8157176L;
+            return p;
+        }
         if (p <= 0L) {
             switch (skyblockId) {
-                case "CRUDE_GABAGOOL": return 450L;
-                case "VERY_CRUDE_GABAGOOL": return 7200L;
-                case "CHILI_PEPPER": return 145000L;
-                case "INFERNO_VERTEX": return 4500000L;
-                case "INFERNO_APEX": return 125000000L;
+                case "CRUDE_GABAGOOL": return 402L;
+                case "VERY_CRUDE_GABAGOOL": return 1608L;
+                case "CHILI_PEPPER": return 31500L;
+                case "ENCHANTED_CHILI_PEPPER": return 5040000L;
+                case "INFERNO_VERTEX": return 222199L;
+                case "INFERNO_APEX": return 8157176L;
                 case "REAPER_PEPPER": return 25000000L;
                 default: return 1000L;
             }

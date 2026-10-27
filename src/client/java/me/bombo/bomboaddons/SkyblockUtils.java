@@ -47,7 +47,8 @@ public class SkyblockUtils {
 
    public static void onChatMessage(String message) {
       if (message == null) return;
-      java.util.regex.Matcher m = PROFILE_ID_PATTERN.matcher(message);
+      String clean = message.replaceAll("§.", "").trim();
+      java.util.regex.Matcher m = PROFILE_ID_PATTERN.matcher(clean);
       if (m.find()) {
          String pid = m.group(1).trim().toLowerCase(java.util.Locale.ROOT);
          setActiveProfileId(pid);
@@ -57,6 +58,13 @@ public class SkyblockUtils {
    public static void setActiveProfileId(String pid) {
       if (pid != null && !pid.isEmpty() && !pid.equalsIgnoreCase(currentProfileId)) {
          currentProfileId = pid;
+         try {
+            BomboConfig.Settings s = BomboConfig.get();
+            if (s != null) {
+               s.lastProfileId = pid;
+               BomboConfig.save();
+            }
+         } catch (Throwable ignored) {}
          me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.onProfileChanged(pid);
          me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onProfileChanged(pid);
       }

@@ -30,6 +30,25 @@ public class InfernoTrackerScreen extends Screen {
     private boolean editingPasskey = false;
     private EditBox passkeyEditBox = null;
 
+    // Activity detail modal & grouped activity state
+    public static class ActivityGroup {
+        public String player = "Unknown";
+        public String type = "CLAIM"; // "CLAIM" or "FUEL"
+        public long startTime = 0L;
+        public long endTime = 0L;
+        public int minionCount = 0;
+        public int itemCount = 0;
+        public long totalRevenue = 0L;
+        public long totalCost = 0L;
+        public Map<String, Integer> drops = new LinkedHashMap<>();
+        public List<InfernoMinionTracker.ActionEntry> subActions = new ArrayList<>();
+    }
+
+    private ActivityGroup selectedActivity = null;
+    private double detailModalScroll = 0.0;
+    private double detailModalMaxScroll = 0.0;
+    private static final SimpleDateFormat DETAIL_TIME_FMT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.ROOT);
+
     private static final String[] TAB_NAMES = {"📦 Drops & Revenue", "⛽ Fuel & Costs", "🤖 Tracked Minions", "📜 Activity Log"};
     private static final SimpleDateFormat TIME_FMT = new SimpleDateFormat("MM/dd HH:mm", Locale.ROOT);
 
@@ -188,7 +207,7 @@ public class InfernoTrackerScreen extends Screen {
             case 0 -> totalH = renderDropsTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, s);
             case 1 -> totalH = renderFuelTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, s);
             case 2 -> totalH = renderMinionsTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, s);
-            case 3 -> totalH = renderActivityTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, s);
+            case 3 -> totalH = renderActivityTab(g, font, contentX + 8, contentY + 8 - (int) this.scrollAmount, contentW - 16, s, mouseX, mouseY);
         }
 
         g.disableScissor();
@@ -209,6 +228,11 @@ public class InfernoTrackerScreen extends Screen {
         // Passkey Edit Modal
         if (this.editingPasskey) {
             renderPasskeyModal(g, font, winX, winY, winW, winH, mouseX, mouseY);
+        }
+
+        // Activity Detail Modal
+        if (this.selectedActivity != null) {
+            renderActivityDetailModal(g, font, winX, winY, winW, winH, mouseX, mouseY);
         }
     }
 
@@ -357,50 +381,244 @@ public class InfernoTrackerScreen extends Screen {
         return curY - y;
     }
 
-    private int renderActivityTab(GuiGraphicsExtractor g, Font font, int x, int y, int w, InfernoMinionTracker.TrackerState s) {
+    public List<ActivityGroup> groupActions(List<InfernoMinionTracker.ActionEntry> rawActions) {
+        List<ActivityGroup> groups = new ArrayList<>();
+        if (rawActions == null || rawActions.isEmpty()) return groups;
+
+        ActivityGroup currentGroup = null;
+        for (InfernoMinionTracker.ActionEntry a : rawActions) {
+            if (a == null) continue;
+            String type = a.type != null ? a.type.toUpperCase(Locale.ROOT) : "CLAIM";
+            String player = (a.player != null && !a.player.isEmpty()) ? a.player : "Player";
+            long time = a.timestamp;
+
+            boolean canMerge = false;
+            if (currentGroup != null && currentGroup.type.equals(type) && currentGroup.player.equalsIgnoreCase(player)) {
+                // Group contiguous actions by the same player within a 3-minute window (180,000 ms)
+                long diff = Math.abs(currentGroup.endTime - time);
+                if (diff <= 180000L) {
+                    canMerge = true;
+                }
+            }
+
+            if (!canMerge) {
+                currentGroup = new ActivityGroup();
+                currentGroup.type = type;
+                currentGroup.player = player;
+                currentGroup.startTime = time;
+                currentGroup.endTime = time;
+                groups.add(currentGroup);
+            }
+
+            if (time < currentGroup.startTime) currentGroup.startTime = time;
+            if (time > currentGroup.endTime) currentGroup.endTime = time;
+            currentGroup.minionCount++;
+            currentGroup.totalRevenue += a.revenue;
+            currentGroup.totalCost += a.cost;
+            currentGroup.subActions.add(a);
+
+            if ("CLAIM".equals(type) && a.drops != null) {
+                for (Map.Entry<String, Integer> e : a.drops.entrySet()) {
+                    currentGroup.drops.put(e.getKey(), currentGroup.drops.getOrDefault(e.getKey(), 0) + e.getValue());
+                    currentGroup.itemCount += e.getValue();
+                }
+            } else if ("FUEL".equals(type)) {
+                currentGroup.itemCount++;
+            }
+        }
+        return groups;
+    }
+
+    private int renderActivityTab(GuiGraphicsExtractor g, Font font, int x, int y, int w, InfernoMinionTracker.TrackerState s, int mouseX, int mouseY) {
         int curY = y;
-        if (s.actions.isEmpty()) {
+        List<ActivityGroup> groups = groupActions(s.actions);
+        if (groups.isEmpty()) {
             g.centeredText(font, "§7No coop activity recorded yet.", x + w / 2, curY + 40, 0xFF9CA3AF);
             return 100;
         }
 
-        g.text(font, "§7Recent Coop Activity Log (" + s.actions.size() + " actions):", x, curY, 0xFFE5E7EB, false);
+        g.text(font, "§7Recent Activity Sessions (" + groups.size() + " sessions, " + s.actions.size() + " minion actions) §8- Click to inspect:", x, curY, 0xFFE5E7EB, false);
         curY += 16;
 
-        int rowH = 34;
-        for (InfernoMinionTracker.ActionEntry a : s.actions) {
-            boolean isClaim = "CLAIM".equalsIgnoreCase(a.type);
-            int rowBg = isClaim ? 0x1510B981 : 0x15EF4444;
-            int border = isClaim ? 0x4010B981 : 0x40EF4444;
+        int rowH = 38;
+        for (ActivityGroup grp : groups) {
+            boolean isClaim = "CLAIM".equalsIgnoreCase(grp.type);
+            boolean isHovered = mouseX >= x && mouseX <= x + w && mouseY >= curY && mouseY <= curY + rowH;
+            int rowBg = isClaim ? (isHovered ? 0x2A10B981 : 0x1510B981) : (isHovered ? 0x2AEF4444 : 0x15EF4444);
+            int border = isClaim ? (isHovered ? 0x9010B981 : 0x4010B981) : (isHovered ? 0x90EF4444 : 0x40EF4444);
 
             g.fill(x, curY, x + w, curY + rowH, rowBg);
             g.outline(x, curY, w, rowH, border);
 
-            // Badge
+            // Badge & session title
             String badge = isClaim ? "§a[CLAIM]" : "§c[FUEL]";
-            String timeStr = a.timestamp > 0 ? TIME_FMT.format(new Date(a.timestamp)) : "";
-            g.text(font, badge + " §f" + a.player + " §7(" + timeStr + ")", x + 10, curY + 6, 0xFFFFFFFF, false);
+            String timeStr = grp.startTime > 0 ? TIME_FMT.format(new Date(grp.startTime)) : "";
+            String minionStr = grp.minionCount == 1 ? "1 minion" : (grp.minionCount + " minions");
+            String itemStr = grp.itemCount == 1 ? "1 item" : (grp.itemCount + " items");
 
             if (isClaim) {
+                // e.g. bomboclas claimed 24 minions at 10/27 20:36 collecting 1,482 items
+                g.text(font, badge + " §f" + grp.player + " §7claimed §e" + minionStr + " §7at §f" + timeStr + " §7collecting §e" + itemStr, x + 10, curY + 6, 0xFFFFFFFF, false);
+
                 StringBuilder desc = new StringBuilder("§7Collected: ");
-                if (a.drops != null) {
+                if (!grp.drops.isEmpty()) {
                     int i = 0;
-                    for (Map.Entry<String, Integer> e : a.drops.entrySet()) {
+                    for (Map.Entry<String, Integer> e : grp.drops.entrySet()) {
                         if (i++ > 0) desc.append(", ");
                         desc.append(e.getValue()).append("x ").append(InfernoMinionTracker.formatDropName(e.getKey()));
+                        if (i >= 4 && grp.drops.size() > 4) {
+                            desc.append(", +").append(grp.drops.size() - 4).append(" more");
+                            break;
+                        }
                     }
                 }
-                g.text(font, desc.toString(), x + 10, curY + 19, 0xFFCBD5E1, false);
-                g.text(font, "§6+" + InfernoMinionTracker.formatCoins(a.revenue), x + w - 90, curY + 11, 0xFFFBBF24, true);
+                desc.append(isHovered ? " §b[Click to view full breakdown]" : " §8[Click for details]");
+                g.text(font, desc.toString(), x + 10, curY + 21, 0xFFCBD5E1, false);
+                g.text(font, "§6+" + InfernoMinionTracker.formatCoins(grp.totalRevenue), x + w - 90, curY + 13, 0xFFFBBF24, true);
             } else {
-                g.text(font, "§7Placed 1x Hypergolic Crude Gabagool (Slot 19)", x + 10, curY + 19, 0xFFCBD5E1, false);
-                g.text(font, "§c-" + InfernoMinionTracker.formatCoins(a.cost), x + w - 90, curY + 11, 0xFFF87171, true);
+                g.text(font, badge + " §f" + grp.player + " §7placed §e" + minionStr + " fuels §7at §f" + timeStr, x + 10, curY + 6, 0xFFFFFFFF, false);
+                g.text(font, "§7Hypergolic Crude Gabagool (Slot 19)" + (isHovered ? " §b[Click to view full breakdown]" : " §8[Click for details]"), x + 10, curY + 21, 0xFFCBD5E1, false);
+                g.text(font, "§c-" + InfernoMinionTracker.formatCoins(grp.totalCost), x + w - 90, curY + 13, 0xFFF87171, true);
             }
 
             curY += rowH + 4;
         }
 
         return curY - y;
+    }
+
+    private void renderActivityDetailModal(GuiGraphicsExtractor g, Font font, int winX, int winY, int winW, int winH, int mouseX, int mouseY) {
+        if (this.selectedActivity == null) return;
+        ActivityGroup grp = this.selectedActivity;
+
+        // Dark dim backdrop
+        g.fill(winX, winY, winX + winW, winY + winH, 0xDD000000);
+
+        int modalW = Math.min(520, winW - 30);
+        int modalH = Math.min(360, winH - 30);
+        int modalX = winX + (winW - modalW) / 2;
+        int modalY = winY + (winH - modalH) / 2;
+
+        // Panel background & glowing border
+        g.fill(modalX, modalY, modalX + modalW, modalY + modalH, 0xF0111827);
+        g.outline(modalX, modalY, modalW, modalH, 0xFF3B82F6);
+
+        // Header
+        g.text(font, "§6§l🔥 SESSION DETAILS: §f" + grp.player, modalX + 16, modalY + 14, 0xFFFFFFFF, true);
+        String timeStr = grp.startTime > 0 ? DETAIL_TIME_FMT.format(new Date(grp.startTime)) : "Recent";
+        g.text(font, "§7Time: §e" + timeStr + " §8| §7Type: " + ("CLAIM".equalsIgnoreCase(grp.type) ? "§aMinion Claim" : "§cFuel Insertion"), modalX + 16, modalY + 27, 0xFFA0AEC0, false);
+
+        // Close [✕] button
+        int closeBtnW = 20;
+        int closeBtnH = 20;
+        int closeBtnX = modalX + modalW - closeBtnW - 12;
+        int closeBtnY = modalY + 12;
+        boolean closeHover = mouseX >= closeBtnX && mouseX <= closeBtnX + closeBtnW && mouseY >= closeBtnY && mouseY <= closeBtnY + closeBtnH;
+        g.fill(closeBtnX, closeBtnY, closeBtnX + closeBtnW, closeBtnY + closeBtnH, closeHover ? 0xFFEF4444 : 0xFF1F2937);
+        g.outline(closeBtnX, closeBtnY, closeBtnW, closeBtnH, closeHover ? 0xFFF87171 : 0xFF374151);
+        g.centeredText(font, "✕", closeBtnX + closeBtnW / 2, closeBtnY + 5, 0xFFFFFFFF);
+
+        // Mini metric cards bar (3 cards)
+        int cardY = modalY + 44;
+        int cardH = 34;
+        int cardW = (modalW - 32 - 16) / 3;
+
+        // Card 1: Minions
+        int c1X = modalX + 16;
+        g.fill(c1X, cardY, c1X + cardW, cardY + cardH, 0x601F2937);
+        g.outline(c1X, cardY, cardW, cardH, 0xFF374151);
+        g.text(font, "§7MINIONS", c1X + 8, cardY + 5, 0xFF9CA3AF, false);
+        g.text(font, "§e" + grp.minionCount + " Minions", c1X + 8, cardY + 18, 0xFFFBBF24, true);
+
+        // Card 2: Total Items
+        int c2X = c1X + cardW + 8;
+        g.fill(c2X, cardY, c2X + cardW, cardY + cardH, 0x601F2937);
+        g.outline(c2X, cardY, cardW, cardH, 0xFF374151);
+        g.text(font, "§7TOTAL ITEMS", c2X + 8, cardY + 5, 0xFF9CA3AF, false);
+        g.text(font, "§b" + grp.itemCount + " Items", c2X + 8, cardY + 18, 0xFF38BDF8, true);
+
+        // Card 3: Revenue / Cost
+        int c3X = c2X + cardW + 8;
+        boolean isClaim = "CLAIM".equalsIgnoreCase(grp.type);
+        g.fill(c3X, cardY, c3X + cardW, cardY + cardH, 0x601F2937);
+        g.outline(c3X, cardY, cardW, cardH, isClaim ? 0xFF10B981 : 0xFFEF4444);
+        g.text(font, isClaim ? "§7GROSS VALUE" : "§7FUEL EXPENSE", c3X + 8, cardY + 5, 0xFF9CA3AF, false);
+        g.text(font, (isClaim ? "§a+" : "§c-") + InfernoMinionTracker.formatCoins(isClaim ? grp.totalRevenue : grp.totalCost), c3X + 8, cardY + 18, isClaim ? 0xFF10B981 : 0xFFF87171, true);
+
+        // Inner scrollable content
+        int innerX = modalX + 16;
+        int innerY = cardY + cardH + 12;
+        int innerW = modalW - 32;
+        int innerH = modalH - (innerY - modalY) - 14;
+
+        g.fill(innerX, innerY, innerX + innerW, innerY + innerH, 0x400A0D14);
+        g.outline(innerX, innerY, innerW, innerH, 0xFF1F2937);
+
+        g.enableScissor(innerX + 1, innerY + 1, innerX + innerW - 1, innerY + innerH - 1);
+        int curContentY = innerY + 8 - (int) this.detailModalScroll;
+
+        // Section 1: Drops Breakdown
+        if (isClaim && !grp.drops.isEmpty()) {
+            g.text(font, "§6§lCOLLECTED DROPS BREAKDOWN:", innerX + 8, curContentY, 0xFFF59E0B, true);
+            curContentY += 16;
+
+            for (Map.Entry<String, Integer> e : grp.drops.entrySet()) {
+                String sbId = e.getKey();
+                int count = e.getValue();
+                long unitPrice = InfernoMinionTracker.getDropUnitPrice(sbId);
+                long totalVal = unitPrice * count;
+
+                String dropName = InfernoMinionTracker.formatDropName(sbId);
+                g.text(font, "• §f" + count + "x §e" + dropName, innerX + 14, curContentY, 0xFFFFFFFF, false);
+                g.text(font, "§7@ §e" + InfernoMinionTracker.formatCoins(unitPrice) + " §7= §6+" + InfernoMinionTracker.formatCoins(totalVal), innerX + innerW - 150, curContentY, 0xFFFBBF24, false);
+                curContentY += 14;
+            }
+            curContentY += 8;
+        }
+
+        // Section 2: Individual Minion Claims / Actions
+        g.text(font, "§3§lMINION LOGS (" + grp.subActions.size() + " actions):", innerX + 8, curContentY, 0xFF06B6D4, true);
+        curContentY += 16;
+
+        int actionIdx = 1;
+        for (InfernoMinionTracker.ActionEntry sub : grp.subActions) {
+            String subTime = sub.timestamp > 0 ? TIME_FMT.format(new Date(sub.timestamp)) : "";
+            String pos = (sub.pos != null && !sub.pos.isEmpty()) ? sub.pos : "Unknown pos";
+            g.text(font, "§8#" + (actionIdx++) + " §7Minion at §e(" + pos + ") §8[" + subTime + "]", innerX + 14, curContentY, 0xFFCBD5E1, false);
+
+            if (isClaim) {
+                StringBuilder dropSb = new StringBuilder();
+                if (sub.drops != null) {
+                    int di = 0;
+                    for (Map.Entry<String, Integer> de : sub.drops.entrySet()) {
+                        if (di++ > 0) dropSb.append(", ");
+                        dropSb.append(de.getValue()).append("x ").append(InfernoMinionTracker.formatDropName(de.getKey()));
+                    }
+                }
+                g.text(font, "   §7Drops: " + dropSb.toString(), innerX + 14, curContentY + 12, 0xFF94A3B8, false);
+                g.text(font, "§6+" + InfernoMinionTracker.formatCoins(sub.revenue), innerX + innerW - 80, curContentY + 5, 0xFFFBBF24, true);
+                curContentY += 26;
+            } else {
+                g.text(font, "   §7Fuel UUID: §8" + (sub.fuelUuid != null ? sub.fuelUuid : "N/A"), innerX + 14, curContentY + 12, 0xFF94A3B8, false);
+                g.text(font, "§c-" + InfernoMinionTracker.formatCoins(sub.cost), innerX + innerW - 80, curContentY + 5, 0xFFF87171, true);
+                curContentY += 26;
+            }
+        }
+
+        g.disableScissor();
+
+        int totalDetailH = curContentY - (innerY + 8 - (int) this.detailModalScroll);
+        this.detailModalMaxScroll = Math.max(0, totalDetailH - innerH + 16);
+
+        // Detail scrollbar
+        if (this.detailModalMaxScroll > 0) {
+            int sbW = 3;
+            int sbX = innerX + innerW - sbW - 2;
+            int thumbH = Math.max(16, (int) ((float) innerH / totalDetailH * innerH));
+            int thumbY = innerY + (int) ((this.detailModalScroll / this.detailModalMaxScroll) * (innerH - thumbH));
+            g.fill(sbX, innerY, sbX + sbW, innerY + innerH, 0x33000000);
+            g.fill(sbX, thumbY, sbX + sbW, thumbY + thumbH, 0xFF3B82F6);
+        }
     }
 
     private void renderPasskeyModal(GuiGraphicsExtractor g, Font font, int winX, int winY, int winW, int winH, int mouseX, int mouseY) {
@@ -444,6 +662,14 @@ public class InfernoTrackerScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (this.selectedActivity != null) {
+            if (this.detailModalMaxScroll > 0) {
+                this.detailModalScroll -= verticalAmount * 24.0;
+                if (this.detailModalScroll < 0) this.detailModalScroll = 0;
+                if (this.detailModalScroll > this.detailModalMaxScroll) this.detailModalScroll = this.detailModalMaxScroll;
+            }
+            return true;
+        }
         if (this.maxScroll > 0) {
             this.scrollAmount -= verticalAmount * 28.0;
             if (this.scrollAmount < 0) this.scrollAmount = 0;
@@ -459,6 +685,30 @@ public class InfernoTrackerScreen extends Screen {
         int winH = Math.min(this.height - 40, 500);
         int winX = (this.width - winW) / 2;
         int winY = (this.height - winH) / 2;
+
+        if (this.selectedActivity != null) {
+            int modalW = Math.min(520, winW - 30);
+            int modalH = Math.min(360, winH - 30);
+            int modalX = winX + (winW - modalW) / 2;
+            int modalY = winY + (winH - modalH) / 2;
+
+            int closeBtnW = 20;
+            int closeBtnH = 20;
+            int closeBtnX = modalX + modalW - closeBtnW - 12;
+            int closeBtnY = modalY + 12;
+
+            if (event.x() >= closeBtnX && event.x() <= closeBtnX + closeBtnW && event.y() >= closeBtnY && event.y() <= closeBtnY + closeBtnH) {
+                this.selectedActivity = null;
+                return true;
+            }
+
+            if (event.x() < modalX || event.x() > modalX + modalW || event.y() < modalY || event.y() > modalY + modalH) {
+                this.selectedActivity = null;
+                return true;
+            }
+
+            return true;
+        }
 
         if (this.editingPasskey) {
             int modalW = 280;
@@ -600,6 +850,29 @@ public class InfernoTrackerScreen extends Screen {
             }
         }
 
+        // Activity Tab: Row click to open detail modal
+        if (this.currentTab == 3) {
+            int contentX = winX + 16;
+            int contentY = tabsY + 30;
+            int contentW = winW - 32;
+            int contentH = winH - (contentY - winY) - 16;
+            if (event.x() >= contentX && event.x() <= contentX + contentW && event.y() >= contentY && event.y() <= contentY + contentH) {
+                int listX = contentX + 8;
+                int curY = contentY + 8 - (int) this.scrollAmount + 16;
+                int listW = contentW - 16;
+                int rowH = 38;
+                List<ActivityGroup> groups = groupActions(InfernoMinionTracker.getState().actions);
+                for (ActivityGroup grp : groups) {
+                    if (event.y() >= curY && event.y() <= curY + rowH && event.x() >= listX && event.x() <= listX + listW) {
+                        this.selectedActivity = grp;
+                        this.detailModalScroll = 0;
+                        return true;
+                    }
+                    curY += rowH + 4;
+                }
+            }
+        }
+
         return super.mouseClicked(event, handled);
     }
 
@@ -623,6 +896,12 @@ public class InfernoTrackerScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (this.selectedActivity != null) {
+            if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+                this.selectedActivity = null;
+                return true;
+            }
+        }
         if (this.editingPasskey) {
             if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
                 this.editingPasskey = false;
