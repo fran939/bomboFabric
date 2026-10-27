@@ -289,16 +289,20 @@ public class ClientPacketListenerMixin {
             float pitch = packet.getPitch();
             if (BomboConfig.get().debugSounds) {
                Minecraft mc = Minecraft.getInstance();
-               if (mc.player != null) {
-                  mc.player.sendSystemMessage(Component.literal("§8[§bSound Packet Debug§8] §cBlocked: §e" + loc + " ➔ §aReplacing with: §e" + repl));
-               }
+               mc.execute(() -> {
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§bSound Packet Debug§8] §cBlocked: §e" + loc + " ➔ §aReplacing with: §e" + repl));
+                  }
+               });
             }
             me.bombo.bomboaddons.features.sounds.CustomSoundManager.playCustomOrVanillaSound(repl, vol, pitch);
          } else if (BomboConfig.get().debugSounds) {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(Component.literal("§8[§bSound Packet Debug§8] §7[Packet] §e" + loc + " §7(v:" + packet.getVolume() + " p:" + packet.getPitch() + ")"));
-            }
+            mc.execute(() -> {
+               if (mc.player != null) {
+                  mc.player.sendSystemMessage(Component.literal("§8[§bSound Packet Debug§8] §7[Packet] §e" + loc + " §7(v:" + packet.getVolume() + " p:" + packet.getPitch() + ")"));
+               }
+            });
          }
       } catch (Throwable ignored) {}
    }
@@ -318,16 +322,20 @@ public class ClientPacketListenerMixin {
             float pitch = packet.getPitch();
             if (BomboConfig.get().debugSounds) {
                Minecraft mc = Minecraft.getInstance();
-               if (mc.player != null) {
-                  mc.player.sendSystemMessage(Component.literal("§8[§bSound Packet Debug§8] §cBlocked Entity Sound: §e" + loc + " ➔ §aReplacing with: §e" + repl));
-               }
+               mc.execute(() -> {
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§bSound Packet Debug§8] §cBlocked Entity Sound: §e" + loc + " ➔ §aReplacing with: §e" + repl));
+                  }
+               });
             }
             me.bombo.bomboaddons.features.sounds.CustomSoundManager.playCustomOrVanillaSound(repl, vol, pitch);
          } else if (BomboConfig.get().debugSounds) {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(Component.literal("§8[§bSound Packet Debug§8] §7[Entity Packet] §e" + loc + " §7(v:" + packet.getVolume() + " p:" + packet.getPitch() + ")"));
-            }
+            mc.execute(() -> {
+               if (mc.player != null) {
+                  mc.player.sendSystemMessage(Component.literal("§8[§bSound Packet Debug§8] §7[Entity Packet] §e" + loc + " §7(v:" + packet.getVolume() + " p:" + packet.getPitch() + ")"));
+               }
+            });
          }
       } catch (Throwable ignored) {}
    }

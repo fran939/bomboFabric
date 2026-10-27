@@ -384,7 +384,7 @@ public class AutoSequenceManager {
             if (display != null && !display.isBlank() && !display.startsWith("key_") && !display.equals("None")) {
                 return display;
             }
-            String name = org.lwjgl.glfw.GLFW.glfwGetKeyName(code, 0);
+            String name = (code > 0 && code != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) ? org.lwjgl.glfw.GLFW.glfwGetKeyName(code, 0) : null;
             if (name != null && !name.isBlank()) {
                 return name.toUpperCase(java.util.Locale.ROOT);
             }

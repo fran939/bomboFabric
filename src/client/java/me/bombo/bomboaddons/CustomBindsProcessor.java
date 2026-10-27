@@ -274,6 +274,9 @@ public class CustomBindsProcessor {
    private static final java.util.Map<String, Integer> REVERSE_KEY_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
    public static String getKeyNameForGlfwCode(int code) {
+      if (code <= 0 || code == org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
+         return "none";
+      }
       if (code >= 1000 && code <= 1007) {
          return "mouse" + (code - 1000 + 1);
       } else if (code >= 290 && code <= 301) {

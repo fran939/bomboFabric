@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.161",
+    "date": "2026-10-27",
+    "changes": [
+      "+ Fixed sound debug crash (NPE in Devonian ChatUtils) by dispatching chat messages to the render thread",
+      "+ Deduplicated and rate-limited sound debug chat messages to prevent chat flooding",
+      "+ Fixed 65540: Invalid scancode -1 console spam by guarding GLFW key name lookups for unbound keys",
+      "+ Documented Vulkan/Core Profile polygon mode compatibility"
+    ]
+  },
+  {
     "version": "26.2.28.160",
     "date": "2026-10-27",
     "changes": [

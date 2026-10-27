@@ -164,6 +164,7 @@ public class ClickLogic {
                                                       if (keyName.toLowerCase().startsWith("key_")) {
                                                          try {
                                                             int code = Integer.parseInt(keyName.substring(4));
+                                                            if (code <= 0) return "None";
                                                             // Special keys GLFW has no name for - shown verbatim otherwise.
                                                             switch (code) {
                                                                case 256: return "Escape";

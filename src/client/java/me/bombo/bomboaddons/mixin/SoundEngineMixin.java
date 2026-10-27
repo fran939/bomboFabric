@@ -15,6 +15,17 @@ public class SoundEngineMixin {
    private static long lastDragonSoundAlert = 0L;
 
    private static final ThreadLocal<Boolean> IS_PLAYING_REPLACEMENT = ThreadLocal.withInitial(() -> false);
+   private static final java.util.Map<String, Long> lastSoundLoggedTime = new java.util.concurrent.ConcurrentHashMap<>();
+
+   private static boolean shouldLogSound(String key) {
+      long now = System.currentTimeMillis();
+      Long last = lastSoundLoggedTime.get(key);
+      if (last != null && (now - last) < 250L) {
+         return false;
+      }
+      lastSoundLoggedTime.put(key, now);
+      return true;
+   }
 
    @Inject(
       method = {"play"},
@@ -37,10 +48,13 @@ public class SoundEngineMixin {
             float vol = sound.getVolume();
             float pitch = sound.getPitch();
             if (BomboConfig.get().debugSounds) {
+               final String finalRepl = repl;
                Minecraft mc = Minecraft.getInstance();
-               if (mc.player != null) {
-                  mc.player.sendSystemMessage(Component.literal("§8[§bSound Debug§8] §cBlocked: §e" + loc + " §7(ident: " + ident + ") ➔ §aReplacing with: §e" + repl));
-               }
+               mc.execute(() -> {
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§bSound Debug§8] §cBlocked: §e" + loc + " §7(ident: " + ident + ") ➔ §aReplacing with: §e" + finalRepl));
+                  }
+               });
             }
             IS_PLAYING_REPLACEMENT.set(true);
             try {
@@ -48,14 +62,17 @@ public class SoundEngineMixin {
             } finally {
                IS_PLAYING_REPLACEMENT.set(false);
             }
-         } else if (BomboConfig.get().debugSounds) {
+         } else if (BomboConfig.get().debugSounds && shouldLogSound(ident.isEmpty() ? loc : ident)) {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null) {
-               mc.player.sendSystemMessage(Component.literal("§8[§bSound Debug§8] §7[Played] §e" + loc + " §8| §7Ident: §e" + ident + " §7(v:" + sound.getVolume() + " p:" + sound.getPitch() + ")"));
-            }
+            mc.execute(() -> {
+               if (mc.player != null) {
+                  mc.player.sendSystemMessage(Component.literal("§8[§bSound Debug§8] §7[Played] §e" + loc + " §8| §7Ident: §e" + ident + " §7(v:" + sound.getVolume() + " p:" + sound.getPitch() + ")"));
+               }
+            });
          }
       } catch (Throwable ignored) {}
    }
+
    @Inject(
       method = {"play"},
       at = {@At("TAIL")}
@@ -67,8 +84,6 @@ public class SoundEngineMixin {
 
       try {
          String id = sound.getIdentifier().toString();
-         float vol = sound.getVolume();
-         float pitch = sound.getPitch();
 
          String area = me.bombo.bomboaddons.BomboaddonsClient.currentArea;
          if (area != null && (area.toLowerCase().contains("crystal") || area.toLowerCase().contains("hollows"))) {
@@ -88,11 +103,6 @@ public class SoundEngineMixin {
                   });
                }
             }
-         }
-
-         BomboConfig.Settings s = BomboConfig.get();
-         if (s != null && s.debugSounds) {
-            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §e[Sound] §a" + id + " §7(v:" + vol + " p:" + pitch + ")"));
          }
       } catch (Exception ignored) {
       }

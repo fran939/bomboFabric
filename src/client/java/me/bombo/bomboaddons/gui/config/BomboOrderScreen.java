@@ -2905,9 +2905,9 @@ public class BomboOrderScreen extends Screen {
                     BomboConfig.save();
                 }
             } else {
-                String keyName = GLFW.glfwGetKeyName(code, 0);
+                String keyName = (code > 0 && code != GLFW.GLFW_KEY_UNKNOWN) ? GLFW.glfwGetKeyName(code, 0) : null;
                 if (keyName == null || keyName.isEmpty()) {
-                    keyName = "KEY_" + code;
+                    keyName = code <= 0 ? "NONE" : "KEY_" + code;
                 }
                 if (this.activeKeybindItem.stringSetter != null) {
                     this.activeKeybindItem.stringSetter.accept(keyName.toUpperCase(Locale.ROOT));
