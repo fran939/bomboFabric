@@ -109,11 +109,11 @@ public class InfernoFuelCraftHelper {
         int toBuyFuelBlock = Math.max(0, neededFuelBlock - haveFuelBlock);
 
         // Build Raw Material items
-        CraftItem distillate = createItem("CRUDE_GABAGOOL_DISTILLATE", "Crude Gabagool Distillate", "🧪", "crude_gabagool_distillate", true, neededDistillate, toBuyDistillate, 0);
-        CraftItem fuelBlock = createItem("INFERNO_FUEL_BLOCK", "Inferno Fuel Block", "🧱", "inferno_fuel_block", true, neededFuelBlock, toBuyFuelBlock, 0);
-        CraftItem veryCrude = createItem("VERY_CRUDE_GABAGOOL", "Very Crude Gabagool", "🍖", "very_crude_gabagool", true, neededVeryCrude, toBuyVeryCrude, 0);
-        CraftItem enchCoal = createItem("ENCHANTED_COAL", "Enchanted Coal", "⚫", "enchanted_coal", true, neededEnchantedCoal, toBuyEnchantedCoal, 0);
-        CraftItem enchSulphur = createItem("ENCHANTED_SULPHUR", "Enchanted Sulphur", "🟡", "enchanted_sulphur", true, neededEnchantedSulphur, toBuyEnchantedSulphur, 0);
+        CraftItem distillate = createItem("CRUDE_GABAGOOL_DISTILLATE", "Crude Gabagool Distillate", "🧪", "crude gabagool distillate", true, neededDistillate, toBuyDistillate, 0);
+        CraftItem fuelBlock = createItem("INFERNO_FUEL_BLOCK", "Inferno Fuel Block", "🧱", "inferno fuel block", true, neededFuelBlock, toBuyFuelBlock, 0);
+        CraftItem veryCrude = createItem("VERY_CRUDE_GABAGOOL", "Very Crude Gabagool", "🍖", "very crude gabagool", true, neededVeryCrude, toBuyVeryCrude, 0);
+        CraftItem enchCoal = createItem("ENCHANTED_COAL", "Enchanted Coal", "⚫", "enchanted coal", true, neededEnchantedCoal, toBuyEnchantedCoal, 0);
+        CraftItem enchSulphur = createItem("ENCHANTED_SULPHUR", "Enchanted Sulphur", "🟡", "enchanted sulphur", true, neededEnchantedSulphur, toBuyEnchantedSulphur, 0);
 
         plan.rawMaterials.add(distillate);
         plan.rawMaterials.add(fuelBlock);
@@ -122,10 +122,10 @@ public class InfernoFuelCraftHelper {
         plan.rawMaterials.add(enchSulphur);
 
         // Build Intermediate items
-        CraftItem sulphCoal = createItem("SULPHURIC_COAL", "Sulphuric Coal", "🔥", "sulphuric_coal", false, totalSulphuricCoal, 0, craftSulphuricCoal);
-        CraftItem fuelGab = createItem("FUEL_GABAGOOL", "Fuel Gabagool", "⛽", "fuel_gabagool", false, neededFuelGabagool, 0, craftFuelGabagool);
-        CraftItem heavyGab = createItem("HEAVY_GABAGOOL", "Heavy Gabagool", "📦", "heavy_gabagool", false, neededHeavy, 0, craftHeavy);
-        CraftItem hyperGab = createItem("HYPERGOLIC_GABAGOOL", "Hypergolic Gabagool", "⚡", "hypergolic_gabagool", false, neededHypergolic, 0, craftHypergolic);
+        CraftItem sulphCoal = createItem("SULPHURIC_COAL", "Sulphuric Coal", "🔥", "sulphuric coal", false, totalSulphuricCoal, 0, craftSulphuricCoal);
+        CraftItem fuelGab = createItem("FUEL_GABAGOOL", "Fuel Gabagool", "⛽", "fuel gabagool", false, neededFuelGabagool, 0, craftFuelGabagool);
+        CraftItem heavyGab = createItem("HEAVY_GABAGOOL", "Heavy Gabagool", "📦", "heavy gabagool", false, neededHeavy, 0, craftHeavy);
+        CraftItem hyperGab = createItem("HYPERGOLIC_GABAGOOL", "Hypergolic Gabagool", "⚡", "hypergolic gabagool", false, neededHypergolic, 0, craftHypergolic);
 
         plan.intermediates.add(sulphCoal);
         plan.intermediates.add(fuelGab);
@@ -147,7 +147,7 @@ public class InfernoFuelCraftHelper {
         item.id = id;
         item.name = name;
         item.icon = icon;
-        item.bzCommand = bzCmd;
+        item.bzCommand = bzCmd != null ? bzCmd.replace("_", " ").trim() : "";
         item.isRawMaterial = isRaw;
         item.needed = needed;
         item.haveInv = SacksHelper.getPhysicalInventoryCount(id);
@@ -185,27 +185,37 @@ public class InfernoFuelCraftHelper {
     }
 
     /**
-     * Executes the click action: copies amount needed to buy to clipboard and runs `/bz <item>`.
+     * Executes the click action:
+     * - For raw materials with deficit: copies buy amount to clipboard and executes `/bz <item name>`.
+     * - For intermediate crafts or completed items: executes `/viewrecipe <item ID>`.
      */
     public static void executeBazaarAction(CraftItem item) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
+        if (!item.isRawMaterial) {
+            mc.player.connection.sendCommand("viewrecipe " + item.id);
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Craft Helper§8] §aOpened §e/viewrecipe " + item.id + "§a!"));
+            return;
+        }
+
         if (item.toBuy <= 0) {
-            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Craft Helper§8] §aYou already have enough §f" + item.name + "§a! (§e" + formatNum(item.getTotalHave()) + "§a / §e" + formatNum(item.needed) + "§a)"));
+            mc.player.connection.sendCommand("viewrecipe " + item.id);
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Craft Helper§8] §aYou have all needed §f" + item.name + "§a! (§e" + formatNum(item.getTotalHave()) + "§a/§e" + formatNum(item.needed) + "§a) - Opened §e/viewrecipe " + item.id));
             return;
         }
 
         int toCopy = Math.min(item.toBuy, BAZAAR_ORDER_LIMIT);
         mc.keyboardHandler.setClipboard(String.valueOf(toCopy));
 
-        mc.player.connection.sendCommand("bz " + item.bzCommand);
+        String searchName = item.bzCommand.replace("_", " ").trim();
+        mc.player.connection.sendCommand("bz " + searchName);
 
         if (item.toBuy > BAZAAR_ORDER_LIMIT) {
             int remaining = item.toBuy - toCopy;
-            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Craft Helper§8] §aOpened §e/bz " + item.bzCommand + " §aand copied §b" + formatNum(toCopy) + " §ato clipboard! §7(Max order reached, §c" + formatNum(remaining) + " §7remaining)"));
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Craft Helper§8] §aOpened §e/bz " + searchName + " §aand copied §b" + formatNum(toCopy) + " §ato clipboard! §7(Max order reached, §c" + formatNum(remaining) + " §7remaining)"));
         } else {
-            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Craft Helper§8] §aOpened §e/bz " + item.bzCommand + " §aand copied §b" + formatNum(toCopy) + " §ato clipboard!"));
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Craft Helper§8] §aOpened §e/bz " + searchName + " §aand copied §b" + formatNum(toCopy) + " §ato clipboard!"));
         }
     }
 

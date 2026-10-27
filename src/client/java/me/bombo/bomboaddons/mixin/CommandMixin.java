@@ -253,6 +253,10 @@ public class CommandMixin {
                break;
             }
          }
+         final String user = targetUser;
+         Minecraft.getInstance().execute(() -> {
+            Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.gui.SacksBrowserScreen(user));
+         });
          me.bombo.bomboaddons.features.inferno.SacksHelper.displaySacksDebug(targetUser);
          ci.cancel();
          return;

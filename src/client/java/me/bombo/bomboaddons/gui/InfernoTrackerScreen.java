@@ -5,6 +5,7 @@ import java.util.*;
 import me.bombo.bomboaddons.Bomboaddons;
 import me.bombo.bomboaddons.LowestBinManager;
 import me.bombo.bomboaddons.features.inferno.InfernoMinionTracker;
+import me.bombo.bomboaddons.features.inferno.SacksHelper;
 import me.bombo.bomboaddons.gui.config.ConfigUITheme;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -360,33 +361,72 @@ public class InfernoTrackerScreen extends Screen {
 
     private int renderMinionsTab(GuiGraphicsExtractor g, Font font, int x, int y, int w, InfernoMinionTracker.TrackerState s) {
         int curY = y;
-        if (s.minions.isEmpty()) {
-            g.centeredText(font, "§7No Inferno Minions tracked yet.", x + w / 2, curY + 40, 0xFF9CA3AF);
-            g.centeredText(font, "§8Right-click or collect from any Inferno Minion on your Private Island to register it!", x + w / 2, curY + 56, 0xFF6B7280);
-            return 120;
-        }
+        InfernoMinionTracker.ensureAllMinionsInitialized();
 
-        g.text(font, "§7Total Active Minions Tracked: §a" + s.minions.size(), x, curY, 0xFFE5E7EB, false);
-        curY += 16;
+        // Top Summary Header
+        int sumH = 34;
+        g.fill(x, curY, x + w, curY + sumH, 0xFF1E293B);
+        g.outline(x, curY, w, sumH, 0xFF334155);
 
-        int rowH = 40;
-        for (InfernoMinionTracker.MinionInfo m : s.minions.values()) {
-            g.fill(x, curY, x + w, curY + rowH, 0x201F2937);
-            g.outline(x, curY, w, rowH, 0xFF374151);
+        long activeCount = s.minions.values().stream().filter(m -> m.totalDrops > 0 || m.totalFuels > 0).count();
+        long totalHarvestDrops = s.minions.values().stream().mapToLong(m -> m.totalDrops).sum();
+        long totalHarvestFuels = s.minions.values().stream().mapToLong(m -> m.totalFuels).sum();
 
-            String minionTitle = "§6§l" + m.tier + " §7(ID: §e" + m.entityId + "§7)";
+        g.text(font, "§6§l🤖 32 Inferno Minions Island Grid §7(Row 1: #1-16 @ Z=49.5 | Row 2: #17-32 @ Z=45.5)", x + 10, curY + 7, 0xFFFFFFFF, true);
+        g.text(font, "§a" + activeCount + "/32 Active §8| §e" + SacksHelper.formatNumber(totalHarvestDrops) + " §7Drops Claimed §8| §6" + totalHarvestFuels + " §7Fuels Used", x + 10, curY + 20, 0xFFCBD5E1, false);
+
+        curY += sumH + 10;
+
+        // Sort minions by index 1 to 32
+        List<InfernoMinionTracker.MinionInfo> minionList = new ArrayList<>(s.minions.values());
+        minionList.sort(Comparator.comparingInt(m -> m.index));
+
+        int rowH = 44;
+        for (InfernoMinionTracker.MinionInfo m : minionList) {
+            int row = m.index <= 16 ? 1 : 2;
+            int col = m.index <= 16 ? m.index : (m.index - 16);
+            double targetX = InfernoMinionTracker.getMinionTargetX(m.index);
+            double targetZ = InfernoMinionTracker.getMinionTargetZ(m.index);
+
+            boolean hasActivity = m.totalDrops > 0 || m.totalFuels > 0;
+            int rowBg = hasActivity ? 0x251E293B : 0x15111827;
+            g.fill(x, curY, x + w, curY + rowH, rowBg);
+            g.outline(x, curY, w, rowH, hasActivity ? 0xFF475569 : 0x30374151);
+
+            // Minion title & row/col
+            String minionTitle = "§6§l#" + m.index + " " + m.tier + " §7(Row " + row + ", Spot " + col + ")";
             g.text(font, minionTitle, x + 10, curY + 7, 0xFFFFFFFF, false);
 
-            String posStr = "§7Location: §f" + m.x + ", " + m.y + ", " + m.z;
-            g.text(font, posStr, x + 10, curY + 22, 0xFF9CA3AF, false);
+            // Exact Coords
+            String posStr = String.format(Locale.ROOT, "§7Location: §f%.1f, 103.0, %.1f", targetX, targetZ);
+            g.text(font, posStr, x + 10, curY + 24, 0xFF94A3B8, false);
 
-            String stats = "§aDrops: §e" + m.totalDrops + " §8| §6Fuels: §e" + m.totalFuels;
-            g.text(font, stats, x + w - 210, curY + 7, 0xFFD1D5DB, false);
+            // Status badge
+            String statusBadge;
+            int badgeColor;
+            if (m.totalFuels > 0) {
+                statusBadge = "§a⚡ FUELED (" + m.totalFuels + ")";
+                badgeColor = 0xFF10B981;
+            } else if (m.totalDrops > 0) {
+                statusBadge = "§e📦 HARVESTED";
+                badgeColor = 0xFFFCD34D;
+            } else {
+                statusBadge = "§8💤 READY";
+                badgeColor = 0xFF64748B;
+            }
+            g.text(font, statusBadge, x + w - 320, curY + 8, badgeColor, true);
 
-            String lastTime = m.lastActionTime > 0 ? "§7Last: §b" + TIME_FMT.format(new Date(m.lastActionTime)) : "§8Never";
-            g.text(font, lastTime, x + w - 210, curY + 22, 0xFF9CA3AF, false);
+            // Drops & fuels
+            String stats = "§aDrops: §e" + SacksHelper.formatNumber(m.totalDrops) + " §8| §6Fuels: §e" + m.totalFuels;
+            g.text(font, stats, x + w - 210, curY + 8, 0xFFE2E8F0, false);
 
-            curY += rowH + 6;
+            // Last claim time & player
+            String lastTime = m.lastActionTime > 0
+                    ? "§7Last: §b" + TIME_FMT.format(new Date(m.lastActionTime)) + (m.lastActionPlayer != null ? " §8(" + m.lastActionPlayer + ")" : "")
+                    : "§8Never harvested";
+            g.text(font, lastTime, x + w - 210, curY + 24, 0xFF94A3B8, false);
+
+            curY += rowH + 4;
         }
 
         return curY - y;

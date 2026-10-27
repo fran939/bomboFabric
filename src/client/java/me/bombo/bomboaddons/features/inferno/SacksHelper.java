@@ -392,8 +392,11 @@ public class SacksHelper {
                 grandTotal += entry.getValue();
             }
 
-            mc.player.sendSystemMessage(Component.literal("§8§m-----------------------------------------------------"));
-            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Sacks Debug§8] §aFound §e" + formatNumber(grandTotal) + "§a total items in §b" + target + "§a's sacks across §e" + grouped.size() + "§a sacks:"));
+            MutableComponent headerMsg = Component.literal("§8[§6🔥 Sacks Debug§8] §aFound §e" + formatNumber(grandTotal) + "§a total items in §b" + target + "§a's sacks: ");
+            headerMsg.append(Component.literal("§b§l[🎒 Open Sacks GUI]")
+                    .withStyle(st -> st.withClickEvent(new ClickEvent.RunCommand("/b sacks " + target))
+                            .withHoverEvent(new HoverEvent.ShowText(Component.literal("§bClick to open interactive Sacks GUI!")))));
+            mc.player.sendSystemMessage(headerMsg);
 
             for (Map.Entry<SackCategory, Map<String, Integer>> g : grouped.entrySet()) {
                 SackCategory cat = g.getKey();

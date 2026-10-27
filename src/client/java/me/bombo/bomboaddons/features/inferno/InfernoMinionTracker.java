@@ -77,13 +77,17 @@ public class InfernoMinionTracker {
 
     // Data structures
     public static class MinionInfo {
+        public int index = 1;
         public String uuid;
         public int entityId;
+        public double posX, posY, posZ;
         public int x, y, z;
         public String tier = "Inferno Minion";
         public long totalDrops;
         public long totalFuels;
         public long lastActionTime;
+        public String lastActionPlayer = "Player";
+        public Map<String, Long> dropCounts = new ConcurrentHashMap<>();
     }
 
     public static class ActionEntry {
@@ -121,6 +125,73 @@ public class InfernoMinionTracker {
     private static int activeMinionEntityId = 0;
     private static BlockPos activeMinionPos = null;
     private static String activeMinionName = "Inferno Minion";
+    public static int activeMinionIndex = 1;
+
+    // 32 Inferno Minion Island Mapping (Row 1: #1-16 @ Z=49.5; Row 2: #17-32 @ Z=45.5)
+    public static double getMinionTargetX(int index) {
+        if (index >= 1 && index <= 16) {
+            return 51.5 + (index - 1) * 2.0;
+        } else if (index >= 17 && index <= 32) {
+            return 81.5 - (index - 17) * 2.0;
+        }
+        return 51.5;
+    }
+
+    public static double getMinionTargetZ(int index) {
+        if (index >= 1 && index <= 16) {
+            return 49.5;
+        } else if (index >= 17 && index <= 32) {
+            return 45.5;
+        }
+        return 49.5;
+    }
+
+    public static int getMinionIndexForCoords(double x, double y, double z) {
+        int bestIdx = -1;
+        double bestDistSq = 20.0; // within ~4.4 blocks
+        for (int i = 1; i <= 32; i++) {
+            double tx = getMinionTargetX(i);
+            double ty = 103.0;
+            double tz = getMinionTargetZ(i);
+            double dx = x - tx;
+            double dy = y - ty;
+            double dz = z - tz;
+            double distSq = dx * dx + dy * dy + dz * dz;
+            if (distSq < bestDistSq) {
+                bestDistSq = distSq;
+                bestIdx = i;
+            }
+        }
+        return bestIdx;
+    }
+
+    public static void ensureAllMinionsInitialized() {
+        for (int i = 1; i <= 32; i++) {
+            String key = "minion_" + i;
+            final int idx = i;
+            MinionInfo info = state.minions.computeIfAbsent(key, k -> {
+                MinionInfo m = new MinionInfo();
+                m.index = idx;
+                m.uuid = key;
+                m.tier = "Inferno Minion #" + idx;
+                m.posX = getMinionTargetX(idx);
+                m.posY = 103.0;
+                m.posZ = getMinionTargetZ(idx);
+                m.x = (int) Math.floor(m.posX);
+                m.y = 103;
+                m.z = (int) Math.floor(m.posZ);
+                return m;
+            });
+            info.index = idx;
+            info.tier = "Inferno Minion #" + idx;
+            info.posX = getMinionTargetX(idx);
+            info.posY = 103.0;
+            info.posZ = getMinionTargetZ(idx);
+            info.x = (int) Math.floor(info.posX);
+            info.y = 103;
+            info.z = (int) Math.floor(info.posZ);
+        }
+    }
 
     // Fuel guard: records existing fuel sitting in slot 19 so it is NEVER counted as placed
     private static final Set<String> existingRunningFuelUuids = Collections.synchronizedSet(new HashSet<>());
@@ -136,6 +207,7 @@ public class InfernoMinionTracker {
         if (loaded) return;
         loaded = true;
         loadFromDisk();
+        ensureAllMinionsInitialized();
         syncWithServer(null);
     }
 
@@ -453,41 +525,84 @@ public class InfernoMinionTracker {
 
     private static void resolveActiveMinion(String title) {
         Minecraft mc = Minecraft.getInstance();
-        if (lastInteractedEntity != null && System.currentTimeMillis() - lastInteractTime < 6000L) {
-            activeMinionUuid = lastInteractedEntity.getUUID().toString();
+        if (mc.player == null) return;
+
+        double bestX = 0, bestY = 0, bestZ = 0;
+        boolean foundCandidate = false;
+
+        // 1. Check last interacted entity (if within 8s)
+        if (lastInteractedEntity != null && System.currentTimeMillis() - lastInteractTime < 8000L) {
+            bestX = lastInteractedEntity.getX();
+            bestY = lastInteractedEntity.getY();
+            bestZ = lastInteractedEntity.getZ();
+            foundCandidate = true;
             activeMinionEntityId = lastInteractedEntity.getId();
-            activeMinionPos = lastInteractedEntity.blockPosition();
-            activeMinionName = title;
-            return;
         }
 
-        // Fallback: look for nearest ArmorStand within 5 blocks
-        if (mc.level != null && mc.player != null) {
+        // 2. Check player hitResult (crosshair raycast block or entity)
+        if (!foundCandidate && mc.hitResult != null) {
+            if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult ehr && ehr.getEntity() != null) {
+                bestX = ehr.getEntity().getX();
+                bestY = ehr.getEntity().getY();
+                bestZ = ehr.getEntity().getZ();
+                foundCandidate = true;
+                activeMinionEntityId = ehr.getEntity().getId();
+            } else if (mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult bhr) {
+                BlockPos bp = bhr.getBlockPos();
+                bestX = bp.getX() + 0.5;
+                bestY = bp.getY() + 1.0;
+                bestZ = bp.getZ() + 0.5;
+                foundCandidate = true;
+            }
+        }
+
+        // 3. Fallback: look for nearest ArmorStand within 6 blocks
+        if (!foundCandidate && mc.level != null) {
             ArmorStand nearest = null;
             double nearestDistSq = Double.MAX_VALUE;
             for (Entity e : mc.level.entitiesForRendering()) {
                 if (e instanceof ArmorStand stand) {
                     double distSq = stand.distanceToSqr(mc.player);
-                    if (distSq < 25.0 && distSq < nearestDistSq) {
+                    if (distSq < 36.0 && distSq < nearestDistSq) {
                         nearestDistSq = distSq;
                         nearest = stand;
                     }
                 }
             }
             if (nearest != null) {
-                activeMinionUuid = nearest.getUUID().toString();
+                bestX = nearest.getX();
+                bestY = nearest.getY();
+                bestZ = nearest.getZ();
+                foundCandidate = true;
                 activeMinionEntityId = nearest.getId();
-                activeMinionPos = nearest.blockPosition();
-                activeMinionName = title;
-                return;
             }
         }
 
-        if (activeMinionUuid == null) {
-            activeMinionUuid = "minion_" + (mc.player != null ? mc.player.blockPosition().toShortString() : "unknown");
-            activeMinionEntityId = 0;
-            activeMinionPos = mc.player != null ? mc.player.blockPosition() : BlockPos.ZERO;
-            activeMinionName = title;
+        // 4. Fallback: player's position
+        if (!foundCandidate) {
+            bestX = mc.player.getX();
+            bestY = mc.player.getY();
+            bestZ = mc.player.getZ();
+        }
+
+        // Match against 32-minion grid
+        int idx = getMinionIndexForCoords(bestX, bestY, bestZ);
+        if (idx == -1) {
+            idx = getMinionIndexForCoords(mc.player.getX(), mc.player.getY(), mc.player.getZ());
+        }
+
+        if (idx != -1) {
+            activeMinionIndex = idx;
+            activeMinionName = "Inferno Minion #" + idx;
+            activeMinionUuid = "minion_" + idx;
+            double tx = getMinionTargetX(idx);
+            double tz = getMinionTargetZ(idx);
+            activeMinionPos = new BlockPos((int) Math.floor(tx), 103, (int) Math.floor(tz));
+        } else {
+            activeMinionIndex = 1;
+            activeMinionName = title != null ? title : "Inferno Minion";
+            activeMinionUuid = "minion_1";
+            activeMinionPos = mc.player.blockPosition();
         }
     }
 
@@ -626,7 +741,7 @@ public class InfernoMinionTracker {
         state.fuels.put(HYPERGOLIC_FUEL_ID, state.fuels.getOrDefault(HYPERGOLIC_FUEL_ID, 0L) + 1L);
 
         // Update minion record
-        updateMinionRecord(0, 1);
+        updateMinionRecord(0, 1, null);
 
         // Log action
         Minecraft mc = Minecraft.getInstance();
@@ -635,9 +750,11 @@ public class InfernoMinionTracker {
         action.type = "FUEL";
         action.player = playerName;
         action.timestamp = System.currentTimeMillis();
-        action.minionUuid = activeMinionUuid;
+        action.minionUuid = "minion_" + activeMinionIndex;
         action.minionEntityId = activeMinionEntityId;
-        action.pos = activeMinionPos != null ? (activeMinionPos.getX() + ", " + activeMinionPos.getY() + ", " + activeMinionPos.getZ()) : "0, 0, 0";
+        double tx = getMinionTargetX(activeMinionIndex);
+        double tz = getMinionTargetZ(activeMinionIndex);
+        action.pos = String.format(Locale.ROOT, "%.1f, 103.0, %.1f", tx, tz);
         action.cost = craftCost;
         action.revenue = 0L;
         action.fuelUuid = fuelUuid;
@@ -757,7 +874,7 @@ public class InfernoMinionTracker {
             totalCount += e.getValue();
         }
 
-        updateMinionRecord(totalCount, 0);
+        updateMinionRecord(totalCount, 0, claimedDrops);
 
         Minecraft mc = Minecraft.getInstance();
         String playerName = mc.player != null ? mc.player.getName().getString() : "Player";
@@ -765,9 +882,11 @@ public class InfernoMinionTracker {
         action.type = "CLAIM";
         action.player = playerName;
         action.timestamp = System.currentTimeMillis();
-        action.minionUuid = activeMinionUuid;
+        action.minionUuid = "minion_" + activeMinionIndex;
         action.minionEntityId = activeMinionEntityId;
-        action.pos = activeMinionPos != null ? (activeMinionPos.getX() + ", " + activeMinionPos.getY() + ", " + activeMinionPos.getZ()) : "0, 0, 0";
+        double tx = getMinionTargetX(activeMinionIndex);
+        double tz = getMinionTargetZ(activeMinionIndex);
+        action.pos = String.format(Locale.ROOT, "%.1f, 103.0, %.1f", tx, tz);
         action.cost = 0L;
         action.revenue = claimRevenue;
         action.drops = claimedDrops;
@@ -777,7 +896,7 @@ public class InfernoMinionTracker {
         pushActionToServer(action);
 
         if (BomboConfig.get().infernoChatAlerts && mc.player != null) {
-            StringBuilder sb = new StringBuilder("§8[§6🔥 Inferno§8] §aClaimed §e" + totalCount + "§a drops §7(§6+" + formatCoins(claimRevenue) + "§7): ");
+            StringBuilder sb = new StringBuilder("§8[§6🔥 Inferno§8] §aClaimed §e" + totalCount + "§a drops from §6Minion #" + activeMinionIndex + " §7(§6+" + formatCoins(claimRevenue) + "§7): ");
             int i = 0;
             for (Map.Entry<String, Integer> e : claimedDrops.entrySet()) {
                 if (i++ > 0) sb.append("§7, ");
@@ -788,31 +907,48 @@ public class InfernoMinionTracker {
         }
     }
 
-    private static void updateMinionRecord(int addedDrops, int addedFuels) {
-        if (activeMinionUuid == null) return;
-        MinionInfo info = state.minions.computeIfAbsent(activeMinionUuid, k -> {
+    private static void updateMinionRecord(int addedDrops, int addedFuels, Map<String, Integer> claimedDrops) {
+        ensureAllMinionsInitialized();
+        int idx = (activeMinionIndex >= 1 && activeMinionIndex <= 32) ? activeMinionIndex : 1;
+        String key = "minion_" + idx;
+        MinionInfo info = state.minions.computeIfAbsent(key, k -> {
             MinionInfo m = new MinionInfo();
-            m.uuid = activeMinionUuid;
-            m.entityId = activeMinionEntityId;
-            if (activeMinionPos != null) {
-                m.x = activeMinionPos.getX();
-                m.y = activeMinionPos.getY();
-                m.z = activeMinionPos.getZ();
-            }
-            m.tier = activeMinionName;
+            m.index = idx;
+            m.uuid = key;
+            m.tier = "Inferno Minion #" + idx;
+            m.posX = getMinionTargetX(idx);
+            m.posY = 103.0;
+            m.posZ = getMinionTargetZ(idx);
+            m.x = (int) Math.floor(m.posX);
+            m.y = 103;
+            m.z = (int) Math.floor(m.posZ);
             return m;
         });
 
+        info.index = idx;
         info.entityId = activeMinionEntityId;
-        info.tier = activeMinionName;
-        if (activeMinionPos != null) {
-            info.x = activeMinionPos.getX();
-            info.y = activeMinionPos.getY();
-            info.z = activeMinionPos.getZ();
-        }
+        info.tier = "Inferno Minion #" + idx;
+        info.posX = getMinionTargetX(idx);
+        info.posY = 103.0;
+        info.posZ = getMinionTargetZ(idx);
+        info.x = (int) Math.floor(info.posX);
+        info.y = 103;
+        info.z = (int) Math.floor(info.posZ);
         info.totalDrops += addedDrops;
         info.totalFuels += addedFuels;
         info.lastActionTime = System.currentTimeMillis();
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            info.lastActionPlayer = mc.player.getName().getString();
+        }
+
+        if (claimedDrops != null) {
+            if (info.dropCounts == null) info.dropCounts = new ConcurrentHashMap<>();
+            for (Map.Entry<String, Integer> e : claimedDrops.entrySet()) {
+                info.dropCounts.put(e.getKey(), info.dropCounts.getOrDefault(e.getKey(), 0L) + e.getValue());
+            }
+        }
     }
 
     public static boolean isFarmDrop(ItemStack stack) {

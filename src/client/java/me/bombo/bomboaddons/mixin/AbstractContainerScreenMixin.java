@@ -412,9 +412,36 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          }
       }
 
+      if (me.bombo.bomboaddons.features.inferno.InfernoCraftHud.onMouseClicked(event.x(), event.y(), event.button())) {
+         cir.setReturnValue(true);
+         return;
+      }
+
       if (ItemListOverlay.mouseClicked(event.x(), event.y(), event.button())) {
          cir.setReturnValue(true);
       } else {
+         // Guard against crafting Sulphuric Coal using expensive Chili Pepper recipe
+         if (this.hoveredSlot != null) {
+            String title = this.getTitle() != null ? this.getTitle().getString().toLowerCase(java.util.Locale.ROOT) : "";
+            if (title.contains("sulphuric coal") || title.contains("sulphur coal")) {
+               int sIdx = this.hoveredSlot.index;
+               if (sIdx == 23 || sIdx == 25 || sIdx == 31) {
+                  if (isChiliPepperSulphuricCoalRecipe()) {
+                     boolean bypassed = event.hasControlDown() || event.hasShiftDown()
+                           || (Minecraft.getInstance() != null && (Minecraft.getInstance().hasControlDown() || Minecraft.getInstance().hasShiftDown()));
+                     if (!bypassed) {
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.player != null) {
+                           mc.player.sendSystemMessage(Component.literal("§8[§6🔥 BomboAddons§8] §c⛔ BLOCKED Supercraft for Sulphuric Coal with Chili Peppers! §7(Recipe is not profitable. Hold §eCtrl§7 to craft anyway)"));
+                        }
+                        cir.setReturnValue(true);
+                        return;
+                     }
+                  }
+               }
+            }
+         }
+
          BomboConfig.Settings s = BomboConfig.get();
          boolean isGardenMoving = s != null && s.gardenBlockSlotsWhileFarming && me.bombo.bomboaddons.GardenMovement.isActive() && (s.gardenBindsEverywhere || me.bombo.bomboaddons.SkyblockUtils.isInGarden());
          if (isGardenMoving && this.hoveredSlot != null) {
@@ -818,6 +845,23 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          }
       } catch (Throwable ignored) {}
 
+      // In-Bazaar / In-Container Fuel Craft HUD Direct Render
+      try {
+         if (BomboConfig.get().infernoCraftHudEnabled && (me.bombo.bomboaddons.SkyblockUtils.isInBazaar() || !BomboConfig.get().infernoCraftHudOnlyIsland || me.bombo.bomboaddons.SkyblockUtils.isInPrivateIsland())) {
+            me.bombo.bomboaddons.features.inferno.InfernoCraftHud.renderDirect(graphics, mouseX, mouseY);
+         }
+      } catch (Throwable ignored) {}
+
+      // Blocked Sulphuric Coal Supercraft Slot Highlight
+      try {
+         String title = this.getTitle() != null ? this.getTitle().getString().toLowerCase(java.util.Locale.ROOT) : "";
+         if (title.contains("sulphuric coal") || title.contains("sulphur coal")) {
+            if (isChiliPepperSulphuricCoalRecipe()) {
+               renderBlockedSupercraftSlots(graphics);
+            }
+         }
+      } catch (Throwable ignored) {}
+
       if (BomboConfig.get().storagePreview) {
          if (now - lastStoragePreviewTickTime >= 100L) {
             lastStoragePreviewTickTime = now;
@@ -997,5 +1041,41 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          ing.append("§e").append(me.bombo.bomboaddons.features.inferno.InfernoFuelCraftHelper.formatNum(e.getValue())).append(" §f").append(e.getKey());
       }
       graphics.text(font, ing.toString(), boxX + 6, boxY + 31, 0xFFCBD5E1, false);
+   }
+
+   private boolean isChiliPepperSulphuricCoalRecipe() {
+      AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
+      if (screen.getMenu() == null) return false;
+      for (Slot s : screen.getMenu().slots) {
+         if (s != null && s.hasItem() && s.index < 54) {
+            ItemStack item = s.getItem();
+            String sbId = me.bombo.bomboaddons.SkyblockUtils.getSkyblockId(item);
+            if ("CHILI_PEPPER".equalsIgnoreCase(sbId) || "ENCHANTED_CHILI_PEPPER".equalsIgnoreCase(sbId)) {
+               return true;
+            }
+            String n = net.minecraft.ChatFormatting.stripFormatting(item.getHoverName().getString()).toLowerCase(java.util.Locale.ROOT);
+            if (n.contains("chili pepper")) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   private void renderBlockedSupercraftSlots(GuiGraphicsExtractor graphics) {
+      AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
+      if (screen.getMenu() == null) return;
+      int[] blockedSlots = {23, 25};
+      for (int slotIdx : blockedSlots) {
+         if (slotIdx < screen.getMenu().slots.size()) {
+            Slot s = screen.getMenu().getSlot(slotIdx);
+            if (s != null) {
+               int sx = this.leftPos + s.x;
+               int sy = this.topPos + s.y;
+               graphics.fill(sx, sy, sx + 16, sy + 16, 0x85EF4444);
+               graphics.outline(sx, sy, 16, 16, 0xFFFF0000);
+            }
+         }
+      }
    }
 }
