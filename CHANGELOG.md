@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.157] - 2026-10-27 (Beta)
+
+### Inferno Minion Profit & Fuel Tracker (`InfernoMinionTracker.java`, `InfernoTrackerScreen.java`, `CommandMixin.java`, `AbstractContainerScreenMixin.java`, `MinecraftMixin.java`)
+- **Automated Drop Tracking:** Detects when collecting drops from Inferno Minions (Tiers I-XI) on the Private Island. Tracks Crude Gabagool, Very Crude Gabagool, Fuel Gabagool, Heavy Gabagool, Hypergolic Gabagool, Chili Pepper, Inferno Vertex, Inferno Apex, Reaper Pepper, and Gabagool the Fish with live Bazaar and Lowest BIN pricing.
+- **Hypergolic Fuel Craft Cost Accounting:** Accurately tracks fuel placement in slot 19 for Hypergolic Crude Gabagool fuel (`{fuel_item:1b, id:"INFERNO_HYPERGOLIC_CRUDE_GABAGOOL"}`). Uses raw craft cost (`LowestBinManager.getCraftCostCached`), deduplicates using unique item UUIDs, and deducts fuel expenses from total profit.
+- **Dedicated Visual Dashboard (`/b inferno`):** Implemented a glassmorphic analytics screen featuring 4 glowing KPI metric cards (Net Profit, Gross Revenue, Fuel Expenses, Fuels Consumed) and 4 interactive tabs (Farmed Drops, Fuel & Costs, Tracked Minions, Activity Log).
+- **Minion Identity & Entity Tracking:** Identifies minions via right-clicked ArmorStand UUIDs, Entity IDs, and block coordinates, keeping a persistent catalog of all active minions on your island.
+- **Coop Cloud Synchronization:** Synchronizes drops, fuel usage, and actions with coop members via `api.bombo.dpdns.org/api/inferno/data` with configurable passkeys (`/b inferno key <pass>`), and displays active coops in the server Key Manager dashboard (`keys.html`).
+
 ## [26.2.28.156] - 2026-10-25 (Beta)
 
 ### Hotbar Swapper Subcommand Fix (`CommandMixin.java`, `HotbarSwapper.java`, `HotbarConfig.java`, `BomboaddonsClient.java`)

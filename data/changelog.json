@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.157",
+    "date": "2026-10-27",
+    "changes": [
+      "+ Inferno Minion Profit & Fuel Tracker - Automated drop tracking and fuel craft cost accounting for Inferno Minions on Private Island",
+      "+ Dedicated Visual Dashboard (/b inferno) - Glassmorphic screen with Net Profit, Gross Revenue, Fuel Expenses, and 4 interactive tabs",
+      "+ Hypergolic Fuel Raw Craft Cost - Accurately deducts Hypergolic Crude Gabagool fuel costs (LowestBinManager craft cost) with UUID deduplication",
+      "+ Minion Entity Tracking - Resolves ArmorStand UUIDs, Entity IDs, and block coordinates for all active minions",
+      "+ Cloud & Coop Synchronization - Syncs drops, fuels, and action history via api.bombo.dpdns.org/api/inferno/data with passkey support",
+      "+ Server Key Manager Integration - Added Inferno Minion Coops table and metrics to keys.html"
+    ]
+  },
+  {
     "version": "26.2.28.156",
     "date": "2026-10-25",
     "changes": [

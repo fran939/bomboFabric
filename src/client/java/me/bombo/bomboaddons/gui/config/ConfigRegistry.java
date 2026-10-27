@@ -817,6 +817,17 @@ public class ConfigRegistry {
                 items.add(ConfigItem.button("View Greenhouse Profits", "Open GUI", "Opens the Greenhouse Profit summary screen (/gp).", category, () -> {
                     Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.features.garden.GreenhouseProfitScreen(Minecraft.getInstance().gui.screen()));
                 }));
+
+                items.add(ConfigItem.header("Inferno Minion Tracker", category));
+                items.add(ConfigItem.toggle("Inferno Minion Tracker", "Tracks farmed drops and fuel craft costs for Inferno Minions on your Private Island.", category, () -> s.infernoTrackerEnabled, v -> s.infernoTrackerEnabled = v));
+                items.add(ConfigItem.toggle("Inferno Chat Alerts", "Sends a sleek chat summary when claiming drops or placing fuel.", category, () -> s.infernoChatAlerts, v -> s.infernoChatAlerts = v));
+                items.add(ConfigItem.text("Coop Passkey", "Passkey used to sync minion tracking data across coop members.", category, () -> s.infernoCoopPasskey != null ? s.infernoCoopPasskey : "default", v -> {
+                    s.infernoCoopPasskey = v;
+                    me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(v);
+                }));
+                items.add(ConfigItem.button("Open Inferno Tracker", "Open GUI", "Opens the dedicated Inferno Minion profit and analytics dashboard (/b inferno).", category, () -> {
+                    Minecraft.getInstance().setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(Minecraft.getInstance().gui.screen()));
+                }));
             }
 
             case "General" -> {

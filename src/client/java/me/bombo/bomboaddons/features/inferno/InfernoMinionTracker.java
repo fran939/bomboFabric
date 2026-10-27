@@ -1,0 +1,733 @@
+package me.bombo.bomboaddons.features.inferno;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.LowestBinManager;
+import me.bombo.bomboaddons.SkyblockUtils;
+import me.bombo.bomboaddons.util.BomboApiUrl;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+
+public class InfernoMinionTracker {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(6)).build();
+    private static final File DATA_FILE = FabricLoader.getInstance().getConfigDir().resolve("bomboaddons/inferno_tracker.json").toFile();
+
+    // Valid Inferno Minion drop IDs
+    public static final Set<String> TRACKED_DROPS = Set.of(
+        "CRUDE_GABAGOOL",
+        "VERY_CRUDE_GABAGOOL",
+        "FUEL_GABAGOOL",
+        "HEAVY_GABAGOOL",
+        "HYPERGOLIC_GABAGOOL",
+        "CHILI_PEPPER",
+        "ENCHANTED_CHILI_PEPPER",
+        "INFERNO_VERTEX",
+        "INFERNO_APEX",
+        "REAPER_PEPPER",
+        "GABAGOOL_THE_FISH"
+    );
+
+    public static final String HYPERGOLIC_FUEL_ID = "INFERNO_HYPERGOLIC_CRUDE_GABAGOOL";
+
+    // Data structures
+    public static class MinionInfo {
+        public String uuid;
+        public int entityId;
+        public int x, y, z;
+        public String tier = "Inferno Minion";
+        public long totalDrops;
+        public long totalFuels;
+        public long lastActionTime;
+    }
+
+    public static class ActionEntry {
+        public String type; // "CLAIM" or "FUEL"
+        public String player;
+        public long timestamp;
+        public String minionUuid;
+        public int minionEntityId;
+        public String pos;
+        public long cost;
+        public long revenue;
+        public Map<String, Integer> drops;
+        public String fuelUuid;
+    }
+
+    public static class TrackerState {
+        public String passkey = "default";
+        public long totalRevenue = 0L;
+        public long totalCost = 0L;
+        public long netProfit = 0L;
+        public Map<String, Long> drops = new ConcurrentHashMap<>();
+        public Map<String, Long> fuels = new ConcurrentHashMap<>();
+        public Set<String> seenFuelUuids = Collections.synchronizedSet(new HashSet<>());
+        public List<ActionEntry> actions = Collections.synchronizedList(new ArrayList<>());
+        public Map<String, MinionInfo> minions = new ConcurrentHashMap<>();
+    }
+
+    private static TrackerState state = new TrackerState();
+    private static boolean loaded = false;
+
+    // Runtime context
+    private static Entity lastInteractedEntity = null;
+    private static long lastInteractTime = 0L;
+    private static String activeMinionUuid = null;
+    private static int activeMinionEntityId = 0;
+    private static BlockPos activeMinionPos = null;
+    private static String activeMinionName = "Inferno Minion";
+    private static String initialFuelUuid = null;
+    private static final Map<Integer, ItemStack> dropSlotSnapshot = new HashMap<>();
+
+    public static synchronized void ensureLoaded() {
+        if (loaded) return;
+        loaded = true;
+        loadFromDisk();
+        syncWithServer(null);
+    }
+
+    public static TrackerState getState() {
+        ensureLoaded();
+        return state;
+    }
+
+    public static String getPasskey() {
+        ensureLoaded();
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s != null && s.infernoCoopPasskey != null && !s.infernoCoopPasskey.trim().isEmpty()) {
+            return s.infernoCoopPasskey.trim();
+        }
+        return state.passkey != null ? state.passkey : "default";
+    }
+
+    public static void setPasskey(String key) {
+        if (key == null || key.trim().isEmpty()) key = "default";
+        key = key.trim();
+        state.passkey = key;
+        BomboConfig.Settings s = BomboConfig.get();
+        if (s != null) {
+            s.infernoCoopPasskey = key;
+            BomboConfig.save();
+        }
+        saveToDisk();
+        syncWithServer(null);
+    }
+
+    public static void loadFromDisk() {
+        try {
+            if (!DATA_FILE.exists()) {
+                DATA_FILE.getParentFile().mkdirs();
+                return;
+            }
+            try (FileReader reader = new FileReader(DATA_FILE, StandardCharsets.UTF_8)) {
+                TrackerState loadedState = GSON.fromJson(reader, TrackerState.class);
+                if (loadedState != null) {
+                    state = loadedState;
+                    if (state.drops == null) state.drops = new ConcurrentHashMap<>();
+                    if (state.fuels == null) state.fuels = new ConcurrentHashMap<>();
+                    if (state.seenFuelUuids == null) state.seenFuelUuids = Collections.synchronizedSet(new HashSet<>());
+                    if (state.actions == null) state.actions = Collections.synchronizedList(new ArrayList<>());
+                    if (state.minions == null) state.minions = new ConcurrentHashMap<>();
+                }
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    public static synchronized void saveToDisk() {
+        try {
+            if (!DATA_FILE.getParentFile().exists()) {
+                DATA_FILE.getParentFile().mkdirs();
+            }
+            try (FileWriter writer = new FileWriter(DATA_FILE, StandardCharsets.UTF_8)) {
+                GSON.toJson(state, writer);
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    public static void syncWithServer(Runnable onComplete) {
+        String key = getPasskey();
+        CompletableFuture.runAsync(() -> {
+            try {
+                String url = BomboApiUrl.getApiUrl("/api/inferno/data?key=" + java.net.URLEncoder.encode(key, StandardCharsets.UTF_8));
+                HttpRequest req = BomboApiUrl.attachApiKey(HttpRequest.newBuilder().uri(URI.create(url)).GET().timeout(Duration.ofSeconds(6))).build();
+                HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                if (resp.statusCode() == 200) {
+                    JsonObject json = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    if (json.has("success") && json.get("success").getAsBoolean() && json.has("data")) {
+                        JsonObject data = json.getAsJsonObject("data");
+                        Minecraft.getInstance().execute(() -> {
+                            mergeServerData(data);
+                            saveToDisk();
+                            if (onComplete != null) onComplete.run();
+                        });
+                        return;
+                    }
+                }
+            } catch (Throwable t) {
+                // Silently keep local state if offline
+            }
+            if (onComplete != null) {
+                Minecraft.getInstance().execute(onComplete);
+            }
+        });
+    }
+
+    private static void mergeServerData(JsonObject data) {
+        if (data.has("totalRevenue")) state.totalRevenue = data.get("totalRevenue").getAsLong();
+        if (data.has("totalCost")) state.totalCost = data.get("totalCost").getAsLong();
+        if (data.has("netProfit")) state.netProfit = data.get("netProfit").getAsLong();
+
+        if (data.has("drops") && data.get("drops").isJsonObject()) {
+            JsonObject dObj = data.getAsJsonObject("drops");
+            for (Map.Entry<String, JsonElement> entry : dObj.entrySet()) {
+                state.drops.put(entry.getKey(), entry.getValue().getAsLong());
+            }
+        }
+
+        if (data.has("fuels") && data.get("fuels").isJsonObject()) {
+            JsonObject fObj = data.getAsJsonObject("fuels");
+            for (Map.Entry<String, JsonElement> entry : fObj.entrySet()) {
+                state.fuels.put(entry.getKey(), entry.getValue().getAsLong());
+            }
+        }
+
+        if (data.has("seenFuelUuids") && data.get("seenFuelUuids").isJsonArray()) {
+            JsonArray arr = data.getAsJsonArray("seenFuelUuids");
+            for (JsonElement el : arr) {
+                state.seenFuelUuids.add(el.getAsString());
+            }
+        }
+
+        if (data.has("actions") && data.get("actions").isJsonArray()) {
+            state.actions.clear();
+            JsonArray arr = data.getAsJsonArray("actions");
+            for (JsonElement el : arr) {
+                try {
+                    if (el.isJsonObject()) {
+                        JsonObject aObj = el.getAsJsonObject();
+                        ActionEntry a = GSON.fromJson(aObj, ActionEntry.class);
+                        if (a != null) {
+                            if ((a.player == null || a.player.isEmpty()) && aObj.has("user")) {
+                                a.player = aObj.get("user").getAsString();
+                            }
+                            if (a.cost == 0 && aObj.has("fuelCost")) {
+                                a.cost = aObj.get("fuelCost").getAsLong();
+                            }
+                            state.actions.add(a);
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (data.has("minions") && data.get("minions").isJsonObject()) {
+            JsonObject mObj = data.getAsJsonObject("minions");
+            for (Map.Entry<String, JsonElement> entry : mObj.entrySet()) {
+                try {
+                    MinionInfo m = GSON.fromJson(entry.getValue(), MinionInfo.class);
+                    if (m != null) state.minions.put(entry.getKey(), m);
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    private static void pushActionToServer(ActionEntry action) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                String key = getPasskey();
+                JsonObject payload = new JsonObject();
+                payload.addProperty("passkey", key);
+                payload.addProperty("type", action.type);
+                payload.addProperty("player", action.player);
+                payload.addProperty("user", action.player);
+                payload.addProperty("minionUuid", action.minionUuid);
+                payload.addProperty("minionEntityId", action.minionEntityId);
+                payload.addProperty("minionPos", action.pos);
+                if (action.fuelUuid != null) payload.addProperty("fuelUuid", action.fuelUuid);
+                if (action.cost > 0) {
+                    payload.addProperty("fuelCost", action.cost);
+                    payload.addProperty("cost", action.cost);
+                }
+                if (action.revenue > 0) payload.addProperty("revenue", action.revenue);
+                if (action.drops != null && !action.drops.isEmpty()) {
+                    JsonObject dObj = new JsonObject();
+                    for (Map.Entry<String, Integer> e : action.drops.entrySet()) {
+                        dObj.addProperty(e.getKey(), e.getValue());
+                    }
+                    payload.add("drops", dObj);
+                }
+
+                String url = BomboApiUrl.getApiUrl("/api/inferno/action");
+                HttpRequest req = BomboApiUrl.attachApiKey(HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
+                    .timeout(Duration.ofSeconds(6)))
+                    .build();
+
+                HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.discarding());
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        });
+    }
+
+    public static void resetData(Runnable onComplete) {
+        state.totalRevenue = 0L;
+        state.totalCost = 0L;
+        state.netProfit = 0L;
+        state.drops.clear();
+        state.fuels.clear();
+        state.seenFuelUuids.clear();
+        state.actions.clear();
+        state.minions.clear();
+        saveToDisk();
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                String key = getPasskey();
+                String url = BomboApiUrl.getApiUrl("/api/inferno/reset?key=" + java.net.URLEncoder.encode(key, StandardCharsets.UTF_8));
+                HttpRequest req = BomboApiUrl.attachApiKey(HttpRequest.newBuilder().uri(URI.create(url)).POST(HttpRequest.BodyPublishers.noBody()).timeout(Duration.ofSeconds(6))).build();
+                HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.discarding());
+            } catch (Throwable ignored) {}
+            if (onComplete != null) {
+                Minecraft.getInstance().execute(onComplete);
+            }
+        });
+    }
+
+    // Entity interaction hook
+    public static void onEntityRightClicked(Entity entity) {
+        if (!SkyblockUtils.isInPrivateIsland()) return;
+        if (entity == null) return;
+        if (entity instanceof ArmorStand || entity.getName().getString().contains("Minion")) {
+            lastInteractedEntity = entity;
+            lastInteractTime = System.currentTimeMillis();
+        }
+    }
+
+    // Container open / tick hook
+    public static void onContainerTick(AbstractContainerScreen<?> screen) {
+        if (!SkyblockUtils.isInPrivateIsland()) return;
+        String title = screen.getTitle().getString();
+        if (!isInfernoMinionGui(title)) return;
+
+        if (screen.getMenu() instanceof ChestMenu chestMenu) {
+            resolveActiveMinion(title);
+            // Snapshot initial fuel in slot 19 if not already done
+            if (initialFuelUuid == null) {
+                ItemStack fuelStack = chestMenu.getSlot(19).getItem();
+                initialFuelUuid = extractFuelUuid(fuelStack);
+            }
+        }
+    }
+
+    public static boolean isInfernoMinionGui(String title) {
+        if (title == null) return false;
+        String clean = title.replaceAll("§.", "").trim();
+        return clean.startsWith("Inferno Minion");
+    }
+
+    private static void resolveActiveMinion(String title) {
+        Minecraft mc = Minecraft.getInstance();
+        if (lastInteractedEntity != null && System.currentTimeMillis() - lastInteractTime < 6000L) {
+            activeMinionUuid = lastInteractedEntity.getUUID().toString();
+            activeMinionEntityId = lastInteractedEntity.getId();
+            activeMinionPos = lastInteractedEntity.blockPosition();
+            activeMinionName = title;
+            return;
+        }
+
+        // Fallback: look for nearest ArmorStand within 5 blocks
+        if (mc.level != null && mc.player != null) {
+            ArmorStand nearest = null;
+            double nearestDistSq = Double.MAX_VALUE;
+            for (Entity e : mc.level.entitiesForRendering()) {
+                if (e instanceof ArmorStand stand) {
+                    double distSq = stand.distanceToSqr(mc.player);
+                    if (distSq < 25.0 && distSq < nearestDistSq) {
+                        nearestDistSq = distSq;
+                        nearest = stand;
+                    }
+                }
+            }
+            if (nearest != null) {
+                activeMinionUuid = nearest.getUUID().toString();
+                activeMinionEntityId = nearest.getId();
+                activeMinionPos = nearest.blockPosition();
+                activeMinionName = title;
+                return;
+            }
+        }
+
+        if (activeMinionUuid == null) {
+            activeMinionUuid = "minion_" + (mc.player != null ? mc.player.blockPosition().toShortString() : "unknown");
+            activeMinionEntityId = 0;
+            activeMinionPos = mc.player != null ? mc.player.blockPosition() : BlockPos.ZERO;
+            activeMinionName = title;
+        }
+    }
+
+    public static void onContainerClosed() {
+        initialFuelUuid = null;
+        dropSlotSnapshot.clear();
+    }
+
+    // Slot click hook
+    public static void onSlotClick(Slot slot, int slotId, int mouseButton, ContainerInput type, AbstractContainerScreen<?> screen, boolean isReturn) {
+        if (!SkyblockUtils.isInPrivateIsland()) return;
+        String title = screen.getTitle().getString();
+        if (!isInfernoMinionGui(title)) return;
+        if (!(screen.getMenu() instanceof ChestMenu chestMenu)) return;
+
+        resolveActiveMinion(title);
+
+        if (!isReturn) {
+            // HEAD: snapshot before click
+            dropSlotSnapshot.clear();
+            if (slot != null && !slot.getItem().isEmpty()) {
+                String hoverName = slot.getItem().getHoverName().getString();
+                if (hoverName.contains("Collect All")) {
+                    // Snapshot all minion storage drop slots
+                    for (int i = 0; i < 54; i++) {
+                        ItemStack item = chestMenu.getSlot(i).getItem();
+                        if (isFarmDrop(item)) {
+                            dropSlotSnapshot.put(i, item.copy());
+                        }
+                    }
+                } else if (isFarmDrop(slot.getItem())) {
+                    dropSlotSnapshot.put(slotId, slot.getItem().copy());
+                }
+            }
+        } else {
+            // RETURN: verify slot updates
+            Minecraft mc = Minecraft.getInstance();
+            mc.execute(() -> {
+                try {
+                    // 1. Check if fuel was placed into slot 19
+                    ItemStack fuelSlotItem = chestMenu.getSlot(19).getItem();
+                    checkAndRecordFuelPlacement(fuelSlotItem);
+
+                    // 2. Check if drops were collected
+                    if (!dropSlotSnapshot.isEmpty()) {
+                        Map<String, Integer> claimedDrops = new HashMap<>();
+                        long claimRevenue = 0L;
+
+                        for (Map.Entry<Integer, ItemStack> entry : dropSlotSnapshot.entrySet()) {
+                            int sId = entry.getKey();
+                            ItemStack before = entry.getValue();
+                            ItemStack after = chestMenu.getSlot(sId).getItem();
+
+                            int taken = 0;
+                            if (after.isEmpty() || !after.getItem().equals(before.getItem())) {
+                                taken = before.getCount();
+                            } else if (after.getCount() < before.getCount()) {
+                                taken = before.getCount() - after.getCount();
+                            }
+
+                            if (taken > 0) {
+                                String sbId = SkyblockUtils.getSkyblockId(before);
+                                if (sbId.isEmpty()) sbId = before.getHoverName().getString();
+                                claimedDrops.put(sbId, claimedDrops.getOrDefault(sbId, 0) + taken);
+
+                                long unitPrice = getDropUnitPrice(sbId);
+                                claimRevenue += unitPrice * taken;
+                            }
+                        }
+
+                        if (!claimedDrops.isEmpty()) {
+                            recordClaim(claimedDrops, claimRevenue);
+                        }
+                        dropSlotSnapshot.clear();
+                    }
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+        }
+    }
+
+    private static void checkAndRecordFuelPlacement(ItemStack fuelStack) {
+        if (fuelStack == null || fuelStack.isEmpty()) return;
+        String fuelUuid = extractFuelUuid(fuelStack);
+        if (fuelUuid == null || fuelUuid.isEmpty()) return;
+
+        // If this fuel was already inside the minion when opened, ignore
+        if (fuelUuid.equals(initialFuelUuid)) return;
+
+        // Check if fuel is Hypergolic gabagool fuel
+        String sbId = SkyblockUtils.getSkyblockId(fuelStack);
+        boolean isHypergolic = HYPERGOLIC_FUEL_ID.equalsIgnoreCase(sbId) || isFuelItem(fuelStack);
+        if (!isHypergolic) return;
+
+        // Check if fuel uuid already counted
+        if (state.seenFuelUuids.contains(fuelUuid)) return;
+
+        // Calculate Craft Cost
+        long craftCost = LowestBinManager.getCraftCostCached(HYPERGOLIC_FUEL_ID);
+        if (craftCost <= 0) {
+            craftCost = LowestBinManager.getCachedPrice(HYPERGOLIC_FUEL_ID);
+        }
+        if (craftCost <= 0) {
+            craftCost = 4_320_000L; // Safe fallback standard craft cost
+        }
+
+        // Record fuel
+        state.seenFuelUuids.add(fuelUuid);
+        state.totalCost += craftCost;
+        state.netProfit = state.totalRevenue - state.totalCost;
+        state.fuels.put(HYPERGOLIC_FUEL_ID, state.fuels.getOrDefault(HYPERGOLIC_FUEL_ID, 0L) + 1L);
+
+        // Update minion record
+        updateMinionRecord(0, 1);
+
+        // Log action
+        Minecraft mc = Minecraft.getInstance();
+        String playerName = mc.player != null ? mc.player.getName().getString() : "Player";
+        ActionEntry action = new ActionEntry();
+        action.type = "FUEL";
+        action.player = playerName;
+        action.timestamp = System.currentTimeMillis();
+        action.minionUuid = activeMinionUuid;
+        action.minionEntityId = activeMinionEntityId;
+        action.pos = activeMinionPos != null ? (activeMinionPos.getX() + ", " + activeMinionPos.getY() + ", " + activeMinionPos.getZ()) : "0, 0, 0";
+        action.cost = craftCost;
+        action.revenue = 0L;
+        action.fuelUuid = fuelUuid;
+        state.actions.add(0, action);
+
+        saveToDisk();
+        pushActionToServer(action);
+
+        initialFuelUuid = fuelUuid;
+
+        if (BomboConfig.get().infernoChatAlerts && mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aAdded 1x Hypergolic Fuel! §7(Craft Cost: §c-" + formatCoins(craftCost) + "§7) §8[Net: " + (state.netProfit >= 0 ? "§a+" : "§c") + formatCoins(state.netProfit) + "§8]"));
+        }
+    }
+
+    private static void recordClaim(Map<String, Integer> claimedDrops, long claimRevenue) {
+        state.totalRevenue += claimRevenue;
+        state.netProfit = state.totalRevenue - state.totalCost;
+
+        int totalCount = 0;
+        for (Map.Entry<String, Integer> e : claimedDrops.entrySet()) {
+            state.drops.put(e.getKey(), state.drops.getOrDefault(e.getKey(), 0L) + e.getValue());
+            totalCount += e.getValue();
+        }
+
+        updateMinionRecord(totalCount, 0);
+
+        Minecraft mc = Minecraft.getInstance();
+        String playerName = mc.player != null ? mc.player.getName().getString() : "Player";
+        ActionEntry action = new ActionEntry();
+        action.type = "CLAIM";
+        action.player = playerName;
+        action.timestamp = System.currentTimeMillis();
+        action.minionUuid = activeMinionUuid;
+        action.minionEntityId = activeMinionEntityId;
+        action.pos = activeMinionPos != null ? (activeMinionPos.getX() + ", " + activeMinionPos.getY() + ", " + activeMinionPos.getZ()) : "0, 0, 0";
+        action.cost = 0L;
+        action.revenue = claimRevenue;
+        action.drops = claimedDrops;
+        state.actions.add(0, action);
+
+        saveToDisk();
+        pushActionToServer(action);
+
+        if (BomboConfig.get().infernoChatAlerts && mc.player != null) {
+            StringBuilder sb = new StringBuilder("§8[§6🔥 Inferno§8] §aClaimed §e" + totalCount + "§a drops §7(§6+" + formatCoins(claimRevenue) + "§7): ");
+            int i = 0;
+            for (Map.Entry<String, Integer> e : claimedDrops.entrySet()) {
+                if (i++ > 0) sb.append("§7, ");
+                sb.append("§f").append(e.getValue()).append("x §e").append(formatDropName(e.getKey()));
+            }
+            sb.append(" §8[Net: ").append(state.netProfit >= 0 ? "§a+" : "§c").append(formatCoins(state.netProfit)).append("§8]");
+            mc.player.sendSystemMessage(Component.literal(sb.toString()));
+        }
+    }
+
+    private static void updateMinionRecord(int addedDrops, int addedFuels) {
+        if (activeMinionUuid == null) return;
+        MinionInfo info = state.minions.computeIfAbsent(activeMinionUuid, k -> {
+            MinionInfo m = new MinionInfo();
+            m.uuid = activeMinionUuid;
+            m.entityId = activeMinionEntityId;
+            if (activeMinionPos != null) {
+                m.x = activeMinionPos.getX();
+                m.y = activeMinionPos.getY();
+                m.z = activeMinionPos.getZ();
+            }
+            m.tier = activeMinionName;
+            return m;
+        });
+
+        info.entityId = activeMinionEntityId;
+        info.tier = activeMinionName;
+        if (activeMinionPos != null) {
+            info.x = activeMinionPos.getX();
+            info.y = activeMinionPos.getY();
+            info.z = activeMinionPos.getZ();
+        }
+        info.totalDrops += addedDrops;
+        info.totalFuels += addedFuels;
+        info.lastActionTime = System.currentTimeMillis();
+    }
+
+    public static boolean isFarmDrop(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        String id = SkyblockUtils.getSkyblockId(stack);
+        if (id.isEmpty()) return false;
+
+        // Explicitly exclude minion fuel
+        if (HYPERGOLIC_FUEL_ID.equalsIgnoreCase(id) || isFuelItem(stack)) {
+            return false;
+        }
+
+        // Exclude minion upgrades and buttons
+        if (id.contains("FLYCATCHER") || id.contains("COMPACTOR") || id.contains("HOPPER") || id.contains("SPREADING") || id.contains("SOIL") || id.contains("SMELTER")) {
+            return false;
+        }
+
+        if (TRACKED_DROPS.contains(id)) return true;
+        if (id.contains("GABAGOOL") && !id.contains("FUEL_BLOCK")) return true;
+        if (id.contains("PEPPER")) return true;
+        if (id.contains("VERTEX") || id.contains("APEX")) return true;
+
+        return false;
+    }
+
+    public static boolean isFuelItem(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        try {
+            CustomData cd = (CustomData) stack.get(DataComponents.CUSTOM_DATA);
+            if (cd != null) {
+                CompoundTag tag = cd.copyTag();
+                if (tag.contains("fuel_item") || tag.contains("inferno_fuel")) return true;
+                if (tag.contains("ExtraAttributes")) {
+                    CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+                    if (ea != null && (ea.contains("fuel_item") || ea.contains("inferno_fuel"))) return true;
+                }
+            }
+        } catch (Throwable ignored) {}
+        String id = SkyblockUtils.getSkyblockId(stack);
+        return HYPERGOLIC_FUEL_ID.equalsIgnoreCase(id);
+    }
+
+    public static String extractFuelUuid(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+        try {
+            CustomData cd = (CustomData) stack.get(DataComponents.CUSTOM_DATA);
+            if (cd != null) {
+                CompoundTag tag = cd.copyTag();
+                if (tag.contains("uuid")) {
+                    return tag.getString("uuid").orElse(null);
+                }
+                if (tag.contains("ExtraAttributes")) {
+                    CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+                    if (ea != null && ea.contains("uuid")) {
+                        return ea.getString("uuid").orElse(null);
+                    }
+                }
+                if (tag.contains("timestamp")) {
+                    return "ts_" + tag.getLong("timestamp").orElse(0L);
+                }
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    public static long getDropUnitPrice(String skyblockId) {
+        if (skyblockId == null || skyblockId.isEmpty()) return 0L;
+        long p = LowestBinManager.getCachedPrice(skyblockId);
+        if (p <= 0L) {
+            // Standard baseline fallbacks if offline / not loaded
+            switch (skyblockId) {
+                case "CRUDE_GABAGOOL": return 450L;
+                case "VERY_CRUDE_GABAGOOL": return 7200L;
+                case "CHILI_PEPPER": return 145000L;
+                case "INFERNO_VERTEX": return 4500000L;
+                case "INFERNO_APEX": return 125000000L;
+                case "REAPER_PEPPER": return 25000000L;
+                default: return 1000L;
+            }
+        }
+        return p;
+    }
+
+    public static String formatCoins(long c) {
+        boolean neg = c < 0;
+        long abs = Math.abs(c);
+        String s;
+        if (abs >= 1_000_000_000L) {
+            s = String.format(Locale.ROOT, "%.2fB", abs / 1_000_000_000.0);
+        } else if (abs >= 1_000_000L) {
+            s = String.format(Locale.ROOT, "%.2fM", abs / 1_000_000.0);
+        } else if (abs >= 1_000L) {
+            s = String.format(Locale.ROOT, "%.1fK", abs / 1_000.0);
+        } else {
+            s = String.valueOf(abs);
+        }
+        return (neg ? "-" : "") + s;
+    }
+
+    public static String formatDropName(String id) {
+        if (id == null) return "Unknown";
+        switch (id) {
+            case "CRUDE_GABAGOOL": return "Crude Gabagool";
+            case "VERY_CRUDE_GABAGOOL": return "Very Crude Gabagool";
+            case "FUEL_GABAGOOL": return "Fuel Gabagool";
+            case "HEAVY_GABAGOOL": return "Heavy Gabagool";
+            case "HYPERGOLIC_GABAGOOL": return "Hypergolic Gabagool";
+            case "CHILI_PEPPER": return "Chili Pepper";
+            case "ENCHANTED_CHILI_PEPPER": return "Enchanted Chili Pepper";
+            case "INFERNO_VERTEX": return "Inferno Vertex";
+            case "INFERNO_APEX": return "Inferno Apex";
+            case "REAPER_PEPPER": return "Reaper Pepper";
+            case "GABAGOOL_THE_FISH": return "Gabagool the Fish";
+            case "INFERNO_HYPERGOLIC_CRUDE_GABAGOOL": return "Hypergolic Crude Gabagool";
+            default:
+                String[] words = id.toLowerCase(Locale.ROOT).replace("_", " ").split("\\s+");
+                StringBuilder sb = new StringBuilder();
+                for (String w : words) {
+                    if (w.isEmpty()) continue;
+                    if (sb.length() > 0) sb.append(" ");
+                    sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
+                }
+                return sb.toString();
+        }
+    }
+}

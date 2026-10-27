@@ -76,6 +76,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       CroesusHelper.onContainerTick((AbstractContainerScreen)(Object)this);
       me.bombo.bomboaddons.features.garden.GreenhouseTracker.onContainerTick((AbstractContainerScreen)(Object)this);
       me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onContainerTick((AbstractContainerScreen)(Object)this);
+      me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onContainerTick((AbstractContainerScreen)(Object)this);
       ItemListOverlay.updateLayout(this.leftPos, this.imageWidth, this.topPos, this.width, this.height);
       if (BomboConfig.get().itemListEnabled && ItemListOverlay.sidebarW >= 120) {
          int searchX = ItemListOverlay.sidebarX + 5;
@@ -925,6 +926,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onHumanCannonballPurchased();
          }
       }
+      me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onSlotClick(slot, slotId, mouseButton, type, (AbstractContainerScreen<?>)(Object)this, false);
    }
 
    @Inject(
@@ -937,6 +939,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             String title = containerScreen.getTitle().getString();
             me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.updateFromContainer(title, chestMenu.getContainer());
             me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onSlotClicked(slot, containerScreen);
+            me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onSlotClick(slot, slotId, mouseButton, type, containerScreen, true);
          }
       } catch (Throwable ignored) {}
    }
@@ -951,6 +954,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             String title = containerScreen.getTitle().getString();
             me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.updateFromContainer(title, chestMenu.getContainer());
          }
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onContainerClosed();
       } catch (Throwable ignored) {}
    }
 }

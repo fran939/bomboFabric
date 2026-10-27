@@ -670,6 +670,10 @@ public class BomboConfig {
       public String fastUseSkyblockId = "";
       public int etherwarpMaxDistance = 61;
 
+      public boolean infernoTrackerEnabled = true;
+      public String infernoCoopPasskey = "default";
+      public boolean infernoChatAlerts = true;
+
       public boolean dianaLootshareEnabled = false;
       public boolean dianaLsInquisitor = false;
       public boolean dianaLsChampion = false;

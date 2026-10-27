@@ -154,6 +154,60 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.equals("inferno") || lower.startsWith("inferno ") || lower.equals("b inferno") || lower.startsWith("b inferno ")
+            || lower.equals("bombo inferno") || lower.startsWith("bombo inferno ") || lower.equals("bomboaddons inferno") || lower.startsWith("bomboaddons inferno ")) {
+         String sub = "";
+         if (lower.startsWith("bomboaddons inferno")) sub = trimmed.substring(18).trim();
+         else if (lower.startsWith("bombo inferno")) sub = trimmed.substring(13).trim();
+         else if (lower.startsWith("b inferno")) sub = trimmed.substring(9).trim();
+         else if (lower.startsWith("inferno")) sub = trimmed.substring(7).trim();
+
+         Minecraft mc = Minecraft.getInstance();
+         if (sub.isEmpty()) {
+            mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
+         } else {
+            String[] tokens = sub.split("\\s+");
+            String subCmd = tokens[0].toLowerCase(java.util.Locale.ROOT);
+            if (subCmd.equals("key") || subCmd.equals("pass") || subCmd.equals("password")) {
+               if (tokens.length >= 2) {
+                  String newKey = tokens[1].trim();
+                  me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(newKey);
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCoop Passkey set to: §e" + newKey + " §7(Syncing data...)"));
+                  }
+               } else {
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §7Current Coop Passkey: §e" + me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.getPasskey()));
+                  }
+               }
+            } else if (subCmd.equals("sync")) {
+               if (mc.player != null) {
+                  mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §7Syncing Inferno Minion data with cloud..."));
+               }
+               me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.syncWithServer(() -> {
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCloud sync complete!"));
+                  }
+               });
+            } else if (subCmd.equals("reset")) {
+               me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.resetData(() -> {
+                  if (mc.player != null) {
+                     mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §cReset all Inferno Minion tracking data."));
+                  }
+               });
+            } else if (subCmd.equals("gui") || subCmd.equals("open")) {
+               mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.InfernoTrackerScreen(null)));
+            } else {
+               String pass = tokens[0].trim();
+               me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.setPasskey(pass);
+               if (mc.player != null) {
+                  mc.player.sendSystemMessage(Component.literal("§8[§6🔥 Inferno§8] §aCoop Passkey set to: §e" + pass + " §7(Syncing data...)"));
+               }
+            }
+         }
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b order") || trimmed.equalsIgnoreCase("bombo order") || trimmed.equalsIgnoreCase("bomboaddons order") || trimmed.equalsIgnoreCase("order")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));

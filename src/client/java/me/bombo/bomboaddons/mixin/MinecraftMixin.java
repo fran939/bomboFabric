@@ -104,6 +104,12 @@ public class MinecraftMixin {
       cancellable = true
    )
    private void onStartUseItem(CallbackInfo ci) {
+      Minecraft mc = (Minecraft)(Object)this;
+      if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult eHit) {
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onEntityRightClicked(eHit.getEntity());
+      } else if (mc.crosshairPickEntity != null) {
+         me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onEntityRightClicked(mc.crosshairPickEntity);
+      }
       if (me.bombo.bomboaddons.features.kuudra.KuudraGeneral.shouldBlockSkyblockMenu()) {
          ci.cancel();
       }
