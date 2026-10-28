@@ -50,6 +50,13 @@ public class GlobalStorageScreen extends Screen {
    private List<AggregatedItem> allItems = new ArrayList();
    private static List<AggregatedItem> cachedAllItems = new ArrayList();
    private static long cachedStorageTime = -1L;
+   private static String cachedProfileId = "";
+
+   public static void invalidateCache() {
+      cachedAllItems.clear();
+      cachedStorageTime = -1L;
+      cachedProfileId = "";
+   }
    private int scrollOffset = 0;
    private int itemsPerRow;
    private final int itemSize;
@@ -105,6 +112,13 @@ public class GlobalStorageScreen extends Screen {
    }
 
    private void aggregateItems() {
+      String currentPid = SkyblockUtils.currentProfileId != null ? SkyblockUtils.currentProfileId : "";
+      if (!currentPid.equalsIgnoreCase(cachedProfileId)) {
+         cachedAllItems.clear();
+         cachedStorageTime = -1L;
+         cachedProfileId = currentPid;
+      }
+
       if (StorageTracker.lastUpdateTime == cachedStorageTime && !cachedAllItems.isEmpty()) {
          this.allItems = new ArrayList(cachedAllItems);
       } else {
@@ -208,6 +222,7 @@ public class GlobalStorageScreen extends Screen {
          this.sortAllItems();
          cachedAllItems = new ArrayList(this.allItems);
          cachedStorageTime = StorageTracker.lastUpdateTime;
+         cachedProfileId = currentPid;
       }
    }
 

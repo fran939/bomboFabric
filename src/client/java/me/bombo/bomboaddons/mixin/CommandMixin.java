@@ -282,6 +282,14 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.equals("b transfer") || lower.startsWith("b transfer ")
+            || lower.equals("bombo transfer") || lower.startsWith("bombo transfer ")
+            || lower.equals("bomboaddons transfer") || lower.startsWith("bomboaddons transfer ")
+            || lower.equals("transfer") || lower.startsWith("transfer ")) {
+         me.bombo.bomboaddons.features.TransferAllManager.handleCommand(trimmed);
+         ci.cancel();
+         return;
+      }
       if (trimmed.equalsIgnoreCase("b order") || trimmed.equalsIgnoreCase("bombo order") || trimmed.equalsIgnoreCase("bomboaddons order") || trimmed.equalsIgnoreCase("order")) {
          net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
          mc.execute(() -> mc.setScreenAndShow(new me.bombo.bomboaddons.gui.config.BomboOrderScreen(null)));

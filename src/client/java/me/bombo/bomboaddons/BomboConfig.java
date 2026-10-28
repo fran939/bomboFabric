@@ -715,6 +715,12 @@ public class BomboConfig {
       public int autoAhSellDelayMs = 120;
       public String chatPeekKey = "y";
       public String quickTransferAllKey = "LEFT_ALT";
+      public String transferAllInventoryKey = "none";
+      public boolean transferExcludeWeapons = true;
+      public boolean transferExcludeArmor = true;
+      public boolean transferExcludeTools = true;
+      public Set<Integer> transferExcludedSlots = new HashSet<>(java.util.List.of(8));
+      public List<String> transferExcludedItems = new ArrayList<>(java.util.List.of("skyblock menu", "nether star"));
       public String tradeKey = "n";
       public String tradeMaxKey = "";
       public String countItemKey = "";

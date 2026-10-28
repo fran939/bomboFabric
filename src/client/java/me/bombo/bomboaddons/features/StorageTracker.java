@@ -40,7 +40,8 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class StorageTracker {
-   private static final File STORAGE_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bomboaddons_storage.json");
+   private static final File LEGACY_STORAGE_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bomboaddons_storage.json");
+   private static String loadedProfileId = "";
    public static final Map<String, Map<Integer, String>> storageData = new ConcurrentHashMap();
    private static final Map<String, Map<Integer, String>> uncompressedCache = new ConcurrentHashMap();
    public static long lastUpdateTime = 0L;
@@ -49,10 +50,62 @@ public class StorageTracker {
    private static long lastSaveAttempt = 0L;
    private static long lastPlayerInvUpdate = 0L;
 
-   public static void init() {
-      if (STORAGE_FILE.exists()) {
+   public static String getActiveProfileId() {
+      if (loadedProfileId != null && !loadedProfileId.isEmpty()) {
+         return loadedProfileId;
+      }
+      if (SkyblockUtils.currentProfileId != null && !SkyblockUtils.currentProfileId.isEmpty()) {
+         return SkyblockUtils.currentProfileId.trim().toLowerCase(Locale.ROOT);
+      }
+      try {
+         me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
+         if (s != null && s.lastProfileId != null && !s.lastProfileId.isEmpty()) {
+            return s.lastProfileId.trim().toLowerCase(Locale.ROOT);
+         }
+      } catch (Throwable ignored) {}
+      return "default";
+   }
+
+   public static File getStorageFile(String profileId) {
+      String pid = (profileId != null && !profileId.trim().isEmpty()) ? profileId.trim().toLowerCase(Locale.ROOT) : "default";
+      File dir = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bomboaddons/storage");
+      if (!dir.exists()) {
+         dir.mkdirs();
+      }
+      File target = new File(dir, pid + ".json");
+      if (!target.exists() && LEGACY_STORAGE_FILE.exists()) {
          try {
-            FileReader reader = new FileReader(STORAGE_FILE);
+            java.nio.file.Files.copy(LEGACY_STORAGE_FILE.toPath(), target.toPath());
+         } catch (Exception ignored) {}
+      }
+      return target;
+   }
+
+   public static synchronized void onProfileChanged(String newProfileId) {
+      if (newProfileId == null || newProfileId.trim().isEmpty()) return;
+      String pid = newProfileId.trim().toLowerCase(Locale.ROOT);
+      if (pid.equalsIgnoreCase(loadedProfileId)) return;
+      saveImmediate();
+      storageData.clear();
+      uncompressedCache.clear();
+      slotHashCache.clear();
+      loadedProfileId = pid;
+      loadForProfile(pid);
+      lastUpdateTime = System.currentTimeMillis();
+      me.bombo.bomboaddons.gui.GlobalStorageScreen.invalidateCache();
+   }
+
+   public static void init() {
+      String pid = getActiveProfileId();
+      loadedProfileId = pid;
+      loadForProfile(pid);
+   }
+
+   public static synchronized void loadForProfile(String pid) {
+      File storageFile = getStorageFile(pid);
+      if (storageFile.exists()) {
+         try {
+            FileReader reader = new FileReader(storageFile);
 
             try {
                JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
@@ -185,35 +238,54 @@ public class StorageTracker {
       }
    }
 
+   private static JsonObject buildRootJson() {
+      JsonObject root = new JsonObject();
+      JsonObject containers = new JsonObject();
+
+      for(Map.Entry<String, Map<Integer, String>> entry : storageData.entrySet()) {
+         JsonObject containerObj = new JsonObject();
+         JsonArray items = new JsonArray();
+
+         for(Map.Entry<Integer, String> slotEntry : ((Map<Integer, String>)(Map<?, ?>)entry.getValue()).entrySet()) {
+            JsonObject itemObj = new JsonObject();
+            itemObj.addProperty("slot", (Number)slotEntry.getKey());
+            itemObj.addProperty("nbt", (String)slotEntry.getValue());
+            items.add(itemObj);
+         }
+
+         containerObj.add("items", items);
+         containers.add((String)entry.getKey(), containerObj);
+      }
+
+      root.add("containers", containers);
+      return root;
+   }
+
+   public static synchronized void saveImmediate() {
+      try {
+         File storageFile = getStorageFile(getActiveProfileId());
+         storageFile.getParentFile().mkdirs();
+         JsonObject root = buildRootJson();
+         try (FileWriter writer = new FileWriter(storageFile)) {
+            (new GsonBuilder()).setPrettyPrinting().create().toJson(root, writer);
+         }
+      } catch (Exception e) {
+         Bomboaddons.LOGGER.error("[BomboAddons] Failed to save storage cache immediately", e);
+      }
+   }
+
    public static synchronized void save() {
       if (System.currentTimeMillis() - lastSaveAttempt >= 2000L) {
          lastSaveAttempt = System.currentTimeMillis();
          lastUpdateTime = System.currentTimeMillis();
 
          try {
-            JsonObject root = new JsonObject();
-            JsonObject containers = new JsonObject();
-
-            for(Map.Entry<String, Map<Integer, String>> entry : storageData.entrySet()) {
-               JsonObject containerObj = new JsonObject();
-               JsonArray items = new JsonArray();
-
-               for(Map.Entry<Integer, String> slotEntry : ((Map<Integer, String>)(Map<?, ?>)entry.getValue()).entrySet()) {
-                  JsonObject itemObj = new JsonObject();
-                  itemObj.addProperty("slot", (Number)slotEntry.getKey());
-                  itemObj.addProperty("nbt", (String)slotEntry.getValue());
-                  items.add(itemObj);
-               }
-
-               containerObj.add("items", items);
-               containers.add((String)entry.getKey(), containerObj);
-            }
-
-            root.add("containers", containers);
+            JsonObject root = buildRootJson();
+            File storageFile = getStorageFile(getActiveProfileId());
             CompletableFuture.runAsync(() -> {
                try {
-                  STORAGE_FILE.getParentFile().mkdirs();
-                  FileWriter writer = new FileWriter(STORAGE_FILE);
+                  storageFile.getParentFile().mkdirs();
+                  FileWriter writer = new FileWriter(storageFile);
 
                   try {
                      (new GsonBuilder()).setPrettyPrinting().create().toJson(root, writer);

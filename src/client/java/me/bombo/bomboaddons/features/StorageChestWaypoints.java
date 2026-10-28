@@ -23,6 +23,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.ByteArrayInputStream;
+import java.util.Base64;
+import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.TagParser;
 
 /**
  * {@code /b storage <query>} - puts a highlight on every island chest that still holds a matching
@@ -42,6 +49,55 @@ import java.util.regex.Pattern;
 public final class StorageChestWaypoints {
 
     private static final String ISLAND_CHEST_PREFIX = "Island Chest @ ";
+    public static final class DecodedItem {
+        public final String searchString;
+        public final long count;
+
+        public DecodedItem(String searchString, long count) {
+            this.searchString = searchString;
+            this.count = count;
+        }
+    }
+
+    private static final Map<String, DecodedItem> DECODE_CACHE = new ConcurrentHashMap<>();
+
+    public static DecodedItem getDecoded(String nbtStr) {
+        if (nbtStr == null || nbtStr.isEmpty()) {
+            return new DecodedItem("", 0L);
+        }
+        DecodedItem cached = DECODE_CACHE.get(nbtStr);
+        if (cached != null) {
+            return cached;
+        }
+
+        try {
+            CompoundTag tag;
+            if (nbtStr.startsWith("B64:")) {
+                byte[] decoded = Base64.getDecoder().decode(nbtStr.substring(4));
+                ByteArrayInputStream bais = new ByteArrayInputStream(decoded);
+                tag = NbtIo.readCompressed(bais, NbtAccounter.unlimitedHeap());
+            } else {
+                tag = TagParser.parseCompoundFully(nbtStr);
+            }
+
+            long count = 1L;
+            if (tag.contains("count")) {
+                count = (Integer) tag.getInt("count").orElse(1);
+            } else if (tag.contains("Count")) {
+                count = (Byte) tag.getByte("Count").orElse((byte) 1);
+            }
+
+            String fullText = normalize(tag.toString());
+            DecodedItem item = new DecodedItem(fullText, Math.max(1L, count));
+            DECODE_CACHE.put(nbtStr, item);
+            return item;
+        } catch (Throwable t) {
+            DecodedItem fallback = new DecodedItem(normalize(nbtStr), 1L);
+            DECODE_CACHE.put(nbtStr, fallback);
+            return fallback;
+        }
+    }
+
     private static final Pattern COUNT_PATTERN = Pattern.compile("count:\\s*(\\d+)");
 
     /** One highlighted chest (or merged double chest). */
@@ -121,9 +177,10 @@ public final class StorageChestWaypoints {
             long quantity = 0L;
             for (String nbt : container.getValue().values()) {
                 if (nbt == null) continue;
-                if (normalize(nbt).contains(needle)) {
+                DecodedItem decoded = getDecoded(nbt);
+                if (decoded.searchString.contains(needle)) {
                     hitSlots++;
-                    quantity += stackCount(nbt);
+                    quantity += decoded.count;
                 }
             }
             if (hitSlots > 0) {
@@ -233,9 +290,10 @@ public final class StorageChestWaypoints {
             long quantity = 0L;
             for (String nbt : contents.values()) {
                 if (nbt == null) continue;
-                if (normalize(nbt).contains(needle)) {
+                DecodedItem decoded = getDecoded(nbt);
+                if (decoded.searchString.contains(needle)) {
                     hitSlots++;
-                    quantity += stackCount(nbt);
+                    quantity += decoded.count;
                 }
             }
             if (hitSlots == 0) {
@@ -341,14 +399,7 @@ public final class StorageChestWaypoints {
     }
 
     private static long stackCount(String nbt) {
-        Matcher matcher = COUNT_PATTERN.matcher(nbt);
-        if (matcher.find()) {
-            try {
-                return Long.parseLong(matcher.group(1));
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return 1L;
+        return getDecoded(nbt).count;
     }
 
     /** {@code "Island Chest @ 12, 71, -30"} -> BlockPos. */

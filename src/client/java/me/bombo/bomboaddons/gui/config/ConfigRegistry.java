@@ -989,6 +989,10 @@ public class ConfigRegistry {
 
                 items.add(ConfigItem.header("Item & Inventory Hotkeys", category));
                 items.add(ConfigItem.keybind("Transfer All Matching Hotkey", "Hold key while clicking an item (or press while hovering) to transfer all items of the same type into the chest/GUI.", category, () -> s.quickTransferAllKey != null ? s.quickTransferAllKey : "LEFT_ALT", v -> s.quickTransferAllKey = v));
+                items.add(ConfigItem.keybind("Transfer All Inventory Hotkey", "Transfers entire inventory into container (or vice-versa), excluding weapons, armor, tools, and slot 9.", category, () -> s.transferAllInventoryKey != null ? s.transferAllInventoryKey : "NONE", v -> s.transferAllInventoryKey = v));
+                items.add(ConfigItem.toggle("Transfer Exclude Weapons", "Exclude swords, bows, wands, and weapons when transferring all inventory.", category, () -> s.transferExcludeWeapons, v -> s.transferExcludeWeapons = v));
+                items.add(ConfigItem.toggle("Transfer Exclude Armor", "Exclude armor and equipment when transferring all inventory.", category, () -> s.transferExcludeArmor, v -> s.transferExcludeArmor = v));
+                items.add(ConfigItem.toggle("Transfer Exclude Tools", "Exclude pickaxes, drills, axes, shovels, and fishing rods when transferring all inventory.", category, () -> s.transferExcludeTools, v -> s.transferExcludeTools = v));
                 items.add(ConfigItem.keybind("Trade Hotkey", "Quick trade with the player you're looking at or hovering over, or lookup on AH/BZ.", category, () -> s.tradeKey, v -> s.tradeKey = v));
                 items.add(ConfigItem.keybind("Trade Max Pet Hotkey", "Quick AH search for max level pets (100] or 200] for GDrag/Rose/Jade).", category, () -> s.tradeMaxKey, v -> s.tradeMaxKey = v));
                 items.add(ConfigItem.keybind("Recipe Viewer", "Open the SkyBlock recipe viewer screen for the hovered item.", category, () -> s.recipeKey, v -> s.recipeKey = v));

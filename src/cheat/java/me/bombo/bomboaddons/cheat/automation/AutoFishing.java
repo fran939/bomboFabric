@@ -25,6 +25,7 @@ public class AutoFishing {
    private static int lastBobberId;
    private static int originalRodSlot;
    private static int remainingWeaponClicks;
+   private static long lastBobberNullTime = 0L;
 
    public static boolean isFishingActive(Minecraft client) {
       if (client == null || client.player == null) return false;
@@ -34,69 +35,111 @@ public class AutoFishing {
    public static void onTick(Minecraft client) {
       if (!BomboConfig.get().autoFishingEnabled) {
          state = AutoFishing.State.IDLE;
-      } else if (client.player != null && client.level != null) {
-         if (state == AutoFishing.State.IDLE && (!(client.player.getMainHandItem().getItem() instanceof FishingRodItem) || client.player.fishing == null)) {
+         lastBobberNullTime = 0L;
+         return;
+      }
+      if (client.player == null || client.level == null) {
+         return;
+      }
+
+      long now = System.currentTimeMillis();
+
+      // Auto-recast watchdog: if holding rod, in IDLE, not in GUI, and no active bobber exists
+      if (state == AutoFishing.State.IDLE) {
+         if (client.player.getMainHandItem().getItem() instanceof FishingRodItem) {
+            if (client.player.fishing == null) {
+               if (client.gui.screen() == null) {
+                  if (lastBobberNullTime == 0L) {
+                     lastBobberNullTime = now;
+                  } else if (now - lastBobberNullTime >= 1500L && now - lastReelTime >= 1000L) {
+                     if (BomboConfig.get().autoFishingDebug) {
+                        client.player.sendSystemMessage(Component.literal("§e[AutoFishing] No active bobber detected - casting rod..."));
+                     }
+                     client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
+                     client.player.swing(InteractionHand.MAIN_HAND);
+                     lastBobberNullTime = now;
+                     lastReelTime = now;
+                  }
+               }
+               return;
+            } else {
+               lastBobberNullTime = 0L;
+            }
+         } else {
+            lastBobberNullTime = 0L;
             return;
          }
+      }
 
-         if (client.player.fishing != null && client.player.fishing.getId() != lastBobberId) {
-            lastBobberId = client.player.fishing.getId();
-            debuggedSlugSkip = false;
-         }
+      if (client.player.fishing != null && client.player.fishing.getId() != lastBobberId) {
+         lastBobberId = client.player.fishing.getId();
+         debuggedSlugSkip = false;
+      }
 
-         long now = System.currentTimeMillis();
-         switch (state.ordinal()) {
-            case 0:
-            default:
-               if (!(client.player.getMainHandItem().getItem() instanceof FishingRodItem) || client.player.fishing == null) {
-                  return;
-               } else {
-                  if (now - lastReelTime < 2000L) {
-                     return;
-                  }
+      switch (state.ordinal()) {
+         case 0:
+         default:
+            if (!(client.player.getMainHandItem().getItem() instanceof FishingRodItem) || client.player.fishing == null) {
+               return;
+            }
 
-                  for(Entity entity : client.level.entitiesForRendering()) {
-                     if (entity instanceof ArmorStand && entity.hasCustomName()) {
-                        String name = entity.getCustomName().getString();
-                        if (name.contains("!!!")) {
-                           if (BomboConfig.get().autoFishingSlugMode && BomboConfig.get().autoFishingSlugDelay > 0.0F) {
-                              if (client.player.fishing == null) {
-                                 continue;
-                              }
+            // Stuck bobber timeout watchdog: if immersed for >30 seconds with no bite, reel in and recast
+            if (client.player.fishing.tickCount > 600) {
+               if (BomboConfig.get().autoFishingDebug) {
+                  client.player.sendSystemMessage(Component.literal("§e[AutoFishing] Bobber stuck (>30s) - reeling in & recasting..."));
+               }
+               client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
+               lastReelTime = now;
+               state = AutoFishing.State.RECASTING;
+               nextActionTime = now + 400L;
+               return;
+            }
 
-                              int requiredTicks = (int)(BomboConfig.get().autoFishingSlugDelay * 20.0F);
-                              if (client.player.fishing.tickCount < requiredTicks) {
-                                 if (BomboConfig.get().autoFishingDebug && !debuggedSlugSkip) {
-                                    LocalPlayer var10000 = client.player;
-                                    String var10001 = String.format("%.1f", (float)client.player.fishing.tickCount / 20.0F);
-                                    var10000.sendSystemMessage(Component.literal("§c[AutoFishing] Slug mode: Skipping bite, bobber time " + var10001 + "s < " + BomboConfig.get().autoFishingSlugDelay + "s"));
-                                    debuggedSlugSkip = true;
-                                 }
-                                 continue;
-                              }
+            if (now - lastReelTime < 2000L) {
+               return;
+            }
+
+            for (Entity entity : client.level.entitiesForRendering()) {
+               if (entity instanceof ArmorStand && entity.hasCustomName()) {
+                  String name = entity.getCustomName().getString();
+                  if (name.contains("!!!")) {
+                     // Proximity check: ensure the exclamation mark ArmorStand belongs to our bobber!
+                     if (client.player.fishing != null && entity.distanceToSqr(client.player.fishing) > 16.0) {
+                        continue;
+                     }
+
+                     if (BomboConfig.get().autoFishingSlugMode && BomboConfig.get().autoFishingSlugDelay > 0.0F) {
+                        int requiredTicks = (int)(BomboConfig.get().autoFishingSlugDelay * 20.0F);
+                        if (client.player.fishing.tickCount < requiredTicks) {
+                           if (BomboConfig.get().autoFishingDebug && !debuggedSlugSkip) {
+                              LocalPlayer var10000 = client.player;
+                              String var10001 = String.format("%.1f", (float)client.player.fishing.tickCount / 20.0F);
+                              var10000.sendSystemMessage(Component.literal("§c[AutoFishing] Slug mode: Skipping bite, bobber time " + var10001 + "s < " + BomboConfig.get().autoFishingSlugDelay + "s"));
+                              debuggedSlugSkip = true;
                            }
-
-                           int min = BomboConfig.get().autoFishingMinDelay;
-                           int max = BomboConfig.get().autoFishingMaxDelay;
-                           if (max < min) {
-                              max = min;
-                           }
-
-                           lastCalculatedDelay = min + (max > min ? random.nextInt(max - min + 1) : 0);
-                           if (BomboConfig.get().autoFishingDebug) {
-                              client.player.sendSystemMessage(Component.literal("§c[AutoFishing] Detected !!! §7(" + lastCalculatedDelay + "ms delay)"));
-                           }
-
-                           nextActionTime = now + (long)lastCalculatedDelay;
-                           state = AutoFishing.State.REELING;
-                           lastReelTime = now;
-                           break;
+                           continue;
                         }
                      }
-                  }
 
-                  return;
+                     int min = BomboConfig.get().autoFishingMinDelay;
+                     int max = BomboConfig.get().autoFishingMaxDelay;
+                     if (max < min) {
+                        max = min;
+                     }
+
+                     lastCalculatedDelay = min + (max > min ? random.nextInt(max - min + 1) : 0);
+                     if (BomboConfig.get().autoFishingDebug) {
+                        client.player.sendSystemMessage(Component.literal("§c[AutoFishing] Detected !!! §7(" + lastCalculatedDelay + "ms delay)"));
+                     }
+
+                     nextActionTime = now + (long)lastCalculatedDelay;
+                     state = AutoFishing.State.REELING;
+                     lastReelTime = now;
+                     break;
+                  }
                }
+            }
+            return;
             case 1:
                if (now >= nextActionTime) {
                   client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
@@ -149,9 +192,12 @@ public class AutoFishing {
                   if (remainingWeaponClicks > 0) {
                      --remainingWeaponClicks;
                      int clickType = BomboConfig.get().autoFishingClickType;
-                     if (clickType == 0) {
-                        client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
-                     } else {
+                     if (clickType == 1) { // Left Click
+                        if (client.crosshairPickEntity != null) {
+                           client.gameMode.attack(client.player, client.crosshairPickEntity);
+                        }
+                        client.player.swing(InteractionHand.MAIN_HAND);
+                     } else { // Right Click
                         client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
                      }
 
@@ -208,7 +254,6 @@ public class AutoFishing {
                }
 
          }
-      }
    }
 
    private static int findWeaponSlot(Minecraft client) {
@@ -326,52 +371,21 @@ public class AutoFishing {
    }
 
    public static int getSelectedSlot(Minecraft client) {
-      if (client.player == null) {
+      if (client == null || client.player == null) {
          return 0;
-      } else {
-         try {
-            Field field = Inventory.class.getDeclaredField("selected");
-            field.setAccessible(true);
-            return field.getInt(client.player.getInventory());
-         } catch (Throwable var8) {
-            try {
-               Field[] fields = Inventory.class.getDeclaredFields();
-
-               for(Field f : fields) {
-                  if (f.getType() == Integer.TYPE) {
-                     f.setAccessible(true);
-                     return f.getInt(client.player.getInventory());
-                  }
-               }
-            } catch (Throwable var7) {
-            }
-
-            return 0;
-         }
+      }
+      try {
+         return client.player.getInventory().getSelectedSlot();
+      } catch (Throwable t) {
+         return 0;
       }
    }
 
    public static void setSelectedSlot(Minecraft client, int slot) {
-      if (client.player != null) {
+      if (client != null && client.player != null && slot >= 0 && slot < 9) {
          try {
-            Field field = Inventory.class.getDeclaredField("selected");
-            field.setAccessible(true);
-            field.setInt(client.player.getInventory(), slot);
-         } catch (Throwable var9) {
-            try {
-               Field[] fields = Inventory.class.getDeclaredFields();
-
-               for(Field f : fields) {
-                  if (f.getType() == Integer.TYPE) {
-                     f.setAccessible(true);
-                     f.setInt(client.player.getInventory(), slot);
-                     break;
-                  }
-               }
-            } catch (Throwable var8) {
-            }
-         }
-
+            client.player.getInventory().setSelectedSlot(slot);
+         } catch (Throwable ignored) {}
       }
    }
 

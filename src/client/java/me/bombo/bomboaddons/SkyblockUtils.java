@@ -67,6 +67,7 @@ public class SkyblockUtils {
          } catch (Throwable ignored) {}
          me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.onProfileChanged(pid);
          me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onProfileChanged(pid);
+         me.bombo.bomboaddons.features.StorageTracker.onProfileChanged(pid);
       }
    }
 

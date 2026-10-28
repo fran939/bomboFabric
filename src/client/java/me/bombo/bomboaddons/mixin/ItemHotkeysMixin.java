@@ -59,7 +59,12 @@ public abstract class ItemHotkeysMixin {
                BomboConfig.Settings s = BomboConfig.get();
 
                // Check key combination matches (prioritizing tradeMaxKey over tradeKey if both match)
-               if (CustomBindsProcessor.matchesKey(s.quickTransferAllKey, pressedKey)) {
+               if (CustomBindsProcessor.matchesKey(s.transferAllInventoryKey, pressedKey)) {
+                  Slot targetSlot = this.hoveredSlot;
+                  if (me.bombo.bomboaddons.features.TransferAllManager.handleTransferAll((AbstractContainerScreen<?>)(Object)this, targetSlot)) {
+                     cir.setReturnValue(true);
+                  }
+               } else if (CustomBindsProcessor.matchesKey(s.quickTransferAllKey, pressedKey)) {
                   Slot targetSlot = this.hoveredSlot;
                   if (targetSlot != null && me.bombo.bomboaddons.features.QuickTransferManager.handleSlotClick((AbstractContainerScreen<?>)(Object)this, targetSlot)) {
                      cir.setReturnValue(true);

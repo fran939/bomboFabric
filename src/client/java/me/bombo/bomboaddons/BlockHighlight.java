@@ -283,7 +283,12 @@ public class BlockHighlight {
          }
 
          BomboConfig.Settings s = BomboConfig.get();
-         if (s == null || !s.blockHighlightsEnabled) {
+         if (s == null) {
+            return;
+         }
+         boolean renderChests = !targetChestPosList.isEmpty();
+         boolean renderBlocks = s.blockHighlightsEnabled && !highlightedBlocks.isEmpty();
+         if (!renderChests && !renderBlocks) {
             return;
          }
 
@@ -295,7 +300,7 @@ public class BlockHighlight {
          double maxRenderDist = Math.max(64.0, (double) s.blockScanRadius);
          double maxDistSq = maxRenderDist * maxRenderDist;
 
-         if (!currentHighlights.isEmpty()) {
+         if (renderBlocks && !currentHighlights.isEmpty()) {
             for (Map.Entry<BlockPos, BomboConfig.BlockHighlightInfo> entry : currentHighlights.entrySet()) {
                BlockPos pos = entry.getKey();
                BomboConfig.BlockHighlightInfo info = entry.getValue();

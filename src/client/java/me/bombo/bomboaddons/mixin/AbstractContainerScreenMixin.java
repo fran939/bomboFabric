@@ -997,6 +997,15 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          }
       }
       BomboConfig.Settings s = BomboConfig.get();
+      if (s != null && s.transferAllInventoryKey != null && !s.transferAllInventoryKey.trim().isEmpty() && !"none".equalsIgnoreCase(s.transferAllInventoryKey.trim())) {
+         if (CustomBindsProcessor.isKeyOrComboDown(s.transferAllInventoryKey)) {
+            Slot targetSlot = slot != null ? slot : this.hoveredSlot;
+            if (me.bombo.bomboaddons.features.TransferAllManager.handleTransferAll((AbstractContainerScreen<?>)(Object)this, targetSlot)) {
+               ci.cancel();
+               return;
+            }
+         }
+      }
       if (s != null && s.quickTransferAllKey != null && !s.quickTransferAllKey.trim().isEmpty() && !"none".equalsIgnoreCase(s.quickTransferAllKey.trim())) {
          if (CustomBindsProcessor.isKeyOrComboDown(s.quickTransferAllKey)) {
             Slot targetSlot = slot != null ? slot : this.hoveredSlot;

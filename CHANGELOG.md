@@ -1,5 +1,16 @@
 # BomboAddons Changelog
  
+## [26.2.28.169] - 2026-10-28 (Beta)
+
+### Transfer All Items Keybind, Auto Fishing Watchdogs, /b storage Profile ID Separation & Chest Highlighting (`TransferAllManager.java`, `AutoFishing.java`, `StorageTracker.java`, `StorageChestWaypoints.java`, `BlockHighlight.java`, `GlobalStorageScreen.java`, `SkyblockUtils.java`, `CommandMixin.java`, `BomboConfig.java`)
+- **Transfer All Items Hotkey & Direction Detection:** Added a configurable custom keybind (`Transfer All Items Hotkey` in `/b config`). Holding the keybind and clicking any item in a container (or hovering and pressing the keybind) transfers every eligible item between player inventory and container (or vice-versa).
+- **Intelligent Category & Item Exclusions:** Default protection excludes Weapons (swords, bows, crossbows, tridents, Hyperion, Terminator, etc.), Armor (helmets, chestplates, leggings, boots, Elytra, accessories), and Tools (pickaxes, axes, shovels, hoes, rods, shears, drills, gauntlets). Hotbar Slot 9 (the SkyBlock Menu / nether star) is strictly and permanently protected against transfers.
+- **`/b transfer` Management Command:** Added `/b transfer [weapons|armor|tools|slot <1-8>|add <item>|remove <item>|list|reset]` to toggle exclusions, exclude specific hotbar slots, or blacklist custom items on the fly.
+- **Auto Fishing Auto-Recast & Timeout Watchdogs:** Fixed fishing automation unexpectedly stalling. Introduced an auto-recast watchdog in IDLE state if holding a rod with no bobber active for >1.5s, a stuck bobber timeout watchdog that reels in and recasts after 30s with no bite, and fixed weapon swap attack clicks to properly Left Click/attack.
+- **Auto Fishing Bite Proximity Check:** Added distance verification (`distanceToSqr <= 16.0` to player bobber) when detecting `!!!` ArmorStands, completely ignoring other players' bites in crowded fishing areas.
+- **`/b storage` Profile ID Separation:** Migrated `StorageTracker` to isolated per-profile files in `config/bomboaddons/storage/<profileId>.json` (supporting target Profile ID `5115867e-5d1c-4e34-a46a-4b53e4d69ad7`). Switching profiles immediately persists the previous profile, clears memory, and loads the new profile's storage data.
+- **Chest Highlighting & B64 NBT Search Fix:** Fixed `BlockHighlight.java` so target chest outlines render in the world even when general block highlights are disabled. Implemented fast cached Base64 NBT decoding in `StorageChestWaypoints.java`, restoring accurate item search and waypoint highlighting for `/b storage <item>`.
+
 ## [26.2.28.168] - 2026-10-28 (Beta)
 
 ### Quick Transfer All Matching Items Keybind (`QuickTransferManager.java`, `CustomBindsProcessor.java`, `AbstractContainerScreenMixin.java`, `ItemHotkeysMixin.java`, `BomboConfig.java`)

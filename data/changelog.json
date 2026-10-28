@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.169",
+    "date": "2026-10-28",
+    "changes": [
+      "+ Added Transfer All Items Hotkey to transfer all inventory items to chest or vice-versa",
+      "+ Built-in exclusions for weapons, armor, tools, custom items, and permanent slot 9 protection",
+      "+ Added /b transfer command for toggling exclusions and managing blacklisted items/slots",
+      "+ Auto Fishing fix: auto-recast watchdog, 30s stuck bobber timeout, and left-click attack fix",
+      "+ Auto Fishing proximity check: filters !!! ArmorStands to ignore other players' bites",
+      "+ /b storage Profile ID separation: isolated per-profile storage files (<profileId>.json)",
+      "+ Chest highlighting fix: renders target chests independently of block highlights toggle",
+      "+ StorageChestWaypoints fix: cached Base64 NBT decoding for accurate /b storage <item> search"
+    ]
+  },
+  {
     "version": "26.2.28.168",
     "date": "2026-10-28",
     "changes": [
