@@ -242,6 +242,10 @@ public abstract class KeyboardMixin {
          // Sequence triggers are handled by the flavor runtime (cheat build only).
          if (me.bombo.bomboaddons.flavor.Flavor.get().onInputTrigger(key, "Keybind",
                me.bombo.bomboaddons.features.auto.AutoSequenceManager.describeKeyCode(key))) {
+            if (mc.options != null && mc.options.keyDrop != null) {
+               while (mc.options.keyDrop.consumeClick()) {}
+               mc.options.keyDrop.setDown(false);
+            }
             ci.cancel();
             return;
          }
@@ -255,6 +259,15 @@ public abstract class KeyboardMixin {
          int saveInvKey = ClickLogic.getKeyCode(BomboConfig.get().saveInventoryKey);
          if (saveInvKey != -1 && key == saveInvKey && mc.gui.screen() instanceof AbstractContainerScreen) {
             InventoryManager.captureCurrentGUI();
+         }
+      } else if (action == 2) {
+         if (me.bombo.bomboaddons.features.auto.AutoSequenceManager.isKeyBoundToMatchingSequence(event.key())) {
+            if (mc.options != null && mc.options.keyDrop != null) {
+               while (mc.options.keyDrop.consumeClick()) {}
+               mc.options.keyDrop.setDown(false);
+            }
+            ci.cancel();
+            return;
          }
       }
    }

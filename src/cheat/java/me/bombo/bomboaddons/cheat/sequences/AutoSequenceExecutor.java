@@ -78,11 +78,23 @@ public final class AutoSequenceExecutor {
 
             int mapped = ClickLogic.getKeyCode(seq.triggerKey);
             if (mapped == code || CustomBindsProcessor.matchesKey(seq.triggerKey, code)) {
+                if (!AutoSequenceManager.matchesIslandFilter(seq.islandFilter)) {
+                    continue;
+                }
                 toggle(seq, triggerText(kind, label));
+                consumeDropKey();
                 return true;
             }
         }
         return false;
+    }
+
+    public static void consumeDropKey() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc != null && mc.options != null && mc.options.keyDrop != null) {
+            while (mc.options.keyDrop.consumeClick()) {}
+            mc.options.keyDrop.setDown(false);
+        }
     }
 
     public static void toggleByIndex(int index, String kind, String label) {
@@ -96,6 +108,16 @@ public final class AutoSequenceExecutor {
 
         if (AutoSequenceManager.isRunning(seq)) {
             halt("stopped by user", trigger);
+            return;
+        }
+        if (!AutoSequenceManager.matchesIslandFilter(seq.islandFilter)) {
+            AutoSequenceManager.sendMessage("§cSequence §e" + seq.name + " §ccannot run on this island (§d" + seq.islandFilter + "§c).");
+            record("Could not start auto sequence: " + seq.name + " (island mismatch: " + seq.islandFilter + ")", trigger);
+            return;
+        }
+        if (!AutoSequenceManager.matchesIslandFilter(seq.islandFilter)) {
+            AutoSequenceManager.sendMessage("§cSequence §e" + seq.name + " §ccannot run on this island (§d" + seq.islandFilter + "§c).");
+            record("Could not start auto sequence: " + seq.name + " (island mismatch: " + seq.islandFilter + ")", trigger);
             return;
         }
         if (seq.actions == null || seq.actions.isEmpty()) {
@@ -178,6 +200,16 @@ public final class AutoSequenceExecutor {
         AutoSequence seq = AutoSequenceManager.getRunningSequence();
         if (seq == null) {
             halt("sequence no longer exists", "Safety guard");
+            return;
+        }
+
+        if (!AutoSequenceManager.matchesIslandFilter(seq.islandFilter)) {
+            halt("island changed (" + seq.islandFilter + ")", "Safety guard");
+            return;
+        }
+
+        if (!AutoSequenceManager.matchesIslandFilter(seq.islandFilter)) {
+            halt("island changed (" + seq.islandFilter + ")", "Safety guard");
             return;
         }
 

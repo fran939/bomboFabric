@@ -204,6 +204,7 @@ public class AutoSequenceManager {
         public boolean enabled = true;
         public String triggerKey = ""; // Keybind to trigger
         public String triggerGui = ""; // Optional GUI title matcher
+        public String islandFilter = ""; // Optional island filter (e.g. "except isle", "!isle", "kuudra", "!kuudra")
         public boolean loop = false;
         public int loopDelayMs = 400;
         /**
@@ -391,5 +392,96 @@ public class AutoSequenceManager {
         } catch (Throwable ignored) {
         }
         return "Key " + code;
+    }
+    public static boolean matchesIslandFilter(String filter) {
+        if (filter == null || filter.trim().isEmpty()) return true;
+        String f = filter.trim().toLowerCase(java.util.Locale.ROOT);
+        if (f.equals("all") || f.equals("any") || f.equals("*") || f.equals("none")) return true;
+
+        boolean isException = f.startsWith("except ") || f.startsWith("except:") || f.startsWith("not ") || f.startsWith("not:") || f.startsWith("-");
+        if (isException) {
+            String stripped = f;
+            if (stripped.startsWith("except ")) stripped = stripped.substring(7);
+            else if (stripped.startsWith("except:")) stripped = stripped.substring(7);
+            else if (stripped.startsWith("not ")) stripped = stripped.substring(4);
+            else if (stripped.startsWith("not:")) stripped = stripped.substring(4);
+            else if (stripped.startsWith("-")) stripped = stripped.substring(1);
+
+            for (String part : stripped.split(",")) {
+                String p = part.trim();
+                if (!p.isEmpty() && isIslandMatch(p)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        String stripped = f;
+        if (stripped.startsWith("!")) stripped = stripped.substring(1);
+        else if (stripped.startsWith("only ")) stripped = stripped.substring(5);
+        else if (stripped.startsWith("only:")) stripped = stripped.substring(5);
+        else if (stripped.startsWith("+")) stripped = stripped.substring(1);
+
+        for (String part : stripped.split(",")) {
+            String p = part.trim();
+            if (!p.isEmpty() && isIslandMatch(p)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean isIslandMatch(String target) {
+        if (target == null) return false;
+        String t = target.trim().toLowerCase(java.util.Locale.ROOT);
+        if (t.isEmpty()) return false;
+
+        String loc = me.bombo.bomboaddons.SkyblockUtils.getLocation().toLowerCase(java.util.Locale.ROOT);
+        String sub = me.bombo.bomboaddons.SkyblockUtils.getSubArea().toLowerCase(java.util.Locale.ROOT);
+
+        if (t.equals("kuudra") || t.equals("kuudra hollow") || t.equals("kuudras hollow")) {
+            return me.bombo.bomboaddons.SkyblockUtils.isInKuudra() || loc.contains("kuudra") || sub.contains("kuudra");
+        }
+
+        if (t.equals("isle") || t.equals("crimson") || t.equals("crimson isle") || t.equals("nether")) {
+            return loc.contains("crimson") || loc.contains("isle") || sub.contains("crimson") || sub.contains("isle") || loc.contains("nether");
+        }
+
+        if (t.equals("garden") || t.equals("plot")) {
+            return me.bombo.bomboaddons.SkyblockUtils.isInGarden() || loc.contains("garden") || sub.contains("garden");
+        }
+
+        if (t.equals("dungeon") || t.equals("catacombs") || t.equals("dungeons") || t.equals("cata")) {
+            return me.bombo.bomboaddons.SkyblockUtils.isInDungeon() || loc.contains("catacombs") || loc.contains("dungeon");
+        }
+
+        if (t.equals("island") || t.equals("is") || t.equals("private island")) {
+            return me.bombo.bomboaddons.SkyblockUtils.isInPrivateIsland() || loc.contains("private island") || loc.contains("island");
+        }
+
+        if (t.equals("hub")) {
+            return loc.contains("hub") || sub.contains("hub");
+        }
+
+        if (loc.contains(t) || sub.contains(t)) {
+            return true;
+        }
+
+        return me.bombo.bomboaddons.SkyblockUtils.matchesIslandRequirement(t);
+    }
+
+    public static boolean isKeyBoundToMatchingSequence(int code) {
+        if (code <= 0) return false;
+        for (AutoSequence seq : getSequences()) {
+            if (seq == null || !seq.enabled) continue;
+            if (seq.triggerKey == null || seq.triggerKey.trim().isEmpty()) continue;
+            int mapped = me.bombo.bomboaddons.ClickLogic.getKeyCode(seq.triggerKey);
+            if (mapped == code || me.bombo.bomboaddons.CustomBindsProcessor.matchesKey(seq.triggerKey, code)) {
+                if (matchesIslandFilter(seq.islandFilter)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

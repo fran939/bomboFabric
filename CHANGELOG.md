@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.171] - 2026-10-28 (Beta)
+
+### AutoFishing Fire Veil 5s Cooldown, Sequence Island Filter & Keybind Drop Suppression (`AutoFishing.java`, `AutoSequenceManager.java`, `AutoSequenceExecutor.java`, `KeyboardMixin.java`, `AbstractContainerScreenMixin.java`, `BomboaddonsClient.java`, `AutoSequenceVisualScreen.java`)
+- **Auto Fishing Fire Veil 5-Second Cooldown:** When weapon swapping is configured with Fire Veil Wand (or weapon slot contains a Fire Veil item), avoids swapping and casting on every bite. If used within the last 5 seconds, skips the weapon swap entirely and recasts the rod immediately; only swaps and casts if >= 5 seconds have passed since the last use.
+- **AutoSequence Island Whitelist & Blacklist Filtering:** Added `islandFilter` to sequences. Supports blacklist mode (`except isle`, `except:isle`, `not isle`, `-isle` to run everywhere EXCEPT Crimson Isle) and whitelist mode (`!isle`, `only isle`, `kuudra`, `!kuudra` to run ONLY on the specified island), with multi-island support (`except isle, kuudra`).
+- **Island Change Safety Guard:** If a looping sequence is active and the player leaves the required island, the sequence automatically halts safely with `"island changed"`.
+- **Keybind Drop Suppression (Q Key on Kuudra vs Elsewhere):** When a sequence is bound to a key (such as vanilla drop key `Q`), activating the sequence on a matching island (e.g. Kuudra) suppresses item dropping completely in the world and inside container GUIs during swaps (`cir.setReturnValue(true)` & `keyDrop` click draining). When on non-matching islands, the drop key behaves normally.
+- **`/b auto island <name> <filter>` Command & Visual Studio Integration:** Added `/b auto island` to inspect or assign island filters via command line, displayed active island filters in `/b auto list`, and added an interactive `🌐 Island` header button and preset modal dialog in `AutoSequenceVisualScreen`.
+
 ## [26.2.28.170] - 2026-10-28 (Beta)
 
 ### Profile Storage Separation, /b debug profile, /b storage clear & scan, Double Chest Highlighting & GUI Item Highlighting (`StorageTracker.java`, `StorageChestWaypoints.java`, `GlobalStorageScreen.java`, `SkyblockUtils.java`, `StoragePreviewManager.java`, `CommandMixin.java`, `BomboaddonsClient.java`, `SlotHighlight.java`)

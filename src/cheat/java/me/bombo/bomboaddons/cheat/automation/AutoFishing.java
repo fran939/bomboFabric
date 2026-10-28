@@ -26,6 +26,7 @@ public class AutoFishing {
    private static int originalRodSlot;
    private static int remainingWeaponClicks;
    private static long lastBobberNullTime = 0L;
+   public static long lastFireVeilUseTime = 0L;
 
    public static boolean isFishingActive(Minecraft client) {
       if (client == null || client.player == null) return false;
@@ -43,6 +44,12 @@ public class AutoFishing {
       }
 
       long now = System.currentTimeMillis();
+
+      if (client.options != null && client.options.keyUse != null && client.options.keyUse.isDown()) {
+         if (client.player != null && isFireVeil(client.player.getMainHandItem())) {
+            lastFireVeilUseTime = now;
+         }
+      }
 
       // Auto-recast watchdog: if holding rod, in IDLE, not in GUI, and no active bobber exists
       if (state == AutoFishing.State.IDLE) {
@@ -168,6 +175,23 @@ public class AutoFishing {
                if (now >= nextActionTime) {
                   int weaponSlot = findWeaponSlot(client);
                   if (weaponSlot != -1) {
+                     ItemStack weaponStack = client.player.getInventory().getItem(weaponSlot);
+                     if (isFireVeil(weaponStack)) {
+                        long elapsed = now - lastFireVeilUseTime;
+                        if (elapsed < 5000L) {
+                           if (BomboConfig.get().autoFishingDebug) {
+                              client.player.sendSystemMessage(Component.literal("§e[AutoFishing] Fire Veil active (" + (5000L - elapsed) + "ms remaining), skipping swap."));
+                           }
+                           state = AutoFishing.State.RECASTING;
+                           int min = BomboConfig.get().autoFishingMinDelay;
+                           int max = BomboConfig.get().autoFishingMaxDelay;
+                           if (max < min) max = min;
+                           int recastDelay = min + (max > min ? random.nextInt(max - min + 1) : 0);
+                           nextActionTime = now + (long)recastDelay;
+                           return;
+                        }
+                     }
+
                      originalRodSlot = getSelectedSlot(client);
                      setSelectedSlot(client, weaponSlot);
                      remainingWeaponClicks = Math.max(1, BomboConfig.get().autoFishingClickCount);
@@ -191,14 +215,21 @@ public class AutoFishing {
                if (now >= nextActionTime) {
                   if (remainingWeaponClicks > 0) {
                      --remainingWeaponClicks;
-                     int clickType = BomboConfig.get().autoFishingClickType;
-                     if (clickType == 1) { // Left Click
-                        if (client.crosshairPickEntity != null) {
-                           client.gameMode.attack(client.player, client.crosshairPickEntity);
-                        }
-                        client.player.swing(InteractionHand.MAIN_HAND);
-                     } else { // Right Click
+                     ItemStack heldWeapon = client.player.getMainHandItem();
+                     if (isFireVeil(heldWeapon)) {
+                        lastFireVeilUseTime = now;
                         client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
+                        client.player.swing(InteractionHand.MAIN_HAND);
+                     } else {
+                        int clickType = BomboConfig.get().autoFishingClickType;
+                        if (clickType == 1) { // Left Click
+                           if (client.crosshairPickEntity != null) {
+                              client.gameMode.attack(client.player, client.crosshairPickEntity);
+                           }
+                           client.player.swing(InteractionHand.MAIN_HAND);
+                        } else { // Right Click
+                           client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
+                        }
                      }
 
                      int min = BomboConfig.get().autoFishingClickDelayMin;
@@ -254,6 +285,21 @@ public class AutoFishing {
                }
 
          }
+   }
+
+   public static boolean isFireVeil(ItemStack stack) {
+      if (stack == null || stack.isEmpty()) return false;
+      String sbId = SkyblockUtils.getSkyblockId(stack);
+      if (sbId != null && !sbId.isEmpty()) {
+         if (sbId.toUpperCase(java.util.Locale.ROOT).contains("FIRE_VEIL")) return true;
+      }
+      String hover = stack.getHoverName().getString().toLowerCase(java.util.Locale.ROOT);
+      if (hover.contains("fire veil") || hover.contains("fireveil") || hover.contains("veil")) return true;
+      String cfg = BomboConfig.get().autoFishingWeaponName.toLowerCase(java.util.Locale.ROOT).trim();
+      if (!cfg.isEmpty() && (cfg.contains("veil") || cfg.contains("fire veil"))) {
+         if (hover.contains(cfg)) return true;
+      }
+      return false;
    }
 
    private static int findWeaponSlot(Minecraft client) {

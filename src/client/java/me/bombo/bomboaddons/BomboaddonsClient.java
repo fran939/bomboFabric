@@ -10194,6 +10194,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                   + " §7[" + (seq.enabled ? "§aON" : "§cOFF") + "§7]"
                   + (running ? " §b▶ RUNNING" : "")
                   + " §8key: §e" + (seq.triggerKey == null || seq.triggerKey.isEmpty() ? "none" : seq.triggerKey)
+                  + (seq.islandFilter != null && !seq.islandFilter.isEmpty() ? " §8island: §d" + seq.islandFilter : "")
                   + " §8steps: §e" + steps
                   + (seq.loop ? " §8loop: §e"
                         + me.bombo.bomboaddons.features.auto.AutoSequenceManager
@@ -10279,6 +10280,116 @@ public class BomboaddonsClient implements ClientModInitializer {
                me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
                src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Keybind for §e" + seq.name + "§7: §b"
                      + (seq.triggerKey.isEmpty() ? "none" : seq.triggerKey)));
+               return 1;
+            })));
+
+      auto.then(ClientCommands.literal("island")
+            .then(ClientCommands.argument("args", StringArgumentType.greedyString()).executes((context) -> {
+               String raw = StringArgumentType.getString(context, "args").trim();
+               FabricClientCommandSource src = context.getSource();
+               var list = me.bombo.bomboaddons.features.auto.AutoSequenceManager.getSequences();
+               me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoSequence matchedSeq = null;
+               String filter = "";
+
+               for (var s : list) {
+                  String sName = s.name.trim();
+                  if (raw.equalsIgnoreCase(sName)) {
+                     matchedSeq = s;
+                     filter = "";
+                     break;
+                  }
+                  if (raw.toLowerCase(Locale.ROOT).startsWith(sName.toLowerCase(Locale.ROOT) + " ")) {
+                     matchedSeq = s;
+                     filter = raw.substring(sName.length()).trim();
+                     break;
+                  }
+               }
+
+               if (matchedSeq == null) {
+                  int split = raw.lastIndexOf(' ');
+                  if (split > 0) {
+                     String name = raw.substring(0, split).trim();
+                     matchedSeq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(name);
+                     if (matchedSeq != null) {
+                        filter = raw.substring(split + 1).trim();
+                     }
+                  } else {
+                     matchedSeq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(raw);
+                     filter = "";
+                  }
+               }
+
+               if (matchedSeq == null) {
+                  src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching. Usage: §e/b auto island <name> <filter|none>§c."));
+                  return 0;
+               }
+
+               if (filter.isEmpty()) {
+                  src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Sequence §e" + matchedSeq.name + " §7island filter: §b"
+                        + (matchedSeq.islandFilter == null || matchedSeq.islandFilter.isEmpty() ? "none (all islands)" : matchedSeq.islandFilter)
+                        + "§7. Set with: §e/b auto island " + matchedSeq.name + " <filter|none>"));
+                  return 1;
+               }
+
+               matchedSeq.islandFilter = (filter.equalsIgnoreCase("none") || filter.equalsIgnoreCase("all") || filter.equalsIgnoreCase("any")) ? "" : filter;
+               me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
+               src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Island filter for §e" + matchedSeq.name + "§7 set to: §b"
+                     + (matchedSeq.islandFilter.isEmpty() ? "none (all islands)" : matchedSeq.islandFilter)));
+               return 1;
+            })));
+
+      auto.then(ClientCommands.literal("island")
+            .then(ClientCommands.argument("args", StringArgumentType.greedyString()).executes((context) -> {
+               String raw = StringArgumentType.getString(context, "args").trim();
+               FabricClientCommandSource src = context.getSource();
+               var list = me.bombo.bomboaddons.features.auto.AutoSequenceManager.getSequences();
+               me.bombo.bomboaddons.features.auto.AutoSequenceManager.AutoSequence matchedSeq = null;
+               String filter = "";
+
+               for (var s : list) {
+                  String sName = s.name.trim();
+                  if (raw.equalsIgnoreCase(sName)) {
+                     matchedSeq = s;
+                     filter = "";
+                     break;
+                  }
+                  if (raw.toLowerCase(Locale.ROOT).startsWith(sName.toLowerCase(Locale.ROOT) + " ")) {
+                     matchedSeq = s;
+                     filter = raw.substring(sName.length()).trim();
+                     break;
+                  }
+               }
+
+               if (matchedSeq == null) {
+                  int split = raw.lastIndexOf(' ');
+                  if (split > 0) {
+                     String name = raw.substring(0, split).trim();
+                     matchedSeq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(name);
+                     if (matchedSeq != null) {
+                        filter = raw.substring(split + 1).trim();
+                     }
+                  } else {
+                     matchedSeq = me.bombo.bomboaddons.features.auto.AutoSequenceManager.findByName(raw);
+                     filter = "";
+                  }
+               }
+
+               if (matchedSeq == null) {
+                  src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §cNo sequence matching. Usage: §e/b auto island <name> <filter|none>§c."));
+                  return 0;
+               }
+
+               if (filter.isEmpty()) {
+                  src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Sequence §e" + matchedSeq.name + " §7island filter: §b"
+                        + (matchedSeq.islandFilter == null || matchedSeq.islandFilter.isEmpty() ? "none (all islands)" : matchedSeq.islandFilter)
+                        + "§7. Set with: §e/b auto island " + matchedSeq.name + " <filter|none>"));
+                  return 1;
+               }
+
+               matchedSeq.islandFilter = (filter.equalsIgnoreCase("none") || filter.equalsIgnoreCase("all") || filter.equalsIgnoreCase("any")) ? "" : filter;
+               me.bombo.bomboaddons.features.auto.AutoSequenceManager.save();
+               src.sendFeedback(Component.literal("§8[§bBomboAddons§8] §7Island filter for §e" + matchedSeq.name + "§7 set to: §b"
+                     + (matchedSeq.islandFilter.isEmpty() ? "none (all islands)" : matchedSeq.islandFilter)));
                return 1;
             })));
 

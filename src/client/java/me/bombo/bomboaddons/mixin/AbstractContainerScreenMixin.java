@@ -600,6 +600,17 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       cancellable = true
    )
    private void onKeyPressed(KeyEvent event, CallbackInfoReturnable<Boolean> cir) {
+      if (me.bombo.bomboaddons.flavor.Flavor.get().onInputTrigger(event.key(), "Keybind",
+            me.bombo.bomboaddons.features.auto.AutoSequenceManager.describeKeyCode(event.key()))) {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.options != null && mc.options.keyDrop != null) {
+            while (mc.options.keyDrop.consumeClick()) {}
+            mc.options.keyDrop.setDown(false);
+         }
+         cir.setReturnValue(true);
+         return;
+      }
+
       if (me.bombo.bomboaddons.features.kuudra.KuudraGeneral.handlePerkKeybind((AbstractContainerScreen<?>)(Object)this, event.key(), false)) {
          cir.setReturnValue(true);
          return;

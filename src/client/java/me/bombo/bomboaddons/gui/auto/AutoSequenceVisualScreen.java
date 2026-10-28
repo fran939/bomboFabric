@@ -148,6 +148,20 @@ public class AutoSequenceVisualScreen extends Screen {
             g.outline(rightX, 10, keyBtnW, 24, hoverKey ? 0xFFA78BFA : 0x448B5CF6);
             String keyStr = (seq.triggerKey != null && !seq.triggerKey.isEmpty()) ? seq.triggerKey : "None";
             g.text(font, "⌨ Key: " + keyStr, rightX + 8, 18, 0xFFDDD6FE, false);
+
+            rightX -= 10;
+
+            // Island Filter Button
+            int islandBtnW = 110;
+            rightX -= islandBtnW;
+            boolean hoverIsland = mouseX >= rightX && mouseX <= rightX + islandBtnW && mouseY >= 10 && mouseY <= 34;
+            g.fill(rightX, 10, rightX + islandBtnW, 34, hoverIsland ? 0x44EC4899 : 0x22374151);
+            g.outline(rightX, 10, islandBtnW, 24, hoverIsland ? 0xFFF472B6 : 0x44EC4899);
+            String isFmt = (seq.islandFilter != null && !seq.islandFilter.isEmpty()) ? seq.islandFilter : "All Islands";
+            if (font.width(isFmt) > 70) {
+                isFmt = isFmt.substring(0, Math.min(isFmt.length(), 9)) + "..";
+            }
+            g.text(font, "🌐 " + isFmt, rightX + 8, 18, 0xFFFCE7F3, false);
         }
 
         // Sequence Switcher in Center Header
@@ -601,6 +615,30 @@ public class AutoSequenceVisualScreen extends Screen {
                 primaryInput.setPosition(modalX + 16, modalY + 60);
                 primaryInput.extractRenderState(g, mouseX, mouseY, 0);
             }
+        } else if ("SET_ISLAND".equals(editingModalMode)) {
+            g.text(font, "Set Sequence Island Filter", modalX + 16, modalY + 16, 0xFFFFFFFF, true);
+            g.text(font, "Format: 'except isle', '!isle', 'kuudra', '!kuudra', or 'none'", modalX + 16, modalY + 36, 0xFF9CA3AF, false);
+            if (primaryInput != null) {
+                primaryInput.setPosition(modalX + 16, modalY + 60);
+                primaryInput.extractRenderState(g, mouseX, mouseY, 0);
+            }
+            renderSmallChip(g, font, modalX + 16, modalY + 95, 80, 18, "except isle", mouseX, mouseY, "§7Every island EXCEPT Crimson Isle");
+            renderSmallChip(g, font, modalX + 102, modalY + 95, 60, 18, "!isle", mouseX, mouseY, "§7ONLY on Crimson Isle");
+            renderSmallChip(g, font, modalX + 168, modalY + 95, 65, 18, "kuudra", mouseX, mouseY, "§7ONLY in Kuudra");
+            renderSmallChip(g, font, modalX + 239, modalY + 95, 85, 18, "except kuudra", mouseX, mouseY, "§7Every island EXCEPT Kuudra");
+            renderSmallChip(g, font, modalX + 330, modalY + 95, 75, 18, "All Islands", mouseX, mouseY, "§7Clear filter (runs everywhere)");
+        } else if ("SET_ISLAND".equals(editingModalMode)) {
+            g.text(font, "Set Sequence Island Filter", modalX + 16, modalY + 16, 0xFFFFFFFF, true);
+            g.text(font, "Format: 'except isle', '!isle', 'kuudra', '!kuudra', or 'none'", modalX + 16, modalY + 36, 0xFF9CA3AF, false);
+            if (primaryInput != null) {
+                primaryInput.setPosition(modalX + 16, modalY + 60);
+                primaryInput.extractRenderState(g, mouseX, mouseY, 0);
+            }
+            renderSmallChip(g, font, modalX + 16, modalY + 95, 80, 18, "except isle", mouseX, mouseY, "§7Every island EXCEPT Crimson Isle");
+            renderSmallChip(g, font, modalX + 102, modalY + 95, 60, 18, "!isle", mouseX, mouseY, "§7ONLY on Crimson Isle");
+            renderSmallChip(g, font, modalX + 168, modalY + 95, 65, 18, "kuudra", mouseX, mouseY, "§7ONLY in Kuudra");
+            renderSmallChip(g, font, modalX + 239, modalY + 95, 85, 18, "except kuudra", mouseX, mouseY, "§7Every island EXCEPT Kuudra");
+            renderSmallChip(g, font, modalX + 330, modalY + 95, 75, 18, "All Islands", mouseX, mouseY, "§7Clear filter (runs everywhere)");
         } else if ("EDIT_BLOCK".equals(editingModalMode)) {
             AutoSequence seq = getActiveSequence();
             AutoAction action = (seq != null && editingActionIndex >= 0 && editingActionIndex < seq.actions.size())
@@ -774,6 +812,66 @@ public class AutoSequenceVisualScreen extends Screen {
                 if (mx >= cancelX && mx <= cancelX + btnW && my >= btnY && my <= btnY + btnH) {
                     editingModalMode = null;
                     return true;
+                }
+
+                if ("SET_ISLAND".equals(editingModalMode)) {
+                    if (my >= modalY + 95 && my <= modalY + 113) {
+                        if (mx >= modalX + 16 && mx <= modalX + 96 && primaryInput != null) {
+                            primaryInput.setValue("except isle");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 102 && mx <= modalX + 162 && primaryInput != null) {
+                            primaryInput.setValue("!isle");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 168 && mx <= modalX + 233 && primaryInput != null) {
+                            primaryInput.setValue("kuudra");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 239 && mx <= modalX + 324 && primaryInput != null) {
+                            primaryInput.setValue("except kuudra");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 330 && mx <= modalX + 405 && primaryInput != null) {
+                            primaryInput.setValue("none");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                    }
+                }
+
+                if ("SET_ISLAND".equals(editingModalMode)) {
+                    if (my >= modalY + 95 && my <= modalY + 113) {
+                        if (mx >= modalX + 16 && mx <= modalX + 96 && primaryInput != null) {
+                            primaryInput.setValue("except isle");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 102 && mx <= modalX + 162 && primaryInput != null) {
+                            primaryInput.setValue("!isle");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 168 && mx <= modalX + 233 && primaryInput != null) {
+                            primaryInput.setValue("kuudra");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 239 && mx <= modalX + 324 && primaryInput != null) {
+                            primaryInput.setValue("except kuudra");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                        if (mx >= modalX + 330 && mx <= modalX + 405 && primaryInput != null) {
+                            primaryInput.setValue("none");
+                            setFocusedInput(primaryInput, null);
+                            return true;
+                        }
+                    }
                 }
 
                 if ("EDIT_BLOCK".equals(editingModalMode)) {
@@ -969,6 +1067,16 @@ public class AutoSequenceVisualScreen extends Screen {
                 rightX -= keyBtnW;
                 if (mx >= rightX && mx <= rightX + keyBtnW && my >= 10 && my <= 34) {
                     openKeyModal(seq);
+                    return true;
+                }
+
+                rightX -= 10;
+
+                // Island Filter Button
+                int islandBtnW = 110;
+                rightX -= islandBtnW;
+                if (mx >= rightX && mx <= rightX + islandBtnW && my >= 10 && my <= 34) {
+                    openIslandModal(seq);
                     return true;
                 }
             }
@@ -1267,6 +1375,16 @@ public class AutoSequenceVisualScreen extends Screen {
         primaryInput.setFocused(true);
     }
 
+    private void openIslandModal(AutoSequence seq) {
+        if (seq == null) return;
+        editingModalMode = "SET_ISLAND";
+        Font font = Minecraft.getInstance().font;
+        primaryInput = new EditBox(font, 0, 0, 380, 20, Component.literal("Island Filter"));
+        primaryInput.setMaxLength(64);
+        primaryInput.setValue(seq.islandFilter != null ? seq.islandFilter : "");
+        primaryInput.setFocused(true);
+    }
+
     private void openEditBlockModal(AutoSequence seq, int actionIdx) {
         if (seq == null || actionIdx < 0 || actionIdx >= seq.actions.size()) return;
         editingActionIndex = actionIdx;
@@ -1311,6 +1429,17 @@ public class AutoSequenceVisualScreen extends Screen {
         } else if ("SET_KEY".equals(editingModalMode)) {
             if (seq != null && primaryInput != null) {
                 seq.triggerKey = primaryInput.getValue().trim().toUpperCase(Locale.ROOT);
+                AutoSequenceManager.save();
+            }
+        } else if ("SET_ISLAND".equals(editingModalMode)) {
+            if (seq != null && primaryInput != null) {
+                String val = primaryInput.getValue().trim();
+                seq.islandFilter = (val.equalsIgnoreCase("none") || val.equalsIgnoreCase("all") || val.equalsIgnoreCase("all islands")) ? "" : val;
+                AutoSequenceManager.save();
+            }
+            if (seq != null && primaryInput != null) {
+                String val = primaryInput.getValue().trim();
+                seq.islandFilter = (val.equalsIgnoreCase("none") || val.equalsIgnoreCase("all") || val.equalsIgnoreCase("all islands")) ? "" : val;
                 AutoSequenceManager.save();
             }
         } else if ("EDIT_BLOCK".equals(editingModalMode)) {
