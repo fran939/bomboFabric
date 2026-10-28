@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.170",
+    "date": "2026-10-28",
+    "changes": [
+      "+ Fixed /b storage profile separation bug: prevented legacy file cloning to newly loaded profiles",
+      "+ Added /b debug profile [id] to view active Profile ID, storage file info, or switch active profile",
+      "+ Added /b storage clear (and reset) to purge current profile storage cache and reset storage file",
+      "+ Added /b storage scan to verify chest coordinates against loaded chunks and remove missing chests",
+      "+ Double chest highlight fix: accurately highlights both blocks of double chests in the world",
+      "+ GUI item highlighting: opening a highlighted chest in world highlights the targeted item in cyan",
+      "+ Supported Island Double Chest storage format with combined coordinates in storage tracker"
+    ]
+  },
+  {
     "version": "26.2.28.169",
     "date": "2026-10-28",
     "changes": [

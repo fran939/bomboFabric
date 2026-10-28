@@ -51,15 +51,15 @@ public class StorageTracker {
    private static long lastPlayerInvUpdate = 0L;
 
    public static String getActiveProfileId() {
-      if (loadedProfileId != null && !loadedProfileId.isEmpty()) {
-         return loadedProfileId;
-      }
-      if (SkyblockUtils.currentProfileId != null && !SkyblockUtils.currentProfileId.isEmpty()) {
+      if (SkyblockUtils.currentProfileId != null && !SkyblockUtils.currentProfileId.trim().isEmpty()) {
          return SkyblockUtils.currentProfileId.trim().toLowerCase(Locale.ROOT);
+      }
+      if (loadedProfileId != null && !loadedProfileId.trim().isEmpty() && !loadedProfileId.equalsIgnoreCase("default")) {
+         return loadedProfileId;
       }
       try {
          me.bombo.bomboaddons.BomboConfig.Settings s = me.bombo.bomboaddons.BomboConfig.get();
-         if (s != null && s.lastProfileId != null && !s.lastProfileId.isEmpty()) {
+         if (s != null && s.lastProfileId != null && !s.lastProfileId.trim().isEmpty()) {
             return s.lastProfileId.trim().toLowerCase(Locale.ROOT);
          }
       } catch (Throwable ignored) {}
@@ -73,7 +73,7 @@ public class StorageTracker {
          dir.mkdirs();
       }
       File target = new File(dir, pid + ".json");
-      if (!target.exists() && LEGACY_STORAGE_FILE.exists()) {
+      if ("default".equalsIgnoreCase(pid) && !target.exists() && LEGACY_STORAGE_FILE.exists()) {
          try {
             java.nio.file.Files.copy(LEGACY_STORAGE_FILE.toPath(), target.toPath());
          } catch (Exception ignored) {}
@@ -329,17 +329,62 @@ public class StorageTracker {
          if (isTrackableContainer(title)) {
             boolean changed = false;
             if (("Private Island".equals(SkyblockUtils.getLocation()) || "Garden".equals(SkyblockUtils.getLocation())) && lastClickedBlockPos != null && isChestContainerTitle(title)) {
-               int var10000 = lastClickedBlockPos.getX();
-               title = "Island Chest @ " + var10000 + ", " + lastClickedBlockPos.getY() + ", " + lastClickedBlockPos.getZ();
+               boolean isDouble = false;
+               BlockPos partnerPos = null;
+               try {
+                  if (mc.level != null) {
+                     net.minecraft.world.level.block.state.BlockState bs = mc.level.getBlockState(lastClickedBlockPos);
+                     if (bs.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
+                        net.minecraft.world.level.block.state.properties.ChestType cType = bs.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE)
+                           ? bs.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE)
+                           : net.minecraft.world.level.block.state.properties.ChestType.SINGLE;
+                        if (cType != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
+                           Direction connectedDir = net.minecraft.world.level.block.ChestBlock.getConnectedDirection(bs);
+                           partnerPos = lastClickedBlockPos.relative(connectedDir);
+                           isDouble = true;
+                        }
+                     }
+                  }
+               } catch (Throwable ignored) {}
 
-               for(Direction d : Plane.HORIZONTAL) {
-                  BlockPos adj = lastClickedBlockPos.relative(d);
-                  var10000 = adj.getX();
-                  String oldKey = "Island Chest @ " + var10000 + ", " + adj.getY() + ", " + adj.getZ();
-                  if (storageData.containsKey(oldKey)) {
+               if (isDouble && partnerPos != null) {
+                  int minX = Math.min(lastClickedBlockPos.getX(), partnerPos.getX());
+                  int maxX = Math.max(lastClickedBlockPos.getX(), partnerPos.getX());
+                  int minY = Math.min(lastClickedBlockPos.getY(), partnerPos.getY());
+                  int maxY = Math.max(lastClickedBlockPos.getY(), partnerPos.getY());
+                  int minZ = Math.min(lastClickedBlockPos.getZ(), partnerPos.getZ());
+                  int maxZ = Math.max(lastClickedBlockPos.getZ(), partnerPos.getZ());
+                  title = "Island Double Chest @ " + minX + ", " + minY + ", " + minZ + " & " + maxX + ", " + maxY + ", " + maxZ;
+
+                  List<String> toClean = new ArrayList<>();
+                  for (String k : storageData.keySet()) {
+                     if ((k.startsWith("Island Chest @ ") || k.startsWith("Island Double Chest @ ")) && !k.equals(title)) {
+                        if (k.contains(String.valueOf(lastClickedBlockPos.getX())) || k.contains(String.valueOf(partnerPos.getX()))) {
+                           if (k.contains(String.valueOf(lastClickedBlockPos.getZ())) || k.contains(String.valueOf(partnerPos.getZ()))) {
+                              toClean.add(k);
+                           }
+                        }
+                     }
+                  }
+                  for (String oldKey : toClean) {
                      storageData.remove(oldKey);
                      slotHashCache.remove(oldKey);
+                     uncompressedCache.remove(oldKey);
                      changed = true;
+                  }
+               } else {
+                  int cx = lastClickedBlockPos.getX();
+                  title = "Island Chest @ " + cx + ", " + lastClickedBlockPos.getY() + ", " + lastClickedBlockPos.getZ();
+
+                  for (Direction d : Plane.HORIZONTAL) {
+                     BlockPos adj = lastClickedBlockPos.relative(d);
+                     String oldKey = "Island Chest @ " + adj.getX() + ", " + adj.getY() + ", " + adj.getZ();
+                     if (storageData.containsKey(oldKey)) {
+                        storageData.remove(oldKey);
+                        slotHashCache.remove(oldKey);
+                        uncompressedCache.remove(oldKey);
+                        changed = true;
+                     }
                   }
                }
             }
@@ -593,5 +638,65 @@ public class StorageTracker {
 
          }
       }
+   }
+
+   public static synchronized void clearCurrentProfileStorage() {
+      storageData.clear();
+      uncompressedCache.clear();
+      slotHashCache.clear();
+      StorageChestWaypoints.clear();
+      me.bombo.bomboaddons.BlockHighlight.targetChestPosList.clear();
+      me.bombo.bomboaddons.SlotHighlight.clearTargetSlot();
+      saveImmediate();
+      me.bombo.bomboaddons.gui.GlobalStorageScreen.invalidateCache();
+   }
+
+   public static synchronized int[] scanAndCleanStaleChests() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level == null) return new int[]{0, 0, storageData.size()};
+
+      List<String> staleKeys = new ArrayList<>();
+      int scanned = 0;
+
+      for (String key : storageData.keySet()) {
+         if (key.startsWith("Island Chest @ ")) {
+            BlockPos pos = StorageChestWaypoints.parsePosition(key);
+            if (pos != null && mc.level.isLoaded(pos)) {
+               scanned++;
+               net.minecraft.world.level.block.state.BlockState state = mc.level.getBlockState(pos);
+               if (!StorageChestWaypoints.isContainer(state)) {
+                  staleKeys.add(key);
+               }
+            }
+         } else if (key.startsWith("Island Double Chest @ ")) {
+            BlockPos[] pair = StorageChestWaypoints.parseDoublePosition(key);
+            if (pair != null && pair.length == 2) {
+               boolean p0Loaded = mc.level.isLoaded(pair[0]);
+               boolean p1Loaded = mc.level.isLoaded(pair[1]);
+               if (p0Loaded && p1Loaded) {
+                  scanned++;
+                  net.minecraft.world.level.block.state.BlockState s0 = mc.level.getBlockState(pair[0]);
+                  net.minecraft.world.level.block.state.BlockState s1 = mc.level.getBlockState(pair[1]);
+                  if (!StorageChestWaypoints.isContainer(s0) || !StorageChestWaypoints.isContainer(s1)) {
+                     staleKeys.add(key);
+                  }
+               }
+            }
+         }
+      }
+
+      for (String k : staleKeys) {
+         storageData.remove(k);
+         slotHashCache.remove(k);
+         uncompressedCache.remove(k);
+      }
+
+      if (!staleKeys.isEmpty()) {
+         saveImmediate();
+         me.bombo.bomboaddons.gui.GlobalStorageScreen.invalidateCache();
+         StorageChestWaypoints.verify(mc);
+      }
+
+      return new int[]{scanned, staleKeys.size(), storageData.size()};
    }
 }

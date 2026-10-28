@@ -4278,11 +4278,36 @@ public class BomboaddonsClient implements ClientModInitializer {
                            Minecraft.getInstance()
                                  .execute(() -> Minecraft.getInstance().setScreenAndShow(new GlobalStorageScreen()));
                            return 1;
+                        })).then(ClientCommands.literal("clear").executes((context) -> {
+                           StorageTracker.clearCurrentProfileStorage();
+                           ((FabricClientCommandSource) context.getSource())
+                                 .sendFeedback(Component.literal("§8[§3Bombo§8]§r §aStorage data cleared and reset for profile: §b" + StorageTracker.getActiveProfileId()));
+                           return 1;
+                        })).then(ClientCommands.literal("reset").executes((context) -> {
+                           StorageTracker.clearCurrentProfileStorage();
+                           ((FabricClientCommandSource) context.getSource())
+                                 .sendFeedback(Component.literal("§8[§3Bombo§8]§r §aStorage data cleared and reset for profile: §b" + StorageTracker.getActiveProfileId()));
+                           return 1;
+                        })).then(ClientCommands.literal("scan").executes((context) -> {
+                           int[] res = StorageTracker.scanAndCleanStaleChests();
+                           ((FabricClientCommandSource) context.getSource())
+                                 .sendFeedback(Component.literal("§8[§3Bombo§8]§r §aStorage scan completed: §f" + res[0] + " §achests checked, §c" + res[1] + " §cstale chests removed (§7" + res[2] + " remaining§a)."));
+                           return 1;
                         })).then(ClientCommands.argument("query", StringArgumentType.greedyString())
                               .executes((context) -> {
                                  String query = StringArgumentType.getString(context, "query");
                                  FabricClientCommandSource storageSource = (FabricClientCommandSource) context
                                        .getSource();
+                                 if ("clear".equalsIgnoreCase(query) || "reset".equalsIgnoreCase(query)) {
+                                    StorageTracker.clearCurrentProfileStorage();
+                                    storageSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §aStorage data cleared and reset for profile: §b" + StorageTracker.getActiveProfileId()));
+                                    return 1;
+                                 }
+                                 if ("scan".equalsIgnoreCase(query)) {
+                                    int[] res = StorageTracker.scanAndCleanStaleChests();
+                                    storageSource.sendFeedback(Component.literal("§8[§3Bombo§8]§r §aStorage scan completed: §f" + res[0] + " §achests checked, §c" + res[1] + " §cstale chests removed (§7" + res[2] + " remaining§a)."));
+                                    return 1;
+                                 }
                                  int found = me.bombo.bomboaddons.features.StorageChestWaypoints.search(query);
                                  storageSource.sendFeedback(
                                        me.bombo.bomboaddons.features.StorageChestWaypoints.describeComponent());
@@ -4291,12 +4316,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                           "§8[§3Bombo§8]§r §7Tip: open your island chests once so their contents are tracked, then search again."));
                                  }
                                  return 1;
-                              }).then(ClientCommands.literal("clear").executes((context) -> {
-                                 me.bombo.bomboaddons.features.StorageChestWaypoints.clear();
-                                 ((FabricClientCommandSource) context.getSource())
-                                       .sendFeedback(Component.literal("§8[§3Bombo§8]§r §7Storage waypoints cleared."));
-                                 return 1;
-                              }))));
+                              })));
                         builder.then(((LiteralArgumentBuilder) ((LiteralArgumentBuilder) ClientCommands.literal("pt")
                               .executes((context) -> {
                                  long now = System.currentTimeMillis();
@@ -4910,10 +4930,37 @@ public class BomboaddonsClient implements ClientModInitializer {
                                        return 1;
                                     }));
                         builder.then(
-                              ClientCommands.literal("debug").then(ClientCommands.literal("api").executes((context) -> {
-                                 runApiDebugTests();
-                                 return 1;
-                              })));
+                              ClientCommands.literal("debug")
+                                    .then(ClientCommands.literal("api").executes((context) -> {
+                                       runApiDebugTests();
+                                       return 1;
+                                    }))
+                                    .then(ClientCommands.literal("profile")
+                                          .executes((context) -> {
+                                             String pid = SkyblockUtils.currentProfileId;
+                                             if (pid == null || pid.trim().isEmpty()) {
+                                                pid = StorageTracker.getActiveProfileId();
+                                             }
+                                             File f = StorageTracker.getStorageFile(pid);
+                                             int containers = StorageTracker.storageData.size();
+                                             int totalItems = 0;
+                                             for (Map<Integer, String> slots : StorageTracker.storageData.values()) {
+                                                totalItems += slots.size();
+                                             }
+                                             ((FabricClientCommandSource) context.getSource()).sendFeedback(Component.literal(
+                                                   "§8[§3Bombo§8]§r §eActive Profile ID: §b" + pid
+                                                   + "\n§8[§3Bombo§8]§r §7Storage File: §f" + f.getName() + " §7(" + (f.exists() ? f.length() + " bytes" : "new/unwritten") + ")"
+                                                   + "\n§8[§3Bombo§8]§r §7Tracked Containers: §a" + containers + " §7| Items: §a" + totalItems));
+                                             return 1;
+                                          })
+                                          .then(ClientCommands.argument("newProfileId", StringArgumentType.word())
+                                                .executes((context) -> {
+                                                   String newPid = StringArgumentType.getString(context, "newProfileId");
+                                                   SkyblockUtils.setActiveProfileId(newPid);
+                                                   ((FabricClientCommandSource) context.getSource()).sendFeedback(Component.literal(
+                                                         "§8[§3Bombo§8]§r §aSwitched active Profile ID to: §b" + newPid));
+                                                   return 1;
+                                                }))));
                         builder.then(((LiteralArgumentBuilder) ClientCommands.literal("paste").executes((context) -> {
                            Minecraft mc = Minecraft.getInstance();
                            if (mc.player == null) {

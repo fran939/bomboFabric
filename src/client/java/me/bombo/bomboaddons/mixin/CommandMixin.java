@@ -29,6 +29,58 @@ public class CommandMixin {
       if (me.bombo.bomboaddons.WardrobeHelper.getPendingArmorNumber() == -1) {
          me.bombo.bomboaddons.WardrobeHelper.clearSuppression();
       }
+      if (lower.equals("b debug profile") || lower.equals("bombo debug profile") || lower.equals("bomboaddons debug profile")) {
+         Minecraft mc = Minecraft.getInstance();
+         String pid = me.bombo.bomboaddons.SkyblockUtils.currentProfileId;
+         if (pid == null || pid.trim().isEmpty()) {
+            pid = me.bombo.bomboaddons.features.StorageTracker.getActiveProfileId();
+         }
+         java.io.File f = me.bombo.bomboaddons.features.StorageTracker.getStorageFile(pid);
+         int containers = me.bombo.bomboaddons.features.StorageTracker.storageData.size();
+         int totalItems = 0;
+         for (java.util.Map<Integer, String> slots : me.bombo.bomboaddons.features.StorageTracker.storageData.values()) {
+            totalItems += slots.size();
+         }
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal(
+               "§8[§3Bombo§8]§r §eActive Profile ID: §b" + pid
+               + "\n§8[§3Bombo§8]§r §7Storage File: §f" + f.getName() + " §7(" + (f.exists() ? f.length() + " bytes" : "new/unwritten") + ")"
+               + "\n§8[§3Bombo§8]§r §7Tracked Containers: §a" + containers + " §7| Items: §a" + totalItems));
+         }
+         ci.cancel();
+         return;
+      }
+      if (lower.startsWith("b debug profile ") || lower.startsWith("bombo debug profile ") || lower.startsWith("bomboaddons debug profile ")) {
+         String[] parts = trimmed.split("\\s+");
+         if (parts.length >= 4) {
+            String newPid = parts[3].trim();
+            me.bombo.bomboaddons.SkyblockUtils.setActiveProfileId(newPid);
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aSwitched active Profile ID to: §b" + newPid));
+            }
+         }
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("b storage clear") || lower.equals("b storage reset") || lower.equals("bombo storage clear") || lower.equals("bomboaddons storage clear")) {
+         me.bombo.bomboaddons.features.StorageTracker.clearCurrentProfileStorage();
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aStorage data cleared and reset for profile: §b" + me.bombo.bomboaddons.features.StorageTracker.getActiveProfileId()));
+         }
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("b storage scan") || lower.equals("bombo storage scan") || lower.equals("bomboaddons storage scan")) {
+         int[] res = me.bombo.bomboaddons.features.StorageTracker.scanAndCleanStaleChests();
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player != null) {
+            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aStorage scan completed: §f" + res[0] + " §achests checked, §c" + res[1] + " §cstale chests removed (§7" + res[2] + " remaining§a)."));
+         }
+         ci.cancel();
+         return;
+      }
       if (lower.equals("ep") || lower.startsWith("ep ") || lower.equals("b ep") || lower.startsWith("b ep ")
             || lower.equals("bombo ep") || lower.startsWith("bombo ep ") || lower.equals("bomboaddons ep") || lower.startsWith("bomboaddons ep ")) {
          int amount = 16;

@@ -253,6 +253,14 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          int nameColor = SlotHighlight.getHighlightColor(slot.getItem().getHoverName().getString());
          if (nameColor != 0) {
             color = nameColor;
+         } else {
+            String sbId = me.bombo.bomboaddons.SkyblockUtils.getSkyblockId(slot.getItem());
+            if (sbId != null && !sbId.isEmpty()) {
+               int idColor = SlotHighlight.getHighlightColor(sbId);
+               if (idColor != 0) {
+                  color = idColor;
+               }
+            }
          }
       }
 

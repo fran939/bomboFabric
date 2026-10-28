@@ -357,7 +357,14 @@ public class GlobalStorageScreen extends Screen {
                   break;
                }
 
-               if (targetLoc.contains(" @ ")) {
+               if (targetLoc.startsWith("Island Double Chest @ ")) {
+                  BlockPos[] pair = me.bombo.bomboaddons.features.StorageChestWaypoints.parseDoublePosition(targetLoc);
+                  if (pair != null) {
+                     BlockHighlight.targetChestPosList.add(pair[0]);
+                     BlockHighlight.targetChestPosList.add(pair[1]);
+                     addedPos = true;
+                  }
+               } else if (targetLoc.contains(" @ ")) {
                   try {
                      String coords = targetLoc.substring(targetLoc.indexOf(" @ ") + 3);
                      String[] parts = coords.split(",");
@@ -390,6 +397,10 @@ public class GlobalStorageScreen extends Screen {
             if (addedPos) {
                BlockHighlight.targetChestTime = System.currentTimeMillis();
                SlotHighlight.addTargetName(this.hoveredItem.stack.getHoverName().getString(), -1442775296);
+               String sbId = SkyblockUtils.getSkyblockId(this.hoveredItem.stack);
+               if (sbId != null && !sbId.isEmpty()) {
+                  SlotHighlight.addTargetName(sbId, -1442775296);
+               }
             }
 
             this.minecraft.setScreenAndShow((Screen)null);

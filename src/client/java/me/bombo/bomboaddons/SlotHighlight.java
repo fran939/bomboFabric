@@ -36,10 +36,12 @@ public class SlotHighlight {
    }
 
    private static void checkExpiration() {
+      if (me.bombo.bomboaddons.features.StorageChestWaypoints.hasMatches() || !me.bombo.bomboaddons.BlockHighlight.targetChestPosList.isEmpty()) {
+         return;
+      }
       if (highlightStartTime != 0L && System.currentTimeMillis() - highlightStartTime > 10000L) {
          clearTargetSlot();
       }
-
    }
 
    public static Set<Integer> getTargetSlots() {
@@ -65,6 +67,14 @@ public class SlotHighlight {
          for(String name : targetNames) {
             if (cleanName.contains(name)) {
                return currentColor;
+            }
+         }
+
+         String query = me.bombo.bomboaddons.features.StorageChestWaypoints.getActiveQuery();
+         if (query != null && !query.trim().isEmpty()) {
+            String q = query.trim().replaceAll("§.", "").toLowerCase();
+            if (cleanName.contains(q)) {
+               return -1442775296; // 0xAA00E5FF cyan
             }
          }
 

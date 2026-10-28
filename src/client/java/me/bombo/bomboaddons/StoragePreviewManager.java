@@ -180,9 +180,9 @@ public class StoragePreviewManager {
 
                   if (profile != null) {
                      if (profile.has("profile_id")) {
-                        SkyblockUtils.currentProfileId = profile.get("profile_id").getAsString();
+                        SkyblockUtils.setActiveProfileId(profile.get("profile_id").getAsString());
                      } else if (profile.has("id")) {
-                        SkyblockUtils.currentProfileId = profile.get("id").getAsString();
+                        SkyblockUtils.setActiveProfileId(profile.get("id").getAsString());
                      }
 
                      logDebugToFile("[StorageDebug] Active Profile ID resolved to: " + SkyblockUtils.currentProfileId);

@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.170] - 2026-10-28 (Beta)
+
+### Profile Storage Separation, /b debug profile, /b storage clear & scan, Double Chest Highlighting & GUI Item Highlighting (`StorageTracker.java`, `StorageChestWaypoints.java`, `GlobalStorageScreen.java`, `SkyblockUtils.java`, `StoragePreviewManager.java`, `CommandMixin.java`, `BomboaddonsClient.java`, `SlotHighlight.java`)
+- **/b storage Profile ID Separation & Clone Fix:** Fixed a critical bug where `StorageTracker` copied legacy profile data to every newly encountered profile file, making all profiles show identical storage. Prevented copying to non-default profiles and ensured switching profiles immediately clears and reloads profile-specific storage (supporting active target Profile ID `5115867e-5d1c-4e34-a46a-4b53e4d69ad7`).
+- **`/b debug profile` Subcommand:** Added `/b debug profile` displaying the current active Profile ID, storage file name, file size, tracked container count, and total items. Added `/b debug profile <id>` to switch or link active Profile IDs on the fly.
+- **`/b storage clear` & `/b storage reset`:** Added commands to clear and reset the current profile's storage data, purge in-memory caches, truncate the storage JSON, and clear all active chest waypoints and highlights.
+- **`/b storage scan` Stale Chest Cleaner:** Added `/b storage scan` to verify all saved chest coordinates against currently loaded world chunks; automatically purges any storage entries where chests were broken or replaced.
+- **Double Chest World Highlighting (2x1 Bounding Box):** Fixed the single-half highlight issue where double chests only outlined 1 block. When a double chest is targeted by `/b storage <item>` or clicked in `/b storage`, both blocks of the double chest are encompassed in the cyan bounding box (`Island Double Chest @ minX, minY, minZ & maxX, maxY, maxZ`).
+- **In-Container GUI Item Highlighting:** Opening a highlighted storage container in the world now highlights the searched/targeted item in the container GUI slots with a cyan/aqua overlay (`0xAA00E5FF`), matching by item display name and SkyBlock ID.
+
 ## [26.2.28.169] - 2026-10-28 (Beta)
 
 ### Transfer All Items Keybind, Auto Fishing Watchdogs, /b storage Profile ID Separation & Chest Highlighting (`TransferAllManager.java`, `AutoFishing.java`, `StorageTracker.java`, `StorageChestWaypoints.java`, `BlockHighlight.java`, `GlobalStorageScreen.java`, `SkyblockUtils.java`, `CommandMixin.java`, `BomboConfig.java`)

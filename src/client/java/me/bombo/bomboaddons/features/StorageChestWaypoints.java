@@ -12,6 +12,10 @@ import net.minecraft.world.level.block.BarrelBlock;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.core.Direction;
+import me.bombo.bomboaddons.SlotHighlight;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -141,6 +145,7 @@ public final class StorageChestWaypoints {
     public static synchronized void clear() {
         matches.clear();
         activeQuery = null;
+        SlotHighlight.clearTargetSlot();
     }
 
     // -------------------------------------------------------------------------------------------
@@ -156,8 +161,11 @@ public final class StorageChestWaypoints {
         matches.clear();
         activeQuery = query;
         if (query == null || query.trim().isEmpty()) {
+            SlotHighlight.clearTargetSlot();
             return 0;
         }
+        SlotHighlight.addTargetName(query.trim(), -1442775296);
+
         String needle = normalize(query);
 
         // containerKey -> matched slot count / quantity
@@ -166,11 +174,7 @@ public final class StorageChestWaypoints {
 
         for (Map.Entry<String, Map<Integer, String>> container : StorageTracker.storageData.entrySet()) {
             String key = container.getKey();
-            if (key == null || !key.startsWith(ISLAND_CHEST_PREFIX)) {
-                continue;
-            }
-            BlockPos pos = parsePosition(key);
-            if (pos == null) {
+            if (key == null || (!key.startsWith(ISLAND_CHEST_PREFIX) && !key.startsWith("Island Double Chest @ "))) {
                 continue;
             }
             int hitSlots = 0;
@@ -190,18 +194,30 @@ public final class StorageChestWaypoints {
         }
 
         for (Map.Entry<String, int[]> hit : hits.entrySet()) {
-            BlockPos pos = parsePosition(hit.getKey());
-            if (pos == null) continue;
+            String key = hit.getKey();
             ChestMatch match = new ChestMatch();
-            match.containerKey = hit.getKey();
-            match.minX = pos.getX();
-            match.minY = pos.getY();
-            match.minZ = pos.getZ();
-            match.maxX = pos.getX();
-            match.maxY = pos.getY();
-            match.maxZ = pos.getZ();
+            match.containerKey = key;
+            if (key.startsWith("Island Double Chest @ ")) {
+                BlockPos[] pair = parseDoublePosition(key);
+                if (pair == null) continue;
+                match.minX = Math.min(pair[0].getX(), pair[1].getX());
+                match.minY = Math.min(pair[0].getY(), pair[1].getY());
+                match.minZ = Math.min(pair[0].getZ(), pair[1].getZ());
+                match.maxX = Math.max(pair[0].getX(), pair[1].getX());
+                match.maxY = Math.max(pair[0].getY(), pair[1].getY());
+                match.maxZ = Math.max(pair[0].getZ(), pair[1].getZ());
+            } else {
+                BlockPos pos = parsePosition(key);
+                if (pos == null) continue;
+                match.minX = pos.getX();
+                match.minY = pos.getY();
+                match.minZ = pos.getZ();
+                match.maxX = pos.getX();
+                match.maxY = pos.getY();
+                match.maxZ = pos.getZ();
+            }
             match.itemCount = hit.getValue()[0];
-            match.totalQuantity = quantities.getOrDefault(hit.getKey(), (long) match.itemCount);
+            match.totalQuantity = quantities.getOrDefault(key, (long) match.itemCount);
             match.itemLabel = query.trim();
             matches.add(match);
         }
@@ -256,16 +272,32 @@ public final class StorageChestWaypoints {
         List<String> broken = new ArrayList<>();
         for (Map.Entry<String, Map<Integer, String>> container : StorageTracker.storageData.entrySet()) {
             String key = container.getKey();
-            if (key == null || !key.startsWith(ISLAND_CHEST_PREFIX)) continue;
-            BlockPos pos = parsePosition(key);
-            if (pos == null) {
-                broken.add(key);
-                continue;
-            }
-            if (mc.level == null || !mc.level.isLoaded(pos)) continue;
-            BlockState state = mc.level.getBlockState(pos);
-            if (!isContainer(state)) {
-                broken.add(key);
+            if (key == null) continue;
+            if (key.startsWith(ISLAND_CHEST_PREFIX)) {
+                BlockPos pos = parsePosition(key);
+                if (pos == null) {
+                    broken.add(key);
+                    continue;
+                }
+                if (mc.level == null || !mc.level.isLoaded(pos)) continue;
+                BlockState state = mc.level.getBlockState(pos);
+                if (!isContainer(state)) {
+                    broken.add(key);
+                }
+            } else if (key.startsWith("Island Double Chest @ ")) {
+                BlockPos[] pair = parseDoublePosition(key);
+                if (pair == null) {
+                    broken.add(key);
+                    continue;
+                }
+                if (mc.level == null) continue;
+                if (mc.level.isLoaded(pair[0]) && mc.level.isLoaded(pair[1])) {
+                    BlockState s0 = mc.level.getBlockState(pair[0]);
+                    BlockState s1 = mc.level.getBlockState(pair[1]);
+                    if (!isContainer(s0) || !isContainer(s1)) {
+                        broken.add(key);
+                    }
+                }
             }
         }
         for (String key : broken) {
@@ -341,6 +373,24 @@ public final class StorageChestWaypoints {
         OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
 
         for (ChestMatch match : snapshot) {
+            if (match.minX == match.maxX && match.minZ == match.maxZ) {
+                BlockPos p = new BlockPos(match.minX, match.minY, match.minZ);
+                if (mc.level.isLoaded(p)) {
+                    BlockState state = mc.level.getBlockState(p);
+                    if (state.getBlock() instanceof ChestBlock) {
+                        ChestType type = state.hasProperty(BlockStateProperties.CHEST_TYPE) ? state.getValue(BlockStateProperties.CHEST_TYPE) : ChestType.SINGLE;
+                        if (type != ChestType.SINGLE) {
+                            Direction connected = ChestBlock.getConnectedDirection(state);
+                            BlockPos partner = p.relative(connected);
+                            match.minX = Math.min(p.getX(), partner.getX());
+                            match.maxX = Math.max(p.getX(), partner.getX());
+                            match.minZ = Math.min(p.getZ(), partner.getZ());
+                            match.maxZ = Math.max(p.getZ(), partner.getZ());
+                        }
+                    }
+                }
+            }
+
             double x = match.minX - camPos.x;
             double y = match.minY - camPos.y;
             double z = match.minZ - camPos.z;
@@ -391,7 +441,7 @@ public final class StorageChestWaypoints {
     // Helpers
     // -------------------------------------------------------------------------------------------
 
-    private static boolean isContainer(BlockState state) {
+    public static boolean isContainer(BlockState state) {
         if (state == null) return false;
         return state.getBlock() instanceof ChestBlock
                 || state.getBlock() instanceof BarrelBlock
@@ -404,7 +454,12 @@ public final class StorageChestWaypoints {
 
     /** {@code "Island Chest @ 12, 71, -30"} -> BlockPos. */
     public static BlockPos parsePosition(String key) {
-        if (key == null || !key.startsWith(ISLAND_CHEST_PREFIX)) return null;
+        if (key == null) return null;
+        if (key.startsWith("Island Double Chest @ ")) {
+            BlockPos[] pair = parseDoublePosition(key);
+            return pair != null ? pair[0] : null;
+        }
+        if (!key.startsWith(ISLAND_CHEST_PREFIX)) return null;
         String coords = key.substring(ISLAND_CHEST_PREFIX.length()).trim();
         String[] parts = coords.split(",");
         if (parts.length != 3) return null;
@@ -413,6 +468,23 @@ public final class StorageChestWaypoints {
                     Integer.parseInt(parts[0].trim()),
                     Integer.parseInt(parts[1].trim()),
                     Integer.parseInt(parts[2].trim()));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public static BlockPos[] parseDoublePosition(String key) {
+        if (key == null || !key.startsWith("Island Double Chest @ ")) return null;
+        String coords = key.substring("Island Double Chest @ ".length()).trim();
+        String[] halves = coords.split("&");
+        if (halves.length != 2) return null;
+        String[] p0 = halves[0].trim().split(",");
+        String[] p1 = halves[1].trim().split(",");
+        if (p0.length != 3 || p1.length != 3) return null;
+        try {
+            BlockPos pos0 = new BlockPos(Integer.parseInt(p0[0].trim()), Integer.parseInt(p0[1].trim()), Integer.parseInt(p0[2].trim()));
+            BlockPos pos1 = new BlockPos(Integer.parseInt(p1[0].trim()), Integer.parseInt(p1[1].trim()), Integer.parseInt(p1[2].trim()));
+            return new BlockPos[]{pos0, pos1};
         } catch (NumberFormatException e) {
             return null;
         }
