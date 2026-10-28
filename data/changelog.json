@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.168",
+    "date": "2026-10-28",
+    "changes": [
+      "+ Added Transfer All Matching Hotkey (default Left Alt) for fast 1-click GUI deposits & withdrawals",
+      "+ Supports Keybind + Click on slot or hovering over slot and pressing keybind",
+      "+ Precise SkyBlock ID & vanilla item type matching (no mixing enchanted vs regular items)",
+      "+ Integrated locked slot protection honoring Blocked Slots Bypass keybind",
+      "+ Full integration in /b config with key conflict detection and combination support"
+    ]
+  },
+  {
     "version": "26.2.28.167",
     "date": "2026-10-27",
     "changes": [

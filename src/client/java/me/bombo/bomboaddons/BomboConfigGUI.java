@@ -1191,6 +1191,9 @@ public class BomboConfigGUI
                     int col2W = col1W;
                     int y1 = contentBaseY + 24 - (int) this.scrollAmount;
                     int y2 = contentBaseY + 24 - (int) this.scrollAmount;
+                    y1 = this.addKeyBindButton("Transfer All Matching", s.quickTransferAllKey != null ? s.quickTransferAllKey : "LEFT_ALT", v -> {
+                        s.quickTransferAllKey = v;
+                    }, "quickTransferAll", col1X, col1W, y1);
                     y1 = this.addKeyBindButton("Trade", s.tradeKey, v -> {
                         s.tradeKey = v;
                     }, "trade", col1X, col1W, y1);

@@ -996,6 +996,16 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             me.bombo.bomboaddons.features.kuudra.KuudraStunKillHelper.onHumanCannonballPurchased();
          }
       }
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s != null && s.quickTransferAllKey != null && !s.quickTransferAllKey.trim().isEmpty() && !"none".equalsIgnoreCase(s.quickTransferAllKey.trim())) {
+         if (CustomBindsProcessor.isKeyOrComboDown(s.quickTransferAllKey)) {
+            Slot targetSlot = slot != null ? slot : this.hoveredSlot;
+            if (me.bombo.bomboaddons.features.QuickTransferManager.handleSlotClick((AbstractContainerScreen<?>)(Object)this, targetSlot)) {
+               ci.cancel();
+               return;
+            }
+         }
+      }
       me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onSlotClick(slot, slotId, mouseButton, type, (AbstractContainerScreen<?>)(Object)this, false);
    }
 

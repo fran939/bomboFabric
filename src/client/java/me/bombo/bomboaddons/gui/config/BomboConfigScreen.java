@@ -2884,6 +2884,7 @@ public class BomboConfigScreen extends Screen {
                 keyNames.put("Freecam", s.freecamKey);
                 keyNames.put("Backpack Preview", s.backpackPreviewKey);
             } else if (scope == KeyScope.CONTAINER_GENERIC) {
+                keyNames.put("Transfer All Matching", s.quickTransferAllKey);
                 keyNames.put("Trade", s.tradeKey);
                 keyNames.put("Trade Max Pet", s.tradeMaxKey);
                 keyNames.put("Count Items", s.countItemKey);

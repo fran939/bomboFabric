@@ -988,6 +988,7 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Ignore Caps Lock", "Trigger all hotkeys properly even when Caps Lock is ON.", category, () -> s.ignoreCapsLock, v -> s.ignoreCapsLock = v));
 
                 items.add(ConfigItem.header("Item & Inventory Hotkeys", category));
+                items.add(ConfigItem.keybind("Transfer All Matching Hotkey", "Hold key while clicking an item (or press while hovering) to transfer all items of the same type into the chest/GUI.", category, () -> s.quickTransferAllKey != null ? s.quickTransferAllKey : "LEFT_ALT", v -> s.quickTransferAllKey = v));
                 items.add(ConfigItem.keybind("Trade Hotkey", "Quick trade with the player you're looking at or hovering over, or lookup on AH/BZ.", category, () -> s.tradeKey, v -> s.tradeKey = v));
                 items.add(ConfigItem.keybind("Trade Max Pet Hotkey", "Quick AH search for max level pets (100] or 200] for GDrag/Rose/Jade).", category, () -> s.tradeMaxKey, v -> s.tradeMaxKey = v));
                 items.add(ConfigItem.keybind("Recipe Viewer", "Open the SkyBlock recipe viewer screen for the hovered item.", category, () -> s.recipeKey, v -> s.recipeKey = v));

@@ -714,6 +714,7 @@ public class BomboConfig {
       public boolean sphinxMacro = false;
       public int autoAhSellDelayMs = 120;
       public String chatPeekKey = "y";
+      public String quickTransferAllKey = "LEFT_ALT";
       public String tradeKey = "n";
       public String tradeMaxKey = "";
       public String countItemKey = "";

@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.168] - 2026-10-28 (Beta)
+
+### Quick Transfer All Matching Items Keybind (`QuickTransferManager.java`, `CustomBindsProcessor.java`, `AbstractContainerScreenMixin.java`, `ItemHotkeysMixin.java`, `BomboConfig.java`)
+- **Fast 1-Click GUI Deposit & Withdraw:** Added a configurable custom keybind (`Transfer All Matching Hotkey`, default `LEFT_ALT` in `/b config`). Holding the keybind and clicking any item in a container GUI (or pressing the keybind while hovering over an item) immediately transfers all matching items of the same type between player inventory and the container (or vice-versa).
+- **Intelligent SkyBlock & Vanilla Item Matching:** Accurately compares SkyBlock internal IDs (ExtraAttributes) and vanilla item types, ensuring enchanted/custom variants (e.g. Enchanted Cobblestone vs plain Cobblestone) are never mixed up.
+- **Slot Lock & Blocked Slot Protection:** Honors slot protection and bypass keybind (`blockedSlotsBypassKey`), preventing locked tools, weapons, and armor from being accidentally transferred.
+- **Configurable Keybind & Conflict Detection:** Fully integrated into `/b config` (Hotkeys -> Item & Inventory Hotkeys) with real-time keybinding listener, conflict detection, and GLFW combo support.
+
 ## [26.2.28.167] - 2026-10-27 (Beta)
 
 ### Real Market Unit Pricing, Stuffed Chili Pepper Sync & Exact Drop Valuation (`InfernoMinionTracker.java`, `keys.html`)

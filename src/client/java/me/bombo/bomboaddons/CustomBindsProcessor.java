@@ -544,6 +544,26 @@ public class CustomBindsProcessor {
       return false;
    }
 
+   public static boolean isKeyOrComboDown(String keyBindStr) {
+      if (keyBindStr == null || keyBindStr.trim().isEmpty()) {
+         return false;
+      }
+      String clean = keyBindStr.trim();
+      if ("none".equalsIgnoreCase(clean) || "unbound".equalsIgnoreCase(clean) || "-1".equals(clean)) {
+         return false;
+      }
+      if (!clean.contains("+")) {
+         return isSingleKeyCurrentlyPressed(clean);
+      }
+      String[] parts = clean.split("\\+");
+      for (String part : parts) {
+         if (!isSingleKeyCurrentlyPressed(part)) {
+            return false;
+         }
+      }
+      return true;
+   }
+
    public static boolean matchesKey(String keyName, int keyCode) {
       if (keyName != null && !keyName.trim().isEmpty()) {
          String raw = keyName.trim();
