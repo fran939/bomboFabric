@@ -17,6 +17,13 @@ public class ClientLevelMixin {
       argsOnly = true
    )
    private BlockState modifyBlockState(BlockState state, BlockPos pos) {
+      if (pos != null && state != null && !me.bombo.bomboaddons.features.StorageChestWaypoints.isContainer(state)) {
+         try {
+            if (me.bombo.bomboaddons.features.StorageTracker.hasChestAt(pos)) {
+               me.bombo.bomboaddons.features.StorageTracker.removeChestAt(pos);
+            }
+         } catch (Throwable ignored) {}
+      }
       return FuckDiorite.checkAndReplace(pos, state);
    }
 

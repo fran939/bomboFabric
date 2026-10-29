@@ -1113,28 +1113,19 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
 
          BlockState state = world.getBlockState(pos);
-         if (state.getBlock() instanceof ChestBlock) {
-            ChestType type = (ChestType) state.getValue(BlockStateProperties.CHEST_TYPE);
-            if (type != ChestType.SINGLE) {
+         if (state.getBlock() instanceof ChestBlock || state.getBlock() instanceof net.minecraft.world.level.block.BarrelBlock || state.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock) {
+            ChestType type = state.hasProperty(BlockStateProperties.CHEST_TYPE) ? (ChestType) state.getValue(BlockStateProperties.CHEST_TYPE) : ChestType.SINGLE;
+            if (type != ChestType.SINGLE && state.getBlock() instanceof ChestBlock) {
                Direction connectedDir = ChestBlock.getConnectedDirection(state);
                BlockPos otherPos = pos.relative(connectedDir);
-               if (otherPos.compareTo(pos) < 0) {
-                  pos = otherPos;
-               }
+               StorageTracker.setPendingChestInteraction(pos, otherPos, type == ChestType.RIGHT);
             } else {
-               for (Direction d : Plane.HORIZONTAL) {
-                  BlockPos adj = pos.relative(d);
-                  if (world.getBlockState(adj).getBlock() instanceof ChestBlock) {
-                     if (adj.compareTo(pos) < 0) {
-                        pos = adj;
-                     }
-                     break;
-                  }
-               }
+               StorageTracker.setPendingChestInteraction(pos, null, false);
             }
+         } else {
+            StorageTracker.clearPendingChestInteraction();
          }
 
-         StorageTracker.lastClickedBlockPos = pos;
          return InteractionResult.PASS;
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register((ClientLifecycleEvents.ClientStopping) (client) -> {

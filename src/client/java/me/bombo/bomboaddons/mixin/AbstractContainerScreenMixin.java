@@ -68,6 +68,8 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       ClickLogic.onGuiOpen((AbstractContainerScreen)(Object)this);
    }
 
+
+
    @Inject(
       method = {"init"},
       at = {@At("TAIL")}
@@ -611,6 +613,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       at = {@At("HEAD")}
    )
    private void onContainerRemoved(CallbackInfo ci) {
+      me.bombo.bomboaddons.features.StorageTracker.onContainerClosed();
       if (!me.bombo.bomboaddons.features.StorageChestWaypoints.hasMatches()) {
          SlotHighlight.clearTargetSlot();
          me.bombo.bomboaddons.features.StorageChestWaypoints.clearActiveQuery();

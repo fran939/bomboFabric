@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -260,7 +261,7 @@ public class LF {
          sendMessage("&eSearch Results for '&f" + lowerQuery + "&e' in &b" + username + (ctx.coopMode ? " (Coop)" : "") + "&e:");
          searchJsonRecursive(searchTarget, pathPrefix, lowerQuery, searchLore, matchCount, ctx, false, false, 300, false);
          Minecraft mc = Minecraft.getInstance();
-         if (mc.player != null && removeColors(mc.player.getName().getString()).equalsIgnoreCase(username)) {
+         if (mc.player != null && (removeColors(mc.player.getName().getString()).equalsIgnoreCase(username) || ctx.coopMode)) {
             searchStorageTracker(lowerQuery, searchLore, matchCount);
          }
 
@@ -275,56 +276,64 @@ public class LF {
 
    private static void searchStorageTracker(String query, boolean searchLore, AtomicInteger matchCount) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.level != null) {
-         RegistryAccess registryAccess = mc.level.registryAccess();
-         RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registryAccess);
+      if (mc.player == null) return;
 
-         for(Map.Entry<String, Map<Integer, String>> containerEntry : StorageTracker.storageData.entrySet()) {
-            String containerName = (String)containerEntry.getKey();
+      int chestHitCount = 0;
+      for (Map.Entry<String, Map<Integer, String>> containerEntry : StorageTracker.storageData.entrySet()) {
+         String containerName = (String) containerEntry.getKey();
+         if (containerName == null) continue;
 
-            for(Map.Entry<Integer, String> slotEntry : ((Map<Integer, String>)(Map<?, ?>)containerEntry.getValue()).entrySet()) {
-               if (matchCount.get() >= 300) {
-                  return;
-               }
+         for (Map.Entry<Integer, String> slotEntry : ((Map<Integer, String>)(Map<?, ?>)containerEntry.getValue()).entrySet()) {
+            if (matchCount.get() >= 300) {
+               return;
+            }
 
-               String nbtStr = (String)slotEntry.getValue();
-               if (nbtStr != null && !nbtStr.isEmpty()) {
-                  try {
-                     CompoundTag tag = TagParser.parseCompoundFully(nbtStr);
-                     ItemStack stack = (ItemStack)ItemStack.CODEC.parse(ops, tag).result().orElse(ItemStack.EMPTY);
-                     if (!stack.isEmpty()) {
-                        String friendlyName = stack.getHoverName().getString();
-                        String cleanName = removeColors(friendlyName).toLowerCase();
-                        String queryNoDashes = query.replace("-", "").toLowerCase();
-                        String sbId = SkyblockUtils.getInternalIdRaw(stack);
-                        boolean matched = cleanName.contains(query);
-                        if (!matched && !sbId.isEmpty() && sbId.toLowerCase().contains(query)) {
-                           matched = true;
-                        }
-                        if (!matched && nbtStr.toLowerCase().replace("-", "").contains(queryNoDashes)) {
-                           matched = true;
-                        }
+            String nbtStr = (String) slotEntry.getValue();
+            if (nbtStr != null && !nbtStr.isEmpty()) {
+               try {
+                  me.bombo.bomboaddons.features.StorageChestWaypoints.DecodedItem decoded =
+                        me.bombo.bomboaddons.features.StorageChestWaypoints.getDecoded(nbtStr);
+                  String queryLower = query.toLowerCase(Locale.ROOT).trim();
+                  String queryNormalized = queryLower.replaceAll("[^a-z0-9]", "");
+                  if (queryNormalized.isEmpty()) continue;
 
-                        if (matched) {
-                           int count = stack.getCount();
-                           matchCount.incrementAndGet();
-                           String fullName = "§a" + friendlyName + (count > 1 ? " §7x" + count : "");
-                           String[] locCmd = StorageTracker.getDisplayLocAndCommand(containerName);
-                           String displayLoc = locCmd[0];
-                           String cmd = locCmd[1];
-                           MutableComponent var10000 = Component.literal(fullName + " §8- §e" + displayLoc);
-                           Style var10001 = Style.EMPTY.withHoverEvent(SBECommands.createHoverEvent("§a" + friendlyName + "\n§7Click to highlight in storage!"));
-                           String var10004 = String.valueOf(slotEntry.getKey());
-                           Component msg = var10000.withStyle(var10001.withClickEvent(new ClickEvent.RunCommand("/bombo_highlight_slot " + var10004 + (cmd.isEmpty() ? "" : " " + cmd))));
-                           mc.player.sendSystemMessage(msg);
-                        }
+                  boolean matched = searchLore
+                        ? decoded.loreText.contains(queryNormalized)
+                        : (decoded.nameAndId.contains(queryNormalized) || decoded.displayName.toLowerCase(Locale.ROOT).contains(queryLower));
+
+                  if (matched) {
+                     matchCount.incrementAndGet();
+                     long count = decoded.count;
+                     String friendlyName = decoded.displayName.isEmpty() ? decoded.nameAndId : decoded.displayName;
+                     String fullName = "§a" + friendlyName + (count > 1 ? " §7x" + count : "");
+                     String[] locCmd = StorageTracker.getDisplayLocAndCommand(containerName);
+                     String displayLoc = locCmd[0];
+                     String cmd = locCmd[1];
+
+                     MutableComponent line = Component.literal(fullName + " §8- §e" + displayLoc);
+                     Style style;
+                     boolean isIslandChest = containerName.startsWith("Island Chest @ ") || containerName.startsWith("Island Double Chest @ ");
+                     if (isIslandChest) {
+                        chestHitCount++;
+                        style = Style.EMPTY.withHoverEvent(SBECommands.createHoverEvent("§a" + friendlyName + "\n§7Click to highlight chest in world!"))
+                              .withClickEvent(new ClickEvent.RunCommand("/b storage " + friendlyName));
+                     } else {
+                        style = Style.EMPTY.withHoverEvent(SBECommands.createHoverEvent("§a" + friendlyName + "\n§7Click to open/highlight in storage!"))
+                              .withClickEvent(new ClickEvent.RunCommand("/bombo_highlight_slot " + slotEntry.getKey() + (cmd.isEmpty() ? "" : " " + cmd)));
                      }
-                  } catch (Exception var23) {
+                     mc.player.sendSystemMessage(line.withStyle(style));
                   }
-               }
+               } catch (Exception ignored) {}
             }
          }
+      }
 
+      if (chestHitCount > 0 && query != null && !query.trim().isEmpty()) {
+         int waypoints = me.bombo.bomboaddons.features.StorageChestWaypoints.search(query.trim());
+         if (waypoints > 0) {
+            mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §7Found §e" + waypoints + " §7island chest"
+                  + (waypoints == 1 ? "" : "s") + " holding §b" + query.trim() + " §8- §bwaypoints active in world!"));
+         }
       }
    }
 

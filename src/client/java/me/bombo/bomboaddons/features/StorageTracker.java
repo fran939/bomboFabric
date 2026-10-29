@@ -49,8 +49,85 @@ public class StorageTracker {
    public static long lastUpdateTime = 0L;
    private static long lastSave = 0L;
    public static BlockPos lastClickedBlockPos = null;
+   public static volatile BlockPos pendingChestPos = null;
+   public static volatile BlockPos pendingPartnerPos = null;
+   public static volatile boolean pendingIsRightHalf = false;
+   public static volatile long pendingInteractionTime = 0L;
    private static long lastSaveAttempt = 0L;
    private static long lastPlayerInvUpdate = 0L;
+
+   public static void setPendingChestInteraction(BlockPos pos, BlockPos partner, boolean isRightHalf) {
+      pendingChestPos = pos;
+      pendingPartnerPos = partner;
+      pendingIsRightHalf = isRightHalf;
+      pendingInteractionTime = System.currentTimeMillis();
+      lastClickedBlockPos = pos;
+   }
+
+   public static void clearPendingChestInteraction() {
+      pendingChestPos = null;
+      pendingPartnerPos = null;
+      pendingIsRightHalf = false;
+      pendingInteractionTime = 0L;
+      lastClickedBlockPos = null;
+   }
+
+   public static void onContainerClosed() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level != null) {
+         StorageChestWaypoints.onContainerChanged();
+      }
+      clearPendingChestInteraction();
+      save();
+   }
+
+   public static synchronized boolean hasChestAt(BlockPos pos) {
+      if (pos == null) return false;
+      String singleKey = "Island Chest @ " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ();
+      if (storageData.containsKey(singleKey)) return true;
+      for (String k : storageData.keySet()) {
+         if (k.startsWith("Island Double Chest @ ")) {
+            BlockPos[] pair = StorageChestWaypoints.parseDoublePosition(k);
+            if (pair != null && (pair[0].equals(pos) || pair[1].equals(pos))) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   public static synchronized boolean removeChestAt(BlockPos pos) {
+      if (pos == null) return false;
+      boolean removed = false;
+      String singleKey = "Island Chest @ " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ();
+      if (storageData.remove(singleKey) != null) {
+         slotHashCache.remove(singleKey);
+         uncompressedCache.remove(singleKey);
+         removed = true;
+      }
+      List<String> toRemove = new ArrayList<>();
+      for (String k : storageData.keySet()) {
+         if (k.startsWith("Island Double Chest @ ")) {
+            BlockPos[] pair = StorageChestWaypoints.parseDoublePosition(k);
+            if (pair != null && (pair[0].equals(pos) || pair[1].equals(pos))) {
+               toRemove.add(k);
+            }
+         }
+      }
+      for (String k : toRemove) {
+         storageData.remove(k);
+         slotHashCache.remove(k);
+         uncompressedCache.remove(k);
+         removed = true;
+      }
+      if (removed) {
+         save();
+         StorageChestWaypoints.removeMatchAt(pos);
+         me.bombo.bomboaddons.BlockHighlight.targetChestPosList.remove(pos);
+         me.bombo.bomboaddons.gui.GlobalStorageScreen.invalidateCache();
+      }
+      return removed;
+   }
 
    public static String getActiveProfileId() {
       if (SkyblockUtils.currentProfileId != null && !SkyblockUtils.currentProfileId.trim().isEmpty()) {
@@ -244,32 +321,23 @@ public class StorageTracker {
       }
       storageData.putAll(toAdd);
 
-      List<String> duplicates = new ArrayList<>();
+      // Clean single-chest keys that are already tracked inside a double chest
+      List<String> redundantSingles = new ArrayList<>();
       for (String key : storageData.keySet()) {
-         if (!duplicates.contains(key) && key.startsWith("Island Chest @ ")) {
-            try {
-               String[] parts = key.substring(15).split(",");
-               int x = Integer.parseInt(parts[0].trim());
-               int y = Integer.parseInt(parts[1].trim());
-               int z = Integer.parseInt(parts[2].trim());
-               BlockPos pos = new BlockPos(x, y, z);
-               for (Direction d : Plane.HORIZONTAL) {
-                  BlockPos adj = pos.relative(d);
-                  String adjKey = "Island Chest @ " + adj.getX() + ", " + adj.getY() + ", " + adj.getZ();
-                  if (storageData.containsKey(adjKey) && !duplicates.contains(adjKey)) {
-                     if (adj.compareTo(pos) < 0) {
-                        duplicates.add(key);
-                     } else {
-                        duplicates.add(adjKey);
-                     }
-                  }
-               }
-            } catch (Exception ignored) {}
+         if (key.startsWith("Island Double Chest @ ")) {
+            BlockPos[] pair = StorageChestWaypoints.parseDoublePosition(key);
+            if (pair != null && pair.length == 2) {
+               String s0 = "Island Chest @ " + pair[0].getX() + ", " + pair[0].getY() + ", " + pair[0].getZ();
+               String s1 = "Island Chest @ " + pair[1].getX() + ", " + pair[1].getY() + ", " + pair[1].getZ();
+               if (storageData.containsKey(s0)) redundantSingles.add(s0);
+               if (storageData.containsKey(s1)) redundantSingles.add(s1);
+            }
          }
       }
-
-      for (String key : duplicates) {
-         storageData.remove(key);
+      for (String k : redundantSingles) {
+         storageData.remove(k);
+         slotHashCache.remove(k);
+         uncompressedCache.remove(k);
       }
 
       for (Map<Integer, String> slotsMap : storageData.values()) {
@@ -377,61 +445,65 @@ public class StorageTracker {
          String title = screen.getTitle().getString().replaceAll("§.", "").trim();
          if (isTrackableContainer(title)) {
             boolean changed = false;
-            if (("Private Island".equals(SkyblockUtils.getLocation()) || "Garden".equals(SkyblockUtils.getLocation())) && lastClickedBlockPos != null && isChestContainerTitle(title)) {
-               boolean isDouble = false;
-               BlockPos partnerPos = null;
-               try {
-                  if (mc.level != null) {
-                     net.minecraft.world.level.block.state.BlockState bs = mc.level.getBlockState(lastClickedBlockPos);
-                     if (bs.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
-                        net.minecraft.world.level.block.state.properties.ChestType cType = bs.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE)
-                           ? bs.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE)
-                           : net.minecraft.world.level.block.state.properties.ChestType.SINGLE;
-                        if (cType != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
-                           Direction connectedDir = net.minecraft.world.level.block.ChestBlock.getConnectedDirection(bs);
-                           partnerPos = lastClickedBlockPos.relative(connectedDir);
-                           isDouble = true;
+            if (("Private Island".equals(SkyblockUtils.getLocation()) || "Garden".equals(SkyblockUtils.getLocation())) && isChestContainerTitle(title)) {
+               BlockPos targetPos = pendingChestPos != null ? pendingChestPos : lastClickedBlockPos;
+               if (targetPos != null) {
+                  boolean isDouble = false;
+                  BlockPos partnerPos = pendingPartnerPos;
+                  try {
+                     if (mc.level != null && mc.level.isLoaded(targetPos)) {
+                        net.minecraft.world.level.block.state.BlockState bs = mc.level.getBlockState(targetPos);
+                        if (bs.getBlock() instanceof net.minecraft.world.level.block.ChestBlock) {
+                           net.minecraft.world.level.block.state.properties.ChestType cType = bs.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE)
+                              ? bs.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.CHEST_TYPE)
+                              : net.minecraft.world.level.block.state.properties.ChestType.SINGLE;
+                           if (cType != net.minecraft.world.level.block.state.properties.ChestType.SINGLE) {
+                              Direction connectedDir = net.minecraft.world.level.block.ChestBlock.getConnectedDirection(bs);
+                              partnerPos = targetPos.relative(connectedDir);
+                              isDouble = true;
+                           }
                         }
+                     } else if (partnerPos != null) {
+                        isDouble = true;
                      }
-                  }
-               } catch (Throwable ignored) {}
+                  } catch (Throwable ignored) {}
 
-               if (isDouble && partnerPos != null) {
-                  int minX = Math.min(lastClickedBlockPos.getX(), partnerPos.getX());
-                  int maxX = Math.max(lastClickedBlockPos.getX(), partnerPos.getX());
-                  int minY = Math.min(lastClickedBlockPos.getY(), partnerPos.getY());
-                  int maxY = Math.max(lastClickedBlockPos.getY(), partnerPos.getY());
-                  int minZ = Math.min(lastClickedBlockPos.getZ(), partnerPos.getZ());
-                  int maxZ = Math.max(lastClickedBlockPos.getZ(), partnerPos.getZ());
-                  title = "Island Double Chest @ " + minX + ", " + minY + ", " + minZ + " & " + maxX + ", " + maxY + ", " + maxZ;
+                  if (isDouble && partnerPos != null) {
+                     int minX = Math.min(targetPos.getX(), partnerPos.getX());
+                     int maxX = Math.max(targetPos.getX(), partnerPos.getX());
+                     int minY = Math.min(targetPos.getY(), partnerPos.getY());
+                     int maxY = Math.max(targetPos.getY(), partnerPos.getY());
+                     int minZ = Math.min(targetPos.getZ(), partnerPos.getZ());
+                     int maxZ = Math.max(targetPos.getZ(), partnerPos.getZ());
+                     title = "Island Double Chest @ " + minX + ", " + minY + ", " + minZ + " & " + maxX + ", " + maxY + ", " + maxZ;
 
-                  List<String> toClean = new ArrayList<>();
-                  for (String k : storageData.keySet()) {
-                     if ((k.startsWith("Island Chest @ ") || k.startsWith("Island Double Chest @ ")) && !k.equals(title)) {
-                        if (k.contains(String.valueOf(lastClickedBlockPos.getX())) || k.contains(String.valueOf(partnerPos.getX()))) {
-                           if (k.contains(String.valueOf(lastClickedBlockPos.getZ())) || k.contains(String.valueOf(partnerPos.getZ()))) {
-                              toClean.add(k);
+                     String s0 = "Island Chest @ " + minX + ", " + minY + ", " + minZ;
+                     String s1 = "Island Chest @ " + maxX + ", " + maxY + ", " + maxZ;
+                     if (storageData.remove(s0) != null) {
+                        slotHashCache.remove(s0);
+                        uncompressedCache.remove(s0);
+                        changed = true;
+                     }
+                     if (storageData.remove(s1) != null) {
+                        slotHashCache.remove(s1);
+                        uncompressedCache.remove(s1);
+                        changed = true;
+                     }
+                  } else {
+                     title = "Island Chest @ " + targetPos.getX() + ", " + targetPos.getY() + ", " + targetPos.getZ();
+                     List<String> oldDoubleKeys = new ArrayList<>();
+                     for (String k : storageData.keySet()) {
+                        if (k.startsWith("Island Double Chest @ ")) {
+                           BlockPos[] pair = StorageChestWaypoints.parseDoublePosition(k);
+                           if (pair != null && (pair[0].equals(targetPos) || pair[1].equals(targetPos))) {
+                              oldDoubleKeys.add(k);
                            }
                         }
                      }
-                  }
-                  for (String oldKey : toClean) {
-                     storageData.remove(oldKey);
-                     slotHashCache.remove(oldKey);
-                     uncompressedCache.remove(oldKey);
-                     changed = true;
-                  }
-               } else {
-                  int cx = lastClickedBlockPos.getX();
-                  title = "Island Chest @ " + cx + ", " + lastClickedBlockPos.getY() + ", " + lastClickedBlockPos.getZ();
-
-                  for (Direction d : Plane.HORIZONTAL) {
-                     BlockPos adj = lastClickedBlockPos.relative(d);
-                     String oldKey = "Island Chest @ " + adj.getX() + ", " + adj.getY() + ", " + adj.getZ();
-                     if (storageData.containsKey(oldKey)) {
-                        storageData.remove(oldKey);
-                        slotHashCache.remove(oldKey);
-                        uncompressedCache.remove(oldKey);
+                     for (String odk : oldDoubleKeys) {
+                        storageData.remove(odk);
+                        slotHashCache.remove(odk);
+                        uncompressedCache.remove(odk);
                         changed = true;
                      }
                   }
@@ -549,6 +621,7 @@ public class StorageTracker {
    public static boolean isChestContainerTitle(String title) {
       if (title == null) return false;
       String t = title.toLowerCase(Locale.ROOT).trim();
+      if (t.contains("minion")) return false;
       if (t.startsWith("chest") || t.startsWith("large chest") || t.startsWith("small chest")
             || t.startsWith("cofre") || t.startsWith("cofre grande") || t.startsWith("cofre pequeño")
             || t.startsWith("island chest")) {

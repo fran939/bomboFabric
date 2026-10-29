@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.173",
+    "date": "2026-10-29",
+    "changes": [
+      "+ Chest tracking fix: stopped adjacent single chests from overriding each other's coordinates",
+      "+ Removed destructive adjacent chest deletion and unsafe substring coordinate matching",
+      "+ Automatic block-break storage purge: breaking/clearing a chest in world instantly removes it from storage",
+      "+ Container close lifecycle: properly flushes and resets chest interaction state when closing container screens",
+      "+ Excluded minion chests from being tracked as island storage chests in storage tracker",
+      "+ /lbc chest search: /lbc searches island chests, decodes B64 NBT, and activates 3D in-world waypoints"
+    ]
+  },
+  {
     "version": "26.2.28.172",
     "date": "2026-10-29",
     "changes": [

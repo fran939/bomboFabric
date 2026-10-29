@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.173] - 2026-10-29 (Beta)
+
+### Chest Tracking Disambiguation & Overwrite Fix, SkyOcean-Style Geometry, /lbc Chest Search & Auto Block-Break Purge (`StorageTracker.java`, `BomboaddonsClient.java`, `AbstractContainerScreenMixin.java`, `ClientLevelMixin.java`, `LF.java`)
+- **Chest Tracking Disambiguation & Adjacent Chest Bug Fix:** Resolved the critical bug where opening adjacent single chests altered coordinates and wiped neighboring chests from `storageData`. Removed the broken horizontal loop that forced single chest clicks onto neighboring coordinates. Single chests now strictly retain their exact clicked block position, and double chests accurately resolve both halves based on modern BlockStateProperties.
+- **Removed Destructive Adjacent Chest Deletion:** Eliminated the legacy routine in `cleanStorageData()` and `onGuiTick()` that deleted adjacent single chests and used dangerous coordinate substring matching (`k.contains(String.valueOf(x))`). Each chest now cleanly tracks its own items without corrupting or deleting neighbors.
+- **Automatic Block-Break Storage Purge:** Injected `ClientLevel.setBlock()` to automatically detect when a tracked chest is mined, broken, or replaced by air/non-container blocks; immediately deletes the chest from `storageData`, clears waypoints, and saves.
+- **Container Screen Close Lifecycle:** Hooked `AbstractContainerScreen.removed()` to immediately trigger container close processing, reset pending chest coordinates, update active waypoints via `StorageChestWaypoints.onContainerChanged()`, and save without stale position leakage.
+- **Excluded Minion Chests:** Filtered out `"Minion Chest"` containers from being tracked as island storage chests in `StorageTracker.isChestContainerTitle()`.
+- **Search Island Chests in `/lbc`:** Enhanced `/lbc <query>` to search island chest storage alongside API auctions and co-op profiles. Decodes compressed Base64 NBT strings (`B64:`), displays matching island chest entries in chat with clickable `[Click to highlight chest in world!]` actions, and automatically activates in-world 3D waypoints and cyan outlines.
+
 ## [26.2.28.172] - 2026-10-29 (Beta)
 
 ### Unified storage.json, Lore Search Syntax, Magmafish vs Lava Fix, GUI Click Waypoints & Sacks 0-Count Filtering (`StorageTracker.java`, `StorageChestWaypoints.java`, `GlobalStorageScreen.java`, `BomboaddonsClient.java`, `AbstractContainerScreenMixin.java`, `SacksBrowserScreen.java`, `SlotHighlight.java`)
