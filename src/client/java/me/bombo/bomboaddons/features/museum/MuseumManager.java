@@ -432,4 +432,128 @@ public class MuseumManager {
     public static Set<String> getDonatedIds() {
         return Collections.unmodifiableSet(DONATED_IDS);
     }
+
+    public static class ArmorSetStatus {
+        public final String setName;
+        public final int totalPieces;
+        public final int ownedPieces;
+        public final List<String> missingPieces;
+        public final boolean isFullSet;
+        public final boolean isDonated;
+
+        public ArmorSetStatus(String setName, int totalPieces, int ownedPieces, List<String> missingPieces, boolean isFullSet, boolean isDonated) {
+            this.setName = setName;
+            this.totalPieces = totalPieces;
+            this.ownedPieces = ownedPieces;
+            this.missingPieces = missingPieces != null ? missingPieces : Collections.emptyList();
+            this.isFullSet = isFullSet;
+            this.isDonated = isDonated;
+        }
+    }
+
+    public static boolean isArmorPiece(String id) {
+        if (id == null) return false;
+        String u = id.toUpperCase(Locale.ROOT);
+        if (u.endsWith("_BELT") || u.endsWith("_NECKLACE") || u.endsWith("_GLOVES") || u.endsWith("_CLOAK") || u.endsWith("_BRACELET")) {
+            return false;
+        }
+        return u.endsWith("_HELMET") || u.endsWith("_CHESTPLATE") || u.endsWith("_LEGGINGS") || u.endsWith("_BOOTS")
+                || u.contains("HELMET") || u.contains("CHESTPLATE") || u.contains("LEGGINGS") || u.contains("BOOTS")
+                || u.contains("HAT") || u.contains("CAP") || u.contains("MASK") || u.contains("CROWN")
+                || u.contains("FEDORA") || u.contains("HOOD") || u.contains("JACKET") || u.contains("TUNIC")
+                || u.contains("ROBE") || u.contains("VEST") || u.contains("PANTS") || u.contains("OXFORDS");
+    }
+
+    private static int getArmorSlotOrder(String id) {
+        String u = id.toUpperCase(Locale.ROOT);
+        if (u.contains("HELMET") || u.contains("HAT") || u.contains("CAP") || u.contains("MASK") || u.contains("CROWN") || u.contains("FEDORA") || u.contains("HOOD")) return 0;
+        if (u.contains("CHESTPLATE") || u.contains("JACKET") || u.contains("TUNIC") || u.contains("ROBE") || u.contains("VEST")) return 1;
+        if (u.contains("LEGGINGS") || u.contains("PANTS")) return 2;
+        if (u.contains("BOOTS") || u.contains("OXFORDS") || u.contains("SHOES")) return 3;
+        return 4;
+    }
+
+    private static String getPieceShortName(MuseumEntry piece) {
+        String id = piece.id.toUpperCase(Locale.ROOT);
+        if (id.contains("HELMET") || id.contains("HAT") || id.contains("CAP") || id.contains("MASK") || id.contains("CROWN") || id.contains("FEDORA") || id.contains("HOOD")) return "Helmet";
+        if (id.contains("CHESTPLATE") || id.contains("JACKET") || id.contains("TUNIC") || id.contains("ROBE") || id.contains("VEST")) return "Chestplate";
+        if (id.contains("LEGGINGS") || id.contains("PANTS")) return "Leggings";
+        if (id.contains("BOOTS") || id.contains("OXFORDS") || id.contains("SHOES")) return "Boots";
+        if (piece.name != null && !piece.name.isEmpty()) {
+            String[] parts = piece.name.split("\\s+");
+            return parts[parts.length - 1];
+        }
+        return piece.id;
+    }
+
+    private static String formatSetName(String armorSet) {
+        if (armorSet == null || armorSet.isEmpty()) return "";
+        String[] words = armorSet.replace("_", " ").toLowerCase(Locale.ROOT).split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String w : words) {
+            if (w.isEmpty()) continue;
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Resolves armor set status for a museum armor item, checking whether all pieces of the set
+     * are owned across island chest storage and active inventory, and returning missing pieces.
+     */
+    public static ArmorSetStatus getArmorSetStatus(String skyblockId) {
+        if (skyblockId == null || skyblockId.isEmpty()) return null;
+        String id = skyblockId.toUpperCase(Locale.ROOT);
+        MuseumEntry entry = CATALOG.get(id);
+        if (entry == null || entry.armorSet == null || entry.armorSet.isEmpty()) return null;
+        if (!isArmorPiece(id)) return null;
+
+        List<MuseumEntry> setPieces = new ArrayList<>();
+        for (MuseumEntry e : CATALOG.values()) {
+            if (entry.armorSet.equalsIgnoreCase(e.armorSet)) {
+                if (isArmorPiece(e.id)) {
+                    setPieces.add(e);
+                }
+            }
+        }
+        if (setPieces.size() <= 1) return null;
+
+        setPieces.sort(Comparator.comparingInt(e -> getArmorSlotOrder(e.id)));
+
+        Set<String> trackedIds = me.bombo.bomboaddons.features.StorageTracker.getTrackedSkyblockIds();
+        boolean setDonated = isDonated(entry.armorSet) || isDonated(id);
+
+        List<String> missing = new ArrayList<>();
+        int owned = 0;
+
+        for (MuseumEntry piece : setPieces) {
+            boolean has = trackedIds.contains(piece.id) || isDonated(piece.id);
+            if (!has && piece.countsAs != null) {
+                for (String c : piece.countsAs) {
+                    if (trackedIds.contains(c) || isDonated(c)) {
+                        has = true;
+                        break;
+                    }
+                }
+            }
+            if (!has && piece.upgradesTo != null) {
+                for (String up : piece.upgradesTo) {
+                    if (trackedIds.contains(up) || isDonated(up)) {
+                        has = true;
+                        break;
+                    }
+                }
+            }
+            if (has) {
+                owned++;
+            } else {
+                missing.add(getPieceShortName(piece));
+            }
+        }
+
+        boolean isFull = (owned >= setPieces.size());
+        String formattedName = formatSetName(entry.armorSet);
+        return new ArmorSetStatus(formattedName, setPieces.size(), owned, missing, isFull, setDonated);
+    }
 }

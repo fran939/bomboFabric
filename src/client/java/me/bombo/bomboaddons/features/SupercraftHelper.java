@@ -360,6 +360,20 @@ public class SupercraftHelper {
                      text += " §b(+" + xp + " XP)";
                   }
                   additions.add(new LoreAddition("museumDonatable", Component.literal(text), s.getLorePos("museumDonatable", "BOTTOM"), s.getLoreOrder("museumDonatable", 7)));
+
+                  // Armor Set Storage Check
+                  me.bombo.bomboaddons.features.museum.MuseumManager.ArmorSetStatus armorStatus =
+                        me.bombo.bomboaddons.features.museum.MuseumManager.getArmorSetStatus(sbId);
+                  if (armorStatus != null && armorStatus.totalPieces > 1) {
+                     String armorLine;
+                     if (armorStatus.isFullSet) {
+                        armorLine = "§7Armor Set: §e" + armorStatus.setName + " §a(Full set in storage: " + armorStatus.totalPieces + "/" + armorStatus.totalPieces + ")";
+                     } else {
+                        String missingStr = String.join(", ", armorStatus.missingPieces);
+                        armorLine = "§7Armor Set: §e" + armorStatus.setName + " §7(Missing " + armorStatus.missingPieces.size() + ": §c" + missingStr + "§7)";
+                     }
+                     additions.add(new LoreAddition("armorSetStatus", Component.literal(armorLine), s.getLorePos("museumDonatable", "BOTTOM"), s.getLoreOrder("museumDonatable", 7) + 1));
+                  }
                }
             } else if (s.showMuseumDonated && ea != null) {
                boolean donated = ea.getBoolean("donated_museum").orElse(false)

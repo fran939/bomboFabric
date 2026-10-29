@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.176] - 2026-10-29 (Beta)
+
+### Garden Keybind Crop Breaking in Inventory, Armor Set Missing Pieces Storage Check, Scalar API Reference & Tester, and Player Profile 404 Fix (`GardenMovement.java`, `StorageTracker.java`, `MuseumManager.java`, `SupercraftHelper.java`, `index.js`, `docs.js`, `museum_sacks_service.js`, `openapi.json`)
+- **Garden Keybind Crop Breaking in Inventory (`GardenMovement.java`):** Fixed the engine issue where opening the player inventory or allowed client screen caused crop breaking to cease. Actively continues breaking blocks (`startDestroyBlock` & `continueDestroyBlock`) and swinging the arm using raycast hits even while the inventory GUI is open.
+- **Museum Armor Sets Missing Pieces Check (`MuseumManager.java`, `StorageTracker.java`, `SupercraftHelper.java`):** When viewing any armor piece (e.g. `Adaptive Helmet`), dynamically inspects `/b storage` (island chests/containers) and the player's inventory to see which parts of that set are owned. Displays `§7Armor Set: §e<Set Name> §7(Missing X: §c<missing pieces>§7)` or `§a(Full set in storage: 4/4)`.
+- **Interactive Scalar API Reference & Tester (`docs.js`, `index.js`):** Restored the full, interactive Scalar documentation and "Try it out" endpoint tester at `https://api.bombo.dpdns.org/` and `https://api.bombo.dpdns.org/docs`. Machine requests (`application/json`) continue receiving the compact JSON index.
+- **Remote Museum & Sacks Profile 404 Fix (`museum_sacks_service.js`):** Fixed player profile lookup for usernames (e.g. `bomboclas`) on the backend by routing UUID lookups through cached PlayerDB resolvers and sending authenticated Hypixel `API-Key` headers.
+- **Scalar OpenAPI Specification Update (`openapi.json`):** Documented Museum Catalog (`/mod/museum`), Player Museum (`/mod/museum/{user}`), Sacks Directory (`/mod/sacks`), and Player Sacks (`/mod/sacks/{user}`) directly in the interactive documentation tester.
+
 ## [26.2.28.175] - 2026-10-29 (Beta)
 
 ### Player Museum & Sacks Profile Web UI & API, In-Game Donation Interception, Sack of Sacks Sync, /b clearchat, and Storage Waypoint Fixes (`MuseumManager.java`, `SacksManager.java`, `museum_sacks_service.js`, `server.js`, `index.js`, `BomboConfig.java`, `ConfigCustomWidgets.java`, `ChatMixin.java`, `AbstractContainerScreenMixin.java`, `StorageChestWaypoints.java`, `SlotHighlight.java`, `BomboaddonsClient.java`, `SkyblockUtils.java`)

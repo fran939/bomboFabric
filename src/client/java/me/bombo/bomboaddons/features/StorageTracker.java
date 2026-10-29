@@ -16,6 +16,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -840,5 +842,41 @@ public class StorageTracker {
       }
 
       return new int[]{scanned, staleKeys.size(), storageData.size()};
+   }
+
+   private static Set<String> cachedTrackedIds = null;
+   private static long lastTrackedIdsTime = 0L;
+
+   public static Set<String> getTrackedSkyblockIds() {
+      long now = System.currentTimeMillis();
+      if (cachedTrackedIds != null && now - lastTrackedIdsTime < 800L) {
+         return cachedTrackedIds;
+      }
+      Set<String> set = new HashSet<>();
+      try {
+         for (Map<Integer, String> container : storageData.values()) {
+            if (container == null) continue;
+            for (String nbt : container.values()) {
+               if (nbt == null || nbt.isEmpty()) continue;
+               StorageChestWaypoints.DecodedItem dec = StorageChestWaypoints.getDecoded(nbt);
+               if (dec != null && dec.skyblockId != null && !dec.skyblockId.isEmpty()) {
+                  set.add(dec.skyblockId.toUpperCase(Locale.ROOT));
+               }
+            }
+         }
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.player != null && mc.player.getInventory() != null) {
+            for (int i = 0; i < mc.player.getInventory().getContainerSize(); i++) {
+               ItemStack st = mc.player.getInventory().getItem(i);
+               if (st != null && !st.isEmpty()) {
+                  String sbId = SkyblockUtils.getStrictSkyblockId(st);
+                  if (sbId != null && !sbId.isEmpty()) set.add(sbId.toUpperCase(Locale.ROOT));
+               }
+            }
+         }
+      } catch (Throwable ignored) {}
+      cachedTrackedIds = set;
+      lastTrackedIdsTime = now;
+      return set;
    }
 }

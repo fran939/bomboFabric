@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.176",
+    "date": "2026-10-29",
+    "changes": [
+      "+ Garden Keybind Crop Breaking in Inventory: fixed crop breaking stopping when inventory or allowed client screen is open",
+      "+ Museum Armor Sets Missing Pieces Check: dynamically inspects /b storage (island chests/containers) and inventory for armor set parts and displays missing pieces (e.g. Missing 2: Chestplate, Boots or Full set in storage: 4/4)",
+      "+ Interactive Scalar API Reference & Tester: restored full interactive API reference on https://api.bombo.dpdns.org/ with live tester for every endpoint",
+      "+ Remote Museum & Sacks Profile Fix: resolved profile lookup for player profiles (bomboclas) with PlayerDB caching & Hypixel API-Key header",
+      "+ Scalar OpenAPI Update: added Museum and Sacks endpoints to interactive API tester"
+    ]
+  },
+  {
     "version": "26.2.28.175",
     "date": "2026-10-29",
     "changes": [
