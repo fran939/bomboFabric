@@ -1,5 +1,17 @@
 # BomboAddons Changelog
  
+## [26.2.28.174] - 2026-10-29 (Beta)
+
+### Complete Museum & Sacks API, Upgrade Chain Mapping, Donatable & Sacks Lore Additions, and /lbc & Storage Search Integration (`MuseumManager.java`, `SacksManager.java`, `museum_sacks_service.js`, `SupercraftHelper.java`, `SlotHighlight.java`, `StorageChestWaypoints.java`, `GlobalStorageScreen.java`, `BomboaddonsClient.java`, `BomboConfig.java`)
+- **Full SkyBlock Museum Database (1,419 items) & Online Catalog (`/mod/museum` & `api.bombo.dpdns.org/mod/museum`):** Built an authoritative mapping of all 1,419 Museum items from the official SkyBlock Wiki and Hypixel API. Deployed both an interactive, dark-mode web catalog with real-time category filtering and live search, and a high-performance JSON API.
+- **Transitive Museum Upgrade Chains:** Resolved full multi-tier upgrade chains (e.g. `Frosty the Snow Howitzer` -> `Frosty the Snow Blaster` -> `Frosty the Snow Cannon`, or `Black Belt` -> `Brown` -> `Blue` -> `Green` -> `Yellow` -> `White Belt`). Donating an upgraded item automatically satisfies lower-tier donation requirements across the mod.
+- **Museum Lore Additions & Donated Detection (`MuseumManager.java`, `SupercraftHelper.java`):** Added dynamic museum status directly to item tooltips. If an item is donatable, displays `§dDonatable to Museum` with XP reward (`§b(+X XP)`) and upgrade attribution (`counts as donating <base item>`). If already donated, displays `§dDonated to Museum`, with an option in `/b config` (`museumHideAlreadyDonated`) to hide the line completely if already donated.
+- **Real-Time Museum Sync:** Automatically records donated items from the Hypixel API profile data and when browsing in-game Museum menus.
+- **Complete Sacks Directory (39 Sacks, 622 Items) & Online Directory (`/mod/sacks` & `api.bombo.dpdns.org/mod/sacks`):** Mapped every SkyBlock sack and all 622 compatible items. Deployed both a rich web UI with item search and a REST JSON API on `bomboapi`.
+- **Sacks Fit Lore Additions (`SacksManager.java`, `SupercraftHelper.java`):** Added `§6Fits in Sacks: §e<Sack Name>` to item tooltips for all compatible items, with an option in `/b config` (`sacksHideIfDontOwnSack`) to hide the line if the player does not currently own that sack.
+- **Museum & Sacks Search in `/b storage` & `/lbc` (`StorageChestWaypoints.java`, `LF.java`, `GlobalStorageScreen.java`, `SlotHighlight.java`):** Enabled searching island chests and storage for museum and sack items directly from chat and storage GUIs. Typing `/b storage museum`, `/b storage donatable`, `/b storage sacks`, `/b storage l:museum`, or `/lbc museum` finds and outlines all island chests holding donatable or sack-compatible items, with cyan item slot highlights inside containers.
+- **`/b museum` Subcommand:** Added `/b museum` command to display tracked donation count and quick-launch the online interactive catalog.
+
 ## [26.2.28.173] - 2026-10-29 (Beta)
 
 ### Chest Tracking Disambiguation & Overwrite Fix, SkyOcean-Style Geometry, /lbc Chest Search & Auto Block-Break Purge (`StorageTracker.java`, `BomboaddonsClient.java`, `AbstractContainerScreenMixin.java`, `ClientLevelMixin.java`, `LF.java`)

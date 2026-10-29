@@ -1,5 +1,19 @@
 [
   {
+    "version": "26.2.28.174",
+    "date": "2026-10-29",
+    "changes": [
+      "+ Complete SkyBlock Museum database: 1,419 items mapped with categories, XP, and transitive upgrade chains",
+      "+ Museum web catalog & JSON API: live at https://bombo.dpdns.org/mod/museum and api.bombo.dpdns.org/mod/museum",
+      "+ Museum lore additions: displays Donatable to Museum with XP and upgrade counts-as attribution on item tooltips",
+      "+ Museum donated detection: tracks donated items from Hypixel API & in-game Museum menus, with option to hide already donated",
+      "+ Complete Sacks directory: all 39 sacks and 622 compatible items live at https://bombo.dpdns.org/mod/sacks and JSON API",
+      "+ Sacks lore additions: displays Fits in Sacks: <Sack Name> on tooltips, with option to hide if player doesn't own sack",
+      "+ /b storage & /lbc search integration: search for 'museum', 'donatable', or 'sacks' to highlight chests and GUI items",
+      "+ /b museum subcommand: quick-display donation progress and launch online catalog in browser"
+    ]
+  },
+  {
     "version": "26.2.28.173",
     "date": "2026-10-29",
     "changes": [

@@ -390,12 +390,17 @@ public class ProfileFetcher {
          JsonObject itemsObj = memberMuseum.getAsJsonObject("items");
 
          for(Map.Entry<String, JsonElement> entry : itemsObj.entrySet()) {
+            me.bombo.bomboaddons.features.museum.MuseumManager.recordDonated(entry.getKey());
             JsonObject itemData = ((JsonElement)entry.getValue()).getAsJsonObject();
             if (itemData.has("items")) {
                JsonObject innerItems = itemData.getAsJsonObject("items");
                if (innerItems.has("data")) {
                   for(ItemStack stack : LF.decodeToItems(innerItems.get("data").getAsString())) {
                      if (stack != null && !stack.isEmpty()) {
+                        String sId = me.bombo.bomboaddons.SkyblockUtils.getStrictSkyblockId(stack);
+                        if (sId != null) {
+                           me.bombo.bomboaddons.features.museum.MuseumManager.recordDonated(sId);
+                        }
                         String itemName = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().toLowerCase();
                         if (!itemName.contains("helmet") && !itemName.contains("chestplate") && !itemName.contains("leggings") && !itemName.contains("boots") && !itemName.contains("armor")) {
                            if (!itemName.contains("sword") && !itemName.contains("bow") && !itemName.contains("axe") && !itemName.contains("weapon")) {
@@ -420,6 +425,10 @@ public class ProfileFetcher {
                if (innerItems.has("data")) {
                   for(ItemStack stack : LF.decodeToItems(innerItems.get("data").getAsString())) {
                      if (stack != null && !stack.isEmpty()) {
+                        String sId = me.bombo.bomboaddons.SkyblockUtils.getStrictSkyblockId(stack);
+                        if (sId != null) {
+                           me.bombo.bomboaddons.features.museum.MuseumManager.recordDonated(sId);
+                        }
                         merged.museumSpecial.add(stack);
                      }
                   }

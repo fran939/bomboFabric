@@ -1067,6 +1067,10 @@ public class ConfigCustomWidgets {
                 new LoreItemDef("itemCreationDate", "Item Creation Date", () -> s.showItemCreationDate, v -> s.showItemCreationDate = v),
                 new LoreItemDef("leatherColor", "Leather Armor Hex Color", () -> s.showLeatherColor, v -> s.showLeatherColor = v),
                 new LoreItemDef("museumDonated", "Museum Donated Status", () -> s.showMuseumDonated, v -> s.showMuseumDonated = v),
+                new LoreItemDef("museumDonatable", "Museum Donatable Status", () -> s.showMuseumDonatable, v -> s.showMuseumDonatable = v),
+                new LoreItemDef("museumHideDonated", "Museum Hide If Already Donated", () -> s.museumHideAlreadyDonated, v -> s.museumHideAlreadyDonated = v),
+                new LoreItemDef("sacksFit", "Fits in Sacks Status", () -> s.showSacksFit, v -> s.showSacksFit = v),
+                new LoreItemDef("sacksHideNoSack", "Sacks Hide If Don't Own Sack", () -> s.sacksHideIfDontOwnSack, v -> s.sacksHideIfDontOwnSack = v),
                 new LoreItemDef("skyblockId", "Skyblock Item ID", () -> s.showSkyblockId, v -> s.showSkyblockId = v),
                 new LoreItemDef("lowestBin", "Lowest BIN / BZ Price", () -> s.lowestBin, v -> s.lowestBin = v),
                 new LoreItemDef("craftCost", "Raw Craft Cost", () -> s.craftCostTooltip, v -> s.craftCostTooltip = v),
@@ -1077,7 +1081,7 @@ public class ConfigCustomWidgets {
     }
 
     public static int getLoreAdditionsCardHeight() {
-        return 13 * 26 + 45;
+        return getLoreItemDefs().size() * 26 + 45;
     }
 
     public static void renderLoreAdditionsCard(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {

@@ -339,24 +339,52 @@ public class SupercraftHelper {
             }
          }
 
-         // 7. Museum Donated Status
-         if (s.showMuseumDonated && ea != null) {
-            boolean donated = ea.getBoolean("donated_museum").orElse(false)
-               || (ea.getByte("donated_museum").orElse((byte)0) == 1)
-               || (ea.getInt("donated_museum").orElse(0) == 1)
-               || (tag != null && tag.getBoolean("donated_museum").orElse(false))
-               || (tag != null && tag.getByte("donated_museum").orElse((byte)0) == 1);
-            if (donated) {
-               additions.add(new LoreAddition("museumDonated", Component.literal("§dDonated to Museum"), s.getLorePos("museumDonated", "BOTTOM"), s.getLoreOrder("museumDonated", 7)));
+         // 7. Museum Status (Donated or Donatable)
+         String sbId = SkyblockUtils.getStrictSkyblockId(stack);
+         if (sbId != null && !sbId.isEmpty()) {
+            boolean isMuseumItem = me.bombo.bomboaddons.features.museum.MuseumManager.isMuseumItem(sbId);
+            if (isMuseumItem) {
+               boolean isDonated = me.bombo.bomboaddons.features.museum.MuseumManager.isDonated(sbId, stack);
+               if (isDonated) {
+                  if (s.showMuseumDonated && !s.museumHideAlreadyDonated) {
+                     additions.add(new LoreAddition("museumDonated", Component.literal("§dDonated to Museum"), s.getLorePos("museumDonated", "BOTTOM"), s.getLoreOrder("museumDonated", 7)));
+                  }
+               } else if (s.showMuseumDonatable) {
+                  // Not yet donated: Donatable!
+                  String countsAs = me.bombo.bomboaddons.features.museum.MuseumManager.getCountsAsDescription(sbId);
+                  String text = countsAs != null && !countsAs.isEmpty()
+                        ? ("§dDonatable to Museum §7(counts as §b" + countsAs + "§7)")
+                        : "§dDonatable to Museum";
+                  int xp = me.bombo.bomboaddons.features.museum.MuseumManager.getRewardXp(sbId);
+                  if (xp > 0) {
+                     text += " §b(+" + xp + " XP)";
+                  }
+                  additions.add(new LoreAddition("museumDonatable", Component.literal(text), s.getLorePos("museumDonatable", "BOTTOM"), s.getLoreOrder("museumDonatable", 7)));
+               }
+            } else if (s.showMuseumDonated && ea != null) {
+               boolean donated = ea.getBoolean("donated_museum").orElse(false)
+                  || (ea.getByte("donated_museum").orElse((byte)0) == 1)
+                  || (ea.getInt("donated_museum").orElse(0) == 1);
+               if (donated && !s.museumHideAlreadyDonated) {
+                  additions.add(new LoreAddition("museumDonated", Component.literal("§dDonated to Museum"), s.getLorePos("museumDonated", "BOTTOM"), s.getLoreOrder("museumDonated", 7)));
+               }
+            }
+
+            // 7b. Fits in Sacks Status
+            if (s.showSacksFit) {
+               if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
+                  boolean playerOwns = me.bombo.bomboaddons.features.sacks.SacksManager.playerHasSack(sbId);
+                  if (!s.sacksHideIfDontOwnSack || playerOwns) {
+                     String sackName = me.bombo.bomboaddons.features.sacks.SacksManager.getPrimarySackName(sbId);
+                     additions.add(new LoreAddition("sacksFit", Component.literal("§6Fits in Sacks: §e" + sackName), s.getLorePos("sacksFit", "BOTTOM"), s.getLoreOrder("sacksFit", 9)));
+                  }
+               }
             }
          }
 
          // 8. Skyblock Item ID (Only show for real Skyblock items with Hypixel ExtraAttributes)
-         if (s.showSkyblockId) {
-            String sbId = SkyblockUtils.getStrictSkyblockId(stack);
-            if (sbId != null && !sbId.isEmpty()) {
-               additions.add(new LoreAddition("skyblockId", Component.literal("§7Skyblock ID: §8" + sbId), s.getLorePos("skyblockId", "BOTTOM"), s.getLoreOrder("skyblockId", 8)));
-            }
+         if (s.showSkyblockId && sbId != null && !sbId.isEmpty()) {
+            additions.add(new LoreAddition("skyblockId", Component.literal("§7Skyblock ID: §8" + sbId), s.getLorePos("skyblockId", "BOTTOM"), s.getLoreOrder("skyblockId", 8)));
          }
 
          applyAdditionsInPlace(lines, additions);

@@ -34,6 +34,14 @@ public class BomboApiUrl {
       return var10000 + path;
    }
 
+   public static String api(String path) {
+      return getApiUrl(path);
+   }
+
+   public static String web(String path) {
+      return getWebUrl(path);
+   }
+
    public static String getWebUrl(String path) {
       if (path == null) {
          path = "";

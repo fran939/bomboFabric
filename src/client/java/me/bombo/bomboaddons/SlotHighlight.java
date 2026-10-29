@@ -57,6 +57,42 @@ public class SlotHighlight {
       return currentColor;
    }
 
+   public static int getHighlightColor(net.minecraft.world.item.ItemStack stack, String displayName) {
+      if (stack != null && !stack.isEmpty()) {
+         String query = me.bombo.bomboaddons.features.StorageChestWaypoints.getActiveQuery();
+         if (query != null && !query.trim().isEmpty()) {
+            String q = query.trim().replaceAll("§.", "").toLowerCase(java.util.Locale.ROOT);
+            boolean isLore = false;
+            if (q.startsWith("l:") || q.startsWith("lore:")) {
+               isLore = true;
+               q = q.substring(q.indexOf(':') + 1).trim();
+            }
+            String norm = q.replaceAll("[^a-z0-9]", "");
+            String sbId = SkyblockUtils.getStrictSkyblockId(stack);
+            if (sbId != null && !sbId.isEmpty()) {
+               if (norm.equals("museum") || norm.equals("donatable")) {
+                  if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonatable(sbId, stack)) {
+                     return -1442775296; // 0xAA00E5FF cyan
+                  }
+               } else if (norm.equals("donated")) {
+                  if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonated(sbId, stack)) {
+                     return -1442775296;
+                  }
+               } else if (norm.equals("sack") || norm.equals("sacks")) {
+                  if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
+                     return -1442775296;
+                  }
+               } else if (isLore) {
+                  if (norm.equals("museum") && me.bombo.bomboaddons.features.museum.MuseumManager.isMuseumItem(sbId)) {
+                     return -1442775296;
+                  }
+               }
+            }
+         }
+      }
+      return getHighlightColor(displayName);
+   }
+
    public static int getHighlightColor(String displayName) {
       checkExpiration();
       if (displayName == null) {

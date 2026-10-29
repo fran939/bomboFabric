@@ -779,6 +779,10 @@ public class BomboConfig {
       public boolean showItemCreationDate = false;
       public boolean showLeatherColor = false;
       public boolean showMuseumDonated = false;
+      public boolean showMuseumDonatable = true;
+      public boolean museumHideAlreadyDonated = false;
+      public boolean showSacksFit = true;
+      public boolean sacksHideIfDontOwnSack = false;
       public boolean showSkyblockId = false;
        public boolean signCalculator = false;
        public boolean chestClicker = false;

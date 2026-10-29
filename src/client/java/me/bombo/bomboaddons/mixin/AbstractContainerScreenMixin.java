@@ -79,6 +79,31 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       me.bombo.bomboaddons.features.garden.GreenhouseTracker.onContainerTick((AbstractContainerScreen)(Object)this);
       me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onContainerTick((AbstractContainerScreen)(Object)this);
       me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onContainerTick((AbstractContainerScreen)(Object)this);
+      
+      try {
+         String titleClean = net.minecraft.ChatFormatting.stripFormatting(this.getTitle().getString());
+         if (titleClean.contains("Museum") && ((AbstractContainerScreen)(Object)this).getMenu() != null) {
+            for (Slot s : ((AbstractContainerScreen)(Object)this).getMenu().slots) {
+               if (s != null && s.index < 54 && s.hasItem()) {
+                  ItemStack st = s.getItem();
+                  String sId = me.bombo.bomboaddons.SkyblockUtils.getStrictSkyblockId(st);
+                  if (sId != null && !sId.isEmpty()) {
+                     net.minecraft.world.item.component.ItemLore lore = st.get(DataComponents.LORE);
+                     if (lore != null) {
+                        for (Component l : lore.lines()) {
+                           String str = l.getString().toLowerCase(java.util.Locale.ROOT);
+                           if (str.contains("donated to museum") || str.contains("donated on ") || str.contains("click to view")) {
+                              me.bombo.bomboaddons.features.museum.MuseumManager.recordDonated(sId);
+                              break;
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      } catch (Throwable ignored) {}
+
       ItemListOverlay.updateLayout(this.leftPos, this.imageWidth, this.topPos, this.width, this.height);
       if (BomboConfig.get().itemListEnabled && ItemListOverlay.sidebarW >= 120) {
          int searchX = ItemListOverlay.sidebarX + 5;
@@ -252,7 +277,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       if (SlotHighlight.isTargetSlot(slot.index)) {
          color = SlotHighlight.getCurrentColor();
       } else if (slot.hasItem()) {
-         int nameColor = SlotHighlight.getHighlightColor(slot.getItem().getHoverName().getString());
+         int nameColor = SlotHighlight.getHighlightColor(slot.getItem(), slot.getItem().getHoverName().getString());
          if (nameColor != 0) {
             color = nameColor;
          } else {

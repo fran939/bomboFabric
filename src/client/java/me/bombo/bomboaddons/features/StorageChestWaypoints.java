@@ -60,13 +60,19 @@ public final class StorageChestWaypoints {
         public final String searchString;
         public final long count;
         public final String displayName;
+        public final String skyblockId;
 
-        public DecodedItem(String nameAndId, String loreText, String searchString, long count, String displayName) {
+        public DecodedItem(String nameAndId, String loreText, String searchString, long count, String displayName, String skyblockId) {
             this.nameAndId = nameAndId;
             this.loreText = loreText;
             this.searchString = searchString;
             this.count = count;
             this.displayName = displayName;
+            this.skyblockId = skyblockId != null ? skyblockId : "";
+        }
+
+        public DecodedItem(String nameAndId, String loreText, String searchString, long count, String displayName) {
+            this(nameAndId, loreText, searchString, count, displayName, "");
         }
     }
 
@@ -183,7 +189,7 @@ public final class StorageChestWaypoints {
             String loreText = normalize(loreBuilder.toString());
             String fullText = normalize(tag.toString());
 
-            DecodedItem item = new DecodedItem(nameAndId, loreText, fullText, Math.max(1L, count), displayName);
+            DecodedItem item = new DecodedItem(nameAndId, loreText, fullText, Math.max(1L, count), displayName, skyblockId);
             DECODE_CACHE.put(nbtStr, item);
             return item;
         } catch (Throwable t) {
@@ -308,7 +314,7 @@ public final class StorageChestWaypoints {
             for (String nbt : container.getValue().values()) {
                 if (nbt == null) continue;
                 DecodedItem decoded = getDecoded(nbt);
-                boolean matched = searchLore ? decoded.loreText.contains(needle) : decoded.nameAndId.contains(needle);
+                boolean matched = matchesItem(decoded, needle, searchLore);
                 if (matched) {
                     hitSlots++;
                     quantity += decoded.count;
@@ -386,6 +392,46 @@ public final class StorageChestWaypoints {
                 }
             }
         }
+    }
+
+    public static boolean matchesItem(DecodedItem decoded, String needle, boolean searchLore) {
+        if (decoded == null || needle == null || needle.isEmpty()) return false;
+        if (searchLore) {
+            if (decoded.loreText.contains(needle)) return true;
+        } else {
+            if (decoded.nameAndId.contains(needle)) return true;
+        }
+
+        String sbId = decoded.skyblockId;
+        if (sbId != null && !sbId.isEmpty()) {
+            if (needle.equals("museum") || needle.equals("donatable")) {
+                if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonatable(sbId)) return true;
+                if (needle.equals("museum") && me.bombo.bomboaddons.features.museum.MuseumManager.isMuseumItem(sbId)) return true;
+            } else if (needle.equals("donated")) {
+                if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonated(sbId)) return true;
+            }
+
+            if (needle.equals("sack") || needle.equals("sacks")) {
+                if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) return true;
+            }
+
+            if (searchLore) {
+                if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonatable(sbId)) {
+                    if ("donatabletomuseum".contains(needle)) return true;
+                    String counts = me.bombo.bomboaddons.features.museum.MuseumManager.getCountsAsDescription(sbId);
+                    if (counts != null && counts.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "").contains(needle)) return true;
+                }
+                if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonated(sbId)) {
+                    if ("donatedtomuseum".contains(needle)) return true;
+                }
+                if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
+                    if ("fitsinsacks".contains(needle)) return true;
+                    String sName = me.bombo.bomboaddons.features.sacks.SacksManager.getPrimarySackName(sbId);
+                    if (sName != null && sName.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "").contains(needle)) return true;
+                }
+            }
+        }
+        return false;
     }
 
     // -------------------------------------------------------------------------------------------

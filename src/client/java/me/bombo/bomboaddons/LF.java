@@ -297,9 +297,8 @@ public class LF {
                   String queryNormalized = queryLower.replaceAll("[^a-z0-9]", "");
                   if (queryNormalized.isEmpty()) continue;
 
-                  boolean matched = searchLore
-                        ? decoded.loreText.contains(queryNormalized)
-                        : (decoded.nameAndId.contains(queryNormalized) || decoded.displayName.toLowerCase(Locale.ROOT).contains(queryLower));
+                  boolean matched = me.bombo.bomboaddons.features.StorageChestWaypoints.matchesItem(decoded, queryNormalized, searchLore)
+                        || (!searchLore && decoded.displayName.toLowerCase(Locale.ROOT).contains(queryLower));
 
                   if (matched) {
                      matchCount.incrementAndGet();

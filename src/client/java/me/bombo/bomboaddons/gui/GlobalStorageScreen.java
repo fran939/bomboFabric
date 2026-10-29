@@ -277,6 +277,19 @@ public class GlobalStorageScreen extends Screen {
                   }
                }
             }
+            if (!textMatch) {
+               String normQ = lowerQuery.replaceAll("[^a-z0-9]", "");
+               String sbId = SkyblockUtils.getStrictSkyblockId(agg.stack);
+               if (sbId != null && !sbId.isEmpty()) {
+                  if (normQ.equals("museum") || normQ.equals("donatable")) {
+                     textMatch = me.bombo.bomboaddons.features.museum.MuseumManager.isDonatable(sbId, agg.stack);
+                  } else if (normQ.equals("donated")) {
+                     textMatch = me.bombo.bomboaddons.features.museum.MuseumManager.isDonated(sbId, agg.stack);
+                  } else if (normQ.equals("sack") || normQ.equals("sacks")) {
+                     textMatch = me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId);
+                  }
+               }
+            }
          }
 
          return categoryMatch && textMatch;

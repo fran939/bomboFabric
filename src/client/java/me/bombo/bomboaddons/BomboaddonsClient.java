@@ -717,6 +717,7 @@ public class BomboaddonsClient implements ClientModInitializer {
       candidates.add("crafthud");
       candidates.add("craft");
       candidates.add("sacks");
+      candidates.add("museum");
 
       // Coop members from TabCompletionManager
       candidates.addAll(TabCompletionManager.coop);
@@ -777,6 +778,20 @@ public class BomboaddonsClient implements ClientModInitializer {
             scr.setActiveTab(me.bombo.bomboaddons.gui.InfernoTrackerScreen.TAB_CRAFT);
             mc.setScreenAndShow(scr);
          });
+         return;
+      }
+      if (lower.equals("museum") || lower.startsWith("museum ")) {
+         int donatedCount = me.bombo.bomboaddons.features.museum.MuseumManager.getDonatedIds().size();
+         if (mc.player != null) {
+            MutableComponent msg = Component.literal("§8[§d🏛️ Museum§8] §aTracked Donated Items: §e" + donatedCount + "§7. ")
+               .append(Component.literal("§b[Open Online Catalog]")
+                  .withStyle(Style.EMPTY
+                     .withColor(net.minecraft.ChatFormatting.AQUA)
+                     .withUnderlined(true)
+                     .withClickEvent(new ClickEvent.OpenUrl(URI.create(me.bombo.bomboaddons.util.BomboApiUrl.web("/mod/museum"))))
+                     .withHoverEvent(new HoverEvent.ShowText(Component.literal("§7Click to view full Museum Catalog in browser\n§bhttps://bombo.dpdns.org/mod/museum")))));
+            mc.player.sendSystemMessage(msg);
+         }
          return;
       }
       if (lower.equals("sacks") || lower.startsWith("sacks ")) {
