@@ -20,7 +20,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import me.bombo.bomboaddons.features.StorageChestWaypoints;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
@@ -208,6 +210,13 @@ public class GlobalStorageScreen extends Screen {
                            count = info.sackStoredCount;
                         }
 
+                        if (count <= 0 || info.sackStoredCount == 0) {
+                           continue;
+                        }
+                        if (containerName.contains("Sack") && (info.cleanName.toLowerCase(java.util.Locale.ROOT).contains("empty sack") || count <= 0)) {
+                           continue;
+                        }
+
                         ItemStack finalStack = info.stack;
                         AggregatedItem agg = (AggregatedItem)map.computeIfAbsent(groupKey, (k) -> new AggregatedItem(finalStack, nbtStr));
                         agg.addLocation(containerName, count);
@@ -218,7 +227,7 @@ public class GlobalStorageScreen extends Screen {
             }
          }
 
-         this.allItems = new ArrayList(map.values());
+         this.allItems = (List)map.values().stream().filter((a) -> a.totalCount > 0).collect(Collectors.toList());
          this.sortAllItems();
          cachedAllItems = new ArrayList(this.allItems);
          cachedStorageTime = StorageTracker.lastUpdateTime;
@@ -342,6 +351,29 @@ public class GlobalStorageScreen extends Screen {
          if (this.hoveredItem != null && !this.hoveredItem.locations.isEmpty()) {
             boolean addedPos = false;
             BlockHighlight.targetChestPosList.clear();
+            String cleanName = ChatFormatting.stripFormatting(this.hoveredItem.stack.getHoverName().getString()).trim();
+            String sbId = SkyblockUtils.getSkyblockId(this.hoveredItem.stack);
+
+            boolean hasIslandLoc = false;
+            for (String targetLoc : this.hoveredItem.locations.keySet()) {
+               if (targetLoc.contains("Island Chest") || targetLoc.contains("Island Double Chest") || targetLoc.contains(" @ ")) {
+                  hasIslandLoc = true;
+                  break;
+               }
+            }
+
+            if (hasIslandLoc) {
+               int hits = StorageChestWaypoints.search(cleanName);
+               if (hits == 0 && sbId != null && !sbId.isEmpty()) {
+                  hits = StorageChestWaypoints.search(sbId);
+               }
+               if (hits > 0) {
+                  addedPos = true;
+                  if (this.minecraft.player != null) {
+                     this.minecraft.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §7Found §e" + hits + " §7chests holding §a" + cleanName + " §8- §bwaypoints active."));
+                  }
+               }
+            }
 
             for(String targetLoc : this.hoveredItem.locations.keySet()) {
                String[] locCmd = StorageTracker.getDisplayLocAndCommand(targetLoc);
@@ -352,13 +384,16 @@ public class GlobalStorageScreen extends Screen {
                   }
 
                   this.minecraft.player.connection.sendCommand(cmd);
-                  SlotHighlight.addTargetName(this.hoveredItem.stack.getHoverName().getString(), -1442775296);
+                  SlotHighlight.addTargetName(cleanName, -1442775296);
+                  if (sbId != null && !sbId.isEmpty()) {
+                     SlotHighlight.addTargetName(sbId, -1442775296);
+                  }
                   addedPos = true;
                   break;
                }
 
                if (targetLoc.startsWith("Island Double Chest @ ")) {
-                  BlockPos[] pair = me.bombo.bomboaddons.features.StorageChestWaypoints.parseDoublePosition(targetLoc);
+                  BlockPos[] pair = StorageChestWaypoints.parseDoublePosition(targetLoc);
                   if (pair != null) {
                      BlockHighlight.targetChestPosList.add(pair[0]);
                      BlockHighlight.targetChestPosList.add(pair[1]);
@@ -396,8 +431,7 @@ public class GlobalStorageScreen extends Screen {
 
             if (addedPos) {
                BlockHighlight.targetChestTime = System.currentTimeMillis();
-               SlotHighlight.addTargetName(this.hoveredItem.stack.getHoverName().getString(), -1442775296);
-               String sbId = SkyblockUtils.getSkyblockId(this.hoveredItem.stack);
+               SlotHighlight.addTargetName(cleanName, -1442775296);
                if (sbId != null && !sbId.isEmpty()) {
                   SlotHighlight.addTargetName(sbId, -1442775296);
                }
@@ -409,6 +443,28 @@ public class GlobalStorageScreen extends Screen {
             return super.mouseClicked(event, handled);
          }
       }
+   }
+
+   @Override
+   public boolean keyPressed(KeyEvent event) {
+      if (this.searchBox != null && this.searchBox.isFocused()) {
+         if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) {
+            String val = this.searchBox.getValue().trim();
+            if (!val.isEmpty()) {
+               int hits = StorageChestWaypoints.search(val);
+               if (this.minecraft.player != null) {
+                  if (hits > 0) {
+                     this.minecraft.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §7Found §e" + hits + " §7chests holding §a" + val + " §8- §bwaypoints active."));
+                  } else {
+                     this.minecraft.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §7No island chests found holding §e" + val));
+                  }
+               }
+               this.minecraft.setScreenAndShow((Screen)null);
+               return true;
+            }
+         }
+      }
+      return super.keyPressed(event);
    }
 
    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {

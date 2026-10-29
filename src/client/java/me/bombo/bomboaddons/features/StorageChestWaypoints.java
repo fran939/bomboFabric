@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.TagParser;
 
 /**
@@ -54,20 +55,46 @@ public final class StorageChestWaypoints {
 
     private static final String ISLAND_CHEST_PREFIX = "Island Chest @ ";
     public static final class DecodedItem {
+        public final String nameAndId;
+        public final String loreText;
         public final String searchString;
         public final long count;
+        public final String displayName;
 
-        public DecodedItem(String searchString, long count) {
+        public DecodedItem(String nameAndId, String loreText, String searchString, long count, String displayName) {
+            this.nameAndId = nameAndId;
+            this.loreText = loreText;
             this.searchString = searchString;
             this.count = count;
+            this.displayName = displayName;
         }
     }
 
     private static final Map<String, DecodedItem> DECODE_CACHE = new ConcurrentHashMap<>();
 
+    private static String extractCleanText(Tag t) {
+        if (t == null) return "";
+        String raw = t.asString().orElse(t.toString());
+        if (raw.startsWith("\"") && raw.endsWith("\"") && raw.length() >= 2) {
+            raw = raw.substring(1, raw.length() - 1);
+        }
+        raw = raw.replaceAll("§.", "");
+        if (raw.contains("\"text\"")) {
+            Matcher m = Pattern.compile("\"text\"\\s*:\\s*\"([^\"]*)\"").matcher(raw);
+            StringBuilder sb = new StringBuilder();
+            while (m.find()) {
+                sb.append(m.group(1)).append(" ");
+            }
+            if (sb.length() > 0) {
+                return sb.toString().trim();
+            }
+        }
+        return raw.trim();
+    }
+
     public static DecodedItem getDecoded(String nbtStr) {
         if (nbtStr == null || nbtStr.isEmpty()) {
-            return new DecodedItem("", 0L);
+            return new DecodedItem("", "", "", 0L, "");
         }
         DecodedItem cached = DECODE_CACHE.get(nbtStr);
         if (cached != null) {
@@ -91,12 +118,76 @@ public final class StorageChestWaypoints {
                 count = (Byte) tag.getByte("Count").orElse((byte) 1);
             }
 
+            String vanillaId = tag.getString("id").orElse("");
+            if (vanillaId.startsWith("minecraft:")) {
+                vanillaId = vanillaId.substring(10);
+            }
+
+            String displayName = "";
+            String skyblockId = "";
+            StringBuilder loreBuilder = new StringBuilder();
+
+            CompoundTag components = tag.getCompound("components").orElse(null);
+            if (components != null) {
+                if (components.contains("minecraft:custom_name")) {
+                    displayName = extractCleanText(components.get("minecraft:custom_name"));
+                }
+                if (displayName.isEmpty() && components.contains("minecraft:item_name")) {
+                    displayName = extractCleanText(components.get("minecraft:item_name"));
+                }
+                CompoundTag customData = components.getCompound("minecraft:custom_data").orElse(null);
+                if (customData != null) {
+                    CompoundTag ea = customData.getCompound("ExtraAttributes").orElse(null);
+                    if (ea != null && ea.contains("id")) {
+                        skyblockId = ea.getString("id").orElse("");
+                    } else if (customData.contains("id")) {
+                        skyblockId = customData.getString("id").orElse("");
+                    }
+                }
+                net.minecraft.nbt.ListTag loreList = components.getList("minecraft:lore").orElse(null);
+                if (loreList != null) {
+                    for (int i = 0; i < loreList.size(); i++) {
+                        loreBuilder.append(extractCleanText(loreList.get(i))).append(" ");
+                    }
+                }
+            }
+
+            if (tag.contains("display")) {
+                CompoundTag display = tag.getCompound("display").orElse(null);
+                if (display != null) {
+                    if (displayName.isEmpty() && display.contains("Name")) {
+                        displayName = extractCleanText(display.get("Name"));
+                    }
+                    if (display.contains("Lore")) {
+                        net.minecraft.nbt.ListTag loreList = display.getList("Lore").orElse(null);
+                        if (loreList != null) {
+                            for (int i = 0; i < loreList.size(); i++) {
+                                loreBuilder.append(extractCleanText(loreList.get(i))).append(" ");
+                            }
+                        }
+                    }
+                }
+            }
+            if (skyblockId.isEmpty() && tag.contains("ExtraAttributes")) {
+                CompoundTag ea = tag.getCompound("ExtraAttributes").orElse(null);
+                if (ea != null && ea.contains("id")) {
+                    skyblockId = ea.getString("id").orElse("");
+                }
+            }
+
+            if (displayName.isEmpty()) {
+                displayName = vanillaId;
+            }
+
+            String nameAndId = normalize(displayName + " " + skyblockId + " " + vanillaId);
+            String loreText = normalize(loreBuilder.toString());
             String fullText = normalize(tag.toString());
-            DecodedItem item = new DecodedItem(fullText, Math.max(1L, count));
+
+            DecodedItem item = new DecodedItem(nameAndId, loreText, fullText, Math.max(1L, count), displayName);
             DECODE_CACHE.put(nbtStr, item);
             return item;
         } catch (Throwable t) {
-            DecodedItem fallback = new DecodedItem(normalize(nbtStr), 1L);
+            DecodedItem fallback = new DecodedItem(normalize(nbtStr), "", normalize(nbtStr), 1L, "");
             DECODE_CACHE.put(nbtStr, fallback);
             return fallback;
         }
@@ -146,6 +237,30 @@ public final class StorageChestWaypoints {
         matches.clear();
         activeQuery = null;
         SlotHighlight.clearTargetSlot();
+        me.bombo.bomboaddons.BlockHighlight.targetChestPosList.clear();
+    }
+
+    public static synchronized void clearActiveQuery() {
+        activeQuery = null;
+    }
+
+    public static synchronized boolean removeMatchAt(BlockPos pos) {
+        if (pos == null || matches.isEmpty()) return false;
+        boolean removed = false;
+        Iterator<ChestMatch> it = matches.iterator();
+        while (it.hasNext()) {
+            ChestMatch m = it.next();
+            if (pos.getX() >= m.minX && pos.getX() <= m.maxX &&
+                pos.getY() >= m.minY && pos.getY() <= m.maxY &&
+                pos.getZ() >= m.minZ && pos.getZ() <= m.maxZ) {
+                it.remove();
+                removed = true;
+            }
+        }
+        if (matches.isEmpty()) {
+            activeQuery = null;
+        }
+        return removed;
     }
 
     // -------------------------------------------------------------------------------------------
@@ -154,6 +269,7 @@ public final class StorageChestWaypoints {
 
     /**
      * Builds waypoints for every island chest containing {@code query}.
+     * Supports "l:<lore>" or "lore:<lore>" to search lore specifically.
      *
      * @return number of chests highlighted
      */
@@ -162,11 +278,21 @@ public final class StorageChestWaypoints {
         activeQuery = query;
         if (query == null || query.trim().isEmpty()) {
             SlotHighlight.clearTargetSlot();
+            me.bombo.bomboaddons.BlockHighlight.targetChestPosList.clear();
             return 0;
         }
-        SlotHighlight.addTargetName(query.trim(), -1442775296);
 
-        String needle = normalize(query);
+        boolean searchLore = false;
+        String cleanQuery = query.trim();
+        String lower = cleanQuery.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("l:") || lower.startsWith("lore:")) {
+            searchLore = true;
+            cleanQuery = cleanQuery.substring(cleanQuery.indexOf(':') + 1).trim();
+        }
+        SlotHighlight.addTargetName(cleanQuery, -1442775296);
+
+        String needle = normalize(cleanQuery);
+        me.bombo.bomboaddons.BlockHighlight.targetChestPosList.clear();
 
         // containerKey -> matched slot count / quantity
         Map<String, int[]> hits = new LinkedHashMap<>();
@@ -182,7 +308,8 @@ public final class StorageChestWaypoints {
             for (String nbt : container.getValue().values()) {
                 if (nbt == null) continue;
                 DecodedItem decoded = getDecoded(nbt);
-                if (decoded.searchString.contains(needle)) {
+                boolean matched = searchLore ? decoded.loreText.contains(needle) : decoded.nameAndId.contains(needle);
+                if (matched) {
                     hitSlots++;
                     quantity += decoded.count;
                 }
@@ -206,6 +333,8 @@ public final class StorageChestWaypoints {
                 match.maxX = Math.max(pair[0].getX(), pair[1].getX());
                 match.maxY = Math.max(pair[0].getY(), pair[1].getY());
                 match.maxZ = Math.max(pair[0].getZ(), pair[1].getZ());
+                me.bombo.bomboaddons.BlockHighlight.targetChestPosList.add(pair[0]);
+                me.bombo.bomboaddons.BlockHighlight.targetChestPosList.add(pair[1]);
             } else {
                 BlockPos pos = parsePosition(key);
                 if (pos == null) continue;
@@ -215,11 +344,16 @@ public final class StorageChestWaypoints {
                 match.maxX = pos.getX();
                 match.maxY = pos.getY();
                 match.maxZ = pos.getZ();
+                me.bombo.bomboaddons.BlockHighlight.targetChestPosList.add(pos);
             }
             match.itemCount = hit.getValue()[0];
             match.totalQuantity = quantities.getOrDefault(key, (long) match.itemCount);
-            match.itemLabel = query.trim();
+            match.itemLabel = cleanQuery;
             matches.add(match);
+        }
+
+        if (!matches.isEmpty()) {
+            me.bombo.bomboaddons.BlockHighlight.targetChestTime = System.currentTimeMillis();
         }
 
         mergeDoubleChests();
@@ -266,7 +400,15 @@ public final class StorageChestWaypoints {
         if (matches.isEmpty() && (activeQuery == null || activeQuery.isEmpty())) {
             return;
         }
-        String needle = normalize(activeQuery);
+
+        boolean searchLore = false;
+        String cleanQuery = activeQuery != null ? activeQuery.trim() : "";
+        String lower = cleanQuery.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("l:") || lower.startsWith("lore:")) {
+            searchLore = true;
+            cleanQuery = cleanQuery.substring(cleanQuery.indexOf(':') + 1).trim();
+        }
+        String needle = normalize(cleanQuery);
 
         // 1. Purge positions that are verified air / not a container any more.
         List<String> broken = new ArrayList<>();
@@ -323,7 +465,8 @@ public final class StorageChestWaypoints {
             for (String nbt : contents.values()) {
                 if (nbt == null) continue;
                 DecodedItem decoded = getDecoded(nbt);
-                if (decoded.searchString.contains(needle)) {
+                boolean matched = searchLore ? decoded.loreText.contains(needle) : decoded.nameAndId.contains(needle);
+                if (matched) {
                     hitSlots++;
                     quantity += decoded.count;
                 }

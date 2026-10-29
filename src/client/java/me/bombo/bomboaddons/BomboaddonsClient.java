@@ -1093,7 +1093,8 @@ public class BomboaddonsClient implements ClientModInitializer {
       checkResourcePackStartup();
       UseBlockCallback.EVENT.register((UseBlockCallback) (player, world, hand, hitResult) -> {
          BlockPos pos = hitResult.getBlockPos();
-         if (!BlockHighlight.targetChestPosList.isEmpty() && BlockHighlight.targetChestPosList.contains(pos)) {
+         me.bombo.bomboaddons.features.StorageChestWaypoints.removeMatchAt(pos);
+         if (!BlockHighlight.targetChestPosList.isEmpty()) {
             BlockHighlight.targetChestPosList.remove(pos);
 
             try {
@@ -1102,7 +1103,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                   ChestType type = (ChestType) state.getValue(BlockStateProperties.CHEST_TYPE);
                   if (type != ChestType.SINGLE) {
                      Direction connectedDir = ChestBlock.getConnectedDirection(state);
-                     BlockHighlight.targetChestPosList.remove(pos.relative(connectedDir));
+                     BlockPos other = pos.relative(connectedDir);
+                     me.bombo.bomboaddons.features.StorageChestWaypoints.removeMatchAt(other);
+                     BlockHighlight.targetChestPosList.remove(other);
                   }
                }
             } catch (Exception var10) {

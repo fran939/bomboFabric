@@ -92,6 +92,7 @@ public class SacksBrowserScreen extends Screen {
                         this.userSacks = sacks;
                         this.categorizedSacks.clear();
                         for (Map.Entry<String, Integer> e : sacks.entrySet()) {
+                            if (e.getValue() == null || e.getValue() <= 0) continue;
                             SackCategory cat = SacksHelper.getSackCategory(e.getKey());
                             this.categorizedSacks.computeIfAbsent(cat, k -> new TreeMap<>()).put(e.getKey(), e.getValue());
                         }

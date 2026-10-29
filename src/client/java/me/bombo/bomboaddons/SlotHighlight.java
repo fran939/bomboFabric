@@ -73,7 +73,10 @@ public class SlotHighlight {
          String query = me.bombo.bomboaddons.features.StorageChestWaypoints.getActiveQuery();
          if (query != null && !query.trim().isEmpty()) {
             String q = query.trim().replaceAll("§.", "").toLowerCase();
-            if (cleanName.contains(q)) {
+            if (q.startsWith("l:") || q.startsWith("lore:")) {
+               q = q.substring(q.indexOf(':') + 1).trim();
+            }
+            if (!q.isEmpty() && cleanName.contains(q)) {
                return -1442775296; // 0xAA00E5FF cyan
             }
          }

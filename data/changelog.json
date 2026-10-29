@@ -1,5 +1,18 @@
 [
   {
+    "version": "26.2.28.172",
+    "date": "2026-10-29",
+    "changes": [
+      "+ Unified storage.json with profiles map: all profiles stored in single storage.json without data leakage",
+      "+ Magmafish vs Lava search fix: /b storage matches item name & ID by default; lore is no longer falsely matched",
+      "+ Lore search syntax: support /b storage l:<lore> and /b storage lore:<lore> to search lore specifically",
+      "+ /b storage GUI item click & search: clicking an item or pressing Enter in search bar sets waypoints & world highlights",
+      "+ Instant waypoint removal: clicking a target chest in world immediately removes its waypoint and cyan outline",
+      "+ Instant item highlight removal: clicking the highlighted item inside the container immediately turns off highlight",
+      "+ Sacks 0-amount filtering: completely hide and skip 0-amount / empty sack items in /b storage and sacks browser"
+    ]
+  },
+  {
     "version": "26.2.28.171",
     "date": "2026-10-28",
     "changes": [

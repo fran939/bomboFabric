@@ -40,10 +40,12 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class StorageTracker {
+   public static final File UNIFIED_STORAGE_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bomboaddons/storage.json");
    private static final File LEGACY_STORAGE_FILE = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bomboaddons_storage.json");
    private static String loadedProfileId = "";
-   public static final Map<String, Map<Integer, String>> storageData = new ConcurrentHashMap();
-   private static final Map<String, Map<Integer, String>> uncompressedCache = new ConcurrentHashMap();
+   public static final Map<String, Map<String, Map<Integer, String>>> profilesData = new ConcurrentHashMap<>();
+   public static final Map<String, Map<Integer, String>> storageData = new ConcurrentHashMap<>();
+   private static final Map<String, Map<Integer, String>> uncompressedCache = new ConcurrentHashMap<>();
    public static long lastUpdateTime = 0L;
    private static long lastSave = 0L;
    public static BlockPos lastClickedBlockPos = null;
@@ -66,208 +68,269 @@ public class StorageTracker {
       return "default";
    }
 
-   public static File getStorageFile(String profileId) {
-      String pid = (profileId != null && !profileId.trim().isEmpty()) ? profileId.trim().toLowerCase(Locale.ROOT) : "default";
-      File dir = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bomboaddons/storage");
+   public static File getStorageFile() {
+      File dir = UNIFIED_STORAGE_FILE.getParentFile();
       if (!dir.exists()) {
          dir.mkdirs();
       }
-      File target = new File(dir, pid + ".json");
-      if ("default".equalsIgnoreCase(pid) && !target.exists() && LEGACY_STORAGE_FILE.exists()) {
-         try {
-            java.nio.file.Files.copy(LEGACY_STORAGE_FILE.toPath(), target.toPath());
-         } catch (Exception ignored) {}
-      }
-      return target;
+      return UNIFIED_STORAGE_FILE;
+   }
+
+   public static File getStorageFile(String profileId) {
+      return getStorageFile();
    }
 
    public static synchronized void onProfileChanged(String newProfileId) {
       if (newProfileId == null || newProfileId.trim().isEmpty()) return;
       String pid = newProfileId.trim().toLowerCase(Locale.ROOT);
       if (pid.equalsIgnoreCase(loadedProfileId)) return;
+      syncStorageDataToProfilesMap();
       saveImmediate();
       storageData.clear();
       uncompressedCache.clear();
       slotHashCache.clear();
       loadedProfileId = pid;
-      loadForProfile(pid);
+      loadActiveProfileFromMap(pid);
       lastUpdateTime = System.currentTimeMillis();
       me.bombo.bomboaddons.gui.GlobalStorageScreen.invalidateCache();
+      StorageChestWaypoints.clear();
+      me.bombo.bomboaddons.BlockHighlight.targetChestPosList.clear();
+      me.bombo.bomboaddons.SlotHighlight.clearTargetSlot();
    }
 
    public static void init() {
-      String pid = getActiveProfileId();
-      loadedProfileId = pid;
-      loadForProfile(pid);
+      loadAll();
    }
 
-   public static synchronized void loadForProfile(String pid) {
-      File storageFile = getStorageFile(pid);
-      if (storageFile.exists()) {
-         try {
-            FileReader reader = new FileReader(storageFile);
-
-            try {
-               JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-               if (root.has("containers")) {
-                  JsonObject containers = root.getAsJsonObject("containers");
-
-                  for(String containerName : containers.keySet()) {
-                     JsonObject container = containers.getAsJsonObject(containerName);
-                     Map<Integer, String> slots = new ConcurrentHashMap();
-                     if (container.has("items")) {
-                        for(JsonElement elem : container.getAsJsonArray("items")) {
-                           JsonObject itemObj = elem.getAsJsonObject();
-                           int slot = itemObj.get("slot").getAsInt();
-                           String nbt = itemObj.get("nbt").getAsString();
-                           slots.put(slot, nbt);
-                        }
-                     }
-
-                     storageData.put(containerName, slots);
-                  }
-               }
-
-               List<String> toRemove = new ArrayList();
-               Map<String, Map<Integer, String>> toAdd = new HashMap();
-
-               for(String key : storageData.keySet()) {
-                  if (key.contains(" @ ") && !key.startsWith("Island Chest @ ")) {
-                     String var10000 = key.substring(key.indexOf(" @ ") + 3);
-                     String newKey = "Island Chest @ " + var10000;
-                     toRemove.add(key);
-                     toAdd.put(newKey, (Map)storageData.get(key));
-                  }
-               }
-
-               for(String key : toRemove) {
-                  storageData.remove(key);
-               }
-
-               storageData.putAll(toAdd);
-               List<String> duplicates = new ArrayList();
-
-               for(String key : storageData.keySet()) {
-                  if (!duplicates.contains(key) && key.startsWith("Island Chest @ ")) {
-                     try {
-                        String[] parts = key.substring(15).split(",");
-                        int x = Integer.parseInt(parts[0].trim());
-                        int y = Integer.parseInt(parts[1].trim());
-                        int z = Integer.parseInt(parts[2].trim());
-                        BlockPos pos = new BlockPos(x, y, z);
-
-                        for(Direction d : Plane.HORIZONTAL) {
-                           BlockPos adj = pos.relative(d);
-                           int var43 = adj.getX();
-                           String adjKey = "Island Chest @ " + var43 + ", " + adj.getY() + ", " + adj.getZ();
-                           if (storageData.containsKey(adjKey) && !duplicates.contains(adjKey)) {
-                              if (adj.compareTo(pos) < 0) {
-                                 duplicates.add(key);
-                              } else {
-                                 duplicates.add(adjKey);
-                              }
-                           }
-                        }
-                     } catch (Exception var17) {
-                     }
-                  }
-               }
-
-               for(String key : duplicates) {
-                  storageData.remove(key);
-               }
-
-               boolean cleaned = false;
-
-               for(Map<Integer, String> slotsMap : storageData.values()) {
-                  Iterator<Map.Entry<Integer, String>> it = slotsMap.entrySet().iterator();
-
-                  while(it.hasNext()) {
-                     String nbt = (String)((Map.Entry)it.next()).getValue();
-                     if (nbt.contains("\"minecraft:black_stained_glass_pane\"") && nbt.contains("hide_tooltip:1b") && nbt.contains("text:\"\"")) {
-                        it.remove();
-                        cleaned = true;
-                     }
-                  }
-               }
-
-               if (!toRemove.isEmpty() || !duplicates.isEmpty() || cleaned) {
-                  save();
-               }
-
-               CompletableFuture.runAsync(() -> {
-                  boolean migrated = false;
-
-                  for(Map<Integer, String> slotsMap : storageData.values()) {
-                     for(Map.Entry<Integer, String> entry : slotsMap.entrySet()) {
-                        String nbt = (String)entry.getValue();
-                        if (nbt != null && !nbt.startsWith("B64:") && !nbt.isEmpty()) {
-                           try {
-                              CompoundTag tag = TagParser.parseCompoundFully(nbt);
-                              ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                              NbtIo.writeCompressed(tag, baos);
-                              entry.setValue("B64:" + Base64.getEncoder().encodeToString(baos.toByteArray()));
-                              migrated = true;
-                           } catch (Exception var8) {
-                           }
-                        }
-                     }
-                  }
-
-                  if (migrated) {
-                     save();
-                  }
-
-               });
-               lastUpdateTime = System.currentTimeMillis();
-            } catch (Throwable var18) {
-               try {
-                  reader.close();
-               } catch (Throwable var16) {
-                  var18.addSuppressed(var16);
-               }
-
-               throw var18;
+   private static Map<String, Map<Integer, String>> parseContainers(JsonObject containers) {
+      Map<String, Map<Integer, String>> result = new ConcurrentHashMap<>();
+      if (containers == null) return result;
+      for (String containerName : containers.keySet()) {
+         JsonObject container = containers.getAsJsonObject(containerName);
+         Map<Integer, String> slots = new ConcurrentHashMap<>();
+         if (container.has("items")) {
+            for (JsonElement elem : container.getAsJsonArray("items")) {
+               JsonObject itemObj = elem.getAsJsonObject();
+               int slot = itemObj.get("slot").getAsInt();
+               String nbt = itemObj.get("nbt").getAsString();
+               slots.put(slot, nbt);
             }
-
-            reader.close();
-         } catch (Exception e) {
-            Bomboaddons.LOGGER.error("[BomboAddons] Failed to load storage cache", e);
          }
-
+         result.put(containerName, slots);
       }
+      return result;
+   }
+
+   public static synchronized void loadAll() {
+      profilesData.clear();
+      File storageFile = getStorageFile();
+      boolean loaded = false;
+
+      if (storageFile.exists()) {
+         try (FileReader reader = new FileReader(storageFile)) {
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            if (root.has("profiles")) {
+               JsonObject profilesObj = root.getAsJsonObject("profiles");
+               for (String pId : profilesObj.keySet()) {
+                  JsonObject pObj = profilesObj.getAsJsonObject(pId);
+                  if (pObj.has("containers")) {
+                     profilesData.put(pId.toLowerCase(Locale.ROOT), parseContainers(pObj.getAsJsonObject("containers")));
+                  }
+               }
+               loaded = true;
+            } else if (root.has("containers")) {
+               profilesData.put("default", parseContainers(root.getAsJsonObject("containers")));
+               loaded = true;
+            }
+         } catch (Exception e) {
+            Bomboaddons.LOGGER.error("[BomboAddons] Failed to load unified storage.json", e);
+         }
+      }
+
+      if (!loaded && LEGACY_STORAGE_FILE.exists()) {
+         try (FileReader reader = new FileReader(LEGACY_STORAGE_FILE)) {
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            if (root.has("profiles")) {
+               JsonObject profilesObj = root.getAsJsonObject("profiles");
+               for (String pId : profilesObj.keySet()) {
+                  JsonObject pObj = profilesObj.getAsJsonObject(pId);
+                  if (pObj.has("containers")) {
+                     profilesData.put(pId.toLowerCase(Locale.ROOT), parseContainers(pObj.getAsJsonObject("containers")));
+                  }
+               }
+            } else if (root.has("containers")) {
+               profilesData.put("default", parseContainers(root.getAsJsonObject("containers")));
+            }
+         } catch (Exception e) {
+            Bomboaddons.LOGGER.error("[BomboAddons] Failed to load legacy storage file", e);
+         }
+      }
+
+      File storageDir = new File(FabricLoader.getInstance().getConfigDir().toFile(), "bomboaddons/storage");
+      if (storageDir.exists() && storageDir.isDirectory()) {
+         File[] pFiles = storageDir.listFiles((dir, name) -> name.endsWith(".json"));
+         if (pFiles != null) {
+            for (File pf : pFiles) {
+               String fname = pf.getName();
+               String pId = fname.substring(0, fname.length() - 5).toLowerCase(Locale.ROOT);
+               if (!profilesData.containsKey(pId)) {
+                  try (FileReader reader = new FileReader(pf)) {
+                     JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+                     if (root.has("containers")) {
+                        profilesData.put(pId, parseContainers(root.getAsJsonObject("containers")));
+                     }
+                  } catch (Exception ignored) {}
+               }
+            }
+         }
+      }
+
+      String activePid = getActiveProfileId();
+      loadedProfileId = activePid;
+      loadActiveProfileFromMap(activePid);
+   }
+
+   public static synchronized void loadActiveProfileFromMap(String pid) {
+      storageData.clear();
+      uncompressedCache.clear();
+      slotHashCache.clear();
+      if (pid != null && profilesData.containsKey(pid)) {
+         Map<String, Map<Integer, String>> containers = profilesData.get(pid);
+         for (Map.Entry<String, Map<Integer, String>> entry : containers.entrySet()) {
+            storageData.put(entry.getKey(), new ConcurrentHashMap<>(entry.getValue()));
+         }
+      }
+
+      cleanStorageData();
+
+      CompletableFuture.runAsync(() -> {
+         boolean migrated = false;
+         for (Map<Integer, String> slotsMap : storageData.values()) {
+            for (Map.Entry<Integer, String> entry : slotsMap.entrySet()) {
+               String nbt = entry.getValue();
+               if (nbt != null && !nbt.startsWith("B64:") && !nbt.isEmpty()) {
+                  try {
+                     CompoundTag tag = TagParser.parseCompoundFully(nbt);
+                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                     NbtIo.writeCompressed(tag, baos);
+                     entry.setValue("B64:" + Base64.getEncoder().encodeToString(baos.toByteArray()));
+                     migrated = true;
+                  } catch (Exception ignored) {}
+               }
+            }
+         }
+         if (migrated) {
+            save();
+         }
+      });
+      lastUpdateTime = System.currentTimeMillis();
+   }
+
+   private static synchronized void cleanStorageData() {
+      List<String> toRemove = new ArrayList<>();
+      Map<String, Map<Integer, String>> toAdd = new HashMap<>();
+
+      for (String key : storageData.keySet()) {
+         if (key.contains(" @ ") && !key.startsWith("Island Chest @ ") && !key.startsWith("Island Double Chest @ ")) {
+            String coords = key.substring(key.indexOf(" @ ") + 3);
+            String newKey = "Island Chest @ " + coords;
+            toRemove.add(key);
+            toAdd.put(newKey, storageData.get(key));
+         }
+      }
+
+      for (String key : toRemove) {
+         storageData.remove(key);
+      }
+      storageData.putAll(toAdd);
+
+      List<String> duplicates = new ArrayList<>();
+      for (String key : storageData.keySet()) {
+         if (!duplicates.contains(key) && key.startsWith("Island Chest @ ")) {
+            try {
+               String[] parts = key.substring(15).split(",");
+               int x = Integer.parseInt(parts[0].trim());
+               int y = Integer.parseInt(parts[1].trim());
+               int z = Integer.parseInt(parts[2].trim());
+               BlockPos pos = new BlockPos(x, y, z);
+               for (Direction d : Plane.HORIZONTAL) {
+                  BlockPos adj = pos.relative(d);
+                  String adjKey = "Island Chest @ " + adj.getX() + ", " + adj.getY() + ", " + adj.getZ();
+                  if (storageData.containsKey(adjKey) && !duplicates.contains(adjKey)) {
+                     if (adj.compareTo(pos) < 0) {
+                        duplicates.add(key);
+                     } else {
+                        duplicates.add(adjKey);
+                     }
+                  }
+               }
+            } catch (Exception ignored) {}
+         }
+      }
+
+      for (String key : duplicates) {
+         storageData.remove(key);
+      }
+
+      for (Map<Integer, String> slotsMap : storageData.values()) {
+         Iterator<Map.Entry<Integer, String>> it = slotsMap.entrySet().iterator();
+         while (it.hasNext()) {
+            String nbt = it.next().getValue();
+            if (nbt.contains("\"minecraft:black_stained_glass_pane\"") && nbt.contains("hide_tooltip:1b") && nbt.contains("text:\"\"")) {
+               it.remove();
+            }
+         }
+      }
+   }
+
+   private static synchronized void syncStorageDataToProfilesMap() {
+      if (loadedProfileId == null || loadedProfileId.trim().isEmpty()) return;
+      Map<String, Map<Integer, String>> currentMap = new ConcurrentHashMap<>();
+      for (Map.Entry<String, Map<Integer, String>> entry : storageData.entrySet()) {
+         currentMap.put(entry.getKey(), new ConcurrentHashMap<>(entry.getValue()));
+      }
+      profilesData.put(loadedProfileId, currentMap);
    }
 
    private static JsonObject buildRootJson() {
+      syncStorageDataToProfilesMap();
       JsonObject root = new JsonObject();
-      JsonObject containers = new JsonObject();
+      JsonObject profilesObj = new JsonObject();
 
-      for(Map.Entry<String, Map<Integer, String>> entry : storageData.entrySet()) {
-         JsonObject containerObj = new JsonObject();
-         JsonArray items = new JsonArray();
+      for (Map.Entry<String, Map<String, Map<Integer, String>>> pEntry : profilesData.entrySet()) {
+         JsonObject profileObj = new JsonObject();
+         JsonObject containersObj = new JsonObject();
 
-         for(Map.Entry<Integer, String> slotEntry : ((Map<Integer, String>)(Map<?, ?>)entry.getValue()).entrySet()) {
-            JsonObject itemObj = new JsonObject();
-            itemObj.addProperty("slot", (Number)slotEntry.getKey());
-            itemObj.addProperty("nbt", (String)slotEntry.getValue());
-            items.add(itemObj);
+         for (Map.Entry<String, Map<Integer, String>> cEntry : pEntry.getValue().entrySet()) {
+            JsonObject containerObj = new JsonObject();
+            JsonArray itemsArray = new JsonArray();
+
+            for (Map.Entry<Integer, String> sEntry : cEntry.getValue().entrySet()) {
+               JsonObject itemObj = new JsonObject();
+               itemObj.addProperty("slot", sEntry.getKey());
+               itemObj.addProperty("nbt", sEntry.getValue());
+               itemsArray.add(itemObj);
+            }
+
+            containerObj.add("items", itemsArray);
+            containersObj.add(cEntry.getKey(), containerObj);
          }
 
-         containerObj.add("items", items);
-         containers.add((String)entry.getKey(), containerObj);
+         profileObj.add("containers", containersObj);
+         profilesObj.add(pEntry.getKey(), profileObj);
       }
 
-      root.add("containers", containers);
+      root.add("profiles", profilesObj);
       return root;
    }
 
    public static synchronized void saveImmediate() {
       try {
-         File storageFile = getStorageFile(getActiveProfileId());
+         File storageFile = getStorageFile();
          storageFile.getParentFile().mkdirs();
          JsonObject root = buildRootJson();
          try (FileWriter writer = new FileWriter(storageFile)) {
-            (new GsonBuilder()).setPrettyPrinting().create().toJson(root, writer);
+            new GsonBuilder().setPrettyPrinting().create().toJson(root, writer);
          }
       } catch (Exception e) {
          Bomboaddons.LOGGER.error("[BomboAddons] Failed to save storage cache immediately", e);
@@ -281,34 +344,20 @@ public class StorageTracker {
 
          try {
             JsonObject root = buildRootJson();
-            File storageFile = getStorageFile(getActiveProfileId());
+            File storageFile = getStorageFile();
             CompletableFuture.runAsync(() -> {
                try {
                   storageFile.getParentFile().mkdirs();
-                  FileWriter writer = new FileWriter(storageFile);
-
-                  try {
-                     (new GsonBuilder()).setPrettyPrinting().create().toJson(root, writer);
-                  } catch (Throwable var5) {
-                     try {
-                        writer.close();
-                     } catch (Throwable x2) {
-                        var5.addSuppressed(x2);
-                     }
-
-                     throw var5;
+                  try (FileWriter writer = new FileWriter(storageFile)) {
+                     new GsonBuilder().setPrettyPrinting().create().toJson(root, writer);
                   }
-
-                  writer.close();
                } catch (Exception e) {
                   Bomboaddons.LOGGER.error("[BomboAddons] Failed to save storage cache", e);
                }
-
             });
          } catch (Exception e) {
             Bomboaddons.LOGGER.error("[BomboAddons] Failed to build storage cache JSON", e);
          }
-
       }
    }
 
@@ -412,16 +461,33 @@ public class StorageTracker {
                   if (!stack.isEmpty()) {
                      String name = ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim();
                      if (!name.isEmpty() && !name.contains("Empty ") && !name.contains("Locked") && !name.equals("Back") && !name.equals("Close") && !name.contains(" Page") && !name.equals("Go Back")) {
-                        try {
-                           if (ops == null && mc.level != null) {
-                              ops = RegistryOps.create(NbtOps.INSTANCE, mc.level.registryAccess());
-                           }
-                           if (ops != null) {
-                              Tag tag = (Tag)ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
-                              uncompressedNbtStr = tag.toString();
-                           }
-                        } catch (Exception var17) {
+                        boolean isEmptySack = false;
+                        if (title.contains("Sack") && mc.level != null && mc.player != null) {
+                           try {
+                              List<net.minecraft.network.chat.Component> tooltip = stack.getTooltipLines(net.minecraft.world.item.Item.TooltipContext.of(mc.level), mc.player, net.minecraft.world.item.TooltipFlag.Default.NORMAL);
+                              for (net.minecraft.network.chat.Component c : tooltip) {
+                                 String line = ChatFormatting.stripFormatting(c.getString()).trim().toLowerCase(Locale.ROOT);
+                                 if (line.contains("empty sack") || line.startsWith("stored: 0/")) {
+                                    isEmptySack = true;
+                                    break;
+                                 }
+                              }
+                           } catch (Throwable ignored) {}
+                        }
+                        if (isEmptySack) {
                            uncompressedNbtStr = "";
+                        } else {
+                           try {
+                              if (ops == null && mc.level != null) {
+                                 ops = RegistryOps.create(NbtOps.INSTANCE, mc.level.registryAccess());
+                              }
+                              if (ops != null) {
+                                 Tag tag = (Tag)ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
+                                 uncompressedNbtStr = tag.toString();
+                              }
+                           } catch (Exception var17) {
+                              uncompressedNbtStr = "";
+                           }
                         }
                      } else {
                         uncompressedNbtStr = "";
@@ -644,6 +710,9 @@ public class StorageTracker {
       storageData.clear();
       uncompressedCache.clear();
       slotHashCache.clear();
+      if (loadedProfileId != null && !loadedProfileId.isEmpty()) {
+         profilesData.remove(loadedProfileId);
+      }
       StorageChestWaypoints.clear();
       me.bombo.bomboaddons.BlockHighlight.targetChestPosList.clear();
       me.bombo.bomboaddons.SlotHighlight.clearTargetSlot();

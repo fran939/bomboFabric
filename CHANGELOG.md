@@ -1,5 +1,16 @@
 # BomboAddons Changelog
  
+## [26.2.28.172] - 2026-10-29 (Beta)
+
+### Unified storage.json, Lore Search Syntax, Magmafish vs Lava Fix, GUI Click Waypoints & Sacks 0-Count Filtering (`StorageTracker.java`, `StorageChestWaypoints.java`, `GlobalStorageScreen.java`, `BomboaddonsClient.java`, `AbstractContainerScreenMixin.java`, `SacksBrowserScreen.java`, `SlotHighlight.java`)
+- **Unified `storage.json` Architecture & Zero Profile Leakage:** Migrated profile storage to a single consolidated `storage.json` structured with `profiles: { <id>: { containers: { ... } } }`. Loading a profile loads strictly that profile's containers, preventing previous inventory or storage data (such as Bonemerangs or tracked containers from a main profile) from leaking across profiles. When a new profile is selected that has not tracked chests yet, storage starts completely clean (0 containers, 0 items).
+- **Magmafish vs Lava False Positive Fix:** Fixed `/b storage lava` matching chests with Magmafish (`MAGMA_FISH`). `StorageChestWaypoints` now matches items by clean display name, SkyBlock ID, and vanilla item ID by default, ignoring lore text during standard item searches.
+- **Lore Search Syntax (`l:<lore>` / `lore:<lore>`):** Added explicit lore search syntax (`/b storage l:<lore>` and `/b storage lore:<lore>`). Users can now query lore specifically when intended.
+- **`/b storage` GUI Click-to-Search & Enter Key:** Clicking any item in the `/b storage` GUI or typing in the search bar and pressing Enter now triggers full 3D waypoint creation, text billboards, and cyan chest outlines in the world, matching `/b storage <item>` command behavior.
+- **Instant World Waypoint Removal on Chest Interaction:** Right-clicking or interacting with a highlighted chest in the world immediately purges its waypoint and cyan outline with zero delay.
+- **Instant In-Container Highlight Clearing on Item Click:** Clicking a highlighted item inside a container immediately clears the item slot highlight and resets active query state.
+- **Sacks 0-Amount Filtering:** Excluded all 0-count / empty sack items ("Stored: 0/60.5k", "Empty sack!") from `/b storage` and `SacksBrowserScreen`, displaying only sack items with stored counts greater than zero.
+
 ## [26.2.28.171] - 2026-10-28 (Beta)
 
 ### AutoFishing Fire Veil 5s Cooldown, Sequence Island Filter & Keybind Drop Suppression (`AutoFishing.java`, `AutoSequenceManager.java`, `AutoSequenceExecutor.java`, `KeyboardMixin.java`, `AbstractContainerScreenMixin.java`, `BomboaddonsClient.java`, `AutoSequenceVisualScreen.java`)
