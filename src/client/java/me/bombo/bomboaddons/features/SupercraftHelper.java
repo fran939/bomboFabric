@@ -365,16 +365,25 @@ public class SupercraftHelper {
                   me.bombo.bomboaddons.features.museum.MuseumManager.ArmorSetStatus armorStatus =
                         me.bombo.bomboaddons.features.museum.MuseumManager.getArmorSetStatus(sbId);
                   if (armorStatus != null && armorStatus.totalPieces > 1) {
-                     String armorLine;
                      if (armorStatus.isFullSet) {
-                        armorLine = "§7Armor Set: §e" + armorStatus.setName + " §a(Full set in storage: " + armorStatus.totalPieces + "/" + armorStatus.totalPieces + ")";
+                        String armorLine = "§7Armor Set: §e" + armorStatus.setName + " §a(Full set in storage: " + armorStatus.totalPieces + "/" + armorStatus.totalPieces + ")";
+                        additions.add(new LoreAddition("armorSetStatus", Component.literal(armorLine), s.getLorePos("museumDonatable", "BOTTOM"), s.getLoreOrder("museumDonatable", 7) + 1));
                      } else {
                         String missingStr = String.join(", ", armorStatus.missingPieces);
-                        armorLine = "§7Armor Set: §e" + armorStatus.setName + " §7(Missing " + armorStatus.missingPieces.size() + ": §c" + missingStr + "§7)";
+                        String reqLine = "§cRequires full armor set to donate to Museum (" + armorStatus.ownedPieces + "/" + armorStatus.totalPieces + ")";
+                        additions.add(new LoreAddition("museumRequiresSet", Component.literal(reqLine), s.getLorePos("museumDonatable", "BOTTOM"), s.getLoreOrder("museumDonatable", 7)));
+                        String armorLine = "§7Armor Set: §e" + armorStatus.setName + " §7(Missing " + armorStatus.missingPieces.size() + ": §c" + missingStr + "§7)";
+                        additions.add(new LoreAddition("armorSetStatus", Component.literal(armorLine), s.getLorePos("museumDonatable", "BOTTOM"), s.getLoreOrder("museumDonatable", 7) + 1));
                      }
-                     additions.add(new LoreAddition("armorSetStatus", Component.literal(armorLine), s.getLorePos("museumDonatable", "BOTTOM"), s.getLoreOrder("museumDonatable", 7) + 1));
                   }
                }
+            } else if (s.showMuseumDonatable && me.bombo.bomboaddons.features.museum.MuseumManager.getArmorSetStatus(sbId) != null && me.bombo.bomboaddons.features.museum.MuseumManager.getArmorSetStatus(sbId).totalPieces > 1) {
+               me.bombo.bomboaddons.features.museum.MuseumManager.ArmorSetStatus armorStatus = me.bombo.bomboaddons.features.museum.MuseumManager.getArmorSetStatus(sbId);
+               String missingStr = String.join(", ", armorStatus.missingPieces);
+               String armorLine = armorStatus.isFullSet
+                     ? ("§7Armor Set: §e" + armorStatus.setName + " §a(Full set in storage: " + armorStatus.totalPieces + "/" + armorStatus.totalPieces + ")")
+                     : ("§7Armor Set: §e" + armorStatus.setName + " §7(Missing " + armorStatus.missingPieces.size() + ": §c" + missingStr + "§7)");
+               additions.add(new LoreAddition("armorSetStatus", Component.literal(armorLine), s.getLorePos("museumDonatable", "BOTTOM"), s.getLoreOrder("museumDonatable", 7)));
             } else if (s.showMuseumDonated && ea != null) {
                boolean donated = ea.getBoolean("donated_museum").orElse(false)
                   || (ea.getByte("donated_museum").orElse((byte)0) == 1)

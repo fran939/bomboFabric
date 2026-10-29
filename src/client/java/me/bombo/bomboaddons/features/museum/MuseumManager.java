@@ -519,8 +519,13 @@ public class MuseumManager {
         if (skyblockId == null || skyblockId.isEmpty()) return null;
         String id = skyblockId.toUpperCase(Locale.ROOT);
         MuseumEntry entry = CATALOG.get(id);
-        if (entry == null || entry.armorSet == null || entry.armorSet.isEmpty()) return null;
-        if (!isArmorPiece(id)) return null;
+        String armorSet = entry != null ? entry.armorSet : null;
+        if (armorSet == null || armorSet.isEmpty()) {
+            if (id.endsWith("_HELMET") || id.endsWith("_CHESTPLATE") || id.endsWith("_LEGGINGS") || id.endsWith("_BOOTS") || id.endsWith("_BELT")) {
+                armorSet = id.replaceAll("_(HELMET|CHESTPLATE|LEGGINGS|BOOTS|BELT)$", "");
+            }
+        }
+        if (armorSet == null || armorSet.isEmpty()) return null;
 
         List<MuseumEntry> setPieces = new ArrayList<>();
         for (MuseumEntry e : CATALOG.values()) {

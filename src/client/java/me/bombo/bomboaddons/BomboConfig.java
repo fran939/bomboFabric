@@ -707,7 +707,7 @@ public class BomboConfig {
       public boolean autoExperiments = false;
       public int experimentClickDelay = 200;
       public int experimentClickType = 1;
-      public boolean experimentAutoClose = false;
+      public boolean experimentAutoClose = true;
       public int experimentSerumCount = 0;
       public boolean experimentGetMaxXp = false;
       public boolean clearWaterAndLava = false;

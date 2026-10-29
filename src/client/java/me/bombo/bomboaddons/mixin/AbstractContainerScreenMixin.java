@@ -627,19 +627,8 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          if (ComposterHelper.onMouseClicked((AbstractContainerScreen)(Object)this, this.hoveredSlot, event.button())) {
             cir.setReturnValue(true);
          } else {
-            if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
-               int hColor = SlotHighlight.getHighlightColor(this.hoveredSlot.getItem(), this.hoveredSlot.getItem().getHoverName().getString());
-               if (hColor != 0 || SlotHighlight.isTargetSlot(this.hoveredSlot.index)) {
-                  SlotHighlight.clearTargetSlot();
-                  me.bombo.bomboaddons.features.StorageChestWaypoints.clear();
-                  me.bombo.bomboaddons.features.StorageChestWaypoints.clearActiveQuery();
-               }
-            }
-            if (this.hoveredSlot == null || !SlotHighlight.isTargetSlot(this.hoveredSlot.index) && this.hoveredSlot.index != 45 && this.hoveredSlot.index != 53) {
-               SlotHighlight.clearTargetSlot();
-               if (!me.bombo.bomboaddons.features.StorageChestWaypoints.hasMatches()) {
-                  me.bombo.bomboaddons.features.StorageChestWaypoints.clearActiveQuery();
-               }
+            if (this.hoveredSlot != null && SlotHighlight.isTargetSlot(this.hoveredSlot.index)) {
+               SlotHighlight.getTargetSlots().remove(this.hoveredSlot.index);
             }
          }
       }

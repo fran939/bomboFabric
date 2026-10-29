@@ -39,9 +39,9 @@ public class AutoExperiments {
       LOW(5, 5),
       MEDIUM(7, 5),
       HIGH(9, 7),
-      GRAND(9, 7),
-      SUPREME(9, 7),
-      TRANSCENDENT(9, 7),
+      GRAND(11, 7),
+      SUPREME(11, 7),
+      TRANSCENDENT(11, 7),
       METAPHYSICAL(12, 9);
 
       public final int chronoTarget;
@@ -140,10 +140,10 @@ public class AutoExperiments {
       JsonArray profiles = null;
       if (el.isJsonObject()) {
          JsonObject obj = el.getAsJsonObject();
-         if (obj.has("all_profiles") && obj.get("all_profiles").isJsonArray()) {
-            profiles = obj.getAsJsonArray("all_profiles");
-         } else if (obj.has("profiles") && obj.get("profiles").isJsonArray()) {
+         if (obj.has("profiles") && obj.get("profiles").isJsonArray()) {
             profiles = obj.getAsJsonArray("profiles");
+         } else if (obj.has("all_profiles") && obj.get("all_profiles").isJsonArray()) {
+            profiles = obj.getAsJsonArray("all_profiles");
          } else if (obj.has("members") && obj.get("members").isJsonObject()) {
             return extractSerumsFromMembers(obj.getAsJsonObject("members"));
          }
@@ -278,7 +278,7 @@ public class AutoExperiments {
       ++tickCount;
       Minecraft mc = Minecraft.getInstance();
       BomboConfig.Settings config = BomboConfig.get();
-      if (mc.player != null && !config.hideCheats && config.autoExperiments) {
+      if (mc.player != null && !config.hideCheats && (config.autoExperiments || config.experimentAutoClose)) {
          String title = mc.gui.screen() != null ? mc.gui.screen().getTitle().getString().trim() : "";
          if (mc.gui.screen() == null) {
             if (!lastDetectedTitle.isEmpty()) {
@@ -372,6 +372,34 @@ public class AutoExperiments {
          ItemStack timerStack = ((Slot)slots.get(timerSlot)).getItem();
          boolean isInputPhase = isClock(timerStack);
          boolean isShowingPhase = isGlowstone(timerStack) || isGlowItem(timerStack);
+         int currentRound = timerStack.getCount();
+         if (currentRound <= 1) {
+            String hName = timerStack.getHoverName().getString();
+            if (hName.contains("Round: ")) {
+               try {
+                  currentRound = Integer.parseInt(hName.replaceAll("[^0-9]", "").trim());
+               } catch (Exception ignored) {}
+            }
+         }
+
+         ExperimentTier tier = detectTier(lastDetectedTitle, screen, true);
+         lastDetectedTier = tier;
+         int targetRound = getTargetRound(true, tier);
+         int serums = getEffectiveSerumCount();
+         boolean autoCloseEnabled = config.experimentAutoClose || config.autoExperiments;
+
+         // Check if target round is already reached or completed
+         if (autoCloseEnabled && (currentRound >= targetRound || chronomatronOrder.size() >= targetRound) && (currentRound > 2 || chronomatronOrder.size() > 2)) {
+            if (clicks >= chronomatronOrder.size()) {
+               mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto Experiments: Target chain reached (§e"
+                     + targetRound + "§a) for §d" + tier.name() + " §7(Serums: §e" + serums + "§7)! Closing."));
+               closeScreenSafely(mc);
+               return;
+            }
+         }
+
+         if (!config.autoExperiments) return;
+
          boolean terracottaFound = false;
          int currentFlashedSlot = -1;
 
@@ -447,12 +475,7 @@ public class AutoExperiments {
                      mc.player.sendSystemMessage(Component.literal("§7[Bombo] Chrono: Round finished, waiting for next note..."));
                   }
 
-                  ExperimentTier tier = detectTier(lastDetectedTitle, screen, true);
-                  lastDetectedTier = tier;
-                  int targetRound = getTargetRound(true, tier);
-                  int serums = getEffectiveSerumCount();
-
-                  if (config.experimentAutoClose && chronomatronOrder.size() >= targetRound && chronomatronOrder.size() > 2) {
+                  if (autoCloseEnabled && (chronomatronOrder.size() >= targetRound || currentRound >= targetRound) && (chronomatronOrder.size() > 2 || currentRound > 2)) {
                      mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto Experiments: Target chain reached (§e"
                            + targetRound + "§a) for §d" + tier.name() + " §7(Serums: §e" + serums + "§7)! Closing."));
                      closeScreenSafely(mc);
@@ -644,9 +667,14 @@ public class AutoExperiments {
    }
    private static void checkSuperpairsAutoClose(Minecraft mc, AbstractContainerScreen<?> screen) {
       BomboConfig.Settings config = BomboConfig.get();
-      if (!config.experimentAutoClose) return;
+      if (!config.experimentAutoClose && !config.autoExperiments) return;
 
       boolean isFinished = false;
+      String cleanTitle = lastDetectedTitle.toLowerCase();
+      if (cleanTitle.contains("experiment over") || cleanTitle.contains("game over")) {
+         isFinished = true;
+      }
+
       List<Slot> slots = screen.getMenu().slots;
       for (int i = 0; i < 54 && i < slots.size(); i++) {
          Slot s = slots.get(i);
@@ -656,7 +684,8 @@ public class AutoExperiments {
                String name = stack.getHoverName().getString().toLowerCase();
                if (name.contains("remaining clicks: 0") || name.contains("clicks remaining: 0")
                      || name.contains("0 clicks left") || name.contains("0 clicks remaining")
-                     || name.contains("game over") || name.contains("experiment over") || name.contains("no clicks left")) {
+                     || name.contains("clicks: 0") || name.contains("game over")
+                     || name.contains("experiment over") || name.contains("no clicks left")) {
                   isFinished = true;
                   break;
                }
@@ -666,7 +695,8 @@ public class AutoExperiments {
                      String lineStr = line.getString().toLowerCase();
                      if (lineStr.contains("remaining clicks: 0") || lineStr.contains("clicks remaining: 0")
                            || lineStr.contains("0 clicks left") || lineStr.contains("0 clicks remaining")
-                           || lineStr.contains("game over") || lineStr.contains("experiment over") || lineStr.contains("no clicks left")) {
+                           || lineStr.contains("clicks: 0") || lineStr.contains("game over")
+                           || lineStr.contains("experiment over") || lineStr.contains("no clicks left")) {
                         isFinished = true;
                         break;
                      }
@@ -680,7 +710,7 @@ public class AutoExperiments {
       if (isFinished) {
          if (superpairsDoneTime == 0L) {
             superpairsDoneTime = System.currentTimeMillis();
-         } else if (System.currentTimeMillis() - superpairsDoneTime > 750L) {
+         } else if (System.currentTimeMillis() - superpairsDoneTime > 250L) {
             mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto Experiments: Superpairs completed! Closing."));
             closeScreenSafely(mc);
             superpairsDoneTime = 0L;

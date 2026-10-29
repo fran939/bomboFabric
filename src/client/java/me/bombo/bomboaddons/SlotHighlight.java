@@ -78,7 +78,7 @@ public class SlotHighlight {
                   if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonated(sbId, stack)) {
                      return -1442775296;
                   }
-               } else if (norm.equals("sack") || norm.equals("sacks")) {
+               } else if (norm.contains("sack")) {
                   if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
                      if (!BomboConfig.get().sacksHideIfDontOwnSack || me.bombo.bomboaddons.features.sacks.SacksManager.playerHasSack(sbId)) {
                         return -1442775296;

@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.179] - 2026-10-29 (Beta)
+
+### Auto Experiments Auto-Close, Serum Threading & Profile Fix, Silent Accept/ClearChat, SNBT Text Extraction, Container Highlight Persistence, and Equipment Armor Set Status (`AutoExperiments.java`, `BomboConfig.java`, `BomboaddonsClient.java`, `LF.java`, `StorageChestWaypoints.java`, `SlotHighlight.java`, `MuseumManager.java`, `SupercraftHelper.java`, `AbstractContainerScreenMixin.java`)
+- **Auto Experiments Auto-Close Default & Grand Cap (`AutoExperiments.java`, `BomboConfig.java`):** Set `experimentAutoClose` to enabled (`true`) by default in `BomboConfig`. Updated Grand Chronomatron target round to 12 (the official bonus click cap round), and dynamically reads the clock item stack count in slot 49 on every tick, auto-closing safely once the target round is reached or clock count exceeds target. Enhanced Superpairs auto-close to trigger immediately on 0 remaining clicks.
+- **Serum Async Threading & Profiles Resolution (`BomboaddonsClient.java`):** Resolved `RenderSystem called from wrong thread` crashes in `/b debug data serum` and `/b serum` by dispatching all chat output on Minecraft's main execution loop (`mc.execute`). Swapped profile priority to inspect `profiles` before `all_profiles` so full member data (`serums_drank`) is accurately parsed for active and highest profile counts.
+- **Silent `/b accept` & `/b clearchat` (`BomboaddonsClient.java`):** Removed chat confirmation messages when running `/b accept` on dialogue clicks and `/b clearchat` / `/b chat clear` / `/b debug chat clear`, executing commands silently without cluttering the chat log.
+- **SNBT Regex & Lore Search in Chest Storage (`StorageChestWaypoints.java`, `LF.java`, `SlotHighlight.java`):** Fixed regex in `extractCleanText` to match unquoted SNBT keys (`text:"Raw Beef"`), displaying clean item names instead of raw component JSON. Preserved `l:` prefix when routing chest searches from `/lbc` to `StorageChestWaypoints.search()`. Expanded sack and museum needle matching to support `fits in sack`, `fitsinsack`, `sacks`, and `sack`.
+- **In-Container Highlight Persistence (`AbstractContainerScreenMixin.java`):** Prevented clicking an individual item in a container from globally clearing all chest waypoints and other slot highlights.
+- **Equipment Armor Set Status (`MuseumManager.java`, `SupercraftHelper.java`):** Extended `getArmorSetStatus` to support set equipment (such as `ADAPTIVE_BELT`) by associating it with its base armor set (`Adaptive Armor`), displaying the missing/owned pieces count on the tooltip.
+
 ## [26.2.28.178] - 2026-10-29 (Beta)
 
 ### Auto Experiments Auto-Close, /b debug data serum, /b accept Chat Behavior, Garden Break Inventory Persistence, Chest Sacks Lore, Museum Equipment Filter, and Remote Sacks Web & Capacity Fixes (`AutoExperiments.java`, `BomboaddonsClient.java`, `GardenMovement.java`, `SacksManager.java`, `MuseumManager.java`, `SupercraftHelper.java`, `LF.java`, `ChatMixin.java`, `IChatComponent.java`, `museum_sacks_service.js`)

@@ -86,15 +86,13 @@ public final class StorageChestWaypoints {
             raw = raw.substring(1, raw.length() - 1);
         }
         raw = raw.replaceAll("§.", "");
-        if (raw.contains("\"text\"")) {
-            Matcher m = Pattern.compile("\"text\"\\s*:\\s*\"([^\"]*)\"").matcher(raw);
-            StringBuilder sb = new StringBuilder();
-            while (m.find()) {
-                sb.append(m.group(1)).append(" ");
-            }
-            if (sb.length() > 0) {
-                return sb.toString().trim();
-            }
+        Matcher m = Pattern.compile("(?:\"text\"|\\btext)\\s*:\\s*\"([^\"]*)\"").matcher(raw);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            sb.append(m.group(1)).append(" ");
+        }
+        if (sb.length() > 0) {
+            return sb.toString().trim();
         }
         return raw.trim();
     }
@@ -412,7 +410,7 @@ public final class StorageChestWaypoints {
                 if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonated(sbId)) return true;
             }
 
-            if (needle.equals("sack") || needle.equals("sacks")) {
+            if (needle.equals("sack") || needle.equals("sacks") || needle.contains("sack")) {
                 if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
                     if (!BomboConfig.get().sacksHideIfDontOwnSack || me.bombo.bomboaddons.features.sacks.SacksManager.playerHasSack(sbId)) {
                         return true;
@@ -422,7 +420,7 @@ public final class StorageChestWaypoints {
 
             if (searchLore) {
                 if (me.bombo.bomboaddons.features.museum.MuseumManager.isDonatable(sbId)) {
-                    if ("donatabletomuseum".contains(needle)) return true;
+                    if ("donatabletomuseum".contains(needle) || needle.contains("museum") || needle.contains("donat")) return true;
                     String counts = me.bombo.bomboaddons.features.museum.MuseumManager.getCountsAsDescription(sbId);
                     if (counts != null && counts.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "").contains(needle)) return true;
                 }
@@ -431,7 +429,7 @@ public final class StorageChestWaypoints {
                 }
                 if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
                     if (!BomboConfig.get().sacksHideIfDontOwnSack || me.bombo.bomboaddons.features.sacks.SacksManager.playerHasSack(sbId)) {
-                        if ("fitsinsacks".contains(needle)) return true;
+                        if ("fitsinsacks".contains(needle) || needle.contains("fitsin") || needle.contains("sack")) return true;
                         String sName = me.bombo.bomboaddons.features.sacks.SacksManager.getPrimarySackName(sbId);
                         if (sName != null && sName.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "").contains(needle)) return true;
                     }

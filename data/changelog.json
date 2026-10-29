@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.179",
+    "date": "2026-10-29",
+    "changes": [
+      "+ Auto Experiments Auto-Close: enabled by default, Grand Chronomatron target round set to 12, clock stack count tracking in slot 49, and instant 0 clicks Superpairs auto-close",
+      "+ Serum Async Threading & Profiles Resolution: wrapped chat output on main render thread to prevent crash, prioritized profiles member data for serum count",
+      "+ Silent /b accept & /b clearchat: removed chat feedback confirmation messages for completely silent operation",
+      "+ SNBT Regex & Chest Lore Search: fixed unquoted text tag parsing in SNBT to display clean item names in /lbc, preserved l: prefix for chest search waypoints",
+      "+ In-Container Highlight Persistence: clicking single item in container no longer removes all active waypoints and other slot highlights",
+      "+ Equipment Armor Set Status: Adaptive Belt and set equipment resolve base armor set (Adaptive Armor) to display set pieces status"
+    ]
+  },
+  {
     "version": "26.2.28.178",
     "date": "2026-10-29",
     "changes": [

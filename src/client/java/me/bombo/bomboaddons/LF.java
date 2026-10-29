@@ -328,7 +328,8 @@ public class LF {
       }
 
       if (chestHitCount > 0 && query != null && !query.trim().isEmpty()) {
-         int waypoints = me.bombo.bomboaddons.features.StorageChestWaypoints.search(query.trim());
+         String wpQuery = (searchLore ? "l:" : "") + query.trim();
+         int waypoints = me.bombo.bomboaddons.features.StorageChestWaypoints.search(wpQuery);
          if (waypoints > 0) {
             mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §7Found §e" + waypoints + " §7island chest"
                   + (waypoints == 1 ? "" : "s") + " holding §b" + query.trim() + " §8- §bwaypoints active in world!"));
