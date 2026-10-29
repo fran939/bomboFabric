@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.175] - 2026-10-29 (Beta)
+
+### Player Museum & Sacks Profile Web UI & API, In-Game Donation Interception, Sack of Sacks Sync, /b clearchat, and Storage Waypoint Fixes (`MuseumManager.java`, `SacksManager.java`, `museum_sacks_service.js`, `server.js`, `index.js`, `BomboConfig.java`, `ConfigCustomWidgets.java`, `ChatMixin.java`, `AbstractContainerScreenMixin.java`, `StorageChestWaypoints.java`, `SlotHighlight.java`, `BomboaddonsClient.java`, `SkyblockUtils.java`)
+- **Player Museum Web View & API (`/mod/museum/:user` & `/museum/:user`):** Added player profile museum catalog endpoints on both web UI and REST JSON API (`https://bombo.dpdns.org/mod/museum/bomboclas` and `https://api.bombo.dpdns.org/mod/museum/bomboclas`). Dynamically queries player UUID, decodes Hypixel Museum data, and displays donated items, total XP contribution, categories, and upgrade chains.
+- **Player Sacks Web View & API (`/mod/sacks/:user` & `/sacks/:user`):** Added player sack inventory endpoints (`https://bombo.dpdns.org/mod/sacks/bomboclas` and `https://api.bombo.dpdns.org/mod/sacks/bomboclas`). Decodes `sacks_bag` NBT and stored item counts across all sacks.
+- **API Root Endpoints Index (`https://api.bombo.dpdns.org/`):** Updated the API index root to catalog all modern endpoints including Museum, Sacks, Profiles, Networth, Changelog, and Releases.
+- **In-Game Chat Museum Donation Interception (`ChatMixin.java`, `MuseumManager.java`):** Added real-time chat listener for Museum donations (`You donated your <item> to the <section> section of the Museum! +X SkyBlock XP`). Instantly registers the donated item locally and removes "Donatable" lore without waiting for API sync.
+- **Museum Hide Special Items Config Toggle (`BomboConfig.java`, `ConfigCustomWidgets.java`):** Added `museumHideSpecialItems` ("Museum Hide Special Items from Donatable") toggle in `/b config` Lore Additions to filter out special category items.
+- **Sack of Sacks Container & API Sync (`AbstractContainerScreenMixin.java`, `SacksManager.java`):** Opening the "Sack of Sacks" container GUI automatically scans and registers all owned sacks into persistent local cache (`config/bomboaddons/owned_sacks.json`), and syncs automatically from the API on login and profile swap.
+- **Owned Sacks Lore & Search Enforcement (`StorageChestWaypoints.java`, `SlotHighlight.java`):** When `sacksHideIfDontOwnSack` is enabled, `/lbc sacks` and `/b storage sacks` and container slot highlights only match and highlight items that can actually be stored into currently owned sacks.
+- **Persistent Chest Waypoints & Non-Premature Deletion (`StorageChestWaypoints.java`, `BomboaddonsClient.java`):** Fixed waypoint `verify()` doing a naive name string check instead of `matchesItem()`, preventing waypoints from disappearing after half a second on sack and museum queries. Removed premature waypoint deletion on right-clicking chests in `UseBlockCallback.EVENT`.
+- **In-Container Highlight Click Dismissal (`AbstractContainerScreenMixin.java`):** Clicking a highlighted item inside a container GUI now correctly dismisses the item slot highlight, active search query, and chest waypoints.
+- **`/b debug chat clear`, `/b chat clear`, and `/b clearchat` (`BomboaddonsClient.java`):** Added commands to immediately clear the Minecraft in-game chat log.
+
 ## [26.2.28.174] - 2026-10-29 (Beta)
 
 ### Complete Museum & Sacks API, Upgrade Chain Mapping, Donatable & Sacks Lore Additions, and /lbc & Storage Search Integration (`MuseumManager.java`, `SacksManager.java`, `museum_sacks_service.js`, `SupercraftHelper.java`, `SlotHighlight.java`, `StorageChestWaypoints.java`, `GlobalStorageScreen.java`, `BomboaddonsClient.java`, `BomboConfig.java`)

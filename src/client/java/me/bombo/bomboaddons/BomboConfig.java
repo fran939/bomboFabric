@@ -781,6 +781,7 @@ public class BomboConfig {
       public boolean showMuseumDonated = false;
       public boolean showMuseumDonatable = true;
       public boolean museumHideAlreadyDonated = false;
+      public boolean museumHideSpecialItems = false;
       public boolean showSacksFit = true;
       public boolean sacksHideIfDontOwnSack = false;
       public boolean showSkyblockId = false;

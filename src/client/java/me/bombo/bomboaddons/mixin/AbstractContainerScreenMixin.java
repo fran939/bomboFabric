@@ -102,6 +102,17 @@ public abstract class AbstractContainerScreenMixin extends Screen {
                }
             }
          }
+         if (titleClean.contains("Sack of Sacks") && ((AbstractContainerScreen)(Object)this).getMenu() != null) {
+            for (Slot s : ((AbstractContainerScreen)(Object)this).getMenu().slots) {
+               if (s != null && s.index < 54 && s.hasItem()) {
+                  ItemStack st = s.getItem();
+                  String sId = me.bombo.bomboaddons.SkyblockUtils.getStrictSkyblockId(st);
+                  if (sId != null && !sId.isEmpty()) {
+                     me.bombo.bomboaddons.features.sacks.SacksManager.recordOwnedSack(sId);
+                  }
+               }
+            }
+         }
       } catch (Throwable ignored) {}
 
       ItemListOverlay.updateLayout(this.leftPos, this.imageWidth, this.topPos, this.width, this.height);
@@ -617,9 +628,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
             cir.setReturnValue(true);
          } else {
             if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
-               int hColor = SlotHighlight.getHighlightColor(this.hoveredSlot.getItem().getHoverName().getString());
-               if (hColor != 0) {
+               int hColor = SlotHighlight.getHighlightColor(this.hoveredSlot.getItem(), this.hoveredSlot.getItem().getHoverName().getString());
+               if (hColor != 0 || SlotHighlight.isTargetSlot(this.hoveredSlot.index)) {
                   SlotHighlight.clearTargetSlot();
+                  me.bombo.bomboaddons.features.StorageChestWaypoints.clear();
                   me.bombo.bomboaddons.features.StorageChestWaypoints.clearActiveQuery();
                }
             }

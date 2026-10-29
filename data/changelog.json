@@ -1,5 +1,20 @@
 [
   {
+    "version": "26.2.28.175",
+    "date": "2026-10-29",
+    "changes": [
+      "+ Player Museum & Sacks Web UI & API: live at https://bombo.dpdns.org/mod/museum/:user and /mod/sacks/:user",
+      "+ API Root Directory: updated https://api.bombo.dpdns.org/ to expose all endpoints including Museum, Sacks & Profiles",
+      "+ Local Museum chat donation interception: immediately records in-game donations and updates tooltips without API delay",
+      "+ Museum Hide Special Items toggle in /b config to filter out special items from Donatable lore",
+      "+ Sack of Sacks container auto-scan & API sync into persistent local cache for owned sacks detection",
+      "+ Enforced owned sacks check for /lbc sacks, /b storage sacks, and slot highlights when 'Hide if don't own sack' is enabled",
+      "+ Fixed chest waypoints disappearing after half a second by using matchesItem() in verification and preventing click clearing",
+      "+ Clicking highlighted items inside container GUI now dismisses slot highlights and chest waypoints",
+      "+ /b debug chat clear, /b chat clear, and /b clearchat commands to immediately clear Minecraft chat"
+    ]
+  },
+  {
     "version": "26.2.28.174",
     "date": "2026-10-29",
     "changes": [

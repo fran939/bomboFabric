@@ -80,7 +80,9 @@ public class SlotHighlight {
                   }
                } else if (norm.equals("sack") || norm.equals("sacks")) {
                   if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
-                     return -1442775296;
+                     if (!BomboConfig.get().sacksHideIfDontOwnSack || me.bombo.bomboaddons.features.sacks.SacksManager.playerHasSack(sbId)) {
+                        return -1442775296;
+                     }
                   }
                } else if (isLore) {
                   if (norm.equals("museum") && me.bombo.bomboaddons.features.museum.MuseumManager.isMuseumItem(sbId)) {

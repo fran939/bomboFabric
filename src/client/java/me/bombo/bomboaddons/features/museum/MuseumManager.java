@@ -4,28 +4,36 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.SkyblockUtils;
 import me.bombo.bomboaddons.util.BomboApiUrl;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Authoritative Museum catalog and player donation tracking manager.
- * Resolves donation eligibility, transitive upgrade chains, and SkyBlock XP rewards.
+ * Resolves donation eligibility, transitive upgrade chains, armor set matching,
+ * in-game donation chat detection, and SkyBlock XP rewards.
  */
 public class MuseumManager {
     public static class MuseumEntry {
@@ -53,6 +61,8 @@ public class MuseumManager {
 
     private static final Map<String, MuseumEntry> CATALOG = new ConcurrentHashMap<>();
     private static final Set<String> DONATED_IDS = ConcurrentHashMap.newKeySet();
+    private static final Path STORAGE_FILE = Path.of("config", "bomboaddons", "museum_donated.json");
+    private static final Pattern DONATION_CHAT_PATTERN = Pattern.compile("You donated your (.+?) to the (.+?) section of the Museum!(?: \\+(\\d+) SkyBlock XP)?", Pattern.CASE_INSENSITIVE);
     private static boolean initialized = false;
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
@@ -66,6 +76,7 @@ public class MuseumManager {
     public static synchronized void init() {
         if (initialized && !CATALOG.isEmpty()) return;
         loadBundledData();
+        loadDonatedFromDisk();
         refreshFromApiAsync();
         initialized = true;
     }
@@ -78,9 +89,41 @@ public class MuseumManager {
             if (in != null) {
                 parseJson(new InputStreamReader(in, StandardCharsets.UTF_8));
             }
-        } catch (Exception e) {
-            // Log or ignore
-        }
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Loads tracked donated items from local storage config/bomboaddons/museum_donated.json.
+     */
+    public static synchronized void loadDonatedFromDisk() {
+        try {
+            if (Files.exists(STORAGE_FILE)) {
+                String str = Files.readString(STORAGE_FILE, StandardCharsets.UTF_8);
+                JsonElement elem = JsonParser.parseString(str);
+                if (elem.isJsonArray()) {
+                    for (JsonElement el : elem.getAsJsonArray()) {
+                        String id = el.getAsString().toUpperCase(Locale.ROOT);
+                        DONATED_IDS.add(id);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Saves tracked donated items to local storage config/bomboaddons/museum_donated.json.
+     */
+    public static synchronized void saveDonatedToDisk() {
+        try {
+            if (STORAGE_FILE.getParent() != null && !Files.exists(STORAGE_FILE.getParent())) {
+                Files.createDirectories(STORAGE_FILE.getParent());
+            }
+            JsonArray arr = new JsonArray();
+            for (String id : DONATED_IDS) {
+                arr.add(id);
+            }
+            Files.writeString(STORAGE_FILE, arr.toString(), StandardCharsets.UTF_8);
+        } catch (Exception ignored) {}
     }
 
     /**
@@ -103,11 +146,109 @@ public class MuseumManager {
         });
     }
 
+    /**
+     * Syncs player's museum donations directly from the backend API.
+     */
+    public static void syncPlayerDonationsAsync(String username, String profileId) {
+        if (username == null || username.trim().isEmpty() || username.equalsIgnoreCase("Player")) return;
+        CompletableFuture.runAsync(() -> {
+            try {
+                String url = BomboApiUrl.api("/mod/museum/" + encode(username.trim()));
+                if (profileId != null && !profileId.isEmpty()) {
+                    url += "?profile=" + encode(profileId);
+                }
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Accept", "application/json")
+                        .timeout(Duration.ofSeconds(10))
+                        .GET()
+                        .build();
+                HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+                if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isEmpty()) {
+                    JsonObject root = JsonParser.parseString(resp.body()).getAsJsonObject();
+                    if (root.has("donatedIds") && root.get("donatedIds").isJsonArray()) {
+                        int added = 0;
+                        for (JsonElement el : root.getAsJsonArray("donatedIds")) {
+                            String id = el.getAsString().toUpperCase(Locale.ROOT);
+                            if (DONATED_IDS.add(id)) {
+                                added++;
+                            }
+                        }
+                        if (root.has("specialItems") && root.get("specialItems").isJsonArray()) {
+                            for (JsonElement el : root.getAsJsonArray("specialItems")) {
+                                if (el.isJsonObject() && el.getAsJsonObject().has("id")) {
+                                    String id = el.getAsJsonObject().get("id").getAsString().toUpperCase(Locale.ROOT);
+                                    if (DONATED_IDS.add(id)) {
+                                        added++;
+                                    }
+                                }
+                            }
+                        }
+                        saveDonatedToDisk();
+                    }
+                }
+            } catch (Exception ignored) {}
+        });
+    }
+
+    private static String encode(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return s;
+        }
+    }
+
+    /**
+     * Intercepts chat messages to detect in-game museum donations.
+     * Pattern: "You donated your Rookie Pickaxe to the Mining section of the Museum! +2 SkyBlock XP"
+     */
+    public static void onChatMessage(String rawMessage) {
+        if (rawMessage == null || rawMessage.isEmpty()) return;
+        String clean = ChatFormatting.stripFormatting(rawMessage).trim();
+        if (!clean.contains("donated your") || !clean.contains("Museum!")) return;
+
+        Matcher m = DONATION_CHAT_PATTERN.matcher(clean);
+        if (m.find()) {
+            String itemName = m.group(1).trim();
+            String section = m.group(2).trim();
+
+            String matchedId = null;
+            // 1. Look up exact item name in CATALOG
+            for (MuseumEntry entry : CATALOG.values()) {
+                if (entry.name.equalsIgnoreCase(itemName)) {
+                    matchedId = entry.id;
+                    break;
+                }
+            }
+
+            // 2. Fallback: normalize name into ID
+            if (matchedId == null) {
+                String normalized = itemName.toUpperCase(Locale.ROOT)
+                        .replaceAll("[^A-Z0-9]+", "_")
+                        .replaceAll("^_+|_+$", "");
+                if (CATALOG.containsKey(normalized)) {
+                    matchedId = normalized;
+                } else {
+                    matchedId = normalized;
+                }
+            }
+
+            if (matchedId != null) {
+                recordDonated(matchedId);
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null) {
+                    mc.player.sendSystemMessage(Component.literal("§8[§d🏛️ Museum§8] §aTracked donation: §e" + itemName + " §7(" + section + " Section)!"));
+                }
+            }
+        }
+    }
+
     private static void parseJson(Object input) {
         try {
             JsonObject root;
-            if (input instanceof java.io.Reader) {
-                root = JsonParser.parseReader((java.io.Reader) input).getAsJsonObject();
+            if (input instanceof Reader) {
+                root = JsonParser.parseReader((Reader) input).getAsJsonObject();
             } else {
                 root = JsonParser.parseString((String) input).getAsJsonObject();
             }
@@ -159,7 +300,7 @@ public class MuseumManager {
 
     /**
      * Checks if this item has already been donated to the museum.
-     * Evaluates direct donation, ExtraAttributes tag, and transitive upgrades.
+     * Evaluates direct donation, ExtraAttributes tag, armor set donation, and transitive upgrades.
      */
     public static boolean isDonated(String skyblockId) {
         return isDonated(skyblockId, null);
@@ -172,8 +313,22 @@ public class MuseumManager {
         // 1. Direct recorded donation
         if (DONATED_IDS.contains(id)) return true;
 
-        // 2. Transitive upgrade check: if player donated a higher-tier item, this item is satisfied!
+        // 2. Armor set matching (Hypixel API records base set ID like YOUNG_DRAGON for Young Dragon armor)
         MuseumEntry entry = CATALOG.get(id);
+        if (entry != null && entry.armorSet != null && !entry.armorSet.isEmpty()) {
+            String setUpper = entry.armorSet.toUpperCase(Locale.ROOT);
+            if (DONATED_IDS.contains(setUpper)) {
+                return true;
+            }
+        }
+        if (id.endsWith("_HELMET") || id.endsWith("_CHESTPLATE") || id.endsWith("_LEGGINGS") || id.endsWith("_BOOTS")) {
+            String baseSet = id.replaceAll("_(HELMET|CHESTPLATE|LEGGINGS|BOOTS)$", "");
+            if (DONATED_IDS.contains(baseSet)) {
+                return true;
+            }
+        }
+
+        // 3. Transitive upgrade check: if player donated a higher-tier item, this item is satisfied!
         if (entry != null && entry.upgradesTo != null) {
             for (String upId : entry.upgradesTo) {
                 if (DONATED_IDS.contains(upId)) {
@@ -182,10 +337,11 @@ public class MuseumManager {
             }
         }
 
-        // 3. Check stack ExtraAttributes for donated_museum
+        // 4. Check stack ExtraAttributes for donated_museum
         if (stack != null && !stack.isEmpty()) {
             if (checkDonatedNbt(stack)) {
                 DONATED_IDS.add(id);
+                saveDonatedToDisk();
                 return true;
             }
         }
@@ -213,6 +369,7 @@ public class MuseumManager {
 
     /**
      * Checks if an item is eligible to be donated to the museum.
+     * Honors museumHideSpecialItems toggle to hide special category items.
      */
     public static boolean isDonatable(String skyblockId) {
         return isDonatable(skyblockId, null);
@@ -220,7 +377,17 @@ public class MuseumManager {
 
     public static boolean isDonatable(String skyblockId, ItemStack stack) {
         if (skyblockId == null || skyblockId.isEmpty()) return false;
-        return isMuseumItem(skyblockId) && !isDonated(skyblockId, stack);
+        if (!isMuseumItem(skyblockId)) return false;
+
+        // Toggle: hide special items from donatable
+        if (BomboConfig.get().museumHideSpecialItems) {
+            MuseumEntry entry = getEntry(skyblockId);
+            if (entry != null && "Special".equalsIgnoreCase(entry.category)) {
+                return false;
+            }
+        }
+
+        return !isDonated(skyblockId, stack);
     }
 
     /**
@@ -251,12 +418,15 @@ public class MuseumManager {
 
     public static void recordDonated(String skyblockId) {
         if (skyblockId != null && !skyblockId.isEmpty()) {
-            DONATED_IDS.add(skyblockId.toUpperCase(Locale.ROOT));
+            if (DONATED_IDS.add(skyblockId.toUpperCase(Locale.ROOT))) {
+                saveDonatedToDisk();
+            }
         }
     }
 
     public static void clearDonated() {
         DONATED_IDS.clear();
+        saveDonatedToDisk();
     }
 
     public static Set<String> getDonatedIds() {

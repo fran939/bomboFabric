@@ -780,6 +780,15 @@ public class BomboaddonsClient implements ClientModInitializer {
          });
          return;
       }
+      if (lower.equals("debug chat clear") || lower.equals("chat clear") || lower.equals("clearchat")) {
+         if (mc.gui != null && mc.gui.hud != null && mc.gui.hud.getChat() != null) {
+            mc.gui.hud.getChat().clearMessages(false);
+            if (mc.player != null) {
+               mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §aChat messages cleared."));
+            }
+         }
+         return;
+      }
       if (lower.equals("museum") || lower.startsWith("museum ")) {
          int donatedCount = me.bombo.bomboaddons.features.museum.MuseumManager.getDonatedIds().size();
          if (mc.player != null) {
@@ -1108,25 +1117,6 @@ public class BomboaddonsClient implements ClientModInitializer {
       checkResourcePackStartup();
       UseBlockCallback.EVENT.register((UseBlockCallback) (player, world, hand, hitResult) -> {
          BlockPos pos = hitResult.getBlockPos();
-         me.bombo.bomboaddons.features.StorageChestWaypoints.removeMatchAt(pos);
-         if (!BlockHighlight.targetChestPosList.isEmpty()) {
-            BlockHighlight.targetChestPosList.remove(pos);
-
-            try {
-               BlockState state = world.getBlockState(pos);
-               if (state.getBlock() instanceof ChestBlock) {
-                  ChestType type = (ChestType) state.getValue(BlockStateProperties.CHEST_TYPE);
-                  if (type != ChestType.SINGLE) {
-                     Direction connectedDir = ChestBlock.getConnectedDirection(state);
-                     BlockPos other = pos.relative(connectedDir);
-                     me.bombo.bomboaddons.features.StorageChestWaypoints.removeMatchAt(other);
-                     BlockHighlight.targetChestPosList.remove(other);
-                  }
-               }
-            } catch (Exception var10) {
-            }
-         }
-
          BlockState state = world.getBlockState(pos);
          if (state.getBlock() instanceof ChestBlock || state.getBlock() instanceof net.minecraft.world.level.block.BarrelBlock || state.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock) {
             ChestType type = state.hasProperty(BlockStateProperties.CHEST_TYPE) ? (ChestType) state.getValue(BlockStateProperties.CHEST_TYPE) : ChestType.SINGLE;
@@ -2021,6 +2011,15 @@ public class BomboaddonsClient implements ClientModInitializer {
                                  openMagicFindOptimizer((FabricClientCommandSource) ctx.getSource(), null);
                                  return 1;
                               })));
+                        builder.then(ClientCommands.literal("clearchat").executes((context) -> {
+                           Minecraft cMc = Minecraft.getInstance();
+                           if (cMc.gui != null && cMc.gui.hud != null && cMc.gui.hud.getChat() != null) {
+                              cMc.gui.hud.getChat().clearMessages(false);
+                              ((FabricClientCommandSource) context.getSource()).sendFeedback(
+                                    Component.literal("§8[§bBomboAddons§8] §aChat messages cleared."));
+                           }
+                           return 1;
+                        }));
                         builder.then(ClientCommands.literal("help")
                               .then(ClientCommands.literal("gui").executes((context) -> {
                                  Minecraft mc = Minecraft.getInstance();
@@ -2317,6 +2316,14 @@ public class BomboaddonsClient implements ClientModInitializer {
                                              ((FabricClientCommandSource) context.getSource()).sendFeedback(Component
                                                    .literal("§8[§bBomboAddons§8] §7BomboChat Raw Debug Logs set to: "
                                                          + (BomboConfig.get().debugChat ? "§aENABLED" : "§cDISABLED")));
+                                             return 1;
+                                          })).then(ClientCommands.literal("clear").executes((context) -> {
+                                             Minecraft cMc = Minecraft.getInstance();
+                                             if (cMc.gui != null && cMc.gui.hud != null && cMc.gui.hud.getChat() != null) {
+                                                cMc.gui.hud.getChat().clearMessages(false);
+                                                ((FabricClientCommandSource) context.getSource()).sendFeedback(
+                                                      Component.literal("§8[§bBomboAddons§8] §aChat messages cleared."));
+                                             }
                                              return 1;
                                           })))
                                     .then(ClientCommands.literal("critter").executes((context) -> {
@@ -5813,6 +5820,14 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                       Component.literal("§8[§3Bombo§8]§r §7Chat debug logging: "
                                                             + (s.debugChat ? "§aENABLED" : "§cDISABLED")));
                                                 return 1;
+                                             })).then(ClientCommands.literal("clear").executes((context) -> {
+                                                Minecraft cMc = Minecraft.getInstance();
+                                                if (cMc.gui != null && cMc.gui.hud != null && cMc.gui.hud.getChat() != null) {
+                                                   cMc.gui.hud.getChat().clearMessages(false);
+                                                   ((FabricClientCommandSource) context.getSource()).sendFeedback(
+                                                         Component.literal("§8[§bBomboAddons§8] §aChat messages cleared."));
+                                                }
+                                                return 1;
                                              })))
                                        .then(ClientCommands.literal("events").executes((context) -> {
                                           showDebugApiEvents((FabricClientCommandSource) context.getSource());
@@ -8247,6 +8262,8 @@ public class BomboaddonsClient implements ClientModInitializer {
                String name = client.getUser().getName();
                if (name != null && !name.isEmpty() && !name.equalsIgnoreCase("Player")) {
                   RankCache.fetchAsync(name);
+                  me.bombo.bomboaddons.features.museum.MuseumManager.syncPlayerDonationsAsync(name, null);
+                  me.bombo.bomboaddons.features.sacks.SacksManager.syncPlayerSacksAsync(name, null);
                }
             }
 

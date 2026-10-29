@@ -1,6 +1,7 @@
 package me.bombo.bomboaddons.features;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import me.bombo.bomboaddons.BomboConfig;
 import me.bombo.bomboaddons.BomboRenderUtils;
 import me.bombo.bomboaddons.OrderedSubmitNodeCollector;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
@@ -412,7 +413,11 @@ public final class StorageChestWaypoints {
             }
 
             if (needle.equals("sack") || needle.equals("sacks")) {
-                if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) return true;
+                if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
+                    if (!BomboConfig.get().sacksHideIfDontOwnSack || me.bombo.bomboaddons.features.sacks.SacksManager.playerHasSack(sbId)) {
+                        return true;
+                    }
+                }
             }
 
             if (searchLore) {
@@ -425,9 +430,11 @@ public final class StorageChestWaypoints {
                     if ("donatedtomuseum".contains(needle)) return true;
                 }
                 if (me.bombo.bomboaddons.features.sacks.SacksManager.fitsInSack(sbId)) {
-                    if ("fitsinsacks".contains(needle)) return true;
-                    String sName = me.bombo.bomboaddons.features.sacks.SacksManager.getPrimarySackName(sbId);
-                    if (sName != null && sName.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "").contains(needle)) return true;
+                    if (!BomboConfig.get().sacksHideIfDontOwnSack || me.bombo.bomboaddons.features.sacks.SacksManager.playerHasSack(sbId)) {
+                        if ("fitsinsacks".contains(needle)) return true;
+                        String sName = me.bombo.bomboaddons.features.sacks.SacksManager.getPrimarySackName(sbId);
+                        if (sName != null && sName.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "").contains(needle)) return true;
+                    }
                 }
             }
         }
@@ -511,7 +518,7 @@ public final class StorageChestWaypoints {
             for (String nbt : contents.values()) {
                 if (nbt == null) continue;
                 DecodedItem decoded = getDecoded(nbt);
-                boolean matched = searchLore ? decoded.loreText.contains(needle) : decoded.nameAndId.contains(needle);
+                boolean matched = matchesItem(decoded, needle, searchLore);
                 if (matched) {
                     hitSlots++;
                     quantity += decoded.count;

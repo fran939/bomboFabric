@@ -1069,6 +1069,7 @@ public class ConfigCustomWidgets {
                 new LoreItemDef("museumDonated", "Museum Donated Status", () -> s.showMuseumDonated, v -> s.showMuseumDonated = v),
                 new LoreItemDef("museumDonatable", "Museum Donatable Status", () -> s.showMuseumDonatable, v -> s.showMuseumDonatable = v),
                 new LoreItemDef("museumHideDonated", "Museum Hide If Already Donated", () -> s.museumHideAlreadyDonated, v -> s.museumHideAlreadyDonated = v),
+                new LoreItemDef("museumHideSpecial", "Museum Hide Special Items from Donatable", () -> s.museumHideSpecialItems, v -> s.museumHideSpecialItems = v),
                 new LoreItemDef("sacksFit", "Fits in Sacks Status", () -> s.showSacksFit, v -> s.showSacksFit = v),
                 new LoreItemDef("sacksHideNoSack", "Sacks Hide If Don't Own Sack", () -> s.sacksHideIfDontOwnSack, v -> s.sacksHideIfDontOwnSack = v),
                 new LoreItemDef("skyblockId", "Skyblock Item ID", () -> s.showSkyblockId, v -> s.showSkyblockId = v),

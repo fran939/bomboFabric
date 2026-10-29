@@ -196,6 +196,7 @@ public abstract class ChatMixin implements IChatComponent {
             me.bombo.bomboaddons.features.party.PartyManager.onChatMessage(raw);
             me.bombo.bomboaddons.SkyblockUtils.onChatMessage(raw);
             me.bombo.bomboaddons.features.dungeons.DungeonBossManager.onChatMessage(raw);
+            me.bombo.bomboaddons.features.museum.MuseumManager.onChatMessage(raw);
 
             if (raw.contains("Party >")) {
                int colonIdx = raw.indexOf(':');

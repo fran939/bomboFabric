@@ -77,6 +77,16 @@ public class SkyblockUtils {
          me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.onProfileChanged(pid);
          me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onProfileChanged(pid);
          me.bombo.bomboaddons.features.StorageTracker.onProfileChanged(pid);
+         try {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc != null && mc.getUser() != null) {
+               String uName = mc.getUser().getName();
+               if (uName != null && !uName.isEmpty() && !uName.equalsIgnoreCase("Player")) {
+                  me.bombo.bomboaddons.features.museum.MuseumManager.syncPlayerDonationsAsync(uName, pid);
+                  me.bombo.bomboaddons.features.sacks.SacksManager.syncPlayerSacksAsync(uName, pid);
+               }
+            }
+         } catch (Throwable ignored) {}
       }
    }
 
