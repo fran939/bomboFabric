@@ -4850,9 +4850,38 @@ public class BomboaddonsClient implements ClientModInitializer {
                               }));
                         builder.then(ClientCommands.literal("accept").executes((context) -> {
                            ChatMessageTracker.AcceptInfo info = ChatMessageTracker.findBestAcceptInfo();
-                           if (info != null && info.command != null && !info.command.trim().isEmpty()) {
-                              // Run the clickable chat command silently: no local echo and no bridge post.
-                              executeTracked(info.command.trim());
+                           if (info != null) {
+                              Minecraft mc = Minecraft.getInstance();
+                              boolean isCustomOrDialogue = (info.clickEvent != null && !(info.clickEvent instanceof net.minecraft.network.chat.ClickEvent.RunCommand))
+                                    || (info.command != null && (info.command.startsWith("Custom[") || info.command.contains("dialogue_response")));
+                              if (isCustomOrDialogue && info.clickEvent != null) {
+                                 mc.execute(() -> {
+                                    try {
+                                       net.minecraft.client.gui.screens.Screen screen = mc.gui.screen() != null ? mc.gui.screen() : new net.minecraft.client.gui.screens.ChatScreen("", false);
+                                       me.bombo.bomboaddons.mixin.ScreenAccessor.invokeDefaultHandleGameClickEvent(info.clickEvent, mc, screen);
+                                       if (mc.player != null) {
+                                          mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8]§r §aSimulated click on NPC dialogue response."));
+                                       }
+                                    } catch (Throwable t) {
+                                       if (mc.player != null) {
+                                          mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8]§r §cFailed to simulate dialogue click: " + t.getMessage()));
+                                       }
+                                    }
+                                 });
+                              } else if (info.command != null && !info.command.trim().isEmpty() && !info.command.startsWith("Custom[")) {
+                                 // Run the clickable chat command silently: no local echo and no bridge post.
+                                 executeTracked(info.command.trim());
+                              } else if (info.clickEvent != null) {
+                                 mc.execute(() -> {
+                                    try {
+                                       net.minecraft.client.gui.screens.Screen screen = mc.gui.screen() != null ? mc.gui.screen() : new net.minecraft.client.gui.screens.ChatScreen("", false);
+                                       me.bombo.bomboaddons.mixin.ScreenAccessor.invokeDefaultHandleGameClickEvent(info.clickEvent, mc, screen);
+                                    } catch (Throwable ignored) {}
+                                 });
+                              } else {
+                                 ((FabricClientCommandSource) context.getSource()).sendFeedback(Component
+                                       .literal("§8[§bBombo§8]§r §cNo recent accept link/command found in chat!"));
+                              }
                            } else {
                               ((FabricClientCommandSource) context.getSource()).sendFeedback(Component
                                     .literal("§8[§bBombo§8]§r §cNo recent accept link/command found in chat!"));

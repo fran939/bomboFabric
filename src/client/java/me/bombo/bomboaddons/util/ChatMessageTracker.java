@@ -12,11 +12,31 @@ public class ChatMessageTracker {
 
    public static class AcceptInfo {
       public final String command;
+      public final ClickEvent clickEvent;
+      public final Style style;
       public final String ticketDescription;
 
       public AcceptInfo(String command, String ticketDescription) {
+         this(command, null, null, ticketDescription);
+      }
+
+      public AcceptInfo(String command, ClickEvent clickEvent, Style style, String ticketDescription) {
          this.command = command;
+         this.clickEvent = clickEvent;
+         this.style = style;
          this.ticketDescription = ticketDescription;
+      }
+   }
+
+   public static class ClickAction {
+      public final String command;
+      public final ClickEvent clickEvent;
+      public final Style style;
+
+      public ClickAction(String command, ClickEvent clickEvent, Style style) {
+         this.command = command;
+         this.clickEvent = clickEvent;
+         this.style = style;
       }
    }
 
@@ -43,18 +63,18 @@ public class ChatMessageTracker {
 
    public static synchronized AcceptInfo findBestAcceptInfo() {
       for (Component comp : RECENT_MESSAGES) {
-         String cmd = scanComponentForAccept(comp, true);
-         if (cmd != null && !cmd.trim().isEmpty()) {
+         ClickAction action = scanComponentForAction(comp, true);
+         if (action != null) {
             String desc = extractTicketDescription(comp);
             if (desc == null) desc = lastTicketDescription;
-            return new AcceptInfo(cmd, desc);
+            return new AcceptInfo(action.command, action.clickEvent, action.style, desc);
          }
 
-         String anyCmd = scanComponentForAccept(comp, false);
-         if (anyCmd != null && !anyCmd.trim().isEmpty()) {
+         ClickAction anyAction = scanComponentForAction(comp, false);
+         if (anyAction != null) {
             String desc = extractTicketDescription(comp);
             if (desc == null) desc = lastTicketDescription;
-            return new AcceptInfo(anyCmd, desc);
+            return new AcceptInfo(anyAction.command, anyAction.clickEvent, anyAction.style, desc);
          }
       }
 
@@ -101,7 +121,6 @@ public class ChatMessageTracker {
             return sub;
          }
       } else if (!fullText.isEmpty()) {
-         // If this component was clicked or has an accept command, the text itself might be the ticket description!
          String clean = fullText.replaceAll("(?i)\\[?(click\\s+to\\s+)?(accept|view|open)\\]?", "").trim();
          if (!clean.isEmpty() && clean.length() > 5) {
             return clean;
@@ -118,7 +137,6 @@ public class ChatMessageTracker {
          if (hover instanceof net.minecraft.network.chat.HoverEvent.ShowText showText) {
             return showText.value().getString();
          } else {
-            // In case of custom ShowText serialization
             try {
                for (java.lang.reflect.Method m : hover.getClass().getDeclaredMethods()) {
                   if (m.getParameterCount() == 0 && Component.class.isAssignableFrom(m.getReturnType())) {
@@ -138,6 +156,11 @@ public class ChatMessageTracker {
    }
 
    public static String scanComponentForAccept(Component comp, boolean strictAcceptOnly) {
+      ClickAction action = scanComponentForAction(comp, strictAcceptOnly);
+      return action != null ? action.command : null;
+   }
+
+   public static ClickAction scanComponentForAction(Component comp, boolean strictAcceptOnly) {
       if (comp == null) {
          return null;
       } else {
@@ -145,53 +168,26 @@ public class ChatMessageTracker {
          if (style != null && style.getClickEvent() != null) {
             ClickEvent click = style.getClickEvent();
             String cmd = extractCommand(click);
-            if (cmd != null && !cmd.trim().isEmpty()) {
-                String cmdLower = cmd.toLowerCase();
-                String textLower = comp.getString().toLowerCase();
-                String styleStr = style.toString().toLowerCase();
-                if (strictAcceptOnly) {
-                   if (cmdLower.contains("accept") || textLower.contains("accept") 
-                           || cmdLower.contains("/cb") || textLower.contains("pick up") || textLower.contains("pickup")
-                           || (textLower.contains("click") && (styleStr.contains("green") || styleStr.contains("gold")))) {
-                      return cmd;
-                   }
-                } else {
-                   if (!cmdLower.contains("decline") && !cmdLower.contains("deny") && !cmdLower.contains("cancel") && !cmdLower.contains("ignore")) {
-                      if (cmdLower.startsWith("/") || cmdLower.contains("accept") || textLower.contains("click") || textLower.contains("pick")) {
-                         return cmd;
-                      }
-                   }
-                }
+            if (isActionMatching(click, cmd, comp.getString(), style, strictAcceptOnly)) {
+               return new ClickAction(cmd, click, style);
             }
          }
 
          for(Component sibling : comp.getSiblings()) {
-            String found = scanComponentForAccept(sibling, strictAcceptOnly);
+            ClickAction found = scanComponentForAction(sibling, strictAcceptOnly);
             if (found != null) {
                return found;
             }
          }
 
-         final String[] visited = new String[1];
+         final ClickAction[] visited = new ClickAction[1];
          comp.visit((s, text) -> {
             if (s != null && s.getClickEvent() != null) {
-               String cmd = extractCommand(s.getClickEvent());
-               if (cmd != null && !cmd.trim().isEmpty()) {
-                  String cmdLower = cmd.toLowerCase();
-                  String textLower = text.toLowerCase();
-                  if (strictAcceptOnly) {
-                     if (cmdLower.contains("accept") || textLower.contains("accept")
-                           || cmdLower.contains("/cb") || textLower.contains("pick up") || textLower.contains("pickup")
-                           || textLower.contains("click")) {
-                        visited[0] = cmd;
-                        return java.util.Optional.of(net.minecraft.util.Unit.INSTANCE);
-                     }
-                  } else {
-                     if (!cmdLower.contains("decline") && !cmdLower.contains("deny") && !cmdLower.contains("cancel") && !cmdLower.contains("ignore")) {
-                        visited[0] = cmd;
-                        return java.util.Optional.of(net.minecraft.util.Unit.INSTANCE);
-                     }
-                  }
+               ClickEvent click = s.getClickEvent();
+               String cmd = extractCommand(click);
+               if (isActionMatching(click, cmd, text, s, strictAcceptOnly)) {
+                  visited[0] = new ClickAction(cmd, click, s);
+                  return java.util.Optional.of(net.minecraft.util.Unit.INSTANCE);
                }
             }
             return java.util.Optional.empty();
@@ -200,6 +196,47 @@ public class ChatMessageTracker {
          if (visited[0] != null) return visited[0];
 
          return null;
+      }
+   }
+
+   private static boolean isActionMatching(ClickEvent click, String cmd, String text, Style style, boolean strictAcceptOnly) {
+      if (click == null) return false;
+      String cmdStr = cmd != null ? cmd : click.toString();
+      String cmdLower = cmdStr.toLowerCase();
+      String textLower = text != null ? text.toLowerCase() : "";
+      String styleStr = style != null ? style.toString().toLowerCase() : "";
+
+      boolean isDialogue = cmdLower.contains("dialogue_response");
+      boolean isDecline = cmdLower.contains("decline") || cmdLower.contains("deny") || cmdLower.contains("cancel") 
+                       || cmdLower.contains("ignore") || textLower.contains("decline") || textLower.contains("deny")
+                       || textLower.contains("cancel");
+
+      if (isDecline) return false;
+
+      if (strictAcceptOnly) {
+         if (cmdLower.contains("accept") || textLower.contains("accept") 
+               || cmdLower.contains("/cb") || textLower.contains("pick up") || textLower.contains("pickup")
+               || (textLower.contains("click") && (styleStr.contains("green") || styleStr.contains("gold") || styleStr.contains("yellow")))) {
+            return true;
+         }
+         if (isDialogue) {
+            if (textLower.contains("yes") || textLower.contains("sure") || textLower.contains("confirm") 
+                  || textLower.contains("continue") || textLower.contains("agree") || textLower.contains("ok")
+                  || textLower.contains("[1]") || textLower.contains("1.") || textLower.contains("option 1")
+                  || textLower.contains("talk") || textLower.contains("listen")
+                  || styleStr.contains("green") || styleStr.contains("gold") || styleStr.contains("yellow")) {
+               return true;
+            }
+         }
+         return false;
+      } else {
+         if (isDialogue) {
+            return !textLower.contains(" no") && !textLower.equalsIgnoreCase("no") && !textLower.contains("[no]");
+         }
+         if (cmdLower.startsWith("/") || cmdLower.contains("accept") || textLower.contains("click") || textLower.contains("pick")) {
+            return true;
+         }
+         return false;
       }
    }
 

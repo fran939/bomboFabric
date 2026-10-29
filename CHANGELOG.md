@@ -1,5 +1,12 @@
 # BomboAddons Changelog
  
+## [26.2.28.177] - 2026-10-29 (Beta)
+
+### Adaptive Auto Experiments Tier Auto-Close, Hypixel API Metaphysical Serum Sync, and NPC Dialogue Response /b accept Simulation (`AutoExperiments.java`, `ChatMessageTracker.java`, `BomboaddonsClient.java`)
+- **Adaptive Auto Experiments Tier Auto-Close (`AutoExperiments.java`):** Completely mapped Experimentation Table add-on game tiers (High, Grand, Supreme, Transcendent, Metaphysical) according to official Hypixel SkyBlock wiki specifications. Automatically detects current tier via title, selected stakes, and board layout.
+- **Hypixel API Metaphysical Serum Sync (`AutoExperiments.java`):** Automatically fetches the player's consumed Metaphysical Serums count from the API (`api.bombo.dpdns.org/data/{user}` ➔ `member.experimentation.serums_drank`). Correctly accounts for serum discounts (each serum shortens required chain by 1, up to -3), scaling target rounds dynamically (e.g. Metaphysical Chronomatron targets `12 - serums`, Ultrasequencer targets `9 - serums`, and Supreme/Transcendent tiers target `9 - serums` / `7 - serums`). Automatically closes upon reaching bonus click cap with informative chat notification.
+- **NPC Dialogue Response /b accept Simulation (`ChatMessageTracker.java`, `BomboaddonsClient.java`):** Fixed `/b accept` trying to execute custom dialogue payloads (such as `Custom[id=skyblock:dialogue_response, payload=Optional[{npcId:"swoop",responseKey:"r_5_1"}]]`) as raw slash commands that caused `Unknown command. Type "/help" for help.`. Stores native `ClickEvent` and dispatches it directly via `ScreenAccessor.invokeDefaultHandleGameClickEvent()`, simulating an authentic click on the NPC prompt.
+
 ## [26.2.28.176] - 2026-10-29 (Beta)
 
 ### Garden Keybind Crop Breaking in Inventory, Armor Set Missing Pieces Storage Check, Scalar API Reference & Tester, and Player Profile 404 Fix (`GardenMovement.java`, `StorageTracker.java`, `MuseumManager.java`, `SupercraftHelper.java`, `index.js`, `docs.js`, `museum_sacks_service.js`, `openapi.json`)

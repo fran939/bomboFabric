@@ -1,5 +1,14 @@
 [
   {
+    "version": "26.2.28.177",
+    "date": "2026-10-29",
+    "changes": [
+      "+ Adaptive Auto Experiments Tier Auto-Close: mapped all game tiers (High, Grand, Supreme, Transcendent, Metaphysical) from official SkyBlock wiki with auto tier detection",
+      "+ Hypixel API Metaphysical Serum Sync: fetches consumed serum count from api.bombo.dpdns.org/data/{user} and scales target rounds dynamically (-1 required chain per serum)",
+      "+ NPC Dialogue Response /b accept Simulation: native ClickEvent simulation for Custom dialogue payloads (such as swoop or NPC responses) instead of invalid slash command execution"
+    ]
+  },
+  {
     "version": "26.2.28.176",
     "date": "2026-10-29",
     "changes": [

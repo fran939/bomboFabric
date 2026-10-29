@@ -1,11 +1,26 @@
 package me.bombo.bomboaddons.cheat.automation;
 
-import me.bombo.bomboaddons.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.util.BomboApiUrl;
 
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -19,9 +34,29 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public class AutoExperiments {
+   public enum ExperimentTier {
+      BEGINNER(5, 5),
+      LOW(5, 5),
+      MEDIUM(7, 5),
+      HIGH(9, 7),
+      GRAND(9, 7),
+      SUPREME(9, 7),
+      TRANSCENDENT(9, 7),
+      METAPHYSICAL(12, 9);
+
+      public final int chronoTarget;
+      public final int ultraTarget;
+
+      ExperimentTier(int chronoTarget, int ultraTarget) {
+         this.chronoTarget = chronoTarget;
+         this.ultraTarget = ultraTarget;
+      }
+   }
+
    private static String lastDetectedTitle = "";
-   private static final HashMap<Integer, Integer> ultrasequencerOrder = new HashMap();
-   private static final List<Integer> chronomatronOrder = new ArrayList(28);
+   private static ExperimentTier lastDetectedTier = ExperimentTier.METAPHYSICAL;
+   private static final HashMap<Integer, Integer> ultrasequencerOrder = new HashMap<>();
+   private static final List<Integer> chronomatronOrder = new ArrayList<>(28);
    private static long lastClickTime = 0L;
    private static int lastGlowingSlot = -1;
    private static boolean noteInProgress = false;
@@ -36,12 +71,179 @@ public class AutoExperiments {
    private static long lastDebugTime = 0L;
    private static String lastInventoryHash = "";
 
+   // API Metaphysical Serum tracking
+   private static int cachedSerumsDrank = -1;
+   private static long lastSerumFetchTime = 0L;
+   private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+         .connectTimeout(Duration.ofSeconds(5))
+         .build();
+
    public static String getDebugStr() {
       return debugStr;
    }
 
    public static String getDetectedTitle() {
       return lastDetectedTitle;
+   }
+
+   public static ExperimentTier getLastDetectedTier() {
+      return lastDetectedTier;
+   }
+
+   public static int getEffectiveSerumCount() {
+      if (cachedSerumsDrank >= 0) {
+         return Math.max(0, Math.min(3, cachedSerumsDrank));
+      }
+      return Math.max(0, Math.min(3, BomboConfig.get().experimentSerumCount));
+   }
+
+   public static void fetchPlayerSerumsAsync(String username) {
+      if (username == null || username.trim().isEmpty() || username.equalsIgnoreCase("Player")) return;
+      long now = System.currentTimeMillis();
+      if (now - lastSerumFetchTime < 60_000L) return; // 1 min cache
+      lastSerumFetchTime = now;
+
+      CompletableFuture.runAsync(() -> {
+         try {
+            String url = BomboApiUrl.api("/data/" + URLEncoder.encode(username.trim(), StandardCharsets.UTF_8));
+            HttpRequest req = HttpRequest.newBuilder()
+                  .uri(URI.create(url))
+                  .header("Accept", "application/json")
+                  .timeout(Duration.ofSeconds(10))
+                  .GET()
+                  .build();
+            HttpResponse<String> resp = HTTP_CLIENT.send(req, HttpResponse.BodyHandlers.ofString());
+            if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isEmpty()) {
+               JsonElement el = JsonParser.parseString(resp.body());
+               int serums = parseSerumsFromProfiles(el);
+               if (serums >= 0) {
+                  cachedSerumsDrank = Math.max(0, Math.min(3, serums));
+                  BomboConfig.get().experimentSerumCount = cachedSerumsDrank;
+               }
+            }
+         } catch (Throwable ignored) {}
+      });
+   }
+
+   private static int parseSerumsFromProfiles(JsonElement el) {
+      if (el == null) return -1;
+      JsonArray profiles = null;
+      if (el.isJsonObject()) {
+         JsonObject obj = el.getAsJsonObject();
+         if (obj.has("all_profiles") && obj.get("all_profiles").isJsonArray()) {
+            profiles = obj.getAsJsonArray("all_profiles");
+         } else if (obj.has("profiles") && obj.get("profiles").isJsonArray()) {
+            profiles = obj.getAsJsonArray("profiles");
+         } else if (obj.has("members") && obj.get("members").isJsonObject()) {
+            return extractSerumsFromMembers(obj.getAsJsonObject("members"));
+         }
+      } else if (el.isJsonArray()) {
+         profiles = el.getAsJsonArray();
+      }
+
+      if (profiles != null) {
+         // 1. Look for selected/active profile first
+         for (JsonElement pEl : profiles) {
+            if (pEl.isJsonObject()) {
+               JsonObject pObj = pEl.getAsJsonObject();
+               boolean isSelected = (pObj.has("selected") && pObj.get("selected").getAsBoolean())
+                     || (pObj.has("current") && pObj.get("current").getAsBoolean());
+               if (isSelected && pObj.has("members") && pObj.get("members").isJsonObject()) {
+                  int s = extractSerumsFromMembers(pObj.getAsJsonObject("members"));
+                  if (s >= 0) return s;
+               }
+            }
+         }
+
+         // 2. Fallback: highest serum count across any profile
+         int maxFound = -1;
+         for (JsonElement pEl : profiles) {
+            if (pEl.isJsonObject()) {
+               JsonObject pObj = pEl.getAsJsonObject();
+               if (pObj.has("members") && pObj.get("members").isJsonObject()) {
+                  int s = extractSerumsFromMembers(pObj.getAsJsonObject("members"));
+                  if (s > maxFound) maxFound = s;
+               }
+            }
+         }
+         return maxFound;
+      }
+      return -1;
+   }
+
+   private static int extractSerumsFromMembers(JsonObject members) {
+      if (members == null) return -1;
+      Minecraft mc = Minecraft.getInstance();
+      String playerUuid = mc.player != null ? mc.player.getStringUUID().replace("-", "").toLowerCase() : null;
+
+      if (playerUuid != null && members.has(playerUuid)) {
+         JsonElement mEl = members.get(playerUuid);
+         if (mEl.isJsonObject() && mEl.getAsJsonObject().has("experimentation")) {
+            JsonObject exp = mEl.getAsJsonObject().getAsJsonObject("experimentation");
+            if (exp.has("serums_drank") && exp.get("serums_drank").isJsonPrimitive()) {
+               return exp.get("serums_drank").getAsInt();
+            }
+         }
+      }
+
+      for (Map.Entry<String, JsonElement> entry : members.entrySet()) {
+         if (entry.getValue().isJsonObject()) {
+            JsonObject m = entry.getValue().getAsJsonObject();
+            if (m.has("experimentation") && m.get("experimentation").isJsonObject()) {
+               JsonObject exp = m.getAsJsonObject("experimentation");
+               if (exp.has("serums_drank") && exp.get("serums_drank").isJsonPrimitive()) {
+                  return exp.get("serums_drank").getAsInt();
+               }
+            }
+         }
+      }
+      return -1;
+   }
+
+   public static ExperimentTier detectTier(String cleanTitle, AbstractContainerScreen<?> screen, boolean isChrono) {
+      if (cleanTitle != null) {
+         String lower = cleanTitle.toLowerCase();
+         if (lower.contains("metaphysical")) return ExperimentTier.METAPHYSICAL;
+         if (lower.contains("transcendent")) return ExperimentTier.TRANSCENDENT;
+         if (lower.contains("supreme")) return ExperimentTier.SUPREME;
+         if (lower.contains("grand")) return ExperimentTier.GRAND;
+         if (lower.contains("high")) return ExperimentTier.HIGH;
+         if (lower.contains("medium")) return ExperimentTier.MEDIUM;
+         if (lower.contains("low")) return ExperimentTier.LOW;
+         if (lower.contains("beginner")) return ExperimentTier.BEGINNER;
+      }
+
+      // Analyze board note count if available
+      if (screen != null && screen.getMenu() != null) {
+         List<Slot> slots = screen.getMenu().slots;
+         Minecraft mc = Minecraft.getInstance();
+         if (isChrono) {
+            int noteCount = 0;
+            for (int i = 0; i < 54 && i < slots.size(); i++) {
+               Slot s = slots.get(i);
+               if (s.container != mc.player.getInventory() && isNoteItem(s.getItem())) {
+                  noteCount++;
+               }
+            }
+            if (noteCount >= 10) return ExperimentTier.METAPHYSICAL;
+            if (noteCount >= 8) return ExperimentTier.TRANSCENDENT;
+            if (noteCount >= 7) return ExperimentTier.SUPREME;
+            if (noteCount >= 5) return ExperimentTier.GRAND;
+            if (noteCount >= 3) return ExperimentTier.HIGH;
+         }
+      }
+
+      return lastDetectedTier != null ? lastDetectedTier : ExperimentTier.METAPHYSICAL;
+   }
+
+   public static int getTargetRound(boolean isChrono, ExperimentTier tier) {
+      BomboConfig.Settings config = BomboConfig.get();
+      if (config.experimentGetMaxXp) {
+         return isChrono ? 15 : 20;
+      }
+      int serums = getEffectiveSerumCount();
+      int base = isChrono ? tier.chronoTarget : tier.ultraTarget;
+      return Math.max(2, base - serums);
    }
 
    public static void reset() {
@@ -73,11 +275,33 @@ public class AutoExperiments {
          } else {
             String cleanTitle = title.replaceAll("(?i)§[0-9a-fk-or]", "");
             if (!cleanTitle.equals(lastDetectedTitle)) {
-               if (lastDetectedTitle.contains("Chronomatron") != cleanTitle.contains("Chronomatron") || lastDetectedTitle.contains("Ultrasequencer") != cleanTitle.contains("Ultrasequencer") || cleanTitle.contains("Stakes") || lastDetectedTitle.contains("Stakes") || cleanTitle.contains("Experiment Over")) {
+               if (lastDetectedTitle.contains("Chronomatron") != cleanTitle.contains("Chronomatron")
+                     || lastDetectedTitle.contains("Ultrasequencer") != cleanTitle.contains("Ultrasequencer")
+                     || cleanTitle.contains("Stakes") || lastDetectedTitle.contains("Stakes")
+                     || cleanTitle.contains("Experiment Over")) {
                   reset();
                }
 
                lastDetectedTitle = cleanTitle;
+
+               // Update tier if stakes/tier name present in title
+               String lower = cleanTitle.toLowerCase();
+               if (lower.contains("metaphysical")) lastDetectedTier = ExperimentTier.METAPHYSICAL;
+               else if (lower.contains("transcendent")) lastDetectedTier = ExperimentTier.TRANSCENDENT;
+               else if (lower.contains("supreme")) lastDetectedTier = ExperimentTier.SUPREME;
+               else if (lower.contains("grand")) lastDetectedTier = ExperimentTier.GRAND;
+               else if (lower.contains("high")) lastDetectedTier = ExperimentTier.HIGH;
+               else if (lower.contains("medium")) lastDetectedTier = ExperimentTier.MEDIUM;
+               else if (lower.contains("low")) lastDetectedTier = ExperimentTier.LOW;
+               else if (lower.contains("beginner")) lastDetectedTier = ExperimentTier.BEGINNER;
+            }
+
+            // Sync serums from API whenever an experiment GUI or table is open
+            if (cleanTitle.contains("Chronomatron") || cleanTitle.contains("Ultrasequencer")
+                  || cleanTitle.contains("Superpairs") || cleanTitle.contains("Table") || cleanTitle.contains("Stakes")) {
+               if (mc.getUser() != null) {
+                  fetchPlayerSerumsAsync(mc.getUser().getName());
+               }
             }
 
             Screen screen = mc.gui.screen();
@@ -86,7 +310,8 @@ public class AutoExperiments {
                int timerSlot = findTimerSlot(acs.getMenu().slots);
                if (System.currentTimeMillis() - lastDebugTime > 1000L) {
                   String timerInfo = timerSlot != -1 ? ((Slot)acs.getMenu().slots.get(timerSlot)).getItem().getItem().toString() : "NONE";
-                  debugStr = String.format("Timer: %s | Mode: %s", timerInfo, cleanTitle.contains("Chron") ? "Chrono" : "Ultra");
+                  debugStr = String.format("Timer: %s | Mode: %s | Tier: %s | Serums: %d",
+                        timerInfo, cleanTitle.contains("Chron") ? "Chrono" : "Ultra", lastDetectedTier.name(), getEffectiveSerumCount());
                   lastDebugTime = System.currentTimeMillis();
                }
 
@@ -100,13 +325,12 @@ public class AutoExperiments {
             }
          }
       }
-
    }
 
    private static String getInventoryHash(List<Slot> slots) {
       StringBuilder sb = new StringBuilder();
 
-      for(int i = 0; i < 54 && i < slots.size(); ++i) {
+      for (int i = 0; i < 54 && i < slots.size(); ++i) {
          ItemStack stack = ((Slot)slots.get(i)).getItem();
          sb.append(stack.getItem().toString()).append(stack.getCount()).append(hasGlint(stack));
       }
@@ -133,7 +357,7 @@ public class AutoExperiments {
          boolean terracottaFound = false;
          int currentFlashedSlot = -1;
 
-         for(int i = 0; i < slots.size() && i < 54; ++i) {
+         for (int i = 0; i < slots.size() && i < 54; ++i) {
             Slot slot = (Slot)slots.get(i);
             if (slot.container != mc.player.getInventory() && i != timerSlot) {
                ItemStack stack = slot.getItem();
@@ -163,9 +387,9 @@ public class AutoExperiments {
             if (lastGlowingSlot != -1) {
                chronomatronOrder.add(lastGlowingSlot);
                if (config.debugMode) {
-                  LocalPlayer var10000 = mc.player;
-                  int var10001 = chronomatronOrder.size();
-                  var10000.sendSystemMessage(Component.literal("§a[Bombo] Chrono: Note #" + var10001 + " captured: " + lastGlowingSlot));
+                  LocalPlayer player = mc.player;
+                  int orderNum = chronomatronOrder.size();
+                  player.sendSystemMessage(Component.literal("§a[Bombo] Chrono: Note #" + orderNum + " captured: " + lastGlowingSlot));
                }
 
                lastGlowingSlot = -1;
@@ -179,7 +403,10 @@ public class AutoExperiments {
          }
 
          wasInInputPhase = isInputPhase;
-         debugStr = String.format("Chrono | Phase: %s | Clicks: %d/%d | Glow: %d", isShowingPhase ? "SHOWING" : (isInputPhase ? "INPUT" : "WAIT"), clicks, chronomatronOrder.size(), lastGlowingSlot);
+         debugStr = String.format("Chrono | Phase: %s | Clicks: %d/%d | Glow: %d | Tier: %s",
+               isShowingPhase ? "SHOWING" : (isInputPhase ? "INPUT" : "WAIT"),
+               clicks, chronomatronOrder.size(), lastGlowingSlot, lastDetectedTier.name());
+
          if (isInputPhase && hasAdded && chronomatronOrder.size() > clicks) {
             long delay = (long)(config.experimentClickDelay + (random.nextInt(41) - 20));
             if (delay < 0L) {
@@ -190,8 +417,8 @@ public class AutoExperiments {
                int slotIndex = (Integer)chronomatronOrder.get(clicks);
                clickSlot(mc, screen, slotIndex);
                if (config.debugMode) {
-                  int var18 = clicks + 1;
-                  mc.player.sendSystemMessage(Component.literal("§b[Bombo] Chrono Click #" + var18 + " (Slot " + slotIndex + ")"));
+                  int clickNum = clicks + 1;
+                  mc.player.sendSystemMessage(Component.literal("§b[Bombo] Chrono Click #" + clickNum + " (Slot " + slotIndex + ")"));
                }
 
                lastClickTime = System.currentTimeMillis();
@@ -202,33 +429,33 @@ public class AutoExperiments {
                      mc.player.sendSystemMessage(Component.literal("§7[Bombo] Chrono: Round finished, waiting for next note..."));
                   }
 
-                  int targetRound = config.experimentGetMaxXp ? 20 : 6 + config.experimentSerumCount;
+                  ExperimentTier tier = detectTier(lastDetectedTitle, screen, true);
+                  lastDetectedTier = tier;
+                  int targetRound = getTargetRound(true, tier);
+                  int serums = getEffectiveSerumCount();
+
                   if (config.experimentAutoClose && chronomatronOrder.size() >= targetRound && chronomatronOrder.size() > 2) {
-                     mc.player.sendSystemMessage(Component.literal("§c[Bombo] Target round reached (" + targetRound + ")! Closing."));
+                     mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto Experiments: Target chain reached (§e"
+                           + targetRound + "§a) for §d" + tier.name() + " §7(Serums: §e" + serums + "§7)! Closing."));
                      mc.player.closeContainer();
                   }
                }
             }
          }
       }
-
    }
 
    private static void solveUltraSequencer(Minecraft mc, AbstractContainerScreen<?> screen) {
       BomboConfig.Settings config = BomboConfig.get();
-      if (config.experimentGetMaxXp) {
-         boolean var10000 = true;
-      } else {
-         int var16 = 9 - config.experimentSerumCount;
-      }
-
       List<Slot> slots = screen.getMenu().slots;
       int timerSlot = findTimerSlot(slots);
       if (timerSlot != -1) {
          ItemStack timerStack = ((Slot)slots.get(timerSlot)).getItem();
          boolean isInputPhase = isClock(timerStack);
          boolean isShowingPhase = isGlowstone(timerStack) || isGlowItem(timerStack);
-         debugStr = String.format("Ultra | Added: %s | Clicks: %d/%d | Timer: %s", hasAdded, clicks, ultrasequencerOrder.size(), timerStack.getItem().toString());
+         debugStr = String.format("Ultra | Added: %s | Clicks: %d/%d | Timer: %s | Tier: %s",
+               hasAdded, clicks, ultrasequencerOrder.size(), timerStack.getItem().toString(), lastDetectedTier.name());
+
          if (isShowingPhase) {
             if (!wasInShowingPhase) {
                ultrasequencerOrder.clear();
@@ -237,7 +464,7 @@ public class AutoExperiments {
                }
             }
 
-            for(int i = 0; i < slots.size() && i < 54; ++i) {
+            for (int i = 0; i < slots.size() && i < 54; ++i) {
                Slot slot = (Slot)slots.get(i);
                if (slot.container != mc.player.getInventory() && i != timerSlot) {
                   ItemStack stack = slot.getItem();
@@ -271,16 +498,21 @@ public class AutoExperiments {
                   int slotIndex = (Integer)ultrasequencerOrder.get(clicks);
                   clickSlot(mc, screen, slotIndex);
                   if (config.debugMode) {
-                     int var10001 = clicks + 1;
-                     mc.player.sendSystemMessage(Component.literal("§b[Bombo] Ultra Click #" + var10001 + " (Slot " + slotIndex + ")"));
+                     int clickNum = clicks + 1;
+                     mc.player.sendSystemMessage(Component.literal("§b[Bombo] Ultra Click #" + clickNum + " (Slot " + slotIndex + ")"));
                   }
 
                   lastClickTime = System.currentTimeMillis();
                   ++clicks;
                   if (clicks >= ultrasequencerOrder.size()) {
-                     int targetRound = config.experimentGetMaxXp ? 20 : 2 + config.experimentSerumCount;
+                     ExperimentTier tier = detectTier(lastDetectedTitle, screen, false);
+                     lastDetectedTier = tier;
+                     int targetRound = getTargetRound(false, tier);
+                     int serums = getEffectiveSerumCount();
+
                      if (config.experimentAutoClose && ultrasequencerOrder.size() >= targetRound && ultrasequencerOrder.size() > 1) {
-                        mc.player.sendSystemMessage(Component.literal("§c[Bombo] Target round reached (" + targetRound + ")! Closing."));
+                        mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto Experiments: Target series reached (§e"
+                              + targetRound + "§a) for §d" + tier.name() + " §7(Serums: §e" + serums + "§7)! Closing."));
                         mc.player.closeContainer();
                      }
                   }
@@ -289,7 +521,6 @@ public class AutoExperiments {
                }
             }
          }
-
       }
    }
 
@@ -305,7 +536,7 @@ public class AutoExperiments {
          }
       }
 
-      for(int i = 0; i < slots.size() && i < 54; ++i) {
+      for (int i = 0; i < slots.size() && i < 54; ++i) {
          Slot slot = (Slot)slots.get(i);
          if (slot.container != mc.player.getInventory()) {
             ItemStack stack = slot.getItem();
@@ -335,7 +566,6 @@ public class AutoExperiments {
 
          mc.gameMode.handleContainerInput(screen.getMenu().containerId, slotIndex, button, type, mc.player);
       }
-
    }
 
    private static boolean isGlowstone(ItemStack stack) {
@@ -350,7 +580,9 @@ public class AutoExperiments {
       if (stack.isEmpty()) {
          return false;
       } else {
-         return stack.is(Items.SEA_LANTERN) || stack.is(Items.GLOW_INK_SAC) || stack.is(Items.GLOW_ITEM_FRAME) || stack.is(Items.BEACON) || stack.is(Items.MAGMA_BLOCK) || stack.is(Items.COMMAND_BLOCK) || stack.is(Items.REPEATING_COMMAND_BLOCK);
+         return stack.is(Items.SEA_LANTERN) || stack.is(Items.GLOW_INK_SAC) || stack.is(Items.GLOW_ITEM_FRAME)
+               || stack.is(Items.BEACON) || stack.is(Items.MAGMA_BLOCK) || stack.is(Items.COMMAND_BLOCK)
+               || stack.is(Items.REPEATING_COMMAND_BLOCK);
       }
    }
 
@@ -370,7 +602,11 @@ public class AutoExperiments {
          if (path.contains("glass_pane")) {
             return false;
          } else {
-            return path.contains("dye") || path.contains("stained_glass") || path.contains("skull") || path.contains("head") || path.contains("star") || path.contains("dust") || path.contains("terracotta") || path.contains("wool") || path.contains("concrete") || path.equals("bone_meal") || path.equals("ink_sac") || path.equals("lapis_lazuli") || path.equals("cocoa_beans") || path.equals("player_head");
+            return path.contains("dye") || path.contains("stained_glass") || path.contains("skull")
+                  || path.contains("head") || path.contains("star") || path.contains("dust")
+                  || path.contains("terracotta") || path.contains("wool") || path.contains("concrete")
+                  || path.equals("bone_meal") || path.equals("ink_sac") || path.equals("lapis_lazuli")
+                  || path.equals("cocoa_beans") || path.equals("player_head");
          }
       }
    }
