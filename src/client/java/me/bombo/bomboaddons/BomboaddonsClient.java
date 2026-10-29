@@ -780,9 +780,23 @@ public class BomboaddonsClient implements ClientModInitializer {
          });
          return;
       }
+      if (lower.equals("debug data serum") || lower.startsWith("debug data serum ") || lower.equals("serum") || lower.startsWith("serum ")) {
+         String[] parts = arg.split("\\s+");
+         String targetUser = null;
+         String targetProfile = null;
+         if (lower.startsWith("debug data serum")) {
+            if (parts.length >= 4) targetUser = parts[3];
+            if (parts.length >= 5) targetProfile = parts[4];
+         } else {
+            if (parts.length >= 2) targetUser = parts[1];
+            if (parts.length >= 3) targetProfile = parts[2];
+         }
+         handleDebugSerumCommand(targetUser, targetProfile);
+         return;
+      }
       if (lower.equals("debug chat clear") || lower.equals("chat clear") || lower.equals("clearchat")) {
          if (mc.gui != null && mc.gui.hud != null && mc.gui.hud.getChat() != null) {
-            mc.gui.hud.getChat().clearMessages(false);
+            ((me.bombo.bomboaddons.util.IChatComponent) mc.gui.hud.getChat()).bombo$forceClearMessages();
             if (mc.player != null) {
                mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §aChat messages cleared."));
             }
@@ -2014,7 +2028,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                         builder.then(ClientCommands.literal("clearchat").executes((context) -> {
                            Minecraft cMc = Minecraft.getInstance();
                            if (cMc.gui != null && cMc.gui.hud != null && cMc.gui.hud.getChat() != null) {
-                              cMc.gui.hud.getChat().clearMessages(false);
+                              ((me.bombo.bomboaddons.util.IChatComponent) cMc.gui.hud.getChat()).bombo$forceClearMessages();
                               ((FabricClientCommandSource) context.getSource()).sendFeedback(
                                     Component.literal("§8[§bBomboAddons§8] §aChat messages cleared."));
                            }
@@ -2253,7 +2267,23 @@ public class BomboaddonsClient implements ClientModInitializer {
                                                    "/b debug chat toggle", "Toggles live raw BomboChat debug logging.")
                                                    .append(Component.literal(" §7- Toggles raw chat debug logs")));
                                        return 1;
-                                    })).then(ClientCommands.literal("api").executes((context) -> {
+                                    })).then(ClientCommands.literal("data")
+                                               .then(ClientCommands.literal("serum")
+                                                     .executes((context) -> {
+                                                        handleDebugSerumCommand(null, null);
+                                                        return 1;
+                                                     })
+                                                     .then(ClientCommands.argument("user", StringArgumentType.string())
+                                                           .executes((context) -> {
+                                                              handleDebugSerumCommand(StringArgumentType.getString(context, "user"), null);
+                                                              return 1;
+                                                           })
+                                                           .then(ClientCommands.argument("profile", StringArgumentType.string())
+                                                                 .executes((context) -> {
+                                                                    handleDebugSerumCommand(StringArgumentType.getString(context, "user"), StringArgumentType.getString(context, "profile"));
+                                                                    return 1;
+                                                                 })))))
+                                         .then(ClientCommands.literal("api").executes((context) -> {
                                        ((FabricClientCommandSource) context.getSource()).sendFeedback(
                                              Component.literal("§8[§bBomboAddons§8] §eTesting API endpoints..."));
                                        (new Thread(() -> {
@@ -2320,7 +2350,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                           })).then(ClientCommands.literal("clear").executes((context) -> {
                                              Minecraft cMc = Minecraft.getInstance();
                                              if (cMc.gui != null && cMc.gui.hud != null && cMc.gui.hud.getChat() != null) {
-                                                cMc.gui.hud.getChat().clearMessages(false);
+                                                ((me.bombo.bomboaddons.util.IChatComponent) cMc.gui.hud.getChat()).bombo$forceClearMessages();
                                                 ((FabricClientCommandSource) context.getSource()).sendFeedback(
                                                       Component.literal("§8[§bBomboAddons§8] §aChat messages cleared."));
                                              }
@@ -4848,46 +4878,77 @@ public class BomboaddonsClient implements ClientModInitializer {
                                     return 1;
                                  }
                               }));
-                        builder.then(ClientCommands.literal("accept").executes((context) -> {
-                           ChatMessageTracker.AcceptInfo info = ChatMessageTracker.findBestAcceptInfo();
-                           if (info != null) {
-                              Minecraft mc = Minecraft.getInstance();
-                              boolean isCustomOrDialogue = (info.clickEvent != null && !(info.clickEvent instanceof net.minecraft.network.chat.ClickEvent.RunCommand))
-                                    || (info.command != null && (info.command.startsWith("Custom[") || info.command.contains("dialogue_response")));
-                              if (isCustomOrDialogue && info.clickEvent != null) {
-                                 mc.execute(() -> {
-                                    try {
-                                       net.minecraft.client.gui.screens.Screen screen = mc.gui.screen() != null ? mc.gui.screen() : new net.minecraft.client.gui.screens.ChatScreen("", false);
-                                       me.bombo.bomboaddons.mixin.ScreenAccessor.invokeDefaultHandleGameClickEvent(info.clickEvent, mc, screen);
-                                       if (mc.player != null) {
-                                          mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8]§r §aSimulated click on NPC dialogue response."));
-                                       }
-                                    } catch (Throwable t) {
-                                       if (mc.player != null) {
-                                          mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8]§r §cFailed to simulate dialogue click: " + t.getMessage()));
-                                       }
-                                    }
-                                 });
-                              } else if (info.command != null && !info.command.trim().isEmpty() && !info.command.startsWith("Custom[")) {
-                                 // Run the clickable chat command silently: no local echo and no bridge post.
-                                 executeTracked(info.command.trim());
-                              } else if (info.clickEvent != null) {
-                                 mc.execute(() -> {
-                                    try {
-                                       net.minecraft.client.gui.screens.Screen screen = mc.gui.screen() != null ? mc.gui.screen() : new net.minecraft.client.gui.screens.ChatScreen("", false);
-                                       me.bombo.bomboaddons.mixin.ScreenAccessor.invokeDefaultHandleGameClickEvent(info.clickEvent, mc, screen);
-                                    } catch (Throwable ignored) {}
-                                 });
-                              } else {
-                                 ((FabricClientCommandSource) context.getSource()).sendFeedback(Component
-                                       .literal("§8[§bBombo§8]§r §cNo recent accept link/command found in chat!"));
-                              }
-                           } else {
-                              ((FabricClientCommandSource) context.getSource()).sendFeedback(Component
-                                    .literal("§8[§bBombo§8]§r §cNo recent accept link/command found in chat!"));
-                           }
-                           return 1;
-                        }));
+                         builder.then(ClientCommands.literal("accept").executes((context) -> {
+                            ChatMessageTracker.AcceptInfo info = ChatMessageTracker.findBestAcceptInfo();
+                            if (info != null) {
+                               Minecraft mc = Minecraft.getInstance();
+                               boolean isCustomOrDialogue = (info.clickEvent != null && !(info.clickEvent instanceof net.minecraft.network.chat.ClickEvent.RunCommand))
+                                     || (info.command != null && (info.command.startsWith("Custom[") || info.command.contains("dialogue_response")));
+                               if (isCustomOrDialogue && info.clickEvent != null) {
+                                  mc.execute(() -> {
+                                     try {
+                                        me.bombo.bomboaddons.mixin.ScreenAccessor.invokeDefaultHandleGameClickEvent(info.clickEvent, mc, null);
+                                        if (mc.player != null) {
+                                           mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8]§r §aSimulated click on NPC dialogue response."));
+                                        }
+                                     } catch (Throwable t) {
+                                        if (mc.player != null) {
+                                           mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8]§r §cFailed to simulate dialogue click: " + t.getMessage()));
+                                        }
+                                     } finally {
+                                        if (mc.gui != null && mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
+                                           mc.setScreenAndShow((net.minecraft.client.gui.screens.Screen) null);
+                                        }
+                                     }
+                                  });
+                               } else if (info.command != null && !info.command.trim().isEmpty() && !info.command.startsWith("Custom[")) {
+                                  // Run the clickable chat command silently: no local echo and no bridge post.
+                                  executeTracked(info.command.trim());
+                                  mc.execute(() -> {
+                                     if (mc.gui != null && mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
+                                        mc.setScreenAndShow((net.minecraft.client.gui.screens.Screen) null);
+                                     }
+                                  });
+                               } else if (info.clickEvent != null) {
+                                  if (info.clickEvent instanceof net.minecraft.network.chat.ClickEvent.SuggestCommand suggest) {
+                                     String val = suggest.command();
+                                     if (val != null && val.startsWith("/")) {
+                                        executeTracked(val.trim());
+                                     }
+                                     mc.execute(() -> {
+                                        if (mc.gui != null && mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
+                                           mc.setScreenAndShow((net.minecraft.client.gui.screens.Screen) null);
+                                        }
+                                     });
+                                  } else if (info.clickEvent instanceof net.minecraft.network.chat.ClickEvent.RunCommand runCmd) {
+                                     executeTracked(runCmd.command().trim());
+                                     mc.execute(() -> {
+                                        if (mc.gui != null && mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
+                                           mc.setScreenAndShow((net.minecraft.client.gui.screens.Screen) null);
+                                        }
+                                     });
+                                  } else {
+                                     mc.execute(() -> {
+                                        try {
+                                           me.bombo.bomboaddons.mixin.ScreenAccessor.invokeDefaultHandleGameClickEvent(info.clickEvent, mc, null);
+                                        } catch (Throwable ignored) {}
+                                        finally {
+                                           if (mc.gui != null && mc.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen) {
+                                              mc.setScreenAndShow((net.minecraft.client.gui.screens.Screen) null);
+                                           }
+                                        }
+                                     });
+                                  }
+                               } else {
+                                  ((FabricClientCommandSource) context.getSource()).sendFeedback(Component
+                                        .literal("§8[§bBombo§8]§r §cNo recent accept link/command found in chat!"));
+                               }
+                            } else {
+                               ((FabricClientCommandSource) context.getSource()).sendFeedback(Component
+                                     .literal("§8[§bBombo§8]§r §cNo recent accept link/command found in chat!"));
+                            }
+                            return 1;
+                         }));
                         builder.then(((LiteralArgumentBuilder) ClientCommands.literal("recipe")
                               .then(ClientCommands.argument("item", StringArgumentType.greedyString())
                                     .suggests((context, builder2) -> getItemSuggestions(builder2))
@@ -5852,7 +5913,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                                              })).then(ClientCommands.literal("clear").executes((context) -> {
                                                 Minecraft cMc = Minecraft.getInstance();
                                                 if (cMc.gui != null && cMc.gui.hud != null && cMc.gui.hud.getChat() != null) {
-                                                   cMc.gui.hud.getChat().clearMessages(false);
+                                                   ((me.bombo.bomboaddons.util.IChatComponent) cMc.gui.hud.getChat()).bombo$forceClearMessages();
                                                    ((FabricClientCommandSource) context.getSource()).sendFeedback(
                                                          Component.literal("§8[§bBomboAddons§8] §aChat messages cleared."));
                                                 }
@@ -12662,4 +12723,245 @@ public class BomboaddonsClient implements ClientModInitializer {
          this.triggerTime = triggerTime;
       }
    }
+
+
+   public static void handleDebugSerumCommand(String targetUser, String targetProfile) {
+
+      Minecraft mc = Minecraft.getInstance();
+
+      String user = (targetUser != null && !targetUser.trim().isEmpty()) ? targetUser.trim() : (mc.getUser() != null ? mc.getUser().getName() : "Player");
+
+      if (mc.player != null) {
+
+         mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §7Querying experimentation data for §b" + user + "§7..."));
+
+      }
+
+      java.util.concurrent.CompletableFuture.runAsync(() -> {
+
+         try {
+
+            String url = me.bombo.bomboaddons.util.BomboApiUrl.api("/data/" + java.net.URLEncoder.encode(user, java.nio.charset.StandardCharsets.UTF_8));
+
+            java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder()
+
+                  .uri(java.net.URI.create(url))
+
+                  .header("Accept", "application/json")
+
+                  .timeout(java.time.Duration.ofSeconds(10))
+
+                  .GET()
+
+                  .build();
+
+            java.net.http.HttpResponse<String> resp = java.net.http.HttpClient.newHttpClient().send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
+
+            if (resp.statusCode() == 200 && resp.body() != null && !resp.body().isEmpty()) {
+
+               com.google.gson.JsonElement root = com.google.gson.JsonParser.parseString(resp.body());
+
+               displaySerumResults(user, targetProfile, root);
+
+            } else {
+
+               if (mc.player != null) {
+
+                  mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §cFailed to fetch player data for §e" + user + " §7(HTTP " + resp.statusCode() + ")."));
+
+               }
+
+            }
+
+         } catch (Throwable t) {
+
+            if (mc.player != null) {
+
+               mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §cError querying serum data: " + t.getMessage()));
+
+            }
+
+         }
+
+      });
+
+   }
+
+
+
+   private static void displaySerumResults(String user, String targetProfile, com.google.gson.JsonElement root) {
+
+      Minecraft mc = Minecraft.getInstance();
+
+      if (mc.player == null) return;
+
+
+
+      if (!root.isJsonObject()) {
+
+         mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §cInvalid response format received from API."));
+
+         return;
+
+      }
+
+      com.google.gson.JsonObject rootObj = root.getAsJsonObject();
+
+      com.google.gson.JsonArray profiles = null;
+
+      if (rootObj.has("all_profiles") && rootObj.get("all_profiles").isJsonArray()) {
+
+         profiles = rootObj.getAsJsonArray("all_profiles");
+
+      } else if (rootObj.has("profiles") && rootObj.get("profiles").isJsonArray()) {
+
+         profiles = rootObj.getAsJsonArray("profiles");
+
+      }
+
+
+
+      mc.player.sendSystemMessage(Component.literal("§8[§bBombo§8] §e=== Metaphysical Serum Report: §b" + user + " §e==="));
+
+
+
+      if (profiles == null || profiles.size() == 0) {
+
+         if (rootObj.has("members") && rootObj.get("members").isJsonObject()) {
+
+            int serums = extractSerumsFromMemberObj(rootObj.getAsJsonObject("members"));
+
+            mc.player.sendSystemMessage(Component.literal("§7- Consumed Serums: §d" + serums + "/3 §7(-" + Math.min(3, serums) + " rounds discount)"));
+
+            printSerumDiscount(serums);
+
+            return;
+
+         }
+
+         mc.player.sendSystemMessage(Component.literal("§7No profiles found for player §e" + user));
+
+         return;
+
+      }
+
+
+
+      int activeOrMax = 0;
+
+      boolean foundTarget = false;
+
+      for (com.google.gson.JsonElement pEl : profiles) {
+
+         if (!pEl.isJsonObject()) continue;
+
+         com.google.gson.JsonObject pObj = pEl.getAsJsonObject();
+
+         String cuteName = pObj.has("cute_name") ? pObj.get("cute_name").getAsString() : "Profile";
+
+         String profileId = pObj.has("profile_id") ? pObj.get("profile_id").getAsString() : "";
+
+         boolean isSelected = (pObj.has("selected") && pObj.get("selected").getAsBoolean())
+
+               || (pObj.has("current") && pObj.get("current").getAsBoolean());
+
+
+
+         if (targetProfile != null && !targetProfile.isEmpty()) {
+
+            if (!cuteName.equalsIgnoreCase(targetProfile) && !profileId.equalsIgnoreCase(targetProfile)) {
+
+               continue;
+
+            }
+
+         }
+
+         foundTarget = true;
+
+
+
+         int serums = 0;
+
+         if (pObj.has("members") && pObj.get("members").isJsonObject()) {
+
+            serums = extractSerumsFromMemberObj(pObj.getAsJsonObject("members"));
+
+         }
+
+         if (isSelected) activeOrMax = serums;
+
+         else if (activeOrMax == 0) activeOrMax = serums;
+
+
+
+         mc.player.sendSystemMessage(Component.literal("§7- Profile §6" + cuteName + (isSelected ? " §a[ACTIVE]" : "") + "§7: §d" + serums + "/3 Serums Drank §7(-" + Math.min(3, Math.max(0, serums)) + " rounds discount)"));
+
+      }
+
+
+
+      if (targetProfile != null && !foundTarget) {
+
+         mc.player.sendSystemMessage(Component.literal("§cTarget profile '" + targetProfile + "' not found on player " + user));
+
+         return;
+
+      }
+
+
+
+      printSerumDiscount(activeOrMax);
+
+   }
+
+
+
+   private static int extractSerumsFromMemberObj(com.google.gson.JsonObject members) {
+
+      int max = 0;
+
+      for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : members.entrySet()) {
+
+         if (entry.getValue().isJsonObject()) {
+
+            com.google.gson.JsonObject mem = entry.getValue().getAsJsonObject();
+
+            if (mem.has("experimentation") && mem.get("experimentation").isJsonObject()) {
+
+               com.google.gson.JsonObject exp = mem.getAsJsonObject("experimentation");
+
+               if (exp.has("serums_drank") && exp.get("serums_drank").isJsonPrimitive()) {
+
+                  int s = exp.get("serums_drank").getAsInt();
+
+                  if (s > max) max = s;
+
+               }
+
+            }
+
+         }
+
+      }
+
+      return max;
+
+   }
+
+
+
+   private static void printSerumDiscount(int serums) {
+
+      Minecraft mc = Minecraft.getInstance();
+
+      if (mc.player == null) return;
+
+      int discount = Math.max(0, Math.min(3, serums));
+
+      mc.player.sendSystemMessage(Component.literal("§a✔ Active Discount: §e-" + discount + " rounds §7(Chrono: §b" + (12 - discount) + " rounds§7, Ultra: §b" + (9 - discount) + " rounds§7)"));
+
+   }
+
 }
+

@@ -1,5 +1,21 @@
 [
   {
+    "version": "26.2.28.178",
+    "date": "2026-10-29",
+    "changes": [
+      "+ Auto Experiments Auto-Close: Grand Chronomatron and Superpairs (0 clicks left) now cleanly close container and screen automatically",
+      "+ Added /b debug data serum [user] [profile] and /b serum to inspect consumed Metaphysical Serums and target rounds calculation",
+      "+ /b accept Chat Behavior: executes commands and dialogue clicks directly without opening or leaving chat open",
+      "+ Garden Keybind Crop Breaking on Inventory Close: continues breaking seamlessly when closing inventory until break key is pressed",
+      "+ Fits in Sacks Chest Lore: fixed item-to-sacks JSON parsing and stem matching so sack lore displays properly in chests",
+      "+ Museum Equipment & Armor Set Guard: filtered out equipment (Adaptive Belt) and requires complete armor set before marking donatable",
+      "+ Remote Sacks Tier & Capacity: dynamically calculates SMALL (2,240), MEDIUM (4,480), and LARGE (20,160) capacity",
+      "+ Sacks Web Directory & Player Sacks: fixed [object Object] bug on /mod/sacks and added Stored Items grid on /sacks/:user",
+      "+ /lbc sacks Search: fixed keyword matching for sacks items in island storage",
+      "+ /b clearchat: implemented force clear purging chat completely"
+    ]
+  },
+  {
     "version": "26.2.28.177",
     "date": "2026-10-29",
     "changes": [

@@ -288,9 +288,22 @@ public class MuseumManager {
         } catch (Exception ignored) {}
     }
 
+    public static boolean isDisallowedEquipment(String u) {
+        if (u.endsWith("_BELT") || u.endsWith("_NECKLACE") || u.endsWith("_GLOVES") || u.endsWith("_CLOAK") || u.endsWith("_BRACELET")) {
+            if (u.contains("DOJO") || u.equals("WHITE_BELT") || u.equals("YELLOW_BELT") || u.equals("GREEN_BELT")
+                    || u.equals("BLUE_BELT") || u.equals("BROWN_BELT") || u.equals("BLACK_BELT") || u.equals("RIFT_NECKLACE_OUTSIDE")) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public static boolean isMuseumItem(String skyblockId) {
         if (skyblockId == null || skyblockId.isEmpty()) return false;
-        return CATALOG.containsKey(skyblockId.toUpperCase(Locale.ROOT));
+        String u = skyblockId.toUpperCase(Locale.ROOT);
+        if (isDisallowedEquipment(u)) return false;
+        return CATALOG.containsKey(u);
     }
 
     public static MuseumEntry getEntry(String skyblockId) {

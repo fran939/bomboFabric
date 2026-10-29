@@ -64,7 +64,7 @@ public class GardenMovement {
 
             if (breaking) {
                mc.options.keyAttack.setDown(true);
-               if (mc.gui.screen() != null && mc.player != null && mc.level != null && mc.gameMode != null) {
+               if (mc.player != null && mc.level != null && mc.gameMode != null) {
                   try {
                      net.minecraft.world.phys.HitResult hit = mc.hitResult;
                      if ((hit == null || hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS) && mc.getCameraEntity() != null) {
@@ -74,7 +74,9 @@ public class GardenMovement {
                         net.minecraft.core.BlockPos pos = bhr.getBlockPos();
                         net.minecraft.core.Direction dir = bhr.getDirection();
                         if (!mc.level.getBlockState(pos).isAir()) {
-                           mc.gameMode.startDestroyBlock(pos, dir);
+                           if (mc.gui.screen() != null || !mc.gameMode.isDestroying()) {
+                              mc.gameMode.startDestroyBlock(pos, dir);
+                           }
                            mc.gameMode.continueDestroyBlock(pos, dir);
                         }
                      } else if (hit instanceof net.minecraft.world.phys.EntityHitResult ehr) {

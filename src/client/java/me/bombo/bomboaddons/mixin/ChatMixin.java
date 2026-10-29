@@ -65,6 +65,13 @@ public abstract class ChatMixin implements IChatComponent {
    }
 
    @Unique
+   public void bombo$forceClearMessages() {
+      this.allMessages.clear();
+      this.trimmedMessages.clear();
+      this.refreshTrimmedMessages();
+   }
+
+   @Unique
    public void bombo$addMessage(Component message) {
       this.addMessage(message, null, null, null);
    }

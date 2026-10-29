@@ -69,6 +69,16 @@ public class AutoExperiments {
    private static final Random random = new Random();
    private static long tickCount = 0L;
    private static long lastDebugTime = 0L;
+   private static long superpairsDoneTime = 0L;
+
+   public static void closeScreenSafely(Minecraft mc) {
+      mc.execute(() -> {
+         if (mc.player != null) {
+            mc.player.closeContainer();
+         }
+         mc.setScreenAndShow((Screen) null);
+      });
+   }
    private static String lastInventoryHash = "";
 
    // API Metaphysical Serum tracking
@@ -220,16 +230,22 @@ public class AutoExperiments {
          if (isChrono) {
             int noteCount = 0;
             for (int i = 0; i < 54 && i < slots.size(); i++) {
-               Slot s = slots.get(i);
-               if (s.container != mc.player.getInventory() && isNoteItem(s.getItem())) {
-                  noteCount++;
+               int row = i / 9;
+               int col = i % 9;
+               if (row >= 1 && row <= 4 && col >= 1 && col <= 7) {
+                  Slot s = slots.get(i);
+                  if (s.container != mc.player.getInventory() && isTrueNoteBlock(s.getItem())) {
+                     noteCount++;
+                  }
                }
             }
             if (noteCount >= 10) return ExperimentTier.METAPHYSICAL;
             if (noteCount >= 8) return ExperimentTier.TRANSCENDENT;
-            if (noteCount >= 7) return ExperimentTier.SUPREME;
-            if (noteCount >= 5) return ExperimentTier.GRAND;
+            if (noteCount >= 6) return ExperimentTier.SUPREME;
+            if (noteCount == 5) return ExperimentTier.GRAND;
             if (noteCount >= 3) return ExperimentTier.HIGH;
+            if (noteCount == 2) return ExperimentTier.MEDIUM;
+            if (noteCount == 1) return ExperimentTier.LOW;
          }
       }
 
@@ -319,6 +335,8 @@ public class AutoExperiments {
                   solveChronomatron(mc, acs);
                } else if (cleanTitle.contains("Ultrasequencer")) {
                   solveUltraSequencer(mc, acs);
+               } else if (cleanTitle.contains("Superpairs")) {
+                  checkSuperpairsAutoClose(mc, acs);
                }
             } else if (cleanTitle.contains("Stakes") || cleanTitle.contains("Table")) {
                debugStr = "In Menu (Ignored)";
@@ -437,7 +455,7 @@ public class AutoExperiments {
                   if (config.experimentAutoClose && chronomatronOrder.size() >= targetRound && chronomatronOrder.size() > 2) {
                      mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto Experiments: Target chain reached (§e"
                            + targetRound + "§a) for §d" + tier.name() + " §7(Serums: §e" + serums + "§7)! Closing."));
-                     mc.player.closeContainer();
+                     closeScreenSafely(mc);
                   }
                }
             }
@@ -513,7 +531,7 @@ public class AutoExperiments {
                      if (config.experimentAutoClose && ultrasequencerOrder.size() >= targetRound && ultrasequencerOrder.size() > 1) {
                         mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto Experiments: Target series reached (§e"
                               + targetRound + "§a) for §d" + tier.name() + " §7(Serums: §e" + serums + "§7)! Closing."));
-                        mc.player.closeContainer();
+                        closeScreenSafely(mc);
                      }
                   }
                } else {
@@ -594,6 +612,16 @@ public class AutoExperiments {
       }
    }
 
+   private static boolean isTrueNoteBlock(ItemStack stack) {
+      if (stack == null || stack.isEmpty()) return false;
+      String path = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+      if (path.contains("glass") || path.contains("dust") || path.contains("clock") || path.contains("head") || path.contains("star")) {
+         return false;
+      }
+      return path.contains("terracotta") || path.contains("wool") || path.contains("concrete") || path.contains("dye")
+            || path.equals("bone_meal") || path.equals("ink_sac") || path.equals("lapis_lazuli") || path.equals("cocoa_beans");
+   }
+
    private static boolean isNoteItem(ItemStack stack) {
       if (stack.isEmpty()) {
          return false;
@@ -613,5 +641,52 @@ public class AutoExperiments {
 
    private static boolean isDye(ItemStack stack) {
       return isNoteItem(stack);
+   }
+   private static void checkSuperpairsAutoClose(Minecraft mc, AbstractContainerScreen<?> screen) {
+      BomboConfig.Settings config = BomboConfig.get();
+      if (!config.experimentAutoClose) return;
+
+      boolean isFinished = false;
+      List<Slot> slots = screen.getMenu().slots;
+      for (int i = 0; i < 54 && i < slots.size(); i++) {
+         Slot s = slots.get(i);
+         if (s.container != mc.player.getInventory()) {
+            ItemStack stack = s.getItem();
+            if (!stack.isEmpty()) {
+               String name = stack.getHoverName().getString().toLowerCase();
+               if (name.contains("remaining clicks: 0") || name.contains("clicks remaining: 0")
+                     || name.contains("0 clicks left") || name.contains("0 clicks remaining")
+                     || name.contains("game over") || name.contains("experiment over") || name.contains("no clicks left")) {
+                  isFinished = true;
+                  break;
+               }
+               net.minecraft.world.item.component.ItemLore lore = stack.get(DataComponents.LORE);
+               if (lore != null) {
+                  for (Component line : lore.lines()) {
+                     String lineStr = line.getString().toLowerCase();
+                     if (lineStr.contains("remaining clicks: 0") || lineStr.contains("clicks remaining: 0")
+                           || lineStr.contains("0 clicks left") || lineStr.contains("0 clicks remaining")
+                           || lineStr.contains("game over") || lineStr.contains("experiment over") || lineStr.contains("no clicks left")) {
+                        isFinished = true;
+                        break;
+                     }
+                  }
+               }
+            }
+         }
+         if (isFinished) break;
+      }
+
+      if (isFinished) {
+         if (superpairsDoneTime == 0L) {
+            superpairsDoneTime = System.currentTimeMillis();
+         } else if (System.currentTimeMillis() - superpairsDoneTime > 750L) {
+            mc.player.sendSystemMessage(Component.literal("§8[§3Bombo§8]§r §aAuto Experiments: Superpairs completed! Closing."));
+            closeScreenSafely(mc);
+            superpairsDoneTime = 0L;
+         }
+      } else {
+         superpairsDoneTime = 0L;
+      }
    }
 }

@@ -1,5 +1,19 @@
 # BomboAddons Changelog
  
+## [26.2.28.178] - 2026-10-29 (Beta)
+
+### Auto Experiments Auto-Close, /b debug data serum, /b accept Chat Behavior, Garden Break Inventory Persistence, Chest Sacks Lore, Museum Equipment Filter, and Remote Sacks Web & Capacity Fixes (`AutoExperiments.java`, `BomboaddonsClient.java`, `GardenMovement.java`, `SacksManager.java`, `MuseumManager.java`, `SupercraftHelper.java`, `LF.java`, `ChatMixin.java`, `IChatComponent.java`, `museum_sacks_service.js`)
+- **Auto Experiments Auto-Close (`AutoExperiments.java`):** Fixed Grand Chronomatron and Superpairs failing to auto-close upon reaching max bonus click caps. Corrected note block counting so Grand tier is not falsely marked as Metaphysical, and implemented `checkSuperpairsAutoClose` detecting 0 clicks remaining / experiment completion with chat notification.
+- **`/b debug data serum [user] [profile]` & `/b serum` (`BomboaddonsClient.java`):** Added diagnostic command allowing players to inspect consumed Metaphysical Serums, active profile discount, and dynamically calculated target rounds for Chronomatron and Ultrasequencer directly in chat.
+- **`/b accept` Chat Behavior (`BomboaddonsClient.java`):** Completely decoupled chat GUI activation from the `/b accept` simulation. Directly dispatches native dialogue `ClickEvent` or executes tracked commands while ensuring `ChatScreen` is closed or never opened.
+- **Garden Keybind Crop Breaking on Inventory Close (`GardenMovement.java`):** Fixed crop breaking halting when closing inventory or container screens while `breaking == true`. Actively asserts `keyAttack.setDown(true)` and continues block destruction and arm swinging until the break key is explicitly pressed again, command run, or `/b ks`.
+- **Fits in Sacks Lore for Chest Items (`SacksManager.java`):** Fixed JSON parsing error where item entries in `sacks_items.json` are objects (`{"sack_id", "sack_name"}`), preventing premature parser termination. Added stem matching (`ENCHANTED_` stripping) so items like `ENCHANTED_BROWN_MUSHROOM` correctly display "Fits in Sacks" when the player owns an Agronomy Sack.
+- **Museum Equipment & Incomplete Armor Set Guard (`MuseumManager.java`, `SupercraftHelper.java`):** Filtered out dungeon equipment (`ADAPTIVE_BELT`) from being marked as donatable to the museum. For armor sets, suppressed "Donatable to Museum" on individual pieces unless the full 4-piece set is owned in inventory or island chests, displaying `Requires full armor set to donate to Museum (X/4)`.
+- **Remote Sacks Dynamic Tier & Capacity (`museum_sacks_service.js`):** Fixed Small sacks (such as `SMALL_NETHER_SACK`) displaying as `Tier: LARGE • Capacity: 20,160`. Dynamically calculates `SMALL` (2,240 capacity), `MEDIUM` (4,480), and `LARGE` (20,160) tiers.
+- **Sacks Web Directory & Player Sacks Stored Items Grid (`museum_sacks_service.js`):** Fixed `[object Object]` rendering bug on `https://bombo.dpdns.org/mod/sacks` by extracting name properties from sack objects. Added full "Stored Sack Items" interactive display grid with live search and item count badges to player profile view (`https://bombo.dpdns.org/sacks/:user`).
+- **`/lbc sacks` Storage Search (`LF.java`):** Fixed search query parsing so `/lbc sacks` and `/lbc sack` match stored sack counts and compatible sack items in island storage.
+- **`/b clearchat` Direct Purge (`ChatMixin.java`, `IChatComponent.java`, `BomboaddonsClient.java`):** Implemented `bombo$forceClearMessages()` bypassing cancellation in `ChatMixin`, allowing `/b clearchat`, `/b chat clear`, and `/b debug chat clear` to completely wipe visible chat history.
+
 ## [26.2.28.177] - 2026-10-29 (Beta)
 
 ### Adaptive Auto Experiments Tier Auto-Close, Hypixel API Metaphysical Serum Sync, and NPC Dialogue Response /b accept Simulation (`AutoExperiments.java`, `ChatMessageTracker.java`, `BomboaddonsClient.java`)

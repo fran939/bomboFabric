@@ -175,11 +175,18 @@ public class SacksManager {
                     List<SackRef> refs = new ArrayList<>();
                     if (e.getValue().isJsonArray()) {
                         for (JsonElement el : e.getValue().getAsJsonArray()) {
-                            String sackName = el.getAsString();
-                            String sackId = sackName.toUpperCase(Locale.ROOT)
-                                    .replaceAll("[^A-Z0-9]+", "_")
-                                    .replaceAll("^_+|_+$", "");
-                            refs.add(new SackRef(sackId, sackName));
+                            if (el.isJsonObject()) {
+                                JsonObject sObj = el.getAsJsonObject();
+                                String sackId = sObj.has("sack_id") ? sObj.get("sack_id").getAsString() : "";
+                                String sackName = sObj.has("sack_name") ? sObj.get("sack_name").getAsString() : sackId;
+                                refs.add(new SackRef(sackId, sackName));
+                            } else if (el.isJsonPrimitive()) {
+                                String sackName = el.getAsString();
+                                String sackId = sackName.toUpperCase(Locale.ROOT)
+                                        .replaceAll("[^A-Z0-9]+", "_")
+                                        .replaceAll("^_+|_+$", "");
+                                refs.add(new SackRef(sackId, sackName));
+                            }
                         }
                     }
                     ITEM_TO_SACKS.put(itemId, refs);
@@ -260,6 +267,12 @@ public class SacksManager {
                 candidateIds.add("MEDIUM_" + norm);
                 candidateIds.add("SMALL_" + norm);
                 candidateIds.add("BEGINNER_" + norm);
+                String base = norm.replaceAll("^ENCHANTED_", "");
+                candidateIds.add(base);
+                candidateIds.add("LARGE_" + base);
+                candidateIds.add("MEDIUM_" + base);
+                candidateIds.add("SMALL_" + base);
+                candidateIds.add("BEGINNER_" + base);
             }
         }
 
@@ -271,6 +284,10 @@ public class SacksManager {
             }
             String norm = upper.replaceAll("^(LARGE_|MEDIUM_|SMALL_|BEGINNER_)", "");
             if (candidateIds.contains(norm)) {
+                return true;
+            }
+            String base = norm.replaceAll("^ENCHANTED_", "");
+            if (candidateIds.contains(base)) {
                 return true;
             }
         }
