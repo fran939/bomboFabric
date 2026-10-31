@@ -64,6 +64,40 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.equals("cd") || lower.startsWith("cd ")
+            || lower.equals("b cd") || lower.startsWith("b cd ")
+            || lower.equals("bombo cd") || lower.startsWith("bombo cd ")
+            || lower.equals("bomboaddons cd") || lower.startsWith("bomboaddons cd ")) {
+         String args = "";
+         if (lower.startsWith("bomboaddons cd")) args = trimmed.substring(14).trim();
+         else if (lower.startsWith("bombo cd")) args = trimmed.substring(8).trim();
+         else if (lower.startsWith("b cd")) args = trimmed.substring(4).trim();
+         else if (lower.startsWith("cd")) args = trimmed.substring(2).trim();
+
+         me.bombo.bomboaddons.features.misc.CommandDelayManager.handleCommand(args);
+         ci.cancel();
+         return;
+      }
+      if (lower.equals("b ck") || lower.startsWith("b ck ")
+            || lower.equals("b customkey") || lower.startsWith("b customkey ")
+            || lower.equals("b conditional") || lower.startsWith("b conditional ")
+            || lower.equals("bombo ck") || lower.startsWith("bombo ck ")
+            || lower.equals("bombo customkey") || lower.startsWith("bombo customkey ")
+            || lower.equals("bomboaddons ck") || lower.startsWith("bomboaddons ck ")
+            || lower.equals("bomboaddons customkey") || lower.startsWith("bomboaddons customkey ")) {
+         String args = "";
+         if (lower.startsWith("bomboaddons customkey")) args = trimmed.substring(21).trim();
+         else if (lower.startsWith("bomboaddons ck")) args = trimmed.substring(14).trim();
+         else if (lower.startsWith("bombo customkey")) args = trimmed.substring(15).trim();
+         else if (lower.startsWith("bombo ck")) args = trimmed.substring(8).trim();
+         else if (lower.startsWith("b conditional")) args = trimmed.substring(13).trim();
+         else if (lower.startsWith("b customkey")) args = trimmed.substring(11).trim();
+         else if (lower.startsWith("b ck")) args = trimmed.substring(4).trim();
+
+         me.bombo.bomboaddons.features.misc.ConditionalKeybindManager.handleCommand(args);
+         ci.cancel();
+         return;
+      }
       if (lower.equals("b debug profile") || lower.equals("bombo debug profile") || lower.equals("bomboaddons debug profile")) {
          Minecraft mc = Minecraft.getInstance();
          String pid = me.bombo.bomboaddons.SkyblockUtils.currentProfileId;

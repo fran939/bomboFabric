@@ -1177,6 +1177,18 @@ public class ConfigRegistry {
             }
 
             case "Kuudra" -> {
+                items.add(ConfigItem.header("§e§lEmergency / Conditional Keybind", category));
+                items.add(ConfigItem.toggle("Conditional Keybind Enabled", "Executes configured command when key is pressed and location/height conditions match.", category, () -> s.conditionalKeybindEnabled, v -> s.conditionalKeybindEnabled = v));
+                items.add(ConfigItem.keybind("Conditional Keybind", "Key to press to trigger the conditional command.", category, () -> s.conditionalKeybindKey != null ? s.conditionalKeybindKey : "NONE", v -> s.conditionalKeybindKey = v));
+                items.add(ConfigItem.text("Command to Run", "Command executed when conditions match (e.g. /b cd 100 /wd).", category, () -> s.conditionalKeybindCommand != null ? s.conditionalKeybindCommand : "/b cd 100 /wd", v -> s.conditionalKeybindCommand = v));
+                items.add(ConfigItem.cycle("Location Requirement", "Zone or tier required to trigger.", category, List.of("Kuudra T5", "Any Kuudra", "Everywhere"), () -> s.conditionalKeybindArea != null ? s.conditionalKeybindArea : "Kuudra T5", v -> {
+                    s.conditionalKeybindArea = v;
+                    s.conditionalKeybindKuudraT5Only = "Kuudra T5".equalsIgnoreCase(v);
+                }));
+                items.add(ConfigItem.toggle("Check Height Condition", "Only triggers if player Y height is under the configured threshold.", category, () -> s.conditionalKeybindCheckHeight, v -> s.conditionalKeybindCheckHeight = v));
+                items.add(ConfigItem.sliderFloat("Max Y Height Threshold", "Maximum Y coordinate to allow execution (triggers when Y < threshold, e.g. 40.0 in Kuudra).", category, -100.0f, 300.0f, 1.0f, "", () -> (float)s.conditionalKeybindMaxY, v -> s.conditionalKeybindMaxY = v));
+                items.add(ConfigItem.toggle("Trigger Notification", "Show chat confirmation when conditional keybind executes.", category, () -> s.conditionalKeybindNotify, v -> s.conditionalKeybindNotify = v));
+
                 items.add(ConfigItem.header("§e§lKuudra General", category));
                 items.add(ConfigItem.toggle("Block Useless Perks", "Prevents clicking useless perks in perk menu. Hold Ctrl to bypass.", category, () -> s.blockUselessPerks, v -> s.blockUselessPerks = v));
                 items.add(ConfigItem.toggle("Block SkyBlock Menu", "Prevents accidentally clicking slot 8 / SkyBlock menu in Kuudra.", category, () -> s.blockSkyblockMenu, v -> s.blockSkyblockMenu = v));

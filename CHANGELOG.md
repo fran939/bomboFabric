@@ -1,5 +1,12 @@
 # BomboAddons Changelog
  
+## [26.2.28.185] - 2026-10-31 (Beta)
+
+### Delayed Command Scheduler (/b cd), Conditional Emergency Keybind, and Kuudra Fall Protection (`CommandDelayManager.java`, `ConditionalKeybindManager.java`, `CommandMixin.java`, `KeyboardMixin.java`, `BomboaddonsClient.java`, `BomboConfig.java`, `ConfigRegistry.java`)
+- **Delayed Command Execution (`/b cd <ms> <command>`, `/cd <ms> <command>`) (`CommandDelayManager.java`, `CommandMixin.java`):** Added command scheduler allowing players to delay any command execution by a specified millisecond duration (e.g. `/b cd 100 /wd` or `/cd 250 /warp camp`). Supports `ms` and `s` suffixes, millisecond precision, recursive chaining, and dispatches safely on Minecraft's main thread via `executeTracked`.
+- **Conditional & Emergency Keybind System (`ConditionalKeybindManager.java`, `CommandMixin.java`, `KeyboardMixin.java`, `BomboaddonsClient.java`, `BomboConfig.java`, `ConfigRegistry.java`):** Added a customizable conditional action keybind (`key.bomboaddons.conditional_action`, configurable in vanilla Controls or `/b config`). Supports customizable command execution, location/Kuudra tier requirements (Kuudra T5, Any Kuudra, Everywhere), height thresholds (player Y < 40.0), and 400ms debounce protection.
+- **In-Game Conditional Keybind Commands (`/b ck`, `/b customkey`) (`ConditionalKeybindManager.java`, `CommandMixin.java`):** Added in-game management commands: `/b ck` (view status and current Y height), `/b ck cmd <command>` (set command), `/b ck y <height|off>` (set height threshold), `/b ck tier <t5|any|off>` (set area requirement), `/b ck toggle` (toggle on/off), and `/b ck test` (test trigger).
+
 ## [26.2.28.184] - 2026-10-31 (Beta)
 
 ### Garden GUI Crop Breaking & Movement, In-Game /reminder and /timer Command, Bot Delta Formatting, BlockHighlight Distance Scale Fix, Pest ESP Small ArmorStand Alignment, and BomboChat Default (`GardenMovement.java`, `PlayerMixin.java`, `ReminderManager.java`, `CommandMixin.java`, `BlockHighlight.java`, `TargetPests.java`, `PestESP.java`, `BomboConfig.java`, `bombot/index.js`)

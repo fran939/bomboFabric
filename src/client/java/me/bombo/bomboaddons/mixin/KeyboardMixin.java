@@ -255,6 +255,7 @@ public abstract class KeyboardMixin {
             return;
          }
 
+         me.bombo.bomboaddons.features.misc.ConditionalKeybindManager.onKeyPressed(key);
          GardenMovement.handleKey(key);
          int saveInvKey = ClickLogic.getKeyCode(BomboConfig.get().saveInventoryKey);
          if (saveInvKey != -1 && key == saveInvKey && mc.gui.screen() instanceof AbstractContainerScreen) {

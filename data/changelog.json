@@ -1,5 +1,14 @@
 [
   {
+    "version": "26.2.28.185",
+    "date": "2026-10-31",
+    "changes": [
+      "+ Delayed Command Scheduler (/b cd <ms> <command>): executes any command after a configurable millisecond delay (e.g. /b cd 100 /wd, /cd 250 /warp camp), with millisecond precision and automatic main-thread dispatching",
+      "+ Conditional & Emergency Keybind System: added configurable conditional action keybind (supporting Kuudra T5, player height < 40, custom commands) with /b ck commands (/b ck cmd, /b ck y, /b ck tier, /b ck toggle) and in-game controls menu binding",
+      "+ Kuudra Fall Protection Integration: natively detects Kuudra T5 and height under 40.0 to automatically trigger emergency commands when knocked off the platform"
+    ]
+  },
+  {
     "version": "26.2.28.184",
     "date": "2026-10-31",
     "changes": [

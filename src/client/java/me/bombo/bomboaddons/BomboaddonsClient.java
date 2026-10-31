@@ -187,6 +187,11 @@ public class BomboaddonsClient implements ClientModInitializer {
    public static net.minecraft.client.KeyMapping keySpotifyPrev;
 
    public static void registerSpotifyKeyBindings() {
+      me.bombo.bomboaddons.features.misc.ConditionalKeybindManager.keyConditionalAction = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
+            .registerKeyMapping(new net.minecraft.client.KeyMapping(
+                  "key.bomboaddons.conditional_action",
+                  com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue(),
+                  BOMBO_KEY_CATEGORY));
       keySpotifyPlayPause = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
             .registerKeyMapping(new net.minecraft.client.KeyMapping(
                   "key.bomboaddons.spotify_play_pause",
@@ -1107,6 +1112,7 @@ public class BomboaddonsClient implements ClientModInitializer {
             me.bombo.bomboaddons.features.StorageChestWaypoints.onClientTick(client);
             me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.tick();
             handleSpotifyKeybinds();
+            me.bombo.bomboaddons.features.misc.ConditionalKeybindManager.onClientTick();
             me.bombo.bomboaddons.features.SpeedometerHud.onClientTick(client);
             HotbarSwapper.onClientTick();
          } catch (Throwable ignored) {
