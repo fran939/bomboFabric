@@ -29,7 +29,7 @@ public class CommandMixin {
       if (me.bombo.bomboaddons.WardrobeHelper.getPendingArmorNumber() == -1) {
          me.bombo.bomboaddons.WardrobeHelper.clearSuppression();
       }
-      if (lower.equals("b forge") || lower.equals("bombo forge") || lower.equals("bomboaddons forge") || lower.equals("forge")) {
+      if (lower.equals("b forge") || lower.equals("bombo forge") || lower.equals("bomboaddons forge")) {
          Minecraft mc = Minecraft.getInstance();
          me.bombo.bomboaddons.features.mining.ForgeTimerManager.printForgeTimersToChat(mc);
          ci.cancel();
@@ -212,13 +212,12 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
-      if (lower.equals("inferno") || lower.startsWith("inferno ") || lower.equals("b inferno") || lower.startsWith("b inferno ")
+      if (lower.equals("b inferno") || lower.startsWith("b inferno ")
             || lower.equals("bombo inferno") || lower.startsWith("bombo inferno ") || lower.equals("bomboaddons inferno") || lower.startsWith("bomboaddons inferno ")) {
          String sub = "";
          if (lower.startsWith("bomboaddons inferno")) sub = trimmed.substring(18).trim();
          else if (lower.startsWith("bombo inferno")) sub = trimmed.substring(13).trim();
          else if (lower.startsWith("b inferno")) sub = trimmed.substring(9).trim();
-         else if (lower.startsWith("inferno")) sub = trimmed.substring(7).trim();
 
          Minecraft mc = Minecraft.getInstance();
          if (sub.isEmpty()) {

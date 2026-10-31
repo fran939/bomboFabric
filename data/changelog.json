@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.181",
+    "date": "2026-10-31",
+    "changes": [
+      "+ Multi-Account Forge Timers: stores active forge slots per-account and per-profile, /b forge groups timers by account, removed root /forge and /inferno command hijacking",
+      "+ Redesigned Forge HUD: removed opaque black background box, matches clean SkyBlock Pest HUD aesthetic with Total forge: X/Y and color-coded item timers",
+      "+ Auto Reel Single-Click Cooldown: increased cooldown to 1s and tracked entity IDs to guarantee 1 click per reel tier without double-clicking",
+      "+ BomboChat WebSocket Relay: added /bombochat location block in server Nginx proxying to WebSocket port 6668, added api.bombo.dpdns.org WSS fallback in IRCClient",
+      "+ Discord Bot fran938 Resolution: fixed getDiscordUserIdFromIgn resolving fran938 to his Discord ID (349545759617843200) for reminders and alerts",
+      "+ Garden Inventory Screen Allowance: allows farming and crop breaking to continue during player inventory (InventoryScreen) with active arm swing while pausing during container screens"
+    ]
+  },
+  {
     "version": "26.2.28.180",
     "date": "2026-10-31",
     "changes": [

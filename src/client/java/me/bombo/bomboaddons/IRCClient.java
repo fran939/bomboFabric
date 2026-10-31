@@ -272,22 +272,22 @@ public class IRCClient {
                   CompletableFuture<WebSocket> wsFuture2 = null;
                   try {
                      if (!running || Thread.currentThread().isInterrupted()) break;
-                     System.out.println("[BomboAddons-IRC] Trying WS ws://chat.bombo.dpdns.org:6668 (Fallback WS)...");
+                     System.out.println("[BomboAddons-IRC] Trying WSS wss://api.bombo.dpdns.org/bombochat (Fallback WSS)...");
                      var wsBuilder2 = client.newWebSocketBuilder();
                      if (!apiKey.isEmpty()) {
                         wsBuilder2.header("Api-Key", apiKey);
                         wsBuilder2.header("X-Api-Key", apiKey);
                      }
-                     wsFuture2 = wsBuilder2.buildAsync(URI.create("ws://chat.bombo.dpdns.org:6668"), new WebSocketListener());
+                     wsFuture2 = wsBuilder2.buildAsync(URI.create("wss://api.bombo.dpdns.org/bombochat"), new WebSocketListener());
                      webSocket = (WebSocket)wsFuture2.get(5L, TimeUnit.SECONDS);
                      if (!apiKey.isEmpty()) sendRaw("PASS " + apiKey);
                      sendRaw("NICK " + currentNick);
                      sendRaw("USER " + currentNick + " 0 * :BomboAddons User");
                      sendRaw("JOIN #bomboaddons_chat");
                      sendRaw("NAMES #bomboaddons_chat");
-                     activeEndpoint = "ws://chat.bombo.dpdns.org:6668 (WebSocket)";
-                     lastError = "None (Connected via WebSocket WS 6668)";
-                     System.out.println("[BomboAddons-IRC] Connected via WebSocket WS 6668!");
+                     activeEndpoint = "wss://api.bombo.dpdns.org/bombochat (WebSocket)";
+                     lastError = "None (Connected via WebSocket WSS api)";
+                     System.out.println("[BomboAddons-IRC] Connected via WebSocket WSS (api.bombo.dpdns.org)!");
                      onConnected();
 
                      while(running && BomboConfig.get().ircChatEnabled && webSocket != null) {

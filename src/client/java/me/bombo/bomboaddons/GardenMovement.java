@@ -45,7 +45,7 @@ public class GardenMovement {
    public static void onTick(Minecraft mc) {
       BomboConfig.Settings s = BomboConfig.get();
       if (s.gardenMovement) {
-         if (mc.gui.screen() == null) {
+         if (isAllowedScreen(mc.gui.screen())) {
             if (forward) {
                mc.options.keyUp.setDown(true);
             }
@@ -60,13 +60,16 @@ public class GardenMovement {
             }
             if (breaking) {
                mc.options.keyAttack.setDown(true);
+               if (mc.player != null && !mc.player.swinging) {
+                  mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+               }
             }
             if (using) {
                mc.options.keyUse.setDown(true);
             }
          } else {
-            // While ANY GUI is open (inventory, container, chat, pause, config, etc.):
-            // Release attack, use, and movement keys to prevent anticheat Limbo kicks ("sent to limbo due to bad internet connectivity").
+            // While a server container is open (chest, visitors, shop, etc.):
+            // Release attack, use, and movement keys to prevent anticheat Limbo kicks.
             // Active flags (breaking, forward, etc.) are preserved so they instantly resume the moment the GUI closes!
             if (mc.options != null) {
                if (mc.options.keyAttack.isDown()) mc.options.keyAttack.setDown(false);

@@ -41,25 +41,46 @@ public class ForgeTimerHud {
             ForgeTimerManager.ForgeSlot closest = ForgeTimerManager.getClosestSlot();
             if (closest != null) {
                 String name = closest.itemName.isEmpty() ? ("Slot #" + closest.slotIndex) : closest.itemName;
-                lines.add("§6🔨 Forge: §e" + name + " §7- " + closest.getFormattedRemaining());
+                String timePart = closest.finished ? "§aReady!" : ("§b" + closest.getFormattedRemaining());
+                lines.add("§6The Forge: §e" + name + " §7in " + timePart);
             } else if (isPreview) {
-                lines.add("§6🔨 Forge: §eRefined Diamond §7- §b2h 15m");
+                lines.add("§6The Forge: §eRefined Diamond §7in §b2h 15m");
             } else {
-                lines.add("§6🔨 Forge: §7No active timers");
+                lines.add("§6The Forge: §7No active timers");
             }
         } else {
-            lines.add("§6§l🔨 The Forge");
             List<ForgeTimerManager.ForgeSlot> slots = ForgeTimerManager.getUnlockedSlots();
+            int totalUnlocked = slots.size();
+            int activeCount = 0;
+            for (ForgeTimerManager.ForgeSlot slot : slots) {
+                if (!slot.empty) activeCount++;
+            }
+
+            if (isPreview && slots.isEmpty()) {
+                totalUnlocked = 5;
+                activeCount = 3;
+            }
+
+            // Header matching user's reference: "Total pests: 4/8" -> "Total forge: 3/5"
+            lines.add("§6Total forge: §e" + activeCount + "/" + (totalUnlocked > 0 ? totalUnlocked : 5));
+
             if (slots.isEmpty() && isPreview) {
-                lines.add("§7• §eSlot 1: §fRefined Diamond §7- §b2h 15m");
-                lines.add("§7• §eSlot 2: §fMithril Drill SX-R326 §7- §aReady!");
-                lines.add("§7• §eSlot 3: §8Empty");
+                lines.add("§eRefined Diamond §7in §b2h 15m");
+                lines.add("§eMithril Drill §7in §aReady!");
+                lines.add("§eRefined Titanium §7in §b45m");
             } else if (slots.isEmpty()) {
-                lines.add("§7• §8No active slots recorded");
+                lines.add("§7No slots recorded");
             } else {
+                int shown = 0;
                 for (ForgeTimerManager.ForgeSlot slot : slots) {
-                    String name = slot.itemName.isEmpty() ? "Empty Slot" : slot.itemName;
-                    lines.add("§7• §eSlot " + slot.slotIndex + ": §f" + name + " §7- " + slot.getFormattedRemaining());
+                    if (slot.empty) continue;
+                    String name = slot.itemName.isEmpty() ? ("Slot #" + slot.slotIndex) : slot.itemName;
+                    String timePart = slot.finished ? "§aReady!" : ("§b" + slot.getFormattedRemaining());
+                    lines.add("§e" + name + " §7in " + timePart);
+                    shown++;
+                }
+                if (shown == 0) {
+                    lines.add("§7All slots empty");
                 }
             }
         }
@@ -69,8 +90,8 @@ public class ForgeTimerHud {
             int w = font.width(ChatFormatting.stripFormatting(line));
             if (w > maxW) maxW = w;
         }
-        int totalW = maxW + 8;
-        int totalH = lines.size() * 10 + 4;
+        int totalW = maxW + 4;
+        int totalH = lines.size() * 10;
 
         g.pose().pushMatrix();
         g.pose().translate((float) x, (float) y);
@@ -78,12 +99,14 @@ public class ForgeTimerHud {
             g.pose().scale(s.forgeHudScale, s.forgeHudScale);
         }
 
-        // Background box
-        g.fill(0, 0, totalW, totalH, 0x88000000);
+        // Draw preview outline only in HUD edit screen
+        if (isPreview) {
+            g.fill(-2, -2, totalW + 2, totalH + 2, 0x44000000);
+        }
 
-        int curY = 3;
+        int curY = 0;
         for (String line : lines) {
-            g.text(font, line, 4, curY, 0xFFFFFFFF, true);
+            g.text(font, line, 0, curY, 0xFFFFFFFF, true);
             curY += 10;
         }
 
@@ -95,16 +118,16 @@ public class ForgeTimerHud {
         if (s != null && s.forgeHudClosestOnly) {
             return 160;
         }
-        return 170;
+        return 150;
     }
 
     public static int getHeight() {
         BomboConfig.Settings s = BomboConfig.get();
         if (s != null && s.forgeHudClosestOnly) {
-            return 16;
+            return 12;
         }
         List<ForgeTimerManager.ForgeSlot> slots = ForgeTimerManager.getUnlockedSlots();
         int count = slots.isEmpty() ? 4 : (slots.size() + 1);
-        return count * 10 + 6;
+        return count * 10 + 2;
     }
 }

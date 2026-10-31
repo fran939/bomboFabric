@@ -2,8 +2,11 @@ package me.bombo.bomboaddons.features.mining;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import me.bombo.bomboaddons.BomboConfig;
+import me.bombo.bomboaddons.features.StorageTracker;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -26,9 +29,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,7 +73,8 @@ public class ForgeTimerManager {
         }
     }
 
-    private static final List<ForgeSlot> slots = new ArrayList<>();
+    // Key format: "username:profileId" (e.g. "fran938:coconut", "bomboclas:apple")
+    public static final Map<String, List<ForgeSlot>> accountSlots = new ConcurrentHashMap<>();
     private static long lastTickCheck = 0L;
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(3))
@@ -81,9 +84,36 @@ public class ForgeTimerManager {
         load();
     }
 
+    public static String getCurrentAccountKey() {
+        Minecraft mc = Minecraft.getInstance();
+        String user = "default";
+        if (mc != null && mc.getUser() != null) {
+            String u = mc.getUser().getName();
+            if (u != null && !u.isEmpty()) user = u.toLowerCase(Locale.ROOT);
+        }
+        String prof = StorageTracker.getActiveProfileId();
+        if (prof == null || prof.isEmpty()) prof = "default";
+        return user + ":" + prof;
+    }
+
+    public static String getCurrentUsername() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc != null && mc.getUser() != null) {
+            String u = mc.getUser().getName();
+            if (u != null && !u.isEmpty()) return u;
+        }
+        return "player";
+    }
+
+    public static synchronized List<ForgeSlot> getCurrentSlots() {
+        String key = getCurrentAccountKey();
+        return accountSlots.computeIfAbsent(key, k -> new ArrayList<>());
+    }
+
     public static synchronized List<ForgeSlot> getUnlockedSlots() {
+        List<ForgeSlot> current = getCurrentSlots();
         List<ForgeSlot> list = new ArrayList<>();
-        for (ForgeSlot slot : slots) {
+        for (ForgeSlot slot : current) {
             if (!slot.locked) {
                 list.add(slot);
             }
@@ -92,9 +122,10 @@ public class ForgeTimerManager {
     }
 
     public static synchronized ForgeSlot getClosestSlot() {
+        List<ForgeSlot> current = getCurrentSlots();
         ForgeSlot closest = null;
         long lowestRemaining = Long.MAX_VALUE;
-        for (ForgeSlot slot : slots) {
+        for (ForgeSlot slot : current) {
             if (!slot.locked && !slot.empty) {
                 long rem = slot.getRemainingSeconds();
                 if (rem >= 0 && rem < lowestRemaining) {
@@ -117,6 +148,7 @@ public class ForgeTimerManager {
 
         boolean changed = false;
         synchronized (ForgeTimerManager.class) {
+            List<ForgeSlot> slots = getCurrentSlots();
             int detectedSlotNumber = 1;
             for (Slot s : screen.getMenu().slots) {
                 if (s == null || s.index >= 54 || !s.hasItem()) continue;
@@ -181,7 +213,7 @@ public class ForgeTimerManager {
                     int slotIdx = extractSlotNumber(hoverName, detectedSlotNumber);
                     detectedSlotNumber++;
 
-                    ForgeSlot existing = findSlot(slotIdx);
+                    ForgeSlot existing = findSlot(slots, slotIdx);
                     if (existing == null) {
                         existing = new ForgeSlot();
                         existing.slotIndex = slotIdx;
@@ -237,39 +269,51 @@ public class ForgeTimerManager {
         BomboConfig.Settings s = BomboConfig.get();
         if (s == null) return;
 
+        String currentKey = getCurrentAccountKey();
+
         synchronized (ForgeTimerManager.class) {
             boolean changed = false;
-            for (ForgeSlot slot : slots) {
-                if (slot.locked || slot.empty) continue;
+            for (Map.Entry<String, List<ForgeSlot>> entry : accountSlots.entrySet()) {
+                String accKey = entry.getKey();
+                List<ForgeSlot> slots = entry.getValue();
+                boolean isCurrent = accKey.equalsIgnoreCase(currentKey);
 
-                if (!slot.finished && slot.finishTimestamp > 0L && now >= slot.finishTimestamp) {
-                    slot.finished = true;
-                    changed = true;
-                }
+                String[] keyParts = accKey.split(":");
+                String accUser = keyParts.length > 0 ? keyParts[0] : "player";
+                String accProf = keyParts.length > 1 ? keyParts[1] : "default";
 
-                if (slot.finished && !slot.notified) {
-                    slot.notified = true;
-                    changed = true;
+                for (ForgeSlot slot : slots) {
+                    if (slot.locked || slot.empty) continue;
 
-                    // Check for bundling / debounce (items finishing within 3 minutes)
-                    String bundleSuffix = "";
-                    if (s.forgeConsolidateNotifications) {
-                        long windowEnd = now + 180_000L; // 3 minutes
-                        for (ForgeSlot other : slots) {
-                            if (other != slot && !other.locked && !other.empty && !other.finished) {
-                                if (other.finishTimestamp > now && other.finishTimestamp <= windowEnd) {
-                                    long deltaSec = (other.finishTimestamp - now) / 1000L;
-                                    long m = deltaSec / 60;
-                                    long sec = deltaSec % 60;
-                                    String deltaStr = m > 0 ? (m + "m " + sec + "s") : (sec + "s");
-                                    bundleSuffix = " §7(§e" + other.itemName + " §7done in §b" + deltaStr + "§7)";
-                                    break;
+                    if (!slot.finished && slot.finishTimestamp > 0L && now >= slot.finishTimestamp) {
+                        slot.finished = true;
+                        changed = true;
+                    }
+
+                    if (slot.finished && !slot.notified) {
+                        slot.notified = true;
+                        changed = true;
+
+                        // Check for bundling / debounce (items finishing within 3 minutes)
+                        String bundleSuffix = "";
+                        if (s.forgeConsolidateNotifications) {
+                            long windowEnd = now + 180_000L; // 3 minutes
+                            for (ForgeSlot other : slots) {
+                                if (other != slot && !other.locked && !other.empty && !other.finished) {
+                                    if (other.finishTimestamp > now && other.finishTimestamp <= windowEnd) {
+                                        long deltaSec = (other.finishTimestamp - now) / 1000L;
+                                        long m = deltaSec / 60;
+                                        long sec = deltaSec % 60;
+                                        String deltaStr = m > 0 ? (m + "m " + sec + "s") : (sec + "s");
+                                        bundleSuffix = " §7(§e" + other.itemName + " §7done in §b" + deltaStr + "§7)";
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    triggerAlerts(mc, s, slot, bundleSuffix);
+                        triggerAlerts(mc, s, slot, bundleSuffix, accUser, accProf, isCurrent);
+                    }
                 }
             }
 
@@ -279,8 +323,9 @@ public class ForgeTimerManager {
         }
     }
 
-    private static void triggerAlerts(Minecraft mc, BomboConfig.Settings s, ForgeSlot slot, String bundleSuffix) {
+    private static void triggerAlerts(Minecraft mc, BomboConfig.Settings s, ForgeSlot slot, String bundleSuffix, String accUser, String accProf, boolean isCurrent) {
         String itemName = slot.itemName.isEmpty() ? ("Slot #" + slot.slotIndex) : slot.itemName;
+        String accPrefix = isCurrent ? "" : ("§8[§b" + accUser + " - " + accProf + "§8] ");
 
         // 1. Chat Warning
         if (s.forgeChatWarning && mc.player != null) {
@@ -289,7 +334,7 @@ public class ForgeTimerManager {
                             .withClickEvent(new ClickEvent.RunCommand("/warp forge"))
                             .withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to run /warp forge"))));
 
-            Component msg = Component.literal("§8[§6🔨 Forge§8] §aYour §e" + itemName + " §ais ready at the Forge!" + bundleSuffix + " ")
+            Component msg = Component.literal("§8[§6🔨 Forge§8] " + accPrefix + "§aYour §e" + itemName + " §ais ready at the Forge!" + bundleSuffix + " ")
                     .append(warpButton);
             mc.player.sendSystemMessage(msg);
         }
@@ -297,22 +342,28 @@ public class ForgeTimerManager {
         // 2. Screen Title Warning
         if (s.forgeScreenWarning) {
             mc.gui.hud.setTitle(Component.literal("§6§lForge Item Ready!"));
-            mc.gui.hud.setSubtitle(Component.literal("§e" + itemName + " §ais ready to collect!"));
+            String subtitle = isCurrent ? ("§e" + itemName + " §ais ready to collect!") : ("§b[" + accUser + "] §e" + itemName + " §ais ready!");
+            mc.gui.hud.setSubtitle(Component.literal(subtitle));
             mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.NOTE_BLOCK_BELL.value(), 1.0f, 1.0f));
         }
 
         // 3. Discord Bot Alert
         if (s.forgeDiscordAlert) {
             String cleanBundle = ChatFormatting.stripFormatting(bundleSuffix);
-            String discordMsg = "🔨 **[Forge Reminder]** Your **" + itemName + "** is ready at the Forge!" + cleanBundle;
-            sendDiscordAlertAsync(discordMsg);
+            String userTag = isCurrent ? "" : (" (" + accUser + " - " + accProf + ")");
+            String discordMsg = "🔨 **[Forge Reminder]** Your **" + itemName + "**" + userTag + " is ready at the Forge!" + cleanBundle;
+            sendDiscordAlertAsync(discordMsg, accUser);
         }
     }
 
-    private static void sendDiscordAlertAsync(String message) {
+    private static void sendDiscordAlertAsync(String message, String username) {
         new Thread(() -> {
             try {
-                String json = "{\"message\":" + GSON.toJson(message) + "}";
+                Map<String, String> payload = new HashMap<>();
+                payload.put("message", message);
+                payload.put("user", username);
+                String json = GSON.toJson(payload);
+
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create("https://api.bombo.dpdns.org/api/bot/forge-alert"))
                         .header("Content-Type", "application/json")
@@ -323,7 +374,11 @@ public class ForgeTimerManager {
             } catch (Throwable ignored) {
                 // Fallback to direct port 6668 if domain proxy has transient issue
                 try {
-                    String json = "{\"message\":" + GSON.toJson(message) + "}";
+                    Map<String, String> payload = new HashMap<>();
+                    payload.put("message", message);
+                    payload.put("user", username);
+                    String json = GSON.toJson(payload);
+
                     HttpRequest request = HttpRequest.newBuilder()
                             .uri(URI.create("http://ssh.bombo.dpdns.org:6668/api/bot/forge-alert"))
                             .header("Content-Type", "application/json")
@@ -338,28 +393,46 @@ public class ForgeTimerManager {
 
     public static void printForgeTimersToChat(Minecraft mc) {
         if (mc.player == null) return;
-        List<ForgeSlot> unlocked = getUnlockedSlots();
-        if (unlocked.isEmpty()) {
-            mc.player.sendSystemMessage(Component.literal("§8[§6🔨 Forge§8] §7No active Forge slots recorded yet. Open §eThe Forge §7GUI in Dwarven Mines to sync!"));
-            return;
-        }
+        String curKey = getCurrentAccountKey();
 
-        mc.player.sendSystemMessage(Component.literal("§6§l--------- 🔨 Dwarven Mines Forge Timers ---------"));
-        for (ForgeSlot slot : unlocked) {
-            String status = slot.getFormattedRemaining();
-            String name = slot.itemName.isEmpty() ? "Empty Slot" : slot.itemName;
-            mc.player.sendSystemMessage(Component.literal("§7• §eSlot #" + slot.slotIndex + ": §f" + name + " §7- " + status));
-        }
+        synchronized (ForgeTimerManager.class) {
+            if (accountSlots.isEmpty() || (accountSlots.size() == 1 && getCurrentSlots().isEmpty())) {
+                mc.player.sendSystemMessage(Component.literal("§8[§6🔨 Forge§8] §7No active Forge slots recorded yet. Open §eThe Forge §7GUI in Dwarven Mines to sync!"));
+                return;
+            }
 
-        Component warpButton = Component.literal("§b§l[Click to Warp to Forge]")
-                .withStyle(style -> style
-                        .withClickEvent(new ClickEvent.RunCommand("/warp forge"))
-                        .withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to warp to Forge"))));
-        mc.player.sendSystemMessage(Component.literal(" ").append(warpButton));
+            mc.player.sendSystemMessage(Component.literal("§6§l--------- 🔨 Dwarven Mines Forge Timers ---------"));
+            for (Map.Entry<String, List<ForgeSlot>> entry : accountSlots.entrySet()) {
+                String accKey = entry.getKey();
+                List<ForgeSlot> slots = entry.getValue();
+                if (slots.isEmpty()) continue;
+
+                boolean isCurrent = accKey.equalsIgnoreCase(curKey);
+                String[] parts = accKey.split(":");
+                String accUser = parts.length > 0 ? parts[0] : "player";
+                String accProf = parts.length > 1 ? parts[1] : "default";
+
+                String header = "§e" + accUser + " §7(Profile: §b" + accProf + "§7)" + (isCurrent ? " §a[Active]" : "");
+                mc.player.sendSystemMessage(Component.literal(header));
+
+                for (ForgeSlot slot : slots) {
+                    if (slot.locked) continue;
+                    String status = slot.getFormattedRemaining();
+                    String name = slot.itemName.isEmpty() ? "Empty Slot" : slot.itemName;
+                    mc.player.sendSystemMessage(Component.literal("  §7• §eSlot #" + slot.slotIndex + ": §f" + name + " §7- " + status));
+                }
+            }
+
+            Component warpButton = Component.literal("§b§l[Click to Warp to Forge]")
+                    .withStyle(style -> style
+                            .withClickEvent(new ClickEvent.RunCommand("/warp forge"))
+                            .withHoverEvent(new HoverEvent.ShowText(Component.literal("§eClick to warp to Forge"))));
+            mc.player.sendSystemMessage(Component.literal(" ").append(warpButton));
+        }
     }
 
-    private static ForgeSlot findSlot(int index) {
-        for (ForgeSlot slot : slots) {
+    private static ForgeSlot findSlot(List<ForgeSlot> list, int index) {
+        for (ForgeSlot slot : list) {
             if (slot.slotIndex == index) return slot;
         }
         return null;
@@ -404,7 +477,7 @@ public class ForgeTimerManager {
         try {
             FILE.getParentFile().mkdirs();
             try (FileWriter writer = new FileWriter(FILE)) {
-                GSON.toJson(slots, writer);
+                GSON.toJson(accountSlots, writer);
             }
         } catch (Throwable ignored) {}
     }
@@ -412,11 +485,22 @@ public class ForgeTimerManager {
     private static synchronized void load() {
         if (!FILE.exists()) return;
         try (FileReader reader = new FileReader(FILE)) {
-            Type type = new TypeToken<List<ForgeSlot>>() {}.getType();
-            List<ForgeSlot> loaded = GSON.fromJson(reader, type);
-            if (loaded != null) {
-                slots.clear();
-                slots.addAll(loaded);
+            JsonElement root = JsonParser.parseReader(reader);
+            if (root.isJsonObject()) {
+                Type mapType = new TypeToken<Map<String, List<ForgeSlot>>>() {}.getType();
+                Map<String, List<ForgeSlot>> loadedMap = GSON.fromJson(root, mapType);
+                if (loadedMap != null) {
+                    accountSlots.clear();
+                    accountSlots.putAll(loadedMap);
+                }
+            } else if (root.isJsonArray()) {
+                // Backward compatibility: load array into current account
+                Type listType = new TypeToken<List<ForgeSlot>>() {}.getType();
+                List<ForgeSlot> loadedList = GSON.fromJson(root, listType);
+                if (loadedList != null) {
+                    accountSlots.clear();
+                    accountSlots.put(getCurrentAccountKey(), loadedList);
+                }
             }
         } catch (Throwable ignored) {}
     }

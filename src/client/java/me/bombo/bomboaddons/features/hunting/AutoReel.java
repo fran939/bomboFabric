@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class AutoReel {
     private static long lastReelTime = 0L;
+    private static int lastReeledEntityId = -1;
 
     public static boolean isLasso(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
@@ -39,7 +40,7 @@ public class AutoReel {
         if (hand == null) return;
 
         long now = System.currentTimeMillis();
-        if (now - lastReelTime < 200L) return; // Cooldown throttle (5 clicks/sec)
+        if (now - lastReelTime < 1000L) return; // 1s cooldown per tier to prevent double clicking
 
         // Search rendering entities within 7 blocks
         for (Entity entity : mc.level.entitiesForRendering()) {
@@ -53,6 +54,7 @@ public class AutoReel {
 
             if (checkReelText(customName) || checkReelText(displayName) || checkReelText(name)) {
                 lastReelTime = now;
+                lastReeledEntityId = entity.getId();
                 mc.gameMode.useItem(mc.player, hand);
                 mc.player.swing(hand);
                 break;

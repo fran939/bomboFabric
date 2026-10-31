@@ -68,7 +68,7 @@ public class MinecraftMixin {
    private void onTickTail(CallbackInfo ci) {
       Minecraft mc = (Minecraft)(Object)this;
       if (me.bombo.bomboaddons.BomboaddonsClient.holdingLeftClick) {
-         if (mc.gui.screen() == null) {
+         if (me.bombo.bomboaddons.GardenMovement.isAllowedScreen(mc.gui.screen())) {
             if (mc.options != null) mc.options.keyAttack.setDown(true);
             if (mc.player != null && mc.level != null) {
                try {

@@ -1,5 +1,15 @@
 # BomboAddons Changelog
  
+## [26.2.28.181] - 2026-10-31 (Beta)
+
+### Multi-Account Forge Timers & HUD Redesign, Auto Reel Single-Click Cooldown, BomboChat WSS Relay, Discord User ID Linking, and Garden Inventory Farming (`ForgeTimerManager.java`, `ForgeTimerHud.java`, `AutoReel.java`, `GardenMovement.java`, `MinecraftMixin.java`, `CommandMixin.java`, `IRCClient.java`, `bombot/index.js`, nginx)
+- **Multi-Account & Multi-Profile Forge Timers (`ForgeTimerManager.java`, `CommandMixin.java`):** Completely refactored Forge timer storage to persist slots per-account and per-profile (`username:profileId`). Timers from multiple accounts are independently tracked without overwriting each other. `/b forge` command now lists active timers grouped by account and profile. Removed root `/forge` and `/inferno` command interception in `CommandMixin` so they do not collide with Hypixel or other mod commands, preserving `/b forge` and `/b inferno`.
+- **Forge HUD Redesign (`ForgeTimerHud.java`):** Redesigned the Forge HUD to match the clean SkyBlock Pest HUD aesthetic. Removed the opaque black background box for seamless on-screen integration with drop shadows. Displays formatted header (`Total forge: X/Y`) and color-coded items (`<Item> in <Time>`).
+- **Auto Reel Cooldown & Single-Click Enforcement (`AutoReel.java`):** Increased Auto Reel cooldown from 200ms to 1000ms (1s) and added entity tracking to ensure it clicks exactly once per reel tier, preventing double-clicking bugs.
+- **BomboChat WebSocket Relay Resolution (`IRCClient.java`, `/etc/nginx/sites-available/bomboapi`):** Fixed BomboChat failing to connect. Configured Nginx on the remote server to proxy `wss://bombo.dpdns.org/bombochat` to the backend WebSocket port 6668 with upgrade headers. Added fallback to `wss://api.bombo.dpdns.org/bombochat` in `IRCClient`.
+- **Discord Bot User ID Resolution for `fran938` (`bombot/index.js`):** Fixed `getDiscordUserIdFromIgn` erroneously hardcoding `fran938` to `bomboclas`'s Discord account. Lookups now properly query `discord_linked_users.json`, accurately routing reminder and timer DMs for `fran938` to his Discord account (`349545759617843200`).
+- **Garden Movement Inventory Screen Allowance (`GardenMovement.java`, `MinecraftMixin.java`):** Fixed crop breaking and movement stopping when opening player inventory (`InventoryScreen`). Distinguishes client GUI / inventory screens from server-side container screens (`AbstractContainerScreen`), allowing players to check inventory while farming with active arm swinging while still pausing during server containers to prevent anticheat Limbo kicks.
+
 ## [26.2.28.180] - 2026-10-31 (Beta)
 
 ### Auto Reel, Forge Timers & HUD, Discord Bot DMs & Flexible Timers, and Garden Limbo Fix (`AutoReel.java`, `ForgeTimerManager.java`, `ForgeTimerHud.java`, `GardenMovement.java`, `MinecraftMixin.java`, `AbstractContainerScreenMixin.java`, `BomboConfig.java`, `ConfigRegistry.java`, `HudMoveScreen.java`, `bombot/index.js`)
