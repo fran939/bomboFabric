@@ -29,6 +29,12 @@ public class CommandMixin {
       if (me.bombo.bomboaddons.WardrobeHelper.getPendingArmorNumber() == -1) {
          me.bombo.bomboaddons.WardrobeHelper.clearSuppression();
       }
+      if (lower.equals("b forge") || lower.equals("bombo forge") || lower.equals("bomboaddons forge") || lower.equals("forge")) {
+         Minecraft mc = Minecraft.getInstance();
+         me.bombo.bomboaddons.features.mining.ForgeTimerManager.printForgeTimersToChat(mc);
+         ci.cancel();
+         return;
+      }
       if (lower.equals("b debug profile") || lower.equals("bombo debug profile") || lower.equals("bomboaddons debug profile")) {
          Minecraft mc = Minecraft.getInstance();
          String pid = me.bombo.bomboaddons.SkyblockUtils.currentProfileId;

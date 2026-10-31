@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.180",
+    "date": "2026-10-31",
+    "changes": [
+      "+ Auto Reel (Hunting Category): automatically right-clicks when holding any lasso and an entity displays 'REEL' within 7m",
+      "+ Dwarven Mines Forge Timers & HUD: parses active items and remaining times in The Forge GUI, ignores locked slots, provides draggable/resizable FORGE_HUD with All Slots and Closest Only modes",
+      "+ Multi-Channel Forge Alerts: clickable chat alert with [Click to Warp] (/warp forge), on-screen title alert, and Discord bot alerts with 3-minute bundling debounce",
+      "+ Discord Bot !timer & !reminder DM Alerts: sends DM notifications on timer expiration with flexible duration ordering (!timer 3h forge, !timer forge 3h 17m)",
+      "+ Garden Keybind Limbo Kick Resolution: pauses attack and movement packets while ANY GUI is open to prevent anticheat Limbo kicks, instantly resuming when closed"
+    ]
+  },
+  {
     "version": "26.2.28.179",
     "date": "2026-10-29",
     "changes": [

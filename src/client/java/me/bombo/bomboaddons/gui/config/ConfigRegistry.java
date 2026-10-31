@@ -51,6 +51,7 @@ public class ConfigRegistry {
             "Highlight",
             "Profiles",
             "Safari",
+            "Hunting",
             "Crosshair",
             "Discord",
             "Hider",
@@ -1319,6 +1320,24 @@ public class ConfigRegistry {
                 items.add(ConfigItem.color("Tungsten Corpse Color", "Color for Tungsten corpse outline.", category, () -> s.tungstenOutlineColor != null ? s.tungstenOutlineColor : "WHITE", v -> s.tungstenOutlineColor = v));
                 items.add(ConfigItem.color("Umber Corpse Color", "Color for Umber corpse outline.", category, () -> s.umberOutlineColor != null ? s.umberOutlineColor : "GOLD", v -> s.umberOutlineColor = v));
                 items.add(ConfigItem.color("Vanguard Corpse Color", "Color for Vanguard corpse outline.", category, () -> s.vanguardOutlineColor != null ? s.vanguardOutlineColor : "LIGHT_PURPLE", v -> s.vanguardOutlineColor = v));
+
+                items.add(ConfigItem.header("Forge Timers (/b forge)", category));
+                items.add(ConfigItem.hudToggle("Forge HUD", "Displays active Forge timers on your screen.", category, () -> s.forgeHud, v -> s.forgeHud = v, HudTarget.FORGE_HUD));
+                items.add(ConfigItem.toggle("Forge HUD Closest Only", "Only displays the item closest to finishing on the Forge HUD.", category, () -> s.forgeHudClosestOnly, v -> s.forgeHudClosestOnly = v));
+                items.add(ConfigItem.toggle("Forge Chat Warning", "Sends a clickable chat alert when a Forge item is ready (/warp forge).", category, () -> s.forgeChatWarning, v -> s.forgeChatWarning = v));
+                items.add(ConfigItem.toggle("Forge Screen Warning", "Displays a title/banner alert on screen when a Forge item is ready.", category, () -> s.forgeScreenWarning, v -> s.forgeScreenWarning = v));
+                items.add(ConfigItem.toggle("Forge Discord Alert", "Sends a Discord DM notification via Bombot when Forge items finish.", category, () -> s.forgeDiscordAlert, v -> s.forgeDiscordAlert = v));
+                items.add(ConfigItem.toggle("Consolidate Close Alerts", "Bundles Forge notifications if items expire within 3 minutes of each other.", category, () -> s.forgeConsolidateNotifications, v -> s.forgeConsolidateNotifications = v));
+                items.add(ConfigItem.button("View Forge Timers in Chat", "Run /b forge", "Prints current Forge timers to chat.", category, () -> {
+                    Minecraft mc = Minecraft.getInstance();
+                    me.bombo.bomboaddons.features.mining.ForgeTimerManager.printForgeTimersToChat(mc);
+                }));
+            }
+
+            case "Hunting" -> {
+                items.add(ConfigItem.header("Hunting & Lassos", category));
+                items.add(ConfigItem.toggle("Auto Reel", "Automatically reels in mobs when holding a lasso and REEL is displayed.", category, () -> s.autoReel, v -> s.autoReel = v));
+                items.add(ConfigItem.toggle("Lasso Fix", "Allows lasso clicking through bat hitboxes in Spooky Festival.", category, () -> s.lassoClickThroughBats, v -> s.lassoClickThroughBats = v));
             }
 
             case "Misc" -> {

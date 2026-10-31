@@ -1111,6 +1111,8 @@ public class BomboaddonsClient implements ClientModInitializer {
       });
       StructureScanner.loadPatterns();
       ComposterHud.init();
+      me.bombo.bomboaddons.features.mining.ForgeTimerManager.init();
+      me.bombo.bomboaddons.features.mining.ForgeTimerHud.init();
       TabWidgetHud.init();
       HoppityHud.init();
       me.bombo.bomboaddons.features.hud.ArmorHud.init();
@@ -8144,6 +8146,7 @@ public class BomboaddonsClient implements ClientModInitializer {
          me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.init();
          me.bombo.bomboaddons.features.DojoUtilities.init();
          me.bombo.bomboaddons.features.shards.ShardsShoppingHud.init();
+         me.bombo.bomboaddons.features.mining.ForgeTimerHud.init();
          HighlightESP.fetchOnlineAliasesAsync();
          IRCClient.start();
          LevelRenderEvents.COLLECT_SUBMITS.register((LevelRenderEvents.CollectSubmits) (context) -> {
@@ -8976,6 +8979,8 @@ public class BomboaddonsClient implements ClientModInitializer {
          // profile changes.
          me.bombo.bomboaddons.features.profile.ProfileKeybindManager.tick(client);
          me.bombo.bomboaddons.features.hitman.AutoHitman.tick(client);
+         me.bombo.bomboaddons.features.hunting.AutoReel.onClientTick(client);
+         me.bombo.bomboaddons.features.mining.ForgeTimerManager.onClientTick(client);
          BomboConfig.Settings s = BomboConfig.get();
          if (s == null)
             return;

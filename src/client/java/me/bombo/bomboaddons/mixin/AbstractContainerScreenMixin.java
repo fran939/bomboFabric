@@ -79,6 +79,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       me.bombo.bomboaddons.features.garden.GreenhouseTracker.onContainerTick((AbstractContainerScreen)(Object)this);
       me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onContainerTick((AbstractContainerScreen)(Object)this);
       me.bombo.bomboaddons.features.inferno.InfernoMinionTracker.onContainerTick((AbstractContainerScreen)(Object)this);
+      me.bombo.bomboaddons.features.mining.ForgeTimerManager.onContainerTick((AbstractContainerScreen)(Object)this);
       
       try {
          String titleClean = net.minecraft.ChatFormatting.stripFormatting(this.getTitle().getString());
@@ -788,6 +789,8 @@ public abstract class AbstractContainerScreenMixin extends Screen {
    private long lastStoragePreviewTickTime = 0L;
    @org.spongepowered.asm.mixin.Unique
    private long lastEquipmentCheckTime = 0L;
+   @org.spongepowered.asm.mixin.Unique
+   private long lastForgeCheckTime = 0L;
 
    @Inject(
       method = {"extractRenderState"},
@@ -797,6 +800,10 @@ public abstract class AbstractContainerScreenMixin extends Screen {
       long now = System.currentTimeMillis();
       me.bombo.bomboaddons.features.ItemValueBreakdownHud.currentHoveredSlot = this.hoveredSlot;
       me.bombo.bomboaddons.features.AutoExpCapsule.renderHexOverlay(graphics, (AbstractContainerScreen<?>)(Object)this);
+      if (now - lastForgeCheckTime >= 250L) {
+         lastForgeCheckTime = now;
+         me.bombo.bomboaddons.features.mining.ForgeTimerManager.onContainerTick((AbstractContainerScreen<?>)(Object)this);
+      }
       if (now - lastEquipmentCheckTime >= 200L) {
          lastEquipmentCheckTime = now;
          try {
@@ -919,6 +926,7 @@ public abstract class AbstractContainerScreenMixin extends Screen {
          AutoCroesus.onContainerTick((AbstractContainerScreen)(Object)this);
          AutoCroesus.onCheckGuiTick((AbstractContainerScreen)(Object)this);
          me.bombo.bomboaddons.features.kuudra.KuudraEndManager.onContainerTick((AbstractContainerScreen)(Object)this);
+         me.bombo.bomboaddons.features.mining.ForgeTimerManager.onContainerTick((AbstractContainerScreen)(Object)this);
       }
       AutoCroesusHud.renderInContainer(graphics);
       me.bombo.bomboaddons.cheat.dungeons.DungeonChestProfitHud.onScreenRender(graphics, (AbstractContainerScreen<?>)(Object)this, mouseX, mouseY);

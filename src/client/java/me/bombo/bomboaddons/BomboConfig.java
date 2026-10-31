@@ -867,6 +867,16 @@ public class BomboConfig {
       public boolean hollowWandClickThrough = false;
       public boolean hollowWandAutoCombine = false;
       public boolean lassoClickThroughBats = false;
+      public boolean autoReel = false;
+      public boolean forgeHud = false;
+      public int forgeHudX = 10;
+      public int forgeHudY = 100;
+      public float forgeHudScale = 1.0F;
+      public boolean forgeHudClosestOnly = false;
+      public boolean forgeChatWarning = true;
+      public boolean forgeScreenWarning = true;
+      public boolean forgeDiscordAlert = true;
+      public boolean forgeConsolidateNotifications = true;
       public boolean autoAcceptCarnival = false;
       public boolean autoAcceptNpcLore = false;
       public String autoAcceptNpcLoreExceptions = "Safari Receptionist, Safari Manager";

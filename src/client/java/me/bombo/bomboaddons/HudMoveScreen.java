@@ -815,6 +815,18 @@ public class HudMoveScreen extends Screen {
             g.pose().popMatrix();
         }
 
+        // 36. FORGE_HUD
+        if (isTargetVisible(HudTarget.FORGE_HUD, s.forgeHud)) {
+            int forgeW = (int) ((float) me.bombo.bomboaddons.features.mining.ForgeTimerHud.getWidth() * s.forgeHudScale);
+            int forgeH = (int) ((float) me.bombo.bomboaddons.features.mining.ForgeTimerHud.getHeight() * s.forgeHudScale);
+            this.updateDragPosition(mouseX, mouseY, forgeW, forgeH, HudTarget.FORGE_HUD, (nx, ny) -> {
+                s.forgeHudX = nx;
+                s.forgeHudY = ny;
+            });
+            this.renderTargetBox(g, mouseX, mouseY, s.forgeHudX, s.forgeHudY, forgeW, forgeH, HudTarget.FORGE_HUD, s.forgeHudScale);
+            me.bombo.bomboaddons.features.mining.ForgeTimerHud.drawForgeInfo(g, s.forgeHudX, s.forgeHudY, true);
+        }
+
         // Snap Guide Lines (Cyan/Teal)
         if (this.snapGuideX != null) {
             g.fill(this.snapGuideX - 1, 0, this.snapGuideX + 1, this.height, 0xDD00E5FF);
@@ -1061,6 +1073,7 @@ public class HudMoveScreen extends Screen {
             case PIP_OVERLAY -> "Picture-in-Picture";
             case STORAGE_TOOLBAR -> "Storage Overlay Toolbar";
             case SHARDS_SHOPPING_HUD -> "Shard Shopping List HUD";
+            case FORGE_HUD -> "Forge HUD";
             default -> "HUD Element";
         };
     }
@@ -1629,6 +1642,17 @@ public class HudMoveScreen extends Screen {
             if (this.startCornerResize(mouseX, mouseY, shX, shY, shW, shH, HudTarget.SHARDS_SHOPPING_HUD, s.shardsShoppingHudScale)) return true;
             if (this.checkHit(mouseX, mouseY, shX, shY, shW, shH)) {
                 this.selectAndDrag(HudTarget.SHARDS_SHOPPING_HUD, (int) mouseX - shX, (int) mouseY - shY);
+                return true;
+            }
+        }
+
+        // FORGE_HUD
+        if (!s.showOnlyActiveHuds || s.forgeHud) {
+            int forgeW = (int) ((float) me.bombo.bomboaddons.features.mining.ForgeTimerHud.getWidth() * s.forgeHudScale);
+            int forgeH = (int) ((float) me.bombo.bomboaddons.features.mining.ForgeTimerHud.getHeight() * s.forgeHudScale);
+            if (this.startCornerResize(mouseX, mouseY, s.forgeHudX, s.forgeHudY, forgeW, forgeH, HudTarget.FORGE_HUD, s.forgeHudScale)) return true;
+            if (this.checkHit(mouseX, mouseY, s.forgeHudX, s.forgeHudY, forgeW, forgeH)) {
+                this.selectAndDrag(HudTarget.FORGE_HUD, (int) mouseX - s.forgeHudX, (int) mouseY - s.forgeHudY);
                 return true;
             }
         }
@@ -2277,6 +2301,18 @@ public class HudMoveScreen extends Screen {
             }
         }
 
+        // FORGE_HUD
+        if (!s.showOnlyActiveHuds || s.forgeHud) {
+            int forgeW = (int) ((float) me.bombo.bomboaddons.features.mining.ForgeTimerHud.getWidth() * s.forgeHudScale);
+            int forgeH = (int) ((float) me.bombo.bomboaddons.features.mining.ForgeTimerHud.getHeight() * s.forgeHudScale);
+            if (this.checkHit(mouseX, mouseY, s.forgeHudX, s.forgeHudY, forgeW, forgeH)) {
+                s.forgeHudScale = clampScale(s.forgeHudScale + delta);
+                this.selectedTarget = HudTarget.FORGE_HUD;
+                BomboConfig.save();
+                return true;
+            }
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
     }
 
@@ -2358,6 +2394,7 @@ public class HudMoveScreen extends Screen {
             case STORAGE_TOOLBAR -> "Misc";
             case SHARDS_SHOPPING_HUD -> "Dungeons";
             case INFERNO_HUD, INFERNO_CRAFT_HUD -> "Profit Trackers";
+            case FORGE_HUD -> "Mining";
         };
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.activeCategory = category;
         me.bombo.bomboaddons.gui.config.BomboConfigScreen.searchQuery = "";
@@ -2427,6 +2464,7 @@ public class HudMoveScreen extends Screen {
                     case SHARDS_SHOPPING_HUD -> { s.shardsShoppingHudX = 10; s.shardsShoppingHudY = 120; s.shardsShoppingHudScale = 1.0f; }
                     case INFERNO_HUD -> { s.infernoHudX = 10; s.infernoHudY = 120; s.infernoHudScale = 1.0f; }
                     case INFERNO_CRAFT_HUD -> { s.infernoCraftHudX = 10; s.infernoCraftHudY = 180; s.infernoCraftHudScale = 1.0f; }
+                    case FORGE_HUD -> { s.forgeHudX = 10; s.forgeHudY = 100; s.forgeHudScale = 1.0f; }
                 }
                 BomboConfig.save();
                 return true;
@@ -2485,6 +2523,7 @@ public class HudMoveScreen extends Screen {
         STORAGE_TOOLBAR,
         SHARDS_SHOPPING_HUD,
         INFERNO_HUD,
-        INFERNO_CRAFT_HUD;
+        INFERNO_CRAFT_HUD,
+        FORGE_HUD;
     }
 }

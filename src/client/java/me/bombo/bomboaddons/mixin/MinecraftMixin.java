@@ -68,22 +68,26 @@ public class MinecraftMixin {
    private void onTickTail(CallbackInfo ci) {
       Minecraft mc = (Minecraft)(Object)this;
       if (me.bombo.bomboaddons.BomboaddonsClient.holdingLeftClick) {
-         if (mc.options != null) mc.options.keyAttack.setDown(true);
-         if (mc.player != null && mc.level != null) {
-            try {
-               if (mc.gameMode != null && mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult bhr) {
-                  net.minecraft.core.BlockPos pos = bhr.getBlockPos();
-                  net.minecraft.core.Direction dir = bhr.getDirection();
-                  if (!mc.level.getBlockState(pos).isAir()) {
-                     mc.gameMode.continueDestroyBlock(pos, dir);
+         if (mc.gui.screen() == null) {
+            if (mc.options != null) mc.options.keyAttack.setDown(true);
+            if (mc.player != null && mc.level != null) {
+               try {
+                  if (mc.gameMode != null && mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult bhr) {
+                     net.minecraft.core.BlockPos pos = bhr.getBlockPos();
+                     net.minecraft.core.Direction dir = bhr.getDirection();
+                     if (!mc.level.getBlockState(pos).isAir()) {
+                        mc.gameMode.continueDestroyBlock(pos, dir);
+                     }
+                  } else if (mc.gameMode != null && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult ehr) {
+                     mc.gameMode.attack(mc.player, ehr.getEntity());
                   }
-               } else if (mc.gameMode != null && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult ehr) {
-                  mc.gameMode.attack(mc.player, ehr.getEntity());
-               }
-               if (!mc.player.swinging) {
-                  mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-               }
-            } catch (Throwable ignored) {}
+                  if (!mc.player.swinging) {
+                     mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                  }
+               } catch (Throwable ignored) {}
+            }
+         } else if (mc.options != null && mc.options.keyAttack.isDown()) {
+            mc.options.keyAttack.setDown(false);
          }
       }
       if (me.bombo.bomboaddons.BomboaddonsClient.holdingRightClick) {
