@@ -1,5 +1,15 @@
 [
   {
+    "version": "26.2.28.182",
+    "date": "2026-10-31",
+    "changes": [
+      "+ Bulletproof Locraw Message Hider: centralized processLocrawJson with color-code stripping, intercepts and cancels locraw in both ChatMixin and ALLOW_GAME to completely prevent raw JSON in chat",
+      "+ Pest ESP Miss Cache Fix: resolved permanent empty string cache bug in TargetPests so newly loaded skins/textures are checked and detected after tick 1",
+      "+ Multi-Source Pest Recognition: added fallback pest detection via entity names, custom names, nametag armor stands, and passengers for all 15 SkyBlock pest types",
+      "+ Garden & Limbo Detection Sync: clears stale Limbo area state on world changes, validates active scoreboard sidebar before asserting Limbo, and adds direct sidebar scanning for Garden"
+    ]
+  },
+  {
     "version": "26.2.28.181",
     "date": "2026-10-31",
     "changes": [

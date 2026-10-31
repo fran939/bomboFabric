@@ -1,5 +1,13 @@
 # BomboAddons Changelog
  
+## [26.2.28.182] - 2026-10-31 (Beta)
+
+### Pest ESP Entity Detection & Cache Fix, Locraw Message Hider Bulletproofing, and Garden/Limbo Detection Sync (`TargetPests.java`, `SkyblockUtils.java`, `BomboaddonsClient.java`, `ChatMixin.java`)
+- **Locraw Message Hider Bulletproofing (`BomboaddonsClient.java`, `ChatMixin.java`):** Centralized `processLocrawJson` with color code stripping (`replaceAll("§.", "")`) so raw JSON strings like `{"server":"...","gametype":"SKYBLOCK"}` never fail JSON detection or leak to chat under any circumstance. Intercepts and cancels locraw messages in both `ChatMixin.onAddMessage` and `ClientReceiveMessageEvents.ALLOW_GAME`, regardless of whether `expectingLocrawCount` is active, keeping in-game chat completely clean.
+- **Pest ESP Permanent Miss Cache Bug Resolution (`TargetPests.java`):** Fixed critical bug where entities evaluated on tick 1 before Mojang profile textures/skull skins downloaded were permanently cached as empty string misses (`pestCache.put(id, "")`), preventing active pests from ever being detected or highlighted. Non-matches now expire after 1000ms so newly loaded skins/textures are promptly picked up.
+- **Multi-Source Pest Name Recognition (`TargetPests.java`):** Added comprehensive fallback pest detection via entity names, custom names, nametag armor stands, passengers, and vehicles. Reliably detects all 15 SkyBlock pest types (Beetle, Cricket, Fly, Locust, Mite, Mosquito, Moth, Rat, Slug, Earthworm, Field Mouse, Praying Mantis, Dragonfly, Firefly, Spider) even when head textures are loading or formatted.
+- **Garden & Limbo Detection Synchronization (`SkyblockUtils.java`, `BomboaddonsClient.java`):** Fixed `isInGarden()` returning false after returning from Limbo because `currentArea` remained stuck on `"Limbo"` across world changes. Automatically clears stale area variables on level changes (`AFTER_CLIENT_LEVEL_CHANGE`), validates against active SkyBlock sidebar objectives before asserting Limbo state, and adds direct scoreboard sidebar scanning (`garden`, `plot`, `pests:`, `barn skin:`) to ensure Garden features and Pest ESP activate immediately.
+
 ## [26.2.28.181] - 2026-10-31 (Beta)
 
 ### Multi-Account Forge Timers & HUD Redesign, Auto Reel Single-Click Cooldown, BomboChat WSS Relay, Discord User ID Linking, and Garden Inventory Farming (`ForgeTimerManager.java`, `ForgeTimerHud.java`, `AutoReel.java`, `GardenMovement.java`, `MinecraftMixin.java`, `CommandMixin.java`, `IRCClient.java`, `bombot/index.js`, nginx)

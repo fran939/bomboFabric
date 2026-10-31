@@ -8477,9 +8477,12 @@ public class BomboaddonsClient implements ClientModInitializer {
                      locrawGametype = "";
                      locrawMode = "";
                      locrawMap = "";
+                     currentArea = "Unknown";
+                     currentSubArea = "None";
                      clickedNpcOptions.clear();
                      clickedNpcTextOptions.clear();
-                     locrawDelayTicks = 40;
+                     locrawDelayTicks = 20;
+                     triggerLocraw();
                   }
 
                });
@@ -8730,60 +8733,9 @@ public class BomboaddonsClient implements ClientModInitializer {
                      t.printStackTrace();
                   }
 
-                  if (plain.startsWith("{") && plain.endsWith("}") && plain.contains("\"server\"")) {
-                     try {
-                        JsonObject json = JsonParser.parseString(plain).getAsJsonObject();
-                        if (json.has("server")) {
-                           String newServer = json.get("server").getAsString();
-                           if (!newServer.equals(locrawServer)) {
-                              StructureFinder.clear();
-                              me.bombo.bomboaddons.features.dungeons.DungeonBossManager.resetAll();
-                           }
-                           locrawServer = newServer;
-                        }
-
-                        if (json.has("gametype")) {
-                           locrawGametype = json.get("gametype").getAsString();
-                        } else if ("limbo".equalsIgnoreCase(locrawServer)) {
-                           locrawGametype = "LIMBO";
-                        }
-
-                        if (json.has("mode")) {
-                           locrawMode = json.get("mode").getAsString();
-                        } else {
-                           locrawMode = "";
-                        }
-
-                        if (json.has("map")) {
-                           locrawMap = json.get("map").getAsString();
-                        } else {
-                           locrawMap = "";
-                        }
-
-                        String area = SkyblockUtils.mapLocrawToArea(locrawMode, locrawMap);
-                        if (!area.equals("Unknown")) {
-                           currentArea = area;
-                        } else if (json.has("server")) {
-                           String srv = json.get("server").getAsString().toLowerCase();
-                           if (srv.contains("limbo")) {
-                              currentArea = "Limbo";
-                           } else if (srv.contains("lobby")) {
-                              currentArea = "Lobby";
-                           }
-                        }
-                        if (currentArea != null && !currentArea.equals("Unknown")
-                              && !currentArea.equals(lastBroadcastedArea)) {
-                           lastBroadcastedArea = currentArea;
-                           IRCClient.broadcastArea(currentArea, currentSubArea);
-                        }
-                     } catch (Exception e) {
-                        e.printStackTrace();
-                     }
-
-                     if (expectingLocrawCount > 0) {
-                        expectingLocrawCount = Math.max(0, expectingLocrawCount - 1);
-                        return false;
-                     }
+                  String cleanLocraw = plain.replaceAll("§.", "").trim();
+                  if (processLocrawJson(cleanLocraw)) {
+                     return false;
                   }
 
                   return true;
@@ -10214,6 +10166,65 @@ public class BomboaddonsClient implements ClientModInitializer {
       ServerAddress address = ServerAddress.parseString(server.ip);
       Screen parent = (Screen) (parentScreen != null ? parentScreen : new JoinMultiplayerScreen(new TitleScreen()));
       ConnectScreen.startConnecting(parent, mc, address, server, false, (TransferState) null);
+   }
+
+   public static boolean processLocrawJson(String cleanJson) {
+      if (cleanJson == null || !cleanJson.startsWith("{") || !cleanJson.endsWith("}") || !cleanJson.contains("\"server\"")) {
+         return false;
+      }
+      try {
+         JsonObject json = JsonParser.parseString(cleanJson).getAsJsonObject();
+         if (json.has("server")) {
+            String newServer = json.get("server").getAsString();
+            if (!newServer.equals(locrawServer)) {
+               StructureFinder.clear();
+               me.bombo.bomboaddons.features.dungeons.DungeonBossManager.resetAll();
+            }
+            locrawServer = newServer;
+         }
+
+         if (json.has("gametype")) {
+            locrawGametype = json.get("gametype").getAsString();
+         } else if ("limbo".equalsIgnoreCase(locrawServer)) {
+            locrawGametype = "LIMBO";
+         }
+
+         if (json.has("mode")) {
+            locrawMode = json.get("mode").getAsString();
+         } else {
+            locrawMode = "";
+         }
+
+         if (json.has("map")) {
+            locrawMap = json.get("map").getAsString();
+         } else {
+            locrawMap = "";
+         }
+
+         String area = SkyblockUtils.mapLocrawToArea(locrawMode, locrawMap);
+         if (!area.equals("Unknown")) {
+            currentArea = area;
+         } else if (json.has("server")) {
+            String srv = json.get("server").getAsString().toLowerCase();
+            if (srv.contains("limbo")) {
+               currentArea = "Limbo";
+            } else if (srv.contains("lobby")) {
+               currentArea = "Lobby";
+            }
+         }
+         if (currentArea != null && !currentArea.equals("Unknown")
+               && !currentArea.equals(lastBroadcastedArea)) {
+            lastBroadcastedArea = currentArea;
+            IRCClient.broadcastArea(currentArea, currentSubArea);
+         }
+         if (expectingLocrawCount > 0) {
+            expectingLocrawCount = Math.max(0, expectingLocrawCount - 1);
+         }
+         return true;
+      } catch (Exception e) {
+         e.printStackTrace();
+         return false;
+      }
    }
 
    public static void triggerLocraw() {

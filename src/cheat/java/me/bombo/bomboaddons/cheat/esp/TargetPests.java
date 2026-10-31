@@ -19,8 +19,9 @@ import net.minecraft.world.item.component.ResolvableProfile;
 public class TargetPests {
    public static final Map<String, String> PEST_MAP = new HashMap();
    private static int debugCounter = 0;
-   private static final Map<Integer, String> pestCache = new ConcurrentHashMap();
-   private static final Map<Integer, String> headHashMap = new ConcurrentHashMap();
+   private static final Map<Integer, String> pestCache = new ConcurrentHashMap<>();
+   private static final Map<Integer, Long> negativeCache = new ConcurrentHashMap<>();
+   private static final Map<Integer, String> headHashMap = new ConcurrentHashMap<>();
    public static final Map<Integer, EntityInfoCache> infoCache;
 
    public static String getPestName(Entity entity) {
@@ -28,15 +29,29 @@ public class TargetPests {
       if (pestCache.size() > 5000) {
          pestCache.clear();
       }
+      if (negativeCache.size() > 5000) {
+         negativeCache.clear();
+      }
 
       int id = entity.getId();
-      String cached = (String)pestCache.get(id);
+      String cached = pestCache.get(id);
       if (cached != null) {
-         return cached.isEmpty() ? null : cached;
-      } else {
-         String pestName = getPestNameInternal(entity);
-         pestCache.put(id, pestName == null ? "" : pestName);
+         return cached;
+      }
+      Long lastNeg = negativeCache.get(id);
+      long now = System.currentTimeMillis();
+      if (lastNeg != null && now - lastNeg < 1000L) {
+         return null;
+      }
+
+      String pestName = getPestNameInternal(entity);
+      if (pestName != null) {
+         pestCache.put(id, pestName);
+         negativeCache.remove(id);
          return pestName;
+      } else {
+         negativeCache.put(id, now);
+         return null;
       }
    }
 
@@ -47,12 +62,15 @@ public class TargetPests {
       }
       int id = entity.getId();
       String cached = headHashMap.get(id);
-      if (cached != null) {
-         return cached.isEmpty() ? null : cached;
+      if (cached != null && !cached.isEmpty()) {
+         return cached;
       }
       String val = getHeadTextureValueInternal(entity);
-      headHashMap.put(id, val == null ? "" : val);
-      return val;
+      if (val != null && !val.isEmpty()) {
+         headHashMap.put(id, val);
+         return val;
+      }
+      return null;
    }
 
    public static String getHeadTextureFromStack(ItemStack stack) {
@@ -270,6 +288,58 @@ public class TargetPests {
          }
       }
 
+      // Fallback: match by custom name or entity name (nametags, armor stands, etc.)
+      String customName = entity.getCustomName() != null ? entity.getCustomName().getString() : null;
+      String pName = matchPestName(customName);
+      if (pName != null) return pName;
+
+      String name = entity.getName() != null ? entity.getName().getString() : null;
+      pName = matchPestName(name);
+      if (pName != null) return pName;
+
+      for (Entity pass : entity.getPassengers()) {
+         String passName = pass.getCustomName() != null ? pass.getCustomName().getString() : null;
+         pName = matchPestName(passName);
+         if (pName != null) return pName;
+      }
+      if (entity.getVehicle() != null) {
+         String vName = entity.getVehicle().getCustomName() != null ? entity.getVehicle().getCustomName().getString() : null;
+         pName = matchPestName(vName);
+         if (pName != null) return pName;
+      }
+
+      if (entity.level() != null && !(entity instanceof ArmorStand)) {
+         net.minecraft.world.phys.AABB box = entity.getBoundingBox().inflate(0.5, 1.8, 0.5);
+         for (Entity nearby : entity.level().getEntities(entity, box)) {
+            if (nearby instanceof ArmorStand stand) {
+               String standName = stand.getCustomName() != null ? stand.getCustomName().getString() : null;
+               pName = matchPestName(standName);
+               if (pName != null) return pName;
+            }
+         }
+      }
+
+      return null;
+   }
+
+   public static String matchPestName(String raw) {
+      if (raw == null || raw.isEmpty()) return null;
+      String clean = raw.replaceAll("§.", "").trim().toLowerCase(Locale.ROOT);
+      if (clean.contains("field mouse") || clean.contains("field_mouse")) return "field mouse";
+      if (clean.contains("praying mantis") || clean.contains("praying_mantis")) return "praying mantis";
+      if (clean.contains("dragonfly")) return "dragonfly";
+      if (clean.contains("firefly")) return "firefly";
+      if (clean.contains("cricket")) return "cricket";
+      if (clean.contains("beetle")) return "beetle";
+      if (clean.contains("locust")) return "locust";
+      if (clean.contains("mosquito")) return "mosquito";
+      if (clean.contains("moth")) return "moth";
+      if (clean.contains("mite")) return "mite";
+      if (clean.contains("slug")) return "slug";
+      if (clean.contains("earthworm") || clean.contains("worm")) return "worm";
+      if (clean.contains("rat")) return "rat";
+      if (clean.contains("fly") && !clean.contains("flying")) return "fly";
+      if (clean.contains("spider") && !clean.contains("cave_spider")) return "spider";
       return null;
    }
 

@@ -188,6 +188,14 @@ public abstract class ChatMixin implements IChatComponent {
          ci.cancel();
          return;
       }
+      if (message != null) {
+         String raw = message.getString();
+         String cleanLoc = raw.replaceAll("§.", "").trim();
+         if (me.bombo.bomboaddons.BomboaddonsClient.processLocrawJson(cleanLoc)) {
+            ci.cancel();
+            return;
+         }
+      }
       if (!(Boolean)isFormattingMessage.get()) {
          if (message != null) {
             ChatMessageTracker.addMessage(message);

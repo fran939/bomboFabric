@@ -890,6 +890,19 @@ public class SkyblockUtils {
    }
 
    public static boolean isInLimbo() {
+      Minecraft mc = Minecraft.getInstance();
+      if (mc.level != null) {
+         Scoreboard scoreboard = mc.level.getScoreboard();
+         if (scoreboard != null) {
+            Objective sidebar = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
+            if (sidebar != null) {
+               String name = sidebar.getDisplayName().getString().toLowerCase(Locale.ROOT);
+               if (name.contains("skyblock")) {
+                  return false;
+               }
+            }
+         }
+      }
       return "limbo".equalsIgnoreCase(BomboaddonsClient.locrawServer) 
           || "LIMBO".equalsIgnoreCase(BomboaddonsClient.locrawGametype) 
           || "Limbo".equalsIgnoreCase(BomboaddonsClient.currentArea);
@@ -1329,6 +1342,10 @@ public class SkyblockUtils {
    }
 
    public static boolean isInGarden() {
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s != null && s.gardenBindsEverywhere) {
+         return true;
+      }
       String loc = getLocation();
       if (loc.equalsIgnoreCase("The Garden") || loc.toLowerCase(Locale.ROOT).contains("garden") || loc.toLowerCase(Locale.ROOT).contains("plot")) {
          return true;
@@ -1340,6 +1357,14 @@ public class SkyblockUtils {
       String sub = getSubArea();
       if (sub != null && (sub.toLowerCase(Locale.ROOT).contains("plot") || sub.toLowerCase(Locale.ROOT).contains("garden"))) {
          return true;
+      }
+      if (cachedSidebarLines != null) {
+         for (String l : cachedSidebarLines) {
+            String clean = l.toLowerCase(Locale.ROOT);
+            if (clean.contains("garden") || clean.contains("plot") || clean.contains("pests:") || clean.contains("barn skin:")) {
+               return true;
+            }
+         }
       }
       return false;
    }
