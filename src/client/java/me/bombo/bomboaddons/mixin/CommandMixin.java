@@ -26,6 +26,13 @@ public class CommandMixin {
       String raw = command.trim();
       String trimmed = raw.startsWith("/") ? raw.substring(1).trim() : raw;
       String lower = trimmed.toLowerCase(java.util.Locale.ROOT);
+      if (lower.equals("locraw") || lower.startsWith("locraw ")) {
+         String trigger = me.bombo.bomboaddons.features.chat.ChatHistoryTracker.OUTGOING_TRIGGER.get();
+         if (!"Locraw Tracker".equals(trigger)) {
+            me.bombo.bomboaddons.BomboaddonsClient.manualLocrawRequested = true;
+            me.bombo.bomboaddons.BomboaddonsClient.manualLocrawRequestedTime = System.currentTimeMillis();
+         }
+      }
       if (me.bombo.bomboaddons.WardrobeHelper.getPendingArmorNumber() == -1) {
          me.bombo.bomboaddons.WardrobeHelper.clearSuppression();
       }

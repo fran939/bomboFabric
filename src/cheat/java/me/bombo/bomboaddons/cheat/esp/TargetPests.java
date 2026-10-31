@@ -24,6 +24,37 @@ public class TargetPests {
    private static final Map<Integer, String> headHashMap = new ConcurrentHashMap<>();
    public static final Map<Integer, EntityInfoCache> infoCache;
 
+   public static boolean hasUnresolvedHead(Entity entity) {
+      if (entity == null) return false;
+      if (entity instanceof net.minecraft.world.entity.Display.ItemDisplay itemDisplay) {
+         ItemStack stack = itemDisplay.getItemStack();
+         if (stack != null && stack.is(Items.PLAYER_HEAD) && getHeadTextureFromStack(stack) == null) {
+            return true;
+         }
+      }
+      if (entity instanceof LivingEntity living) {
+         ItemStack head = living.getItemBySlot(EquipmentSlot.HEAD);
+         if (head != null && head.is(Items.PLAYER_HEAD) && getHeadTextureFromStack(head) == null) {
+            return true;
+         }
+      }
+      for (Entity pass : entity.getPassengers()) {
+         if (pass instanceof LivingEntity living) {
+            ItemStack head = living.getItemBySlot(EquipmentSlot.HEAD);
+            if (head != null && head.is(Items.PLAYER_HEAD) && getHeadTextureFromStack(head) == null) {
+               return true;
+            }
+         }
+         if (pass instanceof net.minecraft.world.entity.Display.ItemDisplay itemDisplay) {
+            ItemStack stack = itemDisplay.getItemStack();
+            if (stack != null && stack.is(Items.PLAYER_HEAD) && getHeadTextureFromStack(stack) == null) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
    public static String getPestName(Entity entity) {
       if (entity == null) return null;
       if (pestCache.size() > 5000) {
@@ -38,9 +69,10 @@ public class TargetPests {
       if (cached != null) {
          return cached;
       }
+      boolean pendingHead = hasUnresolvedHead(entity);
       Long lastNeg = negativeCache.get(id);
       long now = System.currentTimeMillis();
-      if (lastNeg != null && now - lastNeg < 1000L) {
+      if (!pendingHead && lastNeg != null && now - lastNeg < 200L) {
          return null;
       }
 
@@ -50,7 +82,9 @@ public class TargetPests {
          negativeCache.remove(id);
          return pestName;
       } else {
-         negativeCache.put(id, now);
+         if (!pendingHead) {
+            negativeCache.put(id, now);
+         }
          return null;
       }
    }
@@ -189,10 +223,18 @@ public class TargetPests {
                String tex = getHeadTextureFromStack(head);
                if (tex != null) return tex;
             }
+            if (pass instanceof net.minecraft.world.entity.Display.ItemDisplay passItem) {
+               String tex = getHeadTextureFromStack(passItem.getItemStack());
+               if (tex != null) return tex;
+            }
          }
          if (entity.getVehicle() instanceof net.minecraft.world.entity.LivingEntity vLiving) {
             ItemStack head = vLiving.getItemBySlot(EquipmentSlot.HEAD);
             String tex = getHeadTextureFromStack(head);
+            if (tex != null) return tex;
+         }
+         if (entity.getVehicle() instanceof net.minecraft.world.entity.Display.ItemDisplay vItem) {
+            String tex = getHeadTextureFromStack(vItem.getItemStack());
             if (tex != null) return tex;
          }
          if (entity.level() != null && !(entity instanceof ArmorStand)) {
@@ -201,6 +243,10 @@ public class TargetPests {
                if (e2 instanceof ArmorStand stand) {
                   ItemStack h = stand.getItemBySlot(EquipmentSlot.HEAD);
                   String tex = getHeadTextureFromStack(h);
+                  if (tex != null) return tex;
+               }
+               if (e2 instanceof net.minecraft.world.entity.Display.ItemDisplay itemDisplay) {
+                  String tex = getHeadTextureFromStack(itemDisplay.getItemStack());
                   if (tex != null) return tex;
                }
             }
@@ -268,12 +314,12 @@ public class TargetPests {
       }
       if (headTex != null) {
          BomboConfig.Settings s = BomboConfig.get();
-         if ((s.debugEntities || s.pestDebug || s.pestEspDebug) && SkyblockUtils.isInGarden()) {
+         if (s.debugEntities || s.pestDebug || s.pestEspDebug) {
             System.out.println("DEBUG: Pest Entity Texture: " + headTex);
          }
          if (PEST_MAP.containsKey(headTex)) {
             String pName = (String)PEST_MAP.get(headTex);
-            if (s.pestDebug && SkyblockUtils.isInGarden()) {
+            if (s.pestDebug) {
                System.out.println("DEBUG: Matched pest by texture: " + pName);
             }
             return pName;
@@ -281,7 +327,7 @@ public class TargetPests {
          String hash = extractTextureHash(headTex);
          if (hash != null && PEST_MAP.containsKey(hash)) {
             String pName = (String)PEST_MAP.get(hash);
-            if (s.pestDebug && SkyblockUtils.isInGarden()) {
+            if (s.pestDebug) {
                System.out.println("DEBUG: Matched pest by hash: " + pName + " (hash: " + hash + ")");
             }
             return pName;
@@ -314,6 +360,11 @@ public class TargetPests {
             if (nearby instanceof ArmorStand stand) {
                String standName = stand.getCustomName() != null ? stand.getCustomName().getString() : null;
                pName = matchPestName(standName);
+               if (pName != null) return pName;
+            }
+            if (nearby instanceof net.minecraft.world.entity.Display.ItemDisplay itemDisplay) {
+               String dName = itemDisplay.getCustomName() != null ? itemDisplay.getCustomName().getString() : null;
+               pName = matchPestName(dName);
                if (pName != null) return pName;
             }
          }

@@ -186,9 +186,16 @@ public class IRCClient {
          }};
          SSLContext sslContext = SSLContext.getInstance("TLS");
          sslContext.init((KeyManager[])null, trustAllCerts, new SecureRandom());
-         return HttpClient.newBuilder().sslContext(sslContext).connectTimeout(Duration.ofSeconds(5L)).build();
+         return HttpClient.newBuilder()
+               .version(HttpClient.Version.HTTP_1_1)
+               .sslContext(sslContext)
+               .connectTimeout(Duration.ofSeconds(5L))
+               .build();
       } catch (Throwable var2) {
-         return HttpClient.newBuilder().build();
+         return HttpClient.newBuilder()
+               .version(HttpClient.Version.HTTP_1_1)
+               .connectTimeout(Duration.ofSeconds(5L))
+               .build();
       }
    }
 

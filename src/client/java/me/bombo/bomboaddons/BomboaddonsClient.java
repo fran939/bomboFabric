@@ -416,6 +416,9 @@ public class BomboaddonsClient implements ClientModInitializer {
    public static long lastHoppityCallHeaderTime = 0L;
    public static int locrawDelayTicks = -1;
    public static int expectingLocrawCount = 0;
+   public static volatile boolean manualLocrawRequested = false;
+   public static volatile long manualLocrawRequestedTime = 0L;
+   public static volatile long manualLocrawAllowedTime = 0L;
    public static String lastDetectedCommand = null;
    /**
     * Timestamp (ms) when we first connected to the current lobby/server instance.
@@ -8253,7 +8256,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                }
             }
 
-            if ((s.pestEsp || s.pestEspTracer) && me.bombo.bomboaddons.SkyblockUtils.isInGarden()) {
+            if (s.pestEsp || s.pestEspTracer) {
                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: PestESP")) {
                   PestESP.render(context);
                } catch (Throwable ignored) {
@@ -10219,6 +10222,15 @@ public class BomboaddonsClient implements ClientModInitializer {
          }
          if (expectingLocrawCount > 0) {
             expectingLocrawCount = Math.max(0, expectingLocrawCount - 1);
+         }
+         long now = System.currentTimeMillis();
+         if (manualLocrawRequested && (now - manualLocrawRequestedTime < 6000L)) {
+            manualLocrawRequested = false;
+            manualLocrawAllowedTime = now;
+            return false;
+         }
+         if (now - manualLocrawAllowedTime < 1000L) {
+            return false;
          }
          return true;
       } catch (Exception e) {

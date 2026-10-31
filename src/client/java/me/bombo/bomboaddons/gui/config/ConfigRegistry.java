@@ -1337,6 +1337,16 @@ public class ConfigRegistry {
             case "Hunting" -> {
                 items.add(ConfigItem.header("Hunting & Lassos", category));
                 items.add(ConfigItem.toggle("Auto Reel", "Automatically reels in mobs when holding a lasso and REEL is displayed.", category, () -> s.autoReel, v -> s.autoReel = v));
+                if (s.autoReel) {
+                    items.add(ConfigItem.sliderInt("  Min Reel Delay", "Minimum randomized delay in ms after REEL appears before reeling.", category, 10, 500, 5, "ms", () -> s.autoReelMinDelayMs, v -> {
+                        s.autoReelMinDelayMs = v;
+                        if (s.autoReelMaxDelayMs < s.autoReelMinDelayMs) s.autoReelMaxDelayMs = s.autoReelMinDelayMs;
+                    }));
+                    items.add(ConfigItem.sliderInt("  Max Reel Delay", "Maximum randomized delay in ms after REEL appears before reeling.", category, 10, 500, 5, "ms", () -> s.autoReelMaxDelayMs, v -> {
+                        s.autoReelMaxDelayMs = v;
+                        if (s.autoReelMinDelayMs > s.autoReelMaxDelayMs) s.autoReelMinDelayMs = s.autoReelMaxDelayMs;
+                    }));
+                }
                 items.add(ConfigItem.toggle("Lasso Fix", "Allows lasso clicking through bat hitboxes in Spooky Festival.", category, () -> s.lassoClickThroughBats, v -> s.lassoClickThroughBats = v));
             }
 

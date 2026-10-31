@@ -1,5 +1,14 @@
 # BomboAddons Changelog
  
+## [26.2.28.183] - 2026-10-31 (Beta)
+
+### Manual /locraw Visibility, Pest ESP Garden Un-gate & ItemDisplay Support, BomboChat HTTP/1.1 Handshake, and Auto Reel Randomized Intervals (`BomboaddonsClient.java`, `CommandMixin.java`, `PestESP.java`, `TargetPests.java`, `IRCClient.java`, `AutoReel.java`, `BomboConfig.java`, `ConfigRegistry.java`)
+- **Manual `/locraw` Visibility (`BomboaddonsClient.java`, `CommandMixin.java`):** Distinguishes manual user `/locraw` executions from automated mod background polls. When the player manually enters `/locraw` in chat, the response is updated internally and displayed in chat, while automated periodic checks remain completely silent without chat leakage.
+- **Pest ESP Garden Un-gate (`BomboaddonsClient.java`, `PestESP.java`, `TargetPests.java`):** Removed the hard `isInGarden()` gate from `PestESP.render` and `TargetPests.java`. Because SkyBlock pest textures and hashes are completely unique and do not exist anywhere else, pests will now be highlighted anywhere they spawn, immune to area detection desyncs, guesting status, or Limbo transitions.
+- **Pest ESP Head Texture Loading & ItemDisplay Support (`TargetPests.java`, `PestESP.java`):** Added `hasUnresolvedHead` check so entities with player heads whose textures are actively downloading from Mojang/Hypixel are never locked out by `negativeCache`. Reduced negative cache duration to 200ms. Added native bounding box and tracer alignment for `Display.ItemDisplay` entities so boxes and text render centered on the pest rather than floating with ArmorStand offsets.
+- **BomboChat HTTP/1.1 Handshake (`IRCClient.java`):** Explicitly configured `HttpClient` to use `HttpClient.Version.HTTP_1_1`. Prevents modern Java HttpClient from attempting HTTP/2 WebSocket handshakes that fail against Nginx with HTTP/2 enabled, restoring fast and reliable `/bc` connection.
+- **Auto Reel Configurable Randomized Delays (`AutoReel.java`, `BomboConfig.java`, `ConfigRegistry.java`):** Replaced static cooldown with configurable `Min Reel Delay` and `Max Reel Delay` sliders (default 40ms to 80ms) under the "Hunting" config category. Selects a random interval on each REEL trigger for natural human-like timing while preserving single-click tier protection.
+
 ## [26.2.28.182] - 2026-10-31 (Beta)
 
 ### Pest ESP Entity Detection & Cache Fix, Locraw Message Hider Bulletproofing, and Garden/Limbo Detection Sync (`TargetPests.java`, `SkyblockUtils.java`, `BomboaddonsClient.java`, `ChatMixin.java`)

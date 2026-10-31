@@ -8,9 +8,14 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.Random;
+
 public class AutoReel {
     private static long lastReelTime = 0L;
     private static int lastReeledEntityId = -1;
+    private static long scheduledReelTime = 0L;
+    private static int pendingEntityId = -1;
+    private static final Random random = new Random();
 
     public static boolean isLasso(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
@@ -40,9 +45,9 @@ public class AutoReel {
         if (hand == null) return;
 
         long now = System.currentTimeMillis();
-        if (now - lastReelTime < 1000L) return; // 1s cooldown per tier to prevent double clicking
 
-        // Search rendering entities within 7 blocks
+        // Search rendering entities within 7 blocks for REEL text
+        Entity targetEntity = null;
         for (Entity entity : mc.level.entitiesForRendering()) {
             if (entity == null || entity == mc.player) continue;
             double distSq = entity.distanceToSqr(mc.player);
@@ -53,12 +58,40 @@ public class AutoReel {
             String name = entity.getName() != null ? entity.getName().getString() : null;
 
             if (checkReelText(customName) || checkReelText(displayName) || checkReelText(name)) {
-                lastReelTime = now;
-                lastReeledEntityId = entity.getId();
-                mc.gameMode.useItem(mc.player, hand);
-                mc.player.swing(hand);
+                targetEntity = entity;
                 break;
             }
+        }
+
+        if (targetEntity == null) {
+            // REEL text is gone: reset pending state so next prompt immediately schedules a fresh interval
+            scheduledReelTime = 0L;
+            pendingEntityId = -1;
+            return;
+        }
+
+        // Tier cooldown to prevent double clicking the same REEL prompt
+        if (targetEntity.getId() == lastReeledEntityId && (now - lastReelTime < 800L)) {
+            return;
+        }
+
+        // If not scheduled yet for this target, schedule with randomized delay
+        if (pendingEntityId != targetEntity.getId() || scheduledReelTime == 0L) {
+            pendingEntityId = targetEntity.getId();
+            int min = Math.max(10, s.autoReelMinDelayMs);
+            int max = Math.max(min, s.autoReelMaxDelayMs);
+            int delay = min + (max > min ? random.nextInt(max - min + 1) : 0);
+            scheduledReelTime = now + delay;
+        }
+
+        // Trigger reel once scheduled delay is reached
+        if (now >= scheduledReelTime) {
+            lastReelTime = now;
+            lastReeledEntityId = targetEntity.getId();
+            scheduledReelTime = 0L;
+            pendingEntityId = -1;
+            mc.gameMode.useItem(mc.player, hand);
+            mc.player.swing(hand);
         }
     }
 

@@ -1,5 +1,16 @@
 [
   {
+    "version": "26.2.28.183",
+    "date": "2026-10-31",
+    "changes": [
+      "+ Manual /locraw Visibility: players can now see /locraw output in chat when manually typing it while automated mod queries remain completely suppressed",
+      "+ Pest ESP Garden Un-gate: removed hard isInGarden requirement from PestESP and TargetPests so pests are reliably highlighted regardless of area detection or Limbo desyncs",
+      "+ Pest ESP Texture Loading & ItemDisplay Support: skips negativeCache throttle when player heads are resolving and aligns bounding boxes/tracers accurately for ItemDisplay pests",
+      "+ BomboChat HTTP/1.1 Handshake: configured HttpClient in IRCClient to use HTTP/1.1, preventing HTTP/2 WebSocket upgrade failures on Nginx",
+      "+ Auto Reel Randomized Delays: added configurable Min and Max Reel Delay sliders (40ms-80ms) under Hunting config category for natural human-like reeling intervals"
+    ]
+  },
+  {
     "version": "26.2.28.182",
     "date": "2026-10-31",
     "changes": [

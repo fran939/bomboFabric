@@ -35,139 +35,127 @@ public class PestESP {
             }
          }
 
-         if (!inGarden) {
+         Minecraft mc = Minecraft.getInstance();
+         if (mc.level != null && mc.player != null) {
+            Vec3 camPos = mc.gameRenderer.mainCamera().position();
+            PoseStack poseStack = context.poseStack();
+            OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
+            int colorInt = BomboRenderUtils.colorNameToHex(s.pestEspColor);
+            float r = (float)(colorInt >> 16 & 255) / 255.0F;
+            float g = (float)(colorInt >> 8 & 255) / 255.0F;
+            float b = (float)(colorInt & 255) / 255.0F;
+            float a = 1.0F;
+            float lineWidth = s.pestEspThickness;
             TRACERS.clear();
-         } else {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.level != null && mc.player != null) {
-               Vec3 camPos = mc.gameRenderer.mainCamera().position();
-               PoseStack poseStack = context.poseStack();
-               OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
-               int colorInt = BomboRenderUtils.colorNameToHex(s.pestEspColor);
-               float r = (float)(colorInt >> 16 & 255) / 255.0F;
-               float g = (float)(colorInt >> 8 & 255) / 255.0F;
-               float b = (float)(colorInt & 255) / 255.0F;
-               float a = 1.0F;
-               float lineWidth = s.pestEspThickness;
-               TRACERS.clear();
-               int count = 0;
-               int scannedEntities = 0;
+            int count = 0;
+            int scannedEntities = 0;
 
-               Set<Integer> renderedEntities = new HashSet<>();
-               for(Entity entity : mc.level.entitiesForRendering()) {
-                  if (entity == mc.player) continue;
-                  ++scannedEntities;
-                  String pestName = TargetPests.getPestName(entity);
-                  if (pestName != null) {
-                     if (!renderedEntities.add(entity.getId())) continue;
-                     ++count;
-                     double x = entity.getX() - camPos.x;
-                     double y = entity.getY() - camPos.y;
-                     double z = entity.getZ() - camPos.z;
-                     float dist = (float)Math.sqrt(x * x + y * y + z * z);
-                     float scale = 1.0F;
+            Set<Integer> renderedEntities = new HashSet<>();
+            for(Entity entity : mc.level.entitiesForRendering()) {
+               if (entity == mc.player) continue;
+               ++scannedEntities;
+               String pestName = TargetPests.getPestName(entity);
+               if (pestName != null) {
+                  if (!renderedEntities.add(entity.getId())) continue;
+                  ++count;
+                  double x = entity.getX() - camPos.x;
+                  double y = entity.getY() - camPos.y;
+                  double z = entity.getZ() - camPos.z;
+                  float dist = (float)Math.sqrt(x * x + y * y + z * z);
+                  float scale = 1.0F;
 
-                     float boxWidth = 1.0F;
-                     float boxHeight = 1.0F;
-                        float boxYOffset = 1.3F;
-                        if (pestName.contains("worm")) {
-                           boxYOffset = 0.5F * scale;
-                           boxHeight = 0.8F * scale;
-                        } else if (pestName.equals("slug")) {
-                           boxYOffset = 1.3F * scale;
-                           boxWidth = 0.8F * scale;
-                           boxHeight = 0.4F * scale;
-                        } else if (pestName.equals("field mouse")) {
-                           boxYOffset = 1.5F * scale;
-                        }
+                  float boxWidth = 1.0F;
+                  float boxHeight = 1.0F;
+                  float boxYOffset = 1.3F;
+                  float textYOffset = 2.5F;
 
-                        float textYOffset = 2.5F;
-                        if (pestName.contains("worm")) {
-                           textYOffset = 1.5F;
-                        } else if (pestName.equals("slug")) {
-                           textYOffset = 1.9F;
-                        } else if (pestName.equals("field mouse")) {
-                           textYOffset = 2.7F;
-                        }
-
-                        float scaledX = (float)x * scale;
-                        float scaledY = (float)y * scale;
-                        float scaledZ = (float)z * scale;
-                        AABB box = new AABB((double)(scaledX - boxWidth / 2.0F), (double)(scaledY + boxYOffset), (double)(scaledZ - boxWidth / 2.0F), (double)(scaledX + boxWidth / 2.0F), (double)(scaledY + boxYOffset + boxHeight), (double)(scaledZ + boxWidth / 2.0F));
-                        RenderType renderType = s.hideCheats ? RenderTypes.lines() : RenderTypes.linesTranslucent();
-                        if (s.pestEsp) {
-                           collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, lineWidth));
-                        }
-                        boolean shouldTrace = false;
-                        if ("rat".equals(pestName)) {
-                           shouldTrace = s.tracerRat;
-                        } else if (!"worm".equals(pestName) && !"wormass".equals(pestName)) {
-                           if ("slug".equals(pestName)) {
-                              shouldTrace = s.tracerSlug;
-                           } else if ("fly".equals(pestName)) {
-                              shouldTrace = s.tracerFly;
-                           } else if ("locust".equals(pestName)) {
-                              shouldTrace = s.tracerLocust;
-                           } else if ("beetle".equals(pestName)) {
-                              shouldTrace = s.tracerBeetle;
-                           } else if ("cricket".equals(pestName)) {
-                              shouldTrace = s.tracerCricket;
-                           } else if ("spider".equals(pestName)) {
-                              shouldTrace = s.tracerSpider;
-                           } else if ("moth".equals(pestName)) {
-                              shouldTrace = s.tracerMoth;
-                           } else if ("mite".equals(pestName)) {
-                              shouldTrace = s.tracerMite;
-                           } else if ("field mouse".equals(pestName)) {
-                              shouldTrace = s.tracerMouse;
-                           } else if ("mosquito".equals(pestName)) {
-                              shouldTrace = s.tracerMosquito;
-                           } else if ("praying mantis".equals(pestName) || "dragonfly".equals(pestName) || "firefly".equals(pestName)) {
-                              shouldTrace = true;
-                           }
-                        } else {
-                           shouldTrace = s.tracerWorm;
-                        }
-
-                        if (!s.hideCheats && s.pestEspTracer && shouldTrace) {
-                           float endX = (float)x;
-                           float tempEndY = (float)(y + (double)1.3F + (double)0.5F);
-                           if (pestName.contains("worm")) {
-                              tempEndY = (float)(y + (double)0.5F + (double)0.4F);
-                           } else if (pestName.equals("slug")) {
-                              tempEndY = (float)(y + (double)1.3F + (double)0.2F);
-                           } else if (pestName.equals("field mouse")) {
-                              tempEndY = (float)(y + (double)1.5F + (double)0.5F);
-                           }
-
-                           float endZ = (float)z;
-                           final float endY = tempEndY;
-                           Vector3fc look = mc.gameRenderer.mainCamera().forwardVector();
-                           float startX = look.x();
-                           float startY = look.y();
-                           float startZ = look.z();
-                           collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, r, g, b, a, 2.0F));
-                        }
-
-                        String var10000 = pestName.substring(0, 1).toUpperCase();
-                        String displayName = var10000 + pestName.substring(1);
-                        if (s.pestEsp) {
-                           BomboRenderUtils.drawText(poseStack, collector, "§e" + displayName + " §7(" + String.format("%.1f", dist) + "m)", (float)x, (float)(y + (double)textYOffset), (float)z, 16777215, 0.03F, true, !s.hideCheats);
-                        }
-                     }
+                  if (entity instanceof net.minecraft.world.entity.Display) {
+                     boxWidth = 0.8F * scale;
+                     boxHeight = 0.8F * scale;
+                     boxYOffset = -0.4F * scale;
+                     textYOffset = 0.8F;
+                  } else if (pestName.contains("worm")) {
+                     boxYOffset = 0.5F * scale;
+                     boxHeight = 0.8F * scale;
+                     textYOffset = 1.5F;
+                  } else if (pestName.equals("slug")) {
+                     boxYOffset = 1.3F * scale;
+                     boxWidth = 0.8F * scale;
+                     boxHeight = 0.4F * scale;
+                     textYOffset = 1.9F;
+                  } else if (pestName.equals("field mouse")) {
+                     boxYOffset = 1.5F * scale;
+                     textYOffset = 2.7F;
                   }
 
-               if (debugTicks % 100 == 0 && debugActive) {
-                  String summary = "§8[§6PestESP§8] §7Scanned: §f" + scannedEntities + " §7entities | Found: §a" + count + " §7pests.";
-                  System.out.println("DEBUG: Scanned " + scannedEntities + " entities, found " + count + " pests.");
-                  if (s.pestEspDebug && mc.player != null) {
-                     mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(summary));
+                  float scaledX = (float)x * scale;
+                  float scaledY = (float)y * scale;
+                  float scaledZ = (float)z * scale;
+                  AABB box = new AABB((double)(scaledX - boxWidth / 2.0F), (double)(scaledY + boxYOffset), (double)(scaledZ - boxWidth / 2.0F), (double)(scaledX + boxWidth / 2.0F), (double)(scaledY + boxYOffset + boxHeight), (double)(scaledZ + boxWidth / 2.0F));
+                  RenderType renderType = s.hideCheats ? RenderTypes.lines() : RenderTypes.linesTranslucent();
+                  if (s.pestEsp) {
+                     collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, lineWidth));
+                  }
+                  boolean shouldTrace = false;
+                  if ("rat".equals(pestName)) {
+                     shouldTrace = s.tracerRat;
+                  } else if (!"worm".equals(pestName) && !"wormass".equals(pestName)) {
+                     if ("slug".equals(pestName)) {
+                        shouldTrace = s.tracerSlug;
+                     } else if ("fly".equals(pestName)) {
+                        shouldTrace = s.tracerFly;
+                     } else if ("locust".equals(pestName)) {
+                        shouldTrace = s.tracerLocust;
+                     } else if ("beetle".equals(pestName)) {
+                        shouldTrace = s.tracerBeetle;
+                     } else if ("cricket".equals(pestName)) {
+                        shouldTrace = s.tracerCricket;
+                     } else if ("spider".equals(pestName)) {
+                        shouldTrace = s.tracerSpider;
+                     } else if ("moth".equals(pestName)) {
+                        shouldTrace = s.tracerMoth;
+                     } else if ("mite".equals(pestName)) {
+                        shouldTrace = s.tracerMite;
+                     } else if ("field mouse".equals(pestName)) {
+                        shouldTrace = s.tracerMouse;
+                     } else if ("mosquito".equals(pestName)) {
+                        shouldTrace = s.tracerMosquito;
+                     } else if ("praying mantis".equals(pestName) || "dragonfly".equals(pestName) || "firefly".equals(pestName)) {
+                        shouldTrace = true;
+                     }
+                  } else {
+                     shouldTrace = s.tracerWorm;
+                  }
+
+                  if (!s.hideCheats && s.pestEspTracer && shouldTrace) {
+                     float endX = (float)x;
+                     final float endY = (float)(y + (double)boxYOffset + (double)(boxHeight / 2.0F));
+                     float endZ = (float)z;
+                     Vector3fc look = mc.gameRenderer.mainCamera().forwardVector();
+                     float startX = look.x();
+                     float startY = look.y();
+                     float startZ = look.z();
+                     collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, r, g, b, a, 2.0F));
+                  }
+
+                  String var10000 = pestName.substring(0, 1).toUpperCase();
+                  String displayName = var10000 + pestName.substring(1);
+                  if (s.pestEsp) {
+                     BomboRenderUtils.drawText(poseStack, collector, "§e" + displayName + " §7(" + String.format("%.1f", dist) + "m)", (float)x, (float)(y + (double)textYOffset), (float)z, 16777215, 0.03F, true, !s.hideCheats);
                   }
                }
-
-            } else {
-               TRACERS.clear();
             }
+
+            if (debugTicks % 100 == 0 && debugActive) {
+               String summary = "§8[§6PestESP§8] §7Scanned: §f" + scannedEntities + " §7entities | Found: §a" + count + " §7pests.";
+               System.out.println("DEBUG: Scanned " + scannedEntities + " entities, found " + count + " pests.");
+               if (s.pestEspDebug && mc.player != null) {
+                  mc.player.sendSystemMessage(net.minecraft.network.chat.Component.literal(summary));
+               }
+            }
+
+         } else {
+            TRACERS.clear();
          }
       }
    }

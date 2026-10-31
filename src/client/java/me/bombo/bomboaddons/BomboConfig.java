@@ -868,6 +868,8 @@ public class BomboConfig {
       public boolean hollowWandAutoCombine = false;
       public boolean lassoClickThroughBats = false;
       public boolean autoReel = false;
+      public int autoReelMinDelayMs = 40;
+      public int autoReelMaxDelayMs = 80;
       public boolean forgeHud = false;
       public int forgeHudX = 10;
       public int forgeHudY = 100;
