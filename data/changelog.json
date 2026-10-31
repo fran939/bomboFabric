@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.184",
+    "date": "2026-10-31",
+    "changes": [
+      "+ Garden GUI Breaking & Movement: allows crop breaking and movement across all GUIs (inventory, containers, chat, menus) by continuously raycasting fresh camera targets, avoiding break progress resets, and bypassing swing cancellation in PlayerMixin",
+      "+ In-Game /reminder and /timer Command: added client commands (/reminder and /timer <time> <text>, list, clear) with local sound & title alerts, chat countdowns, and Discord DM bot synchronization",
+      "+ Discord Bot Timer Delta Formatting: fixed time delta calculation in bombot so countdown durations accurately display remaining minutes/seconds instead of thousands of days ago",
+      "+ Block Highlight Coordinate Fix: removed erroneous distance scaling from BlockHighlight to ensure highlighted blocks and chests render correctly through walls",
+      "+ Pest ESP ArmorStand Alignment: accurately sizes and centers bounding boxes and nametag text for Small ArmorStand pests and checks 26.2 skinPatch body textures",
+      "+ BomboChat Default & Auto-Enable: enabled ircChatEnabled by default and auto-activates when sending a message with /bc"
+    ]
+  },
+  {
     "version": "26.2.28.183",
     "date": "2026-10-31",
     "changes": [

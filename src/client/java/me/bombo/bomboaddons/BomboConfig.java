@@ -1448,7 +1448,7 @@ public class BomboConfig {
       public boolean profileKeyControlsEnabled = true;
       public boolean autoClassKeybinds = true;
       public Map<String, CustomTracerInfo> customTracers = new HashMap();
-      public boolean ircChatEnabled = false;
+      public boolean ircChatEnabled = true;
       public boolean ircDefaultChat = false;
       public String ircCustomFormat = "";
       public boolean padTimersPurple = false;

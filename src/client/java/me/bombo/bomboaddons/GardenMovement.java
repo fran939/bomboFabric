@@ -33,52 +33,69 @@ public class GardenMovement {
       return forward || backward || left || right || breaking || using;
    }
 
+   private static net.minecraft.core.BlockPos lastTargetPos = null;
+
    public static boolean isAllowedScreen(net.minecraft.client.gui.screens.Screen screen) {
-      if (screen == null) return true;
-      if (screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen) return true;
-      if (screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen) {
-         return false; // Server-side container (chest, menu)
-      }
-      return true; // Client GUI (Chat, Bombo config, Mod config, Pause, etc.)
+      return true; // Allow garden keybind movement and breaking across all GUIs
    }
 
    public static void onTick(Minecraft mc) {
       BomboConfig.Settings s = BomboConfig.get();
       if (s.gardenMovement) {
-         if (isAllowedScreen(mc.gui.screen())) {
-            if (forward) {
-               mc.options.keyUp.setDown(true);
-            }
-            if (backward) {
-               mc.options.keyDown.setDown(true);
-            }
-            if (left) {
-               mc.options.keyLeft.setDown(true);
-            }
-            if (right) {
-               mc.options.keyRight.setDown(true);
-            }
-            if (breaking) {
-               mc.options.keyAttack.setDown(true);
-               if (mc.player != null && !mc.player.swinging) {
-                  mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-               }
-            }
-            if (using) {
-               mc.options.keyUse.setDown(true);
+         if (forward) {
+            mc.options.keyUp.setDown(true);
+         }
+         if (backward) {
+            mc.options.keyDown.setDown(true);
+         }
+         if (left) {
+            mc.options.keyLeft.setDown(true);
+         }
+         if (right) {
+            mc.options.keyRight.setDown(true);
+         }
+         if (breaking) {
+            mc.options.keyAttack.setDown(true);
+            if (mc.player != null && mc.level != null && mc.gameMode != null) {
+               try {
+                  net.minecraft.world.phys.HitResult hit = null;
+                  if (mc.gui.screen() != null && mc.getCameraEntity() != null) {
+                     hit = mc.getCameraEntity().pick(5.0D, 0.0F, false);
+                  } else {
+                     hit = mc.hitResult;
+                     if ((hit == null || hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS) && mc.getCameraEntity() != null) {
+                        hit = mc.getCameraEntity().pick(5.0D, 0.0F, false);
+                     }
+                  }
+
+                  if (hit instanceof net.minecraft.world.phys.BlockHitResult bhr && bhr.getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+                     net.minecraft.core.BlockPos pos = bhr.getBlockPos();
+                     net.minecraft.core.Direction dir = bhr.getDirection();
+                     if (!mc.level.getBlockState(pos).isAir()) {
+                        if (!pos.equals(lastTargetPos) || !mc.gameMode.isDestroying()) {
+                           lastTargetPos = pos;
+                           mc.gameMode.startDestroyBlock(pos, dir);
+                        }
+                        mc.gameMode.continueDestroyBlock(pos, dir);
+                     } else {
+                        lastTargetPos = null;
+                     }
+                  } else {
+                     lastTargetPos = null;
+                     if (hit instanceof net.minecraft.world.phys.EntityHitResult ehr) {
+                        mc.gameMode.attack(mc.player, ehr.getEntity());
+                     }
+                  }
+                  if (!mc.player.swinging) {
+                     mc.player.swing(InteractionHand.MAIN_HAND);
+                  }
+               } catch (Throwable ignored) {}
             }
          } else {
-            // While a server container is open (chest, visitors, shop, etc.):
-            // Release attack, use, and movement keys to prevent anticheat Limbo kicks.
-            // Active flags (breaking, forward, etc.) are preserved so they instantly resume the moment the GUI closes!
-            if (mc.options != null) {
-               if (mc.options.keyAttack.isDown()) mc.options.keyAttack.setDown(false);
-               if (mc.options.keyUse.isDown()) mc.options.keyUse.setDown(false);
-               if (mc.options.keyUp.isDown()) mc.options.keyUp.setDown(false);
-               if (mc.options.keyDown.isDown()) mc.options.keyDown.setDown(false);
-               if (mc.options.keyLeft.isDown()) mc.options.keyLeft.setDown(false);
-               if (mc.options.keyRight.isDown()) mc.options.keyRight.setDown(false);
-            }
+            lastTargetPos = null;
+         }
+         if (using) {
+            mc.options.keyUse.setDown(true);
          }
       }
 
@@ -365,13 +382,9 @@ public class GardenMovement {
       if (s.gardenMovement) {
          Minecraft mc = Minecraft.getInstance();
          breaking = !breaking;
-         if (mc.gui.screen() == null) {
-            mc.options.keyAttack.setDown(breaking);
-            if (breaking && mc.player != null) {
-               mc.player.swing(InteractionHand.MAIN_HAND);
-            }
-         } else {
-            mc.options.keyAttack.setDown(false);
+         mc.options.keyAttack.setDown(breaking);
+         if (breaking && mc.player != null) {
+            mc.player.swing(InteractionHand.MAIN_HAND);
          }
 
          sendToggleMsg("Breaking", breaking);
@@ -527,5 +540,6 @@ public class GardenMovement {
       right = false;
       breaking = false;
       using = false;
+      lastTargetPos = null;
    }
 }

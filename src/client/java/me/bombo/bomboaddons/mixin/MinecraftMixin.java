@@ -68,26 +68,26 @@ public class MinecraftMixin {
    private void onTickTail(CallbackInfo ci) {
       Minecraft mc = (Minecraft)(Object)this;
       if (me.bombo.bomboaddons.BomboaddonsClient.holdingLeftClick) {
-         if (me.bombo.bomboaddons.GardenMovement.isAllowedScreen(mc.gui.screen())) {
-            if (mc.options != null) mc.options.keyAttack.setDown(true);
-            if (mc.player != null && mc.level != null) {
-               try {
-                  if (mc.gameMode != null && mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult bhr) {
-                     net.minecraft.core.BlockPos pos = bhr.getBlockPos();
-                     net.minecraft.core.Direction dir = bhr.getDirection();
-                     if (!mc.level.getBlockState(pos).isAir()) {
-                        mc.gameMode.continueDestroyBlock(pos, dir);
-                     }
-                  } else if (mc.gameMode != null && mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult ehr) {
-                     mc.gameMode.attack(mc.player, ehr.getEntity());
+         if (mc.options != null) mc.options.keyAttack.setDown(true);
+         if (mc.player != null && mc.level != null) {
+            try {
+               net.minecraft.world.phys.HitResult hit = mc.hitResult;
+               if ((hit == null || hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS) && mc.getCameraEntity() != null) {
+                  hit = mc.getCameraEntity().pick(5.0D, 0.0F, false);
+               }
+               if (mc.gameMode != null && hit instanceof net.minecraft.world.phys.BlockHitResult bhr) {
+                  net.minecraft.core.BlockPos pos = bhr.getBlockPos();
+                  net.minecraft.core.Direction dir = bhr.getDirection();
+                  if (!mc.level.getBlockState(pos).isAir()) {
+                     mc.gameMode.continueDestroyBlock(pos, dir);
                   }
-                  if (!mc.player.swinging) {
-                     mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-                  }
-               } catch (Throwable ignored) {}
-            }
-         } else if (mc.options != null && mc.options.keyAttack.isDown()) {
-            mc.options.keyAttack.setDown(false);
+               } else if (mc.gameMode != null && hit instanceof net.minecraft.world.phys.EntityHitResult ehr) {
+                  mc.gameMode.attack(mc.player, ehr.getEntity());
+               }
+               if (!mc.player.swinging) {
+                  mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+               }
+            } catch (Throwable ignored) {}
          }
       }
       if (me.bombo.bomboaddons.BomboaddonsClient.holdingRightClick) {
@@ -100,6 +100,7 @@ public class MinecraftMixin {
       me.bombo.bomboaddons.util.ClipboardCommandManager.pollClipboard();
       me.bombo.bomboaddons.features.kuudra.KuudraBossTracker.onClientTick();
       me.bombo.bomboaddons.features.misc.DamageTracker.onClientTick();
+      me.bombo.bomboaddons.features.misc.ReminderManager.onClientTick();
    }
 
    @Inject(

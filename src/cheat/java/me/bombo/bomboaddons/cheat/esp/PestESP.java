@@ -64,28 +64,53 @@ public class PestESP {
                   float dist = (float)Math.sqrt(x * x + y * y + z * z);
                   float scale = 1.0F;
 
-                  float boxWidth = 1.0F;
-                  float boxHeight = 1.0F;
-                  float boxYOffset = 1.3F;
-                  float textYOffset = 2.5F;
+                  float boxWidth = 0.8F;
+                  float boxHeight = 0.8F;
+                  float boxYOffset = 0.6F;
+                  float textYOffset = 1.8F;
 
                   if (entity instanceof net.minecraft.world.entity.Display) {
-                     boxWidth = 0.8F * scale;
-                     boxHeight = 0.8F * scale;
-                     boxYOffset = -0.4F * scale;
+                     boxWidth = 0.8F;
+                     boxHeight = 0.8F;
+                     boxYOffset = -0.4F;
                      textYOffset = 0.8F;
+                  } else if (entity instanceof ArmorStand stand) {
+                     if (stand.isSmall()) {
+                        boxWidth = 0.6F;
+                        boxHeight = 0.6F;
+                        boxYOffset = 0.4F;
+                        textYOffset = 1.2F;
+                     } else if (stand.hasCustomName() && stand.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).isEmpty()) {
+                        boxWidth = 0.8F;
+                        boxHeight = 0.8F;
+                        boxYOffset = -1.2F;
+                        textYOffset = 0.5F;
+                     } else {
+                        boxWidth = 0.8F;
+                        boxHeight = 0.8F;
+                        boxYOffset = 1.2F;
+                        textYOffset = 2.2F;
+                     }
+                  } else if (entity instanceof net.minecraft.world.entity.monster.Silverfish || entity instanceof net.minecraft.world.entity.monster.Endermite) {
+                     boxWidth = 0.6F;
+                     boxHeight = 0.4F;
+                     boxYOffset = 0.0F;
+                     textYOffset = 0.7F;
                   } else if (pestName.contains("worm")) {
-                     boxYOffset = 0.5F * scale;
-                     boxHeight = 0.8F * scale;
-                     textYOffset = 1.5F;
+                     boxYOffset = 0.3F;
+                     boxHeight = 0.6F;
+                     boxWidth = 0.6F;
+                     textYOffset = 1.1F;
                   } else if (pestName.equals("slug")) {
-                     boxYOffset = 1.3F * scale;
-                     boxWidth = 0.8F * scale;
-                     boxHeight = 0.4F * scale;
-                     textYOffset = 1.9F;
+                     boxYOffset = 0.4F;
+                     boxWidth = 0.7F;
+                     boxHeight = 0.5F;
+                     textYOffset = 1.1F;
                   } else if (pestName.equals("field mouse")) {
-                     boxYOffset = 1.5F * scale;
-                     textYOffset = 2.7F;
+                     boxYOffset = 0.4F;
+                     boxHeight = 0.6F;
+                     boxWidth = 0.6F;
+                     textYOffset = 1.2F;
                   }
 
                   float scaledX = (float)x * scale;

@@ -319,32 +319,31 @@ public class BlockHighlight {
                      boolean throughWalls = !s.hideCheats && (info.throughWalls || s.blockHighlightsEnabled);
                      RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
 
-                      float scale = (throughWalls && dist > 0.2) ? (float) (0.2 / dist) : 1.0F;
-                      double bMinX = 0.0, bMinY = 0.0, bMinZ = 0.0;
-                      double bMaxX = 1.0, bMaxY = 1.0, bMaxZ = 1.0;
-                      try {
-                         BlockState bState = mc.level.getBlockState(pos);
-                         if (!bState.isAir()) {
-                            net.minecraft.world.phys.shapes.VoxelShape shape = bState.getShape(mc.level, pos);
-                            if (!shape.isEmpty()) {
-                               AABB bounds = shape.bounds();
-                               bMinX = bounds.minX;
-                               bMinY = bounds.minY;
-                               bMinZ = bounds.minZ;
-                               bMaxX = bounds.maxX;
-                               bMaxY = bounds.maxY;
-                               bMaxZ = bounds.maxZ;
-                            }
-                         }
-                      } catch (Throwable ignored) {
-                      }
-                      double minX = (x + bMinX) * scale;
-                      double minY = (y + bMinY) * scale;
-                      double minZ = (z + bMinZ) * scale;
-                      double maxX = (x + bMaxX) * scale;
-                      double maxY = (y + bMaxY) * scale;
-                      double maxZ = (z + bMaxZ) * scale;
-                      AABB box = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
+                     double bMinX = 0.0, bMinY = 0.0, bMinZ = 0.0;
+                     double bMaxX = 1.0, bMaxY = 1.0, bMaxZ = 1.0;
+                     try {
+                        BlockState bState = mc.level.getBlockState(pos);
+                        if (!bState.isAir()) {
+                           net.minecraft.world.phys.shapes.VoxelShape shape = bState.getShape(mc.level, pos);
+                           if (!shape.isEmpty()) {
+                              AABB bounds = shape.bounds();
+                              bMinX = bounds.minX;
+                              bMinY = bounds.minY;
+                              bMinZ = bounds.minZ;
+                              bMaxX = bounds.maxX;
+                              bMaxY = bounds.maxY;
+                              bMaxZ = bounds.maxZ;
+                           }
+                        }
+                     } catch (Throwable ignored) {
+                     }
+                     double minX = x + bMinX;
+                     double minY = y + bMinY;
+                     double minZ = z + bMinZ;
+                     double maxX = x + bMaxX;
+                     double maxY = y + bMaxY;
+                     double maxZ = z + bMaxZ;
+                     AABB box = new AABB(minX, minY, minZ, maxX, maxY, maxZ);
 
                       if (collector == null) {
                          collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());

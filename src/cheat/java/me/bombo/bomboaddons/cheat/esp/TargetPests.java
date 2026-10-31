@@ -119,6 +119,10 @@ public class TargetPests {
                   }
                }
             }
+            if (profile.skinPatch() != null && profile.skinPatch().body().isPresent()) {
+               net.minecraft.resources.Identifier texId = profile.skinPatch().body().get().texturePath();
+               if (texId != null) return texId.toString();
+            }
             try {
                for (java.lang.reflect.Method m : profile.getClass().getMethods()) {
                   if (m.getParameterCount() == 0 && (m.getName().equals("gameProfile") || m.getName().equals("partialProfile") || m.getName().equals("properties"))) {
@@ -237,17 +241,19 @@ public class TargetPests {
             String tex = getHeadTextureFromStack(vItem.getItemStack());
             if (tex != null) return tex;
          }
-         if (entity.level() != null && !(entity instanceof ArmorStand)) {
-            net.minecraft.world.phys.AABB box = entity.getBoundingBox().inflate(0.5, 2.0, 0.5);
+         if (entity.level() != null) {
+            net.minecraft.world.phys.AABB box = entity.getBoundingBox().inflate(0.8, 2.5, 0.8);
             for (Entity e2 : entity.level().getEntities(entity, box)) {
-               if (e2 instanceof ArmorStand stand) {
-                  ItemStack h = stand.getItemBySlot(EquipmentSlot.HEAD);
-                  String tex = getHeadTextureFromStack(h);
-                  if (tex != null) return tex;
-               }
-               if (e2 instanceof net.minecraft.world.entity.Display.ItemDisplay itemDisplay) {
-                  String tex = getHeadTextureFromStack(itemDisplay.getItemStack());
-                  if (tex != null) return tex;
+               if (e2 != entity) {
+                  if (e2 instanceof ArmorStand stand) {
+                     ItemStack h = stand.getItemBySlot(EquipmentSlot.HEAD);
+                     String tex = getHeadTextureFromStack(h);
+                     if (tex != null) return tex;
+                  }
+                  if (e2 instanceof net.minecraft.world.entity.Display.ItemDisplay itemDisplay) {
+                     String tex = getHeadTextureFromStack(itemDisplay.getItemStack());
+                     if (tex != null) return tex;
+                  }
                }
             }
          }
@@ -354,17 +360,15 @@ public class TargetPests {
          if (pName != null) return pName;
       }
 
-      if (entity.level() != null && !(entity instanceof ArmorStand)) {
-         net.minecraft.world.phys.AABB box = entity.getBoundingBox().inflate(0.5, 1.8, 0.5);
+      if (entity.level() != null) {
+         net.minecraft.world.phys.AABB box = entity.getBoundingBox().inflate(1.0, 2.5, 1.0);
          for (Entity nearby : entity.level().getEntities(entity, box)) {
-            if (nearby instanceof ArmorStand stand) {
-               String standName = stand.getCustomName() != null ? stand.getCustomName().getString() : null;
-               pName = matchPestName(standName);
+            if (nearby != entity) {
+               String sName = nearby.getCustomName() != null ? nearby.getCustomName().getString() : null;
+               pName = matchPestName(sName);
                if (pName != null) return pName;
-            }
-            if (nearby instanceof net.minecraft.world.entity.Display.ItemDisplay itemDisplay) {
-               String dName = itemDisplay.getCustomName() != null ? itemDisplay.getCustomName().getString() : null;
-               pName = matchPestName(dName);
+               String directName = nearby.getName() != null ? nearby.getName().getString() : null;
+               pName = matchPestName(directName);
                if (pName != null) return pName;
             }
          }

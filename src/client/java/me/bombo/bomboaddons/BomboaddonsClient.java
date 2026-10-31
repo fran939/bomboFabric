@@ -8208,8 +8208,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                }
             }
 
-            if (s.blockHighlightsEnabled && s.blockHighlights != null && !s.blockHighlights.isEmpty()
-                  && !BlockHighlight.highlightedBlocks.isEmpty()) {
+            if (BlockHighlight.hasHighlights()) {
                try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Render: BlockHighlight")) {
                   BlockHighlight.render(context);
                } catch (Throwable ignored) {
@@ -9299,12 +9298,6 @@ public class BomboaddonsClient implements ClientModInitializer {
          } catch (Throwable var40) {
          }
 
-         if (s.gardenMovement && GardenMovement.isActive()) {
-            try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: GardenMovement")) {
-               GardenMovement.onTick(client);
-            } catch (Throwable var25) {
-            }
-         }
 
          if (s.fuckDiorite && ("Dungeons".equals(currentArea) || "Private Island".equals(currentArea))) {
             try (PerformanceProfiler.Scope p = PerformanceProfiler.scope("Tick: FuckDiorite")) {

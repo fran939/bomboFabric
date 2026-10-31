@@ -24,9 +24,11 @@ public class PlayerMixin {
    )
    private void onSwing(InteractionHand hand, CallbackInfo ci) {
       if ((Object)this == Minecraft.getInstance().player && Minecraft.getInstance().gui.screen() != null) {
+         if (me.bombo.bomboaddons.GardenMovement.isBreaking() || me.bombo.bomboaddons.BomboaddonsClient.holdingLeftClick) {
+            return; // Allow swing while garden breaking or holding left click in GUI
+         }
          ci.cancel();
       }
-
    }
 
    @Inject(

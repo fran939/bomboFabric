@@ -42,6 +42,28 @@ public class CommandMixin {
          ci.cancel();
          return;
       }
+      if (lower.equals("reminder") || lower.startsWith("reminder ")
+            || lower.equals("timer") || lower.startsWith("timer ")
+            || lower.equals("b reminder") || lower.startsWith("b reminder ")
+            || lower.equals("b timer") || lower.startsWith("b timer ")
+            || lower.equals("bombo reminder") || lower.startsWith("bombo reminder ")
+            || lower.equals("bombo timer") || lower.startsWith("bombo timer ")
+            || lower.equals("bomboaddons reminder") || lower.startsWith("bomboaddons reminder ")
+            || lower.equals("bomboaddons timer") || lower.startsWith("bomboaddons timer ")) {
+         String args = "";
+         if (lower.startsWith("bomboaddons reminder")) args = trimmed.substring(20).trim();
+         else if (lower.startsWith("bomboaddons timer")) args = trimmed.substring(17).trim();
+         else if (lower.startsWith("bombo reminder")) args = trimmed.substring(14).trim();
+         else if (lower.startsWith("bombo timer")) args = trimmed.substring(11).trim();
+         else if (lower.startsWith("b reminder")) args = trimmed.substring(10).trim();
+         else if (lower.startsWith("b timer")) args = trimmed.substring(7).trim();
+         else if (lower.startsWith("reminder")) args = trimmed.substring(8).trim();
+         else if (lower.startsWith("timer")) args = trimmed.substring(5).trim();
+
+         me.bombo.bomboaddons.features.misc.ReminderManager.handleCommand(args);
+         ci.cancel();
+         return;
+      }
       if (lower.equals("b debug profile") || lower.equals("bombo debug profile") || lower.equals("bomboaddons debug profile")) {
          Minecraft mc = Minecraft.getInstance();
          String pid = me.bombo.bomboaddons.SkyblockUtils.currentProfileId;
