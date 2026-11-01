@@ -43,7 +43,7 @@ public class ParticleESP {
                PoseStack poseStack = context.poseStack();
                OrderedSubmitNodeCollector collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
                boolean throughWalls = !settings.hideCheats;
-               RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
+               RenderType renderType = throughWalls ? me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH : RenderTypes.lines();
                Map<String, Integer> typeColors = new HashMap<>();
 
                // 1. Particle Highlights

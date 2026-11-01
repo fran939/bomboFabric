@@ -187,11 +187,6 @@ public class BomboaddonsClient implements ClientModInitializer {
    public static net.minecraft.client.KeyMapping keySpotifyPrev;
 
    public static void registerSpotifyKeyBindings() {
-      me.bombo.bomboaddons.features.misc.ConditionalKeybindManager.keyConditionalAction = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
-            .registerKeyMapping(new net.minecraft.client.KeyMapping(
-                  "key.bomboaddons.conditional_action",
-                  com.mojang.blaze3d.platform.InputConstants.UNKNOWN.getValue(),
-                  BOMBO_KEY_CATEGORY));
       keySpotifyPlayPause = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper
             .registerKeyMapping(new net.minecraft.client.KeyMapping(
                   "key.bomboaddons.spotify_play_pause",
@@ -692,6 +687,40 @@ public class BomboaddonsClient implements ClientModInitializer {
       }
    }
 
+   public static LiteralArgumentBuilder<FabricClientCommandSource> buildTimerCommand(String name) {
+      LiteralArgumentBuilder<FabricClientCommandSource> root = ClientCommands.literal(name);
+      root.executes((context) -> {
+         me.bombo.bomboaddons.features.misc.ReminderManager.handleCommand("");
+         return 1;
+      });
+      root.then(ClientCommands.literal("list").executes((context) -> {
+         me.bombo.bomboaddons.features.misc.ReminderManager.handleCommand("list");
+         return 1;
+      }));
+      root.then(ClientCommands.literal("clear").executes((context) -> {
+         me.bombo.bomboaddons.features.misc.ReminderManager.handleCommand("clear");
+         return 1;
+      }));
+      root.then(ClientCommands.literal("reset").executes((context) -> {
+         me.bombo.bomboaddons.features.misc.ReminderManager.handleCommand("clear");
+         return 1;
+      }));
+      root.then(ClientCommands.literal("sw").executes((context) -> {
+         me.bombo.bomboaddons.features.misc.ReminderManager.handleCommand("sw");
+         return 1;
+      }));
+      root.then(ClientCommands.literal("stopwatch").executes((context) -> {
+         me.bombo.bomboaddons.features.misc.ReminderManager.handleCommand("sw");
+         return 1;
+      }));
+      root.then(ClientCommands.argument("args", StringArgumentType.greedyString()).executes((context) -> {
+         String args = StringArgumentType.getString(context, "args");
+         me.bombo.bomboaddons.features.misc.ReminderManager.handleCommand(args);
+         return 1;
+      }));
+      return root;
+   }
+
    public static LiteralArgumentBuilder<FabricClientCommandSource> buildSacksCommand(String name) {
       LiteralArgumentBuilder<FabricClientCommandSource> root = ClientCommands.literal(name);
       root.executes(ctx -> {
@@ -1112,7 +1141,6 @@ public class BomboaddonsClient implements ClientModInitializer {
             me.bombo.bomboaddons.features.StorageChestWaypoints.onClientTick(client);
             me.bombo.bomboaddons.features.storageoverlay.BackpackPreview.tick();
             handleSpotifyKeybinds();
-            me.bombo.bomboaddons.features.misc.ConditionalKeybindManager.onClientTick();
             me.bombo.bomboaddons.features.SpeedometerHud.onClientTick(client);
             HotbarSwapper.onClientTick();
          } catch (Throwable ignored) {
@@ -1427,54 +1455,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                   }
 
                   try {
-                     dispatcher.register((LiteralArgumentBuilder) ((LiteralArgumentBuilder) ClientCommands
-                           .literal("timer").executes((context) -> {
-                              StopwatchManager.start();
-                              ((FabricClientCommandSource) context.getSource()).sendFeedback(Component
-                                    .literal("§8[§3Bombo§8]§r §aStopwatch started! Open inventory to Pause or Stop."));
-                              return 1;
-                           })).then(((RequiredArgumentBuilder) ClientCommands
-                                 .argument("arg1", StringArgumentType.word()).executes((context) -> {
-                                    String arg1 = StringArgumentType.getString(context, "arg1");
-                                    if (!arg1.equalsIgnoreCase("clear") && !arg1.equalsIgnoreCase("reset")) {
-                                       long durationMs = CustomTimerManager.parseTimeMs(arg1);
-                                       if (durationMs > 0L) {
-                                          CustomTimerManager.startTimer("Timer", durationMs);
-                                          ((FabricClientCommandSource) context.getSource()).sendFeedback(
-                                                Component.literal("§8[§bBomboAddons§8] §7Started default timer for §e"
-                                                      + arg1 + "§7."));
-                                       } else {
-                                          ((FabricClientCommandSource) context.getSource()).sendError(Component
-                                                .literal("§8[§bBomboAddons§8] §cInvalid duration format: " + arg1));
-                                       }
-
-                                       return 1;
-                                    } else {
-                                       CustomTimerManager.clearTimers();
-                                       Minecraft.getInstance().player.sendSystemMessage(
-                                             Component.literal("§8[§3Bombo§8]§r §cCleared all active custom timers!"));
-                                       return 1;
-                                    }
-                                 })).then(ClientCommands.argument("arg2", StringArgumentType.word())
-                                       .executes((context) -> {
-                                          String name = StringArgumentType.getString(context, "arg1");
-                                          String durationStr = StringArgumentType.getString(context, "arg2");
-                                          long durationMs = CustomTimerManager.parseTimeMs(durationStr);
-                                          if (durationMs > 0L) {
-                                             CustomTimerManager.startTimer(name, durationMs);
-                                             ((FabricClientCommandSource) context.getSource()).sendFeedback(
-                                                   Component.literal("§8[§bBomboAddons§8] §7Started timer '§e" + name
-                                                         + "§7' for §e" + durationStr + "§7."));
-                                          } else {
-                                             ((FabricClientCommandSource) context.getSource()).sendError(
-                                                   Component.literal("§8[§bBomboAddons§8] §cInvalid duration format: "
-                                                         + durationStr));
-                                          }
-
-                                          return 1;
-                                       }))));
+                     dispatcher.register(buildTimerCommand("timer"));
+                     dispatcher.register(buildTimerCommand("reminder"));
                   } catch (Throwable t) {
-                     Bomboaddons.LOGGER.error("[BomboAddons] Failed to register timer command!", t);
+                     Bomboaddons.LOGGER.error("[BomboAddons] Failed to register timer/reminder commands!", t);
                   }
 
                   try {
@@ -7324,6 +7308,10 @@ public class BomboaddonsClient implements ClientModInitializer {
                          builder.then(buildSacksCommand("sacks"));
                          builder.then(buildSacksCommand("sack"));
 
+                         // /b timer and /b reminder
+                         builder.then(buildTimerCommand("timer"));
+                         builder.then(buildTimerCommand("reminder"));
+
                          // /b debug sacks / /b debug sack
                          builder.then(ClientCommands.literal("debug")
                                .then(buildSacksCommand("sacks"))
@@ -8400,6 +8388,7 @@ public class BomboaddonsClient implements ClientModInitializer {
                      }));
          ClientPlayConnectionEvents.JOIN.register((ClientPlayConnectionEvents.Join) (handler, sender, client) -> {
             StructureFinder.clear();
+                  SkyblockUtils.resetLocationCache();
             me.bombo.bomboaddons.features.FrozenBlazeAFKTracker.reset();
             // History survives lobby/server changes: log a boundary row instead of wiping
             // it.
@@ -10170,8 +10159,15 @@ public class BomboaddonsClient implements ClientModInitializer {
       ConnectScreen.startConnecting(parent, mc, address, server, false, (TransferState) null);
    }
 
-   public static boolean processLocrawJson(String cleanJson) {
-      if (cleanJson == null || !cleanJson.startsWith("{") || !cleanJson.endsWith("}") || !cleanJson.contains("\"server\"")) {
+   public static boolean processLocrawJson(String rawText) {
+      if (rawText == null) return false;
+      int start = rawText.indexOf('{');
+      int end = rawText.lastIndexOf('}');
+      if (start == -1 || end == -1 || end <= start) {
+         return false;
+      }
+      String cleanJson = rawText.substring(start, end + 1);
+      if (!cleanJson.contains("\"server\"") && !cleanJson.contains("\"gametype\"")) {
          return false;
       }
       try {
@@ -10226,10 +10222,10 @@ public class BomboaddonsClient implements ClientModInitializer {
          if (manualLocrawRequested && (now - manualLocrawRequestedTime < 6000L)) {
             manualLocrawRequested = false;
             manualLocrawAllowedTime = now;
-            return false;
-         }
-         if (now - manualLocrawAllowedTime < 1000L) {
-            return false;
+            Minecraft mcInstance = Minecraft.getInstance();
+            if (mcInstance.player != null) {
+               mcInstance.player.sendSystemMessage(Component.literal("§8[§3Bombo§8] §7Server: §b" + locrawServer + " §7| Area: §a" + currentArea + (locrawMode.isEmpty() ? "" : " §7(Mode: §e" + locrawMode + "§7)")));
+            }
          }
          return true;
       } catch (Exception e) {

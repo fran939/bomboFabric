@@ -326,7 +326,7 @@ public class HighlightESP {
                   float endX = (float) (entity.getX() - camPos.x);
                   float endY = (float) (entity.getY() - camPos.y + (double) (entity.getBbHeight() / 2.0F));
                   float endZ = (float) (entity.getZ() - camPos.z);
-                  collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
+                  collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH,
                         (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY,
                               startZ, endX, endY, endZ, 1.0F, 1.0F, 0.0F, 1.0F, 2.0F));
                }
@@ -361,7 +361,7 @@ public class HighlightESP {
                float g = (float) (colorInt >> 8 & 0xFF) / 255.0F;
                float b = (float) (colorInt & 0xFF) / 255.0F;
                float trWidth = Math.max(0.5F, Math.min(s.tracerWidth, 10.0F));
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
+               collector.submitCustomGeometry(poseStack, s.hideCheats ? RenderTypes.lines() : me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH,
                      (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY,
                            startZ, endX, endY, endZ, r, g, b, 1.0F, trWidth));
                HighlightTracer tracer = new HighlightTracer();

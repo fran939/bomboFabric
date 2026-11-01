@@ -105,9 +105,18 @@ public class CustomTimerManager {
 
             timer.ready = ready;
             timer.readyExpiration = readyExpiration;
-            if (!ready && now >= endTime) {
+            if (!keepReadyState) {
+               if (ready) {
+                  if (readyExpiration != -1L && now > readyExpiration) {
+                     continue;
+                  }
+               } else if (now >= endTime) {
+                  continue;
+               }
+            }
+            if (!ready && now >= endTime && keepReadyState) {
                timer.ready = true;
-               timer.readyExpiration = keepReadyState ? -1L : now + 10000L;
+               timer.readyExpiration = -1L;
             }
 
             if (!timer.ready || keepReadyState || timer.readyExpiration == -1L || now <= timer.readyExpiration) {
@@ -258,6 +267,9 @@ public class CustomTimerManager {
    public static void clearTimers() {
       activeTimers.clear();
       saveTimers();
+      try {
+         Files.deleteIfExists(TIMERS_FILE);
+      } catch (Throwable ignored) {}
    }
 
    public static void startTimer(String name, long durationMs, boolean isPartyTimer, String logoItemId, boolean showOnlyWhenReady, boolean keepReadyState) {

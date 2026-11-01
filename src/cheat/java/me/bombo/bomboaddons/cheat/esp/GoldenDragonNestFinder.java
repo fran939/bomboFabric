@@ -155,7 +155,7 @@ public class GoldenDragonNestFinder {
          float b = 0.0F;
          float a = 1.0F;
 
-         RenderType renderType = s.hideCheats ? RenderTypes.lines() : RenderTypes.linesTranslucent();
+         RenderType renderType = s.hideCheats ? RenderTypes.lines() : me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH;
          AABB box = new AABB(x, y, z, x + 1.0, y + 1.0, z + 1.0);
          collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, 2.5F));
 

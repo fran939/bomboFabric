@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.188",
+    "date": "2026-11-01",
+    "changes": [
+      "+ Timer Tab Completion & Registration: registered /b timer, /b reminder, /timer, and /reminder with client command dispatcher and suggestions, resolving red command highlighting and expired 0s timer lingering",
+      "+ Locraw JSON Hiding & Subarea Fix: bulletproofed JSON hiding in chat and fixed area detection desync when warping to Hub",
+      "+ ChatTriggers Overhaul: restored multi-profile chat triggers, case-insensitive matching, sound playback, and hooked into all incoming chat messages",
+      "+ ESP & Tracers Through-Walls Restoration: switched all cheat ESPs (Pest ESP, Block ESP, Target Chests, Highlights) to PRIMITIVE_LINES_NO_DEPTH to render behind blocks",
+      "+ Clean Island Presets: [+ Island;] buttons in /b config now cleanly insert current island (e.g. Hub;, Kuudra;) without prefixes",
+      "- Removed Deprecated /b ckm & /b ck: cleaned up obsolete emergency keybind system in favor of integrated conditions"
+    ]
+  },
+  {
     "version": "26.2.28.187",
     "date": "2026-11-01",
     "changes": [

@@ -195,6 +195,7 @@ public abstract class ChatMixin implements IChatComponent {
             ci.cancel();
             return;
          }
+         me.bombo.bomboaddons.CustomBindsProcessor.processChatTrigger(raw);
       }
       if (!(Boolean)isFormattingMessage.get()) {
          if (message != null) {

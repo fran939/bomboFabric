@@ -165,17 +165,20 @@ public class ReminderManager {
 
     private static void printActiveTimers(Minecraft mc, boolean showEmptyMessage) {
         long now = System.currentTimeMillis();
-        boolean hasAny = false;
+        List<String> lines = new java.util.ArrayList<>();
 
         List<me.bombo.bomboaddons.CustomTimerManager.CustomTimer> customTimers = me.bombo.bomboaddons.CustomTimerManager.activeTimers;
-        if (!customTimers.isEmpty() || !localReminders.isEmpty()) {
-            hasAny = true;
-            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §6Active Timers:"));
-            for (me.bombo.bomboaddons.CustomTimerManager.CustomTimer t : customTimers) {
-                long remSec = Math.max(0, (t.endTime - now) / 1000);
-                mc.player.sendSystemMessage(Component.literal("§8- §e\"§f" + t.name + "§e\" §7in §a" + formatSeconds(remSec) + " §7(HUD)"));
+        for (me.bombo.bomboaddons.CustomTimerManager.CustomTimer t : customTimers) {
+            if (t.ready) {
+                lines.add("§8- §e\"§f" + t.name + "§e\" §a§l[READY] §7(HUD)");
+            } else if (t.endTime > now) {
+                long remSec = (t.endTime - now + 999L) / 1000L;
+                lines.add("§8- §e\"§f" + t.name + "§e\" §7in §a" + formatSeconds(remSec) + " §7(HUD)");
             }
-            for (ActiveReminder r : localReminders) {
+        }
+        for (ActiveReminder r : localReminders) {
+            long remSec = (r.expireTimeMs - now + 999L) / 1000L;
+            if (remSec > 0) {
                 boolean alreadyListed = false;
                 for (me.bombo.bomboaddons.CustomTimerManager.CustomTimer t : customTimers) {
                     if (t.name.equalsIgnoreCase(r.reminder)) {
@@ -184,9 +187,15 @@ public class ReminderManager {
                     }
                 }
                 if (!alreadyListed) {
-                    long remSec = Math.max(0, (r.expireTimeMs - now) / 1000);
-                    mc.player.sendSystemMessage(Component.literal("§8- §b\"§f" + r.reminder + "§b\" §7in §a" + formatSeconds(remSec) + " §7(Alert)"));
+                    lines.add("§8- §b\"§f" + r.reminder + "§b\" §7in §a" + formatSeconds(remSec) + " §7(Alert)");
                 }
+            }
+        }
+
+        if (!lines.isEmpty()) {
+            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §6Active Timers (" + lines.size() + "):"));
+            for (String line : lines) {
+                mc.player.sendSystemMessage(Component.literal(line));
             }
         } else if (showEmptyMessage) {
             mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §7No active timers."));

@@ -1453,15 +1453,7 @@ public class BomboConfig {
       public boolean ircChatEnabled = true;
       public boolean ircDefaultChat = false;
       public String ircCustomFormat = "";
-      // Conditional Keybind Settings
-      public boolean conditionalKeybindEnabled = true;
-      public String conditionalKeybindCommand = "/b cd 100 /wd";
-      public String conditionalKeybindArea = "Kuudra T5";
-      public boolean conditionalKeybindKuudraT5Only = true;
-      public double conditionalKeybindMaxY = 40.0;
-      public boolean conditionalKeybindCheckHeight = true;
-      public String conditionalKeybindKey = "NONE";
-      public boolean conditionalKeybindNotify = true;
+
       public boolean padTimersPurple = false;
       public boolean padTimersGreen = false;
       public int padTimersX = 10;

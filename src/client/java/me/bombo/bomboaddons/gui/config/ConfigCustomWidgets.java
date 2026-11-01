@@ -4712,7 +4712,13 @@ public class ConfigCustomWidgets {
                 String snippet = cp.snippet;
                 if (cp.label.contains("Island;")) {
                     String curLoc = SkyblockUtils.getLocation();
-                    if (curLoc != null && !curLoc.trim().isEmpty() && !curLoc.equalsIgnoreCase("none")) {
+                    if (curLoc == null || curLoc.trim().isEmpty() || curLoc.equalsIgnoreCase("none") || curLoc.equalsIgnoreCase("Unknown")) {
+                        curLoc = me.bombo.bomboaddons.BomboaddonsClient.currentArea;
+                    }
+                    if (curLoc != null && curLoc.startsWith("The ")) {
+                        curLoc = curLoc.substring(4);
+                    }
+                    if (curLoc != null && !curLoc.trim().isEmpty() && !curLoc.equalsIgnoreCase("none") && !curLoc.equalsIgnoreCase("Unknown")) {
                         snippet = (cp.label.contains("!") ? ("!" + curLoc.trim()) : curLoc.trim()) + "; ";
                     }
                 }

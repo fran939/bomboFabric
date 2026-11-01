@@ -117,7 +117,7 @@ public class PestESP {
                   float scaledY = (float)y * scale;
                   float scaledZ = (float)z * scale;
                   AABB box = new AABB((double)(scaledX - boxWidth / 2.0F), (double)(scaledY + boxYOffset), (double)(scaledZ - boxWidth / 2.0F), (double)(scaledX + boxWidth / 2.0F), (double)(scaledY + boxYOffset + boxHeight), (double)(scaledZ + boxWidth / 2.0F));
-                  RenderType renderType = s.hideCheats ? RenderTypes.lines() : RenderTypes.linesTranslucent();
+                  RenderType renderType = s.hideCheats ? RenderTypes.lines() : me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH;
                   if (s.pestEsp) {
                      collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, r, g, b, a, lineWidth));
                   }
@@ -160,7 +160,7 @@ public class PestESP {
                      float startX = look.x();
                      float startY = look.y();
                      float startZ = look.z();
-                     collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, r, g, b, a, 2.0F));
+                     collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, r, g, b, a, 2.0F));
                   }
 
                   String var10000 = pestName.substring(0, 1).toUpperCase();

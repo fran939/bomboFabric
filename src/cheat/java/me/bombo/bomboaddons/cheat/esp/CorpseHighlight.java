@@ -236,12 +236,12 @@ public class CorpseHighlight {
                      final AABB finalBox = tempBox;
 
                      if ("Outline".equals(s.corpseEspStyle) || "Both".equals(s.corpseEspStyle) || s.hideCheats) {
-                        RenderType renderType = s.hideCheats ? RenderTypes.lines() : RenderTypes.linesTranslucent();
+                        RenderType renderType = s.hideCheats ? RenderTypes.lines() : me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH;
                         collector.submitCustomGeometry(poseStack, renderType, (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, finalBox, rOut, gOut, bOut, aOut, 2.0F));
                      }
 
                      if (!s.hideCheats && ("Filled".equals(s.corpseEspStyle) || "Both".equals(s.corpseEspStyle))) {
-                        collector.submitCustomGeometry(poseStack, RenderTypes.debugQuads(), (pose, vertexConsumer) -> drawFilledBox(pose.pose(), vertexConsumer, finalBox, rFill, gFill, bFill, aFill));
+                        collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_QUADS_NO_DEPTH, (pose, vertexConsumer) -> drawFilledBox(pose.pose(), vertexConsumer, finalBox, rFill, gFill, bFill, aFill));
                      }
 
                      boolean shouldTrace = false;
@@ -263,7 +263,7 @@ public class CorpseHighlight {
                         float startX = look.x();
                         float startY = look.y();
                         float startZ = look.z();
-                        collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, rOut, gOut, bOut, 1.0F, 2.0F));
+                        collector.submitCustomGeometry(poseStack, me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, rOut, gOut, bOut, 1.0F, 2.0F));
                      }
                   }
                }

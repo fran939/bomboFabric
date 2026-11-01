@@ -116,7 +116,7 @@ public class DisplayESP {
                float maxX = (float)(aabb.maxX - camX);
                float maxY = (float)(aabb.maxY - camY);
                float maxZ = (float)(aabb.maxZ - camZ);
-               collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> {
+               collector.submitCustomGeometry(poseStack, s.hideCheats ? RenderTypes.lines() : me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, vertexConsumer) -> {
                   Matrix4f matrix = pose.pose();
                   BomboRenderUtils.drawLine(matrix, vertexConsumer, minX, minY, minZ, maxX, minY, minZ, r, g, b, a, lineWidth);
                   BomboRenderUtils.drawLine(matrix, vertexConsumer, maxX, minY, minZ, maxX, minY, maxZ, r, g, b, a, lineWidth);
@@ -135,7 +135,7 @@ public class DisplayESP {
                   float endX = (float)(entity.getX() - camX);
                   float endY = (float)(entity.getY() - camY + aabb.getYsize() / (double)2.0F);
                   float endZ = (float)(entity.getZ() - camZ);
-                  collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(), (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, r, g, b, a, lineWidth));
+                  collector.submitCustomGeometry(poseStack, s.hideCheats ? RenderTypes.lines() : me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH, (pose, vertexConsumer) -> BomboRenderUtils.drawLine(pose.pose(), vertexConsumer, startX, startY, startZ, endX, endY, endZ, r, g, b, a, lineWidth));
                }
 
                String label = String.format("§e%s §7(UUID: %s) §f%s", typeStr, entity.getUUID().toString().substring(0, 8), extraInfo);

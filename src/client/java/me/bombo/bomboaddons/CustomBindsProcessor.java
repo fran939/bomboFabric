@@ -766,52 +766,94 @@ public class CustomBindsProcessor {
       }
    }
 
+   private static String lastProcessedMessage = "";
+   private static long lastProcessedMessageTime = 0L;
+
    public static void processChatTrigger(String chatMessage) {
-      if (chatMessage != null && !chatMessage.trim().isEmpty()) {
-         if (CHAT_TRIGGER_DEPTH.get() > 2) {
-            return;
+      if (chatMessage == null || chatMessage.trim().isEmpty()) {
+         return;
+      }
+      long now = System.currentTimeMillis();
+      if (chatMessage.equals(lastProcessedMessage) && (now - lastProcessedMessageTime < 50L)) {
+         return;
+      }
+      lastProcessedMessage = chatMessage;
+      lastProcessedMessageTime = now;
+
+      if (CHAT_TRIGGER_DEPTH.get() > 2) {
+         return;
+      }
+      BomboConfig.Settings s = BomboConfig.get();
+      if (s == null || !s.chatTriggersEnabled) {
+         return;
+      }
+
+      List<BomboConfig.ChatTrigger> allTriggers = new java.util.ArrayList<>();
+      if (s.profileChatTriggers != null) {
+         String prof = s.activeProfile != null ? s.activeProfile : "default";
+         List<BomboConfig.ChatTrigger> list = s.profileChatTriggers.get(prof);
+         if (list != null) allTriggers.addAll(list);
+
+         if (!prof.equalsIgnoreCase("General")) {
+            List<BomboConfig.ChatTrigger> gen = s.profileChatTriggers.get("General");
+            if (gen != null) allTriggers.addAll(gen);
          }
-         BomboConfig.Settings s = BomboConfig.get();
-         if (s != null && s.chatTriggersEnabled) {
-            List<BomboConfig.ChatTrigger> triggers = null;
-            if (s.profileChatTriggers != null) {
-               triggers = s.profileChatTriggers.get(s.activeProfile != null ? s.activeProfile : "default");
+         if (!prof.equalsIgnoreCase("default") && !"General".equalsIgnoreCase(prof)) {
+            List<BomboConfig.ChatTrigger> def = s.profileChatTriggers.get("default");
+            if (def != null) allTriggers.addAll(def);
+         }
+      }
+      if (s.chatTriggers != null) {
+         for (BomboConfig.ChatTrigger ct : s.chatTriggers) {
+            if (!allTriggers.contains(ct)) {
+               allTriggers.add(ct);
             }
-            if (triggers == null && s.chatTriggers != null) {
-               triggers = s.chatTriggers;
+         }
+      }
+
+      String stripped = chatMessage.replaceAll("§.", "");
+      String lowerRaw = chatMessage.toLowerCase(java.util.Locale.ROOT);
+      String lowerStripped = stripped.toLowerCase(java.util.Locale.ROOT);
+
+      for (BomboConfig.ChatTrigger cte : allTriggers) {
+         if (cte == null || !cte.enabled || cte.triggerText == null || cte.triggerText.trim().isEmpty()) {
+            continue;
+         }
+         String target = cte.triggerText.trim().toLowerCase(java.util.Locale.ROOT);
+         if (!lowerRaw.contains(target) && !lowerStripped.contains(target)) {
+            continue;
+         }
+
+         String cmd = cte.commandToRun != null ? cte.commandToRun.trim() : "";
+         if (!cmd.isEmpty()) {
+            long cooldown = s.chatTriggerCooldownMs > 0 ? s.chatTriggerCooldownMs : 400L;
+            if (cmd.equalsIgnoreCase(lastTriggerCmd) && (now - lastTriggerExecTime < cooldown)) {
+               continue;
             }
+            lastTriggerExecTime = now;
+            lastTriggerCmd = cmd;
 
-            if (triggers != null) {
-               for(BomboConfig.ChatTrigger cte : triggers) {
-                  if (cte != null && cte.enabled && cte.triggerText != null && !cte.triggerText.trim().isEmpty() && chatMessage.contains(cte.triggerText.trim())) {
-                     long now = System.currentTimeMillis();
-                     String cmd = cte.commandToRun != null ? cte.commandToRun.trim() : "";
-                     if (!cmd.isEmpty()) {
-                        long cooldown = s.chatTriggerCooldownMs > 0 ? s.chatTriggerCooldownMs : 400L;
-                        if (cmd.equalsIgnoreCase(lastTriggerCmd) && (now - lastTriggerExecTime < cooldown)) {
-                           continue;
-                        }
-                        lastTriggerExecTime = now;
-                        lastTriggerCmd = cmd;
-
-                        long delay = cte.delayMs > 0 ? (long) cte.delayMs : (s.chatTriggerDelayMs > 0 ? (long) s.chatTriggerDelayMs : 0L);
-                        if (delay > 0) {
-                           me.bombo.bomboaddons.features.misc.CommandDelayManager.scheduleCommand(delay, cmd);
-                        } else {
-                           CHAT_TRIGGER_DEPTH.set(CHAT_TRIGGER_DEPTH.get() + 1);
-                           try {
-                              executeCommandOrChat(cmd);
-                           } finally {
-                              CHAT_TRIGGER_DEPTH.set(Math.max(0, CHAT_TRIGGER_DEPTH.get() - 1));
-                           }
-                        }
-                     }
-
-                     if (cte.titleToShow != null && !cte.titleToShow.trim().isEmpty()) {
-                        showTitle(cte.titleToShow.trim());
-                     }
-                  }
+            long delay = cte.delayMs > 0 ? (long) cte.delayMs : (s.chatTriggerDelayMs > 0 ? (long) s.chatTriggerDelayMs : 0L);
+            if (delay > 0) {
+               me.bombo.bomboaddons.features.misc.CommandDelayManager.scheduleCommand(delay, cmd);
+            } else {
+               CHAT_TRIGGER_DEPTH.set(CHAT_TRIGGER_DEPTH.get() + 1);
+               try {
+                  executeCommandOrChat(cmd);
+               } finally {
+                  CHAT_TRIGGER_DEPTH.set(Math.max(0, CHAT_TRIGGER_DEPTH.get() - 1));
                }
+            }
+         }
+
+         if (cte.titleToShow != null && !cte.titleToShow.trim().isEmpty()) {
+            showTitle(cte.titleToShow.trim());
+         }
+
+         if (cte.soundToPlay != null && !cte.soundToPlay.trim().isEmpty()) {
+            int times = Math.max(1, Math.min(10, cte.soundTimes));
+            for (int i = 0; i < times; i++) {
+               me.bombo.bomboaddons.features.sounds.CustomSoundManager.playCustomOrVanillaSound(cte.soundToPlay.trim(), 1.0f, 1.0f);
             }
          }
       }

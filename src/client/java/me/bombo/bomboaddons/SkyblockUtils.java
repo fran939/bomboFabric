@@ -751,6 +751,12 @@ public class SkyblockUtils {
       }
    }
 
+   public static void resetLocationCache() {
+      cachedLocation = "Unknown";
+      cachedSubArea = "None";
+      lastCacheTime = 0L;
+   }
+
    public static String getLocation() {
       if (simulatedArea != null) {
          return simulatedArea;
@@ -968,7 +974,7 @@ public class SkyblockUtils {
             String sub = internalGetSubArea();
             if (!sub.equals("None")) {
                String mapped = mapSubAreaToMainArea(sub);
-               if (!mapped.equals("Unknown") && (!loc.equals("Private Island") || mapped.equals("The Garden"))) {
+               if (!mapped.equals("Unknown")) {
                   loc = mapped;
                }
             }

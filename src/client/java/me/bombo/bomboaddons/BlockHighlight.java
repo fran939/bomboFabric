@@ -317,7 +317,7 @@ public class BlockHighlight {
                      float b = (float) (colorHex & 255) / 255.0F;
                      float a = 1.0F;
                      boolean throughWalls = !s.hideCheats && (info.throughWalls || s.blockHighlightsEnabled);
-                     RenderType renderType = throughWalls ? RenderTypes.linesTranslucent() : RenderTypes.lines();
+                     RenderType renderType = throughWalls ? me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH : RenderTypes.lines();
 
                      double bMinX = 0.0, bMinY = 0.0, bMinZ = 0.0;
                      double bMaxX = 1.0, bMaxY = 1.0, bMaxZ = 1.0;
@@ -408,7 +408,7 @@ public class BlockHighlight {
                      if (collector == null) {
                         collector = new OrderedSubmitNodeCollector(context.submitNodeCollector());
                      }
-                     collector.submitCustomGeometry(poseStack, RenderTypes.linesTranslucent(),
+                     collector.submitCustomGeometry(poseStack, s.hideCheats ? RenderTypes.lines() : me.bombo.bomboaddons.render.CustomRenderLayer.PRIMITIVE_LINES_NO_DEPTH,
                            (pose, vertexConsumer) -> BomboRenderUtils.drawBox(pose.pose(), vertexConsumer, box, 0.0F,
                                  1.0F, 0.0F, 0.85F, 2.0F));
                      String text = "Target Chest §7(" + (int) dist + "m)";
