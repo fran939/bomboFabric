@@ -4624,6 +4624,106 @@ public class ConfigCustomWidgets {
     public static int editingKbIndex = -1;
     public static boolean kbProfileDropdownOpen = false;
 
+    public static class ConditionPreset {
+        public final String label;
+        public final String snippet;
+        public final int color;
+        public ConditionPreset(String label, String snippet, int color) {
+            this.label = label;
+            this.snippet = snippet;
+            this.color = color;
+        }
+    }
+
+    public static final List<ConditionPreset> CONDITION_PRESETS = List.of(
+        new ConditionPreset("§e+ y<40", "y<40; ", 0xFFFFAA00),
+        new ConditionPreset("§e+ y>40", "y>40; ", 0xFFFFAA00),
+        new ConditionPreset("§6+ x<40", "x<40; ", 0xFFFFCC00),
+        new ConditionPreset("§6+ x=0", "x=0; ", 0xFFFFCC00),
+        new ConditionPreset("§a+ Kuudra T5", "t5; ", 0xFF10B981),
+        new ConditionPreset("§d+ Island;", "Kuudra; ", 0xFFC084FC),
+        new ConditionPreset("§c+ !Island;", "!Hub; ", 0xFFF87171),
+        new ConditionPreset("§b+ Armor:", "armor:necron; ", 0xFF38BDF8),
+        new ConditionPreset("§5+ !Armor:", "!armor:divan; ", 0xFFA855F7)
+    );
+
+    public static void appendConditionPreset(boolean isGui, String snippet) {
+        if (isGui) {
+            if (guiKbIslandInput == null) guiKbIslandInput = "";
+            String cur = guiKbIslandInput.trim();
+            if (cur.isEmpty()) {
+                guiKbIslandInput = snippet;
+            } else {
+                if (!cur.endsWith(";")) cur += "; ";
+                else if (!cur.endsWith(" ")) cur += " ";
+                guiKbIslandInput = cur + snippet;
+            }
+            activeFocusedField = "guiKbIsland";
+            cursorPosition = guiKbIslandInput.length();
+        } else {
+            if (kbIslandInput == null) kbIslandInput = "";
+            String cur = kbIslandInput.trim();
+            if (cur.isEmpty()) {
+                kbIslandInput = snippet;
+            } else {
+                if (!cur.endsWith(";")) cur += "; ";
+                else if (!cur.endsWith(" ")) cur += " ";
+                kbIslandInput = cur + snippet;
+            }
+            activeFocusedField = "kbIsland";
+            cursorPosition = kbIslandInput.length();
+        }
+    }
+
+    public static void renderConditionPresets(GuiGraphicsExtractor g, Font font, int startX, int startY, int maxW, int mouseX, int mouseY) {
+        int curX = startX;
+        int curY = startY;
+        int btnH = 16;
+        g.text(font, "§7Presets:", curX, curY + 4, 0xFFAAAAAA, false);
+        curX += font.width("§7Presets:") + 6;
+
+        for (ConditionPreset cp : CONDITION_PRESETS) {
+            int btnW = font.width(cp.label) + 8;
+            if (curX + btnW > startX + maxW) {
+                curX = startX;
+                curY += btnH + 3;
+            }
+            boolean hov = mouseX >= curX && mouseX <= curX + btnW && mouseY >= curY && mouseY <= curY + btnH;
+            int bg = hov ? 0x4400E5FF : 0x221E293B;
+            int border = hov ? 0xAA00E5FF : 0x33FFFFFF;
+            ConfigUITheme.drawPillButton(g, font, cp.label, curX, curY, btnW, btnH, hov, -1, bg, border);
+            curX += btnW + 4;
+        }
+    }
+
+    public static boolean handleConditionPresetsClick(int startX, int startY, int maxW, boolean isGui, int mouseX, int mouseY) {
+        int curX = startX;
+        int curY = startY;
+        int btnH = 16;
+        curX += Minecraft.getInstance().font.width("§7Presets:") + 6;
+
+        for (ConditionPreset cp : CONDITION_PRESETS) {
+            int btnW = Minecraft.getInstance().font.width(cp.label) + 8;
+            if (curX + btnW > startX + maxW) {
+                curX = startX;
+                curY += btnH + 3;
+            }
+            if (mouseX >= curX && mouseX <= curX + btnW && mouseY >= curY && mouseY <= curY + btnH) {
+                String snippet = cp.snippet;
+                if (cp.label.contains("Island;")) {
+                    String curLoc = SkyblockUtils.getLocation();
+                    if (curLoc != null && !curLoc.trim().isEmpty() && !curLoc.equalsIgnoreCase("none")) {
+                        snippet = (cp.label.contains("!") ? ("!" + curLoc.trim()) : curLoc.trim()) + "; ";
+                    }
+                }
+                appendConditionPreset(isGui, snippet);
+                return true;
+            }
+            curX += btnW + 4;
+        }
+        return false;
+    }
+
     public static List<String> getMatchingProfilesForKeybinds(String query) {
         if (query == null || query.trim().isEmpty()) return Collections.emptyList();
         String q = query.trim().toLowerCase(Locale.ROOT);
@@ -4678,7 +4778,7 @@ public class ConfigCustomWidgets {
             List<String> matches = getMatchingProfilesForKeybinds(BomboConfigScreen.searchQuery);
             if (!matches.isEmpty()) extra += 22;
         }
-        return 112 + extra + Math.max(1, count) * 24;
+        return 136 + extra + Math.max(1, count) * 24;
     }
 
     public static void renderKeybindsManager(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -4717,20 +4817,29 @@ public class ConfigCustomWidgets {
         boolean keyHover = mouseX >= keyX && mouseX <= keyX + keyW && mouseY >= curY && mouseY <= curY + 18;
         ConfigUITheme.drawPillButton(g, font, keyDisplay, keyX, curY, keyW, 18, keyHover, -1, kbIsListening ? 0x44FFAA00 : 0x221E293B, 0x55FFFFFF);
 
-        renderCleanInputField(g, font, "Island (blank=all)", kbIslandInput, "kbIsland", keyX + keyW + 6, curY, colW, mouseX, mouseY);
+        int addBtnX = keyX + keyW + 6;
+        int addBtnW = colW;
+        String addBtnText = editingKbIndex >= 0 ? "§a✔ Save" : "§b+ Add Keybind";
+        boolean addHover = mouseX >= addBtnX && mouseX <= addBtnX + addBtnW && mouseY >= curY && mouseY <= curY + 18;
+        ConfigUITheme.drawPillButton(g, font, addBtnText, addBtnX, curY, addBtnW, 18, addHover, -1, 0x3300E5FF, 0x6600E5FF);
 
-        curY += 24;
+        curY += 22;
 
-        String addBtnText = editingKbIndex >= 0 ? "§a✔ Save Keybind" : "§b+ Add Keybind";
-        boolean addHover = mouseX >= x + 12 && mouseX <= x + 130 && mouseY >= curY && mouseY <= curY + 18;
-        ConfigUITheme.drawPillButton(g, font, addBtnText, x + 12, curY, 126, 18, addHover, -1, 0x3300E5FF, 0x6600E5FF);
+        // Presets on top of conditions input field
+        renderConditionPresets(g, font, x + 12, curY, w - 24, mouseX, mouseY);
 
+        curY += 20;
+
+        int condW = (w - 24);
+        if (editingKbIndex >= 0) condW -= 56;
+        renderCleanInputField(g, font, "Conditions (e.g. Kuudra; y<40; !Hub; t5; armor:necron)", kbIslandInput, "kbIsland", x + 12, curY, condW, mouseX, mouseY);
         if (editingKbIndex >= 0) {
-            boolean canHover = mouseX >= x + 144 && mouseX <= x + 208 && mouseY >= curY && mouseY <= curY + 18;
-            ConfigUITheme.drawPillButton(g, font, "§cCancel", x + 144, curY, 64, 18, canHover, -1, 0x33EF4444, 0x66EF4444);
+            int canX = x + 12 + condW + 6;
+            boolean canHover = mouseX >= canX && mouseX <= canX + 50 && mouseY >= curY && mouseY <= curY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§cCancel", canX, curY, 50, 18, canHover, -1, 0x33EF4444, 0x66EF4444);
         }
 
-        curY += 26;
+        curY += 24;
         g.fill(x + 12, curY, x + w - 12, curY + 1, ConfigUITheme.getDividerColor());
         curY += 6;
 
@@ -4800,7 +4909,7 @@ public class ConfigCustomWidgets {
             g.text(font, "§e" + (cb.command != null ? cb.command : ""), textX, rowY + 7, 0xFFFFFFFF, false);
 
             if (cb.requiredIsland != null && !cb.requiredIsland.isEmpty()) {
-                g.text(font, "§7[" + cb.requiredIsland + "]", textX + font.width("§e" + cb.command) + 8, rowY + 7, ConfigUITheme.getTextMuted(), false);
+                g.text(font, "§3[§b" + cb.requiredIsland + "§3]", textX + font.width("§e" + cb.command) + 8, rowY + 7, ConfigUITheme.getTextMuted(), false);
             }
 
             int rx = x + w - 18;
@@ -4915,16 +5024,14 @@ public class ConfigCustomWidgets {
             return true;
         }
 
-        if (checkFieldClick(keyX + keyW + 6, curY, colW, 18, "kbIsland", mouseX, mouseY)) return true;
-
-        curY += 24;
-
+        int addBtnX = keyX + keyW + 6;
+        int addBtnW = colW;
         BomboConfig.Settings s = BomboConfig.get();
         if (s.keybindBinds == null) s.keybindBinds = new HashMap<>();
         List<BomboConfig.CommandBind> list = s.keybindBinds.computeIfAbsent(s.activeProfile, k -> new ArrayList<>());
 
         // [+ Add Keybind] / [Save]
-        if (mouseX >= x + 12 && mouseX <= x + 138 && mouseY >= curY && mouseY <= curY + 18) {
+        if (mouseX >= addBtnX && mouseX <= addBtnX + addBtnW && mouseY >= curY && mouseY <= curY + 18) {
             if (!kbCmdInput.trim().isEmpty()) {
                 if (editingKbIndex >= 0 && editingKbIndex < list.size()) {
                     BomboConfig.CommandBind cb = list.get(editingKbIndex);
@@ -4948,12 +5055,28 @@ public class ConfigCustomWidgets {
             }
         }
 
-        if (editingKbIndex >= 0 && mouseX >= x + 144 && mouseX <= x + 208 && mouseY >= curY && mouseY <= curY + 18) {
-            editingKbIndex = -1;
-            kbCmdInput = "";
-            kbKeyInput = "";
-            kbIslandInput = "";
+        curY += 22;
+
+        // Check Preset buttons click
+        if (handleConditionPresetsClick(x + 12, curY, w - 24, false, mouseX, mouseY)) {
             return true;
+        }
+
+        curY += 20;
+
+        int condW = (w - 24);
+        if (editingKbIndex >= 0) condW -= 56;
+        if (checkFieldClick(x + 12, curY, condW, 18, "kbIsland", mouseX, mouseY)) return true;
+
+        if (editingKbIndex >= 0) {
+            int canX = x + 12 + condW + 6;
+            if (mouseX >= canX && mouseX <= canX + 50 && mouseY >= curY && mouseY <= curY + 18) {
+                editingKbIndex = -1;
+                kbCmdInput = "";
+                kbKeyInput = "";
+                kbIslandInput = "";
+                return true;
+            }
         }
 
         curY += 26 + 6;
@@ -5058,7 +5181,7 @@ public class ConfigCustomWidgets {
             List<String> matches = getMatchingProfilesForGuiBinds(BomboConfigScreen.searchQuery);
             if (!matches.isEmpty()) extra += 22;
         }
-        return 125 + extra + Math.max(1, count) * 26;
+        return 148 + extra + Math.max(1, count) * 26;
     }
 
     public static void renderGuiBindsManager(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h, int mouseX, int mouseY) {
@@ -5097,20 +5220,29 @@ public class ConfigCustomWidgets {
         boolean keyHover = mouseX >= keyX && mouseX <= keyX + keyW && mouseY >= curY && mouseY <= curY + 18;
         ConfigUITheme.drawPillButton(g, font, keyDisplay, keyX, curY, keyW, 18, keyHover, -1, guiKbIsListening ? 0x44FFAA00 : 0x221E293B, 0x55FFFFFF);
 
-        renderCleanInputField(g, font, "Island (blank=all)", guiKbIslandInput, "guiKbIsland", keyX + keyW + 6, curY, colW, mouseX, mouseY);
+        int addBtnX = keyX + keyW + 6;
+        int addBtnW = colW;
+        String addBtnText = editingGuiKbIndex >= 0 ? "§a✔ Save" : "§b+ Add GUI Bind";
+        boolean addHover = mouseX >= addBtnX && mouseX <= addBtnX + addBtnW && mouseY >= curY && mouseY <= curY + 18;
+        ConfigUITheme.drawPillButton(g, font, addBtnText, addBtnX, curY, addBtnW, 18, addHover, -1, 0x3300E5FF, 0x6600E5FF);
 
-        curY += 24;
+        curY += 22;
 
-        String addBtnText = editingGuiKbIndex >= 0 ? "§a✔ Save GUI Bind" : "§b+ Add GUI Bind";
-        boolean addHover = mouseX >= x + 12 && mouseX <= x + 130 && mouseY >= curY && mouseY <= curY + 18;
-        ConfigUITheme.drawPillButton(g, font, addBtnText, x + 12, curY, 126, 18, addHover, -1, 0x3300E5FF, 0x6600E5FF);
+        // Presets on top of conditions input field
+        renderConditionPresets(g, font, x + 12, curY, w - 24, mouseX, mouseY);
 
+        curY += 20;
+
+        int condW = (w - 24);
+        if (editingGuiKbIndex >= 0) condW -= 56;
+        renderCleanInputField(g, font, "Conditions (e.g. Kuudra; y<40; !Hub; t5; armor:necron)", guiKbIslandInput, "guiKbIsland", x + 12, curY, condW, mouseX, mouseY);
         if (editingGuiKbIndex >= 0) {
-            boolean canHover = mouseX >= x + 144 && mouseX <= x + 208 && mouseY >= curY && mouseY <= curY + 18;
-            ConfigUITheme.drawPillButton(g, font, "§cCancel", x + 144, curY, 64, 18, canHover, -1, 0x33EF4444, 0x66EF4444);
+            int canX = x + 12 + condW + 6;
+            boolean canHover = mouseX >= canX && mouseX <= canX + 50 && mouseY >= curY && mouseY <= curY + 18;
+            ConfigUITheme.drawPillButton(g, font, "§cCancel", canX, curY, 50, 18, canHover, -1, 0x33EF4444, 0x66EF4444);
         }
 
-        curY += 26;
+        curY += 24;
         g.fill(x + 12, curY, x + w - 12, curY + 1, ConfigUITheme.getDividerColor());
         curY += 6;
 
@@ -5176,7 +5308,7 @@ public class ConfigCustomWidgets {
             g.text(font, "§e" + (cb.command != null ? cb.command : ""), textX, rowY + 7, 0xFFFFFFFF, false);
 
             if (cb.requiredIsland != null && !cb.requiredIsland.isEmpty()) {
-                g.text(font, "§7[" + cb.requiredIsland + "]", textX + font.width("§e" + cb.command) + 8, rowY + 7, ConfigUITheme.getTextMuted(), false);
+                g.text(font, "§3[§b" + cb.requiredIsland + "§3]", textX + font.width("§e" + cb.command) + 8, rowY + 7, ConfigUITheme.getTextMuted(), false);
             }
 
             int rx = x + w - 18;
@@ -5291,16 +5423,14 @@ public class ConfigCustomWidgets {
             return true;
         }
 
-        if (checkFieldClick(keyX + keyW + 6, curY, colW, 18, "guiKbIsland", mouseX, mouseY)) return true;
-
-        curY += 24;
-
+        int addBtnX = keyX + keyW + 6;
+        int addBtnW = colW;
         BomboConfig.Settings s = BomboConfig.get();
         if (s.profileBinds == null) s.profileBinds = new HashMap<>();
         List<BomboConfig.CommandBind> list = s.profileBinds.computeIfAbsent(s.activeProfile, k -> new ArrayList<>());
 
-        // [+ Add Keybind] / [Save]
-        if (mouseX >= x + 12 && mouseX <= x + 138 && mouseY >= curY && mouseY <= curY + 18) {
+        // [+ Add GUI Bind] / [Save]
+        if (mouseX >= addBtnX && mouseX <= addBtnX + addBtnW && mouseY >= curY && mouseY <= curY + 18) {
             if (!guiKbCmdInput.trim().isEmpty()) {
                 if (editingGuiKbIndex >= 0 && editingGuiKbIndex < list.size()) {
                     BomboConfig.CommandBind cb = list.get(editingGuiKbIndex);
@@ -5324,12 +5454,28 @@ public class ConfigCustomWidgets {
             }
         }
 
-        if (editingGuiKbIndex >= 0 && mouseX >= x + 144 && mouseX <= x + 208 && mouseY >= curY && mouseY <= curY + 18) {
-            editingGuiKbIndex = -1;
-            guiKbCmdInput = "";
-            guiKbKeyInput = "";
-            guiKbIslandInput = "";
+        curY += 22;
+
+        // Check Preset buttons click
+        if (handleConditionPresetsClick(x + 12, curY, w - 24, true, mouseX, mouseY)) {
             return true;
+        }
+
+        curY += 20;
+
+        int condW = (w - 24);
+        if (editingGuiKbIndex >= 0) condW -= 56;
+        if (checkFieldClick(x + 12, curY, condW, 18, "guiKbIsland", mouseX, mouseY)) return true;
+
+        if (editingGuiKbIndex >= 0) {
+            int canX = x + 12 + condW + 6;
+            if (mouseX >= canX && mouseX <= canX + 50 && mouseY >= curY && mouseY <= curY + 18) {
+                editingGuiKbIndex = -1;
+                guiKbCmdInput = "";
+                guiKbKeyInput = "";
+                guiKbIslandInput = "";
+                return true;
+            }
         }
 
         curY += 26 + 6;

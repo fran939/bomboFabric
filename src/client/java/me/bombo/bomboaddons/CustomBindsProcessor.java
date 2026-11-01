@@ -40,6 +40,12 @@ public class CustomBindsProcessor {
       }
    }
 
+   private static final java.util.regex.Pattern COORD_PATTERN =
+         java.util.regex.Pattern.compile("(?i)^(x|y|z|height|h)\\s*(<=|>=|!=|<>|==|<|>|=)\\s*(-?\\d+(?:\\.\\d+)?)$");
+
+   private static final java.util.regex.Pattern TIER_PATTERN =
+         java.util.regex.Pattern.compile("(?i)^(!?)(?:t|kuudra|tier:?)\\s*([1-5])$");
+
    public static boolean isKeybindAllowed(String reqProfile, String reqIsland, String reqArmor) {
       BomboConfig.Settings s = BomboConfig.get();
       if (reqProfile != null && !reqProfile.trim().isEmpty()) {
@@ -52,15 +58,137 @@ public class CustomBindsProcessor {
          }
       }
 
-      if (!SkyblockUtils.matchesIslandRequirement(reqIsland)) {
-         return false;
-      }
-
-      if (!SkyblockUtils.matchesArmorRequirement(reqArmor)) {
+      if (!matchesConditions(reqIsland, reqArmor)) {
          return false;
       }
 
       return true;
+   }
+
+   public static boolean matchesConditions(String reqConditions, String reqArmor) {
+      if (reqArmor != null && !reqArmor.trim().isEmpty()) {
+         if (!SkyblockUtils.matchesArmorRequirement(reqArmor)) {
+            return false;
+         }
+      }
+
+      if (reqConditions == null || reqConditions.trim().isEmpty()) {
+         return true;
+      }
+
+      Minecraft mc = Minecraft.getInstance();
+      net.minecraft.world.entity.player.Player player = mc.player;
+
+      String[] tokens = reqConditions.split("[;,]");
+      List<String> positiveIslands = new java.util.ArrayList<>();
+      List<String> negativeIslands = new java.util.ArrayList<>();
+
+      for (String raw : tokens) {
+         String token = raw.trim();
+         if (token.isEmpty()) continue;
+
+         // 1. Coordinates / height check (e.g. y<40, y>40, x<40, x=0, height<40)
+         java.util.regex.Matcher coordMatcher = COORD_PATTERN.matcher(token);
+         if (coordMatcher.matches()) {
+            if (player == null) return false;
+            String var = coordMatcher.group(1).toLowerCase();
+            String op = coordMatcher.group(2);
+            double targetVal;
+            try {
+               targetVal = Double.parseDouble(coordMatcher.group(3));
+            } catch (Exception e) {
+               continue;
+            }
+
+            double currentVal = var.equals("x") ? player.getX() : (var.equals("z") ? player.getZ() : player.getY());
+            boolean coordPass = switch (op) {
+               case "<" -> currentVal < targetVal;
+               case "<=" -> currentVal <= targetVal;
+               case ">" -> currentVal > targetVal;
+               case ">=" -> currentVal >= targetVal;
+               case "=", "==" -> Math.abs(currentVal - targetVal) < 1.0;
+               case "!=", "<>" -> Math.abs(currentVal - targetVal) >= 1.0;
+               default -> true;
+            };
+            if (!coordPass) return false;
+            continue;
+         }
+
+         // 2. Kuudra / Dungeon Tiers (e.g. t5, kuudra5, tier:5, !t5)
+         java.util.regex.Matcher tierMatcher = TIER_PATTERN.matcher(token);
+         if (tierMatcher.matches()) {
+            boolean isNeg = "!".equals(tierMatcher.group(1));
+            int reqTier;
+            try {
+               reqTier = Integer.parseInt(tierMatcher.group(2));
+            } catch (Exception e) {
+               continue;
+            }
+            int currentTier = me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.getKuudraTier();
+            if (isNeg) {
+               if (currentTier == reqTier) return false;
+            } else {
+               if (currentTier != reqTier) return false;
+            }
+            continue;
+         }
+
+         // 3. Armor checks in condition string (e.g. armor:necron, wearing:storm, !armor:divan)
+         String lowerToken = token.toLowerCase();
+         if (lowerToken.startsWith("armor:") || lowerToken.startsWith("wearing:") || lowerToken.startsWith("armor=")) {
+            String armorTarget = token.substring(token.indexOf(':') != -1 ? token.indexOf(':') + 1 : token.indexOf('=') + 1).trim();
+            if (!SkyblockUtils.matchesArmorRequirement(armorTarget)) {
+               return false;
+            }
+            continue;
+         }
+         if (lowerToken.startsWith("!armor:") || lowerToken.startsWith("!wearing:") || lowerToken.startsWith("!armor=")) {
+            String armorTarget = token.substring(token.indexOf(':') != -1 ? token.indexOf(':') + 1 : token.indexOf('=') + 1).trim();
+            if (SkyblockUtils.matchesArmorRequirement(armorTarget)) {
+               return false;
+            }
+            continue;
+         }
+
+         // 4. Island / Area requirements and exceptions (e.g. Kuudra, Hub, !Hub, !Garden)
+         if (token.startsWith("!")) {
+            String neg = token.substring(1).trim();
+            if (!neg.isEmpty()) {
+               negativeIslands.add(neg);
+            }
+         } else {
+            positiveIslands.add(token);
+         }
+      }
+
+      // Check Island exceptions (negative islands)
+      for (String neg : negativeIslands) {
+         if (isAreaMatch(neg)) {
+            return false;
+         }
+      }
+
+      // Check positive islands (if specified, player must be in at least one)
+      if (!positiveIslands.isEmpty()) {
+         boolean matchedPositive = false;
+         for (String pos : positiveIslands) {
+            if (isAreaMatch(pos)) {
+               matchedPositive = true;
+               break;
+            }
+         }
+         if (!matchedPositive) return false;
+      }
+
+      return true;
+   }
+
+   private static boolean isAreaMatch(String target) {
+      if (target == null || target.isEmpty()) return false;
+      if (target.equalsIgnoreCase("kuudra")) {
+         if (me.bombo.bomboaddons.kuudra.pearls.KuudraUtils.inKuudra()) return true;
+      }
+      return SkyblockUtils.matchesIslandRequirement(target);
    }
 
    public static java.util.List<BomboConfig.CommandBind> getInGameBinds() {

@@ -1,5 +1,20 @@
 # BomboAddons Changelog
  
+## [26.2.28.187] - 2026-11-01 (Beta)
+
+### Profile Hotkeys Conditions & Exceptions, Height/Coordinate Rules, and Clickable GUI Presets (`CustomBindsProcessor.java`, `ConfigCustomWidgets.java`, `ClickLogic.java`)
+- **Profile Hotkeys Conditions & Exceptions System (`CustomBindsProcessor.java`, `ClickLogic.java`):** Completely overhauled keybind validation for both In-Game Command Keybinds (`keybindBinds`) and GUI Container Keybinds (`profileBinds`). Added rich conditions and exceptions:
+  - **Height & Coordinates:** Supports `y<40`, `y>40`, `y<=40`, `y>=40`, `y=40`, `x<40`, `x>40`, `x=0`, `z<...`, `height<40`, `h<40`. Evaluates player coordinates dynamically.
+  - **Island / Area Requirements & Negation Exceptions:** Supports positive requirements (e.g. `Kuudra`, `Crimson Isle`, `Garden`) and exceptions (e.g. `!Hub`, `!Garden`, `!Kuudra`).
+  - **Kuudra & Dungeon Tiers:** Supports tier conditions (e.g. `t5`, `kuudra5`, `!t5`).
+  - **Armor Requirements & Exceptions:** Supports `armor:necron`, `wearing:storm`, `!armor:divan`.
+  - **Chaining Conditions:** Supports chaining any combination with semicolons or commas (e.g. `Kuudra; y<40; t5; armor:necron`).
+- **Interactive GUI Preset Pill Buttons (`ConfigCustomWidgets.java`):** Added a dedicated preset shortcut bar on top of the Conditions input field in `/b config` for both Command Keybinds and GUI Container Keybinds cards:
+  - Clickable presets: `[+ y<40]`, `[+ y>40]`, `[+ x<40]`, `[+ x=0]`, `[+ Kuudra T5]`, `[+ Island;]`, `[+ !Island;]`, `[+ Armor:]`, `[+ !Armor:]`.
+  - Clicking any preset automatically inserts/appends the snippet with semicolon separation directly into the Conditions field and positions the cursor.
+  - Clicking `[+ Island;]` or `[+ !Island;]` automatically detects and fills the current Skyblock area.
+- **Redesigned 3-Row Keybind Editor & Tag Display (`ConfigCustomWidgets.java`):** Split keybind input card into 3 clean rows: Row 1 (Command, Keybind capture button, and Add/Save button), Row 2 (Preset shortcuts bar), Row 3 (Full-width Conditions & Exceptions input and Cancel button). Updated keybind row listings to render active condition tags in styled cyan brackets (`§3[§b...§3]`).
+
 ## [26.2.28.186] - 2026-10-31 (Beta)
 
 ### /b timer & /timer Complete Overhaul, HUD Timer Integration, and Chat Trigger Command Delay & Cooldown (`ReminderManager.java`, `CommandMixin.java`, `CustomBindsProcessor.java`, `BomboConfig.java`, `ConfigRegistry.java`, `ConfigCustomWidgets.java`)

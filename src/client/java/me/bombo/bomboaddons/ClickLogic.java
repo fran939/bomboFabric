@@ -795,18 +795,10 @@ public class ClickLogic {
 
    public static boolean shouldTriggerBind(BomboConfig.CommandBind bind) {
       Minecraft mc = Minecraft.getInstance();
-      if (mc.player == null) {
+      if (mc.player == null || bind == null) {
          return false;
       } else {
-         if (!SkyblockUtils.matchesIslandRequirement(bind.requiredIsland)) {
-            return false;
-         }
-
-         if (!SkyblockUtils.matchesArmorRequirement(bind.requiredArmor)) {
-            return false;
-         }
-
-         return true;
+         return CustomBindsProcessor.isKeybindAllowed(bind.requiredProfile, bind.requiredIsland, bind.requiredArmor);
       }
    }
 

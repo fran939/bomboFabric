@@ -1,5 +1,14 @@
 [
   {
+    "version": "26.2.28.187",
+    "date": "2026-11-01",
+    "changes": [
+      "+ Profile Hotkeys Conditions & Exceptions: overhauled keybind validation with support for height/coordinates (y<40, y>40, x<40, x=0), island requirements and exceptions (!Hub, Kuudra, Crimson Isle), Kuudra tiers (t5, !t5), and armor rules (armor:necron, !armor:divan)",
+      "+ Interactive GUI Preset Shortcuts: added clickable preset pill buttons on top of the conditions input field (+ y<40, + y>40, + x<40, + x=0, + Kuudra T5, + Island;, + !Island;, + Armor:, + !Armor:) that auto-insert snippets and position cursor",
+      "+ Redesigned 3-Row Keybind Editor & Tag Display: organized keybinds into command/key, presets bar, and wide conditions input with cyan condition badges in keybind list"
+    ]
+  },
+  {
     "version": "26.2.28.186",
     "date": "2026-10-31",
     "changes": [
