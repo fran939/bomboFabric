@@ -1429,7 +1429,9 @@ public class ConfigCustomWidgets {
                 int rowY = curY + i * 24;
                 g.fill(x + 12, rowY, x + w - 12, rowY + 20, 0x221E293B);
 
-                g.text(font, "§e\"" + t.triggerText + "\" §8-> §b" + (t.commandToRun != null && !t.commandToRun.isEmpty() ? t.commandToRun : t.titleToShow), x + 18, rowY + 6, -1, false);
+                int effDelay = t.delayMs > 0 ? t.delayMs : s.chatTriggerDelayMs;
+                String delaySuffix = effDelay > 0 ? " §7(" + effDelay + "ms)" : "";
+                g.text(font, "§e\"" + t.triggerText + "\" §8-> §b" + (t.commandToRun != null && !t.commandToRun.isEmpty() ? t.commandToRun : t.titleToShow) + delaySuffix, x + 18, rowY + 6, -1, false);
 
                 int rx = x + w - 18;
                 int delX = rx - 26;

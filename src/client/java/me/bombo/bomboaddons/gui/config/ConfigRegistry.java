@@ -251,6 +251,8 @@ public class ConfigRegistry {
                         allProfiles,
                         () -> s.activeProfile != null ? s.activeProfile : "default",
                         v -> s.activeProfile = v));
+                items.add(ConfigItem.sliderInt("Command Execution Delay", "Delay in milliseconds before executing command after chat trigger matches.", category, 0, 2000, 25, 150, "ms", () -> s.chatTriggerDelayMs, v -> s.chatTriggerDelayMs = v));
+                items.add(ConfigItem.sliderInt("Trigger Cooldown", "Cooldown in milliseconds between triggers before the same command can execute again.", category, 50, 3000, 50, 400, "ms", () -> s.chatTriggerCooldownMs, v -> s.chatTriggerCooldownMs = v));
                 items.add(ConfigItem.dynamicCustomCard("Chat Triggers Manager", "Set up automated rules to trigger commands, playsound cues, or chat replies when specific text appears in chat.", category,
                         ConfigCustomWidgets::getChatTriggersCardHeight,
                         ConfigCustomWidgets::renderChatTriggersCard,

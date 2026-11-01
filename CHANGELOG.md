@@ -1,5 +1,11 @@
 # BomboAddons Changelog
  
+## [26.2.28.186] - 2026-10-31 (Beta)
+
+### /b timer & /timer Complete Overhaul, HUD Timer Integration, and Chat Trigger Command Delay & Cooldown (`ReminderManager.java`, `CommandMixin.java`, `CustomBindsProcessor.java`, `BomboConfig.java`, `ConfigRegistry.java`, `ConfigCustomWidgets.java`)
+- **Complete `/b timer` & `/timer` Overhaul (`ReminderManager.java`, `CommandMixin.java`):** Resolved issue where `/b timer` was unresponsive or only printed usage. Restored full backwards compatibility with `CustomTimerManager` HUD display and `StopwatchManager`. Commands `/b timer` and `/timer` now immediately show on the player's on-screen HUD, support pure number seconds (e.g. `/b timer 100` or `/b timer 100 boss`), duration token suffixes (`10s`, `5m`, `1h 30m`), immediate in-game chat confirmations, on-screen Title banner and chime alerts, `/b timer list` listing active timers, `/b timer clear` clearing all HUD and local timers, and `/b timer sw` toggling stopwatch.
+- **Chat Trigger Command Delay & Cooldown (`CustomBindsProcessor.java`, `BomboConfig.java`, `ConfigRegistry.java`, `ConfigCustomWidgets.java`):** Added configurable delay between when a chat trigger is detected and when the automated command is dispatched. Configurable globally via new `Command Execution Delay` slider (0ms to 2000ms, default 150ms) and `Trigger Cooldown` slider (50ms to 3000ms, default 400ms) under the "Chat Triggers" config category in `/b config`. Dispatches through `CommandDelayManager` so server commands are not sent simultaneously on the chat packet tick. Added delay display `(Xms)` to the Chat Triggers manager card.
+
 ## [26.2.28.185] - 2026-10-31 (Beta)
 
 ### Delayed Command Scheduler (/b cd), Conditional Emergency Keybind, and Kuudra Fall Protection (`CommandDelayManager.java`, `ConditionalKeybindManager.java`, `CommandMixin.java`, `KeyboardMixin.java`, `BomboaddonsClient.java`, `BomboConfig.java`, `ConfigRegistry.java`)

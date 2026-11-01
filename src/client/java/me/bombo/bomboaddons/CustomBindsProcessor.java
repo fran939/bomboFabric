@@ -659,16 +659,23 @@ public class CustomBindsProcessor {
                      long now = System.currentTimeMillis();
                      String cmd = cte.commandToRun != null ? cte.commandToRun.trim() : "";
                      if (!cmd.isEmpty()) {
-                        if (cmd.equalsIgnoreCase(lastTriggerCmd) && (now - lastTriggerExecTime < 300L)) {
+                        long cooldown = s.chatTriggerCooldownMs > 0 ? s.chatTriggerCooldownMs : 400L;
+                        if (cmd.equalsIgnoreCase(lastTriggerCmd) && (now - lastTriggerExecTime < cooldown)) {
                            continue;
                         }
                         lastTriggerExecTime = now;
                         lastTriggerCmd = cmd;
-                        CHAT_TRIGGER_DEPTH.set(CHAT_TRIGGER_DEPTH.get() + 1);
-                        try {
-                           executeCommandOrChat(cmd);
-                        } finally {
-                           CHAT_TRIGGER_DEPTH.set(Math.max(0, CHAT_TRIGGER_DEPTH.get() - 1));
+
+                        long delay = cte.delayMs > 0 ? (long) cte.delayMs : (s.chatTriggerDelayMs > 0 ? (long) s.chatTriggerDelayMs : 0L);
+                        if (delay > 0) {
+                           me.bombo.bomboaddons.features.misc.CommandDelayManager.scheduleCommand(delay, cmd);
+                        } else {
+                           CHAT_TRIGGER_DEPTH.set(CHAT_TRIGGER_DEPTH.get() + 1);
+                           try {
+                              executeCommandOrChat(cmd);
+                           } finally {
+                              CHAT_TRIGGER_DEPTH.set(Math.max(0, CHAT_TRIGGER_DEPTH.get() - 1));
+                           }
                         }
                      }
 

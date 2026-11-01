@@ -49,9 +49,12 @@ public class CommandMixin {
             || lower.equals("bombo reminder") || lower.startsWith("bombo reminder ")
             || lower.equals("bombo timer") || lower.startsWith("bombo timer ")
             || lower.equals("bomboaddons reminder") || lower.startsWith("bomboaddons reminder ")
-            || lower.equals("bomboaddons timer") || lower.startsWith("bomboaddons timer ")) {
+            || lower.equals("bomboaddons timer") || lower.startsWith("bomboaddons timer ")
+            || lower.equals("b sw") || lower.equals("sw")
+            || lower.equals("b stopwatch") || lower.equals("stopwatch")) {
          String args = "";
-         if (lower.startsWith("bomboaddons reminder")) args = trimmed.substring(20).trim();
+         if (lower.equals("b sw") || lower.equals("sw") || lower.equals("b stopwatch") || lower.equals("stopwatch")) args = "sw";
+         else if (lower.startsWith("bomboaddons reminder")) args = trimmed.substring(20).trim();
          else if (lower.startsWith("bomboaddons timer")) args = trimmed.substring(17).trim();
          else if (lower.startsWith("bombo reminder")) args = trimmed.substring(14).trim();
          else if (lower.startsWith("bombo timer")) args = trimmed.substring(11).trim();

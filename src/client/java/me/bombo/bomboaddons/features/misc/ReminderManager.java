@@ -71,87 +71,126 @@ public class ReminderManager {
 
         String args = (rawArgs != null) ? rawArgs.trim() : "";
         if (args.isEmpty() || args.equalsIgnoreCase("help")) {
+            boolean hasAny = !localReminders.isEmpty() || me.bombo.bomboaddons.CustomTimerManager.hasTimers();
+            if (hasAny) {
+                printActiveTimers(mc, false);
+            }
             mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §e§lTimer & Reminder Commands:"));
-            mc.player.sendSystemMessage(Component.literal("§7/reminder <duration> <text> §8- §fSet a reminder with in-game title & Discord DM (e.g. §b/reminder 10s awa§f or §b/timer 2h 30m forge§f)"));
-            mc.player.sendSystemMessage(Component.literal("§7/reminder list §8- §fView active timers and countdowns"));
-            mc.player.sendSystemMessage(Component.literal("§7/reminder clear §8- §fCancel all active timers"));
+            mc.player.sendSystemMessage(Component.literal("§7• Set: §b/b timer <duration> [name] §7(e.g. §b/b timer 10s§7, §b/b timer 100§7, §b/b timer 5m boss§7)"));
+            mc.player.sendSystemMessage(Component.literal("§7• List: §b/b timer list §7(view active countdowns)"));
+            mc.player.sendSystemMessage(Component.literal("§7• Clear: §b/b timer clear §7(cancel active timers)"));
+            mc.player.sendSystemMessage(Component.literal("§7• Stopwatch: §b/b timer sw §7(toggle stopwatch HUD)"));
             return;
         }
 
         String username = mc.getUser().getName();
 
-        if (args.equalsIgnoreCase("clear") || args.equalsIgnoreCase("cancel")) {
-            localReminders.clear();
-            sendPostAsync("clear", username, null, null, (success, resp) -> {
-                mc.execute(() -> {
-                    mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §aCleared all active reminders and timers."));
-                });
-            });
+        // Stopwatch toggle: /b timer sw or /b timer stopwatch
+        if (args.equalsIgnoreCase("sw") || args.equalsIgnoreCase("stopwatch")) {
+            if (me.bombo.bomboaddons.StopwatchManager.isActive()) {
+                if (me.bombo.bomboaddons.StopwatchManager.isPaused()) {
+                    me.bombo.bomboaddons.StopwatchManager.togglePause();
+                    mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §aStopwatch resumed!"));
+                } else {
+                    me.bombo.bomboaddons.StopwatchManager.stop();
+                    mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §cStopwatch stopped!"));
+                }
+            } else {
+                me.bombo.bomboaddons.StopwatchManager.start();
+                mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §aStopwatch started! Open inventory to Pause or Stop."));
+            }
             return;
         }
 
+        // Clear: /b timer clear or /reminder clear
+        if (args.equalsIgnoreCase("clear") || args.equalsIgnoreCase("reset")) {
+            localReminders.clear();
+            me.bombo.bomboaddons.CustomTimerManager.clearTimers();
+            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §aCleared all active reminders and on-screen timers."));
+            sendPostAsync("clear", username, null, null, null);
+            return;
+        }
+
+        // List: /b timer list or /reminder list
         if (args.equalsIgnoreCase("list")) {
+            printActiveTimers(mc, true);
             sendPostAsync("list", username, null, null, (success, resp) -> {
                 mc.execute(() -> {
                     if (resp != null && resp.has("timers")) {
                         JsonArray arr = resp.getAsJsonArray("timers");
-                        if (arr.size() == 0 && localReminders.isEmpty()) {
-                            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §7No active timers."));
-                            return;
-                        }
-                        mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §6Active Timers (" + (arr.size() + localReminders.size()) + "):"));
-                        for (JsonElement el : arr) {
-                            if (el.isJsonObject()) {
-                                JsonObject obj = el.getAsJsonObject();
-                                String rem = obj.has("reminder") ? obj.get("reminder").getAsString() : "";
-                                String formatted = obj.has("formattedRemaining") ? obj.get("formattedRemaining").getAsString() : "";
-                                mc.player.sendSystemMessage(Component.literal("§8- §e\"§f" + rem + "§e\" §7in §a" + formatted + " §7(Discord DM)"));
+                        if (arr.size() > 0) {
+                            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §6Discord Bot Timers (" + arr.size() + "):"));
+                            for (JsonElement el : arr) {
+                                if (el.isJsonObject()) {
+                                    JsonObject obj = el.getAsJsonObject();
+                                    String rem = obj.has("reminder") ? obj.get("reminder").getAsString() : "";
+                                    String formatted = obj.has("formattedRemaining") ? obj.get("formattedRemaining").getAsString() : "";
+                                    mc.player.sendSystemMessage(Component.literal("§8- §e\"§f" + rem + "§e\" §7in §a" + formatted + " §7(Discord DM)"));
+                                }
                             }
                         }
-                        for (ActiveReminder r : localReminders) {
-                            long remSec = Math.max(0, (r.expireTimeMs - System.currentTimeMillis()) / 1000);
-                            String str = formatSeconds(remSec);
-                            mc.player.sendSystemMessage(Component.literal("§8- §b\"§f" + r.reminder + "§b\" §7in §a" + str + " §7(In-Game)"));
-                        }
-                    } else if (!localReminders.isEmpty()) {
-                        mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §6Active Local Timers (" + localReminders.size() + "):"));
-                        for (ActiveReminder r : localReminders) {
-                            long remSec = Math.max(0, (r.expireTimeMs - System.currentTimeMillis()) / 1000);
-                            mc.player.sendSystemMessage(Component.literal("§8- §b\"§f" + r.reminder + "§b\" §7in §a" + formatSeconds(remSec)));
-                        }
-                    } else {
-                        mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §7No active timers found."));
                     }
                 });
             });
             return;
         }
 
-        // Setting a reminder: parse duration & text
+        // Setting a reminder / timer
         ParsedDuration parsed = parseDuration(args);
         if (parsed == null || parsed.totalSeconds <= 0) {
-            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §cInvalid duration! Examples: §e10s§c, §e5m§c, §e1h 30m§c. Usage: §b/reminder <time> <text>"));
+            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §cInvalid duration! Examples: §e10s§c, §e100§c, §e5m§c, §e1h 30m§c. Usage: §b/b timer <duration> [name]"));
             return;
         }
 
         String durationStr = parsed.durationStr;
-        String reminderText = parsed.reminderText;
+        String reminderText = (parsed.reminderText != null && !parsed.reminderText.trim().isEmpty())
+                ? parsed.reminderText.trim()
+                : "Timer";
         long durationSec = parsed.totalSeconds;
+        long durationMs = durationSec * 1000L;
 
-        // Register local reminder for instant in-game title & sound
-        localReminders.add(new ActiveReminder(System.currentTimeMillis() + (durationSec * 1000L), reminderText, durationStr));
+        // Register local reminder for title banner, bell & sound alert
+        localReminders.add(new ActiveReminder(System.currentTimeMillis() + durationMs, reminderText, durationStr));
+
+        // Start in CustomTimerManager so it displays ON SCREEN on the HUD!
+        me.bombo.bomboaddons.CustomTimerManager.startTimer(reminderText, durationMs);
+
+        // Immediate chat feedback
+        mc.player.sendSystemMessage(Component.literal(
+                "§8[§bBomboAddons§8] §a⏱️ Timer for \"§e" + reminderText + "§a\" set for ~§e" + durationStr + "§a! §7(HUD + Title + Discord)"));
 
         // Register with server bot for Discord DM notifications
-        sendPostAsync("set", username, durationStr, reminderText, (success, resp) -> {
-            mc.execute(() -> {
-                String label = reminderText.isEmpty() ? "" : " for \"" + reminderText + "\"";
-                if (success) {
-                    mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §a⏱️ Reminder" + label + " set for ~" + durationStr + "! §7(In-game alert + Discord DM)"));
-                } else {
-                    mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §a⏱️ Reminder" + label + " set for ~" + durationStr + "! §7(In-game alert active)"));
+        sendPostAsync("set", username, durationStr, reminderText, null);
+    }
+
+    private static void printActiveTimers(Minecraft mc, boolean showEmptyMessage) {
+        long now = System.currentTimeMillis();
+        boolean hasAny = false;
+
+        List<me.bombo.bomboaddons.CustomTimerManager.CustomTimer> customTimers = me.bombo.bomboaddons.CustomTimerManager.activeTimers;
+        if (!customTimers.isEmpty() || !localReminders.isEmpty()) {
+            hasAny = true;
+            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §6Active Timers:"));
+            for (me.bombo.bomboaddons.CustomTimerManager.CustomTimer t : customTimers) {
+                long remSec = Math.max(0, (t.endTime - now) / 1000);
+                mc.player.sendSystemMessage(Component.literal("§8- §e\"§f" + t.name + "§e\" §7in §a" + formatSeconds(remSec) + " §7(HUD)"));
+            }
+            for (ActiveReminder r : localReminders) {
+                boolean alreadyListed = false;
+                for (me.bombo.bomboaddons.CustomTimerManager.CustomTimer t : customTimers) {
+                    if (t.name.equalsIgnoreCase(r.reminder)) {
+                        alreadyListed = true;
+                        break;
+                    }
                 }
-            });
-        });
+                if (!alreadyListed) {
+                    long remSec = Math.max(0, (r.expireTimeMs - now) / 1000);
+                    mc.player.sendSystemMessage(Component.literal("§8- §b\"§f" + r.reminder + "§b\" §7in §a" + formatSeconds(remSec) + " §7(Alert)"));
+                }
+            }
+        } else if (showEmptyMessage) {
+            mc.player.sendSystemMessage(Component.literal("§8[§bBomboAddons§8] §7No active timers."));
+        }
     }
 
     private static class ParsedDuration {
@@ -161,9 +200,56 @@ public class ReminderManager {
     }
 
     private static ParsedDuration parseDuration(String input) {
-        // Matches tokens like "10s", "5m", "2h", "1d", "30min", "45sec", etc. at beginning or end
+        if (input == null || input.trim().isEmpty()) return null;
+        String trimmed = input.trim();
+
+        // 1. Pure number of seconds: e.g. "100" or "60"
+        if (trimmed.matches("^\\d+$")) {
+            try {
+                long sec = Long.parseLong(trimmed);
+                if (sec > 0) {
+                    ParsedDuration p = new ParsedDuration();
+                    p.totalSeconds = sec;
+                    p.durationStr = formatSeconds(sec);
+                    p.reminderText = "Timer";
+                    return p;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 2. Number of seconds followed by name: e.g. "100 boss" or "60 awa"
+        if (trimmed.matches("^\\d+\\s+.*$")) {
+            int sp = trimmed.indexOf(' ');
+            try {
+                long sec = Long.parseLong(trimmed.substring(0, sp).trim());
+                if (sec > 0) {
+                    ParsedDuration p = new ParsedDuration();
+                    p.totalSeconds = sec;
+                    p.durationStr = formatSeconds(sec);
+                    p.reminderText = trimmed.substring(sp + 1).trim();
+                    return p;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 3. Name followed by number of seconds: e.g. "boss 100" or "awa 60"
+        if (trimmed.matches("^.*\\s+\\d+$")) {
+            int sp = trimmed.lastIndexOf(' ');
+            try {
+                long sec = Long.parseLong(trimmed.substring(sp + 1).trim());
+                if (sec > 0) {
+                    ParsedDuration p = new ParsedDuration();
+                    p.totalSeconds = sec;
+                    p.durationStr = formatSeconds(sec);
+                    p.reminderText = trimmed.substring(0, sp).trim();
+                    return p;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 4. Matches tokens like "10s", "5m", "2h", "1d", "30min", "45sec" at beginning: e.g. "10s", "5m boss", "1h 30m forge"
         Pattern tokenPattern = Pattern.compile("(?i)^((?:\\d+\\s*(?:d|h|m|s|min|sec|minute|hour|day)s?\\s*)+)(.*)$");
-        Matcher m = tokenPattern.matcher(input.trim());
+        Matcher m = tokenPattern.matcher(trimmed);
         if (m.find()) {
             String durPart = m.group(1).trim();
             String remPart = m.group(2).trim();
@@ -172,14 +258,14 @@ public class ReminderManager {
                 ParsedDuration p = new ParsedDuration();
                 p.totalSeconds = sec;
                 p.durationStr = formatSeconds(sec);
-                p.reminderText = remPart;
+                p.reminderText = remPart.isEmpty() ? "Timer" : remPart;
                 return p;
             }
         }
 
-        // Try duration at end: e.g. "awa 10s"
+        // 5. Matches tokens at end: e.g. "boss 5m" or "awa 10s"
         Pattern endPattern = Pattern.compile("(?i)^(.*?)\\s+((?:\\d+\\s*(?:d|h|m|s|min|sec|minute|hour|day)s?\\s*)+)$");
-        Matcher em = endPattern.matcher(input.trim());
+        Matcher em = endPattern.matcher(trimmed);
         if (em.find()) {
             String remPart = em.group(1).trim();
             String durPart = em.group(2).trim();
@@ -188,7 +274,7 @@ public class ReminderManager {
                 ParsedDuration p = new ParsedDuration();
                 p.totalSeconds = sec;
                 p.durationStr = formatSeconds(sec);
-                p.reminderText = remPart;
+                p.reminderText = remPart.isEmpty() ? "Timer" : remPart;
                 return p;
             }
         }

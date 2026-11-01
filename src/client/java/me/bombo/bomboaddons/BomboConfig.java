@@ -1418,6 +1418,8 @@ public class BomboConfig {
       public List<ChatTrigger> chatTriggers = null;
       public boolean chatTriggersEnabled = true;
       public boolean chatTriggersCollapsed = false;
+      public int chatTriggerDelayMs = 150;
+      public int chatTriggerCooldownMs = 400;
       public Map<String, List<ChatTrigger>> profileChatTriggers = new HashMap();
 
       // Picture-in-Picture (PiP)
@@ -1844,6 +1846,7 @@ public class BomboConfig {
       public String soundToPlay = "";
       public int soundTimes = 1;
       public boolean enabled = true;
+      public int delayMs = 0;
 
       public ChatTrigger() {
       }
@@ -1860,6 +1863,15 @@ public class BomboConfig {
          this.titleToShow = titleToShow;
          this.soundToPlay = soundToPlay;
          this.soundTimes = soundTimes;
+      }
+
+      public ChatTrigger(String triggerText, String commandToRun, String titleToShow, String soundToPlay, int soundTimes, int delayMs) {
+         this.triggerText = triggerText;
+         this.commandToRun = commandToRun;
+         this.titleToShow = titleToShow;
+         this.soundToPlay = soundToPlay;
+         this.soundTimes = soundTimes;
+         this.delayMs = delayMs;
       }
    }
 

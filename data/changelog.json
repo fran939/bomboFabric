@@ -1,5 +1,13 @@
 [
   {
+    "version": "26.2.28.186",
+    "date": "2026-10-31",
+    "changes": [
+      "+ /b timer & /timer Complete Overhaul: restored full HUD timer & stopwatch integration, added pure number seconds support (e.g. /b timer 100), immediate chat feedback, on-screen title/sound alerts, and bot DM sync",
+      "+ Chat Trigger Command Delay & Cooldown: added configurable delay between chat trigger detection and automated command dispatch via CommandDelayManager, with Command Execution Delay and Trigger Cooldown sliders in /b config"
+    ]
+  },
+  {
     "version": "26.2.28.185",
     "date": "2026-10-31",
     "changes": [
