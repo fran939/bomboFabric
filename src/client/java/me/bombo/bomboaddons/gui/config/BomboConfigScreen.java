@@ -257,13 +257,20 @@ public class BomboConfigScreen extends Screen {
         g.text(this.font, "§d§lBOMBOADDONS", winX + 16, winY + 14, 0xFFD8B4FE, false);
         g.text(this.font, "§8| §f" + (searchQuery.isEmpty() ? activeCategory : "Search Results"), winX + 115, winY + 14, ConfigUITheme.getTextMuted(), false);
 
-        // Header Search Box
-        int searchW = Math.min(220, Math.max(140, this.winW / 4));
-        int searchX = winX + winW - searchW - 135;
+        // Header Actions: [Show All], [❖ Move HUDs], and [✕ Close]
+        int showAllBtnW = 65;
+        int showAllBtnX = winX + winW - 125 - showAllBtnW - 8;
+        int searchW = Math.min(200, Math.max(120, this.winW / 4));
+        int searchX = showAllBtnX - searchW - 8;
         int searchY = winY + 11;
         ConfigCustomWidgets.renderCleanInputField(g, this.font, "Search settings...", searchQuery, "globalSearch", searchX, searchY, searchW, mouseX, mouseY);
 
-        // Header Quick Actions: [❖ Move HUDs] and [✕ Close]
+        boolean allModeActive = (s != null && s.showAllConfig) || "All Settings".equalsIgnoreCase(activeCategory);
+        boolean showAllHover = mouseX >= showAllBtnX && mouseX <= showAllBtnX + showAllBtnW && mouseY >= winY + 11 && mouseY <= winY + 31;
+        ConfigUITheme.drawPillButton(g, this.font, allModeActive ? "§a✔ All" : "§7All", showAllBtnX, winY + 11, showAllBtnW, 20, showAllHover,
+                allModeActive ? 0xFFFFFFFF : 0xFFCBD5E1, allModeActive ? 0x4422C55E : (showAllHover ? 0x22FFFFFF : 0x11FFFFFF),
+                allModeActive ? 0xFF22C55E : (showAllHover ? 0x66FFFFFF : 0x33FFFFFF));
+
         int moveBtnX = winX + winW - 125;
         int moveBtnY = winY + 11;
         boolean moveHover = mouseX >= moveBtnX && mouseX <= moveBtnX + 85 && mouseY >= moveBtnY && mouseY <= moveBtnY + 20;
@@ -325,7 +332,12 @@ public class BomboConfigScreen extends Screen {
     }
 
     private List<String> getVisibleCategories() {
-        List<String> categories = ConfigRegistry.getAvailableCategories();
+        List<String> rawCategories = ConfigRegistry.getAvailableCategories();
+        List<String> categories = new ArrayList<>();
+        categories.add("All Settings");
+        for (String c : rawCategories) {
+            if (!categories.contains(c)) categories.add(c);
+        }
         if (!searchQuery.isEmpty()) {
             String q = searchQuery.toLowerCase().trim();
             List<String> filtered = new ArrayList<>();
@@ -417,7 +429,7 @@ public class BomboConfigScreen extends Screen {
     }
 
     private void renderContentArea(GuiGraphicsExtractor g, int x, int y, int w, int h, int mouseX, int mouseY) {
-        List<ConfigItem> items = searchQuery.isEmpty() ? ConfigRegistry.getItemsForCategory(activeCategory) : searchMatchingItems();
+        List<ConfigItem> items = getCurrentContentItems();
 
         int itemY = y - (int) this.scrollAmount;
         int totalHeight = 0;
@@ -1647,8 +1659,10 @@ public class BomboConfigScreen extends Screen {
         }
 
         // 2. Header Search & Quick Actions
-        int searchW = Math.min(220, Math.max(140, this.winW / 4));
-        int searchX = winX + winW - searchW - 135;
+        int showAllBtnW = 65;
+        int showAllBtnX = winX + winW - 125 - showAllBtnW - 8;
+        int searchW = Math.min(200, Math.max(120, this.winW / 4));
+        int searchX = showAllBtnX - searchW - 8;
         int searchY = winY + 11;
         if (mouseX >= searchX && mouseX <= searchX + searchW && mouseY >= searchY && mouseY <= searchY + 20) {
             if (event.button() == 1) {
@@ -1656,6 +1670,19 @@ public class BomboConfigScreen extends Screen {
                 if (searchBox != null) searchBox.setValue("");
             }
             ConfigCustomWidgets.activeFocusedField = "globalSearch";
+            return true;
+        }
+
+        if (mouseX >= showAllBtnX && mouseX <= showAllBtnX + showAllBtnW && mouseY >= winY + 11 && mouseY <= winY + 31) {
+            BomboConfig.Settings s = BomboConfig.get();
+            s.showAllConfig = !s.showAllConfig;
+            if (s.showAllConfig) {
+                activeCategory = "All Settings";
+            } else if ("All Settings".equalsIgnoreCase(activeCategory)) {
+                activeCategory = "General";
+            }
+            BomboConfig.save();
+            this.scrollAmount = 0.0;
             return true;
         }
 
@@ -1699,6 +1726,12 @@ public class BomboConfigScreen extends Screen {
             for (String cat : categories) {
                 if (mouseY >= curY && mouseY <= curY + 20) {
                     activeCategory = cat;
+                    if ("All Settings".equalsIgnoreCase(cat)) {
+                        BomboConfig.get().showAllConfig = true;
+                    } else {
+                        BomboConfig.get().showAllConfig = false;
+                    }
+                    BomboConfig.save();
                     this.scrollAmount = 0.0;
                     FeatureOrganizerManager.dropdownOpen = false;
                     return true;
@@ -1729,7 +1762,7 @@ public class BomboConfigScreen extends Screen {
         int contentH = sideH - 16;
 
         if (mouseX >= contentX && mouseX <= contentX + contentW && mouseY >= contentY && mouseY <= contentY + contentH) {
-            List<ConfigItem> items = searchQuery.isEmpty() ? ConfigRegistry.getItemsForCategory(activeCategory) : searchMatchingItems();
+            List<ConfigItem> items = getCurrentContentItems();
             int itemY = contentY - (int) this.scrollAmount;
 
             for (ConfigItem item : items) {
@@ -2280,20 +2313,96 @@ public class BomboConfigScreen extends Screen {
         return false;
     }
 
+    private List<ConfigItem> getCurrentContentItems() {
+        if (!searchQuery.isEmpty()) {
+            return searchMatchingItems();
+        }
+        if (BomboConfig.get().showAllConfig || "All Settings".equalsIgnoreCase(activeCategory)) {
+            return getAllConfigItems();
+        }
+        return ConfigRegistry.getItemsForCategory(activeCategory);
+    }
+
+    private List<ConfigItem> getAllConfigItems() {
+        List<ConfigItem> list = new ArrayList<>();
+        Set<String> seenItemNames = new HashSet<>();
+        List<String> categories = ConfigRegistry.getAvailableCategories();
+        boolean isCheatFlavor = me.bombo.bomboaddons.flavor.Flavor.get().isCheat();
+        boolean hideCheats = BomboConfig.get().hideCheats;
+
+        // Pass 1: Normal categories (excluding All Settings and Uncategorized)
+        for (String cat : categories) {
+            if ("All Settings".equalsIgnoreCase(cat) || "Uncategorized".equalsIgnoreCase(cat)) continue;
+            if (ConfigRegistry.CHEAT_CATEGORIES.contains(cat) && (!isCheatFlavor || hideCheats)) continue;
+
+            List<ConfigItem> catItems = new ArrayList<>();
+            for (ConfigItem item : ConfigRegistry.getItemsForCategory(cat)) {
+                if (item.type == ConfigItem.Type.HEADER) continue;
+                String key = (item.name != null ? item.name.toLowerCase(Locale.ROOT).trim() : "");
+                if (!key.isEmpty() && seenItemNames.contains(key)) continue;
+
+                // Strictly skip cheats on legit flavor or if hideCheats is active
+                if (!isCheatFlavor || hideCheats) {
+                    if (FeatureOrganizerManager.isFeatureCheat(item.name)) continue;
+                }
+
+                catItems.add(item);
+                if (!key.isEmpty()) seenItemNames.add(key);
+            }
+
+            if (!catItems.isEmpty()) {
+                list.add(ConfigItem.header("-------------- " + ConfigRegistry.displayCategoryName(cat) + " --------------", cat));
+                list.addAll(catItems);
+            }
+        }
+
+        // Pass 2: Uncategorized items
+        if (categories.contains("Uncategorized")) {
+            List<ConfigItem> uncatItems = new ArrayList<>();
+            for (ConfigItem item : ConfigRegistry.getItemsForCategory("Uncategorized")) {
+                if (item.type == ConfigItem.Type.HEADER) continue;
+                String key = (item.name != null ? item.name.toLowerCase(Locale.ROOT).trim() : "");
+                if (!key.isEmpty() && seenItemNames.contains(key)) continue;
+
+                if (!isCheatFlavor || hideCheats) {
+                    if (FeatureOrganizerManager.isFeatureCheat(item.name)) continue;
+                }
+
+                uncatItems.add(item);
+                if (!key.isEmpty()) seenItemNames.add(key);
+            }
+
+            if (!uncatItems.isEmpty()) {
+                list.add(ConfigItem.header("-------------- Uncategorized --------------", "Uncategorized"));
+                list.addAll(uncatItems);
+            }
+        }
+
+        return list;
+    }
+
     private List<ConfigItem> searchMatchingItems() {
         List<ConfigItem> list = new ArrayList<>();
         String q = searchQuery.toLowerCase().trim();
         Set<String> seenItemNames = new HashSet<>();
         List<String> categories = ConfigRegistry.getAvailableCategories();
+        boolean isCheatFlavor = me.bombo.bomboaddons.flavor.Flavor.get().isCheat();
+        boolean hideCheats = BomboConfig.get().hideCheats;
 
-        // Pass 1: Normal categories (excluding Uncategorized)
+        // Pass 1: Normal categories (excluding All Settings and Uncategorized)
         for (String cat : categories) {
-            if ("Uncategorized".equalsIgnoreCase(cat)) continue;
+            if ("All Settings".equalsIgnoreCase(cat) || "Uncategorized".equalsIgnoreCase(cat)) continue;
+            if (ConfigRegistry.CHEAT_CATEGORIES.contains(cat) && (!isCheatFlavor || hideCheats)) continue;
+
             List<ConfigItem> catMatches = new ArrayList<>();
             for (ConfigItem item : ConfigRegistry.getItemsForCategory(cat)) {
                 if (item.type == ConfigItem.Type.HEADER) continue;
                 String key = (item.name != null ? item.name.toLowerCase(Locale.ROOT).trim() : "");
                 if (!key.isEmpty() && seenItemNames.contains(key)) continue;
+
+                if (!isCheatFlavor || hideCheats) {
+                    if (FeatureOrganizerManager.isFeatureCheat(item.name)) continue;
+                }
 
                 if (itemMatchesQuery(item, cat, q)) {
                     catMatches.add(item);
@@ -2301,7 +2410,7 @@ public class BomboConfigScreen extends Screen {
                 }
             }
             if (!catMatches.isEmpty()) {
-                list.add(ConfigItem.header("-------------- " + cat + " --------------", cat));
+                list.add(ConfigItem.header("-------------- " + ConfigRegistry.displayCategoryName(cat) + " --------------", cat));
                 list.addAll(catMatches);
             }
         }
@@ -2313,6 +2422,10 @@ public class BomboConfigScreen extends Screen {
                 if (item.type == ConfigItem.Type.HEADER) continue;
                 String key = (item.name != null ? item.name.toLowerCase(Locale.ROOT).trim() : "");
                 if (!key.isEmpty() && seenItemNames.contains(key)) continue;
+
+                if (!isCheatFlavor || hideCheats) {
+                    if (FeatureOrganizerManager.isFeatureCheat(item.name)) continue;
+                }
 
                 if (itemMatchesQuery(item, "Uncategorized", q)) {
                     uncatMatches.add(item);

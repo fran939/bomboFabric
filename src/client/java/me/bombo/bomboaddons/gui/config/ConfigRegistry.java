@@ -54,6 +54,7 @@ public class ConfigRegistry {
             "Hunting",
             "Crosshair",
             "Discord",
+            "Spotify",
             "Hider",
             "Fishing",
             "Farming",
@@ -1715,6 +1716,12 @@ public class ConfigRegistry {
                 items.add(ConfigItem.toggle("Card Hover Glow", "Displays accent border glow when hovering setting cards.", category,
                         () -> s.guiCardGlow,
                         v -> s.guiCardGlow = v));
+                items.add(ConfigItem.header("Config View & Visibility", category));
+                items.add(ConfigItem.toggle("Show All Config Options",
+                        "Displays all configuration options across all categories in a unified view, skipping cheats on the legit version.",
+                        category,
+                        () -> s.showAllConfig,
+                        v -> s.showAllConfig = v));
             }
 
             case "Debug" -> {

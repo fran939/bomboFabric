@@ -309,8 +309,17 @@ public class SkyblockUtils {
       return "COMMON";
    }
 
+   private static final java.util.Map<net.minecraft.world.item.ItemStack, String> ITEM_RARITY_CACHE =
+           java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+   private static final java.util.regex.Pattern STRIP_FORMATTING_PATTERN =
+           java.util.regex.Pattern.compile("(?i)§[0-9a-fk-or]");
+
    public static String getItemRarityColor(net.minecraft.world.item.ItemStack itemStack) {
       if (itemStack == null || itemStack.isEmpty()) return "§f";
+      String cached = ITEM_RARITY_CACHE.get(itemStack);
+      if (cached != null) return cached;
+
+      String result = "§f";
       try {
          // 1. Check ExtraAttributes
          net.minecraft.world.item.component.CustomData customData = (net.minecraft.world.item.component.CustomData)itemStack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
@@ -320,7 +329,9 @@ public class SkyblockUtils {
             if (ea != null) {
                String tier = ea.getString("tier").orElse("");
                if (!tier.isEmpty()) {
-                  return getRarityCode(tier);
+                  result = getRarityCode(tier);
+                  ITEM_RARITY_CACHE.put(itemStack, result);
+                  return result;
                }
                // Check petInfo
                String petInfo = ea.getString("petInfo").orElse("");
@@ -328,7 +339,9 @@ public class SkyblockUtils {
                   int tIdx = petInfo.indexOf("\"tier\":\"");
                   int end = petInfo.indexOf("\"", tIdx + 8);
                   if (end != -1) {
-                     return getRarityCode(petInfo.substring(tIdx + 8, end));
+                     result = getRarityCode(petInfo.substring(tIdx + 8, end));
+                     ITEM_RARITY_CACHE.put(itemStack, result);
+                     return result;
                   }
                }
             }
@@ -340,21 +353,23 @@ public class SkyblockUtils {
             List<Component> lines = itemLore.lines();
             for (int i = lines.size() - 1; i >= 0; --i) {
                String str = lines.get(i).getString();
-               String clean = str.replaceAll("(?i)§[0-9a-fk-or]", "").trim();
+               String clean = STRIP_FORMATTING_PATTERN.matcher(str).replaceAll("").trim();
                if (clean.contains("COMMON") || clean.contains("UNCOMMON") || clean.contains("RARE") || clean.contains("EPIC") || clean.contains("LEGENDARY") || clean.contains("MYTHIC") || clean.contains("DIVINE") || clean.contains("SPECIAL") || clean.contains("VERY SPECIAL") || clean.contains("SUPREME")) {
-                  if (clean.contains("VERY SPECIAL") || clean.contains("SPECIAL")) return "§c";
-                  if (clean.contains("SUPREME") || clean.contains("DIVINE")) return "§b";
-                  if (clean.contains("MYTHIC")) return "§d";
-                  if (clean.contains("LEGENDARY")) return "§6";
-                  if (clean.contains("EPIC")) return "§5";
-                  if (clean.contains("RARE")) return "§9";
-                  if (clean.contains("UNCOMMON")) return "§a";
-                  if (clean.contains("COMMON")) return "§f";
+                  if (clean.contains("VERY SPECIAL") || clean.contains("SPECIAL")) result = "§c";
+                  else if (clean.contains("SUPREME") || clean.contains("DIVINE")) result = "§b";
+                  else if (clean.contains("MYTHIC")) result = "§d";
+                  else if (clean.contains("LEGENDARY")) result = "§6";
+                  else if (clean.contains("EPIC")) result = "§5";
+                  else if (clean.contains("RARE")) result = "§9";
+                  else if (clean.contains("UNCOMMON")) result = "§a";
+                  else if (clean.contains("COMMON")) result = "§f";
+                  break;
                }
             }
          }
       } catch (Throwable ignored) {}
-      return "§f";
+      ITEM_RARITY_CACHE.put(itemStack, result);
+      return result;
    }
 
    public static String getRarityCode(String tier) {

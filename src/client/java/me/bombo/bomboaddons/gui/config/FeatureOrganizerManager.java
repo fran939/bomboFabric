@@ -181,6 +181,13 @@ public class FeatureOrganizerManager {
         ensureFeature("In-Game Command Keybinds", "Keybinds", "", false, "Keybind-to-command mappings for quick execution.");
         ensureFeature("GUI Container Keybinds (Profile Binds)", "Keybinds", "", false, "Container GUI keybinds per profile.");
         ensureFeature("Feature Category & Cheat Organizer", "GUI Settings", "", false, "Feature organization and cheat classification manager.");
+        ensureFeature("Enable Spotify HUD", "Spotify", "", false, "Displays song title, artist, playback time, and clickable controls.");
+        ensureFeature("Always Show", "Spotify", "", false, "Shows the Spotify card even when Spotify is not running or paused.");
+        ensureFeature("HUD Scale", "Spotify", "", false, "Scale multiplier for Spotify HUD.");
+        ensureFeature("Show Album Artwork", "Spotify", "", false, "Display song album cover artwork on the HUD.");
+        ensureFeature("Spotify HUD Lyrics Mode", "Spotify", "", false, "Replaces song/artist text with synchronized lyrics.");
+        ensureFeature("Show Album Cover", "Spotify", "", false, "Display song album cover or icon on the left side of the HUD.");
+        ensureFeature("Show Song Title", "Spotify", "", false, "Display track name text when not in lyrics mode.");
 
         // 2. Load user customized overrides from file
         load();
@@ -216,6 +223,15 @@ public class FeatureOrganizerManager {
             if (!customCategories.contains("Lore Additions")) customCategories.add("Lore Additions");
         }
 
+        if (!customCategories.contains("Spotify")) {
+            int discordIdx = customCategories.indexOf("Discord");
+            if (discordIdx >= 0) {
+                customCategories.add(discordIdx + 1, "Spotify");
+            } else {
+                customCategories.add("Spotify");
+            }
+        }
+
         // Re-home features whose saved category no longer exists in this build.
         Set<String> knownCategories = new HashSet<>(customCategories);
         boolean hasUncategorized = false;
@@ -228,6 +244,12 @@ public class FeatureOrganizerManager {
         if (hasUncategorized && !customCategories.contains("Uncategorized")) {
             customCategories.add("Uncategorized");
         }
+    }
+
+    public static boolean isFeatureCheat(String name) {
+        if (name == null) return false;
+        FeatureMeta fm = features.get(name);
+        return fm != null && fm.isCheat;
     }
 
     private static void ensureFeature(String name, String cat, String subCat, boolean cheat, String desc) {

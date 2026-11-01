@@ -907,6 +907,7 @@ public class BomboConfig {
       public String lastServerIp = "";
       public String lastServerName = "";
       public boolean hideCheats = false;
+      public boolean showAllConfig = false;
       // --- Flavor / build identity (additive; see FlavorMigration) ---
       /** Marks which migration steps have already run on this config. */
       public int configSchemaVersion = 0;

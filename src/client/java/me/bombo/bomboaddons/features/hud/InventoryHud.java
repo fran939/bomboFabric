@@ -16,6 +16,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public class InventoryHud {
+   private static final ItemStack DUMMY_COAL = new ItemStack(Items.COAL);
+   private static final ItemStack DUMMY_IRON = new ItemStack(Items.IRON_INGOT);
+   private static final ItemStack DUMMY_GOLD = new ItemStack(Items.GOLD_INGOT);
+
+   private static final ItemStack[] cachedSlots = new ItemStack[27];
+   private static final int[] cachedColors = new int[27];
+
+   private static int lastHoverSlot = -1;
+   private static ItemStack lastHoverStack = ItemStack.EMPTY;
+   private static List<net.minecraft.network.chat.Component> cachedTooltipLines = null;
    private static final int COLS = 9;
    private static final int ROWS = 3;
    private static final int SLOT_SIZE = 18;
@@ -111,39 +121,51 @@ public class InventoryHud {
 
          ItemStack stack = ItemStack.EMPTY;
          if (isDummy) {
-            if (slotIndex % 4 == 0) stack = new ItemStack(Items.COAL);
-            else if (slotIndex % 5 == 0) stack = new ItemStack(Items.IRON_INGOT);
-            else if (slotIndex % 7 == 0) stack = new ItemStack(Items.GOLD_INGOT);
+            if (slotIndex % 4 == 0) stack = DUMMY_COAL;
+            else if (slotIndex % 5 == 0) stack = DUMMY_IRON;
+            else if (slotIndex % 7 == 0) stack = DUMMY_GOLD;
          } else if (inv != null && slotIndex < 36) {
             stack = inv.getItem(slotIndex);
          }
 
          if (stack != null && !stack.isEmpty()) {
             if (s != null && s.inventoryItemRarityBg) {
-               String code = me.bombo.bomboaddons.SkyblockUtils.getItemRarityColor(stack);
-               int rCol = switch (code) {
-                  case "§a" -> 0x55FF55;
-                  case "§9" -> 0x5555FF;
-                  case "§5" -> 0xAA00AA;
-                  case "§6" -> 0xFFAA00;
-                  case "§d" -> 0xFF55FF;
-                  case "§b" -> 0x55FFFF;
-                  case "§c" -> 0xFF5555;
-                  default -> 0;
-               };
+               int rCol;
+               if (cachedSlots[i] == stack) {
+                  rCol = cachedColors[i];
+               } else {
+                  String code = me.bombo.bomboaddons.SkyblockUtils.getItemRarityColor(stack);
+                  rCol = switch (code) {
+                     case "§a" -> 0x55FF55;
+                     case "§9" -> 0x5555FF;
+                     case "§5" -> 0xAA00AA;
+                     case "§6" -> 0xFFAA00;
+                     case "§d" -> 0xFF55FF;
+                     case "§b" -> 0x55FFFF;
+                     case "§c" -> 0xFF5555;
+                     default -> 0;
+                  };
+                  cachedSlots[i] = stack;
+                  cachedColors[i] = rCol;
+               }
                if (rCol != 0) {
                   g.fill(slotX + 1, slotY + 1, slotX + SLOT_SIZE - 1, slotY + SLOT_SIZE - 1, 0x44000000 | rCol);
                }
+            } else {
+               cachedSlots[i] = null;
             }
             g.item(stack, slotX + 1, slotY + 1);
             g.itemDecorations(mc.font, stack, slotX + 1, slotY + 1);
+         } else {
+            cachedSlots[i] = null;
+            cachedColors[i] = 0;
          }
       }
 
       g.pose().popMatrix();
 
-      // Tooltip rendering when screen is open
-      if (!isDummy && shouldShow(mc) && mc.gui.screen() != null && !(mc.gui.screen() instanceof HudMoveScreen)) {
+      // Tooltip rendering when screen is open (except Container screens where renderHoverTooltipDirect renders on top)
+      if (!isDummy && shouldShow(mc) && mc.gui.screen() != null && !(mc.gui.screen() instanceof HudMoveScreen) && !(mc.gui.screen() instanceof AbstractContainerScreen)) {
          renderHoverTooltip(g, baseX, baseY, scale);
       }
    }
@@ -181,14 +203,26 @@ public class InventoryHud {
          if (mouseX >= slotScreenX && mouseX <= slotScreenX + slotScreenW && mouseY >= slotScreenY && mouseY <= slotScreenY + slotScreenH) {
             ItemStack stack = inv.getItem(slotIndex);
             if (stack != null && !stack.isEmpty()) {
-               List<net.minecraft.network.chat.Component> lines = stack.getTooltipLines(
-                  net.minecraft.world.item.Item.TooltipContext.of(mc.level),
-                  mc.player,
-                  net.minecraft.world.item.TooltipFlag.NORMAL
-               );
+               List<net.minecraft.network.chat.Component> lines;
+               if (slotIndex == lastHoverSlot && stack == lastHoverStack && cachedTooltipLines != null) {
+                  lines = cachedTooltipLines;
+               } else {
+                  lastHoverSlot = slotIndex;
+                  lastHoverStack = stack;
+                  cachedTooltipLines = stack.getTooltipLines(
+                     net.minecraft.world.item.Item.TooltipContext.of(mc.level),
+                     mc.player,
+                     net.minecraft.world.item.TooltipFlag.NORMAL
+                  );
+                  lines = cachedTooltipLines;
+               }
                if (lines != null && !lines.isEmpty()) {
                   drawCustomTooltip(g, mc, lines, (int) mouseX, (int) mouseY);
                }
+            } else {
+               lastHoverSlot = -1;
+               lastHoverStack = ItemStack.EMPTY;
+               cachedTooltipLines = null;
             }
             return;
          }

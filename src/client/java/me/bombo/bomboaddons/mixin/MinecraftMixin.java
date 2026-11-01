@@ -97,7 +97,6 @@ public class MinecraftMixin {
       me.bombo.bomboaddons.features.profile.AutoProfileSwapper.onClientTick();
       me.bombo.bomboaddons.features.TotemAnimationManager.onClientTick();
       me.bombo.bomboaddons.features.AutoExpCapsule.onTick(mc);
-      me.bombo.bomboaddons.util.ClipboardCommandManager.pollClipboard();
       me.bombo.bomboaddons.features.kuudra.KuudraBossTracker.onClientTick();
       me.bombo.bomboaddons.features.misc.DamageTracker.onClientTick();
       me.bombo.bomboaddons.features.misc.ReminderManager.onClientTick();

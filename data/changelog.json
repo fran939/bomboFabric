@@ -1,5 +1,17 @@
 [
   {
+    "version": "26.2.28.189",
+    "date": "2026-11-01",
+    "changes": [
+      "+ Periodic Freeze Resolution: eliminated 3-5s GC micro-stutter by caching item rarity checks (WeakHashMap) and precompiling lore formatting regex, bypassing thousands of per-frame NBT copies",
+      "+ Removed Win32 Clipboard Tick Polling: stopped tick-level OpenClipboard polling in game loop that caused periodic OS input hitches",
+      "+ Inventory HUD CPU Optimization: cached slot rarity colors, replaced dummy ItemStack allocations with static constants, and cached tooltip component lines",
+      "+ Asynchronous Storage Tracking: offloaded storage JSON building to background thread and cached inventory stack references before codec serialization",
+      "+ Spotify Settings Visibility: restored Spotify category and all desktop overlay toggles (HUD, lyrics mode, scale, artwork) in /b config",
+      "+ Show All Config Options: added [All] quick toggle button and All Settings category displaying all options across categories with strict cheat filtering on legit version"
+    ]
+  },
+  {
     "version": "26.2.28.188",
     "date": "2026-11-01",
     "changes": [

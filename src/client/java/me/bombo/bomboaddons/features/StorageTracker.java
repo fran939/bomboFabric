@@ -412,22 +412,20 @@ public class StorageTracker {
          lastSaveAttempt = System.currentTimeMillis();
          lastUpdateTime = System.currentTimeMillis();
 
-         try {
-            JsonObject root = buildRootJson();
-            File storageFile = getStorageFile();
-            CompletableFuture.runAsync(() -> {
-               try {
+         CompletableFuture.runAsync(() -> {
+            try {
+               JsonObject root = buildRootJson();
+               File storageFile = getStorageFile();
+               if (storageFile.getParentFile() != null) {
                   storageFile.getParentFile().mkdirs();
-                  try (FileWriter writer = new FileWriter(storageFile)) {
-                     new GsonBuilder().setPrettyPrinting().create().toJson(root, writer);
-                  }
-               } catch (Exception e) {
-                  Bomboaddons.LOGGER.error("[BomboAddons] Failed to save storage cache", e);
                }
-            });
-         } catch (Exception e) {
-            Bomboaddons.LOGGER.error("[BomboAddons] Failed to build storage cache JSON", e);
-         }
+               try (FileWriter writer = new FileWriter(storageFile)) {
+                  new GsonBuilder().setPrettyPrinting().create().toJson(root, writer);
+               }
+            } catch (Exception e) {
+               Bomboaddons.LOGGER.error("[BomboAddons] Failed to save storage cache", e);
+            }
+         });
       }
    }
 
@@ -721,6 +719,9 @@ public class StorageTracker {
       return new String[]{displayLoc, cmd};
    }
 
+   private static final ItemStack[] lastPlayerStacks = new ItemStack[46];
+   private static final int[] lastPlayerCounts = new int[46];
+
    public static void updatePlayerInventory(Minecraft mc) {
       if (mc.player != null) {
          if (System.currentTimeMillis() - lastPlayerInvUpdate >= 10000L) {
@@ -728,19 +729,36 @@ public class StorageTracker {
             boolean changed = false;
             Map<Integer, String> slots = (Map)storageData.computeIfAbsent("Inventory", (k) -> new ConcurrentHashMap());
             Map<Integer, String> uncompressedSlots = (Map)uncompressedCache.computeIfAbsent("Inventory", (k) -> new ConcurrentHashMap());
-            RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, mc.level.registryAccess());
+            RegistryOps<Tag> ops = null;
 
-            for(int i = 0; i < mc.player.getInventory().getContainerSize(); ++i) {
+            int containerSize = mc.player.getInventory().getContainerSize();
+            for(int i = 0; i < containerSize; ++i) {
                ItemStack stack = mc.player.getInventory().getItem(i);
+               if (i < lastPlayerStacks.length && lastPlayerStacks[i] == stack) {
+                  if (stack.isEmpty() || lastPlayerCounts[i] == stack.getCount()) {
+                     continue; // Unchanged slot instance
+                  }
+               }
+               if (i < lastPlayerStacks.length) {
+                  lastPlayerStacks[i] = stack;
+                  lastPlayerCounts[i] = stack.isEmpty() ? 0 : stack.getCount();
+               }
+
+               if (ops == null) {
+                  ops = RegistryOps.create(NbtOps.INSTANCE, mc.level.registryAccess());
+               }
+
                String uncompressedNbtStr = "";
+               Tag encodedTag = null;
                if (!stack.isEmpty()) {
                   String name = ChatFormatting.stripFormatting(stack.getHoverName().getString()).trim();
                   if (!name.contains("Empty ") && !name.contains("Locked") && !name.equals("Back") && !name.equals("Close") && !name.contains(" Page") && !name.equals("Go Back")) {
                      try {
-                        Tag tag = (Tag)ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
-                        uncompressedNbtStr = tag.toString();
+                        encodedTag = (Tag)ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
+                        uncompressedNbtStr = encodedTag.toString();
                      } catch (Exception var13) {
                         uncompressedNbtStr = "";
+                        encodedTag = null;
                      }
                   }
                }
@@ -754,15 +772,15 @@ public class StorageTracker {
                      uncompressedSlots.put(i, uncompressedNbtStr);
 
                      try {
-                        Tag tag = (Tag)ItemStack.CODEC.encodeStart(ops, stack).getOrThrow();
-                        if (tag instanceof CompoundTag) {
-                           CompoundTag ct = (CompoundTag)tag;
+                        if (encodedTag instanceof CompoundTag ct) {
                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
                            NbtIo.writeCompressed(ct, baos);
                            String nbtStr = "B64:" + Base64.getEncoder().encodeToString(baos.toByteArray());
                            slots.put(i, nbtStr);
+                        } else if (encodedTag != null) {
+                           slots.put(i, encodedTag.toString());
                         } else {
-                           slots.put(i, tag.toString());
+                           slots.put(i, uncompressedNbtStr);
                         }
                      } catch (Exception var14) {
                         slots.put(i, uncompressedNbtStr);

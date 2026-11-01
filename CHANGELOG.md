@@ -1,5 +1,28 @@
 # BomboAddons Changelog
  
+## [26.2.28.189] - 2026-11-01 (Beta)
+
+### Periodic Freeze Resolution, Inventory HUD CPU Optimization, Spotify Settings Visibility, and Show All Config Options (`SkyblockUtils.java`, `InventoryHud.java`, `StorageTracker.java`, `MinecraftMixin.java`, `ConfigRegistry.java`, `FeatureOrganizerManager.java`, `BomboConfigScreen.java`, `BomboConfig.java`)
+- **Resolved 3-5s Periodic Micro-Freezes & Allocation Churn (`SkyblockUtils.java`, `MinecraftMixin.java`):**
+  - Eliminated the root cause of the recurring 3-5 second garbage collection micro-stutter by implementing a thread-safe `WeakHashMap<ItemStack, String>` cache in `SkyblockUtils.getItemRarityColor(stack)` and pre-compiling regex pattern `STRIP_FORMATTING_PATTERN`. Bypassed thousands of deep CompoundTag copies and regex recompilations on every render frame.
+  - Removed tick-level Win32 clipboard polling (`ClipboardCommandManager.pollClipboard()`) from `MinecraftMixin.java` tick loop, preventing GLFW/Win32 OS clipboard locking stalls while playing.
+- **Inventory HUD CPU & Memory Optimization (`InventoryHud.java`):**
+  - Cached slot item references and rarity colors in `InventoryHud.drawHud` so rarity checks only evaluate when inventory slots actually change.
+  - Replaced per-frame dummy `ItemStack` allocations with static singletons `DUMMY_COAL`, `DUMMY_IRON`, and `DUMMY_GOLD`.
+  - Cached hovered slot index, item stack reference, and tooltip component lines in `renderHoverTooltip` so `stack.getTooltipLines(...)` is not re-executed 144+ times per second while hovering an item.
+  - Suppressed duplicate tooltip evaluation when `AbstractContainerScreen` is open.
+- **Asynchronous Storage Tracking & Inventory Diffing (`StorageTracker.java`):**
+  - Cached player inventory `ItemStack` references and counts in `updatePlayerInventory(mc)` so NBT codec serialization is bypassed when inventory contents remain unchanged.
+  - Offloaded `buildRootJson()` and JSON serialization in `StorageTracker.save()` to background `CompletableFuture.runAsync` to eliminate main-thread file I/O hitches.
+- **Spotify HUD Category & Settings Visibility Restoration (`ConfigRegistry.java`, `FeatureOrganizerManager.java`):**
+  - Added `"Spotify"` to `ConfigRegistry.BASE_CATEGORIES` and added automatic category rescue in `FeatureOrganizerManager.initDefaults()`.
+  - Auto-discovered and registered all Spotify settings (`Enable Spotify HUD`, `Always Show`, `HUD Scale`, `Show Album Artwork`, `Spotify HUD Lyrics Mode`, `Show Album Cover`, `Show Song Title`) so they appear right in `/b config` and can be toggled by players.
+- **Universal "Show All Config Options" View & Header Button (`BomboConfigScreen.java`, `ConfigRegistry.java`, `BomboConfig.java`):**
+  - Added a global `[All]` quick toggle button in the `/b config` header bar and added an `"All Settings"` category at the top of the category sidebar.
+  - Clicking `[All]` or `"All Settings"` presents all settings across all categories in a unified, searchable, scrollable view with clean category dividers.
+  - Strictly enforces cheat filtering: in the legit flavor (`bomboaddons`) or when `hideCheats` is enabled, all cheat categories and cheat features are completely hidden from the view and search results.
+  - Added `Show All Config Options` toggle setting under "GUI Settings" in `/b config`.
+
 ## [26.2.28.188] - 2026-11-01 (Beta)
 
 ### Timer Tab Completion & Registration, Locraw Hiding & Subarea Fix, ChatTriggers Overhaul, ESP Through-Walls Restoration, and Clean Island Presets (`BomboaddonsClient.java`, `ReminderManager.java`, `CustomTimerManager.java`, `SkyblockUtils.java`, `ChatMixin.java`, `ConfigCustomWidgets.java`, `CustomBindsProcessor.java`, `PestESP.java`, `BlockHighlight.java`, `HighlightESP.java`, `ParticleESP.java`, `DisplayESP.java`, `CorpseHighlight.java`)
