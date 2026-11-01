@@ -1,5 +1,12 @@
 # BomboAddons Changelog
  
+## [26.2.28.190] - 2026-11-01 (Beta)
+
+### Client Startup Crash Resolution (`InventoryHud.java`)
+- **Fixed Premature `ItemStack` Initialization (`InventoryHud.java`):**
+  - Resolved `java.lang.NullPointerException: Components not bound yet` during Fabric client initialization (`me.bombo.bomboaddons.BomboaddonsClient.onInitializeClient`) by replacing static `ItemStack` initializers with lazy singleton getters (`getDummyCoal()`, `getDummyIron()`, `getDummyGold()`).
+  - Ensures dummy preview item stacks for the HUD Move screen are only instantiated when the screen is actually rendered after Minecraft's component and item registries are fully bound.
+
 ## [26.2.28.189] - 2026-11-01 (Beta)
 
 ### Periodic Freeze Resolution, Inventory HUD CPU Optimization, Spotify Settings Visibility, and Show All Config Options (`SkyblockUtils.java`, `InventoryHud.java`, `StorageTracker.java`, `MinecraftMixin.java`, `ConfigRegistry.java`, `FeatureOrganizerManager.java`, `BomboConfigScreen.java`, `BomboConfig.java`)

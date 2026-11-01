@@ -16,9 +16,24 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public class InventoryHud {
-   private static final ItemStack DUMMY_COAL = new ItemStack(Items.COAL);
-   private static final ItemStack DUMMY_IRON = new ItemStack(Items.IRON_INGOT);
-   private static final ItemStack DUMMY_GOLD = new ItemStack(Items.GOLD_INGOT);
+   private static ItemStack dummyCoal;
+   private static ItemStack dummyIron;
+   private static ItemStack dummyGold;
+
+   private static ItemStack getDummyCoal() {
+      if (dummyCoal == null) dummyCoal = new ItemStack(Items.COAL);
+      return dummyCoal;
+   }
+
+   private static ItemStack getDummyIron() {
+      if (dummyIron == null) dummyIron = new ItemStack(Items.IRON_INGOT);
+      return dummyIron;
+   }
+
+   private static ItemStack getDummyGold() {
+      if (dummyGold == null) dummyGold = new ItemStack(Items.GOLD_INGOT);
+      return dummyGold;
+   }
 
    private static final ItemStack[] cachedSlots = new ItemStack[27];
    private static final int[] cachedColors = new int[27];
@@ -121,9 +136,9 @@ public class InventoryHud {
 
          ItemStack stack = ItemStack.EMPTY;
          if (isDummy) {
-            if (slotIndex % 4 == 0) stack = DUMMY_COAL;
-            else if (slotIndex % 5 == 0) stack = DUMMY_IRON;
-            else if (slotIndex % 7 == 0) stack = DUMMY_GOLD;
+            if (slotIndex % 4 == 0) stack = getDummyCoal();
+            else if (slotIndex % 5 == 0) stack = getDummyIron();
+            else if (slotIndex % 7 == 0) stack = getDummyGold();
          } else if (inv != null && slotIndex < 36) {
             stack = inv.getItem(slotIndex);
          }
