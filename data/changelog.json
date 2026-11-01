@@ -1,5 +1,14 @@
 [
   {
+    "version": "26.2.28.191",
+    "date": "2026-11-01",
+    "changes": [
+      "+ Server-Side Forge Timers: synced slots to server so Discord bot sends DM reminders on time 24/7 even when Minecraft is closed",
+      "+ Suppressed Catch-Up Spam: prevented bursts of stale alerts on game startup by silently marking already-finished items",
+      "+ Player Forge API with Time Until Done: added /api/forge/:user endpoint exposing active slots, remaining seconds, and formatted timeUntilDone"
+    ]
+  },
+  {
     "version": "26.2.28.190",
     "date": "2026-11-01",
     "changes": [

@@ -1,5 +1,17 @@
 # BomboAddons Changelog
  
+## [26.2.28.191] - 2026-11-01 (Beta)
+
+### Server-Side Forge Timers, 24/7 Discord Alerts, and Player API Time Until Done (`ForgeTimerManager.java`, `bombot/index.js`, `bomboapi/server.js`)
+- **Server-Side Forge Timer Tracking & 24/7 Bot Alerts (`bombot/index.js`, `ForgeTimerManager.java`):**
+  - Integrated persistent Forge timer storage (`forge_timers.json`) into the server bot with an autonomous 1-second countdown evaluation loop.
+  - Opening "The Forge" GUI in Dwarven Mines automatically syncs slots via `syncToServerAsync` to `/api/forge/sync`, allowing the server bot to send Discord DM reminders at the exact minute each item completes, even if Minecraft is closed or the user's PC is powered off.
+- **Suppressed Startup Catch-Up Spam (`ForgeTimerManager.java`):**
+  - Eliminated the burst of stale notifications when launching Minecraft by automatically marking past items as finished and notified in `load()`.
+  - Added timestamp guards in `onClientTick` and `triggerAlerts` so items that completed while offline do not spam chat, screen banners, or Discord.
+- **Player Forge Timers API with Remaining Time (`/api/forge/:user`):**
+  - Added public endpoints `GET /api/forge?user=<player>` and `GET /api/forge/:user` (and `/api/bot/forge`) returning slot index, item name, finished status, remaining seconds, and formatted `timeUntilDone` (e.g. `3h 40m 16s` or `Ready!`).
+
 ## [26.2.28.190] - 2026-11-01 (Beta)
 
 ### Client Startup Crash Resolution (`InventoryHud.java`)

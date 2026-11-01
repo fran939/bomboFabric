@@ -257,6 +257,11 @@ public class ForgeTimerManager {
             if (changed) {
                 slots.sort(Comparator.comparingInt(a -> a.slotIndex));
                 save();
+                String accKey = getCurrentAccountKey();
+                String[] keyParts = accKey.split(":");
+                String accUser = keyParts.length > 0 ? keyParts[0] : "player";
+                String accProf = keyParts.length > 1 ? keyParts[1] : "default";
+                syncToServerAsync(accUser, accProf, new ArrayList<>(slots));
             }
         }
     }
@@ -293,6 +298,12 @@ public class ForgeTimerManager {
                     if (slot.finished && !slot.notified) {
                         slot.notified = true;
                         changed = true;
+
+                        // If the item finished more than 3 minutes ago (e.g. while client was closed/offline),
+                        // skip notifications so we don't spam chat/screen/Discord with old items.
+                        if (slot.finishTimestamp > 0L && (now - slot.finishTimestamp > 180_000L)) {
+                            continue;
+                        }
 
                         // Check for bundling / debounce (items finishing within 3 minutes)
                         String bundleSuffix = "";
@@ -349,10 +360,13 @@ public class ForgeTimerManager {
 
         // 3. Discord Bot Alert
         if (s.forgeDiscordAlert) {
-            String cleanBundle = ChatFormatting.stripFormatting(bundleSuffix);
-            String userTag = isCurrent ? "" : (" (" + accUser + " - " + accProf + ")");
-            String discordMsg = "🔨 **[Forge Reminder]** Your **" + itemName + "**" + userTag + " is ready at the Forge!" + cleanBundle;
-            sendDiscordAlertAsync(discordMsg, accUser);
+            long now = System.currentTimeMillis();
+            if (slot.finishTimestamp <= 0L || (now - slot.finishTimestamp <= 60_000L)) {
+                String cleanBundle = ChatFormatting.stripFormatting(bundleSuffix);
+                String userTag = isCurrent ? "" : (" (" + accUser + " - " + accProf + ")");
+                String discordMsg = "🔨 **[Forge Reminder]** Your **" + itemName + "**" + userTag + " is ready at the Forge!" + cleanBundle;
+                sendDiscordAlertAsync(discordMsg, accUser);
+            }
         }
     }
 
@@ -372,7 +386,6 @@ public class ForgeTimerManager {
                         .build();
                 HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
             } catch (Throwable ignored) {
-                // Fallback to direct port 6668 if domain proxy has transient issue
                 try {
                     Map<String, String> payload = new HashMap<>();
                     payload.put("message", message);
@@ -389,6 +402,42 @@ public class ForgeTimerManager {
                 } catch (Throwable ignored2) {}
             }
         }, "ForgeDiscordAlertThread").start();
+    }
+
+    public static void syncToServerAsync(String username, String profileId, List<ForgeSlot> slots) {
+        new Thread(() -> {
+            try {
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("user", username);
+                payload.put("profileId", profileId);
+                payload.put("slots", slots);
+                String json = GSON.toJson(payload);
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create("https://api.bombo.dpdns.org/api/forge/sync"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(json))
+                        .timeout(Duration.ofSeconds(4))
+                        .build();
+                HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
+            } catch (Throwable ignored) {
+                try {
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("user", username);
+                    payload.put("profileId", profileId);
+                    payload.put("slots", slots);
+                    String json = GSON.toJson(payload);
+
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create("http://ssh.bombo.dpdns.org:6668/api/bot/forge/sync"))
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString(json))
+                            .timeout(Duration.ofSeconds(4))
+                            .build();
+                    HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.discarding());
+                } catch (Throwable ignored2) {}
+            }
+        }, "ForgeServerSyncThread").start();
     }
 
     public static void printForgeTimersToChat(Minecraft mc) {
@@ -503,5 +552,17 @@ public class ForgeTimerManager {
                 }
             }
         } catch (Throwable ignored) {}
+
+        // Prevent startup alert spam: any item that finished while Minecraft was closed
+        // is silently marked as finished and notified.
+        long now = System.currentTimeMillis();
+        for (List<ForgeSlot> slots : accountSlots.values()) {
+            for (ForgeSlot slot : slots) {
+                if (slot.finishTimestamp > 0L && now >= slot.finishTimestamp) {
+                    slot.finished = true;
+                    slot.notified = true;
+                }
+            }
+        }
     }
 }
